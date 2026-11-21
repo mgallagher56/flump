@@ -1,0 +1,131 @@
+id: take-home
+app: web
+route: /app/take-home
+title: Take-home pay
+auth: required
+purpose: View estimated monthly take-home pay from saved salary, tax region, pension, and student loan settings, inspect deductions, and model a pay rise or marginal tax rate.
+entry_points:
+  - Main app navigation (Take-home pay)
+  - Dashboard or Budget salary links
+  - Redirect from /app/savings#takehome
+route_file: apps/web/app/routes/app.take-home.tsx
+
+sections:
+  - id: header
+    name: Page header
+    kind: header
+    component: apps/web/app/containers/takeHome/TakeHomeContainer.tsx
+    capabilities:
+      - id: orient
+        goal: Identify the page as showing monthly take-home pay and what a pay rise would change.
+        mode: read
+        actions: []
+
+  - id: hero-and-kpis
+    name: Monthly take-home hero and deductions strip
+    kind: hero
+    component: apps/web/app/features/take-home/components/TakeHomeCalculator/TakeHomeCalculator.tsx
+    capabilities:
+      - id: view-take-home-summary
+        goal: View estimated monthly take-home pay (or typed take-home pay), monthly pay before tax, tax and NI, and pension/student loan deductions, or follow a prompt to add missing salary/details.
+        mode: read
+        facts_read:
+          - salary
+          - typed-take-home
+          - employment-type
+          - tax-region
+          - pension-rates
+          - student-loan-plan
+        figures_shown:
+          - take-home
+        actions:
+          - id: add-salary-link
+            control: link
+            label: Add salary
+            effect: Navigates to Profile settings to enter salary before tax when missing.
+            target: /app/profile#settings-age-and-pay
+          - id: add-details-link
+            control: link
+            label: Add your details
+            effect: Navigates to Profile settings to complete missing tax region or employment details.
+            target: /app/profile
+
+  - id: breakdown
+    name: Take-home pay breakdown
+    kind: table
+    component: apps/web/app/features/take-home/components/TakeHomeBreakdown/TakeHomeBreakdown.tsx
+    when: when salary before tax and tax facts are known
+    capabilities:
+      - id: inspect-pay-breakdown
+        goal: Inspect annual and monthly breakdown of Income Tax, National Insurance, pension, student loan, and effective deduction share.
+        mode: read
+        facts_read:
+          - salary
+          - tax-region
+          - pension-rates
+          - student-loan-plan
+        figures_shown:
+          - take-home
+        actions:
+          - id: toggle-breakdown-details
+            control: drawer-toggle
+            label: Show details
+            effect: Expands or collapses share of pay not taken home, pay after pension, and tax-year assumptions.
+
+  - id: scenario-zone
+    name: Model a change to your pay
+    kind: scenario-zone
+    component: apps/web/app/features/take-home/components/TakeHomeCalculator/TakeHomeCalculator.tsx
+    when: when salary before tax and tax facts are known
+    capabilities:
+      - id: toggle-and-reset-pay-scenario
+        goal: Expand or collapse the pay what-if zone, switch between Pay rise and Next pound tools, or reset scenario inputs.
+        mode: what-if
+        actions:
+          - id: toggle-pay-scenario
+            control: drawer-toggle
+            label: "Show what-if: change your pay"
+            effect: Expands or collapses the ScenarioZone without changing saved data.
+          - id: reset-pay-scenario
+            control: button
+            label: Reset
+            effect: Restores pay-rise and next-pound scenario inputs to saved defaults.
+          - id: switch-pay-tool
+            control: tab
+            label: Pay rise / Each extra pound
+            effect: Switches between PayRiseTool and NextPoundExplorer.
+
+      - id: model-pay-rise
+        goal: Test a yearly pay rise, see the estimated monthly take-home increase, and optionally hand it over to the Savings forecast.
+        mode: what-if
+        facts_read:
+          - salary
+          - tax-region
+          - pension-rates
+          - student-loan-plan
+        figures_shown:
+          - take-home
+        actions:
+          - id: set-pay-rise
+            control: slider
+            label: Yearly pay rise
+            effect: Adjusts scenario yearly pay rise and recalculates monthly take-home change.
+          - id: apply-pay-rise-to-savings
+            control: button
+            label: Use this in savings forecast
+            effect: Navigates to /app/savings#forecast passing the monthly increase in router state.
+            target: /app/savings#forecast
+
+      - id: explore-next-pound
+        goal: Inspect marginal deduction rates across salary levels (Income Tax, NI, student loan, and Personal Allowance taper).
+        mode: what-if
+        facts_read:
+          - salary
+          - tax-region
+          - pension-rates
+          - student-loan-plan
+        actions:
+          - id: adjust-next-pound-salary
+            control: slider
+            label: Salary before tax
+            effect: Moves the scenario salary cursor on the marginal deduction curve.

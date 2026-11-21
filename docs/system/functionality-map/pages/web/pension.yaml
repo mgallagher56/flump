@@ -1,0 +1,226 @@
+id: pension
+app: web
+route: /app/pension
+title: Your pension
+auth: required
+purpose: View total pension pot value, monthly contributions going in, workplace pension details, UK pension rules, and model how changing contribution percentages affects take-home pay.
+entry_points:
+  - Main app navigation (Pension)
+  - Dashboard Pension widget or KPI strip link
+  - Retirement plan links (/app/pension#pension-details)
+route_file: apps/web/app/routes/app.pension.tsx
+
+sections:
+  - id: empty-state
+    name: No pension pots yet
+    kind: content
+    component: apps/web/app/containers/pension/PensionContainer.tsx
+    when: when no pension pots and no salary are saved
+    capabilities:
+      - id: add-first-pension-pot
+        goal: Prompt the user to add their first pension pot.
+        mode: write
+        actions:
+          - id: add-first-pot
+            control: button
+            label: Add pension pot
+            effect: Opens AddPensionAccountDialog in create mode.
+
+  - id: header
+    name: Page header
+    kind: header
+    component: apps/web/app/containers/pension/PensionContainer.tsx
+    when: when at least one pension pot or salary exists
+    capabilities:
+      - id: open-add-pension-pot
+        goal: Open the dialog to add a new pension pot.
+        mode: write
+        actions:
+          - id: add-pension-pot
+            control: button
+            label: Add pension pot
+            effect: Opens AddPensionAccountDialog in create mode.
+
+  - id: hero-and-kpis
+    name: Pension summary hero and strip
+    kind: hero
+    component: apps/web/app/features/pension/components/PensionSummary/PensionSummary.tsx
+    when: when at least one pension pot or salary exists
+    capabilities:
+      - id: view-pension-summary
+        goal: View total value across pension pots and estimated monthly total going in (employee, employer, and pot payments).
+        mode: read
+        facts_read:
+          - account-balance
+          - salary
+          - pension-rates
+          - account-monthly-amount
+        figures_shown:
+          - pension-going-in
+        actions:
+          - id: add-pot-from-summary
+            control: button
+            label: Add pension pot
+            effect: Opens AddPensionAccountDialog when prompted in the summary.
+
+  - id: retirement-link
+    name: Link to retirement plan
+    kind: navigation
+    component: apps/web/app/containers/pension/PensionContainer.tsx
+    when: when at least one pension pot or salary exists
+    capabilities:
+      - id: open-retirement-plan
+        goal: Navigate to the Retirement plan page to see projected yearly retirement income.
+        mode: navigate
+        actions:
+          - id: go-to-retirement
+            control: link
+            label: Open your retirement plan
+            effect: Navigates to /app/retirement.
+            target: /app/retirement
+
+  - id: pension-details
+    name: Your details and pension pots
+    kind: form
+    component: apps/web/app/features/pension/components/PensionDetails/PensionDetails.tsx
+    when: when at least one pension pot or salary exists
+    capabilities:
+      - id: view-and-edit-workplace-details
+        goal: View or edit salary, employee and employer pension percentages, and salary sacrifice method, and inspect or edit individual pension pots.
+        mode: write
+        facts_read:
+          - salary
+          - pension-rates
+          - account-name
+          - account-balance
+          - account-rate
+          - account-monthly-amount
+        facts_written:
+          - salary
+          - pension-rates
+        actions:
+          - id: toggle-edit-details
+            control: button
+            label: Edit details
+            effect: Switches workplace pension details into edit mode.
+          - id: save-workplace-details
+            control: submit
+            label: Save
+            effect: Saves updated salary, pension percentages, and salary sacrifice settings to PATCH /user-profile.
+            target: PATCH /user-profile
+            if_match: true
+          - id: edit-pension-pot
+            control: button
+            label: Edit
+            effect: Opens AddPensionAccountDialog in edit mode for the selected pension pot.
+
+  - id: pension-rules
+    name: UK pension rules drawer
+    kind: drawer
+    component: apps/web/app/features/pension/components/PensionRules/PensionRules.tsx
+    when: when at least one pension pot or salary exists
+    capabilities:
+      - id: view-uk-pension-rules
+        goal: Inspect annual allowance context and how salary sacrifice affects National Insurance.
+        mode: read
+        facts_read:
+          - pension-rates
+        figures_shown:
+          - pension-going-in
+        actions:
+          - id: toggle-pension-rules
+            control: drawer-toggle
+            label: UK pension rules
+            effect: Expands or collapses the UK pension rules drawer.
+
+  - id: scenario-zone
+    name: Model a change to your pension contribution
+    kind: scenario-zone
+    component: apps/web/app/features/pension/components/PensionContributionScenario/PensionContributionScenario.tsx
+    when: when at least one pension pot or salary exists
+    capabilities:
+      - id: model-contribution-impact
+        goal: Adjust your contribution percentage slider locally to see the impact on monthly pension total and take-home pay.
+        mode: what-if
+        facts_read:
+          - salary
+          - pension-rates
+          - tax-region
+          - student-loan-plan
+        figures_shown:
+          - pension-going-in
+          - take-home
+        actions:
+          - id: toggle-pension-scenario
+            control: drawer-toggle
+            label: "Show what-if: change your contribution"
+            effect: Expands or collapses the PensionContributionScenario zone without changing saved data.
+          - id: set-contribution-percent
+            control: slider
+            label: Your contribution
+            effect: Adjusts scenario employee contribution percentage and recalculates monthly contribution and take-home pay.
+          - id: reset-pension-scenario
+            control: button
+            label: Reset
+            effect: Restores scenario contribution percentage to the saved rate.
+
+  - id: tax-trap-note
+    name: Personal Allowance taper note
+    kind: notice
+    component: apps/web/app/containers/pension/PensionContainer.tsx
+    when: when saved adjusted net income is in the £100,000 alert band
+    capabilities:
+      - id: inspect-or-model-taper-contribution
+        goal: Read the factual £100,000 Personal Allowance taper note, jump to set tax region if unset, or prefill the scenario slider to £100,000.
+        mode: what-if
+        facts_read:
+          - salary
+          - pension-rates
+          - tax-region
+        actions:
+          - id: set-tax-region-link
+            control: link
+            label: Set your region
+            effect: Navigates to Profile settings to set tax region when unknown.
+            target: /app/profile#settings-age-and-pay
+          - id: model-trap-contribution
+            control: button
+            label: Model this contribution
+            effect: Opens ScenarioZone and sets the contribution slider to the percentage that brings adjusted net income to £100,000.
+
+  - id: pot-dialog
+    name: Add or edit pension pot dialog
+    kind: form
+    component: apps/web/app/features/pension/components/AddPensionAccountDialog/AddPensionAccountDialog.tsx
+    when: when AddPensionAccountDialog is open
+    capabilities:
+      - id: save-or-delete-pension-pot
+        goal: Create, update, or delete a pension pot account.
+        mode: write
+        facts_read:
+          - account-name
+          - account-balance
+          - account-rate
+          - account-monthly-amount
+        facts_written:
+          - account-name
+          - account-balance
+          - account-rate
+          - account-monthly-amount
+        actions:
+          - id: input-pot-fields
+            control: input
+            label: Pot name / Balance / Expected growth rate / Monthly contribution / Current pot
+            effect: Updates draft pension pot fields.
+          - id: submit-pot
+            control: submit
+            label: Add pot / Save changes
+            effect: Submits createPensionAccount or updatePensionAccount to POST /app/pension.
+            target: PATCH /accounts/:id
+            if_match: true
+          - id: delete-pot
+            control: button
+            label: Delete pot
+            effect: Deletes the pension pot after confirmation via DELETE /accounts/:id.
+            target: DELETE /accounts/:id
+            confirm: ConfirmDialog before deleting the pension pot.
