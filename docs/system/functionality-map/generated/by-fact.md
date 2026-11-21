@@ -13,6 +13,7 @@
 | `account-balance`                 | writes | `web.accounts.check-in-sheet.record-monthly-check-in`                            | web/accounts               | `/app/accounts`                | write    |
 | `account-balance`                 | writes | `web.debt.debt-dialog.save-or-delete-debt`                                       | web/debt                   | `/app/debt`                    | write    |
 | `account-balance`                 | writes | `web.history.check-in-sheet.save-check-in-or-backfill`                           | web/history                | `/app/accounts/history`        | write    |
+| `account-balance`                 | writes | `web.import-review.commit-bar.commit-import`                                     | web/import-review          | `/app/imports/:id`             | write    |
 | `account-balance`                 | writes | `web.mortgage.edit-dialog.save-mortgage-details`                                 | web/mortgage               | `/app/mortgage`                | write    |
 | `account-balance`                 | writes | `web.onboarding.step-housing.enter-housing-and-spending`                         | web/onboarding             | `/app/onboarding`              | write    |
 | `account-balance`                 | writes | `web.onboarding.step-review.review-and-complete-onboarding`                      | web/onboarding             | `/app/onboarding`              | write    |
@@ -38,6 +39,7 @@
 | `account-balance`                 | reads  | `web.debt.scenario-zone.model-extra-debt-payments`                               | web/debt                   | `/app/debt`                    | what-if  |
 | `account-balance`                 | reads  | `web.history.check-in-sheet.save-check-in-or-backfill`                           | web/history                | `/app/accounts/history`        | write    |
 | `account-balance`                 | reads  | `web.history.hero.view-monthly-change`                                           | web/history                | `/app/accounts/history`        | read     |
+| `account-balance`                 | reads  | `web.import-review.diff-table.inspect-and-tick-rows`                             | web/import-review          | `/app/imports/:id`             | what-if  |
 | `account-balance`                 | reads  | `web.mortgage-estimates.scenario-zone.estimate-rate-change`                      | web/mortgage-estimates     | `/app/mortgage-estimates`      | what-if  |
 | `account-balance`                 | reads  | `web.mortgage.cost-details-drawer.view-cost-schedule`                            | web/mortgage               | `/app/mortgage`                | read     |
 | `account-balance`                 | reads  | `web.mortgage.details-summary.view-mortgage-summary`                             | web/mortgage               | `/app/mortgage`                | read     |
@@ -144,6 +146,7 @@
 | `balance-history`                 | writes | `web.account-detail.quick-balance-update.update-balance-inline`                  | web/account-detail         | `/app/accounts/:account`       | write    |
 | `balance-history`                 | writes | `web.accounts.check-in-sheet.record-monthly-check-in`                            | web/accounts               | `/app/accounts`                | write    |
 | `balance-history`                 | writes | `web.history.check-in-sheet.save-check-in-or-backfill`                           | web/history                | `/app/accounts/history`        | write    |
+| `balance-history`                 | writes | `web.import-review.commit-bar.commit-import`                                     | web/import-review          | `/app/imports/:id`             | write    |
 | `balance-history`                 | reads  | `web.account-detail.balance-history.view-account-history`                        | web/account-detail         | `/app/accounts/:account`       | read     |
 | `balance-history`                 | reads  | `web.account-detail.goal-section.manage-account-goal`                            | web/account-detail         | `/app/accounts/:account`       | write    |
 | `balance-history`                 | reads  | `web.account-detail.hero.view-account-balance`                                   | web/account-detail         | `/app/accounts/:account`       | read     |
@@ -153,13 +156,16 @@
 | `balance-history`                 | reads  | `web.history.check-in-sheet.save-check-in-or-backfill`                           | web/history                | `/app/accounts/history`        | write    |
 | `balance-history`                 | reads  | `web.history.hero.view-monthly-change`                                           | web/history                | `/app/accounts/history`        | read     |
 | `balance-history`                 | reads  | `web.history.history-chart.inspect-net-worth-series`                             | web/history                | `/app/accounts/history`        | read     |
+| `balance-history`                 | reads  | `web.import-review.diff-table.inspect-and-tick-rows`                             | web/import-review          | `/app/imports/:id`             | what-if  |
 | `balance-history`                 | reads  | `web.retirement.what-if-zone.inspect-assumptions-and-schedule`                   | web/retirement             | `/app/retirement`              | read     |
 | `balance-history`                 | reads  | `web.savings.investment-returns.view-recorded-returns`                           | web/savings                | `/app/savings`                 | read     |
 | `birth-year`                      | writes | `web.onboarding.header.navigate-and-exit-setup`                                  | web/onboarding             | `/app/onboarding`              | write    |
 | `birth-year`                      | writes | `web.onboarding.step-income.enter-income-and-tax-details`                        | web/onboarding             | `/app/onboarding`              | write    |
 | `birth-year`                      | writes | `web.onboarding.step-review.review-and-complete-onboarding`                      | web/onboarding             | `/app/onboarding`              | write    |
+| `birth-year`                      | writes | `web.settings.age-and-pay.update-age-salary-pension`                             | web/settings               | `/app/profile`                 | write    |
 | `birth-year`                      | reads  | `web.onboarding.step-review.review-and-complete-onboarding`                      | web/onboarding             | `/app/onboarding`              | write    |
 | `birth-year`                      | reads  | `web.retirement.hero.view-headline-income`                                       | web/retirement             | `/app/retirement`              | read     |
+| `birth-year`                      | reads  | `web.settings.age-and-pay.update-age-salary-pension`                             | web/settings               | `/app/profile`                 | write    |
 | `budget-entries`                  | writes | `web.budget.breathing-room.view-and-adjust-breathing-room-basis`                 | web/budget                 | `/app/budget`                  | write    |
 | `budget-entries`                  | writes | `web.budget.editor.edit-budget-entries-and-categories`                           | web/budget                 | `/app/budget`                  | write    |
 | `budget-entries`                  | writes | `web.budget.link-notice.link-saved-income-or-housing`                            | web/budget                 | `/app/budget`                  | write    |
@@ -195,8 +201,10 @@
 | `card-limit-and-zero-percent-end` | reads  | `web.debt.debt-dialog.save-or-delete-debt`                                       | web/debt                   | `/app/debt`                    | write    |
 | `card-limit-and-zero-percent-end` | reads  | `web.debt.debts-list.browse-and-edit-debts`                                      | web/debt                   | `/app/debt`                    | read     |
 | `card-limit-and-zero-percent-end` | reads  | `web.debt.hero-and-kpis.view-debt-summary`                                       | web/debt                   | `/app/debt`                    | read     |
+| `check-in-day`                    | writes | `web.settings.check-in-day.set-check-in-day`                                     | web/settings               | `/app/profile`                 | write    |
 | `check-in-day`                    | reads  | `web.dashboard.housekeeping.start-monthly-check-in`                              | web/dashboard              | `/`                            | navigate |
 | `check-in-day`                    | reads  | `web.history.history-chart.inspect-net-worth-series`                             | web/history                | `/app/accounts/history`        | read     |
+| `check-in-day`                    | reads  | `web.settings.check-in-day.set-check-in-day`                                     | web/settings               | `/app/profile`                 | write    |
 | `check-in-done`                   | writes | `web.accounts.check-in-sheet.record-monthly-check-in`                            | web/accounts               | `/app/accounts`                | write    |
 | `check-in-done`                   | writes | `web.history.check-in-sheet.save-check-in-or-backfill`                           | web/history                | `/app/accounts/history`        | write    |
 | `check-in-done`                   | reads  | `web.accounts.check-in-sheet.record-monthly-check-in`                            | web/accounts               | `/app/accounts`                | write    |
@@ -210,8 +218,10 @@
 | `employment-type`                 | writes | `web.onboarding.header.navigate-and-exit-setup`                                  | web/onboarding             | `/app/onboarding`              | write    |
 | `employment-type`                 | writes | `web.onboarding.step-income.enter-income-and-tax-details`                        | web/onboarding             | `/app/onboarding`              | write    |
 | `employment-type`                 | writes | `web.onboarding.step-review.review-and-complete-onboarding`                      | web/onboarding             | `/app/onboarding`              | write    |
+| `employment-type`                 | writes | `web.settings.age-and-pay.update-age-salary-pension`                             | web/settings               | `/app/profile`                 | write    |
 | `employment-type`                 | reads  | `web.onboarding.step-review.review-and-complete-onboarding`                      | web/onboarding             | `/app/onboarding`              | write    |
 | `employment-type`                 | reads  | `web.self-assessment.headline-or-empty.view-estimated-tax-bill`                  | web/self-assessment        | `/app/self-assessment`         | read     |
+| `employment-type`                 | reads  | `web.settings.age-and-pay.update-age-salary-pension`                             | web/settings               | `/app/profile`                 | write    |
 | `employment-type`                 | reads  | `web.take-home.hero-and-kpis.view-take-home-summary`                             | web/take-home              | `/app/take-home`               | read     |
 | `enabled-pages-and-widgets`       | writes | `web.dashboard.visibility-sheet.configure-dashboard-sections`                    | web/dashboard              | `/`                            | write    |
 | `enabled-pages-and-widgets`       | writes | `web.onboarding.step-review.review-and-complete-onboarding`                      | web/onboarding             | `/app/onboarding`              | write    |
@@ -279,12 +289,14 @@
 | `mortgage-term-and-fix-end`       | reads  | `web.mortgage.hero-and-kpis.view-mortgage-hero-and-kpis`                         | web/mortgage               | `/app/mortgage`                | read     |
 | `mortgage-term-and-fix-end`       | reads  | `web.mortgage.scenario-zone.toggle-and-reset-mortgage-scenario`                  | web/mortgage               | `/app/mortgage`                | what-if  |
 | `mortgage-term-and-fix-end`       | reads  | `web.retirement.hero.view-headline-income`                                       | web/retirement             | `/app/retirement`              | read     |
+| `net-worth-choices`               | writes | `web.settings.net-worth-choices.toggle-net-worth-basis`                          | web/settings               | `/app/profile`                 | write    |
 | `net-worth-choices`               | reads  | `web.account-detail.hero.view-account-balance`                                   | web/account-detail         | `/app/accounts/:account`       | read     |
 | `net-worth-choices`               | reads  | `web.accounts.accounts-lists.browse-accounts`                                    | web/accounts               | `/app/accounts`                | read     |
 | `net-worth-choices`               | reads  | `web.accounts.net-worth-summary.view-net-worth-and-links`                        | web/accounts               | `/app/accounts`                | read     |
 | `net-worth-choices`               | reads  | `web.dashboard.hero.view-net-worth`                                              | web/dashboard              | `/`                            | read     |
 | `net-worth-choices`               | reads  | `web.history.hero.view-monthly-change`                                           | web/history                | `/app/accounts/history`        | read     |
 | `net-worth-choices`               | reads  | `web.history.history-chart.inspect-net-worth-series`                             | web/history                | `/app/accounts/history`        | read     |
+| `net-worth-choices`               | reads  | `web.settings.net-worth-choices.toggle-net-worth-basis`                          | web/settings               | `/app/profile`                 | write    |
 | `other-outgoings`                 | writes | `web.onboarding.header.navigate-and-exit-setup`                                  | web/onboarding             | `/app/onboarding`              | write    |
 | `other-outgoings`                 | writes | `web.onboarding.step-housing.enter-housing-and-spending`                         | web/onboarding             | `/app/onboarding`              | write    |
 | `other-outgoings`                 | writes | `web.onboarding.step-review.review-and-complete-onboarding`                      | web/onboarding             | `/app/onboarding`              | write    |
@@ -310,6 +322,7 @@
 | `pension-rates`                   | writes | `web.onboarding.step-review.review-and-complete-onboarding`                      | web/onboarding             | `/app/onboarding`              | write    |
 | `pension-rates`                   | writes | `web.onboarding.step-savings-debt.enter-savings-pension-debt`                    | web/onboarding             | `/app/onboarding`              | write    |
 | `pension-rates`                   | writes | `web.pension.pension-details.view-and-edit-workplace-details`                    | web/pension                | `/app/pension`                 | write    |
+| `pension-rates`                   | writes | `web.settings.age-and-pay.update-age-salary-pension`                             | web/settings               | `/app/profile`                 | write    |
 | `pension-rates`                   | reads  | `web.dashboard.kpis.view-supporting-kpis`                                        | web/dashboard              | `/`                            | read     |
 | `pension-rates`                   | reads  | `web.dashboard.sections-grid.view-section-cards`                                 | web/dashboard              | `/`                            | read     |
 | `pension-rates`                   | reads  | `web.onboarding.step-review.review-and-complete-onboarding`                      | web/onboarding             | `/app/onboarding`              | write    |
@@ -322,6 +335,7 @@
 | `pension-rates`                   | reads  | `web.retirement.what-if-zone.adjust-scenario-assumptions`                        | web/retirement             | `/app/retirement`              | what-if  |
 | `pension-rates`                   | reads  | `web.retirement.what-if-zone.inspect-assumptions-and-schedule`                   | web/retirement             | `/app/retirement`              | read     |
 | `pension-rates`                   | reads  | `web.retirement.workplace-salary-notice.prompt-salary-on-pension`                | web/retirement             | `/app/retirement`              | navigate |
+| `pension-rates`                   | reads  | `web.settings.age-and-pay.update-age-salary-pension`                             | web/settings               | `/app/profile`                 | write    |
 | `pension-rates`                   | reads  | `web.take-home.breakdown.inspect-pay-breakdown`                                  | web/take-home              | `/app/take-home`               | read     |
 | `pension-rates`                   | reads  | `web.take-home.hero-and-kpis.view-take-home-summary`                             | web/take-home              | `/app/take-home`               | read     |
 | `pension-rates`                   | reads  | `web.take-home.scenario-zone.explore-next-pound`                                 | web/take-home              | `/app/take-home`               | what-if  |
@@ -349,6 +363,7 @@
 | `salary`                          | writes | `web.onboarding.step-review.review-and-complete-onboarding`                      | web/onboarding             | `/app/onboarding`              | write    |
 | `salary`                          | writes | `web.pension.pension-details.view-and-edit-workplace-details`                    | web/pension                | `/app/pension`                 | write    |
 | `salary`                          | writes | `web.self-assessment.calculation-drawer.inspect-and-update-paye-salary`          | web/self-assessment        | `/app/self-assessment`         | write    |
+| `salary`                          | writes | `web.settings.age-and-pay.update-age-salary-pension`                             | web/settings               | `/app/profile`                 | write    |
 | `salary`                          | reads  | `web.budget.link-notice.link-saved-income-or-housing`                            | web/budget                 | `/app/budget`                  | write    |
 | `salary`                          | reads  | `web.budget.overview.view-budget-overview`                                       | web/budget                 | `/app/budget`                  | read     |
 | `salary`                          | reads  | `web.budget.setup-wizard.run-budget-wizard`                                      | web/budget                 | `/app/budget`                  | write    |
@@ -367,6 +382,7 @@
 | `salary`                          | reads  | `web.self-assessment-source.allowance-comparison.compare-allowance-and-expenses` | web/self-assessment-source | `/app/self-assessment/:source` | read     |
 | `salary`                          | reads  | `web.self-assessment.calculation-drawer.inspect-and-update-paye-salary`          | web/self-assessment        | `/app/self-assessment`         | write    |
 | `salary`                          | reads  | `web.self-assessment.headline-or-empty.view-estimated-tax-bill`                  | web/self-assessment        | `/app/self-assessment`         | read     |
+| `salary`                          | reads  | `web.settings.age-and-pay.update-age-salary-pension`                             | web/settings               | `/app/profile`                 | write    |
 | `salary`                          | reads  | `web.take-home.breakdown.inspect-pay-breakdown`                                  | web/take-home              | `/app/take-home`               | read     |
 | `salary`                          | reads  | `web.take-home.hero-and-kpis.view-take-home-summary`                             | web/take-home              | `/app/take-home`               | read     |
 | `salary`                          | reads  | `web.take-home.scenario-zone.explore-next-pound`                                 | web/take-home              | `/app/take-home`               | what-if  |
@@ -379,10 +395,12 @@
 | `student-loan-plan`               | writes | `web.onboarding.header.navigate-and-exit-setup`                                  | web/onboarding             | `/app/onboarding`              | write    |
 | `student-loan-plan`               | writes | `web.onboarding.step-income.enter-income-and-tax-details`                        | web/onboarding             | `/app/onboarding`              | write    |
 | `student-loan-plan`               | writes | `web.onboarding.step-review.review-and-complete-onboarding`                      | web/onboarding             | `/app/onboarding`              | write    |
+| `student-loan-plan`               | writes | `web.settings.tax-basis.update-tax-region-and-loans`                             | web/settings               | `/app/profile`                 | write    |
 | `student-loan-plan`               | reads  | `web.dashboard.kpis.view-supporting-kpis`                                        | web/dashboard              | `/`                            | read     |
 | `student-loan-plan`               | reads  | `web.onboarding.step-review.review-and-complete-onboarding`                      | web/onboarding             | `/app/onboarding`              | write    |
 | `student-loan-plan`               | reads  | `web.pension.scenario-zone.model-contribution-impact`                            | web/pension                | `/app/pension`                 | what-if  |
 | `student-loan-plan`               | reads  | `web.self-assessment.headline-or-empty.view-estimated-tax-bill`                  | web/self-assessment        | `/app/self-assessment`         | read     |
+| `student-loan-plan`               | reads  | `web.settings.tax-basis.update-tax-region-and-loans`                             | web/settings               | `/app/profile`                 | write    |
 | `student-loan-plan`               | reads  | `web.take-home.breakdown.inspect-pay-breakdown`                                  | web/take-home              | `/app/take-home`               | read     |
 | `student-loan-plan`               | reads  | `web.take-home.hero-and-kpis.view-take-home-summary`                             | web/take-home              | `/app/take-home`               | read     |
 | `student-loan-plan`               | reads  | `web.take-home.scenario-zone.explore-next-pound`                                 | web/take-home              | `/app/take-home`               | what-if  |
@@ -406,11 +424,13 @@
 | `tax-region`                      | writes | `web.onboarding.header.navigate-and-exit-setup`                                  | web/onboarding             | `/app/onboarding`              | write    |
 | `tax-region`                      | writes | `web.onboarding.step-income.enter-income-and-tax-details`                        | web/onboarding             | `/app/onboarding`              | write    |
 | `tax-region`                      | writes | `web.onboarding.step-review.review-and-complete-onboarding`                      | web/onboarding             | `/app/onboarding`              | write    |
+| `tax-region`                      | writes | `web.settings.tax-basis.update-tax-region-and-loans`                             | web/settings               | `/app/profile`                 | write    |
 | `tax-region`                      | reads  | `web.dashboard.kpis.view-supporting-kpis`                                        | web/dashboard              | `/`                            | read     |
 | `tax-region`                      | reads  | `web.onboarding.step-review.review-and-complete-onboarding`                      | web/onboarding             | `/app/onboarding`              | write    |
 | `tax-region`                      | reads  | `web.pension.scenario-zone.model-contribution-impact`                            | web/pension                | `/app/pension`                 | what-if  |
 | `tax-region`                      | reads  | `web.pension.tax-trap-note.inspect-or-model-taper-contribution`                  | web/pension                | `/app/pension`                 | what-if  |
 | `tax-region`                      | reads  | `web.self-assessment.headline-or-empty.view-estimated-tax-bill`                  | web/self-assessment        | `/app/self-assessment`         | read     |
+| `tax-region`                      | reads  | `web.settings.tax-basis.update-tax-region-and-loans`                             | web/settings               | `/app/profile`                 | write    |
 | `tax-region`                      | reads  | `web.take-home.breakdown.inspect-pay-breakdown`                                  | web/take-home              | `/app/take-home`               | read     |
 | `tax-region`                      | reads  | `web.take-home.hero-and-kpis.view-take-home-summary`                             | web/take-home              | `/app/take-home`               | read     |
 | `tax-region`                      | reads  | `web.take-home.scenario-zone.explore-next-pound`                                 | web/take-home              | `/app/take-home`               | what-if  |

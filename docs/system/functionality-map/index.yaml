@@ -3,6 +3,8 @@ version: 1
 # Non-UI routes (API proxies, file downloads, health/security endpoints).
 # Every entry must match a real route file and state a reason.
 excluded_routes:
+  - route_file: apps/web/app/routes/$feature._index.tsx
+    reason: Legacy feature redirect route sending known slugs to /app/* and throwing 404 for unknown top-level paths.
   - route_file: apps/web/app/routes/account.export.ts
     reason: Resource route streaming the signed-in user's JSON data export triggered from Settings.
   - route_file: apps/web/app/routes/api.$.tsx
@@ -13,37 +15,35 @@ excluded_routes:
     reason: Pure 301 redirect route sending old /app/forecast links to /app/savings#forecast.
   - route_file: apps/web/app/routes/app.onboarding.mortgage-with-property.ts
     reason: Onboarding resource action endpoint creating a linked mortgage and property.
+  - route_file: apps/web/app/routes/app.sandbox.tsx
+    reason: Pure redirect route sending /app/sandbox to /sandbox.
   - route_file: apps/web/app/routes/app.tax._index.tsx
     reason: Pure 301 redirect route sending old /app/tax links to /app/self-assessment.
   - route_file: apps/web/app/routes/app.tax.receipts.$id.tsx
     reason: Resource route streaming one tax receipt file through the signed-in session; no UI.
+  - route_file: apps/web/app/routes/callback.tsx
+    reason: OAuth callback handler completing WorkOS sign-in and setting session cookies.
   - route_file: apps/web/app/routes/csp-report.ts
     reason: Resource route receiving CSP violation reports; no UI.
   - route_file: apps/web/app/routes/healthz.ts
     reason: Deployment health check resource route returning JSON status; no UI.
+  - route_file: apps/web/app/routes/invite.$token.tsx
+    reason: Pure redirect route storing the invite token in an HttpOnly cookie and redirecting to /invite.
+  - route_file: apps/web/app/routes/login._index.tsx
+    reason: Pure redirect route sending the browser to WorkOS sign-in (or setting the dev session cookie in tests).
+  - route_file: apps/web/app/routes/logout._index.tsx
+    reason: POST-only sign-out handler clearing session cookies and redirecting (GET redirects to /).
+  - route_file: apps/web/app/routes/ping.tsx
+    reason: Health/ping endpoint returning HTTP 200 with Cache-Control no-store on GET.
   - route_file: apps/web/app/routes/robots[.]txt.ts
     reason: Resource route serving plain-text /robots.txt; no UI.
+  - route_file: apps/web/app/routes/sandbox.tsx
+    reason: Pure redirect route sending /sandbox to /signup.
+  - route_file: apps/web/app/routes/signup._index.tsx
+    reason: Pure redirect route sending the browser to WorkOS sign-up (or /login when invite-only).
 
 # Temporary allow-list during S0–S3 rollout. Emptied and removed in S4.
 unmapped_allowlist:
-  - apps/web/app/routes/$.tsx
-  - apps/web/app/routes/$feature._index.tsx
-  - apps/web/app/routes/account-deleted.tsx
-  - apps/web/app/routes/app.imports.$id.tsx
-  - apps/web/app/routes/app.imports._index.tsx
-  - apps/web/app/routes/app.invites.tsx
-  - apps/web/app/routes/app.profile.tsx
-  - apps/web/app/routes/app.sandbox.tsx
-  - apps/web/app/routes/callback.tsx
-  - apps/web/app/routes/invite.$token.tsx
-  - apps/web/app/routes/invite._index.tsx
-  - apps/web/app/routes/login._index.tsx
-  - apps/web/app/routes/logout._index.tsx
-  - apps/web/app/routes/ping.tsx
-  - apps/web/app/routes/sandbox.tsx
-  - apps/web/app/routes/signup._index.tsx
-  - apps/web/app/routes/tools.$slug.tsx
-  - apps/web/app/routes/tools._index.tsx
   - apps/marketing/src/pages/AiConnectionPage/AiConnectionPage.tsx
   - apps/marketing/src/pages/ContactPage/ContactPage.tsx
   - apps/marketing/src/pages/FeaturePage/FeaturePage.tsx

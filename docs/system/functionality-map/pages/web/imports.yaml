@@ -1,0 +1,56 @@
+id: imports
+app: web
+route: /app/imports
+title: Imports
+auth: required
+purpose: View staged, saved, undone, and expired balance import batches and open any batch to review or revisit it.
+entry_points:
+  - Settings Security tab (Review imports link when a connection can stage imports)
+  - Import review page (All imports back link)
+route_file: apps/web/app/routes/app.imports._index.tsx
+
+sections:
+  - id: header
+    name: Page header
+    kind: header
+    component: apps/web/app/features/imports/components/ImportsListPage/ImportsListPage.tsx
+    capabilities:
+      - id: orient
+        goal: Identify the Imports page and its purpose.
+        mode: read
+        actions: []
+
+  - id: imports-list
+    name: All imports
+    kind: table
+    component: apps/web/app/features/imports/components/ImportsListPage/ImportsListPage.tsx
+    capabilities:
+      - id: filter-and-sort-imports
+        goal: Filter import batches by status and sort by received date, status, or outcome.
+        mode: read
+        actions:
+          - id: filter-status
+            control: select
+            label: Status
+            effect: Filters the imports table by batch status (staged, committed, reverted, expired).
+          - id: sort-received
+            control: sort-header
+            label: Received
+            effect: Sorts import batches by received timestamp.
+          - id: sort-status
+            control: sort-header
+            label: Status
+            effect: Sorts import batches by status label.
+          - id: sort-outcome
+            control: sort-header
+            label: Outcome
+            effect: Sorts import batches by outcome summary.
+      - id: open-import-batch
+        goal: Open a staged batch to review it or a past batch to view its summary.
+        mode: navigate
+        actions:
+          - id: open-batch
+            control: link
+            label: Review / View
+            effect: Navigates to the import review page for that batch.
+            target: /app/imports/:id
