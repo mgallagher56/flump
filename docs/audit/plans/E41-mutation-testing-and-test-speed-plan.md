@@ -353,6 +353,7 @@ Each has options and a recommendation. A flag says when it names an outside serv
 
 - M5 adds `apps/web` (`app/utils`, `app/hooks`, `app/services`, `app/state`, `app/containers` and `server/`, judged by the `unit` Vitest project only) and `packages/ui` (helpers and component logic, without style files, stories, tokens or test helpers), each with a Stryker config and a floor, run by `bun run mutation`. Nothing runs in CI.
 - Decisions 2, 3, 7 and 11 apply as written: survivors go in the ledger, floor(measured) - 1, string faults off in these two packages, unit tests only.
+- Floors, signed off by the coordinator on 21 November 2026: `apps/web` **85** (measured 86.57% without timeouts on 21 November 2026, branch commit `e1826ac9f` rebased onto main `e6233a249`) and `packages/ui` **78** (measured 79.51% on 21 November 2026, branch commit `e392c74bd`). No existing floor was lowered.
 
 ## 13. The strongest argument against
 
