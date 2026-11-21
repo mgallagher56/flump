@@ -636,13 +636,12 @@ describe("PensionContainer", () => {
         isSalarySacrificeEmployerNi: true,
       });
       render(<PensionContainer />);
-      // The employer NI saving is the engine's figure, passed through: £58,000 salary, 8% sacrificed
-      // is 58,000 x 8 / 100 = 4,640 a year.
-      const ni = calculateEmployerNISavings(58_000, 4_640, getCurrentUKTaxYear());
-      expect(ni).toBeGreaterThan(0);
-      // You 4,640 + employer 3% of 58,000 = 1,740 + the NI saving, all over 12 months.
-      const monthly = Math.round((4_640 + 1_740 + ni) / 12);
-      expect(strip()?.textContent).toContain(`Going in each month£${monthly.toLocaleString()}`);
+      // £58,000 salary, 8% sacrificed: 58,000 x 8 / 100 = 4,640 a year. The salary is far above the
+      // employer NI threshold, so all 4,640 saves employer NI at 15%: 4,640 x 0.15 = 696.
+      expect(calculateEmployerNISavings(58_000, 4_640, getCurrentUKTaxYear())).toBe(696);
+      // You 4,640 + employer 3% of 58,000 = 1,740 + NI 696 = 7,076 a year; 7,076 / 12 = 589.67,
+      // shown as £590.
+      expect(strip()?.textContent).toContain("Going in each month£590");
       openDetails();
       expect(screen.getByText("Method").nextElementSibling?.textContent).toContain(
         "Salary sacrifice",
@@ -707,17 +706,17 @@ describe("PensionContainer", () => {
       const { calculateEmployerNISavings, getCurrentUKTaxYear } = await import(
         "@flump/finance-engine"
       );
-      // £50,000 at 5% sacrificed: 50,000 x 5 / 100 = 2,500 a year.
-      const ni = calculateEmployerNISavings(50_000, 2_500, getCurrentUKTaxYear());
-      expect(ni).toBeGreaterThan(0);
+      // £50,000 at 5% sacrificed: 50,000 x 5 / 100 = 2,500 a year, all above the employer NI
+      // threshold, so it saves employer NI at 15%: 2,500 x 0.15 = 375.
+      expect(calculateEmployerNISavings(50_000, 2_500, getCurrentUKTaxYear())).toBe(375);
       useFixture({
         ...defaultLoaderData,
         userProfile: { ...defaultProfileData, isSalarySacrificeEmployerNi: true },
       });
       const passed = render(<PensionContainer />);
-      // You 2,500 + employer 3% = 1,500 + the NI saving a year, over 12, plus the current pot's £100.
-      const withNi = Math.round((2_500 + 1_500 + ni) / 12 + 100);
-      expect(strip()?.textContent).toContain(`Going in each month£${withNi.toLocaleString()}`);
+      // You 2,500 + employer 3% = 1,500 + NI 375 = 4,375 a year; 4,375 / 12 = 364.58, plus the
+      // current pot's £100 = 464.58, shown as £465.
+      expect(strip()?.textContent).toContain("Going in each month£465");
       passed.unmount();
       useFixture({
         ...defaultLoaderData,

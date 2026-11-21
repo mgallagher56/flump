@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { visuallyHiddenRecipe } from "../../primitives/VisuallyHidden/VisuallyHidden.styles";
 import { lineLabelSpot, MarginalRateChart, markersNearPay, yTicksFor } from "./MarginalRateChart";
 import {
   SAMPLE_POINTS,
@@ -125,7 +126,7 @@ describe("MarginalRateChart", () => {
     const figure = screen.getByRole("figure");
     const summary = document.getElementById(figure.getAttribute("aria-describedby") ?? "");
     expect(summary?.textContent).toBe(SAMPLE_SUMMARY);
-    expect(summary?.className).not.toContain("textStyle_body.sm");
+    expect(summary?.className).toBe(visuallyHiddenRecipe({ focusable: false }));
   });
 
   it("labels the line, your pay and the stepped zone directly, with no legend", () => {

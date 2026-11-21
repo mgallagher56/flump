@@ -40,7 +40,7 @@ Refreshed on 2026-11-20 against `origin/main` and the merged pull requests up to
 | 24 | E38 | User action friction and interaction-efficiency audit | S0 harness merged (#780, warn-only CI job). S1 to S3 not started |
 | 25 | E39 | Mortgage affordability from your own figures | Plan merged (#776); nothing built |
 | 26 | E40 | One home per value: system data audit and restructure | Done: all nine slices merged (#784, #785, #786, #791, #798 and #803, #797 and #801, #825, #806, #805 and #808 and #820). Owner tax sign-off of the vectors in slices 2 and 7 is open |
-| 27 | E41 | Mutation testing and faster tests | In progress: see the E41 status line. mutation testing is now a local monthly check; M5 (web and UI logic, local only) reinstated and in progress |
+| 27 | E41 | Mutation testing and faster tests | In progress: see the E41 status line. Mutation testing is now a local monthly check; M5 (web and UI logic, local only) reinstated and in progress |
 | 28 | E42 | Marketing site restructure: pages split the way the app is, selling the features it has | Plan written 2026-11-20; all ten owner decisions answered that day; nothing built. First in line once the open work has merged |
 
 ### Work in progress

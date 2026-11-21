@@ -1867,18 +1867,30 @@ describe("<MortgageContainer /> saved figures, saves and the what-if zone in det
     });
 
     test("the saved message goes after 3 seconds", async () => {
-      setApiEnv();
-      loaderData = loaded();
-      okFetch();
-      const { findByText, queryByText } = customRender(<MortgageContainer />);
-      openEdit();
-      fireEvent.change(field(/^Interest rate/), { target: { value: "4.6" } });
-      save();
-      await findByText("Saved interest rate");
-      await waitFor(() => expect(queryByText("Saved interest rate")).toBeNull(), {
-        timeout: 4500,
-      });
-    }, 10000);
+      // Fake timers that still advance on their own, so the save's promises settle; the 3 second
+      // hide is then stepped through instead of waited for.
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      try {
+        setApiEnv();
+        loaderData = loaded();
+        okFetch();
+        const { findByText, queryByText } = customRender(<MortgageContainer />);
+        openEdit();
+        fireEvent.change(field(/^Interest rate/), { target: { value: "4.6" } });
+        save();
+        await findByText("Saved interest rate");
+        act(() => {
+          vi.advanceTimersByTime(2900);
+        });
+        expect(queryByText("Saved interest rate")).not.toBeNull();
+        act(() => {
+          vi.advanceTimersByTime(200);
+        });
+        expect(queryByText("Saved interest rate")).toBeNull();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
 
     test("a saved home value shows in the equity at once", async () => {
       setApiEnv();

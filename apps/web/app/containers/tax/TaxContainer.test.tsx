@@ -1208,7 +1208,8 @@ describe("TaxContainer, what the page decides (E41 M5)", () => {
     });
 
     it("gives the band line from the estimate's total income, not the salary alone", () => {
-      // Salary 60,000 plus 45,000 self-employed income less the 1,000 trading allowance:
+      // Salary 60,000 plus 45,000 self-employed income less the 1,000 trading allowance (the full
+      // allowance, as no expenses are entered):
       // 60,000 + 45,000 - 1,000 = 104,000 in total, inside the £100,000 to £125,140 band. The
       // salary alone (60,000) would show no line.
       mockLoaderRecords = [
