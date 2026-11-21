@@ -107,3 +107,14 @@ describe("DashboardPreview", () => {
     expect(screen.getAllByText(expected.pensions)).toHaveLength(1);
   });
 });
+
+describe("DashboardPreview owed card", () => {
+  it("names the student loan when it is all that is owed outside the mortgage", () => {
+    const { unmount } = render(<DashboardPreview household="renter" id="dp" />);
+    expect(within(screen.getByTestId("dp-kpis")).getByText("Student loan")).toBeDefined();
+    unmount();
+    // The homeowner owes on a card and a loan, so the card carries no student loan line.
+    render(<DashboardPreview household="homeowner" id="dp" />);
+    expect(within(screen.getByTestId("dp-kpis")).queryByText("Student loan")).toBeNull();
+  });
+});

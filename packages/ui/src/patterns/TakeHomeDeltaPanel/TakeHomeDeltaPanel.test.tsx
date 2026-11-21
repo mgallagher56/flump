@@ -1,7 +1,7 @@
 import { ADVICE_PATTERNS } from "@flump/finance-engine";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { allCopyStrings, chartSummary, thresholdLabel } from "./copy";
+import { allCopyStrings, chartSummary, DELTA_PANEL_COPY, thresholdLabel } from "./copy";
 import { TakeHomeDeltaPanel, type TakeHomeDeltaPanelProps } from "./TakeHomeDeltaPanel";
 
 const base: TakeHomeDeltaPanelProps = {
@@ -215,6 +215,91 @@ describe("copy", () => {
     for (const s of strings) {
       expect(s, s).not.toMatch(banned);
       for (const p of ADVICE_PATTERNS) expect(s, `${p.id}: ${s}`).not.toMatch(p.pattern);
+    }
+  });
+});
+
+describe("threshold labels and the copy guard list", () => {
+  const KINDS = [
+    "incomeTaxStarts",
+    "higherRate",
+    "additionalRate",
+    "taperStart",
+    "taperEnd",
+    "niPrimaryThreshold",
+    "niUpperEarningsLimit",
+    "hicbcStart",
+    "hicbcEnd",
+  ];
+
+  it("gives every threshold kind its own label, none of them the unknown-kind fallback", () => {
+    const fallback = thresholdLabel({ kind: `unknown-${Date.now()}` });
+    // The Scottish band and student loan labels without a band or plan are in the set too, so a
+    // kind that fell through to the next case would repeat one of them.
+    const all = [...KINDS, "scottishBand", "studentLoan"];
+    const labels = all.map((kind) => thresholdLabel({ kind }));
+    expect(new Set(labels).size).toBe(all.length);
+    expect(labels).not.toContain(fallback);
+    expect(typeof fallback).toBe("string");
+    expect(fallback.length).toBeGreaterThan(0);
+  });
+
+  it("reads a band rate given as a percentage as well as a fraction, to at most 2 decimals", () => {
+    // 40 is already a percentage: 40%. 0.123456 is a fraction: 12.3456%, shown to 2 places as 12.35%.
+    expect(thresholdLabel({ kind: "higherRate", band: { name: "Higher", rate: 40 } })).toContain(
+      "(40%)",
+    );
+    expect(
+      thresholdLabel({ kind: "higherRate", band: { name: "Higher", rate: 0.123456 } }),
+    ).toContain("(12.35%)");
+  });
+
+  it("feeds the copy guard every threshold label and both chart summaries", () => {
+    const strings = allCopyStrings();
+    for (const kind of KINDS) expect(strings).toContain(thresholdLabel({ kind }));
+    expect(strings).toContain(
+      thresholdLabel({ kind: "scottishBand", band: { name: "Intermediate", rate: 0.21 } }),
+    );
+    expect(strings).toContain(thresholdLabel({ kind: "studentLoan", plan: "postgrad" }));
+    expect(strings).toContain(chartSummary(true, "£150,000"));
+    expect(strings).toContain(chartSummary(false, "£150,000"));
+  });
+});
+
+describe("TakeHomeDeltaPanel assumptions and pension pence", () => {
+  it("lists only assumptions it has wording for", () => {
+    renderPanel({
+      assumptions: [
+        { code: "annualMethod", unverified: false },
+        { code: `unknown-${Date.now()}`, unverified: false },
+      ] as TakeHomeDeltaPanelProps["assumptions"],
+    });
+    fireEvent.click(screen.getByRole("button", { name: DELTA_PANEL_COPY.assumptionsHeading }));
+    expect(screen.getAllByRole("listitem")).toHaveLength(1);
+  });
+
+  it("offers no assumptions drawer, and no empty list, when there are none", () => {
+    const { unmount } = renderPanel({ assumptions: [] });
+    expect(screen.queryByRole("button", { name: DELTA_PANEL_COPY.assumptionsHeading })).toBeNull();
+    unmount();
+    renderPanel({ assumptions: [], mergeDisclosures: true });
+    fireEvent.click(screen.getByRole("button", { name: DELTA_PANEL_COPY.assumptionsHeading }));
+    expect(screen.queryByRole("list")).toBeNull();
+  });
+
+  it("shows pence on every pension preview figure when any one of them has pence", () => {
+    const cases = [
+      { contribution: 1000.5, takeHomeChange: 720, reachesPension: 1000 },
+      { contribution: 1000, takeHomeChange: 720.5, reachesPension: 1000 },
+      { contribution: 1000, takeHomeChange: 720, reachesPension: 1000.5 },
+    ];
+    for (const pensionPreview of cases) {
+      const { unmount } = renderPanel({ pensionPreview });
+      const text = screen.getByTestId("take-home-delta-pension").textContent ?? "";
+      // Every figure is shown to two places, so £720 reads £720.00 or £720.50.
+      expect(text).toMatch(/£1,000\.\d\d/);
+      expect(text).toMatch(/£720\.\d\d/);
+      unmount();
     }
   });
 });

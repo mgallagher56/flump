@@ -5,6 +5,7 @@ import {
   BREATHING_ROOM_DESCRIPTION,
   breathingRoomPhrase,
   breathingRoomValue,
+  formatBreathingRoomMonths,
 } from "./BreathingRoomPreview.wording";
 
 // Worked by hand from the persona fixtures (packages/finance-engine/src/picture/__fixtures__/personas):
@@ -27,6 +28,12 @@ describe("breathing room wording", () => {
     expect(breathingRoomValue(0)).toBe("About 0 months");
     expect(breathingRoomValue(130)).toBe("More than 10 years");
     expect(breathingRoomPhrase(4.7)).toBe("about 4.7 months");
+  });
+
+  it("words a bare figure without About", () => {
+    // 13 months is one year and one month.
+    expect(formatBreathingRoomMonths(13)).toBe("1 year 1 month");
+    expect(formatBreathingRoomMonths(1)).toBe("1 month");
   });
 
   it("words a figure that rounds to 1 as one month", () => {
@@ -69,5 +76,44 @@ describe("BreathingRoomPreview", () => {
     fireEvent.click(screen.getByRole("button", { name: "Reset to saved figures" }));
     expect(screen.getByText(EXPECTED.renter.value)).toBeDefined();
     expect(screen.queryByTestId("test-br-delta")).toBeNull();
+  });
+});
+
+describe("BreathingRoomPreview modelling", () => {
+  const spending = () => screen.getByLabelText("Change in monthly essential spending");
+  const savings = () => screen.getByLabelText("Change in emergency savings");
+  const delta = () => screen.getByTestId("test-br-delta").textContent;
+
+  it("models a change to spending alone, and resets it", () => {
+    render(<BreathingRoomPreview household="renter" id="test-br" />);
+    fireEvent.change(spending(), { target: { value: "100" } });
+    // Essentials 1,280 + 100 = 1,380; 6,050 / 1,380 = 4.38, so 4.4 months (the engine rounds to
+    // one decimal); the saved 6,050 / 1,280 = 4.73 is 4.7, so 0.3 fewer.
+    expect(screen.getByTestId("test-br-essentials").textContent).toBe("£1,380 a month");
+    expect(delta()).toMatch(/^[-−]0\.3 months compared to saved figures$/);
+    fireEvent.click(screen.getByRole("button", { name: "Reset to saved figures" }));
+    expect(screen.getByTestId("test-br-essentials").textContent).toBe("£1,280 a month");
+  });
+
+  it("can lower spending by up to £500", () => {
+    render(<BreathingRoomPreview household="renter" id="test-br" />);
+    fireEvent.change(spending(), { target: { value: "-500" } });
+    // The engine rounds months to one decimal before the difference: saved 6,050 / 1,280 = 4.73,
+    // so 4.7. 1,280 - 500 = 780 a month; 6,050 / 780 = 7.76, so 7.8; 7.8 - 4.7 = 3.1 more.
+    expect(delta()).toBe("+3.1 months compared to saved figures");
+  });
+
+  it("says one month, not months, for a change of exactly one", () => {
+    render(<BreathingRoomPreview household="renter" id="test-br" />);
+    fireEvent.change(savings(), { target: { value: "1300" } });
+    // 6,050 + 1,300 = 7,350; 7,350 / 1,280 = 5.74, so 5.7; 5.7 - 4.7 = 1.0 more.
+    expect(delta()).toBe("+1 month compared to saved figures");
+  });
+
+  it("says there is no change when the change rounds to none", () => {
+    render(<BreathingRoomPreview household="renter" id="test-br" />);
+    fireEvent.change(savings(), { target: { value: "-50" } });
+    // 6,050 - 50 = 6,000; 6,000 / 1,280 = 4.69, so 4.7, the same as the saved 4.7.
+    expect(delta()).toBe("No change compared to saved figures");
   });
 });

@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { sampleNavItems } from "../AppShell/AppShell.fixtures";
 import { TopBar } from "./TopBar";
-import { topBarOptionalAction } from "./TopBar.styles";
+import { topBarBadge, topBarOptionalAction } from "./TopBar.styles";
 
 describe("TopBar", () => {
   it("renders items as links and marks the active one with aria-current", () => {
@@ -213,5 +213,80 @@ describe("TopBar", () => {
     // container and Chrome re-checks the query (phone sweep 4).
     expect(root.className).toContain("calc(0.0625rem_-_1px)");
     expect(topBarOptionalAction()).toContain("[@container_top-bar_(max-width:_17rem)]:d_none");
+  });
+});
+
+describe("TopBar flyout edges", () => {
+  const openPlan = () => {
+    render(<TopBar activeKey="pension" items={sampleNavItems} />);
+    const trigger = screen.getByRole("button", { name: "Plan" });
+    fireEvent.click(trigger);
+    return trigger;
+  };
+
+  it("stays open on a pointer down inside the group", () => {
+    const trigger = openPlan();
+    fireEvent.pointerDown(screen.getByRole("link", { name: /Forecast/ }));
+    expect(trigger.getAttribute("aria-expanded")).toBe("true");
+  });
+
+  it("stays open on a click on the panel that is not a link", () => {
+    const trigger = openPlan();
+    const panel = document.getElementById(trigger.getAttribute("aria-controls") ?? "");
+    if (!panel) throw new Error("flyout panel missing");
+    fireEvent.click(panel);
+    expect(trigger.getAttribute("aria-expanded")).toBe("true");
+  });
+
+  it("stays open when focus leaves to nowhere, such as another window", () => {
+    const trigger = openPlan();
+    fireEvent.blur(trigger, { relatedTarget: null });
+    expect(trigger.getAttribute("aria-expanded")).toBe("true");
+  });
+
+  it("keeps other keys inside the open flyout from closing it", () => {
+    const trigger = openPlan();
+    fireEvent.keyDown(screen.getByRole("link", { name: /Forecast/ }), { key: "ArrowDown" });
+    expect(trigger.getAttribute("aria-expanded")).toBe("true");
+  });
+
+  it("keeps Escape that closes the flyout from reaching outer handlers, and lets it through when closed", () => {
+    const outer = vi.fn();
+    render(
+      // biome-ignore lint/a11y/noStaticElementInteractions: test harness listening for bubbling keys
+      <div onKeyDown={outer}>
+        <TopBar items={sampleNavItems} />
+      </div>,
+    );
+    const trigger = screen.getByRole("button", { name: "Plan" });
+    fireEvent.keyDown(trigger, { key: "Escape" });
+    expect(outer).toHaveBeenCalledTimes(1);
+    fireEvent.click(trigger);
+    fireEvent.keyDown(trigger, { key: "Escape" });
+    expect(outer).toHaveBeenCalledTimes(1);
+  });
+
+  it("marks only the current child as the current page", () => {
+    openPlan();
+    expect(screen.getByRole("link", { name: /Forecast/ }).getAttribute("aria-current")).toBeNull();
+  });
+
+  it("renders an item with an empty children list as a plain link", () => {
+    render(<TopBar items={[{ key: "tools", label: "Tools", href: "/tools", children: [] }]} />);
+    expect(screen.getByRole("link", { name: "Tools" })).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Tools" })).toBeNull();
+  });
+
+  it("shows a badge beside a link that has one, and nothing extra beside one that does not", () => {
+    render(<TopBar items={sampleNavItems} />);
+    expect(screen.getByRole("link", { name: /Debt and borrowing/ }).textContent).toBe(
+      "Debt and borrowing2",
+    );
+    expect(screen.getByRole("link", { name: "Saving" }).textContent).toBe("Saving");
+    // No empty badge pill either.
+    const hasBadge = (link: HTMLElement) =>
+      Array.from(link.querySelectorAll("span")).some((s) => s.className === topBarBadge());
+    expect(hasBadge(screen.getByRole("link", { name: "Saving" }))).toBe(false);
+    expect(hasBadge(screen.getByRole("link", { name: /Debt and borrowing/ }))).toBe(true);
   });
 });

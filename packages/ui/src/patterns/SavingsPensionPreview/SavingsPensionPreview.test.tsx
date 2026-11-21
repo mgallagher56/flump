@@ -73,3 +73,10 @@ describe("SavingsPensionPreview", () => {
     }
   });
 });
+
+describe("SavingsPensionPreview savings list", () => {
+  it("leaves debts out of the savings list", () => {
+    render(<SavingsPensionPreview household="renter" id="sp" />);
+    expect(screen.queryByTestId("sp-savings-list-sam-student-loan")).toBeNull();
+  });
+});

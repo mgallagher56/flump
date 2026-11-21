@@ -54,3 +54,10 @@ describe("SectionBand", () => {
     expect(screen.getByText("Your figures this month.")).toBeDefined();
   });
 });
+
+describe("SectionBand app variant headings", () => {
+  it("shows a title given without a subtitle", () => {
+    render(<SectionBand id="sb" title="Your accounts" variant="app" />);
+    expect(screen.getByRole("heading", { level: 2, name: "Your accounts" })).toBeDefined();
+  });
+});

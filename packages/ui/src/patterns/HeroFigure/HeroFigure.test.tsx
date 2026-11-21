@@ -158,3 +158,11 @@ describe("HeroFigure", () => {
     expect(group.className).toContain("highContrast:c_CanvasText");
   });
 });
+
+describe("HeroFigure with a worded value", () => {
+  it("shows a value given as text as it is, in the hero, not as Not set", () => {
+    render(<HeroFigure id="hf" label="Breathing room" value="About 4 months" />);
+    expect(screen.getByText("About 4 months")).toBeDefined();
+    expect(screen.queryByText("Not set")).toBeNull();
+  });
+});

@@ -101,3 +101,15 @@ describe("DebtBorrowingPreview", () => {
     expect(debtFreeDateText(null)).toBe("Not set");
   });
 });
+
+describe("DebtBorrowingPreview sections", () => {
+  it("lists only student loans under Student loan, and has no such section without one", () => {
+    const { unmount } = render(<DebtBorrowingPreview asOf={AS_OF} household="renter" id="db" />);
+    // The renter's current account and cash ISA are not debts.
+    const list = screen.getByRole("list", { name: "Student loans" });
+    expect(within(list).getAllByRole("listitem")).toHaveLength(1);
+    unmount();
+    render(<DebtBorrowingPreview asOf={AS_OF} household="homeowner" id="db-owner" />);
+    expect(screen.queryByTestId("db-owner-student-loan")).toBeNull();
+  });
+});

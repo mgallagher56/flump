@@ -314,3 +314,73 @@ describe("ChartFigure Pattern", () => {
     }
   });
 });
+
+describe("ChartFigure, later changes", () => {
+  it("takes a control added to the chart later out of the tab order", async () => {
+    render(
+      <ChartFigure summary={SUMMARY} title="Savings forecast">
+        <svg data-testid="chart">
+          <title>chart</title>
+        </svg>
+      </ChartFigure>,
+    );
+    const added = document.createElement("button");
+    screen.getByTestId("chart").parentElement?.appendChild(added);
+    await waitFor(() => expect(added.getAttribute("tabindex")).toBe("-1"));
+  });
+
+  it("takes the chart out of the tab order when it first draws after too few points", () => {
+    const figure = (pointCount: number) => (
+      <ChartFigure minPoints={2} pointCount={pointCount} summary={SUMMARY} title="Savings forecast">
+        <svg data-testid="chart" ref={(el) => el?.setAttribute("tabindex", "0")}>
+          <title>chart</title>
+        </svg>
+      </ChartFigure>
+    );
+    const { rerender } = render(figure(1));
+    rerender(figure(5));
+    expect(screen.getByTestId("chart").getAttribute("tabindex")).toBe("-1");
+  });
+
+  it("hands the chart a legend instead of direct labels when a legend is given", () => {
+    seenConfig = undefined;
+    render(
+      <ChartFigure legend={<p>Legend</p>} summary={SUMMARY} title="Debt">
+        <Probe />
+      </ChartFigure>,
+    );
+    expect(seenConfig?.directLabels).toBe(false);
+  });
+
+  it("hands the chart a new tick limit when it changes", () => {
+    seenConfig = undefined;
+    const figure = (maxTicks: number) => (
+      <ChartFigure maxTicks={maxTicks} summary={SUMMARY} title="Debt">
+        <Probe />
+      </ChartFigure>
+    );
+    const { rerender } = render(figure(4));
+    rerender(figure(8));
+    expect(seenConfig?.maxTicks).toBe(8);
+  });
+
+  it("hides the caption visually only when both the title and the summary are hidden", () => {
+    const hidden = visuallyHiddenRecipe({ focusable: false });
+    const caption = (props: { hideTitle?: boolean; showSummary?: boolean }) => {
+      const { container, unmount } = render(
+        <ChartFigure summary={SUMMARY} title="Savings forecast" {...props}>
+          <svg>
+            <title>chart</title>
+          </svg>
+        </ChartFigure>,
+      );
+      const className = container.querySelector("figcaption")?.className;
+      unmount();
+      return className;
+    };
+    expect(caption({})).not.toBe(hidden);
+    expect(caption({ hideTitle: true })).not.toBe(hidden);
+    expect(caption({ showSummary: false })).not.toBe(hidden);
+    expect(caption({ hideTitle: true, showSummary: false })).toBe(hidden);
+  });
+});

@@ -72,3 +72,27 @@ describe("ChartLegend", () => {
     expect(container.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true");
   });
 });
+
+describe("ChartSwatch shapes", () => {
+  it("fills only the area swatch and dashes only the dashed one", () => {
+    const { container } = render(
+      <>
+        <ChartSwatch color="primary" swatch="line" />
+        <ChartSwatch color="wealth" swatch="area" />
+        <ChartSwatch color="projection" swatch="dashed" />
+      </>,
+    );
+    const svg = (swatch: string) =>
+      container.querySelector(`svg[data-swatch="${swatch}"]`) as SVGElement;
+    expect(svg("line").querySelector("rect")).toBeNull();
+    expect(svg("line").querySelector("line")?.getAttribute("stroke-dasharray")).toBeNull();
+    expect(svg("area").querySelector("rect")).not.toBeNull();
+    expect(svg("dashed").querySelector("rect")).toBeNull();
+    expect(svg("dashed").querySelector("line")?.getAttribute("stroke-dasharray")).not.toBeNull();
+  });
+
+  it("shows no figure for an item without a value", () => {
+    render(<ChartLegend id="cl" items={[{ id: "a", label: "Net worth", color: "primary" }]} />);
+    expect(screen.getByTestId("cl-a").textContent).toBe("Net worth");
+  });
+});

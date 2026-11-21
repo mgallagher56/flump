@@ -442,3 +442,199 @@ describe("ConfirmDialog", () => {
     expect(input.className).toContain("[@media_(pointer:_coarse)]:h_touch");
   });
 });
+
+describe("ConfirmDialog keys held from before it opened", () => {
+  const props = (onConfirm = vi.fn()): ConfirmDialogProps => ({
+    scope: "single",
+    open: false,
+    onOpenChange: vi.fn(),
+    title: "Delete?",
+    description: "Sure?",
+    confirmLabel: "Delete",
+    onConfirm,
+  });
+
+  it("confirms on Enter when the Enter that came before opening was released", () => {
+    const onConfirm = vi.fn();
+    const { rerender } = render(<ConfirmDialog {...props(onConfirm)} />);
+    fireEvent.keyDown(document.body, { key: "Enter" });
+    fireEvent.keyUp(document.body, { key: "Enter" });
+    rerender(<ConfirmDialog {...props(onConfirm)} open />);
+    arm();
+    fireEvent.keyDown(screen.getByRole("button", { name: "Delete" }), { key: "Enter" });
+    expect(onConfirm).toHaveBeenCalledTimes(1);
+  });
+
+  it("is not held back by another key that is down when it opens", () => {
+    const onConfirm = vi.fn();
+    const { rerender } = render(<ConfirmDialog {...props(onConfirm)} />);
+    fireEvent.keyDown(document.body, { key: "Shift" });
+    rerender(<ConfirmDialog {...props(onConfirm)} open />);
+    arm();
+    fireEvent.keyDown(screen.getByRole("button", { name: "Delete" }), { key: "Enter" });
+    expect(onConfirm).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps a held Enter held back when another key is released", () => {
+    const onConfirm = vi.fn();
+    const { rerender } = render(<ConfirmDialog {...props(onConfirm)} />);
+    fireEvent.keyDown(document.body, { key: "Enter" });
+    rerender(<ConfirmDialog {...props(onConfirm)} open />);
+    arm();
+    const confirm = screen.getByRole("button", { name: "Delete" });
+    fireEvent.keyUp(confirm, { key: "Tab" });
+    fireEvent.keyDown(confirm, { key: "Enter" });
+    expect(onConfirm).not.toHaveBeenCalled();
+  });
+
+  it("forgets a held Enter when the window loses focus, since its release is never seen", () => {
+    const onConfirm = vi.fn();
+    const { rerender } = render(<ConfirmDialog {...props(onConfirm)} open />);
+    fireEvent.keyDown(document.body, { key: "Enter" });
+    rerender(<ConfirmDialog {...props(onConfirm)} open={false} />);
+    rerender(<ConfirmDialog {...props(onConfirm)} open />);
+    fireEvent.blur(window);
+    arm();
+    fireEvent.keyDown(screen.getByRole("button", { name: "Delete" }), { key: "Enter" });
+    expect(onConfirm).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not treat Enter as still held at the next opening after the window lost focus", () => {
+    const onConfirm = vi.fn();
+    const { rerender } = render(<ConfirmDialog {...props(onConfirm)} />);
+    fireEvent.keyDown(document.body, { key: "Enter" });
+    fireEvent.blur(window);
+    rerender(<ConfirmDialog {...props(onConfirm)} open />);
+    arm();
+    fireEvent.keyDown(screen.getByRole("button", { name: "Delete" }), { key: "Enter" });
+    expect(onConfirm).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("ConfirmDialog keyboard edges", () => {
+  it("can confirm with Enter again when a new error arrives without a pending phase", () => {
+    const onConfirm = vi.fn();
+    const props: ConfirmDialogProps = {
+      scope: "single",
+      open: true,
+      onOpenChange: vi.fn(),
+      title: "Delete?",
+      description: "Sure?",
+      confirmLabel: "Delete",
+      onConfirm,
+    };
+    const { rerender } = render(<ConfirmDialog {...props} />);
+    arm();
+    const press = () => fireEvent.keyDown(screen.getByRole("alertdialog"), { key: "Enter" });
+    press();
+    rerender(<ConfirmDialog {...props} error="Couldn't delete" />);
+    press();
+    expect(onConfirm).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not confirm twice when an error is cleared without a new attempt", () => {
+    const onConfirm = vi.fn();
+    const props: ConfirmDialogProps = {
+      scope: "single",
+      open: true,
+      onOpenChange: vi.fn(),
+      title: "Delete?",
+      description: "Sure?",
+      confirmLabel: "Delete",
+      onConfirm,
+      error: "Couldn't delete",
+    };
+    const { rerender } = render(<ConfirmDialog {...props} />);
+    arm();
+    const press = () => fireEvent.keyDown(screen.getByRole("alertdialog"), { key: "Enter" });
+    press();
+    rerender(<ConfirmDialog {...props} error={undefined} />);
+    press();
+    expect(onConfirm).toHaveBeenCalledTimes(1);
+  });
+
+  it("ignores spaces and case at both ends of the typed text and the text asked for", () => {
+    const { onConfirm } = setup({ requireText: "Delete ", confirmLabel: "Remove" });
+    const confirm = screen.getByRole("button", { name: "Remove" }) as HTMLButtonElement;
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: " DELETE  " } });
+    expect(confirm.disabled).toBe(false);
+    fireEvent.click(confirm);
+    expect(onConfirm).toHaveBeenCalledTimes(1);
+  });
+
+  it("leaves an Enter that another handler already took", () => {
+    const { onConfirm } = setup();
+    arm();
+    const confirm = screen.getByRole("button", { name: "Delete year" });
+    // A native listener on the button runs before React's, as a nested widget's handler would.
+    confirm.addEventListener("keydown", (event) => event.preventDefault());
+    fireEvent.keyDown(confirm, { key: "Enter" });
+    expect(onConfirm).not.toHaveBeenCalled();
+  });
+
+  it("leaves Space on Cancel alone while arming, so Cancel still works at once", () => {
+    setup();
+    const cancel = screen.getByRole("button", { name: "Cancel" });
+    expect(fireEvent.keyDown(cancel, { key: " " })).toBe(true);
+    expect(fireEvent.keyUp(cancel, { key: " " })).toBe(true);
+  });
+
+  it("does not hold back the release of Enter on Confirm while arming", () => {
+    setup();
+    const confirm = screen.getByRole("button", { name: "Delete year" });
+    expect(fireEvent.keyUp(confirm, { key: "Enter" })).toBe(true);
+  });
+
+  it("keeps holding back a Space begun while arming when the key repeats after the delay", () => {
+    const { onConfirm } = setup();
+    const confirm = screen.getByRole("button", { name: "Delete year" });
+    fireEvent.keyDown(confirm, { key: " " });
+    arm();
+    fireEvent.keyDown(confirm, { key: " ", repeat: true });
+    expect(fireEvent.keyUp(confirm, { key: " " })).toBe(false);
+    expect(onConfirm).not.toHaveBeenCalled();
+  });
+
+  it("does not confirm or swallow other keys pressed on Confirm", () => {
+    const { onConfirm } = setup();
+    arm();
+    const confirm = screen.getByRole("button", { name: "Delete year" });
+    expect(fireEvent.keyDown(confirm, { key: "a" })).toBe(true);
+    expect(fireEvent.keyDown(confirm, { key: "ArrowDown" })).toBe(true);
+    expect(onConfirm).not.toHaveBeenCalled();
+  });
+
+  it("leaves Enter on another control alone in a type-to-confirm dialog too", () => {
+    const { onConfirm } = setup({
+      requireText: "DELETE",
+      confirmLabel: "Delete",
+      error: "Your session has ended.",
+      errorAction: <button type="button">Sign in again</button>,
+    });
+    arm();
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "DELETE" } });
+    const other = screen.getByRole("button", { name: "Sign in again" });
+    expect(fireEvent.keyDown(other, { key: "Enter" })).toBe(true);
+    expect(onConfirm).not.toHaveBeenCalled();
+  });
+
+  it("shows no text field unless typed text is asked for", () => {
+    setup();
+    expect(screen.queryByRole("textbox")).toBeNull();
+  });
+
+  it("is not busy when nothing is pending", () => {
+    setup();
+    expect(
+      screen.getByRole("button", { name: "Delete year" }).getAttribute("aria-busy"),
+    ).toBeNull();
+  });
+
+  it("with keepFocusWhilePending, enables Confirm when idle and the text matches, and not before", () => {
+    setup({ keepFocusWhilePending: true, requireText: "DELETE", confirmLabel: "Delete" });
+    const confirm = screen.getByRole("button", { name: "Delete" }) as HTMLButtonElement;
+    expect(confirm.disabled).toBe(true);
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "delete" } });
+    expect(confirm.disabled).toBe(false);
+  });
+});
