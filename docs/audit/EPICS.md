@@ -22,7 +22,7 @@ Refreshed on 2026-11-20 against `origin/main` and the merged pull requests up to
 | 6 | E23, E4 C-11 | Compute the real estimated tax due (now `null`); verify C-17 | Done (`selectEstimatedTaxDue` feeds the dashboard; C-17 verified: providers throw, never report 0) |
 | 7 | E4 C-10 | A lone bonus record replaces the salary | Done (bfcb776a); one payslip no longer replaces the saved salary either (engine PR) |
 | 8 | E25 T5, T15, E4 B-07 | Rebuild `calculateUkTax` as an adapter; one-engine guard; move web calculators onto finance-engine | Done for tax (engine PR): adapter, `check-one-tax-engine` in `check:laws`. The B-07 mortgage and savings formulas in web remain |
-| 9 | E22 | Stale-rates banner on savings, budget, onboarding and home | Partly |
+| 9 | E22 | Stale-rates banner on savings, budget, onboarding and home | Done (2026-11-21: wired with live `getUkTaxYearContext()` and tested for fallback and provisional states on all four pages) |
 | 10 | E24 | Fix stale paths in `docs/launch/readiness.json` | Done (BE-01) |
 | 11 | E8 | Make the Storybook a11y job blocking (due 2026-11-25) | Done: blocking in `ci-pipeline.yml` and listed in `.github/required-checks.json`. Whether branch protection requires it is not re-checked |
 | 12 | E1 D-06, C-18, F-03 | Transactional deleteAccount; MCP auth coverage to 80% | Partly: deletion runs in one transaction (BE-04, #668, per the backend re-score); MCP auth coverage not re-checked |
@@ -30,7 +30,7 @@ Refreshed on 2026-11-20 against `origin/main` and the merged pull requests up to
 | 14 | E7 M-09, I-07 | Widen the claims guard; mirror the copy changes in web | Done: the marketing claims guard and the web copy guard now also ban "256-bit", "bank-grade", "GDPR" and "Open Banking"; no source used them |
 | 15 | E2, E1 G-03 | Salary-sacrifice defaults; delete the mock token and fake accounts in the parked mobile app | Mobile part done: `apps/mobile-companion` was deleted (#827). Salary-sacrifice defaults not re-checked |
 | 16 | E15 | Pre-release visual pass | Not started |
-| 17 | E9 H-03 | Last 17 design-token violations | Partly |
+| 17 | E9 H-03 | Last 17 design-token violations | Done (2026-11-21: 0 violations remain in `scripts/design-token-baseline.json`) |
 | 18 | E27, E28, E30 v2 | Pension projection epic; MTD decision (before April 2027); snapshot v2 | Not started |
 | 19 | Backend | Re-score follow-ups (backend-2026-11/RESCORE.md): BE-16 conditional writes, BE-17 performance and tests, BE-18 bank launch readiness, SEC-D receipt encryption, SEC-E CI and images, SEC-F audit-trail integrity; SEC-A waits for the owner's variables | Done in code: BE-01 to BE-14; BE-15 with SEC-B (#725); BE-16 (#733); BE-17 with SEC-E (#730); BE-18 (#752); SEC-D (#753); SEC-A and SEC-F (#738). SEC-A makes the keys required at production boot, so the owner's variables must be set before a production deploy |
 | 20 | E16 | Design polish rounds 2 and 3 | Done: merged (#697 to #728). The R3 re-score is in `docs/design/e16-polish/RESCORE-R3.md` |
@@ -548,7 +548,7 @@ E1 blocks E2, E5 and E6 (do not build on an unauthenticated backend). E3, E4 and
 
 ## E9. Adopt packages/ui in apps/web and colocate components
 
-- **Status (2026-11-14, checked against `origin/main`):** superseded by E15 (DECISIONS D3-C; the relaxed rule is in AGENTS.md section 1). The design-token baseline has fallen from about 1,228 violations to 17 in 9 files (`scripts/design-token-baseline.json`).
+- **Status (2026-11-21):** superseded by E15 (DECISIONS D3-C; the relaxed rule is in AGENTS.md section 1). The design-token baseline has fallen from about 1,228 violations to 0 (`scripts/design-token-baseline.json` is `{}`).
 - **Severity:** P1
 - **Blocked by:** none
 - **Done when:** apps/web uses packages/ui primitives and patterns; components follow the Name/Name.tsx layout; no hardcoded colours or non-existent token names; simulator pages follow the layout laws.
@@ -566,7 +566,7 @@ E1 blocks E2, E5 and E6 (do not build on an unauthenticated backend). E3, E4 and
 
 #### H-03: Raw hex/rgb colours across 91 web files; most map to existing semantic tokens
 
-- **Status (2026-11-14):** PARTLY. 17 violations in 9 files remain in the baseline.
+- **Status (2026-11-21):** DONE. 0 violations remain in `scripts/design-token-baseline.json` after fixing the last two in `ImportReviewPage.styles.ts` and `ColorPalette.tsx`.
 - Severity P1, effort L, location `apps/web/app (components/budget 142 lines, tax 58, pension 54, home 45, dashboard/widgets 44), apps/marketing/`
 - Acceptance: Codemod with hex-to-token table; add missing tokens (scrim, shadows, blue accent decision, neutral); keep bank brand colours in one constants file
 - Blocked by: none
@@ -734,15 +734,15 @@ Source: independent Fable review of the epic portfolio against `main` at e4ff6c3
 
 ## E22. Tax-year and rates maintenance
 
-- **Status (2026-11-14, checked against `origin/main`):** partly; phase 1 merged (#411, #413, #415).
+- **Status (2026-11-21, banner coverage verified on `origin/main`):** partly; phase 1 merged (#411, #413, #415) and 2027/28 provisional tables merged (#833).
   - Done:
     - the annual update runbook (`docs/runbooks/tax-year-update.md`);
     - one strict resolver for unsupported years (`uk-tax-year.ts:225`, used by `calculateUKEWNITakeHome`);
     - a CI check that fails from 1 March (`scripts/lib/tax-year-calendar.ts`);
-    - the `tax:signoff` workflow.
-  - Partly: the stale-rates banner is on the tax, take-home, pension and tax-trap views, but missing on savings and forecast, budget, onboarding and home.
-  - Not started: the 2027/28 rates file.
-  - Owner actions: verifying the 2027/28 figures and signing off the vectors.
+    - the `tax:signoff` workflow;
+    - banner coverage (2026-11-21): `TaxRatesStatusBanner` is wired to live `getUkTaxYearContext()` and tested for fallback and provisional states on savings (and forecast), budget, onboarding and home, alongside tax and take-home. (`PensionTakeHomeEffect`, `TakeHomeDeltaPanel` and `TaxTrapCalculator` render the banner without `kind`.)
+  - Open follow-ups (see `docs/audit/plans/E22-ledger.md`): unsupported-year state on the tax page, future-clock CI job, hard-coded years outside the engine, and the GOV.UK drift workflow.
+  - Owner actions: verifying the 2027/28 figures and signing off the vectors (or Fable decider sign-off per DECISIONS, 2026-11-20).
 - **Severity:** Important (hard deadline: 6 April 2027).
 - **Blocked by:** E4 owner sign-off.
 - **Done when:** an annual update runbook; a sourced rates file for 2027/28; a CI test that fails from 1 March if the next tax year's table is missing; a visible "using 2026/27 rates" banner when the date is past the last supported year; one consistent behaviour (the strict resolver throws, but `calculateUKEWNITakeHome` silently falls back to 2026/27 at `tax-rules.ts:1129-1133` and `uk-tax.ts:69`); a sign-off workflow for vectors (the vector test currently asserts `signedOffBy` is null for every vector).
@@ -788,7 +788,7 @@ Source: independent Fable review of the epic portfolio against `main` at e4ff6c3
 ### Housekeeping from the same review
 
 - Close E6: its findings moved (G-04 to E16 T-CUT-4, G-06 to E17, I-08 to E16 T-CUT-5 and T-DEMOTE-4).
-- Fold E9 into E15 after E16's cuts, then re-baseline the token ratchet. (2026-11-14: done in effect; the baseline is now 17 violations in 9 files.)
+- Fold E9 into E15 after E16's cuts, then re-baseline the token ratchet. (2026-11-21: done; the baseline is now 0 violations across 0 files.)
 - EPICS.md has no sections for E10, E12, E13 and E14 yet; write them or fold them.
 - The audit documents (`docs/audit/`) are untracked; commit them so a worktree clean-up cannot lose them (the E12 plan lives only in one worktree).
 
@@ -809,8 +809,7 @@ Checked against `origin/main` on 2026-11-14. A box is ticked only where there is
   - Owner action: all vectors have `signedOffBy: null`.
   - C-15 is fixed (#583). C-11 is hidden as `null`, not computed.
 - [x] 2027/28 handling defined; stale-rates banner in place
-  - Done: the strict resolver (#411), the 1 March CI check, and the banner on the tax pages.
-  - The banner is still missing on savings, budget, onboarding and home (E22).
+  - Done: the strict resolver (#411), the 1 March CI check, 2027/28 provisional tables (#833), and the banner on tax, take-home, savings, budget, onboarding and home (verified 2026-11-21).
 - [ ] Access token not exposed to browser JS; CSP, HSTS and frame headers on web and backend
   - Partly: the token stays on the server (#569, #578), and HSTS and frame headers are enforced.
   - Missing: the full web CSP is report-only (#603).

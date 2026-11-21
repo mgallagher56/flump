@@ -635,4 +635,17 @@ describe("HomeDashboard", () => {
       vi.useRealTimers();
     }
   });
+
+  it("shows the provisional-rates banner during a provisional tax year", () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2027-06-01T12:00:00Z"));
+    try {
+      renderDashboard(noDebt);
+      expect(
+        screen.getByText(/2027\/28 rates are provisional: announced but not yet confirmed\./),
+      ).toBeDefined();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });

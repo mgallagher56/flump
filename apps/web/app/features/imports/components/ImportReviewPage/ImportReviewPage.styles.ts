@@ -24,7 +24,7 @@ export const commitBar = cva({
     borderRadius: "lg",
     borderWidth: "1px",
     borderStyle: "solid",
-    borderColor: "border.DEFAULT",
+    borderColor: "border",
     backgroundColor: "surface.card",
     position: { md: "sticky" },
     bottom: { md: "16px" },
