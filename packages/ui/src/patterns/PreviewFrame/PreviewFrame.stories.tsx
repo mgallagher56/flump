@@ -5,7 +5,7 @@ import { css } from "../../../styled-system/css";
 import { DEFAULT_PREVIEW_CAPTION, PreviewFrame, type SampleHouseholdKey } from "./PreviewFrame";
 
 const meta: Meta<typeof PreviewFrame> = {
-  title: "Patterns/PreviewFrame",
+  title: "3. Patterns/PreviewFrame",
   component: PreviewFrame,
   parameters: {
     layout: "padded",

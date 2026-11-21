@@ -21,7 +21,7 @@ const SwitchingPreview = ({ id, household: initial = "renter" }: SavingsPensionP
 };
 
 const meta: Meta<typeof SavingsPensionPreview> = {
-  title: "Patterns/SavingsPensionPreview",
+  title: "3. Patterns/SavingsPensionPreview",
   component: SavingsPensionPreview,
   parameters: {
     layout: "padded",

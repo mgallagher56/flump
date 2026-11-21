@@ -28,7 +28,7 @@ const SwitchingPreview = ({
 const AS_OF = new Date("2026-11-01T12:00:00Z");
 
 const meta: Meta<typeof DebtBorrowingPreview> = {
-  title: "Patterns/DebtBorrowingPreview",
+  title: "3. Patterns/DebtBorrowingPreview",
   component: DebtBorrowingPreview,
   parameters: {
     layout: "padded",

@@ -4,7 +4,7 @@ import { PreviewFrame } from "../PreviewFrame/PreviewFrame";
 import { DashboardPreview } from "./DashboardPreview";
 
 const meta: Meta<typeof DashboardPreview> = {
-  title: "Patterns/DashboardPreview",
+  title: "3. Patterns/DashboardPreview",
   component: DashboardPreview,
   parameters: {
     layout: "padded",

@@ -4,7 +4,7 @@ import { PreviewFrame } from "../PreviewFrame/PreviewFrame";
 import { CheckInPreview, checkInAccountsFor } from "./CheckInPreview";
 
 const meta: Meta<typeof CheckInPreview> = {
-  title: "Patterns/CheckInPreview",
+  title: "3. Patterns/CheckInPreview",
   component: CheckInPreview,
   parameters: {
     layout: "padded",

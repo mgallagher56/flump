@@ -4,7 +4,7 @@ import { expect, userEvent, within } from "storybook/test";
 import { RetirementPlanner } from "./RetirementPlanner";
 
 const meta: Meta<typeof RetirementPlanner> = {
-  title: "Features/Retirement/RetirementPlanner",
+  title: "3. Patterns/Retirement/RetirementPlanner",
   component: RetirementPlanner,
   parameters: {
     layout: "fullscreen",

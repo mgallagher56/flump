@@ -3,7 +3,7 @@ import { expect, within } from "storybook/test";
 import { NewInviteLink } from "./NewInviteLink";
 
 const meta: Meta<typeof NewInviteLink> = {
-  title: "Features/Invites/NewInviteLink",
+  title: "3. Patterns/Invites/NewInviteLink",
   component: NewInviteLink,
   parameters: { layout: "padded" },
   args: {
