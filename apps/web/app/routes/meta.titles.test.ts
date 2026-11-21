@@ -5,6 +5,7 @@ import { meta as accountsMeta } from "./app.accounts._index";
 import { meta as budgetMeta } from "./app.budget";
 import { meta as debtMeta } from "./app.debt";
 import { meta as mortgageMeta } from "./app.mortgage";
+import { meta as mortgageEstimatesMeta } from "./app.mortgage-estimates";
 import { meta as profileMeta } from "./app.profile";
 import { meta as selfAssessmentMeta } from "./app.self-assessment";
 
@@ -19,6 +20,7 @@ describe("signed-in page titles", () => {
     ["/app/budget", budgetMeta, "Budget | Flump"],
     ["/app/debt", debtMeta, "Cards and loans | Flump"],
     ["/app/mortgage", mortgageMeta, "Mortgage | Flump"],
+    ["/app/mortgage-estimates", mortgageEstimatesMeta, "Mortgage estimates | Flump"],
     ["/app/profile", profileMeta, "Settings | Flump"],
     ["/app/self-assessment (and /app/tax)", selfAssessmentMeta, "Self Assessment | Flump"],
   ])("%s has a page-specific title", (_route, meta, title) => {

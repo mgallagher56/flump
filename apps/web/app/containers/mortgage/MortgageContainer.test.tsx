@@ -298,7 +298,7 @@ describe("<MortgageContainer />", () => {
       expectPageRules(container, { maxNotSet: 0, projectionNotices: 1 });
     });
 
-    test("the rate change tool shows the saved payment as the current payment", () => {
+    test("the rate change tool shows payments at the current rate and +/- 1 point", () => {
       loaderData = {
         accounts: [
           account({ interestRate: 4.5, termMonths: 218, monthlyContribution: 1250 }),
@@ -310,9 +310,11 @@ describe("<MortgageContainer />", () => {
       const { container } = customRender(<MortgageContainer />);
       openZone();
       selectTab("Rate change");
-      const results = container.querySelector("#remortgage-results") as HTMLElement;
-      expect(results.textContent).toContain("Current payment£1,250");
-      expect(results.textContent).not.toContain("Current payment (estimate)");
+      const result = container.querySelector("#rate-change-result") as HTMLElement;
+      const comparisons = container.querySelector("#rate-change-comparisons") as HTMLElement;
+      expect(result.textContent).toContain("Payment at 4.5%");
+      expect(comparisons.textContent).toContain("Payment at 5.5%, 1 point higher");
+      expect(comparisons.textContent).toContain("Payment at 3.5%, 1 point lower");
     });
 
     test("page rules: one hero, one notice below the h1, one primary, first view within budget", () => {
@@ -535,13 +537,11 @@ describe("<MortgageContainer />", () => {
       fireEvent.click(getByRole("button", { name: "Starting figures" }));
       fireEvent.change(getByLabelText("Rate to try"), { target: { value: "3" } });
       selectTab("Rate change");
-      const results = container.querySelector("#remortgage-results") as HTMLElement;
-      expect(results.textContent).toContain("Current payment (estimate)");
-      expect(results.textContent).not.toContain("£1,250");
-      // The default new rate (5.2%) is higher than 3%, so the change is never a fall.
-      const outcome = container.querySelector("#remortgage-outcome") as HTMLElement;
-      expect(outcome.textContent).toMatch(/\+£[\d,]+ a month/);
-      expect(outcome.textContent).not.toMatch(/\u2212£/);
+      const result = container.querySelector("#rate-change-result") as HTMLElement;
+      const comparisons = container.querySelector("#rate-change-comparisons") as HTMLElement;
+      expect(result.textContent).toContain("Payment at 3%");
+      expect(comparisons.textContent).toContain("Payment at 4%, 1 point higher");
+      expect(comparisons.textContent).toContain("Payment at 2%, 1 point lower");
     });
 
     test("Edit in Your details opens the dialog with the saved values, not the scenario", () => {
@@ -2258,13 +2258,16 @@ describe("<MortgageContainer /> saved figures, saves and the what-if zone in det
       expect(summaryLine(container)).toMatch(/^Starts from your mortgage of £135,400/);
     });
 
-    test("the rate change tool calls an estimated payment an estimate", () => {
+    test("the rate change tool shows comparisons around the saved rate", () => {
       loaderData = loaded();
       const { container } = customRender(<MortgageContainer />);
       openZone();
       selectTab("Rate change");
-      const results = container.querySelector("#remortgage-results") as HTMLElement;
-      expect(results.textContent).toContain("Current payment (estimate)");
+      const result = container.querySelector("#rate-change-result") as HTMLElement;
+      const comparisons = container.querySelector("#rate-change-comparisons") as HTMLElement;
+      expect(result.textContent).toContain("Payment at 4.5%");
+      expect(comparisons.textContent).toContain("Payment at 5.5%, 1 point higher");
+      expect(comparisons.textContent).toContain("Payment at 3.5%, 1 point lower");
     });
 
     test("the rate change tool works from the saved term", () => {
@@ -2272,12 +2275,16 @@ describe("<MortgageContainer /> saved figures, saves and the what-if zone in det
       const { container } = customRender(<MortgageContainer />);
       openZone();
       selectTab("Rate change");
-      // At the default new rate of 5.2% over the saved 20 years: r = 0.0043333,
-      // (1 + r)^240 = 2.8229, 135,400 x 0.0043333 x 2.8229 / 1.8229 = 908.6 a month.
-      expect(container.textContent).toMatch(/Payment at the new rate \(estimate\): £90[89]/);
+      // At 4.5% over the saved 20 years on £135,400: £857 a month; at 5.5%: £931; at 3.5%: £785.
+      const result = container.querySelector("#rate-change-result") as HTMLElement;
+      const comparisons = container.querySelector("#rate-change-comparisons") as HTMLElement;
+      expect(result.textContent).toContain("£857");
+      expect(result.textContent).toContain("Over 20 years, repayment.");
+      expect(comparisons.textContent).toContain("£931");
+      expect(comparisons.textContent).toContain("£785");
     });
 
-    test("once the balance or term to try moves, the rate change tool drops the saved payment", () => {
+    test("once the balance or term to try moves, the rate change tool updates payments", () => {
       const withPayment = () => ({
         accounts: [
           account({ interestRate: 4.5, termMonths: 240, monthlyContribution: 1250 }),
@@ -2298,9 +2305,8 @@ describe("<MortgageContainer /> saved figures, saves and the what-if zone in det
         fireEvent.click(getByRole("button", { name: "Starting figures" }));
         fireEvent.change(getByLabelText(label), { target: { value } });
         selectTab("Rate change");
-        const results = container.querySelector("#remortgage-results") as HTMLElement;
-        expect(results.textContent).toContain("Current payment (estimate)");
-        expect(results.textContent).not.toContain("£1,250");
+        const result = container.querySelector("#rate-change-result") as HTMLElement;
+        expect(result.textContent).not.toContain("£1,250");
         unmount();
       }
     });

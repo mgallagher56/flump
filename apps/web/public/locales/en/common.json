@@ -57,6 +57,8 @@
   "navPensionDesc": "Pension pots and a retirement estimate",
   "navRetirementDesc": "Your target and estimated yearly income in today's prices",
   "navMortgageDesc": "Repayment schedule, equity and overpayments",
+  "mortgageEstimates": "Mortgage estimates",
+  "navMortgageEstimatesDesc": "Loan size and monthly payment estimates from your figures",
   "navForecastDesc": "Net worth and budget estimates over several years",
   "navTaxDesc": "Self-employed and rental income, with a tax bill estimate"
 }

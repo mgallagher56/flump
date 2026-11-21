@@ -18,7 +18,7 @@ import {
 } from "@repo/ui";
 import { Plus } from "lucide-react";
 import { type FC, useEffect, useMemo, useState } from "react";
-import { useLoaderData, useLocation, useNavigate } from "react-router";
+import { Link, useLoaderData, useLocation, useNavigate } from "react-router";
 import type { Account } from "~/containers/accounts/types";
 import { AddSavingsAccountDialog } from "~/features/savings/components/AddSavingsAccountDialog";
 import {
@@ -220,6 +220,11 @@ const SavingsContainer: FC = () => {
             basis="Starting from your saved accounts."
             collapsible
             defaultOpen={payRiseMonthly > 0}
+            footer={
+              tool === "deposit" ? (
+                <Link to="/app/mortgage-estimates">See mortgage estimates</Link>
+              ) : undefined
+            }
             id="savings-scenario"
             isModified={isModified}
             showLabel="Show what-if: grow your savings"
