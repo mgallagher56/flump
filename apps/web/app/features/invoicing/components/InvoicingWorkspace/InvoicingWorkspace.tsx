@@ -60,6 +60,7 @@ export interface InvoicingWorkspaceProps {
   workLogs: readonly WorkLogEntryDto[];
   invoices: readonly InvoiceDto[];
   todayIso?: string;
+  initialTab?: "work-log" | "invoices" | "settings";
   isSubmitting?: boolean;
   onCreateWorkLog?: (payload: CreateWorkLogEntryRequest) => void;
   onUpdateWorkLog?: (id: string, payload: UpdateWorkLogEntryRequest, ifMatch: string) => void;
@@ -98,6 +99,7 @@ export const InvoicingWorkspace: FC<InvoicingWorkspaceProps> = ({
   workLogs,
   invoices,
   todayIso = "2026-11-21",
+  initialTab = "work-log",
   isSubmitting = false,
   onCreateWorkLog,
   onUpdateWorkLog,
@@ -111,7 +113,7 @@ export const InvoicingWorkspace: FC<InvoicingWorkspaceProps> = ({
   onUpdateSettings,
 }) => {
   const currentTaxYear = useMemo(() => getUkTaxYearForDate(todayIso), [todayIso]);
-  const [activeTab, setActiveTab] = useState<string>("work-log");
+  const [activeTab, setActiveTab] = useState<string>(initialTab);
 
   // Work log add form state
   const [entryDate, setEntryDate] = useState<string>(todayIso);

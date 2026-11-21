@@ -44,6 +44,12 @@ describe("AddInvoicingTables1795600000000", () => {
     expect(
       sqls.some((s) => s.includes('CREATE UNIQUE INDEX IF NOT EXISTS "UQ_invoices_user_number"')),
     ).toBe(true);
+    expect(
+      sqls.some((s) => s.includes('CREATE INDEX IF NOT EXISTS "idx_invoices_tax_record_id"')),
+    ).toBe(true);
+    expect(
+      sqls.some((s) => s.includes('CREATE INDEX IF NOT EXISTS "idx_work_log_entries_invoice_id"')),
+    ).toBe(true);
   });
 
   it("down() refuses while any invoicing row is saved, and drops nothing", async () => {
