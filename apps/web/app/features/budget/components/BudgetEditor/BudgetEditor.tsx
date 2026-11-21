@@ -252,10 +252,10 @@ const EntryRow: FC<EntryRowProps> = ({ entry, onSave, onRemove, linkOffer = null
         <div className={essentialField()}>
           {!hasEssentialSwitch(entry) ? null : (
             <Switch
+              aria-disabled={pendingEssential || undefined}
               aria-label={`Essential: ${entry.name}`}
               checked={entry.isEssential}
               data-testid={`budget-editor-essential-${entry.id}`}
-              disabled={pendingEssential}
               id={`budget-editor-essential-${entry.id}`}
               label="Essential"
               onChange={(event) => {
