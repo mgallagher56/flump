@@ -19,14 +19,18 @@ vi.mock("~/features/retirement/components/RetirementPlanner", () => ({
 }));
 
 import { BackendError } from "~/services/backend-error";
+import { CONFLICT_MESSAGE, VERSION_FIELD } from "~/services/conflict";
 import { retirementPlanFixture } from "~/test/fixtures/contractResponses";
 import { action, loader } from "./app.retirement";
 
 const loaderArgs = () =>
   ({ request: new Request("http://localhost/app/retirement"), params: {}, context: {} }) as never;
-const actionArgs = () => {
+const actionArgs = (fields: Record<string, string> = {}) => {
   const body = new FormData();
   body.set("payload", JSON.stringify({ retirementAge: 60 }));
+  for (const [key, value] of Object.entries(fields)) {
+    body.set(key, value);
+  }
   return {
     request: new Request("http://localhost/app/retirement", { method: "POST", body }),
     params: {},
@@ -94,7 +98,56 @@ describe("app.retirement (open to everyone the beta lets in; owner, 20 Nov 2026)
 
   it("action: a backend 404 is an ordinary failed save, not a not-found page", async () => {
     backendFetch.mockRejectedValue(notFound());
-    const result = (await action(actionArgs())) as { data: { success: boolean } };
+    const result = (await action(actionArgs())) as { data: { success: boolean; error: string } };
     expect(result.data.success).toBe(false);
+    expect(result.data.error).toBe("We could not find that. It may have been deleted.");
+  });
+
+  it("action: first save omits If-Match and returns ok", async () => {
+    backendFetch.mockResolvedValue({ plan: retirementPlanFixture });
+    const result = (await action(actionArgs())) as { ok: boolean; plan: unknown };
+    expect(backendFetch).toHaveBeenCalledWith(
+      "/retirement-plan",
+      expect.objectContaining({
+        method: "PUT",
+        body: { retirementAge: 60 },
+        ifMatch: undefined,
+      }),
+    );
+    expect(result).toEqual({ ok: true, plan: retirementPlanFixture });
+  });
+
+  it("action: subsequent save sends If-Match from VERSION_FIELD", async () => {
+    const updatedAt = "2026-11-16T10:00:00.000Z";
+    backendFetch.mockResolvedValue({ plan: retirementPlanFixture });
+    const result = (await action(actionArgs({ [VERSION_FIELD]: updatedAt }))) as {
+      ok: boolean;
+      plan: unknown;
+    };
+    expect(backendFetch).toHaveBeenCalledWith(
+      "/retirement-plan",
+      expect.objectContaining({
+        method: "PUT",
+        body: { retirementAge: 60 },
+        ifMatch: `"${updatedAt}"`,
+      }),
+    );
+    expect(result).toEqual({ ok: true, plan: retirementPlanFixture });
+  });
+
+  it("action: surfaces 412 conflict message", async () => {
+    backendFetch.mockRejectedValue(new BackendError("client", "/retirement-plan", 412));
+    const result = (await action(
+      actionArgs({ [VERSION_FIELD]: "2026-11-16T10:00:00.000Z" }),
+    )) as unknown as {
+      init: { status: number };
+      data: { success: boolean; conflict: boolean; error: string };
+    };
+    expect(result.init.status).toBe(412);
+    expect(result.data).toEqual({
+      success: false,
+      conflict: true,
+      error: CONFLICT_MESSAGE,
+    });
   });
 });

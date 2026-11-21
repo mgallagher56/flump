@@ -14,7 +14,7 @@ import {
   workplaceSalaryNotSetFromLoader,
 } from "~/features/retirement/retirementInput";
 import { backendFetch, loadWorkspaceSnapshot } from "~/services/backend-client.server";
-import { ifMatchFromForm, revalidateOnConflict } from "~/services/conflict";
+import { ifMatchFromForm, revalidateOnConflict, VERSION_FIELD } from "~/services/conflict";
 import { actionErrorResponse, throwRouteError } from "~/services/route-error.server";
 import { getAuthSession, requireAccessToken } from "~/utils/auth.server";
 
@@ -91,12 +91,21 @@ export default function RetirementRoute(): ReactElement {
     [loaderData],
   );
 
-  const handleSavePlan = (payload: UpsertRetirementPlanRequest, etag: string | null) => {
+  const handleSavePlan = (payload: UpsertRetirementPlanRequest) => {
     const fd = new FormData();
     fd.set("payload", JSON.stringify(payload));
-    if (etag) fd.set("ifMatch", etag);
+    if (loaderData.retirementPlan.updatedAt) {
+      fd.set(VERSION_FIELD, loaderData.retirementPlan.updatedAt);
+    }
     fetcher.submit(fd, { method: "post" });
   };
+
+  const saveError =
+    fetcher.data && "success" in fetcher.data && fetcher.data.success === false
+      ? fetcher.data.error
+      : null;
+  const saveSuccess =
+    fetcher.data && "ok" in fetcher.data && fetcher.data.ok ? "Retirement plan saved." : null;
 
   return (
     <RetirementPlanner
@@ -106,6 +115,8 @@ export default function RetirementRoute(): ReactElement {
       accountDetails={loaderData.accountDetails ?? []}
       etag={loaderData.etag}
       isSaving={fetcher.state !== "idle"}
+      saveError={saveError}
+      saveSuccess={saveSuccess}
       onSavePlan={handleSavePlan}
       workplaceSalaryNotSet={workplaceSalaryNotSetFromLoader(loaderData.userProfile)}
     />
