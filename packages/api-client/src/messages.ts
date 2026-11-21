@@ -11,6 +11,8 @@ export const ACTION_MESSAGE_BY_KIND: Record<BackendErrorKind, string> = {
   "not-found": "We couldn't find that. It may have been removed.",
   forbidden: "You don't have permission to do that.",
   "not-invited": "This account has not been invited to the Flump beta yet.",
+  "rate-limited":
+    "You have tried this a few times in a short while. Wait a little, then try again.",
   client: "We couldn't save that. Check the details and try again.",
   unauthorised: "Your session has ended. Please sign in again.",
 };

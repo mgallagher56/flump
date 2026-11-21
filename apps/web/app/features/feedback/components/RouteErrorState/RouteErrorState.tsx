@@ -68,6 +68,12 @@ function copyFor(kind: RouteErrorStateProps["kind"]): Copy {
         body: "The page may have moved, or the link may be out of date.",
         scene: "not-found",
       };
+    case "rate-limited":
+      return {
+        heading: "Too many requests",
+        body: "You have tried this a few times in a short while. Wait a little, then try again.",
+        scene: "empty-accounts",
+      };
     case "unavailable":
       return {
         heading: "We could not reach Flump",

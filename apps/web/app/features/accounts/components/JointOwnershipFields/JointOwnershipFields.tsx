@@ -10,7 +10,7 @@ export const OWNERSHIP_OPTIONS = [
 
 export interface JointOwnershipFieldsProps {
   ownership: AccountOwnership;
-  /** The user's share, 1 to 100, shown while the account is joint. */
+  /** The user's share, 1 to 99, shown while the account is joint. */
   sharePercent: number | null;
   onOwnershipChange: (ownership: AccountOwnership) => void;
   onSharePercentChange: (sharePercent: number | null) => void;
@@ -45,7 +45,7 @@ export const JointOwnershipFields: FC<JointOwnershipFieldsProps> = ({
         {(field) => (
           <PercentInput
             {...controlProps(field)}
-            max={100}
+            max={99}
             min={1}
             name="sharePercent"
             value={sharePercent}
@@ -57,13 +57,13 @@ export const JointOwnershipFields: FC<JointOwnershipFieldsProps> = ({
   </div>
 );
 
-/** The share to save: 1 to 100, whole, for a joint account; null for a sole one. */
+/** The share to save: 1 to 99, whole, for a joint account; null for a sole one. */
 export const resolveSharePercent = (
   ownership: AccountOwnership,
   sharePercent: number | null,
 ): number | null =>
   ownership === "joint"
-    ? Math.min(100, Math.max(1, Math.round(sharePercent ?? DEFAULT_JOINT_SHARE_PERCENT)))
+    ? Math.min(99, Math.max(1, Math.round(sharePercent ?? DEFAULT_JOINT_SHARE_PERCENT)))
     : null;
 
 export default JointOwnershipFields;

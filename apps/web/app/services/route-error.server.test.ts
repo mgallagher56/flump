@@ -20,6 +20,7 @@ describe("throwRouteError", () => {
     ["not-found", 404],
     ["forbidden", 403],
     ["not-invited", 403],
+    ["rate-limited", 429],
     ["client", 400],
     ["unauthorised", 401],
   ];

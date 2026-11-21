@@ -46,7 +46,7 @@ export const BreathingRoomBasis: FC<BreathingRoomBasisProps> = ({
   onSetEssential,
 }) => {
   const slots = breathingRoomBasis();
-  const [pending, setPending] = useState<string | null>(null);
+  const [pendingIds, setPendingIds] = useState<ReadonlySet<string>>(() => new Set());
   const snapshot = useMemo(
     () => new PortfolioSnapshot([...accounts], [...accountDetails]),
     [accounts, accountDetails],
@@ -64,13 +64,18 @@ export const BreathingRoomBasis: FC<BreathingRoomBasisProps> = ({
   const counted = spending.filter((e) => e.isEssential || fixedReason(e) !== null).length;
 
   const toggle = async (entry: BudgetEntry, next: boolean) => {
-    setPending(entry.id);
+    if (pendingIds.has(entry.id)) return;
+    setPendingIds((prev) => new Set(prev).add(entry.id));
     try {
       await onSetEssential(entry.id, next);
     } catch {
       // The page shows what went wrong; the switch keeps the saved value.
     } finally {
-      setPending(null);
+      setPendingIds((prev) => {
+        const nextSet = new Set(prev);
+        nextSet.delete(entry.id);
+        return nextSet;
+      });
     }
   };
 
@@ -138,7 +143,7 @@ export const BreathingRoomBasis: FC<BreathingRoomBasisProps> = ({
                       aria-describedby="breathing-basis-intro"
                       checked={reason !== null || entry.isEssential}
                       data-testid={`breathing-basis-essential-${entry.id}`}
-                      disabled={reason !== null || pending === entry.id}
+                      disabled={reason !== null || pendingIds.has(entry.id)}
                       hint={
                         <span className={slots.hint}>
                           {getCategoryLabel(entry.category)},{" "}

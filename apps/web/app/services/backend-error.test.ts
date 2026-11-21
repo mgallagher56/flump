@@ -22,6 +22,7 @@ describe("BackendError", () => {
     expect(kindFromStatus(403)).toBe("forbidden");
     expect(kindFromStatus(404)).toBe("not-found");
     expect(kindFromStatus(422)).toBe("client");
+    expect(kindFromStatus(429)).toBe("rate-limited");
     expect(kindFromStatus(500)).toBe("server");
     expect(kindFromStatus(503)).toBe("server");
   });

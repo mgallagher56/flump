@@ -3,6 +3,7 @@ export const BACKEND_ERROR_KINDS = [
   "forbidden",
   "not-invited",
   "not-found",
+  "rate-limited",
   "client",
   "server",
   "unavailable",
@@ -41,6 +42,7 @@ export function kindFromStatus(status: number): BackendErrorKind {
   if (status === 401) return "unauthorised";
   if (status === 403) return "forbidden";
   if (status === 404) return "not-found";
+  if (status === 429) return "rate-limited";
   if (status >= 500) return "server";
   return "client";
 }
