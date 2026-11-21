@@ -1,6 +1,8 @@
 # E28. Making Tax Digital for Income Tax: discovery
 
-Decisions: open
+Decisions: accepted on 21 November 2026
+
+> Owner, 2026-11-21: "Accept the other decisions". The section 5 recommendation is accepted: path (c) now, the wording rule held, a decision on a narrow path (a) by February 2027, and (b) ruled out for 2027-28. Not yet answered: whether and when to run the five interviews (item 2). Items 3 to 6 arise only if (a) or (b) is later chosen. Nothing is built from this document.
 
 Status: desk research done on 2026-11-18 against `origin/main` at `3ff28a0e`. User evidence (five beta users) is still to gather. This is not legal or tax advice. Every fact in section 1 cites a source in the list at the end, read on 2026-11-18. "Not confirmed" means no primary source confirmed it.
 

@@ -456,3 +456,29 @@ Owner's words: "Add rules to the repo to ensure when test are edited or added th
 - AGENTS.md section 17 and `docs/testing/writing-tests.md` hold the rules. The wording is the coordinator's.
 - Coordinator's rule, not the owner's words: a change to logic in `packages/finance-engine`, or in `apps/backend` guards, interceptors, auth or `security/`, runs Stryker on the changed files before its PR. The whole-package run stays the occasional local check of the 2026-11-20 decision, and nothing is added to CI.
 - Coordinator's limit, not the owner's words: a new or changed unit test file over 5 seconds on its own needs its reason in the PR description. Nothing enforces it in CI.
+
+# Owner decisions (2026-11-21): E39, E35, E36, E37 and E28
+
+Given by the owner in session on 21 November 2026, in answer to one list of every open decision in the five plans with each plan's recommendation. Owner's words, in full:
+
+"When building the mortgage affordability and any new features/sections/pages, remember our rules around a single source of truth for the users values/figures to ensure one value is used everywhere to avoid errors."
+
+"MA2. Default income multiple should be ~4.5x. Do some research on this to make sure, but this is good generally guide. Maybe give a range between 4 and 4.5 to estimates being too wide of the mark."
+
+"MA5. ~4.49-4.94% for a ~90% ltv. The lowest I can find is 4.24-4.44% for 60% and below LTV, so between those LTVs will be a sliding scale at every 10% ltv increment."
+
+"MA7. Give an estimated stamp duty figure."
+
+"D2. Allow adding VAT to invoices."
+
+"Accept the other decisions"
+
+- **E39 mortgage affordability:** MA1, MA3, MA4, MA6 and MA8 to MA12 as recommended. MA2: a range of 4 to 4.5 times income. MA5: default rates by loan to value, from the owner's figures. MA7: an estimated stamp duty figure. Detail, the worked rate table and the coordinator's readings are in section 10a of the plan.
+- **E35 encouragement:** W1 to W9 as recommended.
+- **E36 security hardening:** SD1 to SD8 as recommended.
+- **E37 invoicing:** the plan is approved to build. D1 (a), D3 (a). D2: invoices can carry VAT (plan section 10).
+- **E28 Making Tax Digital:** the recommendation is accepted. Whether to run the five interviews is not yet answered.
+- **Single source of truth:** AGENTS.md section 16 already makes this a law with a CI check. The E39 and E37 plans now say how each keeps to it.
+
+The coordinator's readings, not the owner's words, each marked in its plan: the stamp duty estimate covers England and Northern Ireland, Scotland and Wales; rates for 70% and 80% loan to value are a straight line between the owner's two points; over 90% has no default; the rate table carries its date and is covered by the stale-rates banner; the VAT rate is typed and never suggested.
+

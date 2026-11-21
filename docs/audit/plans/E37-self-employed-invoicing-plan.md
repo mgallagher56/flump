@@ -1,6 +1,8 @@
 # E37. Self-employed work tracking and invoice builder
 
-> **Status: plan for owner approval. No code.** Written 2026-11-16 against `origin/main`. Not legal or tax advice.
+Decisions: accepted on 21 November 2026
+
+> **Status: accepted by the owner on 2026-11-21: D1 (a), D2 (b), D3 (a). See "Owner decisions, 21 November 2026" at the end; where it differs from the text above it, it wins. No code yet.** Written 2026-11-16 against `origin/main`. Not legal or tax advice.
 
 **Summary.** Self-employed users need a lightweight way to log billable work, apply a default hourly rate (overridable per entry), group unbilled work into numbered invoices with client details, export invoices as PDF/print and CSV, and optionally sync paid invoices into their Self Assessment income records. This plan proposes four vertical slices (`S0` data model & pure engine calculations -> `S1` CRUD API -> `S2` Work log & Invoice Builder UI -> `S3` Self Assessment integration & PDF/CSV export), respecting `If-Match` optimistic concurrency, UK GDPR export/deletion and audit rules, and Flump's zero-advice-strings policy.
 
@@ -138,3 +140,19 @@ Strict Zod schemas (`z.strictObject`):
 | D1 | Where `defaultHourlyRate` lives | (a) Single invoicing settings record per user (with optional per-source override later). (b) Per-SA-income-source table from day one. | **(a)** — `tax_records` currently models `source` as an enum (`"self-employed"`), not a separate sources table. |
 | D2 | VAT on invoices | (a) Out of scope for v1 (no VAT fields; total = subtotal). (b) Optional `vatRate` / `vatNumber` fields on invoice. | **(a)** for v1 to avoid VAT registration/threshold advice-boundary complexity; add in a follow-up if needed. |
 | D3 | PDF generation mechanism | (a) Clean `@media print` invoice route (`Print / Save as PDF`). (b) Server-side PDF renderer (`pdfkit` / headless). | **(a)** for S3 — zero new server dependencies and deterministic layout; upgrade to server PDF later if email attachment is added. |
+
+## 10. Owner decisions, 21 November 2026
+
+Owner's words: "D2. Allow adding VAT to invoices." "Accept the other decisions".
+
+- **D1 (a):** one invoicing settings record per user.
+- **D2 (b), changed from the recommendation:** an invoice can carry VAT.
+  - Settings gain an optional `vatNumber`. An invoice gains an optional `vatRatePct` (empty means no VAT) and stores `vatAmount`; `total` = `subtotal` + `vatAmount`, with `vatAmount` = `subtotal` x `vatRatePct` / 100 rounded to the penny. Worked example for the tests: £1,250.00 at 20% is £250.00 VAT, total £1,500.00; £333.33 at 20% is £66.67 (66.666 rounded), total £400.00.
+  - The rate is typed by the user and never defaulted or suggested. The invoice shows the VAT number, the rate, the VAT amount and the total when a rate is set.
+  - Flump does not say whether someone should register for VAT, which rate applies, or what a valid VAT invoice needs: that is the advice boundary (policy R1, R2). One plain line beside the field: "Add VAT only if you are registered for VAT."
+  - The Self Assessment sync (S3) sends the amount without VAT as income. Whether that is right for every VAT scheme is not verified; the sync says which figure it uses.
+  - New stored fields go in the value map and the privacy registry in the same PR (AGENTS.md section 16).
+- **D3 (a):** a print page ("Print / Save as PDF"), no server-side renderer.
+
+One home per value (AGENTS.md section 16): invoice totals are computed by the engine module in section 4.2 and read from there by the backend, web and export; no page sums line items itself.
+

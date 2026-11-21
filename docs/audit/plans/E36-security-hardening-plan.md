@@ -1,6 +1,8 @@
 # E36. Security hardening before real production
 
-Decisions: open
+Decisions: accepted on 21 November 2026
+
+> Owner, 2026-11-21: "Accept the other decisions". SD1 to SD8 are accepted as recommended in section 5. SD3 (WorkOS Radar) and SD6 (penetration test quotes) are paid outside services and stay the owner's to arrange; turning on any WorkOS setting is the owner's.
 
 > **Status: plan for owner approval. No code.** Written 2026-11-15 against `origin/main` at `b3e0e578`. The repository is public, so this plan names no secrets, hosts or real figures. Facts marked **[U]** were not confirmed in a primary source today.
 

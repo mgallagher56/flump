@@ -35,10 +35,10 @@ Refreshed on 2026-11-20 against `origin/main` and the merged pull requests up to
 | 19 | Backend | Re-score follow-ups (backend-2026-11/RESCORE.md): BE-16 conditional writes, BE-17 performance and tests, BE-18 bank launch readiness, SEC-D receipt encryption, SEC-E CI and images, SEC-F audit-trail integrity; SEC-A waits for the owner's variables | Done in code: BE-01 to BE-14; BE-15 with SEC-B (#725); BE-16 (#733); BE-17 with SEC-E (#730); BE-18 (#752); SEC-D (#753); SEC-A and SEC-F (#738). SEC-A makes the keys required at production boot, so the owner's variables must be set before a production deploy |
 | 20 | E16 | Design polish rounds 2 and 3 | Done: merged (#697 to #728). The R3 re-score is in `docs/design/e16-polish/RESCORE-R3.md` |
 | 21 | E33 | Retirement plan: a target the user sets, tracked each month (E27 becomes its tax slices) | Plan approved 2026-11-17 (RD1 to RD11 accepted); S0 to S5 merged (#750, #758, #768), RD6, RD9 and RD11 merged (#770). S6 to S9 not started |
-| 22 | E36 | Security hardening before real production: supply chain, accounts, breach impact, post-quantum readiness, AI-assisted attacks, external test | Slice 1 (#747) and H2 and H5 (#755) merged. MFA and passkeys, the restricted database role, field-level encryption, the breach drill and the external test have no PR. Owner approval of SD1 to SD8: not re-checked |
-| 23 | E37 | Self-employed work tracking & invoice builder: default hourly rate, itemised work logs, draft/issued/paid invoices, PDF/print & CSV export, optional SA sync | Plan merged (#759); nothing built. Owner approval: not re-checked |
+| 22 | E36 | Security hardening before real production: supply chain, accounts, breach impact, post-quantum readiness, AI-assisted attacks, external test | Slice 1 (#747) and H2 and H5 (#755) merged. MFA and passkeys, the restricted database role, field-level encryption, the breach drill and the external test have no PR. SD1 to SD8 accepted as recommended on 2026-11-21 |
+| 23 | E37 | Self-employed work tracking & invoice builder: default hourly rate, itemised work logs, draft/issued/paid invoices, PDF/print & CSV export, optional SA sync | Plan merged (#759) and accepted 2026-11-21 (VAT on invoices allowed); nothing built |
 | 24 | E38 | User action friction and interaction-efficiency audit | S0 harness merged (#780, warn-only CI job); S1 to S3 merged (#841) |
-| 25 | E39 | Mortgage affordability from your own figures | Plan merged (#776); nothing built |
+| 25 | E39 | Mortgage affordability from your own figures | Plan merged (#776) and accepted 2026-11-21 with changes (plan section 10a); nothing built |
 | 26 | E40 | One home per value: system data audit and restructure | Done: all nine slices merged (#784, #785, #786, #791, #798 and #803, #797 and #801, #825, #806, #805 and #808 and #820). Owner tax sign-off of the vectors in slices 2 and 7 is open |
 | 27 | E41 | Mutation testing and faster tests | Done: M0 to M5 and P0 to P5 merged (M5 in #857). Mutation testing is a local monthly check, not a CI job |
 | 28 | E42 | Marketing site restructure: pages split the way the app is, selling the features it has | Done: #848, #850, #852, #853, then the teal bands and larger illustrations (#854, #856) |
@@ -889,7 +889,7 @@ Source: [docs/research/market-research-2026-11.md](../research/market-research-2
 
 ## E28. MTD for Income Tax discovery spike
 
-- **Status (2026-11-18):** desk research done in [E28-mtd-discovery.md](plans/E28-mtd-discovery.md) (Decisions: open). There is no decision and no user evidence yet (E30 plan, owner question O3), and the decision is due before April 2027. No "MTD-compliant" claim appears in the copy.
+- **Status (2026-11-18):** desk research done in [E28-mtd-discovery.md](plans/E28-mtd-discovery.md) (Decisions: accepted on 2026-11-21: do nothing now, decide on records and quarterly estimates by February 2027, rule out submission software for 2027-28). There is no user evidence yet (E30 plan, owner question O3), and the decision is due before April 2027. No "MTD-compliant" claim appears in the copy.
 - **Severity:** P3 (spike with a dated decision).
 - **Blocked by:** none for discovery; a submission build needs HMRC recognition work.
 - **Done when:** a written decision before April 2027 on one of three paths: (a) record and quarterly estimate with export to bridging software only, (b) HMRC-recognised submission, (c) do nothing; evidence from at least five beta self-employed or landlord users; the ledger's labels never claim "MTD-compliant" unless the digital-links and fraud-prevention requirements are met.
@@ -961,7 +961,7 @@ Source: [docs/research/market-research-2026-11.md](../research/market-research-2
 - **Blocked by:** owner decisions W1 to W9 in the plan. Set 3's shared goals need E34 (C3 onward).
 - **Done when:** every feature is a net positive for the person's financial wellbeing and never aims at engagement (test W); every feature passes the five no-shaming tests N1 to N5 (no scores or ranks, no comparison with others, no loss-framed streaks, the action acknowledged and never the amount, the same warmth for every starting point including debt and renting); each feature has its own switch and honours reduced motion; benefit is measured only as the plan's section 7 sets out, and a feature is paused or removed under its stop rules.
 - **Notes:** three option sets: Set 1 warm confirmations of finished actions; Set 2 goals that are the user's own at any size; Set 3 a calmer month, reminders the user asks for, and shared goals for couples. The plan recommends Set 1 first, with the section 4 guide additions either way. UX guidelines O7 and M5 (no celebratory animation on a financial event) still apply. Plan: [E35-encouragement-and-wellbeing.md](plans/E35-encouragement-and-wellbeing.md).
-- **Status (2026-11-18):** `Set 1` (`#749`, no-shaming copy guardrails and warm confirmations) merged. Sets 2 and 3 have no PR yet.
+- **Status (2026-11-18):** `Set 1` (`#749`, no-shaming copy guardrails and warm confirmations) merged. Sets 2 and 3 have no PR yet. The owner accepted W1 to W9 as recommended on 2026-11-21 (DECISIONS), so they may be built.
 - **Labels:** needs-triage
 
 ## E36. Security hardening before real production
@@ -970,7 +970,7 @@ Source: [docs/research/market-research-2026-11.md](../research/market-research-2
 - **Blocked by:** owner approval of the plan and its decisions SD1 to SD8 (not re-checked); the custom domain (E24) for passkeys and the security mailbox; an owner money decision for the external test.
 - **Done when:** Bun and Renovate both wait seven days before taking a new release, with a documented urgent exception; laws keep `trustedDependencies` to an allowlist and every action pinned to a commit; each release has an SBOM and CI fails on a known high advisory; `SECURITY.md` and `security.txt` are published; MFA is required on the owner's and admins' accounts and passkeys are offered to users; the application runs under a database role with no schema rights; names and labels are encrypted at field level; the breach runbook has been exercised once; a crypto inventory exists and the edge's key exchange has been tested; prompt-injection tests cover every MCP read tool and the staged import; an external penetration test has run and its findings are fixed or accepted in writing.
 - **Notes:** the plan starts from an inventory of what is already on main (frozen lockfile with scripts off, SHA-pinned actions, digest-pinned images, gitleaks, Semgrep, ZAP, AES-256-GCM bank tokens, the 72-hour step in the incident runbook) and lists only gaps. Dashboard settings and the test budget are owner-only. Plan: [E36-security-hardening-plan.md](plans/E36-security-hardening-plan.md).
-- **Status (2026-11-20):** `Slice 1` (`#747`: 7-day Bun/Renovate gates, CI laws, `SECURITY.md`, `security.txt`) and `H2 & H5` (`#755`: SBOMs, failing `bun audit`, workspace `knip`, MCP prompt-injection suite) merged. The backend items slice H4 waited on are merged: `SEC-A` and `SEC-F` (`#738`), `BE-18` (`#752`) and `SEC-D` receipt encryption (`#753`). Remaining hardening items (MFA/passkeys, restricted DB role, remaining field-level encryption, breach drill, external pentest) have no PR yet.
+- **Status (2026-11-20):** `Slice 1` (`#747`: 7-day Bun/Renovate gates, CI laws, `SECURITY.md`, `security.txt`) and `H2 & H5` (`#755`: SBOMs, failing `bun audit`, workspace `knip`, MCP prompt-injection suite) merged. The backend items slice H4 waited on are merged: `SEC-A` and `SEC-F` (`#738`), `BE-18` (`#752`) and `SEC-D` receipt encryption (`#753`). Remaining hardening items (MFA/passkeys, restricted DB role, remaining field-level encryption, breach drill, external pentest) have no PR yet. The owner accepted SD1 to SD8 as recommended on 2026-11-21 (DECISIONS).
 - **Labels:** needs-triage
 
 ### Addendum to E19: portability
@@ -983,7 +983,7 @@ Add to E19 (opus review: effort S, so fold in rather than a new epic): full JSON
 - **Blocked by:** owner approval of the plan and its decisions D1 to D3.
 - **Done when:** a user can set a default hourly rate, log itemised work entries (`date`, `description`, `hoursWorked`, `hourlyRate` pre-filled and overridable, `amount`) linked to a Self Assessment income source, group/filter unbilled entries into numbered draft/issued/paid/void invoices with client details and totals, export invoices via PDF/print and formula-safe CSV, and optionally sync paid invoices into Self Assessment `tax_records` with `If-Match` concurrency, UK GDPR export/deletion coverage, and zero advice strings.
 - **Notes:** four slices (`S0` data model & pure engine calculations -> `S1` CRUD API -> `S2` Work log & Invoice Builder UI -> `S3` SA integration & PDF/CSV export). Plan: [E37-self-employed-invoicing-plan.md](plans/E37-self-employed-invoicing-plan.md).
-- **Status (2026-11-20):** plan merged (`#759`); nothing built (`S0` to `S3` have no PR).
+- **Status (2026-11-21):** plan merged (`#759`) and accepted by the owner on 2026-11-21: D1 (a), D2 changed to allow VAT on invoices, D3 (a). Nothing built (`S0` to `S3` have no PR).
 - **Labels:** needs-triage
 
 ## E38. User action friction & interaction-efficiency audit
@@ -1001,7 +1001,7 @@ Add to E19 (opus review: effort S, so fold in rather than a new epic): full JSON
 - **Blocked by:** owner decisions MA1 to MA12; E29a for the wording and the standing line; E29b before anyone beyond the friends beta.
 - **Done when:** a user sees, from saved details and without retyping, what is left each month before housing; an estimated loan from a monthly payment and from an income multiple, each with every assumption visible and editable; payments at a rate and at plus or minus a chosen number of points, for a new loan, a saved mortgage and a fix that ends; all formulas live in `packages/finance-engine` with hand-worked tests; nothing is stored; no surface names a lender, says what a user can borrow, or judges their situation.
 - **Notes:** slices S1 engine, S2 web (new page, one rate tool replacing `RemortgageShockSim`), S3 optional MCP. Stamp duty, shared ownership and new interest-only loans are out of version one. Plan: [E39-mortgage-affordability-plan.md](plans/E39-mortgage-affordability-plan.md).
-- **Status (2026-11-20):** plan only (`#776`); nothing built.
+- **Status (2026-11-21):** plan (`#776`) accepted by the owner on 2026-11-21 with changes: a 4 to 4.5 times income range, default rates by loan to value, and an estimated stamp duty figure (plan section 10a). Nothing built.
 - **Labels:** needs-triage
 
 ## E40. One home per value: system data audit and restructure
