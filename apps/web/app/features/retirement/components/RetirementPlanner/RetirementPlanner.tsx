@@ -53,7 +53,7 @@ import {
   WholeNumberInput,
 } from "@repo/ui";
 import { Calendar, ClipboardList } from "lucide-react";
-import { type FC, type ReactNode, useMemo, useState } from "react";
+import { type FC, type ReactNode, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
 import {
   contributionSliderHelper,
@@ -457,6 +457,11 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
     () => new Set(savedPlan?.excludedAccountIds ?? []),
   );
   const [formError, setFormError] = useState<string | null>(null);
+  const [dirtyAfterSave, setDirtyAfterSave] = useState(false);
+
+  useEffect(() => {
+    setDirtyAfterSave(false);
+  }, [saveSuccess, isSaving]);
 
   // The same lines the plan counts (`retirementBudgetLines`): a debt line linked to a loan shows
   // the loan's payment, never its stored £0, and a linked line that is Not set is not listed.
@@ -860,7 +865,7 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
           description="These saved details make the estimate. Nothing changes until you select Save plan."
           icon={ClipboardList}
         >
-          <div className={controlsCard()}>
+          <div className={controlsCard()} onChangeCapture={() => setDirtyAfterSave(true)}>
             <div className={fieldGrid()}>
               <div className={fieldGroup()}>
                 <label className={fieldLabel()} htmlFor="ret-age-input">
@@ -896,7 +901,10 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
                   variant={targetMode === "typed" ? "primary" : "secondary"}
                   size="sm"
                   aria-pressed={targetMode === "typed"}
-                  onClick={() => setTargetMode("typed")}
+                  onClick={() => {
+                    setTargetMode("typed");
+                    setDirtyAfterSave(true);
+                  }}
                 >
                   Typed figure
                 </Button>
@@ -905,7 +913,10 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
                   variant={targetMode === "budget" ? "primary" : "secondary"}
                   size="sm"
                   aria-pressed={targetMode === "budget"}
-                  onClick={() => setTargetMode("budget")}
+                  onClick={() => {
+                    setTargetMode("budget");
+                    setDirtyAfterSave(true);
+                  }}
                 >
                   From budget lines
                 </Button>
@@ -949,9 +960,10 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
                                 size="sm"
                                 variant={currentStatus === status ? "primary" : "secondary"}
                                 aria-pressed={currentStatus === status}
-                                onClick={() =>
-                                  setLineStatuses((prev) => ({ ...prev, [entry.id]: status }))
-                                }
+                                onClick={() => {
+                                  setLineStatuses((prev) => ({ ...prev, [entry.id]: status }));
+                                  setDirtyAfterSave(true);
+                                }}
                               >
                                 {status === "continues" ? "Continues" : "Stops"}
                               </Button>
@@ -1083,7 +1095,7 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
               </p>
             )}
 
-            {saveSuccess && !formError && !saveError && (
+            {saveSuccess && !dirtyAfterSave && !formError && !saveError && (
               <p className={mutedNote()} role="status">
                 {saveSuccess}
               </p>

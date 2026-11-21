@@ -101,11 +101,16 @@ export default function RetirementRoute(): ReactElement {
   };
 
   const saveError =
-    fetcher.data && "success" in fetcher.data && fetcher.data.success === false
+    fetcher.state === "idle" &&
+    fetcher.data &&
+    "success" in fetcher.data &&
+    fetcher.data.success === false
       ? fetcher.data.error
       : null;
   const saveSuccess =
-    fetcher.data && "ok" in fetcher.data && fetcher.data.ok ? "Retirement plan saved." : null;
+    fetcher.state === "idle" && fetcher.data && "ok" in fetcher.data && fetcher.data.ok
+      ? "Retirement plan saved."
+      : null;
 
   return (
     <RetirementPlanner

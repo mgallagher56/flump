@@ -285,6 +285,17 @@ describe("RetirementPlanner", () => {
     expect(screen.getByText("Retirement plan saved.").getAttribute("role")).toBe("status");
   });
 
+  it("clears saveSuccess when a saved-plan input is edited", async () => {
+    const user = userEvent.setup();
+    renderPlanner({ saveSuccess: "Retirement plan saved." });
+    expect(screen.getByText("Retirement plan saved.")).toBeTruthy();
+
+    const planTo = screen.getByRole("textbox", { name: "Plan to age" });
+    await user.clear(planTo);
+    await user.type(planTo, "92");
+    expect(screen.queryByText("Retirement plan saved.")).toBeNull();
+  });
+
   it("changing the scenario growth case never saves", async () => {
     const user = userEvent.setup();
     const onSavePlan = vi.fn();
