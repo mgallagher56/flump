@@ -461,7 +461,7 @@ Owner's words: "Add rules to the repo to ensure when test are edited or added th
 
 Given by the owner in session on 21 November 2026, in answer to one list of every open decision in the five plans with each plan's recommendation. Owner's words, in full:
 
-"When building the mortgage affordability and any new features/sections/pages, remember our rules around a single source of truth for the users values/figures to ensure one value is used everywhere to avoid errors."
+"When building the mortgage affordability and any new features/sections/pages, remember our rules around a single source of truth for the users values/figures to ensure one value is used everywhere to avoid errors. I'm sure this is already a rule and will be followed, but just to double check and make sure."
 
 "MA2. Default income multiple should be ~4.5x. Do some research on this to make sure, but this is good generally guide. Maybe give a range between 4 and 4.5 to estimates being too wide of the mark."
 
@@ -480,5 +480,5 @@ Given by the owner in session on 21 November 2026, in answer to one list of ever
 - **E28 Making Tax Digital:** the recommendation is accepted. Whether to run the five interviews is not yet answered.
 - **Single source of truth:** AGENTS.md section 16 already makes this a law with a CI check. The E39 and E37 plans now say how each keeps to it.
 
-The coordinator's readings, not the owner's words, each marked in its plan: the stamp duty estimate covers England and Northern Ireland, Scotland and Wales; rates for 70% and 80% loan to value are a straight line between the owner's two points; over 90% has no default; the rate table carries its date and is covered by the stale-rates banner; the VAT rate is typed and never suggested.
+The coordinator's readings, not the owner's words (E39 section 10a and E37 section 10 list them under "The coordinator's readings"): the stamp duty estimate covers England and Northern Ireland, Scotland and Wales; rates for 70% and 80% loan to value are a straight line between the owner's two points, each band taking the rate of its upper end; over 90% has no default; the rate table carries its date and the page says when it is more than six months old; the VAT rate is typed and never suggested; every new line of wording. New wording still needs the owner's approval under E29a before the web slice merges.
 
