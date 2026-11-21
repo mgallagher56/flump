@@ -112,7 +112,7 @@ const FILLED = {
     pensionEmployerPercent: 3,
     isSalarySacrifice: false,
     isSalarySacrificeEmployerNi: false,
-    employmentType: "employed",
+    employmentType: "employed" as const,
     birthYear: new Date().getFullYear() - AGE,
     setupChecklistCompletedSteps: ["pension"],
   },
