@@ -247,6 +247,7 @@ describe.skipIf(dbMode === "skip")("authz: invoicing controller (real Postgres)"
       ["POST /invoices/:id/issue", "post", "/issue", {}],
       ["POST /invoices/:id/mark-paid", "post", "/mark-paid", { paidDate: "2026-11-20" }],
       ["POST /invoices/:id/void", "post", "/void", {}],
+      ["POST /invoices/:id/sync-to-tax", "post", "/sync-to-tax", {}],
     ] as const) {
       const asB = await h.call(method, `/invoices/${invoiceId}${sub}`, h.tokens.b, body);
       const missing = await h.call(method, `/invoices/${MISSING_ID}${sub}`, h.tokens.b, body);
