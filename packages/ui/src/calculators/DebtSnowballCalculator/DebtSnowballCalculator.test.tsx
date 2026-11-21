@@ -358,6 +358,14 @@ describe("DebtSnowballCalculator", () => {
     }
   });
 
+  it("recalculates when a debt's minimum payment changes", () => {
+    render(<DebtSnowballCalculator />);
+    const before = screen.getByTestId("debt-snowball-outcomes").textContent;
+    openDebt(1);
+    enter(debtGroup(/Debt 1/).getByLabelText(DEBT_SNOWBALL_COPY.minimum), "400");
+    expect(screen.getByTestId("debt-snowball-outcomes").textContent).not.toBe(before);
+  });
+
   it("hides Add a debt in the short form once there are six debts", () => {
     render(<DebtSnowballCalculator shortForm />);
     fireEvent.click(screen.getByRole("button", { name: "Change the debt details" }));

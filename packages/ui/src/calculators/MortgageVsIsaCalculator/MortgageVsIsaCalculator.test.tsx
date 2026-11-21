@@ -147,6 +147,16 @@ describe("MortgageVsIsaCalculator", () => {
     expect(explainer()).not.toContain("sooner");
   });
 
+  it("says nothing about sooner when the overpayment shortens the term by no whole month", () => {
+    // £1 a month for 240 months is £240, less than one monthly payment on £240,000 at 4.5% over
+    // 20 years (about £1,518), so the last month is still needed: 0 months sooner.
+    render(<MortgageVsIsaCalculator initialExtra={1} />);
+    fireEvent.click(screen.getByRole("button", { name: MORTGAGE_ISA_COPY.explainerTitle }));
+    expect(
+      screen.getByText(new RegExp(MORTGAGE_ISA_COPY.explainer.slice(0, 30))).textContent,
+    ).not.toContain("sooner");
+  });
+
   it("shows a neutral subtext, not years sooner, when nothing is overpaid", () => {
     const { unmount } = render(<MortgageVsIsaCalculator initialExtra={0} />);
     expect(screen.getByText(MORTGAGE_ISA_COPY.kpiInterestSavedNoExtra)).toBeDefined();
