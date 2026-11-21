@@ -21,28 +21,28 @@ Refreshed on 2026-11-20 against `origin/main` and the merged pull requests up to
 | 5 | E18 | A production environment separate from staging, so releases go to staging first | Not started |
 | 6 | E23, E4 C-11 | Compute the real estimated tax due (now `null`); verify C-17 | Done (`selectEstimatedTaxDue` feeds the dashboard; C-17 verified: providers throw, never report 0) |
 | 7 | E4 C-10 | A lone bonus record replaces the salary | Done (bfcb776a); one payslip no longer replaces the saved salary either (engine PR) |
-| 8 | E25 T5, T15, E4 B-07 | Rebuild `calculateUkTax` as an adapter; one-engine guard; move web calculators onto finance-engine | Done for tax (engine PR): adapter, `check-one-tax-engine` in `check:laws`. The B-07 mortgage and savings formulas in web remain |
+| 8 | E25 T5, T15, E4 B-07 | Rebuild `calculateUkTax` as an adapter; one-engine guard; move web calculators onto finance-engine | Done (2026-11-21): tax adapter and `check-one-tax-engine` in `check:laws`; B-07 web mortgage and savings formulas moved onto `@flump/finance-engine` (`OverpaymentSimulator`, `OverpayVsSaveCompare`, `RateChangeTool`, `savingsForecast.utils.ts`, `DepositTimeline`); mobile deleted (#827) |
 | 9 | E22 | Stale-rates banner on savings, budget, onboarding and home | Done (2026-11-21: wired with live `getUkTaxYearContext()` and tested for fallback and provisional states on all four pages) |
 | 10 | E24 | Fix stale paths in `docs/launch/readiness.json` | Done (BE-01) |
 | 11 | E8 | Make the Storybook a11y job blocking (due 2026-11-25) | Done: blocking in `ci-pipeline.yml` and listed in `.github/required-checks.json`. Whether branch protection requires it is not re-checked |
-| 12 | E1 D-06, C-18, F-03 | Transactional deleteAccount; MCP auth coverage to 80% | Partly: deletion runs in one transaction (BE-04, #668, per the backend re-score); MCP auth coverage not re-checked |
+| 12 | E1 D-06, C-18, F-03 | Transactional deleteAccount; MCP auth coverage to 80% | Done (2026-11-21): deletion runs in one transaction (BE-04, #668); MCP `src/auth/**` coverage verified at 99.55% stmts / 93.58% branches / 100% funcs / 100% lines (977 tests passing; `vitest.config.ts` enforces 98/93/99/99 floors on `src/auth/**` and `src/tools/**`) |
 | 13 | E3 B-04, D-11, N-02 | Foreign keys and indexes; key id for bank tokens; zod env schema | Done in code per the backend re-score: foreign keys (BE-08, #675), indexes proven by a query-plan test, versioned bank token keys (BE-12, #672), `config/env.schema.ts` |
 | 14 | E7 M-09, I-07 | Widen the claims guard; mirror the copy changes in web | Done: the marketing claims guard and the web copy guard now also ban "256-bit", "bank-grade", "GDPR" and "Open Banking"; no source used them |
-| 15 | E2, E1 G-03 | Salary-sacrifice defaults; delete the mock token and fake accounts in the parked mobile app | Mobile part done: `apps/mobile-companion` was deleted (#827). Salary-sacrifice defaults not re-checked |
+| 15 | E2, E1 G-03 | Salary-sacrifice defaults; delete the mock token and fake accounts in the parked mobile app | Done (2026-11-21): `apps/mobile-companion` deleted (#827); salary-sacrifice defaults verified resolved (`TakeHomeCalculator.tsx`, `PensionContainer.tsx`, `useFinishOnboarding.ts`, nullable `isSalarySacrifice` in `user-profile.entity.ts` and `null` default in `user-profile.service.ts`) |
 | 16 | E15 | Pre-release visual pass | Done (2026-11-21: checked all 23 web and marketing screens in light and dark at 375 and 1280 px; fixed the Take-home 3-card `KpiStrip` phone layout conflict) |
 | 17 | E9 H-03 | Last 17 design-token violations | Done (2026-11-21: 0 violations remain in `scripts/design-token-baseline.json`) |
 | 18 | E27, E28, E30 v2 | Pension projection epic; MTD decision (before April 2027); snapshot v2 | Not started |
 | 19 | Backend | Re-score follow-ups (backend-2026-11/RESCORE.md): BE-16 conditional writes, BE-17 performance and tests, BE-18 bank launch readiness, SEC-D receipt encryption, SEC-E CI and images, SEC-F audit-trail integrity; SEC-A waits for the owner's variables | Done in code: BE-01 to BE-14; BE-15 with SEC-B (#725); BE-16 (#733); BE-17 with SEC-E (#730); BE-18 (#752); SEC-D (#753); SEC-A and SEC-F (#738). SEC-A makes the keys required at production boot, so the owner's variables must be set before a production deploy |
 | 20 | E43 | User-POV functionality map (`docs/system/functionality-map/`) and 100% route-coverage enforcement in `check:laws` | Complete (2026-11-21: S0–S4 complete across all `apps/web` and `apps/marketing` routes; `unmapped_allowlist` retired and hard-error enforcement active) |
-| 20 | E16 | Design polish rounds 2 and 3 | Done: merged (#697 to #728). The R3 re-score is in `docs/design/e16-polish/RESCORE-R3.md` |
-| 21 | E33 | Retirement plan: a target the user sets, tracked each month (E27 becomes its tax slices) | Plan approved 2026-11-17 (RD1 to RD11 accepted); S0 to S5 merged (#750, #758, #768), RD6, RD9 and RD11 merged (#770). S6 to S9 not started |
-| 22 | E36 | Security hardening before real production: supply chain, accounts, breach impact, post-quantum readiness, AI-assisted attacks, external test | H1 (`#747`), H2/H5 (`#755`), and H6 (`prompt-injection.test.ts` extended to all read/simulate/stage tools) complete. Only owner-dependent items remain (WorkOS MFA/passkeys/Radar, restricted DB role, field-level encryption with owner key, breach tabletop drill, and external pen test). SD1 to SD8 accepted on 2026-11-21 |
-| 23 | E37 | Self-employed work tracking & invoice builder: default hourly rate, itemised work logs, draft/issued/paid invoices, PDF/print & CSV export, optional SA sync | Complete (`S0`–`S2` merged in `#867`; `S3` complete) |
-| 24 | E38 | User action friction and interaction-efficiency audit | S0 harness merged (#780, warn-only CI job); S1 to S3 merged (#841) |
-| 25 | E39 | Mortgage affordability from your own figures | Plan merged (#776) and accepted 2026-11-21 with changes (plan section 10a); nothing built |
-| 26 | E40 | One home per value: system data audit and restructure | Done: all nine slices merged (#784, #785, #786, #791, #798 and #803, #797 and #801, #825, #806, #805 and #808 and #820). Owner tax sign-off of the vectors in slices 2 and 7 is open |
-| 27 | E41 | Mutation testing and faster tests | Done: M0 to M5 and P0 to P5 merged (M5 in #857). Mutation testing is a local monthly check, not a CI job |
-| 28 | E42 | Marketing site restructure: pages split the way the app is, selling the features it has | Done: #848, #850, #852, #853, then the teal bands and larger illustrations (#854, #856) |
+| 21 | E16 | Design polish rounds 2 and 3 | Done: merged (#697 to #728). The R3 re-score is in `docs/design/e16-polish/RESCORE-R3.md` |
+| 22 | E33 | Retirement plan: a target the user sets, tracked each month (E27 becomes its tax slices) | Plan approved 2026-11-17 (RD1 to RD11 accepted); S0 to S5 merged (#750, #758, #768), RD6, RD9 and RD11 merged (#770). S6 to S9 not started |
+| 23 | E36 | Security hardening before real production: supply chain, accounts, breach impact, post-quantum readiness, AI-assisted attacks, external test | H1 (`#747`), H2/H5 (`#755`), and H6 (`prompt-injection.test.ts` extended to all read/simulate/stage tools) complete. Only owner-dependent items remain (WorkOS MFA/passkeys/Radar, restricted DB role, field-level encryption with owner key, breach tabletop drill, and external pen test). SD1 to SD8 accepted on 2026-11-21 |
+| 24 | E37 | Self-employed work tracking & invoice builder: default hourly rate, itemised work logs, draft/issued/paid invoices, PDF/print & CSV export, optional SA sync | Complete (`S0`–`S2` merged in `#867`; `S3` complete) |
+| 25 | E38 | User action friction and interaction-efficiency audit | S0 harness merged (#780, warn-only CI job); S1 to S3 merged (#841) |
+| 26 | E39 | Mortgage affordability from your own figures | Plan merged (#776) and accepted 2026-11-21 with changes (plan section 10a); nothing built |
+| 27 | E40 | One home per value: system data audit and restructure | Done: all nine slices merged (#784, #785, #786, #791, #798 and #803, #797 and #801, #825, #806, #805 and #808 and #820). Owner tax sign-off of the vectors in slices 2 and 7 is open |
+| 28 | E41 | Mutation testing and faster tests | Done: M0 to M5 and P0 to P5 merged (M5 in #857). Mutation testing is a local monthly check, not a CI job |
+| 29 | E42 | Marketing site restructure: pages split the way the app is, selling the features it has | Done: #848, #850, #852, #853, then the teal bands and larger illustrations (#854, #856) |
 
 ### Work in progress
 
@@ -73,7 +73,7 @@ E1 blocks E2, E5 and E6 (do not build on an unauthenticated backend). E3, E4 and
 
 ## E1. Real authentication and authorisation, fail closed
 
-- **Status (2026-11-20, checked against `origin/main`):** partly. The fail-closed core merged in #369: JWKS verification, the dev bypass gated off production, the MCP verifier rejecting OAuth JWTs, and web redirecting to /login. D-01, D-02, D-04, B-01, D-03, F-01 and D-07 are done. Request validation (D-08, B-02) landed later through E21's global zod contract interceptor (#634). Still open: deleteAccount is not transactional (D-06, C-18); MCP auth coverage is below the 80% target (F-03); G-03 is resolved because `apps/mobile-companion` was deleted (#827).
+- **Status (2026-11-21, checked against `origin/main`):** done. The fail-closed core merged in #369: JWKS verification, the dev bypass gated off production, the MCP verifier rejecting OAuth JWTs, and web redirecting to /login. D-01, D-02, D-04, B-01, D-03, F-01 and D-07 are done. Request validation (D-08, B-02) landed later through E21's global zod contract interceptor (#634). Deletion runs in one transaction (BE-04, #668); MCP `src/auth/**` and `src/tools/**` coverage is 98–100% (`packages/mcp/vitest.config.ts`); G-03 is resolved because `apps/mobile-companion` was deleted (#827).
 - **Severity:** P0
 - **Blocked by:** none
 - **Done when:** Backend, MCP and web reject unauthenticated or forged identities in every environment; no mock token or fallback user exists in production code; one user can never read or write another user's data.
@@ -127,7 +127,7 @@ E1 blocks E2, E5 and E6 (do not build on an unauthenticated backend). E3, E4 and
 
 #### F-03: @flump/mcp auth, scopes and anonymisation are essentially untested
 
-- **Status (2026-11-14):** PARTLY. Tests exist for the verifier, scopes, http, stdio and tools. The coverage threshold is 75% of lines globally (`packages/mcp/vitest.config`), not 80% on auth and tools.
+- **Status (2026-11-21):** DONE. `packages/mcp/vitest.config.ts` enforces 98/93/99/99 coverage floors on both `src/auth/**` and `src/tools/**`; verified `src/auth/**` at 99.55% stmts, 93.58% branches, 100% funcs, 100% lines (977 tests passing across 51 files).
 - Severity P1, effort M, location `packages/mcp/src/mcp.test.ts:149-173; packages/mcp/src/auth/token-verifier.ts:80-188; packages/mcp/src/tools/f`
 - Acceptance: Verifier table test for each accept/reject path, per-tool anonymisation tests with a fake data provider, scope tests, HTTP transport 401/429 tests. Target 80% lines on src/auth and src/tools.
 - Blocked by: none
@@ -168,10 +168,10 @@ E1 blocks E2, E5 and E6 (do not build on an unauthenticated backend). E3, E4 and
 
 ## E2. Remove mocks and fabricated data from product paths
 
-- **Status (2026-11-14, checked against `origin/main`):** done. Backend seeding was removed in #377, with the `RemoveSeededExampleData1794355400000` migration cleaning existing rows, and web fabrications were removed in #384. Every ticket below is done. Small leftovers:
-  - `isSalarySacrifice ?? true` defaults in `TakeHomeCalculator.tsx:60` and `PensionContainer.tsx:164`.
-  - `updateProfile` find-or-create still seeds pension 5%/3% with salary sacrifice on (`user-profile.service.ts:326-345`).
-  - The parked mobile app still carries fake accounts (see E1 G-03).
+- **Status (2026-11-21, checked against `origin/main`):** done. Backend seeding was removed in #377, with the `RemoveSeededExampleData1794355400000` migration cleaning existing rows, and web fabrications were removed in #384. Every ticket below is done, and the earlier salary-sacrifice / mobile leftovers are resolved:
+  - `TakeHomeCalculator.tsx` and `PensionContainer.tsx` no longer default `isSalarySacrifice` to `true` (unanswered stays `null`, false-safe).
+  - `user-profile.entity.ts` and `user-profile.service.ts` default `pensionPercent`, `pensionEmployerPercent`, and `isSalarySacrifice` to `null`.
+  - `apps/mobile-companion` was deleted in #827.
 - **Severity:** P0
 - **Blocked by:** E1
 - **Done when:** No GET or loader creates data; no screen shows invented figures; demo data is reachable only through an explicit, labelled demo mode that can never be entered by a signed-in user.
@@ -294,7 +294,7 @@ E1 blocks E2, E5 and E6 (do not build on an unauthenticated backend). E3, E4 and
   - The engine track merged as #379, despite its DRAFT title: C-01, C-02, C-03, C-06, C-07, C-08, C-13, C-14 and F-06.
   - C-15 and F-02 merged in #583.
   - C-10 and C-11 are done (bfcb776a, `selectEstimatedTaxDue`). The engine PR added the trading and property allowances, payments on account and month-by-month payslips, and removed the second tax implementations.
-  - Still open: the B-07 web mortgage and savings calculators still have their own (non-tax) formulas.
+  - Web mortgage and savings calculators (`OverpaymentSimulator.tsx`, `OverpayVsSaveCompare.tsx`, `RateChangeTool.tsx`, `savingsForecast.utils.ts`, `DepositTimeline.tsx`) all call `@flump/finance-engine` (verified 2026-11-21).
   - Owner action: all 334 vectors are unsigned (`signedOffBy` is null), so every figure stays unverified.
 - **Severity:** P0
 - **Blocked by:** none
@@ -387,9 +387,7 @@ E1 blocks E2, E5 and E6 (do not build on an unauthenticated backend). E3, E4 and
 
 #### B-07: Financial calculations re-implemented in mobile and web instead of using finance-engine
 
-- **Status (2026-11-14):** The mobile part is CANCELLED (DECISIONS.md, E12 rebuild); the old screens still compute locally until they are deleted. The web part is NOT STARTED:
-  - Hand-written formulas remain in `OverpaymentSimulator.tsx:96`, `RemortgageShockSim.tsx:148`, `OverpayVsSaveCompare.tsx:125` and `SavingsWidget/futureValue.ts:35`.
-  - There is no finance-math guard (see E25 T15).
+- **Status (2026-11-21):** DONE. `apps/mobile-companion` was deleted (#827), and all four cited web calculators (`OverpaymentSimulator.tsx`, `OverpayVsSaveCompare.tsx`, `RateChangeTool.tsx` replacing `RemortgageShockSim.tsx`, and `savingsForecast.utils.ts`/`DepositTimeline.tsx` replacing `SavingsWidget/futureValue.ts`) call `@flump/finance-engine`.
 - Severity P1, effort M, location `apps/mobile-companion/src/screens/{ForecastScreen.tsx:11-60,ProfileScreen.tsx:90-140,MortgageScreen.tsx:111-19`
 - Acceptance: Delete the local copies and call the engine. Add an overpayment-comparison function and Irish take-home to the engine. Add a CI grep guard for hand-written amortisation formulas in apps.
 - Blocked by: none
