@@ -7,6 +7,8 @@ excluded_routes:
     reason: Resource route streaming the signed-in user's JSON data export triggered from Settings.
   - route_file: apps/web/app/routes/api.$.tsx
     reason: Backend API proxy resource route for /api/*; no user-facing page.
+  - route_file: apps/web/app/routes/app._index.tsx
+    reason: Pure redirect route sending signed-in users to / (or /app/onboarding if incomplete, or /login / /sandbox if signed out).
   - route_file: apps/web/app/routes/app.onboarding.mortgage-with-property.ts
     reason: Onboarding resource action endpoint creating a linked mortgage and property.
   - route_file: apps/web/app/routes/csp-report.ts
@@ -20,13 +22,7 @@ excluded_routes:
 unmapped_allowlist:
   - apps/web/app/routes/$.tsx
   - apps/web/app/routes/$feature._index.tsx
-  - apps/web/app/routes/_index.tsx
   - apps/web/app/routes/account-deleted.tsx
-  - apps/web/app/routes/app._index.tsx
-  - apps/web/app/routes/app.accounts.$account.tsx
-  - apps/web/app/routes/app.accounts._index.tsx
-  - apps/web/app/routes/app.accounts.history.tsx
-  - apps/web/app/routes/app.budget.tsx
   - apps/web/app/routes/app.debt.tsx
   - apps/web/app/routes/app.forecast.tsx
   - apps/web/app/routes/app.imports.$id.tsx
@@ -35,7 +31,6 @@ unmapped_allowlist:
   - apps/web/app/routes/app.invoicing.tsx
   - apps/web/app/routes/app.mortgage-estimates.tsx
   - apps/web/app/routes/app.mortgage.tsx
-  - apps/web/app/routes/app.onboarding.tsx
   - apps/web/app/routes/app.pension.tsx
   - apps/web/app/routes/app.profile.tsx
   - apps/web/app/routes/app.sandbox.tsx

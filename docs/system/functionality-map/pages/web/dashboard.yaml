@@ -1,0 +1,202 @@
+id: dashboard
+app: web
+route: /
+title: Your money
+auth: required
+purpose: See your net worth, monthly budget summary, setup and check-in prompts, and summaries of each enabled money area.
+entry_points:
+  - Main app navigation (Home)
+  - Sign-in and onboarding completion redirect
+  - Logo link in app header
+route_file: apps/web/app/routes/_index.tsx
+
+sections:
+  - id: header
+    name: Page header
+    kind: header
+    component: apps/web/app/features/dashboard/components/HomeDashboard/HomeDashboard.tsx
+    capabilities:
+      - id: orient
+        goal: Identify the dashboard ("Your money") and view any tax-rates status banner.
+        mode: read
+        actions: []
+
+  - id: hero
+    name: Net worth hero
+    kind: hero
+    component: apps/web/app/features/dashboard/components/HomeDashboard/HomeDashboard.tsx
+    capabilities:
+      - id: view-net-worth
+        goal: View total net worth, month-on-month delta against the prior recorded month, and what the figure leaves out.
+        mode: read
+        facts_read:
+          - account-balance
+          - ownership-share
+          - net-worth-choices
+          - balance-history
+          - home-value
+        figures_shown:
+          - net-worth
+        actions:
+          - id: add-first-account
+            control: link
+            label: Add an account
+            effect: Navigates to /app/accounts when no accounts exist yet.
+            target: /app/accounts
+          - id: add-home-estimate
+            control: link
+            label: Add an estimate
+            effect: Navigates to /app/accounts?add=property when net worth leaves out homeValueMissing.
+            target: /app/accounts?add=property
+          - id: change-what-counts
+            control: link
+            label: Change what counts
+            effect: "Navigates to #net-worth on Settings Profile tab to adjust net worth choices."
+            target: "/app/profile?tab=profile#net-worth"
+
+  - id: kpis
+    name: Supporting KPI strip
+    kind: kpi-strip
+    component: apps/web/app/features/dashboard/components/DashboardKpiStrip/DashboardKpiStrip.tsx
+    capabilities:
+      - id: view-supporting-kpis
+        goal: View monthly left-over (or income-only prompt) and either total debts or pension pots total.
+        mode: read
+        facts_read:
+          - budget-entries
+          - account-balance
+          - salary
+          - typed-take-home
+          - pension-rates
+          - tax-region
+          - student-loan-plan
+        figures_shown:
+          - left-over
+          - total-debts
+        actions:
+          - id: add-budget
+            control: link
+            label: Add your budget
+            effect: Navigates to /app/budget when no budget exists.
+            target: /app/budget
+          - id: add-spending
+            control: link
+            label: Add your spending to see what is left over each month
+            effect: Navigates to /app/budget when only income is in the budget.
+            target: /app/budget
+
+  - id: housekeeping
+    name: Setup checklist and monthly check-in prompt
+    kind: notice
+    component: apps/web/app/features/dashboard/components/SetupChecklist/SetupChecklist.tsx
+    when: when setup checklist is not dismissed or monthly check-in is due
+    capabilities:
+      - id: track-setup-steps
+        goal: Expand the setup checklist, jump to incomplete areas, mark a step "Not for me", or hide the checklist.
+        mode: write
+        facts_read:
+          - setup-checklist
+          - enabled-pages-and-widgets
+        facts_written:
+          - setup-checklist
+        actions:
+          - id: toggle-checklist
+            control: drawer-toggle
+            label: Finish setting up
+            effect: Expands or collapses the setup steps list.
+          - id: open-checklist-step
+            control: link
+            label: Add spending / Add account / Add savings rates / Add pension details / Add mortgage details / Open Self Assessment
+            effect: Navigates to the corresponding app page for an incomplete setup step.
+          - id: skip-checklist-step
+            control: button
+            label: Not for me
+            effect: Marks the step as skipped in the user's setup checklist.
+            target: PATCH /user-profile
+          - id: hide-checklist
+            control: button
+            label: Hide setup checklist
+            effect: Dismisses the setup checklist on the user's profile.
+            target: PATCH /user-profile
+
+      - id: start-monthly-check-in
+        goal: Open the monthly check-in flow when this month's check-in is not yet completed.
+        mode: navigate
+        facts_read:
+          - check-in-done
+          - check-in-day
+        actions:
+          - id: go-to-check-in
+            control: link
+            label: Start monthly check-in / Continue check-in
+            effect: Navigates to /app/accounts/history?checkIn=1 to record monthly balances.
+            target: /app/accounts/history?checkIn=1
+
+  - id: sections-grid
+    name: Your sections
+    kind: list
+    component: apps/web/app/features/dashboard/components/HomeDashboard/HomeDashboard.tsx
+    capabilities:
+      - id: view-section-cards
+        goal: View summary cards for enabled areas with saved data (Accounts, Budget, Cards and loans, Savings, Pension, Mortgage, Self Assessment) and follow links to each page.
+        mode: read
+        facts_read:
+          - enabled-pages-and-widgets
+          - account-balance
+          - budget-entries
+          - pension-rates
+          - tax-records
+        figures_shown:
+          - net-worth
+          - left-over
+          - safe-to-spend
+          - months-of-cover
+          - total-debts
+          - debt-free-date
+          - savings-total
+          - savings-interest
+          - pension-going-in
+          - estimated-tax
+        actions:
+          - id: open-choose-sections
+            control: button
+            label: Choose what shows here
+            effect: Opens the WidgetVisibilityPanel sheet to toggle and reorder dashboard sections.
+          - id: open-section-page
+            control: link
+            label: Section card link
+            effect: Navigates to the corresponding feature page (/app/accounts, /app/budget, /app/debt, /app/savings, /app/pension, /app/mortgage, or /app/self-assessment).
+
+  - id: visibility-sheet
+    name: Choose what shows here sheet
+    kind: drawer
+    component: apps/web/app/features/dashboard/components/WidgetVisibilityPanel/WidgetVisibilityPanel.tsx
+    when: when panelOpen is true
+    capabilities:
+      - id: configure-dashboard-sections
+        goal: Toggle which enabled sections appear on the dashboard, reorder them up or down, or reset to the default order.
+        mode: write
+        facts_read:
+          - enabled-pages-and-widgets
+        facts_written:
+          - enabled-pages-and-widgets
+        actions:
+          - id: toggle-section
+            control: checkbox
+            label: Section visibility checkbox
+            effect: Shows or hides a section and saves dashboardWidgets to the user profile.
+            target: PATCH /user-profile
+          - id: move-section
+            control: button
+            label: Move up / Move down
+            effect: Moves a section up or down one position and saves dashboardWidgetOrder.
+            target: PATCH /user-profile
+          - id: reset-section-order
+            control: button
+            label: Reset to default order
+            effect: Restores default section priority order and saves dashboardWidgetOrder.
+            target: PATCH /user-profile
+          - id: close-visibility-sheet
+            control: button
+            label: Done
+            effect: Closes the section visibility sheet.
