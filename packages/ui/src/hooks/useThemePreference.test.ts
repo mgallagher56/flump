@@ -162,4 +162,34 @@ describe("useThemePreference", () => {
     expect(result.current.theme).toBe("light");
     expect(document.documentElement.getAttribute("data-theme")).toBe("light");
   });
+
+  test("uses a stored dark choice over a light system theme", () => {
+    localStorage.setItem("flump-theme", "dark");
+    const { result } = renderHook(() => useTheme());
+    expect(result.current.preference).toBe("dark");
+    expect(result.current.theme).toBe("dark");
+  });
+
+  test("keeps the server theme when the browser has no matchMedia", () => {
+    vi.stubGlobal("matchMedia", undefined);
+    const { result } = renderHook(() => useTheme({ serverTheme: "light" }));
+    expect(result.current.theme).toBe("light");
+    expect(document.documentElement.getAttribute("data-theme")).toBe("light");
+  });
+
+  test("stops following the system theme after unmounting", () => {
+    const query = {
+      matches: false,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    };
+    vi.stubGlobal(
+      "matchMedia",
+      vi.fn(() => query),
+    );
+    const { unmount } = renderHook(() => useTheme());
+    const onChange = query.addEventListener.mock.calls[0]?.[1];
+    unmount();
+    expect(query.removeEventListener).toHaveBeenCalledWith("change", onChange);
+  });
 });

@@ -159,3 +159,47 @@ describe("useSavedFigureChange", () => {
     expect(result.current.isWashed).toBe(false);
   });
 });
+
+describe("useSavedFigureChange re-runs", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    mockMatchMedia(false);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+    Reflect.deleteProperty(window, "matchMedia");
+  });
+
+  it("does not play when only the timings change", () => {
+    const { result, rerender } = renderHook(
+      ({ val, fadeMs }) => useSavedFigureChange(val, { fadeMs }),
+      { initialProps: { val: 100, fadeMs: 120 } },
+    );
+    rerender({ val: 100, fadeMs: 200 });
+    expect(result.current.isOut).toBe(false);
+    expect(result.current.displayedValue).toBe(100);
+  });
+
+  it("drops the first change when a second save lands during the fade", () => {
+    const { result, rerender } = renderHook(({ val }) => useSavedFigureChange(val), {
+      initialProps: { val: 100 },
+    });
+    rerender({ val: 200 });
+    act(() => {
+      vi.advanceTimersByTime(60);
+    });
+    rerender({ val: 300 });
+    // At 120ms the first fade would have ended; the second runs to 180ms.
+    act(() => {
+      vi.advanceTimersByTime(60);
+    });
+    expect(result.current.displayedValue).toBe(100);
+    expect(result.current.isOut).toBe(true);
+    act(() => {
+      vi.advanceTimersByTime(60);
+    });
+    expect(result.current.displayedValue).toBe(300);
+  });
+});

@@ -75,6 +75,13 @@ describe("formatAxisCurrency", () => {
   it("supports maxFractionDigits", () => {
     expect(formatAxisCurrency(1_234_567, { maxFractionDigits: 2 })).toBe("£1.23m");
     expect(formatAxisCurrency(1_234_567, { maxFractionDigits: 0 })).toBe("£1m");
+    // 1,234,500 / 1,000,000 = 1.2345, kept to four places.
+    expect(formatAxisCurrency(1_234_500, { maxFractionDigits: 4 })).toBe("£1.2345m");
+  });
+
+  it("keeps billions as the largest unit", () => {
+    // 1.5 trillion is 1,500 billion.
+    expect(formatAxisCurrency(1_500_000_000_000)).toBe("£1,500bn");
   });
 });
 
@@ -86,7 +93,7 @@ describe("capSeriesWithOther", () => {
     const result = capSeriesWithOther(items);
     expect(result).toEqual(items);
     expect(result).not.toBe(items);
-    expect(capSeriesWithOther(mk(1, 2, 3, 4, 5))).toHaveLength(5);
+    expect(capSeriesWithOther(mk(1, 2, 3, 4, 5))).toEqual(mk(1, 2, 3, 4, 5));
   });
 
   it("defaults to the donut cap of 5 slices", () => {

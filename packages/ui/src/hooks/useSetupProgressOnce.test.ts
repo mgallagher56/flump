@@ -169,3 +169,52 @@ describe("useSetupProgressOnce", () => {
     expect(result.current.isAnimating).toBe(false);
   });
 });
+
+describe("setup step count storage", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    clearStoredStepCount();
+    mockMatchMedia(false);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+    clearStoredStepCount();
+    vi.unstubAllGlobals();
+    Reflect.deleteProperty(window, "matchMedia");
+  });
+
+  it("clears the stored count", () => {
+    storeStepCount(2);
+    clearStoredStepCount();
+    expect(getStoredStepCount()).toBeNull();
+  });
+
+  it("reads no count when sessionStorage refuses to read", () => {
+    vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
+      throw new Error("blocked");
+    });
+    expect(getStoredStepCount()).toBeNull();
+  });
+
+  it("follows a count that goes down at once", () => {
+    storeStepCount(3);
+    const { result, rerender } = renderHook(({ done }) => useSetupProgressOnce(done), {
+      initialProps: { done: 3 },
+    });
+    rerender({ done: 2 });
+    expect(result.current.currentValue).toBe(2);
+    expect(getStoredStepCount()).toBe(2);
+  });
+
+  it("does not save the new count when it unmounts before the fill has played", () => {
+    storeStepCount(1);
+    const { unmount } = renderHook(() => useSetupProgressOnce(2));
+    unmount();
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+    expect(getStoredStepCount()).toBe(1);
+  });
+});
