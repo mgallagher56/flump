@@ -45,6 +45,16 @@
       "floor": 73,
       "measured": 74.38,
       "measuredOn": "2026-11-20"
+    },
+    "apps/web": {
+      "floor": 85,
+      "measured": 86.57,
+      "measuredOn": "2026-11-21"
+    },
+    "packages/ui": {
+      "floor": 78,
+      "measured": 79.51,
+      "measuredOn": "2026-11-21"
     }
   }
 }
