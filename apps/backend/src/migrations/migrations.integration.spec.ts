@@ -133,12 +133,15 @@ const ENTITY_TABLES = [
   "consents",
   "idempotency_keys",
   "import_batches",
+  "invoices",
+  "invoicing_settings",
   "mcp_tokens",
   "retirement_plans",
   "snapshot_checkins",
   "tax_records",
   "transactions",
   "user_profiles",
+  "work_log_entries",
 ];
 
 describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Postgres)", () => {

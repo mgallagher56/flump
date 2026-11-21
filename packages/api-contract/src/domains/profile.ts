@@ -552,6 +552,58 @@ export const AccountExportRetirementPlan = z.strictObject({
 });
 
 /** GET /user-profile/export: the whole document (`schemaVersion` first). */
+export const AccountExportInvoicingSettings = z.strictObject({
+  id: z.string().uuid(),
+  defaultHourlyRate: z.number().nullable(),
+  businessName: z.string().nullable(),
+  businessAddress: z.string().nullable(),
+  businessEmail: z.string().nullable(),
+  vatNumber: z.string().nullable(),
+  invoicePrefix: z.string(),
+  nextInvoiceSequence: z.number().int(),
+  defaultPaymentTermsDays: z.number().int(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+export type AccountExportInvoicingSettings = z.infer<typeof AccountExportInvoicingSettings>;
+
+export const AccountExportWorkLogEntry = z.strictObject({
+  id: z.string().uuid(),
+  date: z.string(),
+  description: z.string(),
+  hoursWorked: z.number(),
+  hourlyRate: z.number(),
+  amount: z.number(),
+  clientName: z.string().nullable(),
+  incomeSource: z.enum(["self-employed"]),
+  invoiceId: z.string().uuid().nullable(),
+  notes: z.string().nullable(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+export type AccountExportWorkLogEntry = z.infer<typeof AccountExportWorkLogEntry>;
+
+export const AccountExportInvoice = z.strictObject({
+  id: z.string().uuid(),
+  invoiceNumber: z.string(),
+  status: z.enum(["draft", "issued", "paid", "void"]),
+  clientName: z.string(),
+  clientEmail: z.string().nullable(),
+  clientAddress: z.string().nullable(),
+  issueDate: z.string(),
+  dueDate: z.string(),
+  paidDate: z.string().nullable(),
+  subtotal: z.number(),
+  vatRatePct: z.number().nullable(),
+  vatAmount: z.number(),
+  total: z.number(),
+  notes: z.string().nullable(),
+  taxRecordId: z.string().uuid().nullable(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+export type AccountExportInvoice = z.infer<typeof AccountExportInvoice>;
+
 export const AccountExportDocument = z.strictObject({
   schemaVersion: z.literal(ACCOUNT_EXPORT_SCHEMA_VERSION),
   exportedAt: IsoDateTime,
@@ -575,6 +627,9 @@ export const AccountExportDocument = z.strictObject({
   idempotencyKeys: z.array(AccountExportIdempotencyKey),
   auditEvents: z.array(AccountExportAuditEvent),
   consents: z.array(AccountExportConsent),
+  invoicingSettings: z.array(AccountExportInvoicingSettings),
+  workLogEntries: z.array(AccountExportWorkLogEntry),
+  invoices: z.array(AccountExportInvoice),
 });
 export type AccountExportDocument = z.infer<typeof AccountExportDocument>;
 
@@ -605,4 +660,7 @@ export const ACCOUNT_EXPORT_SECTIONS = {
   idempotencyKeys: AccountExportIdempotencyKey,
   auditEvents: AccountExportAuditEvent,
   consents: AccountExportConsent,
+  invoicingSettings: AccountExportInvoicingSettings,
+  workLogEntries: AccountExportWorkLogEntry,
+  invoices: AccountExportInvoice,
 } as const satisfies Record<AccountExportKey, z.ZodType>;

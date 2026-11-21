@@ -13,12 +13,15 @@ import { BudgetEntry } from "../entities/budget-entry.entity";
 import { Consent } from "../entities/consent.entity";
 import { IdempotencyKey } from "../entities/idempotency-key.entity";
 import { ImportBatch } from "../entities/import-batch.entity";
+import { Invoice } from "../entities/invoice.entity";
+import { InvoicingSettings } from "../entities/invoicing-settings.entity";
 import { McpToken } from "../entities/mcp-token.entity";
 import { RetirementPlan } from "../entities/retirement-plan.entity";
 import { SnapshotCheckin } from "../entities/snapshot-checkin.entity";
 import { TaxRecord } from "../entities/tax-record.entity";
 import { Transaction } from "../entities/transaction.entity";
 import { UserProfile } from "../entities/user-profile.entity";
+import { WorkLogEntry } from "../entities/work-log-entry.entity";
 import { type Env, resolveDbConfig } from "./db.config";
 
 // biome-ignore lint/complexity/noBannedTypes: TypeORM entity classes are typed as Function[]
@@ -42,6 +45,9 @@ export const ENTITIES: Function[] = [
   Consent,
   BetaInvite,
   BetaMember,
+  InvoicingSettings,
+  WorkLogEntry,
+  Invoice,
 ];
 
 // Relative to this file so it resolves under both `bun src/...` (ts) and dist/ (js).

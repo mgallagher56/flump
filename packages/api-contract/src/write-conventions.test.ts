@@ -104,6 +104,8 @@ describe("idempotency keys (BE-09, audit M7)", () => {
       "accounts.createMortgageWithProperty",
       "budget.addCategory",
       "budget.create",
+      "invoicing.createInvoice",
+      "invoicing.createWorkLog",
       "tax.bulkCreate",
       "tax.create",
     ]);
@@ -139,6 +141,9 @@ describe("conditional updates (BE-09, audit M7, L15)", () => {
     ).toEqual([
       "accounts.update",
       "budget.update",
+      "invoicing.updateInvoice",
+      "invoicing.updateSettings",
+      "invoicing.updateWorkLog",
       "profile.update",
       "retirementPlan.upsert",
       "snapshots.upsert",

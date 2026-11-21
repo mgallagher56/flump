@@ -12,12 +12,15 @@ import { BudgetEntry } from "../../entities/budget-entry.entity";
 import { Consent } from "../../entities/consent.entity";
 import { IdempotencyKey } from "../../entities/idempotency-key.entity";
 import { ImportBatch } from "../../entities/import-batch.entity";
+import { Invoice } from "../../entities/invoice.entity";
+import { InvoicingSettings } from "../../entities/invoicing-settings.entity";
 import { McpToken } from "../../entities/mcp-token.entity";
 import { RetirementPlan } from "../../entities/retirement-plan.entity";
 import { SnapshotCheckin } from "../../entities/snapshot-checkin.entity";
 import { TaxRecord } from "../../entities/tax-record.entity";
 import { Transaction } from "../../entities/transaction.entity";
 import { UserProfile } from "../../entities/user-profile.entity";
+import { WorkLogEntry } from "../../entities/work-log-entry.entity";
 
 /**
  * What "reset all financial data" does to a table (BE-04, M-PRIV1).
@@ -450,6 +453,137 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
         sharePercent: "budget-entries",
         linkKind: "budget-entry-link-kind",
         linkAccountId: "budget-entry-link-account",
+      },
+      notFacts: { id: ROW_ID, userId: OWNER, createdAt: WRITTEN_AT, updatedAt: WRITTEN_AT },
+    },
+  }),
+  table({
+    entity: WorkLogEntry,
+    key: "workLogEntries",
+    deleteOnErasure: true,
+    export: {
+      shape: "rows",
+      columns: [
+        "id",
+        "date",
+        "description",
+        "hoursWorked",
+        "hourlyRate",
+        "amount",
+        "clientName",
+        "incomeSource",
+        "invoiceId",
+        "notes",
+        "createdAt",
+        "updatedAt",
+      ],
+      excluded: { userId: USER_ID_IN_ENVELOPE },
+      orderBy: ["id"],
+      batchSize: 500,
+    },
+    reset: { kind: "financial-clear", reason: "billable work log entries are financial data" },
+    valueMap: {
+      facts: {
+        date: "work-log-entries",
+        description: "work-log-entries",
+        hoursWorked: "work-log-entries",
+        hourlyRate: "work-log-entries",
+        amount: "work-log-entries",
+        clientName: "work-log-entries",
+        incomeSource: "work-log-entries",
+        invoiceId: "work-log-entries",
+        notes: "work-log-entries",
+      },
+      notFacts: { id: ROW_ID, userId: OWNER, createdAt: WRITTEN_AT, updatedAt: WRITTEN_AT },
+    },
+  }),
+  table({
+    entity: Invoice,
+    key: "invoices",
+    deleteOnErasure: true,
+    export: {
+      shape: "rows",
+      columns: [
+        "id",
+        "invoiceNumber",
+        "status",
+        "clientName",
+        "clientEmail",
+        "clientAddress",
+        "issueDate",
+        "dueDate",
+        "paidDate",
+        "subtotal",
+        "vatRatePct",
+        "vatAmount",
+        "total",
+        "notes",
+        "taxRecordId",
+        "createdAt",
+        "updatedAt",
+      ],
+      excluded: { userId: USER_ID_IN_ENVELOPE },
+      orderBy: ["id"],
+      batchSize: 500,
+    },
+    reset: { kind: "financial-clear", reason: "invoices and billed amounts are financial data" },
+    valueMap: {
+      facts: {
+        invoiceNumber: "invoices",
+        status: "invoices",
+        clientName: "invoices",
+        clientEmail: "invoices",
+        clientAddress: "invoices",
+        issueDate: "invoices",
+        dueDate: "invoices",
+        paidDate: "invoices",
+        subtotal: "invoices",
+        vatRatePct: "invoices",
+        vatAmount: "invoices",
+        total: "invoices",
+        notes: "invoices",
+        taxRecordId: "invoices",
+      },
+      notFacts: { id: ROW_ID, userId: OWNER, createdAt: WRITTEN_AT, updatedAt: WRITTEN_AT },
+    },
+  }),
+  table({
+    entity: InvoicingSettings,
+    key: "invoicingSettings",
+    deleteOnErasure: true,
+    export: {
+      shape: "rows",
+      columns: [
+        "id",
+        "defaultHourlyRate",
+        "businessName",
+        "businessAddress",
+        "businessEmail",
+        "vatNumber",
+        "invoicePrefix",
+        "nextInvoiceSequence",
+        "defaultPaymentTermsDays",
+        "createdAt",
+        "updatedAt",
+      ],
+      excluded: { userId: USER_ID_IN_ENVELOPE },
+      orderBy: ["id"],
+      batchSize: 500,
+    },
+    reset: {
+      kind: "financial-clear",
+      reason: "invoicing rates, VAT number and sequence settings are financial data",
+    },
+    valueMap: {
+      facts: {
+        defaultHourlyRate: "invoicing-settings",
+        businessName: "invoicing-settings",
+        businessAddress: "invoicing-settings",
+        businessEmail: "invoicing-settings",
+        vatNumber: "invoicing-settings",
+        invoicePrefix: "invoicing-settings",
+        nextInvoiceSequence: "invoicing-settings",
+        defaultPaymentTermsDays: "invoicing-settings",
       },
       notFacts: { id: ROW_ID, userId: OWNER, createdAt: WRITTEN_AT, updatedAt: WRITTEN_AT },
     },

@@ -6,70 +6,75 @@ Where each value is stored, entered and used. One entry per stored fact, then on
 
 ## Contents
 
-| Value                                                                                                         | Kind   | Area        | Verdict                                   |
-| ------------------------------------------------------------------------------------------------------------- | ------ | ----------- | ----------------------------------------- |
-| [Salary (yearly pay before tax)](#salary)                                                                     | fact   | pay         | Duplicated (two stores that can disagree) |
-| [Monthly take-home pay as typed in onboarding](#typed-take-home)                                              | fact   | pay         | Holds                                     |
-| [Employment type](#employment-type)                                                                           | fact   | pay         | Holds                                     |
-| [Workplace pension rates and how the pension is paid](#pension-rates)                                         | fact   | pay         | Duplicated (two stores that can disagree) |
-| [Year of birth](#birth-year)                                                                                  | fact   | pay         | Holds                                     |
-| [Tax region](#tax-region)                                                                                     | fact   | pay         | Broken                                    |
-| [Student loan plan](#student-loan-plan)                                                                       | fact   | pay         | Duplicated (two stores that can disagree) |
-| [Second income and rental income on the profile](#second-and-rental-income)                                   | fact   | pay         | Broken                                    |
-| [Account balance today](#account-balance)                                                                     | fact   | accounts    | Holds                                     |
-| [Balance for each past month](#balance-history)                                                               | fact   | accounts    | Broken                                    |
-| [Whether a month's check-in was finished](#check-in-done)                                                     | fact   | accounts    | Holds                                     |
-| [Joint ownership and the user's share of an account](#ownership-share)                                        | fact   | accounts    | Broken                                    |
-| [Interest rate on an account](#account-rate)                                                                  | fact   | accounts    | Holds with a manual step or a delay       |
-| [Monthly amount on an account (saving, pot payment, debt payment, mortgage payment)](#account-monthly-amount) | fact   | accounts    | Duplicated (two stores that can disagree) |
-| [Credit limit and 0% end date](#card-limit-and-zero-percent-end)                                              | fact   | accounts    | Broken                                    |
-| [Mortgage term left and fix end date](#mortgage-term-and-fix-end)                                             | fact   | home        | Holds with a manual step or a delay       |
-| [Value of a property](#home-value)                                                                            | fact   | home        | Holds                                     |
-| [Whether a property is the home or a rental](#property-kind)                                                  | fact   | home        | Holds                                     |
-| [Which property a mortgage is on](#mortgage-property-link)                                                    | fact   | home        | Holds                                     |
-| [How a mortgage is repaid](#repayment-type)                                                                   | fact   | home        | Holds                                     |
-| [Buy-to-let mortgage balance, rate and type](#buy-to-let-mortgage)                                            | fact   | home        | Broken                                    |
-| [Rent received on a rental property](#buy-to-let-rent)                                                        | fact   | home        | Duplicated (two stores that can disagree) |
-| [Housing status, has a mortgage, and mortgage type](#housing-status)                                          | fact   | home        | Broken                                    |
-| [Monthly housing cost (rent or mortgage payment)](#housing-cost)                                              | fact   | home        | Holds                                     |
-| [Account type and kind](#account-type)                                                                        | fact   | accounts    | Broken                                    |
-| [Estimated yearly return on an investment account](#investment-return)                                        | fact   | accounts    | Broken                                    |
-| [Name and profile picture](#name-and-avatar)                                                                  | fact   | preferences | Not checked                               |
-| [Budget categories the user added](#custom-budget-categories)                                                 | fact   | budget      | Not checked                               |
-| [Budget lines](#budget-entries)                                                                               | fact   | budget      | Broken                                    |
-| [Which saved fact a budget line is linked to](#budget-entry-link-kind)                                        | fact   | budget      | Holds                                     |
-| [Which account a savings or debt budget line reads](#budget-entry-link-account)                               | fact   | budget      | Holds                                     |
-| [Other monthly outgoings as typed in onboarding](#other-outgoings)                                            | fact   | budget      | Duplicated (two stores that can disagree) |
-| [Self Assessment income and expense records](#tax-records)                                                    | fact   | tax         | Holds                                     |
-| [Share of a rental property, as used for tax](#rental-share-for-tax)                                          | fact   | tax         | Holds                                     |
-| [Retirement plan (ages, target, State Pension inputs, growth cases, excluded accounts)](#retirement-plan)     | fact   | retirement  | Holds                                     |
-| [Net worth choices (count the home, count the student loan)](#net-worth-choices)                              | fact   | preferences | Broken                                    |
-| [Check-in day of the month](#check-in-day)                                                                    | fact   | preferences | Holds                                     |
-| [Enabled pages and dashboard widgets](#enabled-pages-and-widgets)                                             | fact   | preferences | Holds                                     |
-| [Setup checklist progress](#setup-checklist)                                                                  | fact   | preferences | Holds                                     |
-| [Account name](#account-name)                                                                                 | fact   | accounts    | Not checked                               |
-| [Account transactions](#transactions)                                                                         | fact   | accounts    | Not checked                               |
-| [Currency and country](#currency-and-country)                                                                 | fact   | preferences | Not checked                               |
-| [Net worth today](#net-worth)                                                                                 | figure | accounts    | Holds                                     |
-| [Net worth over time](#net-worth-over-time)                                                                   | figure | accounts    | Broken                                    |
-| [Total debts](#total-debts)                                                                                   | figure | accounts    | Duplicated (two stores that can disagree) |
-| [Debt-free date and interest](#debt-free-date)                                                                | figure | accounts    | Duplicated (two stores that can disagree) |
-| [Home equity](#home-equity)                                                                                   | figure | home        | Holds                                     |
-| [Loan to value](#loan-to-value)                                                                               | figure | home        | Broken                                    |
-| [Mortgage monthly payment (calculated)](#mortgage-payment)                                                    | figure | home        | Holds                                     |
-| [Take-home pay](#take-home)                                                                                   | figure | pay         | Duplicated (two stores that can disagree) |
-| [Left over each month and budget totals](#left-over)                                                          | figure | budget      | Broken                                    |
-| [Safe to spend](#safe-to-spend)                                                                               | figure | budget      | Holds                                     |
-| [Breathing room (months of cover)](#months-of-cover)                                                          | figure | budget      | Broken                                    |
-| [Savings total and saved each month](#savings-total)                                                          | figure | accounts    | Duplicated (two stores that can disagree) |
-| [Savings interest over the next 12 months](#savings-interest)                                                 | figure | accounts    | Holds                                     |
-| [ISA allowance used this tax year](#isa-allowance-used)                                                       | figure | accounts    | Holds                                     |
-| [Estimated Self Assessment tax](#estimated-tax)                                                               | figure | tax         | Holds                                     |
-| [Where the Personal Allowance is set (non-savings, savings, dividends)](#personal-allowance-allocation)       | figure | tax         | Holds                                     |
-| [Mortgage interest carried forward to next year](#finance-costs-carried-forward)                              | figure | tax         | Holds                                     |
-| [Paid into pensions each month](#pension-going-in)                                                            | figure | pay         | Duplicated (two stores that can disagree) |
-| [Estimated income in retirement](#retirement-income)                                                          | figure | retirement  | Broken                                    |
-| [Calculated balance offered in the check-in](#check-in-calculated-balance)                                    | figure | accounts    | Holds                                     |
+| Value                                                                                                                                    | Kind   | Area        | Verdict                                   |
+| ---------------------------------------------------------------------------------------------------------------------------------------- | ------ | ----------- | ----------------------------------------- |
+| [Salary (yearly pay before tax)](#salary)                                                                                                | fact   | pay         | Duplicated (two stores that can disagree) |
+| [Monthly take-home pay as typed in onboarding](#typed-take-home)                                                                         | fact   | pay         | Holds                                     |
+| [Employment type](#employment-type)                                                                                                      | fact   | pay         | Holds                                     |
+| [Workplace pension rates and how the pension is paid](#pension-rates)                                                                    | fact   | pay         | Duplicated (two stores that can disagree) |
+| [Year of birth](#birth-year)                                                                                                             | fact   | pay         | Holds                                     |
+| [Tax region](#tax-region)                                                                                                                | fact   | pay         | Broken                                    |
+| [Student loan plan](#student-loan-plan)                                                                                                  | fact   | pay         | Duplicated (two stores that can disagree) |
+| [Second income and rental income on the profile](#second-and-rental-income)                                                              | fact   | pay         | Broken                                    |
+| [Account balance today](#account-balance)                                                                                                | fact   | accounts    | Holds                                     |
+| [Balance for each past month](#balance-history)                                                                                          | fact   | accounts    | Broken                                    |
+| [Whether a month's check-in was finished](#check-in-done)                                                                                | fact   | accounts    | Holds                                     |
+| [Joint ownership and the user's share of an account](#ownership-share)                                                                   | fact   | accounts    | Broken                                    |
+| [Interest rate on an account](#account-rate)                                                                                             | fact   | accounts    | Holds with a manual step or a delay       |
+| [Monthly amount on an account (saving, pot payment, debt payment, mortgage payment)](#account-monthly-amount)                            | fact   | accounts    | Duplicated (two stores that can disagree) |
+| [Credit limit and 0% end date](#card-limit-and-zero-percent-end)                                                                         | fact   | accounts    | Broken                                    |
+| [Mortgage term left and fix end date](#mortgage-term-and-fix-end)                                                                        | fact   | home        | Holds with a manual step or a delay       |
+| [Value of a property](#home-value)                                                                                                       | fact   | home        | Holds                                     |
+| [Whether a property is the home or a rental](#property-kind)                                                                             | fact   | home        | Holds                                     |
+| [Which property a mortgage is on](#mortgage-property-link)                                                                               | fact   | home        | Holds                                     |
+| [How a mortgage is repaid](#repayment-type)                                                                                              | fact   | home        | Holds                                     |
+| [Buy-to-let mortgage balance, rate and type](#buy-to-let-mortgage)                                                                       | fact   | home        | Broken                                    |
+| [Rent received on a rental property](#buy-to-let-rent)                                                                                   | fact   | home        | Duplicated (two stores that can disagree) |
+| [Housing status, has a mortgage, and mortgage type](#housing-status)                                                                     | fact   | home        | Broken                                    |
+| [Monthly housing cost (rent or mortgage payment)](#housing-cost)                                                                         | fact   | home        | Holds                                     |
+| [Account type and kind](#account-type)                                                                                                   | fact   | accounts    | Broken                                    |
+| [Estimated yearly return on an investment account](#investment-return)                                                                   | fact   | accounts    | Broken                                    |
+| [Name and profile picture](#name-and-avatar)                                                                                             | fact   | preferences | Not checked                               |
+| [Budget categories the user added](#custom-budget-categories)                                                                            | fact   | budget      | Not checked                               |
+| [Budget lines](#budget-entries)                                                                                                          | fact   | budget      | Broken                                    |
+| [Which saved fact a budget line is linked to](#budget-entry-link-kind)                                                                   | fact   | budget      | Holds                                     |
+| [Which account a savings or debt budget line reads](#budget-entry-link-account)                                                          | fact   | budget      | Holds                                     |
+| [Other monthly outgoings as typed in onboarding](#other-outgoings)                                                                       | fact   | budget      | Duplicated (two stores that can disagree) |
+| [Self Assessment income and expense records](#tax-records)                                                                               | fact   | tax         | Holds                                     |
+| [Share of a rental property, as used for tax](#rental-share-for-tax)                                                                     | fact   | tax         | Holds                                     |
+| [Self-employed invoicing settings (default hourly rate, business details, VAT number, invoice prefix and sequence)](#invoicing-settings) | fact   | tax         | Holds                                     |
+| [Self-employed billable work log entries](#work-log-entries)                                                                             | fact   | tax         | Holds                                     |
+| [Self-employed invoices (number, status, client details, dates, optional VAT rate and totals)](#invoices)                                | fact   | tax         | Holds                                     |
+| [Retirement plan (ages, target, State Pension inputs, growth cases, excluded accounts)](#retirement-plan)                                | fact   | retirement  | Holds                                     |
+| [Net worth choices (count the home, count the student loan)](#net-worth-choices)                                                         | fact   | preferences | Broken                                    |
+| [Check-in day of the month](#check-in-day)                                                                                               | fact   | preferences | Holds                                     |
+| [Enabled pages and dashboard widgets](#enabled-pages-and-widgets)                                                                        | fact   | preferences | Holds                                     |
+| [Setup checklist progress](#setup-checklist)                                                                                             | fact   | preferences | Holds                                     |
+| [Account name](#account-name)                                                                                                            | fact   | accounts    | Not checked                               |
+| [Account transactions](#transactions)                                                                                                    | fact   | accounts    | Not checked                               |
+| [Currency and country](#currency-and-country)                                                                                            | fact   | preferences | Not checked                               |
+| [Net worth today](#net-worth)                                                                                                            | figure | accounts    | Holds                                     |
+| [Net worth over time](#net-worth-over-time)                                                                                              | figure | accounts    | Broken                                    |
+| [Total debts](#total-debts)                                                                                                              | figure | accounts    | Duplicated (two stores that can disagree) |
+| [Debt-free date and interest](#debt-free-date)                                                                                           | figure | accounts    | Duplicated (two stores that can disagree) |
+| [Home equity](#home-equity)                                                                                                              | figure | home        | Holds                                     |
+| [Loan to value](#loan-to-value)                                                                                                          | figure | home        | Broken                                    |
+| [Mortgage monthly payment (calculated)](#mortgage-payment)                                                                               | figure | home        | Holds                                     |
+| [Take-home pay](#take-home)                                                                                                              | figure | pay         | Duplicated (two stores that can disagree) |
+| [Left over each month and budget totals](#left-over)                                                                                     | figure | budget      | Broken                                    |
+| [Safe to spend](#safe-to-spend)                                                                                                          | figure | budget      | Holds                                     |
+| [Breathing room (months of cover)](#months-of-cover)                                                                                     | figure | budget      | Broken                                    |
+| [Savings total and saved each month](#savings-total)                                                                                     | figure | accounts    | Duplicated (two stores that can disagree) |
+| [Savings interest over the next 12 months](#savings-interest)                                                                            | figure | accounts    | Holds                                     |
+| [ISA allowance used this tax year](#isa-allowance-used)                                                                                  | figure | accounts    | Holds                                     |
+| [Estimated Self Assessment tax](#estimated-tax)                                                                                          | figure | tax         | Holds                                     |
+| [Where the Personal Allowance is set (non-savings, savings, dividends)](#personal-allowance-allocation)                                  | figure | tax         | Holds                                     |
+| [Mortgage interest carried forward to next year](#finance-costs-carried-forward)                                                         | figure | tax         | Holds                                     |
+| [Paid into pensions each month](#pension-going-in)                                                                                       | figure | pay         | Duplicated (two stores that can disagree) |
+| [Estimated income in retirement](#retirement-income)                                                                                     | figure | retirement  | Broken                                    |
+| [Calculated balance offered in the check-in](#check-in-calculated-balance)                                                               | figure | accounts    | Holds                                     |
+| [Invoice subtotal, VAT amount and total](#invoice-totals)                                                                                | figure | tax         | Holds                                     |
+| [Unbilled hours, unbilled amount, outstanding issued invoices and paid in tax year](#invoicing-kpis)                                     | figure | tax         | Holds                                     |
 
 ## Area: pay
 
@@ -1415,6 +1420,73 @@ Read by:
 - AI read tools: `packages/mcp/src/tools/read/getTaxYearPosition.ts`
 - AI context pack: `packages/finance-engine/src/ai-context-pack.ts`
 
+### Self-employed invoicing settings (default hourly rate, business details, VAT number, invoice prefix and sequence)
+
+<a id="invoicing-settings"></a>
+
+- Id: `invoicing-settings` (stored fact)
+- Verdict: Holds. Findings: none. Links: none.
+- Source of truth: `invoicing_settings.default_hourly_rate, business_name, business_address, business_email, vat_number, invoice_prefix, next_invoice_sequence, default_payment_terms_days` in `apps/backend/src/entities/invoicing-settings.entity.ts`
+- Note: E37 S1 + section 10 (D1 a, D2 b): one invoicing settings record per user, including optional vat_number.
+
+Other stores:
+
+- none
+
+Entered or changed by:
+
+- Invoicing and work log: `apps/web/app/routes/app.invoicing.tsx`
+
+Read by:
+
+- Invoicing and work log: `apps/web/app/routes/app.invoicing.tsx`
+- Data export and erasure: `apps/backend/src/modules/privacy/user-data-registry.ts`
+
+### Self-employed billable work log entries
+
+<a id="work-log-entries"></a>
+
+- Id: `work-log-entries` (stored fact)
+- Verdict: Holds. Findings: none. Links: none.
+- Source of truth: `work_log_entries.date, description, hours_worked, hourly_rate, client_name, income_source, invoice_id, notes` in `apps/backend/src/entities/work-log-entry.entity.ts`
+- Note: E37 S1: each entry links to an invoice through invoice_id; voiding an invoice sets invoice_id back to null in one transaction.
+
+Other stores:
+
+- `work_log_entries.amount` [derived] in `apps/backend/src/entities/work-log-entry.entity.ts` (derived from hours_worked and hourly_rate via calculateWorkLogAmount in packages/finance-engine/src/invoicing/index.ts)
+
+Entered or changed by:
+
+- Invoicing and work log: `apps/web/app/routes/app.invoicing.tsx`
+
+Read by:
+
+- Invoicing and work log: `packages/finance-engine/src/invoicing/index.ts`
+- Data export and erasure: `apps/backend/src/modules/privacy/user-data-registry.ts`
+
+### Self-employed invoices (number, status, client details, dates, optional VAT rate and totals)
+
+<a id="invoices"></a>
+
+- Id: `invoices` (stored fact)
+- Verdict: Holds. Findings: none. Links: none.
+- Source of truth: `invoices.invoice_number, status, client_name, client_email, client_address, issue_date, due_date, paid_date, vat_rate_pct, notes, tax_record_id` in `apps/backend/src/entities/invoice.entity.ts`
+- Note: E37 S1 + section 10 (D2 b): vat_rate_pct is typed by the user and never defaulted or suggested; vat_amount is stored with status derived.
+
+Other stores:
+
+- `invoices.vat_amount` [derived] in `apps/backend/src/entities/invoice.entity.ts` (derived copy (subtotal x vat_rate_pct / 100 rounded half-up to the nearest penny via calculateInvoiceTotals) kept so an issued invoice never changes (E37 section 10))
+- `invoices.subtotal, total` [derived] in `apps/backend/src/entities/invoice.entity.ts` (derived from linked work_log_entries and vat_amount via calculateInvoiceTotals and stored on the invoice so an issued invoice never changes)
+
+Entered or changed by:
+
+- Invoicing and work log: `apps/web/app/routes/app.invoicing.tsx`
+
+Read by:
+
+- Invoicing and work log: `packages/finance-engine/src/invoicing/index.ts`
+- Data export and erasure: `apps/backend/src/modules/privacy/user-data-registry.ts`
+
 ### Estimated Self Assessment tax
 
 <a id="estimated-tax"></a>
@@ -1479,6 +1551,42 @@ Shown on:
 - Self Assessment: `apps/web/app/features/tax/components/TaxReservePanel/TaxReservePanel.tsx`
 - AI read tools: `packages/mcp/src/tools/read/getTaxYearPosition.ts`
 - Public calculators: `packages/ui/src/calculators/Section24Calculator/Section24Calculator.tsx`
+
+### Invoice subtotal, VAT amount and total
+
+<a id="invoice-totals"></a>
+
+- Id: `invoice-totals` (derived figure)
+- Verdict: Holds. Findings: none. Links: none.
+- Computed by: `calculateInvoiceTotals` in `packages/finance-engine/src/invoicing/index.ts`
+- Built from: `work-log-entries`, `invoices`
+- Note: E37 S0 + section 10: single engine function for subtotal, half-up penny VAT rounding, and total.
+
+Other code paths that compute it:
+
+- none
+
+Shown on:
+
+- Invoicing and work log: `apps/web/app/routes/app.invoicing.tsx`
+
+### Unbilled hours, unbilled amount, outstanding issued invoices and paid in tax year
+
+<a id="invoicing-kpis"></a>
+
+- Id: `invoicing-kpis` (derived figure)
+- Verdict: Holds. Findings: none. Links: none.
+- Computed by: `summarizeInvoicingKpis` in `packages/finance-engine/src/invoicing/index.ts`
+- Built from: `work-log-entries`, `invoices`
+- Note: E37 S0/S2: computes the 4 KPI strip figures for the invoicing workspace.
+
+Other code paths that compute it:
+
+- none
+
+Shown on:
+
+- Invoicing and work log: `apps/web/app/routes/app.invoicing.tsx`
 
 ## Area: retirement
 
