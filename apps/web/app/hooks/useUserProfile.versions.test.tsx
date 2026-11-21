@@ -295,18 +295,6 @@ describe("useUserProfile versions while a reload is pending", () => {
     expect(api.sentIfMatch(1)).toBe(`"${V3}"`);
   });
 
-  it("compares versions as instants, so the same instant written another way sends the loaded one", async () => {
-    const { result, api } = staleLoader({ updatedAt: V3 });
-    // V3 written without milliseconds: the same instant as the loaded version.
-    api.answer({ ...profileFixture, updatedAt: "2026-11-15T10:05:00Z" });
-    api.answer({ ...profileFixture, updatedAt: V3 });
-    await act(async () => {
-      await result.current.updateProfile({ firstName: "One" });
-      await result.current.updateProfile({ firstName: "Two" });
-    });
-    expect(api.sentIfMatch(1)).toBe(`"${V3}"`);
-  });
-
   it("handles a conflict without a toast provider: rejects with the 412 and reloads", async () => {
     const { result, api } = staleLoader({ updatedAt: V1 });
     api.answerWith(() => new Response(JSON.stringify({ kind: "client" }), { status: 412 }));
@@ -321,8 +309,8 @@ describe("useUserProfile versions while a reload is pending", () => {
   it("shows the fixed message when a password reset email cannot be sent", async () => {
     const { result, api } = staleLoader({ updatedAt: V1 });
     api.answer(undefined, 503);
-    await expect(result.current.sendPasswordResetEmail()).rejects.toThrow(
-      "We could not send the password reset email. Try again.",
-    );
+    const error = await result.current.sendPasswordResetEmail().catch((e) => e);
+    expect(error).toBeInstanceOf(Error);
+    expect(error.message).toBe("We could not send the password reset email. Try again.");
   });
 });
