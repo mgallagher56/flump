@@ -2695,10 +2695,7 @@ figures:
       }
     inputs: [salary, pension-rates, budget-entries, account-monthly-amount, housing-cost]
     shown_on:
-      - {
-          surface: mortgage,
-          path: packages/finance-engine/src/picture/selectors/housing-room.ts,
-        }
+      - { surface: mortgage, path: packages/finance-engine/src/picture/selectors/housing-room.ts }
     verdict: holds
     note: "E39 S1: take-home less non-housing essentials and debt commitments, with optional savings and other spending switches."
 
@@ -2712,10 +2709,7 @@ figures:
       }
     inputs: []
     shown_on:
-      - {
-          surface: mortgage,
-          path: packages/finance-engine/src/mortgage-affordability.ts,
-        }
+      - { surface: mortgage, path: packages/finance-engine/src/mortgage-affordability.ts }
     verdict: holds
     note: "E39 S1: inverse of repaymentPerMonth with optional deposit, buying costs, and LTV default rate band."
 
@@ -2729,27 +2723,17 @@ figures:
       }
     inputs: [salary]
     shown_on:
-      - {
-          surface: mortgage,
-          path: packages/finance-engine/src/mortgage-affordability.ts,
-        }
+      - { surface: mortgage, path: packages/finance-engine/src/mortgage-affordability.ts }
     verdict: holds
     note: "E39 S1 (MA2): 4 to 4.5 times combined yearly income before tax, with optional deposit and buying costs."
 
   - id: mortgage-rate-comparison
     name: Mortgage payment rate comparison
     area: mortgage
-    computed_by:
-      {
-        function: compareMortgageRates,
-        path: packages/finance-engine/src/mortgage.ts,
-      }
+    computed_by: { function: compareMortgageRates, path: packages/finance-engine/src/mortgage.ts }
     inputs: [account-balance, account-rate, mortgage-term-and-fix-end]
     shown_on:
-      - {
-          surface: mortgage,
-          path: packages/finance-engine/src/mortgage.ts,
-        }
+      - { surface: mortgage, path: packages/finance-engine/src/mortgage.ts }
     verdict: holds
     note: "E39 S1: monthly payments at base rate, base + delta, and max(0, base - delta)."
 
@@ -2757,16 +2741,10 @@ figures:
     name: Mortgage balance and payment at fix end
     area: mortgage
     computed_by:
-      {
-        function: estimateMortgageAtFixEnd,
-        path: packages/finance-engine/src/mortgage.ts,
-      }
+      { function: estimateMortgageAtFixEnd, path: packages/finance-engine/src/mortgage.ts }
     inputs: [account-balance, account-rate, mortgage-term-and-fix-end]
     shown_on:
-      - {
-          surface: mortgage,
-          path: packages/finance-engine/src/mortgage.ts,
-        }
+      - { surface: mortgage, path: packages/finance-engine/src/mortgage.ts }
     verdict: holds
     note: "E39 S1: projects balance at fix end via projectAmortisedBalance and compares payments over remaining term."
 
@@ -2780,10 +2758,7 @@ figures:
       }
     inputs: []
     shown_on:
-      - {
-          surface: mortgage,
-          path: packages/finance-engine/src/mortgage-rate-assumptions.ts,
-        }
+      - { surface: mortgage, path: packages/finance-engine/src/mortgage-rate-assumptions.ts }
     verdict: holds
     note: "E39 S1 (MA5): single home for LTV default rate assumptions (asOf 2026-11) and 6-month staleness check."
 
