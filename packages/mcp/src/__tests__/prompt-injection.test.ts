@@ -40,7 +40,8 @@ const poisonedPersona = {
   accounts: INJECTION_FIXTURES.map((text, i) => ({
     id: `acc-${i}`,
     name: text,
-    type: i % 2 === 0 ? `Credit Card ${text}` : `Mortgage ${text}`,
+    type:
+      i % 3 === 0 ? `Credit Card ${text}` : i % 3 === 1 ? `Mortgage ${text}` : `Pension ${text}`,
     balance: 1000 + i * 100,
     interestRate: 4.5,
     monthlyContribution: 150,
@@ -86,8 +87,10 @@ const READ_AND_SIMULATE_TOOLS: Array<[string, Record<string, unknown>]> = [
   ["get_data_coverage", MINIMAL_TOOL_ARGS.get_data_coverage],
   ["get_tax_year_position", MINIMAL_TOOL_ARGS.get_tax_year_position],
   ["list_tax_records", MINIMAL_TOOL_ARGS.list_tax_records],
+  ["get_retirement_picture", MINIMAL_TOOL_ARGS.get_retirement_picture],
   ["project_net_worth", MINIMAL_TOOL_ARGS.project_net_worth],
   ["simulate_debt_payoff", MINIMAL_TOOL_ARGS.simulate_debt_payoff],
+  ["simulate_retirement", MINIMAL_TOOL_ARGS.simulate_retirement],
   ["compare_mortgage_overpay_vs_invest", MINIMAL_TOOL_ARGS.compare_mortgage_overpay_vs_invest],
 ];
 
