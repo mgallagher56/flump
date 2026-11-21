@@ -60,7 +60,7 @@ Decisions: accepted on 21 November 2026
    - `issueDate`: `IsoDate`, `dueDate`: `IsoDate`, `paidDate`: nullable `IsoDate`.
    - `clientName`: string (1–120 chars), `clientEmail`: nullable string, `clientAddress`: nullable string.
    - `notes`: nullable `Notes` (payment instructions / bank reference entered by user).
-   - `subtotal`: `ResponseMoney`, `total`: `ResponseMoney` (sum of linked work log `amount`s; VAT out of scope for v1, see Decision D2).
+   - `subtotal`: `ResponseMoney`, `total`: `ResponseMoney` (sum of linked work log `amount`s; VAT out of scope for v1, see Decision D2). **Superseded by section 10: an invoice can carry VAT, and `total` = `subtotal` + `vatAmount`.**
    - `taxRecordId`: nullable UUID FK -> `tax_records.id` (`ON DELETE SET NULL`), populated when synced to Self Assessment.
    - `createdAt`, `updatedAt` (`timestamptz` for `ETag`).
 
@@ -117,7 +117,7 @@ Strict Zod schemas (`z.strictObject`):
 
 - **Optional Self Assessment sync:**
   - `POST /invoices/:id/sync-to-tax` (requires `status === "paid"`, `If-Match` header, idempotent if `taxRecordId` already set).
-  - Creates a `tax_records` row (`type: "income"`, `source: "self-employed"`, `category: "Freelance / Invoice"`, `name: "Invoice <invoiceNumber> — <clientName>"`, `amount: invoice.total`, `frequency: "one-off"`, `date: invoice.paidDate ?? invoice.issueDate`) inside a single DB transaction and stores `taxRecordId` on the invoice.
+  - Creates a `tax_records` row (`type: "income"`, `source: "self-employed"`, `category: "Freelance / Invoice"`, `name: "Invoice <invoiceNumber> — <clientName>"`, `amount: invoice.total` (**superseded by section 10: `amount: invoice.subtotal`, the amount without VAT**), `frequency: "one-off"`, `date: invoice.paidDate ?? invoice.issueDate`) inside a single DB transaction and stores `taxRecordId` on the invoice.
   - UI shows a clear "Synced to Self Assessment" link/badge and never auto-syncs without user click.
 - **PDF / Print export:**
   - Dedicated print-ready invoice view (`@media print` stylesheet + "Print / Save as PDF" action, or server-generated PDF stream) showing business header, client details, invoice number, issue/due/paid dates, itemised work log table (`date`, `description`, `hoursWorked`, `hourlyRate`, `amount` in `tabular-nums`), and total.
@@ -147,12 +147,14 @@ Owner's words: "D2. Allow adding VAT to invoices." "Accept the other decisions".
 
 - **D1 (a):** one invoicing settings record per user.
 - **D2 (b), changed from the recommendation:** an invoice can carry VAT.
-  - Settings gain an optional `vatNumber`. An invoice gains an optional `vatRatePct` (empty means no VAT) and stores `vatAmount`; `total` = `subtotal` + `vatAmount`, with `vatAmount` = `subtotal` x `vatRatePct` / 100 rounded to the penny. Worked example for the tests: £1,250.00 at 20% is £250.00 VAT, total £1,500.00; £333.33 at 20% is £66.67 (66.666 rounded), total £400.00.
+  - Settings gain an optional `vatNumber`. An invoice gains an optional `vatRatePct` (empty means no VAT) and stores `vatAmount`; `total` = `subtotal` + `vatAmount`, with `vatAmount` = `subtotal` x `vatRatePct` / 100 rounded to the nearest penny, half a penny up. `vatAmount` is a derived copy kept so an issued invoice never changes; its value-map entry has status `derived`. Worked example for the tests: £1,250.00 at 20% is £250.00 VAT, total £1,500.00; £333.33 at 20% is £66.67 (66.666 rounded), total £400.00.
   - The rate is typed by the user and never defaulted or suggested. The invoice shows the VAT number, the rate, the VAT amount and the total when a rate is set.
-  - Flump does not say whether someone should register for VAT, which rate applies, or what a valid VAT invoice needs: that is the advice boundary (policy R1, R2). One plain line beside the field: "Add VAT only if you are registered for VAT."
+  - Flump does not say whether someone should register for VAT, which rate applies, or what a valid VAT invoice needs: that is the advice boundary (policy R1, R2). One plain line beside the field (the coordinator's draft, for the owner's approval under E29a): "Leave empty for no VAT."
   - The Self Assessment sync (S3) sends the amount without VAT as income. Whether that is right for every VAT scheme is not verified; the sync says which figure it uses.
   - New stored fields go in the value map and the privacy registry in the same PR (AGENTS.md section 16).
 - **D3 (a):** a print page ("Print / Save as PDF"), no server-side renderer.
+
+The coordinator's readings, not the owner's words: the field names, that the rate is typed and never suggested, the rounding, the helper line, and that the Self Assessment sync sends the amount without VAT.
 
 One home per value (AGENTS.md section 16): invoice totals are computed by the engine module in section 4.2 and read from there by the backend, web and export; no page sums line items itself.
 

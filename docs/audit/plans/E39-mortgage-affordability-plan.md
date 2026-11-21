@@ -66,7 +66,7 @@ Not confirmed, for the E29b solicitor: whether a generic calculator with user-se
 
 ### a. Estimated borrowing range (two views, side by side, same weight)
 
-**Income view.** Inputs: yearly income before tax (prefilled from saved salary), an optional second person's income (typed, not stored), a multiple. Formula: total income times the multiple. Assumptions shown: the multiple, and "Lenders set their own limits and checks." Source: none cited. The Bank of England loan-to-income page could not be read, so no "typical" multiple is stated. The multiple is a user-editable assumption (MA2).
+**Income view.** Inputs: yearly income before tax (prefilled from saved salary), an optional second person's income (typed, not stored), a multiple. Formula: total income times the multiple. Assumptions shown: the multiple, and "Lenders set their own limits and checks." Source: none cited. The Bank of England loan-to-income page could not be read, so no "typical" multiple is stated. The multiple is a user-editable assumption (MA2). **Superseded by section 10a (MA2): a range of 4 to 4.5 times income.**
 
 **Budget view.** Inputs: a monthly payment (prefilled from 4b), a rate, a term. Formula: the payment formula run backwards. Loan = payment x ((1 + r)^n - 1) / (r x (1 + r)^n), with r a twelfth of the yearly rate and n months. At 0%, loan = payment x n. Assumptions shown: repayment mortgage, one rate for the whole term, no fees.
 
@@ -89,8 +89,8 @@ Inputs: loan, rate, term, and a change in percentage points. Output: three payme
 | Topic | Verdict |
 | --- | --- |
 | Deposit and loan to value | Include, as typed scenario input. |
-| Stamp duty (SDLT, LBTT, LTT) | Leave out of version one (MA7). Three regimes, first-time buyer relief, extra-home rates, and changes not tied to tax years. Later: a sourced `uk-property-transaction-tax.ts` beside `uk-rule-sources.ts:17`. |
-| Other buying costs | One optional typed field, taken off the deposit. No Flump figures. |
+| Stamp duty (SDLT, LBTT, LTT) | **Superseded by section 10a (MA7): an estimate is shown.** Was: Leave out of version one (MA7). Three regimes, first-time buyer relief, extra-home rates, and changes not tied to tax years. Later: a sourced `uk-property-transaction-tax.ts` beside `uk-rule-sources.ts:17`. |
+| Other buying costs | One optional typed field, taken off the deposit. No Flump figures, except the stamp duty estimate (section 10a). |
 | Term and age at end | Term is a slider. Age line from saved birth year (`user-profile.entity.ts:277`) is MA11. |
 | Joint applications | Typed second income only. E34 has no household yet. The budget view states "This uses your own figures." |
 | Interest-only | Saved mortgages only. Not offered for a new loan. |
@@ -139,7 +139,7 @@ Nothing typed twice: salary, take-home, budget, debts, housing cost, mortgage ba
 
 ## 8. Slices
 
-**S1. Engine (effort M).**
+**S1. Engine (effort M).** Section 10a adds to this slice: the income view returns a range, and one file holds the default rates by loan to value. Section 10a also adds slice S1b, the stamp duty estimate.
 
 - `packages/finance-engine/src/mortgage.ts`: add `calculateLoanFromMonthlyPayment(monthlyPaymentGbp, annualRatePct, termMonths)` beside the formula; add `compareMortgageRates` and a fix-end helper reusing `projectAmortisedBalance`.
 - New `picture/selectors/housing-room.ts`, following `safe-to-spend.ts:33` (`Figure`, unknown never 0).
@@ -166,7 +166,7 @@ Verification per slice: `rtk bun run lint`, `rtk bun run check-types`, `rtk bun 
 
 - **E29a:** the wording in section 6 and the standing line need owner approval before S2 merges.
 - **E29b:** solicitor view before anyone beyond the friends beta (MA12).
-- **Tax vectors:** no new tax calculation. Take-home is reused with its existing notices, so no new sign-off.
+- **Tax vectors:** take-home is reused with its existing notices, so it needs no new sign-off. **Superseded in part by section 10a (MA7): the stamp duty estimate is a new tax calculation and needs the Fable decider's check before S1b merges.**
 - **Work in flight on 2026-11-18:** UX Batch E changes the budget editor, Profile and Self Assessment pages, and a design-fix PR touches the mortgage page. S2 starts after those merge.
 
 ## 10. Owner decisions
@@ -195,8 +195,8 @@ MA1, MA3, MA4, MA6 and MA8 to MA12 are accepted as recommended. The three change
 **MA2: the income view shows a range, 4 to 4.5 times income.**
 
 - The result is a range, low to high: income times 4 and income times 4.5. Both multiples are editable assumptions. This replaces the single multiple in section 4a and the "Income times your multiple" result in section 6.
-- Research on 2026-11-21 (the coordinator's, from search results, primary pages not opened): the Bank of England's loan to income measure counts lending at 4.5 times income or more as "high", and since 2014 has held it to about 15% of new lending. From 2025 and 2026 that 15% is managed across the market, not lender by lender (PRA PS19/26). Consumer guides (Rightmove, Experian, Which?) describe typical limits of about 4 to 4.5 times income, with some lenders offering 5.5 to 6 times since 2025. So 4 to 4.5 is a fair general guide and not a ceiling.
-- Helper wording (the coordinator's, replacing "Multiple helper" in section 6): "Assumption: many lenders lend around 4 to 4.5 times yearly income. Some lend more or less. Lenders set their own limits and checks. You can change these." No source is named on the page.
+- Research on 2026-11-21. Read on the Bank of England's site that day ("High loan to income (LTI) lending" and policy statement PS19/26, "High loan to income lending", published 14 October 2026): lending "at or greater than 4.5 times income" counts as high, and is held to a 15% share of new mortgage lending; PS19/26 removes the lender-by-lender 15% cap from 28 October 2026 and keeps 15% as a limit across the market. From search results only, pages not opened: consumer guides (Rightmove, Experian, Which?) describe typical limits of about 4 to 4.5 times income, with some lenders offering 5.5 to 6 times since 2025. So 4 to 4.5 is a fair general guide and not a ceiling. No primary source gives a "typical" multiple; the range is the owner's decision.
+- Helper wording (the coordinator's draft, replacing "Multiple helper" in section 6): "Assumption: 4 to 4.5 times yearly income. Lenders set their own limits and checks. You can change these." No source is named on the page and no claim is made about what lenders do.
 - Hand-worked case 1 already covers both ends: £65,000 times 4 = £260,000; times 4.5 = £292,500.
 
 **MA5: the new-loan rate defaults to a range that depends on loan to value.**
@@ -214,7 +214,7 @@ The owner's figures are for a loan to value of 60% or less and of about 90%. The
 - With no deposit typed there is no loan to value, so the rate is empty until typed (the original option A).
 - The payment and loan results show a range from the low and high rate. The user can replace the range with one rate of their own.
 - The table lives in one engine file (for example `packages/finance-engine/src/mortgage-rate-assumptions.ts`) with an `asOf` date of November 2026 and the note that the figures are the owner's reading of the market. Pages and tools read it from there; no page holds a rate. The page shows the date: "Assumption: rates seen in November 2026 for this loan to value. You can change it."
-- The figures go stale. The stale-rates banner (E22) covers this table: when `asOf` is more than six months old the page says so. Updating the table is an owner decision each time.
+- The figures go stale. When `asOf` is more than six months old the page says so, in a plain line beside the rate. The existing banner (`packages/ui/src/patterns/TaxRatesStatusBanner`) works by tax year and does not do this; the line is new work in S2. Updating the table is an owner decision each time.
 - The rate-change default stays a change of 1 point. The hardcoded 5.2% in `RemortgageShockSim` goes.
 - Not verified: the rates themselves. They are the owner's figures and were not checked against any source.
 - For the E29b solicitor: whether default rates by loan to value change the view on Article 53A or financial promotions.
@@ -225,7 +225,10 @@ The owner's figures are for a loan to value of 60% or less and of about 90%. The
 - Version one covers a main home bought by one or more people who own no other home, with a "first home" switch for first-time buyer relief where the regime has one. Higher rates for additional homes and for non-UK residents are not modelled; the page says so.
 - New engine file `packages/finance-engine/src/uk-property-transaction-tax.ts`, with every band, rate and relief read from the primary source on the day (GOV.UK, Revenue Scotland, the Welsh Revenue Authority) and cited in `uk-rule-sources.ts`. Hand-worked tests per regime (AGENTS.md section 14). The figures are tax figures: an independent Fable decider checks the table against the sources before merge, as for other tax figures.
 - The figure is taken off the deposit with other buying costs, shown as its own line: "Estimated stamp duty: ~£2,500". In Scotland and Wales the line uses the tax's own name.
+- The figure is a tax output, so it carries the unverified notice the advice boundary policy requires for one (R6), in the same form as other tax estimates.
 - This is a new slice, S1b, after S1. S2 shows the line only once S1b has merged.
+
+**The coordinator's readings, not the owner's words:** the 70% and 80% steps are a straight line between the owner's two points; each band takes the rate of its upper end; over 90% has no default; with no deposit the rate is empty; the six-month stale line; all three stamp duty regimes, the "first home" switch and what version one leaves out; and every line of wording in this section. MA4 approved the wording in section 6 as it stood. The new lines here (the multiple helper, the rate line, the stale line, the stamp duty line and the "Where is the property?" question) were not in what the owner saw and need the owner's approval under E29a before S2 merges.
 
 **One home per value (AGENTS.md section 16).** The owner asked on 2026-11-21 that this feature keep to the single source of truth rule. Every prefilled figure (salary, take-home, essentials, debt payments, housing cost, mortgage balance, rate, term, fix-end date, tax region) is read from its one home through the engine's picture selectors, never recomputed or copied in web code. "Left each month before housing" is one engine selector (`housing-room.ts`) used by every place that shows it. The rate table, the multiples and the property tax bands each have one engine file. Nothing new is stored (MA9), so the value map gains no stored fact; the new shared figures are added to `docs/system/value-map.yaml` in the PR that adds them.
 
@@ -235,7 +238,7 @@ Lender decisions depend on credit files, criteria and stress rates Flump cannot 
 
 ## Not verified
 
-- The Bank of England loan-to-income flow limit and any "typical" multiple: the pages could not be read; nothing is stated.
+- The Bank of England loan-to-income flow limit: read on 2026-11-21 (section 10a). A "typical" multiple has no primary source; the 4 to 4.5 range is the owner's decision.
 - FCA MCOB 11.6 and the withdrawn affordability test: not read.
 - LBTT and LTT rates: not read. The gov.uk SDLT page was read only to confirm it has bands and a first-time buyer relief.
 - Whether a generic calculator is outside Article 53A, or is a financial promotion: solicitor question.
