@@ -31,6 +31,7 @@
         "test/*.ts",
         "react-router.config.ts",
         "vite.config.mts",
+        "vitest.stryker.config.mts",
         "app/**/components/*/index.ts",
         ".storybook/*.{ts,tsx}",
         "app/entry.server.tsx",
