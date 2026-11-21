@@ -174,6 +174,7 @@ interface EntryRowProps {
 const EntryRow: FC<EntryRowProps> = ({ entry, onSave, onRemove, linkOffer = null }) => {
   const [name, setName] = useState(entry.name);
   const [amount, setAmount] = useState<number | null>(toAmount(entry.amount));
+  const [pendingEssential, setPendingEssential] = useState(false);
   // The latest typed amount, read on blur after CurrencyInput's own rounding has run.
   const amountRef = useRef<number | null>(toAmount(entry.amount));
 
@@ -254,9 +255,16 @@ const EntryRow: FC<EntryRowProps> = ({ entry, onSave, onRemove, linkOffer = null
               aria-label={`Essential: ${entry.name}`}
               checked={entry.isEssential}
               data-testid={`budget-editor-essential-${entry.id}`}
+              disabled={pendingEssential}
               id={`budget-editor-essential-${entry.id}`}
               label="Essential"
-              onChange={(event) => void onSave(entry.id, { isEssential: event.target.checked })}
+              onChange={(event) => {
+                if (pendingEssential) return;
+                setPendingEssential(true);
+                void onSave(entry.id, { isEssential: event.target.checked }).finally(() => {
+                  setPendingEssential(false);
+                });
+              }}
             />
           )}
         </div>

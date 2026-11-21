@@ -742,6 +742,17 @@ describe("UserProfileService (Deep Module)", () => {
       expect(mockDataSource.transaction).not.toHaveBeenCalled();
       expect(mockUserProfileRepo.save).not.toHaveBeenCalled();
     });
+
+    it("re-checks isErased inside the reset transaction with the transaction manager", async () => {
+      const isErased = vi.fn().mockResolvedValueOnce(false).mockResolvedValueOnce(true);
+      const guarded = build({ accountDeletion: { isErased } });
+      await expect(guarded.resetFinancialData("user-raced")).rejects.toThrow(
+        "This account has been deleted.",
+      );
+      expect(isErased).toHaveBeenCalledTimes(2);
+      expect(isErased.mock.calls[1]?.[1]).toBeDefined();
+      expect(mockUserProfileRepo.save).not.toHaveBeenCalled();
+    });
   });
 
   describe("reset with a migration before-image table that was never created", () => {

@@ -346,10 +346,10 @@ function validateOwnership(value: unknown): AccountOwnership | undefined {
 
 function validateSharePercent(value: unknown): number | null | undefined {
   if (value === undefined || value === null) return value;
-  if (typeof value === "number" && Number.isInteger(value) && value >= 1 && value <= 100) {
+  if (typeof value === "number" && Number.isInteger(value) && value >= 1 && value <= 99) {
     return value;
   }
-  throw new BadRequestException("sharePercent must be an integer between 1 and 100, or null");
+  throw new BadRequestException("sharePercent must be an integer between 1 and 99, or null");
 }
 
 /** A balance must be a finite number below 10 billion in magnitude (numeric(12,2) column). */

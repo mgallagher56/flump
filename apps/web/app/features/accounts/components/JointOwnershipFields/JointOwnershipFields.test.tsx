@@ -39,7 +39,8 @@ describe("resolveSharePercent", () => {
   test("keeps a joint share between 1 and 100, whole, and gives a sole account none", () => {
     expect(resolveSharePercent("joint", 40.4)).toBe(40);
     expect(resolveSharePercent("joint", 0)).toBe(1);
-    expect(resolveSharePercent("joint", 150)).toBe(100);
+    expect(resolveSharePercent("joint", 100)).toBe(99);
+    expect(resolveSharePercent("joint", 150)).toBe(99);
     expect(resolveSharePercent("joint", null)).toBe(50);
     expect(resolveSharePercent("sole", 40)).toBeNull();
   });

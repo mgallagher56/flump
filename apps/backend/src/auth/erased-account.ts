@@ -1,11 +1,12 @@
 import { SetMetadata } from "@nestjs/common";
+import type { EntityManager } from "typeorm";
 
 /**
  * Port the AuthGuard uses to refuse tokens of erased accounts (BE-04). Provided in AppModule by
  * AccountDeletionService, so the auth module does not depend on the database.
  */
 export interface ErasedAccountCheck {
-  isErased(userId: string): Promise<boolean>;
+  isErased(userId: string, manager?: EntityManager): Promise<boolean>;
 }
 
 export const ERASED_ACCOUNT_CHECK = "ERASED_ACCOUNT_CHECK";

@@ -336,9 +336,10 @@ describe("IdempotencyInterceptor edge cases", () => {
     expect(res.setHeader).toHaveBeenCalledWith("Idempotent-Replayed", "true");
   });
 
-  it("keeps a successful create when its result cannot be stored", async () => {
+  it("keeps a successful create when its result cannot be stored and refuses a retry instead of duplicating", async () => {
     // The source says the create succeeded and failing to store the replay must not turn it into
-    // an error. What a retry with the same key then does is an open question (see the ledger).
+    // an error. Leaving the pending row in place means an immediate retry gets 409 conflict
+    // rather than running the create handler a second time and creating a duplicate.
     vi.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
     const table = tableFake({ failUpdate: true });
     const interceptor = new IdempotencyInterceptor(table.dataSource as never);
@@ -348,5 +349,12 @@ describe("IdempotencyInterceptor edge cases", () => {
       }),
     );
     expect(first).toEqual({ id: "a" });
+
+    const retry = vi.fn(() => of({ id: "b" }));
+    const err = await lastValueFrom(
+      interceptor.intercept(httpContext(keyed, { setHeader: vi.fn() }), { handle: retry }),
+    ).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(ConflictException);
+    expect(retry).not.toHaveBeenCalled();
   });
 });

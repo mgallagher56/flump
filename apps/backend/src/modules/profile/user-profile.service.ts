@@ -381,6 +381,9 @@ export class UserProfileService implements ProfileLifecycle {
     };
 
     const { saved, counts } = await this.dataSource.transaction(async (manager) => {
+      if (await this.accountDeletion.isErased(userId, manager)) {
+        throw accountDeletedException();
+      }
       const result = await performReset((entity) => manager.getRepository(entity));
       // BE-06: the reset revoked every AI token and bank connection, so their consents close,
       // and the action is recorded in the same transaction.

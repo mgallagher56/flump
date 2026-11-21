@@ -140,4 +140,43 @@ describe("BreathingRoomBasis", () => {
     expect(accountsCard.textContent).toContain("£3,040");
     expect(accountsCard.textContent).not.toContain("£1,216");
   });
+
+  it("keeps each toggled switch disabled independently while its own save is in flight", async () => {
+    const pending = new Map<string, () => void>();
+    const onSetEssential = vi.fn(
+      (id: string) =>
+        new Promise<void>((resolve) => {
+          pending.set(id, resolve);
+        }),
+    );
+    render(
+      <BreathingRoomBasis
+        accountDetails={[]}
+        accounts={accounts}
+        entries={[
+          entry({ id: "gym", name: "Gym", category: "expenses", isEssential: false }),
+          entry({ id: "cinema", name: "Cinema", category: "expenses", isEssential: false }),
+        ]}
+        onSetEssential={onSetEssential}
+      />,
+    );
+    open();
+    const gym = screen.getByRole("switch", { name: /Gym/ }) as HTMLInputElement;
+    const cinema = screen.getByRole("switch", { name: /Cinema/ }) as HTMLInputElement;
+
+    fireEvent.click(gym);
+    expect(gym.disabled).toBe(true);
+    expect(cinema.disabled).toBe(false);
+
+    fireEvent.click(cinema);
+    expect(gym.disabled).toBe(true);
+    expect(cinema.disabled).toBe(true);
+
+    pending.get("gym")?.();
+    await waitFor(() => expect(gym.disabled).toBe(false));
+    expect(cinema.disabled).toBe(true);
+
+    pending.get("cinema")?.();
+    await waitFor(() => expect(cinema.disabled).toBe(false));
+  });
 });

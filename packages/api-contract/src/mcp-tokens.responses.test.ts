@@ -165,6 +165,24 @@ describe("mcp-tokens response schemas", () => {
     expect(checkAgainst(ContextPackResponse, { pack, markdown: "# FLUMP" })).toEqual({ ok: true });
   });
 
+  it("ContextPackResponse accepts a budget entry with the engine-resolved linked kind", () => {
+    const [entry] = pack.budgetSummary.entries;
+    const withLinked = (linked: unknown) => ({
+      pack: {
+        ...pack,
+        budgetSummary: {
+          ...pack.budgetSummary,
+          entries: [{ ...entry, linked }],
+        },
+      },
+      markdown: "# FLUMP",
+    });
+    for (const kind of ["take_home", "housing", "savings", "debt"]) {
+      expect(checkAgainst(ContextPackResponse, withLinked(kind))).toEqual({ ok: true });
+    }
+    expect(checkAgainst(ContextPackResponse, withLinked("other")).ok).toBe(false);
+  });
+
   it("ContextPackResponse accepts saved facts not in the budget, without the row ids", () => {
     const fact = { link: "housing", monthly: 950, kind: "rent", paymentEstimated: false };
     const withFacts = (facts: unknown[]) => ({

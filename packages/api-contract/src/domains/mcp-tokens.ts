@@ -118,6 +118,11 @@ const ContextPackBudgetEntry = z.strictObject({
   /** The user's share of a joint entry, 1 to 100; null where none is saved. */
   sharePercent: z.number().int().min(1).max(100).nullable().optional(),
   /**
+   * Set on an engine-resolved line standing in for a saved fact ("take_home", "housing", "savings",
+   * or "debt"). Never stored.
+   */
+  linked: BudgetEntryLinkKind.optional(),
+  /**
    * A row the person linked to a saved fact. Its stored amount is never read: the engine resolves
    * the line from the profile or housing details.
    */

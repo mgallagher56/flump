@@ -62,12 +62,14 @@ export class AccountDeletionService implements ErasedAccountCheck {
    * never removed while it could matter (24 months). Negative answers are never cached, so a
    * deletion takes effect on the very next request.
    */
-  async isErased(userId: string): Promise<boolean> {
+  async isErased(userId: string, manager?: EntityManager): Promise<boolean> {
     if (!this.key || !userId) return false;
     if (this.erasedCache.has(userId)) return true;
-    const found = await this.dataSource.getRepository(AccountDeletionTombstone).exists({
-      where: { subjectHash: tombstoneSubjectHash(this.key, userId) },
-    });
+    const found = await (manager ?? this.dataSource)
+      .getRepository(AccountDeletionTombstone)
+      .exists({
+        where: { subjectHash: tombstoneSubjectHash(this.key, userId) },
+      });
     if (found) {
       if (this.erasedCache.size >= ERASED_CACHE_MAX) this.erasedCache.clear();
       this.erasedCache.add(userId);

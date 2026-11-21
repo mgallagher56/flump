@@ -12673,6 +12673,10 @@
                                       }
                                     ]
                                   },
+                                  "linked": {
+                                    "enum": ["take_home", "housing", "savings", "debt"],
+                                    "type": "string"
+                                  },
                                   "name": {
                                     "type": "string"
                                   },
@@ -12741,6 +12745,10 @@
                                         "type": "null"
                                       }
                                     ]
+                                  },
+                                  "linked": {
+                                    "enum": ["take_home", "housing", "savings", "debt"],
+                                    "type": "string"
                                   },
                                   "name": {
                                     "type": "string"
@@ -13967,6 +13975,10 @@
                                     "type": "null"
                                   }
                                 ]
+                              },
+                              "linked": {
+                                "enum": ["take_home", "housing", "savings", "debt"],
+                                "type": "string"
                               },
                               "name": {
                                 "type": "string"

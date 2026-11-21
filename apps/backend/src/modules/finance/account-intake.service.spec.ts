@@ -708,17 +708,20 @@ describe("AccountIntakeService (Deep Module)", () => {
       expect(mockAccountRepo.save).not.toHaveBeenCalled();
     });
 
-    it.each([0, -5, 101, 50.5, "50"])("rejects invalid sharePercent %j", async (sharePercent) => {
-      await expect(
-        service.createAccount("userA", {
-          name: "Joint Savings",
-          type: "Saving",
-          balance: 5_000,
-          ownership: "joint",
-          sharePercent: sharePercent as never,
-        }),
-      ).rejects.toBeInstanceOf(BadRequestException);
-    });
+    it.each([0, -5, 100, 101, 50.5, "50"])(
+      "rejects invalid sharePercent %j",
+      async (sharePercent) => {
+        await expect(
+          service.createAccount("userA", {
+            name: "Joint Savings",
+            type: "Saving",
+            balance: 5_000,
+            ownership: "joint",
+            sharePercent: sharePercent as never,
+          }),
+        ).rejects.toBeInstanceOf(BadRequestException);
+      },
+    );
 
     it("clears sharePercent when ownership is updated from joint to sole", async () => {
       const accounts = createInMemoryRepository([

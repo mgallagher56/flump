@@ -10,6 +10,8 @@ const WEB_MESSAGES = {
   "not-found": "We couldn't find that. It may have been removed.",
   forbidden: "You don't have permission to do that.",
   "not-invited": "This account has not been invited to the Flump beta yet.",
+  "rate-limited":
+    "You have tried this a few times in a short while. Wait a little, then try again.",
   client: "We couldn't save that. Check the details and try again.",
   unauthorised: "Your session has ended. Please sign in again.",
 };
@@ -19,6 +21,7 @@ describe("kindFromStatus", () => {
     [401, "unauthorised"],
     [403, "forbidden"],
     [404, "not-found"],
+    [429, "rate-limited"],
     [400, "client"],
     [409, "client"],
     [422, "client"],
@@ -52,21 +55,22 @@ describe("BackendError", () => {
 });
 
 describe("messages", () => {
-  it("has exactly the eight kinds", () => {
+  it("has exactly the nine kinds", () => {
     expect([...BACKEND_ERROR_KINDS].sort()).toEqual(Object.keys(WEB_MESSAGES).sort());
-    expect(BACKEND_ERROR_KINDS).toHaveLength(8);
+    expect(BACKEND_ERROR_KINDS).toHaveLength(9);
   });
 
   it("equals web's strings for every kind", () => {
     expect(ACTION_MESSAGE_BY_KIND).toEqual(WEB_MESSAGES);
   });
 
-  it("lists exactly these eight kinds, each with an action message", () => {
+  it("lists exactly these nine kinds, each with an action message", () => {
     const kinds = [
       "unauthorised",
       "forbidden",
       "not-invited",
       "not-found",
+      "rate-limited",
       "client",
       "server",
       "unavailable",

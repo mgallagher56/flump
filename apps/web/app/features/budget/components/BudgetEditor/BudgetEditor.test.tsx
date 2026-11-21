@@ -123,10 +123,22 @@ describe("BudgetEditor", () => {
     expect(screen.getByText("Joint, 40%")).toBeTruthy();
   });
 
-  it("saves the essential switch", () => {
-    const { onUpdate } = setup();
-    fireEvent.click(screen.getByTestId("budget-editor-essential-b-3"));
+  it("saves the essential switch and disables it while the save is in flight", async () => {
+    let resolveSave!: () => void;
+    const onUpdate = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveSave = resolve;
+        }),
+    );
+    setup({ onUpdate });
+    const toggle = screen.getByTestId("budget-editor-essential-b-3") as HTMLInputElement;
+    fireEvent.click(toggle);
+    expect(onUpdate).toHaveBeenCalledTimes(1);
     expect(onUpdate).toHaveBeenCalledWith("b-3", { isEssential: true });
+    expect(toggle.disabled).toBe(true);
+    resolveSave();
+    await waitFor(() => expect(toggle.disabled).toBe(false));
   });
 
   it("opens the add row from its quiet button, adds with the wizard's defaults, then closes it", async () => {
