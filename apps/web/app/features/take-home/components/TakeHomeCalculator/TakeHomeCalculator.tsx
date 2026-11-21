@@ -35,7 +35,6 @@ import {
   detailList,
   detailNote,
   detailValue,
-  payStrip,
   zoneLink,
 } from "./TakeHomeCalculator.styles";
 
@@ -230,7 +229,6 @@ export const TakeHomeCalculator: FC<TakeHomeCalculatorProps> = ({
           valueFormat={{ fractionDigits: 0 }}
         />
         <KpiStrip
-          className={payStrip()}
           emptyPrompt={{
             title: "Add your salary before tax to see what comes off your pay",
             description: "Income Tax, National Insurance and pension are worked out from it.",
@@ -363,7 +361,7 @@ export const TakeHomeCalculator: FC<TakeHomeCalculatorProps> = ({
 
       {/* Pay before tax, then the two parts that come off it: the first card less the other two is
           the hero, so the strip explains itself. */}
-      <KpiStrip className={payStrip()} items={[payBeforeTaxCard, secondCard, thirdCard]} />
+      <KpiStrip items={[payBeforeTaxCard, secondCard, thirdCard]} />
 
       <TakeHomeBreakdown
         details={details}
