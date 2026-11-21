@@ -1,5 +1,5 @@
 import { IconTile } from "@repo/ui";
-import { Ban, Bot, Keyboard, type LucideIcon } from "lucide-react";
+import { Ban, Bot, Download, Keyboard, type LucideIcon, MailX, Trash2 } from "lucide-react";
 import type { FC, ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { DisclosurePolicySection } from "../../components/DisclosurePolicySection";
@@ -50,6 +50,21 @@ const SECURITY_FACTS: SecurityFact[] = [
         (preview) answers questions from the figures you have saved. {AI_STAGING_SENTENCE}
       </>
     ),
+  },
+  {
+    id: "download-figures",
+    icon: Download,
+    text: "You can download a copy of your saved figures from Settings at any time.",
+  },
+  {
+    id: "delete-account",
+    icon: Trash2,
+    text: "You can delete your account and saved data from Settings.",
+  },
+  {
+    id: "no-email-requests",
+    icon: MailX,
+    text: "Flump never asks for a password, code or bank login by email.",
   },
 ];
 

@@ -59,11 +59,19 @@ describe("SecurityPage (E16 PR 12)", () => {
     );
   });
 
-  it("makes no encryption, erasure, data-selling or response-time claims", () => {
+  it("makes no encryption, data-selling or response-time claims, and states data download, deletion and email rules", () => {
     renderPage();
-    expect(document.body.textContent).not.toMatch(
-      /encrypt|AES|TLS|HSTS|CSV|delete all your|close your account|never sell|visible only|business day/i,
-    );
+    const bodyText = document.body.textContent ?? "";
+    expect(bodyText).not.toMatch(/encrypt|AES|TLS|HSTS|CSV|never sell|visible only|business day/i);
+    expect(
+      screen.getByText("You can download a copy of your saved figures from Settings at any time."),
+    ).toBeDefined();
+    expect(
+      screen.getByText("You can delete your account and saved data from Settings."),
+    ).toBeDefined();
+    expect(
+      screen.getByText("Flump never asks for a password, code or bank login by email."),
+    ).toBeDefined();
   });
 
   it("does not offer an enquiry form that cannot send", () => {

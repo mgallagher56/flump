@@ -254,6 +254,37 @@ describe("RetirementPlanner", () => {
     );
   });
 
+  it("shows plain helper text under Plan to age", () => {
+    renderPlanner();
+    const helpers = screen.getAllByText("The age you want your retirement money to last until.");
+    expect(helpers.length).toBeGreaterThanOrEqual(2);
+    const input = screen.getByRole("textbox", { name: "Plan to age" });
+    expect(input.getAttribute("aria-describedby")).toBe("plan-to-age-helper");
+  });
+
+  it("shows saveError in an alert and saveSuccess in a status line", () => {
+    const { rerender } = renderPlanner({
+      saveError: "We could not save that. Check the details and try again.",
+    });
+    expect(screen.getByRole("alert").textContent).toBe(
+      "We could not save that. Check the details and try again.",
+    );
+    expect(screen.queryByText("Retirement plan saved.")).toBeNull();
+
+    rerender(
+      <MemoryRouter>
+        <RetirementPlanner
+          planArgs={planArgs}
+          accountDetails={[]}
+          saveError={null}
+          saveSuccess="Retirement plan saved."
+        />
+      </MemoryRouter>,
+    );
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(screen.getByText("Retirement plan saved.").getAttribute("role")).toBe("status");
+  });
+
   it("changing the scenario growth case never saves", async () => {
     const user = userEvent.setup();
     const onSavePlan = vi.fn();

@@ -89,6 +89,8 @@ export interface RetirementPlannerProps {
   accountDetails: readonly AccountDetailInput[];
   etag?: string | null;
   isSaving?: boolean;
+  saveError?: string | null;
+  saveSuccess?: string | null;
   onSavePlan?: (payload: UpsertRetirementPlanRequest, etag: string | null) => void;
   /**
    * A workplace pension rate is saved but no salary is (`workplaceSalaryNotSet`): the projection
@@ -358,6 +360,8 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
   accountDetails,
   etag = null,
   isSaving = false,
+  saveError = null,
+  saveSuccess = null,
   onSavePlan,
   workplaceSalaryNotSet = false,
 }) => {
@@ -693,6 +697,7 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
                     step={1}
                     onChange={(v) => scenario.set("planToAge", v)}
                     formatValue={(v) => `Age ${v}`}
+                    helperText="The age you want your retirement money to last until."
                   />
                   {workplace ? (
                     <div className={fieldGroup()}>
@@ -873,9 +878,13 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
                 </label>
                 <WholeNumberInput
                   id="plan-to-age-input"
+                  aria-describedby="plan-to-age-helper"
                   value={parseWhole(planToAgeInput)}
                   {...bindNumber(setPlanToAgeInput)}
                 />
+                <p className={mutedNote()} id="plan-to-age-helper">
+                  The age you want your retirement money to last until.
+                </p>
               </div>
             </div>
 
@@ -1068,9 +1077,15 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
               )}
             </CollapsibleDrawer>
 
-            {formError && (
+            {(formError || saveError) && (
               <p className={mutedNote()} role="alert">
-                {formError}
+                {formError ?? saveError}
+              </p>
+            )}
+
+            {saveSuccess && !formError && !saveError && (
+              <p className={mutedNote()} role="status">
+                {saveSuccess}
               </p>
             )}
 
