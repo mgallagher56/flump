@@ -667,6 +667,23 @@ describe("PensionContainer", () => {
       expect(container.textContent).not.toContain("Add your contribution rates");
     });
 
+    it("reads the saved region from the root profile when the loader sends no profile", async () => {
+      const { normalizeProfile } =
+        await vi.importActual<typeof import("~/hooks/useUserProfile")>("~/hooks/useUserProfile");
+      testLoaderData = { accounts: FILLED.accounts, accountDetails: [] };
+      testProfileData = normalizeProfile({
+        ...FILLED.userProfile,
+        annualSalary: 110_000,
+        pensionPercent: 0,
+        pensionEmployerPercent: 0,
+        taxRegion: "SCOTLAND",
+      });
+      render(<PensionContainer />);
+      // 110,000 with nothing paid in is inside the band, and the region is known: no assumption tip.
+      expect(document.getElementById("pension-trap-note")).not.toBeNull();
+      expect(screen.queryByRole("button", { name: "About Tax region" })).toBeNull();
+    });
+
     it("shows the empty state from the root profile when there is no loader data", async () => {
       const { DEFAULT_PROFILE } =
         await vi.importActual<typeof import("~/hooks/useUserProfile")>("~/hooks/useUserProfile");
