@@ -101,6 +101,15 @@ describe("CurrencyInput", () => {
     expect((screen.getByLabelText("Balance") as HTMLInputElement).value).toBe("");
   });
 
+  it("preserves non-empty input text when rerendered with value={undefined}", () => {
+    const { rerender } = render(<CurrencyInput aria-label="Balance" value={50} />);
+    const input = screen.getByLabelText("Balance") as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "1234" } });
+    expect(input.value).toBe("1,234");
+    rerender(<CurrencyInput aria-label="Balance" value={undefined} />);
+    expect(input.value).toBe("1,234");
+  });
+
   it("rejects non-numeric characters", () => {
     const onValueChange = vi.fn();
     render(<CurrencyInput aria-label="Balance" onValueChange={onValueChange} />);

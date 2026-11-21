@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { fireEvent, render, screen, within } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { STUDENT_LOAN_COPY, StudentLoanCalculator } from "./StudentLoanCalculator";
 
 const slider = (label: string) => screen.getByLabelText(label);
@@ -175,26 +175,78 @@ describe("StudentLoanCalculator in 2027/28 (Plan 1 and Plan 4 thresholds not pub
     },
   );
 
-  it.each(["plan1", "plan4"] as const)(
-    "exposes the refusal line for %s in a polite status live region on initial render and plan switch",
-    (plan) => {
-      const { unmount } = render(
-        <StudentLoanCalculator initialPlan={plan} persistSeed={false} taxYear="2027/28" />,
-      );
-      const initialStatus = screen.getByRole("status");
-      expect(initialStatus).toBe(screen.getByTestId("student-loan-refusal"));
-      expect(initialStatus.getAttribute("aria-live")).toBe("polite");
-      expect(initialStatus.textContent).toBe(LINE);
-      unmount();
+  describe("persistent refusal live region", () => {
+    // 2027/28 Plan 2 threshold is £29,385 at 9%; default salary £38,000 gives
+    // (£38,000 - £29,385) * 0.09 = £775.35/yr (£64.61/mo), rounded to £65/mo and £775/yr.
+    const PLAN2_ANNOUNCEMENT = "Illustration: estimated repayment £65 a month, £775 a year";
 
-      render(<StudentLoanCalculator initialPlan="plan2" persistSeed={false} taxYear="2027/28" />);
-      expect(screen.queryByTestId("student-loan-refusal")).toBeNull();
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
 
-      fireEvent.change(planSelect(), { target: { value: plan } });
-      const switchedStatus = screen.getByRole("status");
-      expect(switchedStatus).toBe(screen.getByTestId("student-loan-refusal"));
-      expect(switchedStatus.getAttribute("aria-live")).toBe("polite");
-      expect(switchedStatus.textContent).toBe(LINE);
-    },
-  );
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it.each(["plan1", "plan4"] as const)(
+      "shows the refusal line visibly for %s on initial render while keeping the LiveRegion silent",
+      (plan) => {
+        render(<StudentLoanCalculator initialPlan={plan} persistSeed={false} taxYear="2027/28" />);
+        const refusal = screen.getByTestId("student-loan-refusal");
+        expect(refusal.textContent).toBe(LINE);
+        expect(refusal.getAttribute("role")).toBeNull();
+        expect(refusal.getAttribute("aria-live")).toBeNull();
+
+        const liveRegion = screen.getByRole("status");
+        expect(liveRegion).not.toBe(refusal);
+        expect(liveRegion.textContent).toBe("");
+
+        // Initial load-time content stays silent after the debounce period (LiveRegion contract).
+        act(() => {
+          vi.advanceTimersByTime(1000);
+        });
+        expect(liveRegion.textContent).toBe("");
+      },
+    );
+
+    it.each(["plan1", "plan4"] as const)(
+      "keeps the same status live region across plan2 -> %s -> plan2 switches and announces after 1000ms",
+      (plan) => {
+        render(<StudentLoanCalculator initialPlan="plan2" persistSeed={false} taxYear="2027/28" />);
+        const liveRegion = screen.getByRole("status");
+        expect(liveRegion.textContent).toBe("");
+        expect(screen.queryByTestId("student-loan-refusal")).toBeNull();
+
+        // Known -> refused: same LiveRegion node stays mounted and announces the refusal after 1000ms.
+        fireEvent.change(planSelect(), { target: { value: plan } });
+        expect(screen.getByTestId("student-loan-refusal").textContent).toBe(LINE);
+        expect(screen.getByRole("status")).toBe(liveRegion);
+
+        act(() => {
+          vi.advanceTimersByTime(999);
+        });
+        expect(liveRegion.textContent).toBe("");
+
+        act(() => {
+          vi.advanceTimersByTime(1);
+        });
+        expect(liveRegion.textContent).toBe(LINE);
+
+        // Refused -> known: same LiveRegion node announces the new estimate after 1000ms.
+        fireEvent.change(planSelect(), { target: { value: "plan2" } });
+        expect(screen.queryByTestId("student-loan-refusal")).toBeNull();
+        expect(screen.getByRole("status")).toBe(liveRegion);
+
+        act(() => {
+          vi.advanceTimersByTime(999);
+        });
+        expect(liveRegion.textContent).toBe(LINE);
+
+        act(() => {
+          vi.advanceTimersByTime(1);
+        });
+        expect(liveRegion.textContent).toBe(PLAN2_ANNOUNCEMENT);
+      },
+    );
+  });
 });

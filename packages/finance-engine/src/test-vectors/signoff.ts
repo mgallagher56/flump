@@ -84,7 +84,7 @@ export function signVector<T extends SignableVector>(
   return { ...signed, signedOffHash: vectorSignoffHash(signed) };
 }
 
-export type SignoffState =
+type SignoffState =
   | { state: "unsigned" }
   | { state: "signed" }
   | { state: "invalid"; reason: string };

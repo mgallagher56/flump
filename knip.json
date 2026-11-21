@@ -66,7 +66,6 @@
   },
   "exclude": ["duplicates"],
   "ignoreIssues": {
-    "apps/e2e/**": ["exports", "types"],
-    "packages/finance-engine/src/test-vectors/**": ["exports", "types"]
+    "apps/e2e/**": ["exports", "types"]
   }
 }

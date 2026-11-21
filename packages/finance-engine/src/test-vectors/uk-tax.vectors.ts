@@ -62,7 +62,7 @@ export type UkTaxVectorKind =
   | "giftAid"
   | "class4"
   | "dividends";
-export type UkTaxVectorStatus = "VERIFIED" | "UNVERIFIED";
+type UkTaxVectorStatus = "VERIFIED" | "UNVERIFIED";
 
 export interface UkTaxVector {
   id: string;
@@ -97,26 +97,26 @@ export interface UkTaxVector {
   rulingRef?: string;
 }
 
-export interface UkTaxVectorFilter {
+interface UkTaxVectorFilter {
   taxYear?: UkTaxVectorYear;
   region?: UkTaxVectorRegion;
   kind?: UkTaxVectorKind;
   status?: UkTaxVectorStatus;
 }
 
-export interface UkTaxVectorFailure {
+interface UkTaxVectorFailure {
   id: string;
   expected: number;
   actual: number;
 }
 
-export interface UkTaxVectorRunResult {
+interface UkTaxVectorRunResult {
   checked: number;
   failures: UkTaxVectorFailure[];
 }
 
 /** Half a penny: engine results are rounded to pence at public boundaries. */
-export const UK_TAX_VECTOR_TOLERANCE = 0.005;
+const UK_TAX_VECTOR_TOLERANCE = 0.005;
 
 export function selectUkTaxVectors(
   filter: UkTaxVectorFilter = {},
