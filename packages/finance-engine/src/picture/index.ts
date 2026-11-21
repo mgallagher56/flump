@@ -9,6 +9,7 @@ export * from "./selectors/commitments.js";
 export * from "./selectors/debt-summary.js";
 export * from "./selectors/estimated-tax-due.js";
 export * from "./selectors/housing-cost.js";
+export * from "./selectors/housing-room.js";
 export * from "./selectors/isa-allowance-used.js";
 export * from "./selectors/linked-budget-rows.js";
 export * from "./selectors/loan-to-value.js";

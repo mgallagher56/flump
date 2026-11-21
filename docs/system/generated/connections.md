@@ -579,3 +579,42 @@ flowchart LR
   g_retirement_income -.-> s_mcp_read
   g_retirement_income -.-> s_mcp_simulate
 ```
+
+## mortgage
+
+```mermaid
+flowchart LR
+  s_mortgage["Mortgage"]
+  g_housing_room{{"Left each month before housing"}}
+  f_salary(["Salary (yearly pay before tax)"])
+  f_salary ==> g_housing_room
+  f_pension_rates(["Workplace pension rates and how the pension is paid"])
+  f_pension_rates ==> g_housing_room
+  f_budget_entries(["Budget lines"])
+  f_budget_entries ==> g_housing_room
+  f_account_monthly_amount(["Monthly amount on an account (saving, pot payment, debt payment, mortgage payment)"])
+  f_account_monthly_amount ==> g_housing_room
+  f_housing_cost(["Monthly housing cost (rent or mortgage payment)"])
+  f_housing_cost ==> g_housing_room
+  g_housing_room -.-> s_mortgage
+  g_mortgage_budget_loan_estimate{{"Estimated loan from monthly payment"}}
+  g_mortgage_budget_loan_estimate -.-> s_mortgage
+  g_mortgage_income_multiple_range{{"Estimated borrowing range from income"}}
+  f_salary ==> g_mortgage_income_multiple_range
+  g_mortgage_income_multiple_range -.-> s_mortgage
+  g_mortgage_rate_comparison{{"Mortgage payment rate comparison"}}
+  f_account_balance(["Account balance today"])
+  f_account_balance ==> g_mortgage_rate_comparison
+  f_account_rate(["Interest rate on an account"])
+  f_account_rate ==> g_mortgage_rate_comparison
+  f_mortgage_term_and_fix_end(["Mortgage term left and fix end date"])
+  f_mortgage_term_and_fix_end ==> g_mortgage_rate_comparison
+  g_mortgage_rate_comparison -.-> s_mortgage
+  g_mortgage_fix_end_estimate{{"Mortgage balance and payment at fix end"}}
+  f_account_balance ==> g_mortgage_fix_end_estimate
+  f_account_rate ==> g_mortgage_fix_end_estimate
+  f_mortgage_term_and_fix_end ==> g_mortgage_fix_end_estimate
+  g_mortgage_fix_end_estimate -.-> s_mortgage
+  g_mortgage_ltv_rate_band{{"Default mortgage rate band by LTV"}}
+  g_mortgage_ltv_rate_band -.-> s_mortgage
+```

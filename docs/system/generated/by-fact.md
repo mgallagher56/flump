@@ -75,6 +75,12 @@ Where each value is stored, entered and used. One entry per stored fact, then on
 | [Calculated balance offered in the check-in](#check-in-calculated-balance)                                                               | figure | accounts    | Holds                                     |
 | [Invoice subtotal, VAT amount and total](#invoice-totals)                                                                                | figure | tax         | Holds                                     |
 | [Unbilled hours, unbilled amount, outstanding issued invoices and paid in tax year](#invoicing-kpis)                                     | figure | tax         | Holds                                     |
+| [Left each month before housing](#housing-room)                                                                                          | figure | mortgage    | Holds                                     |
+| [Estimated loan from monthly payment](#mortgage-budget-loan-estimate)                                                                    | figure | mortgage    | Holds                                     |
+| [Estimated borrowing range from income](#mortgage-income-multiple-range)                                                                 | figure | mortgage    | Holds                                     |
+| [Mortgage payment rate comparison](#mortgage-rate-comparison)                                                                            | figure | mortgage    | Holds                                     |
+| [Mortgage balance and payment at fix end](#mortgage-fix-end-estimate)                                                                    | figure | mortgage    | Holds                                     |
+| [Default mortgage rate band by LTV](#mortgage-ltv-rate-band)                                                                             | figure | mortgage    | Holds                                     |
 
 ## Area: pay
 
@@ -1632,6 +1638,116 @@ Shown on:
 - Retirement plan: `apps/web/app/features/retirement/components/RetirementPlanner/RetirementPlanner.tsx`
 - AI read tools: `packages/mcp/src/tools/read/getRetirementPicture.ts`
 - AI simulate tools: `packages/mcp/src/tools/simulate/simulateRetirement.ts`
+
+## Area: mortgage
+
+### Left each month before housing
+
+<a id="housing-room"></a>
+
+- Id: `housing-room` (derived figure)
+- Verdict: Holds. Findings: none. Links: none.
+- Computed by: `selectHousingRoom` in `packages/finance-engine/src/picture/selectors/housing-room.ts`
+- Built from: `salary`, `pension-rates`, `budget-entries`, `account-monthly-amount`, `housing-cost`
+- Note: E39 S1: take-home less non-housing essentials and debt commitments, with optional savings and other spending switches.
+
+Other code paths that compute it:
+
+- none
+
+Shown on:
+
+- Mortgage: `packages/finance-engine/src/picture/selectors/housing-room.ts`
+
+### Estimated loan from monthly payment
+
+<a id="mortgage-budget-loan-estimate"></a>
+
+- Id: `mortgage-budget-loan-estimate` (derived figure)
+- Verdict: Holds. Findings: none. Links: none.
+- Computed by: `calculateBudgetLoanEstimate` in `packages/finance-engine/src/mortgage-affordability.ts`
+- Built from: none
+- Note: E39 S1: inverse of repaymentPerMonth with optional deposit, buying costs, and LTV default rate band.
+
+Other code paths that compute it:
+
+- none
+
+Shown on:
+
+- Mortgage: `packages/finance-engine/src/mortgage-affordability.ts`
+
+### Estimated borrowing range from income
+
+<a id="mortgage-income-multiple-range"></a>
+
+- Id: `mortgage-income-multiple-range` (derived figure)
+- Verdict: Holds. Findings: none. Links: none.
+- Computed by: `calculateIncomeMultipleRange` in `packages/finance-engine/src/mortgage-affordability.ts`
+- Built from: `salary`
+- Note: E39 S1 (MA2): 4 to 4.5 times combined yearly income before tax, with optional deposit and buying costs.
+
+Other code paths that compute it:
+
+- none
+
+Shown on:
+
+- Mortgage: `packages/finance-engine/src/mortgage-affordability.ts`
+
+### Mortgage payment rate comparison
+
+<a id="mortgage-rate-comparison"></a>
+
+- Id: `mortgage-rate-comparison` (derived figure)
+- Verdict: Holds. Findings: none. Links: none.
+- Computed by: `compareMortgageRates` in `packages/finance-engine/src/mortgage.ts`
+- Built from: `account-balance`, `account-rate`, `mortgage-term-and-fix-end`
+- Note: E39 S1: monthly payments at base rate, base + delta, and max(0, base - delta).
+
+Other code paths that compute it:
+
+- none
+
+Shown on:
+
+- Mortgage: `packages/finance-engine/src/mortgage.ts`
+
+### Mortgage balance and payment at fix end
+
+<a id="mortgage-fix-end-estimate"></a>
+
+- Id: `mortgage-fix-end-estimate` (derived figure)
+- Verdict: Holds. Findings: none. Links: none.
+- Computed by: `estimateMortgageAtFixEnd` in `packages/finance-engine/src/mortgage.ts`
+- Built from: `account-balance`, `account-rate`, `mortgage-term-and-fix-end`
+- Note: E39 S1: projects balance at fix end via projectAmortisedBalance and compares payments over remaining term.
+
+Other code paths that compute it:
+
+- none
+
+Shown on:
+
+- Mortgage: `packages/finance-engine/src/mortgage.ts`
+
+### Default mortgage rate band by LTV
+
+<a id="mortgage-ltv-rate-band"></a>
+
+- Id: `mortgage-ltv-rate-band` (derived figure)
+- Verdict: Holds. Findings: none. Links: none.
+- Computed by: `lookupMortgageRateBandForLtv` in `packages/finance-engine/src/mortgage-rate-assumptions.ts`
+- Built from: none
+- Note: E39 S1 (MA5): single home for LTV default rate assumptions (asOf 2026-11) and 6-month staleness check.
+
+Other code paths that compute it:
+
+- none
+
+Shown on:
+
+- Mortgage: `packages/finance-engine/src/mortgage-rate-assumptions.ts`
 
 ## Browser storage and cookies
 

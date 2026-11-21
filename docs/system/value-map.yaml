@@ -2685,6 +2685,108 @@ figures:
     verdict: holds
     note: "E37 S0/S2: computes the 4 KPI strip figures for the invoicing workspace."
 
+  - id: housing-room
+    name: Left each month before housing
+    area: mortgage
+    computed_by:
+      {
+        function: selectHousingRoom,
+        path: packages/finance-engine/src/picture/selectors/housing-room.ts,
+      }
+    inputs: [salary, pension-rates, budget-entries, account-monthly-amount, housing-cost]
+    shown_on:
+      - {
+          surface: mortgage,
+          path: packages/finance-engine/src/picture/selectors/housing-room.ts,
+        }
+    verdict: holds
+    note: "E39 S1: take-home less non-housing essentials and debt commitments, with optional savings and other spending switches."
+
+  - id: mortgage-budget-loan-estimate
+    name: Estimated loan from monthly payment
+    area: mortgage
+    computed_by:
+      {
+        function: calculateBudgetLoanEstimate,
+        path: packages/finance-engine/src/mortgage-affordability.ts,
+      }
+    inputs: []
+    shown_on:
+      - {
+          surface: mortgage,
+          path: packages/finance-engine/src/mortgage-affordability.ts,
+        }
+    verdict: holds
+    note: "E39 S1: inverse of repaymentPerMonth with optional deposit, buying costs, and LTV default rate band."
+
+  - id: mortgage-income-multiple-range
+    name: Estimated borrowing range from income
+    area: mortgage
+    computed_by:
+      {
+        function: calculateIncomeMultipleRange,
+        path: packages/finance-engine/src/mortgage-affordability.ts,
+      }
+    inputs: [salary]
+    shown_on:
+      - {
+          surface: mortgage,
+          path: packages/finance-engine/src/mortgage-affordability.ts,
+        }
+    verdict: holds
+    note: "E39 S1 (MA2): 4 to 4.5 times combined yearly income before tax, with optional deposit and buying costs."
+
+  - id: mortgage-rate-comparison
+    name: Mortgage payment rate comparison
+    area: mortgage
+    computed_by:
+      {
+        function: compareMortgageRates,
+        path: packages/finance-engine/src/mortgage.ts,
+      }
+    inputs: [account-balance, account-rate, mortgage-term-and-fix-end]
+    shown_on:
+      - {
+          surface: mortgage,
+          path: packages/finance-engine/src/mortgage.ts,
+        }
+    verdict: holds
+    note: "E39 S1: monthly payments at base rate, base + delta, and max(0, base - delta)."
+
+  - id: mortgage-fix-end-estimate
+    name: Mortgage balance and payment at fix end
+    area: mortgage
+    computed_by:
+      {
+        function: estimateMortgageAtFixEnd,
+        path: packages/finance-engine/src/mortgage.ts,
+      }
+    inputs: [account-balance, account-rate, mortgage-term-and-fix-end]
+    shown_on:
+      - {
+          surface: mortgage,
+          path: packages/finance-engine/src/mortgage.ts,
+        }
+    verdict: holds
+    note: "E39 S1: projects balance at fix end via projectAmortisedBalance and compares payments over remaining term."
+
+  - id: mortgage-ltv-rate-band
+    name: Default mortgage rate band by LTV
+    area: mortgage
+    computed_by:
+      {
+        function: lookupMortgageRateBandForLtv,
+        path: packages/finance-engine/src/mortgage-rate-assumptions.ts,
+      }
+    inputs: []
+    shown_on:
+      - {
+          surface: mortgage,
+          path: packages/finance-engine/src/mortgage-rate-assumptions.ts,
+        }
+    verdict: holds
+    note: "E39 S1 (MA5): single home for LTV default rate assumptions (asOf 2026-11) and 6-month staleness check."
+
 # Every browser storage and cookie key the code writes, user data or not. A key that holds a copy of
 # a fact names it under fact:. A trailing * means every key with that prefix.
 browser_storage:
