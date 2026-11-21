@@ -148,6 +148,12 @@ describe.skipIf(dbMode === "skip")("authz: invoicing controller (real Postgres)"
         path: () => `/invoices/${invoiceId}/void`,
         body: () => ({}),
       },
+      {
+        key: "POST /invoices/:id/sync-to-tax",
+        method: "post",
+        path: () => `/invoices/${invoiceId}/sync-to-tax`,
+        body: () => ({}),
+      },
     ];
 
     it.each(routes.map((r) => [r.key, r] as const))(
