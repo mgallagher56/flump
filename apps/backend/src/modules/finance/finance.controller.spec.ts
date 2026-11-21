@@ -376,7 +376,8 @@ describe("FinanceController & FinanceService", () => {
     expect(routes).toContain("1 bank-connections/:id/refresh");
     expect(routes).toContain("4 accounts/:id");
     expect(routes).not.toContain("1 bank-connections/:id/sync");
-    expect(routes.filter((r) => r.startsWith("2 "))).toEqual([]);
+    expect(routes).not.toContain("2 accounts/:id");
+    expect(routes.filter((r) => r.startsWith("2 "))).toEqual(["2 accounts/:id/goal"]);
   });
 
   it("returns 404 for another user's account on PATCH", async () => {
