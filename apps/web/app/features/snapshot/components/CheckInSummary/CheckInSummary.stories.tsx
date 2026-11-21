@@ -30,6 +30,8 @@ const meta: Meta<typeof CheckInSummary> = {
       netWorth: 231400,
       change: 1250,
       previousMonth: "2026-10",
+      debtsChange: -320,
+      accountsAdded: 1,
     },
   },
 };

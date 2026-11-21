@@ -2,6 +2,7 @@ import type { AccountExportKey } from "@flump/api-contract";
 import type { ObjectLiteral } from "typeorm";
 import { Account } from "../../entities/account.entity";
 import { AccountDetail } from "../../entities/account-detail.entity";
+import { AccountGoal } from "../../entities/account-goal.entity";
 import { AgentAuditEvent } from "../../entities/agent-audit-event.entity";
 import { AuditEvent } from "../../entities/audit-event.entity";
 import { BankConnection } from "../../entities/bank-connection.entity";
@@ -156,6 +157,36 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
         timestamp: "transactions",
       },
       notFacts: { id: ROW_ID, userId: OWNER },
+    },
+  }),
+  table({
+    entity: AccountGoal,
+    key: "accountGoals",
+    deleteOnErasure: true,
+    export: {
+      shape: "rows",
+      columns: ["id", "accountId", "targetAmount", "targetDate", "label", "createdAt", "updatedAt"],
+      excluded: { userId: USER_ID_IN_ENVELOPE },
+      orderBy: ["id"],
+      batchSize: 500,
+    },
+    reset: {
+      kind: "financial-clear",
+      reason: "account goals belong to accounts that reset removes",
+    },
+    valueMap: {
+      facts: {
+        targetAmount: "account-goal",
+        targetDate: "account-goal",
+        label: "account-goal",
+      },
+      notFacts: {
+        id: ROW_ID,
+        accountId: "the account the goal belongs to",
+        userId: OWNER,
+        createdAt: WRITTEN_AT,
+        updatedAt: WRITTEN_AT,
+      },
     },
   }),
   table({

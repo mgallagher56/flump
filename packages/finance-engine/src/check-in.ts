@@ -659,6 +659,10 @@ export interface CheckInSummary {
    */
   change: number | null;
   previousMonth: CheckInMonth;
+  /** Change in total debts (liabilities) since the previous month, or null with no earlier baseline. */
+  debtsChange?: number | null;
+  /** Accounts whose first recorded figure is in this check-in (no earlier history row). */
+  accountsAdded?: number;
 }
 
 /** Figures read in whole pounds: a difference under £1 is no change in the summary. */
@@ -686,6 +690,7 @@ export function buildCheckInSummary(
 
   // One baseline per account, as stored (debts may be negative).
   const baseline = new Map<string, number>();
+  const hadEarlierHistory = new Set<string>();
   let anyEarlier = false;
   for (const a of accounts ?? []) {
     if (!a.id) continue;
@@ -693,7 +698,10 @@ export function buildCheckInSummary(
     const before = checkInHistoryFor(id, details)
       .filter((r) => compareCheckInMonths(r.month, month) < 0)
       .at(-1);
-    if (before) anyEarlier = true;
+    if (before) {
+      anyEarlier = true;
+      hadEarlierHistory.add(id);
+    }
     const value = before ? before.value : toNumber(a.balance);
     if (value !== null) baseline.set(id, value);
   }
@@ -740,10 +748,14 @@ export function buildCheckInSummary(
   const series = selectSavedNetWorthSeries(accounts, merged, month, basis);
   const now = series.find((p) => p.month === month) ?? null;
   const before = anyEarlier ? (series.find((p) => p.month === previousMonth) ?? null) : null;
+  const accountsAdded =
+    anyEarlier && now ? now.accounts.filter((a) => !hadEarlierHistory.has(a.accountId)).length : 0;
   return {
     changed,
     netWorth: now ? now.netWorth : null,
     change: now && before ? now.netWorth - before.netWorth : null,
     previousMonth,
+    debtsChange: now && before ? now.totalLiabilities - before.totalLiabilities : null,
+    accountsAdded,
   };
 }

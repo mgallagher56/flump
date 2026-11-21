@@ -152,6 +152,10 @@ flowchart LR
   s_check_in --> f_check_in_done
   f_check_in_done -.-> s_dashboard
   f_check_in_done -.-> s_export
+  f_account_goal(["Optional user-set goal on an account"])
+  s_account_detail --> f_account_goal
+  f_account_goal -.-> s_account_detail
+  f_account_goal -.-> s_export
   f_ownership_share(["Joint ownership and the user's share of an account"])
   s_accounts --> f_ownership_share
   s_account_service --> f_ownership_share

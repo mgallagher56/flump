@@ -28,6 +28,7 @@ import {
 } from "../banking/bank-connection-sync";
 import type { BankProvider } from "../banking/providers/provider.interface";
 import { BankProviderRegistry } from "../banking/providers/provider.registry";
+import { AccountGoalService } from "./account-goal.service";
 import {
   AccountIntakeService,
   type CreateAccountDto,
@@ -53,6 +54,7 @@ export class FinanceService {
     private readonly providerRegistry: BankProviderRegistry,
     private readonly configService: ConfigService,
     private readonly accountIntakeService: AccountIntakeService,
+    private readonly accountGoalService?: AccountGoalService,
   ) {}
 
   async getAccounts(userId: string) {
@@ -93,6 +95,26 @@ export class FinanceService {
    */
   async deleteAccount(userId: string, id: string) {
     return this.accountIntakeService.deleteAccount(userId, id);
+  }
+
+  async getAccountGoal(userId: string, accountId: string) {
+    if (!this.accountGoalService) throw new Error("AccountGoalService not configured");
+    return this.accountGoalService.getGoal(userId, accountId);
+  }
+
+  async upsertAccountGoal(
+    userId: string,
+    accountId: string,
+    input: import("@flump/api-contract").UpsertAccountGoalRequest,
+    expectedVersion?: Date,
+  ) {
+    if (!this.accountGoalService) throw new Error("AccountGoalService not configured");
+    return this.accountGoalService.upsertGoal(userId, accountId, input, expectedVersion);
+  }
+
+  async deleteAccountGoal(userId: string, accountId: string) {
+    if (!this.accountGoalService) throw new Error("AccountGoalService not configured");
+    return this.accountGoalService.deleteGoal(userId, accountId);
   }
 
   async getBankConnections(userId: string) {

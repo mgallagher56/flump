@@ -84,6 +84,17 @@ export const summaryLine = cva({
   },
 });
 
+export const briefBlock = cva({
+  base: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "1",
+    padding: "3",
+    borderRadius: "md",
+    backgroundColor: "surface.subtle",
+  },
+});
+
 export const summaryActions = cva({
   base: {
     display: "flex",

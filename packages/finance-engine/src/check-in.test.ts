@@ -612,6 +612,40 @@ describe("summary", () => {
   it("has no change to show without a month before", () => {
     const summary = buildCheckInSummary(steps, {}, accounts, [], MONTH, DEFAULT_NET_WORTH_BASIS);
     expect(summary.change).toBeNull();
+    expect(summary.debtsChange).toBeNull();
+    expect(summary.accountsAdded).toBe(0);
+  });
+
+  it("computes debtsChange and accountsAdded for Month in brief", () => {
+    // October: Current £1,000, Mortgage £180,000 owed -> net worth -179,000, debts 180,000.
+    // November: Current £1,200, Mortgage £179,680 owed, new Savings £500 (no October history).
+    // Net worth in Nov = 1,200 + 500 - 179,680 = -177,980.
+    // Baseline for Savings uses saved balance 500 -> Oct baseline net worth = 1,000 + 500 - 180,000 = -178,500.
+    // Change = -177,980 - (-178,500) = +520.
+    // Debts change = 179,680 - 180,000 = -320.
+    // Accounts added = 1 (Savings had no earlier history row).
+    const pair: CheckInAccountInput[] = [
+      { id: "C", name: "Current account", type: "Current", balance: 1000 },
+      { id: "M", name: "Mortgage", type: "Mortgage", balance: -180000 },
+      { id: "S", name: "Savings", type: "Saving", balance: 500 },
+    ];
+    const history = [row("C", 10, 1000), row("M", 10, -180000)];
+    const s = buildCheckInSteps(pair, history, MONTH);
+    const summary = buildCheckInSummary(
+      s,
+      {
+        c: answer("c", 1200, "manual"),
+        m: answer("m", 179680, "manual"),
+        s: answer("s", 500, "confirmed"),
+      },
+      pair,
+      history,
+      MONTH,
+      DEFAULT_NET_WORTH_BASIS,
+    );
+    expect(summary.change).toBe(520);
+    expect(summary.debtsChange).toBe(-320);
+    expect(summary.accountsAdded).toBe(1);
   });
 });
 

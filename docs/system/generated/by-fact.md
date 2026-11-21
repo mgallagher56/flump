@@ -19,6 +19,7 @@ Where each value is stored, entered and used. One entry per stored fact, then on
 | [Account balance today](#account-balance)                                                                                                | fact   | accounts    | Holds                                     |
 | [Balance for each past month](#balance-history)                                                                                          | fact   | accounts    | Broken                                    |
 | [Whether a month's check-in was finished](#check-in-done)                                                                                | fact   | accounts    | Holds                                     |
+| [Optional user-set goal on an account](#account-goal)                                                                                    | fact   | accounts    | Holds                                     |
 | [Joint ownership and the user's share of an account](#ownership-share)                                                                   | fact   | accounts    | Broken                                    |
 | [Interest rate on an account](#account-rate)                                                                                             | fact   | accounts    | Holds with a manual step or a delay       |
 | [Monthly amount on an account (saving, pot payment, debt payment, mortgage payment)](#account-monthly-amount)                            | fact   | accounts    | Duplicated (two stores that can disagree) |
@@ -418,6 +419,27 @@ Entered or changed by:
 Read by:
 
 - Dashboard: `apps/backend/src/modules/snapshots/snapshots.controller.ts` (GET /snapshots/check-ins, read by the reminder on the Dashboard and History)
+- Data export and erasure: `apps/backend/src/modules/privacy/user-data-registry.ts`
+
+### Optional user-set goal on an account
+
+<a id="account-goal"></a>
+
+- Id: `account-goal` (stored fact)
+- Verdict: Holds. Findings: none. Links: none.
+- Source of truth: `account_goals` in `apps/backend/src/entities/account-goal.entity.ts`
+
+Other stores:
+
+- none
+
+Entered or changed by:
+
+- Account page: `apps/backend/src/modules/finance/account-goal.service.ts` (PUT and DELETE /accounts/:id/goal; optional target_amount, target_date and label)
+
+Read by:
+
+- Account page: `apps/web/app/routes/app.accounts.$account.tsx` (GET /accounts/:id/goal in the account detail loader)
 - Data export and erasure: `apps/backend/src/modules/privacy/user-data-registry.ts`
 
 ### Joint ownership and the user's share of an account

@@ -1137,6 +1137,26 @@ facts:
     verdict: holds
     findings: [CH-3, CH-7, DB-10]
 
+  - id: account-goal
+    name: Optional user-set goal on an account
+    area: accounts
+    source_of_truth: { ref: account_goals, path: apps/backend/src/entities/account-goal.entity.ts }
+    writers:
+      - {
+          surface: account-detail,
+          path: apps/backend/src/modules/finance/account-goal.service.ts,
+          note: "PUT and DELETE /accounts/:id/goal; optional target_amount, target_date and label",
+        }
+    readers:
+      - {
+          surface: account-detail,
+          path: "apps/web/app/routes/app.accounts.$account.tsx",
+          note: "GET /accounts/:id/goal in the account detail loader",
+        }
+      - { surface: export, path: apps/backend/src/modules/privacy/user-data-registry.ts }
+    links: []
+    verdict: holds
+
   - id: ownership-share
     name: Joint ownership and the user's share of an account
     area: accounts

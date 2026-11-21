@@ -6,11 +6,13 @@ import {
   checkInChangeText,
   checkInNetWorthChange,
   checkInWholeTotal,
+  formatMonthInBrief,
   formatWarmConfirmation,
 } from "../../snapshotCopy";
 import type { MonthKey } from "../../snapshotModel";
 
 import {
+  briefBlock,
   changeFigure,
   changeName,
   changeRow,
@@ -58,6 +60,7 @@ export const CheckInSummary: FC<CheckInSummaryProps> = ({
     heading.current?.focus();
   }, []);
   const visible = showAll ? summary.changed : summary.changed.slice(0, SUMMARY_VISIBLE);
+  const brief = formatMonthInBrief(month, summary);
 
   return (
     <div className={summaryRoot()} data-testid="checkin-summary" id="checkin-summary">
@@ -67,6 +70,20 @@ export const CheckInSummary: FC<CheckInSummaryProps> = ({
       <h3 className={summaryHeading()} ref={heading} tabIndex={-1}>
         {formatWarmConfirmation({ kind: "checkInFinished", month })}
       </h3>
+
+      {brief ? (
+        <section
+          aria-labelledby="checkin-brief-heading"
+          className={briefBlock()}
+          data-testid="checkin-month-in-brief"
+          id="checkin-month-in-brief"
+        >
+          <h4 className={summarySubheading()} id="checkin-brief-heading">
+            {brief.heading}
+          </h4>
+          <p className={summaryLine()}>{brief.facts.join(" ")}</p>
+        </section>
+      ) : null}
 
       {summary.changed.length > 0 ? (
         <section aria-labelledby="checkin-changes-heading">

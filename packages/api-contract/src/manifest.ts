@@ -4,6 +4,7 @@ import {
   CreateAccountRequest,
   CreateMortgageWithPropertyRequest,
   UpdateAccountRequest,
+  UpsertAccountGoalRequest,
 } from "./domains/accounts.js";
 import { ConnectBankRequest } from "./domains/bank-connections.js";
 import {
@@ -62,6 +63,7 @@ import { Uuid } from "./primitives.js";
 import {
   AcceptTermsResponse,
   AccountDetailListResponse,
+  AccountGoalResponse,
   AccountListResponse,
   AccountResponse,
   AddBudgetCategoryResponse,
@@ -76,6 +78,7 @@ import {
   CreateAccountResponse,
   CreateMcpTokenResponse,
   CreateMortgageWithPropertyResponse,
+  DeleteAccountGoalResponse,
   DeleteAccountResponse,
   DeleteBankConnectionResponse,
   DeleteBudgetEntryResponse,
@@ -300,6 +303,39 @@ export const routes = {
       params: IdParams,
       group: "accounts",
       response: DeleteAccountResponse,
+    }),
+    getGoal: defineRoute({
+      id: "accounts.getGoal",
+      method: "GET",
+      path: "accounts/:id/goal",
+      auth: "user",
+      ownership: "user",
+      params: IdParams,
+      group: "accounts",
+      response: AccountGoalResponse,
+      etag: "read",
+    }),
+    upsertGoal: defineRoute({
+      id: "accounts.upsertGoal",
+      method: "PUT",
+      path: "accounts/:id/goal",
+      auth: "user",
+      ownership: "user",
+      params: IdParams,
+      body: UpsertAccountGoalRequest,
+      group: "accounts",
+      response: AccountGoalResponse,
+      etag: "conditional",
+    }),
+    removeGoal: defineRoute({
+      id: "accounts.removeGoal",
+      method: "DELETE",
+      path: "accounts/:id/goal",
+      auth: "user",
+      ownership: "user",
+      params: IdParams,
+      group: "accounts",
+      response: DeleteAccountGoalResponse,
     }),
   },
   snapshots: {
