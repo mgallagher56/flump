@@ -140,6 +140,7 @@ describe("conditional updates (BE-09, audit M7, L15)", () => {
         .sort(),
     ).toEqual([
       "accounts.update",
+      "accounts.upsertGoal",
       "budget.update",
       "invoicing.syncInvoiceToTax",
       "invoicing.updateInvoice",

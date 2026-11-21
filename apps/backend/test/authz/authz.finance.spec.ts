@@ -539,6 +539,51 @@ describe.skipIf(dbMode === "skip")("authz: finance controller (real Postgres)", 
       expect(await connections().findOneBy({ id: connectionId })).toBeNull();
       ran("DELETE /bank-connections/:id");
     });
+
+    it("GET/PUT/DELETE /accounts/:id/goal: 401 unauth, B 404 identical to not-found, A 200", async () => {
+      for (const token of [undefined, h.tokens.expired, h.tokens.dev]) {
+        expect((await h.call("get", `/accounts/${accountId}/goal`, token)).status).toBe(401);
+        expect(
+          (await h.call("put", `/accounts/${accountId}/goal`, token, { targetAmount: 500 })).status,
+        ).toBe(401);
+        expect((await h.call("delete", `/accounts/${accountId}/goal`, token)).status).toBe(401);
+      }
+
+      await expectSameAsNotFound(
+        "get",
+        `/accounts/${accountId}/goal`,
+        `/accounts/${MISSING_ID}/goal`,
+      );
+      await expectSameAsNotFound(
+        "put",
+        `/accounts/${accountId}/goal`,
+        `/accounts/${MISSING_ID}/goal`,
+        { targetAmount: 500 },
+      );
+      await expectSameAsNotFound(
+        "delete",
+        `/accounts/${accountId}/goal`,
+        `/accounts/${MISSING_ID}/goal`,
+      );
+
+      const initial = await h.call("get", `/accounts/${accountId}/goal`, h.tokens.a);
+      expect(initial.status).toBe(200);
+      expect(initial.body).toEqual({ goal: null });
+      ran("GET /accounts/:id/goal");
+
+      const saved = await h.call("put", `/accounts/${accountId}/goal`, h.tokens.a, {
+        targetAmount: 500,
+        targetDate: "2027-06-01",
+      });
+      expect(saved.status).toBe(200);
+      expect(saved.body.goal.accountId).toBe(accountId);
+      ran("PUT /accounts/:id/goal");
+
+      const removed = await h.call("delete", `/accounts/${accountId}/goal`, h.tokens.a);
+      expect(removed.status).toBe(200);
+      expect(removed.body).toEqual({ deleted: true });
+      ran("DELETE /accounts/:id/goal");
+    });
   });
 
   describe("/v1 alias (any case) gets the same answers as the unversioned path", () => {

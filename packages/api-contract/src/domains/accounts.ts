@@ -318,6 +318,38 @@ export type CreateMortgageWithPropertyResponse = z.infer<typeof CreateMortgageWi
 export const DeleteAccountResponse = z.strictObject({ success: z.literal(true) });
 export type DeleteAccountResponse = z.infer<typeof DeleteAccountResponse>;
 
+/** Account goal (E35 Set 2): optional user-set target on an account. */
+export const AccountGoalDto = z.strictObject({
+  id: Uuid,
+  accountId: Uuid,
+  targetAmount: ResponseMoney.nullable(),
+  targetDate: IsoDate.nullable(),
+  label: z.string().max(120).nullable(),
+  createdAt: IsoDateTime,
+  updatedAt: IsoDateTime,
+});
+export type AccountGoalDto = z.infer<typeof AccountGoalDto>;
+
+/** PUT /accounts/:id/goal */
+export const UpsertAccountGoalRequest = z.strictObject({
+  targetAmount: MoneyNonNegative.nullish(),
+  targetDate: IsoDate.nullish(),
+  label: z.string().trim().max(120).nullish(),
+});
+export type UpsertAccountGoalRequest = z.infer<typeof UpsertAccountGoalRequest>;
+
+/** GET /accounts/:id/goal and PUT /accounts/:id/goal */
+export const AccountGoalResponse = z.strictObject({
+  goal: AccountGoalDto.nullable(),
+});
+export type AccountGoalResponse = z.infer<typeof AccountGoalResponse>;
+
+/** DELETE /accounts/:id/goal */
+export const DeleteAccountGoalResponse = z.strictObject({
+  deleted: z.boolean(),
+});
+export type DeleteAccountGoalResponse = z.infer<typeof DeleteAccountGoalResponse>;
+
 export const ACCOUNT_CATEGORIES = [
   "cash",
   "savings",

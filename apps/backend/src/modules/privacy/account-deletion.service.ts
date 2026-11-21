@@ -8,6 +8,7 @@ import { safeErrorSummary } from "../../common/log-safe";
 import { Account } from "../../entities/account.entity";
 import { AccountDeletionTombstone } from "../../entities/account-deletion-tombstone.entity";
 import { AccountDetail } from "../../entities/account-detail.entity";
+import { AccountGoal } from "../../entities/account-goal.entity";
 import { BankConnection } from "../../entities/bank-connection.entity";
 import { Transaction } from "../../entities/transaction.entity";
 import { USER_IDENTITY_ADAPTER, type UserIdentityAdapter } from "../../identity/identity.adapter";
@@ -100,6 +101,10 @@ export class AccountDeletionService implements ErasedAccountCheck {
       add(
         "accountDetails",
         (await manager.getRepository(AccountDetail).delete({ accountId: In(accountIds) })).affected,
+      );
+      add(
+        "accountGoals",
+        (await manager.getRepository(AccountGoal).delete({ accountId: In(accountIds) })).affected,
       );
     }
     // SEC-F: audit_events refuses a DELETE unless the transaction declares why. Transaction-local,

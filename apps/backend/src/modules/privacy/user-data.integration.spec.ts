@@ -8,6 +8,7 @@ import { typeOrmOptionsFromEnv } from "../../config/typeorm.options";
 import { Account } from "../../entities/account.entity";
 import { AccountDeletionTombstone } from "../../entities/account-deletion-tombstone.entity";
 import { AccountDetail } from "../../entities/account-detail.entity";
+import { AccountGoal } from "../../entities/account-goal.entity";
 import { AgentAuditEvent } from "../../entities/agent-audit-event.entity";
 import { AuditEvent } from "../../entities/audit-event.entity";
 import { BankConnection } from "../../entities/bank-connection.entity";
@@ -180,6 +181,15 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
       }),
     );
     await m.save(m.create(SnapshotCheckin, { userId, month: "2026-10" }));
+    await m.save(
+      m.create(AccountGoal, {
+        userId,
+        accountId: account.id,
+        targetAmount: 1000,
+        targetDate: "2027-06-01",
+        label: "Buffer",
+      }),
+    );
     await m.save(
       m.create(RetirementPlan, {
         userId,

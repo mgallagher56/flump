@@ -3,6 +3,7 @@ import type {
   CreateAccountRequest,
   CreateMortgageWithPropertyRequest,
   UpdateAccountRequest,
+  UpsertAccountGoalRequest,
 } from "@flump/api-contract";
 import { AccountDetailsOption } from "@flump/api-contract";
 import {
@@ -16,6 +17,7 @@ import {
   Param,
   Patch,
   Post,
+  Put,
   Query,
   Req,
   Res,
@@ -171,6 +173,43 @@ export class FinanceController {
   @RateLimit("destructive")
   async deleteAccount(@Req() req: AuthenticatedRequest, @Param("id") id: string) {
     return this.financeService.deleteAccount(req.user.id, id);
+  }
+
+  @Get("accounts/:id/goal")
+  @HttpCode(200)
+  async getAccountGoal(
+    @Req() req: AuthenticatedRequest,
+    @Param("id") id: string,
+    @Res({ passthrough: true }) res?: Response,
+  ) {
+    const view = await this.financeService.getAccountGoal(req.user.id, id);
+    if (view.updatedAt) setEtag(res, view.updatedAt);
+    return { goal: view.goal };
+  }
+
+  @Put("accounts/:id/goal")
+  @HttpCode(200)
+  async upsertAccountGoal(
+    @Req() req: AuthenticatedRequest,
+    @Param("id") id: string,
+    @Body() body: UpsertAccountGoalRequest,
+    @Headers("if-match") ifMatch?: string,
+    @Res({ passthrough: true }) res?: Response,
+  ) {
+    const view = await this.financeService.upsertAccountGoal(
+      req.user.id,
+      id,
+      body,
+      expectedVersion(ifMatch),
+    );
+    setEtag(res, view.updatedAt);
+    return { goal: view.goal };
+  }
+
+  @Delete("accounts/:id/goal")
+  @HttpCode(200)
+  async deleteAccountGoal(@Req() req: AuthenticatedRequest, @Param("id") id: string) {
+    return this.financeService.deleteAccountGoal(req.user.id, id);
   }
 
   @Get("bank-connections")

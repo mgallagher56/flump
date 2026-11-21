@@ -365,6 +365,17 @@ export const AccountExportAccountDetail = z.strictObject({
   updatedAt: ExportTimestamp,
 });
 
+/** `accountGoals`: optional user-set goals on accounts (E35 Set 2). */
+export const AccountExportAccountGoal = z.strictObject({
+  id: Uuid,
+  accountId: Uuid,
+  targetAmount: NullableNumber,
+  targetDate: NullableText,
+  label: NullableText,
+  createdAt: ExportTimestamp,
+  updatedAt: ExportTimestamp,
+});
+
 /** `transactions`: account movements. */
 export const AccountExportTransaction = z.strictObject({
   id: Uuid,
@@ -615,6 +626,7 @@ export const AccountExportDocument = z.strictObject({
   retirementPlan: AccountExportRetirementPlan.nullable(),
   accounts: z.array(AccountExportAccount),
   accountDetails: z.array(AccountExportAccountDetail),
+  accountGoals: z.array(AccountExportAccountGoal).optional(),
   transactions: z.array(AccountExportTransaction),
   bankConnections: z.array(AccountExportBankConnection),
   bankOAuthStates: z.array(AccountExportBankOAuthState),
@@ -648,6 +660,7 @@ export const ACCOUNT_EXPORT_SECTIONS = {
   retirementPlan: AccountExportRetirementPlan,
   accounts: AccountExportAccount,
   accountDetails: AccountExportAccountDetail,
+  accountGoals: AccountExportAccountGoal,
   transactions: AccountExportTransaction,
   bankConnections: AccountExportBankConnection,
   bankOAuthStates: AccountExportBankOAuthState,

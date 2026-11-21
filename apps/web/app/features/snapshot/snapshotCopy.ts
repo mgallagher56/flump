@@ -212,3 +212,46 @@ export function formatWarmConfirmation(input: WarmConfirmationInput): string {
       return "Your first account is in.";
   }
 }
+
+export interface MonthInBrief {
+  heading: string;
+  facts: string[];
+}
+
+/**
+ * E35 Set 3 ("Month in brief", N4): three plain facts after a check-in, using identical neutral
+ * wording whichever way figures moved.
+ */
+export function formatMonthInBrief(
+  month: MonthKey,
+  summary: {
+    change: number | null;
+    debtsChange?: number | null;
+    accountsAdded?: number;
+    changed: readonly unknown[];
+  },
+): MonthInBrief | null {
+  const facts: string[] = [];
+  if (summary.change !== null) {
+    facts.push(`Net worth changed by ${formatSignedChange(summary.change)}.`);
+  }
+  if (summary.debtsChange !== null && summary.debtsChange !== undefined) {
+    facts.push(`Debts changed by ${formatSignedChange(summary.debtsChange)}.`);
+  }
+  const added = summary.accountsAdded ?? 0;
+  if (added === 1) {
+    facts.push("One account added.");
+  } else if (added > 1) {
+    facts.push(`${added} accounts added.`);
+  } else if (summary.changed.length > 0) {
+    const n = summary.changed.length;
+    facts.push(`${n} ${n === 1 ? "account" : "accounts"} updated.`);
+  } else if (facts.length > 0) {
+    facts.push("No accounts added.");
+  }
+  if (facts.length === 0) return null;
+  return {
+    heading: `${monthNameOnly(month)} in brief.`,
+    facts,
+  };
+}

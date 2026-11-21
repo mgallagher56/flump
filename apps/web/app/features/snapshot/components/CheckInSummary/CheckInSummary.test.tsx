@@ -100,7 +100,23 @@ describe("CheckInSummary", () => {
     const heading = screen.getByRole("heading", { level: 3 });
     expect(heading.textContent).toBe("November is checked in.");
     expect(heading.textContent).not.toMatch(/£|net worth/i);
-    // The change is stated once, in the net worth block.
-    expect(screen.getAllByText(/£1,250/)).toHaveLength(1);
+    // Set 3 Month in brief + the net worth block both state the change.
+    expect(screen.getAllByText(/£1,250/)).toHaveLength(2);
+  });
+
+  it("shows Month in brief with identical neutral wording whichever way figures moved (N4)", () => {
+    setup({ change: 1150, debtsChange: -320, accountsAdded: 1 });
+    const brief = screen.getByTestId("checkin-month-in-brief");
+    expect(brief.textContent).toBe(
+      "November in brief.Net worth changed by +£1,150. Debts changed by −£320. One account added.",
+    );
+  });
+
+  it("uses the same Month in brief sentence when net worth falls and debts rise", () => {
+    setup({ change: -1150, debtsChange: 320, accountsAdded: 0 });
+    const brief = screen.getByTestId("checkin-month-in-brief");
+    expect(brief.textContent).toBe(
+      "November in brief.Net worth changed by −£1,150. Debts changed by +£320. 2 accounts updated.",
+    );
   });
 });

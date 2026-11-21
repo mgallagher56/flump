@@ -1,6 +1,8 @@
 import {
+  AccountGoalResponse,
   AccountListResponse,
   AccountResponse,
+  DeleteAccountGoalResponse,
   DeleteAccountResponse,
   UpdateAccountResponse,
   UserProfileResponse,
@@ -54,6 +56,32 @@ export const action = async (args: ActionFunctionArgs) => {
       });
       return redirect("/app/accounts");
     }
+    if (intent === "upsert-goal") {
+      const rawAmount = formData.get("targetAmount");
+      const rawDate = formData.get("targetDate");
+      const rawLabel = formData.get("label");
+      const targetAmount =
+        typeof rawAmount === "string" && rawAmount.trim() !== "" ? Number(rawAmount) : null;
+      const targetDate =
+        typeof rawDate === "string" && rawDate.trim() !== "" ? rawDate.trim() : null;
+      const label = typeof rawLabel === "string" && rawLabel.trim() !== "" ? rawLabel.trim() : null;
+      await backendFetch(`/accounts/${accountId}/goal`, {
+        accessToken: token,
+        method: "PUT",
+        schema: AccountGoalResponse,
+        ifMatch: ifMatchFromForm(formData),
+        body: { targetAmount, targetDate, label },
+      });
+      return data({ success: true });
+    }
+    if (intent === "delete-goal") {
+      await backendFetch(`/accounts/${accountId}/goal`, {
+        accessToken: token,
+        method: "DELETE",
+        schema: DeleteAccountGoalResponse,
+      });
+      return data({ success: true });
+    }
     return data({ success: false, error: "Unsupported action." }, { status: 400 });
   } catch (error) {
     return actionErrorResponse(error);
@@ -66,7 +94,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
   if (!accessToken) throwRouteError(new BackendError("unauthorised", `/accounts/${accountId}`));
 
   try {
-    const [account, userProfile] = await Promise.all([
+    const [account, userProfile, goalResponse] = await Promise.all([
       backendFetch(`/accounts/${accountId}`, {
         accessToken,
         signal: args.request.signal,
@@ -78,6 +106,11 @@ export const loader = async (args: LoaderFunctionArgs) => {
         accessToken,
         signal: args.request.signal,
         schema: UserProfileResponse,
+      }).catch(() => null),
+      backendFetch(`/accounts/${accountId}/goal`, {
+        accessToken,
+        signal: args.request.signal,
+        schema: AccountGoalResponse,
       }).catch(() => null),
     ]);
     if (!account) throw new BackendError("not-found", `/accounts/${accountId}`);
@@ -95,7 +128,8 @@ export const loader = async (args: LoaderFunctionArgs) => {
     // Whether this account counts toward net worth follows the user's choices (net worth choices).
     // A profile that loaded but has no choices gets the defaults; a failed fetch stays unknown.
     const basis = userProfile === null ? null : netWorthBasisFromProfile(userProfile);
-    return data({ account, accountDetails, accounts, basis, user });
+    const goal = goalResponse?.goal ?? null;
+    return data({ account, accountDetails, accounts, basis, goal, user });
   } catch (error) {
     // The backend refuses an id it cannot read with a 400: to the reader that account does not
     // exist, so it gets the not-found page with "Back to accounts", not "Try again" (P18). Other

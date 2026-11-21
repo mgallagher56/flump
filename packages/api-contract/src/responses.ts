@@ -1,10 +1,12 @@
 // Response schemas the manifest wires to routes (E21). Re-exported from the domain files.
 export {
   AccountDetailListResponse,
+  AccountGoalResponse,
   AccountListResponse,
   AccountResponse,
   CreateAccountResponse,
   CreateMortgageWithPropertyResponse,
+  DeleteAccountGoalResponse,
   DeleteAccountResponse,
   UpdateAccountResponse,
 } from "./domains/accounts.js";

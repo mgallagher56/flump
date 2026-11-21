@@ -14,6 +14,7 @@ import AddEditAccountsDialogBtn from "~/components/dialogs/addEditAccountsDialog
 import { type AccountType, isLiabilityType, toDisplayBalance } from "~/containers/accounts/utils";
 import { summariseAccountBalance } from "~/features/accounts/accountRows";
 import { ACCOUNT_SUBTYPE_LABEL } from "~/features/accounts/accountSubtypes";
+import { AccountGoalSection } from "~/features/accounts/components/AccountGoalSection";
 import { TYPE_LABEL } from "~/features/accounts/components/AccountsGroupList";
 import { QuickBalanceUpdate } from "~/features/accounts/components/QuickBalanceUpdate";
 import { useFetcherOutcome } from "~/features/feedback/hooks/useFetcherOutcome";
@@ -107,10 +108,12 @@ const BackLink: FC = () => (
 );
 
 const AccountDetailContainer: FC = () => {
-  const { account, accountDetails = [], basis } = useLoaderData<typeof loader>();
+  const { account, accountDetails = [], basis, goal = null } = useLoaderData<typeof loader>();
   // The quick balance update posts to this route's own action, as the Edit dialog does.
   const balanceFetcher = useFetcher();
   const balanceOutcome = useFetcherOutcome(balanceFetcher);
+  const goalFetcher = useFetcher();
+  const goalOutcome = useFetcherOutcome(goalFetcher);
 
   // The hero shows the saved balance, the same figure as the accounts list and net worth (D22).
   const summary = useMemo(
@@ -140,13 +143,22 @@ const AccountDetailContainer: FC = () => {
   );
 
   // The latest recorded month up to now: the month the hero's figure is from.
-  const latest =
-    detailsList
-      .filter(
-        (d) => d.month >= 1 && d.year > 0 && (d.year < cy || (d.year === cy && d.month <= cm)),
-      )
-      .sort((a, b) => a.year - b.year || a.month - b.month)
-      .pop() ?? null;
+  const sortedHistory = detailsList
+    .filter((d) => d.month >= 1 && d.year > 0 && (d.year < cy || (d.year === cy && d.month <= cm)))
+    .sort((a, b) => a.year - b.year || a.month - b.month);
+  const latest = sortedHistory.at(-1) ?? null;
+  const earliest = sortedHistory[0] ?? null;
+  const earliestRecord =
+    earliest &&
+    earliest.value !== undefined &&
+    latest &&
+    (earliest.year !== latest.year || earliest.month !== latest.month)
+      ? {
+          value: toDisplayBalance(account?.type, earliest.value),
+          month: earliest.month,
+          year: earliest.year,
+        }
+      : null;
 
   // After a future-dated import, account.balance reflects the future import rather than
   // the latest month up to now. Ensure the hero figure and date line always come from
@@ -257,6 +269,40 @@ const AccountDetailContainer: FC = () => {
           );
         }}
         status={balanceOutcome.status}
+      />
+
+      <AccountGoalSection
+        currentBalance={current}
+        earliestRecord={earliestRecord}
+        error={goalOutcome.error}
+        goal={goal}
+        isLiability={isLiability}
+        onOpen={goalOutcome.dismiss}
+        onRemove={() => {
+          goalOutcome.begin();
+          void goalFetcher.submit(
+            {
+              intent: "delete-goal",
+              accountId: String(account.id ?? ""),
+            },
+            { method: "POST" },
+          );
+        }}
+        onSave={(input) => {
+          goalOutcome.begin();
+          void goalFetcher.submit(
+            {
+              intent: "upsert-goal",
+              accountId: String(account.id ?? ""),
+              ...versionField(goal),
+              ...(input.targetAmount !== null ? { targetAmount: String(input.targetAmount) } : {}),
+              ...(input.targetDate !== null ? { targetDate: input.targetDate } : {}),
+              ...(input.label !== null ? { label: input.label } : {}),
+            },
+            { method: "POST" },
+          );
+        }}
+        status={goalOutcome.status}
       />
 
       <AccountDetails />
