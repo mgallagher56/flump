@@ -1,7 +1,7 @@
 import { act, fireEvent, render, renderHook, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { Table, TBody, Td, THead, Th } from "../primitives/Table";
-import { useTableSort } from "./useTableSort";
+import { compareSortValues, useTableSort } from "./useTableSort";
 
 interface Row {
   name: string;
@@ -169,6 +169,33 @@ describe("useTableSort", () => {
     expect(names(result.current.sortedRows)).toEqual(["b", "a", "c"]);
   });
 
+  it("puts undefined and NaN amounts last, in their given order", () => {
+    const rows = [
+      { name: "none", amount: undefined as unknown as null, date: "" },
+      { name: "low", amount: 10, date: "" },
+      { name: "nan", amount: Number.NaN, date: "" },
+      { name: "high", amount: 90, date: "" },
+    ];
+    const { result } = renderHook(() =>
+      useTableSort({ rows, columns, initial: { key: "amount", direction: "asc" } }),
+    );
+    expect(names(result.current.sortedRows)).toEqual(["low", "high", "none", "nan"]);
+  });
+
+  it("starts a newly chosen column in its own first direction", () => {
+    const { result } = renderHook(() => useTableSort({ rows: ROWS, columns }));
+    act(() => result.current.toggleSort("name"));
+    act(() => result.current.toggleSort("amount"));
+    expect(result.current.sort).toEqual({ key: "amount", direction: "desc" });
+  });
+
+  it("sorts by a key it has no column for in ascending order, leaving rows as given", () => {
+    const { result } = renderHook(() => useTableSort({ rows: ROWS, columns }));
+    act(() => result.current.toggleSort("other" as keyof typeof columns));
+    expect(result.current.sort).toEqual({ key: "other", direction: "asc" });
+    expect(names(result.current.sortedRows)).toEqual(names(ROWS));
+  });
+
   it("does not mutate the rows it is given", () => {
     const rows = [...ROWS];
     const { result } = renderHook(() => useTableSort({ rows, columns }));
@@ -227,5 +254,18 @@ describe("useTableSort with Th", () => {
     expect(amount.getAttribute("aria-sort")).toBe("descending");
     const rows = screen.getAllByRole("row");
     expect(rows[rows.length - 1]?.textContent).toContain("Not set");
+  });
+});
+
+describe("compareSortValues", () => {
+  it("compares decimals as numbers", () => {
+    // 1.5 - 1.25 = 0.25, so 1.5 sorts after 1.25.
+    expect(compareSortValues(1.5, 1.25)).toBeGreaterThan(0);
+  });
+
+  it("compares a number with text as text, either way round", () => {
+    // "5" sorts before "apple" in en-GB.
+    expect(compareSortValues(5, "apple")).toBeLessThan(0);
+    expect(compareSortValues("apple", 5)).toBeGreaterThan(0);
   });
 });

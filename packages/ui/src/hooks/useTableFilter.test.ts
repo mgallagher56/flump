@@ -27,6 +27,20 @@ describe("useTableFilter", () => {
     expect(result.current.isFiltered).toBe(true);
   });
 
+  it("counts a filter on its own as filtered", () => {
+    const { result } = renderHook(() => useTableFilter({ rows: ROWS, searchText, filters }));
+    act(() => result.current.setFilter("kind", "expense"));
+    expect(result.current.isFiltered).toBe(true);
+  });
+
+  it("searches a single text the row gives", () => {
+    const { result } = renderHook(() =>
+      useTableFilter({ rows: ROWS, searchText: (r) => r.name, filters }),
+    );
+    act(() => result.current.setQuery("chair"));
+    expect(result.current.filteredRows.map((r) => r.name)).toEqual(["Office chair"]);
+  });
+
   it("filters by category and combines with the search", () => {
     const { result } = renderHook(() => useTableFilter({ rows: ROWS, searchText, filters }));
     act(() => result.current.setFilter("kind", "income"));

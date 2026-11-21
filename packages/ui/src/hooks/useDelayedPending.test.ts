@@ -43,6 +43,18 @@ describe("useDelayedPending", () => {
     expect(result.current).toBe(true);
   });
 
+  it("hides at once when the wait ends after the minimum has passed", () => {
+    const { result, rerender } = renderHook(({ pending }) => useDelayedPending(pending), {
+      initialProps: { pending: true },
+    });
+    act(() => vi.advanceTimersByTime(200));
+    expect(result.current).toBe(true);
+    // Shown at 200ms; the 400ms minimum is used up exactly at 600ms.
+    act(() => vi.advanceTimersByTime(400));
+    rerender({ pending: false });
+    expect(result.current).toBe(false);
+  });
+
   it("takes custom timings", () => {
     const { result } = renderHook(() => useDelayedPending(true, { delayMs: 50 }));
     act(() => vi.advanceTimersByTime(50));

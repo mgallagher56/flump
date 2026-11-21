@@ -139,3 +139,66 @@ describe("niceYDomain", () => {
     expect(Object.is(hi, -0)).toBe(false);
   });
 });
+
+describe("niceStep boundaries", () => {
+  it.each([
+    [2, 2],
+    [2.5, 2.5],
+    [5, 5],
+  ])("keeps %d as %d", (raw, nice) => {
+    expect(niceStep(raw)).toBe(nice);
+  });
+});
+
+describe("formatMonthTick input checks", () => {
+  it("draws nothing for text around a month key", () => {
+    expect(formatMonthTick("x2026-09")).toBe("");
+    expect(formatMonthTick("2026-09x")).toBe("");
+  });
+});
+
+describe("niceYDomain worked examples", () => {
+  it("starts at zero for data that starts at zero", () => {
+    // Span 100, pad 10, top 110. Step: 110 / 4 = 27.5, rounded up to 50. Top: 150.
+    expect(niceYDomain([0, 100])).toEqual([0, 150]);
+    expect(niceYDomain([-100, 0])).toEqual([-150, 0]);
+  });
+
+  it("anchors at zero when the nearest value is exactly a quarter of the largest", () => {
+    // 2,500 is 25% of 10,000, so the low end is 0. Pad 750, top 10,750. Step 1,075 rounds to
+    // 2,000, so the top is 12,000. Without the anchor the domain would be [1,000, 11,000].
+    expect(niceYDomain([2_500, 10_000], { tickCount: 10 })).toEqual([0, 12_000]);
+    expect(niceYDomain([-10_000, -2_500], { tickCount: 10 })).toEqual([-12_000, 0]);
+  });
+
+  it("anchors at zero for data well inside the near-zero share", () => {
+    // 2,000 is 20% of 10,000. Pad 800, top 10,800, step 1,080 rounds to 2,000: [0, 12,000].
+    expect(niceYDomain([2_000, 10_000], { tickCount: 10 })).toEqual([0, 12_000]);
+    expect(niceYDomain([-10_000, -2_000], { tickCount: 10 })).toEqual([-12_000, 0]);
+  });
+
+  it("measures near zero against the largest value, not the smallest", () => {
+    // Largest 18,000: 4,500 is 25% of it, so the low end is 0. Pad 1,350, top 19,350.
+    // Step 1,935 rounds to 2,000: [0, 20,000].
+    expect(niceYDomain([4_500, 18_000], { tickCount: 10 })).toEqual([0, 20_000]);
+  });
+
+  it("pads a flat series by a tenth of its value", () => {
+    // Pad 5,000 either side: 45,000 to 55,000. Step 10,000 / 4 = 2,500.
+    expect(niceYDomain([50_000, 50_000, 50_000])).toEqual([45_000, 55_000]);
+  });
+
+  it("clamps large padding at zero for one-signed data", () => {
+    // Pad 70 (padRatio 1) would take 30 to -40; clamped to 0. Top 170, step 42.5 rounds to 50.
+    expect(niceYDomain([30, 100], { padRatio: 1 })).toEqual([0, 200]);
+    expect(niceYDomain([-100, -30], { padRatio: 1 })).toEqual([-200, 0]);
+  });
+
+  it("returns a positive zero top for negative data that rounds up to zero", () => {
+    // 300 is 30% of 1,000, so no anchor. Pad 70: -1,070 to -230. Step 840 / 4 = 210 rounds to
+    // 250. Low: floor(-4.28) x 250 = -1,250. Math.ceil(-230 / 250) is -0, normalised to 0.
+    const [lo, hi] = niceYDomain([-1_000, -300]);
+    expect(lo).toBe(-1_250);
+    expect(Object.is(hi, 0)).toBe(true);
+  });
+});

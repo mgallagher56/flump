@@ -1,8 +1,12 @@
 import { act, renderHook } from "@testing-library/react";
+import { renderToString } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { useChartAnimation, usePrefersReducedMotion } from "./index";
+import { useHydratingRender } from "./useHydratingRender";
 
 type Listener = () => void;
+
+const ReducedMotionProbe = () => <span>{String(usePrefersReducedMotion())}</span>;
 
 function mockMatchMedia(initial: boolean) {
   let matches = initial;
@@ -55,6 +59,24 @@ describe("usePrefersReducedMotion", () => {
     expect(result.current).toBe(false);
     unmount();
     expect(m.mql.removeEventListener).toHaveBeenCalled();
+  });
+});
+
+describe("usePrefersReducedMotion without matchMedia or on the server", () => {
+  it("returns false when the window has no matchMedia at all", () => {
+    Object.defineProperty(window, "matchMedia", { value: undefined, configurable: true });
+    expect(renderHook(() => usePrefersReducedMotion()).result.current).toBe(false);
+  });
+
+  it("assumes motion is allowed in server HTML", () => {
+    mockMatchMedia(true);
+    expect(renderToString(<ReducedMotionProbe />)).toContain("false");
+  });
+});
+
+describe("useHydratingRender", () => {
+  it("is false for a component that mounts on the client", () => {
+    expect(renderHook(() => useHydratingRender()).result.current).toBe(false);
   });
 });
 

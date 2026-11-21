@@ -55,6 +55,38 @@ describe("useStepTransition", () => {
     expect(result.current.animationState).toBe("idle");
   });
 
+  it("shows a new step at the same index straight away, with no animation", () => {
+    mockMatchMedia(false);
+    const { result, rerender } = renderHook(({ step, idx }) => useStepTransition(step, idx), {
+      initialProps: { step: "step-1", idx: 0 },
+    });
+    rerender({ step: "step-1-edited", idx: 0 });
+    expect(result.current.displayedStep).toBe("step-1-edited");
+    expect(result.current.animationState).toBe("idle");
+  });
+
+  it("keeps the second step's enter state when two steps follow quickly", () => {
+    mockMatchMedia(false);
+    const { result, rerender } = renderHook(
+      ({ step, idx }) => useStepTransition(step, idx, { enterMs: 200 }),
+      { initialProps: { step: "step-1", idx: 0 } },
+    );
+    rerender({ step: "step-2", idx: 1 });
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+    rerender({ step: "step-3", idx: 2 });
+    // The first step's timer would have ended at 200ms; the second runs to 300ms.
+    act(() => {
+      vi.advanceTimersByTime(150);
+    });
+    expect(result.current.animationState).toBe("enterNext");
+    act(() => {
+      vi.advanceTimersByTime(50);
+    });
+    expect(result.current.animationState).toBe("idle");
+  });
+
   it("runs enterNext with immediate step swap when advancing forward under motion-safe", () => {
     mockMatchMedia(false);
     const { result, rerender } = renderHook(({ step, idx }) => useStepTransition(step, idx), {

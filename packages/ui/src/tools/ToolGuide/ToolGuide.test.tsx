@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { TOOL_SLUGS } from "../toolCatalog";
-import { TOOL_GUIDES } from "../toolGuides";
+import { getToolGuide, TOOL_GUIDES } from "../toolGuides";
 import { ToolGuide } from "./ToolGuide";
 
 const guide = TOOL_GUIDES["uk-debt-snowball-vs-avalanche-calculator"];
@@ -62,6 +62,16 @@ describe("ToolGuide", () => {
     expect(count.parentElement?.className).toContain("flex-d_column");
   });
 
+  it("shows each section's paragraphs, and a singular count for one item", () => {
+    const section = guide.guideSections[0];
+    const faq = guide.faqs[0];
+    if (!section || !faq) throw new Error("the snowball guide has a section and a question");
+    render(<ToolGuide faqs={[faq]} guideSections={[section]} />);
+    for (const paragraph of section.body) expect(screen.getByText(paragraph)).toBeTruthy();
+    expect(screen.getByText("1 section")).toBeTruthy();
+    expect(screen.getByText("1 question")).toBeTruthy();
+  });
+
   it("renders nothing for an empty list", () => {
     const { container } = render(<ToolGuide faqs={[]} guideSections={[]} />);
     expect(panels(container)).toHaveLength(0);
@@ -88,6 +98,24 @@ describe("TOOL_GUIDES copy", () => {
       expect(TOOL_GUIDES[slug].guideSections.length).toBeGreaterThan(0);
       expect(TOOL_GUIDES[slug].faqs.length).toBeGreaterThan(0);
     }
+  });
+
+  it("gives every section a heading and text, and every question an answer", () => {
+    const filled = (s: unknown) => typeof s === "string" && s.trim().length > 0;
+    for (const slug of TOOL_SLUGS) {
+      for (const section of TOOL_GUIDES[slug].guideSections) {
+        expect(filled(section.heading), `${slug} heading`).toBe(true);
+        expect(section.body.length, `${slug}: ${section.heading}`).toBeGreaterThan(0);
+        expect(section.body.every(filled), `${slug}: ${section.heading}`).toBe(true);
+      }
+      for (const faq of TOOL_GUIDES[slug].faqs) {
+        expect(filled(faq.q) && filled(faq.a), `${slug}: ${faq.q}`).toBe(true);
+      }
+    }
+  });
+
+  it("looks a tool's guide up by its slug", () => {
+    for (const slug of TOOL_SLUGS) expect(getToolGuide(slug)).toBe(TOOL_GUIDES[slug]);
   });
 
   it("avoids the phrases the copy audit removed", () => {

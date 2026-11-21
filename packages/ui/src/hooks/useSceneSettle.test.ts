@@ -1,7 +1,12 @@
 import { act, renderHook } from "@testing-library/react";
 import { StrictMode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { clearSceneSettled, isSceneSettled, useSceneSettle } from "./useSceneSettle";
+import {
+  clearSceneSettled,
+  isSceneSettled,
+  markSceneSettled,
+  useSceneSettle,
+} from "./useSceneSettle";
 
 function mockMatchMedia(initial: boolean) {
   let matches = initial;
@@ -109,6 +114,63 @@ describe("useSceneSettle", () => {
   it("returns false under prefers-reduced-motion (scene still from the start)", () => {
     mockMatchMedia(true);
     const { result } = renderHook(() => useSceneSettle("empty-accounts"));
+    expect(result.current).toBe(false);
+  });
+});
+
+describe("scene settled storage", () => {
+  beforeEach(() => {
+    clearSceneSettled();
+    sessionStorage.clear();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    clearSceneSettled();
+    sessionStorage.clear();
+  });
+
+  it("records a settled scene in sessionStorage under its prefixed key", () => {
+    markSceneSettled("net-worth");
+    expect(sessionStorage.getItem("flump.scene-settled.net-worth")).toBe("1");
+  });
+
+  it("reads a scene settled earlier in the visit from sessionStorage", () => {
+    sessionStorage.setItem("flump.scene-settled.budget", "1");
+    expect(isSceneSettled("budget")).toBe(true);
+    expect(isSceneSettled("goals")).toBe(false);
+  });
+
+  it("remembers a scene in memory when sessionStorage refuses to write", () => {
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new Error("quota");
+    });
+    markSceneSettled("debts");
+    expect(isSceneSettled("debts")).toBe(true);
+  });
+
+  it("treats a scene as not settled when sessionStorage refuses to read", () => {
+    vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
+      throw new Error("blocked");
+    });
+    expect(isSceneSettled("pension")).toBe(false);
+  });
+
+  it("clears only its own keys", () => {
+    sessionStorage.setItem("other.key", "kept");
+    markSceneSettled("budget");
+    clearSceneSettled();
+    expect(sessionStorage.getItem("flump.scene-settled.budget")).toBeNull();
+    expect(sessionStorage.getItem("other.key")).toBe("kept");
+  });
+
+  it("stops settling when the scene changes to one already seen", () => {
+    markSceneSettled("seen");
+    const { result, rerender } = renderHook(({ key }) => useSceneSettle(key), {
+      initialProps: { key: "fresh" },
+    });
+    expect(result.current).toBe(true);
+    rerender({ key: "seen" });
     expect(result.current).toBe(false);
   });
 });
