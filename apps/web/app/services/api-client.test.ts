@@ -1,7 +1,7 @@
 import type { ContractSchema } from "@flump/api-client";
 import { BudgetEntryResponse } from "@flump/api-contract";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { apiFetch, apiFetchAll } from "./api-client";
+import { apiFetch, apiFetchAll, apiFetchVersioned } from "./api-client";
 import { BackendError } from "./backend-error";
 
 /** Accepts any JSON body: these tests are about the transport, not a contract shape. */
@@ -225,5 +225,20 @@ describe("apiFetch", () => {
       "/api/mcp-tokens",
       "/api/mcp-tokens?cursor=c2",
     ]);
+  });
+
+  it("returns the body with its ETag from apiFetchVersioned, and a null ETag when none is sent", async () => {
+    const etag = '"2026-11-14T09:30:00.000Z"';
+    fetchMock
+      .mockResolvedValueOnce(new Response('{"ok":1}', { status: 200, headers: { ETag: etag } }))
+      .mockResolvedValueOnce(respond(200, '{"ok":2}'));
+    await expect(apiFetchVersioned("/accounts", { schema: anyJson })).resolves.toEqual({
+      data: { ok: 1 },
+      etag,
+    });
+    await expect(apiFetchVersioned("/accounts", { schema: anyJson })).resolves.toEqual({
+      data: { ok: 2 },
+      etag: null,
+    });
   });
 });

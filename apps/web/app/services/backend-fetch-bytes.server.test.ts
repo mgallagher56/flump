@@ -87,4 +87,36 @@ describe("backendFetchBytes", () => {
     controller.abort(reason);
     expect(await pending).toBe(reason);
   });
+
+  it("has no filename when the backend sends no Content-Disposition", async () => {
+    globalThis.fetch = respond(200, { "Content-Type": "image/png" });
+    const res = await backendFetchBytes("/x", { accessToken: "t" });
+    expect(res.filename).toBeNull();
+  });
+
+  it("cancels the call when the caller has already gone", async () => {
+    const controller = new AbortController();
+    const reason = new Error("navigated away");
+    controller.abort(reason);
+    let received: AbortSignal | undefined;
+    globalThis.fetch = vi.fn((_url, init: RequestInit) => {
+      received = init.signal;
+      return init.signal?.aborted
+        ? Promise.reject(init.signal.reason)
+        : Promise.resolve(new Response("abc"));
+    }) as unknown as typeof fetch;
+    const err = await backendFetchBytes("/x", {
+      accessToken: "t",
+      signal: controller.signal,
+    }).catch((e) => e);
+    expect(received?.aborted).toBe(true);
+    expect(err).toBe(reason);
+  });
+
+  it("leaves no timeout running once it has answered", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    globalThis.fetch = respond(200);
+    await backendFetchBytes("/x", { accessToken: "t" });
+    expect(vi.getTimerCount()).toBe(0);
+  });
 });
