@@ -62,7 +62,9 @@ describe("SecurityPage (E16 PR 12)", () => {
   it("makes no encryption, data-selling or response-time claims, and states data download, deletion and email rules", () => {
     renderPage();
     const bodyText = document.body.textContent ?? "";
-    expect(bodyText).not.toMatch(/encrypt|AES|TLS|HSTS|CSV|never sell|visible only|business day/i);
+    expect(bodyText).not.toMatch(
+      /encrypt|AES|TLS|HSTS|CSV|delete all your|close your account|never sell|visible only|business day/i,
+    );
     expect(
       screen.getByText("You can download a copy of your saved figures from Settings at any time."),
     ).toBeDefined();
