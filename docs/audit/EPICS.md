@@ -4,11 +4,11 @@ Derived from [SUMMARY.md](SUMMARY.md). Items are the 64 verified P0 and P1 findi
 
 Epic grouping is the lead auditor's reading of the verified titles. Severity and effort come from the verified record. Acceptance criteria are the recommendation from each finding plus the shared rule at the end of this file.
 
-## What is left (as of 2026-11-20)
+## What is left (as of 2026-11-21)
 
 This section was first audited against `origin/main` at 7b9b6425 on 2026-11-14. Every epic below carries a dated status line, and tickets that are not done carry their own marker. "Partly" means some of the work has merged; the epic's status line says what is missing.
 
-Refreshed on 2026-11-20 against `origin/main` and the merged pull requests up to #832. The tables below and the status lines of the epics that changed since 2026-11-14 are current. A status line that still carries a 2026-11-14 date was not re-checked on 2026-11-20 and may be stale. Where a line below says "not re-checked", the code was not looked at.
+Refreshed on 2026-11-20 against `origin/main` and the merged pull requests up to #832, and on 2026-11-21 for E4 tax, E38, E41 and E42 only (merged pull requests up to #857). The tables below and the status lines of the epics that changed since 2026-11-14 are current. A status line that still carries a 2026-11-14 date was not re-checked on 2026-11-20 and may be stale. Where a line below says "not re-checked", the code was not looked at.
 
 ### Engineering work not started or partly done, by launch importance
 
@@ -37,26 +37,26 @@ Refreshed on 2026-11-20 against `origin/main` and the merged pull requests up to
 | 21 | E33 | Retirement plan: a target the user sets, tracked each month (E27 becomes its tax slices) | Plan approved 2026-11-17 (RD1 to RD11 accepted); S0 to S5 merged (#750, #758, #768), RD6, RD9 and RD11 merged (#770). S6 to S9 not started |
 | 22 | E36 | Security hardening before real production: supply chain, accounts, breach impact, post-quantum readiness, AI-assisted attacks, external test | Slice 1 (#747) and H2 and H5 (#755) merged. MFA and passkeys, the restricted database role, field-level encryption, the breach drill and the external test have no PR. Owner approval of SD1 to SD8: not re-checked |
 | 23 | E37 | Self-employed work tracking & invoice builder: default hourly rate, itemised work logs, draft/issued/paid invoices, PDF/print & CSV export, optional SA sync | Plan merged (#759); nothing built. Owner approval: not re-checked |
-| 24 | E38 | User action friction and interaction-efficiency audit | S0 harness merged (#780, warn-only CI job). S1 to S3 not started |
+| 24 | E38 | User action friction and interaction-efficiency audit | S0 harness merged (#780, warn-only CI job); S1 to S3 merged (#841) |
 | 25 | E39 | Mortgage affordability from your own figures | Plan merged (#776); nothing built |
 | 26 | E40 | One home per value: system data audit and restructure | Done: all nine slices merged (#784, #785, #786, #791, #798 and #803, #797 and #801, #825, #806, #805 and #808 and #820). Owner tax sign-off of the vectors in slices 2 and 7 is open |
-| 27 | E41 | Mutation testing and faster tests | In progress: see the E41 status line. Mutation testing is now a local monthly check; M5 (web and UI logic, local only) reinstated and in progress |
-| 28 | E42 | Marketing site restructure: pages split the way the app is, selling the features it has | Plan written 2026-11-20; all ten owner decisions answered that day; nothing built. First in line once the open work has merged |
+| 27 | E41 | Mutation testing and faster tests | Done: M0 to M5 and P0 to P5 merged (M5 in #857). Mutation testing is a local monthly check, not a CI job |
+| 28 | E42 | Marketing site restructure: pages split the way the app is, selling the features it has | Done: #848, #850, #852, #853, then the teal bands and larger illustrations (#854, #856) |
 
 ### Work in progress
 
 | Epic / ticket | Work | Where |
 |---|---|---|
-| E41 M4 | Mutation testing of the backend guards and services, and the move to a local check | PR 847 |
+| E41 | Mutation testing and faster tests | Merged (M4 in #847, M5 in #857); nothing in progress |
 | E17 | MCP write tools (PR D, #653) and web review of staged imports (PR E, #654) | Merged; nothing in progress |
 | E15 phase 8 and follow-ups | Visual regression guard (#651), follow-up sweep (#647) | Merged |
-| E4 tax | 2027/28 tax year with property and savings rates | #833, open, needs the owner's tax sign-off |
+| E4 tax | 2027/28 tax year with property and savings rates | Merged (#833), marked provisional until the rates are law. CI fails from 1 April 2027 unless the provisional marker in `PROVISIONAL_UK_TAX_YEARS` is removed or extended |
 
 ### Owner actions
 
 | Epic | Action |
 |---|---|
-| E4, E22, E25 | Sign off the tax vectors (334 unsigned, 41 of them the Self Assessment vectors added by the engine PR); verify the 2027/28 figures |
+| E4, E22, E25 | None for sign-off: since 2026-11-20 an independent Fable decider signs tax vectors, recorded as the signer (DECISIONS, 2026-11-20). 308 older vectors are still unsigned. A paid accountant check before public launch stays the owner's |
 | E18 | Run and log the backup restore drill; set the Sentry DSN and uptime monitors; create a production environment |
 | E3 D-12 | Done: the WorkOS key was rotated on 2026-11-13 |
 | Backend | Set `DELETION_TOMBSTONE_KEY` (never rotate it), `WEB_CLIENT_IP_HMAC_KEY` and `WORKOS_API_KEY`; add the WorkOS logout redirects (BE-04); run the retention cron service; apply the required checks and secret scanning on GitHub; choose the terms version for consent |
@@ -992,7 +992,7 @@ Add to E19 (opus review: effort S, so fold in rather than a new epic): full JSON
 - **Blocked by:** none.
 - **Done when:** a repeatable Playwright interaction-cost harness (`S0`) measures clicks, keystrokes, modal hops, and scroll/focus friction at `1280px` and `375px`, and slices `S1`–`S3` ship targeted friction reductions across budget, check-in, accounts, and Self Assessment while preserving WCAG 2.2 AA and advice-boundary rules.
 - **Notes:** Plan merged (`#763`): [E38-interaction-efficiency-audit-plan.md](plans/E38-interaction-efficiency-audit-plan.md).
-- **Status (2026-11-20):** `S0` merged (`#780`: the interaction-cost harness, its baseline and a warn-only CI job, `.github/workflows/interaction-cost.yml`). `S1`–`S3` have no PR.
+- **Status (2026-11-21):** `S0` merged (`#780`: the interaction-cost harness, its baseline and a warn-only CI job, `.github/workflows/interaction-cost.yml`) and `S1`–`S3` merged (`#841`: friction reductions in the check-in, accounts and Self Assessment). Not re-checked: whether every item in the plan's S1 to S3 lists shipped.
 - **Labels:** needs-triage
 
 ## E39. Mortgage affordability: estimates from your own figures
@@ -1023,7 +1023,7 @@ The E41 block below was added on 2026-11-19. The handoff notes after it were bro
 - **Blocked by:** nothing for the first slices: the owner accepted all 13 decisions on 2026-11-19 (DECISIONS round 12). Tests that assert a tax figure still need the owner's tax vector sign-off. The kill-test slices wait for the E40 slices that rewrite the same files.
 - **Done when:** Stryker (a tool that makes small deliberate faults in the code and checks that a test fails) runs on a schedule against `packages/finance-engine`, `packages/api-contract`, `packages/mcp`, the small packages, the backend's authorisation and validation code, and the logic in `apps/web` and `packages/ui`; each of those has a mutation score floor in a baseline file that may rise freely and is lowered only with sign-off; every surviving fault in the money code is either killed by a test with a hand-worked expected value or recorded with a reason; pull requests get an advisory report on the files they change; the suites that cannot be mutation-tested (stories, Playwright suites, migrations, style recipes, generated code) are listed with what covers them instead; a test-speed baseline is recorded and each speed fix shows a before and after figure with no test weakened.
 - **Notes:** two workstreams. Mutation: M0 proof on one engine module, M1 scheduled run and ratchet, M2 engine kill tests, M3 contract, MCP and small packages, M4 backend guards and services, M5 web and UI logic, M6 close-out. Speed: P0 baseline, P1 browser install in CI, P2 backend files in parallel, P3 web and UI environment and setup, P4 slow files and isolation, P5 Turbo and CI shape. Measured on 2026-11-19: pull request CI took 2 to 9 minutes over six runs; the backend suite is the slowest Vitest run (281 seconds, files run one at a time); the "Install Chromium" step varied from 9 to 328 seconds. No outside service is used; the hosted Stryker dashboard is decision 6. Plan: [E41-mutation-testing-and-test-speed-plan.md](plans/E41-mutation-testing-and-test-speed-plan.md).
-- **Status (2026-11-20):** in progress. Mutation: M0 (`#792`), M1 (`#800`, weekly run and score ratchet), M2 parts A and B (`#809`, `#822`) and M3 (`#832`, contract, MCP and the small packages) merged; M4 (backend guards and services, PR 847) is in review. On 20 November 2026 the owner made mutation testing a local check run about once a month (`bun run mutation <package|all>`), not a CI job; the workflow is removed (DECISIONS, 2026-11-20). M5 was recorded as withdrawn by a coordinator error and was reinstated the same day as a local-only stage (owner: "Yes, reinstate"); it is in progress. Speed: P0 (`#794`), P1 (`#795`), P2 (`#813`), P3 (`#828`), P4 (`#819`) and P5 (`#823`) merged. The change to isolate the engine from the rest was withdrawn.
+- **Status (2026-11-21):** DONE. Mutation: M0 (`#792`), M1 (`#800`, weekly run and score ratchet), M2 parts A and B (`#809`, `#822`) and M3 (`#832`, contract, MCP and the small packages), M4 (`#847`, backend guards, auth, security, contract and services) and M5 (`#857`, `apps/web` and `packages/ui` logic) merged, so every mutation stage is done. On 20 November 2026 the owner made mutation testing a local check run about once a month (`bun run mutation <package|all>`), not a CI job; the workflow is removed (DECISIONS, 2026-11-20). M5 was recorded as withdrawn by a coordinator error and was reinstated the same day as a local-only stage (owner: "Yes, reinstate"); it merged on 21 November 2026 with floors of 85 (`apps/web`) and 78 (`packages/ui`). A full `bun run mutation all` has not yet been run end to end in one go. The rules for writing tests that pass a mutation run and stay quick are in `docs/testing/writing-tests.md` (AGENTS.md section 17). Speed: P0 (`#794`), P1 (`#795`), P2 (`#813`), P3 (`#828`), P4 (`#819`) and P5 (`#823`) merged. The change to isolate the engine from the rest was withdrawn.
 - **Labels:** ready
 
 ## E42. Marketing site restructure: the site mirrors the app
@@ -1032,12 +1032,12 @@ The E41 block below was added on 2026-11-19. The handoff notes after it were bro
 - **Blocked by:** the coordinator's word to start: the build is first in line once the work open on 2026-11-20 has merged (owner, 20 November 2026). The points still to confirm are listed at the end of section 7.1 of the plan (the AI connection's "How to get it" wording and "Preview" label, the headline's punctuation, and that download and deletion work in staging); the build leaves the parts they touch until they are settled. Guard changes named in the plan need the coordinator's sign-off before they are made.
 - **Done when:** the marketing site has a "Flump features" page (navigation label "Features"), an AI connection page and one page for each of the app's five navigation areas (Accounts, Budget, Pay, Savings and pension, Debt and borrowing), named as the app names them and checked against the app's labels by a test; the home page shows all five areas in one picture and carries the three messages (one whole view, simple for everyone, more detail for those who want it); top navigation is three links and the call to action, with no calculators link; the three calculators the owner kept (pay rise, two ways to pay off debts, mortgage overpayment or ISA) sit on the area page they belong to in a short form, the marketing calculators pages are gone with every old address redirected, and all eight calculators remain in the app; Retirement is described on the Savings and pension page as an estimate, with the MoneyHelper line; the AI connection is presented as a feature like the others, with wording that is true for a tester whose account has not been switched on; imports and bank connections are not sold; every claim passes the claims and copy guards and the owner has signed off the copy (E7).
 - **Notes:** plan: [E42-marketing-site-restructure-plan.md](plans/E42-marketing-site-restructure-plan.md), with the inventory, gap list, site map, draft copy, constraints check and build slices in two pull requests. All copy in the plan is a draft. It would change the home h1 and five-band layout set by E16 PR 12, only with the owner's yes. Revised on 2026-11-20 after the owner's first read: eight home headline options, Retirement on the site (the owner superseded RD9), and calculators assessed one by one and taken out of the top navigation.
-- **Status (2026-11-20):** plan written and revised three times. The owner answered all ten decisions on 2026-11-20: headline "All your money. One clear picture."; the page is "Flump features"; the AI connection is presented as a feature, access still by named account; calculators 1, 5 and 6 kept; the rest as recommended. Retirement is open and in the app's navigation on `main`. Two independent reviews were done and their findings applied: the second added the redirect mechanism, the affected files and done criteria for each pull request, and moved the AI connection page into the first pull request so no menu entry is a dead link. The coordinator's re-check passed, with five small text fixes applied. Nothing built.
+- **Status (2026-11-20):** plan written and revised three times. The owner answered all ten decisions on 2026-11-20: headline "All your money. One clear picture."; the page is "Flump features"; the AI connection is presented as a feature, access still by named account; calculators 1, 5 and 6 kept; the rest as recommended. Retirement is open and in the app's navigation on `main`. Two independent reviews were done and their findings applied: the second added the redirect mechanism, the affected files and done criteria for each pull request, and moved the AI connection page into the first pull request so no menu entry is a dead link. The coordinator's re-check passed, with five small text fixes applied. **Update (2026-11-21): DONE.** Built and merged in `#848` (feature pages, Features menu, AI connection page), `#850` (home page, kept calculators, Retirement, `/tools` redirects), `#852` (sample previews) and `#853` (plan closed); `#854` and `#856` then changed the section bands to the teal tint and enlarged the illustrations (owner choice A, AGENTS.md section 2).
 - **Labels:** needs-owner
 
 ## 1. The merge-queue PRs from the 2026-11-16 handoff
 
-All of them have merged: #761, #762, #764, #765 and #766 (UX Batches A to D and the signed-in footer) and the release PR #760. Open pull requests change daily; run `gh pr list --state open` rather than reading a list here. On 2026-11-20 the only open pull request was #833 (the 2027/28 tax year, which needs the owner's tax sign-off).
+All of them have merged: #761, #762, #764, #765 and #766 (UX Batches A to D and the signed-in footer) and the release PR #760. Open pull requests change daily; run `gh pr list --state open` rather than reading a list here. On 2026-11-21 there was no open pull request.
 
 ## 2. UX Batch E
 
@@ -1051,7 +1051,6 @@ Merged in #777: the profile year of birth and pay, the check-in day, and the Sel
 - **E35 (Encouragement and wellbeing):** `Set 1` (`#749`) merged; Sets 2 and 3 have no PR.
 - **E36 (Security hardening):** `Slice 1` (`#747`) and `H2 & H5` (`#755`) merged; the remaining hardening items have no PR.
 - **E37 (Self-employed work tracking and invoice builder):** plan merged (`#759`); `S0` to `S3` have no PR.
-- **E38 (Interaction-efficiency audit):** `S0` merged (`#780`); `S1` to `S3` have no PR.
 - **E39 (Mortgage affordability):** plan merged (`#776`); no build PR.
 
 ## 4. Stale local `.claude/worktrees/*`

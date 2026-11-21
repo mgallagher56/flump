@@ -2,6 +2,8 @@
 
 This document defines behavioral guidelines, coding standards, monorepo conventions, and optimization guidelines for all AI agents working on the Flump codebase in the Antigravity editor.
 
+> **Read first:** [`working_rules.md`](./working_rules.md) (how work is done here: review, merging, owner-only items) and the laws in [`AGENTS.md`](../../AGENTS.md). Where this file disagrees with either, they win.
+
 ## Project Structure & Architecture
 
 Flump is a monorepo managed with Turborepo (`turbo`) and Bun.
@@ -91,6 +93,7 @@ Flump is a monorepo managed with Turborepo (`turbo`) and Bun.
 
 ### 8. Test-Driven Development (TDD)
 
+- **Test quality law**: Before adding or changing any test, read [`docs/testing/writing-tests.md`](../../docs/testing/writing-tests.md) (`AGENTS.md` sections 14 and 17). A test must fail when the code is wrong, and must be quick.
 - **TDD Requirement**: Prefer writing tests _before_ writing the implementation (Red-Green-Refactor). Define the expected behavior via unit or integration tests, run the tests to confirm they fail, write code to make them pass, and then refactor.
 - **Test Coverage**: All new files, components, utilities, and services must have corresponding test files (`.test.ts`/`.test.tsx`).
 - **Interactive Verification**: Use Vitest's watch mode (`vitest`) for instant feedback during feature development.
