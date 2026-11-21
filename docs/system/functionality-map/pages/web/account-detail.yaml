@@ -1,0 +1,203 @@
+id: account-detail
+app: web
+route: /app/accounts/:account
+title: Account detail
+auth: required
+purpose: View an account's current balance, update its balance quickly, set or manage an account goal, inspect balance history, and edit or delete the account.
+entry_points:
+  - Account row link on /app/accounts
+  - Account links on Savings, Debt, Pension, or Mortgage pages
+route_file: apps/web/app/routes/app.accounts.$account.tsx
+
+sections:
+  - id: header
+    name: Page header and navigation
+    kind: header
+    component: apps/web/app/containers/accounts/accountDetailContainer/AccountDetailContainer.tsx
+    capabilities:
+      - id: back-and-edit-trigger
+        goal: Return to the accounts list or open the Edit account dialog.
+        mode: navigate
+        actions:
+          - id: back-to-accounts
+            control: link
+            label: Back to accounts
+            effect: Navigates back to /app/accounts.
+            target: /app/accounts
+          - id: open-edit-account
+            control: button
+            label: Edit account
+            effect: Opens AddEditAccountsDialog in edit mode for this account.
+
+  - id: hero
+    name: Current balance hero
+    kind: hero
+    component: apps/web/app/containers/accounts/accountDetailContainer/AccountDetailContainer.tsx
+    capabilities:
+      - id: view-account-balance
+        goal: View the account's current balance or amount owed, its latest recorded month date line, and whether it counts toward net worth.
+        mode: read
+        facts_read:
+          - account-name
+          - account-type
+          - account-balance
+          - balance-history
+          - net-worth-choices
+        actions: []
+
+  - id: quick-balance-update
+    name: Quick balance update
+    kind: form
+    component: apps/web/app/features/accounts/components/QuickBalanceUpdate/QuickBalanceUpdate.tsx
+    capabilities:
+      - id: update-balance-inline
+        goal: Update the account's current balance or amount owed in place without opening the full edit dialog.
+        mode: write
+        facts_read:
+          - account-balance
+          - ownership-share
+        facts_written:
+          - account-balance
+          - balance-history
+        actions:
+          - id: open-quick-balance
+            control: button
+            label: Update balance / Update amount owed
+            effect: Opens the inline balance input with the current balance prefilled and selected.
+          - id: input-quick-balance
+            control: input
+            label: New balance / Amount owed now
+            effect: Updates the draft balance value.
+            validation: Debts require an amount owed of £0 or more.
+          - id: save-quick-balance
+            control: submit
+            label: Save
+            effect: Submits intent=update with the new balance and optimistic-concurrency version.
+            target: PATCH /accounts/:id
+            if_match: true
+          - id: cancel-quick-balance
+            control: button
+            label: Cancel
+            effect: Closes the inline editor without saving and returns focus to the trigger button.
+
+  - id: goal-section
+    name: Account goal
+    kind: form
+    component: apps/web/app/features/accounts/components/AccountGoalSection/AccountGoalSection.tsx
+    capabilities:
+      - id: manage-account-goal
+        goal: Set, view progress on, edit, or remove an optional target amount, target date, and note for this account.
+        mode: write
+        facts_read:
+          - account-goal
+          - account-balance
+          - balance-history
+        facts_written:
+          - account-goal
+        actions:
+          - id: open-goal-editor
+            control: button
+            label: Set a goal / Change goal
+            effect: Opens the inline goal form prefilled with any existing goal.
+          - id: input-goal-amount
+            control: input
+            label: Target amount (optional)
+            effect: Sets the optional target amount in GBP.
+            validation: Must be £0 or more; at least one of amount, date, or note is required.
+          - id: input-goal-date
+            control: input
+            label: Target date (optional)
+            effect: Sets the optional target date.
+          - id: input-goal-label
+            control: input
+            label: Note (optional)
+            effect: Sets an optional note up to 120 characters.
+          - id: save-goal
+            control: submit
+            label: Save goal
+            effect: Submits intent=upsert-goal to save the account goal.
+            target: PUT /accounts/:id/goal
+            if_match: true
+          - id: cancel-goal
+            control: button
+            label: Cancel
+            effect: Closes the goal form without saving.
+          - id: remove-goal
+            control: button
+            label: Remove goal
+            effect: Submits intent=delete-goal to remove the saved goal.
+            target: DELETE /accounts/:id/goal
+
+  - id: balance-history
+    name: Balance history chart and recorded return
+    kind: content
+    component: apps/web/app/components/accounts/AccountDetails/AccountDetails.tsx
+    capabilities:
+      - id: view-account-history
+        goal: View monthly balance history chart, its Show data table, and recorded return for investment accounts, or navigate to the owning feature page.
+        mode: read
+        facts_read:
+          - balance-history
+          - account-balance
+          - account-rate
+          - account-monthly-amount
+          - investment-return
+        actions:
+          - id: open-owner-page
+            control: link
+            label: See your mortgage / See your debts
+            effect: Navigates to /app/mortgage or /app/debt for mortgage, debt, or student loan accounts.
+
+  - id: edit-account-dialog
+    name: Edit and delete account dialog
+    kind: form
+    component: apps/web/app/components/dialogs/addEditAccountsDialog/AddEditAccountsDialog.tsx
+    when: when Edit account dialog is open
+    capabilities:
+      - id: edit-account-details
+        goal: Edit account name, type, balance, interest rate, monthly contribution, joint ownership share, and mortgage/credit fields.
+        mode: write
+        facts_read:
+          - account-name
+          - account-type
+          - account-balance
+          - account-rate
+          - account-monthly-amount
+          - ownership-share
+          - repayment-type
+          - mortgage-term-and-fix-end
+          - mortgage-property-link
+          - card-limit-and-zero-percent-end
+        facts_written:
+          - account-name
+          - account-type
+          - account-balance
+          - account-rate
+          - account-monthly-amount
+          - ownership-share
+          - student-loan-plan
+          - repayment-type
+          - mortgage-term-and-fix-end
+          - mortgage-property-link
+          - card-limit-and-zero-percent-end
+        actions:
+          - id: submit-edit-account
+            control: submit
+            label: Save changes
+            effect: Submits intent=update to PATCH /accounts/:id with optimistic-concurrency version.
+            target: PATCH /accounts/:id
+            if_match: true
+
+      - id: delete-account
+        goal: Permanently delete the account and its recorded history.
+        mode: delete
+        facts_written:
+          - account-balance
+          - balance-history
+        actions:
+          - id: trigger-delete-account
+            control: button
+            label: Delete account
+            effect: Deletes the account and redirects to /app/accounts.
+            target: DELETE /accounts/:id
+            confirm: Requires confirmation inside the edit dialog before deleting.

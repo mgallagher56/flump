@@ -1,0 +1,279 @@
+id: onboarding
+app: web
+route: /app/onboarding
+title: Set up Flump
+auth: required
+purpose: Enter initial income, housing, savings, pension, and debt details in a four-step guided setup, or save and exit to continue later.
+entry_points:
+  - Redirect from / or /app when onboardingCompleted is false
+  - Signup completion redirect
+route_file: apps/web/app/routes/app.onboarding.tsx
+
+sections:
+  - id: header
+    name: Setup header and progress
+    kind: header
+    component: apps/web/app/features/onboarding/components/OnboardingHeader/OnboardingHeader.tsx
+    capabilities:
+      - id: navigate-and-exit-setup
+        goal: Jump between setup steps via the stepper or save partial answers and exit to the dashboard.
+        mode: write
+        facts_written:
+          - salary
+          - typed-take-home
+          - employment-type
+          - birth-year
+          - tax-region
+          - student-loan-plan
+          - housing-status
+          - housing-cost
+          - other-outgoings
+          - pension-rates
+        actions:
+          - id: save-and-exit
+            control: button
+            label: Save and exit
+            effect: Saves current answers to the profile and exits setup.
+            target: PATCH /user-profile
+          - id: select-step
+            control: tab
+            label: Setup progress
+            effect: Jumps directly to step 1 (Income), 2 (Housing), 3 (Savings and debt), or 4 (Review).
+
+  - id: seed-banner
+    name: Calculator carry-over banner
+    kind: notice
+    component: apps/web/app/features/onboarding/components/SeedBanner/SeedBanner.tsx
+    when: when calculator or sandbox seed data is present
+    capabilities:
+      - id: launch-or-review-seed
+        goal: Finish setup immediately with carried-over calculator figures or dismiss the banner to review each step.
+        mode: write
+        facts_read:
+          - salary
+        actions:
+          - id: finish-with-seed
+            control: button
+            label: Finish with these figures
+            effect: Completes onboarding immediately using carried-over calculator figures when required income details are present.
+          - id: review-seed-figures
+            control: button
+            label: Review figures
+            effect: Dismisses the banner and focuses the current step heading.
+
+  - id: step-income
+    name: Step 1 - You and your income
+    kind: form
+    component: apps/web/app/features/onboarding/components/IncomeStep/IncomeStep.tsx
+    when: when step is 1
+    capabilities:
+      - id: enter-income-and-tax-details
+        goal: Enter age, employment type, yearly salary or monthly take-home pay, tax region, and student loan plan, while seeing live estimated take-home pay.
+        mode: write
+        facts_written:
+          - birth-year
+          - employment-type
+          - salary
+          - typed-take-home
+          - tax-region
+          - student-loan-plan
+        figures_shown:
+          - take-home
+        actions:
+          - id: input-age
+            control: input
+            label: Your age
+            effect: Updates draft age used to derive birth year.
+          - id: select-employment-type
+            control: select
+            label: How you earn
+            effect: Switches between Employed (PAYE) and Self-employed.
+          - id: select-income-mode
+            control: select
+            label: How to enter your income
+            effect: Switches between Salary before tax (yearly) and Take-home pay (monthly).
+          - id: input-gross-salary
+            control: input
+            label: Yearly salary before tax
+            effect: Updates draft annual gross salary when incomeMode is gross.
+          - id: pick-salary-preset
+            control: button
+            label: Example salaries (£32,000 / £45,000 / £65,000)
+            effect: Fills Yearly salary before tax with the selected preset amount.
+          - id: input-monthly-take-home
+            control: input
+            label: Monthly take-home pay
+            effect: Updates draft monthly net take-home pay when incomeMode is net.
+          - id: select-tax-region
+            control: select
+            label: Where do you pay tax?
+            effect: Selects England, Wales, Scotland, or Northern Ireland.
+          - id: select-student-loan
+            control: select
+            label: Student loan plan
+            effect: Selects None, Plan 1, Plan 2, Plan 4 (Scotland), Plan 5, or Postgraduate loan.
+          - id: next-from-income
+            control: button
+            label: Next
+            effect: Advances to Step 2 (Housing).
+
+  - id: step-housing
+    name: Step 2 - Housing and regular spending
+    kind: form
+    component: apps/web/app/features/onboarding/components/HousingStep/HousingStep.tsx
+    when: when step is 2
+    capabilities:
+      - id: enter-housing-and-spending
+        goal: Choose housing status, enter monthly housing cost, property value, mortgage balance, and other monthly spending.
+        mode: write
+        facts_written:
+          - housing-status
+          - housing-cost
+          - home-value
+          - account-balance
+          - other-outgoings
+        figures_shown:
+          - home-equity
+          - take-home
+        actions:
+          - id: select-housing-status
+            control: select
+            label: Your housing
+            effect: Selects Renting, Paying a mortgage, Own with no mortgage, or Living with family or friends.
+          - id: input-housing-cost
+            control: input
+            label: Monthly rent / Monthly mortgage payment / What you pay each month (optional)
+            effect: Updates monthly housing cost when housingStatus has a payment.
+          - id: input-property-value
+            control: input
+            label: What your home is worth
+            effect: Updates estimated property value when owning a home.
+          - id: input-mortgage-balance
+            control: input
+            label: Mortgage left to pay
+            effect: Updates remaining mortgage balance when paying a mortgage.
+          - id: input-other-outgoings
+            control: input
+            label: Other monthly spending (bills, food, travel, subscriptions)
+            effect: Updates rough monthly non-housing spending.
+          - id: back-from-housing
+            control: button
+            label: Back
+            effect: Returns to Step 1.
+          - id: next-from-housing
+            control: button
+            label: Next
+            effect: Advances to Step 3.
+          - id: skip-housing
+            control: button
+            label: Skip this step
+            effect: Marks Step 2 skipped while keeping any entered values and advances to Step 3.
+
+  - id: step-savings-debt
+    name: Step 3 - Savings and debt
+    kind: form
+    component: apps/web/app/features/onboarding/components/SavingsDebtStep/SavingsDebtStep.tsx
+    when: when step is 3
+    capabilities:
+      - id: enter-savings-pension-debt
+        goal: Enter rough balances for cash/ISA savings, pension pot, employee pension contribution percentage, and credit cards/loans.
+        mode: write
+        facts_written:
+          - account-balance
+          - pension-rates
+        figures_shown:
+          - take-home
+        actions:
+          - id: input-cash-savings
+            control: input
+            label: Cash and ISA savings
+            effect: Updates draft cash/ISA savings balance.
+          - id: input-pension-pot
+            control: input
+            label: Pension pot
+            effect: Updates draft pension pot balance.
+          - id: input-pension-percent
+            control: input
+            label: Your pension contribution (% of pay before tax)
+            effect: Updates draft employee pension contribution percentage (0% to 50%).
+          - id: input-unsecured-debt
+            control: input
+            label: Owed on credit cards and loans
+            effect: Updates draft unsecured debt balance.
+          - id: back-from-savings
+            control: button
+            label: Back
+            effect: Returns to Step 2.
+          - id: next-from-savings
+            control: button
+            label: Next
+            effect: Advances to Step 4 (Review).
+          - id: skip-savings
+            control: button
+            label: Skip this step
+            effect: Marks Step 3 skipped while keeping any entered values and advances to Step 4.
+
+  - id: step-review
+    name: Step 4 - Review and finish
+    kind: form
+    component: apps/web/app/features/onboarding/components/FinishSummary/FinishSummary.tsx
+    when: when step is 4
+    capabilities:
+      - id: review-and-complete-onboarding
+        goal: Review entered details and inferred app sections, jump back to edit any step, and save everything to finish setup.
+        mode: write
+        facts_read:
+          - salary
+          - typed-take-home
+          - employment-type
+          - birth-year
+          - tax-region
+          - student-loan-plan
+          - housing-status
+          - housing-cost
+          - home-value
+          - other-outgoings
+          - account-balance
+          - pension-rates
+        facts_written:
+          - salary
+          - typed-take-home
+          - employment-type
+          - birth-year
+          - tax-region
+          - student-loan-plan
+          - housing-status
+          - housing-cost
+          - home-value
+          - other-outgoings
+          - account-balance
+          - pension-rates
+          - budget-entries
+          - enabled-pages-and-widgets
+        figures_shown:
+          - take-home
+        actions:
+          - id: edit-step-group
+            control: button
+            label: Edit
+            effect: Jumps back to the corresponding step (1, 2, or 3) to edit details.
+          - id: fix-missing-income
+            control: button
+            label: Edit you and income
+            effect: Jumps to Step 1 and highlights missing required income or tax region fields.
+          - id: back-from-review
+            control: button
+            label: Back
+            effect: Returns to Step 3.
+          - id: finish-to-budget
+            control: button
+            label: Finish and add common budget items
+            effect: Saves onboarding details, marks onboardingCompleted true, and opens /app/budget?setup=common.
+            target: PATCH /user-profile
+            if_match: true
+          - id: finish-to-dashboard
+            control: submit
+            label: Finish and open dashboard
+            effect: Saves onboarding details, marks onboardingCompleted true, and redirects to /.
+            target: PATCH /user-profile
+            if_match: true

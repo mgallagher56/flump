@@ -1,0 +1,291 @@
+id: budget
+app: web
+route: /app/budget
+title: Your budget
+auth: required
+purpose: See what is left over each month and safe to spend, edit income and spending lines, toggle essential items for breathing room, and test runway scenarios.
+entry_points:
+  - Main app navigation (Budget)
+  - Dashboard Budget widget or KPI strip link
+  - Onboarding "Finish and add common budget items" (/app/budget?setup=common)
+route_file: apps/web/app/routes/app.budget.tsx
+
+sections:
+  - id: header
+    name: Page header
+    kind: header
+    component: apps/web/app/containers/budget/BudgetContainer.tsx
+    capabilities:
+      - id: toggle-budget-views
+        goal: Switch between the budget view, adding common budget items via the wizard, or finishing in-place editing.
+        mode: navigate
+        actions:
+          - id: add-common-items-header
+            control: button
+            label: Add common budget items
+            effect: Opens BudgetSetupWizard to add missing common budget items.
+          - id: finish-editing
+            control: button
+            label: Finish editing
+            effect: Exits in-place editing mode and returns to the budget view.
+
+  - id: overview
+    name: Budget overview
+    kind: hero
+    component: apps/web/app/features/budget/components/BudgetOverview/BudgetOverview.tsx
+    when: when budget has entries
+    capabilities:
+      - id: view-budget-overview
+        goal: View monthly left over (hero), safe to spend before flexible spending, money in, and going out.
+        mode: read
+        facts_read:
+          - budget-entries
+          - budget-entry-link-kind
+          - budget-entry-link-account
+          - salary
+          - typed-take-home
+          - housing-cost
+          - account-monthly-amount
+        figures_shown:
+          - left-over
+          - safe-to-spend
+          - take-home
+        actions:
+          - id: add-salary-link
+            control: link
+            label: Add your salary
+            effect: "Navigates to #settings-age-and-pay on Profile when take-home pay is not set."
+            target: /app/profile#settings-age-and-pay
+
+  - id: link-notice
+    name: Saved figures link notice
+    kind: notice
+    component: apps/web/app/features/budget/components/BudgetLinkNotice/BudgetLinkNotice.tsx
+    when: when budgetLinkOffers is non-empty
+    capabilities:
+      - id: link-saved-income-or-housing
+        goal: Add saved take-home pay or housing cost as a linked budget row, or open the editor to replace an existing row.
+        mode: write
+        facts_read:
+          - salary
+          - typed-take-home
+          - housing-cost
+          - budget-entries
+        facts_written:
+          - budget-entries
+          - budget-entry-link-kind
+        figures_shown:
+          - take-home
+        actions:
+          - id: add-linked-entry
+            control: button
+            label: Add linked entry
+            effect: Creates a linked take_home or housing budget entry.
+            target: POST /budget-entries
+          - id: choose-entry-to-replace
+            control: button
+            label: Replace an entry
+            effect: Opens BudgetEditor to replace a manual row with the linked figure.
+
+  - id: category-list
+    name: Where your money goes
+    kind: list
+    component: apps/web/app/features/budget/components/BudgetCategoryList/BudgetCategoryList.tsx
+    when: when view is budget and budget is not empty
+    capabilities:
+      - id: browse-budget-categories
+        goal: Expand spending categories to inspect entries (including linked rows), follow the housing link to Mortgage when applicable, or open the budget editor.
+        mode: read
+        facts_read:
+          - budget-entries
+          - custom-budget-categories
+          - housing-status
+          - housing-cost
+          - budget-entry-link-kind
+          - budget-entry-link-account
+        actions:
+          - id: open-budget-editor
+            control: button
+            label: Edit budget
+            effect: Switches view to in-place BudgetEditor.
+          - id: toggle-category
+            control: drawer-toggle
+            label: Category row
+            effect: Expands or collapses the entries in the selected category.
+          - id: open-mortgage-from-housing
+            control: link
+            label: Housing row (mortgage page)
+            effect: Navigates to /app/mortgage when housingStatus is mortgage.
+            target: /app/mortgage
+
+  - id: editor
+    name: In-place budget editor
+    kind: form
+    component: apps/web/app/features/budget/components/BudgetEditor/BudgetEditor.tsx
+    when: when view is editing
+    capabilities:
+      - id: edit-budget-entries-and-categories
+        goal: Add, edit, link, and delete budget rows, manage custom categories, and update rent or household housing cost.
+        mode: write
+        facts_read:
+          - budget-entries
+          - custom-budget-categories
+          - housing-status
+          - housing-cost
+          - account-monthly-amount
+        facts_written:
+          - budget-entries
+          - budget-entry-link-kind
+          - budget-entry-link-account
+          - custom-budget-categories
+          - housing-cost
+          - housing-status
+        actions:
+          - id: add-budget-entry
+            control: button
+            label: Add item
+            effect: Creates a new budget entry in the chosen category.
+            target: POST /budget-entries
+          - id: edit-budget-entry
+            control: input
+            label: Name / Amount / Frequency
+            effect: Updates an existing budget entry's name, amount, or frequency.
+            target: PATCH /budget-entries/:id
+          - id: toggle-entry-essential
+            control: toggle
+            label: Essential
+            effect: Marks a spending entry as essential or flexible.
+            target: PATCH /budget-entries/:id
+          - id: link-entry-to-account
+            control: button
+            label: Link to account
+            effect: Links a savings or debt budget row to an account's monthly amount.
+            target: PATCH /budget-entries/:id
+          - id: delete-budget-entry
+            control: button
+            label: Delete
+            effect: Deletes a budget entry.
+            target: DELETE /budget-entries/:id
+          - id: save-housing-cost
+            control: button
+            label: Save housing cost
+            effect: Saves monthly rent or household contribution to the user profile.
+            target: PATCH /user-profile
+          - id: open-add-category
+            control: button
+            label: Add category
+            effect: Opens AddCategoryModal to create a custom budget category.
+          - id: delete-custom-category
+            control: button
+            label: Delete category
+            effect: Removes a custom budget category from the user profile.
+            target: PATCH /user-profile
+
+  - id: setup-wizard
+    name: Budget setup wizard
+    kind: form
+    component: apps/web/app/features/budget/components/BudgetSetupWizard/BudgetSetupWizard.tsx
+    when: when view is wizard
+    capabilities:
+      - id: run-budget-wizard
+        goal: Step through common income and spending items and save them to the budget.
+        mode: write
+        facts_read:
+          - salary
+          - typed-take-home
+          - housing-cost
+          - budget-entries
+        facts_written:
+          - budget-entries
+          - setup-checklist
+        figures_shown:
+          - take-home
+        actions:
+          - id: wizard-cancel
+            control: button
+            label: Cancel
+            effect: Exits the wizard without further changes.
+          - id: wizard-complete
+            control: button
+            label: Save and finish
+            effect: Saves wizard entries, marks the budget checklist step complete, and returns to the budget view.
+            target: POST /budget-entries
+
+  - id: breathing-room
+    name: Breathing room and what counts
+    kind: drawer
+    component: apps/web/app/features/budget/components/BreathingRoom/BreathingRoom.tsx
+    when: when view is budget and budget is not empty
+    capabilities:
+      - id: view-and-adjust-breathing-room-basis
+        goal: View saved months of cover, follow links to Savings accounts, and toggle which spending entries count as essential.
+        mode: write
+        facts_read:
+          - account-balance
+          - budget-entries
+        facts_written:
+          - budget-entries
+        figures_shown:
+          - months-of-cover
+        actions:
+          - id: view-savings-from-breathing-room
+            control: link
+            label: View your savings accounts
+            effect: Navigates to /app/savings.
+            target: /app/savings
+          - id: toggle-what-counts
+            control: drawer-toggle
+            label: Show what counts / Hide what counts
+            effect: Expands or collapses BreathingRoomBasis showing counted accounts and spending switches.
+          - id: view-savings-from-basis
+            control: link
+            label: View or update your savings accounts
+            effect: Navigates to /app/savings.
+            target: /app/savings
+          - id: toggle-essential-in-basis
+            control: toggle
+            label: Entry essential switch
+            effect: Toggles isEssential on a spending entry, updating saved Breathing room.
+            target: PATCH /budget-entries/:id
+
+  - id: runway-calculator
+    name: Breathing room what-if scenario zone
+    kind: scenario-zone
+    component: apps/web/app/features/budget/components/RunwayCalculator/RunwayCalculator.tsx
+    when: when view is budget and budget is not empty
+    capabilities:
+      - id: test-runway-scenarios
+        goal: Test temporary what-if cuts, severance, or included accounts/expenses to see how long savings would last without changing saved data.
+        mode: what-if
+        facts_read:
+          - account-balance
+          - budget-entries
+        figures_shown:
+          - months-of-cover
+        actions:
+          - id: toggle-runway-zone
+            control: drawer-toggle
+            label: Show what-if
+            effect: Expands or collapses the RunwayCalculator scenario zone.
+          - id: adjust-runway-controls
+            control: toggle
+            label: Scenario controls
+            effect: Adjusts local session-only runway inputs (included accounts, kept income, extra monthly cut) and recalculates illustrative months of cover.
+
+  - id: add-category-modal
+    name: Add custom category modal
+    kind: drawer
+    component: apps/web/app/features/budget/components/AddCategoryModal/AddCategoryModal.tsx
+    when: when isAddCategoryOpen is true
+    capabilities:
+      - id: create-custom-category
+        goal: Create a new custom budget category and save it to the user profile.
+        mode: write
+        facts_written:
+          - custom-budget-categories
+        actions:
+          - id: submit-custom-category
+            control: submit
+            label: Add category
+            effect: Adds the custom category to the user profile.
+            target: PATCH /user-profile
