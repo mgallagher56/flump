@@ -627,3 +627,30 @@ describe("DatePicker trigger states", () => {
     expect(errors).toEqual([]);
   });
 });
+
+describe("DatePicker focus and year page after keyboard moves", () => {
+  const open = () => {
+    render(<DatePicker aria-label="Date" value="2026-11-16" />);
+    fireEvent.click(screen.getByRole("button", { name: /^Date/ }));
+  };
+  const heading = () => document.querySelector("[aria-live='polite']")?.textContent;
+
+  it("keeps focus on a header button clicked after moving with the arrow keys", () => {
+    open();
+    fireEvent.keyDown(document.activeElement as HTMLElement, { key: "ArrowRight" });
+    const next = screen.getByRole("button", { name: "Next month" });
+    next.focus();
+    fireEvent.click(next);
+    expect(heading()).toBe("December 2026");
+    expect(document.activeElement).toBe(next);
+  });
+
+  it("opens the year view on the page of a year reached with the keyboard", () => {
+    open();
+    // Shift+PageDown twice: 16 Nov 2026 to 16 Nov 2028. 2028 / 12 = 169, so its page starts 2028.
+    fireEvent.keyDown(document.activeElement as HTMLElement, { key: "PageDown", shiftKey: true });
+    fireEvent.keyDown(document.activeElement as HTMLElement, { key: "PageDown", shiftKey: true });
+    fireEvent.click(screen.getByRole("button", { name: /^Choose year/ }));
+    expect(heading()).toBe("2028 to 2039");
+  });
+});
