@@ -49,7 +49,7 @@ sections:
           - id: add-plan-details
             control: link
             label: Add your plan details
-            effect: Scrolls to #retirement-plan-details when plan inputs other than birthYear are missing.
+            effect: "Scrolls to #retirement-plan-details when plan inputs other than birthYear are missing."
             target: "#retirement-plan-details"
 
   - id: kpis

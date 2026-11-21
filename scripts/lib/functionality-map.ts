@@ -463,31 +463,30 @@ export function validateFunctionalityMap(opts: {
           );
         }
 
-        for (const factId of cap?.facts_read ?? []) {
-          if (!valueMap.factIds.has(factId)) {
-            add(
-              FM_RULES.unknownValueRef,
-              `${cOwner}:facts_read:${factId}`,
-              `${cOwner}: facts_read references unknown value-map fact "${factId}"`,
-            );
+        const refFields: Array<{
+          key: "facts_read" | "facts_written" | "figures_shown";
+          kind: "fact" | "figure";
+          validIds: ReadonlySet<string>;
+        }> = [
+          { key: "facts_read", kind: "fact", validIds: valueMap.factIds },
+          { key: "facts_written", kind: "fact", validIds: valueMap.factIds },
+          { key: "figures_shown", kind: "figure", validIds: valueMap.figureIds },
+        ];
+        for (const { key, kind, validIds } of refFields) {
+          const raw = cap?.[key];
+          if (raw === undefined) continue;
+          if (!Array.isArray(raw)) {
+            add(FM_RULES.malformed, `${cOwner}.${key}`, `${cOwner}: ${key} must be an array`);
+            continue;
           }
-        }
-        for (const factId of cap?.facts_written ?? []) {
-          if (!valueMap.factIds.has(factId)) {
-            add(
-              FM_RULES.unknownValueRef,
-              `${cOwner}:facts_written:${factId}`,
-              `${cOwner}: facts_written references unknown value-map fact "${factId}"`,
-            );
-          }
-        }
-        for (const figureId of cap?.figures_shown ?? []) {
-          if (!valueMap.figureIds.has(figureId)) {
-            add(
-              FM_RULES.unknownValueRef,
-              `${cOwner}:figures_shown:${figureId}`,
-              `${cOwner}: figures_shown references unknown value-map figure "${figureId}"`,
-            );
+          for (const refId of raw) {
+            if (!isNonEmptyString(refId) || !validIds.has(refId)) {
+              add(
+                FM_RULES.unknownValueRef,
+                `${cOwner}:${key}:${String(refId)}`,
+                `${cOwner}: ${key} references unknown value-map ${kind} "${String(refId)}"`,
+              );
+            }
           }
         }
 
