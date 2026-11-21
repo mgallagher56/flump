@@ -52,5 +52,3 @@ export function statementPromptText(p: StatementPrompt): string {
     ? `Your fixed rate ended in ${formatMonth(p.endedMonth)}, so the rate may have changed. Worth checking it against a statement.`
     : "It has been a year since you entered this balance yourself. Worth checking it against a statement.";
 }
-
-export { formatMonthInBrief, type MonthInBrief } from "./snapshotCopy";
