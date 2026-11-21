@@ -78,6 +78,9 @@ export class AddInvoicingTables1795600000000 implements MigrationInterface {
     await queryRunner.query(
       `CREATE INDEX IF NOT EXISTS "IDX_invoices_user_issue_date" ON "invoices" ("user_id", "issue_date")`,
     );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS "idx_invoices_tax_record_id" ON "invoices" ("tax_record_id")`,
+    );
 
     await queryRunner.query(`
       CREATE TABLE IF NOT EXISTS "work_log_entries" (
@@ -111,6 +114,9 @@ export class AddInvoicingTables1795600000000 implements MigrationInterface {
     await queryRunner.query(
       `CREATE INDEX IF NOT EXISTS "IDX_work_log_entries_user_invoice" ON "work_log_entries" ("user_id", "invoice_id")`,
     );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS "idx_work_log_entries_invoice_id" ON "work_log_entries" ("invoice_id")`,
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
@@ -138,9 +144,11 @@ export class AddInvoicingTables1795600000000 implements MigrationInterface {
         throw new Error(INVOICING_DOWN_REFUSAL);
       }
     }
+    await queryRunner.query(`DROP INDEX IF EXISTS "idx_work_log_entries_invoice_id"`);
     await queryRunner.query(`DROP INDEX IF EXISTS "IDX_work_log_entries_user_invoice"`);
     await queryRunner.query(`DROP INDEX IF EXISTS "IDX_work_log_entries_user_date"`);
     await queryRunner.query(`DROP TABLE IF EXISTS "work_log_entries"`);
+    await queryRunner.query(`DROP INDEX IF EXISTS "idx_invoices_tax_record_id"`);
     await queryRunner.query(`DROP INDEX IF EXISTS "IDX_invoices_user_issue_date"`);
     await queryRunner.query(`DROP INDEX IF EXISTS "UQ_invoices_user_number"`);
     await queryRunner.query(`DROP TABLE IF EXISTS "invoices"`);

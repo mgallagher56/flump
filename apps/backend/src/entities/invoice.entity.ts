@@ -13,6 +13,7 @@ import { numericTransformer } from "./numeric.transformer";
 @Entity("invoices")
 @Index("UQ_invoices_user_number", ["userId", "invoiceNumber"], { unique: true })
 @Index("IDX_invoices_user_issue_date", ["userId", "issueDate"])
+@Index("idx_invoices_tax_record_id", ["taxRecordId"])
 @Check(
   "CHK_invoices_bounds",
   `"status" IN ('draft', 'issued', 'paid', 'void') AND "subtotal" >= 0 AND ("vat_rate_pct" IS NULL OR ("vat_rate_pct" >= 0 AND "vat_rate_pct" <= 100)) AND "vat_amount" >= 0 AND "total" >= 0`,

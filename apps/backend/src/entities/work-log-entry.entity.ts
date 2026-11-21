@@ -13,6 +13,7 @@ import { numericTransformer } from "./numeric.transformer";
 @Entity("work_log_entries")
 @Index("IDX_work_log_entries_user_date", ["userId", "date"])
 @Index("IDX_work_log_entries_user_invoice", ["userId", "invoiceId"])
+@Index("idx_work_log_entries_invoice_id", ["invoiceId"])
 @Check(
   "CHK_work_log_entries_bounds",
   `"hours_worked" >= 0 AND "hourly_rate" >= 0 AND "amount" >= 0 AND "income_source" IN ('self-employed')`,
