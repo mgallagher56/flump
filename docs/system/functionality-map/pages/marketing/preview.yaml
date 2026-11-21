@@ -1,0 +1,154 @@
+id: preview
+app: marketing
+route: /preview
+title: Interactive preview | Flump
+auth: public
+purpose: Let visitors explore interactive sample previews of the Dashboard, Monthly check-in, and Breathing room using static renter and homeowner fixtures.
+entry_points:
+  - Marketing header Preview link
+  - Home page hero Interactive preview button
+  - Features index and feature detail Interactive preview buttons
+  - Marketing footer Product column (Interactive preview)
+  - Direct URL (/preview)
+route_file: apps/marketing/src/pages/PreviewPage/PreviewPage.tsx
+
+sections:
+  - id: site-header
+    name: Marketing site header
+    kind: navigation
+    component: apps/marketing/src/components/Header/Header.tsx
+    capabilities:
+      - id: navigate-site
+        goal: Navigate across marketing pages, toggle light/dark theme, or open the web app.
+        mode: navigate
+        actions:
+          - id: home-logo
+            control: link
+            label: Flump home
+            effect: Navigates to the marketing home page.
+            target: /
+          - id: features-menu
+            control: button
+            label: Features
+            effect: Opens the Features dropdown listing All features, the five money areas, AI connection, and Security and privacy.
+          - id: theme-toggle
+            control: toggle
+            label: Toggle colour theme
+            effect: Switches between light and dark theme.
+          - id: open-app-cta
+            control: link
+            label: Open Flump / Sign up
+            effect: Opens the web app sign-up or dashboard URL.
+
+  - id: header
+    name: Interactive preview header
+    kind: header
+    component: apps/marketing/src/pages/PreviewPage/PreviewPage.tsx
+    capabilities:
+      - id: orient
+        goal: Read the Interactive preview heading and instructions.
+        mode: read
+        actions: []
+
+  - id: dashboard-preview
+    name: Dashboard picture preview
+    kind: scenario-zone
+    component: apps/marketing/src/pages/PreviewPage/PreviewPage.tsx
+    capabilities:
+      - id: inspect-dashboard-sample
+        goal: Switch between renting and paying a mortgage to inspect the sample Dashboard net worth and cashflow snapshot.
+        mode: what-if
+        actions:
+          - id: select-dashboard-household
+            control: button
+            label: Renting / Paying a mortgage
+            effect: Updates the shared sample household across all three preview frames.
+          - id: about-accounts-link
+            control: link
+            label: About accounts and net worth
+            effect: Navigates to the Accounts feature page.
+            target: /features/accounts
+
+  - id: checkin-preview
+    name: Monthly check-in preview
+    kind: scenario-zone
+    component: apps/marketing/src/pages/PreviewPage/PreviewPage.tsx
+    capabilities:
+      - id: try-checkin-sample
+        goal: Switch sample households and step through updating or confirming sample account balances.
+        mode: what-if
+        actions:
+          - id: select-checkin-household
+            control: button
+            label: Renting / Paying a mortgage
+            effect: Updates the shared sample household across all three preview frames.
+          - id: step-sample-checkin
+            control: button
+            label: Update / No change
+            effect: Steps through sample accounts in the CheckInPreview without persisting data.
+          - id: about-checkin-link
+            control: link
+            label: About accounts and the monthly check-in
+            effect: Navigates to the Accounts feature page.
+            target: /features/accounts
+
+  - id: breathing-room-preview
+    name: What a change would do preview
+    kind: scenario-zone
+    component: apps/marketing/src/pages/PreviewPage/PreviewPage.tsx
+    capabilities:
+      - id: model-breathing-room-sample
+        goal: Move sample spending or savings sliders to see how breathing room changes for the selected household.
+        mode: what-if
+        actions:
+          - id: select-breathing-room-household
+            control: button
+            label: Renting / Paying a mortgage
+            effect: Updates the shared sample household across all three preview frames.
+          - id: adjust-breathing-room-sliders
+            control: slider
+            label: Spending / Savings sliders
+            effect: Recalculates sample breathing room runway locally inside BreathingRoomPreview.
+          - id: about-budget-link
+            control: link
+            label: About budget and breathing room
+            effect: Navigates to the Budget feature page.
+            target: /features/budget
+
+  - id: final-cta
+    name: Preview call to action
+    kind: content
+    component: apps/marketing/src/pages/PreviewPage/PreviewPage.tsx
+    capabilities:
+      - id: start-from-preview
+        goal: Open sign-up after trying the interactive preview.
+        mode: navigate
+        actions:
+          - id: preview-signup-cta
+            control: link
+            label: Request an invite / Sign up
+            effect: Opens the web app sign-up or contact invite URL.
+
+  - id: site-footer
+    name: Marketing site footer
+    kind: footer
+    component: apps/marketing/src/components/Footer/Footer.tsx
+    capabilities:
+      - id: footer-navigation
+        goal: Navigate to Product feature pages, Company pages, or sign in to the web app.
+        mode: navigate
+        actions:
+          - id: footer-features-link
+            control: link
+            label: All features
+            effect: Navigates to /features.
+            target: /features
+          - id: footer-contact-link
+            control: link
+            label: Contact
+            effect: Navigates to /contact.
+            target: /contact
+          - id: footer-signin-link
+            control: link
+            label: Sign in
+            effect: Opens the web app /login route.

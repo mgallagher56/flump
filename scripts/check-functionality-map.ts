@@ -7,8 +7,8 @@
  * - any capability's facts_read, facts_written, or figures_shown references an unknown ID in
  *   docs/system/value-map.yaml;
  * - generated views in docs/system/functionality-map/generated/ are stale;
- * - unmapped_allowlist contains dead or already-mapped entries, or (when unmapped_allowlist is
- *   removed in S4) any discovered route is unmapped.
+ * - any discovered route is unmapped (not in pages/ or excluded_routes), or retired
+ *   unmapped_allowlist is present in index.yaml.
  */
 import { spawnSync } from "node:child_process";
 import { resolve } from "node:path";

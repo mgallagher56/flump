@@ -1,0 +1,196 @@
+id: home
+app: marketing
+route: /
+title: All your money. One clear picture. | Flump
+auth: public
+purpose: Introduce Flump's five money areas, let visitors try the pay rise tool, read the FAQ, and request an invite or open the interactive preview.
+entry_points:
+  - Direct URL (/)
+  - Marketing header Flump home link
+  - Marketing footer or 404 page home link
+route_file: apps/marketing/src/pages/HomePage/HomePage.tsx
+
+sections:
+  - id: site-header
+    name: Marketing site header
+    kind: navigation
+    component: apps/marketing/src/components/Header/Header.tsx
+    capabilities:
+      - id: navigate-site
+        goal: Navigate across marketing pages, toggle light/dark theme, or open the web app.
+        mode: navigate
+        actions:
+          - id: home-logo
+            control: link
+            label: Flump home
+            effect: Navigates to the marketing home page.
+            target: /
+          - id: features-menu
+            control: button
+            label: Features
+            effect: Opens the Features dropdown listing All features, the five money areas, AI connection, and Security and privacy.
+          - id: theme-toggle
+            control: toggle
+            label: Toggle colour theme
+            effect: Switches between light and dark theme.
+          - id: open-app-cta
+            control: link
+            label: Open Flump / Sign up
+            effect: Opens the web app sign-up or dashboard URL.
+
+  - id: hero
+    name: Home hero and baseline snapshot
+    kind: hero
+    component: apps/marketing/src/components/BaselineSnapshotPreview/BaselineSnapshotPreview.tsx
+    capabilities:
+      - id: start-or-preview
+        goal: Understand Flump's overview, view the sample baseline snapshot, and open sign-up or the interactive preview.
+        mode: navigate
+        actions:
+          - id: hero-signup-cta
+            control: link
+            label: Request an invite / Sign up
+            effect: Opens the web app sign-up or contact invite URL.
+          - id: hero-preview-link
+            control: link
+            label: Interactive preview
+            effect: Navigates to the interactive preview page.
+            target: /preview
+
+  - id: features
+    name: Flump features
+    kind: list
+    component: apps/marketing/src/components/FeatureTiles/FeatureTiles.tsx
+    capabilities:
+      - id: browse-features
+        goal: Explore the five money areas and AI connection tiles, or open the full features index.
+        mode: navigate
+        actions:
+          - id: open-feature-tile
+            control: link
+            label: Feature area tile
+            effect: Navigates to the selected area or AI connection feature page under /features/*.
+            target: /features/:slug
+          - id: all-features-link
+            control: link
+            label: All Flump features on one page
+            effect: Navigates to the features index page.
+            target: /features
+
+  - id: rough-figures
+    name: Start with rough figures
+    kind: content
+    component: apps/marketing/src/pages/HomePage/HomePage.tsx
+    capabilities:
+      - id: read-how-it-works
+        goal: Read the three steps for entering rough figures, seeing where you stand, and checking in once a month.
+        mode: read
+        actions: []
+
+  - id: more-detail
+    name: More detail when you want it
+    kind: list
+    component: apps/marketing/src/pages/HomePage/HomePage.tsx
+    capabilities:
+      - id: explore-deeper-tools
+        goal: Follow links to deeper tools in Pay, Savings and pension, Debt and borrowing, and Accounts.
+        mode: navigate
+        actions:
+          - id: open-area-detail
+            control: link
+            label: About area in Flump
+            effect: Navigates to the corresponding /features/* page for that area.
+            target: /features/:slug
+
+  - id: pay-rise
+    name: What you keep from a pay rise
+    kind: scenario-zone
+    component: apps/marketing/src/components/PayRiseTeaser/PayRiseTeaser.tsx
+    capabilities:
+      - id: model-pay-rise
+        goal: Adjust salary and pay rise sliders to see estimated extra take-home pay, Income Tax, and National Insurance.
+        mode: what-if
+        actions:
+          - id: set-salary
+            control: slider
+            label: Salary before tax
+            effect: Updates the sample salary (£12,000 to £150,000, step £500) and recalculates take-home pay from the rise.
+          - id: set-rise
+            control: slider
+            label: Pay rise (a year)
+            effect: Updates the sample annual pay rise (£0 to £20,000, step £250) and recalculates tax and NI.
+          - id: start-with-salary
+            control: button
+            label: Start with this salary
+            effect: Seeds the chosen salary for onboarding and navigates to sign-up when CTA is external.
+          - id: about-pay-link
+            control: link
+            label: About pay in Flump
+            effect: Navigates to the Pay feature page when CTA is internal.
+            target: /features/pay
+
+  - id: security
+    name: Security and privacy strip
+    kind: notice
+    component: apps/marketing/src/components/SecurityPrivacySection/SecurityPrivacySection.tsx
+    capabilities:
+      - id: read-security-summary
+        goal: Read the security summary and open the full Security and privacy page.
+        mode: navigate
+        actions:
+          - id: security-page-link
+            control: link
+            label: What Flump can and cannot do
+            effect: Navigates to the Security and privacy page.
+            target: /security
+
+  - id: faq
+    name: Frequently asked questions and final call to action
+    kind: list
+    component: apps/marketing/src/components/HomeFAQ/HomeFAQ.tsx
+    capabilities:
+      - id: read-faq
+        goal: Expand or collapse FAQ questions about bank connections, UK rules, getting started, pricing, and AI connection.
+        mode: read
+        actions:
+          - id: toggle-faq-item
+            control: button
+            label: FAQ question
+            effect: Expands or collapses the selected FAQ answer.
+          - id: faq-ai-connection-link
+            control: link
+            label: About the AI connection
+            effect: Navigates to the AI connection feature page from the AI FAQ answer.
+            target: /features/ai-connection
+      - id: final-signup
+        goal: Start sign-up from the final call to action.
+        mode: navigate
+        actions:
+          - id: final-signup-cta
+            control: link
+            label: Request an invite / Sign up
+            effect: Opens the web app sign-up or contact invite URL.
+
+  - id: site-footer
+    name: Marketing site footer
+    kind: footer
+    component: apps/marketing/src/components/Footer/Footer.tsx
+    capabilities:
+      - id: footer-navigation
+        goal: Navigate to Product feature pages, Company pages, or sign in to the web app.
+        mode: navigate
+        actions:
+          - id: footer-features-link
+            control: link
+            label: All features
+            effect: Navigates to /features.
+            target: /features
+          - id: footer-contact-link
+            control: link
+            label: Contact
+            effect: Navigates to /contact.
+            target: /contact
+          - id: footer-signin-link
+            control: link
+            label: Sign in
+            effect: Opens the web app /login route.

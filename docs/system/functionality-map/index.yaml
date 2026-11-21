@@ -41,14 +41,3 @@ excluded_routes:
     reason: Pure redirect route sending /sandbox to /signup.
   - route_file: apps/web/app/routes/signup._index.tsx
     reason: Pure redirect route sending the browser to WorkOS sign-up (or /login when invite-only).
-
-# Temporary allow-list during S0–S3 rollout. Emptied and removed in S4.
-unmapped_allowlist:
-  - apps/marketing/src/pages/AiConnectionPage/AiConnectionPage.tsx
-  - apps/marketing/src/pages/ContactPage/ContactPage.tsx
-  - apps/marketing/src/pages/FeaturePage/FeaturePage.tsx
-  - apps/marketing/src/pages/FeaturesIndexPage/FeaturesIndexPage.tsx
-  - apps/marketing/src/pages/HomePage/HomePage.tsx
-  - apps/marketing/src/pages/NotFoundPage/NotFoundPage.tsx
-  - apps/marketing/src/pages/PreviewPage/PreviewPage.tsx
-  - apps/marketing/src/pages/PricingPage/PricingPage.tsx
