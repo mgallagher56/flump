@@ -16,7 +16,7 @@ These rules say how work is done in this repository. They apply to every task, a
 - Find the epic in [`docs/audit/EPICS.md`](../../docs/audit/EPICS.md) and read its plan in `docs/audit/plans/`. Build what the plan says. If the plan is wrong, say so and fix the plan in the same PR.
 - Check the plan's status line. `Decisions: open` means the undecided parts are not built, and code never invents a default for an undecided question (section 13). List the open questions for the owner instead.
 - Read the code you are about to change and its tests first. Follow the patterns already there.
-- One task per subagent conversation. Give each task to a fresh subagent with a short brief, and do not reuse that subagent for the next task. The main thread that hands out the tasks may carry on from one task to the next (owner, 21 November 2026). Keep the main thread lean: it holds the plan, the briefs and the results, not the file contents.
+- One task per working conversation. Give each task to a fresh session or subagent with a short brief, and do not reuse it for the next task. The main thread that hands out the tasks may carry on from one task to the next (owner, 21 November 2026). Keep the main thread lean: it holds the plan, the briefs and the results, not the file contents.
 
 ## 3. Branches and pull requests
 
