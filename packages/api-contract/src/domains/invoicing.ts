@@ -198,6 +198,9 @@ export type MarkInvoicePaidRequest = z.infer<typeof MarkInvoicePaidRequest>;
 export const VoidInvoiceRequest = z.strictObject({});
 export type VoidInvoiceRequest = z.infer<typeof VoidInvoiceRequest>;
 
+export const SyncInvoiceToTaxRequest = z.strictObject({});
+export type SyncInvoiceToTaxRequest = z.infer<typeof SyncInvoiceToTaxRequest>;
+
 export const DeleteInvoiceResponse = z.strictObject({
   id: Uuid,
 });

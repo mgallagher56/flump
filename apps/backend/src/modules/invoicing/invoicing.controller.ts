@@ -245,4 +245,21 @@ export class InvoicingController {
     setEtag(res, view.updatedAt);
     return { invoice: view.invoice };
   }
+
+  @Post("invoices/:id/sync-to-tax")
+  @HttpCode(200)
+  async syncInvoiceToTax(
+    @Req() req: AuthenticatedRequest,
+    @Param("id", new ParseUUIDPipe()) id: string,
+    @Headers("if-match") ifMatch?: string,
+    @Res({ passthrough: true }) res?: Response,
+  ): Promise<InvoiceResponse> {
+    const view = await this.invoicingService.syncInvoiceToTax(
+      req.user.id,
+      id,
+      expectedVersion(ifMatch),
+    );
+    setEtag(res, view.updatedAt);
+    return { invoice: view.invoice };
+  }
 }

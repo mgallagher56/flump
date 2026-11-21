@@ -141,6 +141,7 @@ describe("conditional updates (BE-09, audit M7, L15)", () => {
     ).toEqual([
       "accounts.update",
       "budget.update",
+      "invoicing.syncInvoiceToTax",
       "invoicing.updateInvoice",
       "invoicing.updateSettings",
       "invoicing.updateWorkLog",

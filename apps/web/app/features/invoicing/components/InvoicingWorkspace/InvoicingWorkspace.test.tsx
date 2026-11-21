@@ -280,4 +280,100 @@ describe("InvoicingWorkspace (E37 S2)", () => {
       '"2026-11-15T10:00:00.000Z"',
     );
   });
+
+  it("supports Self Assessment sync on paid invoices, print view, and CSV export (E37 S3)", () => {
+    const onSyncInvoiceToTax = vi.fn();
+    const printSpy = vi.fn();
+    const origPrint = window.print;
+    window.print = printSpy;
+
+    const createObjectUrlSpy = vi.fn(() => "blob:mock-csv");
+    const revokeObjectUrlSpy = vi.fn();
+    const origCreateObjectUrl = URL.createObjectURL;
+    const origRevokeObjectUrl = URL.revokeObjectURL;
+    URL.createObjectURL = createObjectUrlSpy;
+    URL.revokeObjectURL = revokeObjectUrlSpy;
+
+    const baseInvoice = invoicesFixture[0];
+    if (!baseInvoice) throw new Error("Missing base invoice fixture");
+
+    const paidUnsynced = {
+      ...baseInvoice,
+      id: "33333333-3333-4333-8333-333333333303",
+      invoiceNumber: "INV-0003",
+      status: "paid" as const,
+      paidDate: "2026-11-20",
+      taxRecordId: null,
+    };
+    const paidSynced = {
+      ...baseInvoice,
+      id: "33333333-3333-4333-8333-333333333304",
+      invoiceNumber: "INV-0004",
+      status: "paid" as const,
+      paidDate: "2026-11-21",
+      taxRecordId: "44444444-4444-4444-8444-444444444401",
+    };
+
+    try {
+      render(
+        <InvoicingWorkspace
+          settings={settingsFixture}
+          settingsEtag='"2026-11-15T10:00:00.000Z"'
+          workLogs={workLogsFixture}
+          invoices={[paidUnsynced, paidSynced]}
+          todayIso="2026-11-21"
+          initialTab="invoices"
+          onSyncInvoiceToTax={onSyncInvoiceToTax}
+        />,
+      );
+
+      // Paid unsynced invoice shows Add to Self Assessment button + subtotal factual note
+      fireEvent.click(screen.getByTestId(`sync-to-tax-${paidUnsynced.id}`));
+      expect(onSyncInvoiceToTax).toHaveBeenCalledWith(
+        paidUnsynced.id,
+        `"${paidUnsynced.updatedAt}"`,
+      );
+      expect(
+        screen.getByText(
+          "Adds the subtotal before VAT to Self Assessment as one-off self-employed income.",
+        ),
+      ).toBeTruthy();
+
+      // Paid synced invoice shows badge + link to /app/self-assessment, and no sync button
+      expect(screen.getByTestId(`synced-badge-${paidSynced.id}`).textContent).toContain(
+        "Added to Self Assessment",
+      );
+      expect(screen.getByTestId(`view-self-assessment-${paidSynced.id}`).getAttribute("href")).toBe(
+        "/app/self-assessment",
+      );
+      expect(screen.queryByTestId(`sync-to-tax-${paidSynced.id}`)).toBeNull();
+
+      // Print / Save as PDF opens print sheet with business header, VAT number, and line items
+      fireEvent.click(screen.getByTestId(`print-invoice-${paidUnsynced.id}`));
+      expect(printSpy).toHaveBeenCalledTimes(1);
+      const printSheetEl = screen.getByTestId("invoice-print-sheet");
+      expect(printSheetEl.textContent).toContain("Studio North Ltd");
+      expect(printSheetEl.textContent).toContain("VAT number: GB123456789");
+      expect(printSheetEl.textContent).toContain("Invoice INV-0003");
+      expect(printSheetEl.textContent).toContain("VAT (20%)");
+      fireEvent.click(screen.getByTestId("close-print-sheet-btn"));
+      expect(screen.queryByTestId("invoice-print-sheet")).toBeNull();
+
+      // Export invoices CSV
+      fireEvent.click(screen.getByTestId("export-invoices-csv-btn"));
+      expect(createObjectUrlSpy).toHaveBeenCalledTimes(1);
+      expect(revokeObjectUrlSpy).toHaveBeenCalledWith("blob:mock-csv");
+
+      // Switch to Work log tab and export work log CSV
+      const workLogTab = screen.getByRole("tab", { name: "Work log" });
+      fireEvent.pointerDown(workLogTab, { button: 0 });
+      fireEvent.keyDown(workLogTab, { key: "Enter", code: "Enter" });
+      fireEvent.click(screen.getByTestId("export-work-logs-csv-btn"));
+      expect(createObjectUrlSpy).toHaveBeenCalledTimes(2);
+    } finally {
+      window.print = origPrint;
+      URL.createObjectURL = origCreateObjectUrl;
+      URL.revokeObjectURL = origRevokeObjectUrl;
+    }
+  });
 });

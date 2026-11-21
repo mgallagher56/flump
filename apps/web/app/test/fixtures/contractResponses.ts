@@ -354,7 +354,7 @@ export function contractBody(method: string, path: string): unknown {
   if (p === "/invoices") {
     return m === "GET" ? { invoices: [], nextCursor: null } : { invoice: invoiceFixture };
   }
-  if (/^\/invoices\/[^/]+(\/issue|\/mark-paid|\/void)?$/.test(p)) {
+  if (/^\/invoices\/[^/]+(\/issue|\/mark-paid|\/void|\/sync-to-tax)?$/.test(p)) {
     return { invoice: invoiceFixture };
   }
   if (p === "/snapshots/check-ins") return { latestCompletedMonth: "2026-10" };

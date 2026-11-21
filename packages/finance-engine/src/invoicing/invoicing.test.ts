@@ -4,8 +4,11 @@ import {
   calculateWorkItemAmount,
   calculateWorkLogAmount,
   formatInvoiceNumber,
+  formatInvoicesCsv,
+  formatWorkLogsCsv,
   getUkTaxYearForDate,
   roundHalfUpPence,
+  sanitizeCsvCell,
   summarizeInvoicingKpis,
 } from "./index.js";
 
@@ -327,6 +330,160 @@ describe("invoicing pure engine (E37 S0)", () => {
         paidInTaxYearSubtotal: 0,
         taxYear: "2026/27",
       });
+    });
+  });
+
+  describe("IV7: formula-safe RFC 4180 CSV export (E37 S3)", () => {
+    it("neutralises leading =, +, -, @, tab, and CR characters (raw or left-padded) and quotes RFC 4180 delimiters", () => {
+      expect(sanitizeCsvCell(null)).toBe("");
+      expect(sanitizeCsvCell(undefined)).toBe("");
+      expect(sanitizeCsvCell("")).toBe("");
+      expect(sanitizeCsvCell(125.5)).toBe("125.5");
+      expect(() => sanitizeCsvCell(Number.NaN)).toThrow(
+        new RangeError("CSV numeric cell must be a finite number"),
+      );
+      expect(() => sanitizeCsvCell(Number.POSITIVE_INFINITY)).toThrow(
+        new RangeError("CSV numeric cell must be a finite number"),
+      );
+
+      // Leading formula triggers (raw and left-trimmed)
+      expect(sanitizeCsvCell("=SUM(A1:A2)")).toBe("'=SUM(A1:A2)");
+      expect(sanitizeCsvCell("+cmd|' /C calc'!A0")).toBe("'+cmd|' /C calc'!A0");
+      expect(sanitizeCsvCell("-2+3+cmd")).toBe("'-2+3+cmd");
+      expect(sanitizeCsvCell("@SUM(1+1)")).toBe("'@SUM(1+1)");
+      expect(sanitizeCsvCell("\t=1+1")).toBe("'\t=1+1");
+      expect(sanitizeCsvCell("\r=1+1")).toBe(`"'\r=1+1"`);
+      expect(sanitizeCsvCell('   =HYPERLINK("http://evil")')).toBe(
+        `"'   =HYPERLINK(""http://evil"")"`,
+      );
+      expect(sanitizeCsvCell("  @IMPORTXML()")).toBe("'  @IMPORTXML()");
+
+      // Safe strings with internal -, +, @ or RFC 4180 special chars
+      expect(sanitizeCsvCell("INV-0001")).toBe("INV-0001");
+      expect(sanitizeCsvCell("billing@studio.example")).toBe("billing@studio.example");
+      expect(sanitizeCsvCell("Phase 1, sprint 2")).toBe('"Phase 1, sprint 2"');
+      expect(sanitizeCsvCell('Quote "alpha"')).toBe('"Quote ""alpha"""');
+      expect(sanitizeCsvCell("Line 1\nLine 2")).toBe('"Line 1\nLine 2"');
+      expect(sanitizeCsvCell("Line 1\rLine 2")).toBe('"Line 1\rLine 2"');
+    });
+
+    it("formats work log entries as RFC 4180 CSV with 2dp numbers and formula neutralisation", () => {
+      // Working:
+      // Row 1: 7.50 hours x £65.00 = £487.50, unbilled (no invoiceNumber), client contains comma
+      // Row 2: 2.25 hours x £80.00 = £180.00, billed on INV-0001, description starts with "="
+      const csv = formatWorkLogsCsv([
+        {
+          date: "2026-11-18",
+          description: "Design system tokens",
+          hoursWorked: 7.5,
+          hourlyRate: 65,
+          amount: 487.5,
+          invoiceNumber: null,
+          status: null,
+          clientName: "Britannia, Media Ltd",
+        },
+        {
+          date: "2026-11-19",
+          description: "=1+1 formula attempt",
+          hoursWorked: 2.25,
+          hourlyRate: 80,
+          amount: 180,
+          invoiceNumber: "INV-0001",
+          status: undefined,
+          clientName: null,
+        },
+        {
+          date: "2026-11-20",
+          description: "Explicit status row",
+          hoursWorked: 1,
+          hourlyRate: 100,
+          amount: 100,
+          invoiceNumber: "INV-0002",
+          status: "paid",
+          clientName: "Albion Retail",
+        },
+      ]);
+
+      expect(csv.split("\r\n")).toEqual([
+        "date,description,hoursWorked,hourlyRate,amount,invoiceNumber,status,clientName",
+        '2026-11-18,Design system tokens,7.50,65.00,487.50,,unbilled,"Britannia, Media Ltd"',
+        "2026-11-19,'=1+1 formula attempt,2.25,80.00,180.00,INV-0001,billed,",
+        "2026-11-20,Explicit status row,1.00,100.00,100.00,INV-0002,paid,Albion Retail",
+      ]);
+    });
+
+    it("formats invoices as RFC 4180 CSV including subtotal, vatRatePct, vatAmount, and total", () => {
+      // Working:
+      // INV-0001: 20.00h, subtotal £1,250.00, 20% VAT = £250.00, total £1,500.00
+      // INV-0002: 3.33h, subtotal £333.33, no VAT (null -> empty cell), vatAmount 0.00, total £333.33
+      const csv = formatInvoicesCsv([
+        {
+          invoiceNumber: "INV-0001",
+          status: "paid",
+          clientName: "Britannia Media Ltd",
+          issueDate: "2026-11-06",
+          dueDate: "2026-12-06",
+          paidDate: "2026-11-20",
+          taxYear: "2026/27",
+          totalHours: 20,
+          subtotal: 1250,
+          vatRatePct: 20,
+          vatAmount: 250,
+          total: 1500,
+        },
+        {
+          invoiceNumber: "INV-0002",
+          status: "issued",
+          clientName: "+Injected Client",
+          issueDate: "2026-11-15",
+          dueDate: "2026-12-15",
+          paidDate: null,
+          taxYear: "2026/27",
+          totalHours: 3.33,
+          subtotal: 333.33,
+          vatRatePct: null,
+          vatAmount: 0,
+          total: 333.33,
+        },
+      ]);
+
+      expect(csv.split("\r\n")).toEqual([
+        "invoiceNumber,status,clientName,issueDate,dueDate,paidDate,taxYear,totalHours,subtotal,vatRatePct,vatAmount,total",
+        "INV-0001,paid,Britannia Media Ltd,2026-11-06,2026-12-06,2026-11-20,2026/27,20.00,1250.00,20,250.00,1500.00",
+        "INV-0002,issued,'+Injected Client,2026-11-15,2026-12-15,,2026/27,3.33,333.33,,0.00,333.33",
+      ]);
+    });
+
+    it("rejects negative or non-finite numeric fields in CSV export", () => {
+      expect(() =>
+        formatWorkLogsCsv([
+          {
+            date: "2026-11-18",
+            description: "Bad hours",
+            hoursWorked: -1,
+            hourlyRate: 50,
+            amount: 50,
+          },
+        ]),
+      ).toThrow(new RangeError("hoursWorked must be a non-negative finite number"));
+
+      expect(() =>
+        formatInvoicesCsv([
+          {
+            invoiceNumber: "INV-0001",
+            status: "draft",
+            clientName: "Client",
+            issueDate: "2026-11-18",
+            dueDate: "2026-12-18",
+            taxYear: "2026/27",
+            totalHours: 1,
+            subtotal: 100,
+            vatRatePct: -5,
+            vatAmount: 0,
+            total: 100,
+          },
+        ]),
+      ).toThrow(new RangeError("vatRatePct must be a non-negative finite number"));
     });
   });
 });
