@@ -49,12 +49,16 @@
     "apps/web": {
       "floor": 85,
       "measured": 86.57,
-      "measuredOn": "2026-11-21"
+      "measuredOn": "2026-11-21",
+      "measuredCommit": "e1826ac9f",
+      "signedOffBy": "coordinator"
     },
     "packages/ui": {
       "floor": 78,
       "measured": 79.51,
-      "measuredOn": "2026-11-21"
+      "measuredOn": "2026-11-21",
+      "measuredCommit": "e392c74bd",
+      "signedOffBy": "coordinator"
     }
   }
 }
