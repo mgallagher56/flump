@@ -493,3 +493,12 @@ An agent in the Antigravity editor asked whether "one task per conversation" mea
 
 - AGENTS.md section 8 and `.agents/rules/working_rules.md` section 2 now say so: each task goes to a fresh session or subagent; the thread that coordinates them may carry on from task to task.
 
+# Owner decisions (2026-11-21): E43 user-POV functionality map (FM1–FM5)
+
+- **FM1 (Dynamic feature pages):** Map `apps/marketing/src/pages/FeaturePage` as one template page (`marketing/feature-detail.yaml`) with variant notes unless a feature page has unique interactive controls (such as `AiConnectionPage`).
+- **FM2 (Route-coverage enforcement):** Allow an explicit `unmapped_allowlist` in `docs/system/functionality-map/index.yaml` during S0–S3 so `check:laws` stays green while slices land; S4 removes the allowlist and flips unmapped routes to a hard error.
+- **FM3 (Non-UI and API routes):** Account for 100% of route files by listing non-UI/API/export/resource routes in `excluded_routes` in `index.yaml`, each with a one-line `reason`.
+- **FM4 (Action IDs in tests and audits):** Playwright E2E tests and UX audits may reference Layer 4 action IDs in descriptions or comments without requiring `data-testid` renames on existing components.
+- **FM5 (Single script in `check:laws`):** `scripts/check-functionality-map.ts` verifies both structural/cross-reference rules and generated-view freshness (`overview.md`, `actions-index.md`, `by-fact.md`) in one `check:laws` entry, paired with `bun run functionality-map` (`scripts/generate-functionality-map.ts`) as the generator.
+- **Architecture:** Sharded page YAML (`docs/system/functionality-map/pages/{web|marketing}/<page-id>.yaml`), with a one-way cross-reference from the Functionality Map to `docs/system/value-map.yaml`.
+

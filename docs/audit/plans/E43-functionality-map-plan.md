@@ -1,8 +1,8 @@
 # E43. User-POV functionality map
 
-Decisions: pending owner sign-off (section 1)
+Decisions: accepted 2026-11-21 (FM1–FM5)
 
-> Status: plan for owner approval. No code yet. Written 2026-11-21 against `origin/main`. Paths are relative to the repository root.
+> Status: approved by owner 2026-11-21 (FM1–FM5). Paths are relative to the repository root.
 
 ## 1. Decisions (for owner sign-off before S0/S1)
 
