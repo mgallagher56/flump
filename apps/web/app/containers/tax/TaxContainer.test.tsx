@@ -1178,6 +1178,10 @@ describe("TaxContainer, what the page decides (E41 M5)", () => {
       mockProfileSalary = 70000;
       view.rerender(<TaxContainer />);
       expect(salaryShown()).toBe("70000");
+      // A second saved change, with no edit in between, replaces it again.
+      mockProfileSalary = 72000;
+      view.rerender(<TaxContainer />);
+      expect(salaryShown()).toBe("72000");
       fireEvent.change(salaryField(), { target: { value: "75000" } });
       mockProfileSalary = 80000;
       view.rerender(<TaxContainer />);

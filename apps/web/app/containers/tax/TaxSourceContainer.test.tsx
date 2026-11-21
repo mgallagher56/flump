@@ -321,9 +321,18 @@ describe("TaxSourceContainer, what the page decides (E41 M5)", () => {
       view.unmount();
     }
     mockSource = "self-employed";
+    const { container } = render(<TaxSourceContainer />);
+    expect(container.querySelector("[data-testid^='calculated-figure']")).toBeNull();
+  });
+
+  it("opens an income record for this source from Add income", () => {
     render(<TaxSourceContainer />);
-    expect(screen.queryByTestId("calculated-figure-m1")).toBeNull();
-    expect(screen.queryByTestId("calculated-figure-s1")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Add income" }));
+    const dialog = screen.getByRole("dialog", { name: "Add a record" });
+    expect((within(dialog).getByLabelText("Income source") as HTMLSelectElement).value).toBe(
+      "self-employed",
+    );
+    expect((within(dialog).getByLabelText("Type") as HTMLSelectElement).value).toBe("income");
   });
 
   it("shows a failed add of a calculated figure on the page, and no alert before it", () => {
@@ -480,6 +489,7 @@ describe("TaxSourceContainer, what the page decides (E41 M5)", () => {
       expect(cards[0]).not.toContain("Whole property");
       expect(cards[1]).toContain("No expenses recorded");
       expect(cards[1]).not.toContain("£0");
+      expect(cards[1]).not.toContain("Whole property");
     });
 
     it("rounds the expenses to whole pounds", () => {
@@ -539,9 +549,19 @@ describe("TaxSourceContainer, what the page decides (E41 M5)", () => {
           amount: 3000,
           frequency: "one-off",
         }),
+        rec({
+          id: "n1",
+          name: "Next year job",
+          frequency: "one-off",
+          date: `${next.slice(0, 4)}-05-01`,
+        }),
       ];
       mockProfile = { ...baseProfile, annualSalary: null };
       view.rerender(<TaxSourceContainer />);
+      const options = Array.from(
+        (screen.getByLabelText("Tax year") as HTMLSelectElement).options,
+      ).map((o) => o.value);
+      expect(options).toContain(next);
       // 120 + 3,000 = 3,120 of expenses is now larger than the 1,000 allowance.
       expect(
         screen.getByText(/The expenses you have recorded are larger than the trading allowance\./),
