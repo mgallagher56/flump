@@ -26,6 +26,9 @@ describe("UserProfileService (Deep Module)", () => {
   let mockAuditInsert: Mock;
   let mockConsentUpdate: Mock;
   let mockRetirementPlanRepo: DeleteRepo;
+  let mockWorkLogEntryRepo: DeleteRepo;
+  let mockInvoiceRepo: DeleteRepo;
+  let mockInvoicingSettingsRepo: DeleteRepo;
 
   /** The service over the current doubles; `seams` replaces the default revoker or erased check. */
   const build = (seams: { bankConsentRevoker?: object; accountDeletion?: object } = {}) =>
@@ -89,6 +92,15 @@ describe("UserProfileService (Deep Module)", () => {
     mockRetirementPlanRepo = {
       delete: vi.fn().mockResolvedValue({ affected: 1 }),
     };
+    mockWorkLogEntryRepo = {
+      delete: vi.fn().mockResolvedValue({ affected: 1 }),
+    };
+    mockInvoiceRepo = {
+      delete: vi.fn().mockResolvedValue({ affected: 1 }),
+    };
+    mockInvoicingSettingsRepo = {
+      delete: vi.fn().mockResolvedValue({ affected: 1 }),
+    };
     identityAdapter = new InMemoryIdentityAdapter();
     mockDataSource = {
       transaction: vi.fn(async (cb) => {
@@ -107,6 +119,9 @@ describe("UserProfileService (Deep Module)", () => {
             if (entityClass.name === "BankOAuthState") return mockBankOAuthStateRepo;
             if (entityClass.name === "IdempotencyKey") return mockIdempotencyRepo;
             if (entityClass.name === "RetirementPlan") return mockRetirementPlanRepo;
+            if (entityClass.name === "WorkLogEntry") return mockWorkLogEntryRepo;
+            if (entityClass.name === "Invoice") return mockInvoiceRepo;
+            if (entityClass.name === "InvoicingSettings") return mockInvoicingSettingsRepo;
             if (entityClass.name === "AuditEvent") return { insert: mockAuditInsert };
             if (entityClass.name === "Consent") return { update: mockConsentUpdate };
             return {};
