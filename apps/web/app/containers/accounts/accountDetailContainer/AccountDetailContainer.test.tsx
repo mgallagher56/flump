@@ -1,3 +1,4 @@
+import { within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { vi } from "vitest";
 import customRender from "~/testUtils/customRender";
@@ -425,6 +426,125 @@ describe("<AccountDetailContainer />", () => {
       expect(getByTestId("hero-figure").textContent).not.toContain("£2,000");
       expect(getByText("As of October")).toBeDefined();
     });
+
+    // The fake clock is 14 November 2026, so the current month is November 2026.
+    const heroFor = (balance: number, accountDetails: unknown[]) => {
+      mocks.mockUseLoaderData.mockReturnValueOnce({
+        account: { id: "a1", name: "Easy saver", type: "Savings", balance },
+        accountDetails,
+      } as never);
+      return customRender(<AccountDetailContainer />);
+    };
+
+    test("dates the figure from the latest month when the months arrive out of order", () => {
+      // Latest up to now, by hand: October 2026 (March 2026 and the 2025 months are earlier).
+      const { getByText } = heroFor(1500, [
+        { month: 3, year: 2026, value: 1 },
+        { month: 10, year: 2026, value: 2 },
+        { month: 12, year: 2025, value: 3 },
+        { month: 9, year: 2026, value: 4 },
+        { month: 5, year: 2025, value: 5 },
+        { month: 1, year: 2026, value: 6 },
+      ]);
+      expect(getByText("As of October")).toBeDefined();
+    });
+
+    test("a January row next year counts as a future import", () => {
+      // January 2027 is after November 2026, so the hero takes October's recorded 1,000, not
+      // the saved 2,000 that the import left on the account.
+      const { getByTestId, getByText } = heroFor(2000, [
+        { month: 10, year: 2026, value: 1000 },
+        { month: 1, year: 2027, value: 2000 },
+      ]);
+      expect(getByTestId("hero-figure").textContent).toContain("£1,000");
+      expect(getByText("As of October")).toBeDefined();
+    });
+
+    test("a December row last year is not a future import", () => {
+      // December 2025 is before November 2026: the hero keeps the saved balance.
+      const { getByTestId, getByText } = heroFor(1500, [{ month: 12, year: 2025, value: 900 }]);
+      expect(getByTestId("hero-figure").textContent).toContain("£1,500");
+      expect(getByText("As of December 2025")).toBeDefined();
+    });
+
+    test("a row for this month is not a future import", () => {
+      // November 2026 is the current month: the hero keeps the saved balance (D22).
+      const { getByTestId } = heroFor(1500, [{ month: 11, year: 2026, value: 1100 }]);
+      expect(getByTestId("hero-figure").textContent).toContain("£1,500");
+    });
+
+    test("with only a future row the hero keeps the saved balance and says nothing is recorded", () => {
+      const { getByTestId, getByText } = heroFor(2000, [{ month: 12, year: 2026, value: 2000 }]);
+      expect(getByTestId("hero-figure").textContent).toContain("£2,000");
+      expect(getByText("No monthly balances recorded yet")).toBeDefined();
+    });
+
+    test("after a future import, a latest month with no value keeps the saved balance", () => {
+      // October has no figure, so there is nothing to show from it: the saved 2,000 stays.
+      const { getByTestId } = heroFor(2000, [
+        { month: 10, year: 2026, value: null },
+        { month: 12, year: 2026, value: 2000 },
+      ]);
+      expect(getByTestId("hero-figure").textContent).toContain("£2,000");
+      expect(getByTestId("hero-figure").textContent).not.toContain("£0");
+    });
+
+    test("after a future import, a latest month with no value field keeps the saved balance", () => {
+      const { getByTestId } = heroFor(2000, [
+        { month: 10, year: 2026 },
+        { month: 12, year: 2026, value: 2000 },
+      ]);
+      expect(getByTestId("hero-figure").textContent).toContain("£2,000");
+    });
+
+    test("January can be the latest month up to now", () => {
+      // January 2026 is after December 2025 and before November 2026.
+      const { getByText } = heroFor(1500, [
+        { month: 12, year: 2025, value: 1 },
+        { month: 1, year: 2026, value: 2 },
+      ]);
+      expect(getByText("As of January")).toBeDefined();
+    });
+
+    test("with no saved balance the hero shows the latest recorded month", () => {
+      mocks.mockUseLoaderData.mockReturnValueOnce({
+        account: { id: "a1", name: "Easy saver", type: "Savings", balance: null },
+        // The loader returns this account's months only, without an account id on each.
+        accountDetails: [{ month: 10, year: 2026, value: 1000 }],
+      } as never);
+      const { getByTestId } = customRender(<AccountDetailContainer />);
+      expect(getByTestId("hero-figure").textContent).toContain("£1,000");
+    });
+
+    test("an unknown account with past and future rows still says it cannot be found", () => {
+      mocks.mockUseLoaderData.mockReturnValueOnce({
+        account: null,
+        accountDetails: [
+          { month: 10, year: 2026, value: 1000 },
+          { month: 12, year: 2026, value: 2000 },
+        ],
+      } as never);
+      const { getByText } = customRender(<AccountDetailContainer />);
+      expect(getByText("We cannot find that account.")).toBeDefined();
+    });
+
+    test("an unknown account with a future row still says it cannot be found", () => {
+      mocks.mockUseLoaderData.mockReturnValueOnce({
+        account: null,
+        accountDetails: [{ month: 12, year: 2026, value: 2000 }],
+      } as never);
+      const { getByText } = customRender(<AccountDetailContainer />);
+      expect(getByText("We cannot find that account.")).toBeDefined();
+    });
+
+    test("joins the date line and the not-counted sentence with one full stop each", () => {
+      mocks.mockUseLoaderData.mockReturnValueOnce({
+        account: { id: "s1", name: "Plan 2", type: "Student Loan", balance: -25000 },
+        accountDetails: [{ month: 10, year: 2026, value: -25000 }],
+      } as never);
+      const { getByText } = customRender(<AccountDetailContainer />);
+      expect(getByText("As of October. Not counted in your net worth.")).toBeDefined();
+    });
   });
 
   test("says what happened when the account cannot be found, with a way back", () => {
@@ -435,6 +555,251 @@ describe("<AccountDetailContainer />", () => {
   });
 });
 
+describe("<AccountDetailContainer /> with changing loader data", () => {
+  let original: ReturnType<typeof mocks.mockUseLoaderData.getMockImplementation>;
+  beforeEach(() => {
+    original = mocks.mockUseLoaderData.getMockImplementation();
+    mocks.mockFetcherSubmit.mockClear();
+  });
+  afterEach(() => {
+    if (original) mocks.mockUseLoaderData.mockImplementation(original);
+  });
+  const setLoaderData = (data: unknown) =>
+    mocks.mockUseLoaderData.mockImplementation(() => data as never);
+
+  test("the hero follows the saved balance after a reload", () => {
+    setLoaderData({
+      account: { id: "a1", name: "Easy saver", type: "Savings", balance: 1500 },
+      accountDetails: [],
+    });
+    const view = customRender(<AccountDetailContainer />);
+    expect(view.getByTestId("hero-figure").textContent).toContain("£1,500");
+    setLoaderData({
+      account: { id: "a1", name: "Easy saver", type: "Savings", balance: 1750 },
+      accountDetails: [],
+    });
+    view.rerender(<AccountDetailContainer />);
+    expect(view.getByTestId("hero-figure").textContent).toContain("£1,750");
+  });
+
+  test("loader data with no months says nothing is recorded", () => {
+    setLoaderData({ account: { id: "a1", name: "Easy saver", type: "Savings", balance: 1500 } });
+    const { getByTestId, getByText } = customRender(<AccountDetailContainer />);
+    expect(getByTestId("hero-figure").textContent).toContain("£1,500");
+    expect(getByText("No monthly balances recorded yet")).toBeDefined();
+  });
+
+  test("a subtype names the type under the account name", () => {
+    setLoaderData({
+      account: {
+        id: "p1",
+        name: "Flat",
+        type: "Property",
+        accountSubtype: "rental",
+        balance: 200000,
+      },
+      accountDetails: [],
+    });
+    const { getByText, queryByText } = customRender(<AccountDetailContainer />);
+    expect(getByText("Rental property")).toBeDefined();
+    expect(queryByText("rental", { exact: true })).toBeNull();
+  });
+
+  test("with no subtype the type's plain name is used, not the stored type", () => {
+    setLoaderData({
+      account: { id: "c1", name: "Barclaycard", type: "Credit Card", balance: -100 },
+      accountDetails: [],
+    });
+    const { getByText, queryByText } = customRender(<AccountDetailContainer />);
+    expect(getByText("Credit card")).toBeDefined();
+    expect(queryByText("Credit Card", { exact: true })).toBeNull();
+  });
+
+  test("an unknown type is shown as stored", () => {
+    setLoaderData({
+      account: { id: "x1", name: "Box", type: "Collectables", balance: 100 },
+      accountDetails: [],
+    });
+    const { getByText } = customRender(<AccountDetailContainer />);
+    expect(getByText("Collectables")).toBeDefined();
+  });
+
+  test("a joint account's update field says the figure is the whole balance and gives the share", async () => {
+    setLoaderData({
+      account: {
+        id: "a1",
+        name: "Joint saver",
+        type: "Savings",
+        balance: 1000,
+        ownership: "joint",
+        sharePercent: 40,
+      },
+      accountDetails: [],
+    });
+    const { getByRole, getByText } = customRender(<AccountDetailContainer />);
+    await userEvent.click(getByRole("button", { name: "Update balance" }));
+    expect(getByText(/Your share is 40%/)).toBeDefined();
+  });
+
+  test("the update form is named after the account", async () => {
+    setLoaderData({
+      account: { id: "a1", name: "Easy saver", type: "Savings", balance: 1000 },
+      accountDetails: [],
+    });
+    const { getByRole } = customRender(<AccountDetailContainer />);
+    await userEvent.click(getByRole("button", { name: "Update balance" }));
+    expect(getByRole("form", { name: /Easy saver$/ })).toBeDefined();
+  });
+
+  test("with no saved balance the update field opens empty", async () => {
+    for (const account of [
+      { id: "a1", name: "Easy saver", type: "Savings", balance: null },
+      { id: "a1", name: "Easy saver", type: "Savings" },
+    ]) {
+      setLoaderData({ account, accountDetails: [] });
+      const view = customRender(<AccountDetailContainer />);
+      await userEvent.click(view.getByRole("button", { name: "Update balance" }));
+      expect((view.getByRole("textbox", { name: "New balance" }) as HTMLInputElement).value).toBe(
+        "",
+      );
+      view.unmount();
+    }
+  });
+
+  test("a second Enter while the first save is on its way sends nothing more", async () => {
+    setLoaderData({
+      account: { id: "a1", name: "Easy saver", type: "Savings", balance: 1000 },
+      accountDetails: [],
+    });
+    const { getByRole } = customRender(<AccountDetailContainer />);
+    await userEvent.click(getByRole("button", { name: "Update balance" }));
+    const field = getByRole("textbox", { name: "New balance" });
+    await userEvent.clear(field);
+    await userEvent.type(field, "750{Enter}");
+    await userEvent.type(field, "{Enter}");
+    expect(mocks.mockFetcherSubmit).toHaveBeenCalledTimes(1);
+  });
+
+  describe("Edit opens on the saved details", () => {
+    const openEdit = async () => {
+      const view = customRender(<AccountDetailContainer />);
+      await view.user.click(view.getByRole("button", { name: /edit/i }));
+      // Labels inside the dialog only: the hero also says "Amount owed".
+      return { ...view, getByLabelText: within(view.getByRole("dialog")).getByLabelText };
+    };
+    const fieldValue = (el: HTMLElement) => (el as HTMLInputElement).value;
+    // A date picker keeps its chosen date in a hidden input of the same name.
+    const hiddenValue = (name: string) =>
+      document.querySelector<HTMLInputElement>(`input[type="hidden"][name="${name}"]`)?.value;
+
+    test("a joint mortgage: name, kind, amount owed, repayment, term, fixed rate end, property, ownership and share", async () => {
+      setLoaderData({
+        account: {
+          id: "m1",
+          name: "Halifax",
+          type: "Mortgage",
+          accountSubtype: "residential_mortgage",
+          balance: -180000,
+          repaymentType: "interest-only",
+          termMonths: 230,
+          fixedRateEndDate: "2027-03-31",
+          linkedAccountId: "p1",
+          ownership: "joint",
+          sharePercent: 40,
+        },
+        accounts: [
+          { id: "p1", name: "Flat", type: "Property", balance: 300000 },
+          { id: "m1", name: "Halifax", type: "Mortgage", balance: -180000 },
+        ],
+        accountDetails: [],
+      });
+      const { getByLabelText } = await openEdit();
+      expect(fieldValue(getByLabelText("Name"))).toBe("Halifax");
+      expect(fieldValue(getByLabelText("Kind of mortgage (optional)"))).toBe(
+        "residential_mortgage",
+      );
+      expect(fieldValue(getByLabelText("Amount owed"))).toBe("180,000");
+      expect(fieldValue(getByLabelText("How it is repaid (optional)"))).toBe("interest-only");
+      // 230 months, by hand: 19 years (228 months) and 2 months.
+      expect(fieldValue(getByLabelText("Years left (optional)"))).toBe("19");
+      expect(fieldValue(getByLabelText("Months"))).toBe("2");
+      expect(hiddenValue("fixedRateEndDate")).toBe("2027-03-31");
+      expect(fieldValue(getByLabelText("Which property is this mortgage on"))).toBe("p1");
+      expect(fieldValue(getByLabelText("Ownership"))).toBe("joint");
+      expect(fieldValue(getByLabelText("Your share"))).toBe("40");
+    });
+
+    test("with no saved balance the balance field opens empty", async () => {
+      for (const account of [
+        { id: "a1", name: "Easy saver", type: "Savings", balance: null },
+        { id: "a1", name: "Easy saver", type: "Savings" },
+      ]) {
+        setLoaderData({ account, accountDetails: [] });
+        const view = await openEdit();
+        expect(fieldValue(view.getByLabelText("Balance"))).toBe("");
+        view.unmount();
+      }
+    });
+
+    test("a sole account opens as sole", async () => {
+      setLoaderData({
+        account: { id: "a1", name: "Easy saver", type: "Savings", balance: 1000 },
+        accountDetails: [],
+      });
+      const { getByLabelText } = await openEdit();
+      expect(fieldValue(getByLabelText("Ownership"))).toBe("sole");
+    });
+
+    test("a credit card: credit limit and the 0% period end", async () => {
+      setLoaderData({
+        account: {
+          id: "c1",
+          name: "Barclaycard",
+          type: "Credit Card",
+          balance: -1200,
+          creditLimit: 5000,
+          promoZeroPercentUntil: "2027-06-30",
+        },
+        accountDetails: [],
+      });
+      const { getByLabelText } = await openEdit();
+      expect(fieldValue(getByLabelText("Credit limit (optional)"))).toBe("5,000");
+      expect(hiddenValue("promoZeroPercentUntil")).toBe("2027-06-30");
+    });
+
+    test("a student loan: its repayment plan", async () => {
+      setLoaderData({
+        account: {
+          id: "s1",
+          name: "SLC",
+          type: "Student Loan",
+          balance: -25000,
+          studentLoanPlan: "PLAN_2",
+        },
+        accountDetails: [],
+      });
+      const { getByLabelText } = await openEdit();
+      expect(fieldValue(getByLabelText("Repayment plan"))).toBe("PLAN_2");
+    });
+
+    test("saving sends the change for this account", async () => {
+      setLoaderData({
+        account: { id: "a1", name: "Easy saver", type: "Savings", balance: 1000 },
+        accountDetails: [],
+      });
+      const { getByLabelText, getAllByText, user } = await openEdit();
+      const name = getByLabelText("Name");
+      await user.clear(name);
+      await user.type(name, "Rainy day");
+      await user.click(getAllByText("save")[0] as HTMLElement);
+      expect(mocks.mockFetcherSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({ intent: "update", accountId: "a1", name: "Rainy day" }),
+        expect.anything(),
+      );
+    });
+  });
+});
+
 describe("balanceDateLine", () => {
   const current = { month: 11, year: 2026 };
   test("names the month only when the figure is not from the current month", () => {
@@ -442,6 +807,10 @@ describe("balanceDateLine", () => {
     expect(balanceDateLine({ current, latest: { month: 10, year: 2026 } })).toBe("As of October");
     expect(balanceDateLine({ current, latest: { month: 12, year: 2025 } })).toBe(
       "As of December 2025",
+    );
+    // The same month a year earlier is not the current month.
+    expect(balanceDateLine({ current, latest: { month: 11, year: 2025 } })).toBe(
+      "As of November 2025",
     );
   });
   test("says a calculated balance is calculated", () => {
@@ -462,6 +831,8 @@ describe("typeSubtitle", () => {
     expect(typeSubtitle("Residential mortgage", "Mortgage")).toBeUndefined();
     expect(typeSubtitle("Student loan", "Student loan")).toBeUndefined();
     expect(typeSubtitle("Halifax", "Mortgage")).toBe("Mortgage");
+    // A label with stray spaces still matches the name.
+    expect(typeSubtitle("Residential mortgage", " Mortgage ")).toBeUndefined();
   });
 });
 
