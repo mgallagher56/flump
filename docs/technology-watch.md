@@ -26,10 +26,10 @@ When you check an entry, update "Last looked at" and the notes. Add a row for an
 - A stable release with a compatibility promise.
 - A documented way to do the WorkOS sign-in flow and to keep data encrypted on the device.
 - A documented path to the App Store and Google Play.
-- A reason to want desktop, watch or TV apps, which React Native covers poorly.
+- A reason to want desktop, watch or TV apps. (The coordinator's view, not checked: React Native covers those less well than phones.)
 
 **A cheap trial, if those are met.** One read-only screen (net worth) on the shared engine, on two kinds of device, to see whether the reuse is real. No commitment beyond that.
 
 **What to look at on each check.** The README's status line and platform table; whether there is a packaged release and a version number; what it says about authentication, secure storage and store builds; and whether it still rules out React.
 
-**Not verified.** Everything above is from the README as read on 21 November 2026. Nothing was built or run.
+**Not verified.** The facts about Exact above are from its README as read on 21 November 2026. Nothing was built or run. Statements about React Native and about what Flump would need are the coordinator's.

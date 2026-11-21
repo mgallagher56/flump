@@ -484,6 +484,6 @@ The coordinator's readings, not the owner's words (E39 section 10a and E37 secti
 
 # Owner decisions (2026-11-21, later the same day): stamp duty regimes; Exact
 
-- **E39 MA7.** Asked "Is the stamp duty estimate meant to cover Scotland and Wales as well as England?", the owner answered: "Yes, all three". The estimate covers Stamp Duty Land Tax, Land and Buildings Transaction Tax and Land Transaction Tax. This replaces the coordinator's reading in the entry above.
+- **E39 MA7.** Asked "Is the stamp duty estimate meant to cover Scotland and Wales as well as England?", the owner answered: "Yes, all three". The estimate covers Stamp Duty Land Tax, Land and Buildings Transaction Tax and Land Transaction Tax. It was first recorded in the plan as the coordinator's reading.
 - **Exact (from the Expo team).** The owner asked "Should we consider Expo Exact in the future to create apps for every device?" and then: "add it to the general repo docs as a reminder to check in on progress of the Exact project". Recorded in `docs/technology-watch.md`. It is a reminder to look again, not a decision to adopt it; the E12 framework decision (O1) is still open.
 
