@@ -251,7 +251,7 @@ export function formatMonthInBrief(
   }
   if (facts.length === 0) return null;
   return {
-    heading: `${monthNameOnly(month)} in brief.`,
+    heading: `${monthNameOnly(month)} in brief`,
     facts,
   };
 }

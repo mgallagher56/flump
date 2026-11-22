@@ -108,7 +108,7 @@ describe("CheckInSummary", () => {
     setup({ change: 1150, debtsChange: -320, accountsAdded: 1 });
     const brief = screen.getByTestId("checkin-month-in-brief");
     expect(brief.textContent).toBe(
-      "November in brief.Net worth changed by +£1,150. Debts changed by −£320. One account added.",
+      "November in briefNet worth changed by +£1,150. Debts changed by −£320. One account added.",
     );
   });
 
@@ -116,7 +116,7 @@ describe("CheckInSummary", () => {
     setup({ change: -1150, debtsChange: 320, accountsAdded: 0 });
     const brief = screen.getByTestId("checkin-month-in-brief");
     expect(brief.textContent).toBe(
-      "November in brief.Net worth changed by −£1,150. Debts changed by +£320. 2 accounts updated.",
+      "November in briefNet worth changed by −£1,150. Debts changed by +£320. 2 accounts updated.",
     );
   });
 });
