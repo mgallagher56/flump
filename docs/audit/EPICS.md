@@ -4,11 +4,11 @@ Derived from [SUMMARY.md](SUMMARY.md). Items are the 64 verified P0 and P1 findi
 
 Epic grouping is the lead auditor's reading of the verified titles. Severity and effort come from the verified record. Acceptance criteria are the recommendation from each finding plus the shared rule at the end of this file.
 
-## What is left (as of 2026-11-21)
+## What is left (as of 2026-11-22)
 
 This section was first audited against `origin/main` at 7b9b6425 on 2026-11-14. Every epic below carries a dated status line, and tickets that are not done carry their own marker. "Partly" means some of the work has merged; the epic's status line says what is missing.
 
-Refreshed on 2026-11-20 against `origin/main` and the merged pull requests up to #832, and on 2026-11-21 for E4 tax, E38, E41 and E42 only (merged pull requests up to #857). The tables below and the status lines of the epics that changed since 2026-11-14 are current. A status line that still carries a 2026-11-14 date was not re-checked on 2026-11-20 and may be stale. Where a line below says "not re-checked", the code was not looked at.
+Refreshed on 2026-11-20 against `origin/main` and the merged pull requests up to #832, on 2026-11-21 for E4 tax, E38, E41 and E42 (merged pull requests up to #857), and on 2026-11-22 against `origin/main` (`d9a4a5eef`, merged pull requests up to #885). The tables below and the status lines of the epics that changed since 2026-11-14 are current. A status line that still carries a 2026-11-14 date was not re-checked on 2026-11-20 and may be stale. Where a line below says "not re-checked", the code was not looked at.
 
 ### Engineering work not started or partly done, by launch importance
 
@@ -37,9 +37,9 @@ Refreshed on 2026-11-20 against `origin/main` and the merged pull requests up to
 | 21 | E16 | Design polish rounds 2 and 3 | Done: merged (#697 to #728). The R3 re-score is in `docs/design/e16-polish/RESCORE-R3.md` |
 | 22 | E33 | Retirement plan: a target the user sets, tracked each month (E27 becomes its tax slices) | Plan approved 2026-11-17 (RD1 to RD11 accepted); S0 to S5 merged (#750, #758, #768), RD6, RD9 and RD11 merged (#770). S6 to S9 not started |
 | 23 | E36 | Security hardening before real production: supply chain, accounts, breach impact, post-quantum readiness, AI-assisted attacks, external test | H1 (`#747`), H2/H5 (`#755`), and H6 (`prompt-injection.test.ts` extended to all read/simulate/stage tools) complete. Only owner-dependent items remain (WorkOS MFA/passkeys/Radar, restricted DB role, field-level encryption with owner key, breach tabletop drill, and external pen test). SD1 to SD8 accepted on 2026-11-21 |
-| 24 | E37 | Self-employed work tracking & invoice builder: default hourly rate, itemised work logs, draft/issued/paid invoices, PDF/print & CSV export, optional SA sync | Complete (`S0`–`S2` merged in `#867`; `S3` complete) |
+| 24 | E37 | Self-employed work tracking & invoice builder: default hourly rate, itemised work logs, draft/issued/paid invoices, PDF/print & CSV export, optional SA sync | Complete (`S0`–`S2` merged in `#867`; `S3` merged in `#868`) |
 | 25 | E38 | User action friction and interaction-efficiency audit | S0 harness merged (#780, warn-only CI job); S1 to S3 merged (#841) |
-| 26 | E39 | Mortgage affordability from your own figures | Plan merged (#776) and accepted 2026-11-21 with changes (plan section 10a); nothing built |
+| 26 | E39 | Mortgage affordability from your own figures | `S1` (`#869`) and `S2` (`#871`) merged; Draft PR `#883` (`S1b` stamp duty) ready for Fable sign-off; `S3` (optional MCP) not started |
 | 27 | E40 | One home per value: system data audit and restructure | Done: all nine slices merged (#784, #785, #786, #791, #798 and #803, #797 and #801, #825, #806, #805 and #808 and #820). Owner tax sign-off of the vectors in slices 2 and 7 is open |
 | 28 | E41 | Mutation testing and faster tests | Done: M0 to M5 and P0 to P5 merged (M5 in #857). Mutation testing is a local monthly check, not a CI job |
 | 29 | E42 | Marketing site restructure: pages split the way the app is, selling the features it has | Done: #848, #850, #852, #853, then the teal bands and larger illustrations (#854, #856) |
@@ -738,7 +738,7 @@ Source: independent Fable review of the epic portfolio against `main` at e4ff6c3
     - one strict resolver for unsupported years (`uk-tax-year.ts:225`, used by `calculateUKEWNITakeHome`);
     - a CI check that fails from 1 March (`scripts/lib/tax-year-calendar.ts`);
     - the `tax:signoff` workflow;
-    - banner coverage (2026-11-21): `TaxRatesStatusBanner` is wired to live `getUkTaxYearContext()` and tested for fallback and provisional states on savings (and forecast), budget, onboarding and home, alongside tax and take-home. (`PensionTakeHomeEffect`, `TakeHomeDeltaPanel` and `TaxTrapCalculator` render the banner without `kind`.)
+    - banner coverage (2026-11-22): `TaxRatesStatusBanner` is wired to live `getUkTaxYearContext()` and tested for fallback and provisional states on savings (and forecast), budget, onboarding and home, alongside tax and take-home; `#885` wired `kind` on `PensionTakeHomeEffect`, `TakeHomeDeltaPanel`, `MarginalRateExplorer` and `TaxTrapCalculator`.
   - Open follow-ups (see `docs/audit/plans/E22-ledger.md`): unsupported-year state on the tax page, future-clock CI job, hard-coded years outside the engine, and the GOV.UK drift workflow.
   - Owner actions: verifying the 2027/28 figures and signing off the vectors (or Fable decider sign-off per DECISIONS, 2026-11-20).
 - **Severity:** Important (hard deadline: 6 April 2027).
@@ -776,7 +776,7 @@ Source: independent Fable review of the epic portfolio against `main` at e4ff6c3
     - launch-gated `noindex` (#506);
     - privacy-first analytics (#517);
     - a feedback mailto and a contact page (#507, #615).
-  - `bun scripts/check-launch-readiness.ts` reports 9 pass, 5 fail and 11 unattested. The stale paths in `docs/launch/readiness.json` (pricing page, HSTS sources, rollback runbook, E2E spec folder) were fixed in BE-01, and a test now fails if a scanned path does not exist. The five failures are real gaps: the new-user E2E spec, legal pages, deletion and export, placeholder business details and the accessibility statement.
+  - `bun scripts/check-launch-readiness.ts` reports 11 pass, 3 fail and 11 unattested. The stale paths in `docs/launch/readiness.json` (pricing page, HSTS sources, rollback runbook, E2E spec folder) were fixed in BE-01, and a test now fails if a scanned path does not exist. The three failures are real gaps: legal pages (`/privacy`, `/terms`), placeholder business details (`isPlaceholder: true`) and the accessibility statement (`/accessibility`).
   - Owner actions: the domain and email, real company details, and the launch attestations.
 - **Severity:** Important.
 - **Blocked by:** E18, E19, E20.
@@ -801,16 +801,15 @@ Checked against `origin/main` on 2026-11-14. A box is ticked only where there is
 - [ ] Healthchecks, error tracking, uptime alerts and a rollback runbook
   - Partly: healthchecks (#471) and Sentry scrubbing (#481, #492, #505) are in code, and rollback steps sit inside other runbooks.
   - Owner action: set the Sentry DSN and the uptime monitors.
-- [ ] New-user journey passes an automated end-to-end test (sign up, onboarding, add account, dashboard)
-  - Not met: `apps/e2e` covers sign-in and the dashboard only.
+- [x] New-user journey passes an automated end-to-end test (sign up, onboarding, add account, dashboard)
+  - Done (#701): `apps/e2e/tests/new-user-journey.spec.ts` covers sign-up, onboarding, adding an account and dashboard.
 - [ ] Owner has signed off all seven years of tax vectors; no flat-rate or invented figure remains (C-11, C-15)
   - Owner action: all vectors have `signedOffBy: null`.
   - C-15 is fixed (#583). C-11 is hidden as `null`, not computed.
 - [x] 2027/28 handling defined; stale-rates banner in place
   - Done: the strict resolver (#411), the 1 March CI check, 2027/28 provisional tables (#833), and the banner on tax, take-home, savings, budget, onboarding and home (verified 2026-11-21).
-- [ ] Access token not exposed to browser JS; CSP, HSTS and frame headers on web and backend
-  - Partly: the token stays on the server (#569, #578), and HSTS and frame headers are enforced.
-  - Missing: the full web CSP is report-only (#603).
+- [x] Access token not exposed to browser JS; CSP, HSTS and frame headers on web and backend
+  - Done: the token stays on the server (#569, #578), and the full web CSP (`apps/web/app/security/csp.server.ts`, guarded by BE-07), HSTS and frame headers are enforced on `main`.
 - [x] Rate limiting on auth-adjacent and MCP endpoints; password change needs re-auth
   - Rate limiting in #473 and #511. Password change was removed, and the reset email uses the session user.
 - [x] Request validation on every mutating endpoint; two-user IDOR test suite green
@@ -821,8 +820,8 @@ Checked against `origin/main` on 2026-11-14. A box is ticked only where there is
 - [ ] Privacy policy, terms and cookie position published; ICO fee paid; DPIA done
   - Not met: there are no legal pages.
   - Owner action: pay the ICO fee and sign the DPIA (still a v0.2 draft).
-- [ ] Account deletion and data export work end to end, including the WorkOS user
-  - Not started: only a reset of financial data exists.
+- [x] Account deletion and data export work end to end, including the WorkOS user
+  - Done (#668, #725): deletion includes the WorkOS user and export writes an audit row first. (Deletion returns 503 until `DELETION_TOMBSTONE_KEY` is set.)
 - [ ] Data region decided (EU or UK) or the transfer documented
   - Owner action: EU West is decided (DECISIONS round 3), and `docs/runbooks/region-move.md` exists.
   - The move is not shown as done.
@@ -949,7 +948,7 @@ Source: [docs/research/market-research-2026-11.md](../research/market-research-2
 - **Blocked by:** none for C1. C2 needs C1. C3 needs C2 and a specialist charity's safety review (CD7). C3 to C5 need the owner's approval of the help line wording (CD10). C6 needs E33; C7 needs E17 and E12.
 - **Done when:** each person keeps their own login and their own data; nothing is shared until its owner shares it (private by default, CD1); members are equal, with no administrator (CD4); a household has two people (CD5); either person can stop sharing or leave at once, without the other's agreement and without any message to the other person (CD6); nobody can lock the other out or delete their data; tax is always worked out per person; joint items count at the person's share in their own figures; a shared item reaches a partner's AI connection only if its owner opts in (CD8).
 - **Notes:** the owner accepted CD1 to CD10 as recommended on 2026-11-17. The safety rules G1 to G10 in the plan are requirements. Slices: C1 joint marker and share on accounts, budget entries and housing for one user; C2 combine two person pictures in the engine; C3 household, invitation (Flump's own link, CD3), leave and the help line; C4 per-item sharing and the "Me / Household" switch; C5 shared budget, Breathing room and check-in; C6 retirement for two; C7 MCP `household` scope and mobile. Plan: [E34-shared-finances-research.md](plans/E34-shared-finances-research.md).
-- **Status (2026-11-20):** C1 is merged: `Slice 1` (`#748`, engine joint-share helpers), `Slice 2` (`#757`, joint marking and share on accounts) and the rest of C1, joint marking on budget entries and housing and a property following its mortgage's share (`#773`). C2 to C7 have no PR.
+- **Status (2026-11-22):** C1 is merged: `Slice 1` (`#748`, engine joint-share helpers), `Slice 2` (`#757`, joint marking and share on accounts) and the rest of C1, joint marking on budget entries and housing and a property following its mortgage's share (`#773`). `#884` and `#885` added the `"Partner mode"` toggle (`partnerMode`, default `false`) in Settings > Profile, gating sole/joint ownership and share controls while keeping already-joint items visible. C2 to C7 have no PR.
 - **Labels:** needs-triage
 
 ## E35. Encouragement and financial wellbeing
@@ -958,7 +957,7 @@ Source: [docs/research/market-research-2026-11.md](../research/market-research-2
 - **Blocked by:** owner decisions W1 to W9 in the plan. Set 3's shared goals need E34 (C3 onward).
 - **Done when:** every feature is a net positive for the person's financial wellbeing and never aims at engagement (test W); every feature passes the five no-shaming tests N1 to N5 (no scores or ranks, no comparison with others, no loss-framed streaks, the action acknowledged and never the amount, the same warmth for every starting point including debt and renting); each feature has its own switch and honours reduced motion; benefit is measured only as the plan's section 7 sets out, and a feature is paused or removed under its stop rules.
 - **Notes:** three option sets: Set 1 warm confirmations of finished actions; Set 2 goals that are the user's own at any size; Set 3 a calmer month, reminders the user asks for, and shared goals for couples. The plan recommends Set 1 first, with the section 4 guide additions either way. UX guidelines O7 and M5 (no celebratory animation on a financial event) still apply. Plan: [E35-encouragement-and-wellbeing.md](plans/E35-encouragement-and-wellbeing.md).
-- **Status (2026-11-18):** `Set 1` (`#749`, no-shaming copy guardrails and warm confirmations) merged. Sets 2 and 3 have no PR yet. The owner accepted W1 to W9 as recommended on 2026-11-21 (DECISIONS), so they may be built.
+- **Status (2026-11-22):** `Set 1` (`#749`, no-shaming copy guardrails and warm confirmations) and `Sets 2 and 3` (`#870`: account goals via `AccountGoalSection` / `PUT /v1/accounts/:id/goal` and `"Month in brief"` via `CheckInSummary`) are merged. Shared goals for couples still wait on E34 (C3 onward).
 - **Labels:** needs-triage
 
 ## E36. Security hardening before real production
@@ -998,7 +997,7 @@ Add to E19 (opus review: effort S, so fold in rather than a new epic): full JSON
 - **Blocked by:** owner decisions MA1 to MA12; E29a for the wording and the standing line; E29b before anyone beyond the friends beta.
 - **Done when:** a user sees, from saved details and without retyping, what is left each month before housing; an estimated loan from a monthly payment and from an income multiple, each with every assumption visible and editable; payments at a rate and at plus or minus a chosen number of points, for a new loan, a saved mortgage and a fix that ends; all formulas live in `packages/finance-engine` with hand-worked tests; nothing is stored; no surface names a lender, says what a user can borrow, or judges their situation.
 - **Notes:** slices S1 engine, S2 web (new page, one rate tool replacing `RemortgageShockSim`), S3 optional MCP. Stamp duty, shared ownership and new interest-only loans are out of version one. Plan: [E39-mortgage-affordability-plan.md](plans/E39-mortgage-affordability-plan.md).
-- **Status (2026-11-21):** plan (`#776`) accepted by the owner on 2026-11-21 with changes: a 4 to 4.5 times income range, default rates by loan to value, and an estimated stamp duty figure (plan section 10a). Nothing built.
+- **Status (2026-11-22):** `S1` (`#869`: finance-engine affordability, LTV default rates, `selectHousingRoom`, and value map) and `S2` (`#871`: `/app/mortgage-estimates` and `RateChangeTool` replacing `RemortgageShockSim`) are merged. Draft PR `#883` (`S1b` stamp duty) is ready for Fable sign-off; `S3` (optional MCP) has no PR.
 - **Labels:** needs-triage
 
 ## E40. One home per value: system data audit and restructure
@@ -1045,10 +1044,10 @@ Merged in #777: the profile year of birth and pay, the check-in day, and the Sel
 - **E19 (Portability addendum):** JSON export and CSV export (`#754`) merged; CSV import and the shutdown run-off statement have no PR.
 - **E33 (Retirement plan):** see the E33 status line. `S6` to `S9` and the per-line changed amount in S4 have no PR.
 - **E34 (Shared finances for couples):** C1 is merged (`#748`, `#757`, `#773`). C2 to C7 (household, invitations, the "Me / Household" switch, partner safety and privacy controls) have no PR.
-- **E35 (Encouragement and wellbeing):** `Set 1` (`#749`) merged; Sets 2 and 3 have no PR.
+- **E35 (Encouragement and wellbeing):** `Set 1` (`#749`) and `Sets 2 and 3` (`#870`) merged; shared goals for couples wait on E34 (C3 onward).
 - **E36 (Security hardening):** H1 (`#747`), H2 & H5 (`#755`), and H6 (MCP prompt-injection suite including retirement tools) complete; only owner-dependent items remain (WorkOS MFA/passkeys/Radar, restricted DB role, field-level encryption with owner key, breach tabletop drill, and external pen test).
-- **E37 (Self-employed work tracking and invoice builder):** `S0`–`S2` merged (`#867`); `S3` complete in this PR.
-- **E39 (Mortgage affordability):** plan merged (`#776`); no build PR.
+- **E37 (Self-employed work tracking and invoice builder):** `S0`–`S2` merged (`#867`); `S3` merged (`#868`).
+- **E39 (Mortgage affordability):** `S1` (`#869`) and `S2` (`#871`) merged; Draft PR `#883` (`S1b` stamp duty) ready for Fable sign-off; `S3` (optional MCP) has no PR.
 
 ## 4. Stale local `.claude/worktrees/*`
 
