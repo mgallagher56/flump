@@ -305,6 +305,37 @@ sections:
     ).toBe(true);
   });
 
+  test("rejects an index version other than 1", () => {
+    const problems = validateFunctionalityMap({
+      index: { version: 2, excluded_routes: [] },
+      pages: [],
+      repo: makeRepo(),
+      valueMap,
+      discoveredRoutes: [],
+    });
+    expect(problems.map((p) => [p.rule, p.subject])).toEqual([
+      [FM_RULES.malformed, "index.version"],
+    ]);
+  });
+
+  test("rejects a duplicate excluded route_file", () => {
+    const route = "apps/web/app/routes/healthz.ts";
+    const problems = validateFunctionalityMap({
+      index: {
+        version: 1,
+        excluded_routes: [
+          { route_file: route, reason: "Health check." },
+          { route_file: route, reason: "Health check again." },
+        ],
+      },
+      pages: [],
+      repo: makeRepo(),
+      valueMap,
+      discoveredRoutes: [route],
+    });
+    expect(problems.map((p) => [p.rule, p.subject])).toEqual([[FM_RULES.duplicateId, route]]);
+  });
+
   test("an excluded route counts as covered", () => {
     const problems = validateFunctionalityMap({
       index: parseFmIndex(VALID_INDEX_YAML),
