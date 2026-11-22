@@ -235,7 +235,7 @@ export const LoanFromPaymentTool: FC<LoanFromPaymentToolProps> = ({
           label="Estimated loan for this payment"
           note={
             figureText
-              ? `Repayment mortgage over ${termYears} years, one rate for the whole term, no fees.`
+              ? `Repayment mortgage over ${rateFormat.format(termYears)} years, one rate for the whole term, no fees.`
               : undefined
           }
           row={depositRow}

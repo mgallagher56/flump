@@ -321,7 +321,7 @@ describe("mortgage affordability (E39 section 4a & 10a)", () => {
     it("keeps the matched band when its loan lands just inside a lower band's LTV", () => {
       // £1,000 a month, 300 months, £45,030 deposit. Loan = 1000 * (1 - (1 + i)^-300) / i.
       // 70% band at 4.32%: i = 0.0036, (1.0036)^-300 = 0.34023,
-      //   loan = 659.77 / 0.0036 = £183,269, LTV = 183269 / 228299 = 80.28% > 70, no fit.
+      //   loan = 659.75 / 0.0036 = £183,262.57, LTV = 183262.57 / 228292.57 = 80.27% > 70, no fit.
       // 80% band at 4.41%: i = 0.003675, (1.003675)^-300 = 0.33270,
       //   loan = 667.30 / 0.003675 = £181,578, LTV = 181578 / 226608 = 80.13% > 80, no fit.
       // 90% band at 4.49%: i = 0.0037417, (1.0037417)^-300 = 0.32614,
