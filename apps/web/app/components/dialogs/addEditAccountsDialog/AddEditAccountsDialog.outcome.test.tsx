@@ -220,7 +220,7 @@ describe("AddEditAccountsDialog action outcomes", () => {
         queryByLabelText,
         queryByRole,
         user,
-      } = customRender(<AddEditAccountsDialogBtn />);
+      } = customRender(<AddEditAccountsDialogBtn partnerMode />);
 
       await user.click(getByText("addAccount"));
       await user.selectOptions(getByLabelText("Account type"), "Mortgage");
@@ -252,7 +252,7 @@ describe("AddEditAccountsDialog action outcomes", () => {
 
     test("submits joint ownership and custom sharePercent for a joint mortgage", async () => {
       const { getByText, getAllByText, getByLabelText, user } = customRender(
-        <AddEditAccountsDialogBtn />,
+        <AddEditAccountsDialogBtn partnerMode />,
       );
       await user.click(getByText("addAccount"));
       await user.type(getByLabelText("Name"), "Home mortgage");

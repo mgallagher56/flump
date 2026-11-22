@@ -27,9 +27,9 @@ beforeEach(() => {
   mocks.mockUseLoaderData.mockReturnValue({ user: mockUser, accounts: [] });
 });
 
-const openAdd = async (accounts: unknown[] = []) => {
+const openAdd = async (accounts: unknown[] = [], partnerMode = false) => {
   mocks.mockUseLoaderData.mockReturnValue({ user: mockUser, accounts });
-  const utils = customRender(<AddEditAccountsDialogBtn />);
+  const utils = customRender(<AddEditAccountsDialogBtn partnerMode={partnerMode} />);
   await utils.user.click(utils.getByText("addAccount"));
   return utils;
 };
@@ -80,7 +80,7 @@ describe("the field set for each type (SD-8)", () => {
   });
 
   test("a joint account's balance says it is the whole balance", async () => {
-    const { getByLabelText, getByText, queryByText, user } = await openAdd();
+    const { getByLabelText, getByText, queryByText, user } = await openAdd([], true);
     await user.selectOptions(getByLabelText("Account type"), "Saving");
     expect(queryByText(/whole balance/)).toBeNull();
     await user.selectOptions(getByLabelText("Ownership"), "joint");

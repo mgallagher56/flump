@@ -11,6 +11,7 @@ import AccountDetailContainer, {
 
 const mocks = vi.hoisted(() => ({
   mockFetcherSubmit: vi.fn(),
+  mockUseRouteLoaderData: vi.fn(() => undefined as unknown),
   mockUseLoaderData: vi.fn(() => ({
     account: {
       id: "123456",
@@ -148,6 +149,7 @@ vi.mock("react-router", async () => {
   return {
     ...actual,
     useLoaderData: mocks.mockUseLoaderData,
+    useRouteLoaderData: mocks.mockUseRouteLoaderData,
     useRevalidator: () => ({ revalidate: vi.fn() }),
     useFetcher: () => ({
       submit: mocks.mockFetcherSubmit,
@@ -742,12 +744,17 @@ describe("<AccountDetailContainer /> with changing loader data", () => {
     });
 
     test("a sole account opens as sole", async () => {
-      setLoaderData({
-        account: { id: "a1", name: "Easy saver", type: "Savings", balance: 1000 },
-        accountDetails: [],
-      });
-      const { getByLabelText } = await openEdit();
-      expect(fieldValue(getByLabelText("Ownership"))).toBe("sole");
+      mocks.mockUseRouteLoaderData.mockReturnValue({ userProfile: { partnerMode: true } });
+      try {
+        setLoaderData({
+          account: { id: "a1", name: "Easy saver", type: "Savings", balance: 1000 },
+          accountDetails: [],
+        });
+        const { getByLabelText } = await openEdit();
+        expect(fieldValue(getByLabelText("Ownership"))).toBe("sole");
+      } finally {
+        mocks.mockUseRouteLoaderData.mockReturnValue(undefined);
+      }
     });
 
     test("a credit card: credit limit and the 0% period end", async () => {
