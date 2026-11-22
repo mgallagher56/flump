@@ -14,7 +14,7 @@ import {
   RadioCardGroup,
 } from "@repo/ui";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { type FC, useId, useMemo, useState } from "react";
+import { type FC, useMemo, useState } from "react";
 import {
   stampDutyFigure,
   stampDutyLine,
@@ -39,6 +39,10 @@ export interface StampDutyEstimateProps extends StampDutyInputs {
   /** Opens the section on first render (stories and tests). */
   defaultOpen?: boolean;
 }
+
+/** Paired `id` and `data-testid` (web tests read `id`, stories read `data-testid`). One per page. */
+const TOGGLE_ID = "stamp-duty-toggle";
+const PANEL_ID = "stamp-duty-panel";
 
 const LOCATION_OPTIONS = [
   { value: "ENGLAND_NI", label: "England or Northern Ireland" },
@@ -116,7 +120,6 @@ export const StampDutyEstimate: FC<StampDutyEstimateProps> = ({
   defaultOpen = false,
 }) => {
   const [open, setOpen] = useState(defaultOpen);
-  const panelId = useId();
   const result = useMemo(
     () => estimateStampDuty({ propertyPriceGbp, jurisdiction, allFirstTimeBuyersMainHome }),
     [propertyPriceGbp, jurisdiction, allFirstTimeBuyersMainHome],
@@ -135,9 +138,13 @@ export const StampDutyEstimate: FC<StampDutyEstimateProps> = ({
 
   return (
     <div className={stampDutyRoot()} data-testid="stamp-duty-estimate" id="stamp-duty-estimate">
+      {/* A hand-built toggle, not CollapsibleDrawer: the drawer takes no id or data-testid for its
+          trigger or body, so the paired test ids (component guidelines 5.1) would need an API change. */}
       <Button
-        aria-controls={panelId}
+        aria-controls={open ? PANEL_ID : undefined}
         aria-expanded={open}
+        data-testid={TOGGLE_ID}
+        id={TOGGLE_ID}
         size="sm"
         variant="outline"
         onClick={() => setOpen((prev) => !prev)}
@@ -147,7 +154,7 @@ export const StampDutyEstimate: FC<StampDutyEstimateProps> = ({
       </Button>
 
       {open ? (
-        <div className={stampDutyPanel} id={panelId}>
+        <div className={stampDutyPanel} data-testid={PANEL_ID} id={PANEL_ID}>
           <FormField label="Property price">
             {(field) => (
               <CurrencyInput

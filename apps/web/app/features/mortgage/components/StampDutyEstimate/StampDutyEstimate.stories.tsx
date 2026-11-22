@@ -97,10 +97,13 @@ export const Closed: Story = {
   render: () => <Stateful defaultOpen={false} />,
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const button = canvas.getByRole("button", { name: "Stamp duty estimate" });
+    const button = canvas.getByTestId("stamp-duty-toggle");
     await expect(button).toHaveAttribute("aria-expanded", "false");
+    await expect(canvas.queryByTestId("stamp-duty-panel")).toBeNull();
     await userEvent.click(button);
     await expect(button).toHaveAttribute("aria-expanded", "true");
+    await expect(button).toHaveAttribute("aria-controls", "stamp-duty-panel");
+    await expect(canvas.getByTestId("stamp-duty-panel")).toBeInTheDocument();
     await expect(canvas.getByText("Where is the property?")).toBeInTheDocument();
   },
 };

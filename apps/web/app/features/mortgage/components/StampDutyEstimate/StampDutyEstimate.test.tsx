@@ -97,11 +97,17 @@ describe("estimateStampDuty", () => {
 describe("StampDutyEstimate", () => {
   it("starts closed and opens with its disclosure button", () => {
     render(<Stateful defaultOpen={false} />);
-    const button = screen.getByRole("button", { name: "Stamp duty estimate" });
+    const button = screen.getByTestId("stamp-duty-toggle");
+    expect(button.textContent).toContain("Stamp duty estimate");
     expect(button.getAttribute("aria-expanded")).toBe("false");
-    expect(screen.queryByText("Where is the property?")).toBeNull();
+    expect(button.getAttribute("aria-controls")).toBeNull();
+    expect(screen.queryByTestId("stamp-duty-panel")).toBeNull();
     fireEvent.click(button);
     expect(button.getAttribute("aria-expanded")).toBe("true");
+    expect(button.getAttribute("aria-controls")).toBe("stamp-duty-panel");
+    expect(screen.getByTestId("stamp-duty-panel").getAttribute("data-testid")).toBe(
+      "stamp-duty-panel",
+    );
     expect(screen.getByText("Where is the property?").tagName).toBe("LEGEND");
   });
 
