@@ -91,6 +91,7 @@ describe("IdempotencyInterceptor", () => {
         if (sql.includes("SELECT")) return stored ? [stored] : [];
         return [];
       }),
+      transaction: async (fn: (m: unknown) => unknown) => fn(dataSource),
     };
     const interceptor = new IdempotencyInterceptor(dataSource as never);
     const firstHeaders: Record<string, string> = { etag: '"2026-11-14T09:30:00.123Z"' };
@@ -185,8 +186,12 @@ const tableFake = (options: { failUpdate?: boolean } = {}) => {
     }
     return [];
   });
+  const dataSource = {
+    query,
+    transaction: async (fn: (m: unknown) => unknown) => fn(dataSource),
+  };
   return {
-    dataSource: { query },
+    dataSource,
     setRow: (value: NonNullable<typeof row>) => {
       row = value;
     },

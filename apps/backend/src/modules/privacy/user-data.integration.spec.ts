@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import "reflect-metadata";
 import { AccountExportDocument } from "@flump/api-contract";
 import { Logger } from "@nestjs/common";
-import { DataSource, type DataSourceOptions } from "typeorm";
+import { DataSource, type DataSourceOptions, Repository } from "typeorm";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { typeOrmOptionsFromEnv } from "../../config/typeorm.options";
 import { Account } from "../../entities/account.entity";
@@ -931,8 +931,9 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
 
   it("writes nothing to the response when the audit insert fails", async () => {
     await seed(USER_A, "A");
+    // The audit row is written in a transaction of its own, through that transaction's repository.
     const insert = vi
-      .spyOn(ds.manager.getRepository(AuditEvent), "insert")
+      .spyOn(Repository.prototype, "insert")
       .mockRejectedValueOnce(new Error("audit write failed"));
     const write = vi.fn(async () => {});
     try {

@@ -19,6 +19,7 @@ import { FinanceModule } from "./modules/finance/finance.module";
 import { ImportsModule } from "./modules/imports/imports.module";
 import { InvoicingModule } from "./modules/invoicing/invoicing.module";
 import { PrivacyModule } from "./modules/privacy/privacy.module";
+import { UserDataWriteFenceInterceptor } from "./modules/privacy/user-data-write-fence";
 import { ProfileModule } from "./modules/profile/profile.module";
 import { RetirementModule } from "./modules/retirement/retirement.module";
 import { SnapshotsModule } from "./modules/snapshots/snapshots.module";
@@ -63,6 +64,9 @@ import { SecurityModule } from "./security/security.module";
   controllers: [AppController, HealthController],
   providers: [
     AppService,
+    // First, so every interceptor after it (the idempotency claim) and the handler run inside it:
+    // their transactions take the user-data write fence (privacy finding F1).
+    { provide: APP_INTERCEPTOR, useClass: UserDataWriteFenceInterceptor },
     { provide: APP_INTERCEPTOR, useClass: DeprecationInterceptor },
     { provide: APP_INTERCEPTOR, useClass: ContractShadowInterceptor },
     // After the contract interceptor, so the key's hash is over the parsed request body.

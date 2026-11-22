@@ -174,21 +174,25 @@ export class IdempotencyInterceptor implements NestInterceptor {
     // Expired results count as unused, and are deleted for every route of this user (bounded to
     // the user, served by the unique index's leading user_id); an abandoned pending row of this
     // key counts as unused too.
-    await this.dataSource.query(
-      `DELETE FROM "idempotency_keys"
+    // One transaction, so in a signed-in request the insert takes the user-data write fence
+    // (UserDataWriteFence) and cannot land after the user's erasure.
+    const inserted: unknown[] = await this.dataSource.transaction(async (m) => {
+      await m.query(
+        `DELETE FROM "idempotency_keys"
        WHERE "user_id" = $1
          AND ("created_at" < now() - make_interval(hours => $4)
               OR ("route_id" = $2 AND "key" = $3 AND "status_code" IS NULL
                   AND "created_at" < now() - make_interval(secs => $5)))`,
-      [...params, IDEMPOTENCY_KEY_TTL_HOURS, PENDING_TIMEOUT_SECONDS],
-    );
-    const inserted: unknown[] = await this.dataSource.query(
-      `INSERT INTO "idempotency_keys" ("user_id", "route_id", "key", "request_hash")
+        [...params, IDEMPOTENCY_KEY_TTL_HOURS, PENDING_TIMEOUT_SECONDS],
+      );
+      return m.query(
+        `INSERT INTO "idempotency_keys" ("user_id", "route_id", "key", "request_hash")
        VALUES ($1, $2, $3, $4)
        ON CONFLICT ("user_id", "route_id", "key") DO NOTHING
        RETURNING "id"`,
-      [...params, hash],
-    );
+        [...params, hash],
+      );
+    });
     if (inserted.length > 0) return null;
     const [row]: StoredRow[] = await this.dataSource.query(
       `SELECT "request_hash", "status_code", "response_body", "response_headers"

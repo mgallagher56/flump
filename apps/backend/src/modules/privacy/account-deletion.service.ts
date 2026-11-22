@@ -19,7 +19,7 @@ import {
   tombstoneExpiry,
   tombstoneSubjectHash,
 } from "./tombstone-key";
-import { lockUserData } from "./user-data-lock";
+import { lockUserData, withoutWriteFence } from "./user-data-lock";
 import { type RemovedCounts, USER_DATA_REGISTRY, USER_LINKED_TABLES } from "./user-data-registry";
 
 /** Bound on the in-process cache of erased user ids (cleared whole when full). */
@@ -76,6 +76,30 @@ export class AccountDeletionService implements ErasedAccountCheck {
       this.erasedCache.add(userId);
     }
     return found;
+  }
+
+  /**
+   * isErased for the write fence (UserDataWriteFence): runs in a transaction that already holds the
+   * shared lockUserData, so a tombstone committed while it waited is seen. Only under READ
+   * COMMITTED: a REPEATABLE READ snapshot is taken by the lock statement, before the wait, and
+   * would miss it, so any other level is refused (run read-only work withoutWriteFence).
+   */
+  async isErasedForWrite(userId: string, manager: EntityManager): Promise<boolean> {
+    if (!this.key || !userId) return false;
+    if (this.erasedCache.has(userId)) return true;
+    const [row] = (await manager.query(
+      `SELECT current_setting('transaction_isolation') AS "isolation",
+              EXISTS (SELECT 1 FROM "account_deletion_tombstones" WHERE "subject_hash" = $1) AS "erased"`,
+      [tombstoneSubjectHash(this.key, userId)],
+    )) as Array<{ isolation: string; erased: boolean }>;
+    if (row?.isolation !== "read committed") {
+      throw new Error("The user-data write fence needs READ COMMITTED");
+    }
+    if (row.erased) {
+      if (this.erasedCache.size >= ERASED_CACHE_MAX) this.erasedCache.clear();
+      this.erasedCache.add(userId);
+    }
+    return row.erased === true;
   }
 
   /** Test seam: a test that truncates the tombstone table must forget the cached positives too. */
@@ -139,6 +163,11 @@ export class AccountDeletionService implements ErasedAccountCheck {
   }
 
   async deleteAccount(userId: string): Promise<DeleteUserResponse> {
+    // The erasure takes the exclusive lockUserData itself, so it runs outside the write fence.
+    return withoutWriteFence(() => this.erase(userId));
+  }
+
+  private async erase(userId: string): Promise<DeleteUserResponse> {
     const key = this.key;
     if (!key) {
       // N1: the operator needs to know which variable to set; the person gets a stable code and a
@@ -193,9 +222,10 @@ export class AccountDeletionService implements ErasedAccountCheck {
       return { tombstone, removed, linked };
     });
 
-    // (b2) Sweep again now the tombstone is committed. A request that passed the AuthGuard before
-    // the commit could still insert rows while the transaction ran; from here on the guard refuses
-    // the user, so this second pass (also run on every retry) removes any such stragglers.
+    // (b2) Sweep again now the tombstone is committed. A signed-in request's write cannot land
+    // after (b) (UserDataWriteFence: it waits for the lock, then sees the tombstone), but writes
+    // outside a request (jobs, /mcp) do not take the fence; this second pass (also run on every
+    // retry) removes any of theirs that committed while (b) ran.
     const stragglers = await this.dataSource.transaction(async (manager) => ({
       removed: await this.sweep(manager, userId),
       linked: await this.sweepLinked(manager, userId),

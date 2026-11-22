@@ -25,7 +25,7 @@ import { HOUSING_STATUSES, TAX_REGIONS, UserProfile } from "../../entities/user-
 import { USER_IDENTITY_ADAPTER, type UserIdentityAdapter } from "../../identity/identity.adapter";
 import { BANK_CONSENT_REVOKER, type BankConsentRevoker } from "../banking/bank-consent-revoker";
 import { AccountDeletionService } from "../privacy/account-deletion.service";
-import { lockUserData } from "../privacy/user-data-lock";
+import { lockUserData, withoutWriteFence } from "../privacy/user-data-lock";
 import { CASCADE_ONLY_TABLES, USER_DATA_REGISTRY } from "../privacy/user-data-registry";
 
 /**
@@ -383,25 +383,28 @@ export class UserProfileService implements ProfileLifecycle {
       return { saved: await profileRepo.save(profile), counts };
     };
 
-    const { saved, counts } = await this.dataSource.transaction(async (manager) => {
-      // First statement: serialise with an erasure of the same user, so the tombstone check
-      // below sees a committed erasure and a reset never recreates the deleted profile row.
-      await lockUserData(manager, userId);
-      if (await this.accountDeletion.isErased(userId, manager)) {
-        throw accountDeletedException();
-      }
-      const result = await performReset((entity) => manager.getRepository(entity));
-      // BE-06: the reset revoked every AI token and bank connection, so their consents close,
-      // and the action is recorded in the same transaction.
-      await withdrawAllConsents(manager, { userId, kind: "ai_access" });
-      await withdrawAllConsents(manager, { userId, kind: "bank_access" });
-      await recordAuditEvent(manager, {
-        userId,
-        action: "financial_data.reset",
-        metadata: { removed: result.counts },
-      });
-      return result;
-    });
+    // Outside the write fence: this transaction takes the exclusive lockUserData itself.
+    const { saved, counts } = await withoutWriteFence(() =>
+      this.dataSource.transaction(async (manager) => {
+        // First statement: serialise with an erasure of the same user, so the tombstone check
+        // below sees a committed erasure and a reset never recreates the deleted profile row.
+        await lockUserData(manager, userId);
+        if (await this.accountDeletion.isErased(userId, manager)) {
+          throw accountDeletedException();
+        }
+        const result = await performReset((entity) => manager.getRepository(entity));
+        // BE-06: the reset revoked every AI token and bank connection, so their consents close,
+        // and the action is recorded in the same transaction.
+        await withdrawAllConsents(manager, { userId, kind: "ai_access" });
+        await withdrawAllConsents(manager, { userId, kind: "bank_access" });
+        await recordAuditEvent(manager, {
+          userId,
+          action: "financial_data.reset",
+          metadata: { removed: result.counts },
+        });
+        return result;
+      }),
+    );
 
     // One structured event after the transaction has committed: row counts only, no user id (S6),
     // amounts, names or email. The audit row written above holds the user id, and the request id
