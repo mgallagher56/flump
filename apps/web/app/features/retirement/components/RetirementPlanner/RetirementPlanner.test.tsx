@@ -288,7 +288,7 @@ describe("RetirementPlanner", () => {
   it("clears saveSuccess when a saved-plan input is edited", async () => {
     const user = userEvent.setup();
     renderPlanner({ saveSuccess: "Retirement plan saved." });
-    expect(screen.getByText("Retirement plan saved.")).toBeTruthy();
+    expect(screen.getByText("Retirement plan saved.").getAttribute("role")).toBe("status");
 
     const planTo = screen.getByRole("textbox", { name: "Plan to age" });
     await user.clear(planTo);

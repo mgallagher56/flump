@@ -143,7 +143,7 @@ describe("ISA kind and joint ownership", () => {
       <AddEditAccountsDialogBtn account={account} accountId="a1" isEditAccount />,
     );
     await user.click(getByText("edit"));
-    expect(getByLabelText("Ownership")).toBeDefined();
+    expect((getByLabelText("Ownership") as HTMLSelectElement).value).toBe("joint");
 
     await user.selectOptions(getByLabelText("Kind of account (optional)"), "cash_isa");
     expect(queryByLabelText("Ownership")).toBeNull();
@@ -164,7 +164,7 @@ describe("ISA kind and joint ownership", () => {
     expect(queryByLabelText("Ownership")).toBeNull();
 
     rerender(<AddEditAccountsDialogBtn partnerMode />);
-    expect(getByLabelText("Ownership")).toBeDefined();
+    expect((getByLabelText("Ownership") as HTMLSelectElement).value).toBe("sole");
   });
 
   test("keeps the Ownership select mounted when switching an already-joint account to sole with partnerMode off", async () => {
@@ -182,13 +182,13 @@ describe("ISA kind and joint ownership", () => {
     await user.click(getByText("edit"));
     const ownershipSelect = getByLabelText("Ownership") as HTMLSelectElement;
     expect(ownershipSelect.value).toBe("joint");
-    expect(getByLabelText("Your share")).toBeDefined();
+    expect((getByLabelText("Your share") as HTMLInputElement).value).toBe("50");
 
     await user.selectOptions(ownershipSelect, "sole");
     expect((getByLabelText("Ownership") as HTMLSelectElement).value).toBe("sole");
     expect(queryByLabelText("Your share")).toBeNull();
 
     await user.selectOptions(getByLabelText("Ownership"), "joint");
-    expect(getByLabelText("Your share")).toBeDefined();
+    expect((getByLabelText("Your share") as HTMLInputElement).value).toBe("50");
   });
 });

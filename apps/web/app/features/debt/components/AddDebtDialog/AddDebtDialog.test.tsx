@@ -119,14 +119,14 @@ describe("AddDebtDialog", () => {
     );
     const ownershipSelect = screen.getByLabelText("Ownership") as HTMLSelectElement;
     expect(ownershipSelect.value).toBe("joint");
-    expect(screen.getByLabelText("Your share")).toBeDefined();
+    expect((screen.getByLabelText("Your share") as HTMLInputElement).value).toBe("50");
 
     fireEvent.change(ownershipSelect, { target: { value: "sole" } });
     expect((screen.getByLabelText("Ownership") as HTMLSelectElement).value).toBe("sole");
     expect(screen.queryByLabelText("Your share")).toBeNull();
 
     fireEvent.change(screen.getByLabelText("Ownership"), { target: { value: "joint" } });
-    expect(screen.getByLabelText("Your share")).toBeDefined();
+    expect((screen.getByLabelText("Your share") as HTMLInputElement).value).toBe("50");
   });
 
   it("needs only a name and balance; blank APR and minimum are flagged unknown", () => {
