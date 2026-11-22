@@ -1,0 +1,254 @@
+#!/usr/bin/env bash
+# verify-flump: launch, check, drive and tear down a disposable local Flump stack
+# (Postgres container + built backend, web and marketing) for verification runs.
+#
+#   verify-flump up [--persona <name>] [--skip-build]   start a new run, print its id
+#   verify-flump doctor [run-id]                        read-only health check
+#   verify-flump drive <journey> [run-id]               run a Playwright journey script
+#   verify-flump seed <persona> [run-id]                switch the run's user to another persona
+#   verify-flump down [run-id]                          stop what this run started; keep evidence
+#   verify-flump list                                   runs with live state
+#
+# run-id defaults to the newest run with live state. Everything is local: it never talks to
+# Railway, WorkOS or any deployed environment.
+set -euo pipefail
+
+SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO="$(cd "$SKILL_DIR/../../.." && pwd)"
+VERIFY_ROOT="${VERIFY_ROOT:-$REPO/.verify}"
+STATE_ROOT="$VERIFY_ROOT/state"
+EVIDENCE_ROOT="${VERIFY_EVIDENCE_ROOT:-$VERIFY_ROOT/evidence}"
+E2E_MODULES="$REPO/apps/e2e/node_modules"
+PG_IMAGE="postgres:18-alpine"
+
+die() { echo "verify-flump: $*" >&2; exit 1; }
+log() { echo "[verify-flump] $*" >&2; }
+
+free_port() { bun -e 'const s = Bun.listen({ hostname: "127.0.0.1", port: 0, socket: { data() {} } }); console.log(s.port); s.stop(true);'; }
+
+latest_run() {
+  [ -d "$STATE_ROOT" ] || return 1
+  local newest
+  newest="$(ls -1t "$STATE_ROOT" 2>/dev/null | head -1)"
+  [ -n "$newest" ] || return 1
+  echo "$newest"
+}
+
+load_run() {
+  RUN_ID="${1:-}"
+  if [ -z "$RUN_ID" ]; then RUN_ID="$(latest_run)" || die "no live run; start one with: verify-flump up"; fi
+  STATE_DIR="$STATE_ROOT/$RUN_ID"
+  [ -f "$STATE_DIR/run.env" ] || die "no live run called $RUN_ID (see: verify-flump list)"
+  # shellcheck disable=SC1091
+  source "$STATE_DIR/run.env"
+}
+
+wait_http() { # url name timeout-seconds [pid]
+  local url="$1" name="$2" timeout="$3" pid="${4:-}" i=0
+  until [ "$(curl -s -o /dev/null -w '%{http_code}' "$url" || true)" = "200" ]; do
+    if [ -n "$pid" ] && ! kill -0 "$pid" 2>/dev/null; then die "$name exited before it was ready; see $EVIDENCE_DIR/logs/$name.log"; fi
+    i=$((i + 1)); [ "$i" -le "$timeout" ] || die "$name not ready at $url after ${timeout}s; see $EVIDENCE_DIR/logs/$name.log"
+    sleep 1
+  done
+}
+
+journey_env() {
+  export NODE_PATH="$E2E_MODULES"
+  export VERIFY_RUN_ID="$RUN_ID" VERIFY_WEB_URL="$WEB_URL" VERIFY_BACKEND_URL="$BACKEND_URL"
+  export VERIFY_MARKETING_URL="$MARKETING_URL" VERIFY_STATE_DIR="$STATE_DIR" VERIFY_EVIDENCE_DIR="$EVIDENCE_DIR"
+  # apps/e2e/support/env.ts reads these, so the persona seeder talks to this run's backend.
+  export E2E_BACKEND_PORT="$BACKEND_PORT" E2E_WEB_PORT="$WEB_PORT" E2E_MARKETING_PORT="$MARKETING_PORT"
+}
+
+cmd_up() {
+  local persona="homeowner" skip_build=0
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --persona) persona="$2"; shift 2 ;;
+      --skip-build) skip_build=1; shift ;;
+      *) die "unknown option $1" ;;
+    esac
+  done
+  command -v docker >/dev/null || die "docker is required (Docker Desktop or OrbStack)"
+  docker info >/dev/null 2>&1 || die "the docker daemon is not running"
+  [ -d "$E2E_MODULES/@playwright/test" ] || die "run bun install at the repo root first"
+
+  RUN_ID="$(date +%Y%m%d-%H%M%S)-$$"
+  STATE_DIR="$STATE_ROOT/$RUN_ID"
+  EVIDENCE_DIR="$EVIDENCE_ROOT/$RUN_ID"
+  mkdir -p "$STATE_DIR" "$EVIDENCE_DIR/logs"
+  # From here on, a failed launch still leaves a run that `down` can clean up.
+  {
+    echo "RUN_ID=$RUN_ID"
+    echo "EVIDENCE_DIR=$EVIDENCE_DIR"
+    echo "PG_CONTAINER=flump-verify-$RUN_ID-pg"
+  } >"$STATE_DIR/run.env"
+
+  if [ "$skip_build" = 0 ]; then
+    log "building backend, web and marketing (turbo cache makes repeats quick)"
+    if ! (cd "$REPO" && bunx turbo run build --filter=backend --filter=@flump/web --filter=marketing --output-logs=errors-only >"$EVIDENCE_DIR/logs/build.log" 2>&1); then
+      # A fresh worktree can race panda codegen ("Could not load styled-system/css"); one retry clears it.
+      log "build failed once; retrying"
+      (cd "$REPO" && bunx turbo run build --filter=backend --filter=@flump/web --filter=marketing --output-logs=errors-only >>"$EVIDENCE_DIR/logs/build.log" 2>&1) \
+        || die "build failed; see $EVIDENCE_DIR/logs/build.log (then run: verify-flump down $RUN_ID)"
+    fi
+  fi
+  [ -f "$REPO/apps/web/build/server/index.js" ] && [ -f "$REPO/apps/backend/dist/main.js" ] && [ -d "$REPO/apps/marketing/dist" ] \
+    || die "no build output; run without --skip-build"
+
+  local pg_port backend_port web_port marketing_port
+  pg_port="$(free_port)"; backend_port="$(free_port)"; web_port="$(free_port)"; marketing_port="$(free_port)"
+  local db_url="postgres://postgres:postgres@127.0.0.1:$pg_port/flump_e2e"
+  local hmac
+  hmac="$(openssl rand -hex 32)"
+  {
+    echo "PG_PORT=$pg_port"
+    echo "BACKEND_PORT=$backend_port"
+    echo "WEB_PORT=$web_port"
+    echo "MARKETING_PORT=$marketing_port"
+    echo "BACKEND_URL=http://localhost:$backend_port"
+    echo "WEB_URL=http://localhost:$web_port"
+    echo "MARKETING_URL=http://localhost:$marketing_port"
+    echo "DATABASE_URL=$db_url"
+    echo "PERSONA=$persona"
+    echo "BUILD_REV=$(git -C "$REPO" rev-parse --short HEAD)"
+    echo "BUILD_TREE=$(git -C "$REPO" status --porcelain -- apps packages | shasum | cut -c1-12)"
+  } >>"$STATE_DIR/run.env"
+  # shellcheck disable=SC1091
+  source "$STATE_DIR/run.env"
+
+  log "starting Postgres container $PG_CONTAINER on 127.0.0.1:$PG_PORT"
+  docker run -d --name "$PG_CONTAINER" --label flump-verify="$RUN_ID" -p "127.0.0.1:$PG_PORT:5432" \
+    -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=flump_e2e "$PG_IMAGE" >/dev/null
+  # pg_isready passes while the image's init scripts still run on a socket-only server, so wait
+  # for a real TCP query from outside the container.
+  local i=0
+  until docker exec "$PG_CONTAINER" psql "postgres://postgres:postgres@127.0.0.1:5432/flump_e2e" -tAc 'select 1' >/dev/null 2>&1 \
+    && docker logs "$PG_CONTAINER" 2>&1 | grep -q "PostgreSQL init process complete"; do
+    i=$((i + 1)); [ "$i" -le 60 ] || die "Postgres not ready after 60s"
+    sleep 1
+  done
+
+  local common=(AUTH_DEV_BYPASS=true NODE_ENV=development WORKOS_API_KEY= RAILWAY_ENVIRONMENT= WEB_CLIENT_IP_HMAC_KEY="$hmac")
+
+  log "running migrations"
+  (cd "$REPO/apps/backend" && env "${common[@]}" DATABASE_URL="$DATABASE_URL" DB_SSL=false bun run migration:run >"$EVIDENCE_DIR/logs/migrations.log" 2>&1) \
+    || die "migrations failed; see $EVIDENCE_DIR/logs/migrations.log"
+
+  # Each server is exec'd from its subshell, so the recorded PID is the server itself, and its
+  # output goes only to its log (no inherited stdout keeps a caller's pipe open).
+  log "starting backend on $BACKEND_URL"
+  (cd "$REPO/apps/backend" && exec env "${common[@]}" PORT="$BACKEND_PORT" DATABASE_URL="$DATABASE_URL" DB_SSL=false \
+    CORS_ALLOWED_ORIGINS="$WEB_URL" FRONTEND_URL="$WEB_URL" nohup bun dist/main.js) \
+    >"$EVIDENCE_DIR/logs/backend.log" 2>&1 </dev/null &
+  echo "BACKEND_PID=$!" >>"$STATE_DIR/run.env"
+  log "starting web on $WEB_URL"
+  (cd "$REPO/apps/web" && exec env "${common[@]}" E2E_DEV_SESSION=true PORT="$WEB_PORT" VITE_API_URL="$BACKEND_URL" \
+    VITE_MARKETING_URL="$MARKETING_URL" nohup bun server.ts) >"$EVIDENCE_DIR/logs/web.log" 2>&1 </dev/null &
+  echo "WEB_PID=$!" >>"$STATE_DIR/run.env"
+  log "starting marketing on $MARKETING_URL"
+  (cd "$REPO/apps/marketing" && exec env NODE_ENV=production PORT="$MARKETING_PORT" nohup bun server.ts) \
+    >"$EVIDENCE_DIR/logs/marketing.log" 2>&1 </dev/null &
+  echo "MARKETING_PID=$!" >>"$STATE_DIR/run.env"
+  # shellcheck disable=SC1091
+  source "$STATE_DIR/run.env"
+
+  wait_http "$BACKEND_URL/health/ready" backend 120 "$BACKEND_PID"
+  wait_http "$WEB_URL/healthz" web 120 "$WEB_PID"
+  wait_http "$MARKETING_URL/" marketing 120 "$MARKETING_PID"
+
+  log "signing in and seeding the $persona persona"
+  journey_env
+  (cd "$REPO" && bun "$SKILL_DIR/scripts/seed.ts" "$persona") >"$EVIDENCE_DIR/logs/seed.log" 2>&1 \
+    || die "seeding failed; see $EVIDENCE_DIR/logs/seed.log"
+
+  log "ready: run $RUN_ID, web $WEB_URL, evidence $EVIDENCE_DIR"
+  echo "$RUN_ID"
+}
+
+cmd_doctor() {
+  load_run "${1:-}"
+  local bad=0
+  check() { if eval "$2"; then echo "ok   $1"; else echo "FAIL $1"; bad=1; fi; }
+  owns_port() { lsof -nP -iTCP:"$2" -sTCP:LISTEN -t 2>/dev/null | grep -qx "$1"; }
+  echo "run $RUN_ID  web $WEB_URL  persona $PERSONA  evidence $EVIDENCE_DIR"
+  check "postgres container $PG_CONTAINER running" \
+    "[ \"\$(docker inspect -f '{{.State.Running}}' '$PG_CONTAINER' 2>/dev/null)\" = true ]"
+  check "backend pid $BACKEND_PID owns port $BACKEND_PORT" "owns_port $BACKEND_PID $BACKEND_PORT"
+  check "web pid $WEB_PID owns port $WEB_PORT" "owns_port $WEB_PID $WEB_PORT"
+  check "marketing pid $MARKETING_PID owns port $MARKETING_PORT" "owns_port $MARKETING_PID $MARKETING_PORT"
+  check "backend /health/ready is 200" "[ \"\$(curl -s -o /dev/null -w '%{http_code}' $BACKEND_URL/health/ready)\" = 200 ]"
+  check "web /healthz is 200" "[ \"\$(curl -s -o /dev/null -w '%{http_code}' $WEB_URL/healthz)\" = 200 ]"
+  check "signed-in session reaches the dashboard (200, no redirect)" \
+    "[ \"\$(curl -s -o /dev/null -w '%{http_code}' -b flump_dev_session=1 $WEB_URL/)\" = 200 ]"
+  check "browser session saved by seeding" "[ -s '$STATE_DIR/storage-state.json' ]"
+  local rev tree
+  rev="$(git -C "$REPO" rev-parse --short HEAD)"
+  tree="$(git -C "$REPO" status --porcelain -- apps packages | shasum | cut -c1-12)"
+  if [ "$rev" = "$BUILD_REV" ] && [ "$tree" = "$BUILD_TREE" ]; then
+    echo "ok   build matches the checkout ($BUILD_REV)"
+  else
+    echo "FAIL build is stale: built at $BUILD_REV, checkout is $rev with different local changes; run down, then up"
+    bad=1
+  fi
+  return "$bad"
+}
+
+cmd_drive() {
+  local journey="${1:-}"
+  [ -n "$journey" ] || die "usage: verify-flump drive <journey name or path> [run-id]"
+  load_run "${2:-}"
+  local path="$journey"
+  [ -f "$path" ] || path="$SKILL_DIR/journeys/$journey.ts"
+  [ -f "$path" ] || die "no journey at $journey or $SKILL_DIR/journeys/$journey.ts"
+  journey_env
+  (cd "$REPO" && bun "$path")
+}
+
+cmd_seed() {
+  local persona="${1:-}"
+  [ -n "$persona" ] || die "usage: verify-flump seed <persona> [run-id]"
+  load_run "${2:-}"
+  journey_env
+  (cd "$REPO" && bun "$SKILL_DIR/scripts/seed.ts" "$persona") 2>&1 | tee -a "$EVIDENCE_DIR/logs/seed.log"
+  sed -i '' "s/^PERSONA=.*/PERSONA=$persona/" "$STATE_DIR/run.env"
+}
+
+cmd_down() {
+  RUN_ID="${1:-}"
+  if [ -z "$RUN_ID" ]; then RUN_ID="$(latest_run)" || { log "no live run"; return 0; }; fi
+  STATE_DIR="$STATE_ROOT/$RUN_ID"
+  [ -f "$STATE_DIR/run.env" ] || die "no live run called $RUN_ID"
+  # shellcheck disable=SC1091
+  source "$STATE_DIR/run.env"
+  # Kill only the processes this run recorded (and their children), never by name.
+  for pid in ${BACKEND_PID:-} ${WEB_PID:-} ${MARKETING_PID:-}; do
+    pkill -TERM -P "$pid" 2>/dev/null || true
+    kill -TERM "$pid" 2>/dev/null || true
+  done
+  sleep 2
+  for pid in ${BACKEND_PID:-} ${WEB_PID:-} ${MARKETING_PID:-}; do
+    kill -0 "$pid" 2>/dev/null && kill -KILL "$pid" 2>/dev/null || true
+  done
+  [ -n "${PG_CONTAINER:-}" ] && docker rm -f "$PG_CONTAINER" >/dev/null 2>&1 || true
+  rm -rf "$STATE_DIR"
+  log "stopped run $RUN_ID; evidence kept at $EVIDENCE_DIR"
+}
+
+cmd_list() {
+  [ -d "$STATE_ROOT" ] || { echo "no live runs"; return 0; }
+  for d in "$STATE_ROOT"/*/; do
+    [ -f "$d/run.env" ] || continue
+    (source "$d/run.env"; echo "$RUN_ID  web ${WEB_URL:-?}  persona ${PERSONA:-?}  evidence $EVIDENCE_DIR")
+  done
+}
+
+case "${1:-}" in
+  up) shift; cmd_up "$@" ;;
+  doctor) shift; cmd_doctor "$@" ;;
+  drive) shift; cmd_drive "$@" ;;
+  seed) shift; cmd_seed "$@" ;;
+  down) shift; cmd_down "$@" ;;
+  list) cmd_list ;;
+  *) sed -n '2,13p' "$0" | sed 's/^# \{0,1\}//'; exit 2 ;;
+esac
