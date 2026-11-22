@@ -504,3 +504,14 @@ An agent in the Antigravity editor asked whether "one task per conversation" mea
 
 > Superseded in part on 22 November 2026 (owner decision in chat): the map is cut to route level, because it is for AI agents only and hand-kept control labels go stale. Layer 3 and 4 entries (capabilities and actions) and `actions-index.md` are removed, so FM4 no longer applies and FM5 keeps only `overview.md` and `by-fact.md` fresh. The current format is in `docs/system/functionality-map/README.md`.
 
+
+# Owner decision (2026-11-22): storing invoicing client details
+
+Invoicing (E37) stores details about the user's clients: the client name, email and address on invoices, and the client name on work log entries. Asked whether storing them is acceptable, the owner answered in chat: "storing client info is fine".
+
+What was noted when the decision was recorded:
+
+- **Third-party personal data.** These details belong to the user's clients, not to the user. Flump holds them for the user, so they are personal data about people who have no Flump account.
+- **Stored like other columns.** `invoices.client_name`, `invoices.client_email`, `invoices.client_address` and `work_log_entries.client_name` are plain text columns with no column-level encryption, the same as the other columns in those tables.
+- **Export and erasure.** `apps/backend/src/modules/privacy/user-data-registry.ts` lists all four columns in the `invoices` and `workLogEntries` exports, both tables have `deleteOnErasure: true`, and "reset all financial data" clears both (`financial-clear`).
+- **Legal pages not yet updated.** The privacy notice and the record of processing did not yet mention client details. E19 legal pages are owner-only, so no agent edits them. Proposed wording for the owner to review is in `docs/compliance/drafts/invoicing-client-data-privacy-wording.md`, which is a draft and not published.
