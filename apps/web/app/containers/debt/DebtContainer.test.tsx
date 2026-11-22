@@ -11,6 +11,7 @@ const fetcherState = vi.hoisted(() => ({
 
 const loaderState = vi.hoisted(() => ({
   empty: false,
+  partnerMode: false,
   accountsOverride: null as unknown[] | null,
   debtInputs: { monthlySurplus: 420, liquidSavings: 2000, monthlyEssentialExpenses: 1500 } as {
     monthlySurplus: number | null;
@@ -75,6 +76,7 @@ vi.mock("~/hooks/useUserProfile", async (importOriginal) => {
     useUserProfile: () => ({
       profile: {
         enabledPages: ["accounts", "budget", "debt"],
+        partnerMode: loaderState.partnerMode,
       },
       updateProfile: vi.fn(),
     }),
@@ -1071,21 +1073,28 @@ describe("DebtContainer adding and editing", () => {
   });
 
   it("adds a joint car finance debt with its kind and share", () => {
-    render(<DebtContainer />);
-    fireEvent.click(screen.getByRole("button", { name: "Add a debt" }));
-    const dialog = within(screen.getByRole("dialog", { name: "Add a debt" }));
-    fireEvent.change(dialog.getByLabelText(/^Name of the debt/), { target: { value: "Car" } });
-    fireEvent.change(dialog.getByLabelText(/^Type/), { target: { value: "car_finance" } });
-    fireEvent.change(dialog.getByLabelText(/^Balance you owe/), { target: { value: "8000" } });
-    fireEvent.change(dialog.getByLabelText("Ownership"), { target: { value: "joint" } });
-    fireEvent.change(dialog.getByLabelText(/^Your share/), { target: { value: "40" } });
-    fireEvent.submit(dialog.getByLabelText(/^Name of the debt/).closest("form") as HTMLFormElement);
-    expect(sent()).toMatchObject({
-      intent: "createDebt",
-      accountSubtype: "car_finance",
-      ownership: "joint",
-      sharePercent: "40",
-    });
+    loaderState.partnerMode = true;
+    try {
+      render(<DebtContainer />);
+      fireEvent.click(screen.getByRole("button", { name: "Add a debt" }));
+      const dialog = within(screen.getByRole("dialog", { name: "Add a debt" }));
+      fireEvent.change(dialog.getByLabelText(/^Name of the debt/), { target: { value: "Car" } });
+      fireEvent.change(dialog.getByLabelText(/^Type/), { target: { value: "car_finance" } });
+      fireEvent.change(dialog.getByLabelText(/^Balance you owe/), { target: { value: "8000" } });
+      fireEvent.change(dialog.getByLabelText("Ownership"), { target: { value: "joint" } });
+      fireEvent.change(dialog.getByLabelText(/^Your share/), { target: { value: "40" } });
+      fireEvent.submit(
+        dialog.getByLabelText(/^Name of the debt/).closest("form") as HTMLFormElement,
+      );
+      expect(sent()).toMatchObject({
+        intent: "createDebt",
+        accountSubtype: "car_finance",
+        ownership: "joint",
+        sharePercent: "40",
+      });
+    } finally {
+      loaderState.partnerMode = false;
+    }
   });
 
   it("the edit form opens on a joint debt's whole balance, payment, ownership and share", () => {
@@ -1222,23 +1231,28 @@ describe("DebtContainer adding and editing", () => {
   });
 
   it("making a debt joint sends the ownership and share; making it sole sends no share", () => {
-    withAccounts([card], () => {
-      render(<DebtContainer />);
-      const dialog = editDialog("Everyday card");
-      fireEvent.change(dialog.getByLabelText("Ownership"), { target: { value: "joint" } });
-      fireEvent.change(dialog.getByLabelText(/^Your share/), { target: { value: "40" } });
-      save(dialog);
-      expect(sent()).toMatchObject({ ownership: "joint", sharePercent: "40" });
-    });
-    fetcherState.submit.mockReset();
-    withAccounts([jointLoan], () => {
-      cleanupAndRender();
-      const dialog = editDialog("Joint loan");
-      fireEvent.change(dialog.getByLabelText("Ownership"), { target: { value: "sole" } });
-      save(dialog);
-      expect(sent()).toMatchObject({ ownership: "sole" });
-      expect(Object.keys(sent())).not.toContain("sharePercent");
-    });
+    loaderState.partnerMode = true;
+    try {
+      withAccounts([card], () => {
+        render(<DebtContainer />);
+        const dialog = editDialog("Everyday card");
+        fireEvent.change(dialog.getByLabelText("Ownership"), { target: { value: "joint" } });
+        fireEvent.change(dialog.getByLabelText(/^Your share/), { target: { value: "40" } });
+        save(dialog);
+        expect(sent()).toMatchObject({ ownership: "joint", sharePercent: "40" });
+      });
+      fetcherState.submit.mockReset();
+      withAccounts([jointLoan], () => {
+        cleanupAndRender();
+        const dialog = editDialog("Joint loan");
+        fireEvent.change(dialog.getByLabelText("Ownership"), { target: { value: "sole" } });
+        save(dialog);
+        expect(sent()).toMatchObject({ ownership: "sole" });
+        expect(Object.keys(sent())).not.toContain("sharePercent");
+      });
+    } finally {
+      loaderState.partnerMode = false;
+    }
   });
 
   it("a saved edit closes the dialog; a failed one keeps it open with the message", async () => {

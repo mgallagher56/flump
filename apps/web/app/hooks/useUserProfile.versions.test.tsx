@@ -63,6 +63,7 @@ describe("normalizeProfile", () => {
       dashboardWidgets: SIX_PAGES,
       dashboardWidgetOrder: [],
       customBudgetCategories: [],
+      partnerMode: false,
       hasResetFinancialData: false,
       onboardingCompleted: false,
       createdAt: "",
@@ -214,6 +215,7 @@ describe("normalizeProfile", () => {
       enabledPages: SIX_PAGES,
       dashboardWidgets: SIX_PAGES,
       customBudgetCategories: [],
+      partnerMode: false,
       hasResetFinancialData: false,
       onboardingCompleted: false,
     });
