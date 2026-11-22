@@ -1,56 +1,22 @@
 # FLUMP ARCHITECTURE, DESIGN SYSTEM & FILE STRUCTURE LAWS
 
+**Before any UI work** (`packages/ui`, `apps/web`, `apps/marketing`) read [`docs/agents/ui-laws.md`](./docs/agents/ui-laws.md). It holds sections 1 to 4 and 10 in full, and they are binding. The lines below are reminders only.
+
 ## 1. COLOCATED COMPONENT DIRECTORY LAW (MANDATORY)
 
-> **Detailed Reference**: Before creating or editing any component in `packages/ui`, `apps/web`, or `apps/marketing`, read [`docs/agents/component-guidelines.md`](./docs/agents/component-guidelines.md).
-
-Never create standalone, flat `.tsx` component files. Every component in `packages/ui`, `apps/web/app/features/*/components`, and new feature sections/pages in `apps/marketing/src/{components|pages}` MUST live in its own PascalCase directory with colocated files. The required set depends on where the component lives (E15 decision D3-C):
-
-- **`packages/ui` and shared components** (anything imported by more than one feature or app): all five files.
-- **Feature-internal components** (new components in `apps/web/app/features/<domain>/components/*` used only inside that feature): `ComponentName.tsx`, `ComponentName.styles.ts`, `ComponentName.test.tsx` and `index.ts`. A `ComponentName.stories.tsx` is required only if the component is interactive and not already covered by a story or test of its parent; promote it to the full five files when a second feature imports it. This relaxation takes effect as the E15 phase 3 web adoption lands; until then `architecture.laws.test.ts` still enforces all five files for every directory it lists (debt, sandbox, ai-connections, feedback, calculators, patterns, primitives, marketing), and that test is not loosened by this edit.
-
-The five files:
-
-- `ComponentName/ComponentName.tsx` (Component implementation)
-- `ComponentName/ComponentName.styles.ts` (Panda CSS `cva` or `sva` recipes—no inline style soup)
-- `ComponentName/ComponentName.stories.tsx` (Storybook 8 visual states + `play()` interaction test)
-- `ComponentName/ComponentName.test.tsx` (Vitest unit test)
-- `ComponentName/index.ts` (Barrel export)
-
-Direction of travel (E15 phase 3 target, not yet enforced): web pages move from inline styles to `@repo/ui` primitives and patterns. The legacy `FLP*` layer (`apps/web/app/components/core`) has been removed and `architecture.laws.test.ts` forbids it returning.
+Every component lives in its own PascalCase directory with colocated files (implementation, styles, test, barrel export, and stories where required). Never a flat `.tsx` component file.
 
 ## 2. DESIGN TOKEN & STYLING LAWS
 
-- **Zero Raw Hex/RGB or Primitive Token Leaks:** Components may NEVER use hardcoded hex values (`#141A26`) or raw primitive scale tokens (`indigo.600`, `slate.800`, `success.500`, `purple.500`, `cyan.400`). Always use the 7 canonical semantic namespaces:
-  - `surface.*` (`canvas`, `card`, `sunken`, `subtle`, `overlay`, `contrast`, `scrim`, `hero`; `scrim` is a modal backdrop, never a text surface; `hero` is the single deep-teal headline block per page, added by DECISIONS round 5, text on it uses `text.onContrast`; `tint.{teal|apricot|sage}` are E16 domain tints for icon tiles and at most one tinted section per page, never around a `KpiStrip`, a `ScenarioZone` or a chart, and never on a KPI card; the one exception is marketing pages, whose section bands alternate `surface.canvas` with `surface.tint.teal` and use no `apricot` or `sage` band and no `surface.subtle` strip, while a band that holds figures or a chart stays on `surface.canvas`, by the owner decision of 2026-11-20 in `docs/audit/plans/DECISIONS.md`)
-  - `text.*` (`primary`, `secondary`, `muted`, `onContrast`)
-  - `border.*` (`DEFAULT`, `subtle`, `strong`, `input`, `focusRing`; reference a `DEFAULT` by its group name, `"border"` or `"primary"`: a literal `"border.DEFAULT"` resolves to no CSS variable and renders `currentColor`, and `check-design-tokens` counts it)
-  - `primary.*` (`DEFAULT`, `solid`, `hover`, `subtle`, `border`, `foreground`; `solid`/`hover` are fills behind `primary.foreground` only, graphic-only fills use `primary` or `chart.primary`)
-  - `status.{positive|warning|danger|info|neutral}.{text|bg|border|solid}`
-  - `chart.*` (`primary`, `wealth`, `debt`, `warning`, `accentPurple`, `accentCyan`, `grid`, `series1`..`series8`, `projection`, `band`, `baseline`)
-  - `accent.*` (`DEFAULT`, `subtle`, `border`, `onHero`; decoration and wayfinding only: never a figure, button, link or notice, and never a signal of good or bad)
-- **Tabular Numbers on All Financial Data:** Every currency value, percentage, date, table cell, and slider badge MUST apply `fontVariantNumeric: 'tabular-nums'` (`tabular-nums`) and format numbers via standard UK formatting (`Intl.NumberFormat('en-GB')` / `useFormatCurrency()`).
+Semantic tokens only: no hex or RGB values and no primitive scale tokens. Tabular numbers and en-GB formatting on all financial data.
 
 ## 3. PROGRESSIVE DISCLOSURE & LAYOUT LAWS
 
-- **Single-Row KPI Strip:** Top-level page metrics must use `<KpiStrip>` (`lg:grid-cols-4` or `3`, max 4 items in a single horizontal row—never a tall 2x2 grid).
-- **2-Column Simulator Split:** Any calculator or forecaster (`/debt`, `/mortgage`, `/pension`, `/forecast`) must use `<SimulatorSplitLayout>` (`lg:col-span-5` or `4` sticky left parameter controls + `lg:col-span-7` or `8` right visual chart & outcome cards). Never stack slider parameters full-width above the chart they control.
-- **Compact Slider Inputs:** Always use `<SliderField>` (Label top-left, compact editable value pill top-right, slider below). Never render a full-width text input box below a slider.
-- **Saved vs Scenario:** Headline figures and `<KpiStrip>`s read saved loader data only; what-if inputs live in a `<ScenarioZone>` driven by `useScenarioState`, and scenario inputs never write to saved data (no "apply", no localStorage, no money in URLs) and `surface.hero` never goes on a scenario outcome.
-- **No Uncollapsed Raw Schedules:** Any table exceeding 8 rows (Amortisation schedules, 12-month ledgers, multi-year tax tables) must live inside a `<CollapsibleDrawer>` or secondary tab.
-- **Number Budget and One Notice:** Each view keeps to the number budget and shows one headline figure, and each surface carries at most one quiet notice, as set out in principles P1, P2 and P4 of [`docs/design/e16-polish/PLAN.md`](./docs/design/e16-polish/PLAN.md).
-- **One Tabs Component:** Tabbed views use the single tabs component from `@repo/ui` (today `SegmentedTabs`; E16 PR 2 consolidates it as `Tabs`); no hand-built tab rows.
-- **Page Template:** Every app page renders through `<PageBody>` (content width `sizes.page.max`, `spacing.page.*` gutters and gaps) and shows its headline figure in `<HeroFigure>`, the only place `surface.hero` and `numeric.hero` appear (E16 P2 and P13). Direction of travel: `PageBody` and `HeroFigure` land with E16 PR 2 and pages adopt them in the page PRs; until then this is not enforced and existing `surface.hero` uses (KpiCard `tone="hero"` and others) stay.
-- **Type and Motion Come From Tokens:** Font sizes come from textStyles or the `fontSizes` scale, weights stop at 700, and transitions use the `durations` and `easings` tokens; `bun scripts/check-style-literals.ts` ratchets raw values (and inline `style=` in the apps) down.
+Use the layout components (`KpiStrip`, `SimulatorSplitLayout`, `SliderField`, `ScenarioZone`, `CollapsibleDrawer`, the one tabs component, `PageBody`, `HeroFigure`). Saved figures and scenario inputs stay separate. Type and motion come from tokens.
 
 ## 4. DEFINITION OF DONE FOR ANY UI CHANGE
 
-A component or page task is NOT complete until:
-
-1. It follows the colocated directory structure.
-2. It has a `.stories.tsx` file rendering in both Light and Dark mode with zero `@storybook/addon-a11y` violations.
-3. Interactive states are covered by a `.test.tsx` or Storybook `play()` test.
-4. The local fast checks in section 5 pass, and every CI check on the PR is green (CI runs the full tests, build, Storybook a11y and E2E).
+Colocated files, stories in light and dark with zero a11y violations, interactive states tested, the section 5 checks passing and every CI check green.
 
 ## 5. PRE-FLIGHT LAW (LOCAL FAST CHECKS, THEN CI)
 
@@ -105,42 +71,22 @@ Every token an agent reads is paid for again on each later turn of that session,
 
 ## 9. DEPENDENCY VERSIONS
 
-- A dependency declared in two or more workspace `package.json` files (root, `apps/*`, `packages/*`) must use the same version string everywhere. `bun scripts/check-dependency-versions.ts` enforces this in `check:laws` (and so in CI); peerDependencies ranges are not compared. Deliberate exceptions go in `ALLOWED_MISMATCHES` in `scripts/lib/dependency-versions.ts`, each with a reason and with sign-off first (section 15).
-- Renovate groups non-major updates into one PR and raises major updates one PR per package; each covers every workspace that declares the package. When bumping by hand, bump every workspace together.
-- Bun catalogs (`workspaces.catalog` and `"catalog:"` references) are deferred: Renovate's bun manager does not extract catalog entries ([`lib/modules/manager/bun/extract.ts`](https://github.com/renovatebot/renovate/blob/main/lib/modules/manager/bun/extract.ts) only reads `workspaces.packages`), so catalog versions would never get upgrade PRs. Revisit when Renovate adds support.
+A dependency declared in more than one workspace `package.json` uses the same version string everywhere; `check:laws` enforces it. Bump every workspace together. An exception needs sign-off first (section 15). Detail: [`docs/agents/laws-detail.md`](./docs/agents/laws-detail.md).
 
 ## 10. UX GUIDELINES AND STYLE GUIDE
 
-Three documents in `docs/ux/` are the standing rules for how Flump behaves and looks on every platform (marketing site, web app, future mobile app). Sections 1 to 4 above are the enforced subset of them.
-
-- [`docs/ux/UX-GUIDELINES.md`](./docs/ux/UX-GUIDELINES.md): behaviour. Hierarchy and the number budget, navigation, saved details versus scenarios, forms and money input, states, destructive actions, charts, onboarding, accessibility, trust, motion, responsive and touch.
-- [`docs/ux/STYLE-GUIDE.md`](./docs/ux/STYLE-GUIDE.md): the visual language. Colour, type, spacing, radius, elevation, icons, illustration, logo, chart palette, component anatomy and states.
-- [`docs/ux/CROSS-PLATFORM.md`](./docs/ux/CROSS-PLATFORM.md): what is shared between marketing, web and mobile, the component parity matrix, and the parity checklist.
-
-**What to read before UI work:**
-
-- A new or changed page, flow, form, chart or state in `apps/web` or `apps/marketing`: UX-GUIDELINES (the sections for what you touch), then `docs/agents/component-guidelines.md`.
-- A new or changed component, token or recipe in `packages/ui`: STYLE-GUIDE, then `docs/agents/component-guidelines.md`.
-- Any screen in the mobile app, or any change to tokens, formatting or shared specifications: CROSS-PLATFORM, and run its parity checklist.
-- User-facing words: the copy guide (`docs/copy/COPY-GUIDE.md`, section 11 below) and `docs/compliance/advice-boundary-policy.md`. The UX documents do not set wording.
-
-**Keep mobile in step.** A PR that changes what a user sees or does in a flow the mobile app shares (sign-in, the monthly check-in, navigation, net worth, accounts, settings, loading and error states, shared components, tokens, formatting or fixed wording) adds a dated row to [`docs/audit/plans/E12-mobile-parity-log.md`](./docs/audit/plans/E12-mobile-parity-log.md). The re-sweep session at the end of each design round checks the log against the merged PRs and appends any row that is missing.
-
-**How the rules rank.** Each rule in those documents is marked "Enforced by" a law or test, "Proposed check", or "Review only". If a document and a law or test disagree, the law or test wins: follow it, and correct the document in the same PR. If a document and an older design note under `docs/design/` disagree, the `docs/ux/` document wins. Owner decisions in `docs/audit/plans/DECISIONS.md` outrank all of them.
-
-**Review-only rules still apply.** A PR that touches UI states in its description which review-only rules it checked. The `ui-compliance-reviewer` agent reviews against the laws above and the `docs/ux/` documents.
-
-`docs/ux/UX-ASSESSMENT-2026-11.md` is a dated assessment, not a rule set. Do not treat its findings as instructions; the changes it calls for become rules only when they enter the documents above.
+The documents in `docs/ux/` (UX-GUIDELINES, STYLE-GUIDE, CROSS-PLATFORM) are the standing rules for how Flump behaves and looks. A law or test outranks them, and owner decisions in `docs/audit/plans/DECISIONS.md` outrank all. A PR that changes a flow the mobile app shares adds a dated row to `docs/audit/plans/E12-mobile-parity-log.md`. A PR that touches UI says which review-only rules it checked. Full text: [`docs/agents/ui-laws.md`](./docs/agents/ui-laws.md).
 
 ## 11. COPY LAW
 
-> **Detailed Reference**: Before writing or changing any string a user or a model reads (web, marketing, `packages/ui`, finance-engine text, MCP descriptions, prompts and results), read [`docs/copy/COPY-GUIDE.md`](./docs/copy/COPY-GUIDE.md).
+Before writing or changing any string a user or a model reads, read [`docs/copy/COPY-GUIDE.md`](./docs/copy/COPY-GUIDE.md).
 
-- **How it fits with the UX guidelines.** [`docs/ux/UX-GUIDELINES.md`](./docs/ux/UX-GUIDELINES.md) says how a screen behaves; the copy guide says what its words are. Where both cover a pattern (empty states, errors, destructive actions), the UX guidelines decide the behaviour and the copy guide decides the wording.
-- **Plain, factual, even-handed.** Everyday words, sentences of 25 words at most, sentence case, en-GB, no exclamation marks, em dashes or ampersands. One approved word per concept (guide section 6): "debts" not "liabilities", "what you own" not "assets", "left over each month" not "surplus", "estimate" for anything computed about the future or tax.
-- **Never judge anyone's finances** (owner rule, guide 2.3): no "only" or "just" about money, no ranking renting below owning, no deprivation statistics at the reader, no red or warnings for ordinary situations.
-- **Facts, not recommendations.** The advice boundary policy (`docs/compliance/advice-boundary-policy.md`, R1 to R8) and the claims rule (E7) outrank everything; the guide restates them in section 7. Fixed wording (notices, the MoneyHelper line, regulatory statements; guide 7.3) is never reworded without the owner.
-- **Guard.** `bun scripts/check-copy.ts` (part of `check:laws`) is a ratchet over `scripts/copy-baseline.json`. `--list <path>` prints the hits under a path. After fixing copy, run `--write-baseline` and commit it. A false positive goes in `ALLOWED_PHRASES` with a reason and with sign-off first (section 15).
+- Plain en-GB, sentence case, 25 words a sentence at most, no exclamation marks, em dashes or ampersands, one approved word per concept.
+- Never judge anyone's finances.
+- Facts, not recommendations: `docs/compliance/advice-boundary-policy.md` (R1 to R8) and the claims rule outrank everything. Fixed wording is never reworded without the owner.
+- `bun scripts/check-copy.ts` (in `check:laws`) is a ratchet; an `ALLOWED_PHRASES` entry needs sign-off first (section 15).
+
+Detail: [`docs/agents/laws-detail.md`](./docs/agents/laws-detail.md).
 
 ## 12. INDEPENDENT REVIEW LAW
 
@@ -162,27 +108,24 @@ Changing an allow-list, a numeric limit in a test or law, a scanner suppression,
 
 ## 16. ONE HOME PER VALUE LAW
 
-> **Detailed Reference**: Before adding, moving or removing a stored value, a browser storage or cookie key, or a figure shown in more than one place, read [`docs/system/README.md`](./docs/system/README.md).
+Before adding, moving or removing a stored value, a browser storage or cookie key, a shared figure or a route, read [`docs/system/README.md`](./docs/system/README.md).
 
-- **One source of truth per fact.** Every stored fact about a user has one entry in `docs/system/value-map.yaml`, naming the one table and column that holds it. Do not add a second store for a fact that already has a home: read it from its home. A copy is allowed only when the map lists it with its status (`cache`, `derived` and so on) and says what keeps it equal.
-- **One engine function per shared figure.** A figure shown in more than one place is computed by one function in `packages/finance-engine/src`, named in its map entry. Pages, backend services and AI tools read the figure from there. They do not sum balances, apply shares or convert amounts themselves.
-- **Update the map in the same PR.** A PR that adds, moves or removes a database column, a profile field, a browser storage or cookie key, or a shared figure updates the map in the same PR. A new column also goes in its table's `valueMap` in `apps/backend/src/modules/privacy/user-data-registry.ts`. Then run `bun scripts/generate-value-map.ts`.
-- **Guard.** `bun scripts/check-value-map.ts` (part of `check:laws`) fails on a column or browser key with no entry, a path, function, table or column that no longer exists, a malformed entry, a fact with no source of truth, a figure outside the engine, and stale generated views. Known problems are in `scripts/value-map-baseline.json`, each tied to an audit finding. The baseline only shrinks; raising it falls under section 15. Arithmetic that may be a second formula prints as a warning and does not fail the run.
+- Every stored fact has one home and one entry in `docs/system/value-map.yaml`. A figure shown in more than one place is computed by one function in `packages/finance-engine/src`; pages, services and AI tools read it from there.
+- A PR that adds, moves or removes a column, profile field, storage or cookie key, or shared figure updates the map in the same PR (a new column also goes in its table's `valueMap` in `apps/backend/src/modules/privacy/user-data-registry.ts`), then runs `bun scripts/generate-value-map.ts`.
+- A PR that adds or removes a route, or changes which facts or figures a section reads, updates the functionality map (route and section level only) and runs `bun run functionality-map`.
+- `check:laws` checks both maps. Raising a baseline falls under section 15.
 
-### Functionality map (route level)
-
-> **Detailed Reference**: Before adding or removing a route, or changing which facts or figures a page section reads, read [`docs/system/functionality-map/README.md`](./docs/system/functionality-map/README.md).
-
-- **Update the functionality map in the same PR.** A PR that adds or removes a route, or changes which facts or figures a section reads, updates `docs/system/functionality-map/pages/{web|marketing}/<page-id>.yaml` (or `excluded_routes` in `docs/system/functionality-map/index.yaml` for non-UI routes) and runs `bun run functionality-map`. The map stops at section level: no per-control entries (buttons, links, inputs, labels).
-- **Guard.** `bun scripts/check-functionality-map.ts` (part of `check:laws`) fails on invalid schema, duplicate IDs, dead file paths, unknown `value-map.yaml` fact or figure IDs, stale generated views (`overview.md`, `by-fact.md`) or unmapped routes.
+Detail: [`docs/agents/laws-detail.md`](./docs/agents/laws-detail.md).
 
 ## 17. TESTS THAT CATCH FAULTS AND RUN FAST LAW
 
-> **Detailed Reference**: Before adding or changing any test, read [`docs/testing/writing-tests.md`](./docs/testing/writing-tests.md).
+Before adding or changing any test, read [`docs/testing/writing-tests.md`](./docs/testing/writing-tests.md).
 
-- **A test must fail when the code is wrong.** Every test asserts a specific value, output, state or call; `toBeDefined`, `toBeTruthy`, `not.toThrow` or a snapshot is never the only assertion on a behaviour. Each comparison is tested on its edge, just below and just above. Each branch is taken both ways. Inputs are chosen so a wrong operator, a swapped argument or a missing default gives a different answer.
-- **See it fail.** Before trusting a new or changed test, break the code it covers and watch the test fail. A bug-fix test fails before the fix. For a change to logic in `packages/finance-engine`, or in `apps/backend` guards, interceptors, auth or `security/`, run Stryker on the changed files (the command is in the guide) and kill each survivor or give it a row in `docs/testing/mutation-triage.md`.
-- **Never weaken a test to make it pass.** Loosening an assertion or deleting a case needs the reason in the PR description. `.only` and a bare `.skip` are never committed; `skipIf` on a stated condition is allowed.
-- **A test must be quick.** In `apps/web`, `packages/ui` and `apps/marketing`, a test file with no DOM in the test or its source starts with `// @vitest-environment node` (conditions in the guide). No real waiting (fake timers, never a longer timeout), no real network, database or clock in a unit test, no `Math.random` or wall-clock assertions. Import and render only what the test needs. A new or changed unit test file that takes more than 5 seconds on its own needs the reason in the PR description.
-- **Mutation testing stays local.** No workflow runs Stryker (owner decision, 20 November 2026). `bun run mutation <package|all>` is the whole-package check, run about once a month; the floors in `scripts/mutation-baseline.json` fall under section 15.
-- **The PR description has a "Tests" heading** saying which behaviours the tests cover, how each test was seen to fail, and any test weakened, skipped or removed.
+- **A test must fail when the code is wrong.** Assert a specific value, output, state or call; `toBeDefined`, `toBeTruthy`, `not.toThrow` or a snapshot is never the only assertion on a behaviour. Test each comparison on its edge and each branch both ways.
+- **See it fail.** Break the code and watch the test fail. For logic in `packages/finance-engine`, or in `apps/backend` guards, interceptors, auth or `security/`, run Stryker on the changed files and kill each survivor or give it a row in `docs/testing/mutation-triage.md`.
+- **Never weaken a test to make it pass.** Loosening an assertion or deleting a case needs the reason in the PR description. No `.only` or bare `.skip`.
+- **A test must be quick.** A test file with no DOM starts with `// @vitest-environment node`. No real waiting, network, database or clock in a unit test.
+- **Mutation testing stays local.** No workflow runs Stryker.
+- **The PR description has a "Tests" heading**: behaviours covered, how each test was seen to fail, anything weakened, skipped or removed.
+
+Detail: [`docs/agents/laws-detail.md`](./docs/agents/laws-detail.md).
