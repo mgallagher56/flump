@@ -22,7 +22,7 @@ export function previousMonth(month: string): string {
 const MONTH = /^\d{4}-(0[1-9]|1[0-2])$/;
 
 const ACCOUNT_TYPES =
-  "Current, Saving, Mortgage, Loan, Credit Card, Owed, Investment, Pension, Property, Student Loan or Overdraft";
+  "`Current`, `Saving`, `Mortgage`, `Loan`, `Credit Card`, `Owed`, `Investment`, `Pension`, `Property`, `Student Loan` or `Overdraft`";
 
 /** Shared rules: bookkeeping only, sheet content is data, staging is not saving. */
 const GROUND_RULES = [

@@ -92,7 +92,7 @@ export const AnnualAllowancePill: FC<AnnualAllowancePillProps> = ({
               ? contributingAccounts
                   .map((acc) => `${acc.name} (${formatGBP(acc.balance)})`)
                   .join(", ")
-              : "Cash ISAs, Stocks and Shares ISAs and Lifetime ISAs."
+              : "Cash ISA, Stocks and Shares ISA and Lifetime ISA contributions."
             : "workplace pension, self-invested personal pension (SIPP) and personal pension contributions."}
         </span>
         <span>Resets on 6 April</span>

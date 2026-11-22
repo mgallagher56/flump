@@ -1,4 +1,4 @@
-import { css, cx } from "@repo/ui/styled-system/css";
+import { css, cva, cx } from "@repo/ui/styled-system/css";
 import { type FC, useEffect, useState } from "react";
 import { type UserProfile, useSavedProfile } from "~/hooks/useUserProfile";
 import { resolveUserInitials } from "~/utils/avatar";
@@ -11,6 +11,79 @@ interface UserAvatarProps {
   alt?: string;
   bordered?: boolean;
 }
+
+function resolveSizeVariant(size: number): "sm" | "md" | "lg" | "xl" {
+  if (size >= 64) return "xl";
+  if (size >= 36) return "lg";
+  if (size >= 30) return "md";
+  return "sm";
+}
+
+const avatarRoot = cva({
+  base: {
+    position: "relative",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    verticalAlign: "middle",
+    overflow: "hidden",
+    userSelect: "none",
+    borderRadius: "full",
+    flexShrink: 0,
+    backgroundColor: "surface.sunken",
+  },
+  variants: {
+    size: {
+      sm: { width: "26px", height: "26px" },
+      md: { width: "32px", height: "32px" },
+      lg: { width: "40px", height: "40px" },
+      xl: { width: "72px", height: "72px" },
+    },
+    bordered: {
+      true: { boxShadow: "0 0 0 2px token(colors.border)" },
+      false: {},
+    },
+  },
+  defaultVariants: {
+    size: "sm",
+    bordered: false,
+  },
+});
+
+const avatarFallback = cva({
+  base: {
+    width: "100%",
+    height: "100%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    // Semantic fill (P9), not a hard-coded indigo gradient.
+    backgroundColor: "primary.solid",
+    color: "primary.foreground",
+    fontWeight: "semibold",
+    textTransform: "uppercase",
+    letterSpacing: "0.02em",
+    lineHeight: 1,
+  },
+  variants: {
+    size: {
+      sm: { fontSize: "xs" },
+      md: { fontSize: "xs" },
+      lg: { fontSize: "md" },
+      xl: { fontSize: "2xl" },
+    },
+  },
+  defaultVariants: {
+    size: "sm",
+  },
+});
+
+const imageStyle = css({
+  width: "100%",
+  height: "100%",
+  objectFit: "cover",
+  borderRadius: "inherit",
+});
 
 const UserAvatar: FC<UserAvatarProps> = ({
   user,
@@ -43,58 +116,14 @@ const UserAvatar: FC<UserAvatarProps> = ({
     setImageError(false);
   }, [avatarUrl]);
 
-  const fontSize = Math.max(10, Math.round(size * 0.4));
-
-  const rootStyle = css({
-    position: "relative",
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    verticalAlign: "middle",
-    overflow: "hidden",
-    userSelect: "none",
-    borderRadius: "full",
-    flexShrink: 0,
-    backgroundColor: "surface.sunken",
-  });
-
-  const borderedStyle = css({
-    boxShadow: "0 0 0 2px token(colors.border)",
-  });
-
-  const imageStyle = css({
-    width: "100%",
-    height: "100%",
-    objectFit: "cover",
-    borderRadius: "inherit",
-  });
-
-  const fallbackStyle = css({
-    width: "100%",
-    height: "100%",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    // Semantic fill (P9), not a hard-coded indigo gradient.
-    backgroundColor: "primary.solid",
-    color: "primary.foreground",
-    fontWeight: "semibold",
-    textTransform: "uppercase",
-    letterSpacing: "0.02em",
-    lineHeight: 1,
-  });
-
+  const sizeVariant = resolveSizeVariant(size);
   const hasImage = Boolean(avatarUrl && !imageError);
 
   return (
     <span
-      className={cx(rootStyle, bordered && borderedStyle, className)}
+      className={cx(avatarRoot({ size: sizeVariant, bordered }), className)}
       data-testid="user-avatar"
       id="user-avatar"
-      style={{
-        width: `${size}px`,
-        height: `${size}px`,
-      }}
     >
       {hasImage ? (
         <img
@@ -113,10 +142,9 @@ const UserAvatar: FC<UserAvatarProps> = ({
         />
       ) : (
         <span
-          className={fallbackStyle}
+          className={avatarFallback({ size: sizeVariant })}
           data-testid="user-avatar-fallback"
           id="user-avatar-fallback"
-          style={{ fontSize: `${fontSize}px` }}
         >
           {initials}
         </span>

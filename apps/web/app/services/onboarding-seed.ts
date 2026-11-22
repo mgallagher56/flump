@@ -119,7 +119,7 @@ export function buildOnboardingSeedJobs(input: OnboardingSeedInput): OnboardingS
             : []),
         ]),
     ...(input.unsecuredDebt > 0
-      ? [account("Cards and loans baseline", "Credit Card", input.unsecuredDebt)]
+      ? [account("Cards and loans", "Credit Card", input.unsecuredDebt)]
       : []),
     budgetEntry("Monthly Take-Home Income", "income", input.monthlyTakeHome, true),
     // Linked to the saved housing payment (the profile figure saved with these answers, or the

@@ -220,7 +220,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
           "Cash and emergency savings",
           "Workplace and personal pension",
           "Residential Mortgage",
-          "Cards and loans baseline",
+          "Cards and loans",
         ]),
       );
       expect(accounts.every((a) => a.currency === "GBP")).toBe(true);
