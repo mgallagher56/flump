@@ -5,6 +5,7 @@ import { at } from "../../testing/must";
 import { LoggingBankConsentRevoker } from "../banking/bank-consent-revoker";
 import { AccountDeletionService } from "./account-deletion.service";
 import { TOMBSTONE_KEY_ENV_VAR } from "./tombstone-key";
+import { USER_DATA_LOCK_SQL } from "./user-data-lock";
 import { USER_DATA_REGISTRY, USER_LINKED_TABLES } from "./user-data-registry";
 
 /** A DataSource stand-in: every delete reports one row; one tombstone row is kept in memory. */
@@ -124,7 +125,9 @@ describe("AccountDeletionService", () => {
     ]);
     expect(f.ds.transaction).toHaveBeenCalledTimes(2);
     // SEC-F: each sweep declares the erasure reason inside its own transaction.
+    // The erasure transaction first takes the per-user lock it shares with the reset.
     expect(f.managerQuery.mock.calls).toEqual([
+      [USER_DATA_LOCK_SQL, ["user_A"]],
       ["SELECT set_config($1, $2, true)", ["flump.audit_delete", "erasure"]],
       ["SELECT set_config($1, $2, true)", ["flump.audit_delete", "erasure"]],
     ]);
@@ -150,6 +153,23 @@ describe("AccountDeletionService", () => {
     expect(beta).toEqual([
       "account_deleted_beta_access tombstoneId=11111111-1111-4111-8111-111111111111 members=2 invitesUnlinked=2",
     ]);
+  });
+
+  it("takes the per-user lock before it deletes anything, so a concurrent reset waits for it", async () => {
+    const f = fakeDataSource();
+    // Log the lock into the same statement list as the deletes, to see which ran first.
+    f.managerQuery.mockImplementation(async (sql: string) => {
+      if (sql === USER_DATA_LOCK_SQL) f.deletes.push("LOCK");
+      return [];
+    });
+    const service = new AccountDeletionService(
+      f.ds as never,
+      identity,
+      new LoggingBankConsentRevoker(),
+    );
+    await service.deleteAccount("user_A");
+    expect(f.deletes[0]).toBe("LOCK");
+    expect(f.deletes.filter((s) => s === "LOCK")).toHaveLength(1);
   });
 
   it("answers identity_pending when WorkOS fails, and a retry finishes the job", async () => {

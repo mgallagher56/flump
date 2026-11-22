@@ -75,6 +75,20 @@ const invoiceStateConflict = (message: string) =>
     message,
   });
 
+/**
+ * Reads the caller's invoice with a row lock (SELECT ... FOR UPDATE) held until the transaction
+ * ends. Every lifecycle change checks the status and then writes, so two concurrent calls must
+ * not both pass the check: without the lock, two syncs could each create a TaxRecord, and a void
+ * could overwrite a payment. Must be called inside a transaction.
+ */
+function findInvoiceForUpdate(
+  invoiceRepo: Repository<Invoice>,
+  id: string,
+  userId: string,
+): Promise<Invoice | null> {
+  return invoiceRepo.findOne({ where: { id, userId }, lock: { mode: "pessimistic_write" } });
+}
+
 function addDaysToIsoDate(isoDate: string, days: number): string {
   const base = new Date(`${isoDate}T00:00:00.000Z`);
   base.setUTCDate(base.getUTCDate() + days);
@@ -612,7 +626,7 @@ export class InvoicingService {
         if (claim === "stale") throw preconditionFailed();
       }
 
-      const invoice = await invoiceRepo.findOne({ where: { id, userId } });
+      const invoice = await findInvoiceForUpdate(invoiceRepo, id, userId);
       if (!invoice) throw invoiceNotFound();
 
       if (invoice.status !== "draft") {
@@ -705,7 +719,7 @@ export class InvoicingService {
       const workLogRepo = em.getRepository(WorkLogEntry);
       const invoiceRepo = em.getRepository(Invoice);
 
-      const invoice = await invoiceRepo.findOne({ where: { id, userId } });
+      const invoice = await findInvoiceForUpdate(invoiceRepo, id, userId);
       if (!invoice) throw invoiceNotFound();
 
       if (invoice.status !== "draft") {
@@ -736,7 +750,7 @@ export class InvoicingService {
         if (claim === "stale") throw preconditionFailed();
       }
 
-      const invoice = await invoiceRepo.findOne({ where: { id, userId } });
+      const invoice = await findInvoiceForUpdate(invoiceRepo, id, userId);
       if (!invoice) throw invoiceNotFound();
 
       if (invoice.status !== "draft") {
@@ -786,7 +800,7 @@ export class InvoicingService {
         if (claim === "stale") throw preconditionFailed();
       }
 
-      const invoice = await invoiceRepo.findOne({ where: { id, userId } });
+      const invoice = await findInvoiceForUpdate(invoiceRepo, id, userId);
       if (!invoice) throw invoiceNotFound();
 
       if (invoice.status !== "issued") {
@@ -816,7 +830,7 @@ export class InvoicingService {
         if (claim === "stale") throw preconditionFailed();
       }
 
-      const invoice = await invoiceRepo.findOne({ where: { id, userId } });
+      const invoice = await findInvoiceForUpdate(invoiceRepo, id, userId);
       if (!invoice) throw invoiceNotFound();
 
       if (invoice.status !== "draft" && invoice.status !== "issued") {
@@ -850,7 +864,7 @@ export class InvoicingService {
         if (claim === "stale") throw preconditionFailed();
       }
 
-      const invoice = await invoiceRepo.findOne({ where: { id, userId } });
+      const invoice = await findInvoiceForUpdate(invoiceRepo, id, userId);
       if (!invoice) throw invoiceNotFound();
 
       if (invoice.status !== "paid") {

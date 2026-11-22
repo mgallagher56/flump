@@ -12,11 +12,14 @@ const OWNER_B = ["user", "01HZX3Q9V7C2M8N4P6R0S5T1WB"].join("_");
 const T0 = new Date("2026-11-21T10:00:00.000Z");
 const T1 = new Date("2026-11-21T11:00:00.000Z");
 
+type FindOpts = { where: Record<string, unknown>; lock?: { mode: string } };
+
 function createInMemoryHarness() {
   const settingsRows: InvoicingSettings[] = [];
   const workLogRows: WorkLogEntry[] = [];
   const invoiceRows: Invoice[] = [];
   const taxRecordRows: TaxRecord[] = [];
+  const rowLocks = new Map<string, Promise<void>>();
   let seq = 1;
   const nextUuid = () => `00000000-0000-4000-8000-${String(seq++).padStart(12, "0")}`;
 
@@ -40,11 +43,16 @@ function createInMemoryHarness() {
   const makeRepo = <T extends { id: string; userId: string; createdAt: Date; updatedAt: Date }>(
     target: unknown,
     store: T[],
+    copyOnRead = false,
   ) => {
     const repo = {
       target,
       findOne: vi.fn(async ({ where }: { where: Record<string, unknown> }) => {
-        return store.find((r) => matchesWhere(r, where)) ?? null;
+        // Invoices are read as a copy, as a database read is: a change is seen by other
+        // transactions only once it is saved, so the race tests below see what Postgres would.
+        const row = store.find((r) => matchesWhere(r, where));
+        if (!row) return null;
+        return copyOnRead ? { ...row } : row;
       }),
       find: vi.fn(async ({ where }: { where?: Record<string, unknown> } = {}) => {
         if (!where) return [...store];
@@ -80,16 +88,52 @@ function createInMemoryHarness() {
       manager: {
         transaction: async <R>(
           cb: (em: { getRepository: (t: unknown) => unknown }) => Promise<R>,
-        ) =>
-          cb({
-            getRepository: (t: unknown) => {
-              if (t === InvoicingSettings) return settingsRepo;
-              if (t === WorkLogEntry) return workLogRepo;
-              if (t === Invoice) return invoiceRepo;
-              if (t === TaxRecord) return taxRecordRepo;
-              throw new Error(`Unknown entity ${String(t)}`);
-            },
-          }),
+        ) => {
+          // Models Postgres row locks: a findOne with pessimistic_write waits until any other
+          // transaction holding that row's lock has finished, and holds it until this one ends.
+          const held: Array<() => void> = [];
+          const lockAware = <
+            T extends { target: unknown; findOne: (opts: FindOpts) => Promise<unknown> },
+          >(
+            r: T,
+          ) =>
+            new Proxy(r, {
+              get(target, prop, receiver) {
+                if (prop !== "findOne") return Reflect.get(target, prop, receiver);
+                return async (opts: FindOpts) => {
+                  if (opts.lock?.mode === "pessimistic_write") {
+                    const key = `${(target.target as { name: string }).name}:${String(opts.where.id)}`;
+                    while (rowLocks.has(key)) await rowLocks.get(key);
+                    let release = () => {};
+                    rowLocks.set(
+                      key,
+                      new Promise<void>((resolve) => {
+                        release = () => {
+                          rowLocks.delete(key);
+                          resolve();
+                        };
+                      }),
+                    );
+                    held.push(release);
+                  }
+                  return target.findOne(opts);
+                };
+              },
+            });
+          try {
+            return await cb({
+              getRepository: (t: unknown) => {
+                if (t === InvoicingSettings) return lockAware(settingsRepo);
+                if (t === WorkLogEntry) return lockAware(workLogRepo);
+                if (t === Invoice) return lockAware(invoiceRepo);
+                if (t === TaxRecord) return lockAware(taxRecordRepo);
+                throw new Error(`Unknown entity ${String(t)}`);
+              },
+            });
+          } finally {
+            for (const release of held) release();
+          }
+        },
       },
     };
 
@@ -137,7 +181,7 @@ function createInMemoryHarness() {
 
   const settingsRepo = makeRepo<InvoicingSettings>(InvoicingSettings, settingsRows);
   const workLogRepo = makeRepo<WorkLogEntry>(WorkLogEntry, workLogRows);
-  const invoiceRepo = makeRepo<Invoice>(Invoice, invoiceRows);
+  const invoiceRepo = makeRepo<Invoice>(Invoice, invoiceRows, true);
   const taxRecordRepo = makeRepo<TaxRecord>(TaxRecord, taxRecordRows);
 
   // Use plain array filtering in listWorkLogs / listInvoices while keeping claimVersion working
@@ -527,5 +571,79 @@ describe("InvoicingService & InvoicingController (E37 S1)", () => {
       .invoice;
     expect(taxRecordRows).toHaveLength(1);
     expect(resynced.taxRecordId).toBe(taxRecordRows[0]?.id);
+  });
+
+  describe("concurrent lifecycle calls lock the invoice row", () => {
+    async function issuedInvoice() {
+      const h = createInMemoryHarness();
+      const entry = await h.service.createWorkLog(OWNER_A, {
+        date: "2026-11-18",
+        description: "System design",
+        hoursWorked: 2,
+        hourlyRate: 100,
+      });
+      const { invoice } = await h.service.createInvoice(OWNER_A, {
+        workLogEntryIds: [entry.entry.id],
+        clientName: "Acme Ltd",
+        issueDate: "2026-11-18",
+        vatRatePct: null,
+      });
+      await h.service.issueInvoice(OWNER_A, invoice.id);
+      return { ...h, id: invoice.id };
+    }
+
+    it("two concurrent syncs to tax create exactly one TaxRecord", async () => {
+      const h = await issuedInvoice();
+      await h.service.markInvoicePaid(OWNER_A, h.id, { paidDate: "2026-11-21" });
+      const [a, b] = await Promise.all([
+        h.service.syncInvoiceToTax(OWNER_A, h.id),
+        h.service.syncInvoiceToTax(OWNER_A, h.id),
+      ]);
+      expect(h.taxRecordRows).toHaveLength(1);
+      expect(a.invoice.taxRecordId).toBe(h.taxRecordRows[0]?.id);
+      expect(b.invoice.taxRecordId).toBe(h.taxRecordRows[0]?.id);
+    });
+
+    it("two concurrent mark-paid calls: one succeeds, the other is a 409", async () => {
+      const h = await issuedInvoice();
+      const results = await Promise.allSettled([
+        h.service.markInvoicePaid(OWNER_A, h.id, { paidDate: "2026-11-20" }),
+        h.service.markInvoicePaid(OWNER_A, h.id, { paidDate: "2026-11-21" }),
+      ]);
+      expect(results.map((r) => r.status)).toEqual(["fulfilled", "rejected"]);
+      expect((results[1] as PromiseRejectedResult).reason).toBeInstanceOf(ConflictException);
+      expect(h.invoiceRows[0]?.paidDate).toBe("2026-11-20");
+    });
+
+    it("a void racing a mark-paid cannot leave a paid invoice marked void", async () => {
+      const h = await issuedInvoice();
+      const results = await Promise.allSettled([
+        h.service.markInvoicePaid(OWNER_A, h.id, { paidDate: "2026-11-21" }),
+        h.service.voidInvoice(OWNER_A, h.id),
+      ]);
+      expect(results.map((r) => r.status)).toEqual(["fulfilled", "rejected"]);
+      expect(h.invoiceRows[0]?.status).toBe("paid");
+    });
+
+    it("a second concurrent issue of the same draft is a 409", async () => {
+      const h = createInMemoryHarness();
+      const entry = await h.service.createWorkLog(OWNER_A, {
+        date: "2026-11-18",
+        description: "System design",
+        hoursWorked: 2,
+        hourlyRate: 100,
+      });
+      const { invoice } = await h.service.createInvoice(OWNER_A, {
+        workLogEntryIds: [entry.entry.id],
+        clientName: "Acme Ltd",
+        issueDate: "2026-11-18",
+        vatRatePct: null,
+      });
+      const results = await Promise.allSettled([
+        h.service.issueInvoice(OWNER_A, invoice.id),
+        h.service.issueInvoice(OWNER_A, invoice.id),
+      ]);
+      expect(results.map((r) => r.status)).toEqual(["fulfilled", "rejected"]);
+    });
   });
 });

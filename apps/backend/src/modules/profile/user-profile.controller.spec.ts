@@ -70,6 +70,8 @@ describe("UserProfileController", () => {
     const dataSource = {
       transaction: vi.fn(async (cb: (manager: unknown) => unknown) =>
         cb({
+          // The per-user lock the reset takes first (lockUserData).
+          query: vi.fn().mockResolvedValue([]),
           getRepository: (entity: { name: string }) =>
             byEntity[entity.name] ?? { delete: vi.fn().mockResolvedValue({ affected: 0 }) },
         }),
