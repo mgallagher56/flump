@@ -644,6 +644,8 @@ describe("InvoicingService & InvoicingController (E37 S1)", () => {
         h.service.issueInvoice(OWNER_A, invoice.id),
       ]);
       expect(results.map((r) => r.status)).toEqual(["fulfilled", "rejected"]);
+      expect((results[1] as PromiseRejectedResult).reason).toBeInstanceOf(ConflictException);
+      expect(h.invoiceRows[0]?.status).toBe("issued");
     });
   });
 });

@@ -270,7 +270,7 @@ describe("UserProfileService (Deep Module)", () => {
     const locked = build({ accountDeletion: { isErased } });
     mockUserProfileRepo.findOne.mockResolvedValueOnce({ userId: "user-123" });
     await locked.resetFinancialData("user-123");
-    expect(mockManagerQuery).toHaveBeenCalledWith(USER_DATA_LOCK_SQL, ["user-123"]);
+    expect(mockManagerQuery).toHaveBeenCalledWith(USER_DATA_LOCK_SQL, ["user-data:user-123"]);
     const lockOrder = at(mockManagerQuery.mock.invocationCallOrder, 0);
     // The check inside the transaction (the one given the manager) runs after the lock.
     const inTx = isErased.mock.calls.findIndex((call) => call[1] !== undefined);
@@ -287,7 +287,12 @@ describe("UserProfileService (Deep Module)", () => {
     await expect(guarded.resetFinancialData("user-gone")).rejects.toThrow(
       "This account has been deleted.",
     );
-    expect(mockManagerQuery).toHaveBeenCalledWith(USER_DATA_LOCK_SQL, ["user-gone"]);
+    expect(mockManagerQuery).toHaveBeenCalledWith(USER_DATA_LOCK_SQL, ["user-data:user-gone"]);
+    // The refusing check is the second one (inside the transaction), and it runs after the lock.
+    expect(isErased).toHaveBeenCalledTimes(2);
+    expect(at(mockManagerQuery.mock.invocationCallOrder, 0)).toBeLessThan(
+      at(isErased.mock.invocationCallOrder, 1),
+    );
     expect(mockAccountRepo.delete).not.toHaveBeenCalled();
     expect(mockUserProfileRepo.save).not.toHaveBeenCalled();
   });
