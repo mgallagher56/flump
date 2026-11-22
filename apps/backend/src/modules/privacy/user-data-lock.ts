@@ -11,5 +11,6 @@ export const USER_DATA_LOCK_SQL = "SELECT pg_advisory_xact_lock(hashtextextended
  * released when the transaction ends.
  */
 export async function lockUserData(manager: EntityManager, userId: string): Promise<void> {
-  await manager.query(USER_DATA_LOCK_SQL, [userId]);
+  // Namespaced like the other per-user locks (`terms:`, `imports:`).
+  await manager.query(USER_DATA_LOCK_SQL, [`user-data:${userId}`]);
 }

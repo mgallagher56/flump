@@ -127,7 +127,7 @@ describe("AccountDeletionService", () => {
     // SEC-F: each sweep declares the erasure reason inside its own transaction.
     // The erasure transaction first takes the per-user lock it shares with the reset.
     expect(f.managerQuery.mock.calls).toEqual([
-      [USER_DATA_LOCK_SQL, ["user_A"]],
+      [USER_DATA_LOCK_SQL, ["user-data:user_A"]],
       ["SELECT set_config($1, $2, true)", ["flump.audit_delete", "erasure"]],
       ["SELECT set_config($1, $2, true)", ["flump.audit_delete", "erasure"]],
     ]);
