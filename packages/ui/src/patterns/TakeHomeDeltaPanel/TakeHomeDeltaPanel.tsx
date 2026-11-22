@@ -38,6 +38,8 @@ export interface TakeHomeDeltaPanelProps {
   /** Tax year whose rates were used. */
   ratesYear: string;
   isFallback: boolean;
+  /** "provisional": the rates for calendarYear are loaded but not yet confirmed. */
+  kind?: "fallback" | "provisional";
   /** Tax year the calendar is in, for the fallback banner. */
   calendarYear: string;
   isUnverifiedEstimate: boolean;
@@ -86,6 +88,7 @@ export const TakeHomeDeltaPanel: FC<TakeHomeDeltaPanelProps> = ({
   components,
   ratesYear,
   isFallback,
+  kind,
   calendarYear,
   isUnverifiedEstimate,
   assumptions,
@@ -173,6 +176,7 @@ export const TakeHomeDeltaPanel: FC<TakeHomeDeltaPanelProps> = ({
       <TaxRatesStatusBanner
         calendarYear={calendarYear}
         isFallback={isFallback}
+        kind={kind}
         ratesYear={ratesYear}
       />
 

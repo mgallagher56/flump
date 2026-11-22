@@ -574,7 +574,8 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
   // A debt changed to a type that cannot be overdrawn turns positive, past months too (CH-4).
   const typeFlipsSign = isEditAccount && typeChangeFlipsSign(selectedAccount.type, accountType);
   // A saved joint account edited into an ISA or pension is saved as sole: say so (E34).
-  const becomesSole = isEditAccount && selectedAccount.ownership === "joint" && !fieldSet.joint;
+  const startedJoint = isEditAccount && selectedAccount.ownership === "joint";
+  const becomesSole = startedJoint && !fieldSet.joint;
   const propertyIsRental = wantedKind === "rental";
 
   return (
@@ -806,7 +807,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
                 )}
               </FormField>
             ) : null}
-            {fieldSet.joint && (partnerMode || formInput.ownership === "joint") ? (
+            {fieldSet.joint && (partnerMode || startedJoint || formInput.ownership === "joint") ? (
               <>
                 <JointOwnershipFields
                   ownership={formInput.ownership}

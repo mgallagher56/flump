@@ -302,4 +302,29 @@ describe("TakeHomeDeltaPanel assumptions and pension pence", () => {
       unmount();
     }
   });
+
+  it("wires kind='provisional' and kind='fallback' to TaxRatesStatusBanner", () => {
+    const { rerender } = renderPanel({
+      calendarYear: "2027/28",
+      ratesYear: "2027/28",
+      isFallback: false,
+      kind: "provisional",
+    });
+    expect(screen.getByTestId("tax-rates-status-banner").textContent).toContain(
+      "2027/28 rates are provisional",
+    );
+
+    rerender(
+      <TakeHomeDeltaPanel
+        {...base}
+        calendarYear="2028/29"
+        ratesYear="2027/28"
+        isFallback
+        kind="fallback"
+      />,
+    );
+    expect(screen.getByTestId("tax-rates-status-banner").textContent).toContain(
+      "2028/29 rates are not in Flump yet",
+    );
+  });
 });

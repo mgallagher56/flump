@@ -436,4 +436,19 @@ describe("TaxTrapCalculator in 2027/28 (Scottish rates not published)", () => {
     });
     expect(screen.getByTestId("tax-trap-outcomes")).toBeDefined();
   });
+
+  it("shows the provisional banner in 2027/28 and the fallback banner in 2028/29", () => {
+    const { unmount } = render(
+      <TaxTrapCalculator now={new Date("2027-05-01T12:00:00Z")} persistSeed={false} />,
+    );
+    expect(screen.getByTestId("tax-rates-status-banner").textContent).toContain(
+      "2027/28 rates are provisional",
+    );
+    unmount();
+
+    render(<TaxTrapCalculator now={new Date("2028-05-01T12:00:00Z")} persistSeed={false} />);
+    expect(screen.getByTestId("tax-rates-status-banner").textContent).toContain(
+      "2028/29 rates are not in Flump yet",
+    );
+  });
 });

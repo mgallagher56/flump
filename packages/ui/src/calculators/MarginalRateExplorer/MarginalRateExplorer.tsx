@@ -4,6 +4,7 @@ import {
   getUkTaxYearRules,
   marginalRateCurve,
   persistOnboardingSeed,
+  ratesContextForYear,
   SUPPORTED_UK_TAX_YEARS,
   scottishRatesRefusal,
   studentLoanThresholdNotPublishedNotice,
@@ -226,7 +227,9 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
   // The engine is always given an explicit year, so its own `isFallback` is always false. The
   // banner follows the calendar instead: today's tax year has no rates yet and the year in use is
   // the one standing in for it.
-  const isFallback = context.isFallback && resolveYear(taxYear) === context.ratesYear;
+  const resolvedYear = resolveYear(taxYear);
+  const isFallback = context.isFallback && resolvedYear === context.ratesYear;
+  const bannerKind = ratesContextForYear(resolvedYear, context).kind;
   // Refused, never carried forward: Scotland in a year with no Scottish rates has no estimate.
   // The figures below are then worked out on the other UK bands only so the hooks run in the same
   // order every render; none of them is shown, the refusal line is.
@@ -552,7 +555,7 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
       />
       <TakeHomeDeltaPanel
         assumptions={pension ? pension.after.assumptions : delta.before.assumptions}
-        calendarYear={context.calendarYear}
+        calendarYear={bannerKind === "provisional" ? resolvedYear : context.calendarYear}
         collapseTable
         components={delta.components}
         disclosureExtra={
@@ -575,6 +578,7 @@ export const MarginalRateExplorer: FC<MarginalRateExplorerProps> = ({
         deltaGross={delta.deltaGross}
         headingLevel={sectionHeading}
         isFallback={isFallback}
+        kind={bannerKind}
         isUnverifiedEstimate={unverified}
         pensionPreview={
           pension
