@@ -502,3 +502,5 @@ An agent in the Antigravity editor asked whether "one task per conversation" mea
 - **FM5 (Single script in `check:laws`):** `scripts/check-functionality-map.ts` verifies both structural/cross-reference rules and generated-view freshness (`overview.md`, `actions-index.md`, `by-fact.md`) in one `check:laws` entry, paired with `bun run functionality-map` (`scripts/generate-functionality-map.ts`) as the generator.
 - **Architecture:** Sharded page YAML (`docs/system/functionality-map/pages/{web|marketing}/<page-id>.yaml`), with a one-way cross-reference from the Functionality Map to `docs/system/value-map.yaml`.
 
+> Superseded in part on 22 November 2026 (owner decision in chat): the map is cut to route level, because it is for AI agents only and hand-kept control labels go stale. Layer 3 and 4 entries (capabilities and actions) and `actions-index.md` are removed, so FM4 no longer applies and FM5 keeps only `overview.md` and `by-fact.md` fresh. The current format is in `docs/system/functionality-map/README.md`.
+
