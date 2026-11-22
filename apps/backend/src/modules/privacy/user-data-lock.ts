@@ -1,7 +1,7 @@
 import type { EntityManager } from "typeorm";
 
 /** The statement that serialises a user's reset and erasure. Exported so tests can match it. */
-export const USER_DATA_LOCK_SQL = "SELECT pg_advisory_xact_lock(hashtextextended($1, 0))";
+export const DATA_LOCK_STATEMENT = "SELECT pg_advisory_xact_lock(hashtextextended($1, 0))";
 
 /**
  * Takes the transaction-scoped advisory lock on one user's data. The financial-data reset and
@@ -12,5 +12,5 @@ export const USER_DATA_LOCK_SQL = "SELECT pg_advisory_xact_lock(hashtextextended
  */
 export async function lockUserData(manager: EntityManager, userId: string): Promise<void> {
   // Namespaced like the other per-user locks (`terms:`, `imports:`).
-  await manager.query(USER_DATA_LOCK_SQL, [`user-data:${userId}`]);
+  await manager.query(DATA_LOCK_STATEMENT, [`user-data:${userId}`]);
 }
