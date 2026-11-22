@@ -84,14 +84,7 @@ A per-spawn `model` always overrides an agent file's pinned default, and every w
 
 ## 7. RTK TOKEN-SAVING LAW (RUST TOKEN KILLER)
 
-[`rtk`](https://github.com/rtk-ai/rtk) is a CLI proxy that compresses noisy command output (60-90% fewer tokens). When running a command it supports, agents MUST prefix it with `rtk`.
-
-- Applicable: `git` (status, diff, log, ...), `gh`, `bun`/`npm`/`pnpm` scripts (`lint`, `check-types`, `test`, `build`), `tsc`, `vitest`, `playwright`, `docker`, and file/search builtins (`ls`, `grep`, `find`, `cat`/read).
-  - Example: `rtk git status`, `rtk bun run test`, `rtk bun run build`.
-- The hook only rewrites a command at the start of a line. After a leading `cd ... &&`, and inside pipes, loops, subshells and wrappers, type the `rtk` prefix yourself.
-- Never dump a whole file from another ref with `git show <ref>:<path>`: search it or take a line range.
-- The most-missed commands, `rtk err`, `rtk test`, `rtk bypass`, `rtk discover`, what `rtk` does not apply to and how to install it are in [`docs/agents/rtk.md`](./docs/agents/rtk.md).
-- The Section 5 pre-flight checks must still be executed and verified; `rtk` only changes how their output is displayed (e.g. `rtk bun run lint`).
+A hook adds the [`rtk`](https://github.com/rtk-ai/rtk) prefix to supported commands, so there is nothing to do for a command at the start of a line. The hook does nothing after a leading `cd ... &&` or inside pipes, loops, subshells and wrappers: type `rtk` yourself there. Never dump a whole file from another ref with `git show <ref>:<path>`. Detail: [`docs/agents/rtk.md`](./docs/agents/rtk.md).
 
 ## 8. CONTEXT AND TOKEN EFFICIENCY LAW
 
