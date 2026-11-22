@@ -3886,11 +3886,11 @@ All 32 faults are killed by the new guide content tests in `ToolGuide.test.tsx`.
 
 ## Property transaction tax (E39 S1b, 22 November 2026)
 
-Stryker on `packages/finance-engine/src/uk-property-transaction-tax.ts` at `02fb9cd36`: 101 killed, 2 survived, both equivalent. Line numbers are the current file's (the survivor reported at L239 is now L241).
+Stryker on `packages/finance-engine/src/uk-property-transaction-tax.ts` after the SDLT whole-pound rounding change (22 November 2026): 104 killed, 2 survived, both equivalent. The same two survived at `02fb9cd36` (101 killed), at L204 and L239.
 
 ### `src/uk-property-transaction-tax.ts`
 
 | Line | Fault                                               | Class      | Reason                                                                                                       |
 | ---- | --------------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------ |
-| L204 | EqualityOperator `propertyPriceGbp >= band.fromGbp` | Equivalent | At equality the slice is min(price, upper) - fromGbp = 0, and round2(0) = 0, the same 0 the guard returns.   |
-| L241 | EqualityOperator `input.propertyPriceGbp >= 0`      | Equivalent | A price of exactly 0 then becomes round2(0) = 0, the same 0 the fallback gives, so every band slice stays 0. |
+| L207 | EqualityOperator `propertyPriceGbp >= band.fromGbp` | Equivalent | At equality the slice is min(price, upper) - fromGbp = 0, and round2(0) = 0, the same 0 the guard returns.   |
+| L244 | EqualityOperator `input.propertyPriceGbp >= 0`      | Equivalent | A price of exactly 0 then becomes round2(0) = 0, the same 0 the fallback gives, so every band slice stays 0. |

@@ -46,7 +46,7 @@ export interface PropertyTransactionTaxBandBreakdown {
   ratePct: number;
   /** Portion of the property price falling in this band, in pounds. */
   taxableSliceGbp: number;
-  /** Tax due on this band, in pounds (rounded to pence). */
+  /** Tax due on this band, in pounds (rounded to pence for every regime; only the SDLT total is floored). */
   taxGbp: number;
 }
 
@@ -59,7 +59,10 @@ export interface PropertyTransactionTaxResult {
   isFirstTimeBuyer: boolean;
   /** True when the regime has first-time buyer relief and the purchase qualifies for it. */
   firstTimeBuyerReliefApplied: boolean;
-  /** Total estimated tax in pounds (rounded to pence). */
+  /**
+   * Total estimated tax in pounds. SDLT is rounded down to the whole pound (HMRC SDLTM00050);
+   * LBTT and LTT stay in pence, as no published rounding rule for them was found.
+   */
   taxGbp: number;
   /** Effective tax rate as a percentage of `propertyPriceGbp` (2 decimal places), or 0 at £0. */
   effectiveRatePct: number;
@@ -249,7 +252,11 @@ export function calculatePropertyTransactionTax(
     propertyPriceGbp,
     isFirstTimeBuyer,
   );
-  const { totalTaxGbp, breakdown } = calculateBandedTax(propertyPriceGbp, bands);
+  const banded = calculateBandedTax(propertyPriceGbp, bands);
+  const breakdown = banded.breakdown;
+  // SDLT: "The amount calculated is round down to the nearest pound" (HMRC SDLTM00050), applied
+  // to the total only. LBTT and LTT keep pence: no published rounding rule was found for them.
+  const totalTaxGbp = meta.regime === "SDLT" ? Math.floor(banded.totalTaxGbp) : banded.totalTaxGbp;
   const effectiveRatePct =
     propertyPriceGbp > 0 ? round2((totalTaxGbp / propertyPriceGbp) * 100) : 0;
 

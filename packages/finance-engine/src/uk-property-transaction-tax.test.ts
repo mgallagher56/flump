@@ -36,6 +36,11 @@ describe("UK property transaction tax engine (E39 S1b, MA7)", () => {
       { price: 250_000, expectedTax: 2_500, expectedEffectiveRate: 1 },
       // Just above £250,000: £2,500 + £100 * 5% = £2,505
       { price: 250_100, expectedTax: 2_505, expectedEffectiveRate: 1 },
+      // Floor edge (SDLT total rounds down to the pound, SDLTM00050):
+      // £250,019: £2,500 + £19 * 5% (£0.95) = £2,500.95 -> £2,500; 2,500 / 250,019 = 0.99992% -> 1
+      { price: 250_019, expectedTax: 2_500, expectedEffectiveRate: 1 },
+      // £250,020: £2,500 + £20 * 5% (£1.00) = £2,501.00 exactly -> £2,501; 2,501 / 250,020 = 1.0003% -> 1
+      { price: 250_020, expectedTax: 2_501, expectedEffectiveRate: 1 },
       // Mid-band £350,000: £125,000 * 2% (£2,500) + £100,000 * 5% (£5,000) = £7,500
       { price: 350_000, expectedTax: 7_500, expectedEffectiveRate: 2.14 },
       // Band 3 boundary £925,000: £2,500 + £675,000 * 5% (£33,750) = £36,250
@@ -106,13 +111,15 @@ describe("UK property transaction tax engine (E39 S1b, MA7)", () => {
       expect(at500k.firstTimeBuyerReliefApplied).toBe(true);
 
       // £500,001 (cliff edge over £500,000): standard rates apply!
-      // £125,000 * 2% (£2,500) + £250,001 * 5% (£12,500.05) = £15,000.05
+      // £125,000 * 2% (£2,500) + £250,001 * 5% (£12,500.05) = £15,000.05, rounded down to the
+      // pound (SDLTM00050) -> £15,000; the £250,001 band row keeps pence (£12,500.05)
       const above500k = calculatePropertyTransactionTax({
         propertyPriceGbp: 500_001,
         jurisdiction: "ENGLAND_NI",
         isFirstTimeBuyer: true,
       });
-      expect(above500k.taxGbp).toBe(15_000.05);
+      expect(above500k.taxGbp).toBe(15_000);
+      expect(above500k.bands[2]?.taxGbp).toBe(12_500.05);
       expect(above500k.isFirstTimeBuyer).toBe(true);
       expect(above500k.firstTimeBuyerReliefApplied).toBe(false);
     });
