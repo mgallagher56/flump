@@ -32,6 +32,27 @@ describe("LoanFromPaymentTool", () => {
     expect(text).toContain("Property price ~£210,000, loan to value 86%");
   });
 
+  it("shows a part-year term to two decimals in the note and the term pill", () => {
+    // 235 months / 12 = 19.58333... years, shown as 19.58 (en-GB, at most 2 decimals).
+    render(
+      <LoanFromPaymentTool
+        annualRatePct={4.5}
+        buyingCostsGbp={null}
+        depositGbp={null}
+        monthlyPaymentGbp={1000}
+        referenceDate={new Date("2026-11-21T00:00:00Z")}
+        termYears={235 / 12}
+        {...noop}
+      />,
+    );
+    const text = screen.getByTestId("loan-from-payment-result").textContent ?? "";
+    expect(text).toContain("Repayment mortgage over 19.58 years");
+    expect(text).not.toContain("19.583");
+    expect(
+      (screen.getByRole("textbox", { name: "Term in years input" }) as HTMLInputElement).value,
+    ).toBe("19.58");
+  });
+
   it("uses the LTV default rate range when deposit is set and rate is empty", () => {
     render(
       <LoanFromPaymentTool
