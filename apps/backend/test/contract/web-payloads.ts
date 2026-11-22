@@ -48,7 +48,7 @@ export const ONBOARDING_ACCOUNTS = [
     isCurrent: true,
   },
   { name: "Residential Mortgage", type: "Mortgage", balance: 200000, isCurrent: true },
-  { name: "Cards and loans baseline", type: "Credit Card", balance: 2000, isCurrent: true },
+  { name: "Cards and loans", type: "Credit Card", balance: 2000, isCurrent: true },
 ];
 
 /** POST /budget-entries, one per seeded baseline entry. */
