@@ -7,6 +7,9 @@
 \*            AccountDeletionService.deleteAccount, steps (b) and (b2)
 \*   Lock     apps/backend/src/modules/privacy/user-data-lock.ts lockUserData
 \*   Guard    apps/backend/src/auth/auth.guard.ts (isErased before the handler)
+\*   Fence    apps/backend/src/modules/privacy/user-data-write-fence.ts
+\*            UserDataWriteFence: the shared lockUserData and the tombstone
+\*            recheck at the start of every transaction of a signed-in request
 \*   Reset    apps/backend/src/modules/profile/user-profile.service.ts
 \*            UserProfileService.resetFinancialData
 \*
@@ -24,7 +27,7 @@ CONSTANTS
     Requests,         \* in-flight authenticated requests (model values)
     ResetTakesLock,   \* resetFinancialData takes lockUserData (code: TRUE)
     SecondSweep,      \* deleteAccount runs the straggler sweep (b2) (code: TRUE)
-    RequestsLock      \* what-if: writes take lockUserData and recheck (code: FALSE)
+    RequestsLock      \* writes take the shared lockUserData and recheck (code: TRUE)
 
 Tables == <<"accounts", "profile">>   \* stands for USER_DATA_REGISTRY order
 TableIds == 1..Len(Tables)
@@ -34,19 +37,22 @@ VARIABLES
     ePc,        \* erasure: "idle" | "sweep1" | "sweep2" | "done"
     eIdx,       \* next table the current sweep deletes from
     tombstone,  \* the tombstone has committed, so isErased answers true
-    lock,       \* pg_advisory_xact_lock on user-data:<id>: "none" | "erasure" | "reset" | a request
+    lock,       \* exclusive pg_advisory_xact_lock on user-data:<id>: "none" | "erasure" | "reset"
+    shared,     \* requests holding pg_advisory_xact_lock_shared on the same key
     rows,       \* committed rows of the user's, by table and writer
     late,       \* rows committed after the straggler sweep passed their table
     rPc,        \* request: "start" | "passed" | "locked" | "checked" | "done" | "refused"
     sPc         \* reset: "start" | "prechecked" | "locked" | "checked" | "done" | "refused"
 
-vars == <<ePc, eIdx, tombstone, lock, rows, late, rPc, sPc>>
+vars == <<ePc, eIdx, tombstone, lock, shared, rows, late, rPc, sPc>>
 
 TypeOK ==
     /\ ePc \in {"idle", "sweep1", "sweep2", "done"}
     /\ eIdx \in 1..(Len(Tables) + 1)
     /\ tombstone \in BOOLEAN
-    /\ lock \in {"none", "erasure", "reset"} \cup Requests
+    /\ lock \in {"none", "erasure", "reset"}
+    /\ shared \subseteq Requests
+    /\ (lock # "none" => shared = {})
     /\ rows \in [TableIds -> SUBSET Writers]
     /\ late \in [TableIds -> SUBSET Writers]
     /\ rPc \in [Requests -> {"start", "passed", "locked", "checked", "done", "refused"}]
@@ -57,6 +63,7 @@ Init ==
     /\ eIdx = 1
     /\ tombstone = FALSE
     /\ lock = "none"
+    /\ shared = {}
     /\ rows = [t \in TableIds |-> {"existing"}]
     /\ late = [t \in TableIds |-> {}]
     /\ rPc = [r \in Requests |-> "start"]
@@ -70,21 +77,24 @@ Commit(w, t) ==
     /\ rows' = [rows EXCEPT ![t] = @ \cup {w}]
     /\ late' = IF SweptLate(t) THEN [late EXCEPT ![t] = @ \cup {w}] ELSE late
 
+\* Nobody holds the lock, in either mode: an exclusive request can be granted.
+Free == lock = "none" /\ shared = {}
+
 -----------------------------------------------------------------------------
 \* Erasure: deleteAccount
 
 \* (b) transaction, first statement: lockUserData(manager, userId).
 EraseLock ==
-    /\ ePc = "idle" /\ lock = "none"
+    /\ ePc = "idle" /\ Free
     /\ lock' = "erasure" /\ ePc' = "sweep1" /\ eIdx' = 1
-    /\ UNCHANGED <<tombstone, rows, late, rPc, sPc>>
+    /\ UNCHANGED <<tombstone, shared, rows, late, rPc, sPc>>
 
 \* (b) sweep(): one DELETE per registry table, children first.
 EraseSweep ==
     /\ ePc = "sweep1" /\ eIdx <= Len(Tables)
     /\ rows' = [rows EXCEPT ![eIdx] = {}]
     /\ eIdx' = eIdx + 1
-    /\ UNCHANGED <<ePc, tombstone, lock, late, rPc, sPc>>
+    /\ UNCHANGED <<ePc, tombstone, lock, shared, late, rPc, sPc>>
 
 \* (b) tombstone insert and commit: isErased now answers true, the lock is freed.
 EraseCommit ==
@@ -92,19 +102,19 @@ EraseCommit ==
     /\ tombstone' = TRUE /\ lock' = "none"
     /\ ePc' = IF SecondSweep THEN "sweep2" ELSE "done"
     /\ eIdx' = 1
-    /\ UNCHANGED <<rows, late, rPc, sPc>>
+    /\ UNCHANGED <<shared, rows, late, rPc, sPc>>
 
 \* (b2) the straggler sweep, in its own transaction, no lock.
 EraseStragglerSweep ==
     /\ ePc = "sweep2" /\ eIdx <= Len(Tables)
     /\ rows' = [rows EXCEPT ![eIdx] = {}]
     /\ eIdx' = eIdx + 1
-    /\ UNCHANGED <<ePc, tombstone, lock, late, rPc, sPc>>
+    /\ UNCHANGED <<ePc, tombstone, lock, shared, late, rPc, sPc>>
 
 EraseFinish ==
     /\ ePc = "sweep2" /\ eIdx > Len(Tables)
     /\ ePc' = "done"
-    /\ UNCHANGED <<eIdx, tombstone, lock, rows, late, rPc, sPc>>
+    /\ UNCHANGED <<eIdx, tombstone, lock, shared, rows, late, rPc, sPc>>
 
 -----------------------------------------------------------------------------
 \* In-flight request: AuthGuard, then the handler's write.
@@ -113,35 +123,40 @@ EraseFinish ==
 RequestGuard(r) ==
     /\ rPc[r] = "start"
     /\ rPc' = [rPc EXCEPT ![r] = IF tombstone THEN "refused" ELSE "passed"]
-    /\ UNCHANGED <<ePc, eIdx, tombstone, lock, rows, late, sPc>>
+    /\ UNCHANGED <<ePc, eIdx, tombstone, lock, shared, rows, late, sPc>>
 
-\* The handler's insert commits (code: no lock, no recheck).
+\* Broken variant only (RequestsLock = FALSE): the handler's insert commits with
+\* no lock and no recheck, as the code did before the write fence (finding F1).
 RequestWrite(r, t) ==
     /\ ~RequestsLock
     /\ rPc[r] = "passed"
     /\ Commit(r, t)
     /\ rPc' = [rPc EXCEPT ![r] = "done"]
-    /\ UNCHANGED <<ePc, eIdx, tombstone, lock, sPc>>
+    /\ UNCHANGED <<ePc, eIdx, tombstone, lock, shared, sPc>>
 
-\* What-if only (RequestsLock): the write takes lockUserData, rechecks the
-\* tombstone inside it, and commits. Not in the code today.
+\* UserDataWriteFence.afterTransactionStart, first statement of the write's
+\* transaction: lockUserDataShared. Waits only while an erasure or reset holds
+\* the exclusive lock; other requests of the user hold it alongside.
 RequestLock(r) ==
     /\ RequestsLock /\ rPc[r] = "passed" /\ lock = "none"
-    /\ lock' = r /\ rPc' = [rPc EXCEPT ![r] = "locked"]
-    /\ UNCHANGED <<ePc, eIdx, tombstone, rows, late, sPc>>
+    /\ shared' = shared \cup {r} /\ rPc' = [rPc EXCEPT ![r] = "locked"]
+    /\ UNCHANGED <<ePc, eIdx, tombstone, lock, rows, late, sPc>>
 
+\* The fence's second statement: isErasedForWrite, inside the lock. A refusal
+\* (410) rolls the transaction back, which frees the lock.
 RequestRecheck(r) ==
     /\ rPc[r] = "locked"
     /\ IF tombstone
-         THEN rPc' = [rPc EXCEPT ![r] = "refused"] /\ lock' = "none"
-         ELSE rPc' = [rPc EXCEPT ![r] = "checked"] /\ UNCHANGED lock
-    /\ UNCHANGED <<ePc, eIdx, tombstone, rows, late, sPc>>
+         THEN rPc' = [rPc EXCEPT ![r] = "refused"] /\ shared' = shared \ {r}
+         ELSE rPc' = [rPc EXCEPT ![r] = "checked"] /\ UNCHANGED shared
+    /\ UNCHANGED <<ePc, eIdx, tombstone, lock, rows, late, sPc>>
 
+\* The handler's insert, in the same transaction, and its commit (frees the lock).
 RequestLockedWrite(r, t) ==
     /\ rPc[r] = "checked"
     /\ Commit(r, t)
-    /\ lock' = "none" /\ rPc' = [rPc EXCEPT ![r] = "done"]
-    /\ UNCHANGED <<ePc, eIdx, tombstone, sPc>>
+    /\ shared' = shared \ {r} /\ rPc' = [rPc EXCEPT ![r] = "done"]
+    /\ UNCHANGED <<ePc, eIdx, tombstone, lock, sPc>>
 
 -----------------------------------------------------------------------------
 \* Reset: resetFinancialData
@@ -150,14 +165,14 @@ RequestLockedWrite(r, t) ==
 ResetPrecheck ==
     /\ sPc = "start"
     /\ sPc' = IF tombstone THEN "refused" ELSE "prechecked"
-    /\ UNCHANGED <<ePc, eIdx, tombstone, lock, rows, late, rPc>>
+    /\ UNCHANGED <<ePc, eIdx, tombstone, lock, shared, rows, late, rPc>>
 
 \* Transaction, first statement: lockUserData(manager, userId).
 ResetLock ==
     /\ sPc = "prechecked"
-    /\ IF ResetTakesLock THEN lock = "none" /\ lock' = "reset" ELSE UNCHANGED lock
+    /\ IF ResetTakesLock THEN Free /\ lock' = "reset" ELSE UNCHANGED lock
     /\ sPc' = "locked"
-    /\ UNCHANGED <<ePc, eIdx, tombstone, rows, late, rPc>>
+    /\ UNCHANGED <<ePc, eIdx, tombstone, shared, rows, late, rPc>>
 
 \* isErased(userId, manager) inside the lock; a refusal rolls back and frees it.
 ResetCheck ==
@@ -166,7 +181,7 @@ ResetCheck ==
          THEN /\ sPc' = "refused"
               /\ lock' = IF lock = "reset" THEN "none" ELSE lock
          ELSE sPc' = "checked" /\ UNCHANGED lock
-    /\ UNCHANGED <<ePc, eIdx, tombstone, rows, late, rPc>>
+    /\ UNCHANGED <<ePc, eIdx, tombstone, shared, rows, late, rPc>>
 
 \* profileRepo.save(profile) and commit.
 ResetWrite ==
@@ -174,7 +189,7 @@ ResetWrite ==
     /\ Commit("reset", 2)
     /\ lock' = IF lock = "reset" THEN "none" ELSE lock
     /\ sPc' = "done"
-    /\ UNCHANGED <<ePc, eIdx, tombstone, rPc>>
+    /\ UNCHANGED <<ePc, eIdx, tombstone, shared, rPc>>
 
 -----------------------------------------------------------------------------
 

@@ -12,11 +12,11 @@ A TLA+ model of account erasure (BE-04), checked with TLC over every order of st
 - **Harm if it breaks:** a person told their account is erased still has personal financial data stored, which breaks the erasure promise (UK GDPR Article 17).
 - **Scope:** only the order of steps in the account-deletion service (`deleteAccount`) against requests and the reset. It does not cover the rest of the privacy module (export, retention purge, the registry's contents, consents).
 
-A race this finds in `account-deletion.service.ts` is a privacy finding. Report it to the coordinator with the counterexample, and do not fix product code in the same lane.
+A race this finds in `account-deletion.service.ts` or the write fence is a privacy finding. Report it to the coordinator with the counterexample, and do not fix product code in the same lane.
 
 ## Does my change touch it?
 
-Run the check if your diff touches any code in the coverage record below. Also run it if a new code path writes user rows without going through the AuthGuard, or if a write takes `lockUserData`. If none applies, you do not need to run it.
+Run the check if your diff touches any code in the coverage record below. Also run it if a new code path writes user rows without going through the AuthGuard or outside a signed-in request (jobs, `/mcp`), if a write takes `lockUserData`, or if code runs `withoutWriteFence`. If none applies, you do not need to run it.
 
 ## Run
 
@@ -48,15 +48,15 @@ sh .claude/skills/verify-account-erasure/check.sh
 
 Each line says `ok` or `FAIL`. The script exits 0 only when every config gives its expected result:
 
-| Config (`model/`)               | What it checks                                                                                 | Expected                                      |
-| ------------------------------- | ---------------------------------------------------------------------------------------------- | --------------------------------------------- |
-| `current.cfg`                   | The code as it is: `ResetNeverOutlivesErasure`, `StragglerSweepCatchesEarlierWrites`, `TypeOK` | pass                                          |
-| `promise.cfg`                   | The code against the full promise, `ErasureLeavesNothing`                                      | violated: finding F1                          |
-| `broken-reset-no-lock.cfg`      | Reset without `lockUserData`                                                                   | `ResetNeverOutlivesErasure` violated          |
-| `broken-no-straggler-sweep.cfg` | `deleteAccount` without step (b2)                                                              | `StragglerSweepCatchesEarlierWrites` violated |
-| `whatif-writes-lock.cfg`        | Not the code: every write takes `lockUserData` and checks the tombstone again                  | pass, all four rules                          |
+| Config (`model/`)               | What it checks                                                                                                         | Expected                                      |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
+| `current.cfg`                   | The code as it is: `ErasureLeavesNothing`, `ResetNeverOutlivesErasure`, `StragglerSweepCatchesEarlierWrites`, `TypeOK` | pass                                          |
+| `promise.cfg`                   | The code against the full promise alone, `ErasureLeavesNothing`                                                        | pass                                          |
+| `broken-writes-no-fence.cfg`    | Writes without the write fence (the code before F1 was fixed)                                                          | `ErasureLeavesNothing` violated: F1           |
+| `broken-reset-no-lock.cfg`      | Reset without `lockUserData`                                                                                           | `ResetNeverOutlivesErasure` violated          |
+| `broken-no-straggler-sweep.cfg` | `deleteAccount` without step (b2), with unfenced writes (as jobs and `/mcp` write)                                     | `StragglerSweepCatchesEarlierWrites` violated |
 
-The two `broken-` configs show that the rules can fail. If either of them passes, the model can no longer see the bug it guards against, so fix the model. Pass config names to run only those, for example `check.sh current promise`.
+The three `broken-` configs show that the rules can fail. If any of them passes, the model can no longer see the bug it guards against, so fix the model. Pass config names to run only those, for example `check.sh current promise`.
 
 Read every result, pass or fail, with the pstack `/statechart` skill on `model/AccountErasure.tla` and the config. For a violation it gives the shortest path in plain words. Tell that path in this repo's words (`deleteAccount`, the tombstone, the AuthGuard). For a pass it draws how erasure, requests and the reset move between states. Use one request (`Requests = {r1}`) in a scratch copy of the config so the chart stays readable.
 
@@ -69,37 +69,40 @@ When a result changes, open the actions in the counterexample and compare each o
 
 ## Intended changes
 
-If your change alters behaviour that the model describes, update the matching action and its code comment in the same PR. Examples: a new sweep, a lock taken by writes, or a new tombstone check. Run the check again and update the table above if an expected result changes. If F1 is fixed, `promise.cfg` passes, so the script fails until you change `promise` to `pass` in `check.sh`, move `ErasureLeavesNothing` into `current.cfg` and delete F1 below.
+If your change alters behaviour that the model describes, update the matching action and its code comment in the same PR. Examples: a new sweep, a lock taken by writes, or a new tombstone check. Run the check again and update the table above if an expected result changes. If a change brings F1 back, `promise.cfg` and `current.cfg` fail with the same path as `broken-writes-no-fence.cfg`.
 
 ## Coverage record
 
-Sync commit: `cf6a2938a41fed85ddc3110e73702648cdbc6e62`. At that commit, the model was confirmed to describe this code:
+Sync commit: `3b2f27bcefe54318b303d41ee8d8b4c8c4af800a`. At that commit, the model was confirmed to describe this code:
 
-| Model action                                             | Code                                                                                                                                                           |
-| -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `EraseLock`, `EraseSweep`, `EraseCommit`                 | `apps/backend/src/modules/privacy/account-deletion.service.ts`, `deleteAccount` step (b): `lockUserData`, `sweep`, `sweepLinked`, the tombstone insert, commit |
-| `EraseStragglerSweep`, `EraseFinish`                     | the same file, `deleteAccount` step (b2), the second `sweep` in its own transaction                                                                            |
-| `Tables` (two, in order)                                 | `apps/backend/src/modules/privacy/user-data-registry.ts`, `USER_DATA_REGISTRY`, one `DELETE` per table                                                         |
-| Lock                                                     | `apps/backend/src/modules/privacy/user-data-lock.ts`, `lockUserData`                                                                                           |
-| `RequestGuard`                                           | `apps/backend/src/auth/auth.guard.ts`, `canActivate`, the `isErased` check                                                                                     |
-| `RequestWrite`                                           | any authenticated handler that inserts a row of the user's, with no lock and no tombstone check                                                                |
-| `ResetPrecheck`, `ResetLock`, `ResetCheck`, `ResetWrite` | `apps/backend/src/modules/profile/user-profile.service.ts`, `resetFinancialData`                                                                               |
+| Model action                                             | Code                                                                                                                                                                                     |
+| -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `EraseLock`, `EraseSweep`, `EraseCommit`                 | `apps/backend/src/modules/privacy/account-deletion.service.ts`, `deleteAccount` (run `withoutWriteFence`) step (b): `lockUserData`, `sweep`, `sweepLinked`, the tombstone insert, commit |
+| `EraseStragglerSweep`, `EraseFinish`                     | the same file, `deleteAccount` step (b2), the second `sweep` in its own transaction                                                                                                      |
+| `Tables` (two, in order)                                 | `apps/backend/src/modules/privacy/user-data-registry.ts`, `USER_DATA_REGISTRY`, one `DELETE` per table                                                                                   |
+| Lock (`lock` exclusive, `shared`)                        | `apps/backend/src/modules/privacy/user-data-lock.ts`, `lockUserData` and `lockUserDataShared`                                                                                            |
+| `RequestGuard`                                           | `apps/backend/src/auth/auth.guard.ts`, `canActivate`, the `isErased` check                                                                                                               |
+| `RequestLock`, `RequestRecheck`                          | `apps/backend/src/modules/privacy/user-data-write-fence.ts`, `UserDataWriteFence.afterTransactionStart`: `lockUserDataShared`, then `isErasedForWrite` (`account-deletion.service.ts`)   |
+| `RequestLockedWrite`                                     | any authenticated handler's insert of a user row, in the fenced transaction (`beforeQuery` refuses one outside a transaction), and its commit                                            |
+| `RequestWrite`                                           | broken variants only: a write with no fence (today: jobs and `/mcp`, which are not signed-in requests)                                                                                   |
+| `ResetPrecheck`, `ResetLock`, `ResetCheck`, `ResetWrite` | `apps/backend/src/modules/profile/user-profile.service.ts`, `resetFinancialData` (its transaction runs `withoutWriteFence`)                                                              |
 
-Check whether the verification needs another look with `git log --oneline cf6a2938a41fed85ddc3110e73702648cdbc6e62..HEAD -- <the paths above>`. Move the sync commit forward only after you have read those changes and confirmed that the model still describes the code at the new commit, even if the check passes.
+Check whether the verification needs another look with `git log --oneline 3b2f27bcefe54318b303d41ee8d8b4c8c4af800a..HEAD -- <the paths above>`. Move the sync commit forward only after you have read those changes and confirmed that the model still describes the code at the new commit, even if the check passes.
 
 ## Bounds and assumptions
 
 - One user, two in-flight requests, one reset, one erasure, two registry tables. More requests or tables add only more orders of the same steps. The rules are about whether any write commits after a given sweep step, so a bug that needs more than two requests is not expected, but the check does not prove that.
-- Postgres READ COMMITTED: a `DELETE` sees only committed rows, so a request's insert counts only when it commits. The model applies erasure deletes at the statement. Nothing in the model reads rows, so that gives the same result as applying them at commit.
-- Not covered: transaction failures and rollbacks, retries of `deleteAccount`, the WorkOS steps (c) and (d), the `erasedCache`, the bank consent revoke, `/mcp` (outside the AuthGuard; its tokens are deleted with the account), updates that hit unique keys while a delete is uncommitted, and the per-service `isErased` rechecks (such as `findOrCreateProfile`). Those rechecks run outside the lock, so they narrow F1's window but do not close it.
+- Postgres READ COMMITTED: a `DELETE` sees only committed rows, so a request's insert counts only when it commits. The model applies erasure deletes at the statement. Nothing in the model reads rows, so that gives the same result as applying them at commit. The fence's recheck needs it too (a REPEATABLE READ snapshot would be taken before the lock wait), so `isErasedForWrite` refuses any other level.
+- Shared and exclusive advisory locks are granted in any order the model picks, which covers Postgres's queueing (a shared request waits behind a queued exclusive one).
+- Not covered: transaction failures and rollbacks, retries of `deleteAccount`, the WorkOS steps (c) and (d), the `erasedCache`, the bank consent revoke, `/mcp` (outside the AuthGuard; its tokens are deleted with the account), updates that hit unique keys while a delete is uncommitted, the per-service `isErased` rechecks (such as `findOrCreateProfile`), and writes outside a signed-in request (jobs, `/mcp`): they take no fence, and only the straggler sweep (b2) covers what they commit while (b) runs.
 
 ## Findings
 
-**F1: a row can be saved after the erasure finishes** (`promise.cfg`, open at the sync commit). Shortest path:
+**F1 (fixed): a row could be saved after the erasure finished.** `broken-writes-no-fence.cfg` keeps the path:
 
 1. `deleteAccount` takes `lockUserData` and sweeps every table.
 2. A request from the same user passes the AuthGuard. `isErased` is still false because the tombstone has not committed.
 3. The tombstone commits, the straggler sweep (b2) deletes every table, and `deleteAccount` returns `deleted`.
-4. The request's handler commits its insert. The row stays, and the AuthGuard now refuses the user, so nothing in the app reaches or removes it. Only a repeated `deleteAccount` would sweep it.
+4. The request's handler commits its insert. The row stays, and the AuthGuard now refuses the user, so nothing in the app reaches or removes it.
 
-Step (b2) catches every write that commits before it reaches that table (`StragglerSweepCatchesEarlierWrites` holds). It cannot catch a write that commits later. `whatif-writes-lock.cfg` shows one design that closes the gap. It is not a decided fix.
+The write fence closes it: the insert's transaction takes the shared `lockUserData` first and rechecks the tombstone inside it, so the write either commits before the erasure takes its lock (and is swept) or waits for the erasure and is refused. The backend test `user-data-write-fence.integration.spec.ts` reproduces the path on real Postgres.

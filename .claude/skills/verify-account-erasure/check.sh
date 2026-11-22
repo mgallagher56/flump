@@ -18,10 +18,10 @@ jar="$(mise where "$TLA_TOOL")/tla2tools.jar"
 
 # config name | expected: "pass" or the invariant that must be violated
 expectations='current|pass
-promise|ErasureLeavesNothing
+promise|pass
+broken-writes-no-fence|ErasureLeavesNothing
 broken-reset-no-lock|ResetNeverOutlivesErasure
-broken-no-straggler-sweep|StragglerSweepCatchesEarlierWrites
-whatif-writes-lock|pass'
+broken-no-straggler-sweep|StragglerSweepCatchesEarlierWrites'
 
 only="$*"
 work=$(mktemp -d)
