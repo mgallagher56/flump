@@ -28,42 +28,14 @@ route: /app/retirement
 title: Retirement plan
 auth: required
 purpose: See an estimate of yearly retirement income.
-entry_points:
-  - Main nav
 route_file: apps/web/app/routes/app.retirement.tsx
 sections:
   - id: hero
-    name: Headline estimate
-    kind: hero
     component: apps/web/app/features/retirement/RetirementPlanner.tsx
-    capabilities:
-      - id: view-income
-        goal: View estimated yearly income.
-        mode: read
-        facts_read: [retirement-plan]
-        figures_shown: [retirement-income]
-        actions:
-          - id: add-birth-year
-            control: link
-            label: Add your year of birth
-            effect: Navigates to profile.
-            target: /app/profile
+    facts_read: [retirement-plan]
+    figures_shown: [retirement-income]
   - id: plan-details
-    name: Plan details
-    kind: form
     component: apps/web/app/features/retirement/RetirementPlanner.tsx
-    capabilities:
-      - id: save-plan
-        goal: Save retirement plan.
-        mode: write
-        facts_written: [retirement-plan]
-        actions:
-          - id: save-btn
-            control: submit
-            label: Save plan
-            effect: Saves plan.
-            target: PUT /retirement-plan
-            if_match: true
 `;
 
 const VALID_VALUE_MAP_YAML = `
@@ -102,24 +74,20 @@ function makePageEntry(yaml: string, overrides: Partial<FmPageEntry> = {}): FmPa
 
 describe("functionality-map", () => {
   const valueMap: ValueMapRefs = parseValueMapRefs(VALID_VALUE_MAP_YAML);
+  const retirementRoute = ["apps/web/app/routes/app.retirement.tsx"];
 
   test("validates a clean index and page with zero problems", () => {
-    const index = parseFmIndex(VALID_INDEX_YAML);
-    const pages = [makePageEntry(VALID_PAGE_YAML)];
     const problems = validateFunctionalityMap({
-      index,
-      pages,
+      index: parseFmIndex(VALID_INDEX_YAML),
+      pages: [makePageEntry(VALID_PAGE_YAML)],
       repo: makeRepo(),
       valueMap,
-      discoveredRoutes: [
-        "apps/web/app/routes/healthz.ts",
-        "apps/web/app/routes/app.retirement.tsx",
-      ],
+      discoveredRoutes: ["apps/web/app/routes/healthz.ts", ...retirementRoute],
     });
     expect(problems).toEqual([]);
   });
 
-  test("rejects duplicate page, section, capability, and action IDs", () => {
+  test("rejects duplicate page and section IDs", () => {
     const index: FmIndex = { version: 1, excluded_routes: [] };
     const dupPageYaml = `
 id: retirement
@@ -128,35 +96,12 @@ route: /app/retirement
 title: Retirement
 auth: required
 purpose: Test duplicates.
-entry_points: [Nav]
 route_file: apps/web/app/routes/app.retirement.tsx
 sections:
   - id: hero
-    name: Hero 1
-    kind: hero
     component: apps/web/app/features/retirement/RetirementPlanner.tsx
-    capabilities:
-      - id: cap-one
-        goal: Goal 1
-        mode: read
-        actions:
-          - id: act-one
-            control: button
-            label: One
-            effect: Effect one
-          - id: act-one
-            control: button
-            label: Two
-            effect: Effect two
-      - id: cap-one
-        goal: Goal 2
-        mode: read
-        actions: []
   - id: hero
-    name: Hero 2
-    kind: hero
     component: apps/web/app/features/retirement/RetirementPlanner.tsx
-    capabilities: []
 `;
     const entry = makePageEntry(dupPageYaml);
     const problems = validateFunctionalityMap({
@@ -164,16 +109,12 @@ sections:
       pages: [entry, entry],
       repo: makeRepo(),
       valueMap,
-      discoveredRoutes: ["apps/web/app/routes/app.retirement.tsx"],
+      discoveredRoutes: retirementRoute,
     });
     const dupes = problems.filter((p) => p.rule === FM_RULES.duplicateId);
     expect(dupes.map((d) => d.subject)).toEqual([
-      "web/retirement.hero.cap-one.act-one",
-      "web/retirement.hero.cap-one",
       "web/retirement.hero",
       "web:retirement",
-      "web/retirement.hero.cap-one.act-one",
-      "web/retirement.hero.cap-one",
       "web/retirement.hero",
     ]);
   });
@@ -183,13 +124,12 @@ sections:
       "app: web",
       "app: marketing",
     );
-    const entry = makePageEntry(badYaml);
     const problems = validateFunctionalityMap({
       index: { version: 1, excluded_routes: [] },
-      pages: [entry],
+      pages: [makePageEntry(badYaml)],
       repo: makeRepo(),
       valueMap,
-      discoveredRoutes: ["apps/web/app/routes/app.retirement.tsx"],
+      discoveredRoutes: retirementRoute,
     });
     expect(
       problems.some((p) => p.rule === FM_RULES.malformed && p.message.includes("kebab-case")),
@@ -201,6 +141,49 @@ sections:
     ).toBe(true);
   });
 
+  test("rejects missing required page fields and an invalid auth mode", () => {
+    const yaml = VALID_PAGE_YAML.replace("title: Retirement plan\n", "")
+      .replace("auth: required", "auth: everyone")
+      .replace("purpose: See an estimate of yearly retirement income.\n", "");
+    const messages = validateFunctionalityMap({
+      index: { version: 1, excluded_routes: [] },
+      pages: [makePageEntry(yaml)],
+      repo: makeRepo(),
+      valueMap,
+      discoveredRoutes: retirementRoute,
+    })
+      .filter((p) => p.rule === FM_RULES.malformed)
+      .map((p) => p.message.replace(/^page \S+: /, ""));
+    expect(messages).toEqual([
+      "title is required",
+      "auth must be one of required, public, anonymous-only, admin",
+      "purpose is required",
+    ]);
+  });
+
+  test("rejects retired per-control keys on pages and sections as malformed", () => {
+    const yaml = VALID_PAGE_YAML.replace(
+      "route_file:",
+      "entry_points: [Main nav]\nroute_file:",
+    ).replace(
+      "  - id: plan-details\n",
+      "  - id: plan-details\n    capabilities: []\n    when: always\n",
+    );
+    const malformed = validateFunctionalityMap({
+      index: { version: 1, excluded_routes: [] },
+      pages: [makePageEntry(yaml)],
+      repo: makeRepo(),
+      valueMap,
+      discoveredRoutes: retirementRoute,
+    }).filter((p) => p.rule === FM_RULES.malformed);
+    expect(malformed.map((m) => m.subject)).toEqual([
+      "page docs/system/functionality-map/pages/web/retirement.yaml",
+      "web/retirement.plan-details",
+    ]);
+    expect(malformed[0]?.message).toContain("unknown key(s) entry_points");
+    expect(malformed[1]?.message).toContain("unknown key(s) capabilities, when");
+  });
+
   test("detects missing file paths for route_file and component", () => {
     const files = new Set(["apps/web/app/routes/app.retirement.tsx"]);
     const problems = validateFunctionalityMap({
@@ -208,59 +191,84 @@ sections:
       pages: [makePageEntry(VALID_PAGE_YAML)],
       repo: makeRepo(files),
       valueMap,
-      discoveredRoutes: ["apps/web/app/routes/app.retirement.tsx"],
+      discoveredRoutes: retirementRoute,
     });
     const dead = problems.filter((p) => p.rule === FM_RULES.deadPath);
-    expect(dead.length).toBe(2);
-    expect(dead[0]?.subject).toContain("RetirementPlanner.tsx");
+    expect(dead.map((d) => d.subject)).toEqual([
+      "web/retirement.hero.component -> apps/web/app/features/retirement/RetirementPlanner.tsx",
+      "web/retirement.plan-details.component -> apps/web/app/features/retirement/RetirementPlanner.tsx",
+    ]);
+
+    const noRouteFile = validateFunctionalityMap({
+      index: { version: 1, excluded_routes: [] },
+      pages: [makePageEntry(VALID_PAGE_YAML)],
+      repo: makeRepo(new Set(["apps/web/app/features/retirement/RetirementPlanner.tsx"])),
+      valueMap,
+      discoveredRoutes: [],
+    }).filter((p) => p.rule === FM_RULES.deadPath);
+    expect(noRouteFile.map((d) => d.subject)).toEqual([
+      "page docs/system/functionality-map/pages/web/retirement.yaml.route_file -> apps/web/app/routes/app.retirement.tsx",
+    ]);
   });
 
-  test("detects unknown value-map fact and figure IDs", () => {
-    const unknownRefYaml = VALID_PAGE_YAML.replace("retirement-plan", "no-such-fact").replace(
-      "retirement-income",
-      "no-such-figure",
+  test("detects unknown value-map fact and figure IDs on sections", () => {
+    const unknownRefYaml = VALID_PAGE_YAML.replace("[retirement-plan]", "[no-such-fact]").replace(
+      "[retirement-income]",
+      "[no-such-figure]",
     );
     const problems = validateFunctionalityMap({
       index: { version: 1, excluded_routes: [] },
       pages: [makePageEntry(unknownRefYaml)],
       repo: makeRepo(),
       valueMap,
-      discoveredRoutes: ["apps/web/app/routes/app.retirement.tsx"],
+      discoveredRoutes: retirementRoute,
     });
     const refs = problems.filter((p) => p.rule === FM_RULES.unknownValueRef);
     expect(refs.map((r) => r.subject)).toEqual([
-      "web/retirement.hero.view-income:facts_read:no-such-fact",
-      "web/retirement.hero.view-income:figures_shown:no-such-figure",
+      "web/retirement.hero:facts_read:no-such-fact",
+      "web/retirement.hero:figures_shown:no-such-figure",
     ]);
   });
 
-  test("rejects non-array facts_read, facts_written, and figures_shown as malformed", () => {
+  test("a fact ID is not accepted as a figure ID, nor a figure ID as a fact ID", () => {
+    const swappedYaml = VALID_PAGE_YAML.replace(
+      "facts_read: [retirement-plan]",
+      "facts_read: [retirement-income]",
+    ).replace("figures_shown: [retirement-income]", "figures_shown: [retirement-plan]");
+    const refs = validateFunctionalityMap({
+      index: { version: 1, excluded_routes: [] },
+      pages: [makePageEntry(swappedYaml)],
+      repo: makeRepo(),
+      valueMap,
+      discoveredRoutes: retirementRoute,
+    }).filter((p) => p.rule === FM_RULES.unknownValueRef);
+    expect(refs.map((r) => r.subject)).toEqual([
+      "web/retirement.hero:facts_read:retirement-income",
+      "web/retirement.hero:figures_shown:retirement-plan",
+    ]);
+  });
+
+  test("rejects non-array facts_read and figures_shown as malformed", () => {
     const nonArrayYaml = VALID_PAGE_YAML.replace(
       "facts_read: [retirement-plan]",
       "facts_read: retirement-plan",
-    )
-      .replace("figures_shown: [retirement-income]", "figures_shown: retirement-income")
-      .replace("facts_written: [retirement-plan]", "facts_written: retirement-plan");
+    ).replace("figures_shown: [retirement-income]", "figures_shown: retirement-income");
     const problems = validateFunctionalityMap({
       index: { version: 1, excluded_routes: [] },
       pages: [makePageEntry(nonArrayYaml)],
       repo: makeRepo(),
       valueMap,
-      discoveredRoutes: ["apps/web/app/routes/app.retirement.tsx"],
+      discoveredRoutes: retirementRoute,
     });
     const malformed = problems.filter((p) => p.rule === FM_RULES.malformed);
     expect(malformed.map((m) => m.subject)).toEqual([
-      "web/retirement.hero.view-income.facts_read",
-      "web/retirement.hero.view-income.figures_shown",
-      "web/retirement.plan-details.save-plan.facts_written",
+      "web/retirement.hero.facts_read",
+      "web/retirement.hero.figures_shown",
     ]);
   });
 
   test("errors on any unmapped route and rejects retired unmapped_allowlist", () => {
-    const discovered = [
-      "apps/web/app/routes/app.retirement.tsx",
-      "apps/web/app/routes/app.new-page.tsx",
-    ];
+    const discovered = [...retirementRoute, "apps/web/app/routes/app.new-page.tsx"];
     const unmapped = validateFunctionalityMap({
       index: { version: 1, excluded_routes: [] },
       pages: [makePageEntry(VALID_PAGE_YAML)],
@@ -270,6 +278,7 @@ sections:
     });
     expect(unmapped).toHaveLength(1);
     expect(unmapped[0]?.rule).toBe(FM_RULES.unmappedRoute);
+    expect(unmapped[0]?.subject).toBe("apps/web/app/routes/app.new-page.tsx");
     expect(unmapped[0]?.severity).toBe("error");
 
     const withRetiredAllowlist = validateFunctionalityMap({
@@ -296,18 +305,33 @@ sections:
     ).toBe(true);
   });
 
-  test("renders overview, actions-index, and by-fact views and detects stale views", () => {
+  test("an excluded route counts as covered", () => {
+    const problems = validateFunctionalityMap({
+      index: parseFmIndex(VALID_INDEX_YAML),
+      pages: [],
+      repo: makeRepo(),
+      valueMap,
+      discoveredRoutes: ["apps/web/app/routes/healthz.ts"],
+    });
+    expect(problems).toEqual([]);
+  });
+
+  test("renders overview and by-fact views and detects stale views", () => {
     const index = parseFmIndex(VALID_INDEX_YAML);
     const page = parseFmPage(VALID_PAGE_YAML);
     const views = renderFunctionalityViews([page], index);
 
-    expect(Object.keys(views).sort()).toEqual(["actions-index.md", "by-fact.md", "overview.md"]);
-    expect(views["overview.md"]).toContain("### retirement — Retirement plan");
-    expect(views["actions-index.md"]).toContain("`web.retirement.hero.view-income.add-birth-year`");
-    expect(views["by-fact.md"]).toContain("`retirement-plan` | writes");
-    expect(views["by-fact.md"]).toContain("`retirement-plan` | reads");
+    expect(Object.keys(views).sort()).toEqual(["by-fact.md", "overview.md"]);
+    expect(views["overview.md"]).toContain("Mapped pages: 1 | Sections: 2 | Excluded routes: 1");
+    expect(views["overview.md"]).toContain("### retirement: Retirement plan");
+    expect(views["overview.md"]).toContain(
+      "| `hero` | `apps/web/app/features/retirement/RetirementPlanner.tsx` | `retirement-plan` | `retirement-income` |",
+    );
     expect(views["by-fact.md"]).toContain(
-      "`retirement-income` | `web.retirement.hero.view-income`",
+      "| `retirement-plan` | `web.retirement.hero` | web/retirement | `/app/retirement` |",
+    );
+    expect(views["by-fact.md"]).toContain(
+      "| `retirement-income` | `web.retirement.hero` | web/retirement | `/app/retirement` |",
     );
 
     const identity = (_name: string, text: string) => text;
@@ -322,6 +346,10 @@ sections:
         identity,
       ),
     ).toEqual(["by-fact.md"]);
+    expect(staleFunctionalityViews([page], index, () => null, identity)).toEqual([
+      "overview.md",
+      "by-fact.md",
+    ]);
   });
 
   test("discovers marketing routes from App.tsx", () => {

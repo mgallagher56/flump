@@ -4,245 +4,85 @@ route: /app/mortgage
 title: Your mortgage
 auth: required
 purpose: View saved residential or buy-to-let mortgage details, loan-to-value, home equity, fix-end alerts, and model overpayments, rate changes, or overpaying versus saving.
-entry_points:
-  - Main app navigation (Mortgage)
-  - Dashboard Mortgage widget or KPI strip link
-  - Budget housing row link
 route_file: apps/web/app/routes/app.mortgage.tsx
 
 sections:
   - id: header
-    name: Page header and property category tabs
-    kind: header
     component: apps/web/app/containers/mortgage/MortgageContainer.tsx
-    capabilities:
-      - id: navigate-mortgage-views
-        goal: Open Mortgage estimates or switch between Residential and Buy to let mortgage views when both exist.
-        mode: navigate
-        actions:
-          - id: open-mortgage-estimates
-            control: button
-            label: Mortgage estimates
-            effect: Navigates to /app/mortgage-estimates.
-            target: /app/mortgage-estimates
-          - id: switch-property-category
-            control: tab
-            label: Residential / Buy to let
-            effect: Switches between residential and buy-to-let mortgage views when both categories exist.
 
   - id: empty-or-partial-state
-    name: Empty or incomplete mortgage prompt
-    kind: content
     component: apps/web/app/containers/mortgage/MortgageContainer.tsx
-    when: when no mortgage account exists or required details (balance, rate, or term) are missing
-    capabilities:
-      - id: prompt-mortgage-setup
-        goal: Guide the user to add a mortgage account on Accounts or fill in missing mortgage details in the edit dialog.
-        mode: navigate
-        facts_read:
-          - account-balance
-          - account-rate
-          - mortgage-term-and-fix-end
-          - housing-status
-        actions:
-          - id: add-mortgage-account
-            control: button
-            label: Add a mortgage / Add mortgage account / Add a buy to let mortgage
-            effect: Navigates to /app/accounts when no mortgage account exists for the selected category.
-            target: /app/accounts
-          - id: add-missing-mortgage-details
-            control: button
-            label: Add mortgage details
-            effect: Opens MortgageEditDialog to complete missing balance, rate, or term.
+    facts_read:
+      - account-balance
+      - account-rate
+      - mortgage-term-and-fix-end
+      - housing-status
 
   - id: hero-and-kpis
-    name: Saved mortgage hero and KPI strip
-    kind: hero
     component: apps/web/app/containers/mortgage/MortgageContainer.tsx
-    when: when required mortgage details are complete
-    capabilities:
-      - id: view-mortgage-hero-and-kpis
-        goal: View saved monthly payment (or remaining balance), interest rate, and loan-to-value ratio, or jump to add missing property value.
-        mode: read
-        facts_read:
-          - account-balance
-          - account-monthly-amount
-          - account-rate
-          - mortgage-term-and-fix-end
-          - home-value
-          - ownership-share
-          - repayment-type
-          - mortgage-property-link
-        figures_shown:
-          - mortgage-payment
-          - loan-to-value
-        actions:
-          - id: edit-from-empty-kpi
-            control: button
-            label: Add your balance / Edit your details / Add the property value
-            effect: Opens MortgageEditDialog when a hero or KPI figure is missing.
-          - id: add-home-value-accounts
-            control: button
-            label: Add your home's value
-            effect: Navigates to /app/accounts to add a residential property value.
-            target: /app/accounts
+    facts_read:
+      - account-balance
+      - account-monthly-amount
+      - account-rate
+      - mortgage-term-and-fix-end
+      - home-value
+      - ownership-share
+      - repayment-type
+      - mortgage-property-link
+    figures_shown:
+      - mortgage-payment
+      - loan-to-value
 
   - id: alerts
-    name: Fixed-rate end alert
-    kind: notice
     component: apps/web/app/features/mortgage/components/MortgageAlerts/MortgageAlerts.tsx
-    when: when residential fix-end date has ended or is within 6 months
-    capabilities:
-      - id: alert-fix-end
-        goal: Alert the user that their fixed rate is ending soon or has ended and open the rate-change what-if tool.
-        mode: what-if
-        facts_read:
-          - mortgage-term-and-fix-end
-        actions:
-          - id: model-rate-change-from-alert
-            control: button
-            label: Model a rate change
-            effect: Opens ScenarioZone on the Rate change tab and scrolls to it.
+    facts_read:
+      - mortgage-term-and-fix-end
 
   - id: btl-overview
-    name: Buy-to-let overview
-    kind: list
     component: apps/web/app/features/mortgage/components/BtlOverview/BtlOverview.tsx
-    when: when propertyCategory is btl
-    capabilities:
-      - id: view-btl-yields
-        goal: View rental properties, gross yield, and manage properties on Accounts.
-        mode: read
-        facts_read:
-          - buy-to-let-rent
-          - buy-to-let-mortgage
-          - home-value
-          - tax-records
-        actions:
-          - id: manage-btl-accounts
-            control: button
-            label: Manage on Accounts
-            effect: Navigates to /app/accounts.
-            target: /app/accounts
+    facts_read:
+      - buy-to-let-rent
+      - buy-to-let-mortgage
+      - home-value
+      - tax-records
 
   - id: details-summary
-    name: Your mortgage details
-    kind: content
     component: apps/web/app/features/mortgage/components/MortgageSummary/MortgageSummary.tsx
-    when: when required mortgage details are complete
-    capabilities:
-      - id: view-mortgage-summary
-        goal: View saved account name, repayment type, remaining term, home equity, and open the edit dialog.
-        mode: read
-        facts_read:
-          - account-name
-          - repayment-type
-          - mortgage-term-and-fix-end
-          - home-value
-          - account-balance
-          - ownership-share
-        figures_shown:
-          - home-equity
-        actions:
-          - id: edit-mortgage-details
-            control: button
-            label: Edit details
-            effect: Opens MortgageEditDialog to edit mortgage and property figures.
+    facts_read:
+      - account-name
+      - repayment-type
+      - mortgage-term-and-fix-end
+      - home-value
+      - account-balance
+      - ownership-share
+    figures_shown:
+      - home-equity
 
   - id: scenario-zone
-    name: Model a change to your mortgage
-    kind: scenario-zone
     component: apps/web/app/containers/mortgage/MortgageContainer.tsx
-    when: when required mortgage details are complete
-    capabilities:
-      - id: toggle-and-reset-mortgage-scenario
-        goal: Expand or collapse the mortgage what-if zone, switch between Overpay, Rate change, and Overpay or save, adjust starting figures, or reset.
-        mode: what-if
-        facts_read:
-          - account-balance
-          - account-rate
-          - mortgage-term-and-fix-end
-          - repayment-type
-        figures_shown:
-          - mortgage-payment
-          - mortgage-rate-comparison
-        actions:
-          - id: toggle-mortgage-scenario
-            control: drawer-toggle
-            label: "Show what-if: overpay or a new rate"
-            effect: Expands or collapses the ScenarioZone without changing saved data.
-          - id: reset-mortgage-scenario
-            control: button
-            label: Reset
-            effect: Restores scenario loan amount, rate, term, and overpayment to saved values.
-          - id: select-mortgage-tool
-            control: tab
-            label: Overpay / Rate change / Overpay or save
-            effect: Switches between OverpaymentSimulator, RateChangeTool, and OverpayVsSaveCompare.
-          - id: toggle-starting-figures
-            control: drawer-toggle
-            label: Starting figures
-            effect: Expands or collapses MortgageScenarioInputs to override starting loan, rate, or term locally.
-          - id: adjust-overpayment-or-rate
-            control: slider
-            label: Monthly overpayment / New interest rate
-            effect: Updates scenario overpayment or comparison rate and recalculates illustrative payoff, interest saved, or new monthly payment.
+    facts_read:
+      - account-balance
+      - account-rate
+      - mortgage-term-and-fix-end
+      - repayment-type
+    figures_shown:
+      - mortgage-payment
+      - mortgage-rate-comparison
 
   - id: cost-details-drawer
-    name: Show cost details
-    kind: drawer
     component: apps/web/app/features/mortgage/components/MortgageTracker/MortgageTracker.tsx
-    when: when required mortgage details are complete and propertyCategory is residential
-    capabilities:
-      - id: view-cost-schedule
-        goal: Inspect the year-by-year amortisation and total cost breakdown of the saved mortgage.
-        mode: read
-        facts_read:
-          - account-balance
-          - account-rate
-          - mortgage-term-and-fix-end
-          - repayment-type
-        actions:
-          - id: toggle-cost-details
-            control: drawer-toggle
-            label: Show cost details
-            effect: Expands or collapses MortgageTracker.
+    facts_read:
+      - account-balance
+      - account-rate
+      - mortgage-term-and-fix-end
+      - repayment-type
 
   - id: edit-dialog
-    name: Edit mortgage details dialog
-    kind: form
     component: apps/web/app/features/mortgage/components/MortgageEditDialog/MortgageEditDialog.tsx
-    when: when MortgageEditDialog is open
-    capabilities:
-      - id: save-mortgage-details
-        goal: Select which mortgage account to edit and save updated balance, rate, term, payment, repayment type, fix-end date, and property value.
-        mode: write
-        facts_read:
-          - account-balance
-          - account-rate
-          - account-monthly-amount
-          - mortgage-term-and-fix-end
-          - repayment-type
-          - home-value
-        facts_written:
-          - account-balance
-          - account-rate
-          - account-monthly-amount
-          - mortgage-term-and-fix-end
-          - repayment-type
-          - home-value
-        actions:
-          - id: select-mortgage-account
-            control: select
-            label: Mortgage account
-            effect: Switches which mortgage account is being edited when multiple exist.
-          - id: input-mortgage-fields
-            control: input
-            label: Remaining balance / Interest rate / Years and months left / Monthly payment / Repayment type / Fix end date / Home value
-            effect: Updates draft mortgage and property fields before saving.
-          - id: submit-mortgage-save
-            control: submit
-            label: Save
-            effect: Saves changes to PATCH /accounts/:id (and property account or profile when applicable) with ETag check.
-            target: PATCH /accounts/:id
-            if_match: true
+    facts_read:
+      - account-balance
+      - account-rate
+      - account-monthly-amount
+      - mortgage-term-and-fix-end
+      - repayment-type
+      - home-value

@@ -4,205 +4,46 @@ route: /app/accounts
 title: Your accounts
 auth: required
 purpose: View net worth across all saved accounts, add new accounts, open individual account pages, and run the monthly check-in.
-entry_points:
-  - Main app navigation (Accounts)
-  - Dashboard Accounts widget link or Add an account link
-  - Setup checklist "Add account" link
 route_file: apps/web/app/routes/app.accounts._index.tsx
 
 sections:
   - id: header
-    name: Page header
-    kind: header
     component: apps/web/app/containers/accounts/accountsContainer/AccountsContainer.tsx
-    capabilities:
-      - id: header-actions
-        goal: Start the monthly check-in or open the Add account dialog from the page header.
-        mode: write
-        actions:
-          - id: open-check-in-header
-            control: button
-            label: Start monthly check-in
-            effect: Opens the CheckInSheet drawer in checkIn mode (visible from md breakpoint).
-            target: /app/accounts?checkIn=1
-          - id: open-add-account
-            control: button
-            label: Add account
-            effect: Opens the AddEditAccountsDialog to create a new account.
-            target: /app/accounts?add=1
 
   - id: net-worth-summary
-    name: Net worth summary
-    kind: hero
     component: apps/web/app/features/accounts/components/AccountsGroupList/AccountsGroupList.tsx
-    when: when at least one account exists
-    capabilities:
-      - id: view-net-worth-and-links
-        goal: View total net worth from listed accounts, adjust net worth choices, navigate to net worth history, or start the monthly check-in on mobile.
-        mode: read
-        facts_read:
-          - account-balance
-          - ownership-share
-          - net-worth-choices
-          - home-value
-        figures_shown:
-          - net-worth
-        actions:
-          - id: add-home-estimate
-            control: link
-            label: Add an estimate
-            effect: Opens AddEditAccountsDialog prefilled for a Property account via /app/accounts?add=property.
-            target: /app/accounts?add=property
-          - id: change-what-counts
-            control: link
-            label: Change what counts
-            effect: "Navigates to #net-worth on Settings Profile tab to change net worth choices."
-            target: "/app/profile?tab=profile#net-worth"
-          - id: see-history
-            control: link
-            label: See how it has changed
-            effect: Navigates to /app/accounts/history.
-            target: /app/accounts/history
-          - id: open-check-in-phone
-            control: button
-            label: Start monthly check-in
-            effect: Opens the CheckInSheet drawer on narrow screens.
-            target: /app/accounts?checkIn=1
+    facts_read:
+      - account-balance
+      - ownership-share
+      - net-worth-choices
+      - home-value
+    figures_shown:
+      - net-worth
 
   - id: accounts-lists
-    name: Grouped account lists
-    kind: list
     component: apps/web/app/features/accounts/components/AccountsGroupList/AccountsGroupList.tsx
-    when: when at least one account exists
-    capabilities:
-      - id: browse-accounts
-        goal: Browse accounts grouped into What you own, What you owe, and Not counted in net worth, and open any account's detail page.
-        mode: read
-        facts_read:
-          - account-name
-          - account-type
-          - account-balance
-          - ownership-share
-          - net-worth-choices
-        figures_shown:
-          - net-worth
-          - total-debts
-        actions:
-          - id: open-account-detail
-            control: link
-            label: Account name
-            effect: Navigates to /app/accounts/:account for the selected account.
-            target: /app/accounts/:account
-          - id: open-isa-allowance
-            control: link
-            label: See your ISA allowance
-            effect: Navigates to /app/savings when an account is named as an ISA.
-            target: /app/savings
-          - id: show-all-accounts
-            control: button
-            label: Show all
-            effect: Expands a DataList group beyond 8 rows.
+    facts_read:
+      - account-name
+      - account-type
+      - account-balance
+      - ownership-share
+      - net-worth-choices
+    figures_shown:
+      - net-worth
+      - total-debts
 
   - id: empty-state
-    name: Empty accounts state
-    kind: content
     component: apps/web/app/containers/accounts/accountsContainer/AccountsContainer.tsx
-    when: when no accounts exist
-    capabilities:
-      - id: add-first-account
-        goal: Add the first account when the accounts list is empty.
-        mode: write
-        actions:
-          - id: open-add-first-account
-            control: button
-            label: Add account
-            effect: Opens the AddEditAccountsDialog to create the first account.
 
   - id: add-account-dialog
-    name: Add account dialog
-    kind: form
     component: apps/web/app/components/dialogs/addEditAccountsDialog/AddEditAccountsDialog.tsx
-    when: when Add account dialog is open
-    capabilities:
-      - id: create-account
-        goal: Create a new account (current, savings, investment, pension, property, mortgage, credit card, loan, overdraft, student loan, or owed to you) with optional rate, monthly amount, joint ownership, and mortgage/credit fields.
-        mode: write
-        facts_written:
-          - account-name
-          - account-type
-          - account-balance
-          - account-rate
-          - account-monthly-amount
-          - ownership-share
-          - student-loan-plan
-          - repayment-type
-          - mortgage-term-and-fix-end
-          - mortgage-property-link
-          - home-value
-          - card-limit-and-zero-percent-end
-        actions:
-          - id: input-account-name
-            control: input
-            label: Name
-            effect: Sets the account name.
-          - id: select-account-type
-            control: select
-            label: Account type
-            effect: Selects the account type and reveals type-specific fields.
-          - id: input-balance
-            control: input
-            label: Balance / Amount owed
-            effect: Sets the initial balance or amount owed.
-          - id: set-joint-ownership
-            control: toggle
-            label: Ownership and share percentage
-            effect: Switches between sole and joint ownership and sets the user's share percentage (shown when partnerMode is enabled or the account is already joint).
-          - id: submit-create-account
-            control: submit
-            label: Save account
-            effect: Submits intent=create to POST /accounts (or /accounts/mortgage-with-property when a mortgage includes a home value).
-            target: POST /accounts
 
   - id: check-in-sheet
-    name: Monthly check-in sheet
-    kind: drawer
     component: apps/web/app/features/snapshot/components/CheckInSheet/CheckInSheet.tsx
-    when: when checkInOpen is true
-    capabilities:
-      - id: record-monthly-check-in
-        goal: Confirm or update each account's balance for the current month and finish the monthly check-in.
-        mode: write
-        facts_read:
-          - account-balance
-          - balance-history
-          - check-in-done
-        facts_written:
-          - balance-history
-          - account-balance
-          - check-in-done
-        figures_shown:
-          - check-in-calculated-balance
-          - net-worth
-        actions:
-          - id: keep-remaining-balances
-            control: button
-            label: Keep all / Keep rest unchanged
-            effect: Confirms all eligible unchanged balances in one step.
-          - id: input-check-in-balance
-            control: input
-            label: Account balance or amount owed
-            effect: Enters or confirms an account's balance for the current month.
-            target: PUT /snapshots/:month
-          - id: finish-check-in
-            control: button
-            label: Finish check-in
-            effect: Marks the current month's check-in as completed and shows the summary.
-            target: PUT /snapshots/:month
-          - id: change-check-in-balance
-            control: button
-            label: Change a balance
-            effect: Reopens the account list from the check-in summary to edit a balance.
-          - id: done-check-in
-            control: button
-            label: Done
-            effect: Closes the CheckInSheet and refreshes saved data.
+    facts_read:
+      - account-balance
+      - balance-history
+      - check-in-done
+    figures_shown:
+      - check-in-calculated-balance
+      - net-worth

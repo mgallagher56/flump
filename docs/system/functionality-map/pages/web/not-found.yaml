@@ -4,26 +4,8 @@ route: /*
 title: We cannot find that page
 auth: public
 purpose: Render an accessible 404 error page inside the app layout for any unmatched URL while preserving security headers.
-entry_points:
-  - Any unmatched web URL
 route_file: apps/web/app/routes/$.tsx
 
 sections:
   - id: error-state
-    name: Page not found
-    kind: notice
     component: apps/web/app/features/feedback/components/RouteErrorBoundary/RouteErrorBoundary.tsx
-    capabilities:
-      - id: recover-from-not-found
-        goal: Inform the user the page could not be found and provide a link home and a problem report link.
-        mode: navigate
-        actions:
-          - id: go-home
-            control: link
-            label: Back to home / Go to the home page
-            effect: Navigates back to the home page (labelled Back to home when signed in, Go to the home page when signed out).
-            target: /
-          - id: report-problem
-            control: link
-            label: Report this problem
-            effect: Opens a prefilled feedback email for the unmatched route.

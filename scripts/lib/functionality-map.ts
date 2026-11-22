@@ -1,6 +1,9 @@
 /**
- * User-POV functionality map (docs/system/functionality-map/): schema validation, value-map
+ * Route-level functionality map (docs/system/functionality-map/): schema validation, value-map
  * cross-references, route-coverage checks, and deterministic Markdown view generation.
+ *
+ * The map is for AI agents. It records each route, its sections and the value-map facts and
+ * figures each section reads; it has no per-control entries (owner decision, 22 November 2026).
  *
  * Pure core: callers pass parsed YAML documents and a RepoView so unit tests can run without
  * touching the real repository.
@@ -12,68 +15,23 @@ type FmApp = (typeof FM_APPS)[number];
 const FM_AUTH_MODES = ["required", "public", "anonymous-only", "admin"] as const;
 type FmAuthMode = (typeof FM_AUTH_MODES)[number];
 
-const FM_SECTION_KINDS = [
-  "header",
-  "hero",
-  "kpi-strip",
-  "scenario-zone",
-  "form",
-  "list",
-  "table",
-  "drawer",
-  "notice",
-  "navigation",
-  "content",
-  "footer",
+const FM_PAGE_KEYS = [
+  "id",
+  "app",
+  "route",
+  "title",
+  "auth",
+  "purpose",
+  "route_file",
+  "sections",
 ] as const;
-type FmSectionKind = (typeof FM_SECTION_KINDS)[number];
-
-const FM_CAPABILITY_MODES = ["read", "what-if", "write", "navigate", "export", "delete"] as const;
-type FmCapabilityMode = (typeof FM_CAPABILITY_MODES)[number];
-
-const FM_CONTROLS = [
-  "button",
-  "submit",
-  "link",
-  "input",
-  "slider",
-  "toggle",
-  "checkbox",
-  "select",
-  "tab",
-  "sort-header",
-  "drawer-toggle",
-] as const;
-type FmControl = (typeof FM_CONTROLS)[number];
-
-interface FmAction {
-  id: string;
-  control: FmControl;
-  label: string;
-  effect: string;
-  target?: string;
-  validation?: string;
-  confirm?: string;
-  if_match?: boolean;
-}
-
-interface FmCapability {
-  id: string;
-  goal: string;
-  mode: FmCapabilityMode;
-  facts_read?: string[];
-  facts_written?: string[];
-  figures_shown?: string[];
-  actions: FmAction[];
-}
+const FM_SECTION_KEYS = ["id", "component", "facts_read", "figures_shown"] as const;
 
 interface FmSection {
   id: string;
-  name: string;
-  kind: FmSectionKind;
   component: string;
-  when?: string;
-  capabilities: FmCapability[];
+  facts_read?: string[];
+  figures_shown?: string[];
 }
 
 export interface FmPage {
@@ -83,9 +41,10 @@ export interface FmPage {
   title: string;
   auth: FmAuthMode;
   purpose: string;
-  entry_points: string[];
   route_file: string;
   sections: FmSection[];
+  /** Top-level keys in the YAML that the schema does not allow (for example retired per-control keys). */
+  unknown_keys?: string[];
 }
 
 interface FmExcludedRoute {
@@ -167,7 +126,10 @@ export function parseFmIndex(text: string): FmIndex {
 
 /** Parses a page YAML file (`pages/{web|marketing}/<page-id>.yaml`). */
 export function parseFmPage(text: string): FmPage {
-  const parsed = (Bun.YAML.parse(text) ?? {}) as Partial<FmPage>;
+  const parsed = (Bun.YAML.parse(text) ?? {}) as Partial<FmPage> & Record<string, unknown>;
+  const unknownKeys = Object.keys(parsed).filter(
+    (k) => !(FM_PAGE_KEYS as readonly string[]).includes(k),
+  );
   return {
     id: (parsed.id ?? "") as string,
     app: (parsed.app ?? "") as FmApp,
@@ -175,9 +137,9 @@ export function parseFmPage(text: string): FmPage {
     title: (parsed.title ?? "") as string,
     auth: (parsed.auth ?? "") as FmAuthMode,
     purpose: (parsed.purpose ?? "") as string,
-    entry_points: Array.isArray(parsed.entry_points) ? parsed.entry_points : [],
     route_file: (parsed.route_file ?? "") as string,
     sections: Array.isArray(parsed.sections) ? parsed.sections : [],
+    ...(unknownKeys.length > 0 ? { unknown_keys: unknownKeys } : {}),
   };
 }
 
@@ -317,6 +279,14 @@ export function validateFunctionalityMap(opts: {
     const { page, filePath, expectedApp, expectedId } = entry;
     const pOwner = `page ${filePath}`;
 
+    if (page.unknown_keys && page.unknown_keys.length > 0) {
+      add(
+        FM_RULES.malformed,
+        pOwner,
+        `${pOwner}: unknown key(s) ${page.unknown_keys.join(", ")}; allowed: ${FM_PAGE_KEYS.join(", ")}`,
+      );
+    }
+
     if (!isNonEmptyString(page.id) || !KEBAB_CASE.test(page.id)) {
       add(
         FM_RULES.malformed,
@@ -365,13 +335,6 @@ export function validateFunctionalityMap(opts: {
     if (!isNonEmptyString(page.purpose)) {
       add(FM_RULES.malformed, pOwner, `${pOwner}: purpose is required`);
     }
-    if (!Array.isArray(page.entry_points) || page.entry_points.some((e) => !isNonEmptyString(e))) {
-      add(
-        FM_RULES.malformed,
-        pOwner,
-        `${pOwner}: entry_points must be a list of non-empty strings`,
-      );
-    }
     if (checkPath(`${pOwner}.route_file`, page.route_file)) {
       mappedRouteFiles.add(page.route_file);
     }
@@ -386,11 +349,27 @@ export function validateFunctionalityMap(opts: {
       const sId = isNonEmptyString(section?.id) ? section.id : `[${sIdx}]`;
       const sOwner = `${page.app}/${page.id}.${sId}`;
 
-      if (!isNonEmptyString(section?.id) || !KEBAB_CASE.test(section.id)) {
+      if (!section || typeof section !== "object") {
+        add(FM_RULES.malformed, sOwner, `${sOwner}: section must be an object`);
+        continue;
+      }
+
+      const unknownSectionKeys = Object.keys(section).filter(
+        (k) => !(FM_SECTION_KEYS as readonly string[]).includes(k),
+      );
+      if (unknownSectionKeys.length > 0) {
         add(
           FM_RULES.malformed,
           sOwner,
-          `${sOwner}: section id must be non-empty kebab-case (got "${section?.id}")`,
+          `${sOwner}: unknown key(s) ${unknownSectionKeys.join(", ")}; allowed: ${FM_SECTION_KEYS.join(", ")}`,
+        );
+      }
+
+      if (!isNonEmptyString(section.id) || !KEBAB_CASE.test(section.id)) {
+        add(
+          FM_RULES.malformed,
+          sOwner,
+          `${sOwner}: section id must be non-empty kebab-case (got "${section.id}")`,
         );
       } else {
         if (seenSections.has(section.id)) {
@@ -403,127 +382,30 @@ export function validateFunctionalityMap(opts: {
         seenSections.add(section.id);
       }
 
-      if (!isNonEmptyString(section?.name)) {
-        add(FM_RULES.malformed, sOwner, `${sOwner}: section name is required`);
-      }
-      if (!isOneOf(section?.kind, FM_SECTION_KINDS)) {
-        add(
-          FM_RULES.malformed,
-          sOwner,
-          `${sOwner}: section kind must be one of ${FM_SECTION_KINDS.join(", ")}`,
-        );
-      }
-      checkPath(`${sOwner}.component`, section?.component);
-      if (section?.when !== undefined && !isNonEmptyString(section.when)) {
-        add(FM_RULES.malformed, sOwner, `${sOwner}: when must be a non-empty string if provided`);
-      }
-      if (!Array.isArray(section?.capabilities)) {
-        add(FM_RULES.malformed, sOwner, `${sOwner}: capabilities must be an array`);
-        continue;
-      }
+      checkPath(`${sOwner}.component`, section.component);
 
-      const seenCaps = new Set<string>();
-      for (const [cIdx, cap] of section.capabilities.entries()) {
-        const cId = isNonEmptyString(cap?.id) ? cap.id : `[${cIdx}]`;
-        const cOwner = `${sOwner}.${cId}`;
-
-        if (!isNonEmptyString(cap?.id) || !KEBAB_CASE.test(cap.id)) {
-          add(
-            FM_RULES.malformed,
-            cOwner,
-            `${cOwner}: capability id must be non-empty kebab-case (got "${cap?.id}")`,
-          );
-        } else {
-          if (seenCaps.has(cap.id)) {
-            add(
-              FM_RULES.duplicateId,
-              cOwner,
-              `${cOwner}: duplicate capability id "${cap.id}" in section "${section.id}"`,
-            );
-          }
-          seenCaps.add(cap.id);
-        }
-
-        if (!isNonEmptyString(cap?.goal)) {
-          add(FM_RULES.malformed, cOwner, `${cOwner}: goal is required`);
-        }
-        if (!isOneOf(cap?.mode, FM_CAPABILITY_MODES)) {
-          add(
-            FM_RULES.malformed,
-            cOwner,
-            `${cOwner}: mode must be one of ${FM_CAPABILITY_MODES.join(", ")}`,
-          );
-        }
-
-        const refFields: Array<{
-          key: "facts_read" | "facts_written" | "figures_shown";
-          kind: "fact" | "figure";
-          validIds: ReadonlySet<string>;
-        }> = [
-          { key: "facts_read", kind: "fact", validIds: valueMap.factIds },
-          { key: "facts_written", kind: "fact", validIds: valueMap.factIds },
-          { key: "figures_shown", kind: "figure", validIds: valueMap.figureIds },
-        ];
-        for (const { key, kind, validIds } of refFields) {
-          const raw = cap?.[key];
-          if (raw === undefined) continue;
-          if (!Array.isArray(raw)) {
-            add(FM_RULES.malformed, `${cOwner}.${key}`, `${cOwner}: ${key} must be an array`);
-            continue;
-          }
-          for (const refId of raw) {
-            if (!isNonEmptyString(refId) || !validIds.has(refId)) {
-              add(
-                FM_RULES.unknownValueRef,
-                `${cOwner}:${key}:${String(refId)}`,
-                `${cOwner}: ${key} references unknown value-map ${kind} "${String(refId)}"`,
-              );
-            }
-          }
-        }
-
-        if (!Array.isArray(cap?.actions)) {
-          add(FM_RULES.malformed, cOwner, `${cOwner}: actions must be an array`);
+      const refFields: Array<{
+        key: "facts_read" | "figures_shown";
+        kind: "fact" | "figure";
+        validIds: ReadonlySet<string>;
+      }> = [
+        { key: "facts_read", kind: "fact", validIds: valueMap.factIds },
+        { key: "figures_shown", kind: "figure", validIds: valueMap.figureIds },
+      ];
+      for (const { key, kind, validIds } of refFields) {
+        const raw = section[key];
+        if (raw === undefined) continue;
+        if (!Array.isArray(raw)) {
+          add(FM_RULES.malformed, `${sOwner}.${key}`, `${sOwner}: ${key} must be an array`);
           continue;
         }
-
-        const seenActions = new Set<string>();
-        for (const [aIdx, action] of cap.actions.entries()) {
-          const aId = isNonEmptyString(action?.id) ? action.id : `[${aIdx}]`;
-          const aOwner = `${cOwner}.${aId}`;
-
-          if (!isNonEmptyString(action?.id) || !KEBAB_CASE.test(action.id)) {
+        for (const refId of raw) {
+          if (!isNonEmptyString(refId) || !validIds.has(refId)) {
             add(
-              FM_RULES.malformed,
-              aOwner,
-              `${aOwner}: action id must be non-empty kebab-case (got "${action?.id}")`,
+              FM_RULES.unknownValueRef,
+              `${sOwner}:${key}:${String(refId)}`,
+              `${sOwner}: ${key} references unknown value-map ${kind} "${String(refId)}"`,
             );
-          } else {
-            if (seenActions.has(action.id)) {
-              add(
-                FM_RULES.duplicateId,
-                aOwner,
-                `${aOwner}: duplicate action id "${action.id}" in capability "${cap.id}"`,
-              );
-            }
-            seenActions.add(action.id);
-          }
-
-          if (!isOneOf(action?.control, FM_CONTROLS)) {
-            add(
-              FM_RULES.malformed,
-              aOwner,
-              `${aOwner}: control must be one of ${FM_CONTROLS.join(", ")}`,
-            );
-          }
-          if (!isNonEmptyString(action?.label)) {
-            add(FM_RULES.malformed, aOwner, `${aOwner}: label is required`);
-          }
-          if (!isNonEmptyString(action?.effect)) {
-            add(FM_RULES.malformed, aOwner, `${aOwner}: effect is required`);
-          }
-          if (action?.if_match !== undefined && typeof action.if_match !== "boolean") {
-            add(FM_RULES.malformed, aOwner, `${aOwner}: if_match must be a boolean`);
           }
         }
       }
@@ -548,30 +430,15 @@ export function validateFunctionalityMap(opts: {
   return problems;
 }
 
-const cell = (text: string): string => text.replace(/\|/g, "\\|").replace(/\n+/g, " ").trim();
-
 const list = (items: string[] | undefined): string =>
   items && items.length > 0 ? items.map((i) => `\`${i}\``).join(", ") : "-";
 
 function renderOverview(pages: FmPage[], index: FmIndex): string {
   const sorted = [...pages].sort((a, b) => `${a.app}/${a.id}`.localeCompare(`${b.app}/${b.id}`));
   const sectionCount = sorted.reduce((sum, p) => sum + p.sections.length, 0);
-  const capCount = sorted.reduce(
-    (sum, p) => sum + p.sections.reduce((s, sec) => s + sec.capabilities.length, 0),
-    0,
-  );
-  const actionCount = sorted.reduce(
-    (sum, p) =>
-      sum +
-      p.sections.reduce(
-        (s, sec) => s + sec.capabilities.reduce((c, cap) => c + cap.actions.length, 0),
-        0,
-      ),
-    0,
-  );
 
   let out = `${VIEW_HEADER}# Functionality map: overview\n\n`;
-  out += `Mapped pages: ${sorted.length} | Sections: ${sectionCount} | Capabilities: ${capCount} | Actions: ${actionCount} | Excluded routes: ${index.excluded_routes.length}\n`;
+  out += `Mapped pages: ${sorted.length} | Sections: ${sectionCount} | Excluded routes: ${index.excluded_routes.length}\n`;
 
   for (const app of FM_APPS) {
     const appPages = sorted.filter((p) => p.app === app);
@@ -581,84 +448,31 @@ function renderOverview(pages: FmPage[], index: FmIndex): string {
       continue;
     }
     for (const page of appPages) {
-      out += `\n### ${page.id} — ${page.title}\n\n`;
+      out += `\n### ${page.id}: ${page.title}\n\n`;
       out += `- Route: \`${page.route}\` (auth: \`${page.auth}\`, file: \`${page.route_file}\`)\n`;
-      out += `- Purpose: ${page.purpose}\n`;
-      out += `- Entry points: ${page.entry_points.join("; ")}\n\n`;
-      out +=
-        "| Section | Kind | Capability | Mode | Facts read | Facts written | Figures | Actions |\n";
-      out += "|---|---|---|---|---|---|---|---|\n";
+      out += `- Purpose: ${page.purpose}\n\n`;
+      out += "| Section | Component | Facts read | Figures |\n";
+      out += "|---|---|---|---|\n";
       for (const sec of page.sections) {
-        const secLabel = sec.when ? `${sec.id} (${sec.when})` : sec.id;
-        for (const cap of sec.capabilities) {
-          out += `| \`${cell(secLabel)}\` | ${sec.kind} | \`${cap.id}\` | ${cap.mode} | ${list(cap.facts_read)} | ${list(cap.facts_written)} | ${list(cap.figures_shown)} | ${cap.actions.length} |\n`;
-        }
+        out += `| \`${sec.id}\` | \`${sec.component}\` | ${list(sec.facts_read)} | ${list(sec.figures_shown)} |\n`;
       }
     }
-  }
-  return out;
-}
-
-function renderActionsIndex(pages: FmPage[]): string {
-  const rows: Array<{
-    fullId: string;
-    app: string;
-    page: string;
-    section: string;
-    control: string;
-    label: string;
-    effect: string;
-    target: string;
-  }> = [];
-
-  for (const page of pages) {
-    for (const sec of page.sections) {
-      for (const cap of sec.capabilities) {
-        for (const action of cap.actions) {
-          const targetParts: string[] = [];
-          if (action.target) targetParts.push(`\`${action.target}\``);
-          if (action.if_match) targetParts.push("If-Match");
-          if (action.confirm) targetParts.push(`confirm: ${action.confirm}`);
-          rows.push({
-            fullId: `${page.app}.${page.id}.${sec.id}.${cap.id}.${action.id}`,
-            app: page.app,
-            page: page.id,
-            section: sec.id,
-            control: action.control,
-            label: action.label,
-            effect: action.effect,
-            target: targetParts.length > 0 ? targetParts.join(" · ") : "-",
-          });
-        }
-      }
-    }
-  }
-
-  rows.sort((a, b) => a.fullId.localeCompare(b.fullId));
-
-  let out = `${VIEW_HEADER}# Functionality map: actions index\n\n`;
-  out +=
-    "| Full ID | App | Page | Section | Control | Label | Effect | Target / Guard |\n|---|---|---|---|---|---|---|---|\n";
-  for (const r of rows) {
-    out += `| \`${r.fullId}\` | ${r.app} | ${r.page} | \`${r.section}\` | ${r.control} | ${cell(r.label)} | ${cell(r.effect)} | ${cell(r.target)} |\n`;
   }
   return out;
 }
 
 function renderByFact(pages: FmPage[]): string {
-  interface CapRef {
-    fullCapId: string;
+  interface SectionRef {
+    fullSectionId: string;
     app: string;
     page: string;
     route: string;
-    mode: string;
   }
 
-  const factReaders = new Map<string, CapRef[]>();
-  const factWriters = new Map<string, CapRef[]>();
-  const figureViewers = new Map<string, CapRef[]>();
+  const factReaders = new Map<string, SectionRef[]>();
+  const figureViewers = new Map<string, SectionRef[]>();
 
-  const pushRef = (map: Map<string, CapRef[]>, key: string, ref: CapRef) => {
+  const pushRef = (map: Map<string, SectionRef[]>, key: string, ref: SectionRef) => {
     const existing = map.get(key) ?? [];
     existing.push(ref);
     map.set(key, existing);
@@ -666,52 +480,44 @@ function renderByFact(pages: FmPage[]): string {
 
   for (const page of pages) {
     for (const sec of page.sections) {
-      for (const cap of sec.capabilities) {
-        const ref: CapRef = {
-          fullCapId: `${page.app}.${page.id}.${sec.id}.${cap.id}`,
-          app: page.app,
-          page: page.id,
-          route: page.route,
-          mode: cap.mode,
-        };
-        for (const f of cap.facts_read ?? []) pushRef(factReaders, f, ref);
-        for (const f of cap.facts_written ?? []) pushRef(factWriters, f, ref);
-        for (const g of cap.figures_shown ?? []) pushRef(figureViewers, g, ref);
-      }
+      const ref: SectionRef = {
+        fullSectionId: `${page.app}.${page.id}.${sec.id}`,
+        app: page.app,
+        page: page.id,
+        route: page.route,
+      };
+      for (const f of sec.facts_read ?? []) pushRef(factReaders, f, ref);
+      for (const g of sec.figures_shown ?? []) pushRef(figureViewers, g, ref);
     }
   }
 
-  const allFactIds = [...new Set([...factReaders.keys(), ...factWriters.keys()])].sort();
-  const allFigureIds = [...figureViewers.keys()].sort();
-
-  const sortRefs = (refs: CapRef[]) =>
-    [...refs].sort((a, b) => a.fullCapId.localeCompare(b.fullCapId));
+  const sortRefs = (refs: SectionRef[]) =>
+    [...refs].sort((a, b) => a.fullSectionId.localeCompare(b.fullSectionId));
 
   let out = `${VIEW_HEADER}# Functionality map: by value-map fact and figure\n\n`;
   out += "## Facts\n\n";
+  const allFactIds = [...factReaders.keys()].sort();
   if (allFactIds.length === 0) {
     out += "_No facts referenced yet._\n\n";
   } else {
-    out += "| Fact ID | Role | Capability | Page | Route | Mode |\n|---|---|---|---|---|---|\n";
+    out += "| Fact ID | Section | Page | Route |\n|---|---|---|---|\n";
     for (const factId of allFactIds) {
-      for (const r of sortRefs(factWriters.get(factId) ?? [])) {
-        out += `| \`${factId}\` | writes | \`${r.fullCapId}\` | ${r.app}/${r.page} | \`${r.route}\` | ${r.mode} |\n`;
-      }
       for (const r of sortRefs(factReaders.get(factId) ?? [])) {
-        out += `| \`${factId}\` | reads | \`${r.fullCapId}\` | ${r.app}/${r.page} | \`${r.route}\` | ${r.mode} |\n`;
+        out += `| \`${factId}\` | \`${r.fullSectionId}\` | ${r.app}/${r.page} | \`${r.route}\` |\n`;
       }
     }
     out += "\n";
   }
 
   out += "## Figures\n\n";
+  const allFigureIds = [...figureViewers.keys()].sort();
   if (allFigureIds.length === 0) {
     out += "_No figures referenced yet._\n";
   } else {
-    out += "| Figure ID | Capability | Page | Route | Mode |\n|---|---|---|---|---|\n";
+    out += "| Figure ID | Section | Page | Route |\n|---|---|---|---|\n";
     for (const figureId of allFigureIds) {
       for (const r of sortRefs(figureViewers.get(figureId) ?? [])) {
-        out += `| \`${figureId}\` | \`${r.fullCapId}\` | ${r.app}/${r.page} | \`${r.route}\` | ${r.mode} |\n`;
+        out += `| \`${figureId}\` | \`${r.fullSectionId}\` | ${r.app}/${r.page} | \`${r.route}\` |\n`;
       }
     }
   }
@@ -719,11 +525,10 @@ function renderByFact(pages: FmPage[]): string {
   return out;
 }
 
-/** Renders the three generated Markdown views before Biome formatting. */
+/** Renders the generated Markdown views before Biome formatting. */
 export function renderFunctionalityViews(pages: FmPage[], index: FmIndex): Record<string, string> {
   return {
     "overview.md": renderOverview(pages, index),
-    "actions-index.md": renderActionsIndex(pages),
     "by-fact.md": renderByFact(pages),
   };
 }

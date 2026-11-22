@@ -4,179 +4,35 @@ route: /features/:slug
 title: Feature area detail | Flump
 auth: public
 purpose: Explain one of the five money areas (accounts, budget, pay, savings-and-pension, debt-and-borrowing) with sample figures, deeper tools, and optional embedded calculators.
-entry_points:
-  - Marketing header Features menu
-  - Features index page (/features)
-  - Home page feature tiles and "More detail" links
-  - Preview page area links
-  - Direct URL (/features/accounts, /features/budget, /features/pay, /features/savings-and-pension, /features/debt-and-borrowing)
 route_file: apps/marketing/src/pages/FeaturePage/FeaturePage.tsx
 
 sections:
   - id: site-header
-    name: Marketing site header
-    kind: navigation
     component: apps/marketing/src/components/Header/Header.tsx
-    capabilities:
-      - id: navigate-site
-        goal: Navigate across marketing pages, toggle light/dark theme, or open the web app.
-        mode: navigate
-        actions:
-          - id: home-logo
-            control: link
-            label: Flump home
-            effect: Navigates to the marketing home page.
-            target: /
-          - id: features-menu
-            control: button
-            label: Features
-            effect: Opens the Features dropdown listing All features, the five money areas, AI connection, and Security and privacy.
-          - id: theme-toggle
-            control: toggle
-            label: Toggle colour theme
-            effect: Switches between light and dark theme.
-          - id: open-app-cta
-            control: link
-            label: Open Flump / Sign up
-            effect: Opens the web app sign-up or dashboard URL.
 
   - id: hero
-    name: Feature area hero
-    kind: hero
     component: apps/marketing/src/pages/FeaturePage/FeaturePage.tsx
-    capabilities:
-      - id: orient-and-start
-        goal: Read the area heading and lead sentence, and open sign-up or the interactive preview.
-        mode: navigate
-        actions:
-          - id: hero-signup-cta
-            control: link
-            label: Request an invite / Sign up
-            effect: Opens the web app sign-up or contact invite URL.
-          - id: hero-preview-link
-            control: link
-            label: Interactive preview
-            effect: Navigates to /preview (or "/preview#preview-section-breathing-room-title" on budget) when previewHref is defined.
-            target: /preview
 
   - id: what-you-see
-    name: What you see
-    kind: list
     component: apps/marketing/src/pages/FeaturePage/FeaturePage.tsx
-    capabilities:
-      - id: read-area-facts
-        goal: Read the three core facts about what this area shows in Flump, plus debt help link on debt-and-borrowing.
-        mode: read
-        actions:
-          - id: debt-help-link
-            control: link
-            label: Debt help guidance
-            effect: Opens external free debt advice guidance when viewing /features/debt-and-borrowing.
 
   - id: see-it
-    name: See it with sample figures
-    kind: scenario-zone
     component: apps/marketing/src/pages/FeaturePage/FeaturePage.tsx
-    when: when feature.sample is not "none" (accounts, budget, savings-and-pension, debt-and-borrowing)
-    capabilities:
-      - id: switch-sample-household
-        goal: Switch between renting and paying a mortgage to inspect sample figures for this area.
-        mode: what-if
-        actions:
-          - id: select-household
-            control: button
-            label: Renting / Paying a mortgage
-            effect: Switches the sample household fixture rendered inside the PreviewFrame.
 
   - id: retirement
-    name: Retirement plan
-    kind: content
     component: apps/marketing/src/pages/FeaturePage/FeaturePage.tsx
-    when: when slug is savings-and-pension
-    capabilities:
-      - id: read-retirement-plan
-        goal: Read how the Retirement plan estimates yearly retirement income and review the MoneyHelper guidance link.
-        mode: read
-        actions:
-          - id: moneyhelper-link
-            control: link
-            label: MoneyHelper guidance
-            effect: Opens external MoneyHelper pension guidance.
 
   - id: more-detail
-    name: More detail when you want it
-    kind: list
     component: apps/marketing/src/pages/FeaturePage/FeaturePage.tsx
-    capabilities:
-      - id: read-depth-tools
-        goal: Read the list of deeper tools available inside this area of the app.
-        mode: read
-        actions: []
 
   - id: one-picture
-    name: Part of one picture
-    kind: navigation
     component: apps/marketing/src/components/AreaStrip/AreaStrip.tsx
-    capabilities:
-      - id: switch-area
-        goal: Navigate between the five money areas in the app order.
-        mode: navigate
-        actions:
-          - id: area-strip-link
-            control: link
-            label: Money area link
-            effect: Navigates to another /features/* area page.
-            target: /features/:slug
 
   - id: try-it
-    name: Try it with your own numbers
-    kind: scenario-zone
     component: apps/marketing/src/components/TryItSection/TryItSection.tsx
-    when: when slug is pay or debt-and-borrowing
-    capabilities:
-      - id: try-kept-calculator
-        goal: Run the short-form Pay Rise, Debt Payoff, or Mortgage vs ISA calculator with non-persisted example numbers.
-        mode: what-if
-        actions:
-          - id: adjust-calculator-inputs
-            control: slider
-            label: Calculator inputs
-            effect: Updates local calculator inputs (salary/rise on pay; balances/rates/overpayment on debt-and-borrowing) and recalculates estimates.
 
   - id: final-cta
-    name: Final call to action
-    kind: content
     component: apps/marketing/src/pages/FeaturePage/FeaturePage.tsx
-    capabilities:
-      - id: final-signup
-        goal: Open sign-up from the bottom of the feature page.
-        mode: navigate
-        actions:
-          - id: final-signup-cta
-            control: link
-            label: Request an invite / Sign up
-            effect: Opens the web app sign-up or contact invite URL.
 
   - id: site-footer
-    name: Marketing site footer
-    kind: footer
     component: apps/marketing/src/components/Footer/Footer.tsx
-    capabilities:
-      - id: footer-navigation
-        goal: Navigate to Product feature pages, Company pages, or sign in to the web app.
-        mode: navigate
-        actions:
-          - id: footer-features-link
-            control: link
-            label: All features
-            effect: Navigates to /features.
-            target: /features
-          - id: footer-contact-link
-            control: link
-            label: Contact
-            effect: Navigates to /contact.
-            target: /contact
-          - id: footer-signin-link
-            control: link
-            label: Sign in
-            effect: Opens the web app /login route.

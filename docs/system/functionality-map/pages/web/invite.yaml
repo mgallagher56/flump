@@ -4,24 +4,8 @@ route: /invite
 title: Invite
 auth: public
 purpose: Redeem a private-beta invite token from the invite cookie or show a clear message when the invite link cannot be used.
-entry_points:
-  - Redirect from /invite/:token after storing the invite token cookie
-  - Return URL after WorkOS sign-up or sign-in
 route_file: apps/web/app/routes/invite._index.tsx
 
 sections:
   - id: invite-outcome
-    name: Invite outcome
-    kind: notice
     component: apps/web/app/routes/invite._index.tsx
-    when: when invite link is unusable or redemption is temporarily busy
-    capabilities:
-      - id: recover-from-unusable-invite
-        goal: Inform the visitor when an invite link has been used, cancelled, or expired, and link back home.
-        mode: navigate
-        actions:
-          - id: go-home
-            control: link
-            label: Go to the home page
-            effect: Navigates to the home page.
-            target: /

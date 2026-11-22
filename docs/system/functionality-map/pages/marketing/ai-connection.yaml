@@ -4,154 +4,32 @@ route: /features/ai-connection
 title: AI connection | Flump
 auth: public
 purpose: Explain the Flump MCP AI connection, show example questions, explain how testers request access, and list the available MCP tools.
-entry_points:
-  - Marketing header Features menu (AI connection)
-  - Features index page (/features)
-  - Home page FAQ AI answer
-  - Security page AI security fact
-  - Direct URL (/features/ai-connection or 301 from /mcp)
 route_file: apps/marketing/src/pages/AiConnectionPage/AiConnectionPage.tsx
 
 sections:
   - id: site-header
-    name: Marketing site header
-    kind: navigation
     component: apps/marketing/src/components/Header/Header.tsx
-    capabilities:
-      - id: navigate-site
-        goal: Navigate across marketing pages, toggle light/dark theme, or open the web app.
-        mode: navigate
-        actions:
-          - id: home-logo
-            control: link
-            label: Flump home
-            effect: Navigates to the marketing home page.
-            target: /
-          - id: features-menu
-            control: button
-            label: Features
-            effect: Opens the Features dropdown listing All features, the five money areas, AI connection, and Security and privacy.
-          - id: theme-toggle
-            control: toggle
-            label: Toggle colour theme
-            effect: Switches between light and dark theme.
-          - id: open-app-cta
-            control: link
-            label: Open Flump / Sign up
-            effect: Opens the web app sign-up or dashboard URL.
 
   - id: hero
-    name: AI connection hero
-    kind: hero
     component: apps/marketing/src/pages/FeaturePage/FeaturePage.tsx
-    capabilities:
-      - id: orient-and-start
-        goal: Read the AI connection summary, Preview status badge, and tester access note, or open sign-up.
-        mode: navigate
-        actions:
-          - id: hero-signup-cta
-            control: link
-            label: Request an invite / Sign up
-            effect: Opens the web app sign-up or contact invite URL.
 
   - id: what-you-see
-    name: What you see
-    kind: list
     component: apps/marketing/src/pages/FeaturePage/FeaturePage.tsx
-    capabilities:
-      - id: read-ai-facts
-        goal: Read the three core facts about connecting an AI assistant, deterministic Flump calculations, and staging tools.
-        mode: read
-        actions: []
 
   - id: questions
-    name: Questions you could ask
-    kind: list
     component: apps/marketing/src/pages/AiConnectionPage/AiConnectionPage.tsx
-    capabilities:
-      - id: read-example-questions
-        goal: Review three example household questions answered by Flump MCP tools.
-        mode: read
-        actions: []
 
   - id: setup
-    name: How to get it
-    kind: content
     component: apps/marketing/src/pages/AiConnectionPage/AiConnectionPage.tsx
-    capabilities:
-      - id: request-ai-access
-        goal: Learn how testers request AI connection access and navigate to the contact page.
-        mode: navigate
-        actions:
-          - id: ask-us-link
-            control: link
-            label: Ask us
-            effect: Navigates to the Contact page to request AI connection access.
-            target: /contact
 
   - id: more-detail
-    name: Technical details drawer
-    kind: drawer
     component: apps/marketing/src/pages/AiConnectionPage/AiConnectionPage.tsx
-    capabilities:
-      - id: inspect-mcp-tools
-        goal: Expand technical details to read how Flump MCP works, rate limits, read-only tools, and staging tools.
-        mode: read
-        actions:
-          - id: toggle-technical-details
-            control: drawer-toggle
-            label: Show technical details
-            effect: Expands or collapses the CollapsibleDrawer listing how MCP works and all read/calculate and staging tools.
 
   - id: one-picture
-    name: Part of one picture
-    kind: navigation
     component: apps/marketing/src/components/AreaStrip/AreaStrip.tsx
-    capabilities:
-      - id: switch-area
-        goal: Navigate to any of the five money areas from the strip.
-        mode: navigate
-        actions:
-          - id: area-strip-link
-            control: link
-            label: Money area link
-            effect: Navigates to a /features/* area page.
-            target: /features/:slug
 
   - id: final-cta
-    name: Final call to action
-    kind: content
     component: apps/marketing/src/pages/FeaturePage/FeaturePage.tsx
-    capabilities:
-      - id: final-signup
-        goal: Open sign-up from the bottom of the AI connection page.
-        mode: navigate
-        actions:
-          - id: final-signup-cta
-            control: link
-            label: Request an invite / Sign up
-            effect: Opens the web app sign-up or contact invite URL.
 
   - id: site-footer
-    name: Marketing site footer
-    kind: footer
     component: apps/marketing/src/components/Footer/Footer.tsx
-    capabilities:
-      - id: footer-navigation
-        goal: Navigate to Product feature pages, Company pages, or sign in to the web app.
-        mode: navigate
-        actions:
-          - id: footer-features-link
-            control: link
-            label: All features
-            effect: Navigates to /features.
-            target: /features
-          - id: footer-contact-link
-            control: link
-            label: Contact
-            effect: Navigates to /contact.
-            target: /contact
-          - id: footer-signin-link
-            control: link
-            label: Sign in
-            effect: Opens the web app /login route.

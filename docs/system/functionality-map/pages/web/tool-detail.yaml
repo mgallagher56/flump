@@ -4,66 +4,17 @@ route: /tools/:slug
 title: Public money calculator
 auth: public
 purpose: Run one of eight public UK money calculators locally without signing in, read its guide and FAQ, or request a beta invite.
-entry_points:
-  - Tools index page (/tools)
-  - Direct URL or marketing calculator link
 route_file: apps/web/app/routes/tools.$slug.tsx
 
 sections:
   - id: breadcrumbs
-    name: Calculator breadcrumbs
-    kind: navigation
     component: apps/web/app/routes/tools.$slug.tsx
-    capabilities:
-      - id: navigate-to-tools-index
-        goal: Return to the public calculators index.
-        mode: navigate
-        actions:
-          - id: back-to-calculators
-            control: link
-            label: Calculators
-            effect: Navigates back to /tools.
-            target: /tools
 
   - id: header
-    name: Page header
-    kind: header
     component: apps/web/app/routes/tools.$slug.tsx
-    capabilities:
-      - id: orient
-        goal: Display the selected calculator's title and short description.
-        mode: read
-        actions: []
 
   - id: calculator
-    name: Interactive calculator
-    kind: scenario-zone
     component: apps/web/app/routes/tools.$slug.tsx
-    capabilities:
-      - id: run-public-calculator
-        goal: Adjust calculator inputs locally to explore debt, mortgage, student loan, or UK tax scenarios, and optionally request a beta invite.
-        mode: what-if
-        actions:
-          - id: adjust-calculator-inputs
-            control: input
-            label: Calculator inputs
-            effect: Recalculates the standalone calculator results locally without saving data.
-          - id: request-invite
-            control: button
-            label: Request an invite
-            effect: Navigates to the marketing beta invite request section.
-            target: /contact#beta
 
   - id: guide
-    name: Calculator guide and FAQ
-    kind: drawer
     component: apps/web/app/routes/tools.$slug.tsx
-    capabilities:
-      - id: read-guide-and-faq
-        goal: Expand and read the calculator methodology guide and frequently asked questions.
-        mode: read
-        actions:
-          - id: toggle-guide
-            control: drawer-toggle
-            label: How this works and FAQ
-            effect: Expands or collapses the calculator guide and FAQ sections.

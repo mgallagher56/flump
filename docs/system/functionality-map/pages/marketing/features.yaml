@@ -4,95 +4,17 @@ route: /features
 title: Flump features | Flump
 auth: public
 purpose: Present all five money areas of Flump and the AI connection in one index page with links to each feature page.
-entry_points:
-  - Marketing header Features menu (All features)
-  - Marketing home page ("All Flump features on one page")
-  - Marketing footer Product column (All features)
-  - Direct URL (/features)
 route_file: apps/marketing/src/pages/FeaturesIndexPage/FeaturesIndexPage.tsx
 
 sections:
   - id: site-header
-    name: Marketing site header
-    kind: navigation
     component: apps/marketing/src/components/Header/Header.tsx
-    capabilities:
-      - id: navigate-site
-        goal: Navigate across marketing pages, toggle light/dark theme, or open the web app.
-        mode: navigate
-        actions:
-          - id: home-logo
-            control: link
-            label: Flump home
-            effect: Navigates to the marketing home page.
-            target: /
-          - id: features-menu
-            control: button
-            label: Features
-            effect: Opens the Features dropdown listing All features, the five money areas, AI connection, and Security and privacy.
-          - id: theme-toggle
-            control: toggle
-            label: Toggle colour theme
-            effect: Switches between light and dark theme.
-          - id: open-app-cta
-            control: link
-            label: Open Flump / Sign up
-            effect: Opens the web app sign-up or dashboard URL.
 
   - id: header
-    name: Features index hero
-    kind: header
     component: apps/marketing/src/pages/FeaturesIndexPage/FeaturesIndexPage.tsx
-    capabilities:
-      - id: orient-and-start
-        goal: Read the overview of the five Flump areas and open sign-up or the interactive preview.
-        mode: navigate
-        actions:
-          - id: hero-signup-cta
-            control: link
-            label: Request an invite / Sign up
-            effect: Opens the web app sign-up or contact invite URL.
-          - id: hero-preview-link
-            control: link
-            label: Interactive preview
-            effect: Navigates to the interactive preview page.
-            target: /preview
 
   - id: feature-tiles
-    name: Feature areas and AI connection grid
-    kind: list
     component: apps/marketing/src/components/FeatureTiles/FeatureTiles.tsx
-    capabilities:
-      - id: open-feature-page
-        goal: Browse the five money areas and the AI connection card and navigate to any feature detail page.
-        mode: navigate
-        actions:
-          - id: open-tile
-            control: link
-            label: Feature area card link
-            effect: Navigates to /features/accounts, /features/budget, /features/pay, /features/savings-and-pension, /features/debt-and-borrowing, or /features/ai-connection.
-            target: /features/:slug
 
   - id: site-footer
-    name: Marketing site footer
-    kind: footer
     component: apps/marketing/src/components/Footer/Footer.tsx
-    capabilities:
-      - id: footer-navigation
-        goal: Navigate to Product feature pages, Company pages, or sign in to the web app.
-        mode: navigate
-        actions:
-          - id: footer-features-link
-            control: link
-            label: All features
-            effect: Navigates to /features.
-            target: /features
-          - id: footer-contact-link
-            control: link
-            label: Contact
-            effect: Navigates to /contact.
-            target: /contact
-          - id: footer-signin-link
-            control: link
-            label: Sign in
-            effect: Opens the web app /login route.

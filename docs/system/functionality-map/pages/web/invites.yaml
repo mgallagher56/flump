@@ -4,72 +4,17 @@ route: /app/invites
 title: Invites
 auth: admin
 purpose: Create single-use private-beta invite links, cancel unused links, and remove beta member access.
-entry_points:
-  - Settings Security tab (Manage invites link, visible to beta admins only)
 route_file: apps/web/app/routes/app.invites.tsx
 
 sections:
   - id: header
-    name: Page header
-    kind: header
     component: apps/web/app/routes/app.invites.tsx
-    capabilities:
-      - id: orient
-        goal: Explain that invite links let people join the private test and work once.
-        mode: read
-        actions: []
 
   - id: create-invite
-    name: Create an invite link
-    kind: form
     component: apps/web/app/features/invites/components/NewInviteLink/NewInviteLink.tsx
-    capabilities:
-      - id: generate-invite-link
-        goal: Create a single-use invite link with an optional label and copy it once.
-        mode: write
-        actions:
-          - id: edit-invite-label
-            control: input
-            label: Label
-            effect: Sets an optional admin-only label for the invite link.
-            validation: Maximum 60 characters.
-          - id: submit-create-invite
-            control: submit
-            label: Create invite link
-            effect: Creates a new single-use invite link via POST /app/invites.
-            target: POST /app/invites
-          - id: copy-invite-link
-            control: button
-            label: Copy link / Copied
-            effect: Copies the newly created invite link to the clipboard.
 
   - id: invite-links
-    name: Invite links
-    kind: list
     component: apps/web/app/features/invites/components/InviteList/InviteList.tsx
-    capabilities:
-      - id: list-and-cancel-invites
-        goal: Review recent invite links and cancel any unused link.
-        mode: delete
-        actions:
-          - id: cancel-invite
-            control: button
-            label: Cancel link
-            effect: Cancels an unused invite link so it can no longer be redeemed.
-            target: POST /app/invites
 
   - id: people-with-access
-    name: People with access
-    kind: list
     component: apps/web/app/features/invites/components/MemberList/MemberList.tsx
-    capabilities:
-      - id: list-and-remove-members
-        goal: Review people who joined via invite links and remove their beta access if needed.
-        mode: delete
-        actions:
-          - id: remove-member-access
-            control: button
-            label: Remove access
-            effect: Opens confirmation dialog and revokes the member's beta access.
-            target: POST /app/invites
-            confirm: Confirm in the Remove access dialog to revoke Flump and AI connection access.

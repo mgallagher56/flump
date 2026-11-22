@@ -4,121 +4,33 @@ route: /app/self-assessment/:source
 title: Income source | Self Assessment
 auth: required
 purpose: Inspect and manage income, expenses, allowance comparisons, and receipts for a single Self Assessment income source (self-employed, rental, savings, or PAYE) in one tax year.
-entry_points:
-  - Self Assessment page source row link (/app/self-assessment/:source?year=YYYY-YY)
 route_file: apps/web/app/routes/app.self-assessment_.$source.tsx
 
 sections:
   - id: header
-    name: Back link, page header, and tax year selector
-    kind: header
     component: apps/web/app/containers/tax/TaxSourceContainer.tsx
-    capabilities:
-      - id: navigate-and-select-year
-        goal: Return to Self Assessment overview or switch the active UK tax year for this income source.
-        mode: navigate
-        actions:
-          - id: back-to-self-assessment
-            control: link
-            label: Back to Self Assessment
-            effect: Navigates back to /app/self-assessment preserving the selected tax year.
-            target: /app/self-assessment
-          - id: select-source-tax-year
-            control: button
-            label: Tax year pill
-            effect: Updates ?year= query parameter and switches the displayed tax year.
 
   - id: kpi-strip
-    name: Source income and expenses strip
-    kind: kpi-strip
     component: apps/web/app/containers/tax/TaxSourceContainer.tsx
-    when: when at least one record exists for this source in the selected tax year
-    capabilities:
-      - id: view-source-totals
-        goal: View total recorded income and expenses for this source in the selected tax year.
-        mode: read
-        facts_read:
-          - tax-records
-        actions: []
+    facts_read:
+      - tax-records
 
   - id: allowance-comparison
-    name: Allowance versus recorded expenses comparison
-    kind: content
     component: apps/web/app/features/tax/components/AllowanceComparison/AllowanceComparison.tsx
-    when: when source is self-employed or rental and income or expenses are non-zero
-    capabilities:
-      - id: compare-allowance-and-expenses
-        goal: Compare the £1,000 trading or property allowance against recorded expenses (and rental share), or follow a prompt to add missing salary/self-employment facts.
-        mode: read
-        facts_read:
-          - tax-records
-          - rental-share-for-tax
-          - salary
-        figures_shown:
-          - estimated-tax
-        actions:
-          - id: resolve-missing-estimate-fact
-            control: link
-            label: Add your salary / Add self-employment income
-            effect: Navigates to Profile settings or self-employed source page when an estimate fact is missing.
+    facts_read:
+      - tax-records
+      - rental-share-for-tax
+      - salary
+    figures_shown:
+      - estimated-tax
 
   - id: calculated-figures
-    name: Calculated interest offers from Accounts
-    kind: list
     component: apps/web/app/features/tax/components/CalculatedFigures/CalculatedFigures.tsx
-    when: when source is rental or savings and Accounts provide calculated interest offers
-    capabilities:
-      - id: add-source-calculated-interest
-        goal: Add calculated savings or buy-to-let mortgage interest from Accounts into this source's tax records.
-        mode: write
-        facts_read:
-          - account-balance
-          - account-rate
-        facts_written:
-          - tax-records
-        actions:
-          - id: add-calculated-offer
-            control: button
-            label: Add to tax year
-            effect: Creates a tax record from the calculated interest offer via POST /tax-records.
-            target: POST /tax-records
+    facts_read:
+      - account-balance
+      - account-rate
 
   - id: records-section
-    name: Source records table or empty state
-    kind: table
     component: apps/web/app/containers/tax/TaxSourceContainer.tsx
-    capabilities:
-      - id: manage-source-records
-        goal: Add income or expense records for this source, expand/collapse the records table, edit or delete records, and view receipts.
-        mode: write
-        facts_read:
-          - tax-records
-        facts_written:
-          - tax-records
-        actions:
-          - id: add-source-income
-            control: button
-            label: Add income
-            effect: Opens the tax record dialog pre-scoped to this source and income.
-          - id: add-source-expense
-            control: button
-            label: Add expense
-            effect: Opens the tax record dialog pre-scoped to this source and expense.
-          - id: toggle-source-records-drawer
-            control: drawer-toggle
-            label: Records drawer
-            effect: Expands or collapses TaxRecordsTable for this source and tax year.
-          - id: edit-source-record
-            control: button
-            label: Edit
-            effect: Opens the tax record edit dialog.
-          - id: delete-source-record
-            control: button
-            label: Delete
-            effect: Deletes the tax record after confirmation via DELETE /tax-records/:id.
-            target: DELETE /tax-records/:id
-          - id: view-source-receipt
-            control: button
-            label: View receipt
-            effect: Opens the stored receipt via /app/tax/receipts/:id.
-            target: /app/tax/receipts/:id
+    facts_read:
+      - tax-records

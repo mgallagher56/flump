@@ -4,257 +4,58 @@ route: /app/retirement
 title: Retirement plan
 auth: required
 purpose: See an estimate of yearly retirement income from saved pots and State Pension, test what-if changes, and save retirement plan details.
-entry_points:
-  - Main app navigation (Retirement)
-  - Dashboard retirement widget link
 route_file: apps/web/app/routes/app.retirement.tsx
 
 sections:
   - id: header
-    name: Page header
-    kind: header
     component: apps/web/app/features/retirement/components/RetirementPlanner/RetirementPlanner.tsx
-    capabilities:
-      - id: orient
-        goal: Identify the page and its pricing basis ("Estimates in today's prices, before tax.").
-        mode: read
-        actions: []
 
   - id: hero
-    name: Headline retirement income estimate
-    kind: hero
     component: apps/web/app/features/retirement/components/RetirementPlanner/RetirementPlanner.tsx
-    capabilities:
-      - id: view-headline-income
-        goal: View the middle-case estimated yearly retirement income built from saved details, or follow a prompt to add missing details.
-        mode: read
-        facts_read:
-          - retirement-plan
-          - account-balance
-          - salary
-          - pension-rates
-          - birth-year
-          - housing-cost
-          - housing-status
-          - budget-entries
-          - mortgage-term-and-fix-end
-        figures_shown:
-          - retirement-income
-        actions:
-          - id: add-birth-year
-            control: link
-            label: Add your year of birth
-            effect: Navigates to the profile age-and-pay section when birthYear is missing.
-            target: /app/profile#settings-age-and-pay
-          - id: add-plan-details
-            control: link
-            label: Add your plan details
-            effect: "Scrolls to #retirement-plan-details when plan inputs other than birthYear are missing."
-            target: "#retirement-plan-details"
+    facts_read:
+      - retirement-plan
+      - account-balance
+      - salary
+      - pension-rates
+      - birth-year
+      - housing-cost
+      - housing-status
+      - budget-entries
+      - mortgage-term-and-fix-end
+    figures_shown:
+      - retirement-income
 
   - id: kpis
-    name: Saved retirement summary strip
-    kind: kpi-strip
     component: apps/web/app/features/retirement/components/RetirementPlanner/RetirementPlanner.tsx
-    when: when savedResult exists
-    capabilities:
-      - id: view-saved-kpis
-        goal: View saved pots counted towards retirement, State Pension estimate, and planned retirement age range.
-        mode: read
-        facts_read:
-          - retirement-plan
-          - account-balance
-        figures_shown:
-          - retirement-income
-        actions: []
+    facts_read:
+      - retirement-plan
+      - account-balance
+    figures_shown:
+      - retirement-income
 
   - id: what-if-zone
-    name: What-if scenario zone
-    kind: scenario-zone
     component: apps/web/app/features/retirement/components/RetirementPlanner/RetirementPlanner.tsx
-    when: when savedResult exists
-    capabilities:
-      - id: toggle-scenario-zone
-        goal: Expand or collapse the what-if controls, or reset modified scenario values back to saved plan defaults.
-        mode: what-if
-        actions:
-          - id: show-what-if
-            control: drawer-toggle
-            label: "Show what-if: change your plan"
-            effect: Expands or collapses the ScenarioZone without changing saved data.
-          - id: reset-what-if
-            control: button
-            label: Reset
-            effect: Restores all scenario sliders and toggles to the saved plan values.
-
-      - id: adjust-scenario-assumptions
-        goal: Test different retirement ages, plan-to ages, contribution levels, and growth cases locally.
-        mode: what-if
-        facts_read:
-          - retirement-plan
-          - salary
-          - pension-rates
-          - account-balance
-        figures_shown:
-          - retirement-income
-        actions:
-          - id: set-retirement-age
-            control: slider
-            label: Retirement age
-            effect: Updates scenario retirement age between currentAge and max(80, savedRetirementAge) and recalculates the illustration.
-          - id: set-plan-to-age
-            control: slider
-            label: Plan to age
-            effect: Updates scenario plan-to age between retirementAge + 1 and max(105, savedPlanToAge).
-          - id: set-employee-contribution
-            control: slider
-            label: Your contribution
-            effect: Updates employee pension percentage (0% to max(MAX_CONTRIBUTION_PERCENT, savedEmployeePercent), step 0.5%) when a workplace pension exists.
-          - id: toggle-qualifying-earnings
-            control: checkbox
-            label: Base contributions on pay that counts for your pension
-            effect: Switches workplace contribution calculation between whole salary and qualifying earnings band.
-          - id: set-extra-monthly
-            control: slider
-            label: Extra monthly contribution
-            effect: Updates extra monthly contribution (£0 to £2,000, step £50) when no workplace pension is present.
-          - id: select-growth-case
-            control: button
-            label: Lower case / Middle case / Higher case
-            effect: Switches the active growth case shown in the result block, pot chart, and year-by-year schedule.
-
-      - id: inspect-assumptions-and-schedule
-        goal: Inspect the pot accumulation chart, latest counted monthly check-in total, three growth cases, and year-by-year drawdown schedule.
-        mode: read
-        facts_read:
-          - balance-history
-          - retirement-plan
-          - pension-rates
-        figures_shown:
-          - retirement-income
-        actions:
-          - id: toggle-assumptions-drawer
-            control: drawer-toggle
-            label: Assumptions, pots and year by year
-            effect: Opens or closes the CollapsibleDrawer containing growth/inflation assumptions, State Pension summary, CaseTable, and YearScheduleTable.
-          - id: open-pension-details
-            control: link
-            label: Add your rates on the Pension page / Change them on the Pension page
-            effect: Navigates to the Pension page to edit workplace pension rates.
-            target: /app/pension#pension-details
-          - id: sort-case-table
-            control: sort-header
-            label: Yearly income / Pots at retirement
-            effect: Sorts the 3-row growth case comparison table.
-          - id: sort-year-schedule
-            control: sort-header
-            label: Age / From pots / State Pension / Housing / After housing
-            effect: Sorts the year-by-year drawdown schedule table.
+    facts_read:
+      - retirement-plan
+      - salary
+      - pension-rates
+      - account-balance
+      - balance-history
+    figures_shown:
+      - retirement-income
 
   - id: workplace-salary-notice
-    name: Workplace salary missing notice
-    kind: notice
     component: apps/web/app/features/retirement/components/WorkplaceSalaryNotSet/WorkplaceSalaryNotSet.tsx
-    when: when !workplace && workplaceSalaryNotSet inside Assumptions drawer
-    capabilities:
-      - id: prompt-salary-on-pension
-        goal: Explain that workplace pension contributions are excluded because salary is not set, and link to the Pension page.
-        mode: navigate
-        facts_read:
-          - salary
-          - pension-rates
-        actions:
-          - id: add-salary-on-pension
-            control: link
-            label: Add your salary on the Pension page
-            effect: Navigates to /app/pension#pension-details to enter salary and workplace pension rates.
-            target: /app/pension#pension-details
+    facts_read:
+      - salary
+      - pension-rates
 
   - id: moneyhelper-guidance
-    name: MoneyHelper pension guidance
-    kind: notice
     component: packages/ui/src/patterns/MoneyHelperGuidance/MoneyHelperGuidance.tsx
-    capabilities:
-      - id: open-moneyhelper
-        goal: Provide a quiet, impartial signpost to government-backed MoneyHelper pension guidance.
-        mode: navigate
-        actions:
-          - id: moneyhelper-link
-            control: link
-            label: Pension guidance from MoneyHelper
-            effect: Opens MoneyHelper pensions and retirement guidance in a new tab.
-            target: https://www.moneyhelper.org.uk/en/pensions-and-retirement
 
   - id: plan-details
-    name: Your plan details
-    kind: form
     component: apps/web/app/features/retirement/components/RetirementPlanner/RetirementPlanner.tsx
-    capabilities:
-      - id: edit-and-save-plan
-        goal: Edit and save retirement age, plan-to age, yearly target (typed or from budget lines), State Pension inputs, growth/inflation assumptions, and excluded accounts.
-        mode: write
-        facts_read:
-          - retirement-plan
-          - budget-entries
-          - account-balance
-        facts_written:
-          - retirement-plan
-        actions:
-          - id: input-retirement-age
-            control: input
-            label: Retirement age
-            effect: Updates draft saved retirement age.
-            validation: Whole integer age.
-          - id: input-plan-to-age
-            control: input
-            label: Plan to age
-            effect: Updates draft saved plan-to age.
-            validation: Whole integer age greater than retirement age.
-          - id: switch-target-mode
-            control: button
-            label: Typed figure / From budget lines
-            effect: Switches yearly retirement target between a single typed GBP amount and per-line budget continuation toggles.
-          - id: input-typed-target
-            control: input
-            label: Yearly target in pounds
-            effect: Updates typed yearly spending target when targetMode is typed.
-            validation: Non-negative finite number.
-          - id: toggle-budget-line-status
-            control: button
-            label: Continues / Stops
-            effect: Marks each non-housing budget line as continuing or stopping in retirement when targetMode is budget.
-          - id: input-state-pension-age
-            control: input
-            label: State Pension age
-            effect: Updates draft State Pension age.
-          - id: check-govuk-spa
-            control: link
-            label: Check your State Pension age on GOV.UK
-            effect: Opens GOV.UK State Pension age checker in a new tab.
-            target: https://www.gov.uk/state-pension-age
-          - id: input-state-pension-forecast
-            control: input
-            label: State Pension forecast (pounds a year)
-            effect: Updates draft annual State Pension forecast in GBP.
-          - id: input-qualifying-years
-            control: input
-            label: Or National Insurance qualifying years
-            effect: Updates draft NI qualifying years used when no forecast is entered.
-          - id: input-growth-and-inflation
-            control: input
-            label: Lower case growth (% a year) / Middle case growth (% a year) / Higher case growth (% a year) / Inflation (% a year)
-            effect: Updates the three growth band rates and inflation assumption.
-          - id: toggle-excluded-accounts-drawer
-            control: drawer-toggle
-            label: Accounts that count towards retirement
-            effect: Expands or collapses the list of pensions, investments, and savings accounts.
-          - id: toggle-account-included
-            control: checkbox
-            label: Account name checkbox
-            effect: Includes or excludes an individual account from retirement projections.
-          - id: save-plan
-            control: submit
-            label: Save plan
-            effect: Submits payload to PUT /retirement-plan and remounts with updated ETag on success.
-            target: PUT /retirement-plan
-            if_match: true
+    facts_read:
+      - retirement-plan
+      - budget-entries
+      - account-balance
