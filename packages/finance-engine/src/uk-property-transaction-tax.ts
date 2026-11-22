@@ -221,11 +221,13 @@ function calculateBandedTax(
 /**
  * Maps the user's saved income-tax region (`"ENGLAND_NI_WALES"` or `"SCOTLAND"`) to the initial
  * property-tax jurisdiction for prefilling the "Where is the property?" control (E39 MA7).
+ * `"ENGLAND_NI_WALES"` covers two regimes (SDLT and LTT), so it and a missing region return null
+ * and the UI makes the user choose.
  */
 export function defaultPropertyTaxJurisdictionForTaxRegion(
   ukRegion: UkTaxRegion | null | undefined,
-): UkPropertyTaxJurisdiction {
-  return ukRegion === "SCOTLAND" ? "SCOTLAND" : "ENGLAND_NI";
+): UkPropertyTaxJurisdiction | null {
+  return ukRegion === "SCOTLAND" ? "SCOTLAND" : null;
 }
 
 /**

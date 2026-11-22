@@ -1803,8 +1803,8 @@ Shown on:
 - Id: `property-transaction-tax` (derived figure)
 - Verdict: Holds. Findings: none. Links: none.
 - Computed by: `calculatePropertyTransactionTax` in `packages/finance-engine/src/uk-property-transaction-tax.ts`
-- Built from: `tax-region`
-- Note: E39 S1b (MA7): main-home SDLT (England & NI), LBTT (Scotland), and LTT (Wales) with first-time buyer relief where applicable.
+- Built from: none
+- Note: E39 S1b (MA7): main-home SDLT (England & NI), LBTT (Scotland), and LTT (Wales) with first-time buyer relief where applicable. The engine takes an explicit jurisdiction and what-if price; only the prefill helper defaultPropertyTaxJurisdictionForTaxRegion reads tax-region. shown_on pending: no surface shows it until E39 S2.
 
 Other code paths that compute it:
 
@@ -1812,7 +1812,7 @@ Other code paths that compute it:
 
 Shown on:
 
-- Mortgage: `packages/finance-engine/src/uk-property-transaction-tax.ts`
+- none
 
 ## Browser storage and cookies
 

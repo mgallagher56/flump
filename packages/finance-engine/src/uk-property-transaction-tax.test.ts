@@ -73,6 +73,15 @@ describe("UK property transaction tax engine (E39 S1b, MA7)", () => {
       expect(at300k.taxGbp).toBe(0);
       expect(at300k.firstTimeBuyerReliefApplied).toBe(true);
 
+      // £300,100 (just above the nil band): £100 * 5% = £5
+      const at300_100 = calculatePropertyTransactionTax({
+        propertyPriceGbp: 300_100,
+        jurisdiction: "ENGLAND_NI",
+        isFirstTimeBuyer: true,
+      });
+      expect(at300_100.taxGbp).toBe(5);
+      expect(at300_100.firstTimeBuyerReliefApplied).toBe(true);
+
       // £400,000: £100,000 * 5% = £5,000 (standard would be £10,000)
       const at400k = calculatePropertyTransactionTax({
         propertyPriceGbp: 400_000,
@@ -157,6 +166,15 @@ describe("UK property transaction tax engine (E39 S1b, MA7)", () => {
       expect(at175k.taxGbp).toBe(0);
       expect(at175k.firstTimeBuyerReliefApplied).toBe(true);
 
+      // £175,100 (just above the nil band): £100 * 2% = £2
+      const at175_100 = calculatePropertyTransactionTax({
+        propertyPriceGbp: 175_100,
+        jurisdiction: "SCOTLAND",
+        isFirstTimeBuyer: true,
+      });
+      expect(at175_100.taxGbp).toBe(2);
+      expect(at175_100.firstTimeBuyerReliefApplied).toBe(true);
+
       // £250,000: £75,000 * 2% = £1,500 (saving £600 vs standard £2,100)
       const at250k = calculatePropertyTransactionTax({
         propertyPriceGbp: 250_000,
@@ -231,11 +249,11 @@ describe("UK property transaction tax engine (E39 S1b, MA7)", () => {
   });
 
   describe("defaultPropertyTaxJurisdictionForTaxRegion", () => {
-    it("maps SCOTLAND to SCOTLAND and ENGLAND_NI_WALES / missing to ENGLAND_NI", () => {
+    it("maps SCOTLAND to SCOTLAND and ENGLAND_NI_WALES / missing to null (user chooses)", () => {
       expect(defaultPropertyTaxJurisdictionForTaxRegion("SCOTLAND")).toBe("SCOTLAND");
-      expect(defaultPropertyTaxJurisdictionForTaxRegion("ENGLAND_NI_WALES")).toBe("ENGLAND_NI");
-      expect(defaultPropertyTaxJurisdictionForTaxRegion(null)).toBe("ENGLAND_NI");
-      expect(defaultPropertyTaxJurisdictionForTaxRegion(undefined)).toBe("ENGLAND_NI");
+      expect(defaultPropertyTaxJurisdictionForTaxRegion("ENGLAND_NI_WALES")).toBeNull();
+      expect(defaultPropertyTaxJurisdictionForTaxRegion(null)).toBeNull();
+      expect(defaultPropertyTaxJurisdictionForTaxRegion(undefined)).toBeNull();
     });
   });
 });

@@ -2819,11 +2819,9 @@ figures:
         function: calculatePropertyTransactionTax,
         path: packages/finance-engine/src/uk-property-transaction-tax.ts,
       }
-    inputs: [tax-region]
-    shown_on:
-      - { surface: mortgage, path: packages/finance-engine/src/uk-property-transaction-tax.ts }
+    inputs: []
     verdict: holds
-    note: "E39 S1b (MA7): main-home SDLT (England & NI), LBTT (Scotland), and LTT (Wales) with first-time buyer relief where applicable."
+    note: "E39 S1b (MA7): main-home SDLT (England & NI), LBTT (Scotland), and LTT (Wales) with first-time buyer relief where applicable. The engine takes an explicit jurisdiction and what-if price; only the prefill helper defaultPropertyTaxJurisdictionForTaxRegion reads tax-region. shown_on pending: no surface shows it until E39 S2."
 
 # Every browser storage and cookie key the code writes, user data or not. A key that holds a copy of
 # a fact names it under fact:. A trailing * means every key with that prefix.
