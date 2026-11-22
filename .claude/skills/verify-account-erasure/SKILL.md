@@ -10,6 +10,9 @@ A TLA+ model of account erasure (BE-04), checked with TLC over every order of st
 
 - **Property:** when an erasure has finished, none of the user's rows are left in the database.
 - **Harm if it breaks:** a person told their account is erased still has personal financial data stored, which breaks the erasure promise (UK GDPR Article 17).
+- **Scope:** only the order of steps in the account-deletion service (`deleteAccount`) against requests and the reset. It does not cover the rest of the privacy module (export, retention purge, the registry's contents, consents).
+
+A race this finds in `account-deletion.service.ts` is a privacy finding. Report it to the coordinator with the counterexample, and do not fix product code in the same lane.
 
 ## Does my change touch it?
 
@@ -17,7 +20,27 @@ Run the check if your diff touches any code in the coverage record below. Also r
 
 ## Run
 
-From the repo root (needs `mise`, `brew install mise`; the first run downloads the pinned Java and TLA+ tools, then it takes about 5 seconds):
+The toolchain is dev-only and installed per user by mise. It is not a product, CI or Docker dependency. Set it up once:
+
+```bash
+brew install mise
+```
+
+```bash
+mise install java@temurin-25 'http:tla2tools[url=https://github.com/tlaplus/tlaplus/releases/download/v1.7.4/tla2tools.jar,checksum=sha256:936a262061c914694dfd669a543be24573c45d5aa0ff20a8b96b23d01e050e88]@1.7.4'
+```
+
+Confirm the install: the first command prints a Temurin 25 version, and the second lists `tla2tools.jar`. mise verified the jar's checksum during the install.
+
+```bash
+"$(mise which java --tool java@temurin-25)" -version
+```
+
+```bash
+ls "$(mise where 'http:tla2tools[url=https://github.com/tlaplus/tlaplus/releases/download/v1.7.4/tla2tools.jar,checksum=sha256:936a262061c914694dfd669a543be24573c45d5aa0ff20a8b96b23d01e050e88]@1.7.4')"
+```
+
+Then run the check from the repo root. It takes about 5 seconds, and `check.sh` pins the same versions and checksum:
 
 ```bash
 sh .claude/skills/verify-account-erasure/check.sh
