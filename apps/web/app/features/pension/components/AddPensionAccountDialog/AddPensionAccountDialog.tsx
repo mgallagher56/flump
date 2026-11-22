@@ -148,7 +148,7 @@ const PotForm: FC<PotFormProps> = ({ accountToEdit, onClose, onDeleteRequest }) 
             <TextInput
               {...controlProps(field)}
               list="pension-provider-suggestions"
-              placeholder="For example, Nest Workplace Pension or Vanguard SIPP"
+              placeholder="For example, Nest workplace pension or Vanguard SIPP"
               value={name}
               onChange={(e) => setName(e.target.value)}
             />

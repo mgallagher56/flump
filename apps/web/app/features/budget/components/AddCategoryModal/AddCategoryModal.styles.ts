@@ -24,7 +24,10 @@ export const suggestionChip = cva({
     color: "text.primary",
     textStyle: "label.md",
     cursor: "pointer",
-    transition: "background-color 0.15s ease, border-color 0.15s ease",
+    _motionSafe: {
+      transition:
+        "background-color token(durations.fast) token(easings.standard), border-color token(durations.fast) token(easings.standard)",
+    },
     _hover: { borderColor: "primary.border", backgroundColor: "surface.subtle" },
     _disabled: { opacity: 0.5, cursor: "not-allowed" },
     _focusVisible: {

@@ -36,6 +36,7 @@ const banned = (id: string, guide: string, source: string, use: string, flags = 
 const ALLOWED_PHRASES: Array<{ phrase: RegExp; reason: string }> = [
   { phrase: /\bNational Insurance\b/g, reason: "statutory name" },
   { phrase: /\bPersonal Allowance\b/g, reason: "statutory name" },
+  { phrase: /\bPersonal Savings Allowance\b/g, reason: "statutory name" },
   { phrase: /\bSelf Assessment\b/g, reason: "statutory name" },
   { phrase: /\bPayment on Account\b/gi, reason: "HMRC term" },
   { phrase: /\bCapital Gains Tax\b/g, reason: "statutory name" },

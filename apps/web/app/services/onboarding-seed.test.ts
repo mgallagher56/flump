@@ -21,7 +21,7 @@ describe("buildOnboardingSeedJobs", () => {
       "account:Cash and emergency savings",
       "account:Workplace and personal pension",
       "account:Residential Mortgage",
-      "account:Cards and loans baseline",
+      "account:Cards and loans",
       "entry:Monthly Take-Home Income",
       "entry:Mortgage Payment",
       "entry:General living and outgoings",
@@ -113,7 +113,7 @@ describe("buildOnboardingSeedJobs", () => {
     expect(jobs.filter((j) => j.endpoint === "/accounts").map((j) => j.key)).toEqual([
       "account:Cash and emergency savings",
       "account:Workplace and personal pension",
-      "account:Cards and loans baseline",
+      "account:Cards and loans",
     ]);
   });
 

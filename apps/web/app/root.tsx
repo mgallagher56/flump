@@ -246,15 +246,17 @@ export default function App() {
         <script nonce={nonce} dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       <body
-        style={{
-          backgroundColor: "var(--colors-surface-canvas)",
-          color: "var(--colors-text-primary)",
-          fontFamily:
-            "'Inter Variable', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-          margin: 0,
+        className={css({
+          backgroundColor: "surface.canvas",
+          color: "text.primary",
+          fontFamily: "body",
+          margin: "0",
           minHeight: "100vh",
-          transition: "background-color 0.2s ease, color 0.2s ease",
-        }}
+          _motionSafe: {
+            transition:
+              "background-color token(durations.base) token(easings.standard), color token(durations.base) token(easings.standard)",
+          },
+        })}
       >
         <ThemeContext.Provider value={{ theme, preference, setPreference, toggleTheme }}>
           <ResponsiveProvider serverIsMobile={isMobileClient}>
