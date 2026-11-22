@@ -107,6 +107,7 @@ export function formatProfileRow(profile: UserProfile) {
     // Net worth choices: the column defaults, so a just-inserted entity shows the same values.
     netWorthCountsProperty: profile.netWorthCountsProperty ?? true,
     netWorthCountsStudentLoan: profile.netWorthCountsStudentLoan ?? false,
+    partnerMode: profile.partnerMode ?? false,
     annualSalary:
       profile.annualSalary !== null && profile.annualSalary !== undefined
         ? Number(profile.annualSalary)
@@ -257,4 +258,5 @@ export const PROFILE_UPDATE_DEFAULTS = (userId: string): Partial<UserProfile> =>
   onboardingCompleted: false,
   netWorthCountsProperty: true,
   netWorthCountsStudentLoan: false,
+  partnerMode: false,
 });

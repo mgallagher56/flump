@@ -30,6 +30,7 @@ export interface DebtAccountsListProps {
    */
   editingId?: string | null;
   onEditingIdChange?: (id: string | null) => void;
+  partnerMode?: boolean;
   className?: string;
 }
 
@@ -72,6 +73,7 @@ export const DebtAccountsList: FC<DebtAccountsListProps> = ({
   onUpdateDebt,
   editingId: controlledEditingId,
   onEditingIdChange,
+  partnerMode = false,
   className,
 }) => {
   const { formatCurrency } = useFormatCurrency();
@@ -169,6 +171,7 @@ export const DebtAccountsList: FC<DebtAccountsListProps> = ({
       {editingDebt ? (
         <AddDebtDialog
           key={editingDebt.id}
+          partnerMode={partnerMode}
           debt={editingDebt}
           isOpen
           onAddDebt={() => undefined}

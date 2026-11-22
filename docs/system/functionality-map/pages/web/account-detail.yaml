@@ -152,7 +152,7 @@ sections:
     name: Edit and delete account dialog
     kind: form
     component: apps/web/app/components/dialogs/addEditAccountsDialog/AddEditAccountsDialog.tsx
-    when: when Edit account dialog is open
+    when: when Edit account dialog is open (ownership shown when partnerMode is enabled or the account is already joint)
     capabilities:
       - id: edit-account-details
         goal: Edit account name, type, balance, interest rate, monthly contribution, joint ownership share, and mortgage/credit fields.

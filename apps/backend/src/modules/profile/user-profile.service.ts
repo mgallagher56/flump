@@ -159,6 +159,7 @@ export class UserProfileService implements ProfileLifecycle {
       onboardingCompleted: false,
       netWorthCountsProperty: true,
       netWorthCountsStudentLoan: false,
+      partnerMode: false,
     });
 
     return {
@@ -299,6 +300,7 @@ export class UserProfileService implements ProfileLifecycle {
       profile.netWorthCountsProperty = body.netWorthCountsProperty;
     if (body.netWorthCountsStudentLoan !== undefined)
       profile.netWorthCountsStudentLoan = body.netWorthCountsStudentLoan;
+    if (body.partnerMode !== undefined) profile.partnerMode = body.partnerMode;
     if (body.taxRegion !== undefined) {
       profile.taxRegion = oneOfOrNull(body.taxRegion, TAX_REGIONS, "taxRegion");
     }

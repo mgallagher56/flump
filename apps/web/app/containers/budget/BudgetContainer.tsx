@@ -621,6 +621,7 @@ const BudgetContainer: FC = () => {
               <BudgetLinkNotice offers={picture.budgetLinkOffers} onAdd={addLinkedEntry} />
               <BudgetEditor
                 categories={allCategories}
+                partnerMode={Boolean(userProfile?.partnerMode)}
                 entries={entries}
                 onAdd={addOwnEntry}
                 onAddCategory={() => setIsAddCategoryOpen(true)}

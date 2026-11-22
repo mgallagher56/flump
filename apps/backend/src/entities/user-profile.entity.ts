@@ -161,6 +161,13 @@ export class UserProfile {
   })
   netWorthCountsStudentLoan: boolean;
 
+  /** Preference: show sole/joint ownership and share controls across accounts, debts and budget. */
+  @Column({
+    name: "partner_mode",
+    default: false,
+  })
+  partnerMode: boolean;
+
   @Column({
     name: "is_salary_sacrifice_employer_ni",
     default: false,

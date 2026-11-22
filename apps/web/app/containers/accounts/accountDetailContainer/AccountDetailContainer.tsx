@@ -19,6 +19,7 @@ import { TYPE_LABEL } from "~/features/accounts/components/AccountsGroupList";
 import { QuickBalanceUpdate } from "~/features/accounts/components/QuickBalanceUpdate";
 import { useFetcherOutcome } from "~/features/feedback/hooks/useFetcherOutcome";
 import { londonMonth } from "~/features/snapshot/snapshotModel";
+import { useUserProfile } from "~/hooks/useUserProfile";
 import type { loader } from "~/routes/app.accounts.$account";
 import { versionField } from "~/services/conflict";
 import { backLink, notFound, ownerLink } from "./AccountDetailContainer.styles";
@@ -109,6 +110,7 @@ const BackLink: FC = () => (
 
 const AccountDetailContainer: FC = () => {
   const { account, accountDetails = [], basis, goal = null } = useLoaderData<typeof loader>();
+  const { profile } = useUserProfile();
   // The quick balance update posts to this route's own action, as the Edit dialog does.
   const balanceFetcher = useFetcher();
   const balanceOutcome = useFetcherOutcome(balanceFetcher);
@@ -229,6 +231,7 @@ const AccountDetailContainer: FC = () => {
               ...versionField(account, "updatedAt"),
             }}
             accountId={String(account.id ?? "")}
+            partnerMode={Boolean(profile?.partnerMode)}
             isEditAccount
           />
         }

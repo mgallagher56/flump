@@ -4,10 +4,12 @@ import { debtItemToAccountPayload } from "~/features/debt/utils/debtAccountMappi
 import customRender from "~/testUtils/customRender";
 import { AddDebtDialog } from "./AddDebtDialog";
 
-const open = () => {
+const open = (partnerMode = false) => {
   const onAddDebt = vi.fn();
   const onClose = vi.fn();
-  const view = customRender(<AddDebtDialog isOpen onAddDebt={onAddDebt} onClose={onClose} />);
+  const view = customRender(
+    <AddDebtDialog isOpen partnerMode={partnerMode} onAddDebt={onAddDebt} onClose={onClose} />,
+  );
   return { onAddDebt, onClose, ...view };
 };
 
@@ -76,7 +78,7 @@ describe("AddDebtDialog", () => {
   });
 
   it("adds a joint debt with the user's share (SD-8)", () => {
-    const { onAddDebt } = open();
+    const { onAddDebt } = open(true);
     fill("Name of the debt", "Joint loan");
     fill("Balance you owe", "6000");
     fireEvent.change(screen.getByLabelText("Ownership"), { target: { value: "joint" } });
@@ -86,6 +88,11 @@ describe("AddDebtDialog", () => {
     expect(onAddDebt).toHaveBeenCalledWith(
       expect.objectContaining({ balance: 6000, ownership: "joint", sharePercent: 50 }),
     );
+  });
+
+  it("hides ownership controls when partnerMode is off, except for already-joint debts", () => {
+    open(false);
+    expect(screen.queryByLabelText("Ownership")).toBeNull();
   });
 
   it("needs only a name and balance; blank APR and minimum are flagged unknown", () => {

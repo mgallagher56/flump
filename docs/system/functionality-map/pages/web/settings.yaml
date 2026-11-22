@@ -192,6 +192,19 @@ sections:
             control: toggle
             label: Self Assessment
             effect: Adds or removes the Self Assessment page and dashboard widget immediately.
+      - id: toggle-partner-mode
+        goal: Show or hide sole/joint ownership and share fields on accounts, debts, mortgages, and budget items.
+        mode: write
+        facts_read:
+          - partner-mode
+        facts_written:
+          - partner-mode
+        actions:
+          - id: partner-mode-toggle
+            control: toggle
+            label: Partner mode
+            effect: Saves partnerMode immediately on toggle.
+            target: PATCH /user-profile
 
   - id: security-sign-in
     name: How you sign in

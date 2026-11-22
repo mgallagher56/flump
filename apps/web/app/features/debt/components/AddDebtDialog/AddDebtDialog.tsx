@@ -66,6 +66,8 @@ export interface AddDebtDialogProps {
    * The page asks for confirmation before anything is deleted.
    */
   onDeleteDebt?: (id: string) => void;
+  /** Show sole/joint ownership and share controls for sole/new debts (profile preference). */
+  partnerMode?: boolean;
 }
 
 const FORM_ID = "add-debt-form";
@@ -91,7 +93,13 @@ const toFieldValue = (value: number | undefined): number | null =>
 interface DebtFormProps extends Omit<AddDebtDialogProps, "isOpen" | "onDeleteDebt"> {}
 
 /** Mounted only while the dialog is open, so the fields restart from the debt being edited. */
-const DebtForm: FC<DebtFormProps> = ({ onClose, onAddDebt, debt, onEditDebt }) => {
+const DebtForm: FC<DebtFormProps> = ({
+  onClose,
+  onAddDebt,
+  debt,
+  onEditDebt,
+  partnerMode = false,
+}) => {
   const isEdit = debt !== undefined;
   const [name, setName] = useState(debt?.name ?? "");
   // The whole amount owed, so a joint debt is edited and saved whole (decision 9 A).
@@ -276,7 +284,7 @@ const DebtForm: FC<DebtFormProps> = ({ onClose, onAddDebt, debt, onEditDebt }) =
           )}
         </FormField>
       </div>
-      {fieldSet.joint ? (
+      {fieldSet.joint && (partnerMode || ownership === "joint") ? (
         <JointOwnershipFields
           ownership={ownership}
           sharePercent={sharePercent}

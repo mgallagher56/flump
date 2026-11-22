@@ -231,7 +231,7 @@ sections:
           - id: input-account-details
             control: input
             label: Name / Account kind / Balance / Interest rate / Monthly saving / Ownership
-            effect: Updates draft account fields before saving.
+            effect: Updates draft account fields before saving (Ownership shown when partnerMode is enabled or the account is already joint).
             validation: Name and account kind are required.
           - id: submit-account
             control: submit

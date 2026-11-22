@@ -84,6 +84,7 @@ export const profileFixture = {
   monthlyOtherOutgoings: null,
   netWorthCountsProperty: true,
   netWorthCountsStudentLoan: false,
+  partnerMode: false,
   createdAt: "2026-11-01T09:00:00.000Z",
   updatedAt: "2026-11-13T10:15:00.000Z",
 };

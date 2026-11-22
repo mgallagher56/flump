@@ -42,6 +42,7 @@ import {
 import { SavingsSummaryCards } from "~/features/savings/components/SavingsSummaryCards";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { useScenarioState } from "~/hooks/useScenarioState";
+import { useUserProfile } from "~/hooks/useUserProfile";
 import { emptyWrap, toolPanel, zoneSummary } from "./SavingsContainer.styles";
 
 /**
@@ -66,6 +67,8 @@ export const withFullStop = (text: string): string => (text.endsWith(".") ? text
 const SavingsContainer: FC = () => {
   const loaderData = useLoaderData<any>();
   const { formatCurrency } = useFormatCurrency();
+  const { profile } = useUserProfile();
+  const partnerMode = Boolean(profile?.partnerMode);
   const accounts: Account[] = loaderData?.accounts || [];
   const accountDetails: any[] = loaderData?.accountDetails || [];
 
@@ -208,6 +211,7 @@ const SavingsContainer: FC = () => {
 
           <SavingsAccountsList
             accounts={savingsAccounts}
+            partnerMode={partnerMode}
             savedAccounts={accounts.filter(isSavingsType)}
           />
 
@@ -297,7 +301,11 @@ const SavingsContainer: FC = () => {
         </div>
       )}
 
-      <AddSavingsAccountDialog isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
+      <AddSavingsAccountDialog
+        partnerMode={partnerMode}
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+      />
     </PageBody>
   );
 };

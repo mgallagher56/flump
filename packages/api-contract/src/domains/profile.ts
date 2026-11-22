@@ -91,6 +91,8 @@ export const UpdateProfileRequest = z.strictObject({
   /** Net worth choices: count property less its mortgage; count student loans as a debt. */
   netWorthCountsProperty: z.boolean().optional(),
   netWorthCountsStudentLoan: z.boolean().optional(),
+  /** Preference: show sole/joint ownership and share controls across accounts, debts and budget. */
+  partnerMode: z.boolean().optional(),
 });
 export type UpdateProfileRequest = z.infer<typeof UpdateProfileRequest>;
 
@@ -169,6 +171,8 @@ export const UserProfileDto = z.strictObject({
   netWorthCountsProperty: z.boolean(),
   /** Net worth choice: student loans count as a debt (default false, D-5-B). */
   netWorthCountsStudentLoan: z.boolean(),
+  /** Preference: show sole/joint ownership and share controls across accounts, debts and budget. */
+  partnerMode: z.boolean().default(false),
   createdAt: IsoDateTime,
   updatedAt: IsoDateTime,
 });
@@ -319,6 +323,7 @@ export const AccountExportProfile = z.strictObject({
   lastActiveAt: ExportTimestamp,
   netWorthCountsProperty: z.boolean(),
   netWorthCountsStudentLoan: z.boolean(),
+  partnerMode: z.boolean().default(false),
   createdAt: ExportTimestamp,
   updatedAt: ExportTimestamp,
 });

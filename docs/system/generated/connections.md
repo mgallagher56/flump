@@ -369,8 +369,11 @@ flowchart LR
 flowchart LR
   s_onboarding["Onboarding"]
   s_dashboard["Dashboard"]
+  s_accounts["Accounts"]
   s_history["History"]
   s_budget["Budget"]
+  s_savings["Savings"]
+  s_debt["Debt"]
   s_self_assessment["Self Assessment"]
   s_settings["Settings"]
   s_picture["Engine picture (headline figures)"]
@@ -379,6 +382,12 @@ flowchart LR
   f_name_and_avatar(["Name and profile picture"])
   s_settings --> f_name_and_avatar
   f_name_and_avatar -.-> s_settings
+  f_partner_mode(["Partner mode toggle"])
+  s_settings --> f_partner_mode
+  f_partner_mode -.-> s_accounts
+  f_partner_mode -.-> s_debt
+  f_partner_mode -.-> s_savings
+  f_partner_mode -.-> s_budget
   f_net_worth_choices(["Net worth choices (count the home, count the student loan)"])
   s_settings --> f_net_worth_choices
   f_net_worth_choices -.-> s_picture

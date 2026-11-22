@@ -111,6 +111,7 @@ describe("BudgetEditor", () => {
 
   it("saves an entry as joint at 50%, and shows a joint entry's share (E34 C1)", () => {
     const { onUpdate } = setup({
+      partnerMode: true,
       entries: [
         row({}),
         row({ id: "b-4", name: "Energy", category: "bills", ownership: "joint", sharePercent: 40 }),
@@ -121,6 +122,25 @@ describe("BudgetEditor", () => {
     });
     expect(onUpdate).toHaveBeenCalledWith("b-1", { ownership: "joint", sharePercent: 50 });
     expect(screen.getByText("Joint, 40%")).toBeTruthy();
+  });
+
+  it("hides ownership controls when partnerMode is off, except on already-joint entries", () => {
+    setup({
+      entries: [
+        row({ id: "sole-1", name: "Water", category: "bills", ownership: "sole" }),
+        row({
+          id: "joint-1",
+          name: "Energy",
+          category: "bills",
+          ownership: "joint",
+          sharePercent: 50,
+        }),
+      ],
+    });
+    expect(screen.queryByTestId("budget-editor-sole-1-ownership")).toBeNull();
+    expect(screen.getByTestId("budget-editor-joint-1-ownership")).toBeDefined();
+    fireEvent.click(screen.getByTestId("budget-editor-open-add-bills"));
+    expect(screen.queryByTestId("budget-editor-new-bills-ownership")).toBeNull();
   });
 
   it("saves the essential switch and ignores rapid toggles while the save is in flight", async () => {
@@ -217,7 +237,7 @@ describe("BudgetEditor", () => {
   });
 
   it("gives the add row the same fields as a saved row: Essential and sole or joint (item 26)", async () => {
-    const { onAdd } = setup();
+    const { onAdd } = setup({ partnerMode: true });
     fireEvent.click(screen.getByTestId("budget-editor-open-add-bills"));
     fireEvent.change(screen.getByTestId("budget-editor-new-name-bills"), {
       target: { value: "Water" },
@@ -423,6 +443,7 @@ describe("BudgetEditor", () => {
   // the person linked carries whether it is shared and their share, saved on its stored row.
   it("lets a linked rent line be marked joint, saving the share on its stored row", async () => {
     const { onUpdate } = setup({
+      partnerMode: true,
       entries: [row({ id: "rent", name: "Rent", amount: 0, linkKind: "housing" })],
       shadowedIds: ["rent"],
       linkedEntries: [

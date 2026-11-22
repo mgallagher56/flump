@@ -207,7 +207,7 @@ sections:
           - id: input-debt-fields
             control: input
             label: Name / Type / Balance / APR / Minimum payment / Credit limit / 0% end date / Ownership
-            effect: Updates draft debt fields.
+            effect: Updates draft debt fields (Ownership shown when partnerMode is enabled or the debt is already joint).
           - id: submit-debt
             control: submit
             label: Add debt / Save changes

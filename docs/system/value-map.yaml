@@ -1965,6 +1965,35 @@ facts:
     note: The plan itself has one store. What it reads from elsewhere is where the gaps are (see retirement-income).
 
   # ---------- preferences ----------
+  - id: partner-mode
+    name: Partner mode toggle
+    area: preferences
+    source_of_truth:
+      { ref: user_profiles.partner_mode, path: apps/backend/src/entities/user-profile.entity.ts }
+    writers:
+      - {
+          surface: settings,
+          path: apps/web/app/features/settings/components/ProfileTab/ProfileTab.tsx,
+        }
+    readers:
+      - {
+          surface: accounts,
+          path: apps/web/app/components/dialogs/addEditAccountsDialog/AddEditAccountsDialog.tsx,
+        }
+      - {
+          surface: debt,
+          path: apps/web/app/features/debt/components/AddDebtDialog/AddDebtDialog.tsx,
+        }
+      - {
+          surface: savings,
+          path: apps/web/app/features/savings/components/AddSavingsAccountDialog/AddSavingsAccountDialog.tsx,
+        }
+      - {
+          surface: budget,
+          path: apps/web/app/features/budget/components/BudgetEditor/BudgetEditor.tsx,
+        }
+    verdict: holds
+
   - id: net-worth-choices
     name: Net worth choices (count the home, count the student loan)
     area: preferences
