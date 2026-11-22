@@ -259,6 +259,59 @@ describe("selectHousingRoom (E39 section 4b)", () => {
     }
   });
 
+  it("gives the not-set reason and the missing key on each unknown path", () => {
+    const bills = row({ id: "b", amount: 500, isEssential: true });
+    const cases = [
+      // Take-home unknown with no reason of its own reads as not set.
+      selectHousingRoom({ takeHome: figureUnknown(["annualSalary"]), budgetRows: [bills] }),
+      selectHousingRoom({ takeHome: takeHomeKnown(0), budgetRows: [bills] }),
+      selectHousingRoom({ takeHome: takeHomeKnown(2000), budgetRows: [] }),
+      selectHousingRoom({
+        takeHome: takeHomeKnown(2000),
+        budgetRows: [row({ id: "fun", amount: 200, isEssential: false })],
+      }),
+      selectHousingRoom({
+        takeHome: takeHomeKnown(2000),
+        budgetRows: [
+          row({ id: "s", category: "savings", linked: "savings", notSet: true, amount: 0 }),
+          bills,
+        ],
+      }),
+    ];
+    expect(cases.map((c) => (c.status === "unknown" ? [c.reason, c.missing] : c.status))).toEqual([
+      ["not-set", ["annualSalary"]],
+      ["not-set", ["annualSalary"]],
+      ["not-set", ["budget"]],
+      ["not-set", ["budgetEssentials"]],
+      ["not-set", ["linkedAccountMonthly"]],
+    ]);
+  });
+
+  it("uses the safe-to-spend debt commitments when no snapshot is given", () => {
+    // £2,000 take-home - £500 essentials - £250 debt commitment (from safe to spend, not the
+    // £100 budget debt row) = £1,250. The commitment is all estimated minimums, so the note shows.
+    const safeToSpend = figureKnown({
+      commitments: { debtCommitment: 250, accountMinimums: 250, minimumsEstimated: true },
+    } as never);
+    const res = selectHousingRoom({
+      takeHome: takeHomeKnown(2000),
+      budgetRows: [
+        row({ id: "b", amount: 500, isEssential: true }),
+        row({ id: "d", category: "debt", amount: 100, isEssential: true }),
+      ],
+      safeToSpend,
+    });
+    expect(res.status).toBe("known");
+    if (res.status === "known") {
+      expect(res.value.debtCommitment).toBe(250);
+      expect(res.value.monthly).toBe(1250);
+      expect(res.assumptions).toEqual([ESTIMATED_MINIMUMS_NOTE]);
+      // No housing payment saved: no current housing figure, and not estimated.
+      expect(res.value.currentHousingMonthly).toBeNull();
+      expect(res.value.currentHousingEstimated).toBe(false);
+    }
+  });
+
   it("populates housingRoom on buildFinancialPicture", () => {
     const picture = buildFinancialPicture({
       profile: {

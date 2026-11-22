@@ -101,5 +101,22 @@ describe("mortgage rate assumptions (E39 MA5)", () => {
       expect(isMortgageRateTableStale(new Date(Number.NaN))).toBe(true);
       expect(isMortgageRateTableStale("2026-11", "bad-as-of")).toBe(true);
     });
+
+    it("reads a YYYY-MM(-DD) string by its year and month only, trimmed", () => {
+      // Table as of 2026-11. "2027-05-32" is not a real date (new Date gives Invalid Date), but
+      // its year and month are 2027-05: 6 months on, not stale. Only the pattern reads it.
+      expect(isMortgageRateTableStale("2027-05-32")).toBe(false);
+      expect(isMortgageRateTableStale(" 2027-05-32 ")).toBe(false);
+      // Text before or after the pattern is not a year-month, and new Date cannot read it either.
+      expect(isMortgageRateTableStale("x2027-05")).toBe(true);
+      expect(isMortgageRateTableStale("2027-05xyz")).toBe(true);
+    });
+
+    it("reads other date strings by their UTC month", () => {
+      // 2027-06-01T00:00:00Z is June 2027 in UTC: 2027-06 minus 2026-11 = 7 months > 6, stale.
+      expect(isMortgageRateTableStale("2027-06-01T00:00:00Z")).toBe(true);
+      // 2027-05-31T23:00:00Z is still May in UTC (June 1st 00:00 in London): 6 months, not stale.
+      expect(isMortgageRateTableStale("2027-05-31T23:00:00Z")).toBe(false);
+    });
   });
 });

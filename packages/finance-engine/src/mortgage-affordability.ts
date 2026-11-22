@@ -15,14 +15,13 @@ export const DEFAULT_ESTIMATE_TERM_MONTHS = 300;
 
 export interface SavedMortgageTermInput {
   /** Saved remaining term in months, the preferred source. */
-  remainingTermMonths?: number | string | null;
+  remainingTermMonths?: number | null;
   /** Saved remaining term in years, used when no month count is saved. */
-  remainingTermYears?: number | string | null;
+  remainingTermYears?: number | null;
 }
 
-function positiveNumber(value: number | string | null | undefined): number | null {
-  const n = typeof value === "string" && value.trim() !== "" ? Number(value) : value;
-  return typeof n === "number" && Number.isFinite(n) && n > 0 ? n : null;
+function positiveNumber(value: number | null | undefined): number | null {
+  return Number.isFinite(value) && (value as number) > 0 ? (value as number) : null;
 }
 
 /**

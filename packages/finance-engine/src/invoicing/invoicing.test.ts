@@ -485,5 +485,45 @@ describe("invoicing pure engine (E37 S0)", () => {
         ]),
       ).toThrow(new RangeError("vatRatePct must be a non-negative finite number"));
     });
+
+    it.each([
+      ["hourlyRate", { hoursWorked: 1, hourlyRate: -1, amount: 50 }],
+      ["amount", { hoursWorked: 1, hourlyRate: 50, amount: Number.NaN }],
+    ] as const)("names the bad work log field %s in the CSV error", (label, numbers) => {
+      expect(() =>
+        formatWorkLogsCsv([{ date: "2026-11-18", description: "Row", ...numbers }]),
+      ).toThrow(new RangeError(`${label} must be a non-negative finite number`));
+    });
+
+    const invoiceRow = {
+      invoiceNumber: "INV-0001",
+      status: "draft",
+      clientName: "Client",
+      issueDate: "2026-11-18",
+      dueDate: "2026-12-18",
+      taxYear: "2026/27",
+      totalHours: 1,
+      subtotal: 100,
+      vatAmount: 0,
+      total: 100,
+    };
+
+    it.each([
+      ["totalHours", { totalHours: -1 }],
+      ["subtotal", { subtotal: Number.POSITIVE_INFINITY }],
+      ["vatAmount", { vatAmount: -0.01 }],
+      ["total", { total: Number.NaN }],
+    ] as const)("names the bad invoice field %s in the CSV error", (label, bad) => {
+      expect(() => formatInvoicesCsv([{ ...invoiceRow, ...bad }])).toThrow(
+        new RangeError(`${label} must be a non-negative finite number`),
+      );
+    });
+
+    it("leaves the VAT rate cell empty when no rate is given (undefined, not only null)", () => {
+      // 1 hour, £100 subtotal, no VAT: totalHours 1.00, subtotal 100.00, empty rate, 0.00, 100.00.
+      expect(formatInvoicesCsv([invoiceRow]).split("\r\n")[1]).toBe(
+        "INV-0001,draft,Client,2026-11-18,2026-12-18,,2026/27,1.00,100.00,,0.00,100.00",
+      );
+    });
   });
 });

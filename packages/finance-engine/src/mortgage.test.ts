@@ -414,5 +414,93 @@ describe("mortgage module", () => {
       expect(fallbackPayment.monthlyPaymentDuringFixGbp).toBe(554.6);
       expect(fallbackPayment.rates.baseRatePct).toBe(3);
     });
+
+    it("reads each bad input on its own as zero, the others valid", () => {
+      // An infinite balance is no balance: nothing to project or repay.
+      const infBalance = estimateMortgageAtFixEnd({
+        balanceGbp: Number.POSITIVE_INFINITY,
+        currentAnnualRatePct: 3,
+        remainingTermMonths: 240,
+        monthsUntilFixEnd: 2,
+        currentMonthlyPaymentGbp: 500,
+      });
+      expect(infBalance.rates.baseMonthlyPaymentGbp).toBe(0);
+      expect(infBalance.balanceAtFixEndGbp).toBe(0);
+
+      // An infinite or negative rate reads as 0%: £120,000 over 240 months = 120000 / 240 = £500.
+      for (const currentAnnualRatePct of [Number.POSITIVE_INFINITY, -2]) {
+        const badRate = estimateMortgageAtFixEnd({
+          balanceGbp: 120000,
+          currentAnnualRatePct,
+          remainingTermMonths: 240,
+          monthsUntilFixEnd: 0,
+        });
+        expect(badRate.monthlyPaymentDuringFixGbp).toBe(500);
+        expect(badRate.rates.baseRatePct).toBe(0);
+      }
+
+      // An infinite or negative term is no term: nothing projected, no term left.
+      for (const remainingTermMonths of [Number.POSITIVE_INFINITY, -5]) {
+        const badTerm = estimateMortgageAtFixEnd({
+          balanceGbp: 100000,
+          currentAnnualRatePct: 3,
+          remainingTermMonths,
+          monthsUntilFixEnd: 2,
+          currentMonthlyPaymentGbp: 500,
+        });
+        expect(badTerm.monthsProjected).toBe(0);
+        expect(badTerm.remainingTermAtFixEndMonths).toBe(0);
+        expect(badTerm.balanceAtFixEndGbp).toBe(100000);
+      }
+    });
+  });
+
+  describe("compareMortgageRates, one bad input at a time", () => {
+    it("gives no payment for an infinite loan or term when the rest is valid", () => {
+      const infLoan = compareMortgageRates({
+        loanGbp: Number.POSITIVE_INFINITY,
+        annualRatePct: 4,
+        termMonths: 300,
+      });
+      expect(infLoan.baseMonthlyPaymentGbp).toBe(0);
+      expect(infLoan.higherMonthlyPaymentGbp).toBe(0);
+
+      const infTerm = compareMortgageRates({
+        loanGbp: 200000,
+        annualRatePct: 4,
+        termMonths: Number.POSITIVE_INFINITY,
+      });
+      expect(infTerm.baseMonthlyPaymentGbp).toBe(0);
+      expect(infTerm.higherMonthlyPaymentGbp).toBe(0);
+    });
+
+    it("gives no interest-only payment for an infinite loan or term", () => {
+      // Interest-only skips the repayment formula's own guard, so these rely on the input checks.
+      for (const input of [
+        { loanGbp: Number.POSITIVE_INFINITY, termMonths: 300 },
+        { loanGbp: 240000, termMonths: Number.POSITIVE_INFINITY },
+      ]) {
+        const res = compareMortgageRates({
+          ...input,
+          annualRatePct: 5,
+          repaymentType: "interest-only",
+        });
+        expect(res.baseMonthlyPaymentGbp).toBe(0);
+        expect(res.higherMonthlyPaymentGbp).toBe(0);
+      }
+    });
+
+    it("gives no interest-only payment over a zero term", () => {
+      // £240,000 interest-only at 5% would be £1,000 a month, but with no term left there is none.
+      const res = compareMortgageRates({
+        loanGbp: 240000,
+        annualRatePct: 5,
+        termMonths: 0,
+        repaymentType: "interest-only",
+      });
+      expect(res.baseMonthlyPaymentGbp).toBe(0);
+      expect(res.higherMonthlyPaymentGbp).toBe(0);
+      expect(res.lowerMonthlyPaymentGbp).toBe(0);
+    });
   });
 });

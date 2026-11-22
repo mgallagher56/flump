@@ -226,6 +226,98 @@ describe("mortgage affordability (E39 section 4a & 10a)", () => {
       expect(highLtv.matchedRateBand?.maxLtvPct).toBe(90);
     });
 
+    it("counts a loan to value exactly on a band's limit as inside that band", () => {
+      // £1,001 a month over 300 months at the 80% band's 4.41%: i = 0.003675,
+      // (1.003675)^-300 = 0.332700, loan = 1001 x 0.667300 / 0.003675 = £181,756.64.
+      // Deposit £45,439.16 = 181,756.64 / 4, so price = £227,195.80 and LTV = 4/5 = 80% exactly.
+      // The 60% and 70% bands' lower rates give a bigger loan, so LTV above 80%: no fit.
+      // 80% <= 80% picks the 80% band; a strict < would wrongly move it to the 90% band.
+      const res = calculateBudgetLoanEstimate({
+        monthlyPaymentGbp: 1001,
+        termMonths: 300,
+        depositGbp: 45439.16,
+      });
+      expect(res.matchedRateBand?.maxLtvPct).toBe(80);
+      expect(res.highLtvPct).toBe(80);
+    });
+
+    it("shows no property price or loan to value without a deposit", () => {
+      // E39 worked case 3: £1,000 at 4.5% over 300 months = £179,910.32. No deposit, so the
+      // property price and LTV are unknown, not the loan alone or 100%.
+      const res = calculateBudgetLoanEstimate({
+        monthlyPaymentGbp: 1000,
+        termMonths: 300,
+        annualRatePct: 4.5,
+      });
+      expect(res.loanGbp).toBeCloseTo(179910.32, 2);
+      expect(res.propertyPriceGbp).toBeNull();
+      expect(res.lowPropertyPriceGbp).toBeNull();
+      expect(res.highPropertyPriceGbp).toBeNull();
+      expect(res.lowLtvPct).toBeNull();
+      expect(res.highLtvPct).toBeNull();
+    });
+
+    it("treats a deposit used up by buying costs as no deposit", () => {
+      // £5,000 deposit less £6,000 buying costs: net deposit max(0, -1000) = £0.
+      // £0 is not a deposit, so no property price (not £179,910.32 at 100% LTV).
+      const res = calculateBudgetLoanEstimate({
+        monthlyPaymentGbp: 1000,
+        termMonths: 300,
+        annualRatePct: 4.5,
+        depositGbp: 5000,
+        buyingCostsGbp: 6000,
+      });
+      expect(res.netDepositGbp).toBe(0);
+      expect(res.propertyPriceGbp).toBeNull();
+      expect(res.ltvPct).toBeNull();
+    });
+
+    it("reads a negative term as no term", () => {
+      const res = calculateBudgetLoanEstimate({
+        monthlyPaymentGbp: 1000,
+        termMonths: -12,
+        annualRatePct: 4.5,
+      });
+      expect(res.termMonths).toBe(0);
+      expect(res.loanGbp).toBeNull();
+    });
+
+    it("accepts a 0% band edge and ignores a band with a negative rate", () => {
+      // Band 0% to 4.5%: at 0% the loan is payment x n = £1,000 x 300 = £300,000 (high loan);
+      // at 4.5% it is £179,910.32 (low loan).
+      const zeroLow = calculateBudgetLoanEstimate({
+        monthlyPaymentGbp: 1000,
+        termMonths: 300,
+        rateBand: { lowAnnualRatePct: 0, highAnnualRatePct: 4.5 },
+      });
+      expect(zeroLow.highLoanGbp).toBe(300000);
+      expect(zeroLow.lowLoanGbp).toBeCloseTo(179910.32, 2);
+
+      for (const rateBand of [
+        { lowAnnualRatePct: -1, highAnnualRatePct: 4.5 },
+        { lowAnnualRatePct: 4.5, highAnnualRatePct: -1 },
+      ]) {
+        const bad = calculateBudgetLoanEstimate({
+          monthlyPaymentGbp: 1000,
+          termMonths: 300,
+          rateBand,
+        });
+        expect(bad.lowAnnualRatePct).toBeNull();
+        expect(bad.lowLoanGbp).toBeNull();
+        expect(bad.highLoanGbp).toBeNull();
+      }
+    });
+
+    it("gives a single loan when a band's two rates are equal", () => {
+      // 4.5% to 4.5% is one rate: loan £179,910.32, not a range.
+      const res = calculateBudgetLoanEstimate({
+        monthlyPaymentGbp: 1000,
+        termMonths: 300,
+        rateBand: { lowAnnualRatePct: 4.5, highAnnualRatePct: 4.5 },
+      });
+      expect(res.loanGbp).toBeCloseTo(179910.32, 2);
+    });
+
     it("keeps the matched band when its loan lands just inside a lower band's LTV", () => {
       // £1,000 a month, 300 months, £45,030 deposit. Loan = 1000 * (1 - (1 + i)^-300) / i.
       // 70% band at 4.32%: i = 0.0036, (1.0036)^-300 = 0.34023,
@@ -260,8 +352,13 @@ describe("mortgage affordability (E39 section 4a & 10a)", () => {
       expect(resolveEstimateTermMonths({ remainingTermMonths: 235, remainingTermYears: 30 })).toBe(
         235,
       );
-      // A numeric string from the API reads the same: "235" -> 235.
-      expect(resolveEstimateTermMonths({ remainingTermMonths: "235" })).toBe(235);
+      // A non-finite month count is not a saved term: fall back to 20 years x 12 = 240.
+      expect(
+        resolveEstimateTermMonths({
+          remainingTermMonths: Number.POSITIVE_INFINITY,
+          remainingTermYears: 20,
+        }),
+      ).toBe(240);
     });
 
     it("falls back to the saved years times 12 when no month count is saved", () => {
@@ -276,11 +373,13 @@ describe("mortgage affordability (E39 section 4a & 10a)", () => {
     it("assumes 25 years (300 months) when no term is saved", () => {
       expect(DEFAULT_ESTIMATE_TERM_MONTHS).toBe(300);
       expect(resolveEstimateTermMonths(null)).toBe(300);
-      expect(resolveEstimateTermMonths({ remainingTermMonths: -5, remainingTermYears: "" })).toBe(
-        300,
-      );
+      expect(
+        resolveEstimateTermMonths({ remainingTermMonths: -5, remainingTermYears: Number.NaN }),
+      ).toBe(300);
       // 1 month is the smallest positive term and is kept.
       expect(resolveEstimateTermMonths({ remainingTermMonths: 1 })).toBe(1);
+      // Infinite years is not a saved term either.
+      expect(resolveEstimateTermMonths({ remainingTermYears: Number.POSITIVE_INFINITY })).toBe(300);
     });
   });
 });

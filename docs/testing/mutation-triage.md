@@ -3894,3 +3894,38 @@ Stryker on `packages/finance-engine/src/uk-property-transaction-tax.ts` after th
 | ---- | --------------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------ |
 | L207 | EqualityOperator `propertyPriceGbp >= band.fromGbp` | Equivalent | At equality the slice is min(price, upper) - fromGbp = 0, and round2(0) = 0, the same 0 the guard returns.   |
 | L244 | EqualityOperator `input.propertyPriceGbp >= 0`      | Equivalent | A price of exactly 0 then becomes round2(0) = 0, the same 0 the fallback gives, so every band slice stays 0. |
+
+## Mortgage estimates and invoicing CSV (audit follow-up, 22 November 2026)
+
+Measured with the single-file command on `src/invoicing/index.ts`, `src/mortgage-affordability.ts`, `src/mortgage-rate-assumptions.ts`, `src/mortgage.ts:345-364`, `src/mortgage.ts:447-461` and `src/picture/selectors/housing-room.ts`: 628 faults, 26 not caught, all below. `invoicing/index.ts` and `housing-room.ts` have no survivors after the new tests.
+
+#### `src/mortgage-affordability.ts`
+
+| Line       | Fault                                                      | Class      | Reason                                                                                                                                                                           |
+| ---------- | ---------------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L44        | EqualityOperator `>= 0` in `nonNegativeFinite`             | Equivalent | For 0 both branches return 0.                                                                                                                                                    |
+| L247       | EqualityOperator `termMonths >= 0`                         | Equivalent | For 0, `Math.trunc(0)` is 0, the fallback value.                                                                                                                                 |
+| L254       | ConditionalExpression `true` on `netDepositGbp !== null`   | Equivalent | With `netDepositGbp` null, `null > 0` is false, so the result is still null.                                                                                                     |
+| L275       | ConditionalExpression `true` on `positiveDeposit !== null` | Equivalent | With no deposit the band search adds `null` (0) to the loan, so LTV is 100%, above every band, and no band is matched.                                                           |
+| L284; L285 | `\|\|` to `&&`, operand to `false` on the rate null checks | Equivalent | `lowAnnualRatePct` and `highAnnualRatePct` are always set together (single rate, band or matched band), so both are null or neither is; the payment and term checks still apply. |
+
+#### `src/mortgage-rate-assumptions.ts`
+
+| Line | Fault                          | Class      | Reason                                                                                                                                              |
+| ---- | ------------------------------ | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L45  | Regex: day group made required | Equivalent | A `YYYY-MM` string then misses the pattern, and the `new Date` fallback reads `YYYY-MM` as the first of that month in UTC: the same year and month. |
+
+#### `src/mortgage.ts`
+
+| Line       | Fault                                                              | Class      | Reason                                                                                                                                                                          |
+| ---------- | ------------------------------------------------------------------ | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L345       | `loanGbp >= 0`, or that operand `true`, in `monthlyPaymentForKind` | Equivalent | Callers pass a loan already cleaned to 0 or more; a 0 loan gives 0 interest and `repaymentPerMonth` returns 0 for it.                                                           |
+| L347       | `annualRatePct >= 0`, or `true`, in the interest-only branch       | Equivalent | Rates reach here as 0 or more; at 0% the interest is `loan x 0 = 0`, the same as the fallback.                                                                                  |
+| L357       | `input.loanGbp >= 0`; first operand `true`                         | Equivalent | 0 is the fallback anyway; a negative loan kept by the mutant is stopped by the `loanGbp > 0` guard in `monthlyPaymentForKind`, and Infinity still fails `Number.isFinite`.      |
+| L359       | `input.annualRatePct >= 0`                                         | Equivalent | For 0 both branches give 0.                                                                                                                                                     |
+| L361       | `input.termMonths >= 0`; first operand `true`                      | Equivalent | 0 is the fallback anyway; a negative term is stopped by the `termMonths > 0` guard in `monthlyPaymentForKind`, and Infinity still fails `Number.isFinite`.                      |
+| L363       | `rawDelta > 0`                                                     | Equivalent | For 0 both branches give 0.                                                                                                                                                     |
+| L364; L461 | StringLiteral `""` for the default repayment type                  | Equivalent | Only the two interest-only spellings are checked, so "" and "repayment" both take the repayment path.                                                                           |
+| L447       | `input.balanceGbp >= 0`; first operand `true`                      | Equivalent | 0 is the fallback anyway; a negative balance is clamped to 0 by `projectAmortisedBalance` and gives 0 from `monthlyPaymentForKind`, and Infinity still fails `Number.isFinite`. |
+| L449       | `currentAnnualRatePct >= 0`, or that operand `true`                | Equivalent | `repaymentPerMonth` treats a rate of 0 or less as 0%, `projectAmortisedBalance` clamps it to 0, and `compareMortgageRates` cleans the comparison rate to 0.                     |
+| L453; L457 | `remainingTermMonths >= 0`; `monthsUntilFixEnd >= 0`               | Equivalent | For 0, `Math.trunc(0)` is 0, the fallback value.                                                                                                                                |
