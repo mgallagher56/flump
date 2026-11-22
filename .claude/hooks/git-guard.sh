@@ -18,14 +18,14 @@ echo "$cmd" | grep -qE '(^|[^A-Za-z0-9_-])git[[:space:]]' || exit 0
 # directory.
 dir="${CLAUDE_PROJECT_DIR:-$(pwd)}"
 cd_re='^[[:space:]]*cd[[:space:]]+(/[A-Za-z0-9._/-]+)[[:space:]]*&&[[:space:]]*(git[[:space:]]+[a-z].*)$'
-bad_chars=$'[\'"\\\\$`()\n\r]'
-bad_words='(^|[^A-Za-z0-9_-])(cd|pushd|popd|env|eval|exec|source|command|sh|bash|zsh)([^A-Za-z0-9_-]|$)|GIT_|core\.worktree|--work|--git-dir|-C([^A-Za-z0-9_-]|$)'
+bad_chars=$'[\'"\\\\$`()\n\r;&|<>]'
+bad_words='(^|[^A-Za-z0-9_-])(cd|pushd|popd|env|eval|exec|source|command|sh|bash|zsh|ksh|dash|find|xargs)([^A-Za-z0-9_-]|$)|GIT_|core\.worktree|--work|--git-dir|-exec|-c([^A-Za-z0-9_-]|$)|-C([^A-Za-z0-9_-]|$)'
 if [[ "$cmd" =~ $cd_re ]]; then
   target="${BASH_REMATCH[1]}"
   rest="${BASH_REMATCH[2]}"
   if [ -d "$target" ] \
     && [[ ! "$rest" =~ $bad_chars ]] \
-    && ! printf '%s' "$rest" | grep -qE "$bad_words"; then
+    && ! printf '%s' "$rest" | grep -qiE "$bad_words"; then
     dir="$target"
   fi
 fi
@@ -34,7 +34,9 @@ branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
 
 force_push='git[[:space:]]+push([[:space:]]+[^;&|]*)?[[:space:]](--force|--force-with-lease|-[a-zA-Z]*f[a-zA-Z]*)([[:space:]=]|$)'
 # A refspec that forces (+src:dst) or deletes (:dst) also counts as a forced push.
-force_refspec='git[[:space:]]+push([[:space:]]+[^;&|]*)?[[:space:]](\+[^[:space:]]+|:[^[:space:]]+)([[:space:]]|$)'
+force_refspec='git[[:space:]]+push([[:space:]]+[^;&|]*)?[[:space:]](\+[^[:space:]]+|:[^[:space:]]+|--delete|-d)([[:space:]]|$)'
+# A forced push of everything overwrites main too, whether or not main is named.
+force_everything='(--all|--mirror)([[:space:]=]|$)'
 targets_main='[[:space:]:+/](main|master)([[:space:]]|$)'
 
 block() {
@@ -49,6 +51,9 @@ block() {
 while IFS= read -r segment; do
   # Strip quotes so `origin "main"` is seen as main.
   unquoted=$(printf '%s' "$segment" | tr -d "\"'")
+  if echo "$unquoted" | grep -qE "$force_push" && echo "$unquoted" | grep -qE "$force_everything"; then
+    block "any branch" "force push of all branches (--all or --mirror)"
+  fi
   if { echo "$unquoted" | grep -qE "$force_push" || echo "$unquoted" | grep -qE "$force_refspec"; } && echo "$unquoted" | grep -qE "$targets_main"; then
     block "any branch" "force push targeting main/master"
   fi
@@ -63,6 +68,6 @@ echo "$cmd" | grep -qE "$force_push"                                  && block "
 echo "$cmd" | grep -qE 'git[[:space:]]+([^;&|]*[[:space:]])?reset[[:space:]]+([^;&|]*[[:space:]])?--hard' && block "$branch" "git reset --hard"
 echo "$cmd" | grep -qE '(--no-verify|[[:space:]]-n[[:space:]].*git[[:space:]]+commit|git[[:space:]]+commit[^;&|]*[[:space:]]-n([[:space:]]|$))' && block "$branch" "skipping git hooks (--no-verify)"
 echo "$cmd" | grep -qE 'git[[:space:]]+([^;&|]*[[:space:]])?clean[[:space:]]+[^;&|]*-[a-zA-Z]*f'  && block "$branch" "git clean -f"
-echo "$cmd" | grep -qE 'git[[:space:]]+(checkout|restore)[[:space:]]+(--[[:space:]]+)?\.([[:space:]]|$)' && block "$branch" "discarding all working-tree changes"
+echo "$cmd" | grep -qE 'git[[:space:]]+([^;&|]*[[:space:]])?(checkout|restore)[[:space:]]+(--[[:space:]]+)?\.([[:space:]]|$)' && block "$branch" "discarding all working-tree changes"
 echo "$cmd" | grep -qE 'git[[:space:]]+([^;&|]*[[:space:]])?branch[[:space:]]+[^;&|]*-D'      && block "$branch" "git branch -D"
 exit 0
