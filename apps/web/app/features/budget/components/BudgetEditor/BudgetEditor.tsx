@@ -139,6 +139,16 @@ const toAmount = (value: unknown): number => {
   return Number.isFinite(n) ? n : 0;
 };
 
+/**
+ * True once a row has been joint while mounted. A joint row switched to sole keeps its ownership
+ * field when partner mode is off, so the choice can be changed back (as the account dialogs do).
+ */
+const useSeenJoint = (isJoint: boolean): boolean => {
+  const [seen, setSeen] = useState(isJoint);
+  if (isJoint && !seen) setSeen(true);
+  return seen || isJoint;
+};
+
 /** Savings rows offer Essential too, off by default (owner item 28); only money in has none. */
 const hasEssentialSwitch = (entry: Pick<BudgetEntry, "isIncome" | "category">) =>
   !isIncomeEntry(entry);
@@ -184,6 +194,7 @@ const EntryRow: FC<EntryRowProps> = ({
   const [name, setName] = useState(entry.name);
   const [amount, setAmount] = useState<number | null>(toAmount(entry.amount));
   const [pendingEssential, setPendingEssential] = useState(false);
+  const seenJoint = useSeenJoint(entry.ownership === "joint");
   // The latest typed amount, read on blur after CurrencyInput's own rounding has run.
   const amountRef = useRef<number | null>(toAmount(entry.amount));
 
@@ -305,7 +316,7 @@ const EntryRow: FC<EntryRowProps> = ({
         </p>
       ) : null}
       {/* E34 C1: sole or joint, and the share a joint entry counts at in the figures. */}
-      {partnerMode || entry.ownership === "joint" ? (
+      {partnerMode || seenJoint ? (
         <div className={ownershipCell()}>
           <EntryOwnershipField
             entryName={entry.name}
@@ -397,6 +408,7 @@ const LinkedEntryRow: FC<LinkedEntryRowProps> = ({
   const accountAmount = entry.linked === "savings" ? "monthly saving" : "monthly payment";
   // A shared rent shows the person's share; the whole rent is what the housing details hold.
   const rentShared = sharedRent?.stored.ownership === "joint";
+  const rentSeenJoint = useSeenJoint(rentShared);
   const isHousehold = entry.linked === "housing" && housingStatus === "living_with_family";
   // Take-home, a mortgage payment and an account's amount are changed on their own pages; a rent
   // can be typed here, unless it is shared and set (the figure shown is a share, the field would
@@ -555,7 +567,7 @@ const LinkedEntryRow: FC<LinkedEntryRowProps> = ({
         {source}
       </p>
       {/* A shared rent counts at its share (JO-8); a mortgage's share is on the mortgage account. */}
-      {sharedRent && (partnerMode || sharedRent.stored.ownership === "joint") ? (
+      {sharedRent && (partnerMode || rentSeenJoint) ? (
         <div className={ownershipCell()}>
           <EntryOwnershipField
             entryName={entry.name}

@@ -143,6 +143,100 @@ describe("BudgetEditor", () => {
     expect(screen.queryByTestId("budget-editor-new-bills-ownership")).toBeNull();
   });
 
+  it("keeps a joint entry's ownership field after it is saved as sole with partnerMode off", () => {
+    const onUpdate = vi.fn().mockResolvedValue(undefined);
+    const props = {
+      categories: ["bills"],
+      onAdd: vi.fn().mockResolvedValue(undefined),
+      onUpdate,
+      onDelete: vi.fn().mockResolvedValue(true),
+    };
+    const joint = row({
+      id: "joint-1",
+      name: "Energy",
+      category: "bills",
+      ownership: "joint",
+      sharePercent: 50,
+    });
+    const { rerender } = render(<BudgetEditor {...props} entries={[joint]} />);
+    fireEvent.change(screen.getByTestId("budget-editor-joint-1-ownership"), {
+      target: { value: "sole" },
+    });
+    expect(onUpdate).toHaveBeenCalledWith("joint-1", { ownership: "sole", sharePercent: null });
+
+    // The save lands: the row is now sole, and the field stays so it can be changed back.
+    rerender(
+      <BudgetEditor {...props} entries={[{ ...joint, ownership: "sole", sharePercent: null }]} />,
+    );
+    const select = screen.getByTestId("budget-editor-joint-1-ownership") as HTMLSelectElement;
+    expect(select.value).toBe("sole");
+    fireEvent.change(select, { target: { value: "joint" } });
+    expect(onUpdate).toHaveBeenLastCalledWith("joint-1", { ownership: "joint", sharePercent: 50 });
+  });
+
+  it.each([{ partnerMode: false }, { partnerMode: true }])(
+    "keeps a shared rent's ownership field after it is saved as sole (partnerMode $partnerMode)",
+    ({ partnerMode }) => {
+      const onUpdate = vi.fn().mockResolvedValue(undefined);
+      const linked = row({
+        id: "linked:housing",
+        name: "Rent",
+        category: "housing",
+        amount: 950,
+        linked: "housing",
+        linkedRowId: "rent",
+      });
+      const props = {
+        categories: ["housing"],
+        onAdd: vi.fn().mockResolvedValue(undefined),
+        onUpdate,
+        onDelete: vi.fn().mockResolvedValue(true),
+        partnerMode,
+        shadowedIds: ["rent"],
+        linkedEntries: [linked],
+        housingStatus: "renting" as const,
+      };
+      const stored = row({
+        id: "rent",
+        name: "Rent",
+        amount: 0,
+        linkKind: "housing",
+        ownership: "joint",
+        sharePercent: 50,
+      });
+      const { rerender } = render(<BudgetEditor {...props} entries={[stored]} />);
+      fireEvent.change(screen.getByLabelText("Ownership of Rent"), { target: { value: "sole" } });
+      expect(onUpdate).toHaveBeenCalledWith("rent", { ownership: "sole", sharePercent: null });
+
+      rerender(
+        <BudgetEditor
+          {...props}
+          entries={[{ ...stored, ownership: "sole", sharePercent: null }]}
+        />,
+      );
+      expect((screen.getByLabelText("Ownership of Rent") as HTMLSelectElement).value).toBe("sole");
+    },
+  );
+
+  it("shows no shared rent ownership field with partnerMode off when the rent was never joint", () => {
+    setup({
+      entries: [row({ id: "rent", name: "Rent", amount: 0, linkKind: "housing" })],
+      shadowedIds: ["rent"],
+      linkedEntries: [
+        row({
+          id: "linked:housing",
+          name: "Rent",
+          category: "housing",
+          amount: 950,
+          linked: "housing",
+          linkedRowId: "rent",
+        }),
+      ],
+      housingStatus: "renting",
+    });
+    expect(screen.queryByLabelText("Ownership of Rent")).toBeNull();
+  });
+
   it("saves the essential switch and ignores rapid toggles while the save is in flight", async () => {
     let resolveSave!: () => void;
     const onUpdate = vi.fn(

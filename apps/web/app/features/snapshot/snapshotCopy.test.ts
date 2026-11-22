@@ -8,6 +8,7 @@ import {
   checkInProgress,
   checkInWholeTotal,
   doneText,
+  formatMonthInBrief,
   formatSignedChange,
   formatWarmConfirmation,
   lastFigureText,
@@ -98,5 +99,17 @@ describe("check-in copy", () => {
       "Everything on your dashboard now uses your own figures.",
     );
     expect(formatWarmConfirmation({ kind: "firstAccountAdded" })).toBe("Your first account is in.");
+  });
+});
+
+describe("formatMonthInBrief", () => {
+  it("heads the facts with the month name and no full stop (copy guide: headings)", () => {
+    const brief = formatMonthInBrief("2026-11", { change: 150, changed: [] });
+    expect(brief?.heading).toBe("November in brief");
+    expect(brief?.facts).toEqual(["Net worth changed by +£150.", "No accounts added."]);
+  });
+
+  it("returns null when there is nothing to say", () => {
+    expect(formatMonthInBrief("2026-11", { change: null, changed: [] })).toBeNull();
   });
 });
