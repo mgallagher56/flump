@@ -2,6 +2,7 @@ import {
   getUkTaxYearContext,
   getUkTaxYearRules,
   persistOnboardingSeed,
+  ratesContextForYear,
   SUPPORTED_UK_TAX_YEARS,
   scenarioWithPublishedRates,
   type UkIncomeScenario,
@@ -134,6 +135,7 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
   // banner instead follows the calendar: today's tax year has no rates yet and this is the year
   // standing in for it.
   const isFallback = context.isFallback && year === context.ratesYear;
+  const bannerKind = ratesContextForYear(year, context).kind;
   const rules = useMemo(() => getUkTaxYearRules(year), [year]);
 
   const maxContribution = Math.min(CONTRIBUTION_MAX, Math.max(0, grossIncome));
@@ -270,11 +272,12 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
       <div className={taxTrapBadges()}>
         <StatusBadge variant="neutral">{asAtTaxYear(before.ratesYear)}</StatusBadge>
       </div>
-      {/* Only when the rates are a fallback year, so a normal year still shows one notice. */}
-      {isFallback ? (
+      {/* Only when the rates are a fallback or provisional year, so a normal year still shows one notice. */}
+      {isFallback || bannerKind === "provisional" ? (
         <TaxRatesStatusBanner
-          calendarYear={context.calendarYear}
+          calendarYear={bannerKind === "provisional" ? year : context.calendarYear}
           isFallback={isFallback}
+          kind={bannerKind}
           ratesYear={before.ratesYear}
         />
       ) : null}

@@ -116,4 +116,24 @@ describe("<PensionTakeHomeEffect /> in 2027/28 (refused rates)", () => {
     render(<PensionTakeHomeEffect effect={effect} />);
     expect(screen.getByText(/so repayments are not included\./)).toBeDefined();
   });
+
+  it("shows the provisional banner in 2027/28", () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2027-05-01T12:00:00Z"));
+    const effect = computePensionTakeHomeEffect(FACTS, 2400, IN_2027_28);
+    render(<PensionTakeHomeEffect effect={effect} />);
+    const banner = screen.getByRole("status");
+    expect(banner.textContent).toContain("2027/28 rates are provisional");
+  });
+
+  it("shows the fallback banner in 2028/29", () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2028-05-01T12:00:00Z"));
+    const effect = computePensionTakeHomeEffect(FACTS, 2400, {
+      now: new Date("2028-05-01T12:00:00Z"),
+    });
+    render(<PensionTakeHomeEffect effect={effect} />);
+    const banner = screen.getByRole("status");
+    expect(banner.textContent).toContain("2028/29 rates are not in Flump yet");
+  });
 });

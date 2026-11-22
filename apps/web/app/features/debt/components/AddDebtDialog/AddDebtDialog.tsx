@@ -284,7 +284,7 @@ const DebtForm: FC<DebtFormProps> = ({
           )}
         </FormField>
       </div>
-      {fieldSet.joint && (partnerMode || ownership === "joint") ? (
+      {fieldSet.joint && (partnerMode || initialOwnership === "joint" || ownership === "joint") ? (
         <JointOwnershipFields
           ownership={ownership}
           sharePercent={sharePercent}

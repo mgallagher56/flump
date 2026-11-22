@@ -166,4 +166,29 @@ describe("ISA kind and joint ownership", () => {
     rerender(<AddEditAccountsDialogBtn partnerMode />);
     expect(getByLabelText("Ownership")).toBeDefined();
   });
+
+  test("keeps the Ownership select mounted when switching an already-joint account to sole with partnerMode off", async () => {
+    const account = {
+      id: "a-joint",
+      name: "Joint current",
+      type: "Current" as const,
+      balance: 1000,
+      ownership: "joint" as const,
+      sharePercent: 50,
+    };
+    const { getByText, getByLabelText, queryByLabelText, user } = customRender(
+      <AddEditAccountsDialogBtn account={account} accountId="a-joint" isEditAccount />,
+    );
+    await user.click(getByText("edit"));
+    const ownershipSelect = getByLabelText("Ownership") as HTMLSelectElement;
+    expect(ownershipSelect.value).toBe("joint");
+    expect(getByLabelText("Your share")).toBeDefined();
+
+    await user.selectOptions(ownershipSelect, "sole");
+    expect((getByLabelText("Ownership") as HTMLSelectElement).value).toBe("sole");
+    expect(queryByLabelText("Your share")).toBeNull();
+
+    await user.selectOptions(getByLabelText("Ownership"), "joint");
+    expect(getByLabelText("Your share")).toBeDefined();
+  });
 });

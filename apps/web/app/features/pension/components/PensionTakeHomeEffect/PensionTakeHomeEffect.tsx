@@ -236,6 +236,7 @@ export const PensionTakeHomeEffect: FC<PensionTakeHomeEffectProps> = ({ effect }
       <TaxRatesStatusBanner
         calendarYear={context.calendarYear}
         isFallback={before.isFallback}
+        kind={context.kind}
         ratesYear={before.ratesYear}
       />
       {/* The zone's one result card (E17 5A): the change in take-home pay, what reaches the

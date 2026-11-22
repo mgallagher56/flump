@@ -531,4 +531,31 @@ describe("AddSavingsAccountDialog", () => {
     expect(screen.getByLabelText("Ownership")).toBeDefined();
     expect(screen.getByLabelText("Your share")).toBeDefined();
   });
+
+  it("keeps the Ownership select mounted when switching an already-joint account to sole with partnerMode off", () => {
+    render(
+      <AddSavingsAccountDialog
+        accountToEdit={{
+          id: "s-joint",
+          name: "Joint saver",
+          type: "Saving",
+          balance: 1000,
+          ownership: "joint",
+          sharePercent: 50,
+        }}
+        isOpen={true}
+        onClose={vi.fn()}
+      />,
+    );
+    const ownershipSelect = screen.getByLabelText("Ownership") as HTMLSelectElement;
+    expect(ownershipSelect.value).toBe("joint");
+    expect(screen.getByLabelText("Your share")).toBeDefined();
+
+    fireEvent.change(ownershipSelect, { target: { value: "sole" } });
+    expect((screen.getByLabelText("Ownership") as HTMLSelectElement).value).toBe("sole");
+    expect(screen.queryByLabelText("Your share")).toBeNull();
+
+    fireEvent.change(screen.getByLabelText("Ownership"), { target: { value: "joint" } });
+    expect(screen.getByLabelText("Your share")).toBeDefined();
+  });
 });
