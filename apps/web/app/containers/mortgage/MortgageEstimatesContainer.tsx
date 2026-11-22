@@ -5,6 +5,7 @@ import {
   isFigureKnown,
   MORTGAGE_ESTIMATE_STANDALONE_NOTICE,
   profileFactsFromProfile,
+  resolveEstimateTermMonths,
   selectHousingRoom,
 } from "@flump/finance-engine";
 import {
@@ -124,13 +125,8 @@ const MortgageEstimatesContainer: FC = () => {
 
   const savedMortgageBalance = toNumber(residentialMortgage?.balance);
   const savedMortgageRate = toNumber(residentialMortgage?.interestRate);
-  const savedMortgageTermYears = (() => {
-    const months = toNumber(residentialMortgage?.remainingTermMonths);
-    if (months && months > 0) return Math.round(months / 12);
-    const years = toNumber(residentialMortgage?.remainingTermYears);
-    if (years && years > 0) return Math.round(years);
-    return 25;
-  })();
+  // Saved term as saved (E39 section 4c): 235 months stays 235, never rounded to whole years.
+  const savedMortgageTermYears = resolveEstimateTermMonths(residentialMortgage) / 12;
 
   const defaultMonthlyPayment =
     isFigureKnown(activeHousingRoom) && activeHousingRoom.value.monthly > 0

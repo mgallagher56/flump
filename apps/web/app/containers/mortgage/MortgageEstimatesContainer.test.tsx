@@ -103,4 +103,42 @@ describe("MortgageEstimatesContainer", () => {
     fireEvent.click(screen.getByRole("tab", { name: "If rates change" }));
     expect(screen.getByTestId("rate-change-result")).not.toBeNull();
   });
+
+  it("uses the saved remaining term in months, not rounded to whole years", () => {
+    // 235 months / 12 = 19.583 years, shown as 19.58. Rounding to years would show 20.
+    mockLoaderData.mockReturnValue({
+      ...mockLoaderData(),
+      accounts: [
+        {
+          id: "m1",
+          type: "Mortgage",
+          propertyCategory: "residential",
+          balance: 180000,
+          interestRate: 4.5,
+          remainingTermMonths: 235,
+          remainingTermYears: 20,
+        },
+      ],
+    });
+    render(
+      <MemoryRouter>
+        <MortgageEstimatesContainer />
+      </MemoryRouter>,
+    );
+    const term = screen.getByRole("textbox", { name: "Term in years input" }) as HTMLInputElement;
+    expect(term.value).toBe("19.58");
+
+    fireEvent.click(screen.getByRole("tab", { name: "If rates change" }));
+    expect(screen.getByTestId("rate-change-result").textContent).toContain("Over 19.58 years");
+  });
+
+  it("assumes 25 years when no mortgage term is saved", () => {
+    render(
+      <MemoryRouter>
+        <MortgageEstimatesContainer />
+      </MemoryRouter>,
+    );
+    const term = screen.getByRole("textbox", { name: "Term in years input" }) as HTMLInputElement;
+    expect(term.value).toBe("25");
+  });
 });

@@ -1,4 +1,8 @@
-import { calculateBudgetLoanEstimate, isMortgageRateTableStale } from "@flump/finance-engine";
+import {
+  calculateBudgetLoanEstimate,
+  isMortgageRateTableStale,
+  MORTGAGE_RATE_TABLE_AS_OF,
+} from "@flump/finance-engine";
 import {
   Button,
   CurrencyInput,
@@ -37,8 +41,16 @@ export interface LoanFromPaymentToolProps {
 
 const rateFormat = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 2 });
 
+/** Month and year of the default rate table, for example "November 2026". */
+const [asOfYear, asOfMonth] = MORTGAGE_RATE_TABLE_AS_OF.split("-").map(Number);
+const rateTableMonthLabel = new Intl.DateTimeFormat("en-GB", {
+  month: "long",
+  year: "numeric",
+  timeZone: "UTC",
+}).format(Date.UTC(asOfYear, asOfMonth - 1, 1));
+
 /**
- * Estimates a repayment loan size from a monthly payment, interest rate (or November 2026 LTV
+ * Estimates a repayment loan size from a monthly payment, interest rate (or the dated LTV
  * default band when a deposit is given), and term in years (E39 sections 4a, 5, 6, 10a MA5).
  */
 export const LoanFromPaymentTool: FC<LoanFromPaymentToolProps> = ({
@@ -83,7 +95,7 @@ export const LoanFromPaymentTool: FC<LoanFromPaymentToolProps> = ({
     (monthlyPaymentGbp ?? 0) > 0;
 
   const rateHelperText = matchedBand
-    ? `Using ${rateFormat.format(matchedBand.lowAnnualRatePct)}% to ${rateFormat.format(matchedBand.highAnnualRatePct)}%. Assumption: rates seen in November 2026 for this loan to value. You can change it.`
+    ? `Using ${rateFormat.format(matchedBand.lowAnnualRatePct)}% to ${rateFormat.format(matchedBand.highAnnualRatePct)}%. Assumption: rates seen in ${rateTableMonthLabel} for this loan to value. You can change it.`
     : above90LtvWithoutRate
       ? "No default rate above 90% loan to value. Enter an interest rate."
       : "Assumption: one rate for the whole term.";
@@ -151,14 +163,15 @@ export const LoanFromPaymentTool: FC<LoanFromPaymentToolProps> = ({
         />
         {usingLtvBand && isStale ? (
           <p className={staleNotice} data-testid="stale-rate-notice" id="stale-rate-notice">
-            These rates are from November 2026, more than six months ago. You can type a current
-            rate.
+            These rates are from {rateTableMonthLabel}, more than six months ago. You can type a
+            current rate.
           </p>
         ) : null}
       </div>
 
       <SliderField
         format="number"
+        fractionDigits={Number.isInteger(termYears) ? 0 : 2}
         label="Term in years"
         max={40}
         min={5}
