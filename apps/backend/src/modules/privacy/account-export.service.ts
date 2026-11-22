@@ -8,6 +8,7 @@ import { Injectable } from "@nestjs/common";
 import { DataSource, type EntityManager, type FindOptionsOrder } from "typeorm";
 import { recordAuditEvent } from "../../audit/audit-events";
 import { formatCsvRow } from "./csv-export";
+import { withoutWriteFence } from "./user-data-lock";
 import { USER_DATA_REGISTRY, type UserDataTable } from "./user-data-registry";
 
 /** Plain-English notes written into every export. */
@@ -162,16 +163,22 @@ export class AccountExportService {
     // been written to the response, so the caller answers with the standard error. So an export is
     // never delivered without a record. The reverse can happen: a record may exist for an export
     // that then failed mid-stream.
-    await recordAuditEvent(this.dataSource.manager, { userId, action: "user.exported" });
-    await this.dataSource.transaction("REPEATABLE READ", async (manager) => {
-      await manager.query("SET TRANSACTION READ ONLY");
-      // Server-side backstops, scoped to this transaction only.
-      await manager.query(`SET LOCAL statement_timeout = ${EXPORT_STATEMENT_TIMEOUT_MS}`);
-      await manager.query(
-        `SET LOCAL idle_in_transaction_session_timeout = ${EXPORT_IDLE_IN_TRANSACTION_TIMEOUT_MS}`,
-      );
-      await fn(manager);
-    });
+    // In a transaction of its own, so a signed-in request's insert takes the write fence.
+    await this.dataSource.transaction((manager) =>
+      recordAuditEvent(manager, { userId, action: "user.exported" }),
+    );
+    // Outside the write fence: the fence needs READ COMMITTED, and this transaction is read only.
+    await withoutWriteFence(() =>
+      this.dataSource.transaction("REPEATABLE READ", async (manager) => {
+        await manager.query("SET TRANSACTION READ ONLY");
+        // Server-side backstops, scoped to this transaction only.
+        await manager.query(`SET LOCAL statement_timeout = ${EXPORT_STATEMENT_TIMEOUT_MS}`);
+        await manager.query(
+          `SET LOCAL idle_in_transaction_session_timeout = ${EXPORT_IDLE_IN_TRANSACTION_TIMEOUT_MS}`,
+        );
+        await fn(manager);
+      }),
+    );
   }
 
   /**

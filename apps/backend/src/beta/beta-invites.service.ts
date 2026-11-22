@@ -121,12 +121,15 @@ export class BetaInvitesService {
   async createInvite(adminId: string, rawLabel?: unknown): Promise<CreateBetaInviteResponse> {
     const label = normaliseLabel(rawLabel);
     const token = newInviteToken();
+    // A transaction, so the insert takes the user-data write fence (created_by is the admin's id).
     const rows = rowsOf<{ id: string; label: string | null; created_at: Date; expires_at: Date }>(
-      await this.dataSource.query(
-        `INSERT INTO "beta_invites" ("token_hash", "label", "created_by", "expires_at")
-         VALUES ($1, $2, $3, now() + make_interval(days => $4))
-         RETURNING "id", "label", "created_at", "expires_at"`,
-        [hashInviteToken(token), label, adminId, BETA_INVITE_TTL_DAYS],
+      await this.dataSource.transaction((m) =>
+        m.query(
+          `INSERT INTO "beta_invites" ("token_hash", "label", "created_by", "expires_at")
+           VALUES ($1, $2, $3, now() + make_interval(days => $4))
+           RETURNING "id", "label", "created_at", "expires_at"`,
+          [hashInviteToken(token), label, adminId, BETA_INVITE_TTL_DAYS],
+        ),
       ),
     );
     const row = rows[0];

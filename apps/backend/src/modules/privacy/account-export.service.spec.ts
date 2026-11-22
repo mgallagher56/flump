@@ -35,11 +35,18 @@ function createMockDataSource(options: {
   };
   const dataSource = {
     manager,
-    transaction: vi.fn(async (_isolation: string, cb: (m: typeof manager) => Promise<void>) => {
-      events.push("tx:start");
-      await cb(manager);
-      events.push("tx:end");
-    }),
+    transaction: vi.fn(
+      async (
+        isolationOrCb: string | ((m: typeof manager) => Promise<unknown>),
+        cb?: (m: typeof manager) => Promise<void>,
+      ) => {
+        // The audit row's own transaction (no isolation level) is not the export's.
+        if (typeof isolationOrCb === "function") return isolationOrCb(manager);
+        events.push("tx:start");
+        await cb?.(manager);
+        events.push("tx:end");
+      },
+    ),
   };
   return { dataSource, events, auditInsert };
 }

@@ -205,13 +205,9 @@ export class FinanceService {
     const clientSecret = this.oauthConfig(institutionId, "CLIENT_SECRET");
     if (clientId && clientSecret) {
       const redirectUri = this.redirectUri(institutionId);
-      const { state, codeChallenge } = await issueOAuthState(
-        this.bankConnectionRepository.manager,
-        {
-          userId,
-          institutionId,
-          redirectUri,
-        },
+      // A transaction, so in a signed-in request the insert takes the user-data write fence.
+      const { state, codeChallenge } = await this.bankConnectionRepository.manager.transaction(
+        (m) => issueOAuthState(m, { userId, institutionId, redirectUri }),
       );
       const redirectUrl = withPkceChallenge(
         provider.getAuthUrl(clientId, redirectUri, state),
