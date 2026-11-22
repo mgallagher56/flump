@@ -138,7 +138,9 @@ describe("BudgetEditor", () => {
       ],
     });
     expect(screen.queryByTestId("budget-editor-sole-1-ownership")).toBeNull();
-    expect(screen.getByTestId("budget-editor-joint-1-ownership")).toBeDefined();
+    expect((screen.getByTestId("budget-editor-joint-1-ownership") as HTMLSelectElement).value).toBe(
+      "joint",
+    );
     fireEvent.click(screen.getByTestId("budget-editor-open-add-bills"));
     expect(screen.queryByTestId("budget-editor-new-bills-ownership")).toBeNull();
   });

@@ -173,8 +173,9 @@ describe("<OnboardingFlow />", () => {
     try {
       render(<OnboardingFlow />);
       expect(
-        screen.getByText(/2027\/28 rates are provisional: announced but not yet confirmed\./),
-      ).toBeDefined();
+        screen.getByText(/2027\/28 rates are provisional: announced but not yet confirmed\./)
+          .textContent,
+      ).toBe("2027/28 rates are provisional: announced but not yet confirmed. Figures may change.");
     } finally {
       vi.useRealTimers();
     }

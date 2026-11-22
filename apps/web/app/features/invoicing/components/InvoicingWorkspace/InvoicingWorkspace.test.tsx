@@ -128,10 +128,13 @@ describe("InvoicingWorkspace (E37 S2)", () => {
     // Unbilled amount: £625 + £625 = £1,250
     // Outstanding issued invoices: INV-0001 total = £1,500 (1 issued)
     expect(screen.getAllByText("20.00 hrs").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText("2 unbilled entries")).toBeTruthy();
+    // Matching any count, so a wrong count fails on its value, not on a missing element.
+    expect(screen.getAllByText(/^\d+ unbilled entries$/).map((el) => el.textContent)).toEqual([
+      "2 unbilled entries",
+    ]);
     expect(screen.getAllByText("£1,250").length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText("£1,500").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText("1 issued")).toBeTruthy();
+    expect(screen.getAllByText(/^\d+ issued$/).map((el) => el.textContent)).toEqual(["1 issued"]);
 
     // Owner-approved helper line beside VAT rate input (never defaulted or suggested)
     expect(screen.getAllByText("Leave empty for no VAT.").length).toBeGreaterThanOrEqual(1);

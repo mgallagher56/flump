@@ -65,15 +65,11 @@ describe("SecurityPage (E16 PR 12)", () => {
     expect(bodyText).not.toMatch(
       /encrypt|AES|TLS|HSTS|CSV|delete all your|close your account|never sell|visible only|business day/i,
     );
-    expect(
-      screen.getByText("You can download a copy of your saved figures from Settings at any time."),
-    ).toBeDefined();
-    expect(
-      screen.getByText("You can delete your account and saved data from Settings."),
-    ).toBeDefined();
-    expect(
-      screen.getByText("Flump never asks for a password, code or bank login by email."),
-    ).toBeDefined();
+    expect(bodyText).toContain(
+      "You can download a copy of your saved figures from Settings at any time.",
+    );
+    expect(bodyText).toContain("You can delete your account and saved data from Settings.");
+    expect(bodyText).toContain("Flump never asks for a password, code or bank login by email.");
   });
 
   it("does not offer an enquiry form that cannot send", () => {
