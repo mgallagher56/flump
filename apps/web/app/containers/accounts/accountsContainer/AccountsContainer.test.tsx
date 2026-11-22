@@ -17,6 +17,8 @@ const loaderData = (rows: Record<string, unknown>) => ({
 const mocks = vi.hoisted(() => ({
   mockUseLoaderData: vi.fn(),
   mockUseRevalidator: vi.fn(() => ({ revalidate: vi.fn() })),
+  // The root route's data: the saved profile that useSavedProfile reads.
+  rootData: { value: undefined as { userProfile?: Record<string, unknown> } | undefined },
   searchParams: { value: "", params: new URLSearchParams(), setParams: () => {} },
 }));
 
@@ -26,6 +28,7 @@ vi.mock("react-router", async () => {
     ...actual,
     useLoaderData: mocks.mockUseLoaderData,
     useRevalidator: mocks.mockUseRevalidator,
+    useRouteLoaderData: (id: string) => (id === "root" ? mocks.rootData.value : undefined),
 
     Link: ({ to, children, ...rest }: { to: string; children: React.ReactNode }) => (
       <a href={to} {...rest}>
@@ -135,6 +138,28 @@ describe("<AccountsContainer />", () => {
       mocks.searchParams.value = "";
     }
   });
+
+  test.each([
+    { partnerMode: true, shown: true },
+    { partnerMode: false, shown: false },
+  ])(
+    "reads partner mode from the saved profile for the add dialog (partnerMode $partnerMode)",
+    ({ partnerMode, shown }) => {
+      mocks.searchParams.value = "add=1";
+      mocks.rootData.value = { userProfile: { partnerMode } };
+      mocks.mockUseLoaderData.mockReturnValue(
+        loaderData({ accounts: [{ id: "a1", name: "Monzo", type: "Current", balance: 5000 }] }),
+      );
+      try {
+        const { getByRole, queryByLabelText } = customRender(<AccountsContainer />);
+        expect(getByRole("dialog")).toBeDefined();
+        expect(queryByLabelText("Ownership") !== null).toBe(shown);
+      } finally {
+        mocks.searchParams.value = "";
+        mocks.rootData.value = undefined;
+      }
+    },
+  );
 
   test("should open modal to add an account", async () => {
     mocks.mockUseLoaderData.mockReturnValue(loaderData({ accounts: mockAccounts }));

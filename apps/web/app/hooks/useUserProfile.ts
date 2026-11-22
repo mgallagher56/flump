@@ -293,15 +293,11 @@ export function forgetWrittenProfileVersion(): void {
  * Signed out (no profile) it reads as `DEFAULT_PROFILE`.
  */
 export function useSavedProfile(): UserProfile {
-  let rootData: { userProfile?: Partial<UserProfile> | null } | undefined;
-  try {
-    // biome-ignore lint/correctness/useHookAtTopLevel: fallback when rendered outside a data router in unit tests/Storybook
-    rootData = useRouteLoaderData("root") as
-      | { userProfile?: Partial<UserProfile> | null }
-      | undefined;
-  } catch {
-    rootData = undefined;
-  }
+  // Needs a data router: tests and stories render inside one (createMemoryRouter / the
+  // Storybook router decorator) with a "root" route that carries the profile.
+  const rootData = useRouteLoaderData("root") as
+    | { userProfile?: Partial<UserProfile> | null }
+    | undefined;
   const loaded = rootData?.userProfile;
   return useMemo(() => (loaded ? normalizeProfile(loaded) : DEFAULT_PROFILE), [loaded]);
 }
