@@ -7,9 +7,9 @@ export const stampDutyRoot = cva({
     display: "flex",
     flexDirection: "column",
     alignItems: "flex-start",
-    gap: "12px",
+    gap: "3",
     width: "100%",
-    paddingTop: "16px",
+    paddingTop: "4",
     borderTopWidth: "1px",
     borderTopStyle: "solid",
     borderTopColor: "border.subtle",
@@ -19,7 +19,7 @@ export const stampDutyRoot = cva({
 export const stampDutyPanel = css({
   display: "flex",
   flexDirection: "column",
-  gap: "16px",
+  gap: "4",
   width: "100%",
   ...numeric,
 });

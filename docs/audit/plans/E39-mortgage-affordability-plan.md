@@ -227,6 +227,10 @@ The owner's figures are for a loan to value of 60% or less and of about 90%. The
 - The figure is taken off the deposit with other buying costs, shown as its own line: "Estimated stamp duty: ~£2,500". In Scotland and Wales the line uses the tax's own name.
 - The figure is a tax output, so it carries the unverified notice the advice boundary policy requires for one (R6), in the same form as other tax estimates.
 - This is a new slice, S1b, after S1. S2 shows the line only once S1b has merged.
+- **Note, 22 November 2026: the prefill above is superseded.** After the independent review of the engine (PR #883), the place is not prefilled: the saved region "England, NI or Wales" cannot tell England from Wales, so the user always chooses where the property is. The engine helper `defaultPropertyTaxJurisdictionForTaxRegion` returns null for that region on purpose, and the page (PR #893) never prefills.
+- **Note, 22 November 2026: taking the figure off the deposit is deferred.** Approved by the coordinator on 22 November 2026. The property price depends on the tax and the tax on the price, so this needs a solver in `packages/finance-engine`, as its own engine slice (follow-up S1c). Until then the stamp duty section on the page (PR #893) stands alone, with its own typed property price, and is not taken off the deposit.
+
+**Follow-ups:** S1c, an engine solver that takes the stamp duty estimate off the deposit with other buying costs (price and tax are circular), then the web change to use it.
 
 **The coordinator's readings, not the owner's words:** the 70% and 80% steps are a straight line between the owner's two points; each band takes the rate of its upper end; over 90% has no default; with no deposit the rate is empty; the six-month stale line; the "first home" switch and what version one leaves out; and every line of wording in this section. MA4 approved the wording in section 6 as it stood. The new lines here (the multiple helper, the rate line, the stale line, the stamp duty line and the "Where is the property?" question) were not in what the owner saw and need the owner's approval under E29a before S2 merges.
 
