@@ -9,6 +9,7 @@ import { type MortgageLike, propertyPrefillFor } from "~/features/accounts/prope
 import { CheckInSheet, firstShownElement } from "~/features/snapshot/components/CheckInSheet";
 import { londonMonth } from "~/features/snapshot/snapshotModel";
 import { useSaveSnapshot } from "~/features/snapshot/useSaveSnapshot";
+import { useSavedProfile } from "~/hooks/useUserProfile";
 import type { loader } from "~/routes/app.accounts._index";
 import { emptyWrap, headerActions, phoneOnly, wideOnly } from "./AccountsContainer.styles";
 
@@ -32,6 +33,7 @@ const AccountsContainer: FC = () => {
     netWorth = null,
     latestCheckInMonth = null,
   } = useLoaderData<typeof loader>();
+  const { partnerMode } = useSavedProfile();
   // Before hydration the buttons are plain links (#701): "?add=1" and "?checkIn=1" open the add
   // dialog or the check-in on arrival, then the parameter is removed so a reload does not reopen.
   const [params, setParams] = useSearchParams();
@@ -102,9 +104,7 @@ const AccountsContainer: FC = () => {
               </Button>
               <AddEditAccountsDialogBtn
                 {...addDialogProps}
-                partnerMode={Boolean(
-                  (userProfile as { partnerMode?: boolean } | null)?.partnerMode,
-                )}
+                partnerMode={partnerMode}
                 defaultOpen={arrivedToAdd}
                 fallbackHref={ADD_HREF}
                 openRequestKey={openRequestKey}
@@ -165,9 +165,7 @@ const AccountsContainer: FC = () => {
             action={
               <AddEditAccountsDialogBtn
                 {...addDialogProps}
-                partnerMode={Boolean(
-                  (userProfile as { partnerMode?: boolean } | null)?.partnerMode,
-                )}
+                partnerMode={partnerMode}
                 defaultOpen={arrivedToAdd}
                 fallbackHref={ADD_HREF}
                 openRequestKey={openRequestKey}
