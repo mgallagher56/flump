@@ -6,3 +6,6 @@ For a session that coordinates lane sessions. The laws in [`AGENTS.md`](../../AG
 2. The coordinator tells the owner only about merges, failures and things that need the owner. No "no change" updates.
 3. A claim about a live system (Railway variables, deploy behaviour, plan or usage limits) is either verified in this session or labelled "not checked". A subagent's report is not verification.
 4. Anything the coordinator depends on across restarts (merge scripts, the ledger) lives in the repo or beside the ledger, never only in a temp folder.
+5. The coordinator does not relay each subagent or reviewer report to the owner. It sends one short message per PR when it merges or needs the owner, with the findings that matter in a line or two.
+6. One independent review per PR, then one check of the fixes. A third round needs a stated reason (a guard, money or security change that the second round still found faults in).
+7. A reviewer is given the diff and the specific things to check, not a reading list. An implementer's brief names the files and the two or three documents it needs.
