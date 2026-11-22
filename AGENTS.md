@@ -122,9 +122,9 @@ Detail: [`docs/agents/laws-detail.md`](./docs/agents/laws-detail.md).
 Before adding or changing any test, read [`docs/testing/writing-tests.md`](./docs/testing/writing-tests.md).
 
 - **A test must fail when the code is wrong.** Assert a specific value, output, state or call; `toBeDefined`, `toBeTruthy`, `not.toThrow` or a snapshot is never the only assertion on a behaviour. Test each comparison on its edge and each branch both ways.
-- **See it fail.** Break the code and watch the test fail. For logic in `packages/finance-engine`, or in `apps/backend` guards, interceptors, auth or `security/`, run Stryker on the changed files and kill each survivor or give it a row in `docs/testing/mutation-triage.md`.
+- **See it fail.** Break the code and watch the test fail; a bug-fix test fails before the fix. For logic in `packages/finance-engine`, or in `apps/backend` guards, interceptors, auth or `security/`, run Stryker on the changed files and kill each survivor or give it a row in `docs/testing/mutation-triage.md`.
 - **Never weaken a test to make it pass.** Loosening an assertion or deleting a case needs the reason in the PR description. No `.only` or bare `.skip`.
-- **A test must be quick.** A test file with no DOM starts with `// @vitest-environment node`. No real waiting, network, database or clock in a unit test.
+- **A test must be quick.** In `apps/web`, `packages/ui` and `apps/marketing`, a test file with no DOM starts with `// @vitest-environment node`. No real waiting, network, database or clock in a unit test. A unit test file that takes more than 5 seconds needs the reason in the PR description.
 - **Mutation testing stays local.** No workflow runs Stryker.
 - **The PR description has a "Tests" heading**: behaviours covered, how each test was seen to fail, anything weakened, skipped or removed.
 
