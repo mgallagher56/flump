@@ -1,11 +1,24 @@
 #!/usr/bin/env bash
 # PreToolUse (Bash): block risky git commands, but only on main/master.
 # Other branches are unrestricted, except force pushes that explicitly target main/master.
-cmd=$(jq -r '.tool_input.command // empty')
+input=$(cat)
+cmd=$(printf '%s' "$input" | jq -r '.tool_input.command // empty')
 [ -z "$cmd" ] && exit 0
 echo "$cmd" | grep -qE '(^|[;&|[:space:]])git[[:space:]]' || exit 0
 
-cd "${CLAUDE_PROJECT_DIR:-$(pwd)}" 2>/dev/null || exit 0
+# Decide the branch from the directory the command will run in. A command that
+# starts with `cd <dir> &&` (for example into a git worktree) runs there, so use
+# that directory; otherwise use the session's working directory, then the project.
+dir="${CLAUDE_PROJECT_DIR:-$(pwd)}"
+session_cwd=$(printf '%s' "$input" | jq -r '.cwd // empty')
+[ -n "$session_cwd" ] && [ -d "$session_cwd" ] && dir="$session_cwd"
+if [[ "$cmd" =~ ^[[:space:]]*cd[[:space:]]+([^[:space:];\&\|]+)[[:space:]]*\&\& ]]; then
+  target="${BASH_REMATCH[1]}"
+  target="${target%\"}"; target="${target#\"}"
+  target="${target/#\~/$HOME}"
+  [ -d "$target" ] && dir="$target"
+fi
+cd "$dir" 2>/dev/null || exit 0
 branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
 
 force_push='git[[:space:]]+push([[:space:]]+[^;&|]*)?[[:space:]](--force|--force-with-lease|-f)([[:space:]=]|$)'
