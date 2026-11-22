@@ -47,7 +47,7 @@ export type UkRuleKey =
 export type UkRuleStatus = "verified" | "unverified" | "announced";
 
 export interface UkRuleSource {
-  /** Primary page. Always https://www.gov.uk/, gov.scot or legislation.gov.uk. */
+  /** Primary page. Always https://www.gov.uk/, gov.scot, revenue.scot, gov.wales or legislation.gov.uk. */
   url: string;
   /** Further pages the figure group also rests on. */
   additionalUrls?: readonly string[];

@@ -22,6 +22,8 @@ describe("UK property transaction tax engine (E39 S1b, MA7)", () => {
         expect(res.effectiveRatePct).toBe(0);
         expect(res.firstTimeBuyerReliefApplied).toBe(false);
         expect(res.sourceUrl).toBe(UK_PROPERTY_TRANSACTION_TAX_SOURCES.sdlt.url);
+        expect(res.ratesEffectiveFrom).toBe("2025-04-01");
+        expect(res.sourcesCheckedOn).toBe("2026-11-22");
       }
     });
 
@@ -140,6 +142,8 @@ describe("UK property transaction tax engine (E39 S1b, MA7)", () => {
       expect(res.taxGbp).toBe(expectedTax);
       expect(res.firstTimeBuyerReliefApplied).toBe(false);
       expect(res.sourceUrl).toBe(UK_PROPERTY_TRANSACTION_TAX_SOURCES.lbtt.url);
+      expect(res.ratesEffectiveFrom).toBe("2021-04-01");
+      expect(res.sourcesCheckedOn).toBe("2026-11-22");
     });
 
     it("applies first-time buyer relief (0% up to £175,000, £600 max saving, no price cap)", () => {
@@ -208,6 +212,8 @@ describe("UK property transaction tax engine (E39 S1b, MA7)", () => {
       expect(res.taxGbp).toBe(expectedTax);
       expect(res.firstTimeBuyerReliefApplied).toBe(false);
       expect(res.sourceUrl).toBe(UK_PROPERTY_TRANSACTION_TAX_SOURCES.ltt.url);
+      expect(res.ratesEffectiveFrom).toBe("2022-10-10");
+      expect(res.sourcesCheckedOn).toBe("2026-11-22");
     });
 
     it("has no first-time buyer relief even when isFirstTimeBuyer is true", () => {

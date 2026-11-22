@@ -1,6 +1,6 @@
 # UK Property Transaction Taxes (E39 S1b, MA7)
 
-Primary sources read on 2026-11-21 for main residential property purchases where the buyer(s) own no other home. Higher rates for additional dwellings and non-UK resident surcharges are outside version one.
+Primary sources read on 2026-11-21 and re-read on 2026-11-22 (fable-decider sign-off) for main residential property purchases where the buyer(s) own no other home. Higher rates for additional dwellings and non-UK resident surcharges are outside version one.
 
 ## England & Northern Ireland — Stamp Duty Land Tax (SDLT)
 
@@ -19,7 +19,7 @@ Primary sources read on 2026-11-21 for main residential property purchases where
 ## Scotland — Land and Buildings Transaction Tax (LBTT)
 
 - Source: <https://www.revenue.scot/taxes/land-buildings-transaction-tax/residential-property>
-- Standard residential rates:
+- Standard residential rates (from 1 April 2021):
   - Up to £145,000: 0%
   - £145,001 to £250,000: 2%
   - £250,001 to £325,000: 5%

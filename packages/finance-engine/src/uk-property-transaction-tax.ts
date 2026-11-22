@@ -12,8 +12,11 @@ import { UK_PROPERTY_TRANSACTION_TAX_SOURCES } from "./uk-rule-sources.js";
  *
  * Higher rates for additional homes and non-UK resident surcharges are outside version one.
  *
- * Tax bands and rates are awaiting independent Fable decider sign-off before merge.
+ * Tax bands and rates signed off by fable-decider, 2026-11-22 (no signed vector hash exists).
  */
+
+/** Date the official sources for every regime were last read against these bands (ISO 8601). */
+export const PROPERTY_TAX_SOURCES_CHECKED_ON = "2026-11-22";
 
 export type UkPropertyTaxJurisdiction = "ENGLAND_NI" | "SCOTLAND" | "WALES";
 
@@ -64,6 +67,10 @@ export interface PropertyTransactionTaxResult {
   bands: readonly PropertyTransactionTaxBandBreakdown[];
   /** Primary official source URL for the regime. */
   sourceUrl: string;
+  /** Date the regime's current rates took effect (ISO 8601). */
+  ratesEffectiveFrom: string;
+  /** Date the official sources were last read against these rates (ISO 8601). */
+  sourcesCheckedOn: string;
 }
 
 const round2 = (n: number): number => Math.round(n * 100) / 100;
@@ -89,7 +96,7 @@ export const SDLT_FTB_BANDS: readonly PropertyTaxBand[] = [
   { fromGbp: 300_000, toGbp: 500_000, ratePct: 5 },
 ];
 
-/** Scotland LBTT standard residential bands. */
+/** Scotland LBTT standard residential bands (from 1 April 2021). */
 export const LBTT_STANDARD_BANDS: readonly PropertyTaxBand[] = [
   { fromGbp: 0, toGbp: 145_000, ratePct: 0 },
   { fromGbp: 145_000, toGbp: 250_000, ratePct: 2 },
@@ -98,7 +105,7 @@ export const LBTT_STANDARD_BANDS: readonly PropertyTaxBand[] = [
   { fromGbp: 750_000, toGbp: null, ratePct: 12 },
 ];
 
-/** Scotland LBTT first-time buyer relief bands (nil-rate band raised to £175,000). */
+/** Scotland LBTT first-time buyer relief bands (from 1 April 2021; nil-rate band raised to £175,000). */
 export const LBTT_FTB_BANDS: readonly PropertyTaxBand[] = [
   { fromGbp: 0, toGbp: 175_000, ratePct: 0 },
   { fromGbp: 175_000, toGbp: 250_000, ratePct: 2 },
@@ -121,6 +128,10 @@ export interface PropertyTaxRegimeMeta {
   taxName: string;
   sourceUrl: string;
   hasFirstTimeBuyerRelief: boolean;
+  /** Date the regime's current rates took effect (ISO 8601). */
+  ratesEffectiveFrom: string;
+  /** Date the official sources were last read against these rates (ISO 8601). */
+  sourcesCheckedOn: string;
 }
 
 export const PROPERTY_TAX_REGIME_META: Readonly<
@@ -131,18 +142,24 @@ export const PROPERTY_TAX_REGIME_META: Readonly<
     taxName: "Stamp Duty Land Tax",
     sourceUrl: UK_PROPERTY_TRANSACTION_TAX_SOURCES.sdlt.url,
     hasFirstTimeBuyerRelief: true,
+    ratesEffectiveFrom: "2025-04-01",
+    sourcesCheckedOn: PROPERTY_TAX_SOURCES_CHECKED_ON,
   },
   SCOTLAND: {
     regime: "LBTT",
     taxName: "Land and Buildings Transaction Tax",
     sourceUrl: UK_PROPERTY_TRANSACTION_TAX_SOURCES.lbtt.url,
     hasFirstTimeBuyerRelief: true,
+    ratesEffectiveFrom: "2021-04-01",
+    sourcesCheckedOn: PROPERTY_TAX_SOURCES_CHECKED_ON,
   },
   WALES: {
     regime: "LTT",
     taxName: "Land Transaction Tax",
     sourceUrl: UK_PROPERTY_TRANSACTION_TAX_SOURCES.ltt.url,
     hasFirstTimeBuyerRelief: false,
+    ratesEffectiveFrom: "2022-10-10",
+    sourcesCheckedOn: PROPERTY_TAX_SOURCES_CHECKED_ON,
   },
 };
 
@@ -245,5 +262,7 @@ export function calculatePropertyTransactionTax(
     effectiveRatePct,
     bands: breakdown,
     sourceUrl: meta.sourceUrl,
+    ratesEffectiveFrom: meta.ratesEffectiveFrom,
+    sourcesCheckedOn: meta.sourcesCheckedOn,
   };
 }
