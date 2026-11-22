@@ -49,3 +49,6 @@ docs/design/e16-polish/after*/.auth/
 .stryker-tmp/
 # Left in the package folder when an in-place run is interrupted
 stryker-setup-*.js
+
+# verify-flump runs: live state and kept evidence (.claude/skills/verify-flump)
+.verify/
