@@ -76,4 +76,3 @@ Three documents in `docs/ux/` are the standing rules for how Flump behaves and l
 **Review-only rules still apply.** A PR that touches UI states in its description which review-only rules it checked. The `ui-compliance-reviewer` agent reviews against the laws above and the `docs/ux/` documents.
 
 `docs/ux/UX-ASSESSMENT-2026-11.md` is a dated assessment, not a rule set. Do not treat its findings as instructions; the changes it calls for become rules only when they enter the documents above.
-
