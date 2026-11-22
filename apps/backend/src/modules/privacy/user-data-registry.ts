@@ -948,6 +948,7 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
         "lastActiveAt",
         "netWorthCountsProperty",
         "netWorthCountsStudentLoan",
+        "partnerMode",
         "createdAt",
         "updatedAt",
       ],
@@ -997,6 +998,7 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
         monthlyOtherOutgoings: "other-outgoings",
         netWorthCountsProperty: "net-worth-choices",
         netWorthCountsStudentLoan: "net-worth-choices",
+        partnerMode: "partner-mode",
       },
       notFacts: {
         id: ROW_ID,

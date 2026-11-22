@@ -318,6 +318,8 @@
 | `ownership-share`                 | reads  | `web.savings.account-dialog.save-or-delete-savings-account`                      | web/savings                | `/app/savings`                 | write    |
 | `ownership-share`                 | reads  | `web.savings.accounts-list.browse-and-edit-accounts`                             | web/savings                | `/app/savings`                 | read     |
 | `ownership-share`                 | reads  | `web.savings.hero-and-kpis.view-savings-summary`                                 | web/savings                | `/app/savings`                 | read     |
+| `partner-mode`                    | writes | `web.settings.sections-you-use.toggle-partner-mode`                              | web/settings               | `/app/profile`                 | write    |
+| `partner-mode`                    | reads  | `web.settings.sections-you-use.toggle-partner-mode`                              | web/settings               | `/app/profile`                 | write    |
 | `pension-rates`                   | writes | `web.onboarding.header.navigate-and-exit-setup`                                  | web/onboarding             | `/app/onboarding`              | write    |
 | `pension-rates`                   | writes | `web.onboarding.step-review.review-and-complete-onboarding`                      | web/onboarding             | `/app/onboarding`              | write    |
 | `pension-rates`                   | writes | `web.onboarding.step-savings-debt.enter-savings-pension-debt`                    | web/onboarding             | `/app/onboarding`              | write    |

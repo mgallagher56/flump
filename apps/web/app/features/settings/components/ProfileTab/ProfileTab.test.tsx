@@ -285,4 +285,23 @@ describe("<ProfileTab />", () => {
     expect(screen.queryByRole("link", { name: "Your mortgage" })).toBeNull();
     expect(screen.getByRole("link", { name: "Your pension" })).toBeDefined();
   });
+
+  it("saves Partner mode immediately on toggle and reverts on failure", async () => {
+    render(<ProfileTab profile={DEFAULT_PROFILE} />);
+    const toggle = screen.getByTestId("partner-mode-toggle") as HTMLInputElement;
+    expect(toggle.checked).toBe(false);
+    fireEvent.click(toggle);
+    await waitFor(() =>
+      expect(mockUpdateProfile).toHaveBeenCalledWith(
+        expect.objectContaining({ partnerMode: true }),
+      ),
+    );
+    expect(toggle.checked).toBe(true);
+
+    mockUpdateProfile.mockRejectedValueOnce(new Error("boom"));
+    fireEvent.click(toggle);
+    const alert = await screen.findByTestId("profile-modules-error");
+    expect(alert.getAttribute("role")).toBe("alert");
+    expect(toggle.checked).toBe(true);
+  });
 });

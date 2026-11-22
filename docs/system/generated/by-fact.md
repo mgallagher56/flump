@@ -47,6 +47,7 @@ Where each value is stored, entered and used. One entry per stored fact, then on
 | [Self-employed billable work log entries](#work-log-entries)                                                                             | fact   | tax         | Holds                                     |
 | [Self-employed invoices (number, status, client details, dates, optional VAT rate and totals)](#invoices)                                | fact   | tax         | Holds                                     |
 | [Retirement plan (ages, target, State Pension inputs, growth cases, excluded accounts)](#retirement-plan)                                | fact   | retirement  | Holds                                     |
+| [Partner mode toggle](#partner-mode)                                                                                                     | fact   | preferences | Holds                                     |
 | [Net worth choices (count the home, count the student loan)](#net-worth-choices)                                                         | fact   | preferences | Broken                                    |
 | [Check-in day of the month](#check-in-day)                                                                                               | fact   | preferences | Holds                                     |
 | [Enabled pages and dashboard widgets](#enabled-pages-and-widgets)                                                                        | fact   | preferences | Holds                                     |
@@ -1093,6 +1094,29 @@ Entered or changed by:
 Read by:
 
 - Settings: `apps/web/app/features/settings/components/ProfileTab/ProfileTab.tsx`
+
+### Partner mode toggle
+
+<a id="partner-mode"></a>
+
+- Id: `partner-mode` (stored fact)
+- Verdict: Holds. Findings: none. Links: none.
+- Source of truth: `user_profiles.partner_mode` in `apps/backend/src/entities/user-profile.entity.ts`
+
+Other stores:
+
+- none
+
+Entered or changed by:
+
+- Settings: `apps/web/app/features/settings/components/ProfileTab/ProfileTab.tsx`
+
+Read by:
+
+- Accounts: `apps/web/app/components/dialogs/addEditAccountsDialog/AddEditAccountsDialog.tsx`
+- Debt: `apps/web/app/features/debt/components/AddDebtDialog/AddDebtDialog.tsx`
+- Savings: `apps/web/app/features/savings/components/AddSavingsAccountDialog/AddSavingsAccountDialog.tsx`
+- Budget: `apps/web/app/features/budget/components/BudgetEditor/BudgetEditor.tsx`
 
 ### Net worth choices (count the home, count the student loan)
 

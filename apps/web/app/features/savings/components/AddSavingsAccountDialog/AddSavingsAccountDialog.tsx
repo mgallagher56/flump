@@ -45,6 +45,8 @@ export interface AddSavingsAccountDialogProps {
    * confirmation before anything is deleted.
    */
   onDeleteRequest?: () => void;
+  /** Show sole/joint ownership and share controls for sole/new accounts (profile preference). */
+  partnerMode?: boolean;
 }
 
 /** InfoTip descriptions the fields name in aria-describedby (owner item 23). */
@@ -61,10 +63,16 @@ interface AccountFormProps {
   accountToEdit?: Account | null;
   onClose: () => void;
   onDeleteRequest?: () => void;
+  partnerMode?: boolean;
 }
 
 /** Mounted only while the dialog is open, so the fields restart from the account being edited. */
-const AccountForm: FC<AccountFormProps> = ({ accountToEdit, onClose, onDeleteRequest }) => {
+const AccountForm: FC<AccountFormProps> = ({
+  accountToEdit,
+  onClose,
+  onDeleteRequest,
+  partnerMode = false,
+}) => {
   const fetcher = useFetcher();
   // The dialog closes only once the save lands, so a refused save keeps what was typed.
   const saveOutcome = useFetcherOutcome(fetcher, { onSuccess: onClose });
@@ -249,7 +257,7 @@ const AccountForm: FC<AccountFormProps> = ({ accountToEdit, onClose, onDeleteReq
         </FormField>
       </div>
 
-      {fieldSet.joint ? (
+      {fieldSet.joint && (partnerMode || ownership === "joint") ? (
         <JointOwnershipFields
           ownership={ownership}
           sharePercent={sharePercent}
@@ -307,6 +315,7 @@ export const AddSavingsAccountDialog: FC<AddSavingsAccountDialogProps> = ({
   isOpen,
   onClose,
   onDeleteRequest,
+  partnerMode = false,
 }) => (
   <Dialog
     id="savings-account-dialog"
@@ -320,6 +329,7 @@ export const AddSavingsAccountDialog: FC<AddSavingsAccountDialogProps> = ({
       <AccountForm
         key={accountToEdit?.id ?? "new"}
         accountToEdit={accountToEdit}
+        partnerMode={partnerMode}
         onClose={onClose}
         onDeleteRequest={onDeleteRequest}
       />

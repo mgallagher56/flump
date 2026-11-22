@@ -18061,6 +18061,10 @@
                     "onboardingCompleted": {
                       "type": "boolean"
                     },
+                    "partnerMode": {
+                      "default": false,
+                      "type": "boolean"
+                    },
                     "pensionEmployerPercent": {
                       "type": ["number", "null"]
                     },
@@ -18173,6 +18177,7 @@
                     "monthlyOtherOutgoings",
                     "netWorthCountsProperty",
                     "netWorthCountsStudentLoan",
+                    "partnerMode",
                     "createdAt",
                     "updatedAt"
                   ],
@@ -18461,6 +18466,9 @@
                   "onboardingCompleted": {
                     "type": "boolean"
                   },
+                  "partnerMode": {
+                    "type": "boolean"
+                  },
                   "pensionEmployerPercent": {
                     "anyOf": [
                       {
@@ -18720,6 +18728,10 @@
                     "onboardingCompleted": {
                       "type": "boolean"
                     },
+                    "partnerMode": {
+                      "default": false,
+                      "type": "boolean"
+                    },
                     "pensionEmployerPercent": {
                       "type": ["number", "null"]
                     },
@@ -18832,6 +18844,7 @@
                     "monthlyOtherOutgoings",
                     "netWorthCountsProperty",
                     "netWorthCountsStudentLoan",
+                    "partnerMode",
                     "createdAt",
                     "updatedAt"
                   ],
@@ -19150,6 +19163,10 @@
                     "onboardingCompleted": {
                       "type": "boolean"
                     },
+                    "partnerMode": {
+                      "default": false,
+                      "type": "boolean"
+                    },
                     "pensionEmployerPercent": {
                       "type": ["number", "null"]
                     },
@@ -19262,6 +19279,7 @@
                     "monthlyOtherOutgoings",
                     "netWorthCountsProperty",
                     "netWorthCountsStudentLoan",
+                    "partnerMode",
                     "createdAt",
                     "updatedAt"
                   ],
@@ -19694,6 +19712,10 @@
                         "onboardingCompleted": {
                           "type": "boolean"
                         },
+                        "partnerMode": {
+                          "default": false,
+                          "type": "boolean"
+                        },
                         "pensionEmployerPercent": {
                           "type": ["number", "null"]
                         },
@@ -19806,6 +19828,7 @@
                         "monthlyOtherOutgoings",
                         "netWorthCountsProperty",
                         "netWorthCountsStudentLoan",
+                        "partnerMode",
                         "createdAt",
                         "updatedAt"
                       ],

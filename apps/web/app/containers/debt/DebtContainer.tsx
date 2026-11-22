@@ -33,6 +33,7 @@ import { ConfirmDialog } from "~/features/feedback/components/ConfirmDialog";
 import { useFetcherOutcome } from "~/features/feedback/hooks/useFetcherOutcome";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { useScenarioState } from "~/hooks/useScenarioState";
+import { useUserProfile } from "~/hooks/useUserProfile";
 import { versionField } from "~/services/conflict";
 import { emptyStack, emptyWrap, errorBanner, pageRoot, plainLink } from "./DebtContainer.styles";
 
@@ -46,6 +47,8 @@ const SAVE_ERROR_FALLBACK = "We could not save that debt. Nothing has changed. T
 export const DebtContainer: FC = () => {
   const loaderData = useLoaderData<any>();
   const { formatCurrency } = useFormatCurrency();
+  const { profile } = useUserProfile();
+  const partnerMode = Boolean(profile?.partnerMode);
 
   const debtInputs = loaderData?.debtInputs as
     | {
@@ -302,6 +305,7 @@ export const DebtContainer: FC = () => {
           />
 
           <DebtAccountsList
+            partnerMode={partnerMode}
             debts={debts}
             editingId={editingId}
             onDeleteDebt={(id) => setConfirmDeleteId(id)}
@@ -424,6 +428,7 @@ export const DebtContainer: FC = () => {
       />
 
       <AddDebtDialog
+        partnerMode={partnerMode}
         isOpen={isAddModalOpen}
         onAddDebt={handleAddDebt}
         onClose={() => setIsAddModalOpen(false)}

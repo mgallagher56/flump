@@ -67,6 +67,8 @@ export interface UserProfile {
   /** Net worth choices: property with its mortgage (default on), student loan (default off). */
   netWorthCountsProperty?: boolean;
   netWorthCountsStudentLoan?: boolean;
+  /** Preference: show sole/joint ownership and share controls across accounts, debts and budget. */
+  partnerMode?: boolean;
   hasResetFinancialData?: boolean;
   onboardingCompleted?: boolean;
   createdAt: string;
@@ -106,6 +108,7 @@ export const DEFAULT_PROFILE: UserProfile = {
   // Empty: the dashboard's default section order until the user moves a section.
   dashboardWidgetOrder: [],
   customBudgetCategories: [],
+  partnerMode: false,
   hasResetFinancialData: false,
   onboardingCompleted: false,
   createdAt: "",
@@ -119,6 +122,7 @@ export const normalizeProfile = (p: Partial<UserProfile>): UserProfile => ({
   lastName: p.lastName !== undefined ? p.lastName : DEFAULT_PROFILE.lastName,
   email: p.email !== undefined ? p.email : DEFAULT_PROFILE.email,
   hasResetFinancialData: Boolean(p.hasResetFinancialData),
+  partnerMode: Boolean(p.partnerMode),
   setupChecklistDismissed: Boolean(p.setupChecklistDismissed),
   onboardingCompleted: Boolean(p.onboardingCompleted),
   avatarUrl: p.avatarUrl !== undefined ? p.avatarUrl : DEFAULT_PROFILE.avatarUrl,

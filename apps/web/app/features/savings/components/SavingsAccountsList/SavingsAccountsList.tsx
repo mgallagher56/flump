@@ -37,6 +37,7 @@ export interface SavingsAccountsListProps {
    * joint account's share is never saved back as its whole balance (SD-1, JO-1).
    */
   savedAccounts?: Account[];
+  partnerMode?: boolean;
 }
 
 /** Law 3: a table over eight rows keeps the rest behind a drawer. */
@@ -52,7 +53,11 @@ const typeLabel = (acc: Account) =>
  * shows only when the list mixes savings and investments. The rate, the amount saved each month and "Delete account" live in the edit
  * dialog; deleting always asks for confirmation.
  */
-export const SavingsAccountsList: FC<SavingsAccountsListProps> = ({ accounts, savedAccounts }) => {
+export const SavingsAccountsList: FC<SavingsAccountsListProps> = ({
+  accounts,
+  savedAccounts,
+  partnerMode = false,
+}) => {
   const fetcher = useFetcher();
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
@@ -162,6 +167,7 @@ export const SavingsAccountsList: FC<SavingsAccountsListProps> = ({ accounts, sa
             accounts.find((a) => a.id === editingAccount.id) ??
             editingAccount
           }
+          partnerMode={partnerMode}
           isOpen={true}
           onClose={() => setEditingAccount(null)}
           onDeleteRequest={() => {

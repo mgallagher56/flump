@@ -155,4 +155,15 @@ describe("ISA kind and joint ownership", () => {
     expect(submitted()).toMatchObject({ ownership: "sole", accountSubtype: "cash_isa" });
     expect(submitted()).not.toHaveProperty("sharePercent");
   });
+
+  test("hides ownership controls when partnerMode is off, except for already-joint accounts", async () => {
+    const { getByText, getByLabelText, queryByLabelText, rerender, user } = customRender(
+      <AddEditAccountsDialogBtn />,
+    );
+    await user.click(getByText("addAccount"));
+    expect(queryByLabelText("Ownership")).toBeNull();
+
+    rerender(<AddEditAccountsDialogBtn partnerMode />);
+    expect(getByLabelText("Ownership")).toBeDefined();
+  });
 });

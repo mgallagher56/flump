@@ -102,6 +102,9 @@ const AccountsContainer: FC = () => {
               </Button>
               <AddEditAccountsDialogBtn
                 {...addDialogProps}
+                partnerMode={Boolean(
+                  (userProfile as { partnerMode?: boolean } | null)?.partnerMode,
+                )}
                 defaultOpen={arrivedToAdd}
                 fallbackHref={ADD_HREF}
                 openRequestKey={openRequestKey}
@@ -162,6 +165,9 @@ const AccountsContainer: FC = () => {
             action={
               <AddEditAccountsDialogBtn
                 {...addDialogProps}
+                partnerMode={Boolean(
+                  (userProfile as { partnerMode?: boolean } | null)?.partnerMode,
+                )}
                 defaultOpen={arrivedToAdd}
                 fallbackHref={ADD_HREF}
                 openRequestKey={openRequestKey}

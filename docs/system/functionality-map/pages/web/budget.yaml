@@ -149,7 +149,7 @@ sections:
           - id: edit-budget-entry
             control: input
             label: Name / Amount / Frequency
-            effect: Updates an existing budget entry's name, amount, or frequency.
+            effect: Updates an existing budget entry's name, amount, or frequency (ownership controls shown when partnerMode is enabled or the entry is already joint).
             target: PATCH /budget-entries/:id
           - id: toggle-entry-essential
             control: toggle

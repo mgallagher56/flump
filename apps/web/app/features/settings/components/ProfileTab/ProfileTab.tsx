@@ -72,6 +72,7 @@ interface ProfileFormState {
   lastName: string | null;
   taxRegion: TaxRegion | null;
   studentLoanPlans: string[] | null;
+  partnerMode: boolean;
 }
 
 type SaveArea = "details" | "tax" | "modules";
@@ -116,6 +117,7 @@ export const ProfileTab: FC<ProfileTabProps> = ({ profile, user, netWorthChoices
     lastName: profile.lastName ?? user?.lastName ?? user?.user_metadata?.last_name ?? null,
     taxRegion: profile.taxRegion ?? null,
     studentLoanPlans: profile.studentLoanPlans ?? null,
+    partnerMode: Boolean(profile.partnerMode),
   };
   const [form, setForm] = useState<ProfileFormState>(initial);
   const savedForm = useRef<ProfileFormState>(initial);
@@ -485,6 +487,14 @@ export const ProfileTab: FC<ProfileTabProps> = ({ profile, user, netWorthChoices
             id="self-assessment-module-toggle"
             label="Self Assessment"
             onChange={(e) => handleToggleSelfAssessment(e.target.checked)}
+          />
+          <Switch
+            checked={form.partnerMode}
+            data-testid="partner-mode-toggle"
+            hint="Show sole or joint ownership and share fields on accounts, debts, mortgages and budget items."
+            id="partner-mode-toggle"
+            label="Partner mode"
+            onChange={(e) => void saveFields("modules", { partnerMode: e.target.checked })}
           />
           {errorLine("modules")}
         </Card>

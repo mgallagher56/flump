@@ -156,7 +156,7 @@ sections:
           - id: set-joint-ownership
             control: toggle
             label: Ownership and share percentage
-            effect: Switches between sole and joint ownership and sets the user's share percentage.
+            effect: Switches between sole and joint ownership and sets the user's share percentage (shown when partnerMode is enabled or the account is already joint).
           - id: submit-create-account
             control: submit
             label: Save account

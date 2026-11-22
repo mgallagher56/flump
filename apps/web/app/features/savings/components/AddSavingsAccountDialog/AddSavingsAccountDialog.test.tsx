@@ -493,7 +493,7 @@ describe("AddSavingsAccountDialog", () => {
   });
 
   it("makes a saver joint from the Savings page (SD-8), and offers no ownership for an ISA", () => {
-    render(<AddSavingsAccountDialog isOpen={true} onClose={vi.fn()} />);
+    render(<AddSavingsAccountDialog isOpen={true} partnerMode onClose={vi.fn()} />);
     fireEvent.change(screen.getByLabelText(/Account name/), { target: { value: "Our pot" } });
     fireEvent.change(screen.getByLabelText(/Kind of account/), {
       target: { value: "Saving:easy_access" },
@@ -509,5 +509,26 @@ describe("AddSavingsAccountDialog", () => {
       target: { value: "Saving:cash_isa" },
     });
     expect(screen.queryByLabelText("Ownership")).toBeNull();
+  });
+
+  it("hides ownership controls when partnerMode is off, except for already-joint accounts", () => {
+    const { rerender } = render(<AddSavingsAccountDialog isOpen={true} onClose={vi.fn()} />);
+    expect(screen.queryByLabelText("Ownership")).toBeNull();
+    rerender(
+      <AddSavingsAccountDialog
+        accountToEdit={{
+          id: "s-joint",
+          name: "Joint saver",
+          type: "Saving",
+          balance: 1000,
+          ownership: "joint",
+          sharePercent: 50,
+        }}
+        isOpen={true}
+        onClose={vi.fn()}
+      />,
+    );
+    expect(screen.getByLabelText("Ownership")).toBeDefined();
+    expect(screen.getByLabelText("Your share")).toBeDefined();
   });
 });

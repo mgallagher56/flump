@@ -182,6 +182,8 @@ interface AddEditAccountsDialogBtnProp {
   linkMortgage?: LinkMortgageTarget;
   /** Increment to programmatically open the add dialog (e.g. clicking "Add an estimate" while on /app/accounts). */
   openRequestKey?: number;
+  /** Show sole/joint ownership and share controls for sole/new accounts (profile preference). */
+  partnerMode?: boolean;
 }
 
 /** Every field the form holds, as typed. The balance is the shown figure (owed, for a debt). */
@@ -323,6 +325,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
   initialSharePercent,
   linkMortgage,
   openRequestKey = 0,
+  partnerMode = false,
 }) => {
   const { accounts = [] }: { accounts?: AccountOption[] } = useLoaderData<typeof loader>() ?? {};
   const { t } = useTranslation();
@@ -803,7 +806,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
                 )}
               </FormField>
             ) : null}
-            {fieldSet.joint ? (
+            {fieldSet.joint && (partnerMode || formInput.ownership === "joint") ? (
               <>
                 <JointOwnershipFields
                   ownership={formInput.ownership}

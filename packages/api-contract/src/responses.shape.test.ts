@@ -43,6 +43,7 @@ describe("response shapes", () => {
         "netWorthCountsProperty",
         "netWorthCountsStudentLoan",
         "onboardingCompleted",
+        "partnerMode",
         "pensionEmployerPercent",
         "pensionPercent",
         "propertyOwnershipShare",

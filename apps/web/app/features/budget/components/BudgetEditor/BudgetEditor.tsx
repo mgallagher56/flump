@@ -105,6 +105,8 @@ export interface BudgetEditorProps {
   onSaveHousing?: (monthly: number) => Promise<void>;
   /** Leaves edit mode. Shown as "Finish editing" at the foot (owner item 29). */
   onFinishEditing?: () => void;
+  /** Show sole/joint ownership and share controls for sole/new items (profile preference). */
+  partnerMode?: boolean;
 }
 
 const FREQUENCY_OPTIONS = [
@@ -168,10 +170,17 @@ interface EntryRowProps {
   onRemove: (entry: BudgetEntry) => void;
   /** Set on a row the saved take-home or housing figure can replace (the person chooses). */
   linkOffer?: RowLinkOffer | null;
+  partnerMode?: boolean;
 }
 
 /** One saved entry, editable where it sits. Text fields save on blur, choices save on change. */
-const EntryRow: FC<EntryRowProps> = ({ entry, onSave, onRemove, linkOffer = null }) => {
+const EntryRow: FC<EntryRowProps> = ({
+  entry,
+  onSave,
+  onRemove,
+  linkOffer = null,
+  partnerMode = false,
+}) => {
   const [name, setName] = useState(entry.name);
   const [amount, setAmount] = useState<number | null>(toAmount(entry.amount));
   const [pendingEssential, setPendingEssential] = useState(false);
@@ -296,15 +305,19 @@ const EntryRow: FC<EntryRowProps> = ({ entry, onSave, onRemove, linkOffer = null
         </p>
       ) : null}
       {/* E34 C1: sole or joint, and the share a joint entry counts at in the figures. */}
-      <div className={ownershipCell()}>
-        <EntryOwnershipField
-          entryName={entry.name}
-          idPrefix={`budget-editor-${entry.id}`}
-          ownership={entry.ownership === "joint" ? "joint" : "sole"}
-          sharePercent={entry.sharePercent ?? null}
-          onChange={(ownership, sharePercent) => void onSave(entry.id, { ownership, sharePercent })}
-        />
-      </div>
+      {partnerMode || entry.ownership === "joint" ? (
+        <div className={ownershipCell()}>
+          <EntryOwnershipField
+            entryName={entry.name}
+            idPrefix={`budget-editor-${entry.id}`}
+            ownership={entry.ownership === "joint" ? "joint" : "sole"}
+            sharePercent={entry.sharePercent ?? null}
+            onChange={(ownership, sharePercent) =>
+              void onSave(entry.id, { ownership, sharePercent })
+            }
+          />
+        </div>
+      ) : null}
     </li>
   );
 };
@@ -333,6 +346,7 @@ interface LinkedEntryRowProps {
    * on the row from now on. Shown only on a line that stands in for such a row.
    */
   onUnlink?: (entry: BudgetEntry) => Promise<boolean>;
+  partnerMode?: boolean;
 }
 
 /**
@@ -357,6 +371,7 @@ const LinkedEntryRow: FC<LinkedEntryRowProps> = ({
   onOverrideTakeHome,
   onSaveHousing,
   onUnlink,
+  partnerMode = false,
 }) => {
   const notSet = isNotSetEntry(entry);
   const saved: number | null = notSet ? null : toAmount(entry.amount);
@@ -540,7 +555,7 @@ const LinkedEntryRow: FC<LinkedEntryRowProps> = ({
         {source}
       </p>
       {/* A shared rent counts at its share (JO-8); a mortgage's share is on the mortgage account. */}
-      {sharedRent ? (
+      {sharedRent && (partnerMode || sharedRent.stored.ownership === "joint") ? (
         <div className={ownershipCell()}>
           <EntryOwnershipField
             entryName={entry.name}
@@ -592,7 +607,13 @@ export interface NewEntryFields {
  * the editor does not show an empty form under every section. It holds the same fields, in the
  * same sizes and columns, as a saved row: name, amount, how often, Essential and sole or joint.
  */
-const AddEntryRow: FC<AddEntryRowProps> = ({ category, slug, label, onAdd }) => {
+const AddEntryRow: FC<AddEntryRowProps & { partnerMode?: boolean }> = ({
+  category,
+  slug,
+  label,
+  onAdd,
+  partnerMode = false,
+}) => {
   const [open, setOpen] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
   const openerRef = useRef<HTMLButtonElement>(null);
@@ -714,18 +735,20 @@ const AddEntryRow: FC<AddEntryRowProps> = ({ category, slug, label, onAdd }) => 
         </div>
       </div>
       <span className={removeCell()} />
-      <div className={ownershipCell()}>
-        <EntryOwnershipField
-          entryName={newLabel}
-          idPrefix={`budget-editor-new-${slug}`}
-          ownership={ownership}
-          sharePercent={sharePercent}
-          onChange={(nextOwnership, nextShare) => {
-            setOwnership(nextOwnership);
-            setSharePercent(nextShare);
-          }}
-        />
-      </div>
+      {partnerMode ? (
+        <div className={ownershipCell()}>
+          <EntryOwnershipField
+            entryName={newLabel}
+            idPrefix={`budget-editor-new-${slug}`}
+            ownership={ownership}
+            sharePercent={sharePercent}
+            onChange={(nextOwnership, nextShare) => {
+              setOwnership(nextOwnership);
+              setSharePercent(nextShare);
+            }}
+          />
+        </div>
+      ) : null}
       <div className={addActions()}>
         <Button
           aria-label={`Add to ${label}`}
@@ -778,6 +801,7 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
   housingStatus = null,
   onSaveHousing,
   onFinishEditing,
+  partnerMode = false,
 }) => {
   const toastApi = useOptionalToast();
   const { formatCurrency } = useFormatCurrency();
@@ -1044,6 +1068,7 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
                   {linkedRows.map((entry) => (
                     <LinkedEntryRow
                       accounts={linkableAccounts}
+                      partnerMode={partnerMode}
                       entry={entry}
                       housingStatus={housingStatus}
                       key={entry.id}
@@ -1061,6 +1086,7 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
                   ))}
                   {rows.map((entry) => (
                     <EntryRow
+                      partnerMode={partnerMode}
                       entry={entry}
                       key={entry.id}
                       linkOffer={linkOfferFor(entry)}
@@ -1072,7 +1098,13 @@ export const BudgetEditor: FC<BudgetEditorProps> = ({
               ) : (
                 <p className={section.empty}>No entries added</p>
               )}
-              <AddEntryRow category={category} label={label} slug={slug} onAdd={add(category)} />
+              <AddEntryRow
+                category={category}
+                partnerMode={partnerMode}
+                label={label}
+                slug={slug}
+                onAdd={add(category)}
+              />
             </section>
           );
         })}
