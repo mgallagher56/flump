@@ -228,8 +228,10 @@ export class IdempotencyInterceptor implements NestInterceptor {
         [ids.userId, ids.routeId, ids.key, status, JSON.stringify(wire), JSON.stringify(headers)],
       );
     } catch (error) {
-      // The create succeeded; failing to store the replay must not turn it into an error, and
-      // keeping the pending row prevents a retry from running the create a second time.
+      // The create succeeded; failing to store the replay must not turn it into an error. The
+      // pending row stays, so a retry within PENDING_TIMEOUT_SECONDS (300s) gets 409. After that
+      // the row counts as abandoned and is deleted on the next claim, so a later retry runs the
+      // create again and may duplicate it.
       this.logger.warn(
         `could not store the idempotent result for ${ids.routeId}: ${error instanceof Error ? error.name : "error"}`,
       );

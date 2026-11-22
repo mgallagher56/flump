@@ -19,6 +19,7 @@ import {
   tombstoneExpiry,
   tombstoneSubjectHash,
 } from "./tombstone-key";
+import { lockUserData } from "./user-data-lock";
 import { type RemovedCounts, USER_DATA_REGISTRY, USER_LINKED_TABLES } from "./user-data-registry";
 
 /** Bound on the in-process cache of erased user ids (cleared whole when full). */
@@ -156,6 +157,8 @@ export class AccountDeletionService implements ErasedAccountCheck {
 
     // (b) One transaction: every registry table, children first, then the tombstone.
     const { tombstone, removed, linked } = await this.dataSource.transaction(async (manager) => {
+      // First statement: serialise with a financial-data reset of the same user (see lockUserData).
+      await lockUserData(manager, userId);
       const removed = await this.sweep(manager, userId);
       const linked = await this.sweepLinked(manager, userId);
       const now = new Date();

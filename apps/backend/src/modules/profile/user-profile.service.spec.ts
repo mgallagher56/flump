@@ -3,6 +3,7 @@ import { BadRequestException, Logger, ServiceUnavailableException } from "@nestj
 import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
 import { InMemoryIdentityAdapter } from "../../identity/identity.adapter";
 import { at } from "../../testing/must";
+import { USER_DATA_LOCK_SQL } from "../privacy/user-data-lock";
 import { UserProfileService } from "./user-profile.service";
 
 type DeleteRepo = { delete: Mock };
@@ -26,6 +27,7 @@ describe("UserProfileService (Deep Module)", () => {
   let mockDataSource: { transaction: Mock };
   let mockAuditInsert: Mock;
   let mockConsentUpdate: Mock;
+  let mockManagerQuery: Mock;
   let mockRetirementPlanRepo: DeleteRepo;
   let mockWorkLogEntryRepo: DeleteRepo;
   let mockInvoiceRepo: DeleteRepo;
@@ -106,9 +108,11 @@ describe("UserProfileService (Deep Module)", () => {
       delete: vi.fn().mockResolvedValue({ affected: 1 }),
     };
     identityAdapter = new InMemoryIdentityAdapter();
+    mockManagerQuery = vi.fn().mockResolvedValue([]);
     mockDataSource = {
       transaction: vi.fn(async (cb) => {
         const fakeManager = {
+          query: mockManagerQuery,
           getRepository: (entityClass: { name: string }): unknown => {
             if (entityClass.name === "UserProfile") return mockUserProfileRepo;
             if (entityClass.name === "Account") return mockAccountRepo;
@@ -256,6 +260,35 @@ describe("UserProfileService (Deep Module)", () => {
     const guarded = build({ accountDeletion });
     mockUserProfileRepo.findOne.mockResolvedValueOnce(null);
     await expect(guarded.getProfile("user-gone")).rejects.toThrow("This account has been deleted.");
+    expect(mockUserProfileRepo.save).not.toHaveBeenCalled();
+  });
+
+  it("takes the per-user lock shared with erasure before it checks the tombstone or deletes", async () => {
+    // Without the lock a reset could read "not erased", then recreate the profile row an
+    // erasure committing alongside it had just deleted.
+    const isErased = vi.fn().mockResolvedValue(false);
+    const locked = build({ accountDeletion: { isErased } });
+    mockUserProfileRepo.findOne.mockResolvedValueOnce({ userId: "user-123" });
+    await locked.resetFinancialData("user-123");
+    expect(mockManagerQuery).toHaveBeenCalledWith(USER_DATA_LOCK_SQL, ["user-123"]);
+    const lockOrder = at(mockManagerQuery.mock.invocationCallOrder, 0);
+    // The check inside the transaction (the one given the manager) runs after the lock.
+    const inTx = isErased.mock.calls.findIndex((call) => call[1] !== undefined);
+    expect(inTx).toBeGreaterThanOrEqual(0);
+    expect(lockOrder).toBeLessThan(at(isErased.mock.invocationCallOrder, inTx));
+    expect(lockOrder).toBeLessThan(at(mockAccountRepo.delete.mock.invocationCallOrder, 0));
+  });
+
+  it("an erasure that commits after the early check still stops the reset inside the lock", async () => {
+    // The early check sees no tombstone; the erasure commits; the in-transaction check, made
+    // once the lock is held, sees it and nothing is deleted or saved.
+    const isErased = vi.fn().mockResolvedValueOnce(false).mockResolvedValueOnce(true);
+    const guarded = build({ accountDeletion: { isErased } });
+    await expect(guarded.resetFinancialData("user-gone")).rejects.toThrow(
+      "This account has been deleted.",
+    );
+    expect(mockManagerQuery).toHaveBeenCalledWith(USER_DATA_LOCK_SQL, ["user-gone"]);
+    expect(mockAccountRepo.delete).not.toHaveBeenCalled();
     expect(mockUserProfileRepo.save).not.toHaveBeenCalled();
   });
 

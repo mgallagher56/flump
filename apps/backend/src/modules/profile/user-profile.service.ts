@@ -25,6 +25,7 @@ import { HOUSING_STATUSES, TAX_REGIONS, UserProfile } from "../../entities/user-
 import { USER_IDENTITY_ADAPTER, type UserIdentityAdapter } from "../../identity/identity.adapter";
 import { BANK_CONSENT_REVOKER, type BankConsentRevoker } from "../banking/bank-consent-revoker";
 import { AccountDeletionService } from "../privacy/account-deletion.service";
+import { lockUserData } from "../privacy/user-data-lock";
 import { CASCADE_ONLY_TABLES, USER_DATA_REGISTRY } from "../privacy/user-data-registry";
 
 /**
@@ -383,6 +384,9 @@ export class UserProfileService implements ProfileLifecycle {
     };
 
     const { saved, counts } = await this.dataSource.transaction(async (manager) => {
+      // First statement: serialise with an erasure of the same user, so the tombstone check
+      // below sees a committed erasure and a reset never recreates the deleted profile row.
+      await lockUserData(manager, userId);
       if (await this.accountDeletion.isErased(userId, manager)) {
         throw accountDeletedException();
       }
