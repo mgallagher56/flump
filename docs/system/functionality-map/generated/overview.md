@@ -2,528 +2,479 @@
 
 # Functionality map: overview
 
-Mapped pages: 34 | Sections: 199 | Capabilities: 214 | Actions: 474 | Excluded routes: 19
+Mapped pages: 34 | Sections: 199 | Excluded routes: 19
 
 ## web
 
-### account-deleted — Account deleted
+### account-deleted: Account deleted
 
 - Route: `/account-deleted` (auth: `public`, file: `apps/web/app/routes/account-deleted.tsx`)
 - Purpose: Confirm that the user's account and data have been removed, or let them finish removing their login when deletion stopped halfway.
-- Entry points: Redirect after deleting account in Settings Data tab; Direct URL with ?state=pending when login removal is still pending
 
-| Section                                                            | Kind   | Capability                   | Mode     | Facts read | Facts written | Figures | Actions |
-| ------------------------------------------------------------------ | ------ | ---------------------------- | -------- | ---------- | ------------- | ------- | ------- |
-| `deleted-confirmation (when pending is false)`                     | notice | `confirm-deletion-and-leave` | navigate | -          | -             | -       | 1       |
-| `finish-deletion (when ?state=pending and a live session remains)` | form   | `complete-pending-deletion`  | delete   | -          | -             | -       | 3       |
+| Section                | Component                                                                                 | Facts read | Figures |
+| ---------------------- | ----------------------------------------------------------------------------------------- | ---------- | ------- |
+| `deleted-confirmation` | `apps/web/app/features/settings/components/AccountDeletedNotice/AccountDeletedNotice.tsx` | -          | -       |
+| `finish-deletion`      | `apps/web/app/features/settings/components/FinishDeletionPanel/FinishDeletionPanel.tsx`   | -          | -       |
 
-### account-detail — Account detail
+### account-detail: Account detail
 
 - Route: `/app/accounts/:account` (auth: `required`, file: `apps/web/app/routes/app.accounts.$account.tsx`)
 - Purpose: View an account's current balance, update its balance quickly, set or manage an account goal, inspect balance history, and edit or delete the account.
-- Entry points: Account row link on /app/accounts; Account links on Savings, Debt, Pension, or Mortgage pages
 
-| Section                                                                                                                                | Kind    | Capability              | Mode     | Facts read                                                                                                                                                                                                                 | Facts written                                                                                                                                                                                                                                   | Figures | Actions |
-| -------------------------------------------------------------------------------------------------------------------------------------- | ------- | ----------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- | ------- |
-| `header`                                                                                                                               | header  | `back-and-edit-trigger` | navigate | -                                                                                                                                                                                                                          | -                                                                                                                                                                                                                                               | -       | 2       |
-| `hero`                                                                                                                                 | hero    | `view-account-balance`  | read     | `account-name`, `account-type`, `account-balance`, `balance-history`, `net-worth-choices`                                                                                                                                  | -                                                                                                                                                                                                                                               | -       | 0       |
-| `quick-balance-update`                                                                                                                 | form    | `update-balance-inline` | write    | `account-balance`, `ownership-share`                                                                                                                                                                                       | `account-balance`, `balance-history`                                                                                                                                                                                                            | -       | 4       |
-| `goal-section`                                                                                                                         | form    | `manage-account-goal`   | write    | `account-goal`, `account-balance`, `balance-history`                                                                                                                                                                       | `account-goal`                                                                                                                                                                                                                                  | -       | 7       |
-| `balance-history`                                                                                                                      | content | `view-account-history`  | read     | `balance-history`, `account-balance`, `account-rate`, `account-monthly-amount`, `investment-return`                                                                                                                        | -                                                                                                                                                                                                                                               | -       | 1       |
-| `edit-account-dialog (when Edit account dialog is open (ownership shown when partnerMode is enabled or the account is already joint))` | form    | `edit-account-details`  | write    | `account-name`, `account-type`, `account-balance`, `account-rate`, `account-monthly-amount`, `ownership-share`, `repayment-type`, `mortgage-term-and-fix-end`, `mortgage-property-link`, `card-limit-and-zero-percent-end` | `account-name`, `account-type`, `account-balance`, `account-rate`, `account-monthly-amount`, `ownership-share`, `student-loan-plan`, `repayment-type`, `mortgage-term-and-fix-end`, `mortgage-property-link`, `card-limit-and-zero-percent-end` | -       | 1       |
-| `edit-account-dialog (when Edit account dialog is open (ownership shown when partnerMode is enabled or the account is already joint))` | form    | `delete-account`        | delete   | -                                                                                                                                                                                                                          | `account-balance`, `balance-history`                                                                                                                                                                                                            | -       | 1       |
+| Section                | Component                                                                             | Facts read                                                                                                                                                                                                                 | Figures |
+| ---------------------- | ------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| `header`               | `apps/web/app/containers/accounts/accountDetailContainer/AccountDetailContainer.tsx`  | -                                                                                                                                                                                                                          | -       |
+| `hero`                 | `apps/web/app/containers/accounts/accountDetailContainer/AccountDetailContainer.tsx`  | `account-name`, `account-type`, `account-balance`, `balance-history`, `net-worth-choices`                                                                                                                                  | -       |
+| `quick-balance-update` | `apps/web/app/features/accounts/components/QuickBalanceUpdate/QuickBalanceUpdate.tsx` | `account-balance`, `ownership-share`                                                                                                                                                                                       | -       |
+| `goal-section`         | `apps/web/app/features/accounts/components/AccountGoalSection/AccountGoalSection.tsx` | `account-goal`, `account-balance`, `balance-history`                                                                                                                                                                       | -       |
+| `balance-history`      | `apps/web/app/components/accounts/AccountDetails/AccountDetails.tsx`                  | `balance-history`, `account-balance`, `account-rate`, `account-monthly-amount`, `investment-return`                                                                                                                        | -       |
+| `edit-account-dialog`  | `apps/web/app/components/dialogs/addEditAccountsDialog/AddEditAccountsDialog.tsx`     | `account-name`, `account-type`, `account-balance`, `account-rate`, `account-monthly-amount`, `ownership-share`, `repayment-type`, `mortgage-term-and-fix-end`, `mortgage-property-link`, `card-limit-and-zero-percent-end` | -       |
 
-### accounts — Your accounts
+### accounts: Your accounts
 
 - Route: `/app/accounts` (auth: `required`, file: `apps/web/app/routes/app.accounts._index.tsx`)
 - Purpose: View net worth across all saved accounts, add new accounts, open individual account pages, and run the monthly check-in.
-- Entry points: Main app navigation (Accounts); Dashboard Accounts widget link or Add an account link; Setup checklist "Add account" link
 
-| Section                                                | Kind    | Capability                 | Mode  | Facts read                                                                                | Facts written                                                                                                                                                                                                                                                 | Figures                                    | Actions |
-| ------------------------------------------------------ | ------- | -------------------------- | ----- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ | ------- |
-| `header`                                               | header  | `header-actions`           | write | -                                                                                         | -                                                                                                                                                                                                                                                             | -                                          | 2       |
-| `net-worth-summary (when at least one account exists)` | hero    | `view-net-worth-and-links` | read  | `account-balance`, `ownership-share`, `net-worth-choices`, `home-value`                   | -                                                                                                                                                                                                                                                             | `net-worth`                                | 4       |
-| `accounts-lists (when at least one account exists)`    | list    | `browse-accounts`          | read  | `account-name`, `account-type`, `account-balance`, `ownership-share`, `net-worth-choices` | -                                                                                                                                                                                                                                                             | `net-worth`, `total-debts`                 | 3       |
-| `empty-state (when no accounts exist)`                 | content | `add-first-account`        | write | -                                                                                         | -                                                                                                                                                                                                                                                             | -                                          | 1       |
-| `add-account-dialog (when Add account dialog is open)` | form    | `create-account`           | write | -                                                                                         | `account-name`, `account-type`, `account-balance`, `account-rate`, `account-monthly-amount`, `ownership-share`, `student-loan-plan`, `repayment-type`, `mortgage-term-and-fix-end`, `mortgage-property-link`, `home-value`, `card-limit-and-zero-percent-end` | -                                          | 5       |
-| `check-in-sheet (when checkInOpen is true)`            | drawer  | `record-monthly-check-in`  | write | `account-balance`, `balance-history`, `check-in-done`                                     | `balance-history`, `account-balance`, `check-in-done`                                                                                                                                                                                                         | `check-in-calculated-balance`, `net-worth` | 5       |
+| Section              | Component                                                                           | Facts read                                                                                | Figures                                    |
+| -------------------- | ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------ |
+| `header`             | `apps/web/app/containers/accounts/accountsContainer/AccountsContainer.tsx`          | -                                                                                         | -                                          |
+| `net-worth-summary`  | `apps/web/app/features/accounts/components/AccountsGroupList/AccountsGroupList.tsx` | `account-balance`, `ownership-share`, `net-worth-choices`, `home-value`                   | `net-worth`                                |
+| `accounts-lists`     | `apps/web/app/features/accounts/components/AccountsGroupList/AccountsGroupList.tsx` | `account-name`, `account-type`, `account-balance`, `ownership-share`, `net-worth-choices` | `net-worth`, `total-debts`                 |
+| `empty-state`        | `apps/web/app/containers/accounts/accountsContainer/AccountsContainer.tsx`          | -                                                                                         | -                                          |
+| `add-account-dialog` | `apps/web/app/components/dialogs/addEditAccountsDialog/AddEditAccountsDialog.tsx`   | -                                                                                         | -                                          |
+| `check-in-sheet`     | `apps/web/app/features/snapshot/components/CheckInSheet/CheckInSheet.tsx`           | `account-balance`, `balance-history`, `check-in-done`                                     | `check-in-calculated-balance`, `net-worth` |
 
-### budget — Your budget
+### budget: Your budget
 
 - Route: `/app/budget` (auth: `required`, file: `apps/web/app/routes/app.budget.tsx`)
 - Purpose: See what is left over each month and safe to spend, edit income and spending lines, toggle essential items for breathing room, and test runway scenarios.
-- Entry points: Main app navigation (Budget); Dashboard Budget widget or KPI strip link; Onboarding "Finish and add common budget items" (/app/budget?setup=common)
 
-| Section                                                           | Kind          | Capability                             | Mode     | Facts read                                                                                                                                     | Facts written                                                                                                                         | Figures                                   | Actions |
-| ----------------------------------------------------------------- | ------------- | -------------------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- | ------- |
-| `header`                                                          | header        | `toggle-budget-views`                  | navigate | -                                                                                                                                              | -                                                                                                                                     | -                                         | 2       |
-| `overview (when budget has entries)`                              | hero          | `view-budget-overview`                 | read     | `budget-entries`, `budget-entry-link-kind`, `budget-entry-link-account`, `salary`, `typed-take-home`, `housing-cost`, `account-monthly-amount` | -                                                                                                                                     | `left-over`, `safe-to-spend`, `take-home` | 1       |
-| `link-notice (when budgetLinkOffers is non-empty)`                | notice        | `link-saved-income-or-housing`         | write    | `salary`, `typed-take-home`, `housing-cost`, `budget-entries`                                                                                  | `budget-entries`, `budget-entry-link-kind`                                                                                            | `take-home`                               | 2       |
-| `category-list (when view is budget and budget is not empty)`     | list          | `browse-budget-categories`             | read     | `budget-entries`, `custom-budget-categories`, `housing-status`, `housing-cost`, `budget-entry-link-kind`, `budget-entry-link-account`          | -                                                                                                                                     | -                                         | 3       |
-| `editor (when view is editing)`                                   | form          | `edit-budget-entries-and-categories`   | write    | `budget-entries`, `custom-budget-categories`, `housing-status`, `housing-cost`, `account-monthly-amount`                                       | `budget-entries`, `budget-entry-link-kind`, `budget-entry-link-account`, `custom-budget-categories`, `housing-cost`, `housing-status` | -                                         | 8       |
-| `setup-wizard (when view is wizard)`                              | form          | `run-budget-wizard`                    | write    | `salary`, `typed-take-home`, `housing-cost`, `budget-entries`                                                                                  | `budget-entries`, `setup-checklist`                                                                                                   | `take-home`                               | 2       |
-| `breathing-room (when view is budget and budget is not empty)`    | drawer        | `view-and-adjust-breathing-room-basis` | write    | `account-balance`, `budget-entries`                                                                                                            | `budget-entries`                                                                                                                      | `months-of-cover`                         | 4       |
-| `runway-calculator (when view is budget and budget is not empty)` | scenario-zone | `test-runway-scenarios`                | what-if  | `account-balance`, `budget-entries`                                                                                                            | -                                                                                                                                     | `months-of-cover`                         | 2       |
-| `add-category-modal (when isAddCategoryOpen is true)`             | drawer        | `create-custom-category`               | write    | -                                                                                                                                              | `custom-budget-categories`                                                                                                            | -                                         | 1       |
+| Section              | Component                                                                           | Facts read                                                                                                                                     | Figures                                   |
+| -------------------- | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| `header`             | `apps/web/app/containers/budget/BudgetContainer.tsx`                                | -                                                                                                                                              | -                                         |
+| `overview`           | `apps/web/app/features/budget/components/BudgetOverview/BudgetOverview.tsx`         | `budget-entries`, `budget-entry-link-kind`, `budget-entry-link-account`, `salary`, `typed-take-home`, `housing-cost`, `account-monthly-amount` | `left-over`, `safe-to-spend`, `take-home` |
+| `link-notice`        | `apps/web/app/features/budget/components/BudgetLinkNotice/BudgetLinkNotice.tsx`     | `salary`, `typed-take-home`, `housing-cost`, `budget-entries`                                                                                  | `take-home`                               |
+| `category-list`      | `apps/web/app/features/budget/components/BudgetCategoryList/BudgetCategoryList.tsx` | `budget-entries`, `custom-budget-categories`, `housing-status`, `housing-cost`, `budget-entry-link-kind`, `budget-entry-link-account`          | -                                         |
+| `editor`             | `apps/web/app/features/budget/components/BudgetEditor/BudgetEditor.tsx`             | `budget-entries`, `custom-budget-categories`, `housing-status`, `housing-cost`, `account-monthly-amount`                                       | -                                         |
+| `setup-wizard`       | `apps/web/app/features/budget/components/BudgetSetupWizard/BudgetSetupWizard.tsx`   | `salary`, `typed-take-home`, `housing-cost`, `budget-entries`                                                                                  | `take-home`                               |
+| `breathing-room`     | `apps/web/app/features/budget/components/BreathingRoom/BreathingRoom.tsx`           | `account-balance`, `budget-entries`                                                                                                            | `months-of-cover`                         |
+| `runway-calculator`  | `apps/web/app/features/budget/components/RunwayCalculator/RunwayCalculator.tsx`     | `account-balance`, `budget-entries`                                                                                                            | `months-of-cover`                         |
+| `add-category-modal` | `apps/web/app/features/budget/components/AddCategoryModal/AddCategoryModal.tsx`     | -                                                                                                                                              | -                                         |
 
-### dashboard — Your money
+### dashboard: Your money
 
 - Route: `/` (auth: `required`, file: `apps/web/app/routes/_index.tsx`)
 - Purpose: See your net worth, monthly budget summary, setup and check-in prompts, and summaries of each enabled money area.
-- Entry points: Main app navigation (Home); Sign-in and onboarding completion redirect; Logo link in app header
 
-| Section                                                                           | Kind      | Capability                     | Mode     | Facts read                                                                                                           | Facts written               | Figures                                                                                                                                                                 | Actions |
-| --------------------------------------------------------------------------------- | --------- | ------------------------------ | -------- | -------------------------------------------------------------------------------------------------------------------- | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
-| `header`                                                                          | header    | `orient`                       | read     | -                                                                                                                    | -                           | -                                                                                                                                                                       | 0       |
-| `hero`                                                                            | hero      | `view-net-worth`               | read     | `account-balance`, `ownership-share`, `net-worth-choices`, `balance-history`, `home-value`                           | -                           | `net-worth`                                                                                                                                                             | 3       |
-| `kpis`                                                                            | kpi-strip | `view-supporting-kpis`         | read     | `budget-entries`, `account-balance`, `salary`, `typed-take-home`, `pension-rates`, `tax-region`, `student-loan-plan` | -                           | `left-over`, `total-debts`                                                                                                                                              | 2       |
-| `housekeeping (when setup checklist is not dismissed or monthly check-in is due)` | notice    | `track-setup-steps`            | write    | `setup-checklist`, `enabled-pages-and-widgets`                                                                       | `setup-checklist`           | -                                                                                                                                                                       | 4       |
-| `housekeeping (when setup checklist is not dismissed or monthly check-in is due)` | notice    | `start-monthly-check-in`       | navigate | `check-in-done`, `check-in-day`                                                                                      | -                           | -                                                                                                                                                                       | 1       |
-| `sections-grid`                                                                   | list      | `view-section-cards`           | read     | `enabled-pages-and-widgets`, `account-balance`, `budget-entries`, `pension-rates`, `tax-records`                     | -                           | `net-worth`, `left-over`, `safe-to-spend`, `months-of-cover`, `total-debts`, `debt-free-date`, `savings-total`, `savings-interest`, `pension-going-in`, `estimated-tax` | 2       |
-| `visibility-sheet (when panelOpen is true)`                                       | drawer    | `configure-dashboard-sections` | write    | `enabled-pages-and-widgets`                                                                                          | `enabled-pages-and-widgets` | -                                                                                                                                                                       | 4       |
+| Section            | Component                                                                                    | Facts read                                                                                                           | Figures                                                                                                                                                                 |
+| ------------------ | -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `header`           | `apps/web/app/features/dashboard/components/HomeDashboard/HomeDashboard.tsx`                 | -                                                                                                                    | -                                                                                                                                                                       |
+| `hero`             | `apps/web/app/features/dashboard/components/HomeDashboard/HomeDashboard.tsx`                 | `account-balance`, `ownership-share`, `net-worth-choices`, `balance-history`, `home-value`                           | `net-worth`                                                                                                                                                             |
+| `kpis`             | `apps/web/app/features/dashboard/components/DashboardKpiStrip/DashboardKpiStrip.tsx`         | `budget-entries`, `account-balance`, `salary`, `typed-take-home`, `pension-rates`, `tax-region`, `student-loan-plan` | `left-over`, `total-debts`                                                                                                                                              |
+| `housekeeping`     | `apps/web/app/features/dashboard/components/SetupChecklist/SetupChecklist.tsx`               | `setup-checklist`, `enabled-pages-and-widgets`, `check-in-done`, `check-in-day`                                      | -                                                                                                                                                                       |
+| `sections-grid`    | `apps/web/app/features/dashboard/components/HomeDashboard/HomeDashboard.tsx`                 | `enabled-pages-and-widgets`, `account-balance`, `budget-entries`, `pension-rates`, `tax-records`                     | `net-worth`, `left-over`, `safe-to-spend`, `months-of-cover`, `total-debts`, `debt-free-date`, `savings-total`, `savings-interest`, `pension-going-in`, `estimated-tax` |
+| `visibility-sheet` | `apps/web/app/features/dashboard/components/WidgetVisibilityPanel/WidgetVisibilityPanel.tsx` | `enabled-pages-and-widgets`                                                                                          | -                                                                                                                                                                       |
 
-### debt — Cards and loans
+### debt: Cards and loans
 
 - Route: `/app/debt` (auth: `required`, file: `apps/web/app/routes/app.debt.tsx`)
 - Purpose: Track saved credit cards, loans, and overdrafts, see estimated minimum-payment debt-free date, and model extra monthly payments with avalanche or snowball payoff order.
-- Entry points: Main app navigation (Cards and loans); Dashboard Debt widget or KPI strip link
 
-| Section                                                     | Kind          | Capability                  | Mode     | Facts read                                                                                                                                        | Facts written                                                                                                                                     | Figures                                      | Actions |
-| ----------------------------------------------------------- | ------------- | --------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- | ------- |
-| `header (when at least one debt exists)`                    | header        | `open-add-debt`             | write    | -                                                                                                                                                 | -                                                                                                                                                 | -                                            | 1       |
-| `hero-and-kpis (when at least one debt exists)`             | hero          | `view-debt-summary`         | read     | `account-balance`, `account-rate`, `account-monthly-amount`, `card-limit-and-zero-percent-end`, `ownership-share`                                 | -                                                                                                                                                 | `total-debts`, `debt-free-date`              | 1       |
-| `debts-list (when at least one debt exists)`                | list          | `browse-and-edit-debts`     | read     | `account-name`, `account-balance`, `account-type`, `card-limit-and-zero-percent-end`                                                              | -                                                                                                                                                 | -                                            | 2       |
-| `scenario-zone (when at least one debt exists)`             | scenario-zone | `model-extra-debt-payments` | what-if  | `account-balance`, `account-rate`, `account-monthly-amount`, `budget-entries`                                                                     | -                                                                                                                                                 | `total-debts`, `debt-free-date`, `left-over` | 7       |
-| `uk-debt-calculators (when at least one debt exists)`       | drawer        | `open-overpay-or-save`      | what-if  | -                                                                                                                                                 | -                                                                                                                                                 | -                                            | 4       |
-| `debt-help`                                                 | notice        | `open-debt-help`            | navigate | -                                                                                                                                                 | -                                                                                                                                                 | -                                            | 1       |
-| `empty-state (when no debts exist)`                         | content       | `add-first-debt`            | write    | -                                                                                                                                                 | -                                                                                                                                                 | -                                            | 1       |
-| `debt-dialog (when AddDebtDialog or ConfirmDialog is open)` | form          | `save-or-delete-debt`       | write    | `account-name`, `account-type`, `account-balance`, `account-rate`, `account-monthly-amount`, `card-limit-and-zero-percent-end`, `ownership-share` | `account-name`, `account-type`, `account-balance`, `account-rate`, `account-monthly-amount`, `card-limit-and-zero-percent-end`, `ownership-share` | -                                            | 3       |
+| Section               | Component                                                                               | Facts read                                                                                                                                        | Figures                                      |
+| --------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| `header`              | `apps/web/app/containers/debt/DebtContainer.tsx`                                        | -                                                                                                                                                 | -                                            |
+| `hero-and-kpis`       | `apps/web/app/features/debt/components/DebtSummary/DebtSummary.tsx`                     | `account-balance`, `account-rate`, `account-monthly-amount`, `card-limit-and-zero-percent-end`, `ownership-share`                                 | `total-debts`, `debt-free-date`              |
+| `debts-list`          | `apps/web/app/features/debt/components/DebtAccountsList/DebtAccountsList.tsx`           | `account-name`, `account-balance`, `account-type`, `card-limit-and-zero-percent-end`                                                              | -                                            |
+| `scenario-zone`       | `apps/web/app/features/debt/components/PayExtraTool/PayExtraTool.tsx`                   | `account-balance`, `account-rate`, `account-monthly-amount`, `budget-entries`                                                                     | `total-debts`, `debt-free-date`, `left-over` |
+| `uk-debt-calculators` | `apps/web/app/features/debt/components/UkDebtInstrumentsCard/UkDebtInstrumentsCard.tsx` | -                                                                                                                                                 | -                                            |
+| `debt-help`           | `apps/web/app/containers/debt/DebtContainer.tsx`                                        | -                                                                                                                                                 | -                                            |
+| `empty-state`         | `apps/web/app/containers/debt/DebtContainer.tsx`                                        | -                                                                                                                                                 | -                                            |
+| `debt-dialog`         | `apps/web/app/features/debt/components/AddDebtDialog/AddDebtDialog.tsx`                 | `account-name`, `account-type`, `account-balance`, `account-rate`, `account-monthly-amount`, `card-limit-and-zero-percent-end`, `ownership-share` | -                                            |
 
-### history — Net worth history
+### history: Net worth history
 
 - Route: `/app/accounts/history` (auth: `required`, file: `apps/web/app/routes/app.accounts.history.tsx`)
 - Purpose: View net worth over time across recorded monthly balances, inspect month-by-month and account-by-account changes, complete the monthly check-in, and back-fill earlier months.
-- Entry points: Dashboard monthly check-in prompt (/app/accounts/history?checkIn=1); Accounts page "See how it has changed" link
 
-| Section                                                                                  | Kind    | Capability                   | Mode  | Facts read                                                                 | Facts written                                         | Figures                                    | Actions |
-| ---------------------------------------------------------------------------------------- | ------- | ---------------------------- | ----- | -------------------------------------------------------------------------- | ----------------------------------------------------- | ------------------------------------------ | ------- |
-| `header`                                                                                 | header  | `start-check-in-from-header` | write | -                                                                          | -                                                     | -                                          | 1       |
-| `empty-state (when stage is none)`                                                       | content | `start-history`              | write | -                                                                          | -                                                     | -                                          | 3       |
-| `hero (when stage is not none)`                                                          | hero    | `view-monthly-change`        | read  | `balance-history`, `account-balance`, `net-worth-choices`, `check-in-done` | -                                                     | `net-worth-over-time`                      | 1       |
-| `history-chart (when stage is not none)`                                                 | table   | `inspect-net-worth-series`   | read  | `balance-history`, `net-worth-choices`, `check-in-day`                     | -                                                     | `net-worth-over-time`                      | 5       |
-| `account-changes-drawer (when latest and previous recorded months have account changes)` | drawer  | `inspect-account-changes`    | read  | `balance-history`, `account-name`, `account-type`                          | -                                                     | `net-worth-over-time`                      | 4       |
-| `check-in-sheet (when sheet is checkIn or backfill)`                                     | drawer  | `save-check-in-or-backfill`  | write | `account-balance`, `balance-history`, `check-in-done`                      | `balance-history`, `account-balance`, `check-in-done` | `check-in-calculated-balance`, `net-worth` | 7       |
+| Section                  | Component                                                                                 | Facts read                                                                 | Figures                                    |
+| ------------------------ | ----------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------ |
+| `header`                 | `apps/web/app/features/snapshot/components/SnapshotHistoryPage/SnapshotHistoryPage.tsx`   | -                                                                          | -                                          |
+| `empty-state`            | `apps/web/app/features/snapshot/components/SnapshotHistoryPage/SnapshotHistoryPage.tsx`   | -                                                                          | -                                          |
+| `hero`                   | `apps/web/app/features/snapshot/components/SnapshotHistoryPage/SnapshotHistoryPage.tsx`   | `balance-history`, `account-balance`, `net-worth-choices`, `check-in-done` | `net-worth-over-time`                      |
+| `history-chart`          | `apps/web/app/features/snapshot/components/NetWorthHistoryChart/NetWorthHistoryChart.tsx` | `balance-history`, `net-worth-choices`, `check-in-day`                     | `net-worth-over-time`                      |
+| `account-changes-drawer` | `apps/web/app/features/snapshot/components/MonthlyChangeTable/MonthlyChangeTable.tsx`     | `balance-history`, `account-name`, `account-type`                          | `net-worth-over-time`                      |
+| `check-in-sheet`         | `apps/web/app/features/snapshot/components/CheckInSheet/CheckInSheet.tsx`                 | `account-balance`, `balance-history`, `check-in-done`                      | `check-in-calculated-balance`, `net-worth` |
 
-### import-review — Review import
+### import-review: Review import
 
 - Route: `/app/imports/:id` (auth: `required`, file: `apps/web/app/routes/app.imports.$id.tsx`)
 - Purpose: Map imported accounts to Flump accounts, review balance diffs, save staged balances, or undo a saved import.
-- Entry points: Imports list page (Review / View link); Review URL returned by an AI connection staging a balance import
 
-| Section                                                                    | Kind       | Capability              | Mode     | Facts read                           | Facts written                        | Figures | Actions |
-| -------------------------------------------------------------------------- | ---------- | ----------------------- | -------- | ------------------------------------ | ------------------------------------ | ------- | ------- |
-| `header`                                                                   | header     | `navigate-back`         | navigate | -                                    | -                                    | -       | 1       |
-| `summary-kpis (when batch is staged with preview, committed, or reverted)` | kpi-strip  | `view-import-counts`    | read     | -                                    | -                                    | -       | 0       |
-| `account-mapping (when batch is staged with preview)`                      | form       | `map-imported-accounts` | what-if  | -                                    | -                                    | -       | 1       |
-| `diff-table (when batch is staged with preview)`                           | table      | `inspect-and-tick-rows` | what-if  | `account-balance`, `balance-history` | -                                    | -       | 3       |
-| `commit-bar (when batch is staged with preview)`                           | form       | `commit-import`         | write    | -                                    | `account-balance`, `balance-history` | -       | 1       |
-| `post-commit-actions (when batch is committed)`                            | navigation | `view-history-or-undo`  | delete   | -                                    | -                                    | -       | 2       |
+| Section               | Component                                                                              | Facts read                           | Figures |
+| --------------------- | -------------------------------------------------------------------------------------- | ------------------------------------ | ------- |
+| `header`              | `apps/web/app/features/imports/components/ImportReviewPage/ImportReviewPage.tsx`       | -                                    | -       |
+| `summary-kpis`        | `apps/web/app/features/imports/components/ImportReviewPage/ImportReviewPage.tsx`       | -                                    | -       |
+| `account-mapping`     | `apps/web/app/features/imports/components/AccountMappingPanel/AccountMappingPanel.tsx` | -                                    | -       |
+| `diff-table`          | `apps/web/app/features/imports/components/ImportDiffTable/ImportDiffTable.tsx`         | `account-balance`, `balance-history` | -       |
+| `commit-bar`          | `apps/web/app/features/imports/components/ImportReviewPage/ImportReviewPage.tsx`       | -                                    | -       |
+| `post-commit-actions` | `apps/web/app/features/imports/components/ImportReviewPage/ImportReviewPage.tsx`       | -                                    | -       |
 
-### imports — Imports
+### imports: Imports
 
 - Route: `/app/imports` (auth: `required`, file: `apps/web/app/routes/app.imports._index.tsx`)
 - Purpose: View staged, saved, undone, and expired balance import batches and open any batch to review or revisit it.
-- Entry points: Settings Security tab (Review imports link when a connection can stage imports); Import review page (All imports back link)
 
-| Section        | Kind   | Capability                | Mode     | Facts read | Facts written | Figures | Actions |
-| -------------- | ------ | ------------------------- | -------- | ---------- | ------------- | ------- | ------- |
-| `header`       | header | `orient`                  | read     | -          | -             | -       | 0       |
-| `imports-list` | table  | `filter-and-sort-imports` | read     | -          | -             | -       | 4       |
-| `imports-list` | table  | `open-import-batch`       | navigate | -          | -             | -       | 1       |
+| Section        | Component                                                                      | Facts read | Figures |
+| -------------- | ------------------------------------------------------------------------------ | ---------- | ------- |
+| `header`       | `apps/web/app/features/imports/components/ImportsListPage/ImportsListPage.tsx` | -          | -       |
+| `imports-list` | `apps/web/app/features/imports/components/ImportsListPage/ImportsListPage.tsx` | -          | -       |
 
-### invite — Invite
+### invite: Invite
 
 - Route: `/invite` (auth: `public`, file: `apps/web/app/routes/invite._index.tsx`)
 - Purpose: Redeem a private-beta invite token from the invite cookie or show a clear message when the invite link cannot be used.
-- Entry points: Redirect from /invite/:token after storing the invite token cookie; Return URL after WorkOS sign-up or sign-in
 
-| Section                                                                           | Kind   | Capability                     | Mode     | Facts read | Facts written | Figures | Actions |
-| --------------------------------------------------------------------------------- | ------ | ------------------------------ | -------- | ---------- | ------------- | ------- | ------- |
-| `invite-outcome (when invite link is unusable or redemption is temporarily busy)` | notice | `recover-from-unusable-invite` | navigate | -          | -             | -       | 1       |
+| Section          | Component                               | Facts read | Figures |
+| ---------------- | --------------------------------------- | ---------- | ------- |
+| `invite-outcome` | `apps/web/app/routes/invite._index.tsx` | -          | -       |
 
-### invites — Invites
+### invites: Invites
 
 - Route: `/app/invites` (auth: `admin`, file: `apps/web/app/routes/app.invites.tsx`)
 - Purpose: Create single-use private-beta invite links, cancel unused links, and remove beta member access.
-- Entry points: Settings Security tab (Manage invites link, visible to beta admins only)
 
-| Section              | Kind   | Capability                | Mode   | Facts read | Facts written | Figures | Actions |
-| -------------------- | ------ | ------------------------- | ------ | ---------- | ------------- | ------- | ------- |
-| `header`             | header | `orient`                  | read   | -          | -             | -       | 0       |
-| `create-invite`      | form   | `generate-invite-link`    | write  | -          | -             | -       | 3       |
-| `invite-links`       | list   | `list-and-cancel-invites` | delete | -          | -             | -       | 1       |
-| `people-with-access` | list   | `list-and-remove-members` | delete | -          | -             | -       | 1       |
+| Section              | Component                                                                  | Facts read | Figures |
+| -------------------- | -------------------------------------------------------------------------- | ---------- | ------- |
+| `header`             | `apps/web/app/routes/app.invites.tsx`                                      | -          | -       |
+| `create-invite`      | `apps/web/app/features/invites/components/NewInviteLink/NewInviteLink.tsx` | -          | -       |
+| `invite-links`       | `apps/web/app/features/invites/components/InviteList/InviteList.tsx`       | -          | -       |
+| `people-with-access` | `apps/web/app/features/invites/components/MemberList/MemberList.tsx`       | -          | -       |
 
-### invoicing — Work log and invoicing
+### invoicing: Work log and invoicing
 
 - Route: `/app/invoicing` (auth: `required`, file: `apps/web/app/routes/app.invoicing.tsx`)
 - Purpose: Log billable self-employed hours, build and issue numbered invoices, record payments, export CSVs, print invoices, and sync paid totals to Self Assessment.
-- Entry points: Main app navigation (Invoicing)
 
-| Section                                       | Kind       | Capability                    | Mode     | Facts read                                           | Facts written             | Figures                            | Actions |
-| --------------------------------------------- | ---------- | ----------------------------- | -------- | ---------------------------------------------------- | ------------------------- | ---------------------------------- | ------- |
-| `header`                                      | header     | `orient`                      | read     | -                                                    | -                         | -                                  | 0       |
-| `kpi-strip`                                   | kpi-strip  | `view-invoicing-kpis`         | read     | `work-log-entries`, `invoices`                       | -                         | `invoicing-kpis`, `invoice-totals` | 0       |
-| `workspace-tabs`                              | navigation | `switch-invoicing-tabs`       | navigate | -                                                    | -                         | -                                  | 1       |
-| `work-log-panel (when activeTab is work-log)` | form       | `log-and-manage-work-entries` | write    | `work-log-entries`, `invoicing-settings`             | `work-log-entries`        | -                                  | 6       |
-| `invoices-panel (when activeTab is invoices)` | table      | `manage-invoice-lifecycle`    | write    | `invoices`, `work-log-entries`, `invoicing-settings` | `invoices`, `tax-records` | `invoice-totals`                   | 9       |
-| `settings-panel (when activeTab is settings)` | form       | `update-invoicing-settings`   | write    | `invoicing-settings`                                 | `invoicing-settings`      | -                                  | 1       |
+| Section          | Component                                                                              | Facts read                                           | Figures                            |
+| ---------------- | -------------------------------------------------------------------------------------- | ---------------------------------------------------- | ---------------------------------- |
+| `header`         | `apps/web/app/features/invoicing/components/InvoicingWorkspace/InvoicingWorkspace.tsx` | -                                                    | -                                  |
+| `kpi-strip`      | `apps/web/app/features/invoicing/components/InvoicingWorkspace/InvoicingWorkspace.tsx` | `work-log-entries`, `invoices`                       | `invoicing-kpis`, `invoice-totals` |
+| `workspace-tabs` | `apps/web/app/features/invoicing/components/InvoicingWorkspace/InvoicingWorkspace.tsx` | -                                                    | -                                  |
+| `work-log-panel` | `apps/web/app/features/invoicing/components/InvoicingWorkspace/InvoicingWorkspace.tsx` | `work-log-entries`, `invoicing-settings`             | -                                  |
+| `invoices-panel` | `apps/web/app/features/invoicing/components/InvoicingWorkspace/InvoicingWorkspace.tsx` | `invoices`, `work-log-entries`, `invoicing-settings` | `invoice-totals`                   |
+| `settings-panel` | `apps/web/app/features/invoicing/components/InvoicingWorkspace/InvoicingWorkspace.tsx` | `invoicing-settings`                                 | -                                  |
 
-### mortgage — Your mortgage
+### mortgage: Your mortgage
 
 - Route: `/app/mortgage` (auth: `required`, file: `apps/web/app/routes/app.mortgage.tsx`)
 - Purpose: View saved residential or buy-to-let mortgage details, loan-to-value, home equity, fix-end alerts, and model overpayments, rate changes, or overpaying versus saving.
-- Entry points: Main app navigation (Mortgage); Dashboard Mortgage widget or KPI strip link; Budget housing row link
 
-| Section                                                                                                             | Kind          | Capability                           | Mode     | Facts read                                                                                                                                                            | Facts written                                                                                                            | Figures                                        | Actions |
-| ------------------------------------------------------------------------------------------------------------------- | ------------- | ------------------------------------ | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------- | ------- |
-| `header`                                                                                                            | header        | `navigate-mortgage-views`            | navigate | -                                                                                                                                                                     | -                                                                                                                        | -                                              | 2       |
-| `empty-or-partial-state (when no mortgage account exists or required details (balance, rate, or term) are missing)` | content       | `prompt-mortgage-setup`              | navigate | `account-balance`, `account-rate`, `mortgage-term-and-fix-end`, `housing-status`                                                                                      | -                                                                                                                        | -                                              | 2       |
-| `hero-and-kpis (when required mortgage details are complete)`                                                       | hero          | `view-mortgage-hero-and-kpis`        | read     | `account-balance`, `account-monthly-amount`, `account-rate`, `mortgage-term-and-fix-end`, `home-value`, `ownership-share`, `repayment-type`, `mortgage-property-link` | -                                                                                                                        | `mortgage-payment`, `loan-to-value`            | 2       |
-| `alerts (when residential fix-end date has ended or is within 6 months)`                                            | notice        | `alert-fix-end`                      | what-if  | `mortgage-term-and-fix-end`                                                                                                                                           | -                                                                                                                        | -                                              | 1       |
-| `btl-overview (when propertyCategory is btl)`                                                                       | list          | `view-btl-yields`                    | read     | `buy-to-let-rent`, `buy-to-let-mortgage`, `home-value`, `tax-records`                                                                                                 | -                                                                                                                        | -                                              | 1       |
-| `details-summary (when required mortgage details are complete)`                                                     | content       | `view-mortgage-summary`              | read     | `account-name`, `repayment-type`, `mortgage-term-and-fix-end`, `home-value`, `account-balance`, `ownership-share`                                                     | -                                                                                                                        | `home-equity`                                  | 1       |
-| `scenario-zone (when required mortgage details are complete)`                                                       | scenario-zone | `toggle-and-reset-mortgage-scenario` | what-if  | `account-balance`, `account-rate`, `mortgage-term-and-fix-end`, `repayment-type`                                                                                      | -                                                                                                                        | `mortgage-payment`, `mortgage-rate-comparison` | 5       |
-| `cost-details-drawer (when required mortgage details are complete and propertyCategory is residential)`             | drawer        | `view-cost-schedule`                 | read     | `account-balance`, `account-rate`, `mortgage-term-and-fix-end`, `repayment-type`                                                                                      | -                                                                                                                        | -                                              | 1       |
-| `edit-dialog (when MortgageEditDialog is open)`                                                                     | form          | `save-mortgage-details`              | write    | `account-balance`, `account-rate`, `account-monthly-amount`, `mortgage-term-and-fix-end`, `repayment-type`, `home-value`                                              | `account-balance`, `account-rate`, `account-monthly-amount`, `mortgage-term-and-fix-end`, `repayment-type`, `home-value` | -                                              | 3       |
+| Section                  | Component                                                                             | Facts read                                                                                                                                                            | Figures                                        |
+| ------------------------ | ------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| `header`                 | `apps/web/app/containers/mortgage/MortgageContainer.tsx`                              | -                                                                                                                                                                     | -                                              |
+| `empty-or-partial-state` | `apps/web/app/containers/mortgage/MortgageContainer.tsx`                              | `account-balance`, `account-rate`, `mortgage-term-and-fix-end`, `housing-status`                                                                                      | -                                              |
+| `hero-and-kpis`          | `apps/web/app/containers/mortgage/MortgageContainer.tsx`                              | `account-balance`, `account-monthly-amount`, `account-rate`, `mortgage-term-and-fix-end`, `home-value`, `ownership-share`, `repayment-type`, `mortgage-property-link` | `mortgage-payment`, `loan-to-value`            |
+| `alerts`                 | `apps/web/app/features/mortgage/components/MortgageAlerts/MortgageAlerts.tsx`         | `mortgage-term-and-fix-end`                                                                                                                                           | -                                              |
+| `btl-overview`           | `apps/web/app/features/mortgage/components/BtlOverview/BtlOverview.tsx`               | `buy-to-let-rent`, `buy-to-let-mortgage`, `home-value`, `tax-records`                                                                                                 | -                                              |
+| `details-summary`        | `apps/web/app/features/mortgage/components/MortgageSummary/MortgageSummary.tsx`       | `account-name`, `repayment-type`, `mortgage-term-and-fix-end`, `home-value`, `account-balance`, `ownership-share`                                                     | `home-equity`                                  |
+| `scenario-zone`          | `apps/web/app/containers/mortgage/MortgageContainer.tsx`                              | `account-balance`, `account-rate`, `mortgage-term-and-fix-end`, `repayment-type`                                                                                      | `mortgage-payment`, `mortgage-rate-comparison` |
+| `cost-details-drawer`    | `apps/web/app/features/mortgage/components/MortgageTracker/MortgageTracker.tsx`       | `account-balance`, `account-rate`, `mortgage-term-and-fix-end`, `repayment-type`                                                                                      | -                                              |
+| `edit-dialog`            | `apps/web/app/features/mortgage/components/MortgageEditDialog/MortgageEditDialog.tsx` | `account-balance`, `account-rate`, `account-monthly-amount`, `mortgage-term-and-fix-end`, `repayment-type`, `home-value`                                              | -                                              |
 
-### mortgage-estimates — Mortgage estimates
+### mortgage-estimates: Mortgage estimates
 
 - Route: `/app/mortgage-estimates` (auth: `required`, file: `apps/web/app/routes/app.mortgage-estimates.tsx`)
 - Purpose: See how much is left each month before housing from saved salary and budget, and model estimated loan sizes from monthly payment, income multiples, or rate changes.
-- Entry points: Mortgage page header button (Mortgage estimates); Savings Time to a target footer link
 
-| Section                | Kind          | Capability                       | Mode    | Facts read                                                                              | Facts written | Figures                                                   | Actions |
-| ---------------------- | ------------- | -------------------------------- | ------- | --------------------------------------------------------------------------------------- | ------------- | --------------------------------------------------------- | ------- |
-| `header`               | header        | `orient`                         | read    | -                                                                                       | -             | -                                                         | 0       |
-| `hero-and-kpis`        | hero          | `view-housing-room`              | read    | `salary`, `typed-take-home`, `budget-entries`, `housing-cost`, `account-monthly-amount` | -             | `housing-room`, `take-home`                               | 0       |
-| `housing-room-details` | content       | `toggle-housing-room-deductions` | read    | `budget-entries`, `other-outgoings`, `housing-cost`                                     | -             | `housing-room`                                            | 4       |
-| `scenario-zone`        | scenario-zone | `switch-and-reset-estimates`     | what-if | -                                                                                       | -             | -                                                         | 2       |
-| `scenario-zone`        | scenario-zone | `estimate-from-payment`          | what-if | `mortgage-term-and-fix-end`                                                             | -             | `mortgage-budget-loan-estimate`, `mortgage-ltv-rate-band` | 2       |
-| `scenario-zone`        | scenario-zone | `estimate-from-income`           | what-if | `salary`                                                                                | -             | `mortgage-income-multiple-range`                          | 1       |
-| `scenario-zone`        | scenario-zone | `estimate-rate-change`           | what-if | `account-balance`, `account-rate`, `mortgage-term-and-fix-end`                          | -             | `mortgage-rate-comparison`                                | 1       |
+| Section                | Component                                                                             | Facts read                                                                              | Figures                                                                                                                 |
+| ---------------------- | ------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `header`               | `apps/web/app/containers/mortgage/MortgageEstimatesContainer.tsx`                     | -                                                                                       | -                                                                                                                       |
+| `hero-and-kpis`        | `apps/web/app/containers/mortgage/MortgageEstimatesContainer.tsx`                     | `salary`, `typed-take-home`, `budget-entries`, `housing-cost`, `account-monthly-amount` | `housing-room`, `take-home`                                                                                             |
+| `housing-room-details` | `apps/web/app/features/mortgage/components/HousingRoomSummary/HousingRoomSummary.tsx` | `budget-entries`, `other-outgoings`, `housing-cost`                                     | `housing-room`                                                                                                          |
+| `scenario-zone`        | `apps/web/app/containers/mortgage/MortgageEstimatesContainer.tsx`                     | `mortgage-term-and-fix-end`, `salary`, `account-balance`, `account-rate`                | `mortgage-budget-loan-estimate`, `mortgage-ltv-rate-band`, `mortgage-income-multiple-range`, `mortgage-rate-comparison` |
 
-### not-found — We cannot find that page
+### not-found: We cannot find that page
 
 - Route: `/*` (auth: `public`, file: `apps/web/app/routes/$.tsx`)
 - Purpose: Render an accessible 404 error page inside the app layout for any unmatched URL while preserving security headers.
-- Entry points: Any unmatched web URL
 
-| Section       | Kind   | Capability               | Mode     | Facts read | Facts written | Figures | Actions |
-| ------------- | ------ | ------------------------ | -------- | ---------- | ------------- | ------- | ------- |
-| `error-state` | notice | `recover-from-not-found` | navigate | -          | -             | -       | 2       |
+| Section       | Component                                                                             | Facts read | Figures |
+| ------------- | ------------------------------------------------------------------------------------- | ---------- | ------- |
+| `error-state` | `apps/web/app/features/feedback/components/RouteErrorBoundary/RouteErrorBoundary.tsx` | -          | -       |
 
-### onboarding — Set up Flump
+### onboarding: Set up Flump
 
 - Route: `/app/onboarding` (auth: `required`, file: `apps/web/app/routes/app.onboarding.tsx`)
 - Purpose: Enter initial income, housing, savings, pension, and debt details in a four-step guided setup, or save and exit to continue later.
-- Entry points: Redirect from / or /app when onboardingCompleted is false; Signup completion redirect
 
-| Section                                                         | Kind   | Capability                       | Mode  | Facts read                                                                                                                                                                                             | Facts written                                                                                                                                                                                                                                         | Figures                    | Actions |
-| --------------------------------------------------------------- | ------ | -------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- | ------- |
-| `header`                                                        | header | `navigate-and-exit-setup`        | write | -                                                                                                                                                                                                      | `salary`, `typed-take-home`, `employment-type`, `birth-year`, `tax-region`, `student-loan-plan`, `housing-status`, `housing-cost`, `other-outgoings`, `pension-rates`                                                                                 | -                          | 2       |
-| `seed-banner (when calculator or sandbox seed data is present)` | notice | `launch-or-review-seed`          | write | `salary`                                                                                                                                                                                               | -                                                                                                                                                                                                                                                     | -                          | 2       |
-| `step-income (when step is 1)`                                  | form   | `enter-income-and-tax-details`   | write | -                                                                                                                                                                                                      | `birth-year`, `employment-type`, `salary`, `typed-take-home`, `tax-region`, `student-loan-plan`                                                                                                                                                       | `take-home`                | 9       |
-| `step-housing (when step is 2)`                                 | form   | `enter-housing-and-spending`     | write | -                                                                                                                                                                                                      | `housing-status`, `housing-cost`, `home-value`, `account-balance`, `other-outgoings`                                                                                                                                                                  | `home-equity`, `take-home` | 8       |
-| `step-savings-debt (when step is 3)`                            | form   | `enter-savings-pension-debt`     | write | -                                                                                                                                                                                                      | `account-balance`, `pension-rates`                                                                                                                                                                                                                    | `take-home`                | 7       |
-| `step-review (when step is 4)`                                  | form   | `review-and-complete-onboarding` | write | `salary`, `typed-take-home`, `employment-type`, `birth-year`, `tax-region`, `student-loan-plan`, `housing-status`, `housing-cost`, `home-value`, `other-outgoings`, `account-balance`, `pension-rates` | `salary`, `typed-take-home`, `employment-type`, `birth-year`, `tax-region`, `student-loan-plan`, `housing-status`, `housing-cost`, `home-value`, `other-outgoings`, `account-balance`, `pension-rates`, `budget-entries`, `enabled-pages-and-widgets` | `take-home`                | 5       |
+| Section             | Component                                                                           | Facts read                                                                                                                                                                                             | Figures                    |
+| ------------------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------- |
+| `header`            | `apps/web/app/features/onboarding/components/OnboardingHeader/OnboardingHeader.tsx` | -                                                                                                                                                                                                      | -                          |
+| `seed-banner`       | `apps/web/app/features/onboarding/components/SeedBanner/SeedBanner.tsx`             | `salary`                                                                                                                                                                                               | -                          |
+| `step-income`       | `apps/web/app/features/onboarding/components/IncomeStep/IncomeStep.tsx`             | -                                                                                                                                                                                                      | `take-home`                |
+| `step-housing`      | `apps/web/app/features/onboarding/components/HousingStep/HousingStep.tsx`           | -                                                                                                                                                                                                      | `home-equity`, `take-home` |
+| `step-savings-debt` | `apps/web/app/features/onboarding/components/SavingsDebtStep/SavingsDebtStep.tsx`   | -                                                                                                                                                                                                      | `take-home`                |
+| `step-review`       | `apps/web/app/features/onboarding/components/FinishSummary/FinishSummary.tsx`       | `salary`, `typed-take-home`, `employment-type`, `birth-year`, `tax-region`, `student-loan-plan`, `housing-status`, `housing-cost`, `home-value`, `other-outgoings`, `account-balance`, `pension-rates` | `take-home`                |
 
-### pension — Your pension
+### pension: Your pension
 
 - Route: `/app/pension` (auth: `required`, file: `apps/web/app/routes/app.pension.tsx`)
 - Purpose: View total pension pot value, monthly contributions going in, workplace pension details, UK pension rules, and model how changing contribution percentages affects take-home pay.
-- Entry points: Main app navigation (Pension); Dashboard Pension widget or KPI strip link; Retirement plan links (/app/pension#pension-details)
 
-| Section                                                                        | Kind          | Capability                            | Mode     | Facts read                                                                                             | Facts written                                                               | Figures                         | Actions |
-| ------------------------------------------------------------------------------ | ------------- | ------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------- | ------------------------------- | ------- |
-| `empty-state (when no pension pots and no salary are saved)`                   | content       | `add-first-pension-pot`               | write    | -                                                                                                      | -                                                                           | -                               | 1       |
-| `header (when at least one pension pot or salary exists)`                      | header        | `open-add-pension-pot`                | write    | -                                                                                                      | -                                                                           | -                               | 1       |
-| `hero-and-kpis (when at least one pension pot or salary exists)`               | hero          | `view-pension-summary`                | read     | `account-balance`, `salary`, `pension-rates`, `account-monthly-amount`                                 | -                                                                           | `pension-going-in`              | 1       |
-| `retirement-link (when at least one pension pot or salary exists)`             | navigation    | `open-retirement-plan`                | navigate | -                                                                                                      | -                                                                           | -                               | 1       |
-| `pension-details (when at least one pension pot or salary exists)`             | form          | `view-and-edit-workplace-details`     | write    | `salary`, `pension-rates`, `account-name`, `account-balance`, `account-rate`, `account-monthly-amount` | `salary`, `pension-rates`                                                   | -                               | 3       |
-| `pension-rules (when at least one pension pot or salary exists)`               | drawer        | `view-uk-pension-rules`               | read     | `pension-rates`                                                                                        | -                                                                           | `pension-going-in`              | 1       |
-| `scenario-zone (when at least one pension pot or salary exists)`               | scenario-zone | `model-contribution-impact`           | what-if  | `salary`, `pension-rates`, `tax-region`, `student-loan-plan`                                           | -                                                                           | `pension-going-in`, `take-home` | 3       |
-| `tax-trap-note (when saved adjusted net income is in the £100,000 alert band)` | notice        | `inspect-or-model-taper-contribution` | what-if  | `salary`, `pension-rates`, `tax-region`                                                                | -                                                                           | -                               | 2       |
-| `pot-dialog (when AddPensionAccountDialog is open)`                            | form          | `save-or-delete-pension-pot`          | write    | `account-name`, `account-balance`, `account-rate`, `account-monthly-amount`                            | `account-name`, `account-balance`, `account-rate`, `account-monthly-amount` | -                               | 3       |
+| Section           | Component                                                                                              | Facts read                                                                                             | Figures                         |
+| ----------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ | ------------------------------- |
+| `empty-state`     | `apps/web/app/containers/pension/PensionContainer.tsx`                                                 | -                                                                                                      | -                               |
+| `header`          | `apps/web/app/containers/pension/PensionContainer.tsx`                                                 | -                                                                                                      | -                               |
+| `hero-and-kpis`   | `apps/web/app/features/pension/components/PensionSummary/PensionSummary.tsx`                           | `account-balance`, `salary`, `pension-rates`, `account-monthly-amount`                                 | `pension-going-in`              |
+| `retirement-link` | `apps/web/app/containers/pension/PensionContainer.tsx`                                                 | -                                                                                                      | -                               |
+| `pension-details` | `apps/web/app/features/pension/components/PensionDetails/PensionDetails.tsx`                           | `salary`, `pension-rates`, `account-name`, `account-balance`, `account-rate`, `account-monthly-amount` | -                               |
+| `pension-rules`   | `apps/web/app/features/pension/components/PensionRules/PensionRules.tsx`                               | `pension-rates`                                                                                        | `pension-going-in`              |
+| `scenario-zone`   | `apps/web/app/features/pension/components/PensionContributionScenario/PensionContributionScenario.tsx` | `salary`, `pension-rates`, `tax-region`, `student-loan-plan`                                           | `pension-going-in`, `take-home` |
+| `tax-trap-note`   | `apps/web/app/containers/pension/PensionContainer.tsx`                                                 | `salary`, `pension-rates`, `tax-region`                                                                | -                               |
+| `pot-dialog`      | `apps/web/app/features/pension/components/AddPensionAccountDialog/AddPensionAccountDialog.tsx`         | `account-name`, `account-balance`, `account-rate`, `account-monthly-amount`                            | -                               |
 
-### retirement — Retirement plan
+### retirement: Retirement plan
 
 - Route: `/app/retirement` (auth: `required`, file: `apps/web/app/routes/app.retirement.tsx`)
 - Purpose: See an estimate of yearly retirement income from saved pots and State Pension, test what-if changes, and save retirement plan details.
-- Entry points: Main app navigation (Retirement); Dashboard retirement widget link
 
-| Section                                                                                        | Kind          | Capability                         | Mode     | Facts read                                                                                                                                                     | Facts written     | Figures             | Actions |
-| ---------------------------------------------------------------------------------------------- | ------------- | ---------------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- | ------------------- | ------- |
-| `header`                                                                                       | header        | `orient`                           | read     | -                                                                                                                                                              | -                 | -                   | 0       |
-| `hero`                                                                                         | hero          | `view-headline-income`             | read     | `retirement-plan`, `account-balance`, `salary`, `pension-rates`, `birth-year`, `housing-cost`, `housing-status`, `budget-entries`, `mortgage-term-and-fix-end` | -                 | `retirement-income` | 2       |
-| `kpis (when savedResult exists)`                                                               | kpi-strip     | `view-saved-kpis`                  | read     | `retirement-plan`, `account-balance`                                                                                                                           | -                 | `retirement-income` | 0       |
-| `what-if-zone (when savedResult exists)`                                                       | scenario-zone | `toggle-scenario-zone`             | what-if  | -                                                                                                                                                              | -                 | -                   | 2       |
-| `what-if-zone (when savedResult exists)`                                                       | scenario-zone | `adjust-scenario-assumptions`      | what-if  | `retirement-plan`, `salary`, `pension-rates`, `account-balance`                                                                                                | -                 | `retirement-income` | 6       |
-| `what-if-zone (when savedResult exists)`                                                       | scenario-zone | `inspect-assumptions-and-schedule` | read     | `balance-history`, `retirement-plan`, `pension-rates`                                                                                                          | -                 | `retirement-income` | 4       |
-| `workplace-salary-notice (when !workplace && workplaceSalaryNotSet inside Assumptions drawer)` | notice        | `prompt-salary-on-pension`         | navigate | `salary`, `pension-rates`                                                                                                                                      | -                 | -                   | 1       |
-| `moneyhelper-guidance`                                                                         | notice        | `open-moneyhelper`                 | navigate | -                                                                                                                                                              | -                 | -                   | 1       |
-| `plan-details`                                                                                 | form          | `edit-and-save-plan`               | write    | `retirement-plan`, `budget-entries`, `account-balance`                                                                                                         | `retirement-plan` | -                   | 13      |
+| Section                   | Component                                                                                     | Facts read                                                                                                                                                     | Figures             |
+| ------------------------- | --------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
+| `header`                  | `apps/web/app/features/retirement/components/RetirementPlanner/RetirementPlanner.tsx`         | -                                                                                                                                                              | -                   |
+| `hero`                    | `apps/web/app/features/retirement/components/RetirementPlanner/RetirementPlanner.tsx`         | `retirement-plan`, `account-balance`, `salary`, `pension-rates`, `birth-year`, `housing-cost`, `housing-status`, `budget-entries`, `mortgage-term-and-fix-end` | `retirement-income` |
+| `kpis`                    | `apps/web/app/features/retirement/components/RetirementPlanner/RetirementPlanner.tsx`         | `retirement-plan`, `account-balance`                                                                                                                           | `retirement-income` |
+| `what-if-zone`            | `apps/web/app/features/retirement/components/RetirementPlanner/RetirementPlanner.tsx`         | `retirement-plan`, `salary`, `pension-rates`, `account-balance`, `balance-history`                                                                             | `retirement-income` |
+| `workplace-salary-notice` | `apps/web/app/features/retirement/components/WorkplaceSalaryNotSet/WorkplaceSalaryNotSet.tsx` | `salary`, `pension-rates`                                                                                                                                      | -                   |
+| `moneyhelper-guidance`    | `packages/ui/src/patterns/MoneyHelperGuidance/MoneyHelperGuidance.tsx`                        | -                                                                                                                                                              | -                   |
+| `plan-details`            | `apps/web/app/features/retirement/components/RetirementPlanner/RetirementPlanner.tsx`         | `retirement-plan`, `budget-entries`, `account-balance`                                                                                                         | -                   |
 
-### savings — Your savings
+### savings: Your savings
 
 - Route: `/app/savings` (auth: `required`, file: `apps/web/app/routes/app.savings.tsx`)
 - Purpose: View saved savings and investment balances, estimated 12-month interest, ISA allowance used, recorded investment returns, and test what-if growth or target-deposit timelines.
-- Entry points: Main app navigation (Savings); Dashboard Savings widget or KPI strip link; Budget Breathing Room link; Take-home pay "Use this in savings forecast" (/app/savings#forecast); Redirect from /app/forecast
 
-| Section                                                                  | Kind          | Capability                       | Mode    | Facts read                                                                                                     | Facts written                                                                                                  | Figures                                                   | Actions |
-| ------------------------------------------------------------------------ | ------------- | -------------------------------- | ------- | -------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- | ------- |
-| `header`                                                                 | header        | `open-add-account`               | write   | -                                                                                                              | -                                                                                                              | -                                                         | 1       |
-| `tax-rates-banner`                                                       | notice        | `view-tax-rates-status`          | read    | -                                                                                                              | -                                                                                                              | -                                                         | 0       |
-| `hero-and-kpis (when at least one savings or investment account exists)` | hero          | `view-savings-summary`           | read    | `account-balance`, `account-monthly-amount`, `account-rate`, `account-type`, `ownership-share`                 | -                                                                                                              | `savings-total`, `savings-interest`, `isa-allowance-used` | 0       |
-| `accounts-list (when at least one savings or investment account exists)` | list          | `browse-and-edit-accounts`       | read    | `account-name`, `account-balance`, `account-type`, `ownership-share`                                           | -                                                                                                              | -                                                         | 3       |
-| `investment-returns (when at least one Investment account exists)`       | content       | `view-recorded-returns`          | read    | `balance-history`, `investment-return`, `account-monthly-amount`                                               | -                                                                                                              | -                                                         | 0       |
-| `scenario-zone (when at least one savings or investment account exists)` | scenario-zone | `toggle-and-reset-scenario`      | what-if | -                                                                                                              | -                                                                                                              | -                                                         | 4       |
-| `scenario-zone (when at least one savings or investment account exists)` | scenario-zone | `model-savings-growth`           | what-if | `account-balance`, `account-monthly-amount`, `account-rate`                                                    | -                                                                                                              | `savings-total`                                           | 7       |
-| `scenario-zone (when at least one savings or investment account exists)` | scenario-zone | `model-deposit-timeline`         | what-if | `account-balance`, `account-monthly-amount`                                                                    | -                                                                                                              | -                                                         | 3       |
-| `empty-state (when no savings or investment accounts exist)`             | content       | `add-first-account`              | write   | -                                                                                                              | -                                                                                                              | -                                                         | 1       |
-| `account-dialog (when AddSavingsAccountDialog is open)`                  | form          | `save-or-delete-savings-account` | write   | `account-name`, `account-type`, `account-balance`, `account-rate`, `account-monthly-amount`, `ownership-share` | `account-name`, `account-type`, `account-balance`, `account-rate`, `account-monthly-amount`, `ownership-share` | -                                                         | 3       |
+| Section              | Component                                                                                      | Facts read                                                                                                     | Figures                                                   |
+| -------------------- | ---------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| `header`             | `apps/web/app/containers/savings/SavingsContainer.tsx`                                         | -                                                                                                              | -                                                         |
+| `tax-rates-banner`   | `apps/web/app/containers/savings/SavingsContainer.tsx`                                         | -                                                                                                              | -                                                         |
+| `hero-and-kpis`      | `apps/web/app/features/savings/components/SavingsSummaryCards/SavingsSummaryCards.tsx`         | `account-balance`, `account-monthly-amount`, `account-rate`, `account-type`, `ownership-share`                 | `savings-total`, `savings-interest`, `isa-allowance-used` |
+| `accounts-list`      | `apps/web/app/features/savings/components/SavingsAccountsList/SavingsAccountsList.tsx`         | `account-name`, `account-balance`, `account-type`, `ownership-share`                                           | -                                                         |
+| `investment-returns` | `apps/web/app/features/savings/components/InvestmentReturns/InvestmentReturns.tsx`             | `balance-history`, `investment-return`, `account-monthly-amount`                                               | -                                                         |
+| `scenario-zone`      | `apps/web/app/containers/savings/SavingsContainer.tsx`                                         | `account-balance`, `account-monthly-amount`, `account-rate`                                                    | `savings-total`                                           |
+| `empty-state`        | `apps/web/app/containers/savings/SavingsContainer.tsx`                                         | -                                                                                                              | -                                                         |
+| `account-dialog`     | `apps/web/app/features/savings/components/AddSavingsAccountDialog/AddSavingsAccountDialog.tsx` | `account-name`, `account-type`, `account-balance`, `account-rate`, `account-monthly-amount`, `ownership-share` | -                                                         |
 
-### self-assessment — Self Assessment
+### self-assessment: Self Assessment
 
 - Route: `/app/self-assessment` (auth: `required`, file: `apps/web/app/routes/app.self-assessment.tsx`)
 - Purpose: Track income and expenses outside PAYE across tax years, view estimated Self Assessment tax bill, and manage records and receipts.
-- Entry points: Main app navigation (Self Assessment); Dashboard Self Assessment widget; Redirect from /app/tax; Back link from /app/self-assessment/:source
 
-| Section                                                                                        | Kind    | Capability                       | Mode     | Facts read                                                                                            | Facts written               | Figures                                                                           | Actions |
-| ---------------------------------------------------------------------------------------------- | ------- | -------------------------------- | -------- | ----------------------------------------------------------------------------------------------------- | --------------------------- | --------------------------------------------------------------------------------- | ------- |
-| `opt-in-gate (when tax page is not enabled in user profile)`                                   | content | `enable-self-assessment`         | write    | -                                                                                                     | `enabled-pages-and-widgets` | -                                                                                 | 1       |
-| `header (when Self Assessment is enabled)`                                                     | header  | `switch-or-delete-tax-year`      | delete   | `tax-records`                                                                                         | `tax-records`               | -                                                                                 | 2       |
-| `tax-rates-banner (when Self Assessment is enabled and selected tax year is not refused)`      | notice  | `view-tax-year-rates-status`     | read     | -                                                                                                     | -                           | -                                                                                 | 0       |
-| `headline-or-empty (when Self Assessment is enabled)`                                          | hero    | `view-estimated-tax-bill`        | read     | `tax-records`, `salary`, `tax-region`, `employment-type`, `rental-share-for-tax`, `student-loan-plan` | -                           | `estimated-tax`, `personal-allowance-allocation`, `finance-costs-carried-forward` | 3       |
-| `calculation-drawer (when Self Assessment has non-PAYE income in the selected year)`           | drawer  | `inspect-and-update-paye-salary` | write    | `tax-records`, `salary`, `rental-share-for-tax`                                                       | `salary`                    | `estimated-tax`, `personal-allowance-allocation`, `finance-costs-carried-forward` | 2       |
-| `sources-panel (when Self Assessment is enabled)`                                              | list    | `navigate-to-source-page`        | navigate | `tax-records`, `account-balance`                                                                      | -                           | -                                                                                 | 2       |
-| `calculated-figures (when Accounts provide calculated savings or mortgage interest offers)`    | list    | `add-calculated-interest-record` | write    | `account-balance`, `account-rate`                                                                     | `tax-records`               | -                                                                                 | 1       |
-| `records-and-years-drawers (when records exist for the selected year or multiple years exist)` | drawer  | `manage-tax-records`             | write    | `tax-records`                                                                                         | `tax-records`               | -                                                                                 | 5       |
+| Section                     | Component                                                                      | Facts read                                                                                            | Figures                                                                           |
+| --------------------------- | ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `opt-in-gate`               | `apps/web/app/containers/tax/TaxContainer.tsx`                                 | -                                                                                                     | -                                                                                 |
+| `header`                    | `apps/web/app/containers/tax/TaxContainer.tsx`                                 | `tax-records`                                                                                         | -                                                                                 |
+| `tax-rates-banner`          | `apps/web/app/containers/tax/TaxContainer.tsx`                                 | -                                                                                                     | -                                                                                 |
+| `headline-or-empty`         | `apps/web/app/features/tax/components/TaxHeadline/TaxHeadline.tsx`             | `tax-records`, `salary`, `tax-region`, `employment-type`, `rental-share-for-tax`, `student-loan-plan` | `estimated-tax`, `personal-allowance-allocation`, `finance-costs-carried-forward` |
+| `calculation-drawer`        | `apps/web/app/features/tax/components/TaxReservePanel/TaxReservePanel.tsx`     | `tax-records`, `salary`, `rental-share-for-tax`                                                       | `estimated-tax`, `personal-allowance-allocation`, `finance-costs-carried-forward` |
+| `sources-panel`             | `apps/web/app/features/tax/components/TaxSourcesPanel/TaxSourcesPanel.tsx`     | `tax-records`, `account-balance`                                                                      | -                                                                                 |
+| `calculated-figures`        | `apps/web/app/features/tax/components/CalculatedFigures/CalculatedFigures.tsx` | `account-balance`, `account-rate`                                                                     | -                                                                                 |
+| `records-and-years-drawers` | `apps/web/app/features/tax/components/TaxRecordsTable/TaxRecordsTable.tsx`     | `tax-records`                                                                                         | -                                                                                 |
 
-### self-assessment-source — Income source | Self Assessment
+### self-assessment-source: Income source | Self Assessment
 
 - Route: `/app/self-assessment/:source` (auth: `required`, file: `apps/web/app/routes/app.self-assessment_.$source.tsx`)
 - Purpose: Inspect and manage income, expenses, allowance comparisons, and receipts for a single Self Assessment income source (self-employed, rental, savings, or PAYE) in one tax year.
-- Entry points: Self Assessment page source row link (/app/self-assessment/:source?year=YYYY-YY)
 
-| Section                                                                                                 | Kind      | Capability                       | Mode     | Facts read                                      | Facts written | Figures         | Actions |
-| ------------------------------------------------------------------------------------------------------- | --------- | -------------------------------- | -------- | ----------------------------------------------- | ------------- | --------------- | ------- |
-| `header`                                                                                                | header    | `navigate-and-select-year`       | navigate | -                                               | -             | -               | 2       |
-| `kpi-strip (when at least one record exists for this source in the selected tax year)`                  | kpi-strip | `view-source-totals`             | read     | `tax-records`                                   | -             | -               | 0       |
-| `allowance-comparison (when source is self-employed or rental and income or expenses are non-zero)`     | content   | `compare-allowance-and-expenses` | read     | `tax-records`, `rental-share-for-tax`, `salary` | -             | `estimated-tax` | 1       |
-| `calculated-figures (when source is rental or savings and Accounts provide calculated interest offers)` | list      | `add-source-calculated-interest` | write    | `account-balance`, `account-rate`               | `tax-records` | -               | 1       |
-| `records-section`                                                                                       | table     | `manage-source-records`          | write    | `tax-records`                                   | `tax-records` | -               | 6       |
+| Section                | Component                                                                          | Facts read                                      | Figures         |
+| ---------------------- | ---------------------------------------------------------------------------------- | ----------------------------------------------- | --------------- |
+| `header`               | `apps/web/app/containers/tax/TaxSourceContainer.tsx`                               | -                                               | -               |
+| `kpi-strip`            | `apps/web/app/containers/tax/TaxSourceContainer.tsx`                               | `tax-records`                                   | -               |
+| `allowance-comparison` | `apps/web/app/features/tax/components/AllowanceComparison/AllowanceComparison.tsx` | `tax-records`, `rental-share-for-tax`, `salary` | `estimated-tax` |
+| `calculated-figures`   | `apps/web/app/features/tax/components/CalculatedFigures/CalculatedFigures.tsx`     | `account-balance`, `account-rate`               | -               |
+| `records-section`      | `apps/web/app/containers/tax/TaxSourceContainer.tsx`                               | `tax-records`                                   | -               |
 
-### settings — Settings
+### settings: Settings
 
 - Route: `/app/profile` (auth: `required`, file: `apps/web/app/routes/app.profile.tsx`)
 - Purpose: Manage personal details, age and pay, tax basis, net worth choices, monthly check-in day, optional modules, sign-in security, AI connections, and data export or deletion.
-- Entry points: Main app account menu (Settings); Deep links from onboarding, retirement, dashboard, and account pages (/app/profile#... or ?tab=security)
 
-| Section                                                                                      | Kind       | Capability                      | Mode     | Facts read                                                 | Facts written                                              | Figures | Actions |
-| -------------------------------------------------------------------------------------------- | ---------- | ------------------------------- | -------- | ---------------------------------------------------------- | ---------------------------------------------------------- | ------- | ------- |
-| `header`                                                                                     | navigation | `switch-settings-tab`           | navigate | -                                                          | -                                                          | -       | 1       |
-| `profile-details (when Profile tab is active)`                                               | form       | `update-name-and-avatar`        | write    | -                                                          | -                                                          | -       | 4       |
-| `age-and-pay (when Profile tab is active)`                                                   | form       | `update-age-salary-pension`     | write    | `birth-year`, `employment-type`, `salary`, `pension-rates` | `birth-year`, `employment-type`, `salary`, `pension-rates` | -       | 7       |
-| `tax-basis (when Profile tab is active)`                                                     | form       | `update-tax-region-and-loans`   | write    | `tax-region`, `student-loan-plan`                          | `tax-region`, `student-loan-plan`                          | -       | 4       |
-| `net-worth-choices (when Profile tab is active and property or student loan accounts exist)` | form       | `toggle-net-worth-basis`        | write    | `net-worth-choices`                                        | `net-worth-choices`                                        | -       | 2       |
-| `check-in-day (when Profile tab is active)`                                                  | form       | `set-check-in-day`              | write    | `check-in-day`                                             | `check-in-day`                                             | -       | 1       |
-| `sections-you-use (when Profile tab is active)`                                              | form       | `toggle-self-assessment-module` | write    | -                                                          | -                                                          | -       | 1       |
-| `sections-you-use (when Profile tab is active)`                                              | form       | `toggle-partner-mode`           | write    | `partner-mode`                                             | `partner-mode`                                             | -       | 1       |
-| `security-sign-in (when Security tab is active)`                                             | form       | `request-password-reset`        | write    | -                                                          | -                                                          | -       | 1       |
-| `security-invites (when Security tab is active and user is a beta admin)`                    | navigation | `open-invites-admin`            | navigate | -                                                          | -                                                          | -       | 1       |
-| `ai-connections (when Security tab is active)`                                               | form       | `manage-mcp-tokens`             | write    | -                                                          | -                                                          | -       | 8       |
-| `ai-connections (when Security tab is active)`                                               | form       | `export-ai-context-pack`        | export   | -                                                          | -                                                          | -       | 4       |
-| `security-imports (when Security tab is active and user has a token with staging scope)`     | navigation | `open-imports-list`             | navigate | -                                                          | -                                                          | -       | 1       |
-| `data-export (when Data tab is active)`                                                      | form       | `export-account-json`           | export   | -                                                          | -                                                          | -       | 1       |
-| `reset-financial-data (when Data tab is active)`                                             | form       | `reset-all-financial-data`      | delete   | -                                                          | -                                                          | -       | 1       |
-| `delete-account (when Data tab is active)`                                                   | form       | `delete-user-account`           | delete   | -                                                          | -                                                          | -       | 1       |
+| Section                | Component                                                                                 | Facts read                                                 | Figures |
+| ---------------------- | ----------------------------------------------------------------------------------------- | ---------------------------------------------------------- | ------- |
+| `header`               | `apps/web/app/features/settings/components/SettingsPage/SettingsPage.tsx`                 | -                                                          | -       |
+| `profile-details`      | `apps/web/app/features/settings/components/ProfileTab/ProfileTab.tsx`                     | -                                                          | -       |
+| `age-and-pay`          | `apps/web/app/features/settings/components/AgeAndPaySection/AgeAndPaySection.tsx`         | `birth-year`, `employment-type`, `salary`, `pension-rates` | -       |
+| `tax-basis`            | `apps/web/app/features/settings/components/ProfileTab/ProfileTab.tsx`                     | `tax-region`, `student-loan-plan`                          | -       |
+| `net-worth-choices`    | `apps/web/app/features/settings/components/NetWorthChoices/NetWorthChoices.tsx`           | `net-worth-choices`                                        | -       |
+| `check-in-day`         | `apps/web/app/features/settings/components/CheckInDaySetting/CheckInDaySetting.tsx`       | `check-in-day`                                             | -       |
+| `sections-you-use`     | `apps/web/app/features/settings/components/ProfileTab/ProfileTab.tsx`                     | `partner-mode`                                             | -       |
+| `security-sign-in`     | `apps/web/app/features/settings/components/SecurityTab/SecurityTab.tsx`                   | -                                                          | -       |
+| `security-invites`     | `apps/web/app/features/settings/components/SecurityTab/SecurityTab.tsx`                   | -                                                          | -       |
+| `ai-connections`       | `apps/web/app/features/ai-connections/components/McpConnectionCard/McpConnectionCard.tsx` | -                                                          | -       |
+| `security-imports`     | `apps/web/app/features/settings/components/SecurityTab/SecurityTab.tsx`                   | -                                                          | -       |
+| `data-export`          | `apps/web/app/features/settings/components/DataExportSection/DataExportSection.tsx`       | -                                                          | -       |
+| `reset-financial-data` | `apps/web/app/features/settings/components/DataTab/DataTab.tsx`                           | -                                                          | -       |
+| `delete-account`       | `apps/web/app/features/settings/components/DeleteAccountSection/DeleteAccountSection.tsx` | -                                                          | -       |
 
-### take-home — Take-home pay
+### take-home: Take-home pay
 
 - Route: `/app/take-home` (auth: `required`, file: `apps/web/app/routes/app.take-home.tsx`)
 - Purpose: View estimated monthly take-home pay from saved salary, tax region, pension, and student loan settings, inspect deductions, and model a pay rise or marginal tax rate.
-- Entry points: Main app navigation (Take-home pay); Dashboard or Budget salary links; Redirect from /app/savings#takehome
 
-| Section                                                          | Kind          | Capability                      | Mode    | Facts read                                                                                         | Facts written | Figures     | Actions |
-| ---------------------------------------------------------------- | ------------- | ------------------------------- | ------- | -------------------------------------------------------------------------------------------------- | ------------- | ----------- | ------- |
-| `header`                                                         | header        | `orient`                        | read    | -                                                                                                  | -             | -           | 0       |
-| `hero-and-kpis`                                                  | hero          | `view-take-home-summary`        | read    | `salary`, `typed-take-home`, `employment-type`, `tax-region`, `pension-rates`, `student-loan-plan` | -             | `take-home` | 2       |
-| `breakdown (when salary before tax and tax facts are known)`     | table         | `inspect-pay-breakdown`         | read    | `salary`, `tax-region`, `pension-rates`, `student-loan-plan`                                       | -             | `take-home` | 1       |
-| `scenario-zone (when salary before tax and tax facts are known)` | scenario-zone | `toggle-and-reset-pay-scenario` | what-if | -                                                                                                  | -             | -           | 3       |
-| `scenario-zone (when salary before tax and tax facts are known)` | scenario-zone | `model-pay-rise`                | what-if | `salary`, `tax-region`, `pension-rates`, `student-loan-plan`                                       | -             | `take-home` | 2       |
-| `scenario-zone (when salary before tax and tax facts are known)` | scenario-zone | `explore-next-pound`            | what-if | `salary`, `tax-region`, `pension-rates`, `student-loan-plan`                                       | -             | -           | 1       |
+| Section         | Component                                                                              | Facts read                                                                                         | Figures     |
+| --------------- | -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | ----------- |
+| `header`        | `apps/web/app/containers/takeHome/TakeHomeContainer.tsx`                               | -                                                                                                  | -           |
+| `hero-and-kpis` | `apps/web/app/features/take-home/components/TakeHomeCalculator/TakeHomeCalculator.tsx` | `salary`, `typed-take-home`, `employment-type`, `tax-region`, `pension-rates`, `student-loan-plan` | `take-home` |
+| `breakdown`     | `apps/web/app/features/take-home/components/TakeHomeBreakdown/TakeHomeBreakdown.tsx`   | `salary`, `tax-region`, `pension-rates`, `student-loan-plan`                                       | `take-home` |
+| `scenario-zone` | `apps/web/app/features/take-home/components/TakeHomeCalculator/TakeHomeCalculator.tsx` | `salary`, `tax-region`, `pension-rates`, `student-loan-plan`                                       | `take-home` |
 
-### tool-detail — Public money calculator
+### tool-detail: Public money calculator
 
 - Route: `/tools/:slug` (auth: `public`, file: `apps/web/app/routes/tools.$slug.tsx`)
 - Purpose: Run one of eight public UK money calculators locally without signing in, read its guide and FAQ, or request a beta invite.
-- Entry points: Tools index page (/tools); Direct URL or marketing calculator link
 
-| Section       | Kind          | Capability                | Mode     | Facts read | Facts written | Figures | Actions |
-| ------------- | ------------- | ------------------------- | -------- | ---------- | ------------- | ------- | ------- |
-| `breadcrumbs` | navigation    | `navigate-to-tools-index` | navigate | -          | -             | -       | 1       |
-| `header`      | header        | `orient`                  | read     | -          | -             | -       | 0       |
-| `calculator`  | scenario-zone | `run-public-calculator`   | what-if  | -          | -             | -       | 2       |
-| `guide`       | drawer        | `read-guide-and-faq`      | read     | -          | -             | -       | 1       |
+| Section       | Component                             | Facts read | Figures |
+| ------------- | ------------------------------------- | ---------- | ------- |
+| `breadcrumbs` | `apps/web/app/routes/tools.$slug.tsx` | -          | -       |
+| `header`      | `apps/web/app/routes/tools.$slug.tsx` | -          | -       |
+| `calculator`  | `apps/web/app/routes/tools.$slug.tsx` | -          | -       |
+| `guide`       | `apps/web/app/routes/tools.$slug.tsx` | -          | -       |
 
-### tools — UK money calculators, free during the beta
+### tools: UK money calculators, free during the beta
 
 - Route: `/tools` (auth: `public`, file: `apps/web/app/routes/tools._index.tsx`)
 - Purpose: Browse all eight public UK money calculators and open any calculator.
-- Entry points: Public signed-out header (Calculators); Tool detail breadcrumbs (Calculators)
 
-| Section      | Kind   | Capability        | Mode     | Facts read | Facts written | Figures | Actions |
-| ------------ | ------ | ----------------- | -------- | ---------- | ------------- | ------- | ------- |
-| `header`     | header | `orient`          | read     | -          | -             | -       | 0       |
-| `tools-grid` | list   | `open-calculator` | navigate | -          | -             | -       | 1       |
+| Section      | Component                                                             | Facts read | Figures |
+| ------------ | --------------------------------------------------------------------- | ---------- | ------- |
+| `header`     | `apps/web/app/routes/tools._index.tsx`                                | -          | -       |
+| `tools-grid` | `apps/web/app/features/signed-out/components/ToolsGrid/ToolsGrid.tsx` | -          | -       |
 
 ## marketing
 
-### ai-connection — AI connection | Flump
+### ai-connection: AI connection | Flump
 
 - Route: `/features/ai-connection` (auth: `public`, file: `apps/marketing/src/pages/AiConnectionPage/AiConnectionPage.tsx`)
 - Purpose: Explain the Flump MCP AI connection, show example questions, explain how testers request access, and list the available MCP tools.
-- Entry points: Marketing header Features menu (AI connection); Features index page (/features); Home page FAQ AI answer; Security page AI security fact; Direct URL (/features/ai-connection or 301 from /mcp)
 
-| Section        | Kind       | Capability               | Mode     | Facts read | Facts written | Figures | Actions |
-| -------------- | ---------- | ------------------------ | -------- | ---------- | ------------- | ------- | ------- |
-| `site-header`  | navigation | `navigate-site`          | navigate | -          | -             | -       | 4       |
-| `hero`         | hero       | `orient-and-start`       | navigate | -          | -             | -       | 1       |
-| `what-you-see` | list       | `read-ai-facts`          | read     | -          | -             | -       | 0       |
-| `questions`    | list       | `read-example-questions` | read     | -          | -             | -       | 0       |
-| `setup`        | content    | `request-ai-access`      | navigate | -          | -             | -       | 1       |
-| `more-detail`  | drawer     | `inspect-mcp-tools`      | read     | -          | -             | -       | 1       |
-| `one-picture`  | navigation | `switch-area`            | navigate | -          | -             | -       | 1       |
-| `final-cta`    | content    | `final-signup`           | navigate | -          | -             | -       | 1       |
-| `site-footer`  | footer     | `footer-navigation`      | navigate | -          | -             | -       | 3       |
+| Section        | Component                                                        | Facts read | Figures |
+| -------------- | ---------------------------------------------------------------- | ---------- | ------- |
+| `site-header`  | `apps/marketing/src/components/Header/Header.tsx`                | -          | -       |
+| `hero`         | `apps/marketing/src/pages/FeaturePage/FeaturePage.tsx`           | -          | -       |
+| `what-you-see` | `apps/marketing/src/pages/FeaturePage/FeaturePage.tsx`           | -          | -       |
+| `questions`    | `apps/marketing/src/pages/AiConnectionPage/AiConnectionPage.tsx` | -          | -       |
+| `setup`        | `apps/marketing/src/pages/AiConnectionPage/AiConnectionPage.tsx` | -          | -       |
+| `more-detail`  | `apps/marketing/src/pages/AiConnectionPage/AiConnectionPage.tsx` | -          | -       |
+| `one-picture`  | `apps/marketing/src/components/AreaStrip/AreaStrip.tsx`          | -          | -       |
+| `final-cta`    | `apps/marketing/src/pages/FeaturePage/FeaturePage.tsx`           | -          | -       |
+| `site-footer`  | `apps/marketing/src/components/Footer/Footer.tsx`                | -          | -       |
 
-### contact — Contact | Flump
+### contact: Contact | Flump
 
 - Route: `/contact` (auth: `public`, file: `apps/marketing/src/pages/ContactPage/ContactPage.tsx`)
 - Purpose: Provide the Flump support email address for beta invites, questions, feedback, privacy requests, and complaints, plus a link to security reporting.
-- Entry points: Marketing footer Company column (Contact); AI connection page ("Ask us" link); Invite-only sign-up CTAs (/contact#beta); Direct URL (/contact)
 
-| Section       | Kind       | Capability          | Mode     | Facts read | Facts written | Figures | Actions |
-| ------------- | ---------- | ------------------- | -------- | ---------- | ------------- | ------- | ------- |
-| `site-header` | navigation | `navigate-site`     | navigate | -          | -             | -       | 4       |
-| `header`      | header     | `orient`            | read     | -          | -             | -       | 0       |
-| `email-card`  | content    | `contact-support`   | navigate | -          | -             | -       | 2       |
-| `site-footer` | footer     | `footer-navigation` | navigate | -          | -             | -       | 3       |
+| Section       | Component                                              | Facts read | Figures |
+| ------------- | ------------------------------------------------------ | ---------- | ------- |
+| `site-header` | `apps/marketing/src/components/Header/Header.tsx`      | -          | -       |
+| `header`      | `apps/marketing/src/pages/ContactPage/ContactPage.tsx` | -          | -       |
+| `email-card`  | `apps/marketing/src/pages/ContactPage/ContactPage.tsx` | -          | -       |
+| `site-footer` | `apps/marketing/src/components/Footer/Footer.tsx`      | -          | -       |
 
-### feature-detail — Feature area detail | Flump
+### feature-detail: Feature area detail | Flump
 
 - Route: `/features/:slug` (auth: `public`, file: `apps/marketing/src/pages/FeaturePage/FeaturePage.tsx`)
 - Purpose: Explain one of the five money areas (accounts, budget, pay, savings-and-pension, debt-and-borrowing) with sample figures, deeper tools, and optional embedded calculators.
-- Entry points: Marketing header Features menu; Features index page (/features); Home page feature tiles and "More detail" links; Preview page area links; Direct URL (/features/accounts, /features/budget, /features/pay, /features/savings-and-pension, /features/debt-and-borrowing)
 
-| Section                                                                                                  | Kind          | Capability                | Mode     | Facts read | Facts written | Figures | Actions |
-| -------------------------------------------------------------------------------------------------------- | ------------- | ------------------------- | -------- | ---------- | ------------- | ------- | ------- |
-| `site-header`                                                                                            | navigation    | `navigate-site`           | navigate | -          | -             | -       | 4       |
-| `hero`                                                                                                   | hero          | `orient-and-start`        | navigate | -          | -             | -       | 2       |
-| `what-you-see`                                                                                           | list          | `read-area-facts`         | read     | -          | -             | -       | 1       |
-| `see-it (when feature.sample is not "none" (accounts, budget, savings-and-pension, debt-and-borrowing))` | scenario-zone | `switch-sample-household` | what-if  | -          | -             | -       | 1       |
-| `retirement (when slug is savings-and-pension)`                                                          | content       | `read-retirement-plan`    | read     | -          | -             | -       | 1       |
-| `more-detail`                                                                                            | list          | `read-depth-tools`        | read     | -          | -             | -       | 0       |
-| `one-picture`                                                                                            | navigation    | `switch-area`             | navigate | -          | -             | -       | 1       |
-| `try-it (when slug is pay or debt-and-borrowing)`                                                        | scenario-zone | `try-kept-calculator`     | what-if  | -          | -             | -       | 1       |
-| `final-cta`                                                                                              | content       | `final-signup`            | navigate | -          | -             | -       | 1       |
-| `site-footer`                                                                                            | footer        | `footer-navigation`       | navigate | -          | -             | -       | 3       |
+| Section        | Component                                                     | Facts read | Figures |
+| -------------- | ------------------------------------------------------------- | ---------- | ------- |
+| `site-header`  | `apps/marketing/src/components/Header/Header.tsx`             | -          | -       |
+| `hero`         | `apps/marketing/src/pages/FeaturePage/FeaturePage.tsx`        | -          | -       |
+| `what-you-see` | `apps/marketing/src/pages/FeaturePage/FeaturePage.tsx`        | -          | -       |
+| `see-it`       | `apps/marketing/src/pages/FeaturePage/FeaturePage.tsx`        | -          | -       |
+| `retirement`   | `apps/marketing/src/pages/FeaturePage/FeaturePage.tsx`        | -          | -       |
+| `more-detail`  | `apps/marketing/src/pages/FeaturePage/FeaturePage.tsx`        | -          | -       |
+| `one-picture`  | `apps/marketing/src/components/AreaStrip/AreaStrip.tsx`       | -          | -       |
+| `try-it`       | `apps/marketing/src/components/TryItSection/TryItSection.tsx` | -          | -       |
+| `final-cta`    | `apps/marketing/src/pages/FeaturePage/FeaturePage.tsx`        | -          | -       |
+| `site-footer`  | `apps/marketing/src/components/Footer/Footer.tsx`             | -          | -       |
 
-### features — Flump features | Flump
+### features: Flump features | Flump
 
 - Route: `/features` (auth: `public`, file: `apps/marketing/src/pages/FeaturesIndexPage/FeaturesIndexPage.tsx`)
 - Purpose: Present all five money areas of Flump and the AI connection in one index page with links to each feature page.
-- Entry points: Marketing header Features menu (All features); Marketing home page ("All Flump features on one page"); Marketing footer Product column (All features); Direct URL (/features)
 
-| Section         | Kind       | Capability          | Mode     | Facts read | Facts written | Figures | Actions |
-| --------------- | ---------- | ------------------- | -------- | ---------- | ------------- | ------- | ------- |
-| `site-header`   | navigation | `navigate-site`     | navigate | -          | -             | -       | 4       |
-| `header`        | header     | `orient-and-start`  | navigate | -          | -             | -       | 2       |
-| `feature-tiles` | list       | `open-feature-page` | navigate | -          | -             | -       | 1       |
-| `site-footer`   | footer     | `footer-navigation` | navigate | -          | -             | -       | 3       |
+| Section         | Component                                                          | Facts read | Figures |
+| --------------- | ------------------------------------------------------------------ | ---------- | ------- |
+| `site-header`   | `apps/marketing/src/components/Header/Header.tsx`                  | -          | -       |
+| `header`        | `apps/marketing/src/pages/FeaturesIndexPage/FeaturesIndexPage.tsx` | -          | -       |
+| `feature-tiles` | `apps/marketing/src/components/FeatureTiles/FeatureTiles.tsx`      | -          | -       |
+| `site-footer`   | `apps/marketing/src/components/Footer/Footer.tsx`                  | -          | -       |
 
-### home — All your money. One clear picture. | Flump
+### home: All your money. One clear picture. | Flump
 
 - Route: `/` (auth: `public`, file: `apps/marketing/src/pages/HomePage/HomePage.tsx`)
 - Purpose: Introduce Flump's five money areas, let visitors try the pay rise tool, read the FAQ, and request an invite or open the interactive preview.
-- Entry points: Direct URL (/); Marketing header Flump home link; Marketing footer or 404 page home link
 
-| Section         | Kind          | Capability              | Mode     | Facts read | Facts written | Figures | Actions |
-| --------------- | ------------- | ----------------------- | -------- | ---------- | ------------- | ------- | ------- |
-| `site-header`   | navigation    | `navigate-site`         | navigate | -          | -             | -       | 4       |
-| `hero`          | hero          | `start-or-preview`      | navigate | -          | -             | -       | 2       |
-| `features`      | list          | `browse-features`       | navigate | -          | -             | -       | 2       |
-| `rough-figures` | content       | `read-how-it-works`     | read     | -          | -             | -       | 0       |
-| `more-detail`   | list          | `explore-deeper-tools`  | navigate | -          | -             | -       | 1       |
-| `pay-rise`      | scenario-zone | `model-pay-rise`        | what-if  | -          | -             | -       | 4       |
-| `security`      | notice        | `read-security-summary` | navigate | -          | -             | -       | 1       |
-| `faq`           | list          | `read-faq`              | read     | -          | -             | -       | 2       |
-| `faq`           | list          | `final-signup`          | navigate | -          | -             | -       | 1       |
-| `site-footer`   | footer        | `footer-navigation`     | navigate | -          | -             | -       | 3       |
+| Section         | Component                                                                           | Facts read | Figures |
+| --------------- | ----------------------------------------------------------------------------------- | ---------- | ------- |
+| `site-header`   | `apps/marketing/src/components/Header/Header.tsx`                                   | -          | -       |
+| `hero`          | `apps/marketing/src/components/BaselineSnapshotPreview/BaselineSnapshotPreview.tsx` | -          | -       |
+| `features`      | `apps/marketing/src/components/FeatureTiles/FeatureTiles.tsx`                       | -          | -       |
+| `rough-figures` | `apps/marketing/src/pages/HomePage/HomePage.tsx`                                    | -          | -       |
+| `more-detail`   | `apps/marketing/src/pages/HomePage/HomePage.tsx`                                    | -          | -       |
+| `pay-rise`      | `apps/marketing/src/components/PayRiseTeaser/PayRiseTeaser.tsx`                     | -          | -       |
+| `security`      | `apps/marketing/src/components/SecurityPrivacySection/SecurityPrivacySection.tsx`   | -          | -       |
+| `faq`           | `apps/marketing/src/components/HomeFAQ/HomeFAQ.tsx`                                 | -          | -       |
+| `site-footer`   | `apps/marketing/src/components/Footer/Footer.tsx`                                   | -          | -       |
 
-### not-found — We cannot find that page | Flump
+### not-found: We cannot find that page | Flump
 
 - Route: `*` (auth: `public`, file: `apps/marketing/src/pages/NotFoundPage/NotFoundPage.tsx`)
 - Purpose: Inform visitors that a marketing URL could not be found and provide a link back to the home page.
-- Entry points: Any unknown URL path on the marketing site
 
-| Section          | Kind       | Capability          | Mode     | Facts read | Facts written | Figures | Actions |
-| ---------------- | ---------- | ------------------- | -------- | ---------- | ------------- | ------- | ------- |
-| `site-header`    | navigation | `navigate-site`     | navigate | -          | -             | -       | 4       |
-| `not-found-card` | notice     | `recover-from-404`  | navigate | -          | -             | -       | 1       |
-| `site-footer`    | footer     | `footer-navigation` | navigate | -          | -             | -       | 3       |
+| Section          | Component                                                | Facts read | Figures |
+| ---------------- | -------------------------------------------------------- | ---------- | ------- |
+| `site-header`    | `apps/marketing/src/components/Header/Header.tsx`        | -          | -       |
+| `not-found-card` | `apps/marketing/src/pages/NotFoundPage/NotFoundPage.tsx` | -          | -       |
+| `site-footer`    | `apps/marketing/src/components/Footer/Footer.tsx`        | -          | -       |
 
-### preview — Interactive preview | Flump
+### preview: Interactive preview | Flump
 
 - Route: `/preview` (auth: `public`, file: `apps/marketing/src/pages/PreviewPage/PreviewPage.tsx`)
 - Purpose: Let visitors explore interactive sample previews of the Dashboard, Monthly check-in, and Breathing room using static renter and homeowner fixtures.
-- Entry points: Marketing header Preview link; Home page hero Interactive preview button; Features index and feature detail Interactive preview buttons; Marketing footer Product column (Interactive preview); Direct URL (/preview)
 
-| Section                  | Kind          | Capability                    | Mode     | Facts read | Facts written | Figures | Actions |
-| ------------------------ | ------------- | ----------------------------- | -------- | ---------- | ------------- | ------- | ------- |
-| `site-header`            | navigation    | `navigate-site`               | navigate | -          | -             | -       | 4       |
-| `header`                 | header        | `orient`                      | read     | -          | -             | -       | 0       |
-| `dashboard-preview`      | scenario-zone | `inspect-dashboard-sample`    | what-if  | -          | -             | -       | 2       |
-| `checkin-preview`        | scenario-zone | `try-checkin-sample`          | what-if  | -          | -             | -       | 3       |
-| `breathing-room-preview` | scenario-zone | `model-breathing-room-sample` | what-if  | -          | -             | -       | 3       |
-| `final-cta`              | content       | `start-from-preview`          | navigate | -          | -             | -       | 1       |
-| `site-footer`            | footer        | `footer-navigation`           | navigate | -          | -             | -       | 3       |
+| Section                  | Component                                              | Facts read | Figures |
+| ------------------------ | ------------------------------------------------------ | ---------- | ------- |
+| `site-header`            | `apps/marketing/src/components/Header/Header.tsx`      | -          | -       |
+| `header`                 | `apps/marketing/src/pages/PreviewPage/PreviewPage.tsx` | -          | -       |
+| `dashboard-preview`      | `apps/marketing/src/pages/PreviewPage/PreviewPage.tsx` | -          | -       |
+| `checkin-preview`        | `apps/marketing/src/pages/PreviewPage/PreviewPage.tsx` | -          | -       |
+| `breathing-room-preview` | `apps/marketing/src/pages/PreviewPage/PreviewPage.tsx` | -          | -       |
+| `final-cta`              | `apps/marketing/src/pages/PreviewPage/PreviewPage.tsx` | -          | -       |
+| `site-footer`            | `apps/marketing/src/components/Footer/Footer.tsx`      | -          | -       |
 
-### pricing — Pricing | Flump
+### pricing: Pricing | Flump
 
 - Route: `/pricing` (auth: `public`, file: `apps/marketing/src/pages/PricingPage/PricingPage.tsx`)
 - Purpose: Show that Flump is free during the beta, what the beta includes, and note any possible future paid plan without a price set.
-- Entry points: Marketing header Pricing link; Marketing footer Product column (Pricing); Direct URL (/pricing)
 
-| Section                                             | Kind       | Capability            | Mode     | Facts read | Facts written | Figures | Actions |
-| --------------------------------------------------- | ---------- | --------------------- | -------- | ---------- | ------------- | ------- | ------- |
-| `site-header`                                       | navigation | `navigate-site`       | navigate | -          | -             | -       | 4       |
-| `header`                                            | header     | `orient`              | read     | -          | -             | -       | 0       |
-| `beta-plan`                                         | content    | `start-beta-plan`     | navigate | -          | -             | -       | 1       |
-| `paid-plan (when VITE_SHOW_PAID_PLAN is not false)` | notice     | `read-paid-plan-note` | read     | -          | -             | -       | 0       |
-| `site-footer`                                       | footer     | `footer-navigation`   | navigate | -          | -             | -       | 3       |
+| Section       | Component                                              | Facts read | Figures |
+| ------------- | ------------------------------------------------------ | ---------- | ------- |
+| `site-header` | `apps/marketing/src/components/Header/Header.tsx`      | -          | -       |
+| `header`      | `apps/marketing/src/pages/PricingPage/PricingPage.tsx` | -          | -       |
+| `beta-plan`   | `apps/marketing/src/pages/PricingPage/PricingPage.tsx` | -          | -       |
+| `paid-plan`   | `apps/marketing/src/pages/PricingPage/PricingPage.tsx` | -          | -       |
+| `site-footer` | `apps/marketing/src/components/Footer/Footer.tsx`      | -          | -       |
 
-### security — Security and privacy | Flump
+### security: Security and privacy | Flump
 
 - Route: `/security` (auth: `public`, file: `apps/marketing/src/pages/SecurityPage/SecurityPage.tsx`)
 - Purpose: Explain what Flump can and cannot do with user money and saved figures today, and how to report a security issue.
-- Entry points: Marketing header Features menu (Security and privacy); Marketing footer Company column (Security and privacy); Direct URL (/security)
 
-| Section             | Kind       | Capability              | Mode     | Facts read | Facts written | Figures | Actions |
-| ------------------- | ---------- | ----------------------- | -------- | ---------- | ------------- | ------- | ------- |
-| `site-header`       | navigation | `navigate-site`         | navigate | -          | -             | -       | 4       |
-| `header`            | header     | `orient`                | read     | -          | -             | -       | 0       |
-| `security-facts`    | list       | `read-security-facts`   | read     | -          | -             | -       | 1       |
-| `disclosure-policy` | content    | `report-security-issue` | navigate | -          | -             | -       | 1       |
-| `site-footer`       | footer     | `footer-navigation`     | navigate | -          | -             | -       | 3       |
+| Section             | Component                                                                           | Facts read | Figures |
+| ------------------- | ----------------------------------------------------------------------------------- | ---------- | ------- |
+| `site-header`       | `apps/marketing/src/components/Header/Header.tsx`                                   | -          | -       |
+| `header`            | `apps/marketing/src/pages/SecurityPage/SecurityPage.tsx`                            | -          | -       |
+| `security-facts`    | `apps/marketing/src/pages/SecurityPage/SecurityPage.tsx`                            | -          | -       |
+| `disclosure-policy` | `apps/marketing/src/components/DisclosurePolicySection/DisclosurePolicySection.tsx` | -          | -       |
+| `site-footer`       | `apps/marketing/src/components/Footer/Footer.tsx`                                   | -          | -       |

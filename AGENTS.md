@@ -60,7 +60,7 @@ CI runs the full suite on every PR in a few minutes, and nothing merges unless i
 
 1. `bun run lint` (zero Biome lint/format errors)
 2. `bun run check-types` (zero TypeScript errors across all monorepo packages)
-3. `bun run check:laws` (design tokens, tabular numbers, react icons, style literals, number inputs, judgement colours, dependency versions, copy, the unsigned tax vector ratchet, the one tax engine guard and the value map)
+3. `bun run check:laws` (design tokens, tabular numbers, react icons, style literals, number inputs, judgement colours, dependency versions, copy, the unsigned tax vector ratchet, the one tax engine guard, the value map and the functionality map)
 4. The tests for what you changed only: `bunx vitest run <paths>` or `bun run test --filter=<package>` for each package the change touches. Do not run the whole monorepo suite locally.
 
 When a change removes violations, the baselines go stale and CI fails. Regenerate them with `bun scripts/check-design-tokens.ts --write-baseline`, `bun scripts/check-tabular-nums.ts --write-baseline`, `bun scripts/check-react-icons.ts --write-baseline`, `bun scripts/check-style-literals.ts --write-baseline`, `bun scripts/check-copy.ts --write-baseline` and `bun scripts/check-value-map.ts --write-baseline`, then commit the updated baseline files. The number-input and judgement checks (`scripts/check-input-types.ts`, `scripts/check-judgement-tokens.ts`) fail only when a count rises; a fall prints `IMPROVED` and passes, so regenerating their baselines is optional.
@@ -190,12 +190,12 @@ Changing an allow-list, a numeric limit in a test or law, a scanner suppression,
 - **Update the map in the same PR.** A PR that adds, moves or removes a database column, a profile field, a browser storage or cookie key, or a shared figure updates the map in the same PR. A new column also goes in its table's `valueMap` in `apps/backend/src/modules/privacy/user-data-registry.ts`. Then run `bun scripts/generate-value-map.ts`.
 - **Guard.** `bun scripts/check-value-map.ts` (part of `check:laws`) fails on a column or browser key with no entry, a path, function, table or column that no longer exists, a malformed entry, a fact with no source of truth, a figure outside the engine, and stale generated views. Known problems are in `scripts/value-map-baseline.json`, each tied to an audit finding. The baseline only shrinks; raising it falls under section 15. Arithmetic that may be a second formula prints as a warning and does not fail the run.
 
-### Functionality map (user-POV)
+### Functionality map (route level)
 
-> **Detailed Reference**: Before adding, changing, or removing a route, page section, capability, or user control, read [`docs/system/functionality-map/README.md`](./docs/system/functionality-map/README.md).
+> **Detailed Reference**: Before adding or removing a route, or changing which facts or figures a page section reads, read [`docs/system/functionality-map/README.md`](./docs/system/functionality-map/README.md).
 
-- **Update the functionality map in the same PR.** Any PR that adds, removes, or changes a route, page section, capability, or user control (button, link, input, slider, toggle, drawer) updates the corresponding `docs/system/functionality-map/pages/{web|marketing}/<page-id>.yaml` (or `excluded_routes` in `docs/system/functionality-map/index.yaml` for non-UI routes) and runs `bun run functionality-map`.
-- **Guard.** `bun scripts/check-functionality-map.ts` (part of `check:laws`) fails on invalid schema, duplicate IDs, dead file paths, unknown `value-map.yaml` fact/figure IDs, stale generated views (`overview.md`, `actions-index.md`, `by-fact.md`), or unmapped routes.
+- **Update the functionality map in the same PR.** A PR that adds or removes a route, or changes which facts or figures a section reads, updates `docs/system/functionality-map/pages/{web|marketing}/<page-id>.yaml` (or `excluded_routes` in `docs/system/functionality-map/index.yaml` for non-UI routes) and runs `bun run functionality-map`. The map stops at section level: no per-control entries (buttons, links, inputs, labels).
+- **Guard.** `bun scripts/check-functionality-map.ts` (part of `check:laws`) fails on invalid schema, duplicate IDs, dead file paths, unknown `value-map.yaml` fact or figure IDs, stale generated views (`overview.md`, `by-fact.md`) or unmapped routes.
 
 ## 17. TESTS THAT CATCH FAULTS AND RUN FAST LAW
 

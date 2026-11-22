@@ -4,90 +4,17 @@ route: /contact
 title: Contact | Flump
 auth: public
 purpose: Provide the Flump support email address for beta invites, questions, feedback, privacy requests, and complaints, plus a link to security reporting.
-entry_points:
-  - Marketing footer Company column (Contact)
-  - AI connection page ("Ask us" link)
-  - Invite-only sign-up CTAs (/contact#beta)
-  - Direct URL (/contact)
 route_file: apps/marketing/src/pages/ContactPage/ContactPage.tsx
 
 sections:
   - id: site-header
-    name: Marketing site header
-    kind: navigation
     component: apps/marketing/src/components/Header/Header.tsx
-    capabilities:
-      - id: navigate-site
-        goal: Navigate across marketing pages, toggle light/dark theme, or open the web app.
-        mode: navigate
-        actions:
-          - id: home-logo
-            control: link
-            label: Flump home
-            effect: Navigates to the marketing home page.
-            target: /
-          - id: features-menu
-            control: button
-            label: Features
-            effect: Opens the Features dropdown listing All features, the five money areas, AI connection, and Security and privacy.
-          - id: theme-toggle
-            control: toggle
-            label: Toggle colour theme
-            effect: Switches between light and dark theme.
-          - id: open-app-cta
-            control: link
-            label: Open Flump / Sign up
-            effect: Opens the web app sign-up or dashboard URL.
 
   - id: header
-    name: Contact Flump heading
-    kind: header
     component: apps/marketing/src/pages/ContactPage/ContactPage.tsx
-    capabilities:
-      - id: orient
-        goal: State the Contact Flump heading and intro.
-        mode: read
-        actions: []
 
   - id: email-card
-    name: Email contact card
-    kind: content
     component: apps/marketing/src/pages/ContactPage/ContactPage.tsx
-    capabilities:
-      - id: contact-support
-        goal: Email Flump support for an invite, question, feedback, privacy request, or complaint.
-        mode: navigate
-        actions:
-          - id: email-support-link
-            control: link
-            label: Support email
-            effect: Opens the user's mail client addressed to Flump support with subject "Flump support".
-          - id: security-policy-link
-            control: link
-            label: Security and privacy
-            effect: Navigates to the Security and privacy page for reporting security issues.
-            target: /security
 
   - id: site-footer
-    name: Marketing site footer
-    kind: footer
     component: apps/marketing/src/components/Footer/Footer.tsx
-    capabilities:
-      - id: footer-navigation
-        goal: Navigate to Product feature pages, Company pages, or sign in to the web app.
-        mode: navigate
-        actions:
-          - id: footer-features-link
-            control: link
-            label: All features
-            effect: Navigates to /features.
-            target: /features
-          - id: footer-contact-link
-            control: link
-            label: Contact
-            effect: Navigates to /contact.
-            target: /contact
-          - id: footer-signin-link
-            control: link
-            label: Sign in
-            effect: Opens the web app /login route.

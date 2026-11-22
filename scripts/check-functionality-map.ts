@@ -2,9 +2,10 @@
  * Guard for docs/system/functionality-map/ (E43, part of check:laws).
  *
  * Fails when:
- * - index.yaml or any pages/{web|marketing}/*.yaml is malformed or has duplicate IDs;
- * - a route_file, component, or excluded/allowlisted path does not exist in the repo;
- * - any capability's facts_read, facts_written, or figures_shown references an unknown ID in
+ * - index.yaml or any pages/{web|marketing}/*.yaml is malformed (including retired per-control
+ *   keys such as capabilities or entry_points) or has duplicate IDs;
+ * - a route_file, component, or excluded path does not exist in the repo;
+ * - any section's facts_read or figures_shown references an unknown ID in
  *   docs/system/value-map.yaml;
  * - generated views in docs/system/functionality-map/generated/ are stale;
  * - any discovered route is unmapped (not in pages/ or excluded_routes), or retired

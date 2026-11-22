@@ -4,100 +4,20 @@ route: /security
 title: Security and privacy | Flump
 auth: public
 purpose: Explain what Flump can and cannot do with user money and saved figures today, and how to report a security issue.
-entry_points:
-  - Marketing header Features menu (Security and privacy)
-  - Marketing footer Company column (Security and privacy)
-  - Direct URL (/security)
 route_file: apps/marketing/src/pages/SecurityPage/SecurityPage.tsx
 
 sections:
   - id: site-header
-    name: Marketing site header
-    kind: navigation
     component: apps/marketing/src/components/Header/Header.tsx
-    capabilities:
-      - id: navigate-site
-        goal: Navigate across marketing pages, toggle light/dark theme, or open the web app.
-        mode: navigate
-        actions:
-          - id: home-logo
-            control: link
-            label: Flump home
-            effect: Navigates to the marketing home page.
-            target: /
-          - id: features-menu
-            control: button
-            label: Features
-            effect: Opens the Features dropdown listing All features, the five money areas, AI connection, and Security and privacy.
-          - id: theme-toggle
-            control: toggle
-            label: Toggle colour theme
-            effect: Switches between light and dark theme.
-          - id: open-app-cta
-            control: link
-            label: Open Flump / Sign up
-            effect: Opens the web app sign-up or dashboard URL.
 
   - id: header
-    name: Security and privacy heading
-    kind: header
     component: apps/marketing/src/pages/SecurityPage/SecurityPage.tsx
-    capabilities:
-      - id: orient
-        goal: State the page heading ("Security and privacy") and summary ("What Flump can and cannot do with your money and your figures.").
-        mode: read
-        actions: []
 
   - id: security-facts
-    name: Security facts list
-    kind: list
     component: apps/marketing/src/pages/SecurityPage/SecurityPage.tsx
-    capabilities:
-      - id: read-security-facts
-        goal: Review the six factual statements about bank logins (own-figures), payments (no-payments), AI connection (ai), data export (download-figures), account deletion (delete-account), and phishing policy (no-email-requests).
-        mode: read
-        actions:
-          - id: open-ai-connection
-            control: link
-            label: AI connection
-            effect: Navigates to the AI connection feature page from the ai security fact.
-            target: /features/ai-connection
 
   - id: disclosure-policy
-    name: Reporting a security issue
-    kind: content
     component: apps/marketing/src/components/DisclosurePolicySection/DisclosurePolicySection.tsx
-    capabilities:
-      - id: report-security-issue
-        goal: Read the vulnerability-disclosure guidelines and find the security contact email address.
-        mode: navigate
-        actions:
-          - id: email-security-contact
-            control: link
-            label: Security contact email
-            effect: Opens the user's mail client addressed to the security contact email.
-            target: mailto:security@flump.uk
 
   - id: site-footer
-    name: Marketing site footer
-    kind: footer
     component: apps/marketing/src/components/Footer/Footer.tsx
-    capabilities:
-      - id: footer-navigation
-        goal: Navigate to Product feature pages, Company pages, or sign in to the web app.
-        mode: navigate
-        actions:
-          - id: footer-features-link
-            control: link
-            label: All features
-            effect: Navigates to /features.
-            target: /features
-          - id: footer-contact-link
-            control: link
-            label: Contact
-            effect: Navigates to /contact.
-            target: /contact
-          - id: footer-signin-link
-            control: link
-            label: Sign in
-            effect: Opens the web app /login route.

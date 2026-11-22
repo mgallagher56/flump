@@ -4,135 +4,42 @@ route: /app/mortgage-estimates
 title: Mortgage estimates
 auth: required
 purpose: See how much is left each month before housing from saved salary and budget, and model estimated loan sizes from monthly payment, income multiples, or rate changes.
-entry_points:
-  - Mortgage page header button (Mortgage estimates)
-  - Savings Time to a target footer link
 route_file: apps/web/app/routes/app.mortgage-estimates.tsx
 
 sections:
   - id: header
-    name: Page header
-    kind: header
     component: apps/web/app/containers/mortgage/MortgageEstimatesContainer.tsx
-    capabilities:
-      - id: orient
-        goal: Identify the page as an illustrative mortgage estimator grounded in saved figures.
-        mode: read
-        actions: []
 
   - id: hero-and-kpis
-    name: Left each month before housing
-    kind: hero
     component: apps/web/app/containers/mortgage/MortgageEstimatesContainer.tsx
-    capabilities:
-      - id: view-housing-room
-        goal: View monthly amount left before housing (hero) alongside take-home pay, essentials without housing, and debt payments.
-        mode: read
-        facts_read:
-          - salary
-          - typed-take-home
-          - budget-entries
-          - housing-cost
-          - account-monthly-amount
-        figures_shown:
-          - housing-room
-          - take-home
-        actions: []
+    facts_read:
+      - salary
+      - typed-take-home
+      - budget-entries
+      - housing-cost
+      - account-monthly-amount
+    figures_shown:
+      - housing-room
+      - take-home
 
   - id: housing-room-details
-    name: Your details (housing room toggles)
-    kind: content
     component: apps/web/app/features/mortgage/components/HousingRoomSummary/HousingRoomSummary.tsx
-    capabilities:
-      - id: toggle-housing-room-deductions
-        goal: Choose whether to subtract planned savings or other spending from monthly housing room, or navigate to Settings and Budget when details are missing.
-        mode: read
-        facts_read:
-          - budget-entries
-          - other-outgoings
-          - housing-cost
-        figures_shown:
-          - housing-room
-        actions:
-          - id: toggle-subtract-savings
-            control: toggle
-            label: Subtract planned savings
-            effect: Includes or excludes planned savings from the housing-room calculation in memory.
-          - id: toggle-subtract-other-spending
-            control: toggle
-            label: Subtract other spending
-            effect: Includes or excludes other spending from the housing-room calculation in memory.
-          - id: open-settings-from-missing
-            control: button
-            label: Open Settings
-            effect: Navigates to /app/profile when salary or budget details are missing.
-            target: /app/profile
-          - id: open-budget-from-missing
-            control: button
-            label: Open Budget
-            effect: Navigates to /app/budget when salary or budget details are missing.
-            target: /app/budget
+    facts_read:
+      - budget-entries
+      - other-outgoings
+      - housing-cost
+    figures_shown:
+      - housing-room
 
   - id: scenario-zone
-    name: Model a mortgage
-    kind: scenario-zone
     component: apps/web/app/containers/mortgage/MortgageEstimatesContainer.tsx
-    capabilities:
-      - id: switch-and-reset-estimates
-        goal: Switch between the three mortgage estimate tools or reset scenario inputs to saved defaults.
-        mode: what-if
-        actions:
-          - id: select-estimate-tool
-            control: tab
-            label: From a monthly payment / From income / If rates change
-            effect: Switches between LoanFromPaymentTool, IncomeMultipleTool, and RateChangeTool.
-          - id: reset-estimates
-            control: button
-            label: Reset
-            effect: Restores all estimate inputs to saved salary, housing room, and mortgage defaults.
-
-      - id: estimate-from-payment
-        goal: Estimate a loan size and property price from a monthly payment, interest rate (or LTV rate band), term, and optional deposit.
-        mode: what-if
-        facts_read:
-          - mortgage-term-and-fix-end
-        figures_shown:
-          - mortgage-budget-loan-estimate
-          - mortgage-ltv-rate-band
-        actions:
-          - id: adjust-payment-loan-inputs
-            control: slider
-            label: Monthly payment / Interest rate / Term in years
-            effect: Updates monthly payment, rate, or term and recalculates estimated loan size.
-          - id: toggle-payment-deposit
-            control: button
-            label: Add deposit and buying costs
-            effect: Expands or collapses deposit and buying-costs inputs.
-
-      - id: estimate-from-income
-        goal: Estimate a borrowing range from primary and optional second annual income, editable multiples, and optional deposit.
-        mode: what-if
-        facts_read:
-          - salary
-        figures_shown:
-          - mortgage-income-multiple-range
-        actions:
-          - id: adjust-income-multiple-inputs
-            control: slider
-            label: Your yearly income before tax / Second person's yearly income / Income multiples
-            effect: Updates incomes or multiples and recalculates the borrowing range.
-
-      - id: estimate-rate-change
-        goal: Model how an interest rate change affects monthly payments on a loan.
-        mode: what-if
-        facts_read:
-          - account-balance
-          - account-rate
-          - mortgage-term-and-fix-end
-        figures_shown:
-          - mortgage-rate-comparison
-        actions:
-          - id: adjust-rate-change-inputs
-            control: input
-            label: Loan amount / Current rate / Rate change
-            effect: Updates local rate-change inputs and shows monthly payment difference.
+    facts_read:
+      - mortgage-term-and-fix-end
+      - salary
+      - account-balance
+      - account-rate
+    figures_shown:
+      - mortgage-budget-loan-estimate
+      - mortgage-ltv-rate-band
+      - mortgage-income-multiple-range
+      - mortgage-rate-comparison

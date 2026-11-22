@@ -4,363 +4,61 @@ route: /app/profile
 title: Settings
 auth: required
 purpose: Manage personal details, age and pay, tax basis, net worth choices, monthly check-in day, optional modules, sign-in security, AI connections, and data export or deletion.
-entry_points:
-  - Main app account menu (Settings)
-  - "Deep links from onboarding, retirement, dashboard, and account pages (/app/profile#... or ?tab=security)"
 route_file: apps/web/app/routes/app.profile.tsx
 
 sections:
   - id: header
-    name: Page header and section tabs
-    kind: navigation
     component: apps/web/app/features/settings/components/SettingsPage/SettingsPage.tsx
-    capabilities:
-      - id: switch-settings-tab
-        goal: Switch between Profile, Security, and Data settings tabs.
-        mode: navigate
-        actions:
-          - id: select-tab
-            control: tab
-            label: Profile / Security / Data
-            effect: Switches the active settings tab panel.
 
   - id: profile-details
-    name: Your details
-    kind: form
     component: apps/web/app/features/settings/components/ProfileTab/ProfileTab.tsx
-    when: when Profile tab is active
-    capabilities:
-      - id: update-name-and-avatar
-        goal: Update first name, last name, or profile picture.
-        mode: write
-        actions:
-          - id: upload-picture
-            control: button
-            label: Upload picture / Change picture
-            effect: Opens a file picker and saves the resized profile picture to the user profile.
-          - id: remove-picture
-            control: button
-            label: Delete picture
-            effect: Removes the saved profile picture.
-          - id: edit-first-name
-            control: input
-            label: First name
-            effect: Saves first name on blur or Enter when changed.
-          - id: edit-last-name
-            control: input
-            label: Last name
-            effect: Saves last name on blur or Enter when changed.
 
   - id: age-and-pay
-    name: Your age and pay
-    kind: form
     component: apps/web/app/features/settings/components/AgeAndPaySection/AgeAndPaySection.tsx
-    when: when Profile tab is active
-    capabilities:
-      - id: update-age-salary-pension
-        goal: Set birth year, employment type, yearly salary before tax, and workplace pension contribution rates.
-        mode: write
-        facts_read:
-          - birth-year
-          - employment-type
-          - salary
-          - pension-rates
-        facts_written:
-          - birth-year
-          - employment-type
-          - salary
-          - pension-rates
-        actions:
-          - id: edit-birth-year
-            control: input
-            label: Year of birth
-            effect: Validates and saves birth year on blur or Enter.
-          - id: select-employment-type
-            control: select
-            label: Employment type
-            effect: Saves employment type immediately on change.
-          - id: edit-salary
-            control: input
-            label: Yearly salary before tax
-            effect: Saves annual salary on blur or Enter.
-          - id: switch-contribution-unit
-            control: tab
-            label: "% of salary / £ a month"
-            effect: Switches pension contribution input display between percentage and monthly pounds.
-          - id: edit-employee-pension
-            control: input
-            label: Your pension contribution
-            effect: Saves employee pension contribution rate on blur or Enter.
-          - id: edit-employer-pension
-            control: input
-            label: Employer contribution
-            effect: Saves employer pension contribution rate on blur or Enter.
-          - id: open-pension-page
-            control: link
-            label: Your pension
-            effect: Navigates to the Pension page to manage contribution method and pots.
-            target: /app/pension
+    facts_read:
+      - birth-year
+      - employment-type
+      - salary
+      - pension-rates
 
   - id: tax-basis
-    name: How we work out your tax
-    kind: form
     component: apps/web/app/features/settings/components/ProfileTab/ProfileTab.tsx
-    when: when Profile tab is active
-    capabilities:
-      - id: update-tax-region-and-loans
-        goal: Set UK tax region and student loan plan, or navigate to Self Assessment or Mortgage settings.
-        mode: write
-        facts_read:
-          - tax-region
-          - student-loan-plan
-        facts_written:
-          - tax-region
-          - student-loan-plan
-        actions:
-          - id: select-tax-region
-            control: select
-            label: Where do you pay tax?
-            effect: Saves the UK tax region immediately on change.
-          - id: select-student-loan
-            control: select
-            label: Student loan plan
-            effect: Saves the selected student loan plan immediately on change.
-          - id: open-tax-page
-            control: link
-            label: Tax and take-home pay
-            effect: Navigates to Self Assessment and tax settings.
-            target: /app/self-assessment
-          - id: open-mortgage-page
-            control: link
-            label: Your mortgage
-            effect: Navigates to the Mortgage page when the user owns a home.
-            target: /app/mortgage
+    facts_read:
+      - tax-region
+      - student-loan-plan
 
   - id: net-worth-choices
-    name: What counts in your net worth
-    kind: form
     component: apps/web/app/features/settings/components/NetWorthChoices/NetWorthChoices.tsx
-    when: when Profile tab is active and property or student loan accounts exist
-    capabilities:
-      - id: toggle-net-worth-basis
-        goal: Choose whether property equity and student loans count towards headline net worth.
-        mode: write
-        facts_read:
-          - net-worth-choices
-        facts_written:
-          - net-worth-choices
-        actions:
-          - id: toggle-property-in-net-worth
-            control: toggle
-            label: Count property you own, less the mortgage on it
-            effect: Saves netWorthCountsProperty immediately on toggle.
-          - id: toggle-student-loan-in-net-worth
-            control: toggle
-            label: Count your student loan as a debt
-            effect: Saves netWorthCountsStudentLoan immediately on toggle.
+    facts_read:
+      - net-worth-choices
 
   - id: check-in-day
-    name: Monthly check-in
-    kind: form
     component: apps/web/app/features/settings/components/CheckInDaySetting/CheckInDaySetting.tsx
-    when: when Profile tab is active
-    capabilities:
-      - id: set-check-in-day
-        goal: Choose which day of the month the monthly check-in falls on.
-        mode: write
-        facts_read:
-          - check-in-day
-        facts_written:
-          - check-in-day
-        actions:
-          - id: select-check-in-day
-            control: select
-            label: Check-in day
-            effect: Saves the monthly check-in day immediately on change.
+    facts_read:
+      - check-in-day
 
   - id: sections-you-use
-    name: Sections you use
-    kind: form
     component: apps/web/app/features/settings/components/ProfileTab/ProfileTab.tsx
-    when: when Profile tab is active
-    capabilities:
-      - id: toggle-self-assessment-module
-        goal: Enable or disable the optional Self Assessment tax section in navigation and dashboard.
-        mode: write
-        actions:
-          - id: toggle-self-assessment
-            control: toggle
-            label: Self Assessment
-            effect: Adds or removes the Self Assessment page and dashboard widget immediately.
-      - id: toggle-partner-mode
-        goal: Show or hide sole/joint ownership and share fields on accounts, debts, mortgages, and budget items.
-        mode: write
-        facts_read:
-          - partner-mode
-        facts_written:
-          - partner-mode
-        actions:
-          - id: partner-mode-toggle
-            control: toggle
-            label: Partner mode
-            effect: Saves partnerMode immediately on toggle.
-            target: PATCH /user-profile
+    facts_read:
+      - partner-mode
 
   - id: security-sign-in
-    name: How you sign in
-    kind: form
     component: apps/web/app/features/settings/components/SecurityTab/SecurityTab.tsx
-    when: when Security tab is active
-    capabilities:
-      - id: request-password-reset
-        goal: View account email and request a password reset email.
-        mode: write
-        actions:
-          - id: change-password
-            control: button
-            label: Change password
-            effect: Sends a password reset link to the account email address.
 
   - id: security-invites
-    name: Invites
-    kind: navigation
     component: apps/web/app/features/settings/components/SecurityTab/SecurityTab.tsx
-    when: when Security tab is active and user is a beta admin
-    capabilities:
-      - id: open-invites-admin
-        goal: Navigate to the beta invites management page.
-        mode: navigate
-        actions:
-          - id: manage-invites
-            control: link
-            label: Manage invites
-            effect: Navigates to /app/invites.
-            target: /app/invites
 
   - id: ai-connections
-    name: AI connections (preview)
-    kind: form
     component: apps/web/app/features/ai-connections/components/McpConnectionCard/McpConnectionCard.tsx
-    when: when Security tab is active
-    capabilities:
-      - id: manage-mcp-tokens
-        goal: Create, copy, and revoke MCP connection tokens for external AI assistants.
-        mode: write
-        actions:
-          - id: open-create-token-form
-            control: button
-            label: Create token
-            effect: Opens the form to name and configure a new MCP connection token.
-          - id: edit-token-name
-            control: input
-            label: Connection name
-            effect: Sets the label for the new MCP connection token.
-          - id: select-token-expiry
-            control: select
-            label: Token expires after
-            effect: Sets the expiry duration for the new MCP connection token.
-          - id: toggle-allow-staging
-            control: toggle
-            label: Allow staging balance imports
-            effect: Grants or omits the import-staging scope on the new token.
-          - id: confirm-create-token
-            control: button
-            label: Create token
-            effect: Generates a new MCP token and displays it once for copying.
-          - id: copy-new-token
-            control: button
-            label: Copy / Copied
-            effect: Copies the newly generated token to the clipboard.
-          - id: copy-server-address
-            control: button
-            label: Copy the server address
-            effect: Copies the MCP server URL to the clipboard.
-          - id: disconnect-token
-            control: button
-            label: Disconnect
-            effect: Opens confirmation dialog and revokes the selected MCP token.
-      - id: export-ai-context-pack
-        goal: Copy or download a structured financial summary for an AI assistant.
-        mode: export
-        actions:
-          - id: toggle-hide-bank-names
-            control: toggle
-            label: Hide bank and provider names in the summary
-            effect: Anonymises institution names in the exported AI summary.
-          - id: copy-summary
-            control: button
-            label: Copy summary
-            effect: Copies the AI context pack to the clipboard.
-          - id: download-markdown
-            control: button
-            label: Download as Markdown
-            effect: Downloads the AI context pack as a Markdown file.
-          - id: download-json
-            control: button
-            label: Download as JSON
-            effect: Downloads the AI context pack as a JSON file.
 
   - id: security-imports
-    name: Imports
-    kind: navigation
     component: apps/web/app/features/settings/components/SecurityTab/SecurityTab.tsx
-    when: when Security tab is active and user has a token with staging scope
-    capabilities:
-      - id: open-imports-list
-        goal: Navigate to staged balance imports awaiting review.
-        mode: navigate
-        actions:
-          - id: review-imports
-            control: link
-            label: Review imports
-            effect: Navigates to /app/imports.
-            target: /app/imports
 
   - id: data-export
-    name: Download your data
-    kind: form
     component: apps/web/app/features/settings/components/DataExportSection/DataExportSection.tsx
-    when: when Data tab is active
-    capabilities:
-      - id: export-account-json
-        goal: Download a full JSON copy of all user data.
-        mode: export
-        actions:
-          - id: download-data
-            control: button
-            label: Download your data
-            effect: Streams a JSON export from /account/export.
-            target: /account/export
 
   - id: reset-financial-data
-    name: Delete your financial data
-    kind: form
     component: apps/web/app/features/settings/components/DataTab/DataTab.tsx
-    when: when Data tab is active
-    capabilities:
-      - id: reset-all-financial-data
-        goal: Permanently erase all financial data while keeping the login, then return to onboarding.
-        mode: delete
-        actions:
-          - id: delete-all-data
-            control: button
-            label: Delete all data
-            effect: Opens type-to-confirm dialog and deletes all accounts, budgets, and tax records.
-            confirm: Type RESET in the confirmation dialog to permanently delete all financial data.
 
   - id: delete-account
-    name: Delete your account
-    kind: form
     component: apps/web/app/features/settings/components/DeleteAccountSection/DeleteAccountSection.tsx
-    when: when Data tab is active
-    capabilities:
-      - id: delete-user-account
-        goal: Permanently delete the user account, all data, and sign-in login.
-        mode: delete
-        actions:
-          - id: delete-account
-            control: button
-            label: Delete account
-            effect: Opens type-to-confirm dialog and submits account deletion to the profile route action.
-            target: POST /app/profile
-            confirm: Type DELETE in the confirmation dialog to permanently delete your account.

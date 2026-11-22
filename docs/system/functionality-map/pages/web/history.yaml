@@ -4,191 +4,49 @@ route: /app/accounts/history
 title: Net worth history
 auth: required
 purpose: View net worth over time across recorded monthly balances, inspect month-by-month and account-by-account changes, complete the monthly check-in, and back-fill earlier months.
-entry_points:
-  - Dashboard monthly check-in prompt (/app/accounts/history?checkIn=1)
-  - Accounts page "See how it has changed" link
 route_file: apps/web/app/routes/app.accounts.history.tsx
 
 sections:
   - id: header
-    name: Page header
-    kind: header
     component: apps/web/app/features/snapshot/components/SnapshotHistoryPage/SnapshotHistoryPage.tsx
-    capabilities:
-      - id: start-check-in-from-header
-        goal: Start the monthly check-in from the page header once the chart is shown.
-        mode: write
-        actions:
-          - id: open-check-in-header
-            control: button
-            label: Start monthly check-in
-            effect: Opens CheckInSheet in checkIn mode for the current month.
 
   - id: empty-state
-    name: Empty history state
-    kind: content
     component: apps/web/app/features/snapshot/components/SnapshotHistoryPage/SnapshotHistoryPage.tsx
-    when: when stage is none
-    capabilities:
-      - id: start-history
-        goal: Start the first monthly check-in, add an earlier month, or navigate to add accounts when no accounts exist.
-        mode: write
-        actions:
-          - id: start-first-check-in
-            control: button
-            label: Start monthly check-in
-            effect: Opens CheckInSheet in checkIn mode when accounts exist.
-          - id: start-first-backfill
-            control: button
-            label: Add earlier months
-            effect: Opens CheckInSheet in backfill mode when accounts exist.
-          - id: add-accounts-first
-            control: link
-            label: Add an account
-            effect: Navigates to /app/accounts when no accounts exist yet.
-            target: /app/accounts
 
   - id: hero
-    name: Net worth change hero
-    kind: hero
     component: apps/web/app/features/snapshot/components/SnapshotHistoryPage/SnapshotHistoryPage.tsx
-    when: when stage is not none
-    capabilities:
-      - id: view-monthly-change
-        goal: View the net worth change between the last two recorded months, and open this month's check-in if not yet done.
-        mode: read
-        facts_read:
-          - balance-history
-          - account-balance
-          - net-worth-choices
-          - check-in-done
-        figures_shown:
-          - net-worth-over-time
-        actions:
-          - id: hero-open-check-in
-            control: link
-            label: Check-in not done yet prompt
-            effect: Opens CheckInSheet in checkIn mode for the current month.
-            target: /app/accounts/history?checkIn=1
+    facts_read:
+      - balance-history
+      - account-balance
+      - net-worth-choices
+      - check-in-done
+    figures_shown:
+      - net-worth-over-time
 
   - id: history-chart
-    name: Net worth over time chart and data table
-    kind: table
     component: apps/web/app/features/snapshot/components/NetWorthHistoryChart/NetWorthHistoryChart.tsx
-    when: when stage is not none
-    capabilities:
-      - id: inspect-net-worth-series
-        goal: View the net worth line chart (from 3 recorded months), filter and sort the monthly data table, or open back-fill for earlier months.
-        mode: read
-        facts_read:
-          - balance-history
-          - net-worth-choices
-          - check-in-day
-        figures_shown:
-          - net-worth-over-time
-        actions:
-          - id: open-check-in-inline
-            control: button
-            label: Start monthly check-in
-            effect: Opens CheckInSheet in checkIn mode when fewer than 3 months are recorded.
-          - id: open-backfill
-            control: button
-            label: Add earlier months
-            effect: Opens CheckInSheet in backfill mode to record balances for a past month.
-          - id: toggle-chart-data
-            control: drawer-toggle
-            label: Show data
-            effect: Expands or collapses the NetWorthMonthTable under the chart.
-          - id: filter-month-source
-            control: select
-            label: Source
-            effect: Filters the monthly data table by All months, Recorded, or Carried forward.
-          - id: sort-month-table
-            control: sort-header
-            label: Month / Net worth / Source
-            effect: Sorts the monthly net worth table by the chosen column.
+    facts_read:
+      - balance-history
+      - net-worth-choices
+      - check-in-day
+    figures_shown:
+      - net-worth-over-time
 
   - id: account-changes-drawer
-    name: Changes by account drawer
-    kind: drawer
     component: apps/web/app/features/snapshot/components/MonthlyChangeTable/MonthlyChangeTable.tsx
-    when: when latest and previous recorded months have account changes
-    capabilities:
-      - id: inspect-account-changes
-        goal: Expand the changes-by-account table, search by account name, filter by owned or debt, and sort columns.
-        mode: read
-        facts_read:
-          - balance-history
-          - account-name
-          - account-type
-        figures_shown:
-          - net-worth-over-time
-        actions:
-          - id: toggle-changes-drawer
-            control: drawer-toggle
-            label: Show changes by account
-            effect: Expands or collapses the MonthlyChangeTable.
-          - id: search-account-changes
-            control: input
-            label: Search accounts
-            effect: Filters account change rows by account name.
-          - id: filter-account-kind
-            control: select
-            label: Type
-            effect: Filters rows by All accounts, What you own, or Debts.
-          - id: sort-account-changes
-            control: sort-header
-            label: Account / Previous month / Current month / Effect
-            effect: Sorts the account changes table by the chosen column.
+    facts_read:
+      - balance-history
+      - account-name
+      - account-type
+    figures_shown:
+      - net-worth-over-time
 
   - id: check-in-sheet
-    name: Monthly check-in and backfill sheet
-    kind: drawer
     component: apps/web/app/features/snapshot/components/CheckInSheet/CheckInSheet.tsx
-    when: when sheet is checkIn or backfill
-    capabilities:
-      - id: save-check-in-or-backfill
-        goal: Record or update monthly balances for the current month (check-in) or pick a past month and year to back-fill balances.
-        mode: write
-        facts_read:
-          - account-balance
-          - balance-history
-          - check-in-done
-        facts_written:
-          - balance-history
-          - account-balance
-          - check-in-done
-        figures_shown:
-          - check-in-calculated-balance
-          - net-worth
-        actions:
-          - id: select-backfill-month
-            control: select
-            label: Month
-            effect: Picks the past month to back-fill when in backfill mode.
-          - id: select-backfill-year
-            control: select
-            label: Year
-            effect: Picks the past year (from 2000 to current year) when in backfill mode.
-          - id: keep-remaining-balances
-            control: button
-            label: Keep all / Keep rest unchanged
-            effect: Confirms eligible unchanged balances in checkIn mode.
-          - id: input-snapshot-balance
-            control: input
-            label: Account balance or amount owed
-            effect: Enters a balance for the selected month.
-          - id: save-backfill-balances
-            control: button
-            label: Save balances
-            effect: Saves entered balances for the chosen past month.
-            target: PUT /snapshots/:month
-          - id: finish-check-in
-            control: button
-            label: Finish check-in
-            effect: Completes the current month's check-in and shows the summary.
-            target: PUT /snapshots/:month
-          - id: close-check-in
-            control: button
-            label: Done / Cancel
-            effect: Closes the sheet and refreshes history data.
+    facts_read:
+      - account-balance
+      - balance-history
+      - check-in-done
+    figures_shown:
+      - check-in-calculated-balance
+      - net-worth

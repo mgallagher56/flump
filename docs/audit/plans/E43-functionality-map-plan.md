@@ -3,6 +3,8 @@
 Decisions: accepted 2026-11-21 (FM1–FM5)
 
 > Status: complete 2026-11-21 (S0–S4 complete; 100% route-coverage enforcement active). Paths are relative to the repository root.
+>
+> Superseded in part on 22 November 2026: the owner cut the map back to route level, because it is for AI agents only and hand-kept control labels go stale. Capabilities, actions, `entry_points`, section `name`, `kind` and `when`, and `actions-index.md` are removed. Sections keep `id`, `component`, `facts_read` and `figures_shown`. The current format is in `docs/system/functionality-map/README.md`; the layer 3 and 4 detail below is historical.
 
 ## 1. Decisions (for owner sign-off before S0/S1)
 

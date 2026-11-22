@@ -4,95 +4,20 @@ route: /pricing
 title: Pricing | Flump
 auth: public
 purpose: Show that Flump is free during the beta, what the beta includes, and note any possible future paid plan without a price set.
-entry_points:
-  - Marketing header Pricing link
-  - Marketing footer Product column (Pricing)
-  - Direct URL (/pricing)
 route_file: apps/marketing/src/pages/PricingPage/PricingPage.tsx
 
 sections:
   - id: site-header
-    name: Marketing site header
-    kind: navigation
     component: apps/marketing/src/components/Header/Header.tsx
-    capabilities:
-      - id: navigate-site
-        goal: Navigate across marketing pages, toggle light/dark theme, or open the web app.
-        mode: navigate
-        actions:
-          - id: home-logo
-            control: link
-            label: Flump home
-            effect: Navigates to the marketing home page.
-            target: /
-          - id: features-menu
-            control: button
-            label: Features
-            effect: Opens the Features dropdown listing All features, the five money areas, AI connection, and Security and privacy.
-          - id: theme-toggle
-            control: toggle
-            label: Toggle colour theme
-            effect: Switches between light and dark theme.
-          - id: open-app-cta
-            control: link
-            label: Open Flump / Sign up
-            effect: Opens the web app sign-up or dashboard URL.
 
   - id: header
-    name: Pricing heading
-    kind: header
     component: apps/marketing/src/pages/PricingPage/PricingPage.tsx
-    capabilities:
-      - id: orient
-        goal: State the Pricing heading and beta plan intro ("One plan you can use today.").
-        mode: read
-        actions: []
 
   - id: beta-plan
-    name: Free during the beta plan card
-    kind: content
     component: apps/marketing/src/pages/PricingPage/PricingPage.tsx
-    capabilities:
-      - id: start-beta-plan
-        goal: Review what is included during the beta and open sign-up.
-        mode: navigate
-        actions:
-          - id: beta-signup-cta
-            control: link
-            label: Request an invite / Sign up
-            effect: Opens the web app sign-up or contact invite URL.
 
   - id: paid-plan
-    name: Future paid plan notice
-    kind: notice
     component: apps/marketing/src/pages/PricingPage/PricingPage.tsx
-    when: when VITE_SHOW_PAID_PLAN is not false
-    capabilities:
-      - id: read-paid-plan-note
-        goal: Read the quiet note that a future paid plan has no price set and cannot be bought today.
-        mode: read
-        actions: []
 
   - id: site-footer
-    name: Marketing site footer
-    kind: footer
     component: apps/marketing/src/components/Footer/Footer.tsx
-    capabilities:
-      - id: footer-navigation
-        goal: Navigate to Product feature pages, Company pages, or sign in to the web app.
-        mode: navigate
-        actions:
-          - id: footer-features-link
-            control: link
-            label: All features
-            effect: Navigates to /features.
-            target: /features
-          - id: footer-contact-link
-            control: link
-            label: Contact
-            effect: Navigates to /contact.
-            target: /contact
-          - id: footer-signin-link
-            control: link
-            label: Sign in
-            effect: Opens the web app /login route.
