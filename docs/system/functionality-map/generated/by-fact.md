@@ -363,6 +363,7 @@
 | `pension-going-in`               | `web.pension.scenario-zone`                       | web/pension                | `/app/pension`                 |
 | `personal-allowance-allocation`  | `web.self-assessment.calculation-drawer`          | web/self-assessment        | `/app/self-assessment`         |
 | `personal-allowance-allocation`  | `web.self-assessment.headline-or-empty`           | web/self-assessment        | `/app/self-assessment`         |
+| `property-transaction-tax`       | `web.mortgage-estimates.stamp-duty-estimate`      | web/mortgage-estimates     | `/app/mortgage-estimates`      |
 | `retirement-income`              | `web.retirement.hero`                             | web/retirement             | `/app/retirement`              |
 | `retirement-income`              | `web.retirement.kpis`                             | web/retirement             | `/app/retirement`              |
 | `retirement-income`              | `web.retirement.what-if-zone`                     | web/retirement             | `/app/retirement`              |

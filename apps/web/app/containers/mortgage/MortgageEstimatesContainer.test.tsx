@@ -141,4 +141,38 @@ describe("MortgageEstimatesContainer", () => {
     const term = screen.getByRole("textbox", { name: "Term in years input" }) as HTMLInputElement;
     expect(term.value).toBe("25");
   });
+
+  it("asks where the property is with no prefill and adds the unverified lead once a stamp duty figure shows", () => {
+    // Saved tax region is ENGLAND, but nothing is prefilled: England, Northern Ireland and Wales
+    // share one income tax region and have different property taxes (E39 MA7).
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    render(
+      <MemoryRouter>
+        <MortgageEstimatesContainer />
+      </MemoryRouter>,
+    );
+    const notice = () =>
+      screen.getByRole("note", { name: "Guidance, not advice" }).textContent ?? "";
+    expect(notice().startsWith("Unverified estimate.")).toBe(false);
+
+    fireEvent.click(screen.getByRole("button", { name: "Stamp duty estimate" }));
+    for (const name of ["England or Northern Ireland", "Scotland", "Wales"]) {
+      expect((screen.getByRole("radio", { name }) as HTMLInputElement).checked).toBe(false);
+    }
+
+    const price = screen.getByLabelText(/Property price/);
+    fireEvent.change(price, { target: { value: "250000" } });
+    fireEvent.blur(price);
+    fireEvent.click(screen.getByRole("radio", { name: "England or Northern Ireland" }));
+    fireEvent.click(screen.getByRole("radio", { name: "No" }));
+
+    // SDLT £250,000, standard rates: 2% x (250,000 - 125,000) = £2,500.
+    expect(screen.getByTestId("stamp-duty-result").textContent).toContain(
+      "Estimated stamp duty: ~£2,500",
+    );
+    expect(notice().startsWith("Unverified estimate.")).toBe(true);
+    // Scenario only: nothing is sent.
+    expect(fetchSpy).not.toHaveBeenCalled();
+    fetchSpy.mockRestore();
+  });
 });

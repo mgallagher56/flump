@@ -598,6 +598,7 @@ flowchart LR
 ```mermaid
 flowchart LR
   s_mortgage["Mortgage"]
+  s_mortgage_estimates["Mortgage estimates"]
   g_housing_room{{"Left each month before housing"}}
   f_salary(["Salary (yearly pay before tax)"])
   f_salary ==> g_housing_room
@@ -631,4 +632,5 @@ flowchart LR
   g_mortgage_ltv_rate_band{{"Default mortgage rate band by LTV"}}
   g_mortgage_ltv_rate_band -.-> s_mortgage
   g_property_transaction_tax{{"Estimated stamp duty (SDLT, LBTT, LTT)"}}
+  g_property_transaction_tax -.-> s_mortgage_estimates
 ```
