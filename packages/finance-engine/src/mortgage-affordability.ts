@@ -1,15 +1,42 @@
 import { calculateLoanFromMonthlyPayment } from "./mortgage.js";
-import {
-  lookupMortgageRateBandForLtv,
-  MORTGAGE_LTV_RATE_BANDS,
-  type MortgageRateBand,
-} from "./mortgage-rate-assumptions.js";
+import { MORTGAGE_LTV_RATE_BANDS, type MortgageRateBand } from "./mortgage-rate-assumptions.js";
 
 /** Default lower income multiple assumption (E39 section 10a, MA2). */
 export const DEFAULT_INCOME_MULTIPLE_LOW = 4;
 
 /** Default upper income multiple assumption (E39 section 10a, MA2). */
 export const DEFAULT_INCOME_MULTIPLE_HIGH = 4.5;
+
+/**
+ * Term assumed for a mortgage estimate when no saved mortgage term is known: 25 years
+ * (300 months). Shown as an assumption the user can change.
+ */
+export const DEFAULT_ESTIMATE_TERM_MONTHS = 300;
+
+export interface SavedMortgageTermInput {
+  /** Saved remaining term in months, the preferred source. */
+  remainingTermMonths?: number | string | null;
+  /** Saved remaining term in years, used when no month count is saved. */
+  remainingTermYears?: number | string | null;
+}
+
+function positiveNumber(value: number | string | null | undefined): number | null {
+  const n = typeof value === "string" && value.trim() !== "" ? Number(value) : value;
+  return typeof n === "number" && Number.isFinite(n) && n > 0 ? n : null;
+}
+
+/**
+ * Term in whole months for a mortgage estimate (E39 section 4c): the saved remaining term in
+ * months as saved, else the saved term in years times 12, else `DEFAULT_ESTIMATE_TERM_MONTHS`.
+ * The saved month count is never rounded to whole years.
+ */
+export function resolveEstimateTermMonths(saved: SavedMortgageTermInput | null): number {
+  const months = positiveNumber(saved?.remainingTermMonths);
+  if (months !== null) return Math.round(months);
+  const years = positiveNumber(saved?.remainingTermYears);
+  if (years !== null) return Math.round(years * 12);
+  return DEFAULT_ESTIMATE_TERM_MONTHS;
+}
 
 const round2 = (n: number): number => Math.round(n * 100) / 100;
 const round1 = (n: number): number => Math.round(n * 10) / 10;
@@ -202,7 +229,7 @@ function resolveLtvBandFromDeposit(
     const price = highLoan + netDepositGbp;
     const ltvPct = (highLoan / price) * 100;
     if (ltvPct <= band.maxLtvPct) {
-      return lookupMortgageRateBandForLtv(ltvPct);
+      return band;
     }
   }
   return null;

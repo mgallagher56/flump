@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 import {
   calculateBudgetLoanEstimate,
   calculateIncomeMultipleRange,
+  DEFAULT_ESTIMATE_TERM_MONTHS,
   DEFAULT_INCOME_MULTIPLE_HIGH,
   DEFAULT_INCOME_MULTIPLE_LOW,
+  resolveEstimateTermMonths,
 } from "./mortgage-affordability.js";
 
 describe("mortgage affordability (E39 section 4a & 10a)", () => {
@@ -222,6 +224,63 @@ describe("mortgage affordability (E39 section 4a & 10a)", () => {
         depositGbp: 25000,
       });
       expect(highLtv.matchedRateBand?.maxLtvPct).toBe(90);
+    });
+
+    it("keeps the matched band when its loan lands just inside a lower band's LTV", () => {
+      // £1,000 a month, 300 months, £45,030 deposit. Loan = 1000 * (1 - (1 + i)^-300) / i.
+      // 70% band at 4.32%: i = 0.0036, (1.0036)^-300 = 0.34023,
+      //   loan = 659.77 / 0.0036 = £183,269, LTV = 183269 / 228299 = 80.28% > 70, no fit.
+      // 80% band at 4.41%: i = 0.003675, (1.003675)^-300 = 0.33270,
+      //   loan = 667.30 / 0.003675 = £181,578, LTV = 181578 / 226608 = 80.13% > 80, no fit.
+      // 90% band at 4.49%: i = 0.0037417, (1.0037417)^-300 = 0.32614,
+      //   loan = 673.86 / 0.0037417 = £180,096, LTV = 180096 / 225126 = 79.998% <= 90, fits.
+      // The matched band is the 90% band (4.49% to 4.94%). Looking the band up again from
+      // 79.998% would wrongly give the 80% band, whose 4.41% rate yields 80.13% LTV.
+      const res = calculateBudgetLoanEstimate({
+        monthlyPaymentGbp: 1000,
+        termMonths: 300,
+        depositGbp: 45030,
+      });
+      expect(res.matchedRateBand).toEqual({
+        maxLtvPct: 90,
+        lowAnnualRatePct: 4.49,
+        highAnnualRatePct: 4.94,
+      });
+      expect(res.lowAnnualRatePct).toBe(4.49);
+      expect(res.highAnnualRatePct).toBe(4.94);
+      // High LTV uses the higher loan at 4.49%: 79.998%, within the 90% band and not 80.13%.
+      expect(res.highLtvPct).toBeLessThanOrEqual(80);
+      expect(res.highLtvPct).toBeGreaterThan(79.9);
+    });
+  });
+
+  describe("resolveEstimateTermMonths", () => {
+    it("uses the saved month count as saved, not rounded to whole years", () => {
+      // 235 months is 19 years 7 months; rounding to years would give 20 x 12 = 240.
+      expect(resolveEstimateTermMonths({ remainingTermMonths: 235, remainingTermYears: 30 })).toBe(
+        235,
+      );
+      // A numeric string from the API reads the same: "235" -> 235.
+      expect(resolveEstimateTermMonths({ remainingTermMonths: "235" })).toBe(235);
+    });
+
+    it("falls back to the saved years times 12 when no month count is saved", () => {
+      // 18 years x 12 = 216 months; 0 months counts as not saved.
+      expect(resolveEstimateTermMonths({ remainingTermMonths: 0, remainingTermYears: 18 })).toBe(
+        216,
+      );
+      // 17.5 years x 12 = 210 months.
+      expect(resolveEstimateTermMonths({ remainingTermYears: 17.5 })).toBe(210);
+    });
+
+    it("assumes 25 years (300 months) when no term is saved", () => {
+      expect(DEFAULT_ESTIMATE_TERM_MONTHS).toBe(300);
+      expect(resolveEstimateTermMonths(null)).toBe(300);
+      expect(resolveEstimateTermMonths({ remainingTermMonths: -5, remainingTermYears: "" })).toBe(
+        300,
+      );
+      // 1 month is the smallest positive term and is kept.
+      expect(resolveEstimateTermMonths({ remainingTermMonths: 1 })).toBe(1);
     });
   });
 });
