@@ -11,9 +11,9 @@ const APP_DIR = path.resolve(__dirname, "..");
 const read = (file: string) => fs.readFileSync(path.join(APP_DIR, file), "utf8");
 
 describe("page canvas", () => {
-  it("the root body uses the surface.canvas variable", () => {
+  it("the root body uses the surface.canvas token", () => {
     const root = read("root.tsx");
-    expect(root).toContain('backgroundColor: "var(--colors-surface-canvas)"');
+    expect(root).toContain('backgroundColor: "surface.canvas"');
   });
 
   it("no web source uses the undefined --colors-background variable", () => {
