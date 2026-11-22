@@ -2,7 +2,7 @@
 
 # Functionality map: overview
 
-Mapped pages: 34 | Sections: 199 | Excluded routes: 19
+Mapped pages: 34 | Sections: 200 | Excluded routes: 19
 
 ## web
 
@@ -192,6 +192,7 @@ Mapped pages: 34 | Sections: 199 | Excluded routes: 19
 | `hero-and-kpis`        | `apps/web/app/containers/mortgage/MortgageEstimatesContainer.tsx`                     | `salary`, `typed-take-home`, `budget-entries`, `housing-cost`, `account-monthly-amount` | `housing-room`, `take-home`                                                                                             |
 | `housing-room-details` | `apps/web/app/features/mortgage/components/HousingRoomSummary/HousingRoomSummary.tsx` | `budget-entries`, `other-outgoings`, `housing-cost`                                     | `housing-room`                                                                                                          |
 | `scenario-zone`        | `apps/web/app/containers/mortgage/MortgageEstimatesContainer.tsx`                     | `mortgage-term-and-fix-end`, `salary`, `account-balance`, `account-rate`                | `mortgage-budget-loan-estimate`, `mortgage-ltv-rate-band`, `mortgage-income-multiple-range`, `mortgage-rate-comparison` |
+| `stamp-duty-estimate`  | `apps/web/app/features/mortgage/components/StampDutyEstimate/StampDutyEstimate.tsx`   | -                                                                                       | `property-transaction-tax`                                                                                              |
 
 ### not-found: We cannot find that page
 

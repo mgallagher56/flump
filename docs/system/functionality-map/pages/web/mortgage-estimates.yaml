@@ -43,3 +43,8 @@ sections:
       - mortgage-ltv-rate-band
       - mortgage-income-multiple-range
       - mortgage-rate-comparison
+
+  - id: stamp-duty-estimate
+    component: apps/web/app/features/mortgage/components/StampDutyEstimate/StampDutyEstimate.tsx
+    figures_shown:
+      - property-transaction-tax

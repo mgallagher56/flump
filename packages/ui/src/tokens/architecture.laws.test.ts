@@ -222,6 +222,7 @@ describe("Architecture & Design System Laws", () => {
         "OverpayVsSaveCompare",
         "OverpaymentSimulator",
         "RateChangeTool",
+        "StampDutyEstimate",
       ]) {
         expect(mortgageComponents).toContain(expected);
       }

@@ -7,8 +7,10 @@ import {
   profileFactsFromProfile,
   resolveEstimateTermMonths,
   selectHousingRoom,
+  type UkPropertyTaxJurisdiction,
 } from "@flump/finance-engine";
 import {
+  DELTA_PANEL_COPY,
   HeroFigure,
   KpiCard,
   KpiStrip,
@@ -24,6 +26,10 @@ import { HousingRoomSummary } from "~/features/mortgage/components/HousingRoomSu
 import { IncomeMultipleTool } from "~/features/mortgage/components/IncomeMultipleTool";
 import { LoanFromPaymentTool } from "~/features/mortgage/components/LoanFromPaymentTool";
 import { RateChangeTool } from "~/features/mortgage/components/RateChangeTool";
+import {
+  estimateStampDuty,
+  StampDutyEstimate,
+} from "~/features/mortgage/components/StampDutyEstimate";
 import { useScenarioState } from "~/hooks/useScenarioState";
 import { buildWorkspacePicture } from "~/utils/financialPicture";
 import {
@@ -147,6 +153,11 @@ const MortgageEstimatesContainer: FC = () => {
       rateChangeLoanGbp: null as number | null,
       rateChangeRatePct: null as number | null,
       rateChangeDeltaPct: 1,
+      // Stamp duty (E39 MA7): no prefill. The saved tax region cannot tell England from Wales,
+      // so the user always chooses where the property is.
+      stampDutyPriceGbp: null as number | null,
+      propertyJurisdiction: null as UkPropertyTaxJurisdiction | null,
+      allFirstTimeBuyersMainHome: null as boolean | null,
     }),
     [defaultMonthlyPayment, savedMortgageTermYears, savedSalary],
   );
@@ -179,6 +190,15 @@ const MortgageEstimatesContainer: FC = () => {
     (savedMortgageRate && savedMortgageRate > 0 ? savedMortgageRate : null);
 
   const roomKnown = isFigureKnown(activeHousingRoom);
+
+  // A tax figure is on screen once the stamp duty estimate shows, so the zone's one notice leads
+  // with the fixed "Unverified estimate" wording (R6, copy guide 7.3).
+  const showsStampDuty =
+    estimateStampDuty({
+      propertyPriceGbp: v.stampDutyPriceGbp,
+      jurisdiction: v.propertyJurisdiction,
+      allFirstTimeBuyersMainHome: v.allFirstTimeBuyersMainHome,
+    }) !== null;
 
   return (
     <PageBody className={pageRoot()}>
@@ -232,7 +252,9 @@ const MortgageEstimatesContainer: FC = () => {
         notice={
           <div>
             <p className={standingNotice}>{MORTGAGE_ESTIMATE_STANDALONE_NOTICE}</p>
-            <ProjectionNotice />
+            <ProjectionNotice
+              lead={showsStampDuty ? `${DELTA_PANEL_COPY.unverifiedBadge}.` : undefined}
+            />
           </div>
         }
         title="Model a mortgage"
@@ -289,6 +311,17 @@ const MortgageEstimatesContainer: FC = () => {
           size="sm"
           value={activeTool}
           onValueChange={(value) => setActiveTool(value as EstimateTool)}
+        />
+
+        <StampDutyEstimate
+          allFirstTimeBuyersMainHome={v.allFirstTimeBuyersMainHome}
+          jurisdiction={v.propertyJurisdiction}
+          propertyPriceGbp={v.stampDutyPriceGbp}
+          onAllFirstTimeBuyersMainHomeChange={(val) =>
+            scenario.set("allFirstTimeBuyersMainHome", val)
+          }
+          onJurisdictionChange={(val) => scenario.set("propertyJurisdiction", val)}
+          onPropertyPriceChange={(val) => scenario.set("stampDutyPriceGbp", val)}
         />
       </ScenarioZone>
     </PageBody>
