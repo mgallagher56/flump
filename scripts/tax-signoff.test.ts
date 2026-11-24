@@ -7,15 +7,27 @@ import {
 import { UK_WHATIF_VECTORS } from "../packages/finance-engine/src/test-vectors/uk-whatif.vectors";
 import { applySignoff, generateSheet, parseTicked } from "./lib/tax-signoff";
 
-const v = UK_TAX_VECTORS.find((x) => x.status === "VERIFIED") as UkTaxVector;
-const u = UK_TAX_VECTORS.find((x) => x.status === "UNVERIFIED") as UkTaxVector;
+// Fixture: the catalogues with their signatures removed. Since 24 Nov 2026 every vector is signed,
+// so the tests sign unsigned copies rather than depend on which years the catalogue has left.
+const unsign = <T extends object>(x: T): T => {
+  const { signedOffAt, signedOffHash, rulingRef, ...rest } = x as T & {
+    signedOffAt?: unknown;
+    signedOffHash?: unknown;
+    rulingRef?: unknown;
+  };
+  return { ...rest, signedOffBy: null } as T;
+};
+const CORE = UK_TAX_VECTORS.map(unsign);
+const WHATIF = UK_WHATIF_VECTORS.map(unsign);
+const v = CORE.find((x) => x.status === "VERIFIED") as UkTaxVector;
+const u = CORE.find((x) => x.status === "UNVERIFIED") as UkTaxVector;
 const fake = (id: string, extra = "") =>
   `  {\n    id: "${id}",\n    taxYear: "x",\n    signedOffBy: null,${extra}\n  },\n`;
 
 describe("tax sign-off sheet", () => {
   test("lists every vector of the year as unticked", () => {
-    const sheet = generateSheet(v.taxYear, UK_TAX_VECTORS);
-    const n = UK_TAX_VECTORS.filter((x) => x.taxYear === v.taxYear).length;
+    const sheet = generateSheet(v.taxYear, CORE);
+    const n = CORE.filter((x) => x.taxYear === v.taxYear).length;
     expect(sheet.match(/^- \[ \] /gm)?.length).toBe(n);
     expect(parseTicked(sheet)).toEqual([]);
   });
@@ -28,14 +40,7 @@ describe("tax sign-off sheet", () => {
 describe("applySignoff", () => {
   test("signs the right vector only, with a hash that validates", () => {
     const file = fake("a") + fake(v.id) + fake("b");
-    const r = applySignoff(
-      file,
-      v.taxYear,
-      [{ id: v.id }],
-      UK_TAX_VECTORS,
-      "2026-12-01",
-      "fable-decider",
-    );
+    const r = applySignoff(file, v.taxYear, [{ id: v.id }], CORE, "2026-12-01", "fable-decider");
     expect(r.signed).toEqual([v.id]);
     expect(r.text.match(/signedOffBy: null/g)?.length).toBe(2);
     expect(r.text).toContain('signedOffBy: "fable-decider",');
@@ -55,7 +60,7 @@ describe("applySignoff", () => {
       fake(u.id),
       u.taxYear,
       [{ id: u.id, ruling: "R1" }],
-      UK_TAX_VECTORS,
+      CORE,
       "2026-12-01",
       "fable-decider",
     );
@@ -71,18 +76,11 @@ describe("applySignoff", () => {
     expect(evaluateSignoff({ ...signed, rulingRef: "R2" }).state).toBe("invalid");
   });
   test("writes the signer exactly as given, and refuses a name that is not plain", () => {
-    const r = applySignoff(
-      fake(v.id),
-      v.taxYear,
-      [{ id: v.id }],
-      UK_TAX_VECTORS,
-      "2026-12-01",
-      "owner",
-    );
+    const r = applySignoff(fake(v.id), v.taxYear, [{ id: v.id }], CORE, "2026-12-01", "owner");
     expect(r.text).toContain('signedOffBy: "owner",');
     for (const bad of ["", "a b", 'x"y', "-x"]) {
       expect(() =>
-        applySignoff(fake(v.id), v.taxYear, [{ id: v.id }], UK_TAX_VECTORS, "2026-12-01", bad),
+        applySignoff(fake(v.id), v.taxYear, [{ id: v.id }], CORE, "2026-12-01", bad),
       ).toThrow("not a valid signer name");
     }
   });
@@ -92,7 +90,7 @@ describe("applySignoff", () => {
       file,
       u.taxYear,
       [{ id: u.id }, { id: "nope" }, { id: v.id }],
-      UK_TAX_VECTORS,
+      CORE,
       "2026-12-01",
       "fable-decider",
     );
@@ -105,7 +103,7 @@ describe("applySignoff", () => {
       fake(u.id),
       u.taxYear,
       [{ id: u.id, ruling: "R1" }],
-      UK_TAX_VECTORS,
+      CORE,
       "2026-12-01",
       "fable-decider",
     );
@@ -141,9 +139,10 @@ describe("CLI guards", () => {
 });
 
 describe("E25 what-if catalogue sign-off", () => {
-  const w = UK_WHATIF_VECTORS[0] as (typeof UK_WHATIF_VECTORS)[number];
+  const w = WHATIF[0] as (typeof WHATIF)[number];
   test("the sheet lists what-if vectors alongside the core ones", () => {
-    const all = [...UK_TAX_VECTORS, ...UK_WHATIF_VECTORS];
+    // The real catalogues (all signed) with only w unsigned.
+    const all = [...UK_TAX_VECTORS, w, ...UK_WHATIF_VECTORS.slice(1)];
     const sheet = generateSheet(w.taxYear, all);
     expect(sheet).toContain(`\`${w.id}\``);
     // Unticked boxes are the year's unsigned vectors; signed ones are marked and skipped.
@@ -157,7 +156,7 @@ describe("E25 what-if catalogue sign-off", () => {
       file,
       w.taxYear,
       [{ id: w.id }],
-      UK_WHATIF_VECTORS,
+      WHATIF,
       "2026-12-01",
       "fable-decider",
     );
@@ -167,7 +166,7 @@ describe("E25 what-if catalogue sign-off", () => {
       file,
       w.taxYear,
       [{ id: w.id, ruling: "owner ruled" }],
-      UK_WHATIF_VECTORS,
+      WHATIF,
       "2026-12-01",
       "fable-decider",
     );

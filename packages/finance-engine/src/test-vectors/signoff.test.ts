@@ -12,12 +12,14 @@ import { UK_SELF_ASSESSMENT_VECTORS } from "./uk-self-assessment.vectors.js";
 import { UK_TAX_VECTORS, type UkTaxVector } from "./uk-tax.vectors.js";
 import { UK_WHATIF_VECTORS } from "./uk-whatif.vectors.js";
 
-const base = UK_TAX_VECTORS.find(
-  (v) => v.status === "VERIFIED" && v.signedOffBy === null,
-) as UkTaxVector;
-const unverified = UK_TAX_VECTORS.find(
-  (v) => v.status === "UNVERIFIED" && v.signedOffBy === null,
-) as UkTaxVector;
+// Fixture: a catalogue vector with its signature removed. Since 24 Nov 2026 every vector in the
+// catalogue is signed, so the tests strip the sign-off fields rather than look for an unsigned one.
+const unsign = (v: UkTaxVector): UkTaxVector => {
+  const { signedOffAt, signedOffHash, rulingRef, ...rest } = v;
+  return { ...rest, signedOffBy: null };
+};
+const base = unsign(UK_TAX_VECTORS.find((v) => v.status === "VERIFIED") as UkTaxVector);
+const unverified = unsign(UK_TAX_VECTORS.find((v) => v.status === "UNVERIFIED") as UkTaxVector);
 const sign = (v: UkTaxVector, signer = "fable-decider", ruling?: string): UkTaxVector =>
   signVector(v, signer, "2026-12-01", ruling);
 
@@ -144,7 +146,10 @@ describe("vector sign-off", () => {
   });
   it("a year is verified only when every vector is signed", () => {
     const year = base.taxYear;
-    const only = UK_TAX_VECTORS.filter((v) => v.taxYear === year);
+    // One vector of the year unsigned (the fixture), the rest as signed in the catalogue.
+    const only = UK_TAX_VECTORS.filter((v) => v.taxYear === year).map((v) =>
+      v.id === base.id ? base : v,
+    );
     expect(yearVerification(year, only)).toBe("unverified");
     expect(yearVerification(year, [])).toBe("unverified");
     const all = only.map((v) => (v.signedOffBy === null ? sign(v, "fable-decider", "r") : v));

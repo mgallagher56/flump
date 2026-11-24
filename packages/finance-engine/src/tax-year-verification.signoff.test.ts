@@ -4,10 +4,11 @@ import { type SignableVector, signVector } from "./test-vectors/signoff.js";
 import { UK_SELF_ASSESSMENT_VECTORS } from "./test-vectors/uk-self-assessment.vectors.js";
 import { UK_TAX_VECTORS } from "./test-vectors/uk-tax.vectors.js";
 
-// The "verified" path is checked with fixture sign-offs made in memory here, on years the real
-// catalogue has not signed. The catalogue files are not changed.
-// Fixtures: core vectors signed for 2023/24 and 2024/25; Self Assessment vectors signed for
-// 2024/25 only. So 2024/25 is fully signed and 2023/24 is signed except for Self Assessment.
+// Both paths are checked on fixture sign-offs made in memory here, so the tests do not depend on
+// which years the real catalogue has signed (since 24 Nov 2026, all of them). The catalogue files
+// are not changed. Fixtures: every vector is unsigned except core vectors for 2023/24 and 2024/25
+// and Self Assessment vectors for 2024/25. So 2024/25 is fully signed, 2023/24 is signed except
+// for Self Assessment, and 2022/23 is not signed at all.
 
 function sign<T extends SignableVector>(v: T): T {
   return signVector(
@@ -17,6 +18,18 @@ function sign<T extends SignableVector>(v: T): T {
     v.status === "UNVERIFIED" ? "fixture-ruling" : undefined,
   );
 }
+
+// Hoisted so the vi.mock factories below can use it: a vector with its sign-off fields removed.
+const { unsign } = vi.hoisted(() => ({
+  unsign: <T extends object>(v: T): T => {
+    const { signedOffAt, signedOffHash, rulingRef, ...rest } = v as T & {
+      signedOffAt?: unknown;
+      signedOffHash?: unknown;
+      rulingRef?: unknown;
+    };
+    return { ...rest, signedOffBy: null } as T;
+  },
+}));
 
 vi.mock("./test-vectors/uk-tax.vectors.js", async (importOriginal) => {
   const actual = await importOriginal<typeof import("./test-vectors/uk-tax.vectors.js")>();
@@ -31,7 +44,7 @@ vi.mock("./test-vectors/uk-tax.vectors.js", async (importOriginal) => {
             "2026-12-01",
             v.status === "UNVERIFIED" ? "fixture-ruling" : undefined,
           )
-        : v,
+        : unsign(v),
     ),
   };
 });
@@ -50,7 +63,7 @@ vi.mock("./test-vectors/uk-self-assessment.vectors.js", async (importOriginal) =
             "2026-12-01",
             v.status === "UNVERIFIED" ? "fixture-ruling" : undefined,
           )
-        : v,
+        : unsign(v),
     ),
   };
 });
@@ -75,7 +88,7 @@ describe("getTaxYearVerification with fixture sign-offs", () => {
   });
 
   it("tells the reader an unsigned year's figures are an estimate", () => {
-    // 2022/23 is neither fixture-signed here nor signed in the catalogue.
+    // 2022/23 is unsigned in the fixture.
     const v = getTaxYearVerification("2022/23");
     expect(v.status).toBe("unverified");
     expect(v.detail).toMatch(/estimate/);
