@@ -179,6 +179,19 @@ describe("StampDutyEstimate with a price from the loan estimate (E39 S1c)", () =
     expect(emptyText()).toBe("Answer the first-time buyer question to see an estimate.");
   });
 
+  it("asks for a rate when every answer is in but the estimate has no result", () => {
+    render(
+      <Stateful
+        allFirstTimeBuyersMainHome={false}
+        fromEstimate={empty}
+        jurisdiction="ENGLAND_NI"
+      />,
+    );
+    expect(emptyText()).toBe(
+      "No default rate fits once the tax comes off your deposit. Enter an interest rate to see an estimate.",
+    );
+  });
+
   it("shows one figure when the estimate has one price", () => {
     render(
       <Stateful

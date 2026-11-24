@@ -215,7 +215,8 @@ describe("MortgageEstimatesContainer", () => {
         .textContent?.startsWith("Unverified estimate."),
     ).toBe(true);
 
-    // The rate tool gives no property price, so the section asks for one there. Radix tabs
+    // The rate tool gives no property price, so the section asks for one there (checked below).
+    // Radix tabs
     // switch on mouse down, not click.
     fireEvent.mouseDown(screen.getByRole("tab", { name: "If rates change" }), { button: 0 });
     expect(screen.getByRole("tab", { name: "If rates change" }).getAttribute("aria-selected")).toBe(
@@ -224,6 +225,33 @@ describe("MortgageEstimatesContainer", () => {
     expect(screen.getByLabelText(/Property price/)).not.toBeNull();
     expect(screen.getByTestId("stamp-duty-empty").textContent).toBe(
       "Enter a property price to see an estimate.",
+    );
+  });
+
+  it("asks for a rate when the tax pushes the loan to value past every default band", () => {
+    render(
+      <MemoryRouter>
+        <MortgageEstimatesContainer />
+      </MemoryRouter>,
+    );
+    const payment = screen.getByRole("textbox", { name: "Monthly payment input" });
+    fireEvent.change(payment, { target: { value: "1000" } });
+    fireEvent.blur(payment);
+    fireEvent.click(screen.getByRole("button", { name: "Deposit and buying costs" }));
+    const deposit = screen.getByLabelText(/^Deposit/);
+    fireEvent.change(deposit, { target: { value: "21000" } });
+    fireEvent.blur(deposit);
+
+    // £1,000 over 25 years, no rate typed, deposit £21,000. Without tax the 90% band fits: loan at
+    // 4.49% (1.0037417^300 = 3.0667) is £180,094.18, price £201,094.18, LTV 89.56%.
+    // With SDLT the 90% band gives P = 199,602.18 (2% x 74,602.18 = 1,492.04, floored £1,492;
+    // 199,602.18 + 1,492 = 201,094.18), LTV 90.23% > 90%; lower bands are higher still. No band.
+    fireEvent.click(screen.getByRole("button", { name: "Stamp duty estimate" }));
+    expect(screen.queryByLabelText(/Property price/)).toBeNull();
+    fireEvent.click(screen.getByRole("radio", { name: "England or Northern Ireland" }));
+    fireEvent.click(screen.getByRole("radio", { name: "No" }));
+    expect(screen.getByTestId("stamp-duty-empty").textContent).toBe(
+      "No default rate fits once the tax comes off your deposit. Enter an interest rate to see an estimate.",
     );
   });
 });
