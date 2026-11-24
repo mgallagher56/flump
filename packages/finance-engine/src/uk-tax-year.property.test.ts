@@ -295,6 +295,7 @@ describe("sweep 0..300000 step 250 per year, region and variant", () => {
   // The sweep's time is reported, not asserted: a fixed limit in milliseconds tests the CI machine's
   // load, not the code (E41; the backend specs now run beside this package). What is asserted is
   // that every year, region and salary in the sweep returns a result.
+  // The 20 s limit covers CI machine load under coverage (128 ms locally), not the code.
   it("the whole sweep returns a result for every year, region and salary, and reports its time", async ({
     annotate,
   }) => {
@@ -316,7 +317,7 @@ describe("sweep 0..300000 step 250 per year, region and variant", () => {
     expect(expected).toBe((SUPPORTED_UK_TAX_YEARS.length * REGIONS.length - 1) * GROSSES.length);
     expect(results).toBe(expected);
     await annotate(`${results} calculations in ${ms.toFixed(0)} ms`);
-  });
+  }, 20_000);
 
   // calculateUkTax reads Class 1 NI from the per-year table (previously year-less; fixed in E4).
   it("calculateUkTax NI equals the per-year Class 1 NI for every supported year", () => {

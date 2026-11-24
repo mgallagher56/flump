@@ -293,6 +293,7 @@ describe("runStdio", () => {
     expect(textOf(retried)).toContain("4000");
   });
 
+  // The 20 s limit covers CI machine load (three in-process servers, each its own input), not the code.
   it("lists the retirement tools for everyone, whatever retirementAvailable says (owner, 20 Nov 2026)", async () => {
     const names = async (body: unknown) => {
       const { client } = await connectClient(body);
@@ -308,7 +309,7 @@ describe("runStdio", () => {
     const allowed = await names({ ...okInput, retirementAvailable: true });
     expect(allowed).toContain("get_retirement_picture");
     expect(allowed).toContain("simulate_retirement");
-  });
+  }, 20_000);
 
   it("applies the token's own scopes: a token without a read scope reads nothing", async () => {
     const { client } = await connectClient({
