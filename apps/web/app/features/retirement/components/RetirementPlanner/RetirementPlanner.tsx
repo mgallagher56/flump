@@ -7,7 +7,6 @@ import {
   applyBudgetEntryShare,
   type BuildRetirementPlanInputArgs,
   buildRetirementPlanInput,
-  calculateEvenRealDrawdown,
   calculateRetirementPlan,
   contributionMonthlyFromPercent,
   DEFAULT_RETIREMENT_GROWTH_CASES,
@@ -18,6 +17,7 @@ import {
   type RetirementInputBuildResult,
   type RetirementInputOverrides,
   type RetirementPlanResult,
+  type RetirementWithdrawalMethod,
   resolveBudgetEntrySharePercent,
   resolveUkTaxYear,
   retirementBudgetLines,
@@ -128,6 +128,10 @@ const formatEstimateOrNil = (amount: number): string =>
 
 const GROWTH_CASES = ["lower", "middle", "higher"] as const;
 
+/** The headline income: after income tax, or before tax when income tax is refused. */
+const headlineIncome = (plan: RetirementPlanResult) =>
+  plan.estimatedYearlyIncomeAfterTaxGbp ?? plan.estimatedYearlyIncomeGbp;
+
 /** The three growth cases side by side. Sorting only: three rows whose order (lower, middle, higher) carries meaning. */
 const CaseTable: FC<{
   plan: RetirementPlanResult;
@@ -136,7 +140,7 @@ const CaseTable: FC<{
   const { sortedRows, getSortProps } = useTableSort({
     rows: GROWTH_CASES,
     columns: {
-      income: { value: (c) => plan.estimatedYearlyIncomeGbp[c], firstDirection: "desc" },
+      income: { value: (c) => headlineIncome(plan)[c], firstDirection: "desc" },
       pot: { value: (c) => plan.projectedPotAtRetirementGbp[c], firstDirection: "desc" },
     },
   });
@@ -146,7 +150,7 @@ const CaseTable: FC<{
         <tr>
           <th className={scheduleHeaderCell()}>Case</th>
           <Th bare className={scheduleHeaderCell()} {...getSortProps("income")}>
-            Yearly income
+            {plan.tax.refusal ? "Yearly income before tax" : "Yearly income after tax"}
           </Th>
           <Th bare className={scheduleHeaderCell()} {...getSortProps("pot")}>
             Pots at retirement
@@ -157,7 +161,7 @@ const CaseTable: FC<{
         {sortedRows.map((c) => (
           <tr key={c}>
             <td className={scheduleCell()}>{caseLabel(c)}</td>
-            <td className={scheduleCell()}>{formatEstimate(plan.estimatedYearlyIncomeGbp[c])}</td>
+            <td className={scheduleCell()}>{formatEstimate(headlineIncome(plan)[c])}</td>
             <td className={scheduleCell()}>
               {formatEstimate(plan.projectedPotAtRetirementGbp[c])}
             </td>
@@ -173,15 +177,23 @@ const YearScheduleTable: FC<{
   plan: RetirementPlanResult;
   selectedCase: RetirementGrowthCase;
 }> = ({ plan, selectedCase }) => {
+  // Income tax refused (Scottish rates not published): before-tax columns only.
+  const taxed = plan.tax.refusal === null;
+  const afterHousing = (r: RetirementPlanResult["yearlySchedule"][number]) =>
+    r.yearlyIncomeAfterTaxAndHousing ?? r.yearlyIncomeAfterHousing;
   const { sortedRows, getSortProps } = useTableSort({
     rows: plan.yearlySchedule,
     columns: {
       age: { value: (r) => r.age },
-      pots: { value: (r) => r.potDrawdownYearly[selectedCase], firstDirection: "desc" },
-      statePension: { value: (r) => r.statePensionYearlyGbp, firstDirection: "desc" },
+      beforeTax: { value: (r) => r.grossYearlyIncome[selectedCase], firstDirection: "desc" },
+      tax: { value: (r) => r.incomeTaxYearly?.[selectedCase] ?? 0, firstDirection: "desc" },
+      afterTax: {
+        value: (r) => r.yearlyIncomeAfterTax?.[selectedCase] ?? 0,
+        firstDirection: "desc",
+      },
       housing: { value: (r) => r.housingCostYearlyGbp, firstDirection: "desc" },
       afterHousing: {
-        value: (r) => r.yearlyIncomeAfterHousing[selectedCase],
+        value: (r) => afterHousing(r)[selectedCase],
         firstDirection: "desc",
       },
     },
@@ -193,12 +205,19 @@ const YearScheduleTable: FC<{
           <Th bare className={scheduleHeaderCell()} {...getSortProps("age")}>
             Age
           </Th>
-          <Th bare className={scheduleHeaderCell()} {...getSortProps("pots")}>
-            From pots
+          <Th bare className={scheduleHeaderCell()} {...getSortProps("beforeTax")}>
+            Before tax
           </Th>
-          <Th bare className={scheduleHeaderCell()} {...getSortProps("statePension")}>
-            State Pension
-          </Th>
+          {taxed && (
+            <Th bare className={scheduleHeaderCell()} {...getSortProps("tax")}>
+              Income tax
+            </Th>
+          )}
+          {taxed && (
+            <Th bare className={scheduleHeaderCell()} {...getSortProps("afterTax")}>
+              After tax
+            </Th>
+          )}
           <Th bare className={scheduleHeaderCell()} {...getSortProps("housing")}>
             Housing
           </Th>
@@ -212,13 +231,20 @@ const YearScheduleTable: FC<{
           <tr key={row.age}>
             <td className={scheduleCell()}>{row.age}</td>
             <td className={scheduleCell()}>
-              {formatEstimate(row.potDrawdownYearly[selectedCase])}
+              {formatEstimate(row.grossYearlyIncome[selectedCase])}
             </td>
-            <td className={scheduleCell()}>{formatWholeGbp(row.statePensionYearlyGbp)}</td>
+            {taxed && (
+              <td className={scheduleCell()}>
+                {formatEstimateOrNil(row.incomeTaxYearly?.[selectedCase] ?? 0)}
+              </td>
+            )}
+            {taxed && (
+              <td className={scheduleCell()}>
+                {formatEstimate(row.yearlyIncomeAfterTax?.[selectedCase] ?? 0)}
+              </td>
+            )}
             <td className={scheduleCell()}>{formatEstimateOrNil(row.housingCostYearlyGbp)}</td>
-            <td className={scheduleCell()}>
-              {formatEstimate(row.yearlyIncomeAfterHousing[selectedCase])}
-            </td>
+            <td className={scheduleCell()}>{formatEstimate(afterHousing(row)[selectedCase])}</td>
           </tr>
         ))}
       </tbody>
@@ -259,6 +285,41 @@ export function workplaceNote(workplace: WorkplacePensionInput): string {
   return ownSet
     ? `Workplace pension: your employer's contribution is not set, so it is not included. ${pctPoints(workplace.employeePercent)} from you, of your saved salary of ${salary}, is included.`
     : `Workplace pension: your contribution is not set, so it is not included. ${pctPoints(workplace.employerPercent)} from your employer, of your saved salary of ${salary}, is included.`;
+}
+
+/** "2026/27" in a sentence: "2026 to 2027" (copy guide 4.3). */
+function taxYearInSentence(year: string): string {
+  const start = Number.parseInt(year.slice(0, 4), 10);
+  return Number.isFinite(start) ? `${start} to ${start + 1}` : year;
+}
+
+const BEFORE_TAX_LINE = "The figures here are before income tax.";
+const UNTAXED_LINE =
+  "Withdrawals from ISAs, general investment accounts and cash savings are not taxed here. Capital gains tax, dividend tax and tax on savings interest are not included.";
+
+/**
+ * The income tax lines under the assumptions (E33 S6 decisions D2 to D5): one tax year for every
+ * year, the region (saved or assumed, the same line for everyone without one), how tax-free cash
+ * is taken, and what is not taxed. The same words whichever method gives more (R1).
+ */
+export function incomeTaxNotes(tax: RetirementPlanResult["tax"]): string[] {
+  if (tax.refusal) return [`${tax.refusal.notice} ${BEFORE_TAX_LINE}`, UNTAXED_LINE];
+  const region =
+    tax.region === "SCOTLAND"
+      ? "Scottish income tax bands are used, from your saved tax region."
+      : tax.regionAssumed
+        ? "No tax region is saved, so England, Wales and Northern Ireland bands are used."
+        : "England, Wales and Northern Ireland bands are used, from your saved tax region.";
+  const allowance = formatWholeGbp(tax.lumpSumAllowanceGbp);
+  const method =
+    tax.withdrawalMethod === "lumpSum"
+      ? `This illustration takes a tax-free lump sum at retirement: 25% of your pensions, up to the lump sum allowance of ${allowance}. The rest is taken evenly and taxed.`
+      : `25% of each pension withdrawal is tax-free until the lump sum allowance of ${allowance} is reached. The rest is taxed.`;
+  return [
+    `Income tax on pension withdrawals and the State Pension uses the ${taxYearInSentence(tax.taxYear)} tax year's allowances and bands for every year, in today's prices. ${region}`,
+    method,
+    UNTAXED_LINE,
+  ];
 }
 
 /**
@@ -390,6 +451,8 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
       employeePercent: savedEmployeePercent,
       useQualifyingEarnings: workplace?.useQualifyingEarnings === true,
       growthCase: "middle" as RetirementGrowthCase,
+      // The saved figures take 25% of each withdrawal tax-free; a lump sum is a what-if only.
+      withdrawalMethod: "ufpls" as RetirementWithdrawalMethod,
     }),
     [
       savedResult?.retirementAge,
@@ -412,6 +475,7 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
             useQualifyingEarnings: scenario.values.useQualifyingEarnings,
           }
         : { additionalMonthlyPensionContributionGbp: scenario.values.extraMonthly }),
+      withdrawalMethod: scenario.values.withdrawalMethod as RetirementWithdrawalMethod,
     };
     return compute({ ...planArgs, overrides });
   }, [planArgs, savedResult, scenario.values, workplace]);
@@ -532,8 +596,11 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
 
   // ---- Hero ----
   const missing = saved.built.ok === false ? saved.built.missing : [];
+  const taxRefusal = savedResult?.tax.refusal ?? null;
   const heroLabel = savedResult
-    ? `Estimated yearly income from age ${savedResult.retirementAge}`
+    ? taxRefusal
+      ? `Estimated yearly income before tax from age ${savedResult.retirementAge}`
+      : `Estimated yearly income from age ${savedResult.retirementAge}`
     : "Estimated yearly income in retirement";
   let emptyPrompt: ReactNode;
   let emptyAction: ReactNode;
@@ -558,36 +625,44 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
       ? `Your target: ${formatWholeGbp(targetYearly)} a year.`
       : "No target set yet.";
 
-  // ---- KpiStrip: yearly income figures (decision RD3), saved data only ----
+  // ---- KpiStrip: yearly income after income tax by source (decisions RD3, S6 D1), saved data only ----
   let kpis: KpiStripItems | null = null;
   if (savedResult) {
-    const fromPensions = calculateEvenRealDrawdown(
-      savedResult.projectedPotByGroupGbp.pensions.middle,
-      savedResult.assumptions.realGrowthRates.middle,
-      savedResult.yearsInRetirement,
-    );
-    const fromIsasAndSavings = Math.max(0, savedResult.annualPotIncomeGbp.middle - fromPensions);
+    // Income tax refused: the same items before tax, said so.
+    const bySource = savedResult.incomeAfterTaxBySource;
+    const taxWord = bySource ? "after income tax" : "before tax";
     const housing = savedResult.housing;
     const sp = savedResult.statePension;
+    const spAge = bySource?.age ?? sp?.statePensionAge ?? savedResult.retirementAge;
     kpis = [
       <KpiCard
         key="sp"
         label="State Pension"
-        value={sp ? formatWholeGbp(sp.annualAmountGbp) : "Not included yet"}
+        value={
+          sp
+            ? formatWholeGbp(bySource ? bySource.statePensionGbp : sp.annualAmountGbp)
+            : "Not included yet"
+        }
         subtext={
-          sp ? `A year from age ${sp.statePensionAge}` : "Add your State Pension details below"
+          sp ? `A year from age ${spAge}, ${taxWord}` : "Add your State Pension details below"
         }
       />,
       <KpiCard
         key="pensions"
         label="From pensions"
-        value={formatEstimate(fromPensions)}
-        subtext={`A year, ${caseLabel("middle").toLowerCase()}`}
+        value={formatEstimateOrNil(
+          bySource ? bySource.pensionsGbp.middle : savedResult.annualPensionWithdrawalGbp.middle,
+        )}
+        subtext={
+          bySource
+            ? `A year from age ${bySource.age} after income tax, ${caseLabel("middle").toLowerCase()}`
+            : `A year before tax, ${caseLabel("middle").toLowerCase()}`
+        }
       />,
       <KpiCard
         key="isa-savings"
         label="From ISAs and savings"
-        value={formatEstimate(fromIsasAndSavings)}
+        value={formatEstimateOrNil(savedResult.annualOtherPotIncomeGbp.middle)}
         subtext={`A year, ${caseLabel("middle").toLowerCase()}`}
       />,
       <KpiCard
@@ -606,17 +681,26 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
   }
 
   // ---- Scenario outcome ----
-  const scenarioIncome = scenarioResult?.estimatedYearlyIncomeGbp[selectedCase] ?? null;
-  const scenarioDifference = scenarioResult?.differenceYearly?.[selectedCase] ?? null;
+  // After income tax, or before tax when income tax is refused (the notice says so).
+  const scenarioTaxed = scenarioResult !== null && scenarioResult.tax.refusal === null;
+  const scenarioIncome = scenarioResult ? headlineIncome(scenarioResult)[selectedCase] : null;
+  const scenarioDifference =
+    (scenarioTaxed ? scenarioResult?.differenceYearlyAfterTax : scenarioResult?.differenceYearly)?.[
+      selectedCase
+    ] ?? null;
   const scenarioFromSpa = scenarioResult?.estimatedYearlyIncomeBeforeStatePensionAgeGbp
-    ? scenarioResult.estimatedYearlyIncomeFromStatePensionAgeGbp
+    ? scenarioTaxed
+      ? scenarioResult.estimatedYearlyIncomeFromStatePensionAgeAfterTaxGbp
+      : scenarioResult.estimatedYearlyIncomeFromStatePensionAgeGbp
     : null;
+  const scenarioTax = scenarioResult?.estimatedIncomeTaxYearlyGbp?.[selectedCase] ?? null;
+  const scenarioLumpSum = scenarioResult?.tax.taxFreeLumpSumGbp?.[selectedCase] ?? null;
   const spaForRow = scenarioResult?.statePension?.statePensionAge ?? null;
   // Against the saved plan in the same growth case, so only the moved inputs count; hidden while
   // nothing but the case has changed.
   const rawChange =
     scenario.isModified && scenarioIncome !== null && savedResult
-      ? scenarioIncome - savedResult.estimatedYearlyIncomeGbp[selectedCase]
+      ? scenarioIncome - headlineIncome(savedResult)[selectedCase]
       : null;
   const changeFromSaved = rawChange !== null && Math.round(rawChange) !== 0 ? rawChange : null;
   const annualAllowance = getUkTaxYearRules(resolveUkTaxYear()).pensionAnnualAllowance;
@@ -627,9 +711,19 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
     scenarioDifference !== null && scenarioResult?.targetYearlyIncome != null
       ? `Your target: ${formatWholeGbp(scenarioResult.targetYearlyIncome)} a year. Difference: ${formatEstimate(scenarioDifference)} a year.`
       : "Add your own yearly target in your plan details to compare.";
+  const taxSentence =
+    scenarioTax === null
+      ? null
+      : ` Estimated income tax: ${formatEstimateOrNil(scenarioTax)} a year.`;
+  const lumpSumSentence =
+    scenarioLumpSum === null || scenarioResult === null
+      ? null
+      : ` Tax-free lump sum at age ${scenarioResult.retirementAge}: ${formatEstimateOrNil(scenarioLumpSum)}.`;
   const scenarioNote = (
     <>
       {targetSentence}
+      {taxSentence}
+      {lumpSumSentence}
       {changeFromSaved !== null
         ? ` Change from your saved plan: ${formatSignedEstimate(changeFromSaved)} a year.`
         : null}
@@ -654,17 +748,30 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
   return (
     <PageBody>
       <div className={plannerStack()}>
-        <PageHeader title="Retirement plan" subtitle="Estimates in today's prices, before tax." />
+        <PageHeader
+          title="Retirement plan"
+          subtitle={
+            taxRefusal
+              ? "Estimates in today's prices, before tax."
+              : "Estimates in today's prices, after income tax."
+          }
+        />
 
         <HeroFigure
           label={heroLabel}
-          value={savedResult ? formatEstimate(savedResult.estimatedYearlyIncomeGbp.middle) : null}
+          value={savedResult ? formatEstimate(headlineIncome(savedResult).middle) : null}
           estimateLabel="Unverified estimate"
           subline={heroSubline}
           emptyPrompt={emptyPrompt}
           emptyAction={emptyAction}
-          explain="Built from the accounts that count towards retirement, your State Pension details and your housing in retirement, in today's prices, middle growth case."
+          explain={`Built from the accounts that count towards retirement, your State Pension details and your housing in retirement, ${taxRefusal ? "before tax" : "after income tax"}, in today's prices, middle growth case.`}
         />
+
+        {taxRefusal && (
+          <p className={mutedNote()} id="retirement-tax-refusal">
+            {taxRefusal.notice} {BEFORE_TAX_LINE}
+          </p>
+        )}
 
         {kpis && <KpiStrip items={kpis} />}
 
@@ -765,6 +872,30 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
                       ))}
                     </div>
                   </div>
+                  <div className={fieldGroup()}>
+                    <span className={fieldLabel()}>Tax-free cash</span>
+                    <div className={toggleRow()}>
+                      {(
+                        [
+                          ["ufpls", "25% of each withdrawal"],
+                          ["lumpSum", "Lump sum at retirement"],
+                        ] as const
+                      ).map(([method, label]) => (
+                        <Button
+                          key={method}
+                          type="button"
+                          variant={
+                            scenario.values.withdrawalMethod === method ? "primary" : "secondary"
+                          }
+                          size="sm"
+                          aria-pressed={scenario.values.withdrawalMethod === method}
+                          onClick={() => scenario.set("withdrawalMethod", method)}
+                        >
+                          {label}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               }
               content={
@@ -824,8 +955,13 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
                           Growth band: {pct(growthRates.lower)}, {pct(growthRates.middle)} and{" "}
                           {pct(growthRates.higher)} a year before inflation, with{" "}
                           {pct(inflationRate)} inflation. These are a reference for three cases, not
-                          a prediction. Figures are in today&apos;s prices, before tax.
+                          a prediction. Figures are in today&apos;s prices, after income tax.
                         </p>
+                        {incomeTaxNotes(scenarioResult.tax).map((line) => (
+                          <p key={line} className={mutedNote()}>
+                            {line}
+                          </p>
+                        ))}
                         <p className={mutedNote()}>
                           {scenarioResult.statePension
                             ? `State Pension: ${formatWholeGbp(scenarioResult.statePension.annualAmountGbp)} a year from age ${scenarioResult.statePension.statePensionAge}, at ${scenarioResult.statePension.taxYear} rates.`
@@ -894,7 +1030,9 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
             </div>
 
             <div className={fieldGroup()}>
-              <span className={fieldLabel()}>Your yearly target (today&apos;s prices)</span>
+              <span className={fieldLabel()}>
+                Your yearly target: spending after tax (today&apos;s prices)
+              </span>
               <div className={toggleRow()}>
                 <Button
                   type="button"
@@ -923,7 +1061,8 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
               </div>
               {targetMode === "typed" ? (
                 <CurrencyInput
-                  aria-label="Yearly target in pounds"
+                  aria-label="Yearly target, spending after tax, in pounds"
+                  aria-describedby="retirement-target-after-tax-note"
                   min={0}
                   value={parseAmount(typedTargetInput)}
                   {...bindNumber(setTypedTargetInput)}
@@ -975,6 +1114,10 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
                   )}
                 </div>
               )}
+              <p className={mutedNote()} id="retirement-target-after-tax-note">
+                Your target is compared with your estimated income after income tax. If you typed it
+                as a figure before tax, you can change it here.
+              </p>
             </div>
 
             <div className={fieldGrid()}>

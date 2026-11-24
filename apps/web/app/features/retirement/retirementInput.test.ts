@@ -82,7 +82,12 @@ describe("retirement input parity: web page and MCP tools", () => {
     const web = buildRetirementPlanInput(
       retirementArgsFromLoader(
         {
-          userProfile: { birthYear: 1981, housingStatus: "mortgage", monthlyHousingCost: 900 },
+          userProfile: {
+            birthYear: 1981,
+            housingStatus: "mortgage",
+            monthlyHousingCost: 900,
+            taxRegion: "SCOTLAND",
+          },
           accounts,
           budgetEntries,
           retirementPlan: plan,
@@ -97,7 +102,7 @@ describe("retirement input parity: web page and MCP tools", () => {
       profileFacts: {
         annualSalary: null,
         employmentType: null,
-        taxRegion: null,
+        taxRegion: "SCOTLAND",
         studentLoanPlans: null,
         pensionPercent: null,
         isSalarySacrifice: null,
@@ -113,6 +118,12 @@ describe("retirement input parity: web page and MCP tools", () => {
     expect(web.ok && mcp.ok).toBe(true);
     if (!web.ok || !mcp.ok) return;
     expect(web.input).toEqual(mcp.input);
+    // The saved tax region reaches both the same way (income tax in retirement, E33 S6).
+    expect(web.input.tax).toEqual({
+      withdrawalMethod: "ufpls",
+      taxYear: "2026/27",
+      region: "SCOTLAND",
+    });
     expect(calculateRetirementPlan(web.input)).toEqual(calculateRetirementPlan(mcp.input));
   });
 

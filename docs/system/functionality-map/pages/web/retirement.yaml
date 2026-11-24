@@ -22,6 +22,7 @@ sections:
       - housing-status
       - budget-entries
       - mortgage-term-and-fix-end
+      - tax-region
     figures_shown:
       - retirement-income
 
@@ -30,6 +31,7 @@ sections:
     facts_read:
       - retirement-plan
       - account-balance
+      - tax-region
     figures_shown:
       - retirement-income
 
@@ -41,6 +43,7 @@ sections:
       - pension-rates
       - account-balance
       - balance-history
+      - tax-region
     figures_shown:
       - retirement-income
 

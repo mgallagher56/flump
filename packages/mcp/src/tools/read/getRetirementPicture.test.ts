@@ -1,4 +1,8 @@
-import { type BuildContextPackInput, MCP_NOTICE } from "@flump/finance-engine";
+import {
+  type BuildContextPackInput,
+  MCP_NOTICE,
+  profileFactsFromProfile,
+} from "@flump/finance-engine";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { connectTestClient, TEST_TOKEN } from "../../testing/client.js";
 import { createFakeProvider } from "../../testing/fake-provider.js";
@@ -106,7 +110,20 @@ describe("get_retirement_picture: the saved plan", () => {
     expect(rates?.source).toBe("user_profile");
     expect(rates?.reason?.length).toBeGreaterThan(0);
     // The saved retirement age (60) is not below the current age (60), so nothing was adjusted.
-    expect(e.assumptions.map((a) => a.field)).toEqual(["growthRates"]);
+    // Income tax adds its two assumptions: the year, region and method, and what is untaxed.
+    expect(e.assumptions.map((a) => a.field)).toEqual([
+      "growthRates",
+      "incomeTax",
+      "untaxedWithdrawals",
+    ]);
+    const tax = e.assumptions.find((a) => a.field === "incomeTax");
+    expect(tax?.source).toBe("default");
+    expect(tax?.reason).toContain(
+      "No tax region is saved, so England, Wales and Northern Ireland bands are assumed.",
+    );
+    expect(e.assumptions.find((a) => a.field === "untaxedWithdrawals")?.reason).toBe(
+      "Not taxed in this estimate. Capital gains tax, dividend tax and tax on savings interest are not included.",
+    );
     expect(e.result.notes).toHaveLength(2);
     expect(e.result.notes[0]).toBe(MCP_NOTICE);
     expect(e.result.notes[1]).toMatch(/today's prices/);
@@ -192,6 +209,11 @@ describe("runRetirementPlan: rates when the plan cannot run", () => {
     expect(run.figures.assumptions).toEqual({
       growthRates: { lower: 0.03, middle: 0.04, higher: 0.06 },
       inflationRate: 0.025,
+      // The plan cannot run, so no tax year or region was used.
+      withdrawalMethod: "ufpls",
+      taxYear: null,
+      taxRegion: null,
+      taxRegionAssumed: true,
     });
   });
 
@@ -203,6 +225,10 @@ describe("runRetirementPlan: rates when the plan cannot run", () => {
     expect(run.figures.assumptions).toEqual({
       growthRates: { lower: 0.01, middle: 0.07, higher: 0.09 },
       inflationRate: 0.035,
+      withdrawalMethod: "ufpls",
+      taxYear: null,
+      taxRegion: null,
+      taxRegionAssumed: true,
     });
   });
 
@@ -223,5 +249,50 @@ describe("runRetirementPlan: rates when the plan cannot run", () => {
     const run = await runRetirementPlan(ctxFor(saver), { inflationRate: 0.035 });
     expect(run.figures.currentAge).toBe(60);
     expect(run.figures.assumptions.inflationRate).toBe(0.035);
+  });
+});
+
+describe("income tax refused: a Scottish taxpayer in a year with no Scottish rates", () => {
+  const SCOT_NOTICE =
+    "Scottish Income Tax rates for 2027/28 are not published yet, so there is no estimate for this year.";
+  const scot: BuildContextPackInput = {
+    ...saver,
+    profileFacts: profileFactsFromProfile({ taxRegion: "SCOTLAND" } as never),
+  };
+  const ctx: McpServerContext = { token: FULL, dataProvider: createFakeProvider(scot) };
+
+  it("keeps the before-tax figures, nulls the after-tax ones and passes the notice", async () => {
+    // June 2027 is in 2027/28, whose Scottish rates are not published.
+    const run = await runRetirementPlan(ctx, {}, new Date("2027-06-01T12:00:00Z"));
+    expect(run.figures.estimatedYearlyIncomeGbp).not.toBeNull();
+    expect(run.figures.differenceYearlyGbp).not.toBeNull();
+    expect(run.figures.estimatedYearlyIncomeAfterTaxGbp).toBeNull();
+    expect(run.figures.estimatedIncomeTaxYearlyGbp).toBeNull();
+    expect(run.figures.differenceYearlyAfterTaxGbp).toBeNull();
+    expect(run.figures.incomeTaxNotice).toBe(SCOT_NOTICE);
+    expect(run.figures.assumptions.taxYear).toBe("2027/28");
+    expect(run.assumptions.find((a) => a.field === "incomeTax")?.reason).toBe(
+      `${SCOT_NOTICE} Income figures are before tax and after-tax figures are null.`,
+    );
+  });
+
+  it("both tools answer, with the notice in their notes", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2027-06-01T12:00:00Z"));
+    try {
+      const h = await connectTestClient(scot, { token: FULL });
+      try {
+        for (const tool of ["get_retirement_picture", "simulate_retirement"]) {
+          const e = (await h.callJson(tool, {})) as Env;
+          expect(e.result.notes, tool).toContain(SCOT_NOTICE);
+          expect(e.result.estimatedYearlyIncomeAfterTaxGbp, tool).toBeNull();
+          expect(e.result.estimatedYearlyIncomeGbp, tool).not.toBeNull();
+        }
+      } finally {
+        await h.close();
+      }
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

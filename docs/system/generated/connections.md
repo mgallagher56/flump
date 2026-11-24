@@ -63,6 +63,7 @@ flowchart LR
   f_tax_region -.-> s_picture
   f_tax_region -.-> s_pension
   f_tax_region -.-> s_mcp_read
+  f_tax_region -.-> s_retirement
   f_student_loan_plan(["Student loan plan"])
   s_onboarding --> f_student_loan_plan
   s_settings --> f_student_loan_plan
@@ -588,6 +589,8 @@ flowchart LR
   f_budget_entries ==> g_retirement_income
   f_mortgage_term_and_fix_end(["Mortgage term left and fix end date"])
   f_mortgage_term_and_fix_end ==> g_retirement_income
+  f_tax_region(["Tax region"])
+  f_tax_region ==> g_retirement_income
   g_retirement_income -.-> s_retirement
   g_retirement_income -.-> s_mcp_read
   g_retirement_income -.-> s_mcp_simulate

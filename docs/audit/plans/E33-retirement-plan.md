@@ -148,7 +148,7 @@ Done:
 Remaining:
 
 - S4 finish: a budget-built target where a line's amount changes in retirement. The engine supports a changed amount; the page offers only "Continues" and "Stops".
-- S6: tax on withdrawals, the tax-free lump sum (dropped from the old forecaster until this slice), UFPLS, RV10. Needs signed tax vectors.
+- S6 (2026-11-24, in review): income tax on pension withdrawals and State Pension, 25% of each withdrawal tax-free until the lump sum allowance is used (UFPLS) for saved figures, a tax-free lump sum at retirement as a what-if, figures after income tax. Vectors RV10 to RV16 in `uk-retirement.vectors.ts`, signed by `fable-decider` on 2026-11-24.
 - S7: inheritance tax on unused pensions from 6 April 2027 and the self-employed view. Needs E29b wording.
 - S8: MCP evals for the retirement tools.
 - S9: mobile parity (E12) and the two-person view (E34).

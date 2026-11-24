@@ -22,6 +22,9 @@ import {
   type RetirementStatePensionInput,
   type RetirementTargetInput,
 } from "./retirement.js";
+import type { RetirementWithdrawalMethod } from "./retirement-tax.js";
+import type { UkTaxRegion } from "./types.js";
+import { resolveUkTaxYear } from "./uk-tax-year.js";
 import type { WorkplacePensionInput } from "./workplace-pension.js";
 
 /**
@@ -67,6 +70,8 @@ export interface RetirementInputOverrides {
   employeePercent?: number;
   /** Count only pay inside the qualifying earnings band. Applies only when a salary is saved. */
   useQualifyingEarnings?: boolean;
+  /** How pension money is taken (E33 S6). The saved figures always use "ufpls". */
+  withdrawalMethod?: RetirementWithdrawalMethod;
 }
 
 export interface BuildRetirementPlanInputArgs {
@@ -85,6 +90,11 @@ export interface BuildRetirementPlanInputArgs {
   budgetEntries?: readonly BudgetEntryItem[];
   /** The saved workplace pension (`workplacePensionFromProfile`), or null without a salary. */
   workplacePension?: WorkplacePensionInput | null;
+  /**
+   * The saved tax region from the profile ("ENGLAND", "WALES", "SCOTLAND", "NORTHERN_IRELAND").
+   * Null or anything else: England, Wales and NI bands, marked as assumed.
+   */
+  taxRegion?: string | null;
   overrides?: RetirementInputOverrides;
 }
 
@@ -127,6 +137,14 @@ type HousingStatus = (typeof HOUSING_STATUSES)[number];
 function normaliseHousingStatus(raw: string | null | undefined): HousingStatus | null {
   const value = typeof raw === "string" ? raw.trim().toLowerCase() : "";
   return (HOUSING_STATUSES as readonly string[]).includes(value) ? (value as HousingStatus) : null;
+}
+
+const EWNI_REGIONS = new Set(["ENGLAND", "WALES", "NORTHERN_IRELAND", "ENGLAND_NI_WALES"]);
+
+/** The saved profile region as a tax region, or null when none is saved (an assumed region). */
+export function retirementTaxRegion(raw: string | null | undefined): UkTaxRegion | null {
+  if (raw === "SCOTLAND") return "SCOTLAND";
+  return typeof raw === "string" && EWNI_REGIONS.has(raw) ? "ENGLAND_NI_WALES" : null;
 }
 
 function finiteOrNull(value: unknown): number | null {
@@ -406,6 +424,12 @@ export function buildRetirementPlanInput(
       ...(cashRate !== null ? { cashSavingsNominalRate: cashRate } : {}),
       ...(realRentGrowthRate !== null ? { realRentGrowthRate } : {}),
     },
+    tax: {
+      withdrawalMethod: overrides.withdrawalMethod ?? "ufpls",
+      // The tax year of "now", so the page, the tools and their tests agree on the rules.
+      taxYear: resolveUkTaxYear(undefined, args.now),
+      region: retirementTaxRegion(args.taxRegion),
+    },
   };
 
   return {
@@ -437,6 +461,7 @@ export function retirementArgsFromContextInput(
     accounts: data.accounts ?? [],
     budgetEntries: data.budgetEntries ?? [],
     workplacePension: data.workplacePension ?? null,
+    taxRegion: data.profileFacts?.taxRegion ?? null,
     overrides,
   };
 }

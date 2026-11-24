@@ -19,7 +19,7 @@ export const simulateRetirement = defineFlumpTool({
   name: "simulate_retirement",
   title: "Simulate retirement plan",
   description:
-    "Simulates estimated yearly retirement income in today's prices, before tax, starting from the user's saved retirement plan. Each input given replaces the saved value for this answer only: retirement age, plan-to age, extra monthly contribution, growth rates, inflation, State Pension details and the user's own target. Returns income from the retirement age and, separately, from State Pension age. Never fills in an age or a State Pension amount: while details are missing, figures are null and missing lists what to ask. Saves nothing.",
+    "Simulates estimated yearly retirement income in today's prices, before and after income tax, starting from the user's saved retirement plan. Each input given replaces the saved value for this answer only: retirement age, plan-to age, extra monthly contribution, growth rates, inflation, State Pension details, the user's own target and whether tax-free cash is taken as one lump sum at retirement. Returns income from the retirement age and, separately, from State Pension age. Never fills in an age or a State Pension amount: while details are missing, figures are null and missing lists what to ask. Saves nothing.",
   annotations: SIMULATE_ANNOTATIONS,
   input: {
     retirementAge: z
@@ -60,6 +60,12 @@ export const simulateRetirement = defineFlumpTool({
       "User-supplied annual State Pension forecast in GBP.",
       50_000,
     ).optional(),
+    taxFreeLumpSumAtRetirement: z
+      .boolean()
+      .optional()
+      .describe(
+        "True to take tax-free cash as one lump sum at the retirement age (25% of the pension pot, at most the lump sum allowance) instead of 25% of each withdrawal.",
+      ),
   },
   result,
   maxTokens: 1800,
@@ -89,6 +95,9 @@ export const simulateRetirement = defineFlumpTool({
         higher: toRate(args.higherGrowthPct),
       },
       inflationRate: toRate(args.inflationPct),
+      ...(args.taxFreeLumpSumAtRetirement === undefined
+        ? {}
+        : { withdrawalMethod: args.taxFreeLumpSumAtRetirement ? "lumpSum" : "ufpls" }),
     });
 
     return {
@@ -96,7 +105,8 @@ export const simulateRetirement = defineFlumpTool({
         ...run.figures,
         notes: [
           SIMULATION_NOTICE,
-          "Figures are estimates in today's prices, before tax. Nothing was saved.",
+          "Figures are estimates in today's prices, before and after income tax. Nothing was saved.",
+          ...(run.figures.incomeTaxNotice ? [run.figures.incomeTaxNotice] : []),
         ],
       },
       missing: run.missing,

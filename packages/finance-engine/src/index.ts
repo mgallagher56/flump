@@ -32,6 +32,7 @@ export * from "./recorded-month-comparison.js";
 export * from "./recorded-return.js";
 export * from "./retirement.js";
 export * from "./retirement-input.js";
+export * from "./retirement-tax.js";
 export * from "./sample-households.js";
 export * from "./savings-interest.js";
 export * from "./section24.js";

@@ -16,6 +16,7 @@ import { computeUkTakeHome, type UkPensionMethod } from "./uk-take-home.js";
 import {
   calculateEmployeeNi,
   calculateEmployerNiSaving,
+  calculateIncomeTaxOnNonSavingsIncome,
   calculateIncomeTaxOnTaxable,
   calculatePersonalAllowanceForYear,
   calculateStudentLoanRepayment,
@@ -130,15 +131,8 @@ function marginalIncomeTaxRate(
   return e.additionalRate;
 }
 
-/** Income tax on adjusted net income `ani`: allowance (with the 100k taper) then the shared band function. */
-function incomeTaxOnAdjustedNetIncome(
-  ani: number,
-  rules: UkTaxYearRules,
-  region: UkTaxRegion,
-): number {
-  const allowance = calculatePersonalAllowanceForYear(ani, rules);
-  return calculateIncomeTaxOnTaxable(Math.max(0, ani - allowance), rules, region).total;
-}
+/** Income tax on adjusted net income `ani`: the one rule function for income before the allowance. */
+const incomeTaxOnAdjustedNetIncome = calculateIncomeTaxOnNonSavingsIncome;
 
 /**
  * Analyses the £100k - £125,140 60% UK Tax Trap for `taxYear`. With no year

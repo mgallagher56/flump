@@ -8,8 +8,23 @@ import type { AccountShareInput } from "./joint-share.js";
 import { amortiseOneMonth, calculateMonthlyMortgagePayment } from "./mortgage.js";
 import { DEFAULT_NET_WORTH_BASIS } from "./net-worth-basis.js";
 import { budgetRowMonthly, SAVINGS_CATEGORY } from "./picture/selectors/budget-totals.js";
+import {
+  type RetirementWithdrawalMethod,
+  retirementYearIncomeTax,
+  taxFreeLumpSum,
+  ufplsTaxFreePart,
+} from "./retirement-tax.js";
 import { type SnapshotRow, selectNetWorthSeries } from "./snapshots.js";
-import { getUkStatePensionRules, resolveUkTaxYear, roundPence } from "./uk-tax-year.js";
+import type { UkTaxRegion, UkTaxYear } from "./types.js";
+import {
+  getUkPensionAllowances,
+  getUkStatePensionRules,
+  getUkTaxYearRules,
+  resolveUkTaxYear,
+  roundPence,
+  scottishRatesRefusal,
+  type UkRefusal,
+} from "./uk-tax-year.js";
 import {
   calculateWorkplacePensionContributions,
   type WorkplacePensionContributions,
@@ -896,6 +911,42 @@ export interface RetirementPlanInput {
    */
   statePension?: RetirementStatePensionInput | null;
   assumptions?: RetirementAssumptionsInput;
+  /** Income tax in retirement (E33 S6). Left out: UFPLS, the current tax year, an assumed region. */
+  tax?: RetirementTaxInput | null;
+}
+
+/** How income tax in retirement is worked out (decisions D2, D3 and D5 of E33 S6). */
+export interface RetirementTaxInput {
+  /** Defaults to "ufpls", the method the saved figures use. "lumpSum" is a what-if only. */
+  withdrawalMethod?: RetirementWithdrawalMethod;
+  /**
+   * The tax year whose allowances and bands apply to every retirement year, in today's money.
+   * Defaults to the current tax year (`resolveUkTaxYear`).
+   */
+  taxYear?: string;
+  /** The user's saved tax region. Null or left out: England, Wales and NI, and `regionAssumed`. */
+  region?: UkTaxRegion | null;
+}
+
+export interface RetirementTaxResult {
+  withdrawalMethod: RetirementWithdrawalMethod;
+  taxYear: UkTaxYear;
+  region: UkTaxRegion;
+  /** True when no tax region is saved, so England, Wales and NI bands are used. */
+  regionAssumed: boolean;
+  /** The lump sum allowance of `taxYear` (`getUkPensionAllowances`). */
+  lumpSumAllowanceGbp: number;
+  /**
+   * With "lumpSum": the tax-free lump sum at `retirementAge` for each growth case, outside yearly
+   * income (25% of the pension pot, at most the allowance). Null with "ufpls".
+   */
+  taxFreeLumpSumGbp: RetirementGrowthBand<number> | null;
+  /**
+   * Set when income tax cannot be estimated (a Scottish taxpayer in a year whose Scottish rates
+   * are not published). Every after-tax and tax field is then null; the before-tax figures stand,
+   * and `refusal.notice` says why.
+   */
+  refusal: UkRefusal | null;
 }
 
 export interface RetirementYearProjectionPoint {
@@ -904,8 +955,25 @@ export interface RetirementYearProjectionPoint {
   potDrawdownYearly: RetirementGrowthBand<number>;
   statePensionYearlyGbp: number;
   housingCostYearlyGbp: number;
+  /** Before income tax: pots plus the State Pension. */
   grossYearlyIncome: RetirementGrowthBand<number>;
+  /** Before income tax, less housing. */
   yearlyIncomeAfterHousing: RetirementGrowthBand<number>;
+  /** The year's pension withdrawal before tax (part of `potDrawdownYearly`). */
+  pensionWithdrawalYearly: RetirementGrowthBand<number>;
+  /**
+   * The tax-free part of the pension withdrawal (UFPLS only; 0 with a lump sum at retirement).
+   * This and the four fields below are null when income tax is refused (`tax.refusal`).
+   */
+  taxFreePensionYearly: RetirementGrowthBand<number> | null;
+  /** Taxable income: the pension withdrawal less its tax-free part, plus the State Pension. */
+  taxableIncomeYearly: RetirementGrowthBand<number> | null;
+  /** Estimated income tax on `taxableIncomeYearly`. */
+  incomeTaxYearly: RetirementGrowthBand<number> | null;
+  /** `grossYearlyIncome - incomeTaxYearly`. */
+  yearlyIncomeAfterTax: RetirementGrowthBand<number> | null;
+  /** `yearlyIncomeAfterTax - housingCostYearlyGbp`. */
+  yearlyIncomeAfterTaxAndHousing: RetirementGrowthBand<number> | null;
 }
 
 /** One year on the way to retirement, in today's prices. */
@@ -936,8 +1004,18 @@ export interface RetirementPlanResult {
     investments: RetirementGrowthBand<number>;
     savings: number;
   };
-  /** Annual income from drawing down the pots evenly in real terms from `retirementAge` to `planToAge`. */
+  /**
+   * Annual income before tax from drawing down the pots evenly in real terms from `retirementAge`
+   * to `planToAge`. With a tax-free lump sum at retirement, the pension part is drawn from the pot
+   * left after the lump sum.
+   */
   annualPotIncomeGbp: RetirementGrowthBand<number>;
+  /** The pension part of `annualPotIncomeGbp`, before tax. */
+  annualPensionWithdrawalGbp: RetirementGrowthBand<number>;
+  /** The ISA, investment and savings part of `annualPotIncomeGbp`, untaxed in this estimate. */
+  annualOtherPotIncomeGbp: RetirementGrowthBand<number>;
+  /** How income tax is worked out, and the tax-free lump sum when one is taken. */
+  tax: RetirementTaxResult;
   /**
    * State Pension details and annual amount from `statePensionAge`, or `null` when it is left out
    * (no age or no amount source given).
@@ -962,6 +1040,36 @@ export interface RetirementPlanResult {
    */
   estimatedYearlyIncomeFromStatePensionAgeGbp: RetirementGrowthBand<number> | null;
   /**
+   * `estimatedYearlyIncomeGbp` after income tax: the first year of retirement. This and every
+   * other after-tax or tax figure is null when income tax is refused (`tax.refusal`).
+   */
+  estimatedYearlyIncomeAfterTaxGbp: RetirementGrowthBand<number> | null;
+  /** `estimatedYearlyIncomeBeforeStatePensionAgeGbp` after income tax (the first year), or null. */
+  estimatedYearlyIncomeBeforeStatePensionAgeAfterTaxGbp: RetirementGrowthBand<number> | null;
+  /**
+   * `estimatedYearlyIncomeFromStatePensionAgeGbp` after income tax, in the first year from State
+   * Pension age (or the first year of retirement when it has started by then), or null. When the
+   * State Pension starts at or after `planToAge` it is, like the before-tax figure, the pots'
+   * yearly income plus the State Pension, taxed with the lump sum allowance left at the end of the
+   * plan (no withdrawals are assumed between the plan's end and State Pension age).
+   */
+  estimatedYearlyIncomeFromStatePensionAgeAfterTaxGbp: RetirementGrowthBand<number> | null;
+  /** Estimated income tax in the first year of retirement. */
+  estimatedIncomeTaxYearlyGbp: RetirementGrowthBand<number> | null;
+  /**
+   * Yearly income after income tax by source, in the first year from State Pension age (or the
+   * first year of retirement when the State Pension is left out or has already started). The
+   * State Pension carries the tax it would bear on its own; pensions carry the rest of the year's
+   * tax; ISAs, investments and savings are untaxed. The three add up to that year's income after
+   * tax.
+   */
+  incomeAfterTaxBySource: {
+    age: number;
+    statePensionGbp: number;
+    pensionsGbp: RetirementGrowthBand<number>;
+    otherPotsGbp: RetirementGrowthBand<number>;
+  } | null;
+  /**
    * The user's own yearly target (including retirement housing costs when built from non-housing
    * budget lines, or the direct typed figure when typed). `null` when no target has been set.
    */
@@ -977,6 +1085,12 @@ export interface RetirementPlanResult {
   differenceBeforeStatePensionAgeYearly: RetirementGrowthBand<number> | null;
   /** `estimatedYearlyIncomeFromStatePensionAgeGbp - target`, or `null` when either is unset. */
   differenceFromStatePensionAgeYearly: RetirementGrowthBand<number> | null;
+  /** `estimatedYearlyIncomeAfterTaxGbp - target`, or `null` when no target has been set. */
+  differenceYearlyAfterTax: RetirementGrowthBand<number> | null;
+  /** `estimatedYearlyIncomeBeforeStatePensionAgeAfterTaxGbp - target`, or `null`. */
+  differenceBeforeStatePensionAgeYearlyAfterTax: RetirementGrowthBand<number> | null;
+  /** `estimatedYearlyIncomeFromStatePensionAgeAfterTaxGbp - target`, or `null`. */
+  differenceFromStatePensionAgeYearlyAfterTax: RetirementGrowthBand<number> | null;
   /** Year-by-year retirement schedule from `retirementAge` to `planToAge - 1`. */
   yearlySchedule: RetirementYearProjectionPoint[];
   /** Year-by-year counted pots from `currentAge` (index 0, today) to `retirementAge`. */
@@ -993,6 +1107,8 @@ export interface RetirementPlanResult {
     estimatedMiddleYearlyGbp: number;
     targetYearlyGbp: number | null;
     differenceMiddleYearlyGbp: number | null;
+    estimatedMiddleYearlyAfterTaxGbp: number | null;
+    differenceMiddleYearlyAfterTaxGbp: number | null;
   };
 }
 
@@ -1227,49 +1343,121 @@ export function calculateRetirementPlan(input: RetirementPlanInput): RetirementP
     ),
   };
 
-  // Annuity-style even real-terms drawdown from retirementAge to planToAge per pot group
-  const annualPotIncomeGbp: RetirementGrowthBand<number> = {
-    lower: roundPence(
-      calculateEvenRealDrawdown(
-        projectedPotByGroupGbp.pensions.lower + projectedPotByGroupGbp.investments.lower,
-        assumptions.realGrowthRates.lower,
-        yearsInRetirement,
-      ) + savingsDrawdownAnnual,
+  const mapBand = (fn: (c: RetirementGrowthCase) => number): RetirementGrowthBand<number> => ({
+    lower: fn("lower"),
+    middle: fn("middle"),
+    higher: fn("higher"),
+  });
+
+  // Income tax in retirement (E33 S6): one tax year's rules for every year, in today's money (D3).
+  const withdrawalMethod = input.tax?.withdrawalMethod ?? "ufpls";
+  const taxYear = resolveUkTaxYear(input.tax?.taxYear);
+  const regionAssumed = input.tax?.region == null;
+  const region: UkTaxRegion = input.tax?.region ?? "ENGLAND_NI_WALES";
+  const lumpSumAllowanceGbp = getUkPensionAllowances(taxYear).pensionLumpSumAllowance;
+  if (lumpSumAllowanceGbp === null) {
+    throw new RangeError(`The ${taxYear} tax year has no lump sum allowance.`);
+  }
+  const taxFreeLumpSumGbp =
+    withdrawalMethod === "lumpSum"
+      ? mapBand((c) => taxFreeLumpSum(projectedPotByGroupGbp.pensions[c], lumpSumAllowanceGbp))
+      : null;
+
+  // Even real-terms drawdown from retirementAge to planToAge. The drawdown is linear in the pot,
+  // so pensions and investments are drawn apart; with a tax-free lump sum at retirement the
+  // pension is drawn from what is left after it.
+  const drawdown = (pot: number, c: RetirementGrowthCase) =>
+    calculateEvenRealDrawdown(pot, assumptions.realGrowthRates[c], yearsInRetirement);
+  const annualPensionWithdrawalGbp = mapBand((c) =>
+    roundPence(drawdown(projectedPotByGroupGbp.pensions[c] - (taxFreeLumpSumGbp?.[c] ?? 0), c)),
+  );
+  const annualPotIncomeGbp = mapBand((c) =>
+    roundPence(
+      annualPensionWithdrawalGbp[c] +
+        drawdown(projectedPotByGroupGbp.investments[c], c) +
+        savingsDrawdownAnnual,
     ),
-    middle: roundPence(
-      calculateEvenRealDrawdown(
-        projectedPotByGroupGbp.pensions.middle + projectedPotByGroupGbp.investments.middle,
-        assumptions.realGrowthRates.middle,
-        yearsInRetirement,
-      ) + savingsDrawdownAnnual,
-    ),
-    higher: roundPence(
-      calculateEvenRealDrawdown(
-        projectedPotByGroupGbp.pensions.higher + projectedPotByGroupGbp.investments.higher,
-        assumptions.realGrowthRates.higher,
-        yearsInRetirement,
-      ) + savingsDrawdownAnnual,
-    ),
+  );
+  const annualOtherPotIncomeGbp = mapBand((c) =>
+    roundPence(annualPotIncomeGbp[c] - annualPensionWithdrawalGbp[c]),
+  );
+
+  // The first year from State Pension age, as an index from the retirement age (0 when it has
+  // started by then). It can fall after planToAge, when the State Pension starts after the plan.
+  // An included State Pension always has an age (isStatePensionIncluded).
+  const statePensionYearIndex =
+    statePension === null
+      ? null
+      : Math.max(0, (statePension.statePensionAge as number) - retirementAge);
+
+  // A Scottish taxpayer in a year with no Scottish rates: no tax figures, the before-tax ones stand.
+  const taxRefusal = scottishRatesRefusal(getUkTaxYearRules(taxYear), region);
+
+  interface YearTax {
+    taxFree: RetirementGrowthBand<number>;
+    taxable: RetirementGrowthBand<number>;
+    tax: RetirementGrowthBand<number>;
+  }
+  const statePensionInYear = (i: number) =>
+    statePension ? statePensionAnnualAtAge(retirementAge + i, statePension) : 0;
+  /** The tax for a year with `allowance` left, using it up when `useAllowance` is true. */
+  const yearTax = (
+    spYearly: number,
+    allowance: RetirementGrowthBand<number>,
+    useAllowance: boolean,
+  ): YearTax => {
+    const taxFree = mapBand((c) => {
+      if (withdrawalMethod !== "ufpls") return 0;
+      const part = ufplsTaxFreePart(annualPensionWithdrawalGbp[c], allowance[c]);
+      if (useAllowance) allowance[c] = roundPence(allowance[c] - part);
+      return part;
+    });
+    return {
+      taxFree,
+      taxable: mapBand((c) => roundPence(annualPensionWithdrawalGbp[c] - taxFree[c] + spYearly)),
+      tax: mapBand((c) =>
+        retirementYearIncomeTax({
+          taxablePensionGbp: annualPensionWithdrawalGbp[c] - taxFree[c],
+          statePensionGbp: spYearly,
+          taxYear,
+          region,
+        }),
+      ),
+    };
+  };
+  // UFPLS: 25% of each withdrawal is tax-free until the lump sum allowance is used up (D2).
+  const allowanceLeft = mapBand(() => lumpSumAllowanceGbp);
+  const yearTaxes: YearTax[] = [];
+  if (taxRefusal === null) {
+    for (let i = 0; i < yearsInRetirement; i++) {
+      yearTaxes.push(yearTax(statePensionInYear(i), allowanceLeft, true));
+    }
+  }
+  /**
+   * The tax for year `i` of retirement, or null when tax is refused. A year past the plan (only
+   * asked for when the State Pension starts at or after planToAge) is taxed with the allowance
+   * left at the end of the plan, without using it.
+   */
+  const taxForYear = (i: number): YearTax | null => {
+    if (taxRefusal !== null) return null;
+    return yearTaxes[i] ?? yearTax(statePensionInYear(i), allowanceLeft, false);
   };
 
   const yearlySchedule: RetirementYearProjectionPoint[] = [];
 
   for (let i = 0; i < yearsInRetirement; i++) {
     const age = retirementAge + i;
-    const spYearly = statePension ? statePensionAnnualAtAge(age, statePension) : 0;
+    const spYearly = statePensionInYear(i);
     const housingYearly = housing.yearlySchedule[i]?.annualCostGbp ?? 0;
+    const taxed = taxForYear(i);
 
-    const grossYearlyIncome: RetirementGrowthBand<number> = {
-      lower: roundPence(annualPotIncomeGbp.lower + spYearly),
-      middle: roundPence(annualPotIncomeGbp.middle + spYearly),
-      higher: roundPence(annualPotIncomeGbp.higher + spYearly),
-    };
-
-    const yearlyIncomeAfterHousing: RetirementGrowthBand<number> = {
-      lower: roundPence(grossYearlyIncome.lower - housingYearly),
-      middle: roundPence(grossYearlyIncome.middle - housingYearly),
-      higher: roundPence(grossYearlyIncome.higher - housingYearly),
-    };
+    const grossYearlyIncome = mapBand((c) => roundPence(annualPotIncomeGbp[c] + spYearly));
+    const yearlyIncomeAfterHousing = mapBand((c) =>
+      roundPence(grossYearlyIncome[c] - housingYearly),
+    );
+    const yearlyIncomeAfterTax = taxed
+      ? mapBand((c) => roundPence(grossYearlyIncome[c] - taxed.tax[c]))
+      : null;
 
     yearlySchedule.push({
       age,
@@ -1279,6 +1467,14 @@ export function calculateRetirementPlan(input: RetirementPlanInput): RetirementP
       housingCostYearlyGbp: housingYearly,
       grossYearlyIncome,
       yearlyIncomeAfterHousing,
+      pensionWithdrawalYearly: annualPensionWithdrawalGbp,
+      taxFreePensionYearly: taxed?.taxFree ?? null,
+      taxableIncomeYearly: taxed?.taxable ?? null,
+      incomeTaxYearly: taxed?.tax ?? null,
+      yearlyIncomeAfterTax,
+      yearlyIncomeAfterTaxAndHousing: yearlyIncomeAfterTax
+        ? mapBand((c) => roundPence(yearlyIncomeAfterTax[c] - housingYearly))
+        : null,
     });
   }
 
@@ -1287,6 +1483,12 @@ export function calculateRetirementPlan(input: RetirementPlanInput): RetirementP
     middle: roundPence(band.middle + amount),
     higher: roundPence(band.higher + amount),
   });
+  const lessTax = (band: RetirementGrowthBand<number> | null, yearIndex: number) => {
+    const taxed = taxForYear(yearIndex);
+    return band === null || taxed === null
+      ? null
+      : mapBand((c) => roundPence(band[c] - taxed.tax[c]));
+  };
 
   const estimatedYearlyIncomeFromStatePensionAgeGbp = statePension
     ? addToBand(annualPotIncomeGbp, statePension.annualAmountGbp)
@@ -1304,6 +1506,36 @@ export function calculateRetirementPlan(input: RetirementPlanInput): RetirementP
     estimatedYearlyIncomeFromStatePensionAgeGbp ??
     addToBand(annualPotIncomeGbp, 0);
 
+  const estimatedYearlyIncomeAfterTaxGbp = lessTax(estimatedYearlyIncomeGbp, 0);
+  const estimatedYearlyIncomeBeforeStatePensionAgeAfterTaxGbp = lessTax(
+    estimatedYearlyIncomeBeforeStatePensionAgeGbp,
+    0,
+  );
+  const sourceYearIndex = statePensionYearIndex ?? 0;
+  const estimatedYearlyIncomeFromStatePensionAgeAfterTaxGbp = lessTax(
+    estimatedYearlyIncomeFromStatePensionAgeGbp,
+    sourceYearIndex,
+  );
+  const sourceYearTax = taxForYear(sourceYearIndex);
+  let incomeAfterTaxBySource: RetirementPlanResult["incomeAfterTaxBySource"] = null;
+  if (sourceYearTax) {
+    const sourceYearStatePension = statePensionInYear(sourceYearIndex);
+    const statePensionOwnTax = retirementYearIncomeTax({
+      taxablePensionGbp: 0,
+      statePensionGbp: sourceYearStatePension,
+      taxYear,
+      region,
+    });
+    incomeAfterTaxBySource = {
+      age: retirementAge + sourceYearIndex,
+      statePensionGbp: roundPence(sourceYearStatePension - statePensionOwnTax),
+      pensionsGbp: mapBand((c) =>
+        roundPence(annualPensionWithdrawalGbp[c] - (sourceYearTax.tax[c] - statePensionOwnTax)),
+      ),
+      otherPotsGbp: annualOtherPotIncomeGbp,
+    };
+  }
+
   const differenceFrom = (band: RetirementGrowthBand<number> | null) =>
     band === null || targetYearlyIncome === null ? null : addToBand(band, -targetYearlyIncome);
   const differenceYearly = differenceFrom(estimatedYearlyIncomeGbp);
@@ -1313,6 +1545,7 @@ export function calculateRetirementPlan(input: RetirementPlanInput): RetirementP
   const differenceFromStatePensionAgeYearly = differenceFrom(
     estimatedYearlyIncomeFromStatePensionAgeGbp,
   );
+  const differenceYearlyAfterTax = differenceFrom(estimatedYearlyIncomeAfterTaxGbp);
 
   return {
     currentAge,
@@ -1325,16 +1558,39 @@ export function calculateRetirementPlan(input: RetirementPlanInput): RetirementP
     projectedPotAtRetirementGbp,
     projectedPotByGroupGbp,
     annualPotIncomeGbp,
+    annualPensionWithdrawalGbp,
+    annualOtherPotIncomeGbp,
+    tax: {
+      withdrawalMethod,
+      taxYear,
+      region,
+      regionAssumed,
+      lumpSumAllowanceGbp,
+      taxFreeLumpSumGbp,
+      refusal: taxRefusal,
+    },
     statePension,
     housing,
     estimatedYearlyIncomeGbp,
     estimatedYearlyIncomeBeforeStatePensionAgeGbp,
     estimatedYearlyIncomeFromStatePensionAgeGbp,
+    estimatedYearlyIncomeAfterTaxGbp,
+    estimatedYearlyIncomeBeforeStatePensionAgeAfterTaxGbp,
+    estimatedYearlyIncomeFromStatePensionAgeAfterTaxGbp,
+    estimatedIncomeTaxYearlyGbp: taxForYear(0)?.tax ?? null,
+    incomeAfterTaxBySource,
     targetYearlyIncome,
     targetDetail,
     differenceYearly,
     differenceBeforeStatePensionAgeYearly,
     differenceFromStatePensionAgeYearly,
+    differenceYearlyAfterTax,
+    differenceBeforeStatePensionAgeYearlyAfterTax: differenceFrom(
+      estimatedYearlyIncomeBeforeStatePensionAgeAfterTaxGbp,
+    ),
+    differenceFromStatePensionAgeYearlyAfterTax: differenceFrom(
+      estimatedYearlyIncomeFromStatePensionAgeAfterTaxGbp,
+    ),
     yearlySchedule,
     accumulation,
     workplacePension,
@@ -1343,6 +1599,10 @@ export function calculateRetirementPlan(input: RetirementPlanInput): RetirementP
       estimatedMiddleYearlyGbp: estimatedYearlyIncomeGbp.middle,
       targetYearlyGbp: targetYearlyIncome,
       differenceMiddleYearlyGbp: differenceYearly ? differenceYearly.middle : null,
+      estimatedMiddleYearlyAfterTaxGbp: estimatedYearlyIncomeAfterTaxGbp?.middle ?? null,
+      differenceMiddleYearlyAfterTaxGbp: differenceYearlyAfterTax
+        ? differenceYearlyAfterTax.middle
+        : null,
     },
   };
 }

@@ -294,6 +294,9 @@
 | `tax-region`                      | `web.onboarding.step-review`                      | web/onboarding             | `/app/onboarding`              |
 | `tax-region`                      | `web.pension.scenario-zone`                       | web/pension                | `/app/pension`                 |
 | `tax-region`                      | `web.pension.tax-trap-note`                       | web/pension                | `/app/pension`                 |
+| `tax-region`                      | `web.retirement.hero`                             | web/retirement             | `/app/retirement`              |
+| `tax-region`                      | `web.retirement.kpis`                             | web/retirement             | `/app/retirement`              |
+| `tax-region`                      | `web.retirement.what-if-zone`                     | web/retirement             | `/app/retirement`              |
 | `tax-region`                      | `web.self-assessment.headline-or-empty`           | web/self-assessment        | `/app/self-assessment`         |
 | `tax-region`                      | `web.settings.tax-basis`                          | web/settings               | `/app/profile`                 |
 | `tax-region`                      | `web.take-home.breakdown`                         | web/take-home              | `/app/take-home`               |

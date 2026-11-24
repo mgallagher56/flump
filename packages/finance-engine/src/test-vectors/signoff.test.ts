@@ -7,6 +7,7 @@ import {
   vectorSignoffHashV1,
   yearVerification,
 } from "./signoff.js";
+import { UK_RETIREMENT_VECTORS } from "./uk-retirement.vectors.js";
 import { UK_SELF_ASSESSMENT_VECTORS } from "./uk-self-assessment.vectors.js";
 import { UK_TAX_VECTORS, type UkTaxVector } from "./uk-tax.vectors.js";
 import { UK_WHATIF_VECTORS } from "./uk-whatif.vectors.js";
@@ -174,6 +175,7 @@ describe("vector sign-off", () => {
       ...UK_TAX_VECTORS,
       ...UK_SELF_ASSESSMENT_VECTORS,
       ...UK_WHATIF_VECTORS,
+      ...UK_RETIREMENT_VECTORS,
     ].filter((v) => v.signedOffBy !== null && !v.signedOffHash?.startsWith("v2:"));
     expect(v1Signed).toHaveLength(37);
     expect(v1Signed.every((v) => v.signedOffBy === "owner" && v.taxYear === "2027/28")).toBe(true);

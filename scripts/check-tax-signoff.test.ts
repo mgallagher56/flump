@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { UK_RETIREMENT_VECTORS } from "../packages/finance-engine/src/test-vectors/uk-retirement.vectors";
 import { UK_SELF_ASSESSMENT_VECTORS } from "../packages/finance-engine/src/test-vectors/uk-self-assessment.vectors";
 import { UK_TAX_VECTORS } from "../packages/finance-engine/src/test-vectors/uk-tax.vectors";
 import { UK_WHATIF_VECTORS } from "../packages/finance-engine/src/test-vectors/uk-whatif.vectors";
@@ -36,6 +37,7 @@ describe("unsigned tax vector ratchet (BE-08)", () => {
       ...UK_TAX_VECTORS,
       ...UK_WHATIF_VECTORS,
       ...UK_SELF_ASSESSMENT_VECTORS,
+      ...UK_RETIREMENT_VECTORS,
     ]);
     expect(compareUnsignedToBaseline(now, baseline)).toEqual({ added: [], stale: [] });
   });
