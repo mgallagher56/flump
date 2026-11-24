@@ -37,17 +37,33 @@ export const retirementFiguresSchema = {
   retirementAge: z.number().nullable(),
   planToAge: z.number().nullable(),
   currentCountedPotGbp: z.number(),
-  /** Estimated yearly income from the retirement age (the first year of retirement). */
+  /** Estimated yearly income before tax from the retirement age (the first year of retirement). */
   estimatedYearlyIncomeGbp: bandSchema.nullable(),
+  /** The same first year after income tax: the headline figure the web page shows. */
+  estimatedYearlyIncomeAfterTaxGbp: bandSchema.nullable(),
+  /** Estimated income tax in the first year of retirement. */
+  estimatedIncomeTaxYearlyGbp: bandSchema.nullable(),
   /** Pots only, from the retirement age until State Pension age; null when there is no gap. */
   incomeBeforeStatePensionAgeGbp: bandSchema.nullable(),
   /** Pots plus the State Pension, from State Pension age; null while the State Pension is left out. */
   incomeFromStatePensionAgeGbp: bandSchema.nullable(),
+  /** The two figures above after income tax. */
+  incomeBeforeStatePensionAgeAfterTaxGbp: bandSchema.nullable(),
+  incomeFromStatePensionAgeAfterTaxGbp: bandSchema.nullable(),
+  /** With a tax-free lump sum at retirement (a what-if): the lump sum, outside yearly income. */
+  taxFreeLumpSumGbp: bandSchema.nullable(),
   projectedPotAtRetirementGbp: bandSchema.nullable(),
   targetYearlyIncomeGbp: z.number().nullable(),
+  /** Income before tax less the user's target. */
   differenceYearlyGbp: bandSchema.nullable(),
   differenceBeforeStatePensionAgeGbp: bandSchema.nullable(),
   differenceFromStatePensionAgeGbp: bandSchema.nullable(),
+  /** Income after income tax less the user's target (the difference the web page shows). */
+  differenceYearlyAfterTaxGbp: bandSchema.nullable(),
+  differenceBeforeStatePensionAgeAfterTaxGbp: bandSchema.nullable(),
+  differenceFromStatePensionAgeAfterTaxGbp: bandSchema.nullable(),
+  /** Why income tax is not estimated (Scottish rates not published for the year), or null. */
+  incomeTaxNotice: z.string().nullable(),
   statePensionIncluded: z.boolean(),
   statePensionAnnualGbp: z.number().nullable(),
   statePensionAge: z.number().nullable(),
@@ -56,6 +72,11 @@ export const retirementFiguresSchema = {
   assumptions: z.object({
     growthRates: bandSchema,
     inflationRate: z.number(),
+    /** "ufpls" (25% of each pension withdrawal tax-free) or "lumpSum" (tax-free cash at retirement). */
+    withdrawalMethod: z.string(),
+    taxYear: z.string().nullable(),
+    taxRegion: z.string().nullable(),
+    taxRegionAssumed: z.boolean(),
   }),
 };
 
@@ -168,6 +189,25 @@ export async function runRetirementPlan(
     reason:
       "A reference band for the three cases, not a prediction. Figures are in today's prices.",
   });
+  if (plan) {
+    const region =
+      plan.tax.region === "SCOTLAND" ? "Scotland" : "England, Wales and Northern Ireland";
+    assumptions.push({
+      field: "incomeTax",
+      value: `${plan.tax.taxYear} allowances and bands, ${region}`,
+      source: plan.tax.regionAssumed ? "default" : "user_profile",
+      reason: plan.tax.refusal
+        ? `${plan.tax.refusal.notice} Income figures are before tax and after-tax figures are null.`
+        : `Income tax on pension withdrawals and the State Pension uses the ${plan.tax.taxYear} allowances and bands for every year, in today's money.${plan.tax.regionAssumed ? " No tax region is saved, so England, Wales and Northern Ireland bands are assumed." : ""} ${plan.tax.withdrawalMethod === "lumpSum" ? "A tax-free lump sum at retirement (25% of the pension pot, at most the lump sum allowance), then the rest taxed." : "25% of each pension withdrawal is tax-free until the lump sum allowance is used, then the rest is taxed."}`,
+    });
+    assumptions.push({
+      field: "untaxedWithdrawals",
+      value: "ISA, general investment and cash savings withdrawals",
+      source: "default",
+      reason:
+        "Not taxed in this estimate. Capital gains tax, dividend tax and tax on savings interest are not included.",
+    });
+  }
   if (built.ok && built.retirementAgeAdjusted) {
     assumptions.push({
       field: "retirementAge",
@@ -187,18 +227,42 @@ export async function runRetirementPlan(
       plan?.estimatedYearlyIncomeBeforeStatePensionAgeGbp ?? null,
     ),
     incomeFromStatePensionAgeGbp: band(plan?.estimatedYearlyIncomeFromStatePensionAgeGbp ?? null),
+    estimatedYearlyIncomeAfterTaxGbp: band(plan?.estimatedYearlyIncomeAfterTaxGbp ?? null),
+    estimatedIncomeTaxYearlyGbp: band(plan?.estimatedIncomeTaxYearlyGbp ?? null),
+    incomeBeforeStatePensionAgeAfterTaxGbp: band(
+      plan?.estimatedYearlyIncomeBeforeStatePensionAgeAfterTaxGbp ?? null,
+    ),
+    incomeFromStatePensionAgeAfterTaxGbp: band(
+      plan?.estimatedYearlyIncomeFromStatePensionAgeAfterTaxGbp ?? null,
+    ),
+    taxFreeLumpSumGbp: band(plan?.tax.taxFreeLumpSumGbp ?? null),
     projectedPotAtRetirementGbp: band(plan?.projectedPotAtRetirementGbp ?? null),
     targetYearlyIncomeGbp:
       plan?.targetYearlyIncome === null || plan === null ? null : round2(plan.targetYearlyIncome),
     differenceYearlyGbp: band(plan?.differenceYearly ?? null),
     differenceBeforeStatePensionAgeGbp: band(plan?.differenceBeforeStatePensionAgeYearly ?? null),
     differenceFromStatePensionAgeGbp: band(plan?.differenceFromStatePensionAgeYearly ?? null),
+    differenceYearlyAfterTaxGbp: band(plan?.differenceYearlyAfterTax ?? null),
+    differenceBeforeStatePensionAgeAfterTaxGbp: band(
+      plan?.differenceBeforeStatePensionAgeYearlyAfterTax ?? null,
+    ),
+    differenceFromStatePensionAgeAfterTaxGbp: band(
+      plan?.differenceFromStatePensionAgeYearlyAfterTax ?? null,
+    ),
+    incomeTaxNotice: plan?.tax.refusal?.notice ?? null,
     statePensionIncluded: plan?.statePension != null,
     statePensionAnnualGbp: plan?.statePension ? round2(plan.statePension.annualAmountGbp) : null,
     statePensionAge: plan?.statePension?.statePensionAge ?? null,
     housingKind: plan?.housing.kind ?? null,
     housingAverageAnnualGbp: plan ? round2(plan.housing.averageAnnualCostGbp) : null,
-    assumptions: { growthRates: rates, inflationRate },
+    assumptions: {
+      growthRates: rates,
+      inflationRate,
+      withdrawalMethod: plan?.tax.withdrawalMethod ?? overrides.withdrawalMethod ?? "ufpls",
+      taxYear: plan?.tax.taxYear ?? null,
+      taxRegion: plan?.tax.region ?? null,
+      taxRegionAssumed: plan?.tax.regionAssumed ?? true,
+    },
   };
 
   return {
@@ -218,7 +282,7 @@ export const getRetirementPicture = defineFlumpTool({
   name: "get_retirement_picture",
   title: "Retirement plan estimate",
   description:
-    "Reads the user's saved retirement plan and estimates yearly retirement income in today's prices, before tax, from counted accounts, saved housing details and the State Pension details the user gave, beside the user's own target. Returns income from the retirement age and, separately, from State Pension age. Never proposes a target or fills in an age: while the birth year, retirement age or plan-to age is missing, figures are null and missing lists what to ask. Inputs replace saved values for this answer only. Includes the monthly counted-pots history.",
+    "Reads the user's saved retirement plan and estimates yearly retirement income in today's prices, before and after income tax, from counted accounts, saved housing details and the State Pension details the user gave, beside the user's own target. Returns income from the retirement age and, separately, from State Pension age. Never proposes a target or fills in an age: while the birth year, retirement age or plan-to age is missing, figures are null and missing lists what to ask. Inputs replace saved values for this answer only. Includes the monthly counted-pots history.",
   input: {
     retirementAge: z
       .number()
@@ -263,7 +327,8 @@ export const getRetirementPicture = defineFlumpTool({
         monthlySeries,
         notes: [
           MCP_NOTICE,
-          "Figures are estimates in today's prices, before tax, and use the user's own target when one is saved or stated.",
+          "Figures are estimates in today's prices, given before and after income tax. Differences from the user's own target are given both ways.",
+          ...(run.figures.incomeTaxNotice ? [run.figures.incomeTaxNotice] : []),
         ],
       },
       missing: run.missing,

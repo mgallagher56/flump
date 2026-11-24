@@ -241,6 +241,7 @@ Read by:
 - Engine picture (headline figures): `packages/finance-engine/src/picture/selectors/take-home.ts`
 - Pension: `apps/web/app/containers/pension/PensionContainer.tsx`
 - AI read tools: `packages/mcp/src/tools/read/getTaxYearPosition.ts`
+- Retirement plan: `packages/finance-engine/src/retirement-input.ts`
 
 ### Student loan plan
 
@@ -1674,7 +1675,7 @@ Read by:
 - Id: `retirement-income` (derived figure)
 - Verdict: Broken. Findings: HM-6. Links: L58, L59.
 - Computed by: `calculateRetirementPlan` in `packages/finance-engine/src/retirement.ts`
-- Built from: `retirement-plan`, `account-balance`, `balance-history`, `salary`, `pension-rates`, `birth-year`, `housing-cost`, `housing-status`, `budget-entries`, `mortgage-term-and-fix-end`
+- Built from: `retirement-plan`, `account-balance`, `balance-history`, `salary`, `pension-rates`, `birth-year`, `housing-cost`, `housing-status`, `budget-entries`, `mortgage-term-and-fix-end`, `tax-region`
 - Note: One calculation. The web page feeds it the saved budget rows. A single rental with an ordinary name can still be taken as the home loan.
 
 Other code paths that compute it:

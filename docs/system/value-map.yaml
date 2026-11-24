@@ -969,6 +969,7 @@ facts:
       - { surface: picture, path: packages/finance-engine/src/picture/selectors/take-home.ts }
       - { surface: pension, path: apps/web/app/containers/pension/PensionContainer.tsx }
       - { surface: mcp-read, path: packages/mcp/src/tools/read/getTaxYearPosition.ts }
+      - { surface: retirement, path: packages/finance-engine/src/retirement-input.ts }
     links: [L29]
     verdict: broken
     findings: [SA-3, PP-8]
@@ -2695,6 +2696,7 @@ figures:
         housing-status,
         budget-entries,
         mortgage-term-and-fix-end,
+        tax-region,
       ]
     shown_on:
       - {

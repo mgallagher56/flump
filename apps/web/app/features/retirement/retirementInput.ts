@@ -22,6 +22,8 @@ export interface RetirementLoaderData {
     pensionEmployerPercent?: number | null;
     isSalarySacrifice?: boolean | null;
     isSalarySacrificeEmployerNi?: boolean | null;
+    /** Saved tax region, for income tax in retirement (Scotland has its own bands). */
+    taxRegion?: string | null;
   } | null;
   accounts: readonly RawAccount[];
   budgetEntries: readonly BudgetEntryItem[];
@@ -82,5 +84,6 @@ export function retirementArgsFromLoader(
     accounts: data.accounts,
     budgetEntries: data.budgetEntries,
     workplacePension: workplacePensionFromLoader(data.userProfile),
+    taxRegion: data.userProfile?.taxRegion ?? null,
   };
 }

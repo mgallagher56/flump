@@ -114,9 +114,11 @@ describe("RetirementPlanner", () => {
 
   it("shows income from State Pension age as its own row when it differs", () => {
     renderPlanner();
-    // 5,000 + 11,000 = £16,000 from 67.
+    // After income tax (2026/27, no region saved): 25% of the 5,000 withdrawal is tax-free, so
+    // 3,750 + 11,000 = 14,750 is taxed; (14,750 - 12,570) x 20% = 436; 16,000 - 436 = 15,564,
+    // rounded to ~£15,600.
     expect(screen.getByText("From State Pension age (67)")).toBeTruthy();
-    expect(screen.getByText("~£16,000 a year")).toBeTruthy();
+    expect(screen.getByText("~£15,600 a year")).toBeTruthy();
   });
 
   it("does not crash when the saved retirement age is below the current age", () => {
@@ -392,7 +394,8 @@ describe("RetirementPlanner", () => {
     it("draws the pot each year in the scenario, with no tax-free lump sum figure", () => {
       renderPlanner({ planArgs: workplaceArgs });
       expect(screen.getByRole("figure", { name: "Pot each year" })).toBeTruthy();
-      expect(screen.queryByText(/lump sum/i)).toBeNull();
+      // S6: the lump sum figure appears only once the what-if takes one (tested below).
+      expect(screen.queryByText(/Tax-free lump sum at age/)).toBeNull();
     });
 
     it("names the saved workplace pension in the assumptions drawer, with a link to change it", async () => {
@@ -617,5 +620,153 @@ describe("RetirementPlanner", () => {
     expect(screen.getByTestId(`retirement-budget-line-amount-${id}`).textContent).toBe(
       "£260 / monthly, your 50% share",
     );
+  });
+
+  describe("income tax in retirement (E33 S6)", () => {
+    // Pension 400,000 at real 0% from 60 to 80: 20,000 a year. 25% (5,000) is tax-free, so
+    // 15,000 is taxed before 67: (15,000 - 12,570) x 20% = 486; 20,000 - 486 = 19,514 (~£19,500).
+    const taxedArgs: BuildRetirementPlanInputArgs = {
+      ...planArgs,
+      accounts: [{ id: "pen", name: "Workplace pension", type: "Pension", balance: 400_000 }],
+    };
+
+    it("shows the hero and the subtitle after income tax", () => {
+      renderPlanner({ planArgs: taxedArgs });
+      expect(within(hero()).getByText("~£19,500")).toBeTruthy();
+      expect(screen.getByText("Estimates in today's prices, after income tax.")).toBeTruthy();
+      expect(screen.queryByText("Estimates in today's prices, before tax.")).toBeNull();
+    });
+
+    it("shows pensions after income tax in the KPI strip", () => {
+      renderPlanner({ planArgs: taxedArgs });
+      // From 67: 15,000 + 11,000 = 26,000 taxed; (26,000 - 12,570) x 20% = 2,686. The State
+      // Pension alone is under the allowance, so pensions carry it all: 20,000 - 2,686 = 17,314.
+      expect(screen.getByText("~£17,300")).toBeTruthy();
+      expect(
+        screen.getByText("A year from age 67 after income tax, middle case (2%)"),
+      ).toBeTruthy();
+      expect(screen.getByText("A year from age 67, after income tax")).toBeTruthy();
+    });
+
+    it("states the estimated income tax and the difference after tax in the outcome", () => {
+      renderPlanner({ planArgs: taxedArgs });
+      // 19,514 - 20,000 = -486, shown as an estimate.
+      expect(
+        screen.getByText(
+          /Your target: £20,000 a year\. Difference: ~?[−-]~?£486 a year\. Estimated income tax: ~£486 a year\./,
+        ),
+      ).toBeTruthy();
+    });
+
+    it("switches the what-if to a tax-free lump sum at retirement, and never saves", async () => {
+      const user = userEvent.setup();
+      const onSavePlan = vi.fn();
+      renderPlanner({ planArgs: taxedArgs, onSavePlan });
+      const each = screen.getByRole("button", { name: "25% of each withdrawal" });
+      const lump = screen.getByRole("button", { name: "Lump sum at retirement" });
+      expect(each.getAttribute("aria-pressed")).toBe("true");
+      expect(lump.getAttribute("aria-pressed")).toBe("false");
+      await user.click(lump);
+      expect(lump.getAttribute("aria-pressed")).toBe("true");
+      expect(each.getAttribute("aria-pressed")).toBe("false");
+      // Lump sum 25% x 400,000 = 100,000; 300,000 / 20 = 15,000 a year, all taxed:
+      // (15,000 - 12,570) x 20% = 486; 15,000 - 486 = 14,514 (~£14,500).
+      expect(screen.getByText(/Tax-free lump sum at age 60: ~£100,000\./)).toBeTruthy();
+      const outcome = document.getElementById("retirement-scenario-outcome") as HTMLElement;
+      expect(within(outcome).getByText("~£14,500")).toBeTruthy();
+      // The saved hero is unchanged.
+      expect(within(hero()).getByText("~£19,500")).toBeTruthy();
+      expect(onSavePlan).not.toHaveBeenCalled();
+      await user.click(screen.getByRole("button", { name: "Reset to saved figures" }));
+      expect(screen.queryByText(/Tax-free lump sum at age/)).toBeNull();
+    });
+
+    it("shows before tax, income tax and after tax in the year-by-year table", async () => {
+      const user = userEvent.setup();
+      renderPlanner({ planArgs: taxedArgs });
+      await user.click(screen.getByRole("button", { name: /Assumptions, pots and year by year/ }));
+      for (const name of ["Before tax", "Income tax", "After tax", "After housing"]) {
+        expect(screen.getByRole("columnheader", { name: new RegExp(name) })).toBeTruthy();
+      }
+      const row60 = screen.getAllByRole("row").find((r) => r.textContent?.startsWith("60"));
+      // Age 60: £20,000 before tax, £486 tax, 19,514 after tax and after housing (none).
+      expect(row60?.textContent).toBe("60~£20,000~£486~£19,500£0~£19,500");
+    });
+
+    it("states the tax year, the assumed region and what is not taxed", async () => {
+      const user = userEvent.setup();
+      renderPlanner({ planArgs: taxedArgs });
+      await user.click(screen.getByRole("button", { name: /Assumptions, pots and year by year/ }));
+      expect(
+        screen.getByText(
+          /uses the 2026 to 2027 tax year's allowances and bands for every year, in today's prices\. No tax region is saved, so England, Wales and Northern Ireland bands are used\./,
+        ),
+      ).toBeTruthy();
+      expect(
+        screen.getByText(
+          "25% of each pension withdrawal is tax-free until the lump sum allowance of £268,275 is reached. The rest is taxed.",
+        ),
+      ).toBeTruthy();
+      expect(
+        screen.getByText(
+          "Withdrawals from ISAs, general investment accounts and cash savings are not taxed here. Capital gains tax, dividend tax and tax on savings interest are not included.",
+        ),
+      ).toBeTruthy();
+    });
+
+    it("uses Scottish bands for a saved Scottish tax region", async () => {
+      const user = userEvent.setup();
+      renderPlanner({ planArgs: { ...taxedArgs, taxRegion: "SCOTLAND" } });
+      // 15,000 taxed: 2,430 above the allowance, all at the 19% starter rate = 461.70;
+      // 20,000 - 461.70 = 19,538.30 (~£19,500); tax shown as ~£462.
+      expect(screen.getByText(/Estimated income tax: ~£462 a year\./)).toBeTruthy();
+      await user.click(screen.getByRole("button", { name: /Assumptions, pots and year by year/ }));
+      expect(
+        screen.getByText(/Scottish income tax bands are used, from your saved tax region\./),
+      ).toBeTruthy();
+    });
+
+    it("shows the before-tax estimate with the notice when Scottish rates are not published", async () => {
+      const user = userEvent.setup();
+      // June 2027 is in 2027/28, which has no Scottish rates; born 1967, so 60 then.
+      renderPlanner({
+        planArgs: {
+          ...taxedArgs,
+          now: new Date("2027-06-01T12:00:00Z"),
+          birthYear: 1967,
+          taxRegion: "SCOTLAND",
+        },
+      });
+      // Before tax: 400,000 / 20 = 20,000.
+      expect(
+        within(hero()).getByText("Estimated yearly income before tax from age 60"),
+      ).toBeTruthy();
+      expect(within(hero()).getByText("~£20,000")).toBeTruthy();
+      expect(screen.getByTestId("retirement-tax-refusal").textContent).toBe(
+        "Scottish Income Tax rates for 2027/28 are not published yet, so there is no estimate for this year. The figures here are before income tax.",
+      );
+      expect(screen.getByText("Estimates in today's prices, before tax.")).toBeTruthy();
+      expect(screen.queryByText(/cannot be worked out/)).toBeNull();
+      expect(screen.queryByText(/Estimated income tax:/)).toBeNull();
+      expect(screen.getByText("A year before tax, middle case (2%)")).toBeTruthy();
+      await user.click(screen.getByRole("button", { name: /Assumptions, pots and year by year/ }));
+      expect(screen.queryByRole("columnheader", { name: /Income tax/ })).toBeNull();
+      expect(screen.getByRole("columnheader", { name: /Before tax/ })).toBeTruthy();
+    });
+
+    it("labels the typed target as spending after tax, with one note", () => {
+      renderPlanner({ planArgs: taxedArgs });
+      expect(
+        screen.getByText("Your yearly target: spending after tax (today's prices)"),
+      ).toBeTruthy();
+      expect(
+        screen.getByRole("textbox", { name: "Yearly target, spending after tax, in pounds" }),
+      ).toBeTruthy();
+      expect(
+        screen.getAllByText(
+          "Your target is compared with your estimated income after income tax. If you typed it as a figure before tax, you can change it here.",
+        ),
+      ).toHaveLength(1);
+    });
   });
 });

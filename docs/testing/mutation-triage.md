@@ -572,6 +572,17 @@ The forced full run for part B, on a heavily loaded laptop, reported some faults
 | L1082 | UpdateOperator `y--`         | Not worth killing | Makes the loop `for (let y = 0; y <= yearsToRetirement; y++) {` never end, so the only possible catch is a timeout (Stryker reports one); a timeout is not counted as caught in the honest figure                                                           |
 | L1252 | UpdateOperator `i--`         | Not worth killing | Makes the loop `for (let i = 0; i < yearsInRetirement; i++) {` never end, so the only possible catch is a timeout (Stryker reports one); a timeout is not counted as caught in the honest figure                                                            |
 
+### `src/retirement.ts` (E33 S6, income tax in retirement, 24 November 2026)
+
+Measured with `--mutate "src/retirement-tax.ts,src/uk-tax-year.ts:883-918"` (18 faults, all killed) and `--mutate "src/retirement.ts:1346-1606"` after the review fixes: 175 faults, 171 killed, 2 timeouts, 2 survivors.
+
+| Line  | Fault                                                      | Class             | Reason                                                                                                                       |
+| ----- | ---------------------------------------------------------- | ----------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| L1432 | UpdateOperator `i--` (the yearly tax loop)                 | Not worth killing | Makes `for (let i = 0; i < yearsInRetirement; i++)` never end, so the only possible catch is a timeout (Stryker reports one) |
+| L1448 | UpdateOperator `i--` (the schedule loop)                   | Not worth killing | The schedule loop listed as L1252 above, moved: it never ends, so only a timeout can catch it                                |
+| L1451 | OptionalChaining `housing.yearlySchedule[i].annualCostGbp` | Equivalent        | The line listed as L1255 above, moved: the housing schedule has one entry per retirement year, so index i always exists      |
+| L1498 | ConditionalExpression `true`                               | Equivalent        | The line listed as L1291 above, moved: an included State Pension always has a State Pension age (isStatePensionIncluded)     |
+
 ### `src/snapshots.ts` (added)
 
 | Line | Fault                  | Class             | Reason                                                                                                                                                                                        |

@@ -875,6 +875,44 @@ export function calculateIncomeTaxOnTaxable(
 }
 
 /**
+ * Income tax on non-savings income before the personal allowance (for example a pension and the
+ * State Pension): the allowance after the 100,000 taper (`calculatePersonalAllowanceForYear`,
+ * with the income as adjusted net income), then the region's bands on what is left
+ * (`calculateIncomeTaxOnTaxable`).
+ */
+export function calculateIncomeTaxOnNonSavingsIncome(
+  income: number,
+  rules: UkTaxYearRules,
+  region: UkTaxRegion,
+): number {
+  const total = Math.max(0, income);
+  const allowance = calculatePersonalAllowanceForYear(total, rules);
+  return calculateIncomeTaxOnTaxable(Math.max(0, total - allowance), rules, region).total;
+}
+
+/**
+ * The tax-free share of a pension lump sum, 25%: "You can usually take up to 25% of the amount
+ * built up in any pension as a tax-free lump sum" (https://www.gov.uk/tax-on-pension/tax-free,
+ * read 2026-11-24). For an uncrystallised funds pension lump sum it is "the 25% tax-free part"
+ * (https://www.gov.uk/tax-on-your-private-pension/lump-sum-allowance, read 2026-11-24).
+ */
+const PENSION_TAX_FREE_SHARE = 0.25;
+
+/**
+ * The tax-free part of a pension lump sum: 25% of `amount`, never more than what is left of the
+ * lump sum allowance (`remainingLumpSumAllowance`, `getUkPensionAllowances`), never below 0.
+ * Rounded to pence. Serves both an uncrystallised funds pension lump sum (each withdrawal) and a
+ * tax-free lump sum taken from the whole pot at once.
+ */
+export function calculatePensionTaxFreePart(
+  amount: number,
+  remainingLumpSumAllowance: number,
+): number {
+  const share = Math.max(0, amount) * PENSION_TAX_FREE_SHARE;
+  return roundPence(Math.max(0, Math.min(share, remainingLumpSumAllowance)));
+}
+
+/**
  * Auto-enrolment qualifying earnings band, a year (DWP's annual review has kept it at these
  * figures). Not the National Insurance limits, which can differ.
  */

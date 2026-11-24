@@ -198,3 +198,30 @@ export const WorkplaceSalaryNotSet: Story = {
     ).toBeInTheDocument();
   },
 };
+
+/** The what-if takes tax-free cash as one lump sum at retirement (E33 S6), for a Scottish taxpayer. */
+const lumpSumPlay: Story["play"] = async ({ canvasElement }) => {
+  const canvas = within(canvasElement);
+  await userEvent.click(canvas.getByRole("button", { name: "Show what-if: change your plan" }));
+  const lump = canvas.getByRole("button", { name: "Lump sum at retirement" });
+  await userEvent.click(lump);
+  await expect(lump).toHaveAttribute("aria-pressed", "true");
+  await expect(canvas.getByText(/Tax-free lump sum at age 62:/)).toBeInTheDocument();
+  await userEvent.click(canvas.getByRole("button", { name: /Assumptions, pots and year by year/ }));
+  await expect(
+    canvas.getByText(/Scottish income tax bands are used, from your saved tax region\./),
+  ).toBeInTheDocument();
+};
+
+export const TaxFreeLumpSum: Story = {
+  args: { ...baseArgs, planArgs: { ...planArgs, taxRegion: "SCOTLAND" } },
+  play: lumpSumPlay,
+};
+
+export const TaxFreeLumpSumDark: Story = {
+  args: { ...baseArgs, planArgs: { ...planArgs, taxRegion: "SCOTLAND" } },
+  parameters: {
+    themes: { themeOverride: "dark" },
+  },
+  play: lumpSumPlay,
+};

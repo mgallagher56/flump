@@ -103,13 +103,30 @@ describe("retirement MCP tools read the saved plan", () => {
     const e = await call("get_retirement_picture");
     // Joint saver is excluded and property never counts: pot £100,000, at real 0% from 60 to 80
     // gives 100,000 ÷ 20 = £5,000 a year; from 67 add £11,000 = £16,000.
-    // Target £20,000: differences −15,000 and −4,000.
+    // Income tax (2026/27, no region saved, so England, Wales and NI): 25% of each 5,000 pension
+    // withdrawal is tax-free, 3,750 taxable. Before 67: 3,750 is under the 12,570 allowance, no
+    // tax. From 67: 3,750 + 11,000 = 14,750; (14,750 - 12,570) x 20% = 436; 16,000 - 436 = 15,564.
+    // Target £20,000: differences after tax 5,000 - 20,000 = −15,000 and 15,564 - 20,000 = −4,436.
     expect(e.result.currentCountedPotGbp).toBe(100_000);
     expect(e.result.estimatedYearlyIncomeGbp.middle).toBe(5_000);
     expect(e.result.incomeBeforeStatePensionAgeGbp.middle).toBe(5_000);
     expect(e.result.incomeFromStatePensionAgeGbp.middle).toBe(16_000);
+    expect(e.result.estimatedYearlyIncomeAfterTaxGbp.middle).toBe(5_000);
+    expect(e.result.estimatedIncomeTaxYearlyGbp.middle).toBe(0);
+    expect(e.result.incomeBeforeStatePensionAgeAfterTaxGbp.middle).toBe(5_000);
+    expect(e.result.incomeFromStatePensionAgeAfterTaxGbp.middle).toBe(15_564);
+    expect(e.result.taxFreeLumpSumGbp).toBeNull();
+    // The old difference fields stay before tax: 5,000 - 20,000 and 16,000 - 20,000.
     expect(e.result.differenceBeforeStatePensionAgeGbp.middle).toBe(-15_000);
     expect(e.result.differenceFromStatePensionAgeGbp.middle).toBe(-4_000);
+    expect((e.result.differenceBeforeStatePensionAgeAfterTaxGbp as Band).middle).toBe(-15_000);
+    expect((e.result.differenceFromStatePensionAgeAfterTaxGbp as Band).middle).toBe(-4_436);
+    expect(e.result.incomeTaxNotice).toBeNull();
+    expect(e.result.assumptions.withdrawalMethod).toBe("ufpls");
+    expect(e.result.assumptions.taxRegionAssumed).toBe(true);
+    expect(e.assumptions.map((a) => a.field)).toEqual(
+      expect.arrayContaining(["incomeTax", "untaxedWithdrawals"]),
+    );
     expect(e.result.statePensionAge).toBe(67);
     expect(e.missing).toEqual([]);
     const rates = e.assumptions.find((a) => a.field === "growthRates");
@@ -126,6 +143,20 @@ describe("retirement MCP tools read the saved plan", () => {
     // The saved plan is unchanged: a read afterwards still uses 60.
     const read = await call("get_retirement_picture");
     expect(read.result.retirementAge).toBe(60);
+  });
+
+  it("simulate_retirement can take tax-free cash as one lump sum at retirement", async () => {
+    h = await connectTestClient(saver, { token: FULL });
+    const e = await call("simulate_retirement", { taxFreeLumpSumAtRetirement: true });
+    // Lump sum 25% x 100,000 = 25,000; 75,000 ÷ 20 = 3,750 a year, all taxed but under the
+    // allowance. From 67: 3,750 + 11,000 = 14,750; (14,750 - 12,570) x 20% = 436; 14,314.
+    expect(e.result.taxFreeLumpSumGbp.middle).toBe(25_000);
+    expect(e.result.estimatedYearlyIncomeGbp.middle).toBe(3_750);
+    expect(e.result.incomeFromStatePensionAgeAfterTaxGbp.middle).toBe(14_314);
+    expect(e.result.assumptions.withdrawalMethod).toBe("lumpSum");
+    // Saves nothing: a read afterwards uses UFPLS again.
+    const read = await call("get_retirement_picture");
+    expect(read.result.taxFreeLumpSumGbp).toBeNull();
   });
 
   it("leaves the State Pension out and asks for its age when none is saved", async () => {

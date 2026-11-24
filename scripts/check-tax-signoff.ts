@@ -1,6 +1,6 @@
 /**
  * BE-08 law: unsigned tax vectors may go down, never up. Compares the IDs of every vector with
- * `signedOffBy: null` (core, what-if and Self Assessment catalogues) against scripts/tax-signoff-baseline.json.
+ * `signedOffBy: null` (core, what-if, Self Assessment and retirement catalogues) against scripts/tax-signoff-baseline.json.
  *
  *   bun scripts/check-tax-signoff.ts                   # fail on new unsigned IDs or a stale baseline
  *   bun scripts/check-tax-signoff.ts --write-baseline  # after vectors are signed
@@ -10,6 +10,7 @@
  */
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { UK_RETIREMENT_VECTORS } from "../packages/finance-engine/src/test-vectors/uk-retirement.vectors";
 import { UK_SELF_ASSESSMENT_VECTORS } from "../packages/finance-engine/src/test-vectors/uk-self-assessment.vectors";
 import { UK_TAX_VECTORS } from "../packages/finance-engine/src/test-vectors/uk-tax.vectors";
 import { UK_WHATIF_VECTORS } from "../packages/finance-engine/src/test-vectors/uk-whatif.vectors";
@@ -20,6 +21,7 @@ const unsigned = unsignedVectorIds([
   ...UK_TAX_VECTORS,
   ...UK_WHATIF_VECTORS,
   ...UK_SELF_ASSESSMENT_VECTORS,
+  ...UK_RETIREMENT_VECTORS,
 ]);
 
 if (process.argv.includes("--write-baseline")) {

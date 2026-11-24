@@ -38,7 +38,11 @@ describe("retirementArgsFromContextInput", () => {
       // The profile facts win over the baseline's status.
       baseline: { ...DEFAULT_FINANCIAL_BASELINE, housingStatus: "MORTGAGE" },
       netWorthBasis: DEFAULT_NET_WORTH_BASIS,
-      profileFacts: facts({ housingStatus: "renting", monthlyHousingCost: 1100 }),
+      profileFacts: facts({
+        housingStatus: "renting",
+        monthlyHousingCost: 1100,
+        taxRegion: "SCOTLAND",
+      }),
       retirementPlan,
       birthYear: 1981,
       accounts,
@@ -54,6 +58,7 @@ describe("retirementArgsFromContextInput", () => {
       accounts,
       budgetEntries,
       workplacePension,
+      taxRegion: "SCOTLAND",
       overrides,
     });
   });
@@ -85,6 +90,7 @@ describe("retirementArgsFromContextInput", () => {
       accounts: [],
       budgetEntries: [],
       workplacePension: null,
+      taxRegion: null,
       overrides: undefined,
     });
   });

@@ -2670,7 +2670,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
       "openWorldHint": false,
       "readOnlyHint": true,
     },
-    "description": "Reads the user's saved retirement plan and estimates yearly retirement income in today's prices, before tax, from counted accounts, saved housing details and the State Pension details the user gave, beside the user's own target. Returns income from the retirement age and, separately, from State Pension age. Never proposes a target or fills in an age: while the birth year, retirement age or plan-to age is missing, figures are null and missing lists what to ask. Inputs replace saved values for this answer only. Includes the monthly counted-pots history.",
+    "description": "Reads the user's saved retirement plan and estimates yearly retirement income in today's prices, before and after income tax, from counted accounts, saved housing details and the State Pension details the user gave, beside the user's own target. Returns income from the retirement age and, separately, from State Pension age. Never proposes a target or fills in an age: while the birth year, retirement age or plan-to age is missing, figures are null and missing lists what to ask. Inputs replace saved values for this answer only. Includes the monthly counted-pots history.",
     "execution": {
       "taskSupport": "forbidden",
     },
@@ -2825,10 +2825,32 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
                 "inflationRate": {
                   "type": "number",
                 },
+                "taxRegion": {
+                  "type": [
+                    "string",
+                    "null",
+                  ],
+                },
+                "taxRegionAssumed": {
+                  "type": "boolean",
+                },
+                "taxYear": {
+                  "type": [
+                    "string",
+                    "null",
+                  ],
+                },
+                "withdrawalMethod": {
+                  "type": "string",
+                },
               },
               "required": [
                 "growthRates",
                 "inflationRate",
+                "withdrawalMethod",
+                "taxYear",
+                "taxRegion",
+                "taxRegionAssumed",
               ],
               "type": "object",
             },
@@ -2841,7 +2863,61 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
             "currentCountedPotGbp": {
               "type": "number",
             },
+            "differenceBeforeStatePensionAgeAfterTaxGbp": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "higher": {
+                      "type": "number",
+                    },
+                    "lower": {
+                      "type": "number",
+                    },
+                    "middle": {
+                      "type": "number",
+                    },
+                  },
+                  "required": [
+                    "lower",
+                    "middle",
+                    "higher",
+                  ],
+                  "type": "object",
+                },
+                {
+                  "type": "null",
+                },
+              ],
+            },
             "differenceBeforeStatePensionAgeGbp": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "higher": {
+                      "type": "number",
+                    },
+                    "lower": {
+                      "type": "number",
+                    },
+                    "middle": {
+                      "type": "number",
+                    },
+                  },
+                  "required": [
+                    "lower",
+                    "middle",
+                    "higher",
+                  ],
+                  "type": "object",
+                },
+                {
+                  "type": "null",
+                },
+              ],
+            },
+            "differenceFromStatePensionAgeAfterTaxGbp": {
               "anyOf": [
                 {
                   "additionalProperties": false,
@@ -2895,7 +2971,88 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
                 },
               ],
             },
+            "differenceYearlyAfterTaxGbp": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "higher": {
+                      "type": "number",
+                    },
+                    "lower": {
+                      "type": "number",
+                    },
+                    "middle": {
+                      "type": "number",
+                    },
+                  },
+                  "required": [
+                    "lower",
+                    "middle",
+                    "higher",
+                  ],
+                  "type": "object",
+                },
+                {
+                  "type": "null",
+                },
+              ],
+            },
             "differenceYearlyGbp": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "higher": {
+                      "type": "number",
+                    },
+                    "lower": {
+                      "type": "number",
+                    },
+                    "middle": {
+                      "type": "number",
+                    },
+                  },
+                  "required": [
+                    "lower",
+                    "middle",
+                    "higher",
+                  ],
+                  "type": "object",
+                },
+                {
+                  "type": "null",
+                },
+              ],
+            },
+            "estimatedIncomeTaxYearlyGbp": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "higher": {
+                      "type": "number",
+                    },
+                    "lower": {
+                      "type": "number",
+                    },
+                    "middle": {
+                      "type": "number",
+                    },
+                  },
+                  "required": [
+                    "lower",
+                    "middle",
+                    "higher",
+                  ],
+                  "type": "object",
+                },
+                {
+                  "type": "null",
+                },
+              ],
+            },
+            "estimatedYearlyIncomeAfterTaxGbp": {
               "anyOf": [
                 {
                   "additionalProperties": false,
@@ -2961,7 +3118,61 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
                 "null",
               ],
             },
+            "incomeBeforeStatePensionAgeAfterTaxGbp": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "higher": {
+                      "type": "number",
+                    },
+                    "lower": {
+                      "type": "number",
+                    },
+                    "middle": {
+                      "type": "number",
+                    },
+                  },
+                  "required": [
+                    "lower",
+                    "middle",
+                    "higher",
+                  ],
+                  "type": "object",
+                },
+                {
+                  "type": "null",
+                },
+              ],
+            },
             "incomeBeforeStatePensionAgeGbp": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "higher": {
+                      "type": "number",
+                    },
+                    "lower": {
+                      "type": "number",
+                    },
+                    "middle": {
+                      "type": "number",
+                    },
+                  },
+                  "required": [
+                    "lower",
+                    "middle",
+                    "higher",
+                  ],
+                  "type": "object",
+                },
+                {
+                  "type": "null",
+                },
+              ],
+            },
+            "incomeFromStatePensionAgeAfterTaxGbp": {
               "anyOf": [
                 {
                   "additionalProperties": false,
@@ -3013,6 +3224,12 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
                 {
                   "type": "null",
                 },
+              ],
+            },
+            "incomeTaxNotice": {
+              "type": [
+                "string",
+                "null",
               ],
             },
             "monthlySeries": {
@@ -3111,6 +3328,33 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
                 "null",
               ],
             },
+            "taxFreeLumpSumGbp": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "higher": {
+                      "type": "number",
+                    },
+                    "lower": {
+                      "type": "number",
+                    },
+                    "middle": {
+                      "type": "number",
+                    },
+                  },
+                  "required": [
+                    "lower",
+                    "middle",
+                    "higher",
+                  ],
+                  "type": "object",
+                },
+                {
+                  "type": "null",
+                },
+              ],
+            },
           },
           "required": [
             "currentAge",
@@ -3118,13 +3362,22 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
             "planToAge",
             "currentCountedPotGbp",
             "estimatedYearlyIncomeGbp",
+            "estimatedYearlyIncomeAfterTaxGbp",
+            "estimatedIncomeTaxYearlyGbp",
             "incomeBeforeStatePensionAgeGbp",
             "incomeFromStatePensionAgeGbp",
+            "incomeBeforeStatePensionAgeAfterTaxGbp",
+            "incomeFromStatePensionAgeAfterTaxGbp",
+            "taxFreeLumpSumGbp",
             "projectedPotAtRetirementGbp",
             "targetYearlyIncomeGbp",
             "differenceYearlyGbp",
             "differenceBeforeStatePensionAgeGbp",
             "differenceFromStatePensionAgeGbp",
+            "differenceYearlyAfterTaxGbp",
+            "differenceBeforeStatePensionAgeAfterTaxGbp",
+            "differenceFromStatePensionAgeAfterTaxGbp",
+            "incomeTaxNotice",
             "statePensionIncluded",
             "statePensionAnnualGbp",
             "statePensionAge",
@@ -4192,7 +4445,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
       "openWorldHint": false,
       "readOnlyHint": true,
     },
-    "description": "Simulates estimated yearly retirement income in today's prices, before tax, starting from the user's saved retirement plan. Each input given replaces the saved value for this answer only: retirement age, plan-to age, extra monthly contribution, growth rates, inflation, State Pension details and the user's own target. Returns income from the retirement age and, separately, from State Pension age. Never fills in an age or a State Pension amount: while details are missing, figures are null and missing lists what to ask. Saves nothing.",
+    "description": "Simulates estimated yearly retirement income in today's prices, before and after income tax, starting from the user's saved retirement plan. Each input given replaces the saved value for this answer only: retirement age, plan-to age, extra monthly contribution, growth rates, inflation, State Pension details, the user's own target and whether tax-free cash is taken as one lump sum at retirement. Returns income from the retirement age and, separately, from State Pension age. Never fills in an age or a State Pension amount: while details are missing, figures are null and missing lists what to ask. Saves nothing.",
     "execution": {
       "taskSupport": "forbidden",
     },
@@ -4272,6 +4525,10 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
           "maximum": 1000000,
           "minimum": 0,
           "type": "number",
+        },
+        "taxFreeLumpSumAtRetirement": {
+          "description": "True to take tax-free cash as one lump sum at the retirement age (25% of the pension pot, at most the lump sum allowance) instead of 25% of each withdrawal.",
+          "type": "boolean",
         },
       },
       "type": "object",
@@ -4394,10 +4651,32 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
                 "inflationRate": {
                   "type": "number",
                 },
+                "taxRegion": {
+                  "type": [
+                    "string",
+                    "null",
+                  ],
+                },
+                "taxRegionAssumed": {
+                  "type": "boolean",
+                },
+                "taxYear": {
+                  "type": [
+                    "string",
+                    "null",
+                  ],
+                },
+                "withdrawalMethod": {
+                  "type": "string",
+                },
               },
               "required": [
                 "growthRates",
                 "inflationRate",
+                "withdrawalMethod",
+                "taxYear",
+                "taxRegion",
+                "taxRegionAssumed",
               ],
               "type": "object",
             },
@@ -4410,7 +4689,61 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
             "currentCountedPotGbp": {
               "type": "number",
             },
+            "differenceBeforeStatePensionAgeAfterTaxGbp": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "higher": {
+                      "type": "number",
+                    },
+                    "lower": {
+                      "type": "number",
+                    },
+                    "middle": {
+                      "type": "number",
+                    },
+                  },
+                  "required": [
+                    "lower",
+                    "middle",
+                    "higher",
+                  ],
+                  "type": "object",
+                },
+                {
+                  "type": "null",
+                },
+              ],
+            },
             "differenceBeforeStatePensionAgeGbp": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "higher": {
+                      "type": "number",
+                    },
+                    "lower": {
+                      "type": "number",
+                    },
+                    "middle": {
+                      "type": "number",
+                    },
+                  },
+                  "required": [
+                    "lower",
+                    "middle",
+                    "higher",
+                  ],
+                  "type": "object",
+                },
+                {
+                  "type": "null",
+                },
+              ],
+            },
+            "differenceFromStatePensionAgeAfterTaxGbp": {
               "anyOf": [
                 {
                   "additionalProperties": false,
@@ -4464,7 +4797,88 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
                 },
               ],
             },
+            "differenceYearlyAfterTaxGbp": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "higher": {
+                      "type": "number",
+                    },
+                    "lower": {
+                      "type": "number",
+                    },
+                    "middle": {
+                      "type": "number",
+                    },
+                  },
+                  "required": [
+                    "lower",
+                    "middle",
+                    "higher",
+                  ],
+                  "type": "object",
+                },
+                {
+                  "type": "null",
+                },
+              ],
+            },
             "differenceYearlyGbp": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "higher": {
+                      "type": "number",
+                    },
+                    "lower": {
+                      "type": "number",
+                    },
+                    "middle": {
+                      "type": "number",
+                    },
+                  },
+                  "required": [
+                    "lower",
+                    "middle",
+                    "higher",
+                  ],
+                  "type": "object",
+                },
+                {
+                  "type": "null",
+                },
+              ],
+            },
+            "estimatedIncomeTaxYearlyGbp": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "higher": {
+                      "type": "number",
+                    },
+                    "lower": {
+                      "type": "number",
+                    },
+                    "middle": {
+                      "type": "number",
+                    },
+                  },
+                  "required": [
+                    "lower",
+                    "middle",
+                    "higher",
+                  ],
+                  "type": "object",
+                },
+                {
+                  "type": "null",
+                },
+              ],
+            },
+            "estimatedYearlyIncomeAfterTaxGbp": {
               "anyOf": [
                 {
                   "additionalProperties": false,
@@ -4530,7 +4944,61 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
                 "null",
               ],
             },
+            "incomeBeforeStatePensionAgeAfterTaxGbp": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "higher": {
+                      "type": "number",
+                    },
+                    "lower": {
+                      "type": "number",
+                    },
+                    "middle": {
+                      "type": "number",
+                    },
+                  },
+                  "required": [
+                    "lower",
+                    "middle",
+                    "higher",
+                  ],
+                  "type": "object",
+                },
+                {
+                  "type": "null",
+                },
+              ],
+            },
             "incomeBeforeStatePensionAgeGbp": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "higher": {
+                      "type": "number",
+                    },
+                    "lower": {
+                      "type": "number",
+                    },
+                    "middle": {
+                      "type": "number",
+                    },
+                  },
+                  "required": [
+                    "lower",
+                    "middle",
+                    "higher",
+                  ],
+                  "type": "object",
+                },
+                {
+                  "type": "null",
+                },
+              ],
+            },
+            "incomeFromStatePensionAgeAfterTaxGbp": {
               "anyOf": [
                 {
                   "additionalProperties": false,
@@ -4582,6 +5050,12 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
                 {
                   "type": "null",
                 },
+              ],
+            },
+            "incomeTaxNotice": {
+              "type": [
+                "string",
+                "null",
               ],
             },
             "notes": {
@@ -4650,6 +5124,33 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
                 "null",
               ],
             },
+            "taxFreeLumpSumGbp": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "higher": {
+                      "type": "number",
+                    },
+                    "lower": {
+                      "type": "number",
+                    },
+                    "middle": {
+                      "type": "number",
+                    },
+                  },
+                  "required": [
+                    "lower",
+                    "middle",
+                    "higher",
+                  ],
+                  "type": "object",
+                },
+                {
+                  "type": "null",
+                },
+              ],
+            },
           },
           "required": [
             "currentAge",
@@ -4657,13 +5158,22 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
             "planToAge",
             "currentCountedPotGbp",
             "estimatedYearlyIncomeGbp",
+            "estimatedYearlyIncomeAfterTaxGbp",
+            "estimatedIncomeTaxYearlyGbp",
             "incomeBeforeStatePensionAgeGbp",
             "incomeFromStatePensionAgeGbp",
+            "incomeBeforeStatePensionAgeAfterTaxGbp",
+            "incomeFromStatePensionAgeAfterTaxGbp",
+            "taxFreeLumpSumGbp",
             "projectedPotAtRetirementGbp",
             "targetYearlyIncomeGbp",
             "differenceYearlyGbp",
             "differenceBeforeStatePensionAgeGbp",
             "differenceFromStatePensionAgeGbp",
+            "differenceYearlyAfterTaxGbp",
+            "differenceBeforeStatePensionAgeAfterTaxGbp",
+            "differenceFromStatePensionAgeAfterTaxGbp",
+            "incomeTaxNotice",
             "statePensionIncluded",
             "statePensionAnnualGbp",
             "statePensionAge",
@@ -5447,13 +5957,13 @@ exports[`per-tool output size (E17-N1) > calls every registered tool and pins th
   "get_debt_overview": 1500,
   "get_financial_snapshot": 1500,
   "get_import_status": 1000,
-  "get_retirement_picture": 2000,
+  "get_retirement_picture": 2500,
   "get_tax_year_position": 2500,
   "list_accounts": 1000,
   "list_tax_records": 1000,
   "project_net_worth": 2000,
   "simulate_debt_payoff": 1000,
-  "simulate_retirement": 2000,
+  "simulate_retirement": 2500,
   "stage_import": 1500,
 }
 `;
