@@ -52,6 +52,7 @@ export const VISUAL_ROUTES: readonly VisualRoute[] = [
   web("profile", "/app/profile"),
   { ...web("not-found-app", "/app/not-a-page"), expectedStatus: 404 },
   { ...web("not-found", "/not-a-page", false), expectedStatus: 404 },
+  web("retirement", "/app/retirement"),
   web("savings", "/app/savings"),
   web("self-assessment", "/app/self-assessment"),
   web("take-home", "/app/take-home"),
@@ -78,6 +79,7 @@ const RENTER_ROUTE_NAMES = [
   "debt",
   "mortgage",
   "pension",
+  "retirement",
   "savings",
   "take-home",
 ].map((name) => `web-${name}`);
