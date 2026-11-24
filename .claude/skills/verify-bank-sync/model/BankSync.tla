@@ -192,6 +192,16 @@ Refresh(s) ==
                    holders, highWater, revoked, reconnected, read, prev,
                    attempts, access, judged, outcome>>
 
+\* runSync fails before resolveActiveAccessToken reads the row (findOneOrFail
+\* or the database errors): the status to record is error, about the token
+\* stored at claim. A reconnect since claim makes it stale.
+EarlyFails(s) ==
+    /\ pc[s] = "claimed"
+    /\ DecideError(s, claimed[s])
+    /\ UNCHANGED <<stored, expiringGens, status, statusAbout, reconGen, claimed,
+                   holders, bankVars, highWater, revoked, reconnected, read,
+                   prev, got, attempts, access, replacedFirst>>
+
 \* provider.refreshToken fails another way (a timeout, an outage) before the
 \* bank acts: rethrown, the status to record is error. No token was read into
 \* runSync yet, so the verdict is about the token stored at claim.
@@ -343,7 +353,7 @@ Next ==
     \/ \E s \in Syncs :
          \/ Claim(s) \/ ReadRow(s) \/ Refresh(s) \/ Recover(s) \/ CasWrite(s)
          \/ CasMiss(s) \/ Reencrypt(s) \/ Fetch(s) \/ StatusWrite(s) \/ Release(s)
-         \/ RefreshFails(s) \/ FetchFails(s)
+         \/ EarlyFails(s) \/ RefreshFails(s) \/ FetchFails(s)
     \/ BankRevokes \/ Reconnect
     \/ Finished
 
