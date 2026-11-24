@@ -9,7 +9,19 @@ import { PROVISIONAL_UK_TAX_YEARS, SUPPORTED_UK_TAX_YEARS } from "./types.js";
 // Fixture: the same vectors with their signatures removed, so a test does not depend on which
 // years happen to be signed in the live catalogue.
 const unsigned = <T extends object>(vs: readonly T[]): T[] =>
-  vs.map((v) => ({ ...v, signedOffBy: null }));
+  vs.map((v) => {
+    const { signedOffAt, signedOffHash, rulingRef, ...rest } = v as T & {
+      signedOffAt?: unknown;
+      signedOffHash?: unknown;
+      rulingRef?: unknown;
+    };
+    return { ...rest, signedOffBy: null } as T;
+  });
+
+it("the unsigned fixture leaves vectors unsigned, not invalid", () => {
+  const states = new Set(unsigned(UK_TAX_VECTORS).map((v) => evaluateSignoff(v).state));
+  expect([...states]).toEqual(["unsigned"]);
+});
 
 // A provisional year's rates are announced, not yet law (ruling B, 20 Nov 2026): it never reports
 // "verified", even when every vector is signed. Removing it from PROVISIONAL_UK_TAX_YEARS at Royal

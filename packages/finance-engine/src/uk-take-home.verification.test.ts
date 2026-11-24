@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 import { computeUkTakeHome, type UkIncomeScenario } from "./uk-take-home.js";
 
-// The live sign-off state changes as years are signed. This stands in a fixed sign-off state so the rule "an estimate is verified only when nothing
-// it rests on is unverified" can be checked: every feature signed except HICBC in every year and
-// the core feature in 2025/26.
+// The live sign-off state changes as years are signed. This stands in a fixed sign-off state so
+// the rule "an estimate is verified only when nothing it rests on is unverified" can be checked:
+// every feature signed except HICBC in every year and the core feature in 2025/26.
 vi.mock("./tax-year-verification.js", async (importOriginal) => {
   const actual = await importOriginal<typeof import("./tax-year-verification.js")>();
   return {
