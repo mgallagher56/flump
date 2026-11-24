@@ -18,12 +18,11 @@ jar="$(mise where "$TLA_TOOL")/tla2tools.jar"
 
 # config name | expected: "pass" or the invariant that must be violated
 expectations='current|pass
-promise|NeedsReconnectOnlyWhenTokenDead
 broken-claim-no-lease|OneSyncAtATime
 broken-refresh-no-cas|StoredTokensNeverGoBack
 broken-reencrypt-no-cas|StoredTokensNeverGoBack
 broken-no-recovery|RefreshRejectionHonoursReplacement
-whatif-status-checks-token|pass'
+broken-status-no-cas|NeedsReconnectOnlyWhenTokenDead'
 
 only="$*"
 work=$(mktemp -d)

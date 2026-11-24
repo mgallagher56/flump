@@ -345,7 +345,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("bank sync (real Post
         sync.activeAccessToken(id, provider, creds),
         sync.activeAccessToken(id, provider, creds),
       ]);
-      expect(tokens).toEqual(["access-2", "access-2"]);
+      expect(tokens.map((t) => t.token)).toEqual(["access-2", "access-2"]);
       expect(provider.refreshToken).toHaveBeenCalledTimes(1);
     });
 
@@ -464,6 +464,96 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("bank sync (real Post
     it("an undecryptable stored token needs reconnecting", async () => {
       const id = await insertConnection({ accessToken: "v1:00:00:00" });
       const result = await financeWith(scriptedProvider(() => [])).syncBankConnection(PERSON, id);
+      expect(result).toMatchObject({ success: false, connection: { status: "needs_reconnect" } });
+    });
+  });
+
+  // B1 (verify-bank-sync): a sync refused by the bank must not mark a connection the user has
+  // reconnected meanwhile as needs_reconnect. The needs_reconnect write is a compare-and-swap on
+  // the token the sync judged.
+  describe("a stale sync and a reconnect (B1)", () => {
+    const authExpired = (operation: string) =>
+      new BankAuthExpiredError({ provider: "monzo", operation, status: 401 });
+
+    const expectFreshAndConnected = async (id: string) => {
+      const row = await connectionRow(id);
+      expect(row.status).toBe("connected");
+      expect(BankSyncOrchestrator.decryptToken(row.accessToken as string, accessTokenAad(id))).toBe(
+        "fresh-token",
+      );
+      expect(row.syncStartedAt).toBeNull();
+    };
+
+    it("fetch refused, then the user reconnects: the old sync leaves the fresh connection connected", async () => {
+      const id = await insertConnection();
+      let finance!: ReturnType<typeof financeWith>;
+      const provider = scriptedProvider(async () => {
+        // The reconnect lands while the old sync holds the lease: its own sync gets 409.
+        await expect(
+          finance.connectBank(PERSON, { institutionId: "monzo", token: "fresh-token" }),
+        ).rejects.toBeInstanceOf(ConflictException);
+        throw authExpired("fetch accounts");
+      });
+      finance = financeWith(provider);
+
+      const result = await finance.syncBankConnection(PERSON, id);
+
+      await expectFreshAndConnected(id);
+      // The old sync does not tell the user to reconnect a connection that is fine.
+      expect(result).toMatchObject({
+        success: false,
+        connection: { status: "connected" },
+        error: expect.stringMatching(/try again/i),
+      });
+      expect(result).not.toHaveProperty("error", expect.stringMatching(/needs to be reconnected/));
+    });
+
+    it("refresh refused, then the user reconnects after the recovery's reread: still connected", async () => {
+      const id = await insertConnection({
+        plainRefresh: "refresh-1",
+        expiresAt: new Date(Date.now() - 60_000),
+      });
+      const provider = scriptedProvider(() => []);
+      provider.refreshToken.mockRejectedValue(authExpired("refresh token"));
+      const finance = financeWith(provider);
+      // The recovery's second findOne sees the old row; the reconnect commits right after it.
+      const repo = ds.getRepository(BankConnection);
+      const findOne = repo.findOne.bind(repo);
+      let reads = 0;
+      vi.spyOn(repo, "findOne").mockImplementation(async (options) => {
+        const row = await findOne(options);
+        if (provider.refreshToken.mock.calls.length > 0 && reads++ === 0) {
+          await expect(
+            finance.connectBank(PERSON, { institutionId: "monzo", token: "fresh-token" }),
+          ).rejects.toBeInstanceOf(ConflictException);
+        }
+        return row;
+      });
+
+      await finance.syncBankConnection(PERSON, id);
+
+      await expectFreshAndConnected(id);
+    });
+
+    it("refused with no reconnect: the judged token is still stored, so needs_reconnect is written", async () => {
+      const id = await insertConnection({
+        plainRefresh: "refresh-1",
+        expiresAt: new Date(Date.now() - 60_000),
+      });
+      const provider = scriptedProvider(() => []);
+      provider.refreshToken.mockRejectedValue(authExpired("refresh token"));
+      const result = await financeWith(provider).syncBankConnection(PERSON, id);
+      expect(result).toMatchObject({ success: false, connection: { status: "needs_reconnect" } });
+    });
+
+    it("a re-encrypted token refused by the bank still records needs_reconnect", async () => {
+      const id = await insertConnection();
+      process.env.BANKING_TOKEN_ENCRYPTION_KEYS = `2:${"n".repeat(40)},1:${TEST_KEY}`;
+      const provider = scriptedProvider(() => {
+        throw authExpired("fetch accounts");
+      });
+      const result = await financeWith(provider).syncBankConnection(PERSON, id);
+      expect((await connectionRow(id)).accessToken).toMatch(/^v2:/);
       expect(result).toMatchObject({ success: false, connection: { status: "needs_reconnect" } });
     });
   });

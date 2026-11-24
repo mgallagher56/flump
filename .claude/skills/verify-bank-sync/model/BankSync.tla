@@ -32,7 +32,7 @@ CONSTANTS
     RefreshCAS,         \* the refresh write's WHERE access_token = prev ... (code: TRUE)
     ReencryptCAS,       \* the re-encryption write's WHERE access_token = ... (code: TRUE)
     RefreshRecovery,    \* AUTH_EXPIRED from refresh rereads the row (code: TRUE)
-    StatusChecksToken   \* status write only if the judged token is still stored (code: FALSE)
+    StatusChecksToken   \* needs_reconnect only if the judged token is still stored (code: TRUE)
 
 MaxAttempts == 3   \* the CAS loop's `attempt < 3`
 Gens == 0..(Cardinality(Syncs) + 1)
@@ -57,6 +57,7 @@ VARIABLES
     attempts,     \* per sync: CAS attempts made
     access,       \* per sync: the gen of the access token it uses
     judged,       \* per sync: the gen whose rejection made it decide needs_reconnect
+                  \* (code: ConnectionNeedsReconnectError.judged or the token's storedAs)
     outcome,      \* per sync: the status runSync will write
     replacedFirst \* per sync: a fresh token was stored before its refresh was rejected
 
@@ -238,9 +239,13 @@ Fetch(s) ==
     /\ UNCHANGED <<stored, expiringGens, status, holders, bankVars, highWater,
                    revoked, reconnected, read, prev, got, attempts, access, replacedFirst>>
 
-\* finally: bankConnectionRepository.update({ id, userId }, { status }). The
-\* what-if (StatusChecksToken) adds AND access_token = the judged ciphertext to
-\* a needs_reconnect write.
+\* finally: connected or error is bankConnectionRepository.update({ id, userId },
+\* { status }); needs_reconnect is BankConnectionSync.recordNeedsReconnect, the
+\* status CAS (B1): UPDATE ... WHERE access_token = ANY(judged ciphertexts). On
+\* a miss nothing is written (runSync answers "failed", not "needs_reconnect").
+\* The code compares ciphertexts, the model gens: under the lease the only
+\* other ciphertext of the judged gen is this sync's own re-encryption, which
+\* the code also passes (storedAs), and every other write stores a new gen.
 StatusWrite(s) ==
     /\ pc[s] = "status"
     /\ IF outcome[s] = "needs_reconnect" /\ StatusChecksToken /\ stored.gen /= judged[s]

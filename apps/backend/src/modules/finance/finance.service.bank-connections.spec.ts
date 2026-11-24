@@ -19,6 +19,7 @@ type FakeSync = {
   claim: ReturnType<typeof vi.fn>;
   release: ReturnType<typeof vi.fn>;
   activeAccessToken: ReturnType<typeof vi.fn>;
+  recordNeedsReconnect: ReturnType<typeof vi.fn>;
   writeAccounts: ReturnType<typeof vi.fn>;
   deleteConnectionData: ReturnType<typeof vi.fn>;
 };
@@ -104,7 +105,12 @@ const setup = (
   const sync: FakeSync = {
     claim: vi.fn().mockResolvedValue("lease-1"),
     release: vi.fn().mockResolvedValue(undefined),
-    activeAccessToken: vi.fn().mockResolvedValue("access"),
+    activeAccessToken: vi.fn().mockResolvedValue({ token: "access", storedAs: ["stored-access"] }),
+    // The compare-and-swap is BankConnectionSync's (integration spec); here it always matches.
+    recordNeedsReconnect: vi.fn(async (id: string, userId: string) => {
+      await bankRepo.update({ id, userId }, { status: "needs_reconnect" });
+      return true;
+    }),
     writeAccounts: vi.fn().mockResolvedValue(opts.outcome ?? { total: 1, updated: 1, skipped: 0 }),
     deleteConnectionData: vi.fn(),
   };
@@ -346,10 +352,24 @@ describe("FinanceService bank connections", () => {
 
     it("asks for a reconnect when the bank's consent has expired", async () => {
       const { service, bankRepo, sync } = setup({ rows: [connectionRow({ status: "connected" })] });
-      sync.activeAccessToken.mockRejectedValue(new ConnectionNeedsReconnectError("expired"));
+      sync.activeAccessToken.mockRejectedValue(
+        new ConnectionNeedsReconnectError("expired", ["stored-access"]),
+      );
       const result = await service.syncBankConnection(USER_A, CONN_A);
       expect(bankRepo.rows[0]).toMatchObject({ status: "needs_reconnect" });
+      expect(sync.recordNeedsReconnect).toHaveBeenCalledWith(CONN_A, USER_A, ["stored-access"]);
       expect(result).toMatchObject({ success: false, error: expect.stringMatching(/reconnected/) });
+    });
+
+    it("leaves the status to a reconnect that replaced the judged token (B1)", async () => {
+      const { service, bankRepo, sync } = setup({ rows: [connectionRow({ status: "connected" })] });
+      sync.activeAccessToken.mockRejectedValue(
+        new ConnectionNeedsReconnectError("expired", ["old"]),
+      );
+      sync.recordNeedsReconnect.mockResolvedValue(false);
+      const result = await service.syncBankConnection(USER_A, CONN_A);
+      expect(bankRepo.rows[0]).toMatchObject({ status: "connected" });
+      expect(result).toMatchObject({ success: false, error: expect.stringMatching(/try again/) });
     });
   });
 });

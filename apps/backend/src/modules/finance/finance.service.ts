@@ -20,9 +20,11 @@ import { toPublicConnection } from "../banking/bank-connection.public";
 import { revokeConnectionConsent } from "../banking/bank-connection-consent";
 import { issueOAuthState, withPkceChallenge } from "../banking/bank-connection-oauth";
 import {
+  type ActiveAccessToken,
   accessTokenAad,
   BankConnectionSync,
   ConnectionNeedsReconnectError,
+  type JudgedToken,
   SYNC_DEADLINE_MS,
   type SyncOutcome,
 } from "../banking/bank-connection-sync";
@@ -274,14 +276,17 @@ export class FinanceService {
 
     let status: BankConnection["status"] = "error";
     let outcome: SyncOutcome | undefined;
+    let token: ActiveAccessToken | undefined;
+    // The stored token a needs_reconnect verdict is about (B1); empty: none was stored.
+    let judged: JudgedToken = [];
     try {
       const institutionId = (await this.bankConnectionRepository.findOneOrFail({ where: { id } }))
         .institutionId;
-      const accessToken = await sync.activeAccessToken(id, provider, {
+      token = await sync.activeAccessToken(id, provider, {
         clientId: this.oauthConfig(institutionId, "CLIENT_ID"),
         clientSecret: this.oauthConfig(institutionId, "CLIENT_SECRET"),
       });
-      const providerAccounts = await provider.fetchAccounts(accessToken, {
+      const providerAccounts = await provider.fetchAccounts(token.token, {
         signal: AbortSignal.timeout(SYNC_DEADLINE_MS),
       });
       outcome = await sync.writeAccounts(id, userId, providerAccounts);
@@ -289,13 +294,22 @@ export class FinanceService {
     } catch (err) {
       this.logger.error(`Bank sync failed: ${safeErrorSummary(err)}`);
       status = needsReconnect(err) ? "needs_reconnect" : "error";
+      // A refused fetch is about the token the sync used.
+      judged = err instanceof ConnectionNeedsReconnectError ? err.judged : (token?.storedAs ?? []);
     } finally {
       try {
-        // Only the status columns are written: the token columns may have just been refreshed.
-        await this.bankConnectionRepository.update(
-          { id, userId },
-          status === "connected" ? { status, lastSyncedAt: new Date() } : { status },
-        );
+        if (status === "needs_reconnect") {
+          // Only while the judged token is still stored (B1): a reconnect that landed during this
+          // sync keeps its fresh token's status. The user is then told to sync again, not to
+          // reconnect; nothing is written.
+          if (!(await sync.recordNeedsReconnect(id, userId, judged))) status = "error";
+        } else {
+          // Only the status columns are written: the token columns may have just been refreshed.
+          await this.bankConnectionRepository.update(
+            { id, userId },
+            status === "connected" ? { status, lastSyncedAt: new Date() } : { status },
+          );
+        }
       } catch (err) {
         this.logger.error(`Bank sync status not saved: ${safeErrorSummary(err)}`);
       } finally {
