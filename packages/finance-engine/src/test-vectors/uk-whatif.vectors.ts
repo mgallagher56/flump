@@ -93,7 +93,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:db93e9e73bd7c70e61787dcceea0362b6a71872b04f4e497e7af6432bd901454",
+    rulingRef:
+      "ITEPA 2003 s.681B(1)(a) (as at 06/04/2020) charges only where ANI exceeds 50,000; s.681H(3) gives 53 Mondays 6 Apr 2020 to 5 Apr 2021; SI 2020/298 reg 5 rate 21.05; read 2026-11-24. Charge 0.",
   },
   {
     id: "hicbc.2020-21.ani50100.children1",
@@ -354,7 +358,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:d726c6f7ec4724574e616c11d84a0e2cee44ec0698a35875c28427f7d40a3c45",
+    rulingRef:
+      "ITEPA 2003 s.681C(2) as at 2022-04-06 (L 50,000, X 100) and s.681H(3), read 2026-11-24: ANI 49,999 does not exceed L, so the charge is 0. 52 Mondays fall in 2022/23, all at 21.80 (SI 2022/231 reg 5, in force 11 April 2022).",
   },
   {
     id: "hicbc.2022-23.ani50100.children1",
@@ -485,7 +493,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:dc51a97793470964606af7bc7dbeee9899d19c73b4985393e9d60e916aa97d36",
+    rulingRef:
+      "ITEPA 2003 s.681H(3) counts weeks by their Monday; 52 Mondays fall in 2023/24 (2023-04-10 to 2024-04-01), all at 24.00 (SI 2023/237 reg 5 from 2023-04-10; SI 2024/247 from 2024-04-08). ANI not over L 50,000 (s.681C, 2013 version): charge 0. Read 2026-11-24.",
   },
   {
     id: "hicbc.2023-24.ani50100.children1",
@@ -562,7 +574,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:ad8d45ee997fd7afbc14748bd0d1391225980fe4ec70bf712a2251dbbacea259",
+    rulingRef:
+      "ITEPA 2003 s.681H(3): 52 Monday-weeks x 24.00 (SI 2023/237 reg 5) = 1,248. s.681C as in force for 2023/24 has L 50,000 and X 100, so ANI 60,000 gives 100%: charge 1,248. Read on legislation.gov.uk 2026-11-24.",
   },
   {
     id: "hicbc.2023-24.ani70000.children3",
@@ -612,7 +628,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:ecf66bbdcea861f74d6bc9e0e5905c67d47c5d8e23870d8d83c19131f24479a7",
+    rulingRef:
+      "ITEPA 2003 s.681H(3) (week = 7 days from a Monday, in the year only if that Monday is) and s.681C(2) (L £60,000, X £200 from 2024-25, FA (No.2) 2024 s.5), read on legislation.gov.uk 2026-11-24: ANI 59,999 is not over 60,000, so 0%, charge 0.",
   },
   {
     id: "hicbc.2024-25.ani60200.children1",
@@ -716,7 +736,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:6496ed6cdf0b28f24a41e59b17cd1bd9d412a10dc4f064d31d2c194ed3c379ef",
+    rulingRef:
+      "ITEPA 2003 s.681H(3) and s.681C, with SI 2024/247 reg 5 (25.60/16.95 in force 8 April 2024, the first Monday of 2024/25), read on legislation.gov.uk 2026-11-24: 52 Mondays (8 Apr 2024 to 31 Mar 2025) x 59.50 = 3,094; 20,000/200 = 100%; charge 3,094.",
   },
   {
     id: "hicbc.2025-26.ani59999.children1",
@@ -1274,7 +1298,9 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "Annual method. PA 12570 (no taper at ANI 30000); taxable 30000 - 12570 = 17430; basic 17430 x 20% = 3486; higher 0 x 40% = 0; additional 0 x 45% = 0; income tax 3486; NI on 30000: 17430 x 8% + 0 x 2% = 1394.4. Take-home = 30000 - tax 3486 - NI 1394.4 = 25119.6.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:2a5bb6ab5e478a6d3434f63881a5ec7113ef750359b8816e2ca011130754fe10",
   },
   {
     id: "takeHome.2024-25.ewni.60000.salary-sacrifice3000",
@@ -1299,7 +1325,9 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "Annual method. salary sacrifice 3000 reduces pay for tax, NI and student loan: 57000; PA 12570 (no taper at ANI 57000); taxable 57000 - 12570 = 44430; basic 37700 x 20% = 7540; higher 6730 x 40% = 2692; additional 0 x 45% = 0; income tax 10232; NI on 57000: 37700 x 8% + 6730 x 2% = 3150.6. Take-home = 60000 - pension 3000 - tax 10232 - NI 3150.6 = 43617.4.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:452156ee21ac3e1df5ffedf7b7c3c0b9332f2a83185fd4f4a2b745982249c8e6",
   },
   {
     id: "whatIfDelta.2026-27.ewni.99500.plus1000",
@@ -1681,7 +1709,9 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "Undergraduate Plan 2 (9% over its threshold) and Postgraduate Loan (6% over 21,000) are repaid together: plan2 (45000 - 26575) x 9% = 1658.25; postgrad (45000 - 21000) x 6% = 1440. Total 3098.25.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:c36db37c0e8e9df411b55db280f90905a96391e9f5b3a8038b67e117a4992e5b",
   },
   {
     id: "studentLoanMulti.2021-22.plan2+postgrad.45000",
@@ -1699,7 +1729,9 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "Undergraduate Plan 2 (9% over its threshold) and Postgraduate Loan (6% over 21,000) are repaid together: plan2 (45000 - 27295) x 9% = 1593.45; postgrad (45000 - 21000) x 6% = 1440. Total 3033.45.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:3dd13c1db51f5bb011e85a433e78a57d38c3413ff51303b09e29b3baa792ab79",
   },
   {
     id: "studentLoanMulti.2022-23.plan2+postgrad.45000",
@@ -1717,7 +1749,9 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "Undergraduate Plan 2 (9% over its threshold) and Postgraduate Loan (6% over 21,000) are repaid together: plan2 (45000 - 27295) x 9% = 1593.45; postgrad (45000 - 21000) x 6% = 1440. Total 3033.45.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:c84aecb705d570c90b2a98c6daf1ab39a06cf74b6aa699840a3767f07bbac68d",
   },
   {
     id: "studentLoanMulti.2023-24.plan2+postgrad.45000",
@@ -1735,7 +1769,9 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "Undergraduate Plan 2 (9% over its threshold) and Postgraduate Loan (6% over 21,000) are repaid together: plan2 (45000 - 27295) x 9% = 1593.45; postgrad (45000 - 21000) x 6% = 1440. Total 3033.45.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:9ad43a2a39321ea61001a29d37be07713ee06eea93b65c10146a9e19ca95a5a6",
   },
   {
     id: "studentLoanMulti.2024-25.plan2+postgrad.45000",
@@ -1753,7 +1789,9 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "Undergraduate Plan 2 (9% over its threshold) and Postgraduate Loan (6% over 21,000) are repaid together: plan2 (45000 - 27295) x 9% = 1593.45; postgrad (45000 - 21000) x 6% = 1440. Total 3033.45.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:6797079cce024fbd4b00602548dc1230b1124c61d6d8b041ee2fa61387ebe4ca",
   },
   {
     id: "studentLoanMulti.2025-26.plan2+postgrad.45000",
@@ -1873,7 +1911,9 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "Relief at source: net contribution 4000 grossed up x 1.25 = 5000. ANI = 60000 - 5000 = 55000 (GOV.UK adjusted-net-income step 3). Basic rate limit and higher rate limit increased by the gross contribution, 5000 (FA 2004 s.192(4)). Assumes the higher-rate relief has been claimed (FA 2004 s.192(4)). Income tax on salary 60000: PA 12500 (no taper at ANI 55000); taxable 60000 - 12500 = 47500; basic 42500 x 20% = 8500; higher 5000 x 40% = 2000; additional 0 x 45% = 0; income tax 10500. Expected is income tax only.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:7f0464eeeff8244eff1350c2b6e0cd34149bff3f7f36558620222880f6c879db",
   },
   {
     id: "reliefAtSource.ewni.2020-21.110000.net8000",
@@ -1895,7 +1935,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: personal allowance taper rate (GBP1 per GBP2) is not stated on the archived GOV.UK pages.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:54f386c94565cc1ea7d100d1f018a0d98660be77de903a50829fcfa7c6caf5c1",
+    rulingRef:
+      "ITA 2007 s.35(2) (as at 06/04/2020) reduces PA by one-half of ANI over 100,000; s.58 Step 3 deducts the gross contribution, ANI exactly 100,000, no reduction; FA 2004 s.192(4) lifts limits 10,000. Read 2026-11-24. 29,500.",
   },
   {
     id: "reliefAtSource.ewni.2021-22.60000.net4000",
@@ -1915,7 +1959,9 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "Relief at source: net contribution 4000 grossed up x 1.25 = 5000. ANI = 60000 - 5000 = 55000 (GOV.UK adjusted-net-income step 3). Basic rate limit and higher rate limit increased by the gross contribution, 5000 (FA 2004 s.192(4)). Assumes the higher-rate relief has been claimed (FA 2004 s.192(4)). Income tax on salary 60000: PA 12570 (no taper at ANI 55000); taxable 60000 - 12570 = 47430; basic 42700 x 20% = 8540; higher 4730 x 40% = 1892; additional 0 x 45% = 0; income tax 10432. Expected is income tax only.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:0ca6b1394b1e7265e350bbfd6306b1d51fb8f869e73e82c55c71131f935fd6b4",
   },
   {
     id: "reliefAtSource.ewni.2021-22.110000.net8000",
@@ -1937,7 +1983,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: personal allowance taper rate (GBP1 per GBP2) is not stated on the archived GOV.UK pages.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:52e3f8ca9a006f41d488bb13f8849900c581a9a8cb5ecfead9175eab23ac4088",
+    rulingRef:
+      "ITA 2007 s.35(2) (06/04/2021 version, read 2026-11-24) reduces the 12,570 allowance by one-half of adjusted net income over 100,000; s.58 Step 3 deducts the gross contribution, so ANI is exactly 100,000, no taper. FA 2004 s.192(4) lifts both limits by 10,000. Tax 29,432.",
   },
   {
     id: "reliefAtSource.ewni.2022-23.60000.net4000",
@@ -1957,7 +2007,9 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "Relief at source: net contribution 4000 grossed up x 1.25 = 5000. ANI = 60000 - 5000 = 55000 (GOV.UK adjusted-net-income step 3). Basic rate limit and higher rate limit increased by the gross contribution, 5000 (FA 2004 s.192(4)). Assumes the higher-rate relief has been claimed (FA 2004 s.192(4)). Income tax on salary 60000: PA 12570 (no taper at ANI 55000); taxable 60000 - 12570 = 47430; basic 42700 x 20% = 8540; higher 4730 x 40% = 1892; additional 0 x 45% = 0; income tax 10432. Expected is income tax only.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:1cccb326becf1b310c2fc5e6066a3a3ac729e1366e1f145f1620a97dff77cebe",
   },
   {
     id: "reliefAtSource.ewni.2022-23.110000.net8000",
@@ -1979,7 +2031,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: personal allowance taper rate (GBP1 per GBP2) is not stated on the archived GOV.UK pages.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:b2d0a46309bd5097fd0901db2fdff8806856b2122208a42f210f529fa11ead78",
+    rulingRef:
+      "ITA 2007 s.35(2) as at 2022-04-06, read on legislation.gov.uk 2026-11-24, reduces the allowance by one-half of ANI over 100,000; ANI is exactly 100,000, so PA stays 12,570. FA 2004 s.192(4) raises both limits by 10,000, giving 29,432.",
   },
   {
     id: "reliefAtSource.ewni.2023-24.60000.net4000",
@@ -1999,7 +2055,9 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "Relief at source: net contribution 4000 grossed up x 1.25 = 5000. ANI = 60000 - 5000 = 55000 (GOV.UK adjusted-net-income step 3). Basic rate limit and higher rate limit increased by the gross contribution, 5000 (FA 2004 s.192(4)). Assumes the higher-rate relief has been claimed (FA 2004 s.192(4)). Income tax on salary 60000: PA 12570 (no taper at ANI 55000); taxable 60000 - 12570 = 47430; basic 42700 x 20% = 8540; higher 4730 x 40% = 1892; additional 0 x 45% = 0; income tax 10432. Expected is income tax only.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:5628e74052f14c31d1cd3e3b2b0a4bfb3981d3b1a4d79b31c0108292f17dac63",
   },
   {
     id: "reliefAtSource.ewni.2023-24.110000.net8000",
@@ -2019,7 +2077,9 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "Relief at source: net contribution 8000 grossed up x 1.25 = 10000. ANI = 110000 - 10000 = 100000 (GOV.UK adjusted-net-income step 3). Basic rate limit and higher rate limit increased by the gross contribution, 10000 (FA 2004 s.192(4)). Assumes the higher-rate relief has been claimed (FA 2004 s.192(4)). Income tax on salary 110000: PA 12570 (no taper at ANI 100000); taxable 110000 - 12570 = 97430; basic 47700 x 20% = 9540; higher 49730 x 40% = 19892; additional 0 x 45% = 0; income tax 29432. Expected is income tax only.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:7acf7b77da876514e9a92ae509ee567cede97ee9640c6581a7f80354a89580ce",
   },
   {
     id: "reliefAtSource.ewni.2024-25.60000.net4000",
@@ -2039,7 +2099,9 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "Relief at source: net contribution 4000 grossed up x 1.25 = 5000. ANI = 60000 - 5000 = 55000 (GOV.UK adjusted-net-income step 3). Basic rate limit and higher rate limit increased by the gross contribution, 5000 (FA 2004 s.192(4)). Assumes the higher-rate relief has been claimed (FA 2004 s.192(4)). Income tax on salary 60000: PA 12570 (no taper at ANI 55000); taxable 60000 - 12570 = 47430; basic 42700 x 20% = 8540; higher 4730 x 40% = 1892; additional 0 x 45% = 0; income tax 10432. Expected is income tax only.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:70ca152837d5be9b638005260f0877faac094934bf4788511c096da7bd1759f8",
   },
   {
     id: "reliefAtSource.ewni.2024-25.110000.net8000",
@@ -2059,7 +2121,9 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "Relief at source: net contribution 8000 grossed up x 1.25 = 10000. ANI = 110000 - 10000 = 100000 (GOV.UK adjusted-net-income step 3). Basic rate limit and higher rate limit increased by the gross contribution, 10000 (FA 2004 s.192(4)). Assumes the higher-rate relief has been claimed (FA 2004 s.192(4)). Income tax on salary 110000: PA 12570 (no taper at ANI 100000); taxable 110000 - 12570 = 97430; basic 47700 x 20% = 9540; higher 49730 x 40% = 19892; additional 0 x 45% = 0; income tax 29432. Expected is income tax only.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:cb3bd7511589b43bf748547e6736ccceb16a1d925692164165e4380e2657660a",
   },
   {
     id: "reliefAtSource.ewni.2025-26.60000.net4000",

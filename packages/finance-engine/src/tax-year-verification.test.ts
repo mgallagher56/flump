@@ -131,18 +131,13 @@ describe("getTaxYearVerification", () => {
 
 describe("getTaxFeatureVerification (E25-T8)", () => {
   // 2027/28 core is fully signed but provisional, so it stays unverified (ruling B).
-  // 24 Nov 2026, Fable decider: every 2026/27 and 2025/26 vector signed (2025/26 has no
-  // scheduled vectors); the five 2021/22 HICBC vectors signed. Every other feature and year is
-  // unverified (the corrected 2023/24 and 2024/25 Plan 5 vectors alone do not complete a year).
+  // 24 Nov 2026, Fable decider: every vector for 2020/21 to 2026/27 is signed. Only 2026/27 has
+  // scheduled vectors (the 2029 cap illustrations), so it is the only year with scheduled verified.
   const verifiedToday = new Set([
-    "2026/27 core",
-    "2026/27 hicbc",
-    "2026/27 whatIf",
+    ...["2020/21", "2021/22", "2022/23", "2023/24", "2024/25", "2025/26", "2026/27"].flatMap(
+      (y) => [`${y} core`, `${y} hicbc`, `${y} whatIf`],
+    ),
     "2026/27 scheduled",
-    "2025/26 core",
-    "2025/26 hicbc",
-    "2025/26 whatIf",
-    "2021/22 hicbc",
   ]);
   it("only the features whose vectors are all signed are verified today", () => {
     for (const y of SUPPORTED_UK_TAX_YEARS) {

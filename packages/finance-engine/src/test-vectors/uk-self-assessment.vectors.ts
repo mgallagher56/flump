@@ -47,7 +47,11 @@ export const UK_SELF_ASSESSMENT_VECTORS: readonly UkSelfAssessmentVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: trading allowance 1,000 is only confirmed as current guidance on GOV.UK, not for this tax year.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:141f6584b6374ffc754b12a8a2e7feade48aa74bc6f7873d2a65a7d466d45f89",
+    rulingRef:
+      "ITTOIA 2005 s.783AD (1,000) and ss.783AH-AI partial relief; F(No.2)A 2017 Sch 3 para 13 applies from 2017-18 onward, amount unamended; read legislation.gov.uk 2026-11-24. 5,000 - 1,000 = 4,000.",
   },
   {
     id: "propertyAllowance.2020-21.6000.400.100",
@@ -68,7 +72,11 @@ export const UK_SELF_ASSESSMENT_VECTORS: readonly UkSelfAssessmentVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: property allowance 1,000 is only confirmed as current guidance on GOV.UK, not for this tax year.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:feba6a047c3c3a5b024b280eb4a145c1ab9165fcc72035040fd37cd3bd42fc9b",
+    rulingRef:
+      "ITTOIA 2005 s.783BD (1,000) and ss.783BG-BH; F(No.2)A 2017 Sch 3 para 13 from 2017-18 onward; read 2026-11-24. 6,000 - 1,000 = 5,000.",
   },
   {
     id: "paymentsOnAccount.2020-21.3000.0",
@@ -88,7 +96,11 @@ export const UK_SELF_ASSESSMENT_VECTORS: readonly UkSelfAssessmentVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: payments on account thresholds (1,000 and 80%) is only confirmed as current guidance on GOV.UK, not for this tax year.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:abff7bb09500e109f379808f1a22e0e389789ad0ada7d4afbf21fa8457b08afb",
+    rulingRef:
+      "TMA 1970 s.59A(1)-(2) (two payments of 50%); SI 2008/838 reg 2 sets 1,000 from 2009-10 onward; read 2026-11-24. Nothing deducted at source, so the proportion test is met at any prescribed figure. 3,000 + 1,500 = 4,500.",
   },
   {
     id: "tradingAllowance.2021-22.5000.300",
@@ -108,7 +120,11 @@ export const UK_SELF_ASSESSMENT_VECTORS: readonly UkSelfAssessmentVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: trading allowance 1,000 is only confirmed as current guidance on GOV.UK, not for this tax year.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:a2ec8fcc44de2f295c3af61d8a2d76a4d5b055faf2ed38136289490e04f6c30f",
+    rulingRef:
+      "ITTOIA 2005 s.783AD(1) (06/04/2021 version, read 2026-11-24) sets the trading allowance at 1,000; F(No.2)A 2017 Sch 3 para 13 applies it from 2017-18 onward. Partial relief (ss.783AI/783AJ) deducts the allowance in place of expenses: 5,000 - 1,000 = 4,000.",
   },
   {
     id: "propertyAllowance.2021-22.6000.400.100",
@@ -129,7 +145,11 @@ export const UK_SELF_ASSESSMENT_VECTORS: readonly UkSelfAssessmentVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: property allowance 1,000 is only confirmed as current guidance on GOV.UK, not for this tax year.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:b5aef9c86364aaff01571ca03e33a730a5bae4a4e4468e88c3675f9fce297cf1",
+    rulingRef:
+      "ITTOIA 2005 s.783BD(1) (06/04/2021 version, read 2026-11-24) sets the property allowance at 1,000, in effect from 2017-18 (F(No.2)A 2017 Sch 3 para 13). Partial relief under s.783BH(3),(5) deducts it in place of expenses: 6,000 - 1,000 = 5,000.",
   },
   {
     id: "paymentsOnAccount.2021-22.3000.0",
@@ -149,7 +169,11 @@ export const UK_SELF_ASSESSMENT_VECTORS: readonly UkSelfAssessmentVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: payments on account thresholds (1,000 and 80%) is only confirmed as current guidance on GOV.UK, not for this tax year.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:e9b132ab33263ebc7de88b03e175fdc461f6d2d3086e5796c0ffec8d900d4e7b",
+    rulingRef:
+      "TMA 1970 s.59A(1)(c),(d),(2) (06/04/2021 version, read 2026-11-24) with SI 1996/1654 reg 3 as amended by SI 2008/838 (1,000 from 2009-10) and reg 4 as corrected by SI 1997/2491 (one to five, that is the 80% test). Two payments of 50%: 3,000 + 1,500 = 4,500.",
   },
   {
     id: "tradingAllowance.2022-23.5000.300",
@@ -169,7 +193,11 @@ export const UK_SELF_ASSESSMENT_VECTORS: readonly UkSelfAssessmentVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: trading allowance 1,000 is only confirmed as current guidance on GOV.UK, not for this tax year.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:7a7a7b1d5ae8128b377c7fc822199b93113b1692911579b689845cd7af490bfa",
+    rulingRef:
+      'ITTOIA 2005 s.783AD(1) (1,000, unamended since insertion by F(No.2)A 2017) and s.783AI(3), read 2026-11-24, with GOV.UK "apply from 6 April 2017": allowance deducted in place of expenses, 5,000 - 1,000 = 4,000.',
   },
   {
     id: "propertyAllowance.2022-23.6000.400.100",
@@ -190,7 +218,11 @@ export const UK_SELF_ASSESSMENT_VECTORS: readonly UkSelfAssessmentVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: property allowance 1,000 is only confirmed as current guidance on GOV.UK, not for this tax year.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:44c260502f9596ea308565b3146fbeec050e2d8601b86e232f8f5af5d1fe546d",
+    rulingRef:
+      "ITTOIA 2005 s.783BD(1) (1,000, unamended) and s.783BH(3)-(5), read 2026-11-24: no expenses brought in, the allowance deducted, 6,000 - 1,000 = 5,000.",
   },
   {
     id: "paymentsOnAccount.2022-23.3000.0",
@@ -210,7 +242,11 @@ export const UK_SELF_ASSESSMENT_VECTORS: readonly UkSelfAssessmentVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: payments on account thresholds (1,000 and 80%) is only confirmed as current guidance on GOV.UK, not for this tax year.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:86a556c1a21d85476d923be9165076a4c516433c0ed0e0066d514bebc89e7d65",
+    rulingRef:
+      "TMA 1970 s.59A(1)-(2) and SI 2008/838 reg 2 (1,000 from 2009-10), read 2026-11-24: 3,000 is not under 1,000 and nothing was deducted at source, so two payments of 50% are due; 3,000 + 1,500 = 4,500.",
   },
   {
     id: "tradingAllowance.2023-24.5000.300",
@@ -230,7 +266,11 @@ export const UK_SELF_ASSESSMENT_VECTORS: readonly UkSelfAssessmentVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: trading allowance 1,000 is only confirmed as current guidance on GOV.UK, not for this tax year.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:7b9493cfcf08daa8efac019d4077062ace1df265a0c5232aaea10adcd60ca917",
+    rulingRef:
+      "ITTOIA 2005 s.783AD(1) fixes the trading allowance at 1,000, unamended since Part 6A was inserted by F(No.2)A 2017 (from 2017-18); partial relief deducts it in place of expenses. Read on legislation.gov.uk and GOV.UK 2026-11-24. 5,000 - 1,000 = 4,000.",
   },
   {
     id: "propertyAllowance.2023-24.6000.400.100",
@@ -251,7 +291,11 @@ export const UK_SELF_ASSESSMENT_VECTORS: readonly UkSelfAssessmentVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: property allowance 1,000 is only confirmed as current guidance on GOV.UK, not for this tax year.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:fd8bb2963a7b86ce487e29f1608a1ec5ebfbd7ad1e7230b9a70d4cf4caead2d1",
+    rulingRef:
+      "ITTOIA 2005 s.783BD(1) fixes the property allowance at 1,000, unamended since 2017-18; s.783BH deducts it in place of expenses. Read on legislation.gov.uk and GOV.UK 2026-11-24. 6,000 - 1,000 = 5,000.",
   },
   {
     id: "paymentsOnAccount.2023-24.3000.0",
@@ -271,7 +315,11 @@ export const UK_SELF_ASSESSMENT_VECTORS: readonly UkSelfAssessmentVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: payments on account thresholds (1,000 and 80%) is only confirmed as current guidance on GOV.UK, not for this tax year.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:49465e61c64e8ed06804d990fcf8d57e59d7e72e504a4d6699298fafb721f281",
+    rulingRef:
+      "TMA 1970 s.59A(1)-(2): two payments of 50% each; SI 1996/1654 reg 3 as amended by SI 2008/838 (1,000 from 2009-10) and reg 4 (one to four, that is 80%). Read on legislation.gov.uk 2026-11-24. 3,000 + 1,500 = 4,500, matching the GOV.UK second example.",
   },
   {
     id: "tradingAllowance.2024-25.5000.300",
@@ -291,7 +339,11 @@ export const UK_SELF_ASSESSMENT_VECTORS: readonly UkSelfAssessmentVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: trading allowance 1,000 is only confirmed as current guidance on GOV.UK, not for this tax year.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:2e3bd9a7f2fc45b370fa37563115b8cc04eef9779f5db88989ead3b2375b9583",
+    rulingRef:
+      "ITTOIA 2005 s.783AD (trading allowance 1,000) and s.783AI(3) (partial relief deducts the allowance in place of expenses), in effect from 2017-18 (F(No.2)A 2017 Sch 3 para 13) with no change to the figure, read on legislation.gov.uk 2026-11-24: 5,000 - 1,000 = 4,000.",
   },
   {
     id: "propertyAllowance.2024-25.6000.400.100",
@@ -312,7 +364,11 @@ export const UK_SELF_ASSESSMENT_VECTORS: readonly UkSelfAssessmentVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: property allowance 1,000 is only confirmed as current guidance on GOV.UK, not for this tax year.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:bebd0b8c5df018a378c6e24b2322a7855b784302740046daf04829157c0dd609",
+    rulingRef:
+      "ITTOIA 2005 s.783BD (property allowance 1,000) and s.783BH (no expenses brought in, allowance deducted), in effect from 2017-18 (F(No.2)A 2017 Sch 3 para 13) with no change to the figure, read on legislation.gov.uk 2026-11-24: 6,000 - 1,000 = 5,000.",
   },
   {
     id: "paymentsOnAccount.2024-25.3000.0",
@@ -332,7 +388,11 @@ export const UK_SELF_ASSESSMENT_VECTORS: readonly UkSelfAssessmentVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: payments on account thresholds (1,000 and 80%) is only confirmed as current guidance on GOV.UK, not for this tax year.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:61579c4eb4eae8f1ed319e0eb959a923369b49ab338cd4f111801d075ffb3ec0",
+    rulingRef:
+      "TMA 1970 s.59A(1)-(2) (two payments, each 50% of the relevant amount) and SI 1996/1654 reg 3 as amended by SI 2008/838 (1,000 from 2009-10), read on legislation.gov.uk 2026-11-24; GOV.UK second example confirms 3,000 + 1,500 = 4,500.",
   },
   {
     id: "tradingAllowance.2025-26.5000.300",
