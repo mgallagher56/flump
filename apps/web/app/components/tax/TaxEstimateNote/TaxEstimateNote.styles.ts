@@ -10,8 +10,10 @@ export const taxEstimateNote = cva({
   variants: {
     tone: {
       default: { color: "text.muted" },
-      /** On `surface.hero` or `surface.contrast`. */
+      /** On `surface.contrast` (charcoal). */
       onContrast: { color: "text.onContrast" },
+      /** On `surface.hero`. */
+      onHero: { color: "text.onHero" },
     },
   },
   defaultVariants: { tone: "default" },

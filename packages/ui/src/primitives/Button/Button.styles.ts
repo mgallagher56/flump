@@ -3,9 +3,11 @@ import { cva } from "../../../styled-system/css";
 /** Real disabled only: a pending button (aria-disabled) keeps its own colours. */
 const DISABLED = "&:is(:disabled, [disabled])";
 
+// text.onContrast (off-white in both themes) clears 4.5:1 on the danger fill in both themes; the
+// dark primary.foreground is a dark ink for the mint fill and fails on the dark danger fill.
 const dangerStyles = {
   bg: "status.danger.solid",
-  color: "primary.foreground",
+  color: "text.onContrast",
   _hover: { opacity: 0.9 },
 } as const;
 
@@ -64,11 +66,17 @@ export const buttonRecipe = cva({
         borderColor: "border.strong",
         _hover: { bg: "surface.subtle" },
       },
+      // Midnight and Mint: the outline button is teal in light and mint in dark (primary is the
+      // text colour, >= 4.5:1 on every page surface, and >= 3:1 as a control edge).
       outline: {
         bg: "transparent",
-        color: "text.primary",
-        borderColor: "border.strong",
-        _hover: { bg: "surface.subtle" },
+        color: "primary",
+        borderColor: "primary",
+        _hover: {
+          bg: "surface.subtle",
+          color: "primary.emphasis",
+          borderColor: "primary.emphasis",
+        },
       },
       ghost: {
         bg: "transparent",
@@ -80,7 +88,7 @@ export const buttonRecipe = cva({
         bg: "transparent",
         color: "primary",
         textUnderlineOffset: "4px",
-        _hover: { textDecoration: "underline" },
+        _hover: { textDecoration: "underline", color: "primary.emphasis" },
         height: "auto",
         minH: "0",
         px: "1",

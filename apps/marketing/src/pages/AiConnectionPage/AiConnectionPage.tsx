@@ -123,7 +123,7 @@ export const AiConnectionPage: FC = () => {
           </CollapsibleDrawer>
         </div>
       }
-      sampleLastTone="teal"
+      sampleLastTone="card"
       sample={
         <>
           <MarketingSection id="questions" title="Questions you could ask">
@@ -136,7 +136,7 @@ export const AiConnectionPage: FC = () => {
             </ul>
           </MarketingSection>
           {/* Version 1 (coordinator, 20 November 2026): promises nothing about who is switched on. */}
-          <MarketingSection className={setupSection()} id="setup" title="How to get it" tone="teal">
+          <MarketingSection className={setupSection()} id="setup" title="How to get it" tone="card">
             <p className={body()} data-testid="mcp-how-to-get-it">
               While Flump is being tested, the AI connection is switched on one account at a time.{" "}
               <Link className={inlineLink()} to="/contact">

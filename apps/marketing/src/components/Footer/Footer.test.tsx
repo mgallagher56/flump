@@ -12,6 +12,13 @@ const renderFooter = () =>
   );
 
 describe("Footer", () => {
+  it("is the dark contrast band with text.onContrast text (Midnight and Mint)", () => {
+    const { container } = renderFooter();
+    const footer = container.querySelector("footer") as HTMLElement;
+    expect(footer.className).toContain("bg-c_surface.contrast");
+    expect(footer.className).toMatch(/c_text\.onContrast/);
+  });
+
   it("contains no unverified security or regulatory claims", () => {
     const { container } = renderFooter();
     expect(container.textContent ?? "").not.toMatch(

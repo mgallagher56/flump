@@ -8,7 +8,10 @@ describe("HeroFigure", () => {
     const group = screen.getByRole("group", { name: "Net worth" });
     expect(group.getAttribute("data-tone")).toBe("hero");
     expect(group.className).toContain("surface.hero");
-    expect(group.innerHTML).toContain("text.onContrast");
+    expect(group.className).toContain("text.onHero");
+    expect(group.className).toContain("border.hero");
+    expect(group.innerHTML).toContain("text.heroFigure");
+    expect(group.innerHTML).not.toContain("text.onContrast");
     expect(container.textContent).toContain("£241,000");
     expect(container.querySelector('[data-decorative="true"]')).toBeNull();
     expect(container.querySelectorAll('[data-tone="hero"]')).toHaveLength(1);
@@ -86,7 +89,7 @@ describe("HeroFigure", () => {
     const group = screen.getByRole("group", { name: "Monthly take-home pay" });
     const label = group.querySelector("[data-estimate-label]");
     expect(label?.textContent).toBe("Unverified estimate");
-    expect(label?.className).toContain("text.onContrast");
+    expect(label?.className).toContain("text.onHero");
     expect(label?.className).not.toContain("status.");
   });
 

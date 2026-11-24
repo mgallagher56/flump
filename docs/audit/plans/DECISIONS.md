@@ -449,6 +449,13 @@ Given by the owner and relayed by the coordinator on 20 November 2026. On the E4
 - Marketing bands alternate `surface.canvas` with `surface.tint.teal` (the `SectionBand` tones `canvas` and `teal`), in light and dark, on every marketing page that uses them (home, the feature pages, the AI connection page). A band that holds figures (a sample, a calculator, the pay rise tool) stays on the canvas, because a tint never goes around a chart. This is a marketing exception to "at most one tinted section per page", as D16 (b) was; the web app keeps that rule.
 - No shared token changed. `surface.tint.teal` keeps its values (light #dcede6, dark #1d3932).
 
+# Owner decision (2026-11-24): Midnight and Mint replaces Direction C
+
+Given by the owner and relayed by the coordinator on 24 November 2026. The owner noticed the cream and deep teal-green look (E15 Direction C) closely resembles another company's site. No copying was found; the owner wants Flump to look distinct, and chose "Midnight" (dark) and "Mint" (light) from mock-ups in `docs/design/midnight-mint/`.
+
+- Supersedes the E15 Direction C palette and the 2026-11-20 marketing band decision above: marketing bands now alternate `surface.card` with `surface.canvas`, with one solid mint `surface.hero` band and a `surface.contrast` closing band and footer.
+- Light: no pure white, no pink, mint is a fill and never text, dark only on primary buttons, small markers and the footer. Detail and token meanings: `docs/ux/STYLE-GUIDE.md` section 14.
+
 # Owner request (2026-11-21): rules for tests that catch faults and run fast
 
 Owner's words: "Add rules to the repo to ensure when test are edited or added they actually test what they intend so they will pass a mutation test and are also performant."

@@ -18,6 +18,6 @@ export const Default: Story = {
   parameters: { a11y: { config: { rules: [{ id: "color-contrast", enabled: false }] } } },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getByText("Flump Color System & Semantic Tokens")).toBeInTheDocument();
+    await expect(canvas.getByText("Flump colour system and semantic tokens")).toBeInTheDocument();
   },
 };

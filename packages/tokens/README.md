@@ -4,7 +4,9 @@ The one authored source of Flump's design tokens, for web, marketing and the mob
 
 ## What is authored
 
-`src/index.ts`, `typography.ts`, `layout.ts`, `elevation.ts`, `motion.ts` and `breakpoints.ts`: primitive scales, the six semantic colour namespaces with `{ base, _dark }` values, text styles, spacing, radii, sizes, shadows, motion, z-index and the nav breakpoint. Values are plain strings (the plain-values rule in [`docs/design/e15/tokens.md`](../../docs/design/e15/tokens.md)). Edit only these files.
+`src/index.ts`, `typography.ts`, `layout.ts`, `elevation.ts`, `motion.ts` and `breakpoints.ts`: primitive scales, the seven semantic colour namespaces with `{ base, _dark }` values, text styles, spacing, radii, sizes, shadows, motion, z-index and the nav breakpoint. Values are plain strings (the plain-values rule in [`docs/design/e15/tokens.md`](../../docs/design/e15/tokens.md)). Edit only these files.
+
+The palette is Midnight (dark) and Mint (light), by owner decision on 24 November 2026; it replaced the E15 "Direction C" look. The primitive `mint` scale holds the light neutrals and the mint fill, `teal` the light links and focus ring, and `dark` the Midnight values. Meanings and rules: [`docs/ux/STYLE-GUIDE.md`](../../docs/ux/STYLE-GUIDE.md) sections 2 and 14.
 
 Web and marketing read them through the Panda preset in `packages/ui/panda.preset.ts`; `packages/ui/src/tokens/index.ts` re-exports this package, so `@repo/ui` exports the same names.
 

@@ -93,26 +93,6 @@ export const depthList = cva({
   },
 });
 
-export const finalCta = cva({
-  base: {
-    px: "4",
-    py: { base: "12", md: "16" },
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    gap: "4",
-    textAlign: "center",
-  },
-});
-
-export const finalCtaTitle = cva({
-  base: { textStyle: "heading.lg", color: "text.primary", margin: 0 },
-});
-
-export const finalCtaBody = cva({
-  base: { textStyle: "body.md", color: "text.secondary", margin: 0 },
-});
-
 /** Under the debt facts: the app's fixed MoneyHelper debt line (D10). */
 export const factFooter = cva({
   base: { mt: "6" },

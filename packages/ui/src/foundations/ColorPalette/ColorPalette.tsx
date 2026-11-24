@@ -31,7 +31,7 @@ function getContrast(hex1: string, hex2: string): string {
 }
 
 // Literal token names keep Panda's static extraction working (no dynamic class building).
-const E15_KEYS = [
+const KEY_SWATCHES = [
   {
     token: "surface.scrim",
     note: "Modal backdrop",
@@ -39,8 +39,43 @@ const E15_KEYS = [
   },
   {
     token: "surface.hero",
-    note: "Headline block, text.onContrast",
+    note: "Headline block: solid mint in light, an edged card in dark",
     fill: css({ backgroundColor: "surface.hero" }),
+  },
+  {
+    token: "text.onHero",
+    note: "Text on surface.hero",
+    fill: css({ backgroundColor: "text.onHero" }),
+  },
+  {
+    token: "text.heroFigure",
+    note: "Headline figure: dark ink in light, mint in dark",
+    fill: css({ backgroundColor: "text.heroFigure" }),
+  },
+  {
+    token: "border.hero",
+    note: "Edge of surface.hero",
+    fill: css({ backgroundColor: "border.hero" }),
+  },
+  {
+    token: "border.section",
+    note: "The rule under a section title",
+    fill: css({ backgroundColor: "border.section" }),
+  },
+  {
+    token: "primary.solid",
+    note: "Primary button: charcoal in light, mint in dark",
+    fill: css({ backgroundColor: "primary.solid" }),
+  },
+  {
+    token: "primary.emphasis",
+    note: "Link hover",
+    fill: css({ backgroundColor: "primary.emphasis" }),
+  },
+  {
+    token: "surface.contrast",
+    note: "Charcoal: footer and small markers, text.onContrast",
+    fill: css({ backgroundColor: "surface.contrast" }),
   },
   {
     token: "surface.tint.teal",
@@ -73,7 +108,7 @@ const E15_KEYS = [
   },
 ] as const;
 
-/** Swatches for the E15 keys, rendered inside a themed wrapper so each panel resolves its own mode. */
+/** Swatches for the headline and Midnight and Mint keys, rendered inside a themed wrapper so each panel resolves its own mode. */
 const NewKeyPanel: FC<{ theme: "light" | "dark" }> = ({ theme }) => (
   <div
     data-theme={theme}
@@ -92,7 +127,7 @@ const NewKeyPanel: FC<{ theme: "light" | "dark" }> = ({ theme }) => (
       {theme === "light" ? "Light" : "Dark"}
     </h3>
     <ul className={css({ display: "flex", flexDirection: "column", gap: "8px" })}>
-      {E15_KEYS.map((key) => (
+      {KEY_SWATCHES.map((key) => (
         <li key={key.token} className={css({ display: "flex", alignItems: "center", gap: "12px" })}>
           <span
             aria-hidden="true"
@@ -123,9 +158,10 @@ const NewKeyPanel: FC<{ theme: "light" | "dark" }> = ({ theme }) => (
 export const ColorPalette: FC = () => {
   const primitivePalettes = [
     { name: "Indigo (Info)", scale: colors.indigo },
-    { name: "Sand (Warm Neutrals)", scale: colors.sand },
-    { name: "Teal (Brand)", scale: colors.teal },
-    { name: "Slate (Surfaces & Text)", scale: colors.slate },
+    { name: "Mint (light neutrals and the mint fill)", scale: colors.mint },
+    { name: "Teal (light links and outline buttons)", scale: colors.teal },
+    { name: "Midnight (dark mode)", scale: colors.dark },
+    { name: "Slate (kept for compatibility)", scale: colors.slate },
     { name: "Success", scale: colors.success },
     { name: "Warning", scale: colors.warning },
     { name: "Destructive", scale: colors.destructive },
@@ -152,7 +188,7 @@ export const ColorPalette: FC = () => {
             color: "text.primary",
           })}
         >
-          Flump Color System & Semantic Tokens
+          Flump colour system and semantic tokens
         </h1>
         <p className={css({ fontSize: "sm", color: "text.muted", mt: "4px" })}>
           Strict 7 canonical namespaces: <code>primary</code>, <code>accent</code>,{" "}
@@ -161,7 +197,7 @@ export const ColorPalette: FC = () => {
         </p>
       </div>
 
-      {/* Semantic Tokens Comparison Table */}
+      {/* Semantic tokens comparison table */}
       <section className={css({ mb: "40px" })}>
         <h2
           className={css({
@@ -171,7 +207,7 @@ export const ColorPalette: FC = () => {
             mb: "12px",
           })}
         >
-          Canonical Semantic Tokens (Light & Dark Contract)
+          Canonical semantic tokens, light and dark
         </h2>
         <div
           className={css({
@@ -263,7 +299,7 @@ export const ColorPalette: FC = () => {
         </div>
       </section>
 
-      {/* New E15 keys, both themes */}
+      {/* Headline and Midnight and Mint keys, both themes */}
       <section className={css({ mb: "40px" })}>
         <h2
           className={css({
@@ -273,7 +309,7 @@ export const ColorPalette: FC = () => {
             mb: "12px",
           })}
         >
-          New in E15 (Light & Dark)
+          Headline and Midnight and Mint keys, light and dark
         </h2>
         <div className={css({ display: "flex", flexWrap: "wrap", gap: "16px" })}>
           <NewKeyPanel theme="light" />

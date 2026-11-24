@@ -63,7 +63,7 @@ export const Brand: Story = {
   args: { variant: "brand", children: "Sample data" },
 };
 
-/** The status labels from the Direction C sign-off frame: icon plus words, every one. */
+/** The status labels from the palette sign-off frame: icon plus words, every one. */
 export const SignoffLabels: Story = {
   render: () => (
     <div className={row}>

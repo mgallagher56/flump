@@ -21,8 +21,8 @@
     height: 16px;
     margin: 0;
     border-radius: 4px;
-    border: 1.5px solid var(--colors-border, #cbd5e1);
-    background-color: var(--colors-surface, #ffffff);
+    border: 1.5px solid var(--colors-border, #b9d4cc);
+    background-color: var(--colors-surface, #f8fcfa);
     cursor: pointer;
     display: inline-grid;
     place-content: center;
@@ -35,28 +35,28 @@
   }
 
   input[type="checkbox"]:not([data-flp-checkbox]):hover:not(:disabled) {
-    border-color: var(--colors-primary, #6363f1);
+    border-color: var(--colors-primary, #0b6b5d);
   }
 
   input[type="checkbox"]:not([data-flp-checkbox]):focus-visible {
-    border-color: var(--colors-primary, #6363f1);
+    border-color: var(--colors-primary, #0b6b5d);
     /* focusRing token (>= 3:1 on both themes); replaces the 1.60:1 rgba shadow. */
-    outline: 2px solid var(--colors-border-focus-ring, #4f46e5);
+    outline: 2px solid var(--colors-border-focus-ring, #0b6b5d);
     outline-offset: 2px;
   }
 
-  /* The checked box carries a white tick, so its fill is primary-solid; the border stays primary. */
+  /* The checked box carries a foreground tick, so its fill is primary-solid; the border stays primary. */
   input[type="checkbox"]:not([data-flp-checkbox]):checked {
-    background-color: var(--colors-primary-solid, #4f46e5);
-    border-color: var(--colors-primary, #6363f1);
+    background-color: var(--colors-primary-solid, #14171c);
+    border-color: var(--colors-primary, #0b6b5d);
   }
 
   input[type="checkbox"]:not([data-flp-checkbox]):checked::before {
     content: "";
     width: 9px;
     height: 5px;
-    border-left: 2px solid var(--colors-primary-foreground, #ffffff);
-    border-bottom: 2px solid var(--colors-primary-foreground, #ffffff);
+    border-left: 2px solid var(--colors-primary-foreground, #f8fcfa);
+    border-bottom: 2px solid var(--colors-primary-foreground, #f8fcfa);
     transform: rotate(-45deg) translate(0.5px, -0.5px);
   }
 
@@ -243,4 +243,22 @@ html {
    screen-reader users start on the new page. The whole page needs no focus ring. */
 main[tabindex="-1"]:focus {
   outline: none;
+}
+
+/* Forced colours (Windows contrast themes). The browser forces backgrounds to the system Canvas,
+   but text set through these tokens kept its own off-white, so labels on primary buttons, the
+   charcoal band and the hero read at about 1:1. Unlayered, so it beats the token layer: each fill
+   and the text on it take a system colour pair. */
+@media (forced-colors: active) {
+  :root,
+  [data-theme] {
+    --colors-primary-solid: ButtonFace;
+    --colors-primary-hover: ButtonFace;
+    --colors-primary-foreground: ButtonText;
+    --colors-surface-contrast: Canvas;
+    --colors-text-on-contrast: CanvasText;
+    --colors-surface-hero: Canvas;
+    --colors-text-on-hero: CanvasText;
+    --colors-text-hero-figure: CanvasText;
+  }
 }

@@ -26,7 +26,8 @@ const ACCENT_TOKENS = [
 ] as const;
 
 /**
- * E17 accent ("Damson"): every permitted pairing in one place, so the tokens can be checked in
+ * The accent since Midnight and Mint (owner, 24 Nov 2026): a deep blue-teal in light, the soft pink
+ * in dark, for small accents only. Every permitted pairing in one place, so the tokens can be checked in
  * light and dark. The accent is decoration and wayfinding. It never colours a figure, a button, a
  * link or a notice, and it never says that anything about a person's money is good or bad.
  */
@@ -35,8 +36,8 @@ export const AccentTokens: FC = () => (
     <div>
       <h1 className={css({ textStyle: "heading.lg" })}>Accent</h1>
       <p className={css({ textStyle: "body.sm", color: "text.muted", mt: "4px" })}>
-        A soft plum used for decoration and wayfinding. Figures, buttons, links and notices never
-        take it.
+        A deep blue-teal in light and a soft pink in dark, used for small decoration and wayfinding
+        only. Figures, buttons, links and notices never take it.
       </p>
     </div>
 
@@ -91,7 +92,7 @@ export const AccentTokens: FC = () => (
 
       <section className={heroSample()} data-testid="accent-sample-hero">
         <p className={css({ textStyle: "body.md" })}>
-          One sun shape on surface.hero. The figure stays in text.onContrast.
+          One sun shape on surface.hero. The text stays in text.onHero.
         </p>
         <span aria-hidden="true" className={heroSun()} />
       </section>

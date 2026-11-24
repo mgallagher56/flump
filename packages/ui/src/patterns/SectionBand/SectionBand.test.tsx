@@ -17,15 +17,30 @@ describe("SectionBand", () => {
     expect(screen.getByText("Body")).toBeDefined();
   });
 
-  it.each<SectionBandTone>(["canvas", "teal"])("renders the %s tone", (tone) => {
+  it.each<SectionBandTone>(["canvas", "card", "teal", "hero", "contrast"])(
+    "renders the %s tone",
+    (tone) => {
+      render(
+        <SectionBand id={`band-${tone}`} title={`Band ${tone}`} tone={tone}>
+          <p>Body</p>
+        </SectionBand>,
+      );
+      expect(
+        screen.getByRole("region", { name: `Band ${tone}` }).getAttribute("data-tone-band"),
+      ).toBe(tone);
+    },
+  );
+
+  it("gives the charcoal contrast band a border.section top edge in dark only", () => {
     render(
-      <SectionBand id={`band-${tone}`} title={`Band ${tone}`} tone={tone}>
+      <SectionBand id="band-edge" title="Band edge" tone="contrast">
         <p>Body</p>
       </SectionBand>,
     );
-    expect(
-      screen.getByRole("region", { name: `Band ${tone}` }).getAttribute("data-tone-band"),
-    ).toBe(tone);
+    const band = screen.getByRole("region", { name: "Band edge" });
+    expect(band.className).toContain("bd-t-c_border.section");
+    expect(band.className).toContain("dark:bd-t-w_1px");
+    expect(band.className).toContain("bd-t-w_0");
   });
 
   it("uses a heading inside the children as the label when there is no title", () => {

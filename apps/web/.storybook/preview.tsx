@@ -69,11 +69,11 @@ const preview: Preview = {
       values: [
         {
           name: "canvas",
-          value: "#f8fafc",
+          value: "#eef6f3",
         },
         {
           name: "dark",
-          value: "#0B0F17",
+          value: "#14171c",
         },
       ],
     },

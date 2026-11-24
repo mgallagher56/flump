@@ -10,7 +10,8 @@ const placeholder = css({
   borderStyle: "dashed",
   borderColor: "border",
   borderRadius: "card",
-  color: "text.secondary",
+  // Inherits the band's text colour, so it reads on the hero and contrast bands too.
+  color: "inherit",
 });
 
 const meta: Meta<typeof SectionBand> = {
@@ -23,7 +24,9 @@ const meta: Meta<typeof SectionBand> = {
     subtitle: "A short line under the section title.",
     children: <div className={placeholder}>Section content</div>,
   },
-  argTypes: { tone: { control: "select", options: ["canvas", "teal"] } },
+  argTypes: {
+    tone: { control: "select", options: ["canvas", "card", "teal", "hero", "contrast"] },
+  },
 };
 
 export default meta;
@@ -42,6 +45,12 @@ export const Canvas: Story = { args: { tone: "canvas" }, play: assertBand };
 export const Teal: Story = { args: { tone: "teal" }, play: assertBand };
 export const CanvasDark: Story = { ...dark, args: { tone: "canvas" }, play: assertBand };
 export const TealDark: Story = { ...dark, args: { tone: "teal" }, play: assertBand };
+export const Card: Story = { args: { tone: "card" }, play: assertBand };
+export const CardDark: Story = { ...dark, args: { tone: "card" }, play: assertBand };
+export const Hero: Story = { args: { tone: "hero" }, play: assertBand };
+export const HeroDark: Story = { ...dark, args: { tone: "hero" }, play: assertBand };
+export const Contrast: Story = { args: { tone: "contrast" }, play: assertBand };
+export const ContrastDark: Story = { ...dark, args: { tone: "contrast" }, play: assertBand };
 
 export const CentredNarrow: Story = {
   args: { tone: "teal", align: "center", width: "narrow", size: "compact" },

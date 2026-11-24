@@ -1,6 +1,5 @@
 import {
   BreathingRoomPreview,
-  Button,
   CheckInPreview,
   DashboardPreview,
   Illustration,
@@ -10,16 +9,14 @@ import {
 } from "@repo/ui";
 import { type FC, useState } from "react";
 import { Link } from "react-router-dom";
+import { ClosingCta } from "../../components/ClosingCta";
 import { Footer } from "../../components/Footer";
 import { Header } from "../../components/Header";
 import { PageMeta } from "../../components/PageMeta";
 import { signupCta } from "../../utils/site";
 import {
   container,
-  ctaBlock,
   ctaIllustration,
-  ctaText,
-  ctaTitle,
   mainContent,
   pageShell,
   previewSection,
@@ -156,22 +153,23 @@ export const PreviewPage: FC = () => {
                 </Link>
               </p>
             </section>
-
-            {/* Call to action */}
-            <div className={ctaBlock()} data-testid="preview-cta">
-              <div className={ctaIllustration()} data-testid="preview-illustration-cta">
-                <Illustration scene="onboarding" size="xl" settle={false} />
-              </div>
-              <h2 className={ctaTitle()}>Ready to see your own figures?</h2>
-              <p className={ctaText()}>
-                Flump is free during the beta. Enter a few rough numbers to see where you stand.
-              </p>
-              <Button asChild size="lg" variant="primary">
-                <a href={cta.href}>{cta.label}</a>
-              </Button>
-            </div>
           </div>
         </div>
+
+        {/* Call to action, on the dark closing band (Midnight and Mint). */}
+        <ClosingCta
+          cta={cta}
+          data-testid="preview-cta"
+          id="get-started"
+          illustration={
+            <div className={ctaIllustration()} data-testid="preview-illustration-cta">
+              <Illustration scene="onboarding" size="xl" settle={false} />
+            </div>
+          }
+          text="Flump is free during the beta. Enter a few rough numbers to see where you stand."
+          title="Ready to see your own figures?"
+          titleId="preview-cta-title"
+        />
       </main>
 
       <Footer />

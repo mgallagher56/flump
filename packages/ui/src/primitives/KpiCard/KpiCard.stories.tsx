@@ -155,7 +155,7 @@ export const WordValueDark: Story = {
 
 const heroArgs = {
   label: "Net worth",
-  value: <Money size="lg" tone="onContrast" value={184250} />,
+  value: <Money size="lg" tone="onHero" value={184250} />,
   deltaText: undefined,
   subtext: "What you own minus what you owe",
   tone: "hero" as const,
@@ -355,7 +355,7 @@ export const WithExplain: Story = {
 };
 export const WithExplainDark: Story = { ...WithExplain, globals: { theme: "dark" } };
 
-/** The explain trigger on the hero tone keeps the hero ink (text.onContrast), not text.muted. */
+/** The explain trigger on the hero tone keeps the hero ink (text.onHero), not text.muted. */
 export const WithExplainHero: Story = {
   ...WithExplain,
   args: { ...WithExplain.args, tone: "hero" },

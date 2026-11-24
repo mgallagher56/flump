@@ -7,8 +7,8 @@ export interface TaxEstimateNoteProps {
   /** Extra assumption to state next to the figure, e.g. "Assumes a 4% drawdown rate." */
   assumption?: string;
   className?: string;
-  /** `onContrast` when the note sits on the hero surface. */
-  tone?: "default" | "onContrast";
+  /** `onHero` when the note sits on the hero surface, `onContrast` on the charcoal one. */
+  tone?: "default" | "onContrast" | "onHero";
 }
 
 /**

@@ -65,12 +65,13 @@ export const faqAnswerText = cva({
   base: { margin: 0 },
 });
 
+// Links are teal in light and mint in dark (Midnight and Mint).
 export const faqLink = cva({
   base: {
-    color: "text.primary",
+    color: "primary",
     fontWeight: "semibold",
     textDecoration: "underline",
     textUnderlineOffset: "3px",
-    _hover: { color: "primary.hover" },
+    _hover: { color: "primary.emphasis" },
   },
 });

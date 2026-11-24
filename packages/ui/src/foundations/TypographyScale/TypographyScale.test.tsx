@@ -12,6 +12,12 @@ describe("TypographyScale Foundation", () => {
     expect(screen.getByText("Tabular numbers line up")).toBeDefined();
   });
 
+  it("names the two sans fonts: Plus Jakarta Sans headings and Inter body", () => {
+    render(<TypographyScale />);
+    expect(screen.getByText(/Plus Jakarta Sans: headings/)).toBeDefined();
+    expect(screen.getByText(/Inter: body text and figures, sans serif throughout/)).toBeDefined();
+  });
+
   it("renders every fontSizes key with a statically extractable class (4xl to 6xl included)", () => {
     // The story once built `css({ fontSize: key })` dynamically, which Panda cannot extract, so
     // 4xl, 5xl and 6xl rendered at body size. Each key must have a literal in the source and the

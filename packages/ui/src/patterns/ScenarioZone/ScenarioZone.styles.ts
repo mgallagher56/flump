@@ -6,8 +6,8 @@ import { sva } from "../../../styled-system/css";
  * reads as "not saved" through shape and words, never colour alone. E17 5A: the outline is
  * `border.input` (3:1 or more on the canvas in both themes, where `border` was 1.3:1 and got lost),
  * and the outcome sits in the zone's one `ResultBlock`, beside the inputs from `md` up. A fill could not be quieter than
- * a card in both themes: `surface.subtle` sits below the card in light (#f0ebe2 under #fffdf9) but
- * above it in dark (#2e2a26 over #272320), so in dark the zone outweighed "Your details", and
+ * a card in both themes: `surface.subtle` sits below the card in light but above it
+ * in dark, so in dark the zone outweighed "Your details", and
  * `surface.sunken` reads as a hole in dark. The canvas is the quietest surface in both. Never
  * `surface.hero`.
  */

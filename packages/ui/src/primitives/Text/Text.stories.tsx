@@ -6,6 +6,7 @@ import { textColors } from "./Text.styles";
 
 const stack = css({ display: "flex", flexDirection: "column", gap: "2", maxWidth: "28rem" });
 const onHero = css({ backgroundColor: "surface.hero", padding: "4", borderRadius: "xl" });
+const onContrast = css({ backgroundColor: "surface.contrast", padding: "4", borderRadius: "xl" });
 
 const meta: Meta<typeof Text> = {
   title: "2. Primitives/Text",
@@ -27,14 +28,17 @@ export const Default: Story = {
 const ColoursGallery = () => (
   <div className={stack}>
     {textColors
-      .filter((c) => c !== "onContrast")
+      .filter((c) => c !== "onContrast" && c !== "onHero")
       .map((color) => (
         <Text color={color} key={color}>
           {color} text
         </Text>
       ))}
     <div className={onHero}>
-      <Text color="onContrast">onContrast on the hero surface</Text>
+      <Text color="onHero">onHero on the hero surface</Text>
+    </div>
+    <div className={onContrast}>
+      <Text color="onContrast">onContrast on the contrast surface</Text>
     </div>
   </div>
 );

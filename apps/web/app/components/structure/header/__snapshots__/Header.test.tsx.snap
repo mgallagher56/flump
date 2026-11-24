@@ -4,7 +4,7 @@ exports[`<Header /> > renders as expected by default 1`] = `
 <body>
   <div>
     <header
-      class="pos_sticky top_0 z_header w_100% bg-c_color-mix(in_srgb,_token(colors.surface.canvas)_88%,_transparent) bkdp_blur(14px) bd-b-w_1px border-bottom-style_solid bd-b-c_border.subtle pt_env(safe-area-inset-top) pl_max(env(safe-area-inset-left),_calc(0.0625rem_-_1px)) pr_max(env(safe-area-inset-right),_calc(0.0625rem_-_1px)) cq-t_inline-size cq-n_top-bar"
+      class="pos_sticky top_0 z_header w_100% bg-c_color-mix(in_srgb,_token(colors.surface.card)_92%,_transparent) dark:bg-c_color-mix(in_srgb,_token(colors.surface.canvas)_88%,_transparent) systemDark:bg-c_color-mix(in_srgb,_token(colors.surface.canvas)_88%,_transparent) bkdp_blur(14px) bd-b-w_1px border-bottom-style_solid bd-b-c_border pt_env(safe-area-inset-top) pl_max(env(safe-area-inset-left),_calc(0.0625rem_-_1px)) pr_max(env(safe-area-inset-right),_calc(0.0625rem_-_1px)) cq-t_inline-size cq-n_top-bar"
       data-sticky-header=""
     >
       <div
@@ -286,7 +286,7 @@ exports[`<Header /> > renders correctly when user logged in 1`] = `
 <body>
   <div>
     <header
-      class="pos_sticky top_0 z_header w_100% bg-c_color-mix(in_srgb,_token(colors.surface.canvas)_88%,_transparent) bkdp_blur(14px) bd-b-w_1px border-bottom-style_solid bd-b-c_border.subtle pt_env(safe-area-inset-top) pl_max(env(safe-area-inset-left),_calc(0.0625rem_-_1px)) pr_max(env(safe-area-inset-right),_calc(0.0625rem_-_1px)) cq-t_inline-size cq-n_top-bar"
+      class="pos_sticky top_0 z_header w_100% bg-c_color-mix(in_srgb,_token(colors.surface.card)_92%,_transparent) dark:bg-c_color-mix(in_srgb,_token(colors.surface.canvas)_88%,_transparent) systemDark:bg-c_color-mix(in_srgb,_token(colors.surface.canvas)_88%,_transparent) bkdp_blur(14px) bd-b-w_1px border-bottom-style_solid bd-b-c_border pt_env(safe-area-inset-top) pl_max(env(safe-area-inset-left),_calc(0.0625rem_-_1px)) pr_max(env(safe-area-inset-right),_calc(0.0625rem_-_1px)) cq-t_inline-size cq-n_top-bar"
       data-sticky-header=""
     >
       <div
@@ -824,7 +824,7 @@ exports[`<Header /> > renders without ColorModeSwitch 1`] = `
 <body>
   <div>
     <header
-      class="pos_sticky top_0 z_header w_100% bg-c_color-mix(in_srgb,_token(colors.surface.canvas)_88%,_transparent) bkdp_blur(14px) bd-b-w_1px border-bottom-style_solid bd-b-c_border.subtle pt_env(safe-area-inset-top) pl_max(env(safe-area-inset-left),_calc(0.0625rem_-_1px)) pr_max(env(safe-area-inset-right),_calc(0.0625rem_-_1px)) cq-t_inline-size cq-n_top-bar"
+      class="pos_sticky top_0 z_header w_100% bg-c_color-mix(in_srgb,_token(colors.surface.card)_92%,_transparent) dark:bg-c_color-mix(in_srgb,_token(colors.surface.canvas)_88%,_transparent) systemDark:bg-c_color-mix(in_srgb,_token(colors.surface.canvas)_88%,_transparent) bkdp_blur(14px) bd-b-w_1px border-bottom-style_solid bd-b-c_border pt_env(safe-area-inset-top) pl_max(env(safe-area-inset-left),_calc(0.0625rem_-_1px)) pr_max(env(safe-area-inset-right),_calc(0.0625rem_-_1px)) cq-t_inline-size cq-n_top-bar"
       data-sticky-header=""
     >
       <div

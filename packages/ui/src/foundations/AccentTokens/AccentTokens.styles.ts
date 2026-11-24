@@ -66,7 +66,10 @@ export const accentTile = cva({
 export const heroSample = cva({
   base: {
     backgroundColor: "surface.hero",
-    color: "text.onContrast",
+    color: "text.onHero",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "border.hero",
     borderRadius: "card",
     p: "16px",
     display: "flex",

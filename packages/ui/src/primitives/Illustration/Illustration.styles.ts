@@ -51,11 +51,15 @@ export const illustrationRecipe = cva({
   defaultVariants: { size: "md" },
 });
 
-/** Decorative scene colours. Semantic tokens only: sand, apricot, sage and the teal family. */
+/**
+ * Decorative scene colours. Semantic tokens only: the mint ground, apricot, sage and the teal family
+ * (teal in light, mint in dark). Midnight and Mint: no cream ground and no charcoal shapes in light,
+ * so the solid shapes use primary (the teal), not primary.solid (the charcoal button fill).
+ */
 export const sceneClasses = {
-  // In dark the sunken sand is darker than a card, so the ground read as a hole; a shade lighter
+  // In dark the sunken step is darker than a card, so the ground read as a hole; a shade lighter
   // than the card reads as ground on any surface (R2-8).
-  sand: css({
+  ground: css({
     fill: { base: "surface.sunken", _dark: "surface.subtle", _systemDark: "surface.subtle" },
   }),
   // The apricot sun is the brightest shape in a scene, so it is muted to a tint: about half
@@ -68,8 +72,9 @@ export const sceneClasses = {
     fillOpacity: { base: "0.5", _dark: "0.3", _systemDark: "0.3" },
   }),
   sage: css({ fill: "chart.wealth" }),
-  tealSoft: css({ fill: "primary.border" }),
-  teal: css({ fill: "primary.solid" }),
+  // A soft backdrop shape: the pale teal tint, not primary.border (now a 3:1 edge colour).
+  tealSoft: css({ fill: "primary.subtle" }),
+  teal: css({ fill: "primary" }),
   leaf: css({ fill: "primary" }),
   paper: css({ fill: "surface.card" }),
   accent: css({ fill: "accent" }),
@@ -87,7 +92,7 @@ export const sceneClasses = {
     strokeLinecap: "round",
   }),
   pole: css({
-    stroke: "primary.solid",
+    stroke: "primary",
     fill: "none",
     strokeWidth: "5",
     strokeLinecap: "round",
