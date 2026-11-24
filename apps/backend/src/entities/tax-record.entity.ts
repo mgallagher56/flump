@@ -15,6 +15,9 @@ import { numericTransformer } from "./numeric.transformer";
 // records without a scan. A (user_id, account_id) index would duplicate it and draw the planner
 // away from IDX_tax_records_user_date for the list of a user's records.
 @Index("IDX_tax_records_account_user", ["accountId", "userId"])
+// The (id, user_id) key invoices.tax_record_id references, so an invoice can only name its own
+// user's tax record (InvoiceOwnerKeys1795635000000).
+@Index("UQ_tax_records_id_user_id", ["id", "userId"], { unique: true })
 @Entity("tax_records")
 export class TaxRecord {
   @PrimaryGeneratedColumn("uuid")

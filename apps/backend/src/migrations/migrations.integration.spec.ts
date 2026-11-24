@@ -66,6 +66,15 @@ import {
 } from "./ClearTakeHomeSalaries1795530100000";
 import { ClearUnchosenSectionOrder1795500000000 } from "./ClearUnchosenSectionOrder1795500000000";
 import { DeleteSyncedTransactions1794355500000 } from "./DeleteSyncedTransactions1794355500000";
+import {
+  INVOICE_TAX_RECORD_KEY,
+  INVOICE_TAX_RECORD_OWNER_KEY,
+  INVOICES_OWNER_INDEX,
+  InvoiceOwnerKeys1795635000000,
+  TAX_RECORDS_OWNER_INDEX,
+  WORK_LOG_INVOICE_KEY,
+  WORK_LOG_INVOICE_OWNER_KEY,
+} from "./InvoiceOwnerKeys1795635000000";
 import { LinkBudgetLinesToAccounts1795490000000 } from "./LinkBudgetLinesToAccounts1795490000000";
 import { MoveBuyToLetProfileIntoAccounts1795470200000 } from "./MoveBuyToLetProfileIntoAccounts1795470200000";
 import { PensionAnswersNullable1795480000000 } from "./PensionAnswersNullable1795480000000";
@@ -3551,6 +3560,167 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       await ds.runMigrations();
       expect(await typeOf(copied)).toBe("interest-only");
       expect(await tables()).toEqual(ENTITY_TABLES);
+    });
+  });
+
+  describe("InvoiceOwnerKeys1795635000000 (audit follow-up, 22 November 2026)", () => {
+    const NAME = "InvoiceOwnerKeys1795635000000";
+    const taxRecord = async (userId: string): Promise<string> =>
+      at<{ id: string }>(
+        await ds.query(
+          `INSERT INTO tax_records (user_id, type, source, category, name, amount, date)
+           VALUES ($1, 'income', 'self-employed', 'Freelance / Invoice', 'Invoice', 100, '2026-05-01') RETURNING id`,
+          [userId],
+        ),
+        0,
+      ).id;
+    let invoiceSeq = 0;
+    const invoice = async (userId: string, taxRecordId: string | null): Promise<string> =>
+      at<{ id: string }>(
+        await ds.query(
+          `INSERT INTO invoices (user_id, invoice_number, client_name, issue_date, due_date, tax_record_id)
+           VALUES ($1, $2, 'Client', '2026-05-01', '2026-05-31', $3) RETURNING id`,
+          [userId, `INV-${String(++invoiceSeq).padStart(4, "0")}`, taxRecordId],
+        ),
+        0,
+      ).id;
+    const entry = async (userId: string, invoiceId: string | null): Promise<string> =>
+      at<{ id: string }>(
+        await ds.query(
+          `INSERT INTO work_log_entries (user_id, date, description, hours_worked, hourly_rate, amount, invoice_id)
+           VALUES ($1, '2026-05-01', 'Work', 2, 50, 100, $2) RETURNING id`,
+          [userId, invoiceId],
+        ),
+        0,
+      ).id;
+    const keys = async (): Promise<Array<{ conname: string; convalidated: boolean }>> =>
+      ds.query(
+        `SELECT conname, convalidated FROM pg_constraint
+          WHERE conrelid IN ('invoices'::regclass, 'work_log_entries'::regclass) AND contype = 'f'
+          ORDER BY conname`,
+      );
+    const ownerIndexes = async (): Promise<string[]> =>
+      (
+        (await ds.query(
+          `SELECT indexname FROM pg_indexes WHERE indexname IN ($1, $2) ORDER BY indexname`,
+          [INVOICES_OWNER_INDEX, TAX_RECORDS_OWNER_INDEX],
+        )) as Array<{ indexname: string }>
+      ).map((r) => r.indexname);
+    const links = async (): Promise<unknown[]> =>
+      ds.query(
+        `SELECT 'invoice' AS kind, user_id, tax_record_id AS link FROM invoices
+         UNION ALL SELECT 'entry', user_id, invoice_id FROM work_log_entries
+         ORDER BY kind, user_id, link`,
+      );
+
+    it("on tables with rows: keeps every link, refuses another user's row, nulls only the link on delete, and a second run changes nothing", async () => {
+      await ds.runMigrations();
+      await undoThrough(NAME);
+      // Rows stored before the migration runs, as on a live database.
+      const record = await taxRecord("u1");
+      const inv = await invoice("u1", record);
+      const work = await entry("u1", inv);
+      await entry("u1", null);
+      const before = await links();
+
+      const logged = vi.spyOn(Logger.prototype, "log");
+      await ds.runMigrations();
+      expect(await applied()).toContain(NAME);
+      // Counts only, no id.
+      expect(logged).toHaveBeenCalledWith("Invoices whose tax record is another user's: 0");
+      expect(logged).toHaveBeenCalledWith("Work log entries whose invoice is another user's: 0");
+      logged.mockRestore();
+      expect(await links()).toEqual(before);
+      expect(await keys()).toEqual([
+        { conname: INVOICE_TAX_RECORD_OWNER_KEY, convalidated: true },
+        { conname: WORK_LOG_INVOICE_OWNER_KEY, convalidated: true },
+      ]);
+      expect(await ownerIndexes()).toEqual([INVOICES_OWNER_INDEX, TAX_RECORDS_OWNER_INDEX]);
+
+      // Another user's tax record or invoice is refused; the caller's own is accepted.
+      const theirRecord = await taxRecord("u2");
+      const theirInvoice = await invoice("u2", null);
+      await expect(invoice("u1", theirRecord)).rejects.toThrow(/foreign key/i);
+      await expect(entry("u1", theirInvoice)).rejects.toThrow(/foreign key/i);
+      await expect(
+        ds.query("UPDATE work_log_entries SET invoice_id = $1 WHERE id = $2", [theirInvoice, work]),
+      ).rejects.toThrow(/foreign key/i);
+
+      await runUpInTransaction(new InvoiceOwnerKeys1795635000000());
+      expect((await keys()).map((k) => k.conname)).toEqual([
+        INVOICE_TAX_RECORD_OWNER_KEY,
+        WORK_LOG_INVOICE_OWNER_KEY,
+      ]);
+
+      // Deleting the tax record, then the invoice, nulls only the link: the rows and owners stay.
+      await ds.query("DELETE FROM tax_records WHERE id = $1", [record]);
+      await ds.query("DELETE FROM invoices WHERE id = $1", [inv]);
+      expect(
+        await ds.query("SELECT user_id, invoice_id FROM work_log_entries WHERE id = $1", [work]),
+      ).toEqual([{ user_id: "u1", invoice_id: null }]);
+      await ds.query("DELETE FROM tax_records WHERE id = $1", [theirRecord]);
+      expect(await ds.query("SELECT count(*)::int AS n FROM invoices")).toEqual([{ n: 1 }]);
+    });
+
+    it("with another user's link already stored, changes no row, keeps the id-only key and checks new rows", async () => {
+      await ds.runMigrations();
+      await undoThrough(NAME);
+      const theirRecord = await taxRecord("u2");
+      const mine = await invoice("u1", theirRecord);
+      await entry("u1", mine);
+      const before = await links();
+
+      const logged = vi.spyOn(Logger.prototype, "log");
+      const warned = vi.spyOn(Logger.prototype, "warn");
+      await ds.runMigrations();
+      expect(logged).toHaveBeenCalledWith("Invoices whose tax record is another user's: 1");
+      expect(logged).toHaveBeenCalledWith("Work log entries whose invoice is another user's: 0");
+      expect(warned).toHaveBeenCalledWith(
+        `${INVOICE_TAX_RECORD_OWNER_KEY} left NOT VALID and ${INVOICE_TAX_RECORD_KEY} kept: new and changed rows are checked, existing rows are unchanged`,
+      );
+      logged.mockRestore();
+      warned.mockRestore();
+      expect(await applied()).toContain(NAME);
+      expect(await links()).toEqual(before);
+      expect(await keys()).toEqual([
+        { conname: INVOICE_TAX_RECORD_KEY, convalidated: true },
+        { conname: INVOICE_TAX_RECORD_OWNER_KEY, convalidated: false },
+        { conname: WORK_LOG_INVOICE_OWNER_KEY, convalidated: true },
+      ]);
+      // The stored invoice still saves a change that leaves its link alone; a new one is refused.
+      await ds.query("UPDATE invoices SET notes = 'kept' WHERE id = $1", [mine]);
+      await expect(invoice("u1", theirRecord)).rejects.toThrow(/foreign key/i);
+    });
+
+    it("down puts back the id-only keys, drops the owner keys and indexes, and keeps every row", async () => {
+      await ds.runMigrations();
+      const record = await taxRecord("u1");
+      const inv = await invoice("u1", record);
+      await entry("u1", inv);
+      const before = await links();
+
+      await undoThrough(NAME);
+      expect(await keys()).toEqual([
+        { conname: INVOICE_TAX_RECORD_KEY, convalidated: true },
+        { conname: WORK_LOG_INVOICE_KEY, convalidated: true },
+      ]);
+      expect(await ownerIndexes()).toEqual([]);
+      expect(await links()).toEqual(before);
+      // The id-only keys are back in force.
+      await expect(invoice("u1", "00000000-0000-4000-8000-000000000000")).rejects.toThrow(
+        /foreign key/i,
+      );
+      // Down after an up that kept the old key (a mismatched row) leaves one copy of it.
+      await ds.query("UPDATE invoices SET tax_record_id = $1 WHERE id = $2", [
+        await taxRecord("u2"),
+        inv,
+      ]);
+      await ds.runMigrations();
+      await undoThrough(NAME);
+      expect((await keys()).map((k) => k.conname)).toEqual([
+        INVOICE_TAX_RECORD_KEY,
+        WORK_LOG_INVOICE_KEY,
+      ]);
     });
   });
 

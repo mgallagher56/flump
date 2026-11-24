@@ -14,6 +14,9 @@ import { numericTransformer } from "./numeric.transformer";
 @Index("UQ_invoices_user_number", ["userId", "invoiceNumber"], { unique: true })
 @Index("IDX_invoices_user_issue_date", ["userId", "issueDate"])
 @Index("idx_invoices_tax_record_id", ["taxRecordId"])
+// The (id, user_id) key work_log_entries.invoice_id references, so an entry can only name its own
+// user's invoice (InvoiceOwnerKeys1795635000000).
+@Index("UQ_invoices_id_user_id", ["id", "userId"], { unique: true })
 @Check(
   "CHK_invoices_bounds",
   `"status" IN ('draft', 'issued', 'paid', 'void') AND "subtotal" >= 0 AND ("vat_rate_pct" IS NULL OR ("vat_rate_pct" >= 0 AND "vat_rate_pct" <= 100)) AND "vat_amount" >= 0 AND "total" >= 0`,
