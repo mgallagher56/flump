@@ -1,6 +1,7 @@
 import { PageBody } from "@repo/ui";
 import type { ReactElement } from "react";
 import { isRouteErrorResponse, useLocation, useRevalidator, useRouteError } from "react-router";
+import { NotInvitedDataActions } from "~/features/settings/components/NotInvitedDataActions";
 import { forgetRootUserOnAuthError, useRootUser } from "../../../../hooks/useRootUser";
 import { BACKEND_ERROR_KINDS, type BackendErrorKind } from "../../../../services/backend-error";
 import { RouteErrorState, type RouteErrorStateProps } from "../RouteErrorState";
@@ -115,6 +116,8 @@ export function RouteErrorBoundary({
           onAccountDetail ? "Back to accounts" : signedIn ? "Back to home" : "Go to the home page"
         }
       />
+      {/* A removed member can still download or delete their data (UK GDPR access and erasure). */}
+      {kind === "not-invited" ? <NotInvitedDataActions /> : null}
     </PageBody>
   );
 }

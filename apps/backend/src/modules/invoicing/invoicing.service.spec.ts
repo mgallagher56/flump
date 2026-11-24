@@ -134,7 +134,7 @@ function createInMemoryHarness() {
                         execute: async () => {
                           if (t !== InvoicingSettings) throw new Error("unexpected insert");
                           if (settingsRows.some((r) => r.userId === values.userId)) return {};
-                          await settingsRepo.save(settingsRepo.create(values));
+                          await settingsRepo.save(settingsRepo.create(values) as InvoicingSettings);
                           return {};
                         },
                       }),

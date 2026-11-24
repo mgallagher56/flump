@@ -20,6 +20,11 @@ const withThrow = (kind: string, status: number) => (): React.ReactElement => {
   return <Stub initialEntries={["/"]} />;
 };
 
+/** The root boundary, as root.tsx renders it. */
+function RootBoundary() {
+  return <RouteErrorBoundary isRoot />;
+}
+
 function RouteContent() {
   return <p>Route content</p>;
 }
@@ -53,3 +58,27 @@ export const Forbidden: Story = { render: withThrow("forbidden", 403) };
 export const Unauthorised: Story = { render: withThrow("unauthorised", 401) };
 
 export const Server: Story = { render: withThrow("server", 500) };
+
+/** The root boundary's not-invited page: sign out, contact, and the person's data rights. */
+export const NotInvitedAtRoot: Story = {
+  render: () => {
+    const Stub = createRoutesStub([
+      {
+        path: "/",
+        loader: () => {
+          throw data({ kind: "not-invited" }, { status: 403 });
+        },
+        Component: RouteContent,
+        ErrorBoundary: RootBoundary,
+      },
+    ]);
+    return <Stub initialEntries={["/"]} />;
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const [download] = await canvas.findAllByRole("heading", { name: "Download your data" });
+    await expect(download).toBeDefined();
+    const [remove] = canvas.getAllByRole("heading", { name: "Delete your account" });
+    await expect(remove).toBeDefined();
+  },
+};
