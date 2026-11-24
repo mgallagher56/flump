@@ -21,7 +21,12 @@ import { discoverMigrations, type MigrationClass } from "../../testing/discoverM
 import { financeServiceWithIntake } from "../../testing/finance-service";
 import { revokeAllBankConsentsForUser } from "./bank-connection-consent";
 import { consumeOAuthState, issueOAuthState } from "./bank-connection-oauth";
-import { accessTokenAad, BankConnectionSync, refreshTokenAad } from "./bank-connection-sync";
+import {
+  accessTokenAad,
+  BankConnectionSync,
+  refreshTokenAad,
+  type SyncLease,
+} from "./bank-connection-sync";
 import { ProviderBankConsentRevoker } from "./bank-consent-revoker";
 import { createFakeBank, PROVIDER_ECHO_MARKER } from "./providers/__fixtures__/fake-bank";
 import { monzoCase } from "./providers/__fixtures__/provider-cases";
@@ -232,9 +237,9 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("bank sync (real Post
       );
       const second = await sync.claim(id, PERSON);
       expect(second).not.toBeNull();
-      await sync.release(id, first as string);
+      await sync.release(id, (first as SyncLease).id);
       expect(await sync.claim(id, PERSON)).toBeNull();
-      await sync.release(id, second as string);
+      await sync.release(id, (second as SyncLease).id);
       expect(await sync.claim(id, PERSON)).not.toBeNull();
     });
 
@@ -533,6 +538,68 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("bank sync (real Post
       await finance.syncBankConnection(PERSON, id);
 
       await expectFreshAndConnected(id);
+    });
+
+    it("fetch times out, then the user reconnects: the old sync's error leaves the fresh connection connected", async () => {
+      const id = await insertConnection();
+      let finance!: ReturnType<typeof financeWith>;
+      const provider = scriptedProvider(async () => {
+        await expect(
+          finance.connectBank(PERSON, { institutionId: "monzo", token: "fresh-token" }),
+        ).rejects.toBeInstanceOf(ConflictException);
+        throw new BankUnavailableError({
+          provider: "monzo",
+          operation: "fetch accounts",
+          reason: "timeout",
+        });
+      });
+      finance = financeWith(provider);
+
+      const result = await finance.syncBankConnection(PERSON, id);
+
+      await expectFreshAndConnected(id);
+      expect(result).toMatchObject({ success: false, connection: { status: "connected" } });
+    });
+
+    it("refresh times out, then the user reconnects: the old sync's error leaves the fresh connection connected", async () => {
+      const id = await insertConnection({
+        plainRefresh: "refresh-1",
+        expiresAt: new Date(Date.now() - 60_000),
+      });
+      let finance!: ReturnType<typeof financeWith>;
+      const provider = scriptedProvider(() => []);
+      provider.refreshToken.mockImplementation(async () => {
+        await expect(
+          finance.connectBank(PERSON, { institutionId: "monzo", token: "fresh-token" }),
+        ).rejects.toBeInstanceOf(ConflictException);
+        throw new BankUnavailableError({
+          provider: "monzo",
+          operation: "refresh token",
+          reason: "timeout",
+        });
+      });
+      finance = financeWith(provider);
+
+      await finance.syncBankConnection(PERSON, id);
+
+      await expectFreshAndConnected(id);
+    });
+
+    it("a refresh timeout with no reconnect still records error", async () => {
+      const id = await insertConnection({
+        plainRefresh: "refresh-1",
+        expiresAt: new Date(Date.now() - 60_000),
+      });
+      const provider = scriptedProvider(() => []);
+      provider.refreshToken.mockRejectedValue(
+        new BankUnavailableError({
+          provider: "monzo",
+          operation: "refresh token",
+          reason: "timeout",
+        }),
+      );
+      const result = await financeWith(provider).syncBankConnection(PERSON, id);
+      expect(result).toMatchObject({ success: false, connection: { status: "error" } });
     });
 
     it("refused with no reconnect: the judged token is still stored, so needs_reconnect is written", async () => {

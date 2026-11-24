@@ -19,7 +19,7 @@ type FakeSync = {
   claim: ReturnType<typeof vi.fn>;
   release: ReturnType<typeof vi.fn>;
   activeAccessToken: ReturnType<typeof vi.fn>;
-  recordNeedsReconnect: ReturnType<typeof vi.fn>;
+  recordFailedStatus: ReturnType<typeof vi.fn>;
   writeAccounts: ReturnType<typeof vi.fn>;
   deleteConnectionData: ReturnType<typeof vi.fn>;
 };
@@ -103,12 +103,12 @@ const setup = (
     },
   });
   const sync: FakeSync = {
-    claim: vi.fn().mockResolvedValue("lease-1"),
+    claim: vi.fn().mockResolvedValue({ id: "lease-1", storedAccess: ["claimed-access"] }),
     release: vi.fn().mockResolvedValue(undefined),
     activeAccessToken: vi.fn().mockResolvedValue({ token: "access", storedAs: ["stored-access"] }),
     // The compare-and-swap is BankConnectionSync's (integration spec); here it always matches.
-    recordNeedsReconnect: vi.fn(async (id: string, userId: string) => {
-      await bankRepo.update({ id, userId }, { status: "needs_reconnect" });
+    recordFailedStatus: vi.fn(async (id: string, userId: string, status: string) => {
+      await bankRepo.update({ id, userId }, { status });
       return true;
     }),
     writeAccounts: vi.fn().mockResolvedValue(opts.outcome ?? { total: 1, updated: 1, skipped: 0 }),
@@ -357,7 +357,9 @@ describe("FinanceService bank connections", () => {
       );
       const result = await service.syncBankConnection(USER_A, CONN_A);
       expect(bankRepo.rows[0]).toMatchObject({ status: "needs_reconnect" });
-      expect(sync.recordNeedsReconnect).toHaveBeenCalledWith(CONN_A, USER_A, ["stored-access"]);
+      expect(sync.recordFailedStatus).toHaveBeenCalledWith(CONN_A, USER_A, "needs_reconnect", [
+        "stored-access",
+      ]);
       expect(result).toMatchObject({ success: false, error: expect.stringMatching(/reconnected/) });
     });
 
@@ -366,7 +368,36 @@ describe("FinanceService bank connections", () => {
       sync.activeAccessToken.mockRejectedValue(
         new ConnectionNeedsReconnectError("expired", ["old"]),
       );
-      sync.recordNeedsReconnect.mockResolvedValue(false);
+      sync.recordFailedStatus.mockResolvedValue(false);
+      const result = await service.syncBankConnection(USER_A, CONN_A);
+      expect(bankRepo.rows[0]).toMatchObject({ status: "connected" });
+      expect(result).toMatchObject({ success: false, error: expect.stringMatching(/try again/) });
+    });
+
+    it("judges a failed fetch's error on the token the sync used", async () => {
+      const { service, sync, provider } = setup({ rows: [connectionRow({ status: "connected" })] });
+      provider.fetchAccounts.mockRejectedValue(new Error("timeout"));
+      await service.syncBankConnection(USER_A, CONN_A);
+      expect(sync.recordFailedStatus).toHaveBeenCalledWith(CONN_A, USER_A, "error", [
+        "stored-access",
+      ]);
+    });
+
+    it("judges an error before any token was read on the token stored at claim", async () => {
+      const { service, sync } = setup({ rows: [connectionRow({ status: "connected" })] });
+      sync.activeAccessToken.mockRejectedValue(new Error("refresh timeout"));
+      await service.syncBankConnection(USER_A, CONN_A);
+      expect(sync.recordFailedStatus).toHaveBeenCalledWith(CONN_A, USER_A, "error", [
+        "claimed-access",
+      ]);
+    });
+
+    it("leaves the status to a reconnect when an old sync's error misses (B1)", async () => {
+      const { service, bankRepo, sync, provider } = setup({
+        rows: [connectionRow({ status: "connected" })],
+      });
+      provider.fetchAccounts.mockRejectedValue(new Error("timeout"));
+      sync.recordFailedStatus.mockResolvedValue(false);
       const result = await service.syncBankConnection(USER_A, CONN_A);
       expect(bankRepo.rows[0]).toMatchObject({ status: "connected" });
       expect(result).toMatchObject({ success: false, error: expect.stringMatching(/try again/) });
