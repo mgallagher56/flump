@@ -112,13 +112,20 @@ describe("UK tax vector catalogue", () => {
     expect(get("ewni.incomeTax.2020-21.150000")).toBe(52500);
   });
 
-  it("keeps Plan 5 pre-2026 and approximated NI as UNVERIFIED; taper-dependent pre-2023 vectors are VERIFIED (ITA 2007 s.35)", () => {
+  it("keeps approximated NI as UNVERIFIED; Plan 5 pre-2026 and taper-dependent pre-2023 vectors are VERIFIED (ITA 2007 s.35)", () => {
     const status = (id: string) => UK_TAX_VECTORS.find((v) => v.id === id)?.status;
+    const get = (id: string) => UK_TAX_VECTORS.find((v) => v.id === id)?.expected;
     expect(status("ewni.incomeTax.2021-22.110000")).toBe("VERIFIED");
     expect(status("scotland.incomeTax.2025-26.110000")).toBe("VERIFIED");
     expect(status("ewni.incomeTax.2025-26.110000")).toBe("VERIFIED");
-    expect(status("studentLoan.2024-25.plan5.35000")).toBe("UNVERIFIED");
+    // SI 2009/470 reg 15(2BA): no Plan 5 repayment before 6 April 2026, so 0 in each earlier year.
+    for (const y of ["2023-24", "2024-25", "2025-26"]) {
+      expect(status(`studentLoan.${y}.plan5.35000`), y).toBe("VERIFIED");
+      expect(get(`studentLoan.${y}.plan5.35000`), y).toBe(0);
+    }
     expect(status("studentLoan.2026-27.plan5.35000")).toBe("VERIFIED");
+    // 2026/27: (35,000 - 25,000) x 9% = 900.
+    expect(get("studentLoan.2026-27.plan5.35000")).toBe(900);
     expect(status("employeeNi.2023-24.60000")).toBe("UNVERIFIED");
   });
 });

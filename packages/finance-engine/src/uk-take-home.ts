@@ -33,6 +33,7 @@ import {
   calculateStudentLoanRepayment,
   getUkTaxYearContext,
   getUkTaxYearRules,
+  isStudentLoanRepayable,
   resolveUkTaxYear,
   roundPence,
   scottishRatesRefusal,
@@ -211,8 +212,11 @@ function studentLoanRepayments(
   if (ug.length > 0) {
     // Throws UnsupportedUkTaxYearError for a plan the year does not list (no substitution).
     for (const p of ug) calculateStudentLoanRepayment(0, p, rules);
+    // A plan the year collects nothing on (Plan 5 before 2026/27) never sets the threshold.
     const threshold = (p: UkStudentLoanPlanKey) =>
-      rules.studentLoans.plans[p]?.threshold ?? Number.POSITIVE_INFINITY;
+      isStudentLoanRepayable(rules, p)
+        ? (rules.studentLoans.plans[p]?.threshold ?? Number.POSITIVE_INFINITY)
+        : Number.POSITIVE_INFINITY;
     const lowest = ug.reduce((a, b) => (threshold(b) < threshold(a) ? b : a));
     const repayment = calculateStudentLoanRepayment(pay, lowest, rules);
     byPlan[lowest] = repayment;

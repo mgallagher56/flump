@@ -4,8 +4,8 @@ import { type SignableVector, signVector } from "./test-vectors/signoff.js";
 import { UK_SELF_ASSESSMENT_VECTORS } from "./test-vectors/uk-self-assessment.vectors.js";
 import { UK_TAX_VECTORS } from "./test-vectors/uk-tax.vectors.js";
 
-// No real vector is signed yet, so the "verified" path is checked with fixture sign-offs made in
-// memory here. The catalogue files are not changed.
+// The "verified" path is checked with fixture sign-offs made in memory here, on years the real
+// catalogue has not signed. The catalogue files are not changed.
 // Fixtures: core vectors signed for 2023/24 and 2024/25; Self Assessment vectors signed for
 // 2024/25 only. So 2024/25 is fully signed and 2023/24 is signed except for Self Assessment.
 
@@ -75,7 +75,8 @@ describe("getTaxYearVerification with fixture sign-offs", () => {
   });
 
   it("tells the reader an unsigned year's figures are an estimate", () => {
-    const v = getTaxYearVerification("2025/26");
+    // 2022/23 is neither fixture-signed here nor signed in the catalogue.
+    const v = getTaxYearVerification("2022/23");
     expect(v.status).toBe("unverified");
     expect(v.detail).toMatch(/estimate/);
   });

@@ -131,14 +131,15 @@ describe("getTaxYearVerification", () => {
 
 describe("getTaxFeatureVerification (E25-T8)", () => {
   // 2027/28 core is fully signed but provisional, so it stays unverified (ruling B).
-  // 24 Nov 2026, Fable decider: every 2026/27 vector signed; every 2025/26 what-if vector signed
-  // (its core still has studentLoan.2025-26.plan5.35000 unsigned, and it has no scheduled
-  // vectors); the five 2021/22 HICBC vectors signed. Every other feature and year is unverified.
+  // 24 Nov 2026, Fable decider: every 2026/27 and 2025/26 vector signed (2025/26 has no
+  // scheduled vectors); the five 2021/22 HICBC vectors signed. Every other feature and year is
+  // unverified (the corrected 2023/24 and 2024/25 Plan 5 vectors alone do not complete a year).
   const verifiedToday = new Set([
     "2026/27 core",
     "2026/27 hicbc",
     "2026/27 whatIf",
     "2026/27 scheduled",
+    "2025/26 core",
     "2025/26 hicbc",
     "2025/26 whatIf",
     "2021/22 hicbc",
