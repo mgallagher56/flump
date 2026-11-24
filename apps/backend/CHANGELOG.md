@@ -1,5 +1,46 @@
 # Changelog
 
+## [1.45.0](https://github.com/mgallagher56/flump/compare/flump/backend-v1.44.0...flump/backend-v1.45.0) (2026-11-24)
+
+
+### Features ✨
+
+* **profile:** add Partner mode toggle gating joint ownership UI ([74df0c3](https://github.com/mgallagher56/flump/commit/74df0c3aa0042ef0c90315b5af468fbbb4a5fbfa))
+* **web:** a not-invited account can download or delete its data ([d701da2](https://github.com/mgallagher56/flump/commit/d701da28ff446863307335adef3022dbe065a9ff))
+
+
+### Bug Fixes 🪲
+
+* **backend:** namespace the user-data lock key and tighten race tests ([1fbc6f3](https://github.com/mgallagher56/flump/commit/1fbc6f3ffb3f20649f5e66b9e04333aee4588b96))
+* **backend:** rename the lock statement constant to clear a Semgrep false positive ([fa4dbfa](https://github.com/mgallagher56/flump/commit/fa4dbfa99cadf7c2d42c56f87402809cbc6adeb1))
+* **backend:** serialise reset with erasure and lock invoice rows ([7397974](https://github.com/mgallagher56/flump/commit/73979745b7d06510f5ad89bf4024049a6cbc3d11))
+* **banking:** a stale sync's error never replaces a reconnect's status (B2) ([eae4888](https://github.com/mgallagher56/flump/commit/eae48880b5247a8b585684560ec6e67cebd59d58))
+* **banking:** needs_reconnect only while the judged token is still stored (B1) ([6582245](https://github.com/mgallagher56/flump/commit/658224551dfd815900f52ea08975973943e969ca))
+* **deps:** update all non-major third-party dependencies ([25340ef](https://github.com/mgallagher56/flump/commit/25340ef33bb9dab5cf9ed68aef96b0d1dfb4058d))
+* **invoicing:** lock work-log entries in id order so shared entries neither deadlock nor double-claim ([bc0505e](https://github.com/mgallagher56/flump/commit/bc0505ef3cd2d9abd55e422ba12ee533c2542726))
+* **invoicing:** owner-scoped keys from invoices to tax records and work-log entries to invoices ([54f0bd3](https://github.com/mgallagher56/flump/commit/54f0bd36beb9db1ecd4736c11d284e02a3ac3bde))
+* **privacy:** apply review of the write fence ([765b1ef](https://github.com/mgallagher56/flump/commit/765b1ef24b8cdd09246061d11c08567d9ee4d047))
+* **privacy:** write fence so no row can outlive a finished erasure (F1) ([c62d4a7](https://github.com/mgallagher56/flump/commit/c62d4a7f8f5e20f0d1cda4f6b870e208f0dcacc6))
+* resolve batch 1 of parked bugs ([eb67b89](https://github.com/mgallagher56/flump/commit/eb67b89ce44473b1446bed9d4209c3d1070d6e8f))
+* **web,e2e:** update partnerMode test fixtures and web-profile visual baselines ([23f8235](https://github.com/mgallagher56/flump/commit/23f823595db688e28b358d3d1d7e35ebe7626a73))
+* **web:** keep keyboard focus on BudgetEditor Essential switch while pending ([befc233](https://github.com/mgallagher56/flump/commit/befc233975dc2a382e68198fba2a54166e207405))
+
+
+### Documentation 📙
+
+* **skills:** verify-bank-sync models a failure before the row is read (EarlyFails) ([d432206](https://github.com/mgallagher56/flump/commit/d4322064c64682b66252bd25e46a44a26e10082e))
+
+
+### Tests 🧪
+
+* **authz:** retry the truncate when it deadlocks with a late /mcp audit write ([769061d](https://github.com/mgallagher56/flump/commit/769061d859b301c5858e2a0c07871f62ec7ae196))
+* **invoicing:** assert work-log row locks are taken in id order in SQL ([127d0f1](https://github.com/mgallagher56/flump/commit/127d0f170ad0ded1159a9c299624db85b736e201))
+
+
+### Miscellaneous 🙃
+
+* align biome schema, fix seeded debt name, record client data decision ([a5ef8be](https://github.com/mgallagher56/flump/commit/a5ef8bef9b3a77245caa27e5f0cc988238b1e53c))
+
 ## [1.44.0](https://github.com/mgallagher56/flump/compare/flump/backend-v1.43.0...flump/backend-v1.44.0) (2026-11-21)
 
 
