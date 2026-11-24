@@ -87,7 +87,10 @@ function createInMemoryHarness() {
       createQueryBuilder: undefined as unknown,
       manager: {
         transaction: async <R>(
-          cb: (em: { getRepository: (t: unknown) => unknown }) => Promise<R>,
+          cb: (em: {
+            getRepository: (t: unknown) => unknown;
+            createQueryBuilder: () => unknown;
+          }) => Promise<R>,
         ) => {
           // Models Postgres row locks: a findOne with pessimistic_write waits until any other
           // transaction holding that row's lock has finished, and holds it until this one ends.
@@ -122,6 +125,23 @@ function createInMemoryHarness() {
             });
           try {
             return await cb({
+              // INSERT ... ON CONFLICT DO NOTHING for the settings row createInvoice ensures.
+              createQueryBuilder: () => ({
+                insert: () => ({
+                  into: (t: unknown) => ({
+                    values: (values: Partial<InvoicingSettings>) => ({
+                      orIgnore: () => ({
+                        execute: async () => {
+                          if (t !== InvoicingSettings) throw new Error("unexpected insert");
+                          if (settingsRows.some((r) => r.userId === values.userId)) return {};
+                          await settingsRepo.save(settingsRepo.create(values) as InvoicingSettings);
+                          return {};
+                        },
+                      }),
+                    }),
+                  }),
+                }),
+              }),
               getRepository: (t: unknown) => {
                 if (t === InvoicingSettings) return lockAware(settingsRepo);
                 if (t === WorkLogEntry) return lockAware(workLogRepo);
