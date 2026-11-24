@@ -17,7 +17,8 @@ export const progressRingRecipe = sva({
     },
     track: {
       fill: "none",
-      stroke: "border",
+      // The empty track reaches 3:1 (border.strong); the count inside the ring says it in words.
+      stroke: "border.strong",
       strokeWidth: "3.5",
     },
     arc: {

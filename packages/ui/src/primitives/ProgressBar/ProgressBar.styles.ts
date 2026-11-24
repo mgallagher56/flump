@@ -29,6 +29,9 @@ export const progressTrackRecipe = cva({
   base: {
     width: "100%",
     backgroundColor: "surface.sunken",
+    // The empty track is a faint fill (about 1.1:1), so a 1px inset edge in border.strong (3:1 on
+    // every surface) shows where the track ends and colour is not the only cue.
+    boxShadow: "inset 0 0 0 1px token(colors.border.strong)",
     borderRadius: "full",
     overflow: "hidden",
   },

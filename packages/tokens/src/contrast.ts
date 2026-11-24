@@ -136,6 +136,17 @@ export const PASSING_PAIRS: Pair[] = [
   ]),
   // The dark accent (primary DEFAULT, mint) is a text colour on the dark hero card too.
   { fg: "primary", bg: "surface.hero", themes: ["dark"], min: 4.5, role: "text" },
+  // Guard change (coordinator sign-off, 24 Nov 2026): the dark hero card edge also reads on the
+  // sunken band, in case the hero ever sits there.
+  { fg: "border.hero", bg: "surface.sunken", themes: ["dark"], min: 1.5, role: "graphic" },
+  // Control boundaries (owner, 24 Nov 2026): border.strong edges outline and secondary buttons,
+  // hover states, toggles, slider and ring tracks, so it reaches 3:1 on every surface. The faint
+  // border.DEFAULT and border.subtle stay decorative hairlines only.
+  ...SURFACES.map((bg): Pair => ({ fg: "border.strong", bg, themes: BOTH, min: 3, role: "ui" })),
+  // primary.border: a selected edge and muted chart bars, 3:1 on the card and the canvas.
+  ...["surface.card", "surface.canvas"].map(
+    (bg): Pair => ({ fg: "primary.border", bg, themes: BOTH, min: 3, role: "graphic" }),
+  ),
   // Section titles sit on border.section: a 3:1 rule on the canvas and the card.
   ...["surface.canvas", "surface.card"].map(
     (bg): Pair => ({ fg: "border.section", bg, themes: BOTH, min: 3, role: "ui" }),

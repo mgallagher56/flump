@@ -72,7 +72,8 @@ export const sceneClasses = {
     fillOpacity: { base: "0.5", _dark: "0.3", _systemDark: "0.3" },
   }),
   sage: css({ fill: "chart.wealth" }),
-  tealSoft: css({ fill: "primary.border" }),
+  // A soft backdrop shape: the pale teal tint, not primary.border (now a 3:1 edge colour).
+  tealSoft: css({ fill: "primary.subtle" }),
   teal: css({ fill: "primary" }),
   leaf: css({ fill: "primary" }),
   paper: css({ fill: "surface.card" }),

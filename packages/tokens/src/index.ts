@@ -42,12 +42,12 @@ export const colors = {
   // mint family with deep-green ink; the semantic surface/text/border tokens map onto these. Slate
   // stays for compatibility; indigo stays for status.info only.
   mint: {
-    50: { value: "#e4f4ef" }, // canvas
-    100: { value: "#d3eae3" }, // sunken
-    150: { value: "#eef8f5" }, // subtle
+    50: { value: "#eef6f3" }, // canvas (owner, 24 Nov 2026: a subtler ground than the first #e4f4ef)
+    100: { value: "#dfeee9" }, // sunken
+    150: { value: "#e7f2ee" }, // subtle
     200: { value: "#d5e5e0" }, // border.subtle
-    250: { value: "#b9d4cc" }, // border
-    300: { value: "#9dc4b9" }, // border.strong
+    250: { value: "#c8dcd5" }, // border: the card hairline, the lightest value that keeps 1.3:1 on card and canvas
+    300: { value: "#678a82" }, // border.strong: a control boundary, 3:1 on every light surface
     400: { value: "#6fd0ba" }, // the mint fill: surface.hero, dark primary. Never text on a light ground
     500: { value: "#5e837a" }, // border.input, chart.baseline (3:1 on every light surface)
     600: { value: "#476060" }, // text.muted
@@ -70,7 +70,8 @@ export const colors = {
     surfaceOverlay: { value: "#2a3039" },
     border: { value: "#303740" }, // Midnight #2c323b, one step up so a card edge reads at 1.3:1
     borderSubtle: { value: "#242931" },
-    borderStrong: { value: "#3a424e" },
+    borderStrong: { value: "#7a8390" }, // a control boundary, 3:1 on every dark surface
+    borderHero: { value: "#3a424e" }, // the dark hero card edge (1.8:1 on the canvas)
     borderInput: { value: "#737c88" },
     contrast: { value: "#0f1216" },
     textPrimary: { value: "#f1eee8" },
@@ -211,7 +212,8 @@ export const semanticTokens = {
       // Link hover: darker teal in light, lighter mint in dark.
       emphasis: { value: { base: "{colors.teal.700}", _dark: "{colors.dark.primaryHover}" } },
       subtle: { value: { base: "#cfe9e2", _dark: "#1f3532" } },
-      border: { value: { base: "{colors.mint.300}", _dark: "#2f4a46" } },
+      // A selected or hovered edge on a primary.subtle fill, and muted chart bars: 3:1 on the card.
+      border: { value: { base: "#5a8f83", _dark: "#53877d" } },
       foreground: { value: { base: "{colors.mint.950}", _dark: "{colors.dark.onPrimary}" } },
     },
 
@@ -226,7 +228,7 @@ export const semanticTokens = {
       // The tinted surface. text.primary, secondary and muted clear 4.5:1 on it.
       subtle: { value: { base: "#d2eef0", _dark: "#2f2733" } },
       // The edge of an accent.subtle surface. Decorative, like border.DEFAULT.
-      border: { value: { base: "{colors.mint.300}", _dark: "#5a4655" } },
+      border: { value: { base: "#a9c6be", _dark: "#5a4655" } },
       // The one shape allowed on surface.hero (>= 3:1 there in both themes). Never text.
       onHero: { value: { base: "{colors.teal.600}", _dark: "{colors.dark.pink}" } },
     },
@@ -239,7 +241,7 @@ export const semanticTokens = {
       card: { value: { base: "{colors.mint.950}", _dark: "{colors.dark.surface}" } },
       sunken: { value: { base: "{colors.mint.100}", _dark: "{colors.dark.surfaceSunken}" } },
       subtle: { value: { base: "{colors.mint.150}", _dark: "{colors.dark.subtle}" } },
-      overlay: { value: { base: "#f2f5f4", _dark: "{colors.dark.surfaceOverlay}" } },
+      overlay: { value: { base: "#f6f7f7", _dark: "{colors.dark.surfaceOverlay}" } },
       // Charcoal: the footer, the closing band and small numbered markers. Text on it uses
       // text.onContrast.
       contrast: { value: { base: "{colors.mint.800}", _dark: "{colors.dark.contrast}" } },
@@ -286,7 +288,7 @@ export const semanticTokens = {
       input: { value: { base: "{colors.mint.500}", _dark: "{colors.dark.borderInput}" } },
       focusRing: { value: { base: "{colors.teal.600}", _dark: "{colors.dark.primary}" } },
       // The edge of surface.hero: the fill itself in light, a visible edge on the dark hero card.
-      hero: { value: { base: "{colors.mint.400}", _dark: "{colors.dark.borderStrong}" } },
+      hero: { value: { base: "{colors.mint.400}", _dark: "{colors.dark.borderHero}" } },
       // Section titles in the app sit on this rule so sections are clearly separated.
       section: { value: { base: "{colors.mint.900}", _dark: "{colors.dark.borderInput}" } },
     },
