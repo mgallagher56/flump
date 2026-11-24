@@ -222,10 +222,10 @@ export class AccountDeletionService implements ErasedAccountCheck {
       return { tombstone, removed, linked };
     });
 
-    // (b2) Sweep again now the tombstone is committed. A signed-in request's write cannot land
-    // after (b) (UserDataWriteFence: it waits for the lock, then sees the tombstone), but writes
-    // outside a request (jobs, /mcp) do not take the fence; this second pass (also run on every
-    // retry) removes any of theirs that committed while (b) ran.
+    // (b2) Sweep again now the tombstone is committed. Signed-in requests and /mcp cannot write
+    // after (b) (UserDataWriteFence: they wait for the lock, then see the tombstone). A write that
+    // takes no fence (none today; a future job) could commit while (b) ran: this second pass (also
+    // run on every retry) removes it. One that commits after this pass is not caught.
     const stragglers = await this.dataSource.transaction(async (manager) => ({
       removed: await this.sweep(manager, userId),
       linked: await this.sweepLinked(manager, userId),

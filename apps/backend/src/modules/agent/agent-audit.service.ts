@@ -107,7 +107,7 @@ export class AgentAuditService {
     const outcome = (AGENT_AUDIT_OUTCOMES as readonly string[]).includes(input.outcome)
       ? input.outcome
       : "error";
-    await this.events.insert({
+    const row = {
       userId: input.userId,
       tokenId: typeof input.tokenId === "string" && UUID.test(input.tokenId) ? input.tokenId : null,
       clientName: safeClientName(input.clientName),
@@ -126,7 +126,9 @@ export class AgentAuditService {
           : typeof input.argsFingerprint === "string" && HEX64.test(input.argsFingerprint)
             ? input.argsFingerprint
             : null,
-    });
+    };
+    // A transaction, so on /mcp (run as the token's user) the insert takes the user-data write fence.
+    await this.events.manager.transaction((m) => m.getRepository(AgentAuditEvent).insert(row));
   }
 
   /**

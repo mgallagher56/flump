@@ -20,6 +20,7 @@ import { RATE_LIMIT_POLICIES } from "../../security/rate-limit.decorator";
 import { RateLimitStore } from "../../security/rate-limit.store";
 import { type ImportBatchView, ImportsService } from "../imports/imports.service";
 import { importReviewUrl } from "../imports/review-url";
+import { runAsUserRequest } from "../privacy/user-data-lock";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 /** Cap messages from ImportsService ("At most N ... per import", "At most N open imports"). */
@@ -42,6 +43,15 @@ export class McpImportsAdapter implements McpImportProvider {
   ) {}
 
   async stageImport(token: VerifiedToken, input: McpStageImportInput): Promise<McpImportBatch> {
+    // /mcp is outside the AuthGuard and its interceptor: run as the token's user, so the staging
+    // writes take the user-data write fence and cannot land after the user's erasure.
+    return runAsUserRequest(token.userId, () => this.stageAsUser(token, input));
+  }
+
+  private async stageAsUser(
+    token: VerifiedToken,
+    input: McpStageImportInput,
+  ): Promise<McpImportBatch> {
     this.authorize(token);
     const parsed = StageImportRequest.safeParse(input);
     if (!parsed.success) {

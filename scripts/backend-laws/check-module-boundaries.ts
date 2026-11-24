@@ -33,7 +33,8 @@ export const MODULE_DEPENDENCIES: Readonly<Record<string, readonly string[]>> = 
   privacy: ["banking"],
   profile: ["banking", "privacy", "snapshots"],
   retirement: ["privacy"],
-  agent: ["finance", "imports", "profile", "retirement"],
+  // privacy: /mcp writes run as the token's user under the user-data write fence (finding F1).
+  agent: ["finance", "imports", "privacy", "profile", "retirement"],
 };
 
 const COMPOSITION_ROOT = new Set(["main.ts", "app.module.ts"]);
