@@ -140,7 +140,7 @@ It runs in its own workflow, `.github/workflows/visual-regression.yml` ("Visual 
 on pull requests and by hand, alongside the required CI Pipeline jobs. It never runs on push to
 `main`, so it cannot hold up Railway deploys.
 
-**Deterministic output.** The job runs in the `mcr.microsoft.com/playwright:v1.65.0-noble`
+**Deterministic output.** The job runs in the `mcr.microsoft.com/playwright:v1.65.1-noble`
 container with its own empty database, seeded by the same global setup as the smoke suite. The
 three servers run under libfaketime, starting at `FROZEN_NOW` in `support/clock.ts`
 (`E2E_FREEZE_CLOCK=1`), and the browser clock is installed at the same instant, so month labels,
