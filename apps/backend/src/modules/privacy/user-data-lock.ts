@@ -5,8 +5,7 @@ import type { EntityManager } from "typeorm";
 export const DATA_LOCK_STATEMENT = "SELECT pg_advisory_xact_lock(hashtextextended($1, 0))";
 
 /** The shared form of the same lock, taken by every write of a signed-in request (the write fence). */
-export const SHARED_DATA_LOCK_STATEMENT =
-  "SELECT pg_advisory_xact_lock_shared(hashtextextended($1, 0))";
+const SHARED_DATA_LOCK_STATEMENT = "SELECT pg_advisory_xact_lock_shared(hashtextextended($1, 0))";
 
 // Namespaced like the other per-user locks (`terms:`, `imports:`).
 const lockKey = (userId: string) => `user-data:${userId}`;
@@ -16,12 +15,14 @@ const lockKey = (userId: string) => `user-data:${userId}`;
  * signed-in request; `exempt` inside withoutWriteFence. Outside a request (jobs, boot, tests that
  * call services directly) there is no store and the fence does nothing.
  */
-type FenceContext = { userId: string } | { exempt: true };
+/** `held`: transactions of this request that hold the fence right now. */
+export type FencedRequest = { userId: string; held: number };
+type FenceContext = FencedRequest | { exempt: true };
 const fenceContext = new AsyncLocalStorage<FenceContext>();
 
 /** Runs `fn` as part of a signed-in request of `userId`: its transactions take the write fence. */
 export function runAsUserRequest<T>(userId: string, fn: () => T): T {
-  return fenceContext.run({ userId }, fn);
+  return fenceContext.run({ userId, held: 0 }, fn);
 }
 
 /**
@@ -30,13 +31,18 @@ export function runAsUserRequest<T>(userId: string, fn: () => T): T {
  * read-only transaction).
  */
 export function withoutWriteFence<T>(fn: () => T): T {
+  // Inside an open fenced transaction of the same request, the exclusive lock taken here would wait
+  // for that transaction's shared lock, which waits for this code: refuse instead of deadlocking.
+  if ((fencedRequest()?.held ?? 0) > 0) {
+    throw new Error("withoutWriteFence inside an open fenced transaction of the same request");
+  }
   return fenceContext.run({ exempt: true }, fn);
 }
 
-/** The user whose writes must take the fence here, or null when there is none. */
-export function fencedUserId(): string | null {
+/** The signed-in request whose writes must take the fence here, or null when there is none. */
+export function fencedRequest(): FencedRequest | null {
   const store = fenceContext.getStore();
-  return store && "userId" in store ? store.userId : null;
+  return store && "userId" in store ? store : null;
 }
 
 /**
@@ -51,7 +57,7 @@ export function fencedUserId(): string | null {
 export async function lockUserData(manager: EntityManager, userId: string): Promise<void> {
   // A transaction that already holds the shared lock would deadlock against another one asking
   // for the exclusive lock (each waits for the other's shared lock). Callers run withoutWriteFence.
-  if (fencedUserId() !== null) {
+  if (fencedRequest() !== null) {
     throw new Error("lockUserData needs withoutWriteFence: the write fence holds the shared lock");
   }
   await manager.query(DATA_LOCK_STATEMENT, [lockKey(userId)]);

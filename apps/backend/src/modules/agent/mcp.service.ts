@@ -21,6 +21,7 @@ import {
 import type { SharedRateLimitStore } from "../../security/rate-limit.store";
 import { SHARED_RATE_LIMIT_STORE } from "../../security/shared-rate-limit";
 import { webOriginBootWarning } from "../imports/review-url";
+import { runAsUserRequest } from "../privacy/user-data-lock";
 import { AgentAuditService } from "./agent-audit.service";
 import { AgentDataService } from "./agent-data.service";
 import { McpImportsAdapter } from "./mcp-imports.adapter";
@@ -87,18 +88,22 @@ export class McpService {
    */
   async recordAudit(caller: McpAuditCaller, event: McpAuditEvent): Promise<void> {
     try {
-      await this.audit.record({
-        userId: caller.token.userId,
-        tokenId: caller.token.tokenId ?? null,
-        clientName: caller.clientName ?? null,
-        toolName: event.tool,
-        scopesUsed: event.scopesUsed,
-        outcome: event.outcome,
-        errorCode: event.errorCode ?? null,
-        latencyMs: event.durationMs,
-        responseBytes: event.responseBytes,
-        argsFingerprint: event.argsFingerprint ?? null,
-      });
+      // /mcp is outside the AuthGuard and its interceptor, so the token's user is set here: the
+      // insert takes the user-data write fence and cannot land after the user's erasure.
+      await runAsUserRequest(caller.token.userId, () =>
+        this.audit.record({
+          userId: caller.token.userId,
+          tokenId: caller.token.tokenId ?? null,
+          clientName: caller.clientName ?? null,
+          toolName: event.tool,
+          scopesUsed: event.scopesUsed,
+          outcome: event.outcome,
+          errorCode: event.errorCode ?? null,
+          latencyMs: event.durationMs,
+          responseBytes: event.responseBytes,
+          argsFingerprint: event.argsFingerprint ?? null,
+        }),
+      );
     } catch (err) {
       this.logger.error(`mcp_audit_write_failed: ${err instanceof Error ? err.name : "error"}`);
     }

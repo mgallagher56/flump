@@ -5,6 +5,7 @@ import { DataSource, type DataSourceOptions } from "typeorm";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { typeOrmOptionsFromEnv } from "../../config/typeorm.options";
 import { Account } from "../../entities/account.entity";
+import { AccountDeletionTombstone } from "../../entities/account-deletion-tombstone.entity";
 import { AccountDetail } from "../../entities/account-detail.entity";
 import { BankConnection } from "../../entities/bank-connection.entity";
 import { BudgetEntry } from "../../entities/budget-entry.entity";
@@ -107,7 +108,9 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
     const advisoryLockWaiter = async () => {
       for (let i = 0; i < 200; i++) {
         const [row] = (await ds.query(
-          `SELECT count(*)::int AS n FROM pg_locks WHERE locktype = 'advisory' AND NOT granted`,
+          `SELECT count(*)::int AS n FROM pg_locks
+           WHERE locktype = 'advisory' AND NOT granted
+             AND database = (SELECT oid FROM pg_database WHERE datname = current_database())`,
         )) as Array<{ n: number }>;
         if ((row?.n ?? 0) > 0) return;
         await new Promise((r) => setTimeout(r, 10));
@@ -201,6 +204,19 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       expect(await budgetRows(USER_A)).toBe(0);
     });
 
+    it("refuses an insert inside a WITH outside a transaction too", async () => {
+      await expect(
+        asRequest(USER_A, () =>
+          ds.query(
+            `WITH v AS (SELECT 1) INSERT INTO "budget_entries" ("user_id", "category", "name", "amount")
+             SELECT $1, 'food', 'cte', 1 FROM v`,
+            [USER_A],
+          ),
+        ),
+      ).rejects.toThrow(/outside a transaction/);
+      expect(await budgetRows(USER_A)).toBe(0);
+    });
+
     it("runs the erasure, its retry, the reset and the export inside a request without deadlock", async () => {
       await ds.getRepository(BudgetEntry).save(budgetLine(USER_B, "kept by reset? no"));
       const repo = <E extends object>(e: new () => E) => ds.getRepository(e);
@@ -229,6 +245,13 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       await expect(asRequest(USER_A, () => deletion.deleteAccount(USER_A))).resolves.toEqual({
         status: "deleted",
       });
+    });
+
+    it("refuses withoutWriteFence inside an open fenced transaction of the same request", async () => {
+      await expect(
+        asRequest(USER_A, () => ds.transaction(() => deletion.deleteAccount(USER_A))),
+      ).rejects.toThrow(/open fenced transaction/);
+      expect(await ds.getRepository(AccountDeletionTombstone).count()).toBe(0);
     });
 
     it("refuses the exclusive lockUserData inside the fence, which would deadlock", async () => {

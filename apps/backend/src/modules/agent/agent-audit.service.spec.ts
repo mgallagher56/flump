@@ -12,7 +12,12 @@ const ACTIVITY_KEYS: KeyColumn[] = [
 
 const make = () => {
   const insert = vi.fn().mockResolvedValue(undefined);
-  const repo = { insert } as unknown as Repository<AgentAuditEvent>;
+  const repo = {
+    insert,
+    manager: {
+      transaction: async (fn: (m: unknown) => unknown) => fn({ getRepository: () => ({ insert }) }),
+    },
+  } as unknown as Repository<AgentAuditEvent>;
   return { service: new AgentAuditService(repo), insert };
 };
 
