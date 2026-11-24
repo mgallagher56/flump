@@ -38,17 +38,16 @@ sh .claude/skills/verify-bank-sync/check.sh
 
 Each line says `ok` or `FAIL`. The script exits 0 only when every config gives its expected result:
 
-| Config (`model/`)                | What it checks                                                                                                      | Expected                                       |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
-| `current.cfg`                    | The code as it is: `OneSyncAtATime`, `StoredTokensNeverGoBack`, `RefreshRejectionHonoursReplacement`, `TypeOK`      | pass                                           |
-| `promise.cfg`                    | The code against the full promise, `NeedsReconnectOnlyWhenTokenDead`                                                | `NeedsReconnectOnlyWhenTokenDead` violated: B1 |
-| `broken-claim-no-lease.cfg`      | `claim` without the `sync_started_at` check                                                                         | `OneSyncAtATime` violated                      |
-| `broken-refresh-no-cas.cfg`      | The refresh write without `WHERE access_token = prev ...`                                                           | `StoredTokensNeverGoBack` violated             |
-| `broken-reencrypt-no-cas.cfg`    | Lazy re-encryption without its `WHERE access_token = ...`                                                           | `StoredTokensNeverGoBack` violated             |
-| `broken-no-recovery.cfg`         | AUTH_EXPIRED from the refresh rethrown without rereading the row                                                    | `RefreshRejectionHonoursReplacement` violated  |
-| `whatif-status-checks-token.cfg` | Not the code: one way to close B1, the `needs_reconnect` write also requires the token it judged to still be stored | pass                                           |
+| Config (`model/`)             | What it checks                                                                                        | Expected                                      |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------- | --------------------------------------------- |
+| `current.cfg`                 | The code as it is, against every rule: the four below, `NeedsReconnectOnlyWhenTokenDead` and `TypeOK` | pass                                          |
+| `broken-claim-no-lease.cfg`   | `claim` without the `sync_started_at` check                                                           | `OneSyncAtATime` violated                     |
+| `broken-refresh-no-cas.cfg`   | The refresh write without `WHERE access_token = prev ...`                                             | `StoredTokensNeverGoBack` violated            |
+| `broken-reencrypt-no-cas.cfg` | Lazy re-encryption without its `WHERE access_token = ...`                                             | `StoredTokensNeverGoBack` violated            |
+| `broken-no-recovery.cfg`      | AUTH_EXPIRED from the refresh rethrown without rereading the row                                      | `RefreshRejectionHonoursReplacement` violated |
+| `broken-status-no-cas.cfg`    | The `needs_reconnect` write without `WHERE access_token = ANY(judged)` (finding B1, fixed)            | `NeedsReconnectOnlyWhenTokenDead` violated    |
 
-The `broken-` configs show that the rules can fail. If any of them passes, the model can no longer see the bug it guards against, so fix the model. Pass config names to run only those, for example `check.sh current promise`.
+The `broken-` configs show that the rules can fail. If any of them passes, the model can no longer see the bug it guards against, so fix the model. Pass config names to run only those, for example `check.sh current broken-status-no-cas`.
 
 Read every result, pass or fail, with the pstack `/statechart` skill on `model/BankSync.tla` and the config. For a violation it gives the shortest path in plain words. Tell that path in this repo's words (`runSync`, `claim`, the CAS, `connectBank`). For a pass it draws how the syncs, the reconnect and the bank move between states. Use one sync (`Syncs = {s1}`) in a scratch copy of the config so the chart stays readable.
 
@@ -61,26 +60,26 @@ When a result changes, open the actions in the counterexample and compare each o
 
 ## Intended changes
 
-If your change alters behaviour the model describes, update the matching action and its code comment in the same PR, run the check again, and update the table above if an expected result changes. Examples: a status write made conditional (then compare with `whatif-status-checks-token.cfg` and move `NeedsReconnectOnlyWhenTokenDead` into `current.cfg`), a lease that can lapse under a running sync, a second caller of `activeAccessToken`, or a reconnect that also writes `sync_started_at`.
+If your change alters behaviour the model describes, update the matching action and its code comment in the same PR, run the check again, and update the table above if an expected result changes. Examples: a `connected` or `error` status write made conditional too, a lease that can lapse under a running sync, a second caller of `activeAccessToken`, or a reconnect that also writes `sync_started_at`.
 
 ## Coverage record
 
-Sync commit: `769061d859b301c5858e2a0c07871f62ec7ae196`. At that commit, the model was confirmed to describe this code:
+Sync commit: `e865290bd3b1d92fa493df280184ce9e4cf1e0dd`. At that commit, the model was confirmed to describe this code:
 
-| Model action                     | Code                                                                                                                                                                                                      |
-| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Claim`, `Release`               | `apps/backend/src/modules/banking/bank-connection-sync.ts`, `BankConnectionSync.claim` and `release` (`sync_started_at`)                                                                                  |
-| `ReadRow`                        | the same file, `resolveActiveAccessToken`, the first `repo.findOne` and the `isTokenExpiring` / `tokenNeedsReencrypt` branch                                                                              |
-| `Refresh`                        | the same file, `provider.refreshToken(... spentRefresh)`; the bank side (rotation, AUTH_EXPIRED on a spent or revoked token) is the provider                                                              |
-| `Recover`                        | the same file, the `catch` after `refreshToken`: `AUTH_EXPIRED`, a second `repo.findOne`, `decryptStoredAccessToken(latest)` or rethrow                                                                   |
-| `CasWrite`, `CasMiss`            | the same file, the `for (attempt < 3)` loop: the conditional `UPDATE ... RETURNING "id"`, then `repo.findOne`, not expiring, same refresh token retry, or `ConnectionNeedsReconnectError`                 |
-| `Reencrypt`                      | the same file, the lazy re-encryption `UPDATE` (M11)                                                                                                                                                      |
-| `Fetch`                          | `apps/backend/src/modules/finance/finance.service.ts`, `runSync`: `provider.fetchAccounts` and `sync.writeAccounts`; 401/403 is `BankAuthExpiredError` in `packages/banking/src/server/provider-fetch.ts` |
-| `DecideReconnect`, `StatusWrite` | `finance.service.ts`, `runSync`'s `catch` (`needsReconnect(err)`) and `finally`: `bankConnectionRepository.update({ id, userId }, { status })`                                                            |
-| `Reconnect`                      | `finance.service.ts`, `connectBank`'s token transaction: the `ON CONFLICT` upsert of the same row, the new `accessToken`, `status: "connected"`                                                           |
-| `BankRevokes`                    | the bank withdrawing consent; not code                                                                                                                                                                    |
+| Model action                     | Code                                                                                                                                                                                                                                                                                                                  |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Claim`, `Release`               | `apps/backend/src/modules/banking/bank-connection-sync.ts`, `BankConnectionSync.claim` and `release` (`sync_started_at`)                                                                                                                                                                                              |
+| `ReadRow`                        | the same file, `resolveActiveAccessToken`, the first `repo.findOne` and the `isTokenExpiring` / `tokenNeedsReencrypt` branch                                                                                                                                                                                          |
+| `Refresh`                        | the same file, `provider.refreshToken(... spentRefresh)`; the bank side (rotation, AUTH_EXPIRED on a spent or revoked token) is the provider                                                                                                                                                                          |
+| `Recover`                        | the same file, the `catch` after `refreshToken`: `AUTH_EXPIRED`, a second `repo.findOne`, `decryptStoredAccessToken(latest)` or rethrow                                                                                                                                                                               |
+| `CasWrite`, `CasMiss`            | the same file, the `for (attempt < 3)` loop: the conditional `UPDATE ... RETURNING "id"`, then `repo.findOne`, not expiring, same refresh token retry, or `ConnectionNeedsReconnectError`                                                                                                                             |
+| `Reencrypt`                      | the same file, the lazy re-encryption `UPDATE` (M11)                                                                                                                                                                                                                                                                  |
+| `Fetch`                          | `apps/backend/src/modules/finance/finance.service.ts`, `runSync`: `provider.fetchAccounts` and `sync.writeAccounts`; 401/403 is `BankAuthExpiredError` in `packages/banking/src/server/provider-fetch.ts`                                                                                                             |
+| `DecideReconnect`, `StatusWrite` | `finance.service.ts`, `runSync`'s `catch` (`needsReconnect(err)`, `judged` from `ConnectionNeedsReconnectError.judged` or the token's `storedAs`) and `finally`: `BankConnectionSync.recordNeedsReconnect` (the status CAS) for `needs_reconnect`, else `bankConnectionRepository.update({ id, userId }, { status })` |
+| `Reconnect`                      | `finance.service.ts`, `connectBank`'s token transaction: the `ON CONFLICT` upsert of the same row, the new `accessToken`, `status: "connected"`                                                                                                                                                                       |
+| `BankRevokes`                    | the bank withdrawing consent; not code                                                                                                                                                                                                                                                                                |
 
-Check whether the verification needs another look with `git log --oneline 769061d859b301c5858e2a0c07871f62ec7ae196..HEAD -- apps/backend/src/modules/banking/bank-connection-sync.ts apps/backend/src/modules/finance/finance.service.ts packages/banking/src/server/provider-fetch.ts packages/banking/src/server/orchestrator.ts`. Move the sync commit forward only after you have read those changes and confirmed that the model still describes the code at the new commit, even if the check passes.
+Check whether the verification needs another look with `git log --oneline e865290bd3b1d92fa493df280184ce9e4cf1e0dd..HEAD -- apps/backend/src/modules/banking/bank-connection-sync.ts apps/backend/src/modules/finance/finance.service.ts packages/banking/src/server/provider-fetch.ts packages/banking/src/server/orchestrator.ts`. Move the sync commit forward only after you have read those changes and confirmed that the model still describes the code at the new commit, even if the check passes.
 
 ## Bounds and assumptions
 
@@ -88,16 +87,16 @@ Check whether the verification needs another look with `git log --oneline 769061
 - A token generation stands for one access/refresh pair. The code writes both columns in one statement, so this loses nothing. Two ciphertexts are equal when generation and key version match, which is what the CAS compares.
 - The bank rotates refresh tokens: using one spends it. Rotation leaves the earlier access token working; revocation stops every token.
 - No lease lapses under a running sync: every provider call has a timeout (`PROVIDER_TIMEOUT_MS`, the 25 s `SYNC_DEADLINE_MS`) and `SYNC_LEASE_MS` is 120 s. A sync that outlives its lease is not modelled. The in-process refresh coalescing is not modelled either: under the lease, two refreshes of one connection never overlap.
-- Not covered: `writeAccounts` and the `FOR SHARE` / `FOR UPDATE` handshake with `deleteConnectionData`, decrypt failures, provider errors other than AUTH_EXPIRED (they record `error`), a crash between steps, and the reconnect's own sync getting 409 (it is one of the two syncs, but its 409 to the user is not a rule here).
+- Not covered: `writeAccounts` and the `FOR SHARE` / `FOR UPDATE` handshake with `deleteConnectionData`, decrypt failures, provider errors other than AUTH_EXPIRED (they record `error`; that write is still unconditional, so an old sync's `error` can land over a reconnect's `connected` the way B1 did, which the model does not see because `outcome` has no `error`), a crash between steps, and the reconnect's own sync getting 409 (it is one of the two syncs, but its 409 to the user is not a rule here).
 
 ## Findings
 
-**B1 (open): an old sync's AUTH_EXPIRED marks a just-reconnected connection `needs_reconnect`.** `promise.cfg` keeps the shortest path:
+**B1 (fixed): an old sync's AUTH_EXPIRED marked a just-reconnected connection `needs_reconnect`.** `broken-status-no-cas.cfg` keeps the shortest path:
 
 1. A sync takes the lease (`claim`) and reads the stored token (`resolveActiveAccessToken`); it is not expiring.
 2. The bank withdraws consent.
 3. `provider.fetchAccounts` is refused (401, AUTH_EXPIRED), so `runSync` decides `needs_reconnect`.
 4. The user reconnects: `connectBank`'s transaction stores a fresh token and sets `status` to `connected`. Its own `runSync` gets 409, because the old sync still holds the lease.
-5. The old sync's `finally` runs `update({ id, userId }, { status: "needs_reconnect" })`. The fresh token is stored, but the connection says it needs reconnecting.
+5. The old sync's `finally` wrote `needs_reconnect` over the fresh connection.
 
-The same happens on the refresh path when the reconnect commits after the recovery's second `findOne`. The recovery (`RefreshRejectionHonoursReplacement`) covers only a reconnect that lands before the refresh is refused; the fetch path has no recovery. Nothing is lost: the next manual sync uses the fresh token and records `connected`. It is a wrong status and a confusing 409 for the user, not a privacy or security finding. `whatif-status-checks-token.cfg` shows one closing design (the `needs_reconnect` write also requires `access_token` to still be the ciphertext the sync judged); not decided.
+The same happened on the refresh path when the reconnect committed after the recovery's second `findOne`. No data was lost and it was not a privacy or security finding. The fix: the `needs_reconnect` write is a compare-and-swap on the stored access token ciphertexts the verdict was about (`recordNeedsReconnect`); on a miss nothing is written and the old request answers "try again". `bank-connection-sync.integration.spec.ts`, "a stale sync and a reconnect (B1)", reproduces both paths against real Postgres.
