@@ -57,7 +57,7 @@ Refreshed on 2026-11-20 against `origin/main` and the merged pull requests up to
 
 | Epic | Action |
 |---|---|
-| E4, E22, E25 | None for sign-off: since 2026-11-20 an independent Fable decider signs tax vectors, recorded as the signer (DECISIONS, 2026-11-20). 308 older vectors are still unsigned. A paid accountant check before public launch stays the owner's |
+| E4, E22, E25 | None for sign-off: since 2026-11-20 an independent Fable decider signs tax vectors, recorded as the signer (DECISIONS, 2026-11-20). Since 2026-11-24 every vector is signed; 2027/28 stays provisional. A paid accountant check before public launch stays the owner's |
 | E18 | Run and log the backup restore drill; set the Sentry DSN and uptime monitors; create a production environment |
 | E3 D-12 | Done: the WorkOS key was rotated on 2026-11-13 |
 | Backend | Set `DELETION_TOMBSTONE_KEY` (never rotate it), `WEB_CLIENT_IP_HMAC_KEY` and `WORKOS_API_KEY`; add the WorkOS logout redirects (BE-04); run the retention cron service; apply the required checks and secret scanning on GitHub; choose the terms version for consent |
@@ -295,7 +295,7 @@ E1 blocks E2, E5 and E6 (do not build on an unauthenticated backend). E3, E4 and
   - C-15 and F-02 merged in #583.
   - C-10 and C-11 are done (bfcb776a, `selectEstimatedTaxDue`). The engine PR added the trading and property allowances, payments on account and month-by-month payslips, and removed the second tax implementations.
   - Web mortgage and savings calculators (`OverpaymentSimulator.tsx`, `OverpayVsSaveCompare.tsx`, `RateChangeTool.tsx`, `savingsForecast.utils.ts`, `DepositTimeline.tsx`) all call `@flump/finance-engine` (verified 2026-11-21).
-  - Owner action: all 334 vectors are unsigned (`signedOffBy` is null), so every figure stays unverified.
+  - Sign-off: since 2026-11-24 every vector is signed by a Fable decider (#906, #912); 2020/21 to 2026/27 report verified and 2027/28 stays provisional.
 - **Severity:** P0
 - **Blocked by:** none
 - **Done when:** Tax, NI, student-loan and Scottish figures match the published rules for each supported tax year, backed by test vectors written before the fix; no money arithmetic produces impossible results.
