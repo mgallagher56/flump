@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { evaluateUkStudentLoan } from "./debt-payoff.js";
 import { computeUkTakeHome } from "./uk-take-home.js";
 import { getUkIncomeThresholds } from "./uk-tax-thresholds.js";
 import {
@@ -60,5 +61,22 @@ describe("Plan 5 repayments start in 2026/27 (SI 2009/470 reg 15(2BA))", () => {
         studentLoans: ["plan1", "plan2"],
       }),
     ).toThrow(UnsupportedUkTaxYearError);
+  });
+});
+
+describe("evaluateUkStudentLoan says when no repayment was due (Plan 5 before 2026/27)", () => {
+  it("2025/26 Plan 5: nothing due, and the line says so with no threshold working", () => {
+    const e = evaluateUkStudentLoan("plan5", 35000, 40000, "2025/26");
+    expect(e.noRepaymentDue).toBe(true);
+    expect(e.annualRepayment).toBe(0);
+    expect(e.monthlyRepayment).toBe(0);
+    expect(e.reasoning).toBe("No Plan 5 repayments were due in the 2025 to 2026 tax year.");
+  });
+
+  it("2026/27 Plan 5: repayments due, (35,000 - 25,000) x 9% = 900 a year", () => {
+    const e = evaluateUkStudentLoan("plan5", 35000, 40000, "2026/27");
+    expect(e.noRepaymentDue).toBe(false);
+    expect(e.annualRepayment).toBe(900);
+    expect(e.reasoning).not.toContain("were due");
   });
 });

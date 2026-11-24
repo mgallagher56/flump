@@ -224,6 +224,12 @@ export interface StudentLoanEvaluationResult {
   writeOffYears: number;
   willLikelyRepayBeforeWriteOff: boolean;
   projectedOutcome: "repaid_before_write_off" | "written_off_first";
+  /**
+   * True when the year collects nothing on the plan (Plan 5 before 2026/27, from the rules'
+   * `noRepaymentDue`). The repayment is 0, `reasoning` says no repayments were due, and the
+   * threshold and rate are not working anyone paid.
+   */
+  noRepaymentDue: boolean;
   reasoning: string;
 }
 
