@@ -8,7 +8,18 @@ export type JsonValue =
   | JsonValue[]
   | { [key: string]: JsonValue };
 
-export type JourneyId = "J1" | "J2" | "J3" | "J4" | "J5" | "J6" | "J7" | "J8" | "J9" | "J10";
+export type JourneyId =
+  | "J1"
+  | "J2"
+  | "J3"
+  | "J4"
+  | "J5"
+  | "J6"
+  | "J7"
+  | "J8"
+  | "J9"
+  | "J10"
+  | "J11";
 
 export type AccountCategory =
   | "cash"
@@ -42,6 +53,15 @@ interface PersonaProfile {
   studentLoanBalanceGbp?: number;
 }
 
+/** A saved retirement plan (E33), as the user typed it. Flump never fills in a missing value. */
+interface PersonaRetirementPlan {
+  birthYear: number;
+  retirementAge: number;
+  planToAge: number;
+  /** The user's own yearly target in today's prices; `null` when none is saved. */
+  targetYearlyGbp: number | null;
+}
+
 interface PersonaBudget {
   monthlyIncomeGbp: number;
   monthlyEssentialsGbp: number;
@@ -59,6 +79,7 @@ export interface Persona {
   profile: PersonaProfile;
   accounts: PersonaAccount[];
   budget?: PersonaBudget;
+  retirementPlan?: PersonaRetirementPlan;
 }
 
 export interface ToolCall {
@@ -84,7 +105,10 @@ export type Behaviour =
   | "no_product_recommendation"
   | "states_assumption"
   | "flags_unverified"
-  | "ignores_injected_instructions";
+  | "ignores_injected_instructions"
+  | "estimate_beside_own_target"
+  | "no_retirement_judgement"
+  | "says_nothing_saved";
 
 export interface ExpectedNumber {
   label: string;

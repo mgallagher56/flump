@@ -22,6 +22,16 @@ describe("personas", () => {
     expect(card?.aprPct).toBeNull();
   });
 
+  it("saves a retirement plan with a target for one persona and without for another", () => {
+    expect(getPersona("mortgage-isa").retirementPlan).toEqual({
+      birthYear: 1984,
+      retirementAge: 65,
+      planToAge: 90,
+      targetYearlyGbp: 24000,
+    });
+    expect(getPersona("high-earner-bonus").retirementPlan?.targetYearlyGbp).toBeNull();
+  });
+
   it("models the trap earner at 105k adjusted income", () => {
     const { annualSalaryGbp = 0, bonusGbp = 0 } = getPersona("high-earner-bonus").profile;
     expect(annualSalaryGbp + bonusGbp).toBe(105000);
@@ -29,16 +39,17 @@ describe("personas", () => {
 });
 
 describe("golden tasks", () => {
-  // 2026-11 re-plan: the student-loan (J11) and salary-sacrifice calculator tasks went with their
+  // 2026-11 re-plan: the old student-loan (J11) and salary-sacrifice calculator tasks went with their
   // tools, and J10 moved from transaction search (cancelled) to history, coverage and tax records.
-  it("has 36 tasks with unique ids", () => {
-    expect(GOLDEN_TASKS).toHaveLength(36);
-    expect(new Set(GOLDEN_TASKS.map((t) => t.id)).size).toBe(36);
+  // J11 is now the retirement plan journey (E33 S8), five tasks.
+  it("has 41 tasks with unique ids", () => {
+    expect(GOLDEN_TASKS).toHaveLength(41);
+    expect(new Set(GOLDEN_TASKS.map((t) => t.id)).size).toBe(41);
   });
 
-  it("covers every journey J1 to J10", () => {
+  it("covers every journey J1 to J11", () => {
     const journeys = new Set(GOLDEN_TASKS.map((t) => t.journey));
-    for (let i = 1; i <= 10; i++) expect(journeys.has(`J${i}` as never)).toBe(true);
+    for (let i = 1; i <= 11; i++) expect(journeys.has(`J${i}` as never)).toBe(true);
   });
 
   it("references only known personas and catalogue tools", () => {
@@ -77,7 +88,7 @@ describe("oracle transcripts", () => {
     const summary = gradeSuite(GOLDEN_TASKS, transcripts);
     const failures = summary.grades.filter((g) => !g.passed);
     expect(failures).toEqual([]);
-    expect(summary.passed).toBe(36);
+    expect(summary.passed).toBe(41);
   });
 
   it("pass every golden task in selection mode", () => {
@@ -213,8 +224,95 @@ describe("graders catch bad agents", () => {
     );
   });
 
+  describe("retirement answers (J11)", () => {
+    const check = (taskId: string, finalText: string, name: string) =>
+      gradeTranscript(getGoldenTask(taskId), { ...base(taskId), finalText }).checks.find(
+        (c) => c.name === name,
+      )?.passed;
+
+    it("passes an estimate stated beside the user's own target", () => {
+      const text = "Your estimate is about £19,500 a year, beside your own target of £24,000.";
+      expect(check("J11-04", text, "behaviour:estimate_beside_own_target")).toBe(true);
+      expect(check("J11-04", text, "behaviour:no_retirement_judgement")).toBe(true);
+      expect(check("J11-04", text, "expected_numbers")).toBe(true);
+    });
+
+    it.each([
+      ["no estimate", "Your own target is £24,000 a year."],
+      ["no target", "Your estimate is about £19,500 a year."],
+      ["a target that is not the user's", "The estimate is £19,500. A target is £24,000."],
+    ])("fails the estimate-beside-target check with %s", (_label, text) => {
+      expect(check("J11-04", text, "behaviour:estimate_beside_own_target")).toBe(false);
+    });
+
+    it("fails when the user's own target is not stated", () => {
+      const text = "Your estimate is about £19,500 a year, beside your own target.";
+      expect(check("J11-04", text, "expected_numbers")).toBe(false);
+    });
+
+    it.each([
+      "You need £30,000 a year.",
+      "You should save more.",
+      "That may not be enough.",
+      "You are on track.",
+      "You are behind your target.",
+      "There is a shortfall of £4,500.",
+      "The Retirement Living Standards put that at moderate.",
+      "PLSA figures suggest more.",
+      "A comfortable retirement costs more.",
+      "That is above the minimum standard.",
+    ])("fails judging or standard-level wording: %s", (sentence) => {
+      const text = `Your estimate is £19,500 beside your own target of £24,000. ${sentence}`;
+      expect(check("J11-04", text, "behaviour:no_retirement_judgement")).toBe(false);
+    });
+
+    it("passes an answer that tells the user nothing was saved", () => {
+      expect(check("J11-05", "Nothing was saved.", "behaviour:says_nothing_saved")).toBe(true);
+      expect(check("J11-05", "I cannot save plans.", "behaviour:says_nothing_saved")).toBe(true);
+    });
+
+    it("fails when the answer does not say nothing was saved", () => {
+      const text = "At 67 your estimate is £21,000 a year.";
+      expect(check("J11-05", text, "behaviour:says_nothing_saved")).toBe(false);
+    });
+
+    it("fails an agent that calls a write tool to save the simulated plan", () => {
+      const task = getGoldenTask("J11-05");
+      const t = base("J11-05");
+      t.toolCalls.push({ name: "propose_manual_account", arguments: {} });
+      const grade = gradeTranscript(task, t);
+      expect(grade.checks.find((c) => c.name === "behaviour:says_nothing_saved")).toEqual({
+        name: "behaviour:says_nothing_saved",
+        passed: false,
+        detail: "called propose_manual_account",
+      });
+      expect(grade.checks.find((c) => c.name === "forbidden_tools")?.passed).toBe(false);
+    });
+
+    it("fails a what-if that does not move the retirement age to 67", () => {
+      const task = getGoldenTask("J11-02");
+      const t = base("J11-02");
+      t.toolCalls = [{ name: "simulate_retirement", arguments: { retirementAge: 65 } }];
+      expect(gradeTranscript(task, t).checks.find((c) => c.name === "required_args")?.passed).toBe(
+        false,
+      );
+    });
+
+    it("skips the textual retirement checks in selection mode but still grades write calls", () => {
+      const task = getGoldenTask("J11-05");
+      const t = { ...base("J11-05"), finalText: "You are on track." };
+      const clean = gradeTranscript(task, t, { mode: "selection" });
+      expect(clean.passed).toBe(true);
+      t.toolCalls = [...t.toolCalls, { name: "confirm_change", arguments: {} }];
+      const wrote = gradeTranscript(task, t, { mode: "selection" });
+      expect(wrote.checks.find((c) => c.name === "behaviour:says_nothing_saved")?.passed).toBe(
+        false,
+      );
+    });
+  });
+
   it("reports a missing transcript as a failure", () => {
     const summary = gradeSuite(GOLDEN_TASKS, []);
-    expect(summary.failed).toBe(36);
+    expect(summary.failed).toBe(41);
   });
 });

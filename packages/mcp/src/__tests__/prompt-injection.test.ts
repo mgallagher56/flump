@@ -150,6 +150,37 @@ describe("MCP prompt-injection defense (E36 H5)", () => {
     expect(h.imports.staged).toEqual([]);
   });
 
+  // E33 S8: the loop above runs the retirement tools without a birth year or plan, so they return
+  // early and never read budget line names. This runs a target built from the poisoned lines.
+  it("retirement tools: a target built from poisoned budget lines never echoes their names", async () => {
+    const budgetBuiltPlan = {
+      ...poisonedPersona,
+      birthYear: new Date().getUTCFullYear() - 60,
+      retirementPlan: {
+        retirementAge: 65,
+        planToAge: 85,
+        target: { kind: "budget" as const, lineSettings: [] },
+      },
+    };
+    for (const token of [ANON_TOKEN, FULL_TOKEN]) {
+      h = await connectTestClient(budgetBuiltPlan, { token });
+      for (const name of ["get_retirement_picture", "simulate_retirement"]) {
+        const text = await h.callText(name, {});
+        const env = JSON.parse(text) as ParsedEnvelope;
+        // Lines bud-1 to bud-4 are monthly spending of 251, 252, 253 and 254 (bud-0 is income),
+        // all left at "continues": (251 + 252 + 253 + 254) x 12 = 1,010 x 12 = 12,120 a year.
+        expect(env.result.targetYearlyIncomeGbp, `${name} ${token.tokenId}`).toBe(12120);
+        expect(env.provenance.userText, name).toBe("untrusted_data");
+        expect(text, `${name} ${token.tokenId}`).not.toMatch(
+          /Ignore previous|SYSTEM:|commit_import|transfer £10000|XXXX|‮|​/,
+        );
+      }
+      expect(h.imports.staged).toEqual([]);
+      await h.close();
+      h = undefined;
+    }
+  });
+
   it("staged-import flow: marks userText provenance, never echoes imported text, and never commits without web review", async () => {
     h = await connectTestClient(emptyUser, { token: FULL_TOKEN });
     const stageAccounts = INJECTION_FIXTURES.map((name, i) => ({
