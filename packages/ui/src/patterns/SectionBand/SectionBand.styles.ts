@@ -34,8 +34,15 @@ export const sectionBandRecipe = cva({
         borderStyle: "solid",
         borderColor: "border.hero",
       },
-      // Charcoal: the closing band above the footer.
-      contrast: { backgroundColor: "surface.contrast", color: "text.onContrast" },
+      // Charcoal: the closing band above the footer. In dark the band is only 1.05:1 off the
+      // canvas, so a border.section top edge marks where it starts.
+      contrast: {
+        backgroundColor: "surface.contrast",
+        color: "text.onContrast",
+        borderTopWidth: { base: "0", _dark: "1px", _systemDark: "1px" },
+        borderTopStyle: "solid",
+        borderTopColor: "border.section",
+      },
     },
     size: {
       default: {},
