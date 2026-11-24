@@ -200,12 +200,18 @@ export const StampDutyEstimate: FC<StampDutyEstimateProps> = ({
   // The result whose regime and dates the line uses: one place, so both ends share them.
   const result = solved ? solved.high : typed;
 
+  // Every answer is in but the estimate has no result: only the monthly payment tool does this,
+  // when no default rate band fits once the tax comes off the deposit and no rate is typed.
+  const answersComplete =
+    stampDutyTaxAnswers({ jurisdiction, allFirstTimeBuyersMainHome }) !== null;
   const emptyPrompt =
     !usesEstimate && (propertyPriceGbp === null || !(propertyPriceGbp > 0))
       ? "Enter a property price to see an estimate."
       : jurisdiction === null
         ? "Choose where the property is to see an estimate."
-        : "Answer the first-time buyer question to see an estimate.";
+        : usesEstimate && answersComplete
+          ? "No default rate fits once the tax comes off your deposit. Enter an interest rate to see an estimate."
+          : "Answer the first-time buyer question to see an estimate.";
 
   let figure: string | null = null;
   if (solved) {
