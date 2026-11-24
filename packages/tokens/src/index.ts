@@ -262,7 +262,7 @@ export const semanticTokens = {
         apricot: { value: { base: "#fae5cc", _dark: "#42311c" } },
         sage: { value: { base: "#e1edd6", _dark: "#2b3822" } },
         sky: { value: { base: "#d8e8f2", _dark: "#1d3846" } },
-        rose: { value: { base: "#f5e1ea", _dark: "#4d2939" } },
+        rose: { value: { base: "#f3e3ea", _dark: "#4d2939" } },
         violet: { value: { base: "#e3e0f4", _dark: "#353050" } },
       },
     },
