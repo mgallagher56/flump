@@ -32,7 +32,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { ChartTooltip, chartCursorProps } from "~/features/charts";
+import { ChartTooltip, chartCursorProps, chartXAxisProps } from "~/features/charts";
 import { formatEstimate } from "~/utils/roundEstimate";
 import { nearDataAxis } from "~/utils/yAxisTicks";
 import {
@@ -361,6 +361,9 @@ export const SavingsForecast: FC<SavingsForecastProps> = ({
                 )}
                 tickLine={false}
                 ticks={ticks}
+                // The last label is end-anchored, so it sits half a label left of where recharts
+                // places it. The shared gap keeps that shift clear of the label before it.
+                minTickGap={chartXAxisProps.minTickGap}
               />
               <YAxis
                 axisLine={false}
