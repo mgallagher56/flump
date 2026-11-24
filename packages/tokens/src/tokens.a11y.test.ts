@@ -741,9 +741,9 @@ describe("E16 surface tints", () => {
     },
   );
 
-  // Owner choice "A" (2026-11-20): marketing bands alternate the canvas with surface.tint.teal, and
-  // those bands carry links and focus rings. By hand from native.generated.ts: primary #0f6b5e on
-  // #dcede6 is 5.27:1 (light) and #6fd0ba on #1d3932 is 6.78:1 (dark).
+  // The SectionBand `teal` tone (owner choice "A", 2026-11-20, kept as a tone after Midnight and
+  // Mint) carries links and focus rings. By hand: primary #0b6b5d on #c6e6dc is 4.81:1 (light)
+  // and #6fd0ba on #1d3934 is 6.76:1 (dark).
   it("the links and controls on a teal marketing band keep their contrast", () => {
     assertPair({ fg: "primary", bg: "surface.tint.teal", themes: BOTH, min: 4.5, role: "text" });
     assertPair({
