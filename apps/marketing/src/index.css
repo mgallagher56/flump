@@ -102,3 +102,21 @@
 main[tabindex="-1"]:focus {
   outline: none;
 }
+
+/* Forced colours (Windows contrast themes). The browser forces backgrounds to the system Canvas,
+   but text set through these tokens kept its own off-white, so labels on primary buttons, the
+   charcoal band and the hero read at about 1:1. Unlayered, so it beats the token layer: each fill
+   and the text on it take a system colour pair. */
+@media (forced-colors: active) {
+  :root,
+  [data-theme] {
+    --colors-primary-solid: ButtonFace;
+    --colors-primary-hover: ButtonFace;
+    --colors-primary-foreground: ButtonText;
+    --colors-surface-contrast: Canvas;
+    --colors-text-on-contrast: CanvasText;
+    --colors-surface-hero: Canvas;
+    --colors-text-on-hero: CanvasText;
+    --colors-text-hero-figure: CanvasText;
+  }
+}

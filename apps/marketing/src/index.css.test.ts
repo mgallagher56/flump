@@ -31,4 +31,15 @@ describe("apps/marketing index.css", () => {
       /outline-offset:/,
     );
   });
+
+  it("maps fills and the text on them to system colour pairs in forced colours", () => {
+    const block = css.match(/@media \(forced-colors: active\)\s*\{[\s\S]*?\n\}/)?.[0] ?? "";
+    expect(block).toMatch(/--colors-primary-solid:\s*ButtonFace/);
+    expect(block).toMatch(/--colors-primary-foreground:\s*ButtonText/);
+    expect(block).toMatch(/--colors-surface-contrast:\s*Canvas;/);
+    expect(block).toMatch(/--colors-text-on-contrast:\s*CanvasText/);
+    expect(block).toMatch(/--colors-surface-hero:\s*Canvas;/);
+    expect(block).toMatch(/--colors-text-on-hero:\s*CanvasText/);
+    expect(block).toMatch(/--colors-text-hero-figure:\s*CanvasText/);
+  });
 });
