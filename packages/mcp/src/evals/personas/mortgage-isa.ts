@@ -31,4 +31,5 @@ export const mortgageIsa: Persona = {
     },
   ],
   budget: { monthlyIncomeGbp: 3900, monthlyEssentialsGbp: 2600, monthlyDiscretionaryGbp: 700 },
+  retirementPlan: { birthYear: 1984, retirementAge: 65, planToAge: 90, targetYearlyGbp: 24000 },
 };

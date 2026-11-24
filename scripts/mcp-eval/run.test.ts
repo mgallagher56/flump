@@ -51,9 +51,9 @@ describe("parseArgs", () => {
 });
 
 describe("runDry", () => {
-  test("oracle transcripts pass all 40 golden tasks", () => {
+  test("oracle transcripts pass all 41 golden tasks", () => {
     const summary = runDry(GOLDEN_TASKS);
-    expect(summary.total).toBe(36);
+    expect(summary.total).toBe(41);
     expect(summary.failed).toBe(0);
   });
 });
@@ -88,6 +88,23 @@ describe("runLive", () => {
     expect(result.stoppedAtCap).toBe(false);
     expect(result.spentGbp).toBeGreaterThan(0);
     expect(calls).toHaveLength(1);
+  });
+
+  test("sends the persona's saved retirement plan and offers both retirement tools", async () => {
+    const bodies: Array<{ system: string; tools: Array<{ name: string }> }> = [];
+    const fetchImpl = (async (_url: string, init: RequestInit) => {
+      bodies.push(JSON.parse(String(init.body)));
+      return json({ content: [], usage: { input_tokens: 10, output_tokens: 1 } });
+    }) as unknown as typeof fetch;
+    const retirementTask = GOLDEN_TASKS.find((t) => t.id === "J11-01");
+    if (!retirementTask) throw new Error("J11-01 missing");
+    await runLive({ tasks: [retirementTask], apiKey: "k", maxGbp: 1, model: "m", fetchImpl });
+    expect(bodies[0]?.system).toContain(
+      '"retirementPlan":{"birthYear":1984,"retirementAge":65,"planToAge":90,"targetYearlyGbp":24000}',
+    );
+    const names = bodies[0]?.tools.map((t) => t.name) ?? [];
+    expect(names).toContain("get_retirement_picture");
+    expect(names).toContain("simulate_retirement");
   });
 
   test("stops at the cap without sending further requests", async () => {
@@ -140,7 +157,7 @@ describe("main", () => {
     const code = await main([], {}, { log: (m) => out.push(m) });
     expect(code).toBe(0);
     expect(out.join("\n")).toContain("dry run");
-    expect(out.join("\n")).toContain("36/36");
+    expect(out.join("\n")).toContain("41/41");
   });
 
   test("a bad cap exits non-zero", async () => {

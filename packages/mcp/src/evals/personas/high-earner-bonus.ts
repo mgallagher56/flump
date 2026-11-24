@@ -17,4 +17,6 @@ export const highEarnerBonus: Persona = {
     },
   ],
   budget: { monthlyIncomeGbp: 6100, monthlyEssentialsGbp: 3200, monthlyDiscretionaryGbp: 1500 },
+  // Ages saved, no target: the agent must ask for the user's own target, never propose one.
+  retirementPlan: { birthYear: 1979, retirementAge: 60, planToAge: 95, targetYearlyGbp: null },
 };

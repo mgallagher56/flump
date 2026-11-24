@@ -51,6 +51,26 @@ const ASSUMPTION_PATTERN =
 const UNVERIFIED_PATTERN =
   /\b(unverified|not (yet )?(been )?(verified|signed off|checked)|figures? (have|has) not been)\b/i;
 
+/**
+ * Retirement answers (E33 R7): the estimate sits beside the user's own target, with no verdict on
+ * it and no Retirement Living Standards level.
+ */
+const ESTIMATE_PATTERN = /\bestimat\w*/i;
+const OWN_TARGET_PATTERN = /\b(your|own)\b[^.]{0,20}\btarget\b/i;
+const RETIREMENT_JUDGEMENT_PATTERNS: readonly RegExp[] = [
+  /\bneed(s|ed)?\b/i,
+  /\bshould\b/i,
+  /\benough\b/i,
+  /\bon track\b/i,
+  /\bbehind\b/i,
+  /\bshortfalls?\b/i,
+  /\bretirement living standards?\b/i,
+  /\bPLSA\b/,
+  /\b(minimum|moderate|comfortable)\b.{0,15}\b(retirement|standard|lifestyle|level)\b/i,
+];
+const NOTHING_SAVED_PATTERN =
+  /\b(nothing (was |has been |is )?saved|not (been )?saved|saves nothing|can(no|')t save|cannot save|unable to save)\b/i;
+
 function argMatches(actual: JsonValue | undefined, expected: JsonValue): boolean {
   if (expected === ANY) return actual !== undefined && actual !== null;
   if (typeof expected === "number" && typeof actual === "number") {
@@ -169,6 +189,25 @@ function checkBehaviour(
           ? `write tools called: ${wrote.map((c) => c.name).join(", ")}`
           : undefined,
       };
+    }
+    case "estimate_beside_own_target":
+      return textual(
+        ESTIMATE_PATTERN.test(text) && OWN_TARGET_PATTERN.test(text),
+        "final answer does not give the estimate beside the user's own target",
+      );
+    case "no_retirement_judgement": {
+      const hit = RETIREMENT_JUDGEMENT_PATTERNS.find((p) => p.test(text));
+      return textual(!hit, `judging or standard-level phrase matched ${hit}`);
+    }
+    case "says_nothing_saved": {
+      const wrote = calls.filter((c) => WRITE_TOOL_PATTERN.test(c.name));
+      if (wrote.length > 0) {
+        return { name, passed: false, detail: `called ${wrote.map((c) => c.name).join(", ")}` };
+      }
+      return textual(
+        NOTHING_SAVED_PATTERN.test(text),
+        "final answer does not say nothing was saved",
+      );
     }
   }
 }

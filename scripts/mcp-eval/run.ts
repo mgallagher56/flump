@@ -118,7 +118,7 @@ function systemPrompt(task: GoldenTask): string {
     "You are a UK personal-finance assistant connected to the user's Flump data through tools.",
     "Call the tools you need. If a required figure is missing, ask the user rather than guessing.",
     "Never confirm a change without the user, and never recommend a specific financial product.",
-    `User data (rows): ${JSON.stringify({ profile: persona.profile, accounts: persona.accounts, budget: persona.budget, facts: personaFacts(persona) })}`,
+    `User data (rows): ${JSON.stringify({ profile: persona.profile, accounts: persona.accounts, budget: persona.budget, retirementPlan: persona.retirementPlan, facts: personaFacts(persona) })}`,
   ].join("\n");
 }
 
