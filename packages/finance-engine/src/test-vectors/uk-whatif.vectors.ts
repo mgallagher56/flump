@@ -832,7 +832,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:647f9a30e38bca4c002cd9d46b9ed1b3fd99f88b72e85d8d9efa03476bc4ecb8",
+    rulingRef:
+      "ITEPA 2003 s.681H(3) counts weeks by Monday (53 in 2026/27) and GOV.UK gives 27.05 a week; the result does not depend on the week count because adjusted net income 59,999 is not over the 60,000 threshold (s.681C(2)), so the charge is 0.",
   },
   {
     id: "hicbc.2026-27.ani60200.children1",
@@ -953,7 +957,9 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "Annual method. PA 12570 (no taper at ANI 30000); taxable 30000 - 12570 = 17430; basic 17430 x 20% = 3486; higher 0 x 40% = 0; additional 0 x 45% = 0; income tax 3486; NI on 30000: 17430 x 8% + 0 x 2% = 1394.4. Take-home = 30000 - tax 3486 - NI 1394.4 = 25119.6.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:ac2128fa58c0d3eba039ae2ad9c9bc69772d6e72c170fe19c6b56344382c4e9d",
   },
   {
     id: "takeHome.2026-27.ewni.60000.salary-sacrifice3000",
@@ -978,7 +984,9 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "Annual method. salary sacrifice 3000 reduces pay for tax, NI and student loan: 57000; PA 12570 (no taper at ANI 57000); taxable 57000 - 12570 = 44430; basic 37700 x 20% = 7540; higher 6730 x 40% = 2692; additional 0 x 45% = 0; income tax 10232; NI on 57000: 37700 x 8% + 6730 x 2% = 3150.6. Take-home = 60000 - pension 3000 - tax 10232 - NI 3150.6 = 43617.4.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:3eedbd7df6c0a250174e309b56558018eda3df96f6f04defeeb64f3a9c0d20e9",
   },
   {
     id: "takeHome.2026-27.ewni.60000.net-pay3000",
@@ -1005,7 +1013,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: net-pay treatment of the pension is the engine's pinned UNVERIFIED behaviour (UK_TAX_PENSION_TREATMENT).",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:e2d635b48112092dfd5e00b90212d68b7c0be3d7b7ca8bf47ed43500c3bb7670",
+    rulingRef:
+      "GOV.UK pension tax relief: under net pay the contribution comes out before Income Tax, so tax is on 57,000; the GOV.UK salary sacrifice policy paper confirms ordinary employee contributions bear employee NICs, so NI is on 60,000.",
   },
   {
     id: "takeHome.2026-27.ewni.60000.relief-at-source3000",
@@ -1031,7 +1043,9 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "Annual method. relief at source: net 3000 grossed up x 1.25 = 3750; basic rate limit and higher rate limit increased by the gross contribution (FA 2004 s.192(4)) and ANI reduced by it; assumes the higher-rate relief has been claimed (FA 2004 s.192(4)); 3000 paid from take-home; PA 12570 (no taper at ANI 56250); taxable 60000 - 12570 = 47430; basic 41450 x 20% = 8290; higher 5980 x 40% = 2392; additional 0 x 45% = 0; income tax 10682; NI on 60000: 37700 x 8% + 9730 x 2% = 3210.6. Take-home = 60000 - net contribution 3000 - tax 10682 - NI 3210.6 = 43107.4.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:961cb05f43d0b95b2f81ff2211cb07292b666ffafcc19e08c58c85ec025d9997",
   },
   {
     id: "takeHome.2026-27.ewni.70000.none0.plan2.children2",
@@ -1090,7 +1104,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: Scottish advanced/top boundary 125,140 is a published figure but its frame (taxable vs gross) is ambiguous between GOV.UK pages.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:372607ea7df426301d77e1395eda7ffded4ed72de35aa1f990ec9991806552d8",
+    rulingRef:
+      "Scottish bands are in taxable income after the Personal Allowance: GOV.UK rates and allowances page and the 2026 to 2027 employer page both give 3,967/16,956/31,092/62,430/125,140; this vector is well below the 125,140 boundary.",
   },
   {
     id: "takeHome.2025-26.ewni.60000.salary-sacrifice3000",
@@ -1268,7 +1286,9 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "Change in annual take-home for +1000 gross. At 99500: PA 12570 (no taper at ANI 99500); taxable 99500 - 12570 = 86930; basic 37700 x 20% = 7540; higher 49230 x 40% = 19692; additional 0 x 45% = 0; income tax 27232; NI on 99500: 37700 x 8% + 49230 x 2% = 4000.6. Take-home = 99500 - tax 27232 - NI 4000.6 = 68267.4. At 100500: PA 12570 - floor((ANI 100500 - 100000) / 2) = 12570 - 250 = 12320; taxable 100500 - 12320 = 88180; basic 37700 x 20% = 7540; higher 50480 x 40% = 20192; additional 0 x 45% = 0; income tax 27732; NI on 100500: 37700 x 8% + 50230 x 2% = 4020.6. Take-home = 100500 - tax 27732 - NI 4020.6 = 68747.4. Delta = 1000 - tax change 500 - NI change 20 = 480 (effective marginal rate 52%).",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:8e290dd25b43b67dd4a622d85ad4bdd32045b31725e543bdea9dadbdf2cc9bda",
   },
   {
     id: "whatIfDelta.2026-27.ewni.100000.plus1000",
@@ -1287,7 +1307,9 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "Change in annual take-home for +1000 gross. At 100000: PA 12570 (no taper at ANI 100000); taxable 100000 - 12570 = 87430; basic 37700 x 20% = 7540; higher 49730 x 40% = 19892; additional 0 x 45% = 0; income tax 27432; NI on 100000: 37700 x 8% + 49730 x 2% = 4010.6. Take-home = 100000 - tax 27432 - NI 4010.6 = 68557.4. At 101000: PA 12570 - floor((ANI 101000 - 100000) / 2) = 12570 - 500 = 12070; taxable 101000 - 12070 = 88930; basic 37700 x 20% = 7540; higher 51230 x 40% = 20492; additional 0 x 45% = 0; income tax 28032; NI on 101000: 37700 x 8% + 50730 x 2% = 4030.6. Take-home = 101000 - tax 28032 - NI 4030.6 = 68937.4. Delta = 1000 - tax change 600 - NI change 20 = 380 (effective marginal rate 62%).",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:fe40d3ca0e9f00e750fc20c913d8b73a8ab0d3db1265ffce141d0c4281b1d220",
   },
   {
     id: "whatIfDelta.2026-27.ewni.125000.plus1000",
@@ -1306,7 +1328,9 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "Change in annual take-home for +1000 gross. At 125000: PA 12570 - floor((ANI 125000 - 100000) / 2) = 12570 - 12500 = 70; taxable 125000 - 70 = 124930; basic 37700 x 20% = 7540; higher 87230 x 40% = 34892; additional 0 x 45% = 0; income tax 42432; NI on 125000: 37700 x 8% + 74730 x 2% = 4510.6. Take-home = 125000 - tax 42432 - NI 4510.6 = 78057.4. At 126000: PA 12570 - floor((ANI 126000 - 100000) / 2) = 12570 - 13000 = 0; taxable 126000 - 0 = 126000; basic 37700 x 20% = 7540; higher 87440 x 40% = 34976; additional 860 x 45% = 387; income tax 42903; NI on 126000: 37700 x 8% + 75730 x 2% = 4530.6. Take-home = 126000 - tax 42903 - NI 4530.6 = 78566.4. Delta = 1000 - tax change 471 - NI change 20 = 509 (effective marginal rate 49.1%).",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:5ab06de2e1b59a4a7d8791cd02510b4f4bcd6135d7d07e50eb93cf2c109cbd84",
   },
   {
     id: "whatIfDelta.2026-27.ewni.50270.plus1000",
@@ -1325,7 +1349,9 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "Change in annual take-home for +1000 gross. At 50270: PA 12570 (no taper at ANI 50270); taxable 50270 - 12570 = 37700; basic 37700 x 20% = 7540; higher 0 x 40% = 0; additional 0 x 45% = 0; income tax 7540; NI on 50270: 37700 x 8% + 0 x 2% = 3016. Take-home = 50270 - tax 7540 - NI 3016 = 39714. At 51270: PA 12570 (no taper at ANI 51270); taxable 51270 - 12570 = 38700; basic 37700 x 20% = 7540; higher 1000 x 40% = 400; additional 0 x 45% = 0; income tax 7940; NI on 51270: 37700 x 8% + 1000 x 2% = 3036. Take-home = 51270 - tax 7940 - NI 3036 = 40294. Delta = 1000 - tax change 400 - NI change 20 = 580 (effective marginal rate 42%).",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:6b76fa10dd0220ce7bb33ea9928c79339efe6a38b3d107ffd39761f0a96ce41e",
   },
   {
     id: "whatIfDelta.2026-27.ewni.60000.plus1000",
@@ -1344,7 +1370,9 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "Change in annual take-home for +1000 gross. At 60000: PA 12570 (no taper at ANI 60000); taxable 60000 - 12570 = 47430; basic 37700 x 20% = 7540; higher 9730 x 40% = 3892; additional 0 x 45% = 0; income tax 11432; NI on 60000: 37700 x 8% + 9730 x 2% = 3210.6. Take-home = 60000 - tax 11432 - NI 3210.6 = 45357.4. At 61000: PA 12570 (no taper at ANI 61000); taxable 61000 - 12570 = 48430; basic 37700 x 20% = 7540; higher 10730 x 40% = 4292; additional 0 x 45% = 0; income tax 11832; NI on 61000: 37700 x 8% + 10730 x 2% = 3230.6. Take-home = 61000 - tax 11832 - NI 3230.6 = 45937.4. Delta = 1000 - tax change 400 - NI change 20 = 580 (effective marginal rate 42%).",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:b4921af63d3302c920c09821592907507e929d94aaf1327aaeb3f63df78de107",
   },
   {
     id: "whatIfDelta.2026-27.ewni.80000.plus1000",
@@ -1363,7 +1391,9 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "Change in annual take-home for +1000 gross. At 80000: PA 12570 (no taper at ANI 80000); taxable 80000 - 12570 = 67430; basic 37700 x 20% = 7540; higher 29730 x 40% = 11892; additional 0 x 45% = 0; income tax 19432; NI on 80000: 37700 x 8% + 29730 x 2% = 3610.6. Take-home = 80000 - tax 19432 - NI 3610.6 = 56957.4. At 81000: PA 12570 (no taper at ANI 81000); taxable 81000 - 12570 = 68430; basic 37700 x 20% = 7540; higher 30730 x 40% = 12292; additional 0 x 45% = 0; income tax 19832; NI on 81000: 37700 x 8% + 30730 x 2% = 3630.6. Take-home = 81000 - tax 19832 - NI 3630.6 = 57537.4. Delta = 1000 - tax change 400 - NI change 20 = 580 (effective marginal rate 42%).",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:d21efd6c4e7b18ac4c48f9b66b0ab6c5270321fa8249e454b33afc0e29688d6b",
   },
   {
     id: "whatIfDelta.2026-27.ewni.60000.plus1000.children1",
@@ -1514,7 +1544,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: Scottish advanced/top boundary 125,140 is a published figure but its frame (taxable vs gross) is ambiguous between GOV.UK pages.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:dcb06b42e8a39082b34c137bae386b46dad45ad1843a5e1cf2692dc8ea22648f",
+    rulingRef:
+      "Bands are in taxable income after the Personal Allowance (GOV.UK rates and allowances page, 2026 to 2027 employer page); 125,140 is not reached; 21% intermediate plus 8% NI gives 29%.",
   },
   {
     id: "scottishMarginal.2026-27.45000.plus1000",
@@ -1535,7 +1569,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: Scottish advanced/top boundary 125,140 is a published figure but its frame (taxable vs gross) is ambiguous between GOV.UK pages.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:2ae62772a4f2d20ce9f7b181e12457899ca282711406fd2197441308e1ec1e2e",
+    rulingRef:
+      "Bands are in taxable income after the Personal Allowance (GOV.UK rates and allowances page, 2026 to 2027 employer page); 125,140 is not reached; 42% higher plus 8% NI gives 50%.",
   },
   {
     id: "scottishMarginal.2026-27.55000.plus1000",
@@ -1556,7 +1594,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: Scottish advanced/top boundary 125,140 is a published figure but its frame (taxable vs gross) is ambiguous between GOV.UK pages.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:97b5d2c170ac42f904cbf2572bd42c87f96995088bd31b44fb95572da71f37ec",
+    rulingRef:
+      "Bands are in taxable income after the Personal Allowance (GOV.UK rates and allowances page, 2026 to 2027 employer page); 125,140 is not reached; 42% plus 2% NI above the 50,270 upper earnings limit gives 44%.",
   },
   {
     id: "scottishMarginal.2026-27.85000.plus1000",
@@ -1577,7 +1619,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: Scottish advanced/top boundary 125,140 is a published figure but its frame (taxable vs gross) is ambiguous between GOV.UK pages.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:69cc8d02e6d92b6b80841a38b502267fc53d24851d78353ba4cda6a56da247e3",
+    rulingRef:
+      "Bands are in taxable income after the Personal Allowance; the advanced rate starts at taxable 62,431 (gross 75,001, as on the GOV.UK Scottish income tax page); 45% plus 2% NI gives 47%.",
   },
   {
     id: "studentLoanMulti.2020-21.plan2+postgrad.45000",
@@ -1703,7 +1749,9 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "Undergraduate Plan 2 (9% over its threshold) and Postgraduate Loan (6% over 21,000) are repaid together: plan2 (45000 - 29385) x 9% = 1405.35; postgrad (45000 - 21000) x 6% = 1440. Total 2845.35.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:84a568d3d65ed669e9dfc8a1e56f455e6f8448405211b997ef3c0c0cee8d6748",
   },
   {
     id: "studentLoanMulti.2026-27.plan5+postgrad.24000",
@@ -1721,7 +1769,9 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "Plan 5 (9% over 25,000) and Postgraduate Loan (6% over 21,000) are repaid together: plan5 (24000 - 25000) x 9% = 0; postgrad (24000 - 21000) x 6% = 180. Total 180.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:821c80968497c6b14abaa679520e5b585873c691d529117c76a935e4dcca03f7",
   },
   {
     id: "studentLoanMulti.2026-27.plan5+postgrad.30000",
@@ -1739,7 +1789,9 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "Plan 5 (9% over 25,000) and Postgraduate Loan (6% over 21,000) are repaid together: plan5 (30000 - 25000) x 9% = 450; postgrad (30000 - 21000) x 6% = 540. Total 990.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:7b55f6707b5d2ee61968c418abd723a4ef1405366e8969cf6042f11427b2117a",
   },
   {
     id: "studentLoanMulti.2026-27.plan5+postgrad.45000",
@@ -1757,7 +1809,9 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "Plan 5 (9% over 25,000) and Postgraduate Loan (6% over 21,000) are repaid together: plan5 (45000 - 25000) x 9% = 1800; postgrad (45000 - 21000) x 6% = 1440. Total 3240.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:09ed31c23646f02c0e6e558b270fc9eac9463146978058436221e409e688b1db",
   },
   {
     id: "reliefAtSource.ewni.2020-21.60000.net4000",
@@ -2023,7 +2077,9 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "Relief at source: net contribution 4000 grossed up x 1.25 = 5000. ANI = 60000 - 5000 = 55000 (GOV.UK adjusted-net-income step 3). Basic rate limit and higher rate limit increased by the gross contribution, 5000 (FA 2004 s.192(4)). Assumes the higher-rate relief has been claimed (FA 2004 s.192(4)). Income tax on salary 60000: PA 12570 (no taper at ANI 55000); taxable 60000 - 12570 = 47430; basic 42700 x 20% = 8540; higher 4730 x 40% = 1892; additional 0 x 45% = 0; income tax 10432. Expected is income tax only.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:4e8436ee92679e0014c7e48e2b5fb84c452de639cd293110b81f057b41009b13",
   },
   {
     id: "reliefAtSource.ewni.2026-27.110000.net8000",
@@ -2043,7 +2099,9 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "Relief at source: net contribution 8000 grossed up x 1.25 = 10000. ANI = 110000 - 10000 = 100000 (GOV.UK adjusted-net-income step 3). Basic rate limit and higher rate limit increased by the gross contribution, 10000 (FA 2004 s.192(4)). Assumes the higher-rate relief has been claimed (FA 2004 s.192(4)). Income tax on salary 110000: PA 12570 (no taper at ANI 100000); taxable 110000 - 12570 = 97430; basic 47700 x 20% = 9540; higher 49730 x 40% = 19892; additional 0 x 45% = 0; income tax 29432. Expected is income tax only.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:c694ce13518630a671b2f438da4c507b13b7a7c25b70724cee527526c8ad197d",
   },
   {
     id: "reliefAtSource.scot.2025-26.60000.net4000",
@@ -2085,7 +2143,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: Scottish advanced/top boundary 125,140 is a published figure but its frame (taxable vs gross) is ambiguous between GOV.UK pages.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:839be0d94958a00aca80c95586ac55d443d35b8f0448073f0011b2d41168f1e0",
+    rulingRef:
+      "FA 2004 s.192(4A) raises the Scottish basic rate limit and the limits above it by the gross contribution, so the starter band is unchanged and the basic band widens to 17,989; band frame per the GOV.UK rates and allowances page.",
   },
   {
     id: "salarySacrificeCap2029.employee.40000.sacrifice5000",
@@ -2103,7 +2165,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: the 2029 cap is announced policy; the design of the 2,000 limit and the rates for 2029/30 are not yet in secondary legislation, so every figure is an illustration.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:9be0a55bf5673b54ab93c47bbcbca26f41f6b2375dd2fb7bea3f0ffb7392a196",
+    rulingRef:
+      "NICs (Employer Pensions Contributions) Act 2026 (c. 15) s.1 sets the 2,000 limit from 2029-30, matching the GOV.UK policy paper; 2029/30 rates do not exist yet, so accepted only as an illustration at verified 2026/27 employee rates 8% and 2%.",
   },
   {
     id: "salarySacrificeCap2029.employee.70000.sacrifice10000",
@@ -2121,7 +2187,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: the 2029 cap is announced policy; the design of the 2,000 limit and the rates for 2029/30 are not yet in secondary legislation, so every figure is an illustration.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:321c8a3596337cfd9b5342dfb0310aadc87aaa3fdd4efa25fa71d45ea73fde70",
+    rulingRef:
+      "Act 2026 (c. 15) s.1(3)-(4) fixes the 2,000 limit and the 2029-30 start; illustration at verified 2026/27 employee rates; the 8,000 excess is above the upper earnings limit at 2%, giving 160.",
   },
   {
     id: "salarySacrificeCap2029.employee.55000.sacrifice8000",
@@ -2139,7 +2209,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: the 2029 cap is announced policy; the design of the 2,000 limit and the rates for 2029/30 are not yet in secondary legislation, so every figure is an illustration.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:7341a258efa0c83791e09b16745ee9e3a46b7cd793f53691cdb7882f2d91c459",
+    rulingRef:
+      "Act 2026 (c. 15) s.1(3)-(4) fixes the 2,000 limit and the 2029-30 start; illustration at verified 2026/27 employee rates; the 6,000 excess straddles the upper earnings limit (3,270 at 8% plus 2,730 at 2%), giving 316.20.",
   },
   {
     id: "salarySacrificeCap2029.employee.40000.sacrifice2000",
@@ -2157,7 +2231,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: the 2029 cap is announced policy; the design of the 2,000 limit and the rates for 2029/30 are not yet in secondary legislation, so every figure is an illustration.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:7f963b223607d8beca08a61c58b1191d87bfd4a512de247ca5c3572c80b2169c",
+    rulingRef:
+      "Act 2026 (c. 15) and the GOV.UK policy paper exempt the first 2,000, so a 2,000 sacrifice has no excess and no extra NI; illustration only.",
   },
   {
     id: "salarySacrificeCap2029.employer.40000.sacrifice5000",
@@ -2175,7 +2253,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: the 2029 cap is announced policy; the design of the 2,000 limit and the rates for 2029/30 are not yet in secondary legislation, so every figure is an illustration.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:6d1a91d2e02b1065b3c05648365c4c11b455e60ff7cd30f9ab0811794b624ef5",
+    rulingRef:
+      "Act 2026 (c. 15) and the GOV.UK policy paper make contributions above 2,000 subject to employer NICs from 2029-30; illustration at the verified 2026/27 secondary rate of 15% on the 3,000 excess.",
   },
   {
     id: "salarySacrificeCap2029.employer.70000.sacrifice10000",
@@ -2193,7 +2275,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: the 2029 cap is announced policy; the design of the 2,000 limit and the rates for 2029/30 are not yet in secondary legislation, so every figure is an illustration.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:600635d205aaa7c7fb4af5cf4f5a7ba54f8f549f311531526d7ec6add428f948",
+    rulingRef:
+      "Act 2026 (c. 15) and the GOV.UK policy paper; illustration at the verified 2026/27 secondary rate of 15% on the 8,000 excess; the 2029/30 rate is not yet set.",
   },
   {
     id: "hicbc.2027-28.ani59999.children1",
