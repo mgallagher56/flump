@@ -17,16 +17,19 @@ describe("SectionBand", () => {
     expect(screen.getByText("Body")).toBeDefined();
   });
 
-  it.each<SectionBandTone>(["canvas", "teal"])("renders the %s tone", (tone) => {
-    render(
-      <SectionBand id={`band-${tone}`} title={`Band ${tone}`} tone={tone}>
-        <p>Body</p>
-      </SectionBand>,
-    );
-    expect(
-      screen.getByRole("region", { name: `Band ${tone}` }).getAttribute("data-tone-band"),
-    ).toBe(tone);
-  });
+  it.each<SectionBandTone>(["canvas", "card", "teal", "hero", "contrast"])(
+    "renders the %s tone",
+    (tone) => {
+      render(
+        <SectionBand id={`band-${tone}`} title={`Band ${tone}`} tone={tone}>
+          <p>Body</p>
+        </SectionBand>,
+      );
+      expect(
+        screen.getByRole("region", { name: `Band ${tone}` }).getAttribute("data-tone-band"),
+      ).toBe(tone);
+    },
+  );
 
   it("uses a heading inside the children as the label when there is no title", () => {
     render(

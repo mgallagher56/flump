@@ -55,41 +55,6 @@ export const sectionDescription = cva({
   },
 });
 
-export const ctaBlock = cva({
-  base: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    textAlign: "center",
-    gap: "4",
-    p: { base: "6", md: "8" },
-    borderRadius: "2xl",
-    backgroundColor: "surface.card",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: "border.subtle",
-    boxShadow: "sm",
-  },
-});
-
-export const ctaTitle = cva({
-  base: {
-    textStyle: "heading.md",
-    color: "text.primary",
-    margin: 0,
-    fontWeight: "bold",
-  },
-});
-
-export const ctaText = cva({
-  base: {
-    textStyle: "body.md",
-    color: "text.secondary",
-    margin: 0,
-    maxWidth: "md",
-  },
-});
-
 /** The heading and description above a preview frame: heading, description, then the frame. */
 export const sectionIntro = cva({
   base: {
@@ -152,7 +117,7 @@ export const sectionLink = cva({
     fontWeight: "semibold",
     textDecoration: "underline",
     textUnderlineOffset: "3px",
-    _hover: { color: "primary.hover" },
+    _hover: { color: "primary.emphasis" },
     _focusVisible: { outline: "2px solid", outlineColor: "border.focusRing", outlineOffset: "2px" },
   },
 });

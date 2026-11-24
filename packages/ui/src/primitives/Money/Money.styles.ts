@@ -22,8 +22,10 @@ export const moneyRecipe = cva({
       positive: { color: "status.positive.text" },
       danger: { color: "status.danger.text" },
       muted: { color: "text.muted" },
-      /** For figures on `surface.hero` or `surface.contrast`. */
+      /** For figures on `surface.contrast` (charcoal). */
       onContrast: { color: "text.onContrast" },
+      /** For the headline figure on `surface.hero`: dark ink in light, mint in dark. */
+      onHero: { color: "text.heroFigure" },
     },
   },
   defaultVariants: { size: "md", tone: "default" },

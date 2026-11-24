@@ -43,8 +43,8 @@ export interface KpiCardProps {
    * @deprecated Use `HeroFigure` for the page's one headline figure (E16 P2). `KpiStrip` cards are
    * never the hero. Kept working so existing screens do not break.
    *
-   * `hero` paints the card as the page's one deep-teal headline block (`surface.hero`). Use it at
-   * most once per page. Figures inside should use `tone="onContrast"`. Falls back to the default
+   * `hero` paints the card as the page's one headline block (`surface.hero`). Use it at most once
+   * per page. Figures inside should use `tone="onHero"`. Falls back to the default
    * card while loading or when the value is unknown, so "Not set" keeps its muted contrast.
    * Action children (`action`, `emptyAction`) are not contrast-checked on the hero; avoid
    * interactive children until they are.
@@ -148,7 +148,7 @@ const renderValue = (
           {...valueFormat}
           className={kpiMoney()}
           size="kpi"
-          tone={cardTone === "hero" ? "onContrast" : "default"}
+          tone={cardTone === "hero" ? "onHero" : "default"}
           value={value}
         />
       ) : (

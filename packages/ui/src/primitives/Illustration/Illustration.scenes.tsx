@@ -51,7 +51,7 @@ export type SceneShape =
 
 const groundShape: SceneShape = {
   kind: "ellipse",
-  role: "sand",
+  role: "ground",
   cx: 120,
   cy: 152,
   rx: 106,

@@ -12,6 +12,7 @@ import {
 } from "@repo/ui";
 import { type FC, type ReactNode, useState } from "react";
 import { AreaStrip } from "../../components/AreaStrip";
+import { ClosingCta } from "../../components/ClosingCta";
 import { Footer } from "../../components/Footer";
 import { Header } from "../../components/Header";
 import { MarketingSection, type MarketingSectionTone } from "../../components/MarketingSection";
@@ -26,9 +27,6 @@ import {
   factFooter,
   factGrid,
   factText,
-  finalCta,
-  finalCtaBody,
-  finalCtaTitle,
   hero,
   heroHeading,
   heroInner,
@@ -56,12 +54,12 @@ export interface FeaturePageProps {
 }
 
 /**
- * Bands alternate the canvas and the soft teal tint (owner choice "A", 2026-11-20). A band that
- * holds figures (a sample or a calculator) always stays on the canvas, since a tint never goes
- * around a chart, so the band after it starts the teal again.
+ * After the pale mint hero, bands alternate off-white (`card`) and pale mint (`canvas`), Midnight
+ * and Mint (owner, 24 Nov 2026). A band that holds figures (a sample or a calculator) always stays
+ * on the canvas, so the band after it starts the card again. The page ends on the dark closing band.
  */
 const nextTone = (previous: MarketingSectionTone): MarketingSectionTone =>
-  previous === "teal" ? "canvas" : "teal";
+  previous === "card" ? "canvas" : "card";
 
 /** The working sample for an area (D6): the same sample components the preview page uses. */
 const SAMPLES = {
@@ -114,8 +112,8 @@ export const FeaturePage: FC<FeaturePageProps> = ({
   const titleId = `${feature.key}-title`;
   const currentArea = MONEY_AREAS.find((area) => area.key === feature.key)?.key;
   const showRetirement = feature.key === "savings-and-pension";
-  // The hero is canvas, so "What you see" is teal; a built-in sample holds figures (canvas).
-  const whatYouSeeTone: MarketingSectionTone = "teal";
+  // The hero is canvas, so "What you see" is card; a built-in sample holds figures (canvas).
+  const whatYouSeeTone: MarketingSectionTone = "card";
   const afterSampleTone: MarketingSectionTone = sample
     ? sampleLastTone
     : feature.sample === "none"
@@ -213,19 +211,14 @@ export const FeaturePage: FC<FeaturePageProps> = ({
           <TryItSection area={feature.key} />
         )}
 
-        <section
-          aria-labelledby="feature-cta-title"
-          className={finalCta()}
+        <ClosingCta
+          cta={cta}
           data-testid="feature-final-cta"
-        >
-          <h2 className={finalCtaTitle()} id="feature-cta-title">
-            Ready to see your own figures?
-          </h2>
-          <p className={finalCtaBody()}>Start with a few rough figures.</p>
-          <Button asChild size="lg" variant="primary">
-            <a href={cta.href}>{cta.label}</a>
-          </Button>
-        </section>
+          id="get-started"
+          text="Start with a few rough figures."
+          title="Ready to see your own figures?"
+          titleId="feature-cta-title"
+        />
       </main>
 
       <Footer />

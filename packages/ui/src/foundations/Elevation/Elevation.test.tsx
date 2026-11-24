@@ -20,4 +20,10 @@ describe("Elevation Foundation", () => {
       expect(screen.getByTestId(`elevation-${level}-compact`)).toBeDefined();
     }
   });
+
+  it("describes the Midnight and Mint shadows, not the old sand ink", () => {
+    render(<Elevation />);
+    expect(screen.getByText(/deep-green ink of Mint/)).toBeDefined();
+    expect(screen.queryByText(/sand/i)).toBeNull();
+  });
 });

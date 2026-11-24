@@ -14,11 +14,17 @@ export const topBarRoot = cva({
     top: "0",
     zIndex: "header",
     width: "100%",
-    backgroundColor: "color-mix(in srgb, token(colors.surface.canvas) 88%, transparent)",
+    // Midnight and Mint: an off-white bar on the mint canvas in light (a dark bar read as too dark),
+    // the charcoal canvas in dark, as in the PageApp mock-up.
+    backgroundColor: {
+      base: "color-mix(in srgb, token(colors.surface.card) 92%, transparent)",
+      _dark: "color-mix(in srgb, token(colors.surface.canvas) 88%, transparent)",
+      _systemDark: "color-mix(in srgb, token(colors.surface.canvas) 88%, transparent)",
+    },
     backdropFilter: "blur(14px)",
     borderBottomWidth: "1px",
     borderBottomStyle: "solid",
-    borderBottomColor: "border.subtle",
+    borderBottomColor: "border",
     // Clear the notch and the rounded corners on a phone held sideways (phone audit P15). With
     // `viewport-fit=cover` these are zero wherever the screen has no cut-outs.
     paddingTop: "env(safe-area-inset-top)",

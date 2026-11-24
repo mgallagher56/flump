@@ -3,7 +3,7 @@ import { expect, userEvent, within } from "@storybook/test";
 import { DirectionCSignoff } from "./DirectionCSignoff";
 
 const meta: Meta<typeof DirectionCSignoff> = {
-  title: "1. Foundations/Direction C sign-off",
+  title: "1. Foundations/Midnight and Mint sign-off",
   component: DirectionCSignoff,
   parameters: { layout: "fullscreen" },
 };
@@ -38,9 +38,12 @@ const play: Story["play"] = async ({ canvasElement }) => {
   await expect(figure).toHaveTextContent("£97,750");
   await expect(within(hero).getByText("Sample data")).toBeVisible();
 
-  // Hero text must be legible on the deep-teal block (WCAG AA, 4.5:1).
-  const ratio = contrast(getComputedStyle(figure).color, getComputedStyle(hero).backgroundColor);
-  await expect(ratio).toBeGreaterThanOrEqual(4.5);
+  // Hero figure and label must be legible on the hero (WCAG AA, 4.5:1): dark ink on solid mint in
+  // light, a mint figure on the Midnight card in dark.
+  const heroBg = getComputedStyle(hero).backgroundColor;
+  await expect(contrast(getComputedStyle(figure).color, heroBg)).toBeGreaterThanOrEqual(4.5);
+  const label = within(hero).getByRole("heading", { name: "Net worth" });
+  await expect(contrast(getComputedStyle(label).color, heroBg)).toBeGreaterThanOrEqual(4.5);
 
   // Keyboard focus ring is visible on a button.
   const button = canvas.getAllByRole("button", { name: "Add missing details" })[0];

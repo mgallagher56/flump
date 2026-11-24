@@ -109,7 +109,7 @@ export const TypographyScale: FC = () => {
               Display (headings and headline figures)
             </div>
             <div className={css({ fontFamily: "display", fontSize: "xl", fontWeight: "bold" })}>
-              Plus Jakarta Sans — The British Personal Finance OS (£100,000)
+              Plus Jakarta Sans: headings and the headline figure (£100,000)
             </div>
             <code className={css({ fontSize: "xs", color: "text.muted" })}>
               {fonts.display.value}
@@ -121,7 +121,7 @@ export const TypographyScale: FC = () => {
               Sans (body text and form inputs)
             </div>
             <div className={css({ fontFamily: "sans", fontSize: "md" })}>
-              Inter — Clear, readable UI typography optimized for density and contrast.
+              Inter: body text and figures, sans serif throughout.
             </div>
             <code className={css({ fontSize: "xs", color: "text.muted" })}>{fonts.sans.value}</code>
           </div>
@@ -131,7 +131,7 @@ export const TypographyScale: FC = () => {
               Mono (tax codes and account numbers)
             </div>
             <div className={css({ fontFamily: "mono", fontSize: "sm" })}>
-              System monospace — 1257L / 08-92-41 / 2024-25 TAX YEAR
+              System monospace: 1257L / 08-92-41 / 2024-25 TAX YEAR
             </div>
             <code className={css({ fontSize: "xs", color: "text.muted" })}>{fonts.mono.value}</code>
           </div>

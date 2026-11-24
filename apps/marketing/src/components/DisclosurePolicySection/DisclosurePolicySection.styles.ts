@@ -20,13 +20,14 @@ export const disclosureBody = cva({
   base: { textStyle: "body.md", color: "text.secondary", margin: 0 },
 });
 
+// Links are teal in light and mint in dark (Midnight and Mint).
 export const disclosureLink = cva({
   base: {
-    color: "text.primary",
+    color: "primary",
     textDecoration: "underline",
     textUnderlineOffset: "3px",
     overflowWrap: "anywhere",
-    _hover: { color: "primary.hover" },
+    _hover: { color: "primary.emphasis" },
   },
 });
 

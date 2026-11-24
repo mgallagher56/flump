@@ -130,11 +130,13 @@ export interface DirectionCSignoffProps {
 }
 
 /**
- * Owner sign-off frame: the Dashboard of Direction C composed with the real tokens, components and
- * fonts. Everything shown is sample data. Not used by any screen.
+ * Owner sign-off frame for the Midnight and Mint palette (owner, 24 Nov 2026; replaces Direction
+ * C): the app Home composed with the real tokens, components and fonts, as in
+ * docs/design/midnight-mint/PageApp.dc.html. Everything shown is sample data. Not used by any
+ * screen. The directory keeps its old name because scripts/judgement-baseline.json keys on it.
  */
 export const DirectionCSignoff: FC<DirectionCSignoffProps> = ({ onFinishSetup }) => (
-  <div className={signoffRoot()} data-testid="direction-c-signoff">
+  <div className={signoffRoot()} data-testid="palette-signoff">
     <PageHeader
       actions={<StatusBadge variant="neutral">{SAMPLE}</StatusBadge>}
       subtitle="Where you stand this month. Sample data."

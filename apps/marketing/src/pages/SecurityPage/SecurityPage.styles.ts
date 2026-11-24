@@ -48,12 +48,13 @@ export const factText = cva({
   base: { textStyle: "body.md", color: "text.primary", margin: 0, pt: "2" },
 });
 
+// Links are teal in light and mint in dark (Midnight and Mint).
 export const factLink = cva({
   base: {
-    color: "text.primary",
+    color: "primary",
     fontWeight: "semibold",
     textDecoration: "underline",
     textUnderlineOffset: "3px",
-    _hover: { color: "primary.hover" },
+    _hover: { color: "primary.emphasis" },
   },
 });

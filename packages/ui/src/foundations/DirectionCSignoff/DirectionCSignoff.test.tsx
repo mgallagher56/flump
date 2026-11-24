@@ -2,13 +2,19 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { DirectionCSignoff } from "./DirectionCSignoff";
 
-describe("DirectionCSignoff", () => {
+describe("DirectionCSignoff (Midnight and Mint sign-off)", () => {
   it("renders the hero with the headline figure and a Sample data label", () => {
     render(<DirectionCSignoff />);
     const hero = screen.getByTestId("signoff-hero");
     expect(within(hero).getByRole("heading", { name: "Net worth" })).toBeDefined();
     expect(within(hero).getByText("Sample data")).toBeDefined();
     expect(screen.getByTestId("signoff-hero-figure").textContent).toBe("£97,750");
+  });
+
+  it("marks the frame as the palette sign-off", () => {
+    render(<DirectionCSignoff />);
+    expect(screen.getByTestId("palette-signoff")).toBeDefined();
+    expect(screen.queryByTestId("direction-c-signoff")).toBeNull();
   });
 
   it("shows four KPIs, the housekeeping coach card and no advice headings", () => {

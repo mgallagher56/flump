@@ -15,6 +15,12 @@ describe("AccentTokens Foundation", () => {
     }
   });
 
+  it("describes the Midnight and Mint accent, with no plum lead", () => {
+    render(<AccentTokens />);
+    expect(screen.getByText(/deep blue-teal in light and a soft pink in dark/)).toBeDefined();
+    expect(screen.queryByText(/plum/i)).toBeNull();
+  });
+
   it("shows the permitted pairings", () => {
     render(<AccentTokens />);
     for (const id of ["accent-sample-card", "accent-sample-plain", "accent-sample-hero"]) {

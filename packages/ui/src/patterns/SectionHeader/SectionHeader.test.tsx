@@ -21,6 +21,13 @@ describe("SectionHeader", () => {
     expect(tile?.getAttribute("aria-hidden")).toBe("true");
   });
 
+  it("sits on the dark section rule (border.section) so sections are clearly separated", () => {
+    const { container } = render(<SectionHeader icon={PiggyBank} title="Breathing room" />);
+    const root = container.firstElementChild as HTMLElement;
+    expect(root.className).toContain("border.section");
+    expect(root.className).not.toContain("border.subtle");
+  });
+
   it("takes the accent tile, a heading level and a heading id", () => {
     const { container } = render(
       <SectionHeader

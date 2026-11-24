@@ -11,11 +11,14 @@ const renderStrip = () =>
   );
 
 describe("SecurityPrivacySection (home security strip)", () => {
-  it("is a short strip on a quiet band that links to the security page", () => {
+  it("is a short strip on the solid mint band that links to the security page", () => {
     renderStrip();
     const strip = screen.getByTestId("security-privacy-section");
-    // A soft teal band, a step off the canvas.
-    expect(strip.getAttribute("data-tone-band")).toBe("teal");
+    // The page's one solid mint band (Midnight and Mint, 24 Nov 2026), with dark ink on it.
+    expect(strip.getAttribute("data-tone-band")).toBe("hero");
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Security and privacy" }).className,
+    ).toContain("c_text.onHero");
     expect(screen.getByRole("heading", { level: 2, name: "Security and privacy" })).toBeDefined();
     expect(
       screen.getByRole("link", { name: "What Flump can and cannot do" }).getAttribute("href"),

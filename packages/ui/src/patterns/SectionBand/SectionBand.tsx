@@ -12,7 +12,7 @@ import {
   sectionBandTitle,
 } from "./SectionBand.styles";
 
-export type SectionBandTone = "canvas" | "teal";
+export type SectionBandTone = "canvas" | "card" | "teal" | "hero" | "contrast";
 
 export interface SectionBandProps {
   /** Anchor id. The title gets `${id}-title` and labels the section. */
@@ -23,7 +23,10 @@ export interface SectionBandProps {
    * one-line description, no band padding and no tone.
    */
   variant?: "marketing" | "app";
-  /** Marketing only. Alternate `canvas` with `teal`, a soft brand-teal tint. */
+  /**
+   * Marketing only. Alternate `card` with `canvas`; one `hero` (solid mint) band per page and a
+   * `contrast` (charcoal) closing band. `teal` is the older soft brand-teal tint.
+   */
   tone?: SectionBandTone;
   /** Marketing only. `compact` trims the vertical padding, for a short strip. */
   size?: "default" | "compact";
@@ -97,11 +100,11 @@ export const SectionBand: FC<SectionBandProps> = ({
         {(title || subtitle) && (
           <div className={sectionBandHeader({ align })}>
             {title && (
-              <h2 className={sectionBandTitle()} id={titleId}>
+              <h2 className={sectionBandTitle({ tone })} id={titleId}>
                 {title}
               </h2>
             )}
-            {subtitle && <p className={sectionBandSubtitle()}>{subtitle}</p>}
+            {subtitle && <p className={sectionBandSubtitle({ tone })}>{subtitle}</p>}
           </div>
         )}
         {children}

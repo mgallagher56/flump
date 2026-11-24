@@ -60,31 +60,6 @@ export const ctaRow = cva({
   base: { display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "3" },
 });
 
-export const finalCta = cva({
-  base: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    gap: "4",
-    textAlign: "center",
-    // Sits under the FAQ in the same band, separated by space and a hairline, not a second band.
-    mt: { base: "12", md: "16" },
-    pt: { base: "10", md: "12" },
-    borderTopWidth: "1px",
-    borderTopStyle: "solid",
-    borderTopColor: "border.subtle",
-    scrollMarginTop: "24",
-  },
-});
-
-export const finalCtaTitle = cva({
-  base: { textStyle: "heading.lg", color: "text.primary", margin: 0 },
-});
-
-export const finalCtaBody = cva({
-  base: { textStyle: "body.md", color: "text.secondary", margin: 0 },
-});
-
 /**
  * The closing scene: no figures follow it, so it never pushes one down on a phone (B10). 160px
  * on a phone, 320px from `md` (was 112px and 140px).
@@ -141,7 +116,7 @@ export const bandLink = cva({
     fontWeight: "semibold",
     textDecoration: "underline",
     textUnderlineOffset: "3px",
-    _hover: { color: "primary.hover" },
+    _hover: { color: "primary.emphasis" },
     _focusVisible: { outline: "2px solid", outlineColor: "border.focusRing", outlineOffset: "2px" },
   },
 });

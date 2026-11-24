@@ -8,7 +8,7 @@ export interface TaxEstimateNoteProps {
   assumption?: string;
   className?: string;
   /** `onContrast` when the note sits on the hero surface. */
-  tone?: "default" | "onContrast";
+  tone?: "default" | "onContrast" | "onHero";
 }
 
 /**

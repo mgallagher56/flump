@@ -128,19 +128,19 @@ describe("FeaturePage samples (D6)", () => {
     expect(homeowner.getAttribute("aria-pressed")).toBe("true");
   });
 
-  // Owner choice "A" (2026-11-20): bands alternate canvas and the soft teal tint after the canvas
-  // hero, and a band with figures (the sample, the calculators) always stays on the canvas.
-  // Worked by hand from each page's band order:
-  //   Accounts, Budget: what-you-see teal, see-it canvas (figures), more-detail teal, one-picture canvas
-  //   Pay (no sample): what-you-see teal, more-detail canvas, one-picture teal, try-it canvas (figures)
-  //   Savings and pension: teal, see-it canvas, retirement teal, more-detail canvas, one-picture teal
-  //   Debt and borrowing: teal, see-it canvas, more-detail teal, one-picture canvas, try-it canvas
+  // Midnight and Mint (owner, 24 Nov 2026): bands alternate card and canvas after the canvas hero,
+  // a band with figures (the sample, the calculators) always stays on the canvas, and the page
+  // ends on the dark closing band. Worked by hand from each page's band order:
+  //   Accounts, Budget: what-you-see card, see-it canvas (figures), more-detail card, one-picture canvas
+  //   Pay (no sample): what-you-see card, more-detail canvas, one-picture card, try-it canvas (figures)
+  //   Savings and pension: card, see-it canvas, retirement card, more-detail canvas, one-picture card
+  //   Debt and borrowing: card, see-it canvas, more-detail card, one-picture canvas, try-it canvas
   it.each([
-    ["accounts", ["teal", "canvas", "teal", "canvas"]],
-    ["budget", ["teal", "canvas", "teal", "canvas"]],
-    ["pay", ["teal", "canvas", "teal", "canvas"]],
-    ["savings-and-pension", ["teal", "canvas", "teal", "canvas", "teal"]],
-    ["debt-and-borrowing", ["teal", "canvas", "teal", "canvas", "canvas"]],
+    ["accounts", ["card", "canvas", "card", "canvas", "contrast"]],
+    ["budget", ["card", "canvas", "card", "canvas", "contrast"]],
+    ["pay", ["card", "canvas", "card", "canvas", "contrast"]],
+    ["savings-and-pension", ["card", "canvas", "card", "canvas", "card", "contrast"]],
+    ["debt-and-borrowing", ["card", "canvas", "card", "canvas", "canvas", "contrast"]],
   ])("alternates the band tones on %s", (key, tones) => {
     const area = MONEY_AREAS.find((a) => a.key === key) as MoneyArea;
     const { container } = renderArea(area);

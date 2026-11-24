@@ -2,7 +2,9 @@ import { sva } from "../../../styled-system/css";
 
 /**
  * E17 5A section header: tile, then the title over one line of description. The tile aligns to the
- * top so a description that wraps on a phone does not centre the tile against two lines.
+ * top so a description that wraps on a phone does not centre the tile against two lines. Midnight
+ * and Mint: the header sits on a 2px rule in border.section (the dark ink in light, >= 3:1 in both
+ * themes), so sections are clearly separated.
  */
 export const sectionHeader = sva({
   slots: ["root", "text", "titleRow", "description", "action"],
@@ -13,6 +15,10 @@ export const sectionHeader = sva({
       gap: "3",
       minWidth: "0",
       color: "text.primary",
+      pb: "3",
+      borderBottomWidth: "2px",
+      borderBottomStyle: "solid",
+      borderBottomColor: "border.section",
     },
     text: {
       display: "flex",

@@ -136,9 +136,15 @@ describe("Num", () => {
     expect(text(render(<Num value={undefined} />).container)).toBe("Not set");
   });
 
-  it("supports the onContrast tone for figures on surface.hero", () => {
+  it("supports the onContrast tone for figures on surface.contrast", () => {
     const { container } = render(<Money tone="onContrast" value={1234} />);
     expect(container.innerHTML).toContain("text.onContrast");
+  });
+
+  it("supports the onHero tone for the headline figure on surface.hero", () => {
+    const { container } = render(<Money tone="onHero" value={1234} />);
+    expect(container.innerHTML).toContain("text.heroFigure");
+    expect(container.innerHTML).not.toContain("text.onContrast");
   });
 });
 
