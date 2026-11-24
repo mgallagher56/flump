@@ -89,6 +89,26 @@ function findInvoiceForUpdate(
   return invoiceRepo.findOne({ where: { id, userId }, lock: { mode: "pessimistic_write" } });
 }
 
+/**
+ * Locks the caller's work-log rows with these ids (SELECT ... ORDER BY id FOR UPDATE) and returns
+ * them as they are now. Every path that links or unlinks entries locks them here, in id order and
+ * after the one invoice or settings row it locks, so two requests over the same entries queue
+ * instead of deadlocking, and each checks links that cannot change under it. Without this, two
+ * requests could both see an entry as free and both claim it. Must be called inside a transaction.
+ */
+function lockWorkLogEntries(
+  workLogRepo: Repository<WorkLogEntry>,
+  userId: string,
+  ids: string[],
+): Promise<WorkLogEntry[]> {
+  if (ids.length === 0) return Promise.resolve([]);
+  return workLogRepo.find({
+    where: { userId, id: In(ids) },
+    order: { id: "ASC" },
+    lock: { mode: "pessimistic_write" },
+  });
+}
+
 function addDaysToIsoDate(isoDate: string, days: number): string {
   const base = new Date(`${isoDate}T00:00:00.000Z`);
   base.setUTCDate(base.getUTCDate() + days);
@@ -366,7 +386,11 @@ export class InvoicingService {
         if (claim === "stale") throw preconditionFailed();
       }
 
-      const existing = await workLogRepo.findOne({ where: { id, userId } });
+      // Locked, so an invoice cannot claim it between the check below and the write.
+      const existing = await workLogRepo.findOne({
+        where: { id, userId },
+        lock: { mode: "pessimistic_write" },
+      });
       if (!existing) throw workLogNotFound();
 
       if (existing.invoiceId !== null) {
@@ -406,7 +430,11 @@ export class InvoicingService {
       const workLogRepo = em.getRepository(WorkLogEntry);
       const invoiceRepo = em.getRepository(Invoice);
 
-      const existing = await workLogRepo.findOne({ where: { id, userId } });
+      // Locked, so an invoice cannot claim it between the check below and the write.
+      const existing = await workLogRepo.findOne({
+        where: { id, userId },
+        lock: { mode: "pessimistic_write" },
+      });
       if (!existing) throw workLogNotFound();
 
       if (existing.invoiceId !== null) {
@@ -525,9 +553,33 @@ export class InvoicingService {
         });
       }
 
-      const entries = await workLogRepo.find({
-        where: { userId, id: In(uniqueEntryIds) },
+      // The settings row first (created if missing; a concurrent create waits, then skips), locked
+      // until this transaction ends: it serialises a user's invoice creation, so two never take
+      // the same number. Then the entries, in id order.
+      await em
+        .createQueryBuilder()
+        .insert()
+        .into(InvoicingSettings)
+        .values({
+          userId,
+          defaultHourlyRate: null,
+          businessName: null,
+          businessAddress: null,
+          businessEmail: null,
+          vatNumber: null,
+          invoicePrefix: DEFAULT_INVOICE_PREFIX,
+          nextInvoiceSequence: DEFAULT_NEXT_SEQUENCE,
+          defaultPaymentTermsDays: DEFAULT_PAYMENT_TERMS_DAYS,
+        })
+        .orIgnore()
+        .execute();
+      const settings = await settingsRepo.findOne({
+        where: { userId },
+        lock: { mode: "pessimistic_write" },
       });
+      if (!settings) throw new Error("invoicing settings row missing after insert");
+
+      const entries = await lockWorkLogEntries(workLogRepo, userId, uniqueEntryIds);
       if (entries.length !== uniqueEntryIds.length) {
         throw new BadRequestException({
           code: "validation_failed",
@@ -538,23 +590,6 @@ export class InvoicingService {
       if (entries.some((entry) => entry.invoiceId !== null)) {
         throw workLogLockedConflict(
           "One or more selected work log entries are already linked to an invoice.",
-        );
-      }
-
-      let settings = await settingsRepo.findOne({ where: { userId } });
-      if (!settings) {
-        settings = await settingsRepo.save(
-          settingsRepo.create({
-            userId,
-            defaultHourlyRate: null,
-            businessName: null,
-            businessAddress: null,
-            businessEmail: null,
-            vatNumber: null,
-            invoicePrefix: DEFAULT_INVOICE_PREFIX,
-            nextInvoiceSequence: DEFAULT_NEXT_SEQUENCE,
-            defaultPaymentTermsDays: DEFAULT_PAYMENT_TERMS_DAYS,
-          }),
         );
       }
 
@@ -643,9 +678,14 @@ export class InvoicingService {
             message: "An invoice must contain at least one work log entry.",
           });
         }
-        const requestedEntries = await workLogRepo.find({
-          where: { userId, id: In(uniqueEntryIds) },
-        });
+        // This invoice's entries and the requested ones, locked together in id order and read
+        // again: a link seen before the lock may have changed.
+        const locked = await lockWorkLogEntries(workLogRepo, userId, [
+          ...new Set([...entries.map((entry) => entry.id), ...uniqueEntryIds]),
+        ]);
+        entries = locked.filter((entry) => entry.invoiceId === invoice.id);
+        const requestedIdSet = new Set(uniqueEntryIds);
+        const requestedEntries = locked.filter((entry) => requestedIdSet.has(entry.id));
         if (requestedEntries.length !== uniqueEntryIds.length) {
           throw new BadRequestException({
             code: "validation_failed",
@@ -662,7 +702,6 @@ export class InvoicingService {
           );
         }
 
-        const requestedIdSet = new Set(uniqueEntryIds);
         for (const oldEntry of entries) {
           if (!requestedIdSet.has(oldEntry.id)) {
             oldEntry.invoiceId = null;
@@ -728,7 +767,12 @@ export class InvoicingService {
         );
       }
 
-      const entries = await workLogRepo.find({ where: { userId, invoiceId: invoice.id } });
+      const linked = await workLogRepo.find({ where: { userId, invoiceId: invoice.id } });
+      const entries = await lockWorkLogEntries(
+        workLogRepo,
+        userId,
+        linked.map((entry) => entry.id),
+      );
       for (const entry of entries) {
         entry.invoiceId = null;
         await workLogRepo.save(entry);
@@ -837,7 +881,12 @@ export class InvoicingService {
         throw invoiceStateConflict("Only draft or issued invoices can be voided.");
       }
 
-      const entries = await workLogRepo.find({ where: { userId, invoiceId: invoice.id } });
+      const linked = await workLogRepo.find({ where: { userId, invoiceId: invoice.id } });
+      const entries = await lockWorkLogEntries(
+        workLogRepo,
+        userId,
+        linked.map((entry) => entry.id),
+      );
       for (const entry of entries) {
         entry.invoiceId = null;
         await workLogRepo.save(entry);
