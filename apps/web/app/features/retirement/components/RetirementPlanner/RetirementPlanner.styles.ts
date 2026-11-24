@@ -37,7 +37,9 @@ export const resultsStack = cva({
 export const fieldGrid = cva({
   base: {
     display: "grid",
-    gridTemplateColumns: { base: "1fr", md: "repeat(2, minmax(0, 1fr))" },
+    // minmax(0, 1fr), not 1fr: a bare 1fr track never narrows below an input's natural width,
+    // which pushed the fields past a 320px screen (WCAG 1.4.10 reflow).
+    gridTemplateColumns: { base: "minmax(0, 1fr)", md: "repeat(2, minmax(0, 1fr))" },
     gap: "4",
   },
 });
