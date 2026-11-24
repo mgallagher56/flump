@@ -38,44 +38,48 @@ export const colors = {
     900: { value: "#0f172a" },
     950: { value: "#020617" },
   },
-  // E15 round 5 (Direction C "Warm guide"): sand light neutrals, deep-teal brand, and warm-charcoal
-  // dark neutrals. The semantic surface/text/border tokens map onto these. Slate stays for
-  // compatibility; indigo stays for status.info only.
-  sand: {
-    50: { value: "#f5f1ea" }, // canvas
-    100: { value: "#eae3d8" }, // sunken (mockup #ece6dc, darkened 1 step so subtle/sunken separate)
-    150: { value: "#f0ebe2" }, // subtle
-    200: { value: "#e8e1d6" }, // border.subtle
-    250: { value: "#dcd4c8" }, // border
-    300: { value: "#b5ab9c" }, // border.strong
-    500: { value: "#867c6e" }, // border.input, chart.baseline (mockup #8c8274 gave 3.04:1 on the darker sunken)
-    600: { value: "#6a6258" }, // text.muted
-    700: { value: "#564f46" }, // text.secondary
-    800: { value: "#22302c" }, // surface.contrast (deep teal-charcoal)
-    900: { value: "#2b2620" }, // text.primary
+  // Midnight and Mint (owner, 24 Nov 2026; replaces E15 Direction C). Light neutrals are a pale
+  // mint family with deep-green ink; the semantic surface/text/border tokens map onto these. Slate
+  // stays for compatibility; indigo stays for status.info only.
+  mint: {
+    50: { value: "#e4f4ef" }, // canvas
+    100: { value: "#d3eae3" }, // sunken
+    150: { value: "#eef8f5" }, // subtle
+    200: { value: "#d5e5e0" }, // border.subtle
+    250: { value: "#b9d4cc" }, // border
+    300: { value: "#9dc4b9" }, // border.strong
+    400: { value: "#6fd0ba" }, // the mint fill: surface.hero, dark primary. Never text on a light ground
+    500: { value: "#5e837a" }, // border.input, chart.baseline (3:1 on every light surface)
+    600: { value: "#476060" }, // text.muted
+    700: { value: "#2f4a4a" }, // text.secondary
+    800: { value: "#14171c" }, // surface.contrast and the light primary fill (charcoal)
+    900: { value: "#0f2a2a" }, // text.primary, text on the mint hero
+    950: { value: "#f8fcfa" }, // the off-white: cards, bands and text on charcoal (never pure white)
   },
-  // Brand teal (Direction C). 600 is the light-theme accent and the fill behind white labels in
-  // both themes; 700 is its hover.
+  // Teal: links, outline buttons and the focus ring in light; 700 is its hover.
   teal: {
-    600: { value: "#0f6b5e" },
-    700: { value: "#0a564b" },
+    600: { value: "#0b6b5d" },
+    700: { value: "#084f45" },
   },
-  // Dark mode: warm charcoal (stepped surfaces: sunken < canvas < card < subtle < overlay)
+  // Dark mode "Midnight": cool charcoal (stepped surfaces: sunken < canvas < card < subtle < overlay)
   dark: {
-    canvas: { value: "#1d1a17" },
-    subtle: { value: "#2e2a26" },
-    surface: { value: "#272320" },
-    surfaceSunken: { value: "#171412" },
-    surfaceOverlay: { value: "#36322d" }, // mockup #312d28 was 1.5 deltaE from subtle
-    border: { value: "#3b362f" },
-    borderSubtle: { value: "#302c27" },
-    borderStrong: { value: "#5c554a" },
-    borderInput: { value: "#8f8678" },
-    contrast: { value: "#3a352f" },
-    textPrimary: { value: "#f4efe7" },
-    textSecondary: { value: "#cbc3b7" },
-    textMuted: { value: "#a59d90" },
+    canvas: { value: "#14171c" },
+    subtle: { value: "#262b33" },
+    surface: { value: "#1d2128" },
+    surfaceSunken: { value: "#0f1216" },
+    surfaceOverlay: { value: "#2a3039" },
+    border: { value: "#303740" }, // Midnight #2c323b, one step up so a card edge reads at 1.3:1
+    borderSubtle: { value: "#242931" },
+    borderStrong: { value: "#3a424e" },
+    borderInput: { value: "#737c88" },
+    contrast: { value: "#0f1216" },
+    textPrimary: { value: "#f1eee8" },
+    textSecondary: { value: "#cdd1d7" },
+    textMuted: { value: "#a9afb9" },
     primary: { value: "#6fd0ba" },
+    primaryHover: { value: "#9be3d2" },
+    onPrimary: { value: "#0e1a17" },
+    pink: { value: "#e3b5d1" },
   },
   // Shared Semantic Colors (WCAG compliant)
   success: {
@@ -180,123 +184,132 @@ export const radii = {
 } as const;
 
 export const shadows = {
-  // E16 PR 1: strengthened so a light card lifts off the sand canvas (paired with a 1px
+  // E16 PR 1: strengthened so a light card lifts off the mint canvas (paired with a 1px
   // border.DEFAULT edge on Card, KpiCard, Table and CollapsibleDrawer).
   cardLight: {
-    value: "0 1px 2px rgba(43, 38, 32, 0.08), 0 4px 14px rgba(43, 38, 32, 0.07)",
+    value: "0 1px 2px rgba(15, 42, 42, 0.08), 0 4px 14px rgba(15, 42, 42, 0.07)",
   },
   cardHoverLight: {
-    value: "0 2px 8px -2px rgba(43, 38, 32, 0.1)",
+    value: "0 2px 8px -2px rgba(15, 42, 42, 0.1)",
   },
   floatingLight: {
-    value: "0 10px 25px -4px rgba(43, 38, 32, 0.14), 0 4px 10px -2px rgba(43, 38, 32, 0.07)",
+    value: "0 10px 25px -4px rgba(15, 42, 42, 0.14), 0 4px 10px -2px rgba(15, 42, 42, 0.07)",
   },
 } as const;
 
 // Universal Mapping (Consumed by Panda CSS)
 export const semanticTokens = {
   colors: {
-    // 1. Brand & Interactive Primary (Direction C teal). primary.solid/hover stay deep teal in BOTH
-    // themes: they are fills behind primary.foreground (white), and white on the dark accent
-    // (#5cc4ae) is only 2.11:1.
+    // 1. Brand & Interactive Primary (Midnight and Mint). primary is the text and line colour: teal
+    // in light (mint fails as text on a light ground), mint in dark. primary.solid/hover are the
+    // button fills behind primary.foreground: charcoal with off-white text in light, mint with dark
+    // ink in dark.
     primary: {
       DEFAULT: { value: { base: "{colors.teal.600}", _dark: "{colors.dark.primary}" } },
-      solid: { value: { base: "{colors.teal.600}", _dark: "{colors.teal.600}" } },
-      hover: { value: { base: "{colors.teal.700}", _dark: "{colors.teal.700}" } },
-      subtle: { value: { base: "#e1f0eb", _dark: "#1e3b35" } },
-      border: { value: { base: "#9ccfc2", _dark: "#2e6055" } },
-      foreground: { value: "#ffffff" },
+      solid: { value: { base: "{colors.mint.800}", _dark: "{colors.dark.primary}" } },
+      hover: { value: { base: "#2c323b", _dark: "{colors.dark.primaryHover}" } },
+      // Link hover: darker teal in light, lighter mint in dark.
+      emphasis: { value: { base: "{colors.teal.700}", _dark: "{colors.dark.primaryHover}" } },
+      subtle: { value: { base: "#cfe9e2", _dark: "#1f3532" } },
+      border: { value: { base: "{colors.mint.300}", _dark: "#2f4a46" } },
+      foreground: { value: { base: "{colors.mint.950}", _dark: "{colors.dark.onPrimary}" } },
     },
 
-    // 1b. Accent (E17, "Damson"): a soft plum, the warm opposite of the teal. Decoration and
-    // wayfinding only: one tinted card or section per page (in place of a domain tint), icon tiles,
-    // one small shape per scene, one chart series (chart.accent) and one sun shape on surface.hero.
-    // Never on a figure, KPI card, table cell, button, link, focus ring, notice or status message,
-    // and never to say that anything about a person's money is good or bad. Hue ~320 keeps it clear
-    // of every status colour and of chart.debt (tests in tokens.a11y.test.ts).
+    // 1b. Accent. Decoration and wayfinding only: icon tiles, one small shape per scene, one chart
+    // series (chart.accent) and one shape on surface.hero. Since Midnight and Mint (owner, 24 Nov
+    // 2026) the light accent is a deep blue-teal, so damson leads nowhere in light; dark keeps the soft pink
+    // for small accents only. Never on a figure, KPI card, table cell, button, link, focus ring,
+    // notice or status message, and never to say anything about a person's money is good or bad.
     accent: {
       // Icons, shapes and lines; also text on card, canvas and accent.subtle (>= 4.5:1).
-      DEFAULT: { value: { base: "#7a3f66", _dark: "#dba6c9" } },
+      DEFAULT: { value: { base: "#1d5f73", _dark: "{colors.dark.pink}" } },
       // The tinted surface. text.primary, secondary and muted clear 4.5:1 on it.
-      subtle: { value: { base: "#f1e4ee", _dark: "#33242f" } },
+      subtle: { value: { base: "#d2eef0", _dark: "#2f2733" } },
       // The edge of an accent.subtle surface. Decorative, like border.DEFAULT.
-      border: { value: { base: "#d6b4cc", _dark: "#6a4560" } },
+      border: { value: { base: "{colors.mint.300}", _dark: "#5a4655" } },
       // The one shape allowed on surface.hero (>= 3:1 there in both themes). Never text.
-      onHero: { value: { base: "#e3b5d1", _dark: "#e3b5d1" } },
+      onHero: { value: { base: "{colors.teal.600}", _dark: "{colors.dark.pink}" } },
     },
 
-    // 2. Layered Surfaces (Canonical surface namespace)
+    // 2. Layered Surfaces (Canonical surface namespace). Light never uses pure white: cards, bands
+    // and the overlay are the off-white mint.950.
     surface: {
-      DEFAULT: { value: { base: "#fffdf9", _dark: "{colors.dark.surface}" } },
-      canvas: { value: { base: "{colors.sand.50}", _dark: "{colors.dark.canvas}" } },
-      card: { value: { base: "#fffdf9", _dark: "{colors.dark.surface}" } },
-      sunken: { value: { base: "{colors.sand.100}", _dark: "{colors.dark.surfaceSunken}" } },
-      subtle: { value: { base: "{colors.sand.150}", _dark: "{colors.dark.subtle}" } },
-      overlay: { value: { base: "#ffffff", _dark: "{colors.dark.surfaceOverlay}" } },
-      contrast: { value: { base: "{colors.sand.800}", _dark: "{colors.dark.contrast}" } },
-      // Deep-teal headline block: one per page (the headline figure). Text on it uses
-      // text.onContrast (>= 4.5:1, asserted in tokens.a11y.test.ts).
-      hero: { value: { base: "#12483f", _dark: "#1b5448" } },
+      DEFAULT: { value: { base: "{colors.mint.950}", _dark: "{colors.dark.surface}" } },
+      canvas: { value: { base: "{colors.mint.50}", _dark: "{colors.dark.canvas}" } },
+      card: { value: { base: "{colors.mint.950}", _dark: "{colors.dark.surface}" } },
+      sunken: { value: { base: "{colors.mint.100}", _dark: "{colors.dark.surfaceSunken}" } },
+      subtle: { value: { base: "{colors.mint.150}", _dark: "{colors.dark.subtle}" } },
+      overlay: { value: { base: "#f2f5f4", _dark: "{colors.dark.surfaceOverlay}" } },
+      // Charcoal: the footer, the closing band and small numbered markers. Text on it uses
+      // text.onContrast.
+      contrast: { value: { base: "{colors.mint.800}", _dark: "{colors.dark.contrast}" } },
+      // The headline block, one per page. Light: solid mint with dark ink (text.onHero). Dark: a
+      // card with an edge (border.hero) and a mint figure (text.heroFigure), as in Midnight.
+      hero: { value: { base: "{colors.mint.400}", _dark: "{colors.dark.surface}" } },
       // Modal/drawer backdrop. A translucent backdrop, never a text surface: contrast is not
       // asserted, only that it visibly dims the page (see tokens.a11y.test.ts).
-      scrim: { value: { base: "rgba(43, 38, 32, 0.4)", _dark: "rgba(8, 6, 4, 0.6)" } },
-      // E16 PR 1 (P9, D16 option a): domain tints for icon tiles and at most ONE tinted section per
-      // page. Never around a KpiStrip, a ScenarioZone or a chart, and KPI cards are never tinted.
-      // Teal: net worth, mortgage. Apricot: debt. Sage: savings (sky, rose and violet: see the area map in IconTile). text.primary, secondary
-      // and muted clear 4.5:1 on each, and each is >= 2 deltaE76 from every other surface (tests).
-      // Dark (P77): as light and as saturated as text.muted at 4.5:1 allows, about 1.25:1 and
-      // 16 deltaE76 against surface.card, so an icon tile reads on a card (it was 1.05 to 1.15:1).
+      scrim: { value: { base: "rgba(15, 42, 42, 0.4)", _dark: "rgba(5, 7, 9, 0.6)" } },
+      // Domain tints for icon tiles and at most ONE tinted section per page. Never around a
+      // KpiStrip, a ScenarioZone or a chart, and KPI cards are never tinted. Teal: net worth,
+      // mortgage. Apricot: debt. Sage: savings (sky, rose and violet: see the area map in IconTile).
+      // text.primary, secondary and muted clear 4.5:1 on each, and each is >= 2 deltaE76 from every
+      // other surface (tests). Dark: about 1.25:1 against surface.card, so an icon tile reads on a
+      // card.
       tint: {
-        teal: { value: { base: "#dcede6", _dark: "#1d3932" } },
+        teal: { value: { base: "#c6e6dc", _dark: "#1d3934" } },
         apricot: { value: { base: "#fae5cc", _dark: "#42311c" } },
-        sage: { value: { base: "#e5edda", _dark: "#2b3822" } },
-        // Home section cards (owner request, 19 Nov 2026): one colour per section, so pension, Self
-        // Assessment and budget each have a tint of their own beside teal, apricot and sage. Paired
-        // with chart.series6 (sky), series4 (violet) and series5 (rose; not series7, which is the
-        // warning colour). Same rules and tests, and at least 5 deltaE from every status bg.
-        sky: { value: { base: "#dceaf3", _dark: "#1d3846" } },
-        rose: { value: { base: "#fadbe3", _dark: "#4d2939" } },
+        sage: { value: { base: "#e1edd6", _dark: "#2b3822" } },
+        sky: { value: { base: "#d8e8f2", _dark: "#1d3846" } },
+        rose: { value: { base: "#f5e1ea", _dark: "#4d2939" } },
         violet: { value: { base: "#e3e0f4", _dark: "#353050" } },
       },
     },
 
     // 3. Typography Hierarchy
     text: {
-      primary: { value: { base: "{colors.sand.900}", _dark: "{colors.dark.textPrimary}" } },
-      secondary: { value: { base: "{colors.sand.700}", _dark: "{colors.dark.textSecondary}" } },
-      muted: { value: { base: "{colors.sand.600}", _dark: "{colors.dark.textMuted}" } },
-      onContrast: { value: { base: "#f6f1e8", _dark: "#fffdf9" } },
+      primary: { value: { base: "{colors.mint.900}", _dark: "{colors.dark.textPrimary}" } },
+      secondary: { value: { base: "{colors.mint.700}", _dark: "{colors.dark.textSecondary}" } },
+      muted: { value: { base: "{colors.mint.600}", _dark: "{colors.dark.textMuted}" } },
+      // Text on surface.contrast (charcoal in light, the darkest step in dark).
+      onContrast: { value: { base: "{colors.mint.950}", _dark: "{colors.mint.950}" } },
+      // Text on surface.hero: dark ink on the light mint block, light text on the dark hero card.
+      onHero: { value: { base: "{colors.mint.900}", _dark: "{colors.dark.textPrimary}" } },
+      // The headline figure on surface.hero: dark ink in light, mint in dark.
+      heroFigure: { value: { base: "{colors.mint.900}", _dark: "{colors.dark.primary}" } },
     },
 
     // 4. Hairline & Interactive Borders
     border: {
-      DEFAULT: { value: { base: "{colors.sand.250}", _dark: "{colors.dark.border}" } },
-      subtle: { value: { base: "{colors.sand.200}", _dark: "{colors.dark.borderSubtle}" } },
-      strong: { value: { base: "{colors.sand.300}", _dark: "{colors.dark.borderStrong}" } },
-      input: { value: { base: "{colors.sand.500}", _dark: "{colors.dark.borderInput}" } },
+      DEFAULT: { value: { base: "{colors.mint.250}", _dark: "{colors.dark.border}" } },
+      subtle: { value: { base: "{colors.mint.200}", _dark: "{colors.dark.borderSubtle}" } },
+      strong: { value: { base: "{colors.mint.300}", _dark: "{colors.dark.borderStrong}" } },
+      input: { value: { base: "{colors.mint.500}", _dark: "{colors.dark.borderInput}" } },
       focusRing: { value: { base: "{colors.teal.600}", _dark: "{colors.dark.primary}" } },
+      // The edge of surface.hero: the fill itself in light, a visible edge on the dark hero card.
+      hero: { value: { base: "{colors.mint.400}", _dark: "{colors.dark.borderStrong}" } },
+      // Section titles in the app sit on this rule so sections are clearly separated.
+      section: { value: { base: "{colors.mint.900}", _dark: "{colors.dark.borderInput}" } },
     },
 
-    // 5. Unified Financial & System Status. Direction C values; positive is a yellower leaf green
-    // (hue ~90) so it never reads as the teal primary (hue ~170); info keeps indigo. Every pair is
-    // covered by the contrast matrix in tokens.a11y.test.ts. The dark positive bg and border are a
-    // deep forest green (hue ~130), not olive, and stay >= 10 deltaE from the teal primary.subtle.
+    // 5. Unified Financial & System Status. Positive is a yellower leaf green (hue ~90) so it never
+    // reads as the teal primary (hue ~170); info keeps indigo. Every pair is covered by the contrast
+    // matrix in tokens.a11y.test.ts.
     status: {
       positive: {
         text: { value: { base: "#3e6b12", _dark: "#a8d86a" } },
-        bg: { value: { base: "#eaf3da", _dark: "#1d3a22" } },
-        border: { value: { base: "#bcd68f", _dark: "#34603a" } },
+        bg: { value: { base: "#eaf3da", _dark: "#1f3622" } },
+        border: { value: { base: "#bcd68f", _dark: "#3a6340" } },
         solid: { value: { base: "#3a5c08", _dark: "#c5de4c" } },
       },
       warning: {
         text: { value: { base: "#8a4a08", _dark: "#f2b873" } },
-        bg: { value: { base: "#fcebd2", _dark: "#3b2c16" } },
+        bg: { value: { base: "#fcebd2", _dark: "#382b18" } },
         border: { value: { base: "#ebc38a", _dark: "#6b4b1e" } },
         solid: { value: { base: "#b06a10", _dark: "#e0a04a" } },
       },
       danger: {
         text: { value: { base: "#a13a2b", _dark: "#f4a593" } },
-        bg: { value: { base: "#fbe5e0", _dark: "#3d221d" } },
+        bg: { value: { base: "#fbe5e0", _dark: "#3b2320" } },
         border: { value: { base: "#e8b0a4", _dark: "#74403a" } },
         solid: { value: { base: "#b64030", _dark: "#be5337" } },
       },
@@ -307,10 +320,10 @@ export const semanticTokens = {
         solid: { value: { base: "#4f46e5", _dark: "#8f92ff" } },
       },
       neutral: {
-        text: { value: { base: "{colors.sand.700}", _dark: "{colors.dark.textSecondary}" } },
-        bg: { value: { base: "#ece6dc", _dark: "#2e2a26" } },
-        border: { value: { base: "#c9c0b2", _dark: "#4a443b" } },
-        solid: { value: { base: "#766c5f", _dark: "#a59d90" } },
+        text: { value: { base: "{colors.mint.700}", _dark: "{colors.dark.textSecondary}" } },
+        bg: { value: { base: "#dbe9e5", _dark: "#262b33" } },
+        border: { value: { base: "#a9c6be", _dark: "#46505c" } },
+        solid: { value: { base: "#5a716d", _dark: "#a9afb9" } },
       },
     },
 
@@ -319,31 +332,31 @@ export const semanticTokens = {
     // distinguishable under colour-vision deficiency (see the CVD test); still pair every series
     // with a direct label, marker or dash so colour is never the only cue.
     chart: {
-      primary: { value: { base: "{colors.teal.600}", _dark: "#5cc4ae" } },
+      primary: { value: { base: "{colors.teal.600}", _dark: "{colors.dark.primary}" } },
       wealth: { value: { base: "#64885c", _dark: "#9ad0a0" } },
       debt: { value: { base: "#c26a18", _dark: "#eda45f" } },
       warning: { value: { base: "#94750f", _dark: "#e3b452" } },
       accentPurple: { value: { base: "#7e67a8", _dark: "#a98fe0" } },
       accentCyan: { value: { base: "#2f7fa0", _dark: "#6db5d6" } },
-      // E17: the accent as a chart series (same values as accent.DEFAULT). At most one series per
-      // chart, always with a direct label and a dash. Never for debt, a loss or a gain.
-      accent: { value: { base: "#7a3f66", _dark: "#dba6c9" } },
-      series1: { value: { base: "{colors.teal.600}", _dark: "#5cc4ae" } },
+      // The accent as a chart series (same values as accent.DEFAULT). At most one series per chart,
+      // always with a direct label and a dash. Never for debt, a loss or a gain.
+      accent: { value: { base: "#1d5f73", _dark: "{colors.dark.pink}" } },
+      series1: { value: { base: "{colors.teal.600}", _dark: "{colors.dark.primary}" } },
       series2: { value: { base: "#64885c", _dark: "#9ad0a0" } },
       series3: { value: { base: "#c26a18", _dark: "#eda45f" } },
       series4: { value: { base: "#7e67a8", _dark: "#a98fe0" } },
       series5: { value: { base: "#b03f6a", _dark: "#e58aa2" } },
       series6: { value: { base: "#2f7fa0", _dark: "#6db5d6" } },
       series7: { value: { base: "#94750f", _dark: "#e3b452" } },
-      series8: { value: { base: "#7a7064", _dark: "#a59d90" } },
+      series8: { value: { base: "#5f7470", _dark: "#a9afb9" } },
       // Forecast / projected values: draw dashed so it is not told apart by colour alone.
       projection: { value: { base: "#6b3f2a", _dark: "#ffd2a8" } },
       // Confidence band: a low-alpha teal FILL behind lines, never a line itself. Verified only as
       // alpha-composited difference from the card (>= 1.1:1) and that chart.primary stays >= 3:1 on it.
-      band: { value: { base: "rgba(15, 107, 94, 0.14)", _dark: "rgba(92, 196, 174, 0.15)" } },
+      band: { value: { base: "rgba(11, 107, 93, 0.14)", _dark: "rgba(111, 208, 186, 0.15)" } },
       // Reference lines (targets, zero line, prior year).
-      baseline: { value: { base: "{colors.sand.500}", _dark: "{colors.dark.borderInput}" } },
-      grid: { value: { base: "rgba(43, 38, 32, 0.08)", _dark: "rgba(244, 239, 231, 0.08)" } },
+      baseline: { value: { base: "{colors.mint.500}", _dark: "{colors.dark.borderInput}" } },
+      grid: { value: { base: "rgba(15, 42, 42, 0.08)", _dark: "rgba(241, 238, 232, 0.08)" } },
     },
   },
   shadows: elevationShadows,
