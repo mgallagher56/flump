@@ -151,8 +151,9 @@ describe("MarginalRateExplorer", () => {
     expect(screen.queryByText(/^Unverified estimate\. These tax figures/)).toBeNull();
   });
 
-  it("says once, outside the chart, when the year's rules are not signed off (2024/25)", () => {
-    render(<MarginalRateExplorerStandalone initialValues={{ taxYear: "2024/25" }} />);
+  it("says once, outside the chart, when the year's rules are not verified (provisional 2027/28)", () => {
+    // Since 24 Nov 2026 every year to 2026/27 is signed; 2027/28 is announced, not yet law.
+    render(<MarginalRateExplorerStandalone initialValues={{ taxYear: "2027/28" }} />);
     const figure = screen.getByRole("figure", { name: CHART_TITLE });
     expect(within(figure).queryByText(/^Unverified estimate\. These tax figures/)).toBeNull();
     expect(screen.getAllByText(/^Unverified estimate\. These tax figures/)).toHaveLength(1);
