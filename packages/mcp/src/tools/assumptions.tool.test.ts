@@ -71,19 +71,25 @@ describe("tax-year defaults and verification (E17-N5, re-plan PR A)", () => {
     }
   });
 
-  it("every year that is not signed off is reported unverified", async () => {
+  it("reports the provisional year 2027/28 unverified, though its vectors are signed", async () => {
+    // 2027/28 rates are announced, not yet law, so the year never reads verified (ruling B).
     h = await connectTestClient(mortgageAndIsa);
-    for (const year of ["2020/21", "2021/22", "2022/23", "2023/24", "2024/25"]) {
-      const e = (await h.callJson("get_tax_year_position", { taxYear: year })) as Env;
-      // These years still have unsigned core or Self Assessment vectors, so none may read verified.
-      expect(e.verification.status, year).toBe("unverified");
-    }
+    const e = (await h.callJson("get_tax_year_position", { taxYear: "2027/28" })) as Env;
+    expect(e.verification.status).toBe("unverified");
   });
 
-  it("reports 2025/26 and 2026/27 verified once every one of their vectors is signed", async () => {
-    // 24 Nov 2026: the Fable decider signed every 2025/26 and 2026/27 vector.
+  it("reports every year from 2020/21 to 2026/27 verified once every one of their vectors is signed", async () => {
+    // 24 Nov 2026: the Fable decider signed every vector for 2020/21 to 2026/27 (#906, #912).
     h = await connectTestClient(mortgageAndIsa);
-    for (const year of ["2025/26", "2026/27"]) {
+    for (const year of [
+      "2020/21",
+      "2021/22",
+      "2022/23",
+      "2023/24",
+      "2024/25",
+      "2025/26",
+      "2026/27",
+    ]) {
       const e = (await h.callJson("get_tax_year_position", { taxYear: year })) as Env;
       expect(e.verification.status, year).toBe("verified");
     }
