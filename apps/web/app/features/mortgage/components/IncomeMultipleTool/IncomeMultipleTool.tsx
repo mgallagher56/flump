@@ -2,6 +2,7 @@ import {
   calculateIncomeMultipleRange,
   DEFAULT_INCOME_MULTIPLE_HIGH,
   DEFAULT_INCOME_MULTIPLE_LOW,
+  type PropertyPriceTaxAnswers,
 } from "@flump/finance-engine";
 import {
   Button,
@@ -43,6 +44,11 @@ export interface IncomeMultipleToolProps {
   onHighMultipleChange: (value: number) => void;
   onDepositChange: (value: number | null) => void;
   onBuyingCostsChange: (value: number | null) => void;
+  /**
+   * Where the property is and who is buying, once answered in the stamp duty section. The engine
+   * then takes the estimated tax off the deposit with other buying costs (E39 S1c).
+   */
+  propertyTax?: PropertyPriceTaxAnswers | null;
 }
 
 const multipleFormat = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 2 });
@@ -64,6 +70,7 @@ export const IncomeMultipleTool: FC<IncomeMultipleToolProps> = ({
   onHighMultipleChange,
   onDepositChange,
   onBuyingCostsChange,
+  propertyTax = null,
 }) => {
   const { formatCurrency } = useFormatCurrency();
   const hintId = useId();
@@ -92,6 +99,7 @@ export const IncomeMultipleTool: FC<IncomeMultipleToolProps> = ({
         highMultiple,
         depositGbp,
         buyingCostsGbp,
+        propertyTax,
       }),
     [
       primaryAnnualIncomeGbp,
@@ -100,6 +108,7 @@ export const IncomeMultipleTool: FC<IncomeMultipleToolProps> = ({
       highMultiple,
       depositGbp,
       buyingCostsGbp,
+      propertyTax,
     ],
   );
 
@@ -252,7 +261,7 @@ export const IncomeMultipleTool: FC<IncomeMultipleToolProps> = ({
               )}
             </FormField>
             <FormField
-              hint="Taken off your deposit before working out property price and loan to value."
+              hint="Taken off your deposit, with any stamp duty estimate, before working out property price and loan to value."
               label="Other buying costs"
             >
               {(field) => (

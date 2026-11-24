@@ -1,4 +1,4 @@
-import type { UkPropertyTaxJurisdiction } from "@flump/finance-engine";
+import { solvePropertyPrice, type UkPropertyTaxJurisdiction } from "@flump/finance-engine";
 import type { Meta, StoryObj } from "@storybook/react";
 import { useState } from "react";
 import { expect, fn, userEvent, within } from "storybook/test";
@@ -19,6 +19,7 @@ const Stateful = (initial: Partial<StampDutyEstimateProps>) => {
       onAllFirstTimeBuyersMainHomeChange={setFtb}
       onJurisdictionChange={setJurisdiction}
       onPropertyPriceChange={setPrice}
+      fromEstimate={initial.fromEstimate}
     />
   );
 };
@@ -106,4 +107,69 @@ export const Closed: Story = {
     await expect(canvas.getByTestId("stamp-duty-panel")).toBeInTheDocument();
     await expect(canvas.getByText("Where is the property?")).toBeInTheDocument();
   },
+};
+
+/**
+ * With a price from the loan estimate (E39 S1c): no price field. £200,000 to £225,000 loans with a
+ * £27,500 deposit solve to £225,491 (tax £2,009, floored) and £250,000 (tax £2,500).
+ */
+export const FromEstimateRange: Story = {
+  render: () => (
+    <Stateful
+      allFirstTimeBuyersMainHome={false}
+      fromEstimate={{
+        low: solvePropertyPrice({
+          loanGbp: 200_000,
+          depositGbp: 27_500,
+          jurisdiction: "ENGLAND_NI",
+        }),
+        high: solvePropertyPrice({
+          loanGbp: 225_000,
+          depositGbp: 27_500,
+          jurisdiction: "ENGLAND_NI",
+        }),
+      }}
+      jurisdiction="ENGLAND_NI"
+    />
+  ),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.queryByLabelText(/Property price/)).toBeNull();
+    await expect(canvas.getByTestId("stamp-duty-result")).toHaveTextContent(
+      "Estimated stamp duty: ~£2,009 to ~£2,500",
+    );
+  },
+};
+
+export const FromEstimateRangeDark: Story = {
+  ...FromEstimateRange,
+  globals: { theme: "dark" },
+};
+
+/** A £300,000 loan with a £4,000 deposit: tax at £300,000 is £5,000, so the deposit is short. */
+export const FromEstimateDepositShort: Story = {
+  render: () => {
+    const short = solvePropertyPrice({
+      loanGbp: 300_000,
+      depositGbp: 4_000,
+      jurisdiction: "ENGLAND_NI",
+    });
+    return (
+      <Stateful
+        allFirstTimeBuyersMainHome={false}
+        fromEstimate={{ low: short, high: short }}
+        jurisdiction="ENGLAND_NI"
+      />
+    );
+  },
+  play: async ({ canvasElement }) => {
+    await expect(within(canvasElement).getByTestId("stamp-duty-short")).toHaveTextContent(
+      "Your deposit, less other buying costs, does not cover this, so no property price is shown.",
+    );
+  },
+};
+
+export const FromEstimateDepositShortDark: Story = {
+  ...FromEstimateDepositShort,
+  globals: { theme: "dark" },
 };

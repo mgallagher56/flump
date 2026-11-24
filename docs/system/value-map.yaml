@@ -2818,6 +2818,24 @@ figures:
     verdict: holds
     note: "E39 S1 (MA5): single home for LTV default rate assumptions (asOf 2026-11) and 6-month staleness check."
 
+  - id: property-price-after-buying-costs
+    name: Property price after stamp duty and other buying costs
+    area: mortgage
+    computed_by:
+      {
+        function: solvePropertyPrice,
+        path: packages/finance-engine/src/property-price-solver.ts,
+      }
+    inputs: []
+    shown_on:
+      - {
+          surface: mortgage-estimates,
+          path: apps/web/app/features/mortgage/components/StampDutyEstimate/StampDutyEstimate.tsx,
+        }
+      - { surface: mortgage, path: packages/finance-engine/src/mortgage-affordability.ts }
+    verdict: holds
+    note: "E39 S1c: the largest whole-pence price with price + calculatePropertyTransactionTax(price) + other buying costs <= loan + deposit, found by bisection. calculateBudgetLoanEstimate and calculateIncomeMultipleRange call it when given tax answers; the page passes the place and first-time buyer answers from the stamp duty section, nothing stored."
+
   - id: property-transaction-tax
     name: Estimated stamp duty (SDLT, LBTT, LTT)
     area: mortgage

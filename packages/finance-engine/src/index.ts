@@ -27,6 +27,7 @@ export * from "./personal-allowance-allocation.js";
 export * from "./picture/index.js";
 export * from "./portfolio.js";
 export * from "./profile.js";
+export * from "./property-price-solver.js";
 export * from "./recorded-month-comparison.js";
 export * from "./recorded-return.js";
 export * from "./retirement.js";

@@ -175,4 +175,55 @@ describe("MortgageEstimatesContainer", () => {
     expect(fetchSpy).not.toHaveBeenCalled();
     fetchSpy.mockRestore();
   });
+
+  it("takes stamp duty off the deposit with the loan tool's price, and asks for a price only where no tool gives one (E39 S1c)", () => {
+    render(
+      <MemoryRouter>
+        <MortgageEstimatesContainer />
+      </MemoryRouter>,
+    );
+    const setField = (name: string | RegExp, value: string) => {
+      const input = screen.getByRole("textbox", { name });
+      fireEvent.change(input, { target: { value } });
+      fireEvent.blur(input);
+    };
+    setField("Monthly payment input", "750");
+    setField("Interest rate input", "0");
+    fireEvent.click(screen.getByRole("button", { name: "Deposit and buying costs" }));
+    const deposit = screen.getByLabelText(/^Deposit/);
+    fireEvent.change(deposit, { target: { value: "27500" } });
+    fireEvent.blur(deposit);
+
+    // 0% over 25 years: £750 x 300 = £225,000. Before the tax answers: 225,000 + 27,500 =
+    // £252,500 -> ~£253,000, LTV 89.1% -> 89%.
+    const loanText = () => screen.getByTestId("loan-from-payment-result").textContent ?? "";
+    expect(loanText()).toContain("Property price ~£253,000, loan to value 89%");
+
+    fireEvent.click(screen.getByRole("button", { name: "Stamp duty estimate" }));
+    expect(screen.queryByLabelText(/Property price/)).toBeNull();
+    fireEvent.click(screen.getByRole("radio", { name: "England or Northern Ireland" }));
+    fireEvent.click(screen.getByRole("radio", { name: "No" }));
+
+    // SDLT: the largest price with price + tax <= £252,500 is £250,000 (2% x 125,000 = £2,500).
+    expect(screen.getByTestId("stamp-duty-result").textContent).toContain(
+      "Estimated stamp duty: ~£2,500",
+    );
+    expect(loanText()).toContain("Property price ~£250,000, loan to value 90%");
+    expect(
+      screen
+        .getByRole("note", { name: "Guidance, not advice" })
+        .textContent?.startsWith("Unverified estimate."),
+    ).toBe(true);
+
+    // The rate tool gives no property price, so the section asks for one there. Radix tabs
+    // switch on mouse down, not click.
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "If rates change" }), { button: 0 });
+    expect(screen.getByRole("tab", { name: "If rates change" }).getAttribute("aria-selected")).toBe(
+      "true",
+    );
+    expect(screen.getByLabelText(/Property price/)).not.toBeNull();
+    expect(screen.getByTestId("stamp-duty-empty").textContent).toBe(
+      "Enter a property price to see an estimate.",
+    );
+  });
 });

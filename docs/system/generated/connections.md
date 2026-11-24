@@ -631,6 +631,9 @@ flowchart LR
   g_mortgage_fix_end_estimate -.-> s_mortgage
   g_mortgage_ltv_rate_band{{"Default mortgage rate band by LTV"}}
   g_mortgage_ltv_rate_band -.-> s_mortgage
+  g_property_price_after_buying_costs{{"Property price after stamp duty and other buying costs"}}
+  g_property_price_after_buying_costs -.-> s_mortgage_estimates
+  g_property_price_after_buying_costs -.-> s_mortgage
   g_property_transaction_tax{{"Estimated stamp duty (SDLT, LBTT, LTT)"}}
   g_property_transaction_tax -.-> s_mortgage_estimates
 ```

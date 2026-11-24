@@ -1,6 +1,8 @@
 import {
   calculatePropertyTransactionTax,
   PROPERTY_TAX_REGIME_META,
+  type PropertyPriceSolution,
+  type PropertyPriceTaxAnswers,
   type PropertyTransactionTaxResult,
   type UkPropertyTaxJurisdiction,
 } from "@flump/finance-engine";
@@ -32,7 +34,22 @@ export interface StampDutyInputs {
   allFirstTimeBuyersMainHome: boolean | null;
 }
 
+/**
+ * The solver's results for the property price the active loan tool works out (E39 S1c). `low` and
+ * `high` are the two ends of the tool's range, the same result when it has one figure, and `null`
+ * until the place and first-time buyer answers are in.
+ */
+export interface StampDutyFromEstimate {
+  low: PropertyPriceSolution | null;
+  high: PropertyPriceSolution | null;
+}
+
 export interface StampDutyEstimateProps extends StampDutyInputs {
+  /**
+   * Set when the active loan tool supplies the property price. The section then shows the tax the
+   * solver took off the deposit and asks for no price of its own.
+   */
+  fromEstimate?: StampDutyFromEstimate | null;
   onPropertyPriceChange: (value: number | null) => void;
   onJurisdictionChange: (value: UkPropertyTaxJurisdiction) => void;
   onAllFirstTimeBuyersMainHomeChange: (value: boolean) => void;
@@ -62,6 +79,32 @@ export const asksFirstTimeBuyerQuestion = (
   jurisdiction !== null && PROPERTY_TAX_REGIME_META[jurisdiction].hasFirstTimeBuyerRelief;
 
 /**
+ * The place and first-time buyer answers the engine needs, once every needed answer is in, or `null`.
+ * The container passes these to the loan tools so the solver takes the tax off the deposit.
+ */
+export const stampDutyTaxAnswers = ({
+  jurisdiction,
+  allFirstTimeBuyersMainHome,
+}: Pick<
+  StampDutyInputs,
+  "jurisdiction" | "allFirstTimeBuyersMainHome"
+>): PropertyPriceTaxAnswers | null => {
+  if (jurisdiction === null) return null;
+  const asksFtb = asksFirstTimeBuyerQuestion(jurisdiction);
+  if (asksFtb && allFirstTimeBuyersMainHome === null) return null;
+  return { jurisdiction, isFirstTimeBuyer: asksFtb ? allFirstTimeBuyersMainHome === true : false };
+};
+
+/** The tax figure a solver result shows: at the solved price, or at a price equal to the loan when the deposit is short. */
+const solutionTax = (
+  solution: PropertyPriceSolution | null,
+): PropertyTransactionTaxResult | null => {
+  if (solution?.status === "solved") return solution.propertyTax;
+  if (solution?.status === "deposit-short") return solution.propertyTaxAtLoan;
+  return null;
+};
+
+/**
  * The engine's estimate once every needed answer is in, or `null`. No rate, band or formula lives
  * here: the figure is `calculatePropertyTransactionTax` only (AGENTS.md section 16).
  */
@@ -70,14 +113,35 @@ export const estimateStampDuty = ({
   jurisdiction,
   allFirstTimeBuyersMainHome,
 }: StampDutyInputs): PropertyTransactionTaxResult | null => {
-  if (propertyPriceGbp === null || !(propertyPriceGbp > 0) || jurisdiction === null) return null;
-  const asksFtb = asksFirstTimeBuyerQuestion(jurisdiction);
-  if (asksFtb && allFirstTimeBuyersMainHome === null) return null;
-  return calculatePropertyTransactionTax({
-    propertyPriceGbp,
-    jurisdiction,
-    isFirstTimeBuyer: asksFtb ? allFirstTimeBuyersMainHome === true : false,
-  });
+  if (propertyPriceGbp === null || !(propertyPriceGbp > 0)) return null;
+  const answers = stampDutyTaxAnswers({ jurisdiction, allFirstTimeBuyersMainHome });
+  if (answers === null) return null;
+  return calculatePropertyTransactionTax({ propertyPriceGbp, ...answers });
+};
+
+/**
+ * What the section shows for the solver's results: the low and high tax figures (the same when the
+ * tool has one figure) and whether the deposit falls short at the high end. `null` until both ends
+ * have a result. A short deposit at the low end means it is short at the high end too, as tax
+ * never falls when the loan rises.
+ */
+export const stampDutyFromEstimateFigures = (
+  fromEstimate: StampDutyFromEstimate,
+): {
+  low: PropertyTransactionTaxResult;
+  high: PropertyTransactionTaxResult;
+  lowIsShort: boolean;
+  highIsShort: boolean;
+} | null => {
+  const low = solutionTax(fromEstimate.low);
+  const high = solutionTax(fromEstimate.high);
+  if (low === null || high === null) return null;
+  return {
+    low,
+    high,
+    lowIsShort: fromEstimate.low?.status === "deposit-short",
+    highIsShort: fromEstimate.high?.status === "deposit-short",
+  };
 };
 
 /** "1 April 2025": the full en-GB date for prose (copy guide 4.3). */
@@ -106,9 +170,11 @@ const taxLabel = (result: PropertyTransactionTaxResult): string =>
   result.regime === "SDLT" ? "stamp duty" : result.taxName;
 
 /**
- * Estimated stamp duty for a typed property price (E39 S2, section 10a MA7). Asks where the property
- * is with no prefill, and whether every buyer is a first-time buyer buying their main home where the
- * regime has a relief. Scenario only: values come from and go to `useScenarioState` in the page.
+ * Estimated stamp duty (E39 S2 and S1c, section 10a MA7). Asks where the property is with no
+ * prefill, and whether every buyer is a first-time buyer buying their main home where the regime has
+ * a relief. When the active loan tool supplies a property price, shows the tax the solver took off
+ * the deposit; otherwise asks for a typed price. Scenario only: values come from and go to
+ * `useScenarioState` in the page.
  */
 export const StampDutyEstimate: FC<StampDutyEstimateProps> = ({
   propertyPriceGbp,
@@ -117,24 +183,48 @@ export const StampDutyEstimate: FC<StampDutyEstimateProps> = ({
   onPropertyPriceChange,
   onJurisdictionChange,
   onAllFirstTimeBuyersMainHomeChange,
+  fromEstimate = null,
   defaultOpen = false,
 }) => {
   const [open, setOpen] = useState(defaultOpen);
-  const result = useMemo(
-    () => estimateStampDuty({ propertyPriceGbp, jurisdiction, allFirstTimeBuyersMainHome }),
-    [propertyPriceGbp, jurisdiction, allFirstTimeBuyersMainHome],
+  const usesEstimate = fromEstimate !== null;
+  const typed = useMemo(
+    () =>
+      usesEstimate
+        ? null
+        : estimateStampDuty({ propertyPriceGbp, jurisdiction, allFirstTimeBuyersMainHome }),
+    [usesEstimate, propertyPriceGbp, jurisdiction, allFirstTimeBuyersMainHome],
   );
+  const solved = fromEstimate ? stampDutyFromEstimateFigures(fromEstimate) : null;
   const asksFtb = asksFirstTimeBuyerQuestion(jurisdiction);
+  // The result whose regime and dates the line uses: one place, so both ends share them.
+  const result = solved ? solved.high : typed;
 
   const emptyPrompt =
-    propertyPriceGbp === null || !(propertyPriceGbp > 0)
+    !usesEstimate && (propertyPriceGbp === null || !(propertyPriceGbp > 0))
       ? "Enter a property price to see an estimate."
       : jurisdiction === null
         ? "Choose where the property is to see an estimate."
         : "Answer the first-time buyer question to see an estimate.";
 
-  const figure = result ? `~${formatTax(result.taxGbp)}` : null;
+  let figure: string | null = null;
+  if (solved) {
+    figure =
+      solved.low.taxGbp === solved.high.taxGbp
+        ? `~${formatTax(solved.high.taxGbp)}`
+        : `~${formatTax(solved.low.taxGbp)} to ~${formatTax(solved.high.taxGbp)}`;
+  } else if (typed) {
+    figure = `~${formatTax(typed.taxGbp)}`;
+  }
   const lineLabel = result ? `Estimated ${taxLabel(result)}` : null;
+  let shortNote: string | null = null;
+  if (solved?.lowIsShort) {
+    shortNote =
+      "Your deposit, less other buying costs, does not cover this, so no property price is shown.";
+  } else if (solved?.highIsShort) {
+    shortNote =
+      "At the higher estimate, your deposit, less other buying costs, does not cover this, so no property price is shown.";
+  }
 
   return (
     <div className={stampDutyRoot()} data-testid="stamp-duty-estimate" id="stamp-duty-estimate">
@@ -155,16 +245,23 @@ export const StampDutyEstimate: FC<StampDutyEstimateProps> = ({
 
       {open ? (
         <div className={stampDutyPanel} data-testid={PANEL_ID} id={PANEL_ID}>
-          <FormField label="Property price">
-            {(field) => (
-              <CurrencyInput
-                {...controlProps(field)}
-                placeholder="0"
-                value={propertyPriceGbp}
-                onValueChange={onPropertyPriceChange}
-              />
-            )}
-          </FormField>
+          {usesEstimate ? (
+            <p className={stampDutyNote} data-testid="stamp-duty-basis" id="stamp-duty-basis">
+              Worked out on the property price in your estimate above, and taken off your deposit
+              with other buying costs.
+            </p>
+          ) : (
+            <FormField label="Property price">
+              {(field) => (
+                <CurrencyInput
+                  {...controlProps(field)}
+                  placeholder="0"
+                  value={propertyPriceGbp}
+                  onValueChange={onPropertyPriceChange}
+                />
+              )}
+            </FormField>
+          )}
 
           <RadioCardGroup
             legend="Where is the property?"
@@ -192,6 +289,11 @@ export const StampDutyEstimate: FC<StampDutyEstimateProps> = ({
               <p className={stampDutyLine}>
                 {lineLabel}: <span className={stampDutyFigure}>{figure}</span>
               </p>
+              {shortNote ? (
+                <p className={stampDutyNote} data-testid="stamp-duty-short" id="stamp-duty-short">
+                  {shortNote}
+                </p>
+              ) : null}
               <p className={stampDutyNote}>
                 Rates in effect from {formatLongDate(result.ratesEffectiveFrom)}. Sources checked on{" "}
                 {formatLongDate(result.sourcesCheckedOn)}.

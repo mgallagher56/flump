@@ -1,3 +1,4 @@
+import { solvePropertyPrice } from "@flump/finance-engine";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
@@ -6,6 +7,9 @@ import {
   estimateStampDuty,
   StampDutyEstimate,
   type StampDutyEstimateProps,
+  type StampDutyFromEstimate,
+  stampDutyFromEstimateFigures,
+  stampDutyTaxAnswers,
 } from "./StampDutyEstimate";
 
 const Stateful = (initial: Partial<StampDutyEstimateProps>) => {
@@ -21,9 +25,29 @@ const Stateful = (initial: Partial<StampDutyEstimateProps>) => {
       onAllFirstTimeBuyersMainHomeChange={setFtb}
       onJurisdictionChange={setJurisdiction}
       onPropertyPriceChange={setPrice}
+      fromEstimate={initial.fromEstimate}
     />
   );
 };
+
+/** SDLT England, not first-time: £225,000 loan, £27,500 deposit -> price £250,000, tax £2,500. */
+const solvedAt250k = solvePropertyPrice({
+  loanGbp: 225_000,
+  depositGbp: 27_500,
+  jurisdiction: "ENGLAND_NI",
+});
+/** SDLT England: £200,000 loan, £27,500 deposit -> price £225,491, tax £2,009 (floored). */
+const solvedAt225k = solvePropertyPrice({
+  loanGbp: 200_000,
+  depositGbp: 27_500,
+  jurisdiction: "ENGLAND_NI",
+});
+/** SDLT England: £300,000 loan, £4,000 deposit; tax at £300,000 = £5,000, so short by £1,000. */
+const shortAt300k = solvePropertyPrice({
+  loanGbp: 300_000,
+  depositGbp: 4_000,
+  jurisdiction: "ENGLAND_NI",
+});
 
 const resultText = () => screen.getByTestId("stamp-duty-result").textContent ?? "";
 const emptyText = () => screen.getByTestId("stamp-duty-empty").textContent ?? "";
@@ -91,6 +115,124 @@ describe("estimateStampDuty", () => {
         allFirstTimeBuyersMainHome: false,
       })?.taxGbp,
     ).toBe(10000);
+  });
+});
+
+describe("stampDutyTaxAnswers", () => {
+  it("returns the answers once the place and, where asked, the first-time buyer answer are in", () => {
+    expect(
+      stampDutyTaxAnswers({ jurisdiction: null, allFirstTimeBuyersMainHome: true }),
+    ).toBeNull();
+    expect(
+      stampDutyTaxAnswers({ jurisdiction: "SCOTLAND", allFirstTimeBuyersMainHome: null }),
+    ).toBeNull();
+    expect(
+      stampDutyTaxAnswers({ jurisdiction: "SCOTLAND", allFirstTimeBuyersMainHome: true }),
+    ).toEqual({ jurisdiction: "SCOTLAND", isFirstTimeBuyer: true });
+    expect(
+      stampDutyTaxAnswers({ jurisdiction: "ENGLAND_NI", allFirstTimeBuyersMainHome: false }),
+    ).toEqual({ jurisdiction: "ENGLAND_NI", isFirstTimeBuyer: false });
+    // Wales has no relief: the question is not asked, so a stale yes is not passed on.
+    expect(
+      stampDutyTaxAnswers({ jurisdiction: "WALES", allFirstTimeBuyersMainHome: true }),
+    ).toEqual({ jurisdiction: "WALES", isFirstTimeBuyer: false });
+  });
+});
+
+describe("stampDutyFromEstimateFigures", () => {
+  it("is null until both ends have a result, and flags a short deposit at the high end", () => {
+    expect(stampDutyFromEstimateFigures({ low: null, high: null })).toBeNull();
+    expect(stampDutyFromEstimateFigures({ low: solvedAt225k, high: null })).toBeNull();
+    const range = stampDutyFromEstimateFigures({ low: solvedAt225k, high: solvedAt250k });
+    expect(range?.low.taxGbp).toBe(2_009);
+    expect(range?.high.taxGbp).toBe(2_500);
+    expect(range?.highIsShort).toBe(false);
+    const short = stampDutyFromEstimateFigures({ low: solvedAt250k, high: shortAt300k });
+    // The short end shows the tax at a price equal to the loan: 2,500 + 5% x 50,000 = £5,000.
+    expect(short?.high.taxGbp).toBe(5_000);
+    expect(short?.highIsShort).toBe(true);
+    expect(short?.lowIsShort).toBe(false);
+    expect(range?.lowIsShort).toBe(false);
+    expect(
+      stampDutyFromEstimateFigures({
+        low: solvedAt250k,
+        high: { status: "invalid-input", field: "loanGbp" },
+      }),
+    ).toBeNull();
+  });
+});
+
+describe("StampDutyEstimate with a price from the loan estimate (E39 S1c)", () => {
+  const empty: StampDutyFromEstimate = { low: null, high: null };
+
+  it("asks for no price of its own and prompts for the place first", () => {
+    render(<Stateful fromEstimate={empty} />);
+    expect(screen.queryByLabelText(/Property price/)).toBeNull();
+    expect(screen.getByTestId("stamp-duty-basis").textContent).toBe(
+      "Worked out on the property price in your estimate above, and taken off your deposit with other buying costs.",
+    );
+    expect(emptyText()).toBe("Choose where the property is to see an estimate.");
+  });
+
+  it("prompts for the first-time buyer answer once the place is chosen", () => {
+    render(<Stateful fromEstimate={empty} jurisdiction="ENGLAND_NI" />);
+    expect(emptyText()).toBe("Answer the first-time buyer question to see an estimate.");
+  });
+
+  it("shows one figure when the estimate has one price", () => {
+    render(
+      <Stateful
+        allFirstTimeBuyersMainHome={false}
+        fromEstimate={{ low: solvedAt250k, high: solvedAt250k }}
+        jurisdiction="ENGLAND_NI"
+      />,
+    );
+    expect(resultText()).toContain("Estimated stamp duty: ~£2,500");
+    expect(resultText()).toContain("Rates in effect from 1 April 2025.");
+    expect(screen.queryByTestId("stamp-duty-short")).toBeNull();
+  });
+
+  it("shows a range when the estimate has two prices", () => {
+    render(
+      <Stateful
+        allFirstTimeBuyersMainHome={false}
+        fromEstimate={{ low: solvedAt225k, high: solvedAt250k }}
+        jurisdiction="ENGLAND_NI"
+      />,
+    );
+    expect(resultText()).toContain("Estimated stamp duty: ~£2,009 to ~£2,500");
+  });
+
+  it("says when the deposit does not cover the tax, for one figure and at the higher end", () => {
+    // Two separate results for one loan, as the engine returns for a single rate.
+    const shortAgain = solvePropertyPrice({
+      loanGbp: 300_000,
+      depositGbp: 4_000,
+      jurisdiction: "ENGLAND_NI",
+    });
+    const { unmount } = render(
+      <Stateful
+        allFirstTimeBuyersMainHome={false}
+        fromEstimate={{ low: shortAt300k, high: shortAgain }}
+        jurisdiction="ENGLAND_NI"
+      />,
+    );
+    expect(resultText()).toContain("Estimated stamp duty: ~£5,000");
+    expect(screen.getByTestId("stamp-duty-short").textContent).toBe(
+      "Your deposit, less other buying costs, does not cover this, so no property price is shown.",
+    );
+    unmount();
+    render(
+      <Stateful
+        allFirstTimeBuyersMainHome={false}
+        fromEstimate={{ low: solvedAt250k, high: shortAt300k }}
+        jurisdiction="ENGLAND_NI"
+      />,
+    );
+    expect(resultText()).toContain("Estimated stamp duty: ~£2,500 to ~£5,000");
+    expect(screen.getByTestId("stamp-duty-short").textContent).toBe(
+      "At the higher estimate, your deposit, less other buying costs, does not cover this, so no property price is shown.",
+    );
   });
 });
 
