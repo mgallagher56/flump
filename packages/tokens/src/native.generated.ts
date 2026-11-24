@@ -162,7 +162,7 @@ export const light: NativeTheme = {
     "surface.subtle": "#e7f2ee",
     "surface.sunken": "#dfeee9",
     "surface.tint.apricot": "#fae5cc",
-    "surface.tint.rose": "#f5e1ea",
+    "surface.tint.rose": "#f3e3ea",
     "surface.tint.sage": "#e1edd6",
     "surface.tint.sky": "#d8e8f2",
     "surface.tint.teal": "#c6e6dc",
