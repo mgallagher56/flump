@@ -1,5 +1,29 @@
 # Changelog
 
+## [1.39.0](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.38.1...flump/marketing-v1.39.0) (2026-11-24)
+
+
+### Features ✨
+
+* **ui:** Midnight and Mint across shared UI, app, marketing and docs ([1511013](https://github.com/mgallagher56/flump/commit/1511013ddc2a57a268353a3490d6a61bc4a467d6))
+
+
+### Bug Fixes 🪲
+
+* **a11y:** system colour pairs for button, hero and charcoal fills in forced colours ([a577f48](https://github.com/mgallagher56/flump/commit/a577f48995af4a7b53e91ef14e14bd428e4d3372))
+* **deps:** update all non-major third-party dependencies ([25340ef](https://github.com/mgallagher56/flump/commit/25340ef33bb9dab5cf9ed68aef96b0d1dfb4058d))
+* **marketing:** closing band scene wrapper keeps the scene's layout; story width from a token ([adcd7df](https://github.com/mgallagher56/flump/commit/adcd7dfafdc198e50f780d1e45845dd177eab360))
+* **theme:** real-app check of Midnight and Mint, savings axis and closing band scene ([6f2b897](https://github.com/mgallagher56/flump/commit/6f2b89749363a00e380b2cc7c0bf377b518b5676))
+* **ui:** dark top edge on the closing band and footer; Storybook canvas to #eef6f3 ([fecea40](https://github.com/mgallagher56/flump/commit/fecea408aab7e5d784a66676412b8facd59ef391))
+* **web,marketing:** address review findings on save status and security test ([72533ea](https://github.com/mgallagher56/flump/commit/72533ea113487ac92ad85b7d17923456cf246cf4))
+* **web,marketing:** fix retirement save version field, add Plan to age helper, and add security facts ([efec4ef](https://github.com/mgallagher56/flump/commit/efec4efb0b0e7c1e0c56453fb6c7c47d5ecc73a0))
+* **web:** format a part-year term in the loan note; correct LTV test working ([c0f5318](https://github.com/mgallagher56/flump/commit/c0f53180871b27632e39933afddbfc17209dc6c3))
+
+
+### Tests 🧪
+
+* replace existence-only assertions with value and state checks ([bc7da3c](https://github.com/mgallagher56/flump/commit/bc7da3c654eeb6640a5c40b8398dde4dc2c055f7))
+
 ## [1.38.1](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.38.0...flump/marketing-v1.38.1) (2026-11-21)
 
 

@@ -1,5 +1,59 @@
 # Changelog
 
+## [1.52.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.51.0...flump/web-v1.52.0) (2026-11-24)
+
+
+### Features ✨
+
+* **mortgage:** solve property price after stamp duty and buying costs (E39 S1c) ([5343db2](https://github.com/mgallagher56/flump/commit/5343db25b84c519f9bacfcf542eb035b6dbeb65b))
+* **profile:** add Partner mode toggle gating joint ownership UI ([74df0c3](https://github.com/mgallagher56/flump/commit/74df0c3aa0042ef0c90315b5af468fbbb4a5fbfa))
+* **retirement:** tax on pension withdrawals, UFPLS and the tax-free lump sum (E33 S6) ([4724042](https://github.com/mgallagher56/flump/commit/4724042acc0a7593910419e29337106600cce4cf))
+* **ui:** Midnight and Mint across shared UI, app, marketing and docs ([1511013](https://github.com/mgallagher56/flump/commit/1511013ddc2a57a268353a3490d6a61bc4a467d6))
+* **web:** a not-invited account can download or delete its data ([d701da2](https://github.com/mgallagher56/flump/commit/d701da28ff446863307335adef3022dbe065a9ff))
+* **web:** stamp duty estimate on mortgage estimates (E39 S2) ([73df1ea](https://github.com/mgallagher56/flump/commit/73df1ea4c25f4afdd062f3ea09a6fc40a3df9a52))
+
+
+### Bug Fixes 🪲
+
+* **a11y:** system colour pairs for button, hero and charcoal fills in forced colours ([a577f48](https://github.com/mgallagher56/flump/commit/a577f48995af4a7b53e91ef14e14bd428e4d3372))
+* **deps:** update all non-major third-party dependencies ([25340ef](https://github.com/mgallagher56/flump/commit/25340ef33bb9dab5cf9ed68aef96b0d1dfb4058d))
+* **finance-engine,web:** keep matched LTV band, saved term in months, dated rate label ([dfd2ce1](https://github.com/mgallagher56/flump/commit/dfd2ce15eeed5e01218ec8c10bf9afb95c937d79))
+* **marketing:** closing band scene wrapper keeps the scene's layout; story width from a token ([adcd7df](https://github.com/mgallagher56/flump/commit/adcd7dfafdc198e50f780d1e45845dd177eab360))
+* **mortgage:** ask for a rate when stamp duty leaves no default band (E39 S1c review) ([7c7f752](https://github.com/mgallagher56/flump/commit/7c7f752613a1f18ec07ce8ae0a3c08d6bd74d2e3))
+* resolve batch 1 of parked bugs ([eb67b89](https://github.com/mgallagher56/flump/commit/eb67b89ce44473b1446bed9d4209c3d1070d6e8f))
+* **retirement:** plan fields reflow at 320px; the single-column grid track can shrink below an input's natural width ([05c41ae](https://github.com/mgallagher56/flump/commit/05c41aef25538460f2cdd99426318e434290a086))
+* **theme:** real-app check of Midnight and Mint, savings axis and closing band scene ([6f2b897](https://github.com/mgallagher56/flump/commit/6f2b89749363a00e380b2cc7c0bf377b518b5676))
+* **tokens:** subtler mint canvas, 3:1 control borders, review fixes ([7921137](https://github.com/mgallagher56/flump/commit/7921137b8e75c7bce3efaaafc38dd8b8d911a96a))
+* **ui,web:** wire TaxRatesStatusBanner kind and keep joint ownership select mounted on edit ([d9a4a5e](https://github.com/mgallagher56/flump/commit/d9a4a5eef06c8c0a718bfbcf2d48e05a08b04a3e))
+* **ui:** dark top edge on the closing band and footer; Storybook canvas to #eef6f3 ([fecea40](https://github.com/mgallagher56/flump/commit/fecea408aab7e5d784a66676412b8facd59ef391))
+* **web,e2e:** update partnerMode test fixtures and web-profile visual baselines ([23f8235](https://github.com/mgallagher56/flump/commit/23f823595db688e28b358d3d1d7e35ebe7626a73))
+* **web,marketing:** address review findings on save status and security test ([72533ea](https://github.com/mgallagher56/flump/commit/72533ea113487ac92ad85b7d17923456cf246cf4))
+* **web,marketing:** fix retirement save version field, add Plan to age helper, and add security facts ([efec4ef](https://github.com/mgallagher56/flump/commit/efec4efb0b0e7c1e0c56453fb6c7c47d5ecc73a0))
+* **web:** apply review of E39 S2 stamp duty ([d501427](https://github.com/mgallagher56/flump/commit/d5014275e957f6c60d746006f19d84fcaf64b17a))
+* **web:** format a part-year term in the loan note; correct LTV test working ([c0f5318](https://github.com/mgallagher56/flump/commit/c0f53180871b27632e39933afddbfc17209dc6c3))
+* **web:** Header snapshot for the off-white top bar; list STORYBOOK in the env matrix ([3cd9dc5](https://github.com/mgallagher56/flump/commit/3cd9dc56eb6edf223865258ce69dcc94b7b2a784))
+* **web:** keep keyboard focus on BudgetEditor Essential switch while pending ([befc233](https://github.com/mgallagher56/flump/commit/befc233975dc2a382e68198fba2a54166e207405))
+* **web:** month in brief heading without full stop, keep budget ownership field mounted ([3dbecbb](https://github.com/mgallagher56/flump/commit/3dbecbbd8c3b4ec0ced92ff7efa036adb2f72c41))
+* **web:** Storybook extracts marketing styles; update header and dialog snapshots ([e214637](https://github.com/mgallagher56/flump/commit/e2146371f4064ca95bdbb4a0218630a5e11d379e))
+
+
+### Refactor 🔥
+
+* burn down style-literals and copy baselines ([51c00c7](https://github.com/mgallagher56/flump/commit/51c00c779ad2b384034041c2ae062eeb315a06ef))
+* **web:** useSavedProfile needs a data router; accounts read partner mode from it ([3416169](https://github.com/mgallagher56/flump/commit/3416169d814e087c518d98097e9b1c5660f7219f))
+
+
+### Tests 🧪
+
+* **invoicing:** assert work-log row locks are taken in id order in SQL ([127d0f1](https://github.com/mgallagher56/flump/commit/127d0f170ad0ded1159a9c299624db85b736e201))
+* replace existence-only assertions with value and state checks ([bc7da3c](https://github.com/mgallagher56/flump/commit/bc7da3c654eeb6640a5c40b8398dde4dc2c055f7))
+* update page-canvas ratchet and web-profile visual baselines ([8443eea](https://github.com/mgallagher56/flump/commit/8443eeacac7fd7a4e837cf3671253f28864cf4e0))
+
+
+### Miscellaneous 🙃
+
+* **deps:** playwright 1.65.1 (package and CI image digest), biome 2.6.8 ([08db5d7](https://github.com/mgallagher56/flump/commit/08db5d73d294590439fccbbd6da4bf4332000fa1))
+
 ## [1.51.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.50.0...flump/web-v1.51.0) (2026-11-21)
 
 
