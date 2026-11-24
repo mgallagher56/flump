@@ -228,8 +228,18 @@ export function parseResponseViolation(message: unknown): string[] {
 
 /** Empties every entity table (derived from the entity metadata, so a new entity is included). */
 export async function truncateAll(dataSource: DataSource): Promise<void> {
-  // audit_events refuses TRUNCATE (SEC-F); the helper deletes its rows the allowed way.
-  await emptyEntityTables(dataSource);
+  // audit_events refuses TRUNCATE (SEC-F); the helper deletes its rows the allowed way. A /mcp
+  // audit row is written after the response, under the user-data write fence (which reads the
+  // tombstone table first), so the previous test's write can deadlock with the TRUNCATE: retry.
+  for (let attempt = 1; ; attempt++) {
+    try {
+      await emptyEntityTables(dataSource);
+      return;
+    } catch (err) {
+      const code = (err as { driverError?: { code?: string } }).driverError?.code;
+      if (code !== "40P01" || attempt >= 3) throw err;
+    }
+  }
 }
 
 /**
