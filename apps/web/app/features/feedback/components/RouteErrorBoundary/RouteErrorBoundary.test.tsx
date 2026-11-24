@@ -8,6 +8,11 @@ import { RouteErrorBoundary, routeKeyFor } from "./RouteErrorBoundary";
 // The global test setup stubs useRevalidator and Form; this suite needs the real router behaviour.
 vi.mock("react-router", async () => await vi.importActual("react-router"));
 
+/** The root boundary, as root.tsx renders it. */
+function RootBoundary() {
+  return <RouteErrorBoundary isRoot />;
+}
+
 function RouteContent() {
   return <p>Route content</p>;
 }
@@ -198,6 +203,33 @@ describe("RouteErrorBoundary", () => {
     const form = container.querySelector("form") as HTMLFormElement;
     expect(form.getAttribute("action")).toBe("/logout");
     expect(form.getAttribute("method")).toBe("post");
+  });
+
+  it("offers a not-invited person their data download and account deletion at the root", async () => {
+    const Stub = createRoutesStub([
+      {
+        path: "/",
+        loader: () => {
+          throw data({ kind: "not-invited" }, { status: 403 });
+        },
+        Component: RouteContent,
+        ErrorBoundary: RootBoundary,
+      },
+    ]);
+    render(<Stub initialEntries={["/"]} />);
+    expect(
+      await screen.findByRole("heading", { name: "This account has not been invited yet" }),
+    ).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Download your data" })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Delete your account" })).toBeDefined();
+  });
+
+  it("shows no data actions on any other error", async () => {
+    renderWithLoader(() => {
+      throw data({ kind: "unavailable" }, { status: 503 });
+    });
+    expect(await screen.findByRole("heading", { name: "We could not reach Flump" })).toBeDefined();
+    expect(screen.queryByTestId("not-invited-data-actions")).toBeNull();
   });
 
   it("treats an unrecognised payload kind as unknown", async () => {
