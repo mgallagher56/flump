@@ -127,8 +127,13 @@ export const heroFigure = sva({
           backgroundColor: "surface.hero",
           borderColor: "border.hero",
           color: "text.onHero",
-          // The hero ink is the strongest outline on both heroes (8:1 and more).
+          // The hero ink is the strongest outline on both heroes (8:1 and more). The app's global
+          // unlayered focus rule reads --colors-border-focus-ring, so the hero resets that too.
+          "--colors-border-focus-ring": "token(colors.text.onHero)",
           "& :focus-visible": { outlineColor: "text.onHero" },
+          // A link never belongs on the hero, but if one lands there it keeps the hero ink: the
+          // teal is 3.5:1 on the light mint.
+          "& a": { color: "text.onHero" },
           // Forced colours (Windows contrast themes) replace the hero fill with the system canvas,
           // and hero text on it was the gate's contrast finding. Use the system pair and keep a
           // real border so the block still reads as one block (UX A12).

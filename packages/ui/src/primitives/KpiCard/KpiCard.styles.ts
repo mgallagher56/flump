@@ -34,8 +34,11 @@ export const kpiCardContainer = cva({
         backgroundColor: "surface.hero",
         borderColor: "border.hero",
         color: "text.onHero",
-        // The hero ink is the strongest outline on both heroes (8:1 and more).
+        // The hero ink is the strongest outline on both heroes (8:1 and more). The app's global
+        // unlayered focus rule reads --colors-border-focus-ring, so the hero resets that too.
+        "--colors-border-focus-ring": "token(colors.text.onHero)",
         "& :focus-visible": { outlineColor: "text.onHero" },
+        "& a": { color: "text.onHero" },
       },
     },
   },

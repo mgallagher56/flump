@@ -124,7 +124,7 @@ const track = {
   borderRadius: "full",
   // --slider-fill is set from the component (0% to 100%) so the filled part reads as progress.
   background:
-    "linear-gradient(to right, token(colors.primary) var(--slider-fill, 0%), token(colors.border) var(--slider-fill, 0%))",
+    "linear-gradient(to right, token(colors.primary) var(--slider-fill, 0%), token(colors.border.strong) var(--slider-fill, 0%))",
 } as const;
 
 export const sliderInputTrack = cva({

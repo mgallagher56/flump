@@ -16,4 +16,15 @@ describe("TaxEstimateNote", () => {
       "Estimate for 2026/27",
     );
   });
+
+  it("takes the hero ink on the hero and the contrast ink on the charcoal surface", () => {
+    const { rerender } = render(<TaxEstimateNote taxYear="2026/27" tone="onHero" />);
+    const note = () => screen.getByText(/^Estimate for 2026\/27/);
+    expect(note().className).toContain("text.onHero");
+    expect(note().className).not.toContain("text.onContrast");
+    rerender(<TaxEstimateNote taxYear="2026/27" tone="onContrast" />);
+    expect(note().className).toContain("text.onContrast");
+    rerender(<TaxEstimateNote taxYear="2026/27" />);
+    expect(note().className).toContain("text.muted");
+  });
 });
