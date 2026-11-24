@@ -221,12 +221,17 @@ describe("computeUkTakeHome: behaviour", () => {
     );
   });
 
-  it("labels an assumed region and never claims a verified estimate today", () => {
+  it("labels an assumed region; 2026/27 is verified and 2024/25 is not", () => {
+    // 24 Nov 2026: every 2026/27 vector is signed by the Fable decider; 2024/25 core and what-if
+    // vectors are still unsigned.
     const b = computeUkTakeHome({ salary: 39000, taxYear: "2026/27" });
     expect(b.region).toBe("ENGLAND_NI_WALES");
     expect(b.assumptions.map((a) => a.code)).toContain("regionAssumed");
-    expect(b.verification).toEqual({ core: "unverified", whatIf: "unverified" });
-    expect(b.isUnverifiedEstimate).toBe(true);
+    expect(b.verification).toEqual({ core: "verified", whatIf: "verified" });
+    expect(b.isUnverifiedEstimate).toBe(false);
+    const older = computeUkTakeHome({ salary: 39000, taxYear: "2024/25" });
+    expect(older.verification).toEqual({ core: "unverified", whatIf: "unverified" });
+    expect(older.isUnverifiedEstimate).toBe(true);
   });
 
   it("verification matches getTaxFeatureVerification per feature", () => {

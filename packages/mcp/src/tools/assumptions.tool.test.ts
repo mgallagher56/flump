@@ -73,19 +73,18 @@ describe("tax-year defaults and verification (E17-N5, re-plan PR A)", () => {
 
   it("every year that is not signed off is reported unverified", async () => {
     h = await connectTestClient(mortgageAndIsa);
-    for (const year of [
-      "2020/21",
-      "2021/22",
-      "2022/23",
-      "2023/24",
-      "2024/25",
-      "2025/26",
-      "2026/27",
-    ]) {
+    for (const year of ["2020/21", "2021/22", "2022/23", "2023/24", "2024/25", "2025/26"]) {
       const e = (await h.callJson("get_tax_year_position", { taxYear: year })) as Env;
-      // No supported year has every vector signed, so no year may read verified.
+      // These years still have unsigned core or Self Assessment vectors, so none may read verified.
       expect(e.verification.status, year).toBe("unverified");
     }
+  });
+
+  it("reports 2026/27 verified once every one of its vectors is signed", async () => {
+    // 24 Nov 2026: the Fable decider signed every 2026/27 vector.
+    h = await connectTestClient(mortgageAndIsa);
+    const e = (await h.callJson("get_tax_year_position", { taxYear: "2026/27" })) as Env;
+    expect(e.verification.status).toBe("verified");
   });
 
   it("falls back to the latest supported year, with an assumption, from 6 April 2028", async () => {

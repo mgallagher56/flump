@@ -981,7 +981,9 @@ export const UK_TAX_VECTORS: readonly UkTaxVector[] = [
       "Gross income 30000. PA 12570 (no taper at adjusted net income 30000). Taxable 30000 - 12570 = 17430. Basic 17430 x 20% = 3486; higher 0 x 40% = 0; additional 0 x 45% = 0. Total 3486.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:70b9c4278fb38a860a65bdd7f346f52097e5246ab5ecb85712626fef599aa5df",
   },
   {
     id: "ewni.incomeTax.2025-26.60000",
@@ -998,7 +1000,9 @@ export const UK_TAX_VECTORS: readonly UkTaxVector[] = [
       "Gross income 60000. PA 12570 (no taper at adjusted net income 60000). Taxable 60000 - 12570 = 47430. Basic 37700 x 20% = 7540; higher 9730 x 40% = 3892; additional 0 x 45% = 0. Total 11432.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:0359e23dfd5e4334ce70a37f883f75c98401c26b886923b8c99e873a2877170a",
   },
   {
     id: "ewni.incomeTax.2025-26.100000",
@@ -1015,7 +1019,9 @@ export const UK_TAX_VECTORS: readonly UkTaxVector[] = [
       "Gross income 100000. PA 12570 (no taper at adjusted net income 100000). Taxable 100000 - 12570 = 87430. Basic 37700 x 20% = 7540; higher 49730 x 40% = 19892; additional 0 x 45% = 0. Total 27432.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:05a254e55a6ad6c823721fb5befa6d6b2738e5cfcecc7b250ab51877d97573fe",
   },
   {
     id: "ewni.incomeTax.2025-26.110000",
@@ -1032,7 +1038,9 @@ export const UK_TAX_VECTORS: readonly UkTaxVector[] = [
       "Gross income 110000. Taper: (110000 - 100000) / 2 = 5000, PA 12570 - 5000 = 7570. Taxable 110000 - 7570 = 102430. Basic 37700 x 20% = 7540; higher 64730 x 40% = 25892; additional 0 x 45% = 0. Total 33432.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:aad32cc3e306f3a27dd12a6ce2a370770e666cfee88d9700f6189d6d8eae91df",
   },
   {
     id: "ewni.incomeTax.2025-26.125140",
@@ -1049,7 +1057,9 @@ export const UK_TAX_VECTORS: readonly UkTaxVector[] = [
       "Gross income 125140. Taper: (125140 - 100000) / 2 = 12570, PA 12570 - 12570 = 0. Taxable 125140 - 0 = 125140. Basic 37700 x 20% = 7540; higher 87440 x 40% = 34976; additional 0 x 45% = 0. Total 42516.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:11597a87f3bd9d2730f034d4dc4bc2ec4b56c0518547365449a80bcc313d66be",
   },
   {
     id: "ewni.incomeTax.2025-26.150000",
@@ -1066,7 +1076,9 @@ export const UK_TAX_VECTORS: readonly UkTaxVector[] = [
       "Gross income 150000. Taper: (150000 - 100000) / 2 = 25000, PA 12570 - 25000 = 0. Taxable 150000 - 0 = 150000. Basic 37700 x 20% = 7540; higher 87440 x 40% = 34976; additional 24860 x 45% = 11187. Total 53703.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:eb9fdba9c60713aea0fee252a8ba9f028725f805ed80d48f5ee77400b3d1cdc9",
   },
   {
     id: "ewni.giftAid.2025-26.60000.net1000",
@@ -1088,7 +1100,9 @@ export const UK_TAX_VECTORS: readonly UkTaxVector[] = [
       "Gross income 60000. Gift Aid gross-up 1000 x 1.25 = 1250; adjusted net income 60000 - 1250 = 58750; basic and higher limits both raised by 1250 (ITA 2007 s.414): 37700 + 1250 = 38950, 125140 + 1250 = 126390. PA 12570 (no taper at adjusted net income 58750). Taxable 60000 - 12570 = 47430. Basic 38950 x 20% = 7790; higher 8480 x 40% = 3392; additional 0 x 45% = 0. Total 11182.",
     confidence: "medium",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:88c1702af46415a6f285036993322d8a1cf5a3d88551d61c13b4bc602ea4127a",
   },
   {
     id: "ewni.giftAid.2025-26.110000.net1000",
@@ -1110,7 +1124,9 @@ export const UK_TAX_VECTORS: readonly UkTaxVector[] = [
       "Gross income 110000. Gift Aid gross-up 1000 x 1.25 = 1250; adjusted net income 110000 - 1250 = 108750; basic and higher limits both raised by 1250 (ITA 2007 s.414): 37700 + 1250 = 38950, 125140 + 1250 = 126390. Taper: (108750 - 100000) / 2 = 4375, PA 12570 - 4375 = 8195. Taxable 110000 - 8195 = 101805. Basic 38950 x 20% = 7790; higher 62855 x 40% = 25142; additional 0 x 45% = 0. Total 32932.",
     confidence: "medium",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:bab988233ec490a49fe12a2c288d9108cb548d7c4f2ef7c8ad6095518de06e07",
   },
   {
     id: "ewni.incomeTax.2026-27.30000",
@@ -1698,7 +1714,9 @@ export const UK_TAX_VECTORS: readonly UkTaxVector[] = [
       "Gross income 30000. PA 12570. Taxable 30000 - 12570 = 17430. Bands (taxable income above PA, upper bounds 2827/14921/31092/62430/125140): 2827 x 19% = 537.13; 12094 x 20% = 2418.8; 2509 x 21% = 526.89; 0 x 42% = 0; 0 x 45% = 0; top 0 x 48% = 0. Total 3482.82.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:75dd5f095a8a8625f8655f440eb17f0e3ad83f571a877c8957ed9eabde0f93e4",
   },
   {
     id: "scotland.incomeTax.2025-26.50000",
@@ -1714,7 +1732,9 @@ export const UK_TAX_VECTORS: readonly UkTaxVector[] = [
       "Gross income 50000. PA 12570. Taxable 50000 - 12570 = 37430. Bands (taxable income above PA, upper bounds 2827/14921/31092/62430/125140): 2827 x 19% = 537.13; 12094 x 20% = 2418.8; 16171 x 21% = 3395.91; 6338 x 42% = 2661.96; 0 x 45% = 0; top 0 x 48% = 0. Total 9013.8.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:2400d5be6ec2543df0c0148bad46d8778dd82e0e79df671b7a626d9c2e90a8b9",
   },
   {
     id: "scotland.incomeTax.2025-26.100000",
@@ -1730,7 +1750,9 @@ export const UK_TAX_VECTORS: readonly UkTaxVector[] = [
       "Gross income 100000. PA 12570. Taxable 100000 - 12570 = 87430. Bands (taxable income above PA, upper bounds 2827/14921/31092/62430/125140): 2827 x 19% = 537.13; 12094 x 20% = 2418.8; 16171 x 21% = 3395.91; 31338 x 42% = 13161.96; 25000 x 45% = 11250; top 0 x 48% = 0. Total 30763.8.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:28234bbcd95ab6601fdf21eda8f442a2e367a3322e57349a8d26580fe85dcc86",
   },
   {
     id: "scotland.incomeTax.2025-26.110000",
@@ -1747,7 +1769,9 @@ export const UK_TAX_VECTORS: readonly UkTaxVector[] = [
       "Gross income 110000. Taper (110000 - 100000) / 2 = 5000, PA 12570 - 5000 = 7570. Taxable 110000 - 7570 = 102430. Bands (taxable income above PA, upper bounds 2827/14921/31092/62430/125140): 2827 x 19% = 537.13; 12094 x 20% = 2418.8; 16171 x 21% = 3395.91; 31338 x 42% = 13161.96; 40000 x 45% = 18000; top 0 x 48% = 0. Total 37513.8.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:bef6d417d51cc48805a119ab1451fa5f4a2148e0d91d928449979cbf70d0b6ad",
   },
   {
     id: "scotland.incomeTax.2025-26.125140",
@@ -1764,7 +1788,9 @@ export const UK_TAX_VECTORS: readonly UkTaxVector[] = [
       "Gross income 125140. Taper (125140 - 100000) / 2 = 12570, PA 12570 - 12570 = 0. Taxable 125140. Bands (taxable income above PA, upper bounds 2827/14921/31092/62430/125140): 2827 x 19% = 537.13; 12094 x 20% = 2418.8; 16171 x 21% = 3395.91; 31338 x 42% = 13161.96; 62710 x 45% = 28219.5; top 0 x 48% = 0. Total 47733.3.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:500ab62e8478335a3b9970e4182e8a377e940af487346854f31df11b32c764dc",
   },
   {
     id: "scotland.incomeTax.2025-26.150000",
@@ -1781,7 +1807,9 @@ export const UK_TAX_VECTORS: readonly UkTaxVector[] = [
       "Gross income 150000. Taper (150000 - 100000) / 2 = 25000, PA 12570 - 25000 = 0. Taxable 150000 - 0 = 150000. Bands (taxable income above PA, upper bounds 2827/14921/31092/62430/125140): 2827 x 19% = 537.13; 12094 x 20% = 2418.8; 16171 x 21% = 3395.91; 31338 x 42% = 13161.96; 62710 x 45% = 28219.5; top 24860 x 48% = 11932.8. Total 59666.1.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:ba91939dbca3d96ea87f9b11afc543c80fdc692f4dc922b9deb4fe331d610227",
   },
   {
     id: "scotland.incomeTax.2026-27.30000",
@@ -2254,7 +2282,9 @@ export const UK_TAX_VECTORS: readonly UkTaxVector[] = [
       "Annual earnings 30000. Main band 30000 - PT 12570 = 17430 x 8% = 1394.4; above UEL 50270: 0 x 2% = 0. Total 1394.4.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:60cac16492ff9270dac7956dd8e4eba192291358a2a0ef260d086993341ea102",
   },
   {
     id: "employeeNi.2025-26.60000",
@@ -2270,7 +2300,9 @@ export const UK_TAX_VECTORS: readonly UkTaxVector[] = [
       "Annual earnings 60000. Main band 50270 - PT 12570 = 37700 x 8% = 3016; above UEL 50270: 9730 x 2% = 194.6. Total 3210.6.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:8ba47570eb2f7905ac9124b7a27557644f56304cfb167997bc44c3b997057400",
   },
   {
     id: "class4.2025-26.60000",
@@ -2287,7 +2319,9 @@ export const UK_TAX_VECTORS: readonly UkTaxVector[] = [
       "Profits 60000. (50270 - LPL 12570) = 37700 x 6% = 2262; above UPL 50270: 9730 x 2% = 194.6. Total 2456.6.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:d58eaaf9deb190e905e633e0787f495bbcf96af96de7c6aadc926bba6fc85e65",
   },
   {
     id: "employerNiSaving.2025-26.60000.3000",
@@ -2304,7 +2338,9 @@ export const UK_TAX_VECTORS: readonly UkTaxVector[] = [
       "Employer NI before = (60000 - ST 5000, floored at 0) = 55000; after sacrifice = (57000 - 5000, floored at 0) = 52000; reduction 3000 x 15% = 450.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:537042592581869051685c7ae859dca52491de0236e17d48552e3cd67d1d2f11",
   },
   {
     id: "employerNiSaving.2025-26.6000.3000",
@@ -2321,7 +2357,9 @@ export const UK_TAX_VECTORS: readonly UkTaxVector[] = [
       "Employer NI before = (6000 - ST 5000, floored at 0) = 1000; after sacrifice = (3000 - 5000, floored at 0) = 0; reduction 1000 x 15% = 150.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:998606d124faa5cc0a2719ab32157bd3ff0d1fbe75fa4bba37c0e62a0130e174",
   },
   {
     id: "employeeNi.2026-27.30000",
@@ -2850,7 +2888,9 @@ export const UK_TAX_VECTORS: readonly UkTaxVector[] = [
     derivation: "plan1 threshold 26065; (35000 - 26065) = 8935 x 9% = 804.15.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:c0c7f916f898680d5bfc1a3f38e89a5d6c56ade9ca1956322617ebae2fd75b61",
   },
   {
     id: "studentLoan.2025-26.plan2.35000",
@@ -2866,7 +2906,9 @@ export const UK_TAX_VECTORS: readonly UkTaxVector[] = [
     derivation: "plan2 threshold 28470; (35000 - 28470) = 6530 x 9% = 587.7.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:0a0fbc1b90166565f03829509ec7003b20a8fb87979bbe798586afdb3183da23",
   },
   {
     id: "studentLoan.2025-26.plan4.35000",
@@ -2882,7 +2924,9 @@ export const UK_TAX_VECTORS: readonly UkTaxVector[] = [
     derivation: "plan4 threshold 32745; (35000 - 32745) = 2255 x 9% = 202.95.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:c35d006dac9edccdbfa7628e4301023b628c7e6565d1fc7113cb1b99b56a7243",
   },
   {
     id: "studentLoan.2025-26.plan5.35000",
@@ -2916,7 +2960,9 @@ export const UK_TAX_VECTORS: readonly UkTaxVector[] = [
     derivation: "postgrad threshold 21000; (35000 - 21000) = 14000 x 6% = 840.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:30fab15ae15a220b88f2d2c89509833edf90195285715cbf8a5ac30059e91cd0",
   },
   {
     id: "studentLoan.2025-26.plan2.27470",
@@ -2932,7 +2978,9 @@ export const UK_TAX_VECTORS: readonly UkTaxVector[] = [
     derivation: "plan2 threshold 28470; income 27470 is below it, so repayment is 0.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:f508d0e61c31ab7ef043cae3a7a445bd841fae71e7d5d5053176e2c8cf0ce2a6",
   },
   {
     id: "studentLoan.2026-27.plan1.35000",
@@ -3287,7 +3335,9 @@ export const UK_TAX_VECTORS: readonly UkTaxVector[] = [
       "Employment income 20000 less PA 12570 = 7430, inside the basic band 37700, so all dividends fall in the basic band. Dividend allowance 500: taxable dividends 5000 - 500 = 4500 x 8.75% = 393.75 (dividend tax only).",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:4083a94740dd1b61398d518b0b543724370c3ceca48cbdeff92149962023de48",
   },
   {
     id: "dividends.2025-26.higher",
@@ -3306,7 +3356,9 @@ export const UK_TAX_VECTORS: readonly UkTaxVector[] = [
       "Employment income 60000 less PA 12570 = 47430 already exceeds the basic band 37700, so all dividends fall in the higher band. Dividend allowance 500: taxable dividends 5000 - 500 = 4500 x 33.75% = 1518.75 (dividend tax only).",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:6bd384c56d474b0f9c6a61ecfb27715a93a8209aa285d0bcdb42736b02a51c95",
   },
   {
     id: "dividends.2025-26.additional",
@@ -3325,7 +3377,9 @@ export const UK_TAX_VECTORS: readonly UkTaxVector[] = [
       "Employment income 200000 gives PA 0 and taxable income above 125140, so all dividends fall in the additional band. Dividend allowance 500: taxable dividends 5000 - 500 = 4500 x 39.35% = 1770.75 (dividend tax only).",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:6b51f8b2b9bcf4280c73560a0199bb5380221883170297a6b1b97f57d6ed060c",
   },
   {
     id: "dividends.2026-27.basic",
@@ -3411,7 +3465,11 @@ export const UK_TAX_VECTORS: readonly UkTaxVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       'UNVERIFIED: hand-derived from ITA 2007 s.414(2)(b) as read on legislation.gov.uk (the revised text and the 06/04/2020 and 06/04/2025 point-in-time versions carry the same wording); no HMRC guidance page confirming the Scottish application was read, and the ITA 2007 does not itself define which Scottish band is the Scottish basic rate (s.6A omitted), so the Scottish Parliament\'s "Basic" band is taken as that rate; owner to review against s.414 before merge.',
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:778f6ff21c7ac8663c5b8a956cc062f1e42349af8a20cebabbae6d887fb113a6",
+    rulingRef:
+      "ITA 2007 s.414(2)(b), read on legislation.gov.uk 2026-11-24, raises the Scottish basic rate limit and the limits above it by the grossed-up gift; s.989 makes the Scottish basic rate the 20% band, so the starter band stays at 2,827 and every limit above it rises by 1,250.",
   },
   {
     id: "scotland.giftAid.2025-26.28000.net1000",
@@ -3434,7 +3492,11 @@ export const UK_TAX_VECTORS: readonly UkTaxVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       'UNVERIFIED: hand-derived from ITA 2007 s.414(2)(b) as read on legislation.gov.uk (the revised text and the 06/04/2020 and 06/04/2025 point-in-time versions carry the same wording); no HMRC guidance page confirming the Scottish application was read, and the ITA 2007 does not itself define which Scottish band is the Scottish basic rate (s.6A omitted), so the Scottish Parliament\'s "Basic" band is taken as that rate; owner to review against s.414 before merge.',
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:3340ce7eeba45b4c4b0dc546d4a750daaa93eadeb105c339e7c5b782e8370348",
+    rulingRef:
+      "ITA 2007 s.414(2)(b) with s.989 extends the 20% Scottish basic band limit and all limits above it by the grossed-up gift, leaving the starter band unchanged; the extended basic band covers all income above the starter band, giving 3,057.73.",
   },
   {
     id: "scotland.giftAid.2025-26.29000.net1000",
@@ -3457,7 +3519,11 @@ export const UK_TAX_VECTORS: readonly UkTaxVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       'UNVERIFIED: hand-derived from ITA 2007 s.414(2)(b) as read on legislation.gov.uk (the revised text and the 06/04/2020 and 06/04/2025 point-in-time versions carry the same wording); no HMRC guidance page confirming the Scottish application was read, and the ITA 2007 does not itself define which Scottish band is the Scottish basic rate (s.6A omitted), so the Scottish Parliament\'s "Basic" band is taken as that rate; owner to review against s.414 before merge.',
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:744cdc6ac72f4865d34da546105adc4f66329b805a9e31c36f38947475b4f228",
+    rulingRef:
+      "ITA 2007 s.414(2)(b) with s.989 extends the 20% Scottish basic band limit and all limits above it by 1,250, leaving the starter band unchanged.",
   },
   {
     id: "scotland.giftAid.2025-26.60000.net1000",
@@ -3480,7 +3546,11 @@ export const UK_TAX_VECTORS: readonly UkTaxVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       'UNVERIFIED: hand-derived from ITA 2007 s.414(2)(b) as read on legislation.gov.uk (the revised text and the 06/04/2020 and 06/04/2025 point-in-time versions carry the same wording); no HMRC guidance page confirming the Scottish application was read, and the ITA 2007 does not itself define which Scottish band is the Scottish basic rate (s.6A omitted), so the Scottish Parliament\'s "Basic" band is taken as that rate; owner to review against s.414 before merge.',
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:0d10c934efcb894086dac91e5b753cc2fe667f9da9d036a26f71190610abbc39",
+    rulingRef:
+      "ITA 2007 s.414(2)(b) with s.989 extends the 20% Scottish basic band limit and all limits above it by 1,250, leaving the starter band unchanged.",
   },
   {
     id: "scotland.giftAid.2025-26.70000.net4000",
@@ -3503,7 +3573,11 @@ export const UK_TAX_VECTORS: readonly UkTaxVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       'UNVERIFIED: hand-derived from ITA 2007 s.414(2)(b) as read on legislation.gov.uk (the revised text and the 06/04/2020 and 06/04/2025 point-in-time versions carry the same wording); no HMRC guidance page confirming the Scottish application was read, and the ITA 2007 does not itself define which Scottish band is the Scottish basic rate (s.6A omitted), so the Scottish Parliament\'s "Basic" band is taken as that rate; owner to review against s.414 before merge.',
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:3f333f8cbcf1626158ccb35bcf16b91a459509e0a01edaf14d80bfc40604c537",
+    rulingRef:
+      "ITA 2007 s.414(2)(b) with s.989 extends the 20% Scottish basic band limit and all limits above it by the grossed-up gift of 5,000, leaving the starter band unchanged.",
   },
   {
     id: "scotland.giftAid.2025-26.110000.net1000",
@@ -3526,7 +3600,11 @@ export const UK_TAX_VECTORS: readonly UkTaxVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       'UNVERIFIED: hand-derived from ITA 2007 s.414(2)(b) as read on legislation.gov.uk (the revised text and the 06/04/2020 and 06/04/2025 point-in-time versions carry the same wording); no HMRC guidance page confirming the Scottish application was read, and the ITA 2007 does not itself define which Scottish band is the Scottish basic rate (s.6A omitted), so the Scottish Parliament\'s "Basic" band is taken as that rate; owner to review against s.414 before merge. Also rests on the taper frame for Scottish bands (sheet ruling 6).',
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:2e3bf22b219642c84742ab20ab621a1410e1b784e3990f64c800924d8f8a564c",
+    rulingRef:
+      "ITA 2007 s.414(2)(b) with s.989 extends the 20% basic band limit and those above by 1,250; GOV.UK sets Scottish bands on income after allowances, so the tapered allowance (8,195 at adjusted net income 108,750) raises taxable income without moving the limits.",
   },
   {
     id: "scotland.giftAid.2025-26.130000.net1000",
@@ -3549,7 +3627,11 @@ export const UK_TAX_VECTORS: readonly UkTaxVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       'UNVERIFIED: hand-derived from ITA 2007 s.414(2)(b) as read on legislation.gov.uk (the revised text and the 06/04/2020 and 06/04/2025 point-in-time versions carry the same wording); no HMRC guidance page confirming the Scottish application was read, and the ITA 2007 does not itself define which Scottish band is the Scottish basic rate (s.6A omitted), so the Scottish Parliament\'s "Basic" band is taken as that rate; owner to review against s.414 before merge. Also rests on the taper frame for Scottish bands (sheet ruling 6).',
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:e131765d56f4ee27930ea26e11b889b09e6c25199310fceabaa0d59fc81bd556",
+    rulingRef:
+      "ITA 2007 s.414(2)(b) with s.989 extends the 20% basic band limit and those above by 1,250; the allowance is nil at adjusted net income 128,750 and bands apply to income after allowances (GOV.UK), so the top rate starts at taxable 126,390.",
   },
   {
     id: "scotland.giftAid.2026-27.30000.net1000",
