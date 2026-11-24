@@ -1,5 +1,6 @@
 import {
   calculateBudgetLoanEstimate,
+  calculateIncomeMultipleRange,
   DEFAULT_INCOME_MULTIPLE_HIGH,
   DEFAULT_INCOME_MULTIPLE_LOW,
   isFigureKnown,
@@ -29,6 +30,9 @@ import { RateChangeTool } from "~/features/mortgage/components/RateChangeTool";
 import {
   estimateStampDuty,
   StampDutyEstimate,
+  type StampDutyFromEstimate,
+  stampDutyFromEstimateFigures,
+  stampDutyTaxAnswers,
 } from "~/features/mortgage/components/StampDutyEstimate";
 import { useScenarioState } from "~/hooks/useScenarioState";
 import { buildWorkspacePicture } from "~/utils/financialPicture";
@@ -165,17 +169,70 @@ const MortgageEstimatesContainer: FC = () => {
   const scenario = useScenarioState(savedScenario);
   const v = scenario.values;
 
-  const budgetEstimate = useMemo(
+  // Once the place (and, where asked, the first-time buyer answer) is in, the loan tools take the
+  // estimated stamp duty off the deposit with other buying costs (E39 S1c). Memoised so the tools'
+  // own memos see a stable value.
+  const propertyTax = useMemo(
     () =>
-      calculateBudgetLoanEstimate({
-        monthlyPaymentGbp: v.monthlyPaymentGbp ?? 0,
-        termMonths: Math.max(0, Math.round(v.termYears * 12)),
-        annualRatePct: v.annualRatePct,
-        depositGbp: v.depositGbp,
-        buyingCostsGbp: v.buyingCostsGbp,
+      stampDutyTaxAnswers({
+        jurisdiction: v.propertyJurisdiction,
+        allFirstTimeBuyersMainHome: v.allFirstTimeBuyersMainHome,
       }),
+    [v.propertyJurisdiction, v.allFirstTimeBuyersMainHome],
+  );
+
+  const budgetInput = useMemo(
+    () => ({
+      monthlyPaymentGbp: v.monthlyPaymentGbp ?? 0,
+      termMonths: Math.max(0, Math.round(v.termYears * 12)),
+      annualRatePct: v.annualRatePct,
+      depositGbp: v.depositGbp,
+      buyingCostsGbp: v.buyingCostsGbp,
+    }),
     [v.monthlyPaymentGbp, v.termYears, v.annualRatePct, v.depositGbp, v.buyingCostsGbp],
   );
+  const budgetEstimate = useMemo(
+    () => calculateBudgetLoanEstimate({ ...budgetInput, propertyTax }),
+    [budgetInput, propertyTax],
+  );
+
+  const incomeInput = useMemo(
+    () => ({
+      primaryAnnualIncomeGbp: v.primaryAnnualIncomeGbp ?? 0,
+      secondAnnualIncomeGbp: v.secondAnnualIncomeGbp,
+      lowMultiple: v.lowMultiple,
+      highMultiple: v.highMultiple,
+      depositGbp: v.depositGbp,
+      buyingCostsGbp: v.buyingCostsGbp,
+    }),
+    [
+      v.primaryAnnualIncomeGbp,
+      v.secondAnnualIncomeGbp,
+      v.lowMultiple,
+      v.highMultiple,
+      v.depositGbp,
+      v.buyingCostsGbp,
+    ],
+  );
+
+  // The stamp duty section uses the active tool's property price when that tool has one (a loan
+  // and a deposit left after other buying costs), and asks for a typed price otherwise. Whether
+  // the tool has a price is read without the tax, so answering the tax questions never swaps
+  // the section back to a typed price.
+  const stampDutyFromEstimate = useMemo((): StampDutyFromEstimate | null => {
+    if (activeTool === "from-payment") {
+      if (calculateBudgetLoanEstimate(budgetInput).lowPropertyPriceGbp === null) return null;
+      return { low: budgetEstimate.lowPriceSolution, high: budgetEstimate.highPriceSolution };
+    }
+    if (activeTool === "from-income") {
+      const plain = calculateIncomeMultipleRange(incomeInput);
+      // The tool shows a price only with some income, so the section follows it.
+      if (plain.lowPropertyPriceGbp === null || !(plain.combinedAnnualIncomeGbp > 0)) return null;
+      const taxed = calculateIncomeMultipleRange({ ...incomeInput, propertyTax });
+      return { low: taxed.lowPriceSolution, high: taxed.highPriceSolution };
+    }
+    return null;
+  }, [activeTool, budgetInput, budgetEstimate, incomeInput, propertyTax]);
 
   const derivedRateChangeLoan =
     v.rateChangeLoanGbp ??
@@ -194,11 +251,13 @@ const MortgageEstimatesContainer: FC = () => {
   // A tax figure is on screen once the stamp duty estimate shows, so the zone's one notice leads
   // with the fixed "Unverified estimate" wording (R6, copy guide 7.3).
   const showsStampDuty =
-    estimateStampDuty({
-      propertyPriceGbp: v.stampDutyPriceGbp,
-      jurisdiction: v.propertyJurisdiction,
-      allFirstTimeBuyersMainHome: v.allFirstTimeBuyersMainHome,
-    }) !== null;
+    stampDutyFromEstimate !== null
+      ? stampDutyFromEstimateFigures(stampDutyFromEstimate) !== null
+      : estimateStampDuty({
+          propertyPriceGbp: v.stampDutyPriceGbp,
+          jurisdiction: v.propertyJurisdiction,
+          allFirstTimeBuyersMainHome: v.allFirstTimeBuyersMainHome,
+        }) !== null;
 
   return (
     <PageBody className={pageRoot()}>
@@ -277,6 +336,7 @@ const MortgageEstimatesContainer: FC = () => {
                 onDepositChange={(val) => scenario.set("depositGbp", val)}
                 onMonthlyPaymentChange={(val) => scenario.set("monthlyPaymentGbp", val)}
                 onTermYearsChange={(val) => scenario.set("termYears", val)}
+                propertyTax={propertyTax}
               />
             ),
             "from-income": (
@@ -293,6 +353,7 @@ const MortgageEstimatesContainer: FC = () => {
                 onLowMultipleChange={(val) => scenario.set("lowMultiple", val)}
                 onPrimaryIncomeChange={(val) => scenario.set("primaryAnnualIncomeGbp", val)}
                 onSecondIncomeChange={(val) => scenario.set("secondAnnualIncomeGbp", val)}
+                propertyTax={propertyTax}
               />
             ),
             "rate-change": (
@@ -315,6 +376,7 @@ const MortgageEstimatesContainer: FC = () => {
 
         <StampDutyEstimate
           allFirstTimeBuyersMainHome={v.allFirstTimeBuyersMainHome}
+          fromEstimate={stampDutyFromEstimate}
           jurisdiction={v.propertyJurisdiction}
           propertyPriceGbp={v.stampDutyPriceGbp}
           onAllFirstTimeBuyersMainHomeChange={(val) =>

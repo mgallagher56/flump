@@ -83,6 +83,7 @@ Where each value is stored, entered and used. One entry per stored fact, then on
 | [Mortgage payment rate comparison](#mortgage-rate-comparison)                                                                            | figure | mortgage    | Holds                                     |
 | [Mortgage balance and payment at fix end](#mortgage-fix-end-estimate)                                                                    | figure | mortgage    | Holds                                     |
 | [Default mortgage rate band by LTV](#mortgage-ltv-rate-band)                                                                             | figure | mortgage    | Holds                                     |
+| [Property price after stamp duty and other buying costs](#property-price-after-buying-costs)                                             | figure | mortgage    | Holds                                     |
 | [Estimated stamp duty (SDLT, LBTT, LTT)](#property-transaction-tax)                                                                      | figure | mortgage    | Holds                                     |
 
 ## Area: pay
@@ -1795,6 +1796,25 @@ Other code paths that compute it:
 Shown on:
 
 - Mortgage: `packages/finance-engine/src/mortgage-rate-assumptions.ts`
+
+### Property price after stamp duty and other buying costs
+
+<a id="property-price-after-buying-costs"></a>
+
+- Id: `property-price-after-buying-costs` (derived figure)
+- Verdict: Holds. Findings: none. Links: none.
+- Computed by: `solvePropertyPrice` in `packages/finance-engine/src/property-price-solver.ts`
+- Built from: none
+- Note: E39 S1c: the largest whole-pence price with price + calculatePropertyTransactionTax(price) + other buying costs <= loan + deposit, found by bisection. calculateBudgetLoanEstimate and calculateIncomeMultipleRange call it when given tax answers; the page passes the place and first-time buyer answers from the stamp duty section, nothing stored.
+
+Other code paths that compute it:
+
+- none
+
+Shown on:
+
+- Mortgage estimates: `apps/web/app/features/mortgage/components/StampDutyEstimate/StampDutyEstimate.tsx`
+- Mortgage: `packages/finance-engine/src/mortgage-affordability.ts`
 
 ### Estimated stamp duty (SDLT, LBTT, LTT)
 

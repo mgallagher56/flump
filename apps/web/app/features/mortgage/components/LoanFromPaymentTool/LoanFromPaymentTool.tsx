@@ -2,6 +2,7 @@ import {
   calculateBudgetLoanEstimate,
   isMortgageRateTableStale,
   MORTGAGE_RATE_TABLE_AS_OF,
+  type PropertyPriceTaxAnswers,
 } from "@flump/finance-engine";
 import {
   Button,
@@ -35,6 +36,11 @@ export interface LoanFromPaymentToolProps {
   onTermYearsChange: (value: number) => void;
   onDepositChange: (value: number | null) => void;
   onBuyingCostsChange: (value: number | null) => void;
+  /**
+   * Where the property is and who is buying, once answered in the stamp duty section. The engine
+   * then takes the estimated tax off the deposit with other buying costs (E39 S1c).
+   */
+  propertyTax?: PropertyPriceTaxAnswers | null;
   /** Injected date for deterministic stale-rate checks in tests and stories. */
   referenceDate?: Date;
 }
@@ -64,6 +70,7 @@ export const LoanFromPaymentTool: FC<LoanFromPaymentToolProps> = ({
   onTermYearsChange,
   onDepositChange,
   onBuyingCostsChange,
+  propertyTax = null,
   referenceDate = new Date(),
 }) => {
   const { formatCurrency } = useFormatCurrency();
@@ -80,8 +87,9 @@ export const LoanFromPaymentTool: FC<LoanFromPaymentToolProps> = ({
         annualRatePct,
         depositGbp,
         buyingCostsGbp,
+        propertyTax,
       }),
-    [monthlyPaymentGbp, termYears, annualRatePct, depositGbp, buyingCostsGbp],
+    [monthlyPaymentGbp, termYears, annualRatePct, depositGbp, buyingCostsGbp, propertyTax],
   );
 
   const isStale = useMemo(() => isMortgageRateTableStale(referenceDate), [referenceDate]);
@@ -205,7 +213,7 @@ export const LoanFromPaymentTool: FC<LoanFromPaymentToolProps> = ({
               )}
             </FormField>
             <FormField
-              hint="Taken off your deposit before working out property price and loan to value."
+              hint="Taken off your deposit, with any stamp duty estimate, before working out property price and loan to value."
               label="Other buying costs"
             >
               {(field) => (

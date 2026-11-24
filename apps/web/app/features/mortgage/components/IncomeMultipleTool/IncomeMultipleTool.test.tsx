@@ -36,6 +36,28 @@ describe("IncomeMultipleTool", () => {
     ).not.toBeNull();
   });
 
+  it("takes the estimated stamp duty off the deposit once the tax answers are in (E39 S1c)", () => {
+    // £50,000 x 4 = £200,000; x 4.5 = £225,000. Deposit £27,500.
+    // Without tax: £227,500 -> ~£228,000 and £252,500 -> ~£253,000; LTV 87.9% -> 88%, 89.1% -> 89%.
+    // With SDLT (England, not first-time): low £225,491 (2% x 100,491 = 2,009.82, floored £2,009;
+    // 225,491 + 2,009 = 227,500) -> ~£225,000, LTV 88.7% -> 89%; high £250,000 (tax £2,500) -> 90%.
+    const props = {
+      buyingCostsGbp: null,
+      depositGbp: 27_500,
+      highMultiple: 4.5,
+      lowMultiple: 4,
+      primaryAnnualIncomeGbp: 50_000,
+      secondAnnualIncomeGbp: null,
+      ...noop,
+    };
+    const { rerender } = render(<IncomeMultipleTool {...props} />);
+    const text = () => screen.getByTestId("income-multiple-result").textContent ?? "";
+    expect(text()).toContain("Property price ~£228,000 to ~£253,000, loan to value 88% to 89%");
+
+    rerender(<IncomeMultipleTool {...props} propertyTax={{ jurisdiction: "ENGLAND_NI" }} />);
+    expect(text()).toContain("Property price ~£225,000 to ~£250,000, loan to value 89% to 90%");
+  });
+
   it("shows property price and LTV range when deposit is entered", () => {
     render(
       <IncomeMultipleTool

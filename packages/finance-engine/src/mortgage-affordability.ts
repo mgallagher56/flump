@@ -1,5 +1,10 @@
 import { calculateLoanFromMonthlyPayment } from "./mortgage.js";
 import { MORTGAGE_LTV_RATE_BANDS, type MortgageRateBand } from "./mortgage-rate-assumptions.js";
+import {
+  type PropertyPriceSolution,
+  type PropertyPriceTaxAnswers,
+  solvePropertyPrice,
+} from "./property-price-solver.js";
 
 /** Default lower income multiple assumption (E39 section 10a, MA2). */
 export const DEFAULT_INCOME_MULTIPLE_LOW = 4;
@@ -44,6 +49,37 @@ function nonNegativeFinite(value: number | null | undefined): number {
   return Number.isFinite(value) && (value as number) > 0 ? (value as number) : 0;
 }
 
+/**
+ * Property price for a loan and a positive deposit. Without tax answers it is loan plus the deposit
+ * left after other buying costs. With them, the estimated property transaction tax comes off the
+ * deposit too, so the price is solved (`solvePropertyPrice`, E39 S1c), and is `null` when the
+ * deposit does not cover the costs and tax.
+ */
+function propertyPriceFor(
+  loanGbp: number,
+  depositGbp: number,
+  buyingCostsGbp: number,
+  netDepositGbp: number,
+  propertyTax: PropertyPriceTaxAnswers | null | undefined,
+): { priceGbp: number | null; solution: PropertyPriceSolution | null } {
+  if (!propertyTax) return { priceGbp: round2(loanGbp + netDepositGbp), solution: null };
+  const solution = solvePropertyPrice({
+    loanGbp,
+    depositGbp,
+    otherBuyingCostsGbp: buyingCostsGbp,
+    jurisdiction: propertyTax.jurisdiction,
+    isFirstTimeBuyer: propertyTax.isFirstTimeBuyer,
+  });
+  return {
+    priceGbp: solution.status === "solved" ? solution.propertyPriceGbp : null,
+    solution,
+  };
+}
+
+/** Loan to value at one decimal place. A price is never 0: it holds a positive deposit or a solved price above 0. */
+const ltvFor = (loanGbp: number, priceGbp: number | null): number | null =>
+  priceGbp === null ? null : round1((loanGbp / priceGbp) * 100);
+
 export interface IncomeMultipleRangeInput {
   /** Primary applicant's yearly income before tax, in pounds. */
   primaryAnnualIncomeGbp: number;
@@ -57,9 +93,22 @@ export interface IncomeMultipleRangeInput {
   depositGbp?: number | null;
   /** Optional buying costs in pounds, deducted from `depositGbp` before computing property price. */
   buyingCostsGbp?: number | null;
+  /**
+   * Where the property is and who is buying. When given, the estimated property transaction tax
+   * is taken off the deposit as well, and each property price is solved (E39 S1c).
+   */
+  propertyTax?: PropertyPriceTaxAnswers | null;
 }
 
-export interface IncomeMultipleRangeResult {
+/** What the solver found for one property price, or `null` when no tax answers or deposit were given. */
+export interface PropertyPriceSolutions {
+  /** Solver result at `lowLoanGbp`. */
+  lowPriceSolution: PropertyPriceSolution | null;
+  /** Solver result at `highLoanGbp`. */
+  highPriceSolution: PropertyPriceSolution | null;
+}
+
+export interface IncomeMultipleRangeResult extends PropertyPriceSolutions {
   primaryAnnualIncomeGbp: number;
   secondAnnualIncomeGbp: number;
   combinedAnnualIncomeGbp: number;
@@ -117,6 +166,8 @@ export function calculateIncomeMultipleRange(
       highPropertyPriceGbp: null,
       lowLtvPct: null,
       highLtvPct: null,
+      lowPriceSolution: null,
+      highPriceSolution: null,
     };
   }
 
@@ -136,13 +187,26 @@ export function calculateIncomeMultipleRange(
       highPropertyPriceGbp: null,
       lowLtvPct: null,
       highLtvPct: null,
+      lowPriceSolution: null,
+      highPriceSolution: null,
     };
   }
 
-  const lowPropertyPriceGbp = round2(lowLoanGbp + netDepositGbp);
-  const highPropertyPriceGbp = round2(highLoanGbp + netDepositGbp);
-  const lowLtvPct = round1((lowLoanGbp / lowPropertyPriceGbp) * 100);
-  const highLtvPct = round1((highLoanGbp / highPropertyPriceGbp) * 100);
+  const depositGbp = input.depositGbp as number;
+  const low = propertyPriceFor(
+    lowLoanGbp,
+    depositGbp,
+    buyingCosts,
+    netDepositGbp,
+    input.propertyTax,
+  );
+  const high = propertyPriceFor(
+    highLoanGbp,
+    depositGbp,
+    buyingCosts,
+    netDepositGbp,
+    input.propertyTax,
+  );
 
   return {
     primaryAnnualIncomeGbp,
@@ -153,10 +217,12 @@ export function calculateIncomeMultipleRange(
     lowLoanGbp,
     highLoanGbp,
     netDepositGbp,
-    lowPropertyPriceGbp,
-    highPropertyPriceGbp,
-    lowLtvPct,
-    highLtvPct,
+    lowPropertyPriceGbp: low.priceGbp,
+    highPropertyPriceGbp: high.priceGbp,
+    lowLtvPct: ltvFor(lowLoanGbp, low.priceGbp),
+    highLtvPct: ltvFor(highLoanGbp, high.priceGbp),
+    lowPriceSolution: low.solution,
+    highPriceSolution: high.solution,
   };
 }
 
@@ -179,9 +245,15 @@ export interface BudgetLoanEstimateInput {
   depositGbp?: number | null;
   /** Optional buying costs in pounds, deducted from `depositGbp`. */
   buyingCostsGbp?: number | null;
+  /**
+   * Where the property is and who is buying. When given, the estimated property transaction tax
+   * is taken off the deposit as well, each property price is solved (E39 S1c), and the default
+   * rate band is chosen on the loan to value after tax.
+   */
+  propertyTax?: PropertyPriceTaxAnswers | null;
 }
 
-export interface BudgetLoanEstimateResult {
+export interface BudgetLoanEstimateResult extends PropertyPriceSolutions {
   monthlyPaymentGbp: number;
   termMonths: number;
   /** Deposit remaining after deducting `buyingCostsGbp`, or `null` when no deposit was given. */
@@ -212,12 +284,17 @@ export interface BudgetLoanEstimateResult {
  * Because a lower LTV band has a lower interest rate (and therefore a slightly larger loan for the
  * same payment), bands are checked from lowest `maxLtvPct` upwards and the first band whose
  * high-loan LTV fits within `band.maxLtvPct` is chosen. Returns `null` when the deposit is not
- * large enough to keep LTV at or below 90%.
+ * large enough to keep LTV at or below 90%. With tax answers the price for each band is solved, so
+ * the band matches the loan to value after tax; a band whose price the deposit cannot reach does
+ * not fit. At most one solve per band, so this always ends.
  */
 function resolveLtvBandFromDeposit(
   monthlyPaymentGbp: number,
   termMonths: number,
+  depositGbp: number,
+  buyingCostsGbp: number,
   netDepositGbp: number,
+  propertyTax: PropertyPriceTaxAnswers | null | undefined,
 ): MortgageRateBand | null {
   for (const band of MORTGAGE_LTV_RATE_BANDS) {
     const highLoan = calculateLoanFromMonthlyPayment(
@@ -225,7 +302,10 @@ function resolveLtvBandFromDeposit(
       band.lowAnnualRatePct,
       termMonths,
     );
-    const price = highLoan + netDepositGbp;
+    const price = propertyTax
+      ? propertyPriceFor(highLoan, depositGbp, buyingCostsGbp, netDepositGbp, propertyTax).priceGbp
+      : highLoan + netDepositGbp;
+    if (price === null) continue;
     const ltvPct = (highLoan / price) * 100;
     if (ltvPct <= band.maxLtvPct) {
       return band;
@@ -273,7 +353,14 @@ export function calculateBudgetLoanEstimate(
     lowAnnualRatePct = Math.min(input.rateBand.lowAnnualRatePct, input.rateBand.highAnnualRatePct);
     highAnnualRatePct = Math.max(input.rateBand.lowAnnualRatePct, input.rateBand.highAnnualRatePct);
   } else if (positiveDeposit !== null) {
-    matchedRateBand = resolveLtvBandFromDeposit(monthlyPaymentGbp, termMonths, positiveDeposit);
+    matchedRateBand = resolveLtvBandFromDeposit(
+      monthlyPaymentGbp,
+      termMonths,
+      input.depositGbp as number,
+      buyingCosts,
+      positiveDeposit,
+      input.propertyTax,
+    );
     if (matchedRateBand) {
       lowAnnualRatePct = matchedRateBand.lowAnnualRatePct;
       highAnnualRatePct = matchedRateBand.highAnnualRatePct;
@@ -302,6 +389,8 @@ export function calculateBudgetLoanEstimate(
       ltvPct: null,
       lowLtvPct: null,
       highLtvPct: null,
+      lowPriceSolution: null,
+      highPriceSolution: null,
     };
   }
 
@@ -320,16 +409,24 @@ export function calculateBudgetLoanEstimate(
   const isSingle = hasSingleRate || lowAnnualRatePct === highAnnualRatePct;
   const loanGbp = isSingle ? lowLoanGbp : null;
 
-  const lowPropertyPriceGbp =
-    positiveDeposit !== null ? round2(lowLoanGbp + positiveDeposit) : null;
-  const highPropertyPriceGbp =
-    positiveDeposit !== null ? round2(highLoanGbp + positiveDeposit) : null;
+  const priceAt = (loan: number) =>
+    positiveDeposit !== null
+      ? propertyPriceFor(
+          loan,
+          input.depositGbp as number,
+          buyingCosts,
+          positiveDeposit,
+          input.propertyTax,
+        )
+      : { priceGbp: null, solution: null };
+  const low = priceAt(lowLoanGbp);
+  const high = priceAt(highLoanGbp);
+  const lowPropertyPriceGbp = low.priceGbp;
+  const highPropertyPriceGbp = high.priceGbp;
   const propertyPriceGbp = isSingle ? lowPropertyPriceGbp : null;
 
-  const lowLtvPct =
-    lowPropertyPriceGbp !== null ? round1((lowLoanGbp / lowPropertyPriceGbp) * 100) : null;
-  const highLtvPct =
-    highPropertyPriceGbp !== null ? round1((highLoanGbp / highPropertyPriceGbp) * 100) : null;
+  const lowLtvPct = ltvFor(lowLoanGbp, lowPropertyPriceGbp);
+  const highLtvPct = ltvFor(highLoanGbp, highPropertyPriceGbp);
   const ltvPct = isSingle ? lowLtvPct : null;
 
   return {
@@ -348,5 +445,7 @@ export function calculateBudgetLoanEstimate(
     ltvPct,
     lowLtvPct,
     highLtvPct,
+    lowPriceSolution: low.solution,
+    highPriceSolution: high.solution,
   };
 }

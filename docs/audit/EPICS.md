@@ -39,7 +39,7 @@ Refreshed on 2026-11-20 against `origin/main` and the merged pull requests up to
 | 23 | E36 | Security hardening before real production: supply chain, accounts, breach impact, post-quantum readiness, AI-assisted attacks, external test | H1 (`#747`), H2/H5 (`#755`), and H6 (`prompt-injection.test.ts` extended to all read/simulate/stage tools) complete. Only owner-dependent items remain (WorkOS MFA/passkeys/Radar, restricted DB role, field-level encryption with owner key, breach tabletop drill, and external pen test). SD1 to SD8 accepted on 2026-11-21 |
 | 24 | E37 | Self-employed work tracking & invoice builder: default hourly rate, itemised work logs, draft/issued/paid invoices, PDF/print & CSV export, optional SA sync | Complete (`S0`–`S2` merged in `#867`; `S3` merged in `#868`) |
 | 25 | E38 | User action friction and interaction-efficiency audit | S0 harness merged (#780, warn-only CI job); S1 to S3 merged (#841) |
-| 26 | E39 | Mortgage affordability from your own figures | `S1` (`#869`) and `S2` (`#871`) merged; Draft PR `#883` (`S1b` stamp duty) ready for Fable sign-off; stamp duty on the web page in PR `#893`; `S1c` (engine solver to take stamp duty off the deposit, deferred on 2026-11-22) not started; `S3` (optional MCP) not started |
+| 26 | E39 | Mortgage affordability from your own figures | `S1` (`#869`), `S2` (`#871`), `S1b` stamp duty (`#883`) and stamp duty on the page (`#893`) merged; `S1c` (solver that takes stamp duty off the deposit, and the page using it) in PR `#S1C`; `S3` (optional MCP) waits on MA10 |
 | 27 | E40 | One home per value: system data audit and restructure | Done: all nine slices merged (#784, #785, #786, #791, #798 and #803, #797 and #801, #825, #806, #805 and #808 and #820). Owner tax sign-off of the vectors in slices 2 and 7 is open |
 | 28 | E41 | Mutation testing and faster tests | Done: M0 to M5 and P0 to P5 merged (M5 in #857). Mutation testing is a local monthly check, not a CI job |
 | 29 | E42 | Marketing site restructure: pages split the way the app is, selling the features it has | Done: #848, #850, #852, #853, then the teal bands and larger illustrations (#854, #856) |
@@ -997,7 +997,7 @@ Add to E19 (opus review: effort S, so fold in rather than a new epic): full JSON
 - **Blocked by:** owner decisions MA1 to MA12; E29a for the wording and the standing line; E29b before anyone beyond the friends beta.
 - **Done when:** a user sees, from saved details and without retyping, what is left each month before housing; an estimated loan from a monthly payment and from an income multiple, each with every assumption visible and editable; payments at a rate and at plus or minus a chosen number of points, for a new loan, a saved mortgage and a fix that ends; all formulas live in `packages/finance-engine` with hand-worked tests; nothing is stored; no surface names a lender, says what a user can borrow, or judges their situation.
 - **Notes:** slices S1 engine, S2 web (new page, one rate tool replacing `RemortgageShockSim`), S3 optional MCP. Stamp duty, shared ownership and new interest-only loans are out of version one. Plan: [E39-mortgage-affordability-plan.md](plans/E39-mortgage-affordability-plan.md).
-- **Status (2026-11-22):** `S1` (`#869`: finance-engine affordability, LTV default rates, `selectHousingRoom`, and value map) and `S2` (`#871`: `/app/mortgage-estimates` and `RateChangeTool` replacing `RemortgageShockSim`) are merged. Draft PR `#883` (`S1b` stamp duty) is ready for Fable sign-off; `S3` (optional MCP) has no PR.
+- **Status (2026-11-24):** `S1` (`#869`: finance-engine affordability, LTV default rates, `selectHousingRoom`, and value map), `S2` (`#871`: `/app/mortgage-estimates` and `RateChangeTool` replacing `RemortgageShockSim`), `S1b` (`#883`: stamp duty engine, Fable-signed) and the stamp duty section on the page (`#893`) are merged. `S1c` is in PR `#S1C`: `solvePropertyPrice` takes stamp duty and other buying costs off the deposit (bisection over whole pence), and the page's loan tools and stamp duty section use it. `S3` (optional MCP) waits on MA10.
 - **Labels:** needs-triage
 
 ## E40. One home per value: system data audit and restructure
@@ -1047,7 +1047,7 @@ Merged in #777: the profile year of birth and pay, the check-in day, and the Sel
 - **E35 (Encouragement and wellbeing):** `Set 1` (`#749`) and `Sets 2 and 3` (`#870`) merged; shared goals for couples wait on E34 (C3 onward).
 - **E36 (Security hardening):** H1 (`#747`), H2 & H5 (`#755`), and H6 (MCP prompt-injection suite including retirement tools) complete; only owner-dependent items remain (WorkOS MFA/passkeys/Radar, restricted DB role, field-level encryption with owner key, breach tabletop drill, and external pen test).
 - **E37 (Self-employed work tracking and invoice builder):** `S0`–`S2` merged (`#867`); `S3` merged (`#868`).
-- **E39 (Mortgage affordability):** `S1` (`#869`) and `S2` (`#871`) merged; Draft PR `#883` (`S1b` stamp duty) ready for Fable sign-off; `S3` (optional MCP) has no PR.
+- **E39 (Mortgage affordability):** `S1` (`#869`), `S2` (`#871`), `S1b` (`#883`) and `#893` merged; `S1c` in PR `#S1C`; `S3` (optional MCP) waits on MA10.
 
 ## 4. Stale local `.claude/worktrees/*`
 

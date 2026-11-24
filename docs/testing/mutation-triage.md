@@ -3929,3 +3929,13 @@ Measured with the single-file command on `src/invoicing/index.ts`, `src/mortgage
 | L447       | `input.balanceGbp >= 0`; first operand `true`                      | Equivalent | 0 is the fallback anyway; a negative balance is clamped to 0 by `projectAmortisedBalance` and gives 0 from `monthlyPaymentForKind`, and Infinity still fails `Number.isFinite`. |
 | L449       | `currentAnnualRatePct >= 0`, or that operand `true`                | Equivalent | `repaymentPerMonth` treats a rate of 0 or less as 0%, `projectAmortisedBalance` clamps it to 0, and `compareMortgageRates` cleans the comparison rate to 0.                     |
 | L453; L457 | `remainingTermMonths >= 0`; `monthsUntilFixEnd >= 0`               | Equivalent | For 0, `Math.trunc(0)` is 0, the fallback value.                                                                                                                                |
+
+## Property price solver (E39 S1c, 24 November 2026)
+
+Measured with the single-file command on `src/property-price-solver.ts` and `src/mortgage-affordability.ts`. `property-price-solver.ts`: 85 faults, none survive (6 reported as timeouts, each a bisection loop made endless). `mortgage-affordability.ts`: the survivors at L49, L321, L328, L349, L365 and L366 are the rows under "Mortgage estimates and invoicing CSV" above (L44, L247, L254, L275, L284 and L285 there, moved down by this slice). One is new:
+
+#### `src/mortgage-affordability.ts`
+
+| Line | Fault                                                   | Class      | Reason                                                                                                                                       |
+| ---- | ------------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| L302 | ConditionalExpression `false` on `price === null` guard | Equivalent | A null price then reads as 0 in `highLoan / price`, giving an infinite loan to value, above every band, so the band is skipped all the same. |

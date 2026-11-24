@@ -346,6 +346,175 @@ describe("mortgage affordability (E39 section 4a & 10a)", () => {
     });
   });
 
+  describe("with the property transaction tax taken off the deposit (E39 S1c)", () => {
+    it("income view: solves each end of the range after SDLT", () => {
+      // £50,000 x 4 = £200,000; x 4.5 = £225,000. Deposit £27,500, England, not a first-time buyer.
+      // High: B = 252,500. tax(250,000) = 2% x 125,000 = £2,500 -> 252,500 = B; 250,000.01 does
+      // not fit (5% of 1p rounds to £0, so cost 252,500.01). LTV 225,000 / 250,000 = 90.0%.
+      // Low: B = 227,500. P = 225,491: 2% x 100,491 = 2,009.82, floored £2,009 -> 227,500 = B.
+      // P = 225,491.01: 2,009.8202 -> £2,009 -> 227,500.01 > B. LTV 200,000 / 225,491 = 88.695 -> 88.7%.
+      const res = calculateIncomeMultipleRange({
+        primaryAnnualIncomeGbp: 50_000,
+        depositGbp: 27_500,
+        propertyTax: { jurisdiction: "ENGLAND_NI", isFirstTimeBuyer: false },
+      });
+      expect(res.netDepositGbp).toBe(27_500);
+      expect(res.highPropertyPriceGbp).toBe(250_000);
+      expect(res.highLtvPct).toBe(90);
+      expect(res.lowPropertyPriceGbp).toBe(225_491);
+      expect(res.lowLtvPct).toBe(88.7);
+      expect(res.highPriceSolution).toMatchObject({ status: "solved" });
+      if (res.highPriceSolution?.status !== "solved" || res.lowPriceSolution?.status !== "solved") {
+        throw new Error("expected both ends solved");
+      }
+      expect(res.highPriceSolution.propertyTax.taxGbp).toBe(2_500);
+      expect(res.lowPriceSolution.propertyTax.taxGbp).toBe(2_009);
+    });
+
+    it("income view: other buying costs and tax both come off; a short deposit gives no price", () => {
+      // £60,000 x 4 = £240,000; x 4.5 = £270,000. Deposit £12,000 less £2,000 costs, Wales.
+      // Low: B = 250,000. 1.06P = 250,000 + 13,500 -> P = 248,584.9057. P = 248,584.90:
+      // 6% x 23,584.90 = 1,415.094 -> £1,415.09 -> 249,999.99. P = 248,584.91: 1,415.0946 ->
+      // £1,415.09 -> 250,000.00 = B. P = 248,584.92: 1,415.0952 -> £1,415.10 -> 250,000.02 > B.
+      // High: tax at a £270,000 price = 6% x 45,000 = £2,700; costs + tax = 4,700 < 12,000, so it
+      // solves too: B = 280,000, 1.06P = 280,000 + 13,500 -> P = 276,886.79: 6% x 51,886.79 =
+      // 3,113.2074 -> £3,113.21 -> 280,000.00 = B; P = 276,886.80: 3,113.208 -> £3,113.21 -> over.
+      const res = calculateIncomeMultipleRange({
+        primaryAnnualIncomeGbp: 60_000,
+        depositGbp: 12_000,
+        buyingCostsGbp: 2_000,
+        propertyTax: { jurisdiction: "WALES" },
+      });
+      expect(res.netDepositGbp).toBe(10_000);
+      expect(res.lowPropertyPriceGbp).toBe(248_584.91);
+      expect(res.highPropertyPriceGbp).toBe(276_886.79);
+
+      // Deposit £5,000 less £3,000 costs, Wales. High: tax at a £270,000 price = £2,700;
+      // 3,000 + 2,700 = 5,700 > 5,000, short by £700.
+      // Low: tax at £240,000 = 6% x 15,000 = £900; 3,000 + 900 = 3,900 <= 5,000 fits.
+      const short = calculateIncomeMultipleRange({
+        primaryAnnualIncomeGbp: 60_000,
+        depositGbp: 5_000,
+        buyingCostsGbp: 3_000,
+        propertyTax: { jurisdiction: "WALES" },
+      });
+      expect(short.highPropertyPriceGbp).toBeNull();
+      expect(short.highLtvPct).toBeNull();
+      expect(short.highPriceSolution).toMatchObject({
+        status: "deposit-short",
+        shortfallGbp: 700,
+      });
+      expect(short.lowPriceSolution).toMatchObject({ status: "solved" });
+      expect(short.lowPropertyPriceGbp).not.toBeNull();
+    });
+
+    it("income view: no tax answers or no deposit leaves the solutions empty", () => {
+      // Without tax answers: price = loan + net deposit = 200,000 + 27,500 = 227,500.
+      const plain = calculateIncomeMultipleRange({
+        primaryAnnualIncomeGbp: 50_000,
+        depositGbp: 27_500,
+      });
+      expect(plain.lowPropertyPriceGbp).toBe(227_500);
+      expect(plain.lowPriceSolution).toBeNull();
+      expect(plain.highPriceSolution).toBeNull();
+      const noDeposit = calculateIncomeMultipleRange({
+        primaryAnnualIncomeGbp: 50_000,
+        propertyTax: { jurisdiction: "SCOTLAND" },
+      });
+      expect(noDeposit.lowPriceSolution).toBeNull();
+      const costsTakeAll = calculateIncomeMultipleRange({
+        primaryAnnualIncomeGbp: 50_000,
+        depositGbp: 1_000,
+        buyingCostsGbp: 1_000,
+        propertyTax: { jurisdiction: "SCOTLAND" },
+      });
+      expect(costsTakeAll.netDepositGbp).toBe(0);
+      expect(costsTakeAll.highPriceSolution).toBeNull();
+    });
+
+    it("budget view: a single rate solves the price after LBTT", () => {
+      // 0% over 300 months: £750 x 300 = £225,000 loan. Deposit £27,100, Scotland.
+      // B = 252,100. tax(250,000) = 2% x 105,000 = £2,100 -> 252,100 = B; 250,000.01 costs
+      // 252,100.01. LTV 225,000 / 250,000 = 90.0%.
+      const res = calculateBudgetLoanEstimate({
+        monthlyPaymentGbp: 750,
+        termMonths: 300,
+        annualRatePct: 0,
+        depositGbp: 27_100,
+        propertyTax: { jurisdiction: "SCOTLAND", isFirstTimeBuyer: false },
+      });
+      expect(res.loanGbp).toBe(225_000);
+      expect(res.propertyPriceGbp).toBe(250_000);
+      expect(res.ltvPct).toBe(90);
+      expect(res.lowPriceSolution).toMatchObject({ status: "solved", propertyPriceGbp: 250_000 });
+    });
+
+    it("budget view: the default rate band is chosen on the loan to value after tax", () => {
+      // £1,000 a month over 300 months, deposit £125,000, England, no rate typed.
+      // Loans (annuity, checked with a calculator): 4.24% -> 1.0035333^300 = 2.880984,
+      // £184,781.98; 4.32% -> 2.938974, £183,262.57; 4.61% -> 3.159115, £177,906.02.
+      // Without tax, the 60% band: price 184,781.98 + 125,000 = 309,781.98, LTV 59.65% -> fits.
+      // With SDLT, the 60% band: B = 309,781.98, P = 304,554.98 (2,500 + 5% x 54,554.98 =
+      // 5,227.749 -> 5,227.75, floored £5,227 -> = B). LTV 184,781.98 / 304,554.98 = 60.67% > 60.
+      // The 70% band (4.32% to 4.61%): high loan B = 308,262.57, P = 303,107.57 (5% x 53,107.57 =
+      // 2,655.3785 -> 2,655.38; total 5,155.38 -> £5,155 -> = B; 1p more costs B + 1p).
+      // LTV 183,262.57 / 303,107.57 = 60.46% -> fits. Low loan B = 302,906.02, P = 298,006.02
+      // (5% x 48,006.02 = 2,400.301 -> 2,400.30; total 4,900.30 -> £4,900 -> = B).
+      // LTV 177,906.02 / 298,006.02 = 59.698% -> 59.7%.
+      const base = { monthlyPaymentGbp: 1_000, termMonths: 300, depositGbp: 125_000 };
+      const plain = calculateBudgetLoanEstimate(base);
+      expect(plain.matchedRateBand?.maxLtvPct).toBe(60);
+
+      const res = calculateBudgetLoanEstimate({
+        ...base,
+        propertyTax: { jurisdiction: "ENGLAND_NI" },
+      });
+      expect(res.matchedRateBand?.maxLtvPct).toBe(70);
+      expect(res.lowAnnualRatePct).toBe(4.32);
+      expect(res.highAnnualRatePct).toBe(4.61);
+      expect(res.highLoanGbp).toBe(183_262.57);
+      expect(res.lowLoanGbp).toBe(177_906.02);
+      expect(res.highPropertyPriceGbp).toBe(303_107.57);
+      expect(res.lowPropertyPriceGbp).toBe(298_006.02);
+      expect(res.highLtvPct).toBe(60.5);
+      expect(res.lowLtvPct).toBe(59.7);
+      expect(res.propertyPriceGbp).toBeNull();
+      expect(res.loanGbp).toBeNull();
+    });
+
+    it("budget view: a band whose price the deposit cannot reach does not fit", () => {
+      // £1,000 a month over 300 months, deposit £1,000, England. Each band's high loan is between
+      // £180,000 and £184,781.98, so SDLT at a price equal to the loan is at least
+      // 2% x (180,000 - 125,000) = £1,100 > £1,000: every band is short, so none fits and there is
+      // no rate, no loan and no solution.
+      const res = calculateBudgetLoanEstimate({
+        monthlyPaymentGbp: 1_000,
+        termMonths: 300,
+        depositGbp: 1_000,
+        propertyTax: { jurisdiction: "ENGLAND_NI" },
+      });
+      expect(res.matchedRateBand).toBeNull();
+      expect(res.lowLoanGbp).toBeNull();
+      expect(res.lowPriceSolution).toBeNull();
+    });
+
+    it("budget view: a short deposit at a typed rate gives the shortfall and no price", () => {
+      // 0% over 300 months: £1,000 x 300 = £300,000. Deposit £4,000, England.
+      // tax(300,000) = 2,500 + 5% x 50,000 = £5,000 > 4,000: short by £1,000.
+      const res = calculateBudgetLoanEstimate({
+        monthlyPaymentGbp: 1_000,
+        termMonths: 300,
+        annualRatePct: 0,
+        depositGbp: 4_000,
+        propertyTax: { jurisdiction: "ENGLAND_NI" },
+      });
+      expect(res.loanGbp).toBe(300_000);
+      expect(res.propertyPriceGbp).toBeNull();
+      expect(res.ltvPct).toBeNull();
+      expect(res.lowPriceSolution).toMatchObject({ status: "deposit-short", shortfallGbp: 1_000 });
+    });
+  });
+
   describe("resolveEstimateTermMonths", () => {
     it("uses the saved month count as saved, not rounded to whole years", () => {
       // 235 months is 19 years 7 months; rounding to years would give 20 x 12 = 240.

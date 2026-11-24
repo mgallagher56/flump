@@ -109,6 +109,34 @@ describe("LoanFromPaymentTool", () => {
     );
   });
 
+  it("takes the estimated stamp duty off the deposit once the tax answers are in (E39 S1c)", () => {
+    // 0% over 25 years: £750 x 300 = £225,000 loan. Deposit £27,500.
+    // Without tax: price 225,000 + 27,500 = £252,500 -> ~£253,000; LTV 225,000 / 252,500 = 89.1% -> 89%.
+    // With SDLT (England, not first-time): the largest price with price + tax <= £252,500 is
+    // £250,000 (2% x 125,000 = £2,500 tax) -> ~£250,000; LTV 225,000 / 250,000 = 90%.
+    const props = {
+      annualRatePct: 0,
+      buyingCostsGbp: null,
+      depositGbp: 27_500,
+      monthlyPaymentGbp: 750,
+      referenceDate: new Date("2026-11-21T00:00:00Z"),
+      termYears: 25,
+      ...noop,
+    };
+    const { rerender } = render(<LoanFromPaymentTool {...props} />);
+    const text = () => screen.getByTestId("loan-from-payment-result").textContent ?? "";
+    expect(text()).toContain("Property price ~£253,000, loan to value 89%");
+
+    rerender(
+      <LoanFromPaymentTool
+        {...props}
+        propertyTax={{ jurisdiction: "ENGLAND_NI", isFirstTimeBuyer: false }}
+      />,
+    );
+    expect(text()).toContain("~£225,000");
+    expect(text()).toContain("Property price ~£250,000, loan to value 90%");
+  });
+
   it("shows empty prompt when neither rate nor deposit is provided", () => {
     render(
       <LoanFromPaymentTool
