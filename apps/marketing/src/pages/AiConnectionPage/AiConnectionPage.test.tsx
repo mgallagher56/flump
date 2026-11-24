@@ -90,16 +90,18 @@ describe("Marketing AI connection page (E42 S2b)", () => {
     expect(within(strip).queryByRole("link", { current: "page" })).toBeNull();
   });
 
-  it("alternates the band tones after the canvas hero (owner choice A)", () => {
+  it("alternates the band tones after the canvas hero (Midnight and Mint)", () => {
     renderPage();
-    // By hand: what-you-see teal, questions canvas, setup teal, more-detail canvas, one-picture teal.
+    // By hand: what-you-see card, questions canvas, setup card, more-detail canvas, one-picture
+    // card, then the dark closing band.
     const bands = [...screen.getByRole("main").querySelectorAll(":scope > [data-tone-band]")];
     expect(bands.map((band) => [band.id, band.getAttribute("data-tone-band")])).toEqual([
-      ["what-you-see", "teal"],
+      ["what-you-see", "card"],
       ["questions", "canvas"],
-      ["setup", "teal"],
+      ["setup", "card"],
       ["more-detail", "canvas"],
-      ["one-picture", "teal"],
+      ["one-picture", "card"],
+      ["get-started", "contrast"],
     ]);
   });
 

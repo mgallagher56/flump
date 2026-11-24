@@ -64,8 +64,8 @@ const heroFrame = css({
 
 const OnHero = () => (
   <div className={heroFrame}>
-    <Money size="kpi" tone="onContrast" value={184250} />
-    <Money size="lg" tone="onContrast" value={-4200} />
+    <Money size="kpi" tone="onHero" value={184250} />
+    <Money size="lg" tone="onHero" value={-4200} />
   </div>
 );
 

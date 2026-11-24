@@ -15,6 +15,15 @@ describe("apps/marketing index.css", () => {
     expect(css.slice(idx)).toMatch(/var\(--colors-border-focus-ring\)/);
   });
 
+  it("gives the focus ring the band's own text colour on the mint and dark bands", () => {
+    expect(css).toMatch(
+      /\[data-tone-band="hero"\]\s*\{\s*--colors-border-focus-ring: var\(--colors-text-on-hero\);/,
+    );
+    expect(css).toMatch(
+      /\[data-tone-band="contrast"\],\s*footer\s*\{\s*--colors-border-focus-ring: var\(--colors-text-on-contrast\);/,
+    );
+  });
+
   it("does not set outline-offset globally and supports the data-focus-managed opt-out", () => {
     const block = css.slice(css.lastIndexOf(":where("));
     expect(block).toContain("[data-focus-managed]");

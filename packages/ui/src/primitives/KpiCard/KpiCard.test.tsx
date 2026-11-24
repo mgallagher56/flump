@@ -144,7 +144,9 @@ describe("KpiCard Primitive", () => {
     const { container, rerender } = render(<KpiCard label="Net worth" tone="hero" value="£1" />);
     expect(container.querySelector('[data-tone="hero"]')).not.toBeNull();
     expect(container.innerHTML).toContain("surface.hero");
-    expect(container.innerHTML).toContain("text.onContrast");
+    expect(container.innerHTML).toContain("text.onHero");
+    expect(container.innerHTML).toContain("text.heroFigure");
+    expect(container.innerHTML).not.toContain("text.onContrast");
     rerender(<KpiCard label="Net worth" tone="hero" value={null} />);
     expect(container.querySelector('[data-tone="hero"]')).toBeNull();
     rerender(<KpiCard label="Net worth" loading tone="hero" value="£1" />);

@@ -25,7 +25,9 @@ chartColor("accentPurple"); // "var(--colors-chart-accent-purple)" (camelCase ro
 seriesColor(i); // series1..series8, cycling
 ```
 
-`chartColor` is for SVG attributes and chart libraries that cannot take Panda style props. The variables switch with the theme, so one set of values works in light and dark. In Panda recipes, use the token names directly (`stroke: "chart.series1"`). Roles: `primary`, `wealth`, `debt`, `warning`, `accentPurple`, `accentCyan`, `grid`, `series1`..`series8`, `projection`, `band`, `baseline`. A test checks every role against Panda's generated variable names.
+`chartColor` is for SVG attributes and chart libraries that cannot take Panda style props. The variables switch with the theme, so one set of values works in light and dark. In Panda recipes, use the token names directly (`stroke: "chart.series1"`). Roles: `primary`, `wealth`, `debt`, `warning`, `accentPurple`, `accentCyan`, `accent`, `grid`, `series1`..`series8`, `projection`, `band`, `baseline`. A test checks every role against Panda's generated variable names.
+
+Since Midnight and Mint (owner, 24 Nov 2026) `chart.primary` and `series1` are teal `#0b6b5d` in light and mint `#6fd0ba` in dark, the band is a low-alpha fill of the same colour, and `chart.accent` is the deep blue-teal in light and the soft pink in dark (at most one series, dashed and labelled). Mint is never a line on a light ground. Values: STYLE-GUIDE section 10.
 
 ### Colouring by entity
 

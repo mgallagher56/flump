@@ -37,8 +37,19 @@
   }
 
   p {
-    color: var(--colors-text-secondary, #475569);
+    color: var(--colors-text-secondary);
     line-height: 1.6;
+  }
+
+  /* Midnight and Mint: the teal focus ring is too faint on the solid mint band and on the dark
+     closing band and footer, so there the ring takes the band's own text colour. */
+  [data-tone-band="hero"] {
+    --colors-border-focus-ring: var(--colors-text-on-hero);
+  }
+
+  [data-tone-band="contrast"],
+  footer {
+    --colors-border-focus-ring: var(--colors-text-on-contrast);
   }
 
   .tabular-nums,

@@ -39,8 +39,8 @@ Use **only** these 7 semantic token namespaces (`packages/tokens/src/index.ts`, 
 
 | Namespace   | Allowed Tokens                                                                                                                                                                                                         | Typical Usage                                                                                                                                                                                                  |
 | :---------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `surface.*` | `surface.canvas`, `surface.card`, `surface.sunken`, `surface.subtle`, `surface.overlay`, `surface.contrast`, `surface.scrim`                                                                                           | Page backgrounds, elevated cards, inset code/tablewells, dark hero callouts                                                                                                                                    |
-| `text.*`    | `text.primary`, `text.secondary`, `text.muted`, `text.onContrast`                                                                                                                                                      | Headings, body copy, captions, text on `surface.contrast`                                                                                                                                                      |
+| `surface.*` | `surface.canvas`, `surface.card`, `surface.sunken`, `surface.subtle`, `surface.overlay`, `surface.contrast`, `surface.scrim`, `surface.hero`                                                                           | Page backgrounds, elevated cards, inset wells, charcoal footer and markers, the one headline block                                                                                                             |
+| `text.*`    | `text.primary`, `text.secondary`, `text.muted`, `text.onContrast`, `text.onHero`, `text.heroFigure`                                                                                                                    | Headings, body copy, captions, text on `surface.contrast`, text and the figure on `surface.hero`                                                                                                               |
 | `border.*`  | `border.DEFAULT`, `border.subtle`, `border.strong`, `border.input`, `border.focusRing`                                                                                                                                 | Card borders, table dividers, form inputs, focus rings                                                                                                                                                         |
 | `primary.*` | `primary` (`DEFAULT`), `primary.solid`, `primary.hover`, `primary.subtle`, `primary.border`, `primary.foreground`                                                                                                      | Brand CTAs, active tabs, accent badges, primary links. `primary.solid` (and `primary.hover`): fill behind `primary.foreground` only (text-labelled fills); graphic-only fills use `primary` or `chart.primary` |
 | `status.*`  | `status.{positive\|warning\|danger\|info\|neutral}.{text\|bg\|border\|solid}`                                                                                                                                          | Semantic badges, alerts, trend indicators, status dots                                                                                                                                                         |
@@ -139,6 +139,7 @@ Import and compose shared layout patterns from `@repo/ui`:
    ```tsx
    <div id="mcp-connection-card" data-testid="mcp-connection-card">
    ```
+
 2. **Radix `<Tabs>` (formerly `SegmentedTabs`) in Vitest JSDOM**: Radix `Tabs.Trigger` activates on pointerdown or keyboard events rather than synthetic `click` in JSDOM. Trigger tab changes in `.test.tsx` with:
 
    ```ts
@@ -146,6 +147,7 @@ Import and compose shared layout patterns from `@repo/ui`:
    fireEvent.pointerDown(tab, { button: 0 });
    fireEvent.keyDown(tab, { key: "Enter", code: "Enter" });
    ```
+
 3. **Storybook `play()` tests (`ComponentName.stories.tsx`)**:
    - Import `expect`, `userEvent`, `within`, `fn` from `"storybook/test"`.
    - Wrap components that render `<Helmet>` in `<HelmetProvider>` inside the story `decorators`.
@@ -163,11 +165,13 @@ Run this exact sequence before committing or updating a pull request:
    ```bash
    bunx biome check --write <modified-files>
    ```
+
 2. Verify architecture and token laws:
 
    ```bash
    cd packages/ui && bunx vitest run src/tokens/architecture.laws.test.ts
    ```
+
 3. Execute the 4 mandatory monorepo CI gates from the repository root:
 
    ```bash

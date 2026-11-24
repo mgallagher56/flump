@@ -1,6 +1,6 @@
 import { css, cva } from "../../../styled-system/css";
 
-/** Page frame: a readable column on the sand canvas. */
+/** Page frame: a readable column on the canvas (mint in light, Midnight in dark). */
 export const signoffRoot = cva({
   base: {
     display: "flex",
@@ -18,8 +18,17 @@ export const signoffSection = cva({
   base: { display: "flex", flexDirection: "column", gap: "4" },
 });
 
+/** Section titles sit on a dark rule so sections are clearly separated. */
 export const signoffSectionTitle = cva({
-  base: { textStyle: "heading.md", color: "text.primary", margin: 0 },
+  base: {
+    textStyle: "heading.md",
+    color: "text.primary",
+    margin: 0,
+    paddingBottom: "2",
+    borderBottomWidth: "2px",
+    borderBottomStyle: "solid",
+    borderBottomColor: "border.section",
+  },
 });
 
 export const signoffSectionNote = cva({
@@ -62,7 +71,10 @@ export const signoffPanelTitle = cva({
   base: { textStyle: "heading.sm", color: "text.primary", margin: 0 },
 });
 
-/** The one deep-teal hero block per page, holding the headline figure. */
+/**
+ * The one hero block per page, holding the headline figure: solid mint with dark ink in light, an
+ * edged card with a mint figure in dark.
+ */
 export const heroBlock = cva({
   base: {
     display: "flex",
@@ -70,7 +82,10 @@ export const heroBlock = cva({
     gap: "3",
     p: { base: "6", md: "8" },
     backgroundColor: "surface.hero",
-    color: "text.onContrast",
+    color: "text.onHero",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "border.hero",
     borderRadius: "2xl",
   },
 });
@@ -86,16 +101,16 @@ export const heroTop = cva({
 });
 
 export const heroLabel = cva({
-  base: { textStyle: "label.md", color: "text.onContrast", margin: 0 },
+  base: { textStyle: "label.md", color: "text.onHero", margin: 0 },
 });
 
 export const heroSample = cva({
   base: {
     textStyle: "label.sm",
-    color: "text.onContrast",
+    color: "text.onHero",
     borderWidth: "1px",
     borderStyle: "solid",
-    borderColor: "text.onContrast",
+    borderColor: "text.onHero",
     borderRadius: "full",
     px: "3",
     py: "1",
@@ -105,7 +120,7 @@ export const heroSample = cva({
 export const heroFigure = cva({
   base: {
     textStyle: "display",
-    color: "text.onContrast",
+    color: "text.heroFigure",
     margin: 0,
     fontVariantNumeric: "tabular-nums",
   },
@@ -117,7 +132,7 @@ export const heroDelta = cva({
     alignItems: "center",
     gap: "2",
     textStyle: "body.md",
-    color: "text.onContrast",
+    color: "text.onHero",
     margin: 0,
     fontVariantNumeric: "tabular-nums",
   },

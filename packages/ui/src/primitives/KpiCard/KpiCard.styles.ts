@@ -24,15 +24,18 @@ export const kpiCardContainer = cva({
     boxShadow: "card",
   },
   variants: {
-    /** `hero`: the single deep-teal headline block per page (`surface.hero`). */
+    /**
+     * `hero`: the single headline block per page (`surface.hero`): solid mint with dark ink in
+     * light, a card with a visible edge and a mint figure in dark.
+     */
     tone: {
       default: {},
       hero: {
         backgroundColor: "surface.hero",
-        borderColor: "surface.hero",
-        color: "text.onContrast",
-        // border.focusRing is under 3:1 on the light hero, so descendants use the label colour.
-        "& :focus-visible": { outlineColor: "text.onContrast" },
+        borderColor: "border.hero",
+        color: "text.onHero",
+        // The hero ink is the strongest outline on both heroes (8:1 and more).
+        "& :focus-visible": { outlineColor: "text.onHero" },
       },
     },
   },
@@ -71,10 +74,10 @@ export const kpiLabel = cva({
     tone: {
       default: {},
       hero: {
-        color: "text.onContrast",
-        // The explain InfoTip trigger defaults to text.muted, which fails on surface.hero. The
+        color: "text.onHero",
+        // The explain InfoTip trigger defaults to text.muted, which fails on the light hero. The
         // type and attribute outrank the trigger's doubled class; the open state keeps its own.
-        "& button[aria-haspopup]:not([data-state='open'])": { color: "text.onContrast" },
+        "& button[aria-haspopup]:not([data-state='open'])": { color: "text.onHero" },
       },
     },
   },
@@ -150,7 +153,7 @@ export const kpiHeroValue = cva({
   variants: {
     tone: {
       default: {},
-      hero: { color: "text.onContrast" },
+      hero: { color: "text.heroFigure" },
     },
     /**
      * A value with no digits ("Interest-only", "None") is a word, not a figure: it drops the
@@ -190,7 +193,7 @@ export const kpiSubtext = cva({
   variants: {
     tone: {
       default: {},
-      hero: { color: "text.onContrast" },
+      hero: { color: "text.onHero" },
     },
   },
   defaultVariants: { tone: "default" },

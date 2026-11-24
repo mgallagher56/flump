@@ -13,8 +13,9 @@ const NARROW_CARD = "@container hero-figure (min-width: 10.01rem) and (max-width
 const NARROWEST_CARD = "@container hero-figure (max-width: 10rem)";
 
 /**
- * E16 P2: the page's one headline figure. `hero` is the single deep-teal block per page
- * (`surface.hero`, text in `text.onContrast`), with no decoration. `plain` is the
+ * E16 P2: the page's one headline figure. `hero` is the single headline block per page
+ * (`surface.hero`): solid mint with dark ink (`text.onHero`) in light, a card with an edge
+ * (`border.hero`) and a mint figure (`text.heroFigure`) in dark, with no decoration. `plain` is the
  * fallback when the value is unknown: an ordinary card with a "Not set" prompt, never the hero.
  */
 export const heroFigure = sva({
@@ -124,12 +125,12 @@ export const heroFigure = sva({
       hero: {
         root: {
           backgroundColor: "surface.hero",
-          borderColor: "surface.hero",
-          color: "text.onContrast",
-          // border.focusRing is under 3:1 on the light hero, so descendants use the text colour.
-          "& :focus-visible": { outlineColor: "text.onContrast" },
+          borderColor: "border.hero",
+          color: "text.onHero",
+          // The hero ink is the strongest outline on both heroes (8:1 and more).
+          "& :focus-visible": { outlineColor: "text.onHero" },
           // Forced colours (Windows contrast themes) replace the hero fill with the system canvas,
-          // and cream text on it was the gate's contrast finding. Use the system pair and keep a
+          // and hero text on it was the gate's contrast finding. Use the system pair and keep a
           // real border so the block still reads as one block (UX A12).
           _highContrast: {
             backgroundColor: "Canvas",
@@ -139,16 +140,16 @@ export const heroFigure = sva({
             "& :focus-visible": { outlineColor: "Highlight" },
           },
         },
-        label: { color: "text.onContrast" },
-        estimate: { color: "text.onContrast" },
-        // The InfoTip trigger defaults to text.muted, which fails on surface.hero. The extra type
+        label: { color: "text.onHero" },
+        estimate: { color: "text.onHero" },
+        // The InfoTip trigger defaults to text.muted, which fails on the light hero. The extra type
         // and attribute outrank the trigger's doubled class (open state keeps its own colours).
         labelRow: {
-          "& button[aria-haspopup]:not([data-state='open'])": { color: "text.onContrast" },
+          "& button[aria-haspopup]:not([data-state='open'])": { color: "text.onHero" },
         },
-        value: { color: "text.onContrast" },
-        delta: { color: "text.onContrast" },
-        subline: { color: "text.onContrast" },
+        value: { color: "text.heroFigure" },
+        delta: { color: "text.onHero" },
+        subline: { color: "text.onHero" },
       },
       plain: {
         root: {

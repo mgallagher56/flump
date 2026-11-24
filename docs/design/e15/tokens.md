@@ -1,6 +1,6 @@
 # E15 design tokens: architecture note
 
-Scope: `packages/tokens/src/` (`@flump/tokens`, moved from `packages/ui/src/tokens/` by E12 T1.15; `@repo/ui` re-exports it) and `packages/ui/panda.preset.ts`. Direction: round 5 hybrid, Direction C's "Warm guide" palette (teal, sand, warm charcoal) on A's structure, with B's compact density available for simulators, tables and account lists. System theme is the default; `data-theme="light|dark"` overrides.
+Scope: `packages/tokens/src/` (`@flump/tokens`, moved from `packages/ui/src/tokens/` by E12 T1.15; `@repo/ui` re-exports it) and `packages/ui/panda.preset.ts`. Direction: the Midnight and Mint palette (owner, 24 Nov 2026; section "Midnight and Mint palette" below), which replaced round 5's Direction C "Warm guide" palette (teal, sand, warm charcoal), on A's structure, with B's compact density available for simulators, tables and account lists. System theme is the default; `data-theme="light|dark"` overrides.
 
 ## Layers
 
@@ -45,7 +45,7 @@ Durations: instant 0ms, fast 120ms, base 200ms, slow 320ms. Easings: standard, e
 
 Elevation keys `xs`, `card`, `raised`, `overlay`, `focus`, all with `_dark`. `cardHover` and `floating` remain as aliases. The primitive `shadows.xs` moved into the semantic set (same name, now themed).
 
-Round 5 treatment: light shadows are warm-tinted with the warm charcoal ink (`rgba(43, 38, 32, a)`, also the primitive `cardLight`/`cardHoverLight`/`floatingLight`), never blue-grey slate; strength rises xs < raised < overlay. Dark elevates by lighter surface (the `surface.*` dark steps) plus a hairline: an inset top highlight and a 1px outer ring (`0 0 0 1px rgba(255,255,255,.05)`), with a modest black shadow (alpha at most 0.3, was 0.4). Parity is enforced by `tokens.foundations.test.ts` (every key has `_dark`, warm ink only, ring present).
+Since Midnight and Mint (24 Nov 2026) light shadows use the deep-green ink `rgba(15, 42, 42, a)` instead of the warm ink; the rest of this paragraph stands. Round 5 treatment: light shadows are warm-tinted with the warm charcoal ink (`rgba(43, 38, 32, a)`, also the primitive `cardLight`/`cardHoverLight`/`floatingLight`), never blue-grey slate; strength rises xs < raised < overlay. Dark elevates by lighter surface (the `surface.*` dark steps) plus a hairline: an inset top highlight and a 1px outer ring (`0 0 0 1px rgba(255,255,255,.05)`), with a modest black shadow (alpha at most 0.3, was 0.4). Parity is enforced by `tokens.foundations.test.ts` (every key has `_dark`, warm ink only, ring present).
 
 ## Overlay stacking
 
@@ -80,7 +80,7 @@ Aliases repeat literal values rather than `{radii.xl}`: a CSS variable that refe
 
 ## Colour changes
 
-Colour values are defined once, in the "Round 5 palette" section at the end of this file (Direction C: teal, sand, warm charcoal). The earlier direction A values (indigo primary, ink-blue neutrals) no longer exist; `slate` and `indigo` primitives remain (indigo only for `status.info`). Liabilities in charts use apricot (`chart.debt`), never red.
+Current colour values are in the "Midnight and Mint palette" section near the end of this file; the "Round 5 palette" section (Direction C: teal, sand, warm charcoal) is kept as history. The earlier direction A values (indigo primary, ink-blue neutrals) no longer exist; `slate` and `indigo` primitives remain (indigo only for `status.info`). Liabilities in charts use apricot (`chart.debt`), never red.
 
 ### New keys (since E15 T1)
 
@@ -144,7 +144,30 @@ Adjacent series pairs are checked with Machado full-severity protan, deutan and 
 
 Non-adjacent series (for example 3 and 7, both warm) can look alike under CVD; they are at least 15 apart under normal vision (tested). Charts must still add direct labels, markers or dashes so no pair relies on colour alone. `chart.projection` is at least 15 deltaE from every series under normal vision and is also drawn dashed.
 
-## Round 5 palette (Direction C, shipped)
+## Midnight and Mint palette (current, 24 Nov 2026)
+
+Owner decision: Midnight (dark) and Mint (light) replace Direction C, because the old look closely resembled another company's site (no copying was found; the owner wants a distinct look). Reasons and light rules: [`docs/ux/STYLE-GUIDE.md`](../../ux/STYLE-GUIDE.md) section 14; full light and dark values: section 2.2 there; mock-ups: [`docs/design/midnight-mint/`](../midnight-mint/README.md). Values live in `packages/tokens/src/index.ts`, which wins over any table.
+
+Primitives: `mint` (replaces `sand`: light neutrals, the mint fill `400`, charcoal `800`, deep-green ink `900`, off-white `950`), `teal` (`600` `#0b6b5d`, `700` `#084f45`) and the Midnight `dark.*` set (canvas `#14171c`, sunken `#0f1216`, card `#1d2128`, borders `#303740` / `#3a424e`, text `#f1eee8`, muted `#a9afb9`, mint `#6fd0ba`, ink on mint `#0e1a17`, pink `#e3b5d1`).
+
+Meanings that changed:
+
+| Token                          | Light                 | Dark                  | Meaning now                                                                                                        |
+| ------------------------------ | --------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `surface.hero`                 | `#6fd0ba`             | `#1d2128`             | Solid mint with dark ink in light; a card with a `border.hero` edge and a mint figure in dark                      |
+| `text.onHero` (new)            | `#0f2a2a`             | `#f1eee8`             | Text on `surface.hero`: 8.24:1 light, 13.95:1 dark                                                                 |
+| `text.heroFigure` (new)        | `#0f2a2a`             | `#6fd0ba`             | The headline figure on `surface.hero`: 8.24:1 light, 8.77:1 dark                                                   |
+| `text.onContrast`              | `#f8fcfa`             | `#f8fcfa`             | Text on `surface.contrast` (charcoal) only, no longer on the hero                                                  |
+| `primary`                      | `#0b6b5d`             | `#6fd0ba`             | Links, outline buttons, focus ring; mint fails as text on light grounds (1.62:1 on the canvas), so light uses teal |
+| `primary.emphasis` (new)       | `#084f45`             | `#9be3d2`             | Link hover                                                                                                         |
+| `primary.solid` / `foreground` | `#14171c` / `#f8fcfa` | `#6fd0ba` / `#0e1a17` | Primary button: charcoal with off-white in light, mint with dark ink in dark                                       |
+| `accent`                       | `#1d5f73`             | `#e3b5d1`             | Deep blue-teal in light, so damson leads nowhere in light; soft pink in dark for small accents only                |
+| `border.hero` (new)            | `#6fd0ba`             | `#3a424e`             | The edge of `surface.hero`                                                                                         |
+| `border.section` (new)         | `#0f2a2a`             | `#737c88`             | The dark rule under an app section title                                                                           |
+
+Contrast figures above are WCAG ratios worked from the hex values; `tokens.a11y.test.ts` asserts each pair at 4.5:1 for text and 3:1 for marks.
+
+## Round 5 palette (Direction C, superseded on 24 Nov 2026)
 
 Source: the `--*` variables of `docs/design/e15/directions/c/index.html` (light `:root`, dark `[data-theme="dark"]`). Primitives: `sand` (replaces `ink`), `teal`, the warm `dark.*` set; `indigo` stays for `status.info` only. Component code is unchanged: semantic names are the same, plus the new `surface.hero`.
 
@@ -221,6 +244,8 @@ Every pair of canvas, card, sunken, subtle and overlay is at least 2.0 deltaE (a
 From `docs/design/e16-polish/PLAN.md` sections 4.1 to 4.3 and 4.7. The `status.info` retune (owner decision D12) is not part of this change: indigo stays until the owner decides.
 
 ### Domain tints (`surface.tint.*`, D16 option a)
+
+Values below are as of E16. The tints were retuned for Midnight and Mint; current values are in STYLE-GUIDE section 2.2.
 
 | Token                  | Light     | Dark      | Domain                       |
 | ---------------------- | --------- | --------- | ---------------------------- |

@@ -6,6 +6,7 @@ export const textColors = [
   "secondary",
   "muted",
   "onContrast",
+  "onHero",
   "positive",
   "warning",
   "danger",
@@ -20,8 +21,10 @@ export const textColorVariants = {
   primary: { color: "text.primary" },
   secondary: { color: "text.secondary" },
   muted: { color: "text.muted" },
-  /** For copy on `surface.hero` or `surface.contrast`. */
+  /** For copy on `surface.contrast` (charcoal). */
   onContrast: { color: "text.onContrast" },
+  /** For copy on `surface.hero` (dark ink on the light mint block, light text on the dark one). */
+  onHero: { color: "text.onHero" },
   positive: { color: "status.positive.text" },
   warning: { color: "status.warning.text" },
   danger: { color: "status.danger.text" },

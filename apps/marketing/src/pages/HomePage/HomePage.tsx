@@ -2,6 +2,7 @@ import { Button, Card, Illustration } from "@repo/ui";
 import type { FC } from "react";
 import { Link } from "react-router-dom";
 import { BaselineSnapshotPreview } from "../../components/BaselineSnapshotPreview";
+import { ClosingCta } from "../../components/ClosingCta";
 import { FeatureTiles } from "../../components/FeatureTiles";
 import { Footer } from "../../components/Footer";
 import { Header } from "../../components/Header";
@@ -19,10 +20,7 @@ import {
   ctaRow,
   depthItem,
   depthList,
-  finalCta,
-  finalCtaBody,
   finalCtaIllustration,
-  finalCtaTitle,
   hero,
   heroHeading,
   heroInner,
@@ -80,8 +78,9 @@ const areaFor = (key: MoneyAreaKey) => MONEY_AREAS.find((area) => area.key === k
 /**
  * Marketing home (E42 S5, D2): the hero with the decided headline and the sample dashboard; "Flump
  * features" (the five area tiles and the AI connection tile); "Start with rough figures"; "More
- * detail when you want it"; the two-slider pay rise tool; the security strip; then one band holding
- * the FAQ and the final call to action. "Request an invite" appears twice in the page body (hero
+ * detail when you want it"; the two-slider pay rise tool; the security strip on the one solid mint
+ * band; the FAQ; then the final call to action on the dark closing band. Bands after the pale mint
+ * hero alternate off-white (`card`) and pale mint (`canvas`), Midnight and Mint (24 Nov 2026). "Request an invite" appears twice in the page body (hero
  * and end).
  */
 export const HomePage: FC = () => {
@@ -123,7 +122,7 @@ export const HomePage: FC = () => {
           id="features"
           subtitle="The same five areas as the app. Use one or all five."
           title={FEATURES_INDEX.title}
-          tone="teal"
+          tone="card"
         >
           <FeatureTiles headingLevel={3} />
           <p className={bandFooter()}>
@@ -156,7 +155,7 @@ export const HomePage: FC = () => {
           id="more-detail"
           subtitle="Each area starts simple and has more underneath for when you want it."
           title="More detail when you want it"
-          tone="teal"
+          tone="card"
         >
           <ul className={depthList()}>
             {HOME_DEPTH.map((item) => {
@@ -179,23 +178,25 @@ export const HomePage: FC = () => {
 
         <SecurityPrivacySection />
 
-        {/* The fifth band: FAQ, then the final call to action in the same band (R2-10). The
+        {/* FAQ, then the final call to action on the dark closing band (Midnight and Mint). The
             heading starts at the left like every other band's (P74). */}
-        <MarketingSection id="faq" title="Frequently asked questions" width="narrow">
+        <MarketingSection id="faq" title="Frequently asked questions" tone="card" width="narrow">
           <HomeFAQ />
-          <div className={finalCta()} data-testid="home-final-cta" id="get-started">
+        </MarketingSection>
+
+        <ClosingCta
+          cta={cta}
+          data-testid="home-final-cta"
+          id="get-started"
+          illustration={
             <div className={finalCtaIllustration()} data-testid="home-final-cta-illustration">
               <Illustration scene="onboarding" size="xl" settle={false} />
             </div>
-            <h3 className={finalCtaTitle()} id="home-cta-title">
-              Ready to see where you stand?
-            </h3>
-            <p className={finalCtaBody()}>Start with a few rough numbers.</p>
-            <Button asChild size="lg" variant="primary">
-              <a href={cta.href}>{cta.label}</a>
-            </Button>
-          </div>
-        </MarketingSection>
+          }
+          text="Start with a few rough numbers."
+          title="Ready to see where you stand?"
+          titleId="home-cta-title"
+        />
       </main>
 
       <Footer />

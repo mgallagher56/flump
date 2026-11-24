@@ -103,7 +103,7 @@ export const inlineLink = cva({
     fontWeight: "semibold",
     textDecoration: "underline",
     textUnderlineOffset: "3px",
-    _hover: { color: "primary.hover" },
+    _hover: { color: "primary.emphasis" },
     _focusVisible: { outline: "2px solid", outlineColor: "border.focusRing", outlineOffset: "2px" },
   },
 });

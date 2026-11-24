@@ -97,7 +97,7 @@ const ACCOUNTS = [
   { name: "Barclaycard Platinum", kind: "Credit card", balance: -3200, change: 80 },
 ] as const;
 
-/** The "Accounts (sample data)" table from the Direction C sign-off frame. */
+/** The "Accounts (sample data)" table from the palette sign-off frame. */
 export const Accounts: Story = {
   render: () => (
     <Table

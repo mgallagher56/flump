@@ -44,7 +44,7 @@ describe("Marketing HomePage (E16 PR 12, E42 S5)", () => {
     expectPageRules(screen.getByTestId("home-final-cta"), { projectionNotices: 0 });
   });
 
-  it("has the E42 bands: hero, features, rough figures, more detail, pay rise, security, then FAQ with the final CTA", () => {
+  it("has the E42 bands: hero, features, rough figures, more detail, pay rise, security, FAQ, then the closing CTA", () => {
     const { container } = renderHome();
     const sections = Array.from(main().children).filter((el) => el.tagName === "SECTION");
     expect(sections.map((s) => s.id || s.getAttribute("data-testid"))).toEqual([
@@ -55,34 +55,38 @@ describe("Marketing HomePage (E16 PR 12, E42 S5)", () => {
       "pay-rise",
       "security",
       "faq",
+      "get-started",
     ]);
     // D1: the band is "Flump features", never "What Flump covers".
     expect(screen.getByRole("heading", { level: 2, name: "Flump features" })).toBeDefined();
     expect(container.textContent ?? "").not.toMatch(/what flump covers/i);
-    // The final call to action sits inside the FAQ band.
+    // The final call to action is the dark closing band after the FAQ (Midnight and Mint).
     const faq = container.querySelector("#faq") as HTMLElement;
-    expect(within(faq).getByTestId("home-final-cta").id).toBe("get-started");
+    const closing = container.querySelector("#get-started") as HTMLElement;
+    expect(within(closing).getByTestId("home-final-cta")).toBeDefined();
     expect(
       within(screen.getByTestId("home-final-cta"))
         .getByRole("link", { name: "Request an invite" })
         .getAttribute("data-variant"),
     ).toBe("primary");
     expect(
-      screen.getByRole("heading", { level: 3, name: "Ready to see where you stand?" }),
+      screen.getByRole("heading", { level: 2, name: "Ready to see where you stand?" }),
     ).toBeDefined();
     // P74: the FAQ heading starts at the left, like every other band's heading.
     const faqHeader = within(faq).getByRole("heading", { level: 2 }).parentElement as HTMLElement;
     expect(faqHeader.className).toContain("ta_left");
     expect(faqHeader.className).not.toContain("ta_center");
-    // Bands alternate the canvas and the soft brand-teal tint after the canvas hero (owner choice
-    // "A", 2026-11-20: no peach, brown or green fills). The hero is a plain section, no tone mark.
+    // Midnight and Mint (owner, 24 Nov 2026): after the pale mint hero, bands alternate off-white
+    // (card) and pale mint (canvas), with the security strip on the one solid mint band and a dark
+    // closing band. The hero is a plain section, no tone mark.
     expect(sections.slice(1).map((s) => s.getAttribute("data-tone-band"))).toEqual([
-      "teal",
+      "card",
       "canvas",
-      "teal",
+      "card",
       "canvas",
-      "teal",
-      "canvas",
+      "hero",
+      "card",
+      "contrast",
     ]);
   });
 

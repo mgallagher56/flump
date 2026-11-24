@@ -54,7 +54,7 @@ export const emptyStateRecipe = sva({
   variants: {
     tone: {
       default: {
-        // Direction C: a sunken sand panel with a large soft radius, no outline.
+        // a sunken mint panel with a large soft radius, no outline.
         root: { backgroundColor: "surface.sunken" },
       },
       muted: {

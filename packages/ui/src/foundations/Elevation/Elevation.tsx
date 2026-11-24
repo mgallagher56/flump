@@ -24,8 +24,9 @@ export const Elevation: FC = () => (
   >
     <h1 className={css({ textStyle: "heading.lg", mb: "4px" })}>Elevation</h1>
     <p className={css({ textStyle: "body.sm", color: "text.muted", mb: "24px" })}>
-      Light mode uses soft warm-tinted shadows (the sand ink, not blue-grey). Dark mode lifts by
-      lighter surface plus a hairline highlight and ring, with only a modest shadow.
+      Light mode uses soft shadows tinted with the deep-green ink of Mint, not blue-grey. Dark mode
+      (Midnight) lifts by a lighter surface plus a hairline highlight and ring, with only a modest
+      shadow.
     </p>
     {DENSITIES.map((density) => (
       <section

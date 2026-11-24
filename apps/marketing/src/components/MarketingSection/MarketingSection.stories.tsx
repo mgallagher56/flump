@@ -12,7 +12,7 @@ const meta: Meta<typeof MarketingSection> = {
     subtitle: "A short line under the section title.",
     children: <p>Section content.</p>,
   },
-  argTypes: { tone: { control: "select", options: ["canvas", "teal"] } },
+  argTypes: { tone: { control: "select", options: ["canvas", "card", "hero", "contrast"] } },
 };
 
 export default meta;
@@ -28,8 +28,8 @@ export const CanvasLight: Story = {
   globals: { theme: "light" },
   play: assertSection,
 };
-export const TealLight: Story = {
-  args: { tone: "teal" },
+export const CardLight: Story = {
+  args: { tone: "card" },
   globals: { theme: "light" },
   play: assertSection,
 };
@@ -39,8 +39,30 @@ export const CanvasDark: Story = {
   parameters: { backgrounds: { default: "dark" } },
   play: assertSection,
 };
-export const TealDark: Story = {
-  args: { tone: "teal" },
+export const CardDark: Story = {
+  args: { tone: "card" },
+  globals: { theme: "dark" },
+  parameters: { backgrounds: { default: "dark" } },
+  play: assertSection,
+};
+export const HeroLight: Story = {
+  args: { tone: "hero" },
+  globals: { theme: "light" },
+  play: assertSection,
+};
+export const HeroDark: Story = {
+  args: { tone: "hero" },
+  globals: { theme: "dark" },
+  parameters: { backgrounds: { default: "dark" } },
+  play: assertSection,
+};
+export const ContrastLight: Story = {
+  args: { tone: "contrast" },
+  globals: { theme: "light" },
+  play: assertSection,
+};
+export const ContrastDark: Story = {
+  args: { tone: "contrast" },
   globals: { theme: "dark" },
   parameters: { backgrounds: { default: "dark" } },
   play: assertSection,

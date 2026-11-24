@@ -87,7 +87,7 @@ export const PAGE_RULES: readonly PageRule[] = [
     id: "P9",
     title: "Colour in light mode",
     rule: "About 60% canvas, 30% cards and at most one tinted section, 10% accent. Cards separate by an edge, not a tint. One colour per domain.",
-    good: "Sand canvas, white cards with a visible edge, a teal hero and teal buttons.",
+    good: "Mint canvas, off-white cards with a visible edge, a solid mint hero with dark ink and charcoal buttons.",
     bad: "Tinted KPI cards inside a tinted section, with a coloured header band on each card.",
   },
   {
