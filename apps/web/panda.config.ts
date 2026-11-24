@@ -9,7 +9,13 @@ export default defineConfig({
   preflight: true,
 
   // Where to look for your css declarations
-  include: ["./app/**/*.{js,jsx,ts,tsx}", "../../packages/ui/src/**/*.{js,jsx,ts,tsx}"],
+  // Storybook (STORYBOOK=true) also renders the marketing stories, so it extracts the marketing
+  // styles too; the web app build does not ship them.
+  include: [
+    "./app/**/*.{js,jsx,ts,tsx}",
+    "../../packages/ui/src/**/*.{js,jsx,ts,tsx}",
+    ...(process.env.STORYBOOK === "true" ? ["../marketing/src/**/*.{js,jsx,ts,tsx}"] : []),
+  ],
 
   // Files to exclude
   exclude: [],
