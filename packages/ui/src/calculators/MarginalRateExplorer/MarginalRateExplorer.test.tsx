@@ -147,7 +147,12 @@ describe("MarginalRateExplorer", () => {
     expect(outcomes.textContent).toContain("The rest goes to tax and other deductions.");
     expect(outcomes.textContent).not.toContain("Estimated take-home a year");
     expect(outcomes.textContent).not.toContain("%");
-    // The 2026/27 rules are not yet signed off: the panel says so once, and the chart does not repeat it.
+    // Every 2026/27 vector is signed (Fable decider, 24 Nov 2026), so no unverified notice shows.
+    expect(screen.queryByText(/^Unverified estimate\. These tax figures/)).toBeNull();
+  });
+
+  it("says once, outside the chart, when the year's rules are not signed off (2024/25)", () => {
+    render(<MarginalRateExplorerStandalone initialValues={{ taxYear: "2024/25" }} />);
     const figure = screen.getByRole("figure", { name: CHART_TITLE });
     expect(within(figure).queryByText(/^Unverified estimate\. These tax figures/)).toBeNull();
     expect(screen.getAllByText(/^Unverified estimate\. These tax figures/)).toHaveLength(1);

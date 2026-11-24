@@ -223,7 +223,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April; Child Benefit weekly rate for this year is not on a GOV.UK page reached (rate recalled from the uprating chain, unconfirmed).",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:95fdcff2523b5afee0308c18b6c8606964b95bbfe013e46952abaef44d8fca57",
+    rulingRef:
+      "SI 2021/156 reg 5 sets Child Benefit at 21.15 and 14.00 from 12 April 2021; ITEPA 2003 s.681H(3) gives 52 Monday-weeks at that rate (1,099.80); the charge is nil because adjusted net income does not exceed 50,000 (s.681B as in force for 2021/22).",
   },
   {
     id: "hicbc.2021-22.ani50100.children1",
@@ -245,7 +249,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April; Child Benefit weekly rate for this year is not on a GOV.UK page reached (rate recalled from the uprating chain, unconfirmed).",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:ca39ae91a8f838c89ac7b8bd28907969e05423bc05e1d65c8ab064cb38e4aaee",
+    rulingRef:
+      "SI 2021/156 reg 5 confirms 21.15 from 12 April 2021 and s.681H(3) gives 52 weeks (1,099.80, rounded down to 1,099); with 50,000 and 100 (s.681C before F(No.2)A 2024 s.5) the charge is 1%, 10 after s.681C(3) rounding.",
   },
   {
     id: "hicbc.2021-22.ani55000.children2",
@@ -267,7 +275,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April; Child Benefit weekly rate for this year is not on a GOV.UK page reached (rate recalled from the uprating chain, unconfirmed).",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:be038be885f0d3a23eb987c4771c0f39d424ee698b3720da622727748b31e04e",
+    rulingRef:
+      "SI 2021/156 reg 5 confirms 21.15 plus 14.00 from 12 April 2021 and s.681H(3) gives 52 weeks (1,827.80, rounded down to 1,827); 50% under the pre-2024 s.681C formula gives 913.50, rounded down to 913.",
   },
   {
     id: "hicbc.2021-22.ani60000.children1",
@@ -289,7 +301,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April; Child Benefit weekly rate for this year is not on a GOV.UK page reached (rate recalled from the uprating chain, unconfirmed).",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:31a6fe30d63dc20d141aa23fae8c8fc348ae491eb8f8c2c565e62a162216ad49",
+    rulingRef:
+      "SI 2021/156 reg 5 confirms 21.15 from 12 April 2021 and s.681H(3) gives 52 weeks (1,099.80, rounded down to 1,099); the pre-2024 s.681C formula gives (60,000 less 50,000) / 100 = 100%, so the charge is 1,099.",
   },
   {
     id: "hicbc.2021-22.ani70000.children3",
@@ -311,7 +327,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April; Child Benefit weekly rate for this year is not on a GOV.UK page reached (rate recalled from the uprating chain, unconfirmed).",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:24ec23e289f32ef3193448f411f0ea6888c385edac7d9405226c99aefc77335d",
+    rulingRef:
+      "SI 2021/156 reg 5 confirms 21.15 plus two at 14.00 from 12 April 2021 and s.681H(3) gives 52 weeks (2,555.80, rounded down to 2,555); the percentage is capped at 100% by s.681C(2)(a), so the charge is 2,555.",
   },
   {
     id: "hicbc.2022-23.ani49999.children1",
@@ -716,7 +736,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026), at that year's single weekly rate because uprating starts on the first Monday on or after 6 April.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:f76fdfcb0b56f5473eb2fc5626c1da57a9e89c7a4e9f32d2d93f7c1946bc08ae",
+    rulingRef:
+      "ITEPA 2003 s.681H(3) gives 52 Monday-weeks in 2025/26 at the GOV.UK rate of 26.05; the charge is nil in any case because s.681B(1)(a) requires adjusted net income over 60,000.",
   },
   {
     id: "hicbc.2025-26.ani60200.children1",
@@ -1133,7 +1157,9 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "Annual method. salary sacrifice 3000 reduces pay for tax, NI and student loan: 57000; PA 12570 (no taper at ANI 57000); taxable 57000 - 12570 = 44430; basic 37700 x 20% = 7540; higher 6730 x 40% = 2692; additional 0 x 45% = 0; income tax 10232; NI on 57000: 37700 x 8% + 6730 x 2% = 3150.6. Take-home = 60000 - pension 3000 - tax 10232 - NI 3150.6 = 43617.4.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:eb9e1ead3c25138627eb69e4e8246bf1948fda33672e68e2f08c600bb532d774",
   },
   {
     id: "takeHome.2025-26.ewni.60000.net-pay3000",
@@ -1160,7 +1186,11 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: net-pay treatment of the pension is the engine's pinned UNVERIFIED behaviour (UK_TAX_PENSION_TREATMENT).",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:e82e5b414800acc180d3177e2b6694d9c144c7edab50c04ac1d7a028cbd0e45c",
+    rulingRef:
+      "GOV.UK workplace pensions and tax on private pension contributions: under net pay the contribution is taken before Income Tax with no NI reduction, so tax on 57,000 and NI on 60,000 is correct.",
   },
   {
     id: "takeHome.2025-26.ewni.70000.none0.plan2+postgrad.children2",
@@ -1217,7 +1247,9 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "Annual method. PA 12570 (no taper at ANI 60000); taxable 60000 - 12570 = 47430; starter 2827 x 19% = 537.13; basic 12094 x 20% = 2418.8; intermediate 16171 x 21% = 3395.91; higher 16338 x 42% = 6861.96; advanced 0 x 45% = 0; top 0 x 48% = 0; income tax 13213.8; NI on 60000: 37700 x 8% + 9730 x 2% = 3210.6. Take-home = 60000 - tax 13213.8 - NI 3210.6 = 43575.6.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:cc7239303b8812af2fa9a641e0862932ab5a26de13d1fbdd0a2952e0d869c505",
   },
   {
     id: "takeHome.2024-25.ewni.30000.none0",
@@ -1466,7 +1498,9 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "Scottish band marginal check, +1000 gross. At 35000: PA 12570 (no taper at ANI 35000); taxable 35000 - 12570 = 22430; starter 2827 x 19% = 537.13; basic 12094 x 20% = 2418.8; intermediate 7509 x 21% = 1576.89; higher 0 x 42% = 0; advanced 0 x 45% = 0; top 0 x 48% = 0; income tax 4532.82; NI on 35000: 22430 x 8% + 0 x 2% = 1794.4. Take-home = 35000 - tax 4532.82 - NI 1794.4 = 28672.78. At 36000: PA 12570 (no taper at ANI 36000); taxable 36000 - 12570 = 23430; starter 2827 x 19% = 537.13; basic 12094 x 20% = 2418.8; intermediate 8509 x 21% = 1786.89; higher 0 x 42% = 0; advanced 0 x 45% = 0; top 0 x 48% = 0; income tax 4742.82; NI on 36000: 23430 x 8% + 0 x 2% = 1874.4. Take-home = 36000 - tax 4742.82 - NI 1874.4 = 29382.78. Delta = 710 (effective marginal rate 29%).",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:a24b32eb40417c1e176a032c9c60a7467332332b3afcb75359af591b9b8606f3",
   },
   {
     id: "scottishMarginal.2025-26.45000.plus1000",
@@ -1485,7 +1519,9 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "Scottish band marginal check, +1000 gross. At 45000: PA 12570 (no taper at ANI 45000); taxable 45000 - 12570 = 32430; starter 2827 x 19% = 537.13; basic 12094 x 20% = 2418.8; intermediate 16171 x 21% = 3395.91; higher 1338 x 42% = 561.96; advanced 0 x 45% = 0; top 0 x 48% = 0; income tax 6913.8; NI on 45000: 32430 x 8% + 0 x 2% = 2594.4. Take-home = 45000 - tax 6913.8 - NI 2594.4 = 35491.8. At 46000: PA 12570 (no taper at ANI 46000); taxable 46000 - 12570 = 33430; starter 2827 x 19% = 537.13; basic 12094 x 20% = 2418.8; intermediate 16171 x 21% = 3395.91; higher 2338 x 42% = 981.96; advanced 0 x 45% = 0; top 0 x 48% = 0; income tax 7333.8; NI on 46000: 33430 x 8% + 0 x 2% = 2674.4. Take-home = 46000 - tax 7333.8 - NI 2674.4 = 35991.8. Delta = 500 (effective marginal rate 50%).",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:5f63aeb29bf964a437d1c6889ae08b388632ddc2f6b3ebdc0af04c6d9e9a2518",
   },
   {
     id: "scottishMarginal.2025-26.55000.plus1000",
@@ -1504,7 +1540,9 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "Scottish band marginal check, +1000 gross. At 55000: PA 12570 (no taper at ANI 55000); taxable 55000 - 12570 = 42430; starter 2827 x 19% = 537.13; basic 12094 x 20% = 2418.8; intermediate 16171 x 21% = 3395.91; higher 11338 x 42% = 4761.96; advanced 0 x 45% = 0; top 0 x 48% = 0; income tax 11113.8; NI on 55000: 37700 x 8% + 4730 x 2% = 3110.6. Take-home = 55000 - tax 11113.8 - NI 3110.6 = 40775.6. At 56000: PA 12570 (no taper at ANI 56000); taxable 56000 - 12570 = 43430; starter 2827 x 19% = 537.13; basic 12094 x 20% = 2418.8; intermediate 16171 x 21% = 3395.91; higher 12338 x 42% = 5181.96; advanced 0 x 45% = 0; top 0 x 48% = 0; income tax 11533.8; NI on 56000: 37700 x 8% + 5730 x 2% = 3130.6. Take-home = 56000 - tax 11533.8 - NI 3130.6 = 41335.6. Delta = 560 (effective marginal rate 44%).",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:589bf0ee67608a75b70e1315211c657cbe683929b4cb97e7a849932e56753f85",
   },
   {
     id: "scottishMarginal.2025-26.85000.plus1000",
@@ -1523,7 +1561,9 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "Scottish band marginal check, +1000 gross. At 85000: PA 12570 (no taper at ANI 85000); taxable 85000 - 12570 = 72430; starter 2827 x 19% = 537.13; basic 12094 x 20% = 2418.8; intermediate 16171 x 21% = 3395.91; higher 31338 x 42% = 13161.96; advanced 10000 x 45% = 4500; top 0 x 48% = 0; income tax 24013.8; NI on 85000: 37700 x 8% + 34730 x 2% = 3710.6. Take-home = 85000 - tax 24013.8 - NI 3710.6 = 57275.6. At 86000: PA 12570 (no taper at ANI 86000); taxable 86000 - 12570 = 73430; starter 2827 x 19% = 537.13; basic 12094 x 20% = 2418.8; intermediate 16171 x 21% = 3395.91; higher 31338 x 42% = 13161.96; advanced 11000 x 45% = 4950; top 0 x 48% = 0; income tax 24463.8; NI on 86000: 37700 x 8% + 35730 x 2% = 3730.6. Take-home = 86000 - tax 24463.8 - NI 3730.6 = 57805.6. Delta = 530 (effective marginal rate 47%).",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:6b95d8afcbd24c59c6fbbcfe1f4b53f138c3f3602d2590e7c8f8f653c53f2da5",
   },
   {
     id: "scottishMarginal.2026-27.35000.plus1000",
@@ -1731,7 +1771,9 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "Undergraduate Plan 2 (9% over its threshold) and Postgraduate Loan (6% over 21,000) are repaid together: plan2 (45000 - 28470) x 9% = 1487.7; postgrad (45000 - 21000) x 6% = 1440. Total 2927.7.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:b3cdf6f6eb64b44e01591e3b97e0b9654f54b713d782ca89fd685e335cde1b02",
   },
   {
     id: "studentLoanMulti.2026-27.plan2+postgrad.45000",
@@ -2037,7 +2079,9 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "Relief at source: net contribution 4000 grossed up x 1.25 = 5000. ANI = 60000 - 5000 = 55000 (GOV.UK adjusted-net-income step 3). Basic rate limit and higher rate limit increased by the gross contribution, 5000 (FA 2004 s.192(4)). Assumes the higher-rate relief has been claimed (FA 2004 s.192(4)). Income tax on salary 60000: PA 12570 (no taper at ANI 55000); taxable 60000 - 12570 = 47430; basic 42700 x 20% = 8540; higher 4730 x 40% = 1892; additional 0 x 45% = 0; income tax 10432. Expected is income tax only.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:3083c22b16b6ccb2a4f6c0f8262bf8e80e2631488c71cd82e1bb00c25957b8b4",
   },
   {
     id: "reliefAtSource.ewni.2025-26.110000.net8000",
@@ -2057,7 +2101,9 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "Relief at source: net contribution 8000 grossed up x 1.25 = 10000. ANI = 110000 - 10000 = 100000 (GOV.UK adjusted-net-income step 3). Basic rate limit and higher rate limit increased by the gross contribution, 10000 (FA 2004 s.192(4)). Assumes the higher-rate relief has been claimed (FA 2004 s.192(4)). Income tax on salary 110000: PA 12570 (no taper at ANI 100000); taxable 110000 - 12570 = 97430; basic 47700 x 20% = 9540; higher 49730 x 40% = 19892; additional 0 x 45% = 0; income tax 29432. Expected is income tax only.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:9ec99f1b6e1ffc9a56506f9d65c67e374b591d7d60795aa3fcaa91b83c6bf0e4",
   },
   {
     id: "reliefAtSource.ewni.2026-27.60000.net4000",
@@ -2121,7 +2167,9 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "Relief at source: net 4000 grossed up x 1.25 = 5000. The Scottish basic rate limit and every Scottish limit above it increased by the gross contribution, 5000; starter band unchanged (FA 2004 s.192(4A)). Assumes the higher-rate relief has been claimed (FA 2004 s.192(4A)). Income tax on 60000: PA 12570 (no taper at ANI 55000); taxable 60000 - 12570 = 47430; starter 2827 x 19% = 537.13; basic 17094 x 20% = 3418.8; intermediate 16171 x 21% = 3395.91; higher 11338 x 42% = 4761.96; advanced 0 x 45% = 0; top 0 x 48% = 0; income tax 12113.8. Expected is income tax only.",
     confidence: "high",
     status: "VERIFIED",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:9f7e614e6d9a4a6587bf6def41e210f0756fcaa5c5ec168c5d36350e60fb8b8a",
   },
   {
     id: "reliefAtSource.scot.2026-27.60000.net4000",
@@ -2167,9 +2215,9 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "UNVERIFIED: the 2029 cap is announced policy; the design of the 2,000 limit and the rates for 2029/30 are not yet in secondary legislation, so every figure is an illustration.",
     signedOffBy: "fable-decider",
     signedOffAt: "2026-11-24",
-    signedOffHash: "v2:9be0a55bf5673b54ab93c47bbcbca26f41f6b2375dd2fb7bea3f0ffb7392a196",
+    signedOffHash: "v2:9f88393957ce8300a1c6313e91380e72138555be3e5121b97ef6d7e08ac57058",
     rulingRef:
-      "NICs (Employer Pensions Contributions) Act 2026 (c. 15) s.1 sets the 2,000 limit from 2029-30, matching the GOV.UK policy paper; 2029/30 rates do not exist yet, so accepted only as an illustration at verified 2026/27 employee rates 8% and 2%.",
+      "The 2026 Act on employer pension contributions (c. 15) s.1 sets the 2,000 limit from 2029-30, matching the GOV.UK policy paper; 2029/30 rates do not exist yet, so accepted only as an illustration at verified 2026/27 employee rates 8% and 2%.",
   },
   {
     id: "salarySacrificeCap2029.employee.70000.sacrifice10000",

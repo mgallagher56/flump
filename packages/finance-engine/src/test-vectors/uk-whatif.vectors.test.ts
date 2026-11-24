@@ -128,10 +128,12 @@ describe("E25 what-if vector catalogue", () => {
 
   it("a year is verified on these vectors only when every one of them is signed", () => {
     // 20 Nov 2026: every 2027/28 what-if vector is signed (4 by the owner, 7 by the Fable
-    // decider); every other year still has unsigned what-if vectors.
+    // decider). 24 Nov 2026: every 2026/27 and 2025/26 what-if vector is signed by the Fable
+    // decider. Every other year still has unsigned what-if vectors.
+    const fullySigned = ["2027/28", "2026/27", "2025/26"];
     for (const y of UK_TAX_VECTOR_YEARS) {
       expect(yearVerification(y, UK_WHATIF_VECTORS), y).toBe(
-        y === "2027/28" ? "verified" : "unverified",
+        fullySigned.includes(y) ? "verified" : "unverified",
       );
     }
   });

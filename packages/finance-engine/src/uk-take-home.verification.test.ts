@@ -1,8 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { computeUkTakeHome, type UkIncomeScenario } from "./uk-take-home.js";
 
-// No tax year has signed vectors yet, so with the real catalogues every result is an unverified
-// estimate. This stands in a sign-off state so the rule "an estimate is verified only when nothing
+// The live sign-off state changes as years are signed. This stands in a fixed sign-off state so the rule "an estimate is verified only when nothing
 // it rests on is unverified" can be checked: every feature signed except HICBC in every year and
 // the core feature in 2025/26.
 vi.mock("./tax-year-verification.js", async (importOriginal) => {

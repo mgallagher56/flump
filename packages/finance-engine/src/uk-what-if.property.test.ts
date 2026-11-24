@@ -252,7 +252,8 @@ describe("marginalRateCurve", () => {
       pension: 0,
     });
     expect(c.asAtTaxYear).toBe("2026/27");
-    expect(c.isUnverifiedEstimate).toBe(true);
+    // Every 2026/27 vector is signed (Fable decider, 24 Nov 2026), so this is a verified estimate.
+    expect(c.isUnverifiedEstimate).toBe(false);
   });
 
   it("marks the taper at 62% smoothed and lists the HICBC stepped zone", () => {

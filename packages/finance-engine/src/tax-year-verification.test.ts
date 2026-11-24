@@ -6,6 +6,11 @@ import { UK_TAX_VECTORS } from "./test-vectors/uk-tax.vectors.js";
 import { selectUkWhatIfVectors, UK_WHATIF_VECTORS } from "./test-vectors/uk-whatif.vectors.js";
 import { PROVISIONAL_UK_TAX_YEARS, SUPPORTED_UK_TAX_YEARS } from "./types.js";
 
+// Fixture: the same vectors with their signatures removed, so a test does not depend on which
+// years happen to be signed in the live catalogue.
+const unsigned = <T extends object>(vs: readonly T[]): T[] =>
+  vs.map((v) => ({ ...v, signedOffBy: null }));
+
 // A provisional year's rates are announced, not yet law (ruling B, 20 Nov 2026): it never reports
 // "verified", even when every vector is signed. Removing it from PROVISIONAL_UK_TAX_YEARS at Royal
 // Assent flips it to verified with no other edit.
@@ -59,9 +64,14 @@ describe("a provisional year never reports verified", () => {
   });
 
   it("a year marked provisional in a fixture, with unsigned core vectors, is not said to be checked", () => {
-    // 2026/27 core vectors are unsigned; marking it provisional here gives the not-yet-law wording.
+    // The fixture strips the 2026/27 core signatures; marking the year provisional here gives the
+    // not-yet-law wording without the "checked" sentence.
     const fixtureYear = "2026/27";
-    const v = getTaxYearVerification(fixtureYear, [fixtureYear]);
+    const v = getTaxYearVerification(fixtureYear, [fixtureYear], {
+      core: unsigned(UK_TAX_VECTORS),
+      selfAssessment: UK_SELF_ASSESSMENT_VECTORS,
+      whatIf: selectUkWhatIfVectors(),
+    });
     expect(v.status).toBe("unverified");
     expect(v.detail).toBe(
       "2026/27 figures use rates that are announced but not yet law. Treat them as an estimate and check them against HMRC.",
@@ -109,10 +119,24 @@ describe("getTaxYearVerification", () => {
 
 describe("getTaxFeatureVerification (E25-T8)", () => {
   // 2027/28 core is fully signed but provisional, so it stays unverified (ruling B).
-  it("every feature in every supported year is unverified today", () => {
+  // 24 Nov 2026, Fable decider: every 2026/27 vector signed; every 2025/26 what-if vector signed
+  // (its core still has studentLoan.2025-26.plan5.35000 unsigned, and it has no scheduled
+  // vectors); the five 2021/22 HICBC vectors signed. Every other feature and year is unverified.
+  const verifiedToday = new Set([
+    "2026/27 core",
+    "2026/27 hicbc",
+    "2026/27 whatIf",
+    "2026/27 scheduled",
+    "2025/26 hicbc",
+    "2025/26 whatIf",
+    "2021/22 hicbc",
+  ]);
+  it("only the features whose vectors are all signed are verified today", () => {
     for (const y of SUPPORTED_UK_TAX_YEARS) {
       for (const f of ["core", "hicbc", "whatIf", "scheduled"] as const) {
-        expect(getTaxFeatureVerification(y, f), `${y} ${f}`).toBe("unverified");
+        expect(getTaxFeatureVerification(y, f), `${y} ${f}`).toBe(
+          verifiedToday.has(`${y} ${f}`) ? "verified" : "unverified",
+        );
       }
     }
   });
@@ -131,8 +155,9 @@ describe("getTaxFeatureVerification (E25-T8)", () => {
 
 describe("getTaxFeatureVerification isolation (E25-T8)", () => {
   it("a fixture-signed feature flips only that feature", () => {
+    // Fixture: every catalogue unsigned, then only the 2026/27 what-if feature signed.
     const year = "2026/27";
-    const whatIf = selectUkWhatIfVectors({ taxYear: year, feature: "whatIf" }).map((v) =>
+    const whatIf = unsigned(selectUkWhatIfVectors({ taxYear: year, feature: "whatIf" })).map((v) =>
       signVector(
         v,
         "fable-decider",
@@ -140,8 +165,10 @@ describe("getTaxFeatureVerification isolation (E25-T8)", () => {
         v.status === "UNVERIFIED" ? "fixture-ruling" : undefined,
       ),
     );
-    const others = UK_WHATIF_VECTORS.filter((v) => !(v.taxYear === year && v.feature === "whatIf"));
-    const catalogues = { core: UK_TAX_VECTORS, whatIf: [...whatIf, ...others] };
+    const others = unsigned(
+      UK_WHATIF_VECTORS.filter((v) => !(v.taxYear === year && v.feature === "whatIf")),
+    );
+    const catalogues = { core: unsigned(UK_TAX_VECTORS), whatIf: [...whatIf, ...others] };
     expect(getTaxFeatureVerification(year, "whatIf", catalogues)).toBe("verified");
     expect(getTaxFeatureVerification(year, "hicbc", catalogues)).toBe("unverified");
     expect(getTaxFeatureVerification(year, "core", catalogues)).toBe("unverified");

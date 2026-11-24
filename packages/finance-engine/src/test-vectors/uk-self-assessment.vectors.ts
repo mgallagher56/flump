@@ -352,7 +352,11 @@ export const UK_SELF_ASSESSMENT_VECTORS: readonly UkSelfAssessmentVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: trading allowance 1,000 is only confirmed as current guidance on GOV.UK, not for this tax year.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:a139665764f1523caebf05a45dc8eb603828c9624922b243498312c7c0fdfced",
+    rulingRef:
+      "GOV.UK tax-free allowances guidance gives the 1,000 trading allowance for each tax year from 6 April 2017, deducted instead of expenses, so 5,000 less 1,000 is right.",
   },
   {
     id: "tradingAllowance.2025-26.800.0",
@@ -372,7 +376,11 @@ export const UK_SELF_ASSESSMENT_VECTORS: readonly UkSelfAssessmentVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: trading allowance 1,000 is only confirmed as current guidance on GOV.UK, not for this tax year.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:f411d0b613f3a0f521392c1da35e16f39e79fd45e8b3467ed2c1387e35a53f21",
+    rulingRef:
+      "GOV.UK tax-free allowances guidance applies the 1,000 allowance to each tax year from 6 April 2017; income of 1,000 or less is fully covered, so profit is 0.",
   },
   {
     id: "tradingAllowance.2025-26.1000.200",
@@ -392,7 +400,11 @@ export const UK_SELF_ASSESSMENT_VECTORS: readonly UkSelfAssessmentVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: trading allowance 1,000 is only confirmed as current guidance on GOV.UK, not for this tax year.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:1a592c54319608da91ea9c6cc1099b304f02231ebfe83d505e5df603278abc6f",
+    rulingRef:
+      "GOV.UK tax-free allowances guidance applies the 1,000 allowance to each tax year from 6 April 2017; income of exactly 1,000 is 1,000 or less and fully relieved, so profit is 0.",
   },
   {
     id: "tradingAllowance.2025-26.5000.1800",
@@ -412,7 +424,11 @@ export const UK_SELF_ASSESSMENT_VECTORS: readonly UkSelfAssessmentVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: trading allowance 1,000 is only confirmed as current guidance on GOV.UK, not for this tax year.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:e96cca667df6ecd7b1a138082238fe69aba33421f96b8af6358d920eb05fe107",
+    rulingRef:
+      "GOV.UK tax-free allowances guidance makes the 1,000 allowance an alternative to expenses; deducting the larger actual expenses of 1,800 is permitted, giving 3,200.",
   },
   {
     id: "propertyAllowance.2025-26.6000.400.100",
@@ -433,7 +449,11 @@ export const UK_SELF_ASSESSMENT_VECTORS: readonly UkSelfAssessmentVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: property allowance 1,000 is only confirmed as current guidance on GOV.UK, not for this tax year.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:de62909dfb79dd34013f57d270e88b72f22f5d0bab741baba3247f0cd7a08a92",
+    rulingRef:
+      "GOV.UK tax-free allowances guidance gives the 1,000 property allowance for each tax year from 6 April 2017, deducted instead of expenses, giving 5,000.",
   },
   {
     id: "propertyAllowance.2025-26.900.0.100",
@@ -454,7 +474,11 @@ export const UK_SELF_ASSESSMENT_VECTORS: readonly UkSelfAssessmentVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: property allowance 1,000 is only confirmed as current guidance on GOV.UK, not for this tax year.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:ea882ed5550a7c612359c7d7014eaa7be1b5ee56bf22cb1680888bd6727f1486",
+    rulingRef:
+      "GOV.UK tax-free allowances guidance applies to each tax year from 6 April 2017; gross property income of 1,000 or less is fully covered, so profit is 0.",
   },
   {
     id: "propertyAllowance.2025-26.6000.2500.100",
@@ -475,7 +499,11 @@ export const UK_SELF_ASSESSMENT_VECTORS: readonly UkSelfAssessmentVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: property allowance 1,000 is only confirmed as current guidance on GOV.UK, not for this tax year.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:f7d5d2f96938a7d8039ad5132a39658f0cb02e4afbac984161d3827dad1afd5e",
+    rulingRef:
+      "GOV.UK tax-free allowances guidance makes the allowance an alternative to expenses; deducting actual costs of 2,500 gives 3,500.",
   },
   {
     id: "propertyAllowance.2025-26.3000.0.50",
@@ -496,7 +524,11 @@ export const UK_SELF_ASSESSMENT_VECTORS: readonly UkSelfAssessmentVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: property allowance 1,000 is only confirmed as current guidance on GOV.UK, not for this tax year.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:e09d0af165f7c0b7312d3e586964e3cd3da38524a970173f6dce3ee7e418dee9",
+    rulingRef:
+      "GOV.UK tax-free allowances guidance: joint owners each get the 1,000 allowance against their share of gross rental income; a 50% share of 1,500 less 1,000 gives 500.",
   },
   {
     id: "paymentsOnAccount.2025-26.3000.0",
@@ -516,7 +548,11 @@ export const UK_SELF_ASSESSMENT_VECTORS: readonly UkSelfAssessmentVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: payments on account thresholds (1,000 and 80%) is only confirmed as current guidance on GOV.UK, not for this tax year.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:b01993264e8e4d26a40df24742cc8a7fbbeadfbef7f0b41403603447efc01b29",
+    rulingRef:
+      "The 1,000 threshold applies from 2009-10 (SI 2008/838 amending SI 1996/1654 reg 3) and the 80% test is reg 4 as corrected by SI 1997/2491; GOV.UK's own example gives 4,500 for a 3,000 bill.",
   },
   {
     id: "paymentsOnAccount.2025-26.999.99.0",
@@ -536,7 +572,11 @@ export const UK_SELF_ASSESSMENT_VECTORS: readonly UkSelfAssessmentVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: payments on account thresholds (1,000 and 80%) is only confirmed as current guidance on GOV.UK, not for this tax year.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:bf0b83e444866111e9fb559962f8d2460b7d0b10ac6c9de3a5e8f041ee8064a5",
+    rulingRef:
+      "TMA 1970 s.59A(1)(c) requires the relevant amount to be not less than the prescribed 1,000 (SI 2008/838); GOV.UK says no payments on account below 1,000, so 999.99 alone is due.",
   },
   {
     id: "paymentsOnAccount.2025-26.1000.0",
@@ -556,7 +596,11 @@ export const UK_SELF_ASSESSMENT_VECTORS: readonly UkSelfAssessmentVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: payments on account thresholds (1,000 and 80%) is only confirmed as current guidance on GOV.UK, not for this tax year.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:9ff87fe7d29df2eb89c71ceafbd6bda6e0c462dd8a18cc9726e1e65165debcd8",
+    rulingRef:
+      "TMA 1970 s.59A(1)(c) uses not less than the prescribed 1,000 (SI 2008/838), so a bill of exactly 1,000 triggers payments on account of 500 each, 1,500 by 31 January.",
   },
   {
     id: "paymentsOnAccount.2025-26.2000.9000",
@@ -576,7 +620,11 @@ export const UK_SELF_ASSESSMENT_VECTORS: readonly UkSelfAssessmentVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: payments on account thresholds (1,000 and 80%) is only confirmed as current guidance on GOV.UK, not for this tax year.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:a053b36761a98980e2c10abd1cc5c1a99d4f278a27e7288d70a1b21d1e8bdd98",
+    rulingRef:
+      "GOV.UK exempts cases where more than 80% was paid outside Self Assessment, matching s.59A(1)(d) with the one-to-five proportion (SI 1996/1654 reg 4 as amended by SI 1997/2491); 81.8% deducted means no payments on account.",
   },
   {
     id: "paymentsOnAccount.2025-26.2000.8000",
@@ -596,7 +644,11 @@ export const UK_SELF_ASSESSMENT_VECTORS: readonly UkSelfAssessmentVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: payments on account thresholds (1,000 and 80%) is only confirmed as current guidance on GOV.UK, not for this tax year.",
-    signedOffBy: null,
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-24",
+    signedOffHash: "v2:137bb16db8daf321172fc89acfb19b036509c863e8531aeeeeed76ed051e8144",
+    rulingRef:
+      "s.59A(1)(d) requires the relevant amount to be not less than one fifth of the assessed amount (SI 1996/1654 reg 4, SI 1997/2491); at exactly 80% deducted payments on account are due, so 3,000 is right.",
   },
   {
     id: "tradingAllowance.2026-27.5000.300",
