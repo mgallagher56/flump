@@ -33,6 +33,8 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
   "invoicing races (real Postgres)",
   () => {
     let ds: DataSource;
+    // Every SQL statement the app sends, so a test can check the lock order Postgres is asked for.
+    const queries: string[] = [];
     let service: InvoicingService;
     let migrations: MigrationClass[] = [];
 
@@ -46,7 +48,26 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
         NODE_ENV: "test",
         DATABASE_URL: TEST_DATABASE_URL,
       }) as DataSourceOptions;
-      ds = new DataSource({ ...options, migrations, synchronize: false, migrationsRun: false });
+      queries.length = 0;
+      const record = (query: string) => {
+        queries.push(query);
+      };
+      const ignore = () => undefined;
+      ds = new DataSource({
+        ...options,
+        migrations,
+        synchronize: false,
+        migrationsRun: false,
+        logging: ["query"],
+        logger: {
+          logQuery: record,
+          logQueryError: ignore,
+          logQuerySlow: ignore,
+          logSchemaBuild: ignore,
+          logMigration: ignore,
+          log: ignore,
+        },
+      });
       await ds.initialize();
       await ds.query("DROP SCHEMA public CASCADE");
       await ds.query("CREATE SCHEMA public");
@@ -171,6 +192,16 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       const loserId = winnerId === invoiceA ? invoiceB : invoiceA;
       const loserOwn = winnerId === invoiceA ? ownB : ownA;
       expect(await linkedTo([e1 as string, e2 as string])).toEqual([winnerId, winnerId]);
+      // The guard itself: Postgres takes a statement's row locks in its output order, so every
+      // locking read of work-log rows must sort by id before FOR UPDATE. Without the sort, two
+      // requests can lock the same rows in different orders whatever the JavaScript order is.
+      const lockingReads = queries.filter(
+        (q) => /FROM "work_log_entries"/.test(q) && /FOR UPDATE/.test(q),
+      );
+      expect(lockingReads.length).toBeGreaterThanOrEqual(2);
+      for (const q of lockingReads) {
+        expect(q).toMatch(/ORDER BY "\w+"\."id" ASC\s+FOR UPDATE$/);
+      }
       expect(winner.invoice.entries.map((e) => e.id).sort()).toEqual(
         [winnerId === invoiceA ? ownA : ownB, e1, e2].sort(),
       );
