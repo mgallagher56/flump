@@ -152,7 +152,7 @@ describe("E15 elevation", () => {
 
   it("E16: the light card shadow has a contact shadow plus a soft lift layer", () => {
     expect(shadows.cardLight.value).toBe(
-      "0 1px 2px rgba(43, 38, 32, 0.08), 0 4px 14px rgba(43, 38, 32, 0.07)",
+      "0 1px 2px rgba(15, 42, 42, 0.08), 0 4px 14px rgba(15, 42, 42, 0.07)",
     );
     expect((elevationShadows.card.value as Record<string, string>).base).toBe(
       "{shadows.cardLight}",
@@ -165,7 +165,7 @@ describe("E15 elevation", () => {
     }
   });
 
-  it("light elevation values use only the warm ink 43, 38, 32 (no cool slate or blue)", () => {
+  it("light elevation values use only the deep-green ink 15, 42, 42 (no slate, blue or warm sand)", () => {
     const lights = [
       ...Object.entries(elevationShadows)
         .filter(([key]) => key !== "focus")
@@ -175,7 +175,7 @@ describe("E15 elevation", () => {
     expect(lights.length).toBeGreaterThanOrEqual(6);
     for (const [key, value] of lights) {
       for (const m of value.matchAll(/rgba\((\d+), (\d+), (\d+),/g)) {
-        expect(m.slice(1, 4).map(Number), key).toEqual([43, 38, 32]);
+        expect(m.slice(1, 4).map(Number), key).toEqual([15, 42, 42]);
       }
     }
   });

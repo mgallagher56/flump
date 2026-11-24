@@ -199,14 +199,14 @@ function assertPair(pair: Pair) {
 }
 
 describe("Semantic token contrast matrix", () => {
-  it("every semanticTokens.colors leaf defines base and _dark (except primary.foreground)", () => {
+  it("every semanticTokens.colors leaf defines base and _dark", () => {
     const missing: string[] = [];
     const walk = (node: any, path: string[]) => {
       if (node && typeof node === "object" && "value" in node) {
         const key = path.join(".");
         const v = node.value;
         const ok = typeof v === "object" && v !== null && "base" in v && "_dark" in v;
-        if (!ok && key !== "primary.foreground") missing.push(key);
+        if (!ok) missing.push(key);
         return;
       }
       for (const [k, child] of Object.entries(node)) walk(child, [...path, k]);
@@ -216,11 +216,11 @@ describe("Semantic token contrast matrix", () => {
   });
 
   it("resolveColor follows references and DEFAULT keys", () => {
-    expect(resolveColor("surface.card", "dark").toLowerCase()).toBe("#272320");
-    expect(resolveColor("surface.card", "light")).toBe("#fffdf9");
+    expect(resolveColor("surface.card", "dark").toLowerCase()).toBe("#1d2128");
+    expect(resolveColor("surface.card", "light")).toBe("#f8fcfa");
     expect(resolveColor("primary", "light")).toBe(colors.teal[600].value);
-    expect(resolveColor("border", "light")).toBe(colors.sand[250].value);
-    expect(resolveColor("border.input", "light")).toBe(colors.sand[500].value);
+    expect(resolveColor("border", "light")).toBe(colors.mint[250].value);
+    expect(resolveColor("border.input", "light")).toBe(colors.mint[500].value);
     expect(resolveColor("border.input", "dark")).toBe(colors.dark.borderInput.value);
   });
 
@@ -262,12 +262,15 @@ describe("Semantic token contrast matrix", () => {
   it("primary split reports computed ratios (accent vs solid)", () => {
     const r = (fg: string, bg: string, theme: Theme) =>
       pairContrast({ fg, bg, themes: [theme], min: 4.5, role: "text" }, theme);
-    // The dark accent (#5cc4ae / #6fd0ba) fails white labels (2.11:1), so solid stays deep teal.
-    expect(r("primary.foreground", "primary.solid", "dark")).toBeGreaterThanOrEqual(6.2);
-    expect(r("primary.foreground", "primary.hover", "dark")).toBeGreaterThanOrEqual(7.8);
+    // Midnight and Mint: light buttons are charcoal with off-white labels, dark buttons are mint
+    // with dark ink. By hand: #f8fcfa on #14171c is 17.4:1; #0e1a17 on #6fd0ba is 9.0:1.
+    expect(r("primary.foreground", "primary.solid", "light")).toBeGreaterThanOrEqual(17);
+    expect(r("primary.foreground", "primary.solid", "dark")).toBeGreaterThanOrEqual(8.5);
+    expect(r("primary.foreground", "primary.hover", "dark")).toBeGreaterThanOrEqual(8.5);
     expect(r("primary", "surface.card", "dark")).toBeGreaterThanOrEqual(5.8);
-    // solid is deliberately identical in both themes (white label keeps AA).
-    expect(resolveColor("primary.solid", "dark")).toBe(resolveColor("primary.solid", "light"));
+    // The dark fill is the mint itself; the light fill is charcoal, not the teal text colour.
+    expect(resolveColor("primary.solid", "dark")).toBe(resolveColor("primary", "dark"));
+    expect(resolveColor("primary.solid", "light")).toBe(colors.mint[800].value);
     expect(resolveColor("primary", "dark")).toBe(colors.dark.primary.value);
   });
 
@@ -312,9 +315,10 @@ describe("Semantic token contrast matrix", () => {
         if (!PRIMARY_FOREGROUND_OK[s].includes(theme)) forbidden.push([s, theme]);
       }
     }
-    // warning (both themes) and positive/info/neutral in dark are the documented no-white-text fills.
+    // The off-white label fails on the light warning fill, and the dark ink fails on the dark
+    // danger fill (the danger button uses text.onContrast instead).
     expect(forbidden.map(([s, t]) => `${s}.${t}`).sort()).toEqual(
-      ["info.dark", "neutral.dark", "positive.dark", "warning.dark", "warning.light"].sort(),
+      ["danger.dark", "warning.light"].sort(),
     );
     for (const [s, theme] of forbidden) {
       const ratio = pairContrast(
@@ -507,7 +511,7 @@ describe("E15 new colour keys exist with light and dark values", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Round 5 (Direction C palette): surface separation, hue separation, chart distinctness
+// Round 5, updated for Midnight and Mint: surface separation, hue separation, chart distinctness
 // ---------------------------------------------------------------------------
 
 /** Perceptual distance of two resolved colours under normal vision (CIE76, no CVD simulation). */
@@ -541,23 +545,34 @@ describe("Round 5 page surface separation", () => {
     });
   }
 
-  it("light surfaces are warm sand (red channel >= blue channel), dark are warm charcoal", () => {
-    for (const theme of BOTH) {
-      for (const s of PAGE_SURFACES) {
-        const [r, , b] = toRgb(resolveColor(`surface.${s}`, theme));
-        expect(r, `surface.${s} ${theme}`).toBeGreaterThanOrEqual(b);
-      }
+  // Midnight and Mint (owner, 24 Nov 2026): no cream or sand is left. Light surfaces lean mint
+  // (green channel above red), dark surfaces are a cool charcoal (blue channel above red).
+  it("light surfaces are mint (green > red), dark are cool charcoal (blue > red)", () => {
+    for (const s of PAGE_SURFACES) {
+      const [lr, lg] = toRgb(resolveColor(`surface.${s}`, "light"));
+      expect(lg, `surface.${s} light`).toBeGreaterThan(lr);
+      const [dr, , db] = toRgb(resolveColor(`surface.${s}`, "dark"));
+      expect(db, `surface.${s} dark`).toBeGreaterThan(dr);
     }
   });
 
-  it("the hero block is a distinct deep teal on every page surface (deltaE76 >= 20)", () => {
-    for (const theme of BOTH) {
-      for (const s of PAGE_SURFACES) {
-        expect(
-          deltaE("surface.hero", `surface.${s}`, theme),
-          `${s} ${theme}`,
-        ).toBeGreaterThanOrEqual(20);
-      }
+  it("the light hero is a solid mint block, distinct on every page surface (deltaE76 >= 20)", () => {
+    expect(resolveColor("surface.hero", "light")).toBe(colors.mint[400].value);
+    for (const s of PAGE_SURFACES) {
+      expect(deltaE("surface.hero", `surface.${s}`, "light"), `${s} light`).toBeGreaterThanOrEqual(
+        20,
+      );
+    }
+  });
+
+  // In dark the hero is a card (as in the Midnight mock-up): its edge and its mint figure mark it.
+  it("the dark hero is a card whose figure is the mint (deltaE76 >= 20 from every page surface)", () => {
+    expect(resolveColor("surface.hero", "dark")).toBe(resolveColor("surface.card", "dark"));
+    expect(resolveColor("text.heroFigure", "dark")).toBe(colors.dark.primary.value);
+    for (const s of PAGE_SURFACES) {
+      expect(deltaE("text.heroFigure", `surface.${s}`, "dark"), `${s} dark`).toBeGreaterThanOrEqual(
+        20,
+      );
     }
   });
 });
@@ -693,15 +708,22 @@ describe("Round 5 hue and series separation", () => {
     }
   });
 
-  it("primary.solid stays deep teal in both themes and the dark accent would fail a white label", () => {
-    expect(resolveColor("primary.solid", "light")).toBe(resolveColor("primary.solid", "dark"));
-    expect(contrast("#ffffff", "#5cc4ae", "#ffffff")).toBeLessThan(3);
-    expect(
-      pairContrast(
-        { fg: "primary.foreground", bg: "primary.solid", themes: BOTH, min: 4.5, role: "text" },
-        "dark",
-      ),
-    ).toBeGreaterThanOrEqual(4.5);
+  // Mint fails as text or a light label on a light ground, so it is a fill there, never text, and
+  // the label on a mint fill is the dark ink.
+  it("mint is never text on a light ground, and its button label is the dark ink", () => {
+    const mint = colors.mint[400].value;
+    expect(contrast(mint, resolveColor("surface.card", "light"), mint)).toBeLessThan(3);
+    expect(contrast(mint, resolveColor("surface.canvas", "light"), mint)).toBeLessThan(3);
+    expect(contrast(colors.mint[950].value, mint, mint)).toBeLessThan(3);
+    for (const theme of BOTH) {
+      expect(
+        pairContrast(
+          { fg: "primary.foreground", bg: "primary.solid", themes: BOTH, min: 4.5, role: "text" },
+          theme,
+        ),
+      ).toBeGreaterThanOrEqual(4.5);
+    }
+    expect(resolveColor("primary", "light")).not.toBe(mint);
   });
 });
 

@@ -103,15 +103,16 @@ const CHART_LINES = [
 ];
 
 /**
- * Which status fills may carry primary.foreground (white) text, per theme. Measured ratios are in
- * docs/design/e15/tokens.md. Everything not listed here is forbidden and asserted in the tests.
+ * Which status fills may carry primary.foreground, per theme. Since Midnight and Mint the
+ * foreground is the off-white #f8fcfa in light and the dark ink #0e1a17 in dark (it sits on the
+ * mint fill). Ratios are computed in the tests. Everything not listed here is forbidden.
  */
 export const PRIMARY_FOREGROUND_OK: Record<string, Theme[]> = {
-  positive: ["light"],
-  warning: [],
-  danger: ["light", "dark"],
-  info: ["light"],
-  neutral: ["light"],
+  positive: ["light", "dark"],
+  warning: ["dark"],
+  danger: ["light"],
+  info: ["light", "dark"],
+  neutral: ["light", "dark"],
 };
 
 export const PASSING_PAIRS: Pair[] = [
@@ -121,16 +122,28 @@ export const PASSING_PAIRS: Pair[] = [
   { fg: "text.onContrast", bg: "surface.contrast", themes: BOTH, min: 4.5, role: "text" },
   // Round 5: the deep-teal hero block carries text.onContrast, and stays a visible block on every
   // page surface (graphic, 1.4.11 does not apply to a fill, but 3:1 keeps it unmistakable).
-  { fg: "text.onContrast", bg: "surface.hero", themes: BOTH, min: 4.5, role: "text" },
-  // Focus ring on the hero block (KpiCard tone="hero"): the teal ring only clears 3:1 in dark, so
-  // hero descendants switch to a text.onContrast outline (see KpiCard.styles.ts).
-  { fg: "border.focusRing", bg: "surface.hero", themes: ["dark"], min: 3, role: "ui" },
-  { fg: "text.onContrast", bg: "surface.hero", themes: BOTH, min: 3, role: "ui" },
+  // Midnight and Mint: the hero is solid mint with dark ink in light and a card with a mint figure
+  // in dark. text.onHero and text.heroFigure carry it; the hero focus outline is text.onHero.
+  { fg: "text.onHero", bg: "surface.hero", themes: BOTH, min: 4.5, role: "text" },
+  { fg: "text.heroFigure", bg: "surface.hero", themes: BOTH, min: 4.5, role: "text" },
+  { fg: "text.onHero", bg: "surface.hero", themes: BOTH, min: 3, role: "ui" },
+  { fg: "border.focusRing", bg: "surface.hero", themes: BOTH, min: 3, role: "ui" },
+  // The hero stays a visible block on every page surface: the mint fill in light, its edge
+  // (border.hero) in dark, where the block is a card as in the Midnight mock-up.
+  ...["surface.canvas", "surface.card"].flatMap((bg): Pair[] => [
+    { fg: "surface.hero", bg, themes: ["light"], min: 1.5, role: "graphic" },
+    { fg: "border.hero", bg, themes: ["dark"], min: 1.5, role: "graphic" },
+  ]),
+  // The dark accent (primary DEFAULT, mint) is a text colour on the dark hero card too.
+  { fg: "primary", bg: "surface.hero", themes: ["dark"], min: 4.5, role: "text" },
+  // Section titles sit on border.section: a 3:1 rule on the canvas and the card.
   ...["surface.canvas", "surface.card"].map(
-    (bg): Pair => ({ fg: "surface.hero", bg, themes: BOTH, min: 1.5, role: "graphic" }),
+    (bg): Pair => ({ fg: "border.section", bg, themes: BOTH, min: 3, role: "ui" }),
   ),
-  // Round 5: the dark accent (primary DEFAULT) is a text colour on the hero block too.
-  { fg: "primary", bg: "surface.hero", themes: ["dark"], min: 3, role: "graphic" },
+  // Link hover (primary.emphasis) stays a text colour on the page surfaces.
+  ...["surface.canvas", "surface.card"].map(
+    (bg): Pair => ({ fg: "primary.emphasis", bg, themes: BOTH, min: 4.5, role: "text" }),
+  ),
   ...STATUSES.flatMap((s) => [
     { fg: `status.${s}.text`, bg: `status.${s}.bg`, themes: BOTH, min: 4.5, role: "text" } as Pair,
     { fg: `status.${s}.text`, bg: "surface.card", themes: BOTH, min: 4.5, role: "text" } as Pair,
@@ -215,7 +228,7 @@ export const PASSING_PAIRS: Pair[] = [
   ...["surface.sunken", "surface.subtle", "surface.overlay"].map(
     (bg): Pair => ({ fg: "border.focusRing", bg, themes: BOTH, min: 3, role: "ui" }),
   ),
-  // primary.foreground (white) on a status fill: only the fills in PRIMARY_FOREGROUND_OK.
+  // primary.foreground on a status fill: only the fills in PRIMARY_FOREGROUND_OK.
   ...Object.entries(PRIMARY_FOREGROUND_OK).flatMap(([s, themes]) =>
     themes.length
       ? [

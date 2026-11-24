@@ -68,17 +68,17 @@ describe("native.generated.ts", () => {
   });
 
   it("keeps the authored values, alpha included", () => {
-    expect(native.light.colors["surface.canvas"]).toBe(colors.sand[50].value);
+    expect(native.light.colors["surface.canvas"]).toBe(colors.mint[50].value);
     expect(native.dark.colors["surface.canvas"]).toBe(colors.dark.canvas.value);
-    expect(native.light.colors["chart.band"]).toBe("rgba(15, 107, 94, 0.14)");
-    expect(native.dark.colors["surface.scrim"]).toBe("rgba(8, 6, 4, 0.6)");
-    expect(native.light.colors.border).toBe(colors.sand[250].value);
+    expect(native.light.colors["chart.band"]).toBe("rgba(11, 107, 93, 0.14)");
+    expect(native.dark.colors["surface.scrim"]).toBe("rgba(5, 7, 9, 0.6)");
+    expect(native.light.colors.border).toBe(colors.mint[250].value);
   });
 
   it("resolves semantic colours inside shadows per theme (the focus halo follows the theme)", () => {
-    expect(native.light.shadows.focus).toBe("0 0 0 2px #fffdf9, 0 0 0 4px #0f6b5e");
-    expect(native.dark.shadows.focus).toBe("0 0 0 2px #272320, 0 0 0 4px #6fd0ba");
-    expect(native.light.shadows.card).toContain("rgba(43, 38, 32, 0.08)");
+    expect(native.light.shadows.focus).toBe("0 0 0 2px #f8fcfa, 0 0 0 4px #0b6b5d");
+    expect(native.dark.shadows.focus).toBe("0 0 0 2px #1d2128, 0 0 0 4px #6fd0ba");
+    expect(native.light.shadows.card).toContain("rgba(15, 42, 42, 0.08)");
     expect(Object.keys(native.light.shadows)).toEqual(["card", "focus", "overlay", "raised", "xs"]);
   });
 
@@ -150,12 +150,12 @@ describe("generator helpers reject what they cannot translate", () => {
   });
 
   it("references", () => {
-    expect(resolve({ base: "{colors.sand.50}", _dark: "{colors.dark.canvas}" }, "dark")).toBe(
+    expect(resolve({ base: "{colors.mint.50}", _dark: "{colors.dark.canvas}" }, "dark")).toBe(
       colors.dark.canvas.value,
     );
     expect(() => resolve("{colors.nope.1}", "light")).toThrow(/Unresolved/);
     expect(() => resolve({ base: 1 }, "light")).toThrow(/Cannot resolve/);
-    expect(() => resolve("{colors.sand.50}", "light", ["colors.sand.50"])).toThrow(/Circular/);
+    expect(() => resolve("{colors.mint.50}", "light", ["colors.mint.50"])).toThrow(/Circular/);
   });
 
   it("natural key order", () => {
