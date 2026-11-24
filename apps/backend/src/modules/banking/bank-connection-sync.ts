@@ -32,9 +32,17 @@ const TOKEN_REFRESH_MARGIN_MS = 300_000;
 
 /**
  * The stored access token ciphertexts a verdict is about (B1). Empty means no token was stored.
- * A needs_reconnect status is written only while one of them is still the stored token.
+ * A needs_reconnect or error status is written only while one of them is still the stored token.
  */
 export type JudgedToken = readonly string[];
+
+/** A taken sync lease. */
+export interface SyncLease {
+  /** The claimed timestamp; `release` clears only this lease. */
+  readonly id: string;
+  /** The access token stored when the lease was taken: what a failure before a token was read is about. */
+  readonly storedAccess: JudgedToken;
+}
 
 /** The stored tokens cannot be used (missing, undecryptable, refused, or no way to refresh). */
 export class ConnectionNeedsReconnectError extends Error {
@@ -117,19 +125,21 @@ export class BankConnectionSync {
   }
 
   /**
-   * Takes the sync lease. Returns the lease token (the claimed timestamp), or null when another
-   * sync for this connection holds it.
+   * Takes the sync lease. Returns it with the access token stored at that moment, or null when
+   * another sync for this connection holds it.
    */
-  async claim(connectionId: string, userId: string): Promise<string | null> {
+  async claim(connectionId: string, userId: string): Promise<SyncLease | null> {
     const result = await this.dataSource.query(
       `UPDATE "bank_connections" SET "sync_started_at" = now()
        WHERE "id" = $1 AND "user_id" = $2
          AND ("sync_started_at" IS NULL
               OR "sync_started_at" < now() - make_interval(secs => $3::double precision))
-       RETURNING "sync_started_at"::text AS "lease"`,
+       RETURNING "sync_started_at"::text AS "lease", "access_token" AS "accessToken"`,
       [connectionId, userId, SYNC_LEASE_MS / 1000],
     );
-    return returnedRows<{ lease: string }>(result)[0]?.lease ?? null;
+    const row = returnedRows<{ lease: string; accessToken: string | null }>(result)[0];
+    if (!row) return null;
+    return { id: row.lease, storedAccess: row.accessToken ? [row.accessToken] : [] };
   }
 
   /** Releases only this sync's lease: a slow sync never clears a newer sync's lease. */
@@ -147,22 +157,24 @@ export class BankConnectionSync {
   }
 
   /**
-   * Records needs_reconnect only while the stored access token is still one the sync judged (B1):
-   * a compare-and-swap, so a stale sync never marks a connection the user has reconnected since.
-   * Returns false when the token was replaced (or the connection removed) and nothing was written.
+   * Records a failed sync's status only while the stored access token is still one the sync
+   * judged (B1): a compare-and-swap, so a stale sync never marks a connection the user has
+   * reconnected since. Returns false when the token was replaced (or the connection removed) and
+   * nothing was written.
    */
-  async recordNeedsReconnect(
+  async recordFailedStatus(
     connectionId: string,
     userId: string,
+    status: "needs_reconnect" | "error",
     judged: JudgedToken,
   ): Promise<boolean> {
     const result = await this.dataSource.query(
-      `UPDATE "bank_connections" SET "status" = 'needs_reconnect', "updated_at" = now()
+      `UPDATE "bank_connections" SET "status" = $4, "updated_at" = now()
        WHERE "id" = $1 AND "user_id" = $2
          AND ("access_token" = ANY($3::text[])
               OR ("access_token" IS NULL AND cardinality($3::text[]) = 0))
        RETURNING "id"`,
-      [connectionId, userId, [...judged]],
+      [connectionId, userId, [...judged], status],
     );
     return returnedRows(result).length > 0;
   }

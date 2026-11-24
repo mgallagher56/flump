@@ -22,7 +22,8 @@ broken-claim-no-lease|OneSyncAtATime
 broken-refresh-no-cas|StoredTokensNeverGoBack
 broken-reencrypt-no-cas|StoredTokensNeverGoBack
 broken-no-recovery|RefreshRejectionHonoursReplacement
-broken-status-no-cas|NeedsReconnectOnlyWhenTokenDead'
+broken-status-no-cas|NeedsReconnectOnlyWhenTokenDead
+broken-error-no-cas|FailureNeverHidesReconnect'
 
 only="$*"
 work=$(mktemp -d)
