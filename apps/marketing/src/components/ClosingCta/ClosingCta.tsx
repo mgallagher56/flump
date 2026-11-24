@@ -31,7 +31,9 @@ export const ClosingCta: FC<ClosingCtaProps> = ({
 }) => (
   <MarketingSection id={id} labelledBy={titleId} tone="contrast" width="narrow">
     <div className={closingCtaBody()} data-testid={testId}>
-      {illustration}
+      {/* The band is charcoal in both themes, so the scene always takes its dark colours: in
+          light its pale ground and tints read as a bright patch on the band. */}
+      {illustration ? <div data-theme="dark">{illustration}</div> : null}
       <h2 className={closingCtaTitle()} id={titleId}>
         {title}
       </h2>

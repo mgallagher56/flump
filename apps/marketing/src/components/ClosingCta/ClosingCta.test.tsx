@@ -36,4 +36,25 @@ describe("ClosingCta", () => {
     expect(link.getAttribute("href")).toBe("/signup");
     expect(link.getAttribute("data-variant")).toBe("primary");
   });
+
+  it("draws the scene in its dark colours, since the band is charcoal in both themes", () => {
+    render(
+      <ClosingCta
+        cta={{ href: "/signup", label: "Request an invite" }}
+        id="get-started"
+        illustration={<svg data-testid="scene" />}
+        text="Start with a few rough numbers."
+        title="Ready to see where you stand?"
+        titleId="closing-title"
+      />,
+    );
+    expect(screen.getByTestId("scene").closest("[data-theme]")?.getAttribute("data-theme")).toBe(
+      "dark",
+    );
+  });
+
+  it("adds no scene wrapper when there is no scene", () => {
+    const { container } = renderCta();
+    expect(container.querySelector("[data-theme]")).toBeNull();
+  });
 });
