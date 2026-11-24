@@ -16,7 +16,7 @@ A race this finds in `account-deletion.service.ts` or the write fence is a priva
 
 ## Does my change touch it?
 
-Run the check if your diff touches any code in the coverage record below. Also run it if a new code path writes user rows without going through the AuthGuard or outside a signed-in request (jobs, `/mcp`), if a write takes `lockUserData`, or if code runs `withoutWriteFence`. If none applies, you do not need to run it.
+Run the check if your diff touches any code in the coverage record below. Also run it if a new code path writes user rows without the write fence (outside a signed-in request and not in `runAsUserRequest`, or outside a transaction), if a write takes `lockUserData`, or if code runs `withoutWriteFence`. If none applies, you do not need to run it.
 
 ## Run
 
@@ -52,9 +52,9 @@ Each line says `ok` or `FAIL`. The script exits 0 only when every config gives i
 | ------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
 | `current.cfg`                   | The code as it is: `ErasureLeavesNothing`, `ResetNeverOutlivesErasure`, `StragglerSweepCatchesEarlierWrites`, `TypeOK` | pass                                          |
 | `promise.cfg`                   | The code against the full promise alone, `ErasureLeavesNothing`                                                        | pass                                          |
-| `broken-writes-no-fence.cfg`    | Writes without the write fence (the code before F1 was fixed)                                                          | `ErasureLeavesNothing` violated: F1           |
+| `broken-writes-no-fence.cfg`    | Writes without the write fence (the code before F1, or a future unfenced writer)                                       | `ErasureLeavesNothing` violated: F1           |
 | `broken-reset-no-lock.cfg`      | Reset without `lockUserData`                                                                                           | `ResetNeverOutlivesErasure` violated          |
-| `broken-no-straggler-sweep.cfg` | `deleteAccount` without step (b2), with unfenced writes (as jobs and `/mcp` write)                                     | `StragglerSweepCatchesEarlierWrites` violated |
+| `broken-no-straggler-sweep.cfg` | `deleteAccount` without step (b2), with unfenced writes (a future job, say)                                            | `StragglerSweepCatchesEarlierWrites` violated |
 
 The three `broken-` configs show that the rules can fail. If any of them passes, the model can no longer see the bug it guards against, so fix the model. Pass config names to run only those, for example `check.sh current promise`.
 
@@ -73,28 +73,28 @@ If your change alters behaviour that the model describes, update the matching ac
 
 ## Coverage record
 
-Sync commit: `3b2f27bcefe54318b303d41ee8d8b4c8c4af800a`. At that commit, the model was confirmed to describe this code:
+Sync commit: `f2f955f28bf1aa1e46d166b6c9cd351c7249c62f`. At that commit, the model was confirmed to describe this code:
 
-| Model action                                             | Code                                                                                                                                                                                     |
-| -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `EraseLock`, `EraseSweep`, `EraseCommit`                 | `apps/backend/src/modules/privacy/account-deletion.service.ts`, `deleteAccount` (run `withoutWriteFence`) step (b): `lockUserData`, `sweep`, `sweepLinked`, the tombstone insert, commit |
-| `EraseStragglerSweep`, `EraseFinish`                     | the same file, `deleteAccount` step (b2), the second `sweep` in its own transaction                                                                                                      |
-| `Tables` (two, in order)                                 | `apps/backend/src/modules/privacy/user-data-registry.ts`, `USER_DATA_REGISTRY`, one `DELETE` per table                                                                                   |
-| Lock (`lock` exclusive, `shared`)                        | `apps/backend/src/modules/privacy/user-data-lock.ts`, `lockUserData` and `lockUserDataShared`                                                                                            |
-| `RequestGuard`                                           | `apps/backend/src/auth/auth.guard.ts`, `canActivate`, the `isErased` check                                                                                                               |
-| `RequestLock`, `RequestRecheck`                          | `apps/backend/src/modules/privacy/user-data-write-fence.ts`, `UserDataWriteFence.afterTransactionStart`: `lockUserDataShared`, then `isErasedForWrite` (`account-deletion.service.ts`)   |
-| `RequestLockedWrite`                                     | any authenticated handler's insert of a user row, in the fenced transaction (`beforeQuery` refuses one outside a transaction), and its commit                                            |
-| `RequestWrite`                                           | broken variants only: a write with no fence (today: jobs and `/mcp`, which are not signed-in requests)                                                                                   |
-| `ResetPrecheck`, `ResetLock`, `ResetCheck`, `ResetWrite` | `apps/backend/src/modules/profile/user-profile.service.ts`, `resetFinancialData` (its transaction runs `withoutWriteFence`)                                                              |
+| Model action                                             | Code                                                                                                                                                                                                                    |
+| -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `EraseLock`, `EraseSweep`, `EraseCommit`                 | `apps/backend/src/modules/privacy/account-deletion.service.ts`, `deleteAccount` (run `withoutWriteFence`) step (b): `lockUserData`, `sweep`, `sweepLinked`, the tombstone insert, commit                                |
+| `EraseStragglerSweep`, `EraseFinish`                     | the same file, `deleteAccount` step (b2), the second `sweep` in its own transaction                                                                                                                                     |
+| `Tables` (two, in order)                                 | `apps/backend/src/modules/privacy/user-data-registry.ts`, `USER_DATA_REGISTRY`, one `DELETE` per table                                                                                                                  |
+| Lock (`lock` exclusive, `shared`)                        | `apps/backend/src/modules/privacy/user-data-lock.ts`, `lockUserData` and `lockUserDataShared`                                                                                                                           |
+| `RequestGuard`                                           | `apps/backend/src/auth/auth.guard.ts`, `canActivate`, the `isErased` check                                                                                                                                              |
+| `RequestLock`, `RequestRecheck`                          | `apps/backend/src/modules/privacy/user-data-write-fence.ts`, `UserDataWriteFence.afterTransactionStart`: `lockUserDataShared`, then `isErasedForWrite` (`account-deletion.service.ts`)                                  |
+| `RequestLockedWrite`                                     | any authenticated handler's or `/mcp` insert of a user row (`mcp-imports.adapter.ts`, `mcp.service.ts` `recordAudit`), in the fenced transaction (`beforeQuery` refuses an INSERT or MERGE outside one), and its commit |
+| `RequestWrite`                                           | broken variants only: a write with no fence (none in the code today)                                                                                                                                                    |
+| `ResetPrecheck`, `ResetLock`, `ResetCheck`, `ResetWrite` | `apps/backend/src/modules/profile/user-profile.service.ts`, `resetFinancialData` (its transaction runs `withoutWriteFence`)                                                                                             |
 
-Check whether the verification needs another look with `git log --oneline 3b2f27bcefe54318b303d41ee8d8b4c8c4af800a..HEAD -- <the paths above>`. Move the sync commit forward only after you have read those changes and confirmed that the model still describes the code at the new commit, even if the check passes.
+Check whether the verification needs another look with `git log --oneline f2f955f28bf1aa1e46d166b6c9cd351c7249c62f..HEAD -- <the paths above>`. Move the sync commit forward only after you have read those changes and confirmed that the model still describes the code at the new commit, even if the check passes.
 
 ## Bounds and assumptions
 
 - One user, two in-flight requests, one reset, one erasure, two registry tables. More requests or tables add only more orders of the same steps. The rules are about whether any write commits after a given sweep step, so a bug that needs more than two requests is not expected, but the check does not prove that.
 - Postgres READ COMMITTED: a `DELETE` sees only committed rows, so a request's insert counts only when it commits. The model applies erasure deletes at the statement. Nothing in the model reads rows, so that gives the same result as applying them at commit. The fence's recheck needs it too (a REPEATABLE READ snapshot would be taken before the lock wait), so `isErasedForWrite` refuses any other level.
 - Shared and exclusive advisory locks are granted in any order the model picks, which covers Postgres's queueing (a shared request waits behind a queued exclusive one).
-- Not covered: transaction failures and rollbacks, retries of `deleteAccount`, the WorkOS steps (c) and (d), the `erasedCache`, the bank consent revoke, `/mcp` (outside the AuthGuard; its tokens are deleted with the account), updates that hit unique keys while a delete is uncommitted, the per-service `isErased` rechecks (such as `findOrCreateProfile`), and writes outside a signed-in request (jobs, `/mcp`): they take no fence, and only the straggler sweep (b2) covers what they commit while (b) runs.
+- Not covered: transaction failures and rollbacks, retries of `deleteAccount`, the WorkOS steps (c) and (d), the `erasedCache`, the bank consent revoke, updates that hit unique keys while a delete is uncommitted, the per-service `isErased` rechecks (such as `findOrCreateProfile`), and updates that set a blanked user column (the beta invite redemption runs in a transaction, so it is fenced). `current.cfg` models every writer as fenced: a new writer that takes no fence (a job) is `broken-writes-no-fence.cfg`, and only the straggler sweep (b2) covers what it commits while (b) runs.
 
 ## Findings
 
@@ -106,3 +106,5 @@ Check whether the verification needs another look with `git log --oneline 3b2f27
 4. The request's handler commits its insert. The row stays, and the AuthGuard now refuses the user, so nothing in the app reaches or removes it.
 
 The write fence closes it: the insert's transaction takes the shared `lockUserData` first and rechecks the tombstone inside it, so the write either commits before the erasure takes its lock (and is swept) or waits for the erasure and is refused. The backend test `user-data-write-fence.integration.spec.ts` reproduces the path on real Postgres.
+
+Signed-in requests take the fence through `UserDataWriteFenceInterceptor`. `/mcp` is outside the AuthGuard, so its two writes (the staging adapter and the audit row) run inside `runAsUserRequest` for the token's user. No background job writes user rows today; one that does must do the same.
