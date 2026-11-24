@@ -2822,10 +2822,7 @@ figures:
     name: Property price after stamp duty and other buying costs
     area: mortgage
     computed_by:
-      {
-        function: solvePropertyPrice,
-        path: packages/finance-engine/src/property-price-solver.ts,
-      }
+      { function: solvePropertyPrice, path: packages/finance-engine/src/property-price-solver.ts }
     inputs: []
     shown_on:
       - {
