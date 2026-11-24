@@ -3,6 +3,9 @@
   "env": {
     "CLAUDE_CODE_SUBAGENT_MODEL": "opus"
   },
+  "permissions": {
+    "allow": ["Bash(gh pr merge:*)"]
+  },
   "hooks": {
     "PostToolUse": [
       {
@@ -37,19 +40,10 @@
             "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/protect-files.sh"
           }
         ]
-      },
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/git-guard.sh"
-          }
-        ]
       }
     ]
   },
-  "permissions": {
-    "allow": ["Bash(gh pr merge:*)"]
+  "enabledPlugins": {
+    "pstack@cursor-plugins": true
   }
 }
