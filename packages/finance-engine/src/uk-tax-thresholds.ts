@@ -21,6 +21,7 @@ import {
   type UkTakeHomeBreakdown,
 } from "./uk-take-home.js";
 import {
+  isStudentLoanRepayable,
   requireScottishRules,
   roundPence,
   type UkStudentLoanPlanKey,
@@ -198,7 +199,7 @@ export function getUkIncomeThresholds(
   // Same rule as the core: several undergraduate plans are charged once over the lowest threshold, so
   // only that plan's threshold is a real change in the rate. Postgraduate is separate.
   const ugPlans = [...new Set(s.studentLoans ?? [])].filter(
-    (p) => p !== "postgrad" && rules.studentLoans.plans[p],
+    (p) => p !== "postgrad" && isStudentLoanRepayable(rules, p),
   );
   const lowestUg = ugPlans.sort(
     (a, b) =>

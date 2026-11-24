@@ -3939,3 +3939,14 @@ Measured with the single-file command on `src/property-price-solver.ts` and `src
 | Line | Fault                                                   | Class      | Reason                                                                                                                                       |
 | ---- | ------------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
 | L302 | ConditionalExpression `false` on `price === null` guard | Equivalent | A null price then reads as 0 in `highLoan / price`, giving an infinite loan to value, above every band, so the band is skipped all the same. |
+
+## Plan 5 repayments start in 2026/27 (tax vector backlog, 24 November 2026)
+
+Measured with `--mutate "src/uk-tax-year.ts:926-944,src/uk-take-home.ts:214-220,src/uk-tax-thresholds.ts:200-203"`. 42 faults, 38 killed, 4 equivalent.
+
+| Line                      | Fault                                                             | Class      | Reason                                                                                                                                                             |
+| ------------------------- | ----------------------------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| uk-tax-year.ts L942       | EqualityOperator `pay <= entry.threshold` to `<`                  | Equivalent | At pay equal to the threshold the formula gives (0 x rate) = 0, the same as the early return.                                                                      |
+| uk-take-home.ts L218      | OptionalChaining `plans[p]?.threshold` to `plans[p].threshold`    | Equivalent | The branch runs only when `isStudentLoanRepayable` is true, which needs the entry to exist; unlisted plans have already thrown in `calculateStudentLoanRepayment`. |
+| uk-take-home.ts L220      | EqualityOperator `threshold(b) < threshold(a)` to `<=`            | Equivalent | No year lists two undergraduate plans with the same threshold, and only Plan 5 is ever not repayable, so two plans never tie (not even at Infinity).               |
+| uk-tax-thresholds.ts L201 | ArrayDeclaration `s.studentLoans ?? []` to `["Stryker was here"]` | Equivalent | The junk key is not a plan, so `isStudentLoanRepayable` is false and the filter drops it; the result is the same empty list.                                       |

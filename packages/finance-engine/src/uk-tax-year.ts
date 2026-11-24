@@ -922,7 +922,16 @@ export function calculateEmployerNiSaving(
 
 export type UkStudentLoanPlanKey = keyof UKStudentLoanYear["plans"];
 
-/** Annual student loan repayment: plan rate on pay above the plan threshold. */
+/** True when the year lists the plan and collects repayments on it (not Plan 5 before 2026/27). */
+export function isStudentLoanRepayable(rules: UkTaxYearRules, plan: UkStudentLoanPlanKey): boolean {
+  const entry = rules.studentLoans.plans[plan];
+  return entry !== undefined && entry.noRepaymentDue !== true;
+}
+
+/**
+ * Annual student loan repayment: plan rate on pay above the plan threshold. 0 in a year that
+ * collects nothing on the plan (`noRepaymentDue`).
+ */
 export function calculateStudentLoanRepayment(
   pay: number,
   plan: UkStudentLoanPlanKey,
@@ -930,6 +939,6 @@ export function calculateStudentLoanRepayment(
 ): number {
   const entry = rules.studentLoans.plans[plan];
   if (!entry) throw new UnsupportedUkTaxYearError(rules.year, `student loan ${plan}`);
-  if (pay <= entry.threshold) return 0;
+  if (entry.noRepaymentDue || pay <= entry.threshold) return 0;
   return roundPence((pay - entry.threshold) * entry.rate);
 }

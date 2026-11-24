@@ -531,6 +531,11 @@ export interface UKStudentLoanPlan {
   threshold: number;
   /** Repayment rate on income above threshold */
   rate: number;
+  /**
+   * True where the plan exists but no repayment is collected in the year (Plan 5 before 2026/27,
+   * SI 2009/470 reg 15(2BA)). The repayment is 0 and the threshold is not a real band edge.
+   */
+  noRepaymentDue?: true;
 }
 
 export interface UKStudentLoanYear {
@@ -541,7 +546,11 @@ export interface UKStudentLoanYear {
     plan2: UKStudentLoanPlan;
     /** Scotland. Absent where the year's source page lists no Plan 4 threshold. */
     plan4?: UKStudentLoanPlan;
-    /** Absent before Plan 5 existed (it starts in the 2023/24 era, first listed 2026/27). */
+    /**
+     * Absent before Plan 5 existed. Listed from 2023/24 (loans for courses from 1 August 2023) with
+     * `noRepaymentDue` until 2026/27: SI 2009/470 reg 15(2BA) collects nothing on or before
+     * 5 April 2026 (https://www.legislation.gov.uk/uksi/2009/470/regulation/15).
+     */
     plan5?: UKStudentLoanPlan;
     postgrad: UKStudentLoanPlan;
   };
@@ -600,7 +609,7 @@ export const UK_STUDENT_LOANS: Record<string, UKStudentLoanYear> = {
       plan1: { name: "Plan 1", threshold: 22015, rate: 0.09 },
       plan2: { name: "Plan 2", threshold: 27295, rate: 0.09 },
       plan4: { name: "Plan 4 (Scotland)", threshold: 27660, rate: 0.09 },
-      plan5: { name: "Plan 5", threshold: 25000, rate: 0.09 },
+      plan5: { name: "Plan 5", threshold: 25000, rate: 0.09, noRepaymentDue: true },
       postgrad: { name: "Postgrad", threshold: 21000, rate: 0.06 },
     },
   },
@@ -610,20 +619,21 @@ export const UK_STUDENT_LOANS: Record<string, UKStudentLoanYear> = {
       plan1: { name: "Plan 1", threshold: 24990, rate: 0.09 },
       plan2: { name: "Plan 2", threshold: 27295, rate: 0.09 },
       plan4: { name: "Plan 4 (Scotland)", threshold: 31395, rate: 0.09 },
-      plan5: { name: "Plan 5", threshold: 25000, rate: 0.09 },
+      plan5: { name: "Plan 5", threshold: 25000, rate: 0.09, noRepaymentDue: true },
       postgrad: { name: "Postgrad", threshold: 21000, rate: 0.06 },
     },
   },
   // E4 T3a: 2025/26 Plan 1/2/4 corrected (this key previously held the 2026/27 figures).
   // Source: https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2025-to-2026
-  // UNVERIFIED: Plan 5 25,000 is not listed on the 2025 to 2026 page (kept from the previous code).
+  // Plan 5: nothing is collected before 6 April 2026 (SI 2009/470 reg 15(2BA)), so the 2025 to 2026
+  // page lists no Plan 5 threshold; 25,000 is the 2026/27 figure, kept only as the plan's terms.
   "2025/26": {
     description: "Student loans, 2025/26",
     plans: {
       plan1: { name: "Plan 1", threshold: 26065, rate: 0.09 },
       plan2: { name: "Plan 2", threshold: 28470, rate: 0.09 },
       plan4: { name: "Plan 4 (Scotland)", threshold: 32745, rate: 0.09 },
-      plan5: { name: "Plan 5", threshold: 25000, rate: 0.09 },
+      plan5: { name: "Plan 5", threshold: 25000, rate: 0.09, noRepaymentDue: true },
       postgrad: { name: "Postgrad", threshold: 21000, rate: 0.06 },
     },
   },
