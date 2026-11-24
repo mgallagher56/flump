@@ -1,7 +1,12 @@
 import { Button } from "@repo/ui";
 import type { FC, ReactNode } from "react";
 import { MarketingSection } from "../MarketingSection";
-import { closingCtaBody, closingCtaText, closingCtaTitle } from "./ClosingCta.styles";
+import {
+  closingCtaBody,
+  closingCtaScene,
+  closingCtaText,
+  closingCtaTitle,
+} from "./ClosingCta.styles";
 
 export interface ClosingCtaProps {
   /** Anchor id of the band. */
@@ -33,7 +38,11 @@ export const ClosingCta: FC<ClosingCtaProps> = ({
     <div className={closingCtaBody()} data-testid={testId}>
       {/* The band is charcoal in both themes, so the scene always takes its dark colours: in
           light its pale ground and tints read as a bright patch on the band. */}
-      {illustration ? <div data-theme="dark">{illustration}</div> : null}
+      {illustration ? (
+        <div className={closingCtaScene()} data-theme="dark">
+          {illustration}
+        </div>
+      ) : null}
       <h2 className={closingCtaTitle()} id={titleId}>
         {title}
       </h2>

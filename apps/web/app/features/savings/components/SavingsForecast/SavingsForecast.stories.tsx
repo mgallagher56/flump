@@ -1,3 +1,4 @@
+import { css } from "@repo/ui/styled-system/css";
 import type { Meta, StoryObj } from "@storybook/react";
 import { useState } from "react";
 import { expect, userEvent, waitFor, within } from "storybook/test";
@@ -43,7 +44,7 @@ export const NothingPaidIn: Story = {
 export const NarrowColumn: Story = {
   decorators: [
     (StoryFn) => (
-      <div style={{ width: 420 }}>
+      <div className={css({ width: "md" })}>
         <StoryFn />
       </div>
     ),

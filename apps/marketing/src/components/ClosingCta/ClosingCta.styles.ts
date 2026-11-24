@@ -30,6 +30,12 @@ export const closingCtaBody = cva({
   },
 });
 
+/**
+ * Wraps the scene so it takes its dark colours (data-theme="dark"). `display: contents` keeps the
+ * scene itself as the flex item, so its own width and centring are unchanged.
+ */
+export const closingCtaScene = cva({ base: { display: "contents" } });
+
 export const closingCtaTitle = cva({
   base: { textStyle: "heading.lg", color: "text.onContrast", margin: 0 },
 });
