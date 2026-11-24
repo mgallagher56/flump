@@ -21,6 +21,7 @@ import { toStudentLoanPlanKey } from "./uk-tax.js";
 import {
   calculateStudentLoanRepayment,
   getUkTaxYearRules,
+  isStudentLoanRepayable,
   resolveUkTaxYear,
   roundPence,
   studentLoanThresholdRefusal,
@@ -758,6 +759,12 @@ export function calculateCarFinanceBalloon(
   };
 }
 
+/** "2025/26" as a sentence says it (COPY-GUIDE 4.3): "2025 to 2026". */
+const taxYearInWords = (taxYear: string): string => {
+  const start = Number.parseInt(taxYear.slice(0, 4), 10);
+  return `${start} to ${start + 1}`;
+};
+
 /**
  * The student loan estimate's line when the plan's threshold for the year is not published. The
  * estimate is the repayment itself, so "repayments are not included" does not fit here.
@@ -830,11 +837,17 @@ export function evaluateUkStudentLoan(
     (annualRepayment > interestAccumulation * 1.5 &&
       currentBalance < annualRepayment * (cfg.writeOffYears / 2));
 
-  const reasoning = nothingOwed
-    ? "There is no balance left to repay."
-    : willLikelyRepayBeforeWriteOff
-      ? `Estimate: repayments of £${Math.round(annualRepayment).toLocaleString("en-GB")} a year pay off the £${Math.round(currentBalance).toLocaleString("en-GB")} balance. That is before it would be written off after ${cfg.writeOffYears} years.`
-      : `Estimate: repayments of £${Math.round(annualRepayment).toLocaleString("en-GB")} a year do not pay off the £${Math.round(currentBalance).toLocaleString("en-GB")} balance. What is left is written off after ${cfg.writeOffYears} years.`;
+  // The rules' one fact (Plan 5 before 2026/27): nothing is collected this year, so the line says
+  // that rather than an estimate built on a threshold nobody paid against.
+  const noRepaymentDue = !isStudentLoanRepayable(rules, key);
+
+  const reasoning = noRepaymentDue
+    ? `No ${entry!.name} repayments were due in the ${taxYearInWords(rules.year)} tax year.`
+    : nothingOwed
+      ? "There is no balance left to repay."
+      : willLikelyRepayBeforeWriteOff
+        ? `Estimate: repayments of £${Math.round(annualRepayment).toLocaleString("en-GB")} a year pay off the £${Math.round(currentBalance).toLocaleString("en-GB")} balance. That is before it would be written off after ${cfg.writeOffYears} years.`
+        : `Estimate: repayments of £${Math.round(annualRepayment).toLocaleString("en-GB")} a year do not pay off the £${Math.round(currentBalance).toLocaleString("en-GB")} balance. What is left is written off after ${cfg.writeOffYears} years.`;
 
   return {
     plan: key,
@@ -847,6 +860,7 @@ export function evaluateUkStudentLoan(
     projectedOutcome: willLikelyRepayBeforeWriteOff
       ? "repaid_before_write_off"
       : "written_off_first",
+    noRepaymentDue,
     reasoning,
   };
 }

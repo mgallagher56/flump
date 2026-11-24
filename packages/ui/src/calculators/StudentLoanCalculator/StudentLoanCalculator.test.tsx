@@ -250,3 +250,21 @@ describe("StudentLoanCalculator in 2027/28 (Plan 1 and Plan 4 thresholds not pub
     );
   });
 });
+
+describe("StudentLoanCalculator for Plan 5 before 2026/27 (no repayments due)", () => {
+  it("shows the engine's line in place of the estimate, never a threshold beside £0", () => {
+    render(<StudentLoanCalculator initialPlan="plan5" persistSeed={false} taxYear="2025/26" />);
+    expect(screen.getByTestId("student-loan-refusal").textContent).toBe(
+      "No Plan 5 repayments were due in the 2025 to 2026 tax year.",
+    );
+    expect(screen.queryByTestId("student-loan-outcomes")).toBeNull();
+    expect(toolText()).not.toMatch(/of pay above/);
+  });
+
+  it("estimates Plan 5 as usual from 2026/27", () => {
+    render(<StudentLoanCalculator initialPlan="plan5" persistSeed={false} taxYear="2026/27" />);
+    expect(screen.queryByTestId("student-loan-refusal")).toBeNull();
+    // Default £38,000 salary: (38,000 - 25,000) x 9% = £1,170 a year, £97.50 a month, shown as £98.
+    expect(screen.getByTestId("student-loan-outcomes").textContent).toContain("£98");
+  });
+});

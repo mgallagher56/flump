@@ -133,9 +133,18 @@ export const StudentLoanCalculator: FC<StudentLoanCalculatorProps> = ({
   );
   // A plan with no published threshold for the year (Plan 1 and Plan 4 in 2027/28) is refused:
   // the engine's one line stands in place of the estimate, never a carried-forward one.
-  const evaluation: StudentLoanEvaluationResult | null =
+  // A year that collects nothing on the plan (Plan 5 before 2026/27) has no estimate either: the
+  // engine's line ("No Plan 5 repayments were due in the 2025 to 2026 tax year.") stands in its place, so no
+  // threshold is ever shown beside a repayment of £0.
+  const known: StudentLoanEvaluationResult | null =
     outcome.status === "known" ? outcome.evaluation : null;
-  const refusalNotice = outcome.status === "refused" ? outcome.refusal.notice : null;
+  const evaluation = known?.noRepaymentDue ? null : known;
+  const refusalNotice =
+    outcome.status === "refused"
+      ? outcome.refusal.notice
+      : known?.noRepaymentDue
+        ? known.reasoning
+        : null;
 
   const nothingOwed = balance <= 0;
   const repaid = evaluation?.projectedOutcome === "repaid_before_write_off";
