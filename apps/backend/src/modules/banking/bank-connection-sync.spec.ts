@@ -121,7 +121,7 @@ describe("BankConnectionSync.activeAccessToken (N7 / S11, S4, database-free)", (
       clientSecret: "csecret",
     });
 
-    expect(token).toBe("access-new");
+    expect(token.token).toBe("access-new");
     expect(transaction).not.toHaveBeenCalled();
     expect(events).toEqual(["db:findOne:unlocked", "http:refreshToken", "db:casUpdate"]);
     expect(
@@ -165,8 +165,8 @@ describe("BankConnectionSync.activeAccessToken (N7 / S11, S4, database-free)", (
       sync.activeAccessToken(CONN_ID, provider, creds),
     ]);
 
-    expect(a).toBe("access-refreshed");
-    expect(b).toBe("access-refreshed");
+    expect(a.token).toBe("access-refreshed");
+    expect(b.token).toBe("access-refreshed");
     expect(provider.refreshToken).toHaveBeenCalledTimes(1);
     expect(transaction).not.toHaveBeenCalled();
   });
@@ -221,7 +221,7 @@ describe("BankConnectionSync.activeAccessToken (N7 / S11, S4, database-free)", (
       clientSecret: "csecret",
     });
 
-    expect(result).toBe("access-from-winner");
+    expect(result.token).toBe("access-from-winner");
     expect(findOne).toHaveBeenCalledTimes(2);
     expect(transaction).not.toHaveBeenCalled();
   });
@@ -307,7 +307,7 @@ describe("BankConnectionSync.activeAccessToken (N7 / S11, S4, database-free)", (
       clientSecret: "csecret",
     });
 
-    expect(token).toBe("access-new");
+    expect(token.token).toBe("access-new");
     expect(query).toHaveBeenCalledTimes(2);
     expect(
       BankSyncOrchestrator.decryptToken(currentRow.accessToken as string, accessTokenAad(CONN_ID)),
@@ -352,8 +352,8 @@ describe("BankConnectionSync.activeAccessToken (N7 / S11, S4, database-free)", (
       syncB.activeAccessToken(CONN_ID, provider, creds),
     ]);
 
-    expect(a).toBe("access-refreshed");
-    expect(b).toBe("access-refreshed");
+    expect(a.token).toBe("access-refreshed");
+    expect(b.token).toBe("access-refreshed");
     expect(provider.refreshToken).toHaveBeenCalledTimes(1);
   });
 
@@ -409,6 +409,6 @@ describe("BankConnectionSync.activeAccessToken (N7 / S11, S4, database-free)", (
       clientSecret: "csecret",
     });
 
-    expect(token).toBe("access-winner");
+    expect(token.token).toBe("access-winner");
   });
 });
