@@ -14,6 +14,10 @@ export const footerSpacing = cva({
   base: {
     mt: "0",
     backgroundColor: "surface.contrast",
+    // In dark the footer is only 1.05:1 off the canvas, so a border.section top edge marks it.
+    borderTopWidth: { base: "0", _dark: "1px", _systemDark: "1px" },
+    borderTopStyle: "solid",
+    borderTopColor: "border.section",
     "& h2, & h3, & p, & span, & a": { color: "text.onContrast" },
     "& a:hover": { color: "text.onContrast", textDecoration: "underline" },
     "& a:focus-visible": { outlineColor: "text.onContrast" },

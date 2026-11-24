@@ -31,6 +31,18 @@ describe("SectionBand", () => {
     },
   );
 
+  it("gives the charcoal contrast band a border.section top edge in dark only", () => {
+    render(
+      <SectionBand id="band-edge" title="Band edge" tone="contrast">
+        <p>Body</p>
+      </SectionBand>,
+    );
+    const band = screen.getByRole("region", { name: "Band edge" });
+    expect(band.className).toContain("bd-t-c_border.section");
+    expect(band.className).toContain("dark:bd-t-w_1px");
+    expect(band.className).toContain("bd-t-w_0");
+  });
+
   it("uses a heading inside the children as the label when there is no title", () => {
     render(
       <SectionBand id="plain" labelledBy="inner">
