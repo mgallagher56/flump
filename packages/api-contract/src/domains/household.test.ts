@@ -49,7 +49,7 @@ describe("household contract (E34 C3)", () => {
   it("a summary item carries no share or percentage", () => {
     const item = {
       name: "Joint current",
-      type: "Current Account",
+      type: "Current",
       wholeBalance: 1200,
       addedBy: "you",
     };
