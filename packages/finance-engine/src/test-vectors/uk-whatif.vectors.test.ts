@@ -101,7 +101,11 @@ describe("E25 what-if vector catalogue", () => {
   it("features follow the DECISIONS round 4 addendum (D1)", () => {
     for (const v of UK_WHATIF_VECTORS) {
       expect(v.feature, v.id).toBe(
-        v.kind === "hicbc" ? "hicbc" : v.kind === "salarySacrificeCap2029" ? "scheduled" : "whatIf",
+        v.kind === "hicbc" || v.kind === "hicbcCouple"
+          ? "hicbc"
+          : v.kind === "salarySacrificeCap2029"
+            ? "scheduled"
+            : "whatIf",
       );
     }
   });
