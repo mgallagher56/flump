@@ -117,12 +117,14 @@ export const loader = async (args: LoaderFunctionArgs) => {
     }
   }
 
-  // A coming change to the terms or privacy notice (published, not yet in force). Asked of the
-  // backend only while LEGAL_PAGES holds a version dated in the future, so a page load costs
-  // nothing extra the rest of the time. Best effort: a failed read shows no notice.
+  // A coming change to the terms or privacy notice (published, not yet in force), shown on the
+  // home page only. Asked of the backend only there and only while LEGAL_PAGES holds a version
+  // dated in the future, so no other page load spends a read on it (every read counts against the
+  // person's rate limit). Best effort: a failed read shows no notice.
   let termsUpcoming: { terms: boolean; privacyNotice: boolean; effectiveFrom: string } | null =
     null;
-  if (userProfile && accessToken && hasUpcomingAcceptanceChange(new Date())) {
+  const onHome = new URL(args.request.url).pathname === "/";
+  if (onHome && userProfile && accessToken && hasUpcomingAcceptanceChange(new Date())) {
     const status = await backendFetch("/user-profile/terms-acceptance", {
       accessToken,
       schema: TermsStatusResponse,
