@@ -59,11 +59,47 @@ describe("write-fence exemption law (F1)", () => {
     ].join("\n");
     expect(lines(LISTED, one)).toEqual([]);
     expect(lines(LISTED, `${one}\nawait withoutWriteFence(() => other());`)).toEqual([3]);
+    // Two calls on one line count as two.
+    expect(lines(LISTED, "a(withoutWriteFence(() => 1), withoutWriteFence(() => 2));")).toEqual([
+      1,
+    ]);
+  });
+
+  test("refuses an alias or a bare reference in a listed file", () => {
+    const aliased = [
+      'import { withoutWriteFence as unfenced } from "./user-data-lock";',
+      "unfenced(() => one());",
+      "unfenced(() => two());",
+    ].join("\n");
+    expect(lines(LISTED, aliased)).toEqual([1]);
+    const kept = [
+      'import { withoutWriteFence } from "./user-data-lock";',
+      "const f = withoutWriteFence;",
+      "return withoutWriteFence(() => this.erase(userId));",
+    ].join("\n");
+    expect(lines(LISTED, kept)).toEqual([2]);
+  });
+
+  test("the defining file may hold the definition only", () => {
+    const definition = [
+      "export function withoutWriteFence<T>(fn: () => T): T {",
+      '  throw new Error("withoutWriteFence inside an open fenced transaction");',
+      "}",
+    ].join("\n");
+    expect(lines(DEFINING_FILE, definition)).toEqual([]);
+    expect(
+      lines(DEFINING_FILE, `${definition}\nexport const unfenced = (f) => withoutWriteFence(f);`),
+    ).toEqual([4]);
+  });
+
+  test("ignores the name inside a string, and a // inside a string starts no comment", () => {
+    expect(lines(OTHER, 'log("withoutWriteFence was skipped");')).toEqual([]);
+    expect(lines(OTHER, 'fetch("https://x"); withoutWriteFence(() => 1);')).toEqual([1]);
   });
 
   test("covers production backend source only", () => {
     expect(isCoveredFile(OTHER)).toBe(true);
-    expect(isCoveredFile(DEFINING_FILE)).toBe(false);
+    expect(isCoveredFile(DEFINING_FILE)).toBe(true);
     expect(isCoveredFile("apps/backend/src/modules/privacy/user-data.integration.spec.ts")).toBe(
       false,
     );

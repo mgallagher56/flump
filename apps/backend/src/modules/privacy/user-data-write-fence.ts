@@ -3,6 +3,7 @@ import {
   type ExecutionContext,
   Injectable,
   type NestInterceptor,
+  ServiceUnavailableException,
 } from "@nestjs/common";
 import { Observable } from "rxjs";
 import {
@@ -19,10 +20,17 @@ import { AccountDeletionService } from "./account-deletion.service";
 import {
   type FencedRequest,
   fencedRequest,
-  lockUserDataShared,
   runAsUserRequest,
+  tryLockUserDataShared,
 } from "./user-data-lock";
 import { USER_DATA_REGISTRY, USER_LINKED_TABLES } from "./user-data-registry";
+
+/** A write refused because an erasure or reset of the same user is running: try again shortly. */
+const userDataBusyException = () =>
+  new ServiceUnavailableException({
+    code: "service_unavailable",
+    message: "The service is busy. Please try again shortly.",
+  });
 
 /**
  * Privacy finding F1 (verify-account-erasure skill): a request that passed the AuthGuard just before
@@ -33,8 +41,8 @@ import { USER_DATA_REGISTRY, USER_LINKED_TABLES } from "./user-data-registry";
  * mode as its first statement and checks the tombstone inside the lock, before any write.
  * - A write that holds the lock first commits before the erasure can take the exclusive lock, so the
  *   erasure's sweep deletes it.
- * - A write that starts while the erasure holds the lock waits for its commit, then sees the
- *   tombstone and is refused with 410.
+ * - A write that starts while the erasure holds or waits for the lock is refused at once with 503,
+ *   and one that starts after it committed sees the tombstone and is refused with 410.
  * Shared, so a user's own requests never wait for each other; only an erasure or reset waits.
  */
 
@@ -75,12 +83,29 @@ function insertTarget(sql: string): string | null {
 }
 
 const UPDATE_SET =
-  /^\s*UPDATE\s+(?:ONLY\s+)?(?:"?public"?\.)?"?([A-Za-z0-9_]+)"?(?:\s+(?:AS\s+)?"?\w+"?)?\s+SET\s+([\s\S]*?)(?:\bFROM\b|\bWHERE\b|\bRETURNING\b|$)/i;
+  /\bUPDATE\s+(?:ONLY\s+)?(?:"?public"?\.)?"?([A-Za-z0-9_]+)"?(?:\s+(?:AS\s+)?"?\w+"?)?\s+SET\s+([\s\S]*)$/i;
 
-/** The table an UPDATE writes to and its SET list, or null for any other statement. */
+/** Drops comments, then every parenthesised part (subqueries, function calls), innermost first. */
+function flatten(sql: string): string {
+  let out = sql.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/--[^\n]*/g, " ");
+  for (let prev = ""; prev !== out; ) {
+    prev = out;
+    out = out.replace(/\([^()]*\)/g, " ");
+  }
+  return out;
+}
+
+/**
+ * The table an UPDATE writes to (also inside a WITH, or after a comment) and its SET list, or null
+ * for any other statement. The SET list ends at the first top-level FROM, WHERE or RETURNING, so a
+ * subquery in a SET value does not end it early and a WHERE on the user column does not count.
+ */
 function updateTarget(sql: string): { table: string; set: string } | null {
-  const m = UPDATE_SET.exec(sql);
-  return m?.[1] && m[2] !== undefined ? { table: m[1], set: m[2] } : null;
+  const flat = flatten(sql);
+  if (!/^\s*(UPDATE|WITH)\b/i.test(flat)) return null;
+  const m = UPDATE_SET.exec(flat);
+  if (!m?.[1] || m[2] === undefined) return null;
+  return { table: m[1], set: m[2].split(/\b(?:FROM|WHERE|RETURNING)\b/i)[0] ?? "" };
 }
 
 /** True when a SET list assigns `column` (quoted or not, with or without an alias). */
@@ -107,11 +132,16 @@ export class UserDataWriteFence implements EntitySubscriberInterface {
     // A savepoint inside a fenced transaction is already covered.
     if (!request || fenced.has(runner)) return;
     const { userId } = request;
-    // First statements of the transaction, so it holds no row lock while it waits. The session's
-    // lock_timeout bounds the wait: a request whose transaction waits behind a queued erasure while
-    // another of its own transactions holds the lock fails instead of hanging.
+    // First statements of the transaction, before any row lock. No wait: the lock is busy only while
+    // an erasure or reset of this user holds or waits for it (up to 30 s, lockUserData). Waiting
+    // would hold a pooled connection per write for that time, and a user could fill the pool by
+    // writing during their own reset; and a request whose other transaction holds the lock would
+    // wait on itself. So the write is refused with 503 (try again); after an erasure the retry
+    // meets the AuthGuard's 410.
     try {
-      await lockUserDataShared(runner.manager, userId);
+      if (!(await tryLockUserDataShared(runner.manager, userId))) {
+        throw userDataBusyException();
+      }
       if (await this.deletion.isErasedForWrite(userId, runner.manager)) {
         throw accountDeletedException();
       }
