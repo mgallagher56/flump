@@ -1,5 +1,13 @@
-import { chmodSync, mkdirSync, symlinkSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import {
+  accessSync,
+  chmodSync,
+  constants,
+  mkdirSync,
+  statSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
+import { delimiter, isAbsolute, join } from "node:path";
 
 /**
  * A PATH for a test that runs a script with fake tools. It holds the fakes and symlinks to the
@@ -11,6 +19,9 @@ import { join } from "node:path";
  *
  * The shell and coreutils in BASE_TOOLS are linked whenever they are installed; `tools` names any
  * other real tool the script needs, and a missing one throws.
+ *
+ * The one implementation for Bun tests (scripts/) and Jest tests on Node (apps/mobile/e2e): it uses
+ * Node's fs and path only, no Bun API, so both runtimes import this file.
  */
 const BASE_TOOLS = [
   "bash",
@@ -50,6 +61,20 @@ const BASE_TOOLS = [
   "shasum",
 ];
 
+/** The first executable file called `tool` on the given PATH, as `which` finds it. */
+export function findOnPath(tool: string, path = process.env.PATH ?? ""): string | null {
+  for (const dir of path.split(delimiter)) {
+    if (!isAbsolute(dir)) continue;
+    const candidate = join(dir, tool);
+    try {
+      if (!statSync(candidate).isFile()) continue;
+      accessSync(candidate, constants.X_OK);
+      return candidate;
+    } catch {}
+  }
+  return null;
+}
+
 export function isolatedPath(
   dir: string,
   { fakes = {}, tools = [] }: { fakes?: Record<string, string>; tools?: string[] },
@@ -62,12 +87,12 @@ export function isolatedPath(
   }
   for (const tool of BASE_TOOLS) {
     if (tool in fakes || tools.includes(tool)) continue;
-    const real = Bun.which(tool);
+    const real = findOnPath(tool);
     if (real) symlinkSync(real, join(bin, tool));
   }
   for (const tool of tools) {
     if (tool in fakes) continue;
-    const real = Bun.which(tool);
+    const real = findOnPath(tool);
     if (!real) throw new Error(`isolatedPath: the real tool "${tool}" is not installed`);
     symlinkSync(real, join(bin, tool));
   }

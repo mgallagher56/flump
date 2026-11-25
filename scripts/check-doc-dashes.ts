@@ -5,27 +5,19 @@
  *   bun scripts/check-doc-dashes.ts                   check against the baseline
  *   bun scripts/check-doc-dashes.ts --write-baseline  lock in a fall
  */
-import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { baselineRaises } from "./lib/baseline-vs-main";
 import { compareToBaseline } from "./lib/design-tokens";
 import { countEmDashes, isDashCheckedFile } from "./lib/doc-dashes";
-import { repoRoot } from "./lib/scan";
+import { repoRoot, trackedFiles } from "./lib/scan";
 
-const tracked = execFileSync(
-  "git",
-  ["ls-files", "-z", "--cached", "--others", "--exclude-standard"],
-  { cwd: repoRoot, encoding: "utf8" },
-)
-  .split("\0")
-  .filter(isDashCheckedFile);
+// Tracked files only, so an untracked local file cannot change the result.
+const tracked = trackedFiles(repoRoot).filter(isDashCheckedFile);
 
 const counts: Record<string, number> = {};
 for (const file of tracked) {
-  const path = join(repoRoot, file);
-  if (!existsSync(path)) continue;
-  const n = countEmDashes(readFileSync(path, "utf8"));
+  const n = countEmDashes(readFileSync(join(repoRoot, file), "utf8"));
   if (n > 0) counts[file] = n;
 }
 

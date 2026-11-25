@@ -1,4 +1,5 @@
-import { readdirSync, readFileSync, statSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 
 export const repoRoot = resolve(import.meta.dir, "../..");
@@ -41,6 +42,29 @@ export function collectFiles(root = repoRoot, dirs = SCAN_DIRS): string[] {
     } catch {}
   }
   return out.sort();
+}
+
+/**
+ * Files git tracks (the index) under `dirs`, or the whole tree with no dirs. Untracked and ignored
+ * local files are never listed, so a ratchet gives the same answer on every machine and in CI.
+ * A tracked file deleted in the working tree is left out.
+ */
+export function trackedFiles(root = repoRoot, dirs: string[] = []): string[] {
+  return execFileSync("git", ["ls-files", "-z", "--cached", "--", ...dirs], {
+    cwd: root,
+    encoding: "utf8",
+    maxBuffer: 64 * 1024 * 1024,
+  })
+    .split("\0")
+    .filter((rel) => rel !== "" && existsSync(join(root, rel)))
+    .sort();
+}
+
+/** collectFiles over tracked files only: same skips, but untracked local files never count. */
+export function collectTrackedFiles(root = repoRoot, dirs = SCAN_DIRS): string[] {
+  return trackedFiles(root, dirs).filter(
+    (rel) => !shouldSkip(rel) && !rel.split("/").some((part) => SKIP_DIRS.has(part)),
+  );
 }
 
 export function readSource(root: string, rel: string): string {

@@ -7,41 +7,12 @@
  * does not switch, or screens that will not go, fail the run instead of being retried.
  */
 import { spawnSync } from "node:child_process";
-import { chmodSync, mkdtempSync, readFileSync, symlinkSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { isolatedPath } from "../../../scripts/lib/fake-bin";
 
 const script = join(__dirname, "run-android-flows.sh");
-/**
- * The real tools the runner and the fakes use. The PATH holds the fakes and links to these only,
- * nothing else (as scripts/lib/fake-bin.ts's isolatedPath, which needs Bun; this test runs on
- * Node), so a real adb or maestro on the machine can never answer in place of a fake.
- */
-const REAL_TOOLS = [
-  "bash",
-  "sh",
-  "sed",
-  "grep",
-  "find",
-  "mkdir",
-  "seq",
-  "sleep",
-  "cat",
-  "basename",
-  "dirname",
-  "touch",
-];
-
-function linkRealTools(bin: string) {
-  for (const tool of REAL_TOOLS) {
-    const found = spawnSync("/bin/sh", ["-c", `command -v ${tool}`], {
-      encoding: "utf8",
-    }).stdout.trim();
-    if (!found.startsWith("/")) throw new Error(`The real tool "${tool}" is not installed`);
-    symlinkSync(found, join(bin, tool));
-  }
-}
-
 const SHOTS = [
   "welcome",
   "engine-check",
@@ -55,14 +26,12 @@ const SHOTS = [
 
 function run(opts: { screensStay?: boolean; nightStuck?: boolean; failFlow?: string } = {}) {
   const dir = mkdtempSync(join(tmpdir(), "flows-"));
-  const bin = join(dir, "bin");
   const log = join(dir, "adb.log");
   const night = join(dir, "night");
   writeFileSync(night, "no");
-  spawnSync("mkdir", ["-p", bin]);
-  writeFileSync(
-    join(bin, "adb"),
-    `#!/usr/bin/env bash
+  // The PATH holds the fakes and links to the named real tools only (isolatedPath), so a real adb
+  // or maestro on the machine can never answer in place of a fake.
+  const adb = `#!/usr/bin/env bash
 echo "$*" >> "${log}"
 case "$*" in
   "shell dumpsys activity activities")
@@ -71,23 +40,17 @@ case "$*" in
   "shell cmd uimode night no") echo no > "${night}" ;;
   "shell cmd uimode night") echo "Night mode: $(cat "${night}")" ;;
 esac
-`,
-  );
+`;
   // The fake maestro writes every screenshot the runner requires for the theme it is given.
-  writeFileSync(
-    join(bin, "maestro"),
-    `#!/usr/bin/env bash
+  const maestro = `#!/usr/bin/env bash
 theme=$(printf '%s\\n' "$@" | sed -n 's/^THEME=//p')
 flow=$(basename "\${@: -1}" .yaml)
 echo "maestro $flow $theme" >> "${log}"
 for s in ${SHOTS.join(" ")}; do touch "$s-$theme.png"; done
 ${opts.failFlow ? `[ "$flow" = "${opts.failFlow}" ] && exit 1` : ""}
 exit 0
-`,
-  );
-  chmodSync(join(bin, "adb"), 0o755);
-  chmodSync(join(bin, "maestro"), 0o755);
-  linkRealTools(bin);
+`;
+  const bin = isolatedPath(dir, { fakes: { adb, maestro }, tools: ["find"] });
   const result = spawnSync(join(bin, "bash"), [script, join(dir, "app.apk"), join(dir, "out")], {
     encoding: "utf8",
     env: { ...process.env, PATH: bin, SETTLE_TRIES: "2" },

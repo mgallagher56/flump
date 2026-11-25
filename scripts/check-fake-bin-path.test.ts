@@ -1,8 +1,17 @@
 import { describe, expect, test } from "bun:test";
-import { mkdtempSync, readdirSync, readlinkSync, rmSync } from "node:fs";
+import {
+  chmodSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  readlinkSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { isolatedPath } from "./lib/fake-bin";
+import { findOnPath, isolatedPath } from "./lib/fake-bin";
 import { findFakeThenRealPaths, isTestFile } from "./lib/fake-bin-path";
 
 // Built at runtime so this file's own fixtures are not hits for the check it tests.
@@ -60,6 +69,34 @@ describe("isolatedPath", () => {
       expect(() => isolatedPath(dir, { tools: ["definitely-not-a-real-tool"] })).toThrow(
         'the real tool "definitely-not-a-real-tool" is not installed',
       );
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("one isolatedPath for Bun and Node", () => {
+  test("fake-bin.ts uses no Bun API, so the mobile Jest tests on Node can import it", () => {
+    const source = readFileSync(join(import.meta.dir, "lib/fake-bin.ts"), "utf8");
+    expect(source).not.toMatch(/\bBun\.|from "bun/);
+  });
+
+  test("findOnPath takes the first executable file, skipping plain files, folders and relative dirs", () => {
+    const dir = mkdtempSync(join(tmpdir(), "find-on-path-"));
+    try {
+      const [plain, folder, exec, later] = ["plain", "folder", "exec", "later"].map((d) =>
+        join(dir, d),
+      );
+      for (const d of [plain, folder, exec, later]) mkdirSync(d);
+      writeFileSync(join(plain, "tool"), "not executable");
+      mkdirSync(join(folder, "tool"));
+      for (const d of [exec, later]) {
+        writeFileSync(join(d, "tool"), "#!/bin/sh\n");
+        chmodSync(join(d, "tool"), 0o755);
+      }
+      const path = ["relative/bin", plain, folder, exec, later].join(":");
+      expect(findOnPath("tool", path)).toBe(join(exec, "tool"));
+      expect(findOnPath("missing", path)).toBeNull();
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
