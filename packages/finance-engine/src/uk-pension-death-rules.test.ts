@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { UK_RETIREMENT_VECTORS } from "./test-vectors/uk-retirement.vectors.js";
 import {
   arePensionInheritanceRulesInForce,
   UK_PENSION_INHERITANCE_RULES,
@@ -72,6 +73,20 @@ describe("UK_SELF_EMPLOYED_PENSION_RULES (E33 S7)", () => {
       nationalInsurance: "https://www.gov.uk/self-employed-national-insurance-rates",
     });
     for (const url of Object.values(r.sources)) expect(url).toMatch(GOV_URL);
+  });
+});
+
+describe("checked dates", () => {
+  it("the rules' checked date is the date the decider signed the S7 vectors", () => {
+    // One decider read the sources and signed RV17 to RV18b on the same day; the page's
+    // "Rules checked on" line reads checkedOn, so it cannot drift from the signature.
+    const s7 = UK_RETIREMENT_VECTORS.filter((v) => v.kind === "reliefAtSourceGross");
+    expect(s7.length).toBe(3);
+    for (const v of s7) {
+      expect(v.signedOffAt, v.id).toBe(UK_PENSION_INHERITANCE_RULES.checkedOn);
+      expect(v.signedOffBy, v.id).toBe(UK_PENSION_INHERITANCE_RULES.checkedBy);
+      expect(v.signedOffAt, v.id).toBe(UK_SELF_EMPLOYED_PENSION_RULES.checkedOn);
+    }
   });
 });
 

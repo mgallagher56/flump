@@ -15,7 +15,9 @@ describe("SelfEmployedPensions", () => {
     ).toBeTruthy();
     expect(
       screen
-        .getByRole("link", { name: "Tax relief on pension contributions on GOV.UK" })
+        .getByRole("link", {
+          name: "Tax relief on pension contributions on GOV.UK (opens in a new tab)",
+        })
         .getAttribute("href"),
     ).toBe("https://www.gov.uk/tax-on-your-private-pension/pension-tax-relief");
   });
@@ -32,11 +34,15 @@ describe("SelfEmployedPensions", () => {
     expect(lines.facts[3]).toBe(
       "Tax relief covers contributions up to a year's UK earnings. Where earnings are lower, it covers up to £3,600 a year, including the relief.",
     );
-    expect(lines.facts[5]).toBe(
+    // GOV.UK annual-allowance: £60,000 in 2026/27 (getUkPensionAllowances).
+    expect(lines.facts[4]).toBe(
+      "Contributions above the annual allowance, £60,000 for most people, can lead to a tax charge.",
+    );
+    expect(lines.facts[6]).toBe(
       "With profits of £7,105 or more, Class 2 National Insurance is treated as paid. That adds a qualifying year for the State Pension.",
     );
     // £3.65 keeps its pence; 10 qualifying years from the State Pension rules.
-    expect(lines.facts[6]).toBe(
+    expect(lines.facts[7]).toBe(
       "Below that, voluntary Class 2 contributions cost £3.65 a week. Any new State Pension takes at least 10 qualifying years.",
     );
   });
@@ -46,7 +52,7 @@ describe("SelfEmployedPensions", () => {
       ...UK_SELF_EMPLOYED_PENSION_RULES,
       class2VoluntaryWeeklyGbp: 3.8,
     });
-    expect(lines.facts[6]).toMatch(
+    expect(lines.facts[7]).toMatch(
       /^Below that, voluntary Class 2 contributions cost £3\.80 a week\./,
     );
   });

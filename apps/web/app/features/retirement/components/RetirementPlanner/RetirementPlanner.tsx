@@ -59,6 +59,7 @@ import {
   contributionSliderHelper,
   MAX_CONTRIBUTION_PERCENT,
 } from "~/features/pension/contribution";
+import { londonDate } from "~/features/snapshot/snapshotModel";
 import { useScenarioState } from "~/hooks/useScenarioState";
 import { formatEstimate, roundEstimate } from "~/utils/roundEstimate";
 import { RetirementPotChart } from "../RetirementPotChart";
@@ -108,16 +109,6 @@ export const CONTRIBUTION_BASIS_LINE =
   "Monthly pension contributions are counted as the full amount going into the pension, including tax relief the provider adds.";
 export const EXTRA_CONTRIBUTION_HELPER =
   "The amount going into the pension each month, including any tax relief.";
-
-/** A date as yyyy-mm-dd in the UK, for rules that start on a UK date. */
-export function ukIsoDate(date: Date): string {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Europe/London",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(date);
-}
 
 /** Year of birth lives in the age and pay section of the Profile tab. */
 export const PROFILE_PATH = "/app/profile#settings-age-and-pay";
@@ -1016,7 +1007,7 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
         )}
 
         {/* E33 S7: UK rules as facts, closed by default; no estimate and none of the user's figures. */}
-        <UnusedPensionSavings todayIso={ukIsoDate(planArgs.now)} />
+        <UnusedPensionSavings todayIso={londonDate(planArgs.now)} />
         {isSelfEmployed && <SelfEmployedPensions />}
 
         {/* Owner decision RD11: the same quiet line for every user, with or without a plan. */}

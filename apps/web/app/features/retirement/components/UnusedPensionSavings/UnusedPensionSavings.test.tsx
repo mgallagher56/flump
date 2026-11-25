@@ -28,6 +28,10 @@ describe("UnusedPensionSavings", () => {
     expect(lines.inheritanceTax[0]).toBe(
       "From 6 April 2027, most unused pension savings and pension death benefits count as part of a person's estate for inheritance tax.",
     );
+    // "usually": a payment notice is invalid below £1,000 (IHTA s.226B, decider 2026-11-25).
+    expect(lines.inheritanceTax[4]).toBe(
+      "The people dealing with the estate report the pension and pay any tax. They can usually ask the pension scheme to pay its share.",
+    );
     expect(lines.inheritanceTax[5]).toBe(
       "Inheritance tax is due by the end of the sixth month after the death.",
     );
@@ -98,11 +102,13 @@ describe("UnusedPensionSavings", () => {
       ),
     ).toBeTruthy();
     expect(
-      screen.getByRole("link", { name: "Inheritance tax on GOV.UK" }).getAttribute("href"),
+      screen
+        .getByRole("link", { name: "Inheritance tax on GOV.UK (opens in a new tab)" })
+        .getAttribute("href"),
     ).toBe("https://www.gov.uk/inheritance-tax");
     expect(
       screen
-        .getByRole("link", { name: "Tax on a pension you inherit on GOV.UK" })
+        .getByRole("link", { name: "Tax on a pension you inherit on GOV.UK (opens in a new tab)" })
         .getAttribute("href"),
     ).toBe("https://www.gov.uk/tax-on-pension-death-benefits");
   });
