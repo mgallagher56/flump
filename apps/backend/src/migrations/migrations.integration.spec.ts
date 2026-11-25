@@ -106,7 +106,7 @@ import { UniqueAccountDetailMonth1794356000000 } from "./UniqueAccountDetailMont
 import { WidenPensionPercentPrecision1795460000000 } from "./WidenPensionPercentPrecision1795460000000";
 
 // These tests DROP the public schema. Run them against a throwaway database only:
-//   docker run --rm -d --name flump-e3-pg -e POSTGRES_PASSWORD=postgres \
+//   docker run --rm -d --name flump-e3-pg --label flump.purpose=test-db --label flump.worktree="$(git rev-parse --show-toplevel)" -e POSTGRES_PASSWORD=postgres \
 //     -e POSTGRES_DB=flump_e3_test -p 55432:5432 postgres:18-alpine
 //   TEST_DATABASE_URL=postgres://postgres:postgres@localhost:55432/flump_e3_test \
 //     bunx vitest run src/migrations

@@ -52,7 +52,7 @@ vi.mock("../../src/config/typeorm.options", async (importOriginal) => {
  * exact bodies apps/web sends. Asserts 2xx and that the GET round trip returns what was sent.
  *
  * Run locally against a throwaway database (these tests DROP the public schema):
- *   docker run --rm -d --name flump-e23-pg -e POSTGRES_PASSWORD=postgres \
+ *   docker run --rm -d --name flump-e23-pg --label flump.purpose=test-db --label flump.worktree="$(git rev-parse --show-toplevel)" -e POSTGRES_PASSWORD=postgres \
  *     -e POSTGRES_DB=flump_e23_test -p 55432:5432 postgres:18-alpine
  *   TEST_DATABASE_URL=postgres://postgres:postgres@localhost:55432/flump_e23_test \
  *     REQUIRE_DB_TESTS=1 bunx vitest run test/contract

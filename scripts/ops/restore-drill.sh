@@ -138,7 +138,7 @@ logdir="$(mktemp -d)"
 cleanup() {
   rm -rf "$logdir"
   if [ "$created" -eq 1 ] && [ "$keep" -eq 0 ]; then
-    docker rm -f "$container" >/dev/null 2>&1 || true
+    docker rm -fv "$container" >/dev/null 2>&1 || true
   fi
 }
 trap cleanup EXIT
@@ -171,7 +171,9 @@ run_psql() { # stdin is the SQL file; extra args are psql args
 }
 
 echo "drill: starting container '$container' ($image) on port $port"
-docker run -d --name "$container" -e POSTGRES_PASSWORD="$password" -e POSTGRES_DB="$db" \
+docker run -d --name "$container" --label flump.purpose=test-db \
+  --label flump.worktree="$(git -C "$here" rev-parse --show-toplevel 2>/dev/null || echo "$here")" \
+  -e POSTGRES_PASSWORD="$password" -e POSTGRES_DB="$db" \
   -p "127.0.0.1:${port}:5432" "$image" >/dev/null
 created=1
 
@@ -216,7 +218,7 @@ echo "drill: counts written to $out ($(wc -l <"$out" | tr -d ' ') lines)"
 
 if [ "$keep" -eq 1 ]; then
   echo "drill: container kept. Connect with: docker exec -it $container psql -U postgres -d $db"
-  echo "drill: remove it with: docker rm -f $container"
+  echo "drill: remove it with: docker rm -fv $container"
 else
   echo "drill: removing container '$container'"
 fi

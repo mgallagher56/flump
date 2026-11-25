@@ -24,7 +24,7 @@ import { emptyEntityTables } from "../../src/testing/emptyTables";
  * JWKS) in place of the dev bypass, so user_A, user_B and an expired token are real signed JWTs.
  * Pattern copied from test/contract/web-mutations.contract.spec.ts; that file is not edited
  * (E23 owns it). The schema is DROPPED, so the database must be a throwaway:
- *   docker run --rm -d --name flump-pg-test -e POSTGRES_PASSWORD=postgres \
+ *   docker run --rm -d --name flump-pg-test --label flump.purpose=test-db --label flump.worktree="$(git rev-parse --show-toplevel)" -e POSTGRES_PASSWORD=postgres \
  *     -e POSTGRES_DB=flump_authz_test -p 55432:5432 postgres:18-alpine
  *   TEST_DATABASE_URL=postgres://postgres:postgres@localhost:55432/flump_authz_test \
  *     REQUIRE_DB_TESTS=1 bunx vitest run test/authz

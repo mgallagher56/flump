@@ -233,7 +233,7 @@ To run against production-like settings, set the environment explicitly, for exa
 The migration integration tests need a real PostgreSQL and are skipped unless `TEST_DATABASE_URL` is set. Use a throwaway container and a dedicated database:
 
 ```bash
-docker run --rm -d --name flump-e3-pg -e POSTGRES_PASSWORD=postgres \
+docker run --rm -d --name flump-e3-pg --label flump.purpose=test-db --label flump.worktree="$(git rev-parse --show-toplevel)" -e POSTGRES_PASSWORD=postgres \
   -e POSTGRES_DB=flump_e3_test -p 55432:5432 postgres:18-alpine
 cd apps/backend
 TEST_DATABASE_URL=postgres://postgres:postgres@localhost:55432/flump_e3_test \

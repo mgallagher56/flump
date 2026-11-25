@@ -47,7 +47,7 @@ import {
 
 // BE-04 on real Postgres: erasure completeness, two-user isolation, rollback, retry after a WorkOS
 // failure, export contents and the reset. Drops the public schema, so a throwaway database only:
-//   docker run --rm -d --name flump-pg-test -e POSTGRES_PASSWORD=postgres \
+//   docker run --rm -d --name flump-pg-test --label flump.purpose=test-db --label flump.worktree="$(git rev-parse --show-toplevel)" -e POSTGRES_PASSWORD=postgres \
 //     -e POSTGRES_DB=flump_privacy_test -p 55432:5432 postgres:18-alpine
 //   TEST_DATABASE_URL=postgres://postgres:postgres@localhost:55432/flump_privacy_test \
 //     bunx vitest run src/modules/privacy

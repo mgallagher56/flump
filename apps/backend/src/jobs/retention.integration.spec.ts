@@ -14,7 +14,7 @@ import { RETENTION_LOCK_KEY, RETENTION_POLICIES, runRetentionPurge } from "./ret
 // past each cutoff, keeps the rest, is safe to run twice and skips while another run holds the
 // lock. Also checks the audit_events append-only trigger and consent withdrawal. Drops the public
 // schema, so a throwaway database only:
-//   docker run --rm -d --name flump-pg-test -e POSTGRES_PASSWORD=postgres \
+//   docker run --rm -d --name flump-pg-test --label flump.purpose=test-db --label flump.worktree="$(git rev-parse --show-toplevel)" -e POSTGRES_PASSWORD=postgres \
 //     -e POSTGRES_DB=flump_retention_test -p 55432:5432 postgres:18-alpine
 //   TEST_DATABASE_URL=postgres://postgres:postgres@localhost:55432/flump_retention_test \
 //     bunx vitest run src/jobs/retention.integration.spec.ts

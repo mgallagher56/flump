@@ -12,7 +12,7 @@ import { RATE_LIMIT_POLICIES } from "./rate-limit.decorator";
 // BE-07 (M10) on real Postgres: the shared store keeps counts across a restart (a new instance on
 // a new connection pool) and two instances (replicas) share one limit. Drops the public schema,
 // so a throwaway database only:
-//   docker run --rm -d --name flump-pg-test -e POSTGRES_PASSWORD=postgres \
+//   docker run --rm -d --name flump-pg-test --label flump.purpose=test-db --label flump.worktree="$(git rev-parse --show-toplevel)" -e POSTGRES_PASSWORD=postgres \
 //     -e POSTGRES_DB=flump_rate_limit_test -p 55432:5432 postgres:18-alpine
 //   TEST_DATABASE_URL=postgres://postgres:postgres@localhost:55432/flump_rate_limit_test \
 //     bunx vitest run src/security/pg-rate-limit.store.integration.spec.ts

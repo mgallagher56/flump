@@ -34,7 +34,7 @@ environment, use a separate tool and plan, agreed with the owner.
 A Postgres database whose name says what it is for, the built backend, then the script:
 
 ```bash
-docker run -d --rm --name flump-load-pg -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=flump_load_test -p 127.0.0.1:55432:5432 postgres:18-alpine
+docker run -d --rm --name flump-load-pg --label flump.purpose=test-db --label flump.worktree="$(git rev-parse --show-toplevel)" -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=flump_load_test -p 127.0.0.1:55432:5432 postgres:18-alpine
 ```
 
 ```bash
