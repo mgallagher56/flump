@@ -8,8 +8,10 @@ import { DataSource } from "typeorm";
 import {
   COUNTER_POLICY_NAME,
   describeRetentionReport,
+  discardConnection,
   purgeTable,
   RETENTION_POLICIES,
+  RetentionLockNotReleasedError,
   runRetentionPurge,
 } from "./retention";
 
@@ -77,9 +79,16 @@ export class RetentionScheduler implements OnApplicationBootstrap, OnModuleDestr
   async check(now: Date = new Date()): Promise<void> {
     if (this.stopped || !retentionScheduleEnabled(process.env)) return;
     const runner = this.dataSource.createQueryRunner();
+    let leaked: Error | undefined;
     try {
       await runner.connect();
-      if (COUNTER_POLICY) await purgeTable(runner, COUNTER_POLICY, now);
+      // Its own try: a failed counter sweep must not stop the daily purge.
+      if (COUNTER_POLICY) {
+        await purgeTable(runner, COUNTER_POLICY, now).catch((error: unknown) => {
+          const name = error instanceof Error ? error.name : "error";
+          this.logger.warn(`retention counter sweep failed (${name})`);
+        });
+      }
       const report = await runRetentionPurge(runner, now, RETENTION_POLICIES, {
         trigger: "schedule",
         skipIfSucceededWithinMs: RUN_EVERY_MS,
@@ -89,11 +98,14 @@ export class RetentionScheduler implements OnApplicationBootstrap, OnModuleDestr
         for (const line of describeRetentionReport(report)) this.logger.log(line);
       }
     } catch (error) {
+      if (error instanceof RetentionLockNotReleasedError) leaked = error;
       // The error name only: a database error can quote values from the statement.
       const name = error instanceof Error ? error.name : "error";
       this.logger.error(`retention run failed (${name}); retrying at the next check`);
     } finally {
-      await runner.release().catch(() => undefined);
+      // A connection that may still hold the lock is closed, never pooled.
+      const done = leaked ? discardConnection(runner, leaked) : runner.release();
+      await done.catch(() => undefined);
     }
   }
 }

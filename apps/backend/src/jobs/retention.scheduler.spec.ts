@@ -14,7 +14,7 @@ function fakeDataSource(error?: Error) {
       if (error) throw error;
     }),
     release: vi.fn(async () => undefined),
-    query: vi.fn(async (sql: string) => {
+    query: vi.fn(async (sql: string): Promise<unknown> => {
       if (sql.includes("pg_try_advisory_lock")) return [{ locked: true }];
       if (sql.includes("to_regclass")) return [{ t: null }];
       if (sql.includes("count(*)")) return [{ n: 0 }];
@@ -57,6 +57,42 @@ describe("RetentionScheduler (D5 revised)", () => {
     await expect(new RetentionScheduler(ds as never).check()).resolves.toBeUndefined();
     expect(errors).toEqual(["retention run failed (QueryFailedError); retrying at the next check"]);
     expect(runner.release).toHaveBeenCalledTimes(1);
+  });
+
+  it("a failed counter sweep warns and still runs the daily purge", async () => {
+    const warnings: string[] = [];
+    vi.spyOn(Logger.prototype, "warn").mockImplementation((m: unknown) => {
+      warnings.push(String(m));
+    });
+    vi.spyOn(Logger.prototype, "log").mockImplementation(() => undefined);
+    const { ds, runner } = fakeDataSource();
+    const base = runner.query.getMockImplementation() as (sql: string) => Promise<unknown>;
+    runner.query.mockImplementation((sql: string) =>
+      sql.includes('"rate_limit_buckets"') && sql.includes("WITH doomed")
+        ? Promise.reject(Object.assign(new Error("lock timeout"), { name: "QueryFailedError" }))
+        : base(sql),
+    );
+    await new RetentionScheduler(ds as never).check();
+    expect(warnings).toEqual(["retention counter sweep failed (QueryFailedError)"]);
+    expect(
+      runner.query.mock.calls.some(([sql]) => String(sql).includes("pg_try_advisory_lock")),
+    ).toBe(true);
+  });
+
+  it("closes the connection instead of pooling it when the lock cannot be released", async () => {
+    vi.spyOn(Logger.prototype, "error").mockImplementation(() => undefined);
+    vi.spyOn(Logger.prototype, "log").mockImplementation(() => undefined);
+    const { ds, runner } = fakeDataSource();
+    const base = runner.query.getMockImplementation() as (sql: string) => Promise<unknown>;
+    runner.query.mockImplementation((sql: string) =>
+      sql.includes("pg_advisory_unlock") ? Promise.reject(new Error("aborted")) : base(sql),
+    );
+    const discard = vi.fn(async (_err: Error) => undefined);
+    Object.assign(runner, { releasePostgresConnection: discard });
+    await new RetentionScheduler(ds as never).check();
+    expect(discard).toHaveBeenCalledTimes(1);
+    expect(discard.mock.calls[0]?.[0]?.name).toBe("RetentionLockNotReleasedError");
+    expect(runner.release).not.toHaveBeenCalled();
   });
 
   it("a check while switched off opens no connection", async () => {

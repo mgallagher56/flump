@@ -223,7 +223,9 @@ export const RETENTION_POLICIES: readonly RetentionPolicy[] = [
     table: "rate_limit_buckets",
     // The store also sweeps expired rows every SWEEP_EVERY hits per process, which on low traffic
     // may not come for a while. The schedule runs this policy on every check (retention.scheduler).
-    where: `"expires_at" < $1::timestamptz`,
+    // The store reads the database clock (now()); the run's `now` is the app's. The earlier of the
+    // two is used, so a clock running ahead on either side can never remove a live window.
+    where: `"expires_at" < LEAST($1::timestamptz, now())`,
     reason:
       "a request counter is worth nothing once its window (a day at most) has passed; the privacy notice says one day at most",
   },
@@ -416,8 +418,47 @@ export async function runRetentionPurge(
       throw error;
     }
   } finally {
-    await db.query("SELECT pg_advisory_unlock($1)", [RETENTION_LOCK_KEY]);
+    await releaseLock(db);
   }
+}
+
+/** The session lock could not be released: the connection must be closed, never pooled. */
+export class RetentionLockNotReleasedError extends Error {
+  override name = "RetentionLockNotReleasedError";
+}
+
+/**
+ * Releases the session lock. An aborted transaction (a failed ROLLBACK swallowed above) refuses
+ * the unlock, so end it and try once more. If that fails too, throw: a pooled connection still
+ * holding the lock would make every later run skip as "locked".
+ */
+async function releaseLock(db: Queryable): Promise<void> {
+  const unlock = () => db.query("SELECT pg_advisory_unlock($1)", [RETENTION_LOCK_KEY]);
+  try {
+    await unlock();
+  } catch {
+    await db.query("ROLLBACK").catch(() => undefined);
+    try {
+      await unlock();
+    } catch {
+      throw new RetentionLockNotReleasedError("retention lock not released");
+    }
+  }
+}
+
+/**
+ * Closes a query runner's connection instead of returning it to the pool, so its session (and
+ * any advisory lock it holds) ends. Uses TypeORM's Postgres runner release-with-error, which tells
+ * pg-pool to discard the client; retention.integration.spec.ts checks it still does.
+ */
+export async function discardConnection(
+  runner: { release(): Promise<void> },
+  error: Error,
+): Promise<void> {
+  const discard = (runner as { releasePostgresConnection?: (err: Error) => Promise<void> })
+    .releasePostgresConnection;
+  if (typeof discard === "function") await discard.call(runner, error);
+  else await runner.release();
 }
 
 /** One line per policy plus the inactive count: names and counts only, never ids. */
