@@ -159,6 +159,8 @@ const backendEnvSchema = z.looseObject({
   BETA_ADMIN_USER_IDS: text(),
   BANK_CONNECTIONS_ENABLED: bool(),
   BANK_CONNECTIONS_ALLOWED_USER_IDS: text(),
+  /** Households (E34 C3). Off unless exactly true; only the owner turns it on (household-gate.ts). */
+  HOUSEHOLD_ENABLED: text(),
   STARLING_USE_SANDBOX: bool(),
 
   // API contract

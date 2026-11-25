@@ -3,10 +3,12 @@ import {
   assertBootGuards,
   BankLaunchGateError,
   ContractModeNotEnforcedError,
+  HouseholdGateError,
   OpenBetaNotConfirmedError,
   validateBootEnv,
 } from "./boot-guards";
 import { EnvValidationError } from "./env.schema";
+import { HOUSEHOLD_LAUNCH_CONDITIONS_MET, isHouseholdEnabled } from "./household-gate";
 import { BANK_LAUNCH_GATE_PASSED } from "./launch-gate";
 
 const PROD = {
@@ -129,6 +131,60 @@ describe("bank launch gate guard", () => {
 
   it("has a stable error name", () => {
     expect(new BankLaunchGateError().name).toBe("BankLaunchGateError");
+  });
+});
+
+describe("household gate guard (E34 C3)", () => {
+  it("is closed until the owner records the three launch conditions", () => {
+    expect(HOUSEHOLD_LAUNCH_CONDITIONS_MET).toBe(false);
+  });
+
+  it("is off unless the variable is exactly true", () => {
+    expect(isHouseholdEnabled({})).toBe(false);
+    for (const value of ["", "false", "1", "yes", "on", "truthy"]) {
+      expect(isHouseholdEnabled({ HOUSEHOLD_ENABLED: value })).toBe(false);
+    }
+    expect(isHouseholdEnabled({ HOUSEHOLD_ENABLED: " True " })).toBe(true);
+  });
+
+  it("refuses HOUSEHOLD_ENABLED=true in production while the conditions are not met", () => {
+    expect(() => assertBootGuards({ ...PROD, HOUSEHOLD_ENABLED: "true" })).toThrow(
+      HouseholdGateError,
+    );
+  });
+
+  it("refuses it on Railway whatever NODE_ENV says", () => {
+    expect(() =>
+      assertBootGuards({
+        ...PROD,
+        NODE_ENV: "development",
+        RAILWAY_ENVIRONMENT: "production",
+        HOUSEHOLD_ENABLED: "TRUE",
+      }),
+    ).toThrow(HouseholdGateError);
+  });
+
+  it("allows it in a local process, for the disposable test stack", () => {
+    expect(() =>
+      assertBootGuards({ NODE_ENV: "development", HOUSEHOLD_ENABLED: "true" }),
+    ).not.toThrow();
+  });
+
+  it("allows it in production once the conditions are met, and off always", () => {
+    expect(() =>
+      assertBootGuards({ ...PROD, HOUSEHOLD_ENABLED: "true" }, { householdConditionsMet: true }),
+    ).not.toThrow();
+    expect(() => assertBootGuards({ ...PROD, HOUSEHOLD_ENABLED: "false" })).not.toThrow();
+    expect(() => assertBootGuards(PROD)).not.toThrow();
+  });
+
+  it("names the three conditions and the owner, with a stable error name", () => {
+    const error = new HouseholdGateError();
+    expect(error.name).toBe("HouseholdGateError");
+    expect(error.message).toContain("CD7");
+    expect(error.message).toContain("DPIA");
+    expect(error.message).toContain("CD10");
+    expect(error.message).toContain("Only the owner");
   });
 });
 
