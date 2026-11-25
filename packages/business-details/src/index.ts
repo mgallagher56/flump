@@ -162,8 +162,9 @@ export function ukDate(now: Date): string {
 }
 
 /**
- * The version of a page that applies on this date: the newest whose `effectiveFrom` has come.
- * Throws when none has, which would mean a page with no version in force.
+ * The version of a page that applies on this date: the newest whose `effectiveFrom` has come. The
+ * first version has nothing before it, so it applies to any earlier date too (a test clock, or a
+ * date before the page was published); there is always a version in force.
  */
 export function versionInEffect(
   key: AcceptanceDocument,
@@ -171,8 +172,9 @@ export function versionInEffect(
   pages: readonly LegalPage[] = LEGAL_PAGES,
 ): LegalPageVersion {
   const today = ukDate(now);
-  const found = pageIn(pages, key).history.find((entry) => entry.effectiveFrom <= today);
-  if (!found) throw new Error(`No version of ${key} is in effect on ${today}`);
+  const history = pageIn(pages, key).history;
+  const found = history.find((entry) => entry.effectiveFrom <= today) ?? history.at(-1);
+  if (!found) throw new Error(`Legal page ${key} has no version`);
   return found;
 }
 

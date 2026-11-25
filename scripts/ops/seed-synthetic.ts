@@ -62,6 +62,9 @@ export const USER_DATA_TABLES = [
   // BE-06 sensitive-action records and consents (user_id is null only for user.deleted rows).
   "audit_events",
   "consents",
+  // Terms acceptance: cleared, never written. A persona's user agrees on the acceptance page at
+  // their first sign-in, so no agreement is recorded that a person did not make.
+  "terms_acceptances",
   "mcp_tokens",
   // BE-09 stored create responses for Idempotency-Key retries (they echo the rows they created).
   "idempotency_keys",

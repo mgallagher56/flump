@@ -179,6 +179,8 @@ describe.skipIf(!DB_TESTS_ENABLED)("seed-synthetic (real Postgres, all migration
         0,
       );
       expect(first.accounts).toBe(expectedAccounts);
+      // No terms agreement is written for a persona: they agree on the page at first sign-in.
+      expect(first.terms_acceptances).toBe(0);
       expect(first.user_profiles).toBe(4);
       expect(first.transactions).toBe(0);
       expect(first.bank_connections).toBe(0);

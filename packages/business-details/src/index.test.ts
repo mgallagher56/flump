@@ -200,10 +200,13 @@ describe("versions in effect (terms acceptance)", () => {
     expect(hasUpcomingAcceptanceChange(new Date("2026-11-24T12:00:00Z"))).toBe(true);
   });
 
-  it("refuses a date before any version applied", () => {
-    expect(() => versionInEffect("terms", new Date("2026-11-24T12:00:00Z"))).toThrow(
-      "No version of terms is in effect on 2026-11-24",
-    );
+  it("uses the first version for a date before any version applied", () => {
+    // The e2e suites freeze the clock at 14 November 2026, before the first versions (25 November).
+    const early = new Date("2026-11-14T12:00:00Z");
+    expect(versionInEffect("terms", early).version).toBe("0.1");
+    // The privacy notice's first version is 0.1; 0.2 and newer satisfy it.
+    expect(versionInEffect("privacy", early).version).toBe("0.1");
+    expect(versionsAtLeastInEffect("privacy", early)).toEqual(["0.2", "0.1"]);
   });
 });
 
