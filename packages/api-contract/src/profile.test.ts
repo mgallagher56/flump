@@ -13,6 +13,7 @@ import {
   DeleteUserRequest,
   DeleteUserResponse,
   HousingStatus,
+  TermsStatusResponse,
   UpdateChecklistRequest,
   UpdateProfileRequest,
 } from "./domains/profile.js";
@@ -221,51 +222,75 @@ describe("DeleteUserRequest and DeleteUserResponse (BE-04)", () => {
   });
 });
 
-describe("AcceptTermsRequest and AcceptTermsResponse (BE-15, M-PRIV3)", () => {
-  it("accepts a short version identifier and nothing else", () => {
-    expect(AcceptTermsRequest.safeParse({ version: "2026-11-01" }).success).toBe(true);
-    expect(AcceptTermsRequest.safeParse({ version: "v1.2_b" }).success).toBe(true);
-    expect(AcceptTermsRequest.safeParse({ version: "" }).success).toBe(false);
-    expect(AcceptTermsRequest.safeParse({ version: "I agree" }).success).toBe(false);
-    expect(AcceptTermsRequest.safeParse({ version: "v".repeat(65) }).success).toBe(false);
-    expect(AcceptTermsRequest.safeParse({}).success).toBe(false);
-    // Surrounding spaces are not part of the identifier.
-    expect(AcceptTermsRequest.parse({ version: " 2026-11-01 " }).version).toBe("2026-11-01");
-    expect(AcceptTermsRequest.safeParse({ version: "2026-11-01", userId: "x" }).success).toBe(
+describe("terms acceptance contract", () => {
+  const pair = { termsVersion: "0.1", privacyNoticeVersion: "0.2" };
+
+  it("takes the two page versions and nothing else", () => {
+    expect(AcceptTermsRequest.safeParse(pair).success).toBe(true);
+    expect(AcceptTermsRequest.safeParse({ ...pair, termsVersion: "10.12" }).success).toBe(true);
+    expect(AcceptTermsRequest.safeParse({ termsVersion: "0.1" }).success).toBe(false);
+    expect(AcceptTermsRequest.safeParse({ ...pair, termsVersion: "2026-11-01" }).success).toBe(
       false,
     );
+    expect(AcceptTermsRequest.safeParse({ ...pair, privacyNoticeVersion: "I agree" }).success).toBe(
+      false,
+    );
+    expect(AcceptTermsRequest.safeParse({ ...pair, userId: "x" }).success).toBe(false);
+    expect(AcceptTermsRequest.safeParse({ version: "0.1" }).success).toBe(false);
   });
 
-  it("answers the version and whether this call recorded it", () => {
-    expect(AcceptTermsResponse.safeParse({ version: "2026-11-01", recorded: true }).success).toBe(
-      true,
-    );
-    expect(AcceptTermsResponse.safeParse({ version: "2026-11-01", recorded: false }).success).toBe(
-      true,
-    );
-    expect(AcceptTermsResponse.safeParse({ version: "2026-11-01" }).success).toBe(false);
+  it("answers the pair and whether this call recorded it", () => {
+    expect(AcceptTermsResponse.safeParse({ ...pair, recorded: true }).success).toBe(true);
+    expect(AcceptTermsResponse.safeParse({ ...pair, recorded: false }).success).toBe(true);
+    expect(AcceptTermsResponse.safeParse(pair).success).toBe(false);
   });
 
-  it("is a user-owned profile route with request and response schemas", () => {
-    const route = routes.profile.acceptTerms;
-    expect(route).toMatchObject({
+  it("describes the status with both pages", () => {
+    const page = {
+      version: "0.1",
+      updated: "25 November 2026",
+      effectiveFrom: "2026-11-25",
+      path: "/terms",
+      changed: false,
+    };
+    const status = {
+      required: true,
+      agreed: false,
+      firstTime: true,
+      terms: page,
+      privacyNotice: { ...page, version: "0.2", path: "/privacy" },
+    };
+    expect(TermsStatusResponse.safeParse(status).success).toBe(true);
+    expect(
+      TermsStatusResponse.safeParse({ ...status, terms: { ...page, effectiveFrom: "25/11/2026" } })
+        .success,
+    ).toBe(false);
+    expect(TermsStatusResponse.safeParse({ ...status, consent: true }).success).toBe(false);
+  });
+
+  it("puts both routes on the user-owned profile group", () => {
+    expect(routes.profile.acceptTerms).toMatchObject({
       method: "POST",
       path: "user-profile/terms-acceptance",
       auth: "user",
       ownership: "user",
     });
-    expect(route.body).toBe(AcceptTermsRequest);
-    expect(route.response).toBe(AcceptTermsResponse);
+    expect(routes.profile.acceptTerms.body).toBe(AcceptTermsRequest);
+    expect(routes.profile.acceptTerms.response).toBe(AcceptTermsResponse);
+    expect(routes.profile.termsStatus).toMatchObject({
+      method: "GET",
+      path: "user-profile/terms-acceptance",
+      auth: "user",
+      ownership: "user",
+    });
+    expect(routes.profile.termsStatus.response).toBe(TermsStatusResponse);
   });
 
-  it("lists the BE-15 error codes", () => {
-    for (const code of [
-      "terms_not_configured",
-      "terms_version_mismatch",
-      "account_deletion_unavailable",
-    ]) {
-      expect(ERROR_CODES).toContain(code);
-    }
+  it("lists the terms error codes and drops the retired one", () => {
+    expect(ERROR_CODES).toContain("terms_not_accepted");
+    expect(ERROR_CODES).toContain("terms_version_mismatch");
+    expect(ERROR_CODES).toContain("account_deletion_unavailable");
+    expect(ERROR_CODES).not.toContain("terms_not_configured");
   });
 });
 
@@ -291,6 +316,7 @@ describe("AccountExportDocument (BE-04)", () => {
     idempotencyKeys: [],
     auditEvents: [],
     consents: [],
+    termsAcceptances: [],
     invoicingSettings: [],
     workLogEntries: [],
     invoices: [],

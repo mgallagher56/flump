@@ -6,6 +6,7 @@ import { AuditEvent } from "../../entities/audit-event.entity";
 import { Consent } from "../../entities/consent.entity";
 import { McpToken } from "../../entities/mcp-token.entity";
 import { fakeBetaMembership } from "../../testing/fake-beta-membership";
+import { fakeTermsAcceptance } from "../../testing/fake-terms-acceptance";
 import { McpTokenService } from "./mcp-token.service";
 
 function buildTokenService() {
@@ -31,7 +32,7 @@ function buildTokenService() {
     },
   };
   repo.manager = { transaction: async (fn: (m: unknown) => unknown) => fn(m) };
-  const service = new McpTokenService(repo as never, fakeBetaMembership());
+  const service = new McpTokenService(repo as never, fakeBetaMembership(), fakeTermsAcceptance());
   return { service, repo, auditInsert, consentInsert, consentUpdate, tokenUpdate };
 }
 

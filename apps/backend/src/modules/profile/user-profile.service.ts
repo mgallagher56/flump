@@ -14,7 +14,7 @@ import {
 import { InjectRepository } from "@nestjs/typeorm";
 import { DataSource, type EntityTarget, In, type ObjectLiteral, Repository } from "typeorm";
 import { recordAuditEvent } from "../../audit/audit-events";
-import { acceptTermsOnce, withdrawAllConsents } from "../../audit/consents";
+import { withdrawAllConsents } from "../../audit/consents";
 import { accountDeletedException } from "../../auth/recent-login";
 import { safeErrorSummary } from "../../common/log-safe";
 import { preconditionFailed, withVersionClaim } from "../../contract/etag";
@@ -424,19 +424,6 @@ export class UserProfileService implements ProfileLifecycle {
         email: email || null,
       },
     };
-  }
-
-  /**
-   * Records the caller's acceptance of `version` (BE-15, M-PRIV3). The caller has already checked
-   * that it is the version currently served. Idempotent per user and version: a transaction-scoped
-   * advisory lock on the user serialises two concurrent acceptances, so the second finds the first.
-   */
-  async acceptTerms(userId: string, version: string): Promise<{ recorded: boolean }> {
-    const recorded = await this.dataSource.transaction(async (manager) => {
-      await manager.query("SELECT pg_advisory_xact_lock(hashtext($1))", [`terms:${userId}`]);
-      return acceptTermsOnce(manager, { userId, version });
-    });
-    return { recorded };
   }
 
   /**

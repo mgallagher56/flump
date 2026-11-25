@@ -1,10 +1,11 @@
 import "reflect-metadata";
 import { AccountExportDocument } from "@flump/api-contract";
+import { In } from "typeorm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { Account } from "../../src/entities/account.entity";
 import { BudgetEntry } from "../../src/entities/budget-entry.entity";
-import { Consent } from "../../src/entities/consent.entity";
 import { TaxRecord } from "../../src/entities/tax-record.entity";
+import { TermsAcceptance } from "../../src/entities/terms-acceptance.entity";
 import { UserProfile } from "../../src/entities/user-profile.entity";
 import {
   USER_IDENTITY_ADAPTER,
@@ -56,12 +57,10 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
   const resetSentTo: string[] = [];
   const deletedLogins: string[] = [];
 
-  // Read once at boot (BE-15), so it is set before the app starts and restored after.
-  const savedTermsVersion = process.env.TERMS_VERSION;
-  const TERMS = "2026-11-01";
+  // The newest versions in LEGAL_PAGES (packages/business-details): terms 0.1, privacy notice 0.2.
+  const NEWEST = { termsVersion: "0.1", privacyNoticeVersion: "0.2" };
 
   beforeAll(async () => {
-    process.env.TERMS_VERSION = TERMS;
     h = await bootAuthzHarness();
     const adapter = h.app.get<WorkOSIdentityAdapter>(USER_IDENTITY_ADAPTER);
     vi.spyOn(adapter, "getUserEmail").mockImplementation(async (userId) => {
@@ -84,8 +83,6 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
       .sort();
     expect([...exercised].sort()).toEqual(expected);
     await h?.close();
-    if (savedTermsVersion === undefined) delete process.env.TERMS_VERSION;
-    else process.env.TERMS_VERSION = savedTermsVersion;
   });
 
   beforeEach(async () => {
@@ -185,10 +182,15 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
       { key: "GET /user-profile/export", method: "get", path: "/user-profile/export" },
       { key: "GET /user-profile/export/csv", method: "get", path: "/user-profile/export/csv" },
       {
+        key: "GET /user-profile/terms-acceptance",
+        method: "get",
+        path: "/user-profile/terms-acceptance",
+      },
+      {
         key: "POST /user-profile/terms-acceptance",
         method: "post",
         path: "/user-profile/terms-acceptance",
-        body: { version: TERMS },
+        body: NEWEST,
       },
     ];
 
@@ -512,42 +514,118 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
     ran("GET /user-profile/export/csv");
   });
 
-  it("POST /user-profile/terms-acceptance: records only the caller's acceptance, once per version", async () => {
-    const termsRows = () =>
+  it("POST /user-profile/terms-acceptance: records only the caller's agreement, once per pair", async () => {
+    const rows = () =>
       h.dataSource
-        .getRepository(Consent)
-        .find({ where: { kind: "terms" }, order: { grantedAt: "ASC" } });
+        .getRepository(TermsAcceptance)
+        .find({ where: { userId: In([USER_A, USER_B]) }, order: { userId: "ASC" } });
+    await h.dataSource.getRepository(TermsAcceptance).delete({ userId: USER_B });
+    const before = await rows();
 
     // B's probe body (A's id and userId) is rejected and records nothing.
     expectProbeRejected(
       await h.call("post", "/user-profile/terms-acceptance", h.tokens.b, {
         ...probeBody(profileAId),
-        version: TERMS,
+        ...NEWEST,
       }),
     );
-    expect(await termsRows()).toEqual([]);
+    expect(await rows()).toEqual(before);
 
-    const first = await h.call("post", "/user-profile/terms-acceptance", h.tokens.b, {
-      version: TERMS,
-    });
+    const first = await h.call("post", "/user-profile/terms-acceptance", h.tokens.b, NEWEST);
     expect(first.status).toBe(200);
-    expect(first.body).toEqual({ version: TERMS, recorded: true });
-    const again = await h.call("post", "/user-profile/terms-acceptance", h.tokens.b, {
-      version: TERMS,
-    });
+    expect(first.body).toEqual({ ...NEWEST, recorded: true });
+    const again = await h.call("post", "/user-profile/terms-acceptance", h.tokens.b, NEWEST);
     expect(again.status).toBe(200);
-    expect(again.body).toEqual({ version: TERMS, recorded: false });
+    expect(again.body).toEqual({ ...NEWEST, recorded: false });
 
     const stale = await h.call("post", "/user-profile/terms-acceptance", h.tokens.b, {
-      version: "2020-01-01",
+      ...NEWEST,
+      privacyNoticeVersion: "0.1",
     });
     expect(stale.status).toBe(409);
     expect(stale.body.code).toBe("terms_version_mismatch");
 
-    const rows = await termsRows();
-    expect(rows.map((r) => [r.userId, r.version])).toEqual([[USER_B, TERMS]]);
+    const after = await rows();
+    expect(after.map((r) => [r.userId, r.termsVersionAgreed, r.privacyNoticeVersionShown])).toEqual(
+      [
+        [USER_A, "0.1", "0.2"],
+        [USER_B, "0.1", "0.2"],
+      ],
+    );
+    // A's row is untouched by B's calls.
+    expect(after[0]?.acceptedAt).toEqual(before[0]?.acceptedAt);
     await expectProfileAUntouched();
     ran("POST /user-profile/terms-acceptance");
+  });
+
+  it("GET /user-profile/terms-acceptance: each caller gets only their own status", async () => {
+    const a = await h.call("get", "/user-profile/terms-acceptance", h.tokens.a);
+    expect(a.status).toBe(200);
+    expect(a.body).toMatchObject({ required: false, agreed: true, firstTime: false });
+    expect(a.body.terms).toMatchObject({ version: "0.1", path: "/terms", changed: false });
+    expect(a.body.privacyNotice).toMatchObject({ version: "0.2", path: "/privacy" });
+
+    const c = await h.call(
+      "get",
+      "/user-profile/terms-acceptance",
+      await h.tokenFor(["user", "terms", "status"].join("_")),
+    );
+    expect(c.status).toBe(200);
+    expect(c.body).toMatchObject({ required: true, agreed: false, firstTime: true });
+    ran("GET /user-profile/terms-acceptance");
+  });
+
+  describe("an account that has not agreed to the terms", () => {
+    // A user outside HARNESS_USERS: no agreement row, and never cached as agreed.
+    const fresh = () => h.tokenFor(["user", "no", "terms", String(Date.now())].join("_"));
+
+    it("is refused everywhere else with 403 terms_not_accepted", async () => {
+      const token = await fresh();
+      for (const path of ["/user-profile", "/budget-entries", "/accounts", "/mcp-tokens"]) {
+        const res = await h.call("get", path, token);
+        expect(res.status, path).toBe(403);
+        expect(res.body.code, path).toBe("terms_not_accepted");
+      }
+      const write = await h.call("patch", "/user-profile", token, { firstName: "X" });
+      expect(write.status).toBe(403);
+      expect(write.body.code).toBe("terms_not_accepted");
+    });
+
+    it("can download both exports", async () => {
+      const token = await fresh();
+      const json = await h.call("get", "/user-profile/export", token).buffer(true);
+      expect(json.status).toBe(200);
+      expect(JSON.parse(json.text).termsAcceptances).toEqual([]);
+      const csv = await h.call("get", "/user-profile/export/csv", token).buffer(true);
+      expect(csv.status).toBe(200);
+    });
+
+    it("can delete their account", async () => {
+      const userId = ["user", "no", "terms", "delete", String(Date.now())].join("_");
+      const token = await h.tokenFor(userId);
+      const res = await h.call("delete", "/user-profile", token, { confirmation: "DELETE" });
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({ status: "deleted" });
+      expect(deletedLogins).toContain(userId);
+    });
+
+    it("can agree, and is then let through", async () => {
+      const token = await fresh();
+      expect((await h.call("get", "/budget-entries", token)).status).toBe(403);
+      const agreed = await h.call("post", "/user-profile/terms-acceptance", token, NEWEST);
+      expect(agreed.status).toBe(200);
+      expect((await h.call("get", "/budget-entries", token)).status).toBe(200);
+    });
+  });
+
+  it("export and erasure cover the agreement record", async () => {
+    const exported = await h.call("get", "/user-profile/export", h.tokens.a).buffer(true);
+    expect(JSON.parse(exported.text).termsAcceptances).toEqual([
+      expect.objectContaining({ termsVersionAgreed: "0.1", privacyNoticeVersionShown: "0.2" }),
+    ]);
+    const deleted = await h.call("delete", "/user-profile", h.tokens.a, { confirmation: "DELETE" });
+    expect(deleted.status).toBe(200);
+    expect(await h.dataSource.getRepository(TermsAcceptance).countBy({ userId: USER_A })).toBe(0);
   });
 
   it("POST /user-profile/send-password-reset: resolves the caller's own address, body ignored", async () => {

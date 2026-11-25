@@ -23,6 +23,7 @@
   "dependencies": {
     "@flump/api-contract": "workspace:*",
     "@flump/banking": "workspace:*",
+    "@flump/business-details": "workspace:*",
     "@flump/finance-engine": "workspace:*",
     "@flump/mcp": "workspace:*",
     "@flump/observability": "workspace:*",

@@ -20,6 +20,7 @@ import { McpToken } from "../entities/mcp-token.entity";
 import { RetirementPlan } from "../entities/retirement-plan.entity";
 import { SnapshotCheckin } from "../entities/snapshot-checkin.entity";
 import { TaxRecord } from "../entities/tax-record.entity";
+import { TermsAcceptance } from "../entities/terms-acceptance.entity";
 import { Transaction } from "../entities/transaction.entity";
 import { UserProfile } from "../entities/user-profile.entity";
 import { WorkLogEntry } from "../entities/work-log-entry.entity";
@@ -36,6 +37,7 @@ export const ENTITIES: Function[] = [
   UserProfile,
   BudgetEntry,
   TaxRecord,
+  TermsAcceptance,
   McpToken,
   RetirementPlan,
   SnapshotCheckin,

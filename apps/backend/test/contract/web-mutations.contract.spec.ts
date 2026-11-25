@@ -5,11 +5,12 @@ import request from "supertest";
 import { DataSource } from "typeorm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { AppModule } from "../../src/app.module";
-import { DEV_BYPASS_TOKEN } from "../../src/auth/dev-bypass.verifier";
+import { DEV_BYPASS_TOKEN, DEV_USER } from "../../src/auth/dev-bypass.verifier";
 import { storedBalance } from "../../src/modules/snapshots/stored-balance";
 import { assertSafeTestDatabase } from "../../src/testing/assertSafeTestDatabase";
 import { resolveDbTestMode } from "../../src/testing/dbTestMode";
 import { at } from "../../src/testing/must";
+import { seedTermsAcceptance } from "../../src/testing/seedTermsAcceptance";
 import { parseResponseViolation } from "../authz/support";
 import {
   ACCOUNT_CREATE_PAYLOADS,
@@ -128,6 +129,8 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       app = moduleRef.createNestApplication({ rawBody: true });
       await app.init();
       dataSource = app.get(DataSource);
+      // The dev user has agreed to the terms, as after the web acceptance screen.
+      await seedTermsAcceptance(dataSource, [DEV_USER.id]);
     }, 60_000);
 
     afterAll(async () => {

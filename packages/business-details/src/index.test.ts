@@ -11,6 +11,9 @@ import {
   legalPage,
   placeholderFields,
   shortCompanyLine,
+  ukDate,
+  versionInEffect,
+  versionsAtLeastInEffect,
 } from "./index";
 
 const realDetails = (): BusinessDetails => {
@@ -148,6 +151,19 @@ describe("legal pages", () => {
     }
   });
 
+  it("keeps each page's history newest first, with distinct versions and UK dates", () => {
+    for (const page of LEGAL_PAGES) {
+      expect(page.history[0]?.version, page.key).toBe(page.version);
+      expect(page.history[0]?.updated, page.key).toBe(page.updated);
+      const versions = page.history.map((entry) => entry.version);
+      expect(new Set(versions).size, page.key).toBe(versions.length);
+      const dates = page.history.map((entry) => entry.effectiveFrom);
+      for (const date of dates) expect(date, page.key).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      // Newest first: each version applies no earlier than the one after it.
+      expect([...dates].sort().reverse(), page.key).toEqual(dates);
+    }
+  });
+
   it("finds a page by key and refuses an unknown one", () => {
     expect(legalPage("terms").title).toBe("Terms of use");
     expect(() => legalPage("nope" as never)).toThrow("Unknown legal page: nope");
@@ -156,6 +172,28 @@ describe("legal pages", () => {
   it("never credits a solicitor or the owner with the review", () => {
     expect(LEGAL_REVIEW_NOTE).toBe(
       "Written and checked with AI tools for Flump's test phase. A solicitor has not reviewed this page.",
+    );
+  });
+});
+
+describe("versions in effect (terms acceptance)", () => {
+  it("reads the UK date, not the UTC one", () => {
+    // 23:30 UTC on 31 March 2027 is 00:30 on 1 April in London (BST, UTC+1).
+    expect(ukDate(new Date("2027-03-31T23:30:00Z"))).toBe("2027-04-01");
+    // 23:30 UTC on 1 December 2026 is still 1 December in London (GMT).
+    expect(ukDate(new Date("2026-12-01T23:30:00Z"))).toBe("2026-12-01");
+  });
+
+  it("gives the current terms and privacy versions on and after their dates", () => {
+    const now = new Date("2026-11-25T12:00:00Z");
+    expect(versionInEffect("terms", now).version).toBe("0.1");
+    expect(versionInEffect("privacy", now).version).toBe("0.2");
+    expect(versionsAtLeastInEffect("privacy", now)).toEqual(["0.2"]);
+  });
+
+  it("refuses a date before any version applied", () => {
+    expect(() => versionInEffect("terms", new Date("2026-11-24T12:00:00Z"))).toThrow(
+      "No version of terms is in effect on 2026-11-24",
     );
   });
 });

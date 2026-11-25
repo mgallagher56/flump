@@ -5,7 +5,7 @@ import request from "supertest";
 import { DataSource } from "typeorm";
 import { vi } from "vitest";
 import { AppModule } from "../../src/app.module";
-import { DEV_BYPASS_TOKEN } from "../../src/auth/dev-bypass.verifier";
+import { DEV_BYPASS_TOKEN, DEV_USER } from "../../src/auth/dev-bypass.verifier";
 import { createTestJwks } from "../../src/auth/testing/test-jwks";
 import { TOKEN_VERIFIER } from "../../src/auth/token-verifier";
 import { WorkOsJwtVerifier } from "../../src/auth/workos-jwt.verifier";
@@ -16,6 +16,7 @@ import { requestContextMiddleware } from "../../src/observability/request-contex
 import { RateLimitStore } from "../../src/security/rate-limit.store";
 import { assertSafeTestDatabase } from "../../src/testing/assertSafeTestDatabase";
 import { emptyEntityTables } from "../../src/testing/emptyTables";
+import { seedTermsAcceptance } from "../../src/testing/seedTermsAcceptance";
 
 /**
  * Two-user IDOR harness (E20-N22).
@@ -36,6 +37,13 @@ import { emptyEntityTables } from "../../src/testing/emptyTables";
  */
 export const USER_A = "user_A";
 export const USER_B = "user_B";
+
+/**
+ * The users the harness signs in. Each has agreed to the newest terms after boot and after every
+ * truncateAll, so the AuthGuard's terms check lets the matrix through; a test about terms
+ * acceptance deletes a user's row first.
+ */
+export const HARNESS_USERS = [USER_A, USER_B, DEV_USER.id] as const;
 
 /** A well-formed uuid that no row has, for the "real not-found" baseline. */
 export const MISSING_ID = "00000000-0000-4000-8000-000000000000";
@@ -66,6 +74,11 @@ export interface AuthzHarness {
   dataSource: DataSource;
   /** `stale`: user B, signed in an hour ago (fails the recent-login check). */
   tokens: { a: string; b: string; stale: string; expired: string; dev: string };
+  /**
+   * A freshly signed token for any user id, signed in now. For a user outside HARNESS_USERS, who
+   * has not agreed to the terms (terms acceptance tests).
+   */
+  tokenFor(userId: string): Promise<string>;
   call(method: HttpMethod, path: string, token?: string, body?: object): request.Test;
   /** Per-user and per-IP limits (tokenMint 5/h, destructive 10/h) would otherwise 429 the matrix. */
   resetRateLimits(): Promise<void>;
@@ -155,6 +168,7 @@ export async function bootAuthzHarness(options: HarnessOptions = {}): Promise<Au
     applySecurity(app, { NODE_ENV: process.env.NODE_ENV });
   }
   await app.init();
+  await seedTermsAcceptance(app.get(DataSource), HARNESS_USERS);
   // The harness is only meaningful if the real verifier is in front of every route.
   if (!(app.get(TOKEN_VERIFIER) instanceof WorkOsJwtVerifier)) {
     throw new Error("authz harness: TOKEN_VERIFIER is not WorkOsJwtVerifier");
@@ -190,6 +204,7 @@ export async function bootAuthzHarness(options: HarnessOptions = {}): Promise<Au
     app,
     dataSource: app.get(DataSource),
     tokens,
+    tokenFor: (userId) => jwt.sign({ sub: userId, auth_time: Math.floor(Date.now() / 1000) }),
     call(method, path, token, body) {
       let req = request(app.getHttpServer())[method](path);
       if (token) req = req.set("Authorization", `Bearer ${token}`);
@@ -247,6 +262,7 @@ export async function truncateAll(dataSource: DataSource): Promise<void> {
   await Promise.all([...pendingAuditWrites]);
   // audit_events refuses TRUNCATE (SEC-F); the helper deletes its rows the allowed way.
   await emptyEntityTables(dataSource);
+  await seedTermsAcceptance(dataSource, HARNESS_USERS);
 }
 
 /** /mcp audit writes started and not yet finished, across every harness in this process. */

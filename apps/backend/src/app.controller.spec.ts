@@ -7,7 +7,7 @@ import type { BootConfig } from "./config/config.module";
 const bootConfig = (env: Record<string, string | undefined> = {}): BootConfig => ({
   db: {} as BootConfig["db"],
   clientPolicy: readClientPolicy(env),
-  privacyWarnings: [],
+  configWarnings: [],
 });
 
 describe("AppController", () => {

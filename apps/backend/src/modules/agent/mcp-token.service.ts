@@ -1,5 +1,6 @@
 import { randomBytes } from "node:crypto";
 import {
+  AuthenticationError,
   hashPatToken,
   type McpTokenRecord,
   type McpTokenStoreAdapter,
@@ -16,6 +17,7 @@ import {
   isBetaUserIdAllowed,
 } from "../../auth/beta-access";
 import { isMcpUserAllowed, readMcpAccessConfig } from "../../auth/mcp-access";
+import { TERMS_ACCEPTANCE_CHECK, type TermsAcceptanceCheck } from "../../auth/terms-acceptance";
 import { type KeysetOrder, keysetPage, type PageRequest } from "../../contract/pagination";
 import { McpToken } from "../../entities/mcp-token.entity";
 
@@ -31,6 +33,7 @@ export class McpTokenService implements McpTokenStoreAdapter {
     @InjectRepository(McpToken)
     private readonly mcpTokenRepository: Repository<McpToken>,
     @Inject(BETA_MEMBERSHIP_CHECK) private readonly betaMembership: BetaMembershipCheck,
+    @Inject(TERMS_ACCEPTANCE_CHECK) private readonly termsAcceptance: TermsAcceptanceCheck,
   ) {}
 
   // --- McpTokenStoreAdapter implementation ---
@@ -54,6 +57,16 @@ export class McpTokenService implements McpTokenStoreAdapter {
     if (!(await isBetaUserIdAllowed(process.env, found.userId, this.betaMembership))) {
       this.logger.warn(`mcp_token_denied tokenId=${found.id} reason=beta_allowlist`);
       return null;
+    }
+    // Terms acceptance: a token works only while its owner has agreed to the terms in force,
+    // checked on every request. A new terms version coming into force stops the token until the
+    // owner agrees in Flump; the token is refused, not revoked. The message says where to agree.
+    // A failed read throws, so the request fails rather than passing.
+    if (!(await this.termsAcceptance.hasAgreedToTermsInForce(found.userId))) {
+      this.logger.warn(`mcp_token_denied tokenId=${found.id} reason=terms_not_accepted`);
+      throw new AuthenticationError(
+        "Open Flump and agree to the terms of use to use this AI connection again.",
+      );
     }
     // S2: a row without an expiry is refused here as well as in the verifier.
     if (!found.expiresAt) {

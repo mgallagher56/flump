@@ -1,6 +1,6 @@
 import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
-import { resolveTermsVersion, TERMS_VERSION_CONFIG } from "../../config/privacy.config";
+import { TERMS_ACCEPTANCE_CHECK } from "../../auth/terms-acceptance";
 import { Account } from "../../entities/account.entity";
 import { AccountDetail } from "../../entities/account-detail.entity";
 import { BankConnection } from "../../entities/bank-connection.entity";
@@ -9,15 +9,17 @@ import { ImportBatch } from "../../entities/import-batch.entity";
 import { McpToken } from "../../entities/mcp-token.entity";
 import { SnapshotCheckin } from "../../entities/snapshot-checkin.entity";
 import { TaxRecord } from "../../entities/tax-record.entity";
+import { TermsAcceptance } from "../../entities/terms-acceptance.entity";
 import { Transaction } from "../../entities/transaction.entity";
 import { UserProfile } from "../../entities/user-profile.entity";
 import { IdentityModule } from "../../identity/identity.module";
 import { BankingModule } from "../banking/banking.module";
 import { PrivacyModule } from "../privacy/privacy.module";
+import { TermsAcceptanceService } from "./terms-acceptance.service";
 import { UserProfileController } from "./user-profile.controller";
 import { UserProfileService } from "./user-profile.service";
 
-/** The user's profile, onboarding facts, checklist and financial-data reset. */
+/** The user's profile, onboarding facts, checklist, financial-data reset and terms acceptance. */
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -29,6 +31,7 @@ import { UserProfileService } from "./user-profile.service";
       McpToken,
       SnapshotCheckin,
       TaxRecord,
+      TermsAcceptance,
       Transaction,
       UserProfile,
     ]),
@@ -39,9 +42,10 @@ import { UserProfileService } from "./user-profile.service";
   controllers: [UserProfileController],
   providers: [
     UserProfileService,
-    // BE-15 (M-PRIV3): the terms version, read once at boot; null while TERMS_VERSION is unset.
-    { provide: TERMS_VERSION_CONFIG, useFactory: () => resolveTermsVersion(process.env) },
+    TermsAcceptanceService,
+    // The AuthGuard's terms check (terms acceptance), resolved lazily from the whole app.
+    { provide: TERMS_ACCEPTANCE_CHECK, useExisting: TermsAcceptanceService },
   ],
-  exports: [UserProfileService],
+  exports: [UserProfileService, TermsAcceptanceService, TERMS_ACCEPTANCE_CHECK],
 })
 export class ProfileModule {}

@@ -1,58 +1,36 @@
 import { describe, expect, it } from "vitest";
-import { PRODUCTION_REQUIRED, parseBackendEnv } from "./env.schema";
-import {
-  PRIVACY_PRODUCTION_VARIABLES,
-  privacyConfigWarnings,
-  privacyWarningMessage,
-  resolveTermsVersion,
-} from "./privacy.config";
+import { parseBackendEnv } from "./env.schema";
+import { retiredVariableMessage, retiredVariablesSet } from "./privacy.config";
 
-describe("privacyConfigWarnings (BE-15; SEC-A)", () => {
-  it("warns about TERMS_VERSION only: the three keys are boot requirements now (SEC-A)", () => {
-    expect(privacyConfigWarnings({ NODE_ENV: "production" })).toEqual(["TERMS_VERSION"]);
-    expect(PRIVACY_PRODUCTION_VARIABLES).toEqual(["TERMS_VERSION"]);
-    for (const name of ["DELETION_TOMBSTONE_KEY", "WEB_CLIENT_IP_HMAC_KEY", "WORKOS_API_KEY"]) {
-      expect(PRODUCTION_REQUIRED).toContain(name);
-    }
-  });
-
-  it("treats blank as unset and says nothing once it is set", () => {
-    expect(privacyConfigWarnings({ NODE_ENV: "production", TERMS_VERSION: "   " })).toEqual([
+describe("retired variables (terms acceptance retired TERMS_VERSION)", () => {
+  it("names TERMS_VERSION when it is set, in any environment", () => {
+    expect(retiredVariablesSet({ TERMS_VERSION: "2026-11-01" })).toEqual(["TERMS_VERSION"]);
+    expect(retiredVariablesSet({ NODE_ENV: "production", TERMS_VERSION: "x" })).toEqual([
       "TERMS_VERSION",
     ]);
-    expect(privacyConfigWarnings({ NODE_ENV: "production", TERMS_VERSION: "2026-11-01" })).toEqual(
-      [],
-    );
   });
 
-  it("says nothing outside production", () => {
-    expect(privacyConfigWarnings({ NODE_ENV: "development" })).toEqual([]);
-    expect(privacyConfigWarnings({})).toEqual([]);
+  it("says nothing when it is unset or blank", () => {
+    expect(retiredVariablesSet({})).toEqual([]);
+    expect(retiredVariablesSet({ TERMS_VERSION: "   " })).toEqual([]);
   });
 
-  it("logs the variable name and the owner doc, never a value", () => {
-    for (const name of PRIVACY_PRODUCTION_VARIABLES) {
-      const message = privacyWarningMessage(name);
-      expect(message).toContain(name);
-      expect(message).toContain("OWNER-SETUP.md");
-    }
+  it("logs the name and what to do, never the value", () => {
+    const message = retiredVariableMessage("TERMS_VERSION");
+    expect(message).toContain("TERMS_VERSION");
+    expect(message).toContain("Delete TERMS_VERSION");
+    expect(message).not.toContain("2026-11-01");
   });
 
-  it("TERMS_VERSION stays optional at production boot", () => {
+  it("still boots in production with any old value left in place, or none", () => {
     expect(() => parseBackendEnv(productionBase())).not.toThrow();
-  });
-});
-
-describe("resolveTermsVersion (M-PRIV3)", () => {
-  it("is null when unset or blank, else the trimmed version", () => {
-    expect(resolveTermsVersion({})).toBeNull();
-    expect(resolveTermsVersion({ TERMS_VERSION: "  " })).toBeNull();
-    expect(resolveTermsVersion({ TERMS_VERSION: " 2026-11-01 " })).toBe("2026-11-01");
-  });
-
-  it("is optional at boot but must be a short identifier when set", () => {
-    expect(() => parseBackendEnv({ TERMS_VERSION: "2026-11-01" })).not.toThrow();
-    expect(() => parseBackendEnv({ TERMS_VERSION: "v1 (Nov 2026)" })).toThrow(/TERMS_VERSION/);
+    // The old schema refused free text; a retired variable must never fail boot.
+    expect(() =>
+      parseBackendEnv({ ...productionBase(), TERMS_VERSION: "v1 (Nov 2026)" }),
+    ).not.toThrow();
+    expect(() =>
+      parseBackendEnv({ ...productionBase(), TERMS_VERSION: "2026-11-01" }),
+    ).not.toThrow();
   });
 });
 

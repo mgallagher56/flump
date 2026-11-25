@@ -105,6 +105,7 @@ import {
   SyncBankConnectionResponse,
   TaxRecordListResponse,
   TaxRecordResponse,
+  TermsStatusResponse,
   UpdateAccountResponse,
   UpdateChecklistResponse,
   UpdateProfileResponse,
@@ -856,7 +857,17 @@ export const routes = {
       group: "profile",
       response: DeleteUserResponse,
     }),
-    /** Records the caller's acceptance of the current terms version (BE-15, M-PRIV3). */
+    /** Whether the caller must agree to the terms of use, and the versions to show. */
+    termsStatus: defineRoute({
+      id: "profile.termsStatus",
+      method: "GET",
+      path: "user-profile/terms-acceptance",
+      auth: "user",
+      ownership: "user",
+      group: "profile",
+      response: TermsStatusResponse,
+    }),
+    /** Records the caller's agreement to the newest terms, with the privacy notice shown. */
     acceptTerms: defineRoute({
       id: "profile.acceptTerms",
       method: "POST",

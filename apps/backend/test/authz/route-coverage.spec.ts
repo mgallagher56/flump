@@ -46,7 +46,9 @@ describe("authz route coverage", () => {
   });
 
   it("detects an unguarded route (self-test of the detector)", () => {
-    const fake: RegisteredRoute[] = [{ key: "GET /secret", guarded: false, allowUninvited: false }];
+    const fake: RegisteredRoute[] = [
+      { key: "GET /secret", guarded: false, allowUninvited: false, allowWithoutTerms: null },
+    ];
     const offenders = fake.filter((r) => !r.guarded && !UNGUARDED_ALLOWLIST.includes(r.key));
     expect(offenders).toHaveLength(1);
   });
@@ -65,5 +67,27 @@ describe("authz route coverage", () => {
       "GET /user-profile/export/csv",
       "POST /beta/invites/redeem",
     ]);
+  });
+
+  it("lets a caller who has not agreed to the terms through only on the listed routes, each with a reason", () => {
+    // Terms acceptance. Every AuthGuard route runs the terms check unless marked
+    // @AllowWithoutTerms(reason); /mcp and its REST route check the token owner's agreement in
+    // McpTokenService.findTokenByHash. A person who does not agree must still be able to read and
+    // record the agreement, get a copy of their data and delete their account; an invite is
+    // redeemed before the terms are shown. Adding a route here needs the coordinator's sign-off
+    // (AGENTS.md section 15).
+    const exempt = routes.filter((r) => r.allowWithoutTerms !== null);
+    expect(exempt.map((r) => r.key).sort()).toEqual([
+      "DELETE /user-profile",
+      "GET /user-profile/export",
+      "GET /user-profile/export/csv",
+      "GET /user-profile/terms-acceptance",
+      "POST /beta/invites/redeem",
+      "POST /user-profile/terms-acceptance",
+    ]);
+    for (const route of exempt) {
+      expect(route.guarded, route.key).toBe(true);
+      expect(route.allowWithoutTerms?.trim().length ?? 0, route.key).toBeGreaterThan(20);
+    }
   });
 });

@@ -65,13 +65,13 @@ export class HealthController {
         res.status(HttpStatus.SERVICE_UNAVAILABLE);
         return { status: "unavailable" };
       }
-      // BE-15 (N1, N2): privacy variables unset in production are counted, never named (the names are in the boot log). They do
-      // not make the service unready: every other route works without them.
+      // Retired variables still set are counted, never named (the names are in the boot log). They
+      // do not make the service unready: nothing reads them.
       return {
         status: "ok",
         version: VERSION,
         commit: readCommit(),
-        configWarnings: this.bootConfig.privacyWarnings.length,
+        configWarnings: this.bootConfig.configWarnings.length,
       };
     } catch {
       res.status(HttpStatus.SERVICE_UNAVAILABLE);

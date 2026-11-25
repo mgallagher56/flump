@@ -16,21 +16,61 @@ import {
 } from "./beta-access";
 import { ALLOW_ERASED, ERASED_ACCOUNT_CHECK, type ErasedAccountCheck } from "./erased-account";
 import { accountDeletedException } from "./recent-login";
+import {
+  ALLOW_WITHOUT_TERMS,
+  TERMS_ACCEPTANCE_CHECK,
+  type TermsAcceptanceCheck,
+  termsCheckUnavailableException,
+  termsNotAcceptedException,
+} from "./terms-acceptance";
 import { type AuthenticatedUser, TOKEN_VERIFIER, type TokenVerifier } from "./token-verifier";
 
 @Injectable()
 export class AuthGuard implements CanActivate {
   private erasedCheck: ErasedAccountCheck | null | undefined;
   private membershipCheck: BetaMembershipCheck | null | undefined;
+  private termsCheck: TermsAcceptanceCheck | null | undefined;
 
   constructor(
     @Inject(TOKEN_VERIFIER) private readonly verifier: TokenVerifier,
     @Optional() private readonly moduleRef?: ModuleRef,
     @Optional() @Inject(ERASED_ACCOUNT_CHECK) erasedCheck?: ErasedAccountCheck,
     @Optional() @Inject(BETA_MEMBERSHIP_CHECK) membershipCheck?: BetaMembershipCheck,
+    @Optional() @Inject(TERMS_ACCEPTANCE_CHECK) termsCheck?: TermsAcceptanceCheck,
   ) {
     this.erasedCheck = erasedCheck;
     this.membershipCheck = membershipCheck;
+    this.termsCheck = termsCheck;
+  }
+
+  /**
+   * The terms acceptance lookup, resolved lazily from the whole app (the profile module provides
+   * it), once. Null when absent, and then every route that needs the terms answers 503: a missing
+   * provider must never let a caller through.
+   */
+  private resolveTermsCheck(): TermsAcceptanceCheck | null {
+    if (this.termsCheck !== undefined) return this.termsCheck;
+    try {
+      this.termsCheck =
+        this.moduleRef?.get<TermsAcceptanceCheck>(TERMS_ACCEPTANCE_CHECK, { strict: false }) ??
+        null;
+    } catch {
+      this.termsCheck = null;
+    }
+    return this.termsCheck;
+  }
+
+  /** Fails closed: no provider, or a failed read, is 503; not agreed is 403. */
+  private async assertTermsAgreed(userId: string): Promise<void> {
+    const check = this.resolveTermsCheck();
+    if (!check) throw termsCheckUnavailableException();
+    let agreed: boolean;
+    try {
+      agreed = await check.hasAgreedToTermsInForce(userId);
+    } catch {
+      throw termsCheckUnavailableException();
+    }
+    if (!agreed) throw termsNotAcceptedException();
   }
 
   /**
@@ -111,6 +151,14 @@ export class AuthGuard implements CanActivate {
         message: "This account has not been invited to the Flump beta.",
       });
     }
+    // Terms acceptance: a caller must have agreed to the terms of use in force (with the privacy
+    // notice in force shown). Checked after the beta, so an uninvited person is told they are not
+    // invited rather than asked to agree. A route marked @AllowWithoutTerms (reading and recording
+    // the agreement, the data export, account deletion, invite redemption) skips it.
+    const allowWithoutTerms = handler
+      ? typeof Reflect.getMetadata(ALLOW_WITHOUT_TERMS, handler) === "string"
+      : false;
+    if (!allowWithoutTerms) await this.assertTermsAgreed(request.user.id);
     return true;
   }
 }

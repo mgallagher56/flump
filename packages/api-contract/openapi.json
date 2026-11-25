@@ -237,7 +237,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "429": {
             "content": {
@@ -638,7 +638,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "429": {
             "content": {
@@ -1144,7 +1144,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "409": {
             "content": {
@@ -1877,7 +1877,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "409": {
             "content": {
@@ -2010,7 +2010,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "404": {
             "content": {
@@ -2398,7 +2398,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "404": {
             "content": {
@@ -2908,7 +2908,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "404": {
             "content": {
@@ -3146,7 +3146,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "404": {
             "content": {
@@ -3258,7 +3258,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "404": {
             "content": {
@@ -3436,7 +3436,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "404": {
             "content": {
@@ -3661,7 +3661,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "404": {
             "content": {
@@ -3981,7 +3981,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "429": {
             "content": {
@@ -4174,7 +4174,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "413": {
             "content": {
@@ -4274,7 +4274,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "429": {
             "content": {
@@ -4380,7 +4380,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "404": {
             "content": {
@@ -4629,7 +4629,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "404": {
             "content": {
@@ -4720,7 +4720,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "429": {
             "content": {
@@ -4828,7 +4828,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "429": {
             "content": {
@@ -4948,7 +4948,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "413": {
             "content": {
@@ -5071,7 +5071,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "404": {
             "content": {
@@ -5178,7 +5178,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "429": {
             "content": {
@@ -5281,7 +5281,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "404": {
             "content": {
@@ -5400,7 +5400,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "413": {
             "content": {
@@ -5644,7 +5644,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "429": {
             "content": {
@@ -5950,7 +5950,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "409": {
             "content": {
@@ -6118,7 +6118,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "409": {
             "content": {
@@ -6251,7 +6251,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "404": {
             "content": {
@@ -6573,7 +6573,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "404": {
             "content": {
@@ -7009,7 +7009,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "404": {
             "content": {
@@ -7376,7 +7376,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "404": {
             "content": {
@@ -7682,7 +7682,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "404": {
             "content": {
@@ -7998,7 +7998,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "404": {
             "content": {
@@ -8339,7 +8339,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "404": {
             "content": {
@@ -8657,7 +8657,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "404": {
             "content": {
@@ -9034,7 +9034,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "429": {
             "content": {
@@ -9414,7 +9414,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "409": {
             "content": {
@@ -9548,7 +9548,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "404": {
             "content": {
@@ -9853,7 +9853,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "404": {
             "content": {
@@ -10249,7 +10249,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "404": {
             "content": {
@@ -10590,7 +10590,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "404": {
             "content": {
@@ -10926,7 +10926,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "404": {
             "content": {
@@ -11274,7 +11274,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "404": {
             "content": {
@@ -11615,7 +11615,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "404": {
             "content": {
@@ -11803,7 +11803,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "429": {
             "content": {
@@ -12068,7 +12068,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "412": {
             "content": {
@@ -12380,7 +12380,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "429": {
             "content": {
@@ -12533,7 +12533,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "413": {
             "content": {
@@ -13313,7 +13313,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "429": {
             "content": {
@@ -13416,7 +13416,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "404": {
             "content": {
@@ -13602,7 +13602,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "404": {
             "content": {
@@ -15003,7 +15003,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "429": {
             "content": {
@@ -15716,7 +15716,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "412": {
             "content": {
@@ -15845,7 +15845,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "429": {
             "content": {
@@ -16040,7 +16040,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "404": {
             "content": {
@@ -16291,7 +16291,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "429": {
             "content": {
@@ -16584,7 +16584,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "409": {
             "content": {
@@ -16942,7 +16942,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "409": {
             "content": {
@@ -17075,7 +17075,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "404": {
             "content": {
@@ -17282,7 +17282,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "404": {
             "content": {
@@ -17591,7 +17591,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "404": {
             "content": {
@@ -17719,7 +17719,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "404": {
             "content": {
@@ -17838,7 +17838,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "413": {
             "content": {
@@ -18227,7 +18227,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "429": {
             "content": {
@@ -18904,7 +18904,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "412": {
             "content": {
@@ -19331,7 +19331,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "413": {
             "content": {
@@ -19417,7 +19417,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "429": {
             "content": {
@@ -19483,7 +19483,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "429": {
             "content": {
@@ -19888,7 +19888,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "413": {
             "content": {
@@ -19989,7 +19989,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "429": {
             "content": {
@@ -20031,6 +20031,138 @@
       }
     },
     "/v1/user-profile/terms-acceptance": {
+      "get": {
+        "operationId": "profile.termsStatus",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "agreed": {
+                      "type": "boolean"
+                    },
+                    "firstTime": {
+                      "type": "boolean"
+                    },
+                    "privacyNotice": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "changed": {
+                          "type": "boolean"
+                        },
+                        "effectiveFrom": {
+                          "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                          "type": "string"
+                        },
+                        "path": {
+                          "type": "string"
+                        },
+                        "updated": {
+                          "type": "string"
+                        },
+                        "version": {
+                          "pattern": "^\\d{1,4}\\.\\d{1,4}$",
+                          "type": "string"
+                        }
+                      },
+                      "required": ["version", "updated", "effectiveFrom", "path", "changed"],
+                      "type": "object"
+                    },
+                    "required": {
+                      "type": "boolean"
+                    },
+                    "terms": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "changed": {
+                          "type": "boolean"
+                        },
+                        "effectiveFrom": {
+                          "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                          "type": "string"
+                        },
+                        "path": {
+                          "type": "string"
+                        },
+                        "updated": {
+                          "type": "string"
+                        },
+                        "version": {
+                          "pattern": "^\\d{1,4}\\.\\d{1,4}$",
+                          "type": "string"
+                        }
+                      },
+                      "required": ["version", "updated", "effectiveFrom", "path", "changed"],
+                      "type": "object"
+                    }
+                  },
+                  "required": ["required", "agreed", "firstTime", "terms", "privacyNotice"],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Success."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`unauthorized`: missing or invalid credentials."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`rate_limited`: too many requests. See the Retry-After header."
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`internal_error`: an unexpected failure. Quote the requestId."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`service_unavailable`: busy or temporarily unavailable. See the Retry-After header."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": ["profile"]
+      },
       "post": {
         "operationId": "profile.acceptTerms",
         "requestBody": {
@@ -20039,14 +20171,16 @@
               "schema": {
                 "additionalProperties": false,
                 "properties": {
-                  "version": {
-                    "maxLength": 64,
-                    "minLength": 1,
-                    "pattern": "^[A-Za-z0-9._-]+$",
+                  "privacyNoticeVersion": {
+                    "pattern": "^\\d{1,4}\\.\\d{1,4}$",
+                    "type": "string"
+                  },
+                  "termsVersion": {
+                    "pattern": "^\\d{1,4}\\.\\d{1,4}$",
                     "type": "string"
                   }
                 },
-                "required": ["version"],
+                "required": ["termsVersion", "privacyNoticeVersion"],
                 "type": "object"
               }
             }
@@ -20060,17 +20194,19 @@
                 "schema": {
                   "additionalProperties": false,
                   "properties": {
+                    "privacyNoticeVersion": {
+                      "pattern": "^\\d{1,4}\\.\\d{1,4}$",
+                      "type": "string"
+                    },
                     "recorded": {
                       "type": "boolean"
                     },
-                    "version": {
-                      "maxLength": 64,
-                      "minLength": 1,
-                      "pattern": "^[A-Za-z0-9._-]+$",
+                    "termsVersion": {
+                      "pattern": "^\\d{1,4}\\.\\d{1,4}$",
                       "type": "string"
                     }
                   },
-                  "required": ["version", "recorded"],
+                  "required": ["termsVersion", "privacyNoticeVersion", "recorded"],
                   "type": "object"
                 }
               }
@@ -20105,7 +20241,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "409": {
             "content": {
@@ -20115,7 +20251,7 @@
                 }
               }
             },
-            "description": "`terms_version_mismatch`: the version sent is not the one currently served. Fetch the current version and ask again."
+            "description": "`terms_version_mismatch`: the versions sent are not the newest. Read GET /user-profile/terms-acceptance and ask again."
           },
           "413": {
             "content": {
@@ -20165,7 +20301,7 @@
                 }
               }
             },
-            "description": "`terms_not_configured`: terms acceptance is not set up on this server. No Retry-After header is sent."
+            "description": "`service_unavailable`: busy or temporarily unavailable. See the Retry-After header."
           }
         },
         "security": [
@@ -20372,7 +20508,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "429": {
             "content": {
@@ -20608,7 +20744,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "409": {
             "content": {
@@ -20742,7 +20878,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "404": {
             "content": {
@@ -20994,7 +21130,7 @@
                 }
               }
             },
-            "description": "`forbidden` or `not_invited`: the account may not use this route."
+            "description": "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first."
           },
           "404": {
             "content": {

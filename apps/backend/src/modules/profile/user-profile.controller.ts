@@ -5,6 +5,7 @@ import {
   DeleteUserRequest,
   type DeleteUserResponse,
   ResetFinancialDataRequest,
+  type TermsStatusResponse,
   type UpdateChecklistRequest,
   type UpdateProfileRequest,
 } from "@flump/api-contract";
@@ -17,7 +18,6 @@ import {
   Get,
   Headers,
   HttpCode,
-  Inject,
   Logger,
   Patch,
   Post,
@@ -33,8 +33,8 @@ import { AuthGuard } from "../../auth/auth.guard";
 import type { AuthenticatedRequest } from "../../auth/authenticated-request";
 import { AllowErasedAccount } from "../../auth/erased-account";
 import { assertRecentLogin } from "../../auth/recent-login";
+import { AllowWithoutTerms } from "../../auth/terms-acceptance";
 import { safeErrorSummary } from "../../common/log-safe";
-import { TERMS_VERSION_CONFIG } from "../../config/privacy.config";
 import { expectedVersion, setEtag } from "../../contract/etag";
 import { RateLimit } from "../../security/rate-limit.decorator";
 import { AccountDeletionService } from "../privacy/account-deletion.service";
@@ -44,6 +44,7 @@ import {
   exportFileName,
   isAccountExportKey,
 } from "../privacy/account-export.service";
+import { newestPair, TermsAcceptanceService } from "./terms-acceptance.service";
 import {
   type ProfileView,
   type ResetFinancialDataResult,
@@ -59,8 +60,7 @@ export class UserProfileController {
     private readonly userProfileService: UserProfileService,
     private readonly accountDeletion: AccountDeletionService,
     private readonly accountExport: AccountExportService,
-    /** TERMS_VERSION, resolved once at boot; null turns terms acceptance off (BE-15). */
-    @Inject(TERMS_VERSION_CONFIG) private readonly termsVersion: string | null,
+    private readonly termsAcceptance: TermsAcceptanceService,
   ) {}
 
   @Get("user-profile")
@@ -135,6 +135,9 @@ export class UserProfileController {
   @Delete("user-profile")
   @AllowErasedAccount()
   @AllowUninvited()
+  @AllowWithoutTerms(
+    "a person who does not agree to the terms must be able to delete their account",
+  )
   @HttpCode(200)
   @RateLimit("destructive")
   async deleteUser(
@@ -160,6 +163,9 @@ export class UserProfileController {
    */
   @Get("user-profile/export")
   @AllowUninvited()
+  @AllowWithoutTerms(
+    "a person who does not agree to the terms must be able to get a copy of their data",
+  )
   @RateLimit("dataExport")
   @HttpCode(200)
   async exportData(@Req() req: AuthenticatedRequest, @Res() res: Response): Promise<void> {
@@ -176,6 +182,9 @@ export class UserProfileController {
    */
   @Get("user-profile/export/csv")
   @AllowUninvited()
+  @AllowWithoutTerms(
+    "a person who does not agree to the terms must be able to get a copy of their data",
+  )
   @RateLimit("dataExport")
   @HttpCode(200)
   async exportCsv(
@@ -242,39 +251,50 @@ export class UserProfileController {
   }
 
   /**
-   * Records that the caller accepted the terms and privacy notice (BE-15, M-PRIV3). The version
-   * must be the one served now (`TERMS_VERSION`): 409 `terms_version_mismatch` otherwise, so a
-   * client showing an older notice re-fetches rather than recording the wrong text. 503
-   * `terms_not_configured` while TERMS_VERSION is unset. 200 either way it records (idempotent per
-   * version; `recorded` says whether this call wrote the row). Default write rate limit, as for the
-   * other profile writes.
+   * Whether the caller must agree to the terms of use before using Flump, and the newest versions
+   * of the terms and the privacy notice to show (terms acceptance). Reachable without agreeing, as
+   * it is how the web and mobile apps learn what to show.
+   */
+  @Get("user-profile/terms-acceptance")
+  @AllowWithoutTerms("the acceptance screen reads what to show before the person has agreed")
+  @HttpCode(200)
+  async termsStatus(@Req() req: AuthenticatedRequest): Promise<TermsStatusResponse> {
+    return this.termsAcceptance.status(req.user.id);
+  }
+
+  /**
+   * Records that the caller agreed to the newest terms of use, with the newest privacy notice
+   * shown (information, not consent). The versions sent must be the newest: 409
+   * `terms_version_mismatch` otherwise, so a client showing older pages re-reads them rather than
+   * recording what it did not show. 200 either way it records (idempotent per pair; `recorded`
+   * says whether this call wrote the row). Default write rate limit, as for the other profile
+   * writes.
    */
   @Post("user-profile/terms-acceptance")
+  @AllowWithoutTerms("this is how a person who has not agreed records their agreement")
   @HttpCode(200)
   async acceptTerms(
     @Req() req: AuthenticatedRequest,
     @Body() body: AcceptTermsRequest,
   ): Promise<AcceptTermsResponse> {
-    if (this.termsVersion === null) {
-      throw new ServiceUnavailableException({
-        code: "terms_not_configured",
-        message: "Terms acceptance is not available right now. Try again later.",
-      });
-    }
     // Checked here as well as by the contract interceptor, so a malformed body is still refused
     // when contract enforcement is off (allowed outside production only).
     const parsed = AcceptTermsRequest.safeParse(body);
     if (!parsed.success) {
-      throw new BadRequestException("Send the terms version you accepted.");
+      throw new BadRequestException("Send the versions of the terms and privacy notice you read.");
     }
-    if (parsed.data.version !== this.termsVersion) {
+    const newest = newestPair();
+    if (
+      parsed.data.termsVersion !== newest.termsVersion ||
+      parsed.data.privacyNoticeVersion !== newest.privacyNoticeVersion
+    ) {
       throw new ConflictException({
         code: "terms_version_mismatch",
-        message: "The terms have changed. Reload to read the current version.",
+        message: "The terms or privacy notice have changed. Reload to read the current versions.",
       });
     }
-    const { recorded } = await this.userProfileService.acceptTerms(req.user.id, this.termsVersion);
-    return { version: this.termsVersion, recorded };
+    const { recorded } = await this.termsAcceptance.accept(req.user.id, newest);
+    return { ...newest, recorded };
   }
 
   @Patch("user-profile/checklist")

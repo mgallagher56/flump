@@ -3,6 +3,7 @@ import type { HttpTransportOptions } from "@flump/mcp";
 import { Logger } from "@nestjs/common";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fakeBetaMembership } from "../../testing/fake-beta-membership";
+import { fakeTermsAcceptance } from "../../testing/fake-terms-acceptance";
 
 const handlerOptions: HttpTransportOptions[] = [];
 
@@ -468,7 +469,7 @@ describe("McpService.getContextPack for a brand-new user", () => {
       retirementPlans as never,
     );
     const service = new McpService(
-      new McpTokenService(mcpTokens as never, fakeBetaMembership()),
+      new McpTokenService(mcpTokens as never, fakeBetaMembership(), fakeTermsAcceptance()),
       dataService,
       config as never,
       "workos",
