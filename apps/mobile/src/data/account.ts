@@ -1,10 +1,12 @@
 /**
  * The account check after sign-in and on launch: `GET /v1/user-profile` with the new access token
- * (plan section 9.5, S2b acceptance 3 and 7). The closed beta answers 403 `not_invited`.
+ * (plan section 9.5, S2b acceptance 3 and 7). The closed beta answers 403 `not_invited`; a person
+ * who has not agreed to the terms in force gets 403 `terms_not_accepted`.
  */
 import { type ApiClient, BackendError, createApiClient } from "@flump/api-client";
 import { UserProfileResponse } from "@flump/api-contract";
 import type { AccountCheck } from "../auth/session";
+import { TERMS_NOT_ACCEPTED_CODE } from "./problems";
 
 export function createAccountCheck(client: ApiClient): () => Promise<AccountCheck> {
   return async () => {
@@ -14,6 +16,10 @@ export function createAccountCheck(client: ApiClient): () => Promise<AccountChec
     } catch (error) {
       if (!(error instanceof BackendError)) return "unavailable";
       if (error.kind === "not-invited") return "not-invited";
+      // PR #939: until the terms in force are agreed, every authenticated route answers this.
+      if (error.kind === "forbidden" && error.code === TERMS_NOT_ACCEPTED_CODE) {
+        return "terms-not-accepted";
+      }
       // The client has already refreshed once and retried: a 401 now means the session is over.
       if (error.kind === "unauthorised") return "unauthorised";
       return "unavailable";

@@ -8,6 +8,7 @@ import { Offline } from "../Offline";
 import { SessionEnded } from "../SessionEnded";
 import { SignIn } from "../SignIn";
 import { SignInUnavailable } from "../SignInUnavailable";
+import { TermsRequired } from "../TermsRequired";
 
 /** The first route: shows the screen for the session's state (plan section 5.2). */
 export function SessionGate() {
@@ -46,5 +47,13 @@ export function SessionGate() {
       return <SessionEnded onSignIn={signIn} />;
     case "notInvited":
       return <NotInvited onSignOut={signOut} />;
+    case "termsRequired":
+      return (
+        <TermsRequired
+          marketingOrigin={marketingOrigin}
+          onRetry={() => void session.retry()}
+          onSignOut={signOut}
+        />
+      );
   }
 }

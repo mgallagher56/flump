@@ -3,7 +3,7 @@ app: mobile
 route: /
 title: Flump
 auth: public
-purpose: First screen of the Expo app (E12 S2a). Signed out, it shows the name, the tagline, Sign in and Create account (WorkOS AuthKit in the system browser sheet, PKCE) and the privacy and terms links. After sign-in it checks the account with GET /v1/user-profile and shows the signed-in placeholder (with the monthly check-in row when one is due, E12 S3), Not invited, the session-ended screen or the offline screen.
+purpose: First screen of the Expo app (E12 S2a). Signed out, it shows the name, the tagline, Sign in and Create account (WorkOS AuthKit in the system browser sheet, PKCE) and the privacy and terms links. After sign-in it checks the account with GET /v1/user-profile and shows the signed-in placeholder (with the monthly check-in row when one is due, E12 S3), Not invited, the terms screen (403 terms_not_accepted sends the person to the website to agree), the session-ended screen or the offline screen.
 route_file: apps/mobile/app/(app)/index.tsx
 
 sections:
@@ -21,6 +21,8 @@ sections:
       - check-in-day
   - id: not-invited
     component: apps/mobile/src/screens/NotInvited/NotInvited.tsx
+  - id: terms-required
+    component: apps/mobile/src/screens/TermsRequired/TermsRequired.tsx
   - id: session-ended
     component: apps/mobile/src/screens/SessionEnded/SessionEnded.tsx
   - id: offline

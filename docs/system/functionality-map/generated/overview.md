@@ -2,7 +2,7 @@
 
 # Functionality map: overview
 
-Mapped pages: 41 | Sections: 265 | Excluded routes: 23
+Mapped pages: 41 | Sections: 266 | Excluded routes: 23
 
 ## web
 
@@ -590,7 +590,7 @@ Mapped pages: 41 | Sections: 265 | Excluded routes: 23
 ### sign-in: Flump
 
 - Route: `/` (auth: `public`, file: `apps/mobile/app/(app)/index.tsx`)
-- Purpose: First screen of the Expo app (E12 S2a). Signed out, it shows the name, the tagline, Sign in and Create account (WorkOS AuthKit in the system browser sheet, PKCE) and the privacy and terms links. After sign-in it checks the account with GET /v1/user-profile and shows the signed-in placeholder (with the monthly check-in row when one is due, E12 S3), Not invited, the session-ended screen or the offline screen.
+- Purpose: First screen of the Expo app (E12 S2a). Signed out, it shows the name, the tagline, Sign in and Create account (WorkOS AuthKit in the system browser sheet, PKCE) and the privacy and terms links. After sign-in it checks the account with GET /v1/user-profile and shows the signed-in placeholder (with the monthly check-in row when one is due, E12 S3), Not invited, the terms screen (403 terms_not_accepted sends the person to the website to agree), the session-ended screen or the offline screen.
 
 | Section               | Component                                                         | Facts read                                         | Figures |
 | --------------------- | ----------------------------------------------------------------- | -------------------------------------------------- | ------- |
@@ -599,6 +599,7 @@ Mapped pages: 41 | Sections: 265 | Excluded routes: 23
 | `signed-in`           | `apps/mobile/src/screens/Home/Home.tsx`                           | -                                                  | -       |
 | `check-in-row`        | `apps/mobile/src/screens/Home/Home.tsx`                           | `balance-history`, `check-in-done`, `check-in-day` | -       |
 | `not-invited`         | `apps/mobile/src/screens/NotInvited/NotInvited.tsx`               | -                                                  | -       |
+| `terms-required`      | `apps/mobile/src/screens/TermsRequired/TermsRequired.tsx`         | -                                                  | -       |
 | `session-ended`       | `apps/mobile/src/screens/SessionEnded/SessionEnded.tsx`           | -                                                  | -       |
 | `offline`             | `apps/mobile/src/screens/Offline/Offline.tsx`                     | -                                                  | -       |
 | `sign-in-unavailable` | `apps/mobile/src/screens/SignInUnavailable/SignInUnavailable.tsx` | -                                                  | -       |

@@ -1,0 +1,25 @@
+# E12 S3 (PR #939): a person who has not agreed to the terms in force sees the terms screen after
+# sign-in, not an error. Once they have agreed (on the website; here the fixture flips), Try again
+# signs them in.
+appId: app.flump.mobile
+---
+- runScript:
+    file: ../scripts/fixture.js
+    env:
+      SCENARIO: '{"terms": "required"}'
+- runFlow: ../subflows/launch-signed-out.yaml
+- runFlow:
+    file: ../subflows/sign-in.yaml
+    env:
+      AFTER: "Please agree to our terms on the website"
+- assertVisible: "Open the Flump website"
+- takeScreenshot: terms-required-${THEME}
+- runScript:
+    file: ../scripts/scenario.js
+    env:
+      SCENARIO: '{"terms": "agreed"}'
+- tapOn:
+    id: "terms-retry"
+- extendedWaitUntil:
+    visible: "You are signed in"
+    timeout: 60000

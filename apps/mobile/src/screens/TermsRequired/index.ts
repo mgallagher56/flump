@@ -1,0 +1,1 @@
+export { TermsRequired } from "./TermsRequired";

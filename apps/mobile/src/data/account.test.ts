@@ -28,6 +28,15 @@ describe("createAccountCheck", () => {
     expect(await createAccountCheck(client)()).toBe(expected);
   });
 
+  it("a 403 terms_not_accepted is terms-not-accepted (PR #939)", async () => {
+    const client = clientThat(async () => {
+      const error = new BackendError("forbidden", "/user-profile", 403);
+      error.code = "terms_not_accepted";
+      throw error;
+    });
+    expect(await createAccountCheck(client)()).toBe("terms-not-accepted");
+  });
+
   it("anything that is not a backend error is unavailable", async () => {
     const client = clientThat(async () => {
       throw new TypeError("boom");
