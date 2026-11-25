@@ -522,3 +522,31 @@ What was noted when the decision was recorded:
 - **Stored like other columns.** `invoices.client_name`, `invoices.client_email`, `invoices.client_address` and `work_log_entries.client_name` are plain text columns with no column-level encryption, the same as the other columns in those tables.
 - **Export and erasure.** `apps/backend/src/modules/privacy/user-data-registry.ts` lists all four columns in the `invoices` and `workLogEntries` exports, both tables have `deleteOnErasure: true`, and "reset all financial data" clears both (`financial-clear`).
 - **Legal pages not yet updated.** The privacy notice and the record of processing did not yet mention client details. E19 legal pages are owner-only, so no agent edits them. Proposed wording for the owner to review is in `docs/compliance/drafts/invoicing-client-data-privacy-wording.md`, which is a draft and not published.
+
+# Coordinator decisions in the Midnight and Mint change (2026-11-24, #901 and #913)
+
+Recorded from the merged pull requests #901 and #913 and the code they changed. The owner's decision itself (Midnight and Mint replace Direction C) is the entry above. These are the details the pull requests settled. No owner words are quoted.
+
+- **Accessibility level: AA.** Text clears 4.5:1 and control boundaries clear 3:1 on every surface in both themes, held by `packages/tokens/src/tokens.a11y.test.ts`. Light primary text also clears AAA (7:1) on the canvas and card. #913 ran axe over the signed-in routes in light and dark at 375 and 1280 px with 0 contrast violations.
+- **Light card hairline is `#c8dcd5`.** The owner's first value `#d5e5e0` is 1.26:1 on the card, under the 1.3:1 card-edge rule, so the lightest value that passes is used. `#d5e5e0` stays as `border.subtle` for dividers. #901 flagged this for the owner to veto.
+- **Light overlay is `#f6f7f7`** (dialogs, sheets, menus, popovers). Dark overlay is `#2a3039`.
+- **Rose stays on small marks in light.** Rose remains the Budget and Pay colour (icon tile, card top edge, one chart series and its legend dot), never a background, band, button, link or text. The six section colours leave no free non-pink hue. A coordinator decision in #901 that the owner may veto.
+- **Guard changes signed off by the coordinator on 2026-11-24:** the hero ">= 1.5 on canvas and card" row and the "hero deltaE >= 20" test now apply to light only; dark checks `border.hero` >= 1.5 (canvas, card, sunken) and `text.heroFigure` deltaE >= 20.
+- **Token names and meanings that changed:** `surface.hero`, `primary.solid` and `primary.foreground`, the light `accent` (deep blue-teal), and `border.strong` (now a 3:1 control edge); new `text.onHero`, `text.heroFigure`, `border.hero`, `border.section` and `primary.emphasis`. Values are in `packages/tokens/src/index.ts` and `docs/ux/STYLE-GUIDE.md` section 2.2; where they differ, the code wins.
+- **#913 fixes:** the closing band scene uses its dark colours on the charcoal band in light; the savings chart axis takes a shared `minTickGap`; Retirement joined the visual and accessibility routes with new baselines; five unused JPGs per app were deleted.
+
+# Owner change (2026-11-24): the git-guard hook is removed
+
+Committed by the owner in #909, and merged by the owner (the pull request says no agent should).
+
+- Deletes `.claude/hooks/git-guard.sh` and its `PreToolUse` entry in `.claude/settings.json`. The hook blocked force pushes from any Claude session whose project sits on `main`, including pushes of feature branches from worktrees, which stalled every rebase in the merge queue.
+- The other hooks (`protect-files.sh`, `token-guard.sh`, formatting) are unchanged. Nothing now stops an agent's force push or other git command, so the git rules in the lane briefs apply without a hook.
+- Also enables the `pstack` plugin.
+
+# Tax vectors: all signed (2026-11-24, #906 and #912)
+
+Under the owner's rule of 2026-11-20, Fable deciders read GOV.UK and legislation.gov.uk on 24 November 2026 and signed as `fable-decider`: 140 vectors in #906 and the last 168 in #912 (five deciders, one per year, 2020/21 to 2024/25). All 308 are signed and the unsigned ratchet baseline is 0. 2020/21 to 2026/27 report verified; 2027/28 stays provisional. The decider found no wrong figure, except one engine fault fixed in #906: the engine charged Plan 5 student loan repayments in 2023/24 to 2025/26, but none are due before 2026/27 (SI 2009/470 reg 15(2BA)). Not verified by the deciders: Scottish rate resolutions (GOV.UK bands used) and Child Benefit rates from the statutory instruments.
+
+# E39 MA10 stays deferred (recorded 2026-11-25)
+
+MA10 (an MCP tool for mortgage estimates) was accepted as recommended on 2026-11-21: option A, defer. It needs the frozen simulate list reopened, which touches the model provider and the DPIA. So E39 S3 has no PR. S1c (#905) merged on 2026-11-24 without it.
