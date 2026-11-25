@@ -81,7 +81,7 @@ BE-07 and BE-08 run in parallel. BE-06 starts after BE-07 and the MCP session me
 - **Owns:** `be/audit/`, `be/jobs/`, `be/agent/`, `be/mcp.*`, `be/finance.controller.ts`, `be/app.module.ts`, `be/config/typeorm.options.ts`, `packages/mcp/`, `packages/finance-engine/src/anonymise.ts`, one migration.
 - **Acceptance:** each listed action writes one event; the job deletes rows past retention and is safe to run twice; the coverage test from BE-04 passes with the new tables.
 - **Tests:** real-Postgres integration for the job; authz matrix rows; MCP tool test for the anonymised output.
-- **Owner action:** Railway cron service. Blocked by D4 (retention) and D5 (where jobs run).
+- **Owner action:** Railway cron service. Blocked by D4 (retention) and D5 (where jobs run). Since D5 was revised (25 Nov 2026) the purge runs in the backend and the cron service is optional.
 
 ### BE-07 Security, config and observability hardening
 - **Findings:** M8, M9, M10, M12, M14, M15, M18, L7, L14; M6 (production refuses non-enforce); launch-gate boot check.
@@ -185,7 +185,7 @@ Ratchets follow the existing pattern: `bun scripts/backend-laws/<name>.ts --writ
 | D2 | Export format | JSON; JSON plus CSV | One JSON document. Complete, and cheap to cover by test. | Default JSON |
 | D3 | Student Loan as stored-negative liability | Yes; no | Yes. It is a debt and the engine already treats it as one. | Blocks BE-05 |
 | D4 | Retention | Various | Inactive accounts 24 months with notice; audit events 13 months; stale import batches 30 days. Matches the stated 13 months. | Blocks BE-06 |
-| D5 | Where jobs run | Railway cron service; in-process | Railway cron. Nothing double-runs across replicas. | Default cron |
+| D5 | Where jobs run | Railway cron service; in-process | Railway cron. Nothing double-runs across replicas. Revised 25 Nov 2026 for the retention purge only: in-process behind its advisory lock, cron optional (`docs/audit/plans/DECISIONS.md`). | Default cron |
 | D6 | Rate-limit store | Postgres; Redis | Postgres. No new service to run. | Default Postgres |
 | D7 | Tracing | Off; low sample | 2% scrubbed sample. Slow pages become visible at little cost. | Default 2% |
 | D8 | Open beta | Allow-list; `BETA_OPEN=true` | Keep the allow-list. | Default allow-list |

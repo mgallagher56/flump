@@ -239,14 +239,19 @@ The migration `AddRateLimitBuckets1794632012000` adds one table, `rate_limit_buc
 
 ## BE-06 Audit trail, retention and consents (findings H12, M-PRIV2, M-PRIV3, M-PRIV4, L6)
 
-The retention purge is a command a Railway cron service runs once a day (ruling D5). It never runs inside the API. Policies (ruling D4): audit records 13 months (`audit_events`, `agent_audit_events`), import batches 30 days after their last change, revoked or expired AI tokens 13 months, pending bank consents 1 day after expiry, deletion tombstones at their 24-month expiry, idempotency keys after their 24-hour TTL (BE-09), the BE-05 sign before-image 90 days. Accounts with no sign-in for 24 months are **counted, not erased** (the log line `retention inactive_accounts_due=N`); see the follow-up below.
+Since 25 November 2026 (D5 revised, `docs/audit/plans/DECISIONS.md`) the backend runs the retention purge itself: a few minutes after boot, then daily, behind an advisory lock so several instances never run it twice. `RETENTION_SCHEDULE_ENABLED=false` on the backend stops it without new code. `/health/ready` shows `retentionLastRunHoursAgo` (over 24 means a run is late) and `retentionSchedule`. The cron service below is optional: a second trigger that shares the lock. Both also clear unconfirmed imports after 7 days and sweep expired request counters. Policies (ruling D4): audit records 13 months (`audit_events`, `agent_audit_events`), import batches 30 days after their last change, revoked or expired AI tokens 13 months, pending bank consents 1 day after expiry, deletion tombstones at their 24-month expiry, idempotency keys after their 24-hour TTL (BE-09), the BE-05 sign before-image 90 days. Accounts with no sign-in for 24 months are **counted, not erased** (the log line `retention inactive_accounts_due=N`); see the follow-up below.
 
 ### Before deploying
 
 - [ ] Run the backup drill (BE-03 "Before deploying any PR with an irreversible migration"). The BE-06 migration is additive and its `down()` only drops the new tables and column, but the deploy rule applies to every migration. Date: ____
 - [ ] Optional: remove `AGENT_AUDIT_PURGE_ENABLED` from the backend's Railway variables. The in-process purge it controlled is gone; the variable is still accepted, so leaving it does no harm.
 
-### 1. Retention cron service
+### 1. Retention cron service (optional since D5 was revised)
+
+- [ ] After the first deploy with the in-process schedule: within about five minutes the backend log shows one `retention <policy> deleted=<n>` line per policy, then `retention inactive_accounts_due=<n>`, and `/health/ready` shows `retentionLastRunHoursAgo: 0`. Date: ____
+
+The steps below add the Railway cron as a second trigger. Skip them unless you want it.
+
 
 - [ ] In the production environment: New, GitHub Repo, this repository. Name it `retention`.
 - [ ] Settings, Config-as-code: set the path to `apps/backend/retention.railway.json`. This builds the backend image (`apps/backend/Dockerfile`), sets the start command `bun dist/jobs/retention-purge.js`, the schedule `15 3 * * *` (03:15 UTC, after the 02:30 backup) and restart policy `NEVER`. Confirm Settings shows the cron schedule. No public domain.

@@ -619,3 +619,15 @@ Relayed by the coordinator on 25 November 2026. The owner reported the logo as b
 - **Tokens.** The mark has its own semantic tokens, `primary.mark` and `primary.markLit`, so a button restyle cannot recolour it. Contrast in light: 8.6:1 or more for the body and 5.8:1 or more for the lit edge on canvas, card and overlay.
 - **Favicon.** The owner said: "make the favicon teal to match". The `favicon.svg` in both apps (still identical) has a `#084f45` tile in light and keeps its mint `#6fd0ba` tile in dark, through its own `prefers-color-scheme` rule (it follows the browser or system theme, not the app's theme switch). The "F" clears 9.2:1 on the light tile and 9.8:1 on the dark one. `chrome-parity.laws.test.ts` pins both fills to `primary.mark`. There is no `favicon.ico`, apple-touch icon, PNG size or manifest.
 - **Left for other lanes.** The Expo `FlumpLogo` in `apps/mobile` uses the same button tokens and is still charcoal in light (mobile lane).
+
+# D5 revised for the retention purge (2026-11-25), decided by a Fable decider
+
+The coordinator chose option B on 25 November 2026, on condition that an independent Fable decider (signed `fable-decider`) agreed to reversing ruling D5 (`docs/audit/backend-2026-11/PLAN.md`). It agreed. The owner may veto. Not legal advice; Fable is not a solicitor.
+
+- **Ruling.** "D5 (revised 25 Nov 2026): the retention purge runs in-process in the backend, daily and shortly after boot, behind the advisory lock with an env kill switch; the Railway cron stays an optional trigger; other jobs keep the cron default."
+- **Why.** D5's reason ("nothing double-runs across replicas") is met by the purge's advisory lock and single-`now` cutoffs. The privacy notice's timed lines become untrue from 3 December 2026 unless a purge runs, and the cron service needs an owner step. The owner prefers measures with no manual or recurring steps.
+- **Conditions the decider set.** One dedicated connection, released in `finally`, never on the request path. First run a few minutes after boot; timers unref'd and stopped on shutdown. The last-run record is written only after a full run; health shows its age and never fails readiness on it. The kill switch is read at each run. Tests for two instances (one skips), a failure that does not crash, and logs of names and counts only. A run confirmed on staging before 3 December.
+- **Strongest argument against.** A wrong policy now deletes within minutes of a deploy. Policy changes keep needing review and a real-database test.
+- **What would change it.** A transaction-mode pooler in front of Postgres (it breaks session locks), or a pool with no spare connection.
+- **Kill switch.** `RETENTION_SCHEDULE_ENABLED=false` on the backend service stops the in-process schedule without new code. The cron trigger is unaffected.
+- Supersedes: D5 for the retention purge only.

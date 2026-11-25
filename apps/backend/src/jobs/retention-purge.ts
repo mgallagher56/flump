@@ -4,9 +4,11 @@ import { cliDataSourceOptions } from "../data-source.options";
 import { describeRetentionReport, runRetentionPurge } from "./retention";
 
 /**
- * BE-06 retention purge (rulings D4, D5). Started once a day by the Railway cron service configured
- * in apps/backend/retention.railway.json (the owner provisions it: OWNER-SETUP.md, BE-06), and
- * exits. Uses the same DATABASE_URL settings as the app; never runs migrations.
+ * BE-06 retention purge (rulings D4, D5 revised 25 Nov 2026) as a one-off command. The backend
+ * already runs the same purge daily (`retention.scheduler.ts`); this is the optional second trigger
+ * for a Railway cron service (apps/backend/retention.railway.json, OWNER-SETUP.md BE-06) or a
+ * manual run. Both share the advisory lock, so they never overlap. Exits when done. Uses the same
+ * DATABASE_URL settings as the app; never runs migrations.
  *
  *   DATABASE_URL=... bun run --cwd apps/backend retention:purge
  *
@@ -18,7 +20,7 @@ async function main(): Promise<void> {
   const runner = ds.createQueryRunner();
   try {
     await runner.connect();
-    const report = await runRetentionPurge(runner);
+    const report = await runRetentionPurge(runner, new Date(), undefined, { trigger: "command" });
     for (const line of describeRetentionReport(report)) console.log(line);
   } finally {
     await runner.release();
