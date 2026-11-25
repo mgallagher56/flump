@@ -40,6 +40,15 @@
             "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/protect-files.sh"
           }
         ]
+      },
+      {
+        "matcher": "Agent|Task|mcp__ccd_session__start_session",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/require-model.sh"
+          }
+        ]
       }
     ]
   },

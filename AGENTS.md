@@ -48,7 +48,7 @@ When spawning any subagent (Agent/Task tool, workflows, parallel agents, `start_
 
 Never use `opus` or `fable` for anything outside the jobs above. When in doubt between two tiers, use the cheaper one, with two exceptions: `haiku` vs `sonnet` (use `sonnet`), and the work named above as staying on `opus` (all code review; money and tax maths, auth and security, privacy and data handling, migrations), which is never downgraded.
 
-A per-spawn `model` always overrides an agent file's pinned default, and every workflow `agent()` call passes `model`. The agent files, their pinned defaults, the three spawns that differ from them and the workflow rules are in [`docs/agents/subagent-models.md`](./docs/agents/subagent-models.md).
+A per-spawn `model` always overrides an agent file's pinned default, and every workflow `agent()` call passes `model`. `.claude/hooks/require-model.sh` refuses an Agent, Task or `start_session` call with no model (forks and calls where model does not apply pass). The agent files, their pinned defaults, the three spawns that differ from them and the workflow rules are in [`docs/agents/subagent-models.md`](./docs/agents/subagent-models.md).
 
 ## 7. RTK TOKEN-SAVING LAW (RUST TOKEN KILLER)
 
