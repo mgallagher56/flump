@@ -8,7 +8,11 @@ export interface AppSession {
   marketingOrigin: string;
 }
 
+/** Why there is no session: a bad config value, or native modules this app binary lacks. */
+export type StartProblem = { kind: "misconfigured" } | { kind: "unavailable"; missing: string[] };
+
 const SessionContext = createContext<AppSession | null>(null);
+const StartProblemContext = createContext<StartProblem>({ kind: "misconfigured" });
 
 const noSubscription = () => () => {};
 const initial = () => INITIAL_STATE;
@@ -19,15 +23,26 @@ const initial = () => INITIAL_STATE;
  */
 export function SessionProvider({
   app,
+  problem = { kind: "misconfigured" },
   children,
 }: {
   app: AppSession | null;
+  problem?: StartProblem;
   children: ReactNode;
 }) {
   useEffect(() => {
     void app?.session.restore();
   }, [app]);
-  return <SessionContext.Provider value={app}>{children}</SessionContext.Provider>;
+  return (
+    <StartProblemContext.Provider value={problem}>
+      <SessionContext.Provider value={app}>{children}</SessionContext.Provider>
+    </StartProblemContext.Provider>
+  );
+}
+
+/** Why sign-in is off when `useSession` gives null. */
+export function useStartProblem(): StartProblem {
+  return useContext(StartProblemContext);
 }
 
 /** The session and its state, or null in a misconfigured build. */

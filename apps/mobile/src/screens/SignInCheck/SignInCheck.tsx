@@ -1,6 +1,6 @@
-import * as SecureStore from "expo-secure-store";
 import { useState } from "react";
 import { View } from "react-native";
+import { MissingNativeModulesError, missingNativeModules } from "../../auth/nativeModules";
 import { NotSignedInError, runSignInCheck, type SignInCheckReport } from "../../auth/signInCheck";
 import { createTokenStore } from "../../auth/tokenStore";
 import { Button } from "../../components/Button";
@@ -77,6 +77,9 @@ export function problemText(error: unknown): string {
   if (error instanceof MobileConfigError) {
     return `This build is misconfigured: ${error.message} Set it in apps/mobile/.env.local and restart Metro.`;
   }
+  if (error instanceof MissingNativeModulesError) {
+    return `This app does not include what sign-in needs (${error.missing.join(", ")}). Open Flump in a development build.`;
+  }
   if (error instanceof NotSignedInError) {
     return "Sign in first. Expo Go cannot finish a sign-in (it never receives the flump:// redirect), so use a development build.";
   }
@@ -84,7 +87,11 @@ export function problemText(error: unknown): string {
   return `The check could not run (${kind}).`;
 }
 
-function defaultRun(): Promise<SignInCheckReport> {
+async function defaultRun(): Promise<SignInCheckReport> {
+  // Checked before the secure store is loaded: loading a missing native module throws.
+  const missing = missingNativeModules();
+  if (missing.length > 0) throw new MissingNativeModulesError(missing);
+  const SecureStore: typeof import("expo-secure-store") = require("expo-secure-store");
   const config = loadSignInConfig();
   return runSignInCheck({
     tokens: createTokenStore(SecureStore, SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY),

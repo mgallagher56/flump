@@ -19,3 +19,5 @@ sections:
     component: apps/mobile/src/screens/SessionEnded/SessionEnded.tsx
   - id: offline
     component: apps/mobile/src/screens/Offline/Offline.tsx
+  - id: sign-in-unavailable
+    component: apps/mobile/src/screens/SignInUnavailable/SignInUnavailable.tsx

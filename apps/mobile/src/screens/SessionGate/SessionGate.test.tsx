@@ -91,4 +91,18 @@ describe("SessionGate", () => {
     expect(screen.getByRole("header", { name: "This build is misconfigured" })).toBeOnTheScreen();
     expect(screen.queryByRole("button", { name: "Sign in" })).toBeNull();
   });
+
+  it("a host app without sign-in's native modules says so and offers no sign-in", async () => {
+    await render(
+      <ThemeProvider scheme="light">
+        <SessionProvider app={null} problem={{ kind: "unavailable", missing: ["ExpoCrypto"] }}>
+          <SessionGate />
+        </SessionProvider>
+      </ThemeProvider>,
+    );
+    expect(
+      screen.getByRole("header", { name: "Sign-in is not available in this app" }),
+    ).toBeOnTheScreen();
+    expect(screen.queryByRole("button", { name: "Sign in" })).toBeNull();
+  });
 });

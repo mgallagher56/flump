@@ -1,18 +1,28 @@
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useState } from "react";
-import { createAppSession } from "../src/auth/authDeps";
-import { SessionProvider } from "../src/auth/SessionProvider";
+import type * as AuthDeps from "../src/auth/authDeps";
+import { missingNativeModules } from "../src/auth/nativeModules";
+import { type AppSession, SessionProvider, type StartProblem } from "../src/auth/SessionProvider";
 import { loadSignInConfig } from "../src/config";
 import { ThemeProvider, useTheme } from "../src/theme/ThemeProvider";
 
-/** Reads the config once. A bad value stops sign-in before any network call (plan section 5.3). */
-function startApp() {
+/**
+ * Reads the config once. A bad value stops sign-in before any network call (plan section 5.3).
+ * The sign-in code loads native modules as it is imported, so it is required only once they are
+ * known to be there: a host app without them (Expo Go) then still opens, and says so.
+ */
+function startApp(): { app: AppSession | null; problem?: StartProblem } {
+  const missing = missingNativeModules();
+  if (missing.length > 0) return { app: null, problem: { kind: "unavailable", missing } };
   try {
     const config = loadSignInConfig();
-    return { session: createAppSession(config), marketingOrigin: config.site.marketingOrigin };
+    const { createAppSession }: typeof AuthDeps = require("../src/auth/authDeps");
+    return {
+      app: { session: createAppSession(config), marketingOrigin: config.site.marketingOrigin },
+    };
   } catch {
-    return null;
+    return { app: null, problem: { kind: "misconfigured" } };
   }
 }
 
@@ -46,11 +56,11 @@ function ThemedStack() {
 }
 
 export default function RootLayout() {
-  const [app] = useState(startApp);
+  const [{ app, problem }] = useState(startApp);
   return (
     <ThemeProvider>
-      {/* A null app makes the first route show "This build is misconfigured"; dev screens still open. */}
-      <SessionProvider app={app}>
+      {/* A null app makes the first route say why sign-in is off; dev screens still open. */}
+      <SessionProvider app={app} problem={problem}>
         <ThemedStack />
       </SessionProvider>
     </ThemeProvider>
