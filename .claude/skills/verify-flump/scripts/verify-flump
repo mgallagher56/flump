@@ -25,6 +25,22 @@ PG_IMAGE="postgres:18-alpine"
 die() { echo "verify-flump: $*" >&2; exit 1; }
 log() { echo "[verify-flump] $*" >&2; }
 
+# A test database carries the AGENTS.md section 18 labels, so scripts/ops/clean-test-dbs.sh can
+# remove it when this worktree goes, even if nobody ran `down`.
+worktree_root() { git -C "$REPO" rev-parse --show-toplevel 2>/dev/null || echo "$REPO"; }
+
+# A failed or interrupted `up` tears its own run down; only a ready run is left for `down`.
+UP_RUN_ID=""
+up_cleanup() {
+  local rc=$?
+  trap - EXIT INT TERM
+  if [ -n "$UP_RUN_ID" ]; then
+    log "up did not finish; tearing down run $UP_RUN_ID (evidence kept)"
+    cmd_down "$UP_RUN_ID" || true
+  fi
+  exit "$rc"
+}
+
 free_port() { bun -e 'const s = Bun.listen({ hostname: "127.0.0.1", port: 0, socket: { data() {} } }); console.log(s.port); s.stop(true);'; }
 
 # The only live run. With several live (parallel agents), refuse to guess: a default of "newest"
@@ -88,7 +104,10 @@ cmd_up() {
   STATE_DIR="$STATE_ROOT/$RUN_ID"
   EVIDENCE_DIR="$EVIDENCE_ROOT/$RUN_ID"
   mkdir -p "$STATE_DIR" "$EVIDENCE_DIR/logs"
-  # From here on, a failed launch still leaves a run that `down` can clean up.
+  UP_RUN_ID="$RUN_ID"
+  trap up_cleanup EXIT
+  trap 'exit 130' INT
+  trap 'exit 143' TERM
   {
     echo "RUN_ID=$RUN_ID"
     echo "EVIDENCE_DIR=$EVIDENCE_DIR"
@@ -101,7 +120,7 @@ cmd_up() {
       # A fresh worktree can race panda codegen ("Could not load styled-system/css"); one retry clears it.
       log "build failed once; retrying"
       (cd "$REPO" && bunx turbo run build --filter=backend --filter=@flump/web --filter=marketing --output-logs=errors-only >>"$EVIDENCE_DIR/logs/build.log" 2>&1) \
-        || die "build failed; see $EVIDENCE_DIR/logs/build.log (then run: verify-flump down $RUN_ID)"
+        || die "build failed; see $EVIDENCE_DIR/logs/build.log"
     fi
   fi
   [ -f "$REPO/apps/web/build/server/index.js" ] && [ -f "$REPO/apps/backend/dist/main.js" ] && [ -d "$REPO/apps/marketing/dist" ] \
@@ -129,7 +148,8 @@ cmd_up() {
   source "$STATE_DIR/run.env"
 
   log "starting Postgres container $PG_CONTAINER on 127.0.0.1:$PG_PORT"
-  docker run -d --name "$PG_CONTAINER" --label flump-verify="$RUN_ID" -p "127.0.0.1:$PG_PORT:5432" \
+  docker run -d --name "$PG_CONTAINER" --label flump-verify="$RUN_ID" \
+    --label flump.purpose=test-db --label flump.worktree="$(worktree_root)" -p "127.0.0.1:$PG_PORT:5432" \
     -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=flump_e2e "$PG_IMAGE" >/dev/null
   # pg_isready passes while the image's init scripts still run on a socket-only server, so wait
   # for a real TCP query from outside the container.
@@ -178,6 +198,8 @@ cmd_up() {
     log "not seeded (--no-seed): journeys must sign in themselves"
   fi
 
+  UP_RUN_ID=""
+  trap - EXIT INT TERM
   log "ready: run $RUN_ID, web $WEB_URL, evidence $EVIDENCE_DIR"
   echo "$RUN_ID"
 }
@@ -244,15 +266,16 @@ cmd_down() {
   # shellcheck disable=SC1091
   source "$STATE_DIR/run.env"
   # Kill only the processes this run recorded (and their children), never by name.
-  for pid in ${BACKEND_PID:-} ${WEB_PID:-} ${MARKETING_PID:-}; do
+  local pids="${BACKEND_PID:-} ${WEB_PID:-} ${MARKETING_PID:-}"
+  for pid in $pids; do
     pkill -TERM -P "$pid" 2>/dev/null || true
     kill -TERM "$pid" 2>/dev/null || true
   done
-  sleep 2
+  [ -z "${pids// /}" ] || sleep 2
   for pid in ${BACKEND_PID:-} ${WEB_PID:-} ${MARKETING_PID:-}; do
     kill -0 "$pid" 2>/dev/null && kill -KILL "$pid" 2>/dev/null || true
   done
-  [ -n "${PG_CONTAINER:-}" ] && docker rm -f "$PG_CONTAINER" >/dev/null 2>&1 || true
+  [ -n "${PG_CONTAINER:-}" ] && docker rm -fv "$PG_CONTAINER" >/dev/null 2>&1 || true
   rm -rf "$STATE_DIR"
   log "stopped run $RUN_ID; evidence kept at $EVIDENCE_DIR"
 }
