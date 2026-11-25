@@ -135,15 +135,14 @@ const MIGRATION_ONLY_TABLES =
   "'migrations', 'liability_sign_backfill', 'rate_limit_buckets', 'pension_rates_backfill', 'student_loan_plan_backfill', 'paye_salary_record_backfill', 'account_home_backfill', 'rent_share_backfill', 'mortgage_repayment_type_backfill', 'profile_column_drop_backfill', 'take_home_salary_backfill', 'reset_pension_zeros_backfill', 'rental_share_onto_property_backfill', 'budget_entry_share_backfill', 'invoice_tax_record_category_backfill'";
 
 /**
- * The groups for the oldest migrations reach their legacy schema by running the whole chain up and
- * then undoing it back to that migration, so each test applies and reverts well over 100 migrations,
- * and that grows with every new one. Measured on 25 Nov 2026: 1.5 to 2.5 s each with this file on
- * its own, up to 6.2 s with the db project's files running side by side, and 18 s once in a full run
- * on a loaded machine, past the 15 s default. A shorter route (migrating up only to the one before)
- * would stop running the later migrations' down() steps, which these tests also exercise, so they
- * keep the route and get this limit instead.
+ * For the three slowest tests here (measured times on each). Like every test for an old migration,
+ * they reach its legacy schema by running the whole chain up and undoing it back, well over 100
+ * migrations, and they replay part of it again, so they take about twice as long as the rest. One
+ * test of this file took 18 s in a full run on a loaded machine, past the 15 s default; the log did
+ * not name it, and these are the ones that measure longest. A shorter route (migrating up only to
+ * the one before) would stop running the later migrations' down() steps, which these tests exercise.
  */
-const CHAIN_REPLAY_TIMEOUT_MS = 60_000;
+const CHAIN_REPLAY_TIMEOUT_MS = 45_000;
 
 const ENTITY_TABLES = [
   "account_deletion_tombstones",
@@ -381,7 +380,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       { access_token: null, status: "error" },
     ]);
   });
-  describe("RemoveSeededExampleData1794355400000", { timeout: CHAIN_REPLAY_TIMEOUT_MS }, () => {
+  describe("RemoveSeededExampleData1794355400000", () => {
     const MIGRATION = "RemoveSeededExampleData1794355400000";
 
     const insertTax = async (
@@ -644,9 +643,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
     });
   });
 
-  describe("EvolveAccountDetailsForSnapshots1794356100000 (E30)", {
-    timeout: CHAIN_REPLAY_TIMEOUT_MS,
-  }, () => {
+  describe("EvolveAccountDetailsForSnapshots1794356100000 (E30)", () => {
     const MIGRATION = "EvolveAccountDetailsForSnapshots1794356100000";
 
     // Brings the schema to the state before this migration (full up, then the downs back to and
@@ -673,7 +670,10 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
         [account, month, year, value],
       );
 
-    it("down() removes the new columns, constraints and table", async () => {
+    // Measured 1.2 s alone, 3.4 s with the db project in parallel (25 Nov 2026).
+    it("down() removes the new columns, constraints and table", {
+      timeout: CHAIN_REPLAY_TIMEOUT_MS,
+    }, async () => {
       await ds.runMigrations();
       await undoThrough(MIGRATION);
       expect(await tables()).not.toContain("snapshot_checkins");
@@ -689,7 +689,10 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       ]);
     });
 
-    it("keeps the latest write per account and month, drops orphans, backfills owner and date", async () => {
+    // Measured 1.4 s alone, 6.2 s with the db project in parallel (25 Nov 2026).
+    it("keeps the latest write per account and month, drops orphans, backfills owner and date", {
+      timeout: CHAIN_REPLAY_TIMEOUT_MS,
+    }, async () => {
       const { a, b } = await legacy();
       await legacyRow(a, 2026, 1, 100); // older duplicate
       await legacyRow(a, 2026, 1, 150); // latest write wins
@@ -770,7 +773,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
     });
   });
 
-  describe("DeleteSyncedTransactions1794355500000", { timeout: CHAIN_REPLAY_TIMEOUT_MS }, () => {
+  describe("DeleteSyncedTransactions1794355500000", () => {
     const MIGRATION = "DeleteSyncedTransactions1794355500000";
 
     const insertAccountWithTx = async (
@@ -830,7 +833,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
     });
   });
 
-  describe("AddMortgageTermColumns1794355600000", { timeout: CHAIN_REPLAY_TIMEOUT_MS }, () => {
+  describe("AddMortgageTermColumns1794355600000", () => {
     const MIGRATION = "AddMortgageTermColumns1794355600000";
 
     const termColumns = (): Promise<unknown[]> =>
@@ -885,7 +888,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
     });
   });
 
-  describe("AddProfileFacts1794355723000", { timeout: CHAIN_REPLAY_TIMEOUT_MS }, () => {
+  describe("AddProfileFacts1794355723000", () => {
     const MIGRATION = "AddProfileFacts1794355723000";
     const FACT_COLUMNS = [
       "birth_year",
@@ -1366,9 +1369,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
     });
   });
 
-  describe("AddImportBatchesAndAgentAudit1794356200000 (E17 PR C)", {
-    timeout: CHAIN_REPLAY_TIMEOUT_MS,
-  }, () => {
+  describe("AddImportBatchesAndAgentAudit1794356200000 (E17 PR C)", () => {
     const MIGRATION = "AddImportBatchesAndAgentAudit1794356200000";
 
     const account = async (): Promise<string> => {
@@ -1412,7 +1413,10 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       ).rejects.toThrow(/CHK_agent_audit_events_outcome/);
     });
 
-    it("down() drops the tables and column, relabels agent rows manual and restores the old CHECK", async () => {
+    // Measured 1.6 s alone, 5.1 s with the db project in parallel (25 Nov 2026).
+    it("down() drops the tables and column, relabels agent rows manual and restores the old CHECK", {
+      timeout: CHAIN_REPLAY_TIMEOUT_MS,
+    }, async () => {
       await ds.runMigrations();
       const id = await account();
       await ds.query(

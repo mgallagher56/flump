@@ -111,7 +111,13 @@ function updateTarget(sql: string): { table: string; set: string } | null {
 
 /** True when a SET list assigns `column` (quoted or not, with or without an alias). */
 function assigns(set: string, column: string): boolean {
-  return new RegExp(`(?:^|[\\s,.])"?${column}"?\\s*=`, "i").test(set);
+  // The SET list is flat (no parentheses, see flatten), so its assignments split on commas. Plain
+  // string work, no pattern built from the column name.
+  return set.split(",").some((assignment) => {
+    const target = assignment.split("=")[0]?.trim() ?? "";
+    const name = target.slice(target.lastIndexOf(".") + 1).replaceAll('"', "");
+    return assignment.includes("=") && name.toLowerCase() === column.toLowerCase();
+  });
 }
 
 /** Takes the fence in every transaction of a signed-in request (see the comment at the top). */
