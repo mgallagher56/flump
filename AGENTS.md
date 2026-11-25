@@ -131,3 +131,12 @@ Before adding or changing any test, read [`docs/testing/writing-tests.md`](./doc
 - **The PR description has a "Tests" heading**: behaviours covered, how each test was seen to fail, anything weakened, skipped or removed.
 
 Detail: [`docs/agents/laws-detail.md`](./docs/agents/laws-detail.md).
+
+## 18. TEST DATABASE CLEAN-UP LAW
+
+Leftover test databases filled the owner's disk once (23 containers and 24 GB of volumes on 25 November 2026), so every container or volume a lane starts for tests is tied to its worktree:
+
+- Label it `--label flump.purpose=test-db --label flump.worktree="$(git rev-parse --show-toplevel)"`, and use `--rm` or an explicit teardown on exit, failure and interrupt.
+- Remove it with its volumes before the lane reports ready: `docker rm -fv <name>`, or `bash scripts/ops/clean-test-dbs.sh "$(git rev-parse --show-toplevel)"`.
+- When archiving a lane, the coordinator runs `bash scripts/ops/clean-test-dbs.sh <worktree path>`. `--orphans` removes those whose worktree is gone; `--dry-run` only lists. No Claude Code hook covers this: `WorktreeRemove` fires only for worktrees made by a `WorktreeCreate` hook.
+- Never touch `flump-postgres` (the owner's dev database) or anything not labelled as a Flump test database. The script refuses both.
