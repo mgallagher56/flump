@@ -1,6 +1,8 @@
 import {
+  getMonthsForTaxYear,
   getNextTaxYear,
-  getRecordAnnualTotalForTaxYear,
+  getRecordBucketMonth,
+  getRecordValueForMonth,
   type RentalShares,
   rentalShareForRecord,
   type TaxRecordFields,
@@ -82,13 +84,19 @@ export function mtdQualifyingIncomeForTaxYear(
   records: readonly TaxRecordFields[],
   taxYear: string,
   rentalShares?: RentalShares,
+  /** Last calendar month ("YYYY-MM") to count. Left out, the whole year counts. */
+  throughMonth?: string,
 ): number | null {
+  const months = getMonthsForTaxYear(taxYear).filter(
+    (month) => throughMonth === undefined || month <= throughMonth,
+  );
   let total = 0;
   let found = false;
   for (const record of records) {
     if (record.type !== "income") continue;
     if (record.source !== "self-employed" && record.source !== "rental") continue;
-    const yearly = getRecordAnnualTotalForTaxYear(record, taxYear);
+    let yearly = 0;
+    for (const month of months) yearly += getRecordValueForMonth(record, month);
     if (yearly <= 0) continue;
     found = true;
     const share =
@@ -110,7 +118,8 @@ export interface MtdQualifyingIncomeCheck {
 /**
  * Whether the recorded gross qualifying income for one measured year is more than its threshold.
  * "unknown" when nothing is recorded for that year, or when the year has not ended at `asOf` and
- * the total so far is not over (more income may still come). "notOver" only for a finished year.
+ * the total so far is not over (more income may still come). In a running year only months up to
+ * `asOf` count, so a monthly record's later months never make it "over". "notOver" only for a finished year.
  * Returns null for a year the rules do not measure.
  */
 export function checkMtdQualifyingIncome(
@@ -121,8 +130,15 @@ export function checkMtdQualifyingIncome(
 ): MtdQualifyingIncomeCheck | null {
   const threshold = mtdIncomeTaxThreshold(measuredTaxYear);
   if (!threshold) return null;
-  const income = mtdQualifyingIncomeForTaxYear(records, measuredTaxYear, rentalShares);
   const yearEnded = startYearOf(getUkTaxYearForDate(asOf)) > startYearOf(measuredTaxYear);
+  // In a year still running, only months up to today count: a monthly record's later months
+  // have not happened, so they are not income the user has recorded yet.
+  const income = mtdQualifyingIncomeForTaxYear(
+    records,
+    measuredTaxYear,
+    rentalShares,
+    yearEnded ? undefined : getRecordBucketMonth(asOf),
+  );
   const status: MtdQualifyingIncomeStatus =
     income === null
       ? "unknown"

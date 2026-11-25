@@ -4,10 +4,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("react-router", async () => await vi.importActual("react-router"));
 
 const backendFetch = vi.fn();
-const loadWorkspaceSnapshot = vi.fn();
+const backendFetchAll = vi.fn();
 vi.mock("~/services/backend-client.server", () => ({
   backendFetch: (...a: unknown[]) => backendFetch(...a),
-  loadWorkspaceSnapshot: (...a: unknown[]) => loadWorkspaceSnapshot(...a),
+  backendFetchAll: (...a: unknown[]) => backendFetchAll(...a),
 }));
 vi.mock("~/utils/auth.server", () => ({
   getAuthSession: async () => ({ user: { id: "u1" }, accessToken: "tok" }),
@@ -59,12 +59,15 @@ describe("app.invoicing route loader and action (E37 S2)", () => {
     vi.useRealTimers();
   });
 
-  const workspace = (taxRecords: unknown[] = [], employmentType: string | null = null) =>
-    loadWorkspaceSnapshot.mockResolvedValue({
-      taxRecords,
-      userProfile: { employmentType },
-      accounts: [],
+  let profile: { employmentType: string | null } = { employmentType: null };
+  const workspace = (taxRecords: unknown[] = [], employmentType: string | null = null) => {
+    profile = { employmentType };
+    backendFetchAll.mockImplementation(async (endpoint: string) => {
+      if (endpoint === "/tax-records") return taxRecords;
+      if (endpoint === "/accounts") return [];
+      throw new Error(`Unexpected list ${endpoint}`);
     });
+  };
 
   const backendReturnsEmptyLists = () => {
     workspace();
@@ -72,6 +75,7 @@ describe("app.invoicing route loader and action (E37 S2)", () => {
       if (endpoint === "/invoicing/settings") return { settings: settingsFixture };
       if (endpoint === "/work-logs") return { entries: [], nextCursor: null };
       if (endpoint === "/invoices") return { invoices: [], nextCursor: null };
+      if (endpoint === "/user-profile") return profile;
       throw new Error(`Unexpected endpoint ${endpoint}`);
     });
   };
@@ -89,7 +93,17 @@ describe("app.invoicing route loader and action (E37 S2)", () => {
       today: "2026-11-25",
       mtdPosition: { kind: "none" },
     });
-    expect(loadWorkspaceSnapshot).toHaveBeenCalledWith(expect.anything(), { includeTax: true });
+    // No rental records, so accounts are not read.
+    expect(backendFetchAll.mock.calls.map(([endpoint]) => endpoint)).toEqual(["/tax-records"]);
+  });
+
+  it("loader still loads with no Making Tax Digital line when the tax records fail", async () => {
+    vi.setSystemTime(new Date("2026-11-25T12:00:00Z"));
+    backendReturnsEmptyLists();
+    backendFetchAll.mockRejectedValue(new Error("tax records down"));
+    const data = await loader(loaderArgs());
+    expect(data.mtdPosition).toEqual({ kind: "none" });
+    expect(data.settings).toEqual(settingsFixture);
   });
 
   it("loader gives the Making Tax Digital position from the recorded tax records", async () => {

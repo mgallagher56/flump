@@ -24,8 +24,9 @@ import {
 import { InvoicingWorkspace } from "~/features/invoicing/components/InvoicingWorkspace";
 import { londonDate } from "~/features/snapshot/snapshotModel";
 import { MtdNotice } from "~/features/tax/components/MtdNotice";
-import { mtdNoticeCopy, mtdNoticePosition } from "~/features/tax/mtdNotice";
-import { backendFetch, loadWorkspaceSnapshot } from "~/services/backend-client.server";
+import { mtdNoticeCopy } from "~/features/tax/mtdNotice";
+import { loadMtdNoticePosition } from "~/features/tax/mtdNotice.server";
+import { backendFetch } from "~/services/backend-client.server";
 import { ifMatchFromForm, revalidateOnConflict } from "~/services/conflict";
 import { actionErrorResponse, throwRouteError } from "~/services/route-error.server";
 import { getAuthSession, requireAccessToken } from "~/utils/auth.server";
@@ -38,7 +39,8 @@ export const loader = async (args: LoaderFunctionArgs) => {
   const { accessToken } = await getAuthSession(args, { ensureSignedIn: true });
   const token = requireAccessToken({ accessToken });
 
-  const [settingsRes, workLogsRes, invoicesRes, workspace] = await Promise.all([
+  const today = londonDate();
+  const [settingsRes, workLogsRes, invoicesRes, mtdPosition] = await Promise.all([
     backendFetch("/invoicing/settings", {
       schema: InvoicingSettingsResponse,
       accessToken: token,
@@ -54,10 +56,9 @@ export const loader = async (args: LoaderFunctionArgs) => {
       accessToken: token,
       method: "GET",
     }).catch(throwRouteError),
-    // Tax records, profile and accounts, for the Making Tax Digital notice (E28).
-    loadWorkspaceSnapshot(args, { includeTax: true }),
+    // The Making Tax Digital line (E28). Never fails the page: no line on any error.
+    loadMtdNoticePosition(token, args.request.signal, today),
   ]);
-  const today = londonDate();
 
   const settings = settingsRes.settings;
   const settingsEtag = settings.updatedAt ? `"${settings.updatedAt}"` : null;
@@ -69,12 +70,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
     invoices: invoicesRes.invoices,
     // New work, issue and paid dates default to today on the Europe/London clock.
     today,
-    mtdPosition: mtdNoticePosition({
-      records: workspace.taxRecords,
-      employmentType: workspace.userProfile?.employmentType ?? null,
-      accounts: workspace.accounts,
-      today,
-    }),
+    mtdPosition,
   };
 };
 

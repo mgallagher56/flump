@@ -153,6 +153,39 @@ describe("checkMtdQualifyingIncome", () => {
     expect(checkMtdQualifyingIncome(partial, "2026/27", "2027-04-05")?.status).toBe("unknown");
   });
 
+  it("counts only months up to today in a year still running", () => {
+    // £3,000 a month from June 2026. On 25 November 2026: June to November is 6 x 3,000 = 18,000,
+    // not over £20,000. The whole year would be 10 x 3,000 = 30,000.
+    const monthly = [record({ amount: 3_000, frequency: "monthly", date: "2026-06-01" })];
+    expect(checkMtdQualifyingIncome(monthly, "2026/27", "2026-11-25")).toMatchObject({
+      status: "unknown",
+      recordedQualifyingIncomeGbp: 18_000,
+    });
+    // On 25 December 2026: 7 x 3,000 = 21,000, over £20,000.
+    expect(checkMtdQualifyingIncome(monthly, "2026/27", "2026-12-25")?.status).toBe("over");
+    // A yearly record dated later in the year has not happened yet.
+    const later = [record({ amount: 25_000, date: "2027-02-01" })];
+    expect(checkMtdQualifyingIncome(later, "2026/27", "2026-11-25")?.status).toBe("unknown");
+    // 1 to 5 April belongs to the year that ends on 5 April: on 3 April 2027 March counts too,
+    // 10 x 3,000 = 30,000.
+    expect(
+      checkMtdQualifyingIncome(monthly, "2026/27", "2027-04-03")?.recordedQualifyingIncomeGbp,
+    ).toBe(30_000);
+  });
+
+  it("counts a monthly record up to its end date and a string amount", () => {
+    // £2,000 a month, April 2025 to September 2025: 6 x 2,000 = 12,000, plus "19000.50" = 31,000.50,
+    // over £30,000 for 2025/26.
+    const records = [
+      record({ amount: 2_000, frequency: "monthly", date: "2025-04-06", endDate: "2025-09-30" }),
+      record({ amount: "19000.50", date: "2025-07-01" }),
+    ];
+    expect(checkMtdQualifyingIncome(records, "2025/26", "2026-11-25")).toMatchObject({
+      status: "over",
+      recordedQualifyingIncomeGbp: 31_000.5,
+    });
+  });
+
   it("is unknown with nothing recorded and reports the recorded income", () => {
     expect(checkMtdQualifyingIncome([], "2024/25", afterAll)).toMatchObject({
       status: "unknown",

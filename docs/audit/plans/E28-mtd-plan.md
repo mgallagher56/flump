@@ -231,7 +231,7 @@ Nothing in this plan is designed around interview answers.
 ## 6. Owner decisions
 
 1. **Accepted on 25 November 2026.** Accept option (a) now, with (b) decided by February 2027 and (c) ruled out for 2027-28 and until the section 4 conditions change. The owner said: "accept the MTD recommendation and start the notice".
-2. **Answered on 25 November 2026.** The notice states the user's own recorded position against the rule, never that they are mandated. The coordinator approves the exact wording in the notice PR.
+2. **Answered on 25 November 2026.** The notice states the user's own recorded position against the rule, never that they are mandated: income recorded "is over" the figure and the rules "may apply" from the date, with HMRC deciding from the return. The test is strictly more than the threshold, so exactly £50,000 is not over. Wording approved by the coordinator at the owner's delegation; the line is permanent and quiet, with nothing to dismiss and nothing stored.
 3. Open. Run the five interviews: yes or no, by when, where notes live and when they are deleted.
 4. Open. Whether to write to HMRC's SDS team about records-only status.
 5. Open. Whether foreign property is in scope (still open from the discovery note).

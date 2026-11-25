@@ -1,6 +1,6 @@
 import { checkMtdQualifyingIncome, type TaxRecordFields } from "@flump/finance-engine";
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { mtdNoticeCopy } from "../../mtdNotice";
 import { MtdNotice } from "./MtdNotice";
 
@@ -24,16 +24,26 @@ if (!check) throw new Error("fixture: 2025/26 is a measured year");
 const overCopy = mtdNoticeCopy({ kind: "over", check });
 const generalCopy = mtdNoticeCopy({ kind: "unknown" });
 
+const LEAD =
+  "The self-employed and property income you recorded for the 2025 to 2026 tax year, before expenses, is over £30,000. Making Tax Digital for Income Tax may apply to you from 6 April 2027.";
+
 describe("MtdNotice", () => {
-  it("states the date, the figure, the year and that Flump does not send anything", () => {
+  it("always shows the recorded income, the figure and the date, with the detail closed", () => {
     render(<MtdNotice copy={overCopy} />);
-    const notice = screen.getByTestId("mtd-notice");
-    expect(notice.getAttribute("data-kind")).toBe("over");
-    expect(
-      screen.getByText(
-        "Making Tax Digital for Income Tax is a set of HMRC rules for keeping records and reporting self-employed and property income through software.",
-      ),
-    ).toBeTruthy();
+    expect(screen.getByTestId("mtd-notice").getAttribute("data-kind")).toBe("over");
+    expect(screen.getByText(LEAD)).toBeTruthy();
+    const toggle = screen.getByRole("button", { name: "Show details" });
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    expect(screen.queryByText(/HMRC works this out/)).toBeNull();
+    expect(screen.queryByRole("link")).toBeNull();
+  });
+
+  it("opens the detail with the HMRC line, the not-compatible line and both GOV.UK links", () => {
+    render(<MtdNotice copy={overCopy} />);
+    fireEvent.click(screen.getByRole("button", { name: "Show details" }));
+    expect(screen.getByRole("button", { name: "Hide details" }).getAttribute("aria-expanded")).toBe(
+      "true",
+    );
     expect(
       screen.getByText(
         "From 6 April 2027, HMRC expects people over its threshold to keep digital records and send quarterly updates using compatible software.",
@@ -41,7 +51,7 @@ describe("MtdNotice", () => {
     ).toBeTruthy();
     expect(
       screen.getByText(
-        "The self-employed and property income you recorded for the 2025 to 2026 tax year, before expenses, is over £30,000, the threshold for that date.",
+        "HMRC works this out from your Self Assessment tax return, not from Flump. Some people are exempt.",
       ),
     ).toBeTruthy();
     expect(
@@ -49,23 +59,18 @@ describe("MtdNotice", () => {
         "Flump does not send anything to HMRC and is not compatible software for this.",
       ),
     ).toBeTruthy();
-  });
-
-  it("links to GOV.UK to check and to sign up, in a new tab", () => {
-    render(<MtdNotice copy={overCopy} />);
-    const check = screen.getByRole("link", { name: /Check if you need to use it on GOV.UK/ });
-    const signUp = screen.getByRole("link", { name: /Sign up on GOV.UK/ });
-    expect(check.getAttribute("href")).toBe(
+    const checkLink = screen.getByRole("link", { name: /Check if you need to use it on GOV.UK/ });
+    expect(checkLink.getAttribute("href")).toBe(
       "https://www.gov.uk/guidance/check-if-youre-eligible-for-making-tax-digital-for-income-tax",
     );
-    expect(signUp.getAttribute("href")).toBe(
+    expect(checkLink.getAttribute("target")).toBe("_blank");
+    expect(checkLink.textContent).toContain("(opens in a new tab)");
+    expect(screen.getByRole("link", { name: /Sign up on GOV.UK/ }).getAttribute("href")).toBe(
       "https://www.gov.uk/guidance/sign-up-for-making-tax-digital-for-income-tax",
     );
-    expect(check.getAttribute("target")).toBe("_blank");
-    expect(check.textContent).toContain("(opens in a new tab)");
   });
 
-  it("shows the shorter general line with one link when the position is unknown", () => {
+  it("shows the general line with one link and no details section", () => {
     render(<MtdNotice copy={generalCopy} />);
     expect(screen.getByTestId("mtd-notice").getAttribute("data-kind")).toBe("general");
     expect(
@@ -74,25 +79,18 @@ describe("MtdNotice", () => {
       ),
     ).toBeTruthy();
     expect(screen.getAllByRole("link")).toHaveLength(1);
+    expect(screen.queryByRole("button")).toBeNull();
   });
 
-  it("renders nothing with no copy or once dismissed", () => {
-    const { container, rerender } = render(<MtdNotice copy={null} />);
-    expect(container.innerHTML).toBe("");
-    rerender(<MtdNotice copy={overCopy} dismissed />);
-    expect(container.innerHTML).toBe("");
-  });
-
-  it("hides at once and saves the dismissal when hidden", () => {
-    const onDismiss = vi.fn();
-    render(<MtdNotice copy={overCopy} onDismiss={onDismiss} />);
-    fireEvent.click(screen.getByRole("button", { name: "Hide this notice" }));
-    expect(onDismiss).toHaveBeenCalledTimes(1);
-    expect(screen.queryByTestId("mtd-notice")).toBeNull();
-  });
-
-  it("has no hide button when there is nowhere to save the dismissal", () => {
+  it("has no alert role and nothing to dismiss", () => {
     render(<MtdNotice copy={overCopy} />);
-    expect(screen.queryByRole("button", { name: "Hide this notice" })).toBeNull();
+    expect(screen.queryByRole("status")).toBeNull();
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(screen.getAllByRole("button")).toHaveLength(1);
+  });
+
+  it("renders nothing with no copy", () => {
+    const { container } = render(<MtdNotice copy={null} />);
+    expect(container.innerHTML).toBe("");
   });
 });

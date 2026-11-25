@@ -35,7 +35,7 @@ const in2026to27 = now >= new Date("2026-04-06") && now < new Date("2027-04-06")
 // £20,000 gives 6 April 2028. £40,000 of trading income is over it before and after the £3,000
 // expense, because the test is gross income, not profit. Pinned only inside 2026/27.
 const MTD_OVER_2026_27 =
-  "The self-employed and property income you recorded for the 2026 to 2027 tax year, before expenses, is over £20,000, the threshold for that date.";
+  "The self-employed and property income you recorded for the 2026 to 2027 tax year, before expenses, is over £20,000. Making Tax Digital for Income Tax may apply to you from 6 April 2028.";
 
 await journey("self-assessment", async ({ page, step, save }) => {
   const summary = page.getByRole("region", { name: "Summary" });
@@ -78,13 +78,16 @@ await journey("self-assessment", async ({ page, step, save }) => {
     if (in2026to27) expect(before).toBe(BILL_2026_27);
   });
 
-  await step("the Making Tax Digital notice states the figure and the date", async () => {
+  await step("the Making Tax Digital line states the figure and the date", async () => {
     await expect(mtdNotice).toHaveAttribute("data-kind", "over");
+    if (in2026to27) await expect(mtdNotice).toContainText(MTD_OVER_2026_27);
+    // The detail is closed until opened, and says HMRC decides and Flump sends nothing.
+    await expect(mtdNotice).not.toContainText("HMRC works this out");
+    await mtdNotice.getByRole("button", { name: "Show details" }).click();
+    await expect(mtdNotice).toContainText(
+      "HMRC works this out from your Self Assessment tax return, not from Flump.",
+    );
     await expect(mtdNotice).toContainText("is not compatible software for this");
-    if (in2026to27) {
-      await expect(mtdNotice).toContainText("From 6 April 2028, HMRC expects");
-      await expect(mtdNotice).toContainText(MTD_OVER_2026_27);
-    }
     await expect(mtdNotice.getByRole("link", { name: /Sign up on GOV.UK/ })).toHaveAttribute(
       "href",
       "https://www.gov.uk/guidance/sign-up-for-making-tax-digital-for-income-tax",
