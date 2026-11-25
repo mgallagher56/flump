@@ -13,15 +13,15 @@ export const flumpLogoRecipe = cva({
 });
 
 /**
- * Midnight and Mint: a charcoal mark in light and a mint mark in dark, as in the mock-ups, via the
- * button fill tokens (primary.solid, lit from above by primary.hover). The highlights take the
- * button label colour, so they read on either mark. Panda has no colour utility for `stopColor`,
- * so a bare token name is emitted as an invalid value and the stop falls back to black. `token()`
- * resolves it to the CSS variable.
+ * The logo's own tokens: a teal mark in light and a mint mark in dark (primary.mark, lit from above
+ * by primary.markLit). Not the charcoal button fill, which read as a black ball (owner, 25 Nov
+ * 2026). The highlights take the button label colour, so they read on either mark. Panda has no
+ * colour utility for `stopColor`, so a bare token name is emitted as an invalid value and the stop
+ * falls back to black. `token()` resolves it to the CSS variable.
  */
 export const logoClasses = {
-  bodyTop: css({ stopColor: "token(colors.primary.hover)" }),
-  bodyBottom: css({ stopColor: "token(colors.primary.solid)" }),
+  bodyTop: css({ stopColor: "token(colors.primary.markLit)" }),
+  bodyBottom: css({ stopColor: "token(colors.primary.mark)" }),
   shadow: css({ fill: "text.primary", opacity: 0.18 }),
   highlight: css({ fill: "primary.foreground" }),
 };
