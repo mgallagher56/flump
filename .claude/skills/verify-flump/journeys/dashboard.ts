@@ -3,7 +3,7 @@
  * then sign out from the account menu and land on the marketing site.
  * Run: verify-flump drive dashboard   (expects the homeowner persona: net worth £231,400)
  */
-import { expect, hydrated, journey, MARKETING_URL } from "../scripts/lib.ts";
+import { expect, hydrated, journey, MARKETING_URL, optionalEnv } from "../scripts/lib.ts";
 
 await journey(
   "dashboard",
@@ -16,7 +16,7 @@ await journey(
 
     await step("net worth headline shows the persona figure once", async () => {
       const hero = page.locator('[data-tone="hero"]').filter({ hasText: "Net worth" });
-      await expect(hero).toContainText(process.env.VERIFY_NET_WORTH ?? "£231,400");
+      await expect(hero).toContainText(optionalEnv("VERIFY_NET_WORTH") ?? "£231,400");
       await expect(page.locator('[data-figure="netWorth"]')).toHaveCount(1);
     });
 

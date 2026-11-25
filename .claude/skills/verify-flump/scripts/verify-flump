@@ -17,7 +17,8 @@ SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 REPO="$(cd "$SKILL_DIR/../../.." && pwd)"
 VERIFY_ROOT="${VERIFY_ROOT:-$REPO/.verify}"
 STATE_ROOT="$VERIFY_ROOT/state"
-EVIDENCE_ROOT="${VERIFY_EVIDENCE_ROOT:-$VERIFY_ROOT/evidence}"
+# Evidence lives outside the checkout, so it survives the worktree and can never be committed.
+EVIDENCE_ROOT="${VERIFY_EVIDENCE_ROOT:-$HOME/.flump-verify/evidence}"
 E2E_MODULES="$REPO/apps/e2e/node_modules"
 PG_IMAGE="postgres:18-alpine"
 

@@ -9,14 +9,9 @@
 import { appendFileSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { type APIResponse, type Browser, chromium, expect, type Page } from "@playwright/test";
+import { requireEnv as env, optionalEnv } from "./env.ts";
 
-export { expect };
-
-function env(name: string): string {
-  const value = process.env[name];
-  if (!value) throw new Error(`${name} is not set: run journeys with verify-flump drive`);
-  return value;
-}
+export { expect, optionalEnv };
 
 export const WEB_URL = env("VERIFY_WEB_URL");
 export const MARKETING_URL = env("VERIFY_MARKETING_URL");
@@ -71,7 +66,7 @@ export async function journey(
   let n = 0;
   let failed = false;
   try {
-    browser = await chromium.launch({ headless: process.env.VERIFY_HEADED !== "1" });
+    browser = await chromium.launch({ headless: optionalEnv("VERIFY_HEADED") !== "1" });
     const context = await browser.newContext({
       baseURL: WEB_URL,
       viewport: { width: 1280, height: 900 },
