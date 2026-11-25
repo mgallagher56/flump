@@ -52,4 +52,5 @@ Keep implementation details out of the map. Name only user paths, stable handles
 - [Self Assessment](./self-assessment.md) covers the year's bill and adding an expense. Shipped journey: `self-assessment`.
 - [Work log and invoicing](./invoicing.md) covers logging work, a draft invoice, issuing it and marking it paid. Shipped journey: `invoicing`.
 - [Data rights when not invited](./data-rights-not-invited.md) covers downloading data and deleting the account from the not-invited page. Shipped journey: `data-rights-not-invited`.
+- [Terms acceptance](./terms-acceptance.md) covers agreeing to the terms before setup, an existing user asked on their next visit, and a changed privacy notice. Shipped journeys: `terms-new-user`, `terms-existing-user`, `terms-version-change`.
 - [Main pages at phone width](./phone-pass.md) covers each main page at 375 wide: no sideways scroll, the bottom bar and the h1. Shipped journey: `phone-pass`.

@@ -106,7 +106,7 @@ export const PrivacyPage: FC = () => (
       </p>
       <p>
         Which version of the terms you agreed to, which version of this notice we showed you, and
-        when. We keep this until you delete your account. Lawful basis: our legitimate interest in
+        when. We keep this until your account is deleted. Lawful basis: our legitimate interest in
         keeping a record of the agreement between us.
       </p>
 

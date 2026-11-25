@@ -4000,3 +4000,26 @@ Measured with `--mutate "src/test-vectors/engine-check.ts"` in `packages/finance
 | ------------------- | ------------------------------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | engine-check.ts L58 | ConditionalExpression `default:` removed          | Not worth killing | Unreachable guard: `runEngineCheck` filters to `ENGINE_CHECK_KINDS` before `evaluate` runs, and every checked kind has a case. |
 | engine-check.ts L59 | StringLiteral in the "no evaluator" error emptied | Not worth killing | Message of the same unreachable guard.                                                                                         |
+
+## Terms acceptance (25 November 2026)
+
+Measured with `bunx stryker run --mutate "src/auth/auth.guard.ts,src/auth/terms-acceptance.ts,src/modules/profile/terms-acceptance.service.ts"` in `apps/backend`. Only the lines this change added are listed; the other `auth.guard.ts` survivors in a partial run sit on lines it did not change.
+
+#### `src/auth/auth.guard.ts`
+
+| Line | Fault                                                | Class      | Reason                                                                                                                                 |
+| ---- | ---------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| L55  | OptionalChaining `this.moduleRef.get` (terms lookup) | Equivalent | Without a ModuleRef the call throws, the catch sets the check to null and the guard answers 503, which is what the `?.` path does too. |
+| L66  | ConditionalExpression `false` (`if (!check) throw`)  | Equivalent | With no check, `check.hasAgreedToTermsInForce` throws a TypeError inside the try, whose catch throws the same 503.                     |
+
+#### `src/auth/terms-acceptance.ts`
+
+| Line     | Fault                                                 | Class      | Reason                                                                                                                  |
+| -------- | ----------------------------------------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------- |
+| L12; L14 | StringLiteral `""` (injection token and metadata key) | Equivalent | Every provider, `@Inject`, decorator and reader uses the exported constant, and no other token or metadata key is `""`. |
+
+#### `src/modules/profile/terms-acceptance.service.ts`
+
+| Line | Fault                                                   | Class             | Reason                                                                                                       |
+| ---- | ------------------------------------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------ |
+| L91  | ConditionalExpression and StringLiteral (empty history) | Not worth killing | A guard that cannot fire: `LEGAL_PAGES` is built by `withVersion`, which throws at load on an empty history. |
