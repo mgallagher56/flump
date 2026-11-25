@@ -190,6 +190,7 @@ function toContractProfile(p: PersonaFixture) {
     taxRegion: f.taxRegion,
     birthYear: null,
     checkInDay: null,
+    wellbeingQuestions: true,
     studentLoanPlans: f.studentLoanPlans,
     housingStatus: f.housingStatus ?? null,
     monthlyHousingCost: f.monthlyHousingCost ?? null,
