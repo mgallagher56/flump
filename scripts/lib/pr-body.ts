@@ -5,9 +5,14 @@
 
 export const PR_BODY_MAX_CHARS = 1000;
 
-/** Release-please and Renovate write their own bodies; the laws are for agent-written PRs. */
-const EXEMPT_AUTHORS = new Set(["renovate[bot]", "github-actions[bot]", "release-please[bot]"]);
-const EXEMPT_TITLE = /^chore\(main\): release\b/;
+/**
+ * Release-please and Renovate write their own bodies; the laws are for agent-written PRs.
+ * Renovate is exempt by author ("renovate[bot]" in the event, "app/renovate" in gh). Release PRs
+ * are opened with the owner's token, so their author is a person: they are exempt by their head
+ * branch, which only release-please writes. A title alone never exempts a PR.
+ */
+const EXEMPT_AUTHORS = new Set(["renovate[bot]", "app/renovate"]);
+const RELEASE_PLEASE_BRANCH = /^release-please--/;
 
 /**
  * Each heading is a line that opens with its name, as `## Tests`, `**Tests**:`, `Tests:` or
@@ -35,10 +40,14 @@ export interface PrBodyInput {
   title: string;
   body: string;
   author?: string;
+  headRef?: string;
 }
 
-export function isExempt({ title, author }: PrBodyInput): boolean {
-  return EXEMPT_TITLE.test(title) || (author !== undefined && EXEMPT_AUTHORS.has(author));
+export function isExempt({ author, headRef }: PrBodyInput): boolean {
+  return (
+    (author !== undefined && EXEMPT_AUTHORS.has(author)) ||
+    (headRef !== undefined && RELEASE_PLEASE_BRANCH.test(headRef))
+  );
 }
 
 /** Characters as GitHub counts them: code points, with CRLF line ends counted once. */

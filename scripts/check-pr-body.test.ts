@@ -96,13 +96,21 @@ describe("checkPrBody rules", () => {
     ]);
   });
 
-  test("release-please and Renovate PRs are exempt; a person's release-looking title is not", () => {
+  test("release-please (by head branch) and Renovate (by author) are exempt; a title is not", () => {
     const long = "x".repeat(5000);
-    expect(checkPrBody({ title: "chore(main): release 1.2.0", body: long })).toEqual([]);
+    // #874: a release PR opened with the owner's token, so its author is a person.
+    const release = { title: "chore(main): release 1.2.0", body: long, author: "mgallagher56" };
+    expect(checkPrBody({ ...release, headRef: "release-please--branches--main" })).toEqual([]);
+    expect(checkPrBody(release).length).toBeGreaterThan(0);
     expect(checkPrBody({ title: "fix(deps): bump", body: long, author: "renovate[bot]" })).toEqual(
       [],
     );
-    expect(checkPrBody({ title: "chore: release notes", body: long }).length).toBeGreaterThan(0);
+    expect(checkPrBody({ title: "fix(deps): bump", body: long, author: "app/renovate" })).toEqual(
+      [],
+    );
+    expect(
+      checkPrBody({ title: "t", body: long, headRef: "claude/release-please" }).length,
+    ).toBeGreaterThan(0);
   });
 });
 
