@@ -23,14 +23,25 @@ const lockKey = (userId: string) => `user-data:${userId}`;
  * signed-in request; `exempt` inside withoutWriteFence. Outside a request (jobs, boot, tests that
  * call services directly) there is no store and the fence does nothing.
  */
-/** `held`: transactions of this request that hold the fence right now. */
-export type FencedRequest = { userId: string; held: number };
+/**
+ * `held`: transactions of this request that hold the fence right now. `waitForLock`: wait (up to the
+ * pool's lock_timeout) for an erasure or reset instead of being refused at once.
+ */
+export type FencedRequest = { userId: string; held: number; waitForLock: boolean };
 type FenceContext = FencedRequest | { exempt: true };
 const fenceContext = new AsyncLocalStorage<FenceContext>();
 
-/** Runs `fn` as part of a signed-in request of `userId`: its transactions take the write fence. */
-export function runAsUserRequest<T>(userId: string, fn: () => T): T {
-  return fenceContext.run({ userId, held: 0 }, fn);
+/**
+ * Runs `fn` as part of a signed-in request of `userId`: its transactions take the write fence.
+ * `waitForLock` is for a write that must not be dropped while the user's reset runs (the /mcp audit
+ * row): it waits for the lock, holding its connection meanwhile, instead of getting a 503.
+ */
+export function runAsUserRequest<T>(
+  userId: string,
+  fn: () => T,
+  options: { waitForLock?: boolean } = {},
+): T {
+  return fenceContext.run({ userId, held: 0, waitForLock: options.waitForLock === true }, fn);
 }
 
 /**

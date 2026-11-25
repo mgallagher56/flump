@@ -89,20 +89,24 @@ export class McpService {
   async recordAudit(caller: McpAuditCaller, event: McpAuditEvent): Promise<void> {
     try {
       // /mcp is outside the AuthGuard and its interceptor, so the token's user is set here: the
-      // insert takes the user-data write fence and cannot land after the user's erasure.
-      await runAsUserRequest(caller.token.userId, () =>
-        this.audit.record({
-          userId: caller.token.userId,
-          tokenId: caller.token.tokenId ?? null,
-          clientName: caller.clientName ?? null,
-          toolName: event.tool,
-          scopesUsed: event.scopesUsed,
-          outcome: event.outcome,
-          errorCode: event.errorCode ?? null,
-          latencyMs: event.durationMs,
-          responseBytes: event.responseBytes,
-          argsFingerprint: event.argsFingerprint ?? null,
-        }),
+      // insert takes the user-data write fence and cannot land after the user's erasure. It waits
+      // for a reset of the same user rather than being refused, so the audit row is not dropped.
+      await runAsUserRequest(
+        caller.token.userId,
+        () =>
+          this.audit.record({
+            userId: caller.token.userId,
+            tokenId: caller.token.tokenId ?? null,
+            clientName: caller.clientName ?? null,
+            toolName: event.tool,
+            scopesUsed: event.scopesUsed,
+            outcome: event.outcome,
+            errorCode: event.errorCode ?? null,
+            latencyMs: event.durationMs,
+            responseBytes: event.responseBytes,
+            argsFingerprint: event.argsFingerprint ?? null,
+          }),
+        { waitForLock: true },
       );
     } catch (err) {
       this.logger.error(`mcp_audit_write_failed: ${err instanceof Error ? err.name : "error"}`);

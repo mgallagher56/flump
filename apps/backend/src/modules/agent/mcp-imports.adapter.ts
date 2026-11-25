@@ -10,9 +10,11 @@ import {
 import {
   BadRequestException,
   ConflictException,
+  GoneException,
   Inject,
   Injectable,
   NotFoundException,
+  ServiceUnavailableException,
 } from "@nestjs/common";
 import { isMcpUserAllowed, readMcpAccessConfig } from "../../auth/mcp-access";
 import type { StagedAccount } from "../../entities/import-batch.entity";
@@ -114,6 +116,19 @@ export class McpImportsAdapter implements McpImportProvider {
       return await fn();
     } catch (err) {
       if (err instanceof NotFoundException) throw notFound();
+      // The write fence: the user's reset or erasure is running (503), or the account is erased.
+      if (err instanceof ServiceUnavailableException) {
+        throw new FlumpToolError("UNAVAILABLE", "Flump is busy with this account.", {
+          hint: "Try again in a minute.",
+          retryable: true,
+        });
+      }
+      if (err instanceof GoneException) {
+        throw new FlumpToolError("UNAVAILABLE", "This account has been deleted.", {
+          hint: "Nothing can be staged for it.",
+          retryable: false,
+        });
+      }
       const message = err instanceof Error ? err.message : "";
       if (err instanceof BadRequestException || err instanceof ConflictException) {
         if (CAP_MESSAGE.test(message)) {
