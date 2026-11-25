@@ -4,8 +4,14 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vites
 import { Account } from "../../src/entities/account.entity";
 import { AccountDetail } from "../../src/entities/account-detail.entity";
 import { SnapshotCheckin } from "../../src/entities/snapshot-checkin.entity";
+import { WellbeingAnswer } from "../../src/entities/wellbeing-answer.entity";
 import { writeConnectedSnapshot } from "../../src/modules/snapshots/connected-write";
-import { londonDate, londonYearMonth, monthKey } from "../../src/modules/snapshots/london-date";
+import {
+  londonDate,
+  londonQuarterStart,
+  londonYearMonth,
+  monthKey,
+} from "../../src/modules/snapshots/london-date";
 import { resolveDbTestMode } from "../../src/testing/dbTestMode";
 import { ROUTE_MATRIX } from "./matrix";
 import {
@@ -632,6 +638,134 @@ describe.skipIf(dbMode === "skip")("authz: snapshots controller (real Postgres)"
     expect(Number((await rowsFor(accountA))[0]?.value)).toBe(5);
     // Nothing was written for B.
     expect(await rowsFor(accountB)).toHaveLength(0);
+  });
+
+  describe("wellbeing questions (E35 W5)", () => {
+    const answers = () =>
+      h.dataSource.getRepository(WellbeingAnswer).find({ order: { userId: "ASC" } });
+    const status = (token: string | undefined) =>
+      h.call("get", "/snapshots/wellbeing-questions", token);
+    const answer = (token: string | undefined, body: object) =>
+      h.call("post", "/snapshots/wellbeing-questions", token, body);
+
+    it("GET and POST: no, expired and dev-bypass tokens get 401 and nothing is written", async () => {
+      exercised.add("GET /snapshots/wellbeing-questions");
+      exercised.add("POST /snapshots/wellbeing-questions");
+      for (const token of [undefined, h.tokens.expired, h.tokens.dev]) {
+        expect((await status(token)).status).toBe(401);
+        expect((await answer(token, { feeling: "about_the_same", worseText: null })).status).toBe(
+          401,
+        );
+      }
+      expect(await answers()).toEqual([]);
+    });
+
+    it("records the first answer of the quarter for the caller only; a repeat changes nothing", async () => {
+      expect((await status(h.tokens.a)).body).toEqual({ due: true });
+      const first = await answer(h.tokens.a, {
+        feeling: "more_worried",
+        worseText: "  The pension page.  ",
+      });
+      expect(first.status).toBe(200);
+      expect(first.body).toEqual({ recorded: true });
+      const again = await answer(h.tokens.a, { feeling: "more_in_control", worseText: null });
+      expect(again.status).toBe(200);
+      expect(again.body).toEqual({ recorded: false });
+      expect(await answers()).toEqual([
+        {
+          userId: USER_A,
+          quarter: londonQuarterStart(),
+          feeling: "more_worried",
+          worseText: "The pension page.",
+        },
+      ]);
+      expect((await status(h.tokens.a)).body).toEqual({ due: false });
+      // B's quarter is untouched by A's answer.
+      expect((await status(h.tokens.b)).body).toEqual({ due: true });
+    });
+
+    it("a skip records both answers as null, and an all-space answer is stored as null", async () => {
+      expect((await answer(h.tokens.a, { feeling: null, worseText: null })).body).toEqual({
+        recorded: true,
+      });
+      expect(
+        (await answer(h.tokens.b, { feeling: "about_the_same", worseText: "   " })).body,
+      ).toEqual({ recorded: true });
+      expect((await answers()).map((r) => [r.userId, r.feeling, r.worseText])).toEqual([
+        [USER_A, null, null],
+        [USER_B, "about_the_same", null],
+      ]);
+      expect((await status(h.tokens.a)).body).toEqual({ due: false });
+    });
+
+    it("rejects an unknown feeling, text over 1000 characters and smuggled keys with 400", async () => {
+      for (const body of [
+        { feeling: "fine", worseText: null },
+        { feeling: null, worseText: "x".repeat(1001) },
+        { feeling: null, worseText: null, userId: USER_B },
+        { feeling: null, worseText: null, quarter: "2001-01-01" },
+        {},
+      ]) {
+        expect((await answer(h.tokens.a, body)).status, JSON.stringify(body).slice(0, 80)).toBe(
+          400,
+        );
+      }
+      expect(await answers()).toEqual([]);
+      // 1000 characters exactly is accepted.
+      expect(
+        (await answer(h.tokens.a, { feeling: null, worseText: "y".repeat(1000) })).body,
+      ).toEqual({ recorded: true });
+    });
+
+    it("switching off deletes the caller's answers in the same save and stops asking", async () => {
+      await answer(h.tokens.a, { feeling: "more_worried", worseText: "Too many numbers." });
+      await answer(h.tokens.b, { feeling: "about_the_same", worseText: null });
+      const off = await h.call("patch", "/user-profile", h.tokens.a, { wellbeingQuestions: false });
+      expect(off.status).toBe(200);
+      expect(off.body.wellbeingQuestions).toBe(false);
+      expect((await answers()).map((r) => r.userId)).toEqual([USER_B]);
+      expect((await status(h.tokens.a)).body).toEqual({ due: false });
+      expect((await answer(h.tokens.a, { feeling: null, worseText: null })).body).toEqual({
+        recorded: false,
+      });
+      expect((await answers()).map((r) => r.userId)).toEqual([USER_B]);
+
+      // Switching back on asks again this quarter, since the earlier answer is gone.
+      const on = await h.call("patch", "/user-profile", h.tokens.a, { wellbeingQuestions: true });
+      expect(on.body.wellbeingQuestions).toBe(true);
+      expect((await status(h.tokens.a)).body).toEqual({ due: true });
+    });
+
+    it("paused for everyone: not due and nothing recorded, then back when unpaused", async () => {
+      process.env.WELLBEING_QUESTIONS_PAUSED = "true";
+      try {
+        expect((await status(h.tokens.a)).body).toEqual({ due: false });
+        expect((await answer(h.tokens.a, { feeling: null, worseText: null })).body).toEqual({
+          recorded: false,
+        });
+        expect(await answers()).toEqual([]);
+      } finally {
+        delete process.env.WELLBEING_QUESTIONS_PAUSED;
+      }
+      expect((await status(h.tokens.a)).body).toEqual({ due: true });
+    });
+
+    it("reset-financial-data leaves the answers and the switch alone", async () => {
+      await answer(h.tokens.a, { feeling: "more_in_control", worseText: null });
+      await h.call("patch", "/user-profile", h.tokens.b, { wellbeingQuestions: false });
+      for (const token of [h.tokens.a, h.tokens.b]) {
+        const res = await h.call("post", "/user-profile/reset-financial-data", token, {
+          confirmation: "RESET",
+        });
+        expect(res.status).toBeLessThan(300);
+      }
+      expect((await answers()).map((r) => [r.userId, r.feeling])).toEqual([
+        [USER_A, "more_in_control"],
+      ]);
+      expect((await h.call("get", "/user-profile", h.tokens.b)).body.wellbeingQuestions).toBe(
+        false,
+      );
+    });
   });
 
   it("reset-financial-data erases the user's history and check-ins, and only theirs", async () => {

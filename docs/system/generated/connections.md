@@ -154,6 +154,10 @@ flowchart LR
   s_check_in --> f_check_in_done
   f_check_in_done -.-> s_dashboard
   f_check_in_done -.-> s_export
+  f_wellbeing_answer(["The answer to the two optional questions after a check-in, one per quarter"])
+  s_check_in --> f_wellbeing_answer
+  f_wellbeing_answer -.-> s_check_in
+  f_wellbeing_answer -.-> s_export
   f_account_goal(["Optional user-set goal on an account"])
   s_account_detail --> f_account_goal
   f_account_goal -.-> s_account_detail
@@ -377,6 +381,7 @@ flowchart LR
   s_dashboard["Dashboard"]
   s_accounts["Accounts"]
   s_history["History"]
+  s_check_in["Monthly check-in"]
   s_budget["Budget"]
   s_savings["Savings"]
   s_debt["Debt"]
@@ -385,6 +390,7 @@ flowchart LR
   s_picture["Engine picture (headline figures)"]
   s_account_service["Backend account service"]
   s_mcp_read["AI read tools"]
+  s_export["Data export and erasure"]
   f_name_and_avatar(["Name and profile picture"])
   s_settings --> f_name_and_avatar
   f_name_and_avatar -.-> s_settings
@@ -400,6 +406,10 @@ flowchart LR
   f_net_worth_choices -.-> s_history
   f_net_worth_choices -.-> s_account_service
   f_net_worth_choices -.-> s_mcp_read
+  f_wellbeing_questions_switch(["Whether to ask the two optional questions after a check-in"])
+  s_settings --> f_wellbeing_questions_switch
+  f_wellbeing_questions_switch -.-> s_check_in
+  f_wellbeing_questions_switch -.-> s_export
   f_check_in_day(["Check-in day of the month"])
   s_settings --> f_check_in_day
   f_check_in_day -.-> s_dashboard

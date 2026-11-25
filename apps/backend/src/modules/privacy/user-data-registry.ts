@@ -24,6 +24,7 @@ import { TaxRecord } from "../../entities/tax-record.entity";
 import { TermsAcceptance } from "../../entities/terms-acceptance.entity";
 import { Transaction } from "../../entities/transaction.entity";
 import { UserProfile } from "../../entities/user-profile.entity";
+import { WellbeingAnswer } from "../../entities/wellbeing-answer.entity";
 import { WorkLogEntry } from "../../entities/work-log-entry.entity";
 
 /**
@@ -246,6 +247,31 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
     // A row is a started check-in; completedAt (null until then) says it was finished (CH-3).
     valueMap: {
       facts: { month: "check-in-done", completedAt: "check-in-done" },
+      notFacts: { userId: OWNER },
+    },
+  }),
+  table({
+    entity: WellbeingAnswer,
+    key: "wellbeingAnswers",
+    deleteOnErasure: true,
+    export: {
+      shape: "rows",
+      columns: ["quarter", "feeling", "worseText"],
+      excluded: { userId: USER_ID_IN_ENVELOPE },
+      orderBy: ["quarter"],
+      batchSize: 500,
+    },
+    reset: {
+      kind: "keep",
+      reason:
+        "not financial data: how the person felt after a check-in; account deletion removes it, and switching the questions off deletes it",
+    },
+    valueMap: {
+      facts: {
+        quarter: "wellbeing-answer",
+        feeling: "wellbeing-answer",
+        worseText: "wellbeing-answer",
+      },
       notFacts: { userId: OWNER },
     },
   }),
@@ -967,6 +993,7 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
         "taxRegion",
         "birthYear",
         "checkInDay",
+        "wellbeingQuestions",
         "studentLoanPlans",
         "housingStatus",
         "monthlyHousingCost",
@@ -1025,6 +1052,7 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
         netWorthCountsProperty: "net-worth-choices",
         netWorthCountsStudentLoan: "net-worth-choices",
         partnerMode: "partner-mode",
+        wellbeingQuestions: "wellbeing-questions-switch",
       },
       notFacts: {
         id: ROW_ID,

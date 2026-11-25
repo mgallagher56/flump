@@ -2219,6 +2219,53 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
     });
   });
 
+  describe("AddWellbeingAnswers1795670000000 (E35 W5)", () => {
+    const NAME = "AddWellbeingAnswers1795670000000";
+
+    it("defaults the switch on, refuses an unknown feeling and a second row for a quarter", async () => {
+      await ds.runMigrations();
+      expect(await applied()).toContain(NAME);
+      await ds.query("INSERT INTO user_profiles (user_id) VALUES ('u1')");
+      expect(await ds.query("SELECT wellbeing_questions AS on FROM user_profiles")).toEqual([
+        { on: true },
+      ]);
+      await ds.query(
+        "INSERT INTO wellbeing_answers (user_id, quarter, feeling, worse_text) VALUES ('u1', '2026-10-01', NULL, NULL)",
+      );
+      await expect(
+        ds.query(
+          "INSERT INTO wellbeing_answers (user_id, quarter, feeling) VALUES ('u1', '2027-01-01', 'fine')",
+        ),
+      ).rejects.toThrow(/CHK_wellbeing_answers_feeling/);
+      await expect(
+        ds.query(
+          "INSERT INTO wellbeing_answers (user_id, quarter, feeling) VALUES ('u1', '2026-10-01', 'more_worried')",
+        ),
+      ).rejects.toThrow(/duplicate key/);
+    });
+
+    it("refuses to revert while answers are stored or anyone switched off, then reverts", async () => {
+      await ds.runMigrations();
+      await ds.query(
+        "INSERT INTO user_profiles (user_id, wellbeing_questions) VALUES ('u1', false)",
+      );
+      await ds.query(
+        "INSERT INTO wellbeing_answers (user_id, quarter) VALUES ('u2', '2026-10-01')",
+      );
+      await expect(undoThrough(NAME)).rejects.toThrow(/wellbeing_answers has rows/);
+      await ds.query("DELETE FROM wellbeing_answers");
+      await expect(undoThrough(NAME)).rejects.toThrow(/switched off/);
+      await ds.query("UPDATE user_profiles SET wellbeing_questions = true");
+      await undoThrough(NAME);
+      expect(await tables()).not.toContain("wellbeing_answers");
+      expect(
+        await ds.query(
+          "SELECT column_name FROM information_schema.columns WHERE table_name = 'user_profiles' AND column_name = 'wellbeing_questions'",
+        ),
+      ).toEqual([]);
+    });
+  });
+
   describe("CheckInStartedRows1795650000000 (CH-3, Continue check-in)", () => {
     const NAME = "CheckInStartedRows1795650000000";
     const rows = (): Promise<unknown[]> =>

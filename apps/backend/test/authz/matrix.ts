@@ -129,6 +129,9 @@ export const ROUTE_MATRIX: Readonly<Record<string, MatrixRow>> = {
   // Monthly snapshots (E30).
   "GET /snapshots/check-ins": snapshots,
   "PUT /snapshots/:month": snapshots,
+  // E35 W5: the two optional questions after a check-in.
+  "GET /snapshots/wellbeing-questions": snapshots,
+  "POST /snapshots/wellbeing-questions": snapshots,
 
   // Import pipeline (E17 re-plan PR C).
   "POST /imports": imports,
