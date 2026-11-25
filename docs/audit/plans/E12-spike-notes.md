@@ -39,11 +39,11 @@ The device check route (`app/(dev)/engine-check.tsx`) loads its screen behind `_
 
 ## Left for later slices
 
-- The logo: `FlumpLogo` needs `react-native-svg` and comes with S1b's components. The first screen shows the name as text.
+- The logo: done in S1b (`FlumpLogo` on `react-native-svg` 15.16.0, the version SDK 58 lists).
 - Brand fonts: token text styles name a role (`body`, `heading`), not a font, so the system font is used.
 - The native splash and root background colours from tokens, and the stored theme choice (System, Light, Dark) with the header toggle.
 - `eas.json` has only an internal `development` profile (simulator build and APK); a development client, `e2e`, `preview` and `production` profiles come with S2c and S19.
-- The Panda-specific law checks (tabular numbers, style literals, icons, number inputs) reach `apps/mobile` in S1b. The raw colour, copy, one tax engine and value map checks already scan it.
+- The Panda-specific law checks (tabular numbers, style literals, icons, number inputs): done in S1b; every UI check now scans `apps/mobile`.
 
 ## Seam cost
 

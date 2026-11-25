@@ -2,11 +2,11 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { compareToBaseline } from "./lib/design-tokens";
 import { countNumberInputs } from "./lib/input-types";
-import { collectFiles, readSource, repoRoot } from "./lib/scan";
+import { collectFiles, readSource, repoRoot, UI_SCAN_DIRS } from "./lib/scan";
 
 const baselinePath = resolve(import.meta.dir, "input-types-baseline.json");
 const counts: Record<string, number> = {};
-for (const file of collectFiles()) {
+for (const file of collectFiles(repoRoot, UI_SCAN_DIRS)) {
   const n = countNumberInputs(readSource(repoRoot, file));
   if (n > 0) counts[file] = n;
 }

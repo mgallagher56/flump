@@ -2,7 +2,7 @@
 
 The Expo app for iOS and Android (epic E12). Plan: `docs/audit/plans/E12-mobile-rebuild-plan.md`; what slice S1a found while setting it up: `docs/audit/plans/E12-spike-notes.md`.
 
-Today it is a skeleton (slice S1a): one placeholder screen with the name and tagline, the native theme from `@flump/tokens/native` in light and dark (it follows the phone's setting), and a development-only **Device check** screen that runs the engine's tax vectors and the shared formatter fixture on the phone's JavaScript engine. No sign-in, no stored data and no network calls.
+Today it is a skeleton (slices S1a and S1b): one placeholder screen with the logo, name and tagline, the native theme from `@flump/tokens/native` in light and dark (it follows the phone's setting), the first six components in `src/components` (`Text`, `Pressable`, `Button`, `Screen`, `Card`, `FlumpLogo`), and two development-only screens: **Device check**, which runs the engine's tax vectors and the shared formatter fixture on the phone's JavaScript engine, and **Component gallery**, which shows every component in every named state in light, dark and 200% text. No sign-in, no stored data and no network calls.
 
 ## Run it locally
 
@@ -23,7 +23,7 @@ Then, from the Expo prompt:
 - **iOS simulator:** press `i`. Needs a Mac with Xcode.
 - **Android emulator:** press `a`. Needs Android Studio with an emulator running.
 
-Switch the phone or simulator between light and dark to see the theme follow it. Tap **Device check** (development builds only) to see "All vectors pass" and "All formatting cases match" with the JavaScript engine named.
+Switch the phone or simulator between light and dark to see the theme follow it. Tap **Device check** (development builds only) to see "All vectors pass" and "All formatting cases match" with the JavaScript engine named. Tap **Component gallery** to see the components.
 
 `EXPO_PUBLIC_API_URL` is optional in S1a; the device check only shows whether it is set and valid. It must be HTTPS in a release build; a development build also accepts plain HTTP to `localhost`, `127.0.0.1`, `[::1]`, `10.0.2.2` (the Android emulator's name for your computer) or a `name.local` address.
 
@@ -31,17 +31,22 @@ The Maestro flow `e2e/flows/engine-check.yaml` checks the device check on a debu
 
 ## Checks
 
-| Command (in `apps/mobile`) | What it does                                                                                                                     |
-| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `bun run lint`             | Biome                                                                                                                            |
-| `bun run check-types`      | TypeScript 7 over `expo/tsconfig.base`                                                                                           |
-| `bun run test`             | Jest with `jest-expo`, on Node                                                                                                   |
-| `bun run export`           | Production export for iOS and Android into `dist` (needs the shared packages built)                                              |
-| `bun run check:bundle`     | Fails if the export contains the device check or the tax vectors, or if its source maps show a package bundled from two installs |
-| `bun run doctor`           | `expo-doctor`, tolerating only its same-version duplicate finding from Bun's isolated linker (see `scripts/run-expo-doctor.ts`)  |
+| Command (in `apps/mobile`) | What it does                                                                                                                                  |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bun run lint`             | Biome                                                                                                                                         |
+| `bun run check-types`      | TypeScript 7 over `expo/tsconfig.base`                                                                                                        |
+| `bun run test`             | Jest with `jest-expo`, on Node                                                                                                                |
+| `bun run export`           | Production export for iOS and Android into `dist` (needs the shared packages built)                                                           |
+| `bun run check:bundle`     | Fails if the export contains the device check, the gallery or the tax vectors, or if its source maps show a package bundled from two installs |
+| `bun run doctor`           | `expo-doctor`, tolerating only its same-version duplicate finding from Bun's isolated linker (see `scripts/run-expo-doctor.ts`)               |
 
 CI runs all of these in the `📱 Mobile checks` job on GitHub's Linux runners. It does not build a native app, run a simulator or emulator, or prove Hermes at runtime.
 
 ## Rules
 
-Colours, sizes and type come from `useTheme()` (never a hex or rgb value); figures come from `@flump/finance-engine` and are formatted by `@flump/format` (no money maths here). `check:laws` scans `app/` and `src/` for raw colours, tax formulas and copy. `ios/` and `android/` are generated by `expo prebuild` and never committed.
+Colours, sizes and type come from `useTheme()` (never a hex or rgb value); figures come from `@flump/finance-engine` and are formatted by `@flump/format` (no money maths here). `check:laws` scans `app/` and `src/` with every UI check: raw colours, tabular numbers, style literals, icons, number inputs, tax formulas and copy. `ios/` and `android/` are generated by `expo prebuild` and never committed.
+
+- **Components** live in `src/components/<Name>/` with five files: `Name.tsx`, `Name.styles.ts` (a StyleSheet factory that takes the theme), `Name.test.tsx`, `Name.states.ts` (named prop sets for the gallery and the tests, in place of Storybook) and `index.ts` (AGENTS.md section 1).
+- **Raw primitives:** outside `src/components`, Biome refuses React Native's `Text`, `Pressable` and `TextInput`. Use the app's own: they keep text scalable, targets at least 48 points and every control named.
+- **The data door:** only `src/data` may import `@flump/api-client` or call `fetch` (O5 seam 2). It is empty until sign-in (S2b).
+- **200% text:** each component's test renders every state from its `.states.ts` at a text scale of 2 and checks nothing would clip. The look on a real phone is a hand check.

@@ -6,6 +6,8 @@
 
 Every component lives in its own PascalCase directory with colocated files (implementation, styles, test, barrel export, and stories where required). Never a flat `.tsx` component file.
 
+**`apps/mobile`**: every component lives in its own PascalCase directory with `ComponentName.tsx`, `ComponentName.styles.ts` (a StyleSheet factory that takes the theme), `ComponentName.test.tsx`, `ComponentName.states.ts` (named prop sets, shown by the dev gallery and used by the tests, in place of a Storybook file) and `index.ts`.
+
 ## 2. DESIGN TOKEN & STYLING LAWS
 
 Semantic tokens only: no hex or RGB values and no primitive scale tokens. Tabular numbers and en-GB formatting on all financial data.

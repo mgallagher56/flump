@@ -226,7 +226,7 @@ The four seams, and where each lands:
 
 **Seam budget.** The decision drops the seams if they cost more than about 5 agent-days in all. Each slice that does seam work states its share in its PR description under "Seam cost", and the plan keeps a running total here. Estimate today: seam 1 is a review rule (0), seam 2 is a lint rule in S1b (0.5), seam 3 is D1 (1), seam 4 is the part of S7 beyond a plain cache (1.5): about 3 in all. If the running total passes 5, the coordinator stops the seam work and records the app as plain option (a) in `DECISIONS.md`.
 
-Running total: 0 agent-days (S1a did no seam work).
+Running total: 0.5 agent-days (S1a 0; S1b 0.5, the data door rule in `biome.json`).
 
 **The cache (S7).** The last successful responses for the screens in the first release, kept 7 days, labelled with their age, read-only; writes need a connection (round 2, E12 D4-A). Platform facts, CONFIRMED on 25 November 2026:
 
@@ -306,7 +306,7 @@ States: `loading`, then `signedOut`, `signedIn`, `restoredOffline` (refresh toke
 
 - Target WCAG 2.2 AA, read for apps as in WCAG2ICT.
 - `ThemeProvider` reads `@flump/tokens/native` light and dark sets, follows the system scheme by default, remembers a three-way choice (System, Light, Dark) and the header toggle switches light and dark. No flash of the wrong theme on launch: the stored choice is read before the first screen renders.
-- Token contrast is already tested on the generated values; S1b adds the mobile-only pairs.
+- Token contrast is already tested on the generated values. The S1b components draw only pairs the shared matrix already checks (each button label on its fill, text and status text on every surface, the muted label on the disabled fill); the mobile-only pairs (placeholder, tab icon states) arrive with the input and the tab bar that use them.
 - Each slice's acceptance: 200% text and 320 points wide with nothing clipped; VoiceOver and TalkBack reach and name every control in order; Reduce Motion removes slides and shimmer; nothing needs dragging.
 - Recalculated results are announced without moving focus; in a scenario the announcement starts with "Illustration:".
 - The dev gallery renders every component in light, dark and 200% text from `X.states.ts`. It and the engine check screen are left out of production builds, proved by the bundle search.
@@ -444,6 +444,8 @@ After S6 the page slices touch separate folders and can run two or three at a ti
 2. `Pressable` enforces 48 by 48 and needs a label when it has no text child. Each component renders at 200% text without clipping, tested from its `X.states.ts`.
 3. The gallery shows every component in light, dark and 200% text, and the production export does not contain it.
 4. The PR states its seam cost (the data door rule).
+
+**Built (S1b, 25 November 2026).** The tax threshold literal check is the existing one tax engine guard, which already scans `apps/mobile` for the four thresholds and the rate fields; S1b adds a mobile fixture test instead of a second check. `noReactNativeRawText` skips `Button`, whose words are typed as a string and always drawn in `Text`. Jest has no layout engine, so "200% text without clipping" is checked structurally (sizes and line heights double, no fixed height around text, nothing truncates unless asked, system text size never turned off); the look at 200% on a phone is a hand check. `Card` has the `none` and `resting` elevations; `interactive` and `floating` need native shadow tokens and come with the first screen that uses them.
 
 ### 9.5 S2a, S2b and S2c. Sign-in
 

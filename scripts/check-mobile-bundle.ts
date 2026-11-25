@@ -1,6 +1,6 @@
 /**
- * Mobile bundle search (E12 S1a): after `expo export`, fails when a production bundle carries
- * development-only code. The engine check screen and the tax vector catalogue must be stripped by
+ * Mobile bundle search (E12 S1a, S1b): after `expo export`, fails when a production bundle carries
+ * development-only code. The engine check screen, the tax vector catalogue and the gallery must be stripped by
  * the `__DEV__` guards; a known production string must be present, so a search that reads nothing
  * cannot pass by accident.
  *
@@ -13,13 +13,20 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 
-/** Strings that only the dev device check screen (route `engine-check`) and the vector catalogue contain. */
+/**
+ * Strings that only development code contains: the device check screen (route `engine-check`) and
+ * the vector catalogue (S1a), and the component gallery (route `gallery`) with the components'
+ * named states that only it and the tests import (S1b).
+ */
 export const DEV_ONLY_MARKERS = [
   "Device check",
   "All vectors pass",
   "Tax vectors",
   "ewni.incomeTax.",
   "All formatting cases match",
+  "Component gallery",
+  "200% text",
+  "Plain pressable",
 ] as const;
 
 /** A string every production bundle must contain (the tagline on the first screen). */

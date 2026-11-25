@@ -2,7 +2,7 @@
 
 # Functionality map: overview
 
-Mapped pages: 39 | Sections: 254 | Excluded routes: 20
+Mapped pages: 39 | Sections: 254 | Excluded routes: 21
 
 ## web
 

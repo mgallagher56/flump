@@ -1,6 +1,6 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { collectFiles, readSource, repoRoot } from "./lib/scan";
+import { collectFiles, readSource, repoRoot, UI_SCAN_DIRS } from "./lib/scan";
 import { needsTabular } from "./lib/tabular-nums";
 
 // AGENTS.md section 1 keeps recipes in Foo.styles.ts, so a tabular marker there counts for Foo.tsx.
@@ -13,7 +13,7 @@ function withSiblingStyles(file: string): string {
 }
 
 const baselinePath = resolve(import.meta.dir, "tabular-baseline.txt");
-const offenders = collectFiles()
+const offenders = collectFiles(repoRoot, UI_SCAN_DIRS)
   .filter((f) => f.endsWith(".tsx") && needsTabular(withSiblingStyles(f)))
   .sort();
 

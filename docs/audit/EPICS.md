@@ -53,7 +53,7 @@ Refreshed on 2026-11-20 against `origin/main` and the merged pull requests up to
 | E41 | Mutation testing and faster tests | Merged (M4 in #847, M5 in #857); nothing in progress |
 | E17 | MCP write tools (PR D, #653) and web review of staged imports (PR E, #654) | Merged; nothing in progress |
 | E15 phase 8 and follow-ups | Visual regression guard (#651), follow-up sweep (#647) | Merged |
-| E12 mobile | Expo app slice S1a: `apps/mobile` skeleton, native theme, engine vectors on Hermes (dev screen), CI `📱 Mobile checks` (plan revision 4, `plans/E12-mobile-rebuild-plan.md` section 9.3; spike notes in `plans/E12-spike-notes.md`) | In review (2026-11-25); D1, B-A and P5 can run beside it |
+| E12 mobile | S1a merged (#925): `apps/mobile` skeleton, native theme, engine check (dev), CI `📱 Mobile checks`. Slice S1b: the first six components (`Text`, `Pressable`, `Button`, `Screen`, `Card`, `FlumpLogo`), the dev gallery, the UI law checks on `apps/mobile`, Biome rules for raw primitives and the data door, the native file set in AGENTS.md (plan section 9.4) | S1b in review (2026-11-25); S2a waits for OS1; D1, B-A, P5 and S2c can start |
 | E4 tax | 2027/28 tax year with property and savings rates | Merged (#833), marked provisional until the rates are law. CI fails from 1 April 2027 unless the provisional marker in `PROVISIONAL_UK_TAX_YEARS` is removed or extended |
 
 ### Owner actions

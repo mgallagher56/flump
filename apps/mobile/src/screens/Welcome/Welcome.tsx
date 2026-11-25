@@ -1,31 +1,36 @@
 import { Link } from "expo-router";
-import { useMemo } from "react";
-import { Pressable, ScrollView, Text } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Button } from "../../components/Button";
+import { FlumpLogo } from "../../components/FlumpLogo";
+import { Screen } from "../../components/Screen";
+import { Text } from "../../components/Text";
 import { APP_NAME, TAGLINE } from "../../copy/brand";
-import { useTheme } from "../../theme/ThemeProvider";
-import { createStyles } from "./Welcome.styles";
 
-/** The placeholder first screen: the name and the tagline, in the system's light or dark theme. */
+/** The placeholder first screen: the logo, the name and the tagline, in the system's theme. */
 export function Welcome() {
-  const theme = useTheme();
-  const styles = useMemo(() => createStyles(theme), [theme]);
-
   return (
-    <SafeAreaView style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.content}>
-        <Text accessibilityRole="header" style={styles.name}>
-          {APP_NAME}
-        </Text>
-        <Text style={styles.tagline}>{TAGLINE}</Text>
-        {__DEV__ ? (
+    <Screen centred>
+      {/* Decorative: the name in words beside it is what a screen reader reads. */}
+      <FlumpLogo size="lg" />
+      <Text accessibilityRole="header" textStyle="heading.lg">
+        {APP_NAME}
+      </Text>
+      <Text textStyle="body.lg" color="secondary">
+        {TAGLINE}
+      </Text>
+      {__DEV__ ? (
+        <>
           <Link href="/engine-check" asChild>
-            <Pressable accessibilityRole="link" style={styles.devLink}>
-              <Text style={styles.devLinkText}>Device check</Text>
-            </Pressable>
+            <Button variant="link" accessibilityRole="link">
+              Device check
+            </Button>
           </Link>
-        ) : null}
-      </ScrollView>
-    </SafeAreaView>
+          <Link href="/gallery" asChild>
+            <Button variant="link" accessibilityRole="link">
+              Component gallery
+            </Button>
+          </Link>
+        </>
+      ) : null}
+    </Screen>
   );
 }

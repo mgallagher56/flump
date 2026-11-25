@@ -2,11 +2,11 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { compareToBaseline } from "./lib/design-tokens";
 import { countReactIconsImports } from "./lib/react-icons";
-import { collectFiles, readSource, repoRoot } from "./lib/scan";
+import { collectFiles, readSource, repoRoot, UI_SCAN_DIRS } from "./lib/scan";
 
 const baselinePath = resolve(import.meta.dir, "react-icons-baseline.json");
 const counts: Record<string, number> = {};
-for (const file of collectFiles()) {
+for (const file of collectFiles(repoRoot, UI_SCAN_DIRS)) {
   const n = countReactIconsImports(readSource(repoRoot, file));
   if (n > 0) counts[file] = n;
 }

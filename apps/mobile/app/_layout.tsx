@@ -19,6 +19,9 @@ function ThemedStack() {
         {__DEV__ ? (
           <Stack.Screen name="(dev)/engine-check" options={{ title: "Device check" }} />
         ) : null}
+        {__DEV__ ? (
+          <Stack.Screen name="(dev)/gallery" options={{ title: "Component gallery" }} />
+        ) : null}
       </Stack>
     </>
   );

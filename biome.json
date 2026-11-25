@@ -65,6 +65,98 @@
       }
     },
     {
+      "includes": ["apps/mobile/**"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "noReactNativeRawText": {
+              "level": "error",
+              "options": { "skip": ["Button"] }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "apps/mobile/app/**",
+        "apps/mobile/src/**",
+        "!apps/mobile/src/components/**",
+        "!apps/mobile/src/data/**"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "react-native": {
+                    "importNames": ["Text", "Pressable", "TextInput"],
+                    "message": "Use the app's own Text, Pressable or input from src/components (E12 S1b): they keep text scalable, targets 48pt and controls named."
+                  },
+                  "@flump/api-client": "Only src/data talks to the API (O5 seam 2, plan section 4.6)."
+                }
+              }
+            },
+            "noRestrictedGlobals": {
+              "level": "error",
+              "options": {
+                "deniedGlobals": {
+                  "fetch": "Only src/data talks to the API (O5 seam 2, plan section 4.6)."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["apps/mobile/src/components/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "@flump/api-client": "Only src/data talks to the API (O5 seam 2, plan section 4.6)."
+                }
+              }
+            },
+            "noRestrictedGlobals": {
+              "level": "error",
+              "options": {
+                "deniedGlobals": {
+                  "fetch": "Only src/data talks to the API (O5 seam 2, plan section 4.6)."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["apps/mobile/src/data/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "react-native": {
+                    "importNames": ["Text", "Pressable", "TextInput"],
+                    "message": "Use the app's own Text, Pressable or input from src/components (E12 S1b)."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "includes": ["apps/web/app/**"],
       "linter": {
         "rules": {

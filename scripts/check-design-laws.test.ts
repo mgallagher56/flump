@@ -212,6 +212,6 @@ describe("raw colours in the mobile app (E12 S1a)", () => {
 
   test("check-design-tokens scans the mobile app", () => {
     const script = readFileSync(resolve(import.meta.dir, "check-design-tokens.ts"), "utf8");
-    expect(script).toContain("[...SCAN_DIRS, ...MOBILE_SCAN_DIRS]");
+    expect(script).toContain("collectFiles(repoRoot, UI_SCAN_DIRS)");
   });
 });
