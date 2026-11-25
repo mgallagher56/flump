@@ -25,3 +25,14 @@ export const ACCOUNT_ERASED_PATH = "/account-deleted?state=pending";
 export function isAccountErased(err: unknown): boolean {
   return err instanceof BackendError && err.status === 410;
 }
+
+/** The terms acceptance page (mirrors TERMS_ACCEPTANCE_PATH in features/settings/account.ts). */
+export const TERMS_ACCEPTANCE_REDIRECT_PATH = "/terms-acceptance";
+
+/**
+ * True for the backend's 403 `terms_not_accepted`: the caller has not agreed to the terms in
+ * force (terms acceptance). A new version can come into force while the app is open.
+ */
+export function isTermsNotAccepted(err: unknown): boolean {
+  return err instanceof BackendError && err.status === 403 && err.code === "terms_not_accepted";
+}

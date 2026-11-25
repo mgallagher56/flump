@@ -4,7 +4,9 @@ import {
   BackendError,
   type BackendErrorKind,
   isAccountErased,
+  isTermsNotAccepted,
   type RouteErrorPayload,
+  TERMS_ACCEPTANCE_REDIRECT_PATH,
 } from "./backend-error";
 import { CONFLICT_MESSAGE, CONFLICT_STATUS, isConflict } from "./conflict";
 
@@ -25,12 +27,16 @@ const STATUS_BY_KIND: Record<BackendErrorKind, number> = {
  * carries only the kind and endpoint path, never the token, base URL, body or cause. An expired
  * backend session is a 401 state, not a redirect (D1 option B). Anything that is not a
  * BackendError, such as an authkit redirect Response, is rethrown by identity. A 410 (erased
- * account) redirects to the page that finishes the deletion.
+ * account) redirects to the page that finishes the deletion, and a 403 `terms_not_accepted` to the
+ * terms acceptance page.
  */
 export function throwRouteError(err: unknown): never {
   if (!(err instanceof BackendError)) throw err;
   // An erased account (410) is not an error page: send the person to finish the deletion.
   if (isAccountErased(err)) throw redirect(ACCOUNT_ERASED_PATH);
+  // Not agreed to the terms in force (a version came into force while the app was open): the
+  // acceptance page, not an error page.
+  if (isTermsNotAccepted(err)) throw redirect(TERMS_ACCEPTANCE_REDIRECT_PATH);
   const payload: RouteErrorPayload = { kind: err.kind, endpoint: err.endpoint };
   throw data(payload, { status: STATUS_BY_KIND[err.kind] });
 }
@@ -56,6 +62,8 @@ const ACTION_MESSAGE_BY_KIND: Record<BackendErrorKind, string> = {
  */
 export function actionErrorResponse(err: unknown) {
   if (!(err instanceof BackendError)) throw err;
+  // Not agreed to the terms in force: the acceptance page, not "no permission".
+  if (isTermsNotAccepted(err)) throw redirect(TERMS_ACCEPTANCE_REDIRECT_PATH);
   // 412: the record changed since the form loaded it. The route reloads its saved data
   // (`revalidateOnConflict`) and the form keeps what was typed.
   if (isConflict(err)) {

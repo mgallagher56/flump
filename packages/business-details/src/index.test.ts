@@ -10,6 +10,7 @@ import {
   LEGAL_PAGES,
   LEGAL_REVIEW_NOTE,
   legalPage,
+  legalPageFromHistory,
   placeholderFields,
   shortCompanyLine,
   ukDate,
@@ -203,5 +204,48 @@ describe("versions in effect (terms acceptance)", () => {
     expect(() => versionInEffect("terms", new Date("2026-11-24T12:00:00Z"))).toThrow(
       "No version of terms is in effect on 2026-11-24",
     );
+  });
+});
+
+describe("versions with a change coming (a test history, not LEGAL_PAGES)", () => {
+  // Terms 0.2 published, applying from 9 December 2026; 0.1 in force before that.
+  const pages = [
+    legalPageFromHistory({
+      key: "terms",
+      path: "/terms",
+      label: "Terms",
+      title: "Terms of use",
+      history: [
+        { version: "0.2", updated: "25 November 2026", effectiveFrom: "2026-12-09" },
+        { version: "0.1", updated: "25 November 2026", effectiveFrom: "2026-11-25" },
+      ],
+    }),
+    legalPageFromHistory({
+      key: "privacy",
+      path: "/privacy",
+      label: "Privacy",
+      title: "Privacy notice",
+      history: [{ version: "0.2", updated: "25 November 2026", effectiveFrom: "2026-11-25" }],
+    }),
+  ];
+
+  it("keeps the old version in force until the new one's date, in UK time", () => {
+    expect(versionInEffect("terms", new Date("2026-12-08T23:59:00Z"), pages).version).toBe("0.1");
+    expect(versionInEffect("terms", new Date("2026-12-09T00:00:00Z"), pages).version).toBe("0.2");
+  });
+
+  it("counts an early agreement to the newer version while the older one is in force", () => {
+    expect(versionsAtLeastInEffect("terms", new Date("2026-12-01T12:00:00Z"), pages)).toEqual([
+      "0.2",
+      "0.1",
+    ]);
+    expect(versionsAtLeastInEffect("terms", new Date("2026-12-09T12:00:00Z"), pages)).toEqual([
+      "0.2",
+    ]);
+  });
+
+  it("says a change is coming only before its date", () => {
+    expect(hasUpcomingAcceptanceChange(new Date("2026-12-08T12:00:00Z"), pages)).toBe(true);
+    expect(hasUpcomingAcceptanceChange(new Date("2026-12-09T12:00:00Z"), pages)).toBe(false);
   });
 });

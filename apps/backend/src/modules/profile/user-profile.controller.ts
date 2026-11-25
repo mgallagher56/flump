@@ -283,7 +283,7 @@ export class UserProfileController {
     if (!parsed.success) {
       throw new BadRequestException("Send the versions of the terms and privacy notice you read.");
     }
-    const newest = newestPair();
+    const newest = newestPair(this.termsAcceptance.pages);
     if (
       parsed.data.termsVersion !== newest.termsVersion ||
       parsed.data.privacyNoticeVersion !== newest.privacyNoticeVersion

@@ -1,3 +1,4 @@
+import { legalPageFromHistory } from "@flump/business-details";
 import { describe, expect, it, vi } from "vitest";
 import { AGREED_CACHE_MS, newestPair, TermsAcceptanceService } from "./terms-acceptance.service";
 
@@ -97,9 +98,9 @@ describe("TermsAcceptanceService.hasAgreedToTermsInForce", () => {
   });
 
   it("forgets the oldest cached yes once 10,000 are held", async () => {
-    const rows: Row[] = [];
-    for (let i = 0; i <= 10_000; i++) rows.push(row(`u${i}`, "0.1", "0.2"));
-    const { service, count } = serviceWith(rows);
+    // Everyone has agreed: a count of 1 for any user, without scanning 10,001 rows each time.
+    const count = vi.fn(async () => 1);
+    const service = new TermsAcceptanceService({ count } as never);
     for (let i = 0; i <= 10_000; i++) await service.hasAgreedToTermsInForce(`u${i}`, NOW);
     expect(count).toHaveBeenCalledTimes(10_001);
     // u0 was cached first and pushed out by u10000; u1 is still cached.
@@ -185,5 +186,72 @@ describe("TermsAcceptanceService.accept", () => {
     });
     builder.execute.mockResolvedValueOnce({ raw: [] });
     await expect(service.accept("u1", newestPair())).resolves.toEqual({ recorded: false });
+  });
+});
+
+describe("TermsAcceptanceService with a terms change coming (a test history)", () => {
+  // Terms 0.2 published, applying from 9 December 2026 (UK); 0.1 in force until then.
+  const pages = [
+    legalPageFromHistory({
+      key: "terms",
+      path: "/terms",
+      label: "Terms",
+      title: "Terms of use",
+      history: [
+        { version: "0.2", updated: "25 November 2026", effectiveFrom: "2026-12-09" },
+        { version: "0.1", updated: "25 November 2026", effectiveFrom: "2026-11-25" },
+      ],
+    }),
+    legalPageFromHistory({
+      key: "privacy",
+      path: "/privacy",
+      label: "Privacy",
+      title: "Privacy notice",
+      history: [{ version: "0.2", updated: "25 November 2026", effectiveFrom: "2026-11-25" }],
+    }),
+  ];
+  const withPages = (rows: Row[]) => {
+    const made = serviceWith(rows);
+    made.service.pages = pages;
+    return made;
+  };
+
+  it("never answers from the cache once a new version comes into force", async () => {
+    const { service, count } = withPages([row("u1", "0.1", "0.2")]);
+    // Agreed to 0.1, cached ten seconds before midnight (GMT, so UK midnight is UTC midnight).
+    expect(await service.hasAgreedToTermsInForce("u1", new Date("2026-12-08T23:59:50Z"))).toBe(
+      true,
+    );
+    // Five seconds after midnight, well inside the 30-second limit: 0.2 is in force, read again.
+    expect(await service.hasAgreedToTermsInForce("u1", new Date("2026-12-09T00:00:05Z"))).toBe(
+      false,
+    );
+    expect(count).toHaveBeenCalledTimes(2);
+  });
+
+  it("counts an early agreement to the coming version, before and after its date", async () => {
+    const { service } = withPages([row("u1", "0.2", "0.2")]);
+    expect(await service.hasAgreedToTermsInForce("u1", new Date("2026-12-01T12:00:00Z"))).toBe(
+      true,
+    );
+    expect(await service.hasAgreedToTermsInForce("u1", new Date("2026-12-10T12:00:00Z"))).toBe(
+      true,
+    );
+  });
+
+  it("offers the coming version without requiring it", async () => {
+    const { service } = withPages([row("u1", "0.1", "0.2")]);
+    const status = await service.status("u1", new Date("2026-12-01T12:00:00Z"));
+    expect(status).toMatchObject({ required: false, agreed: false, firstTime: false });
+    expect(status.terms).toMatchObject({
+      version: "0.2",
+      effectiveFrom: "2026-12-09",
+      changed: true,
+    });
+    expect(status.privacyNotice.changed).toBe(false);
+  });
+
+  it("records the newest pair from its own pages", () => {
+    expect(newestPair(pages)).toEqual({ termsVersion: "0.2", privacyNoticeVersion: "0.2" });
   });
 });

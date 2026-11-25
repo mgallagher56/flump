@@ -25,7 +25,13 @@ export const heading = cva({
 });
 
 export const copy = cva({
-  base: { textStyle: "body.md", color: "text.secondary", margin: 0 },
+  // Versions and dates appear in the prose.
+  base: {
+    textStyle: "body.md",
+    color: "text.secondary",
+    margin: 0,
+    fontVariantNumeric: "tabular-nums",
+  },
 });
 
 export const actions = cva({
@@ -37,6 +43,7 @@ export const legalLink = cva({
     color: "primary",
     textDecoration: "underline",
     textUnderlineOffset: "2px",
+    _hover: { color: "primary.emphasis" },
     _focusVisible: { outline: "2px solid", outlineColor: "border.focusRing", outlineOffset: "2px" },
   },
 });

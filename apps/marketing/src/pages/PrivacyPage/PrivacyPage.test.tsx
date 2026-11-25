@@ -67,8 +67,12 @@ describe("PrivacyPage", () => {
       "Messages you send us",
       "What we do not hold",
     ]);
-    // Eight groups of data, each with its own "Lawful basis:" sentence.
-    expect((what.textContent?.match(/Lawful basis:/g) ?? []).length).toBe(8);
+    // Eight groups of data, each with its own "Lawful basis:" sentence, and a second one in
+    // "Security records" for the record of which terms were agreed to (privacy notice 0.2).
+    expect((what.textContent?.match(/Lawful basis:/g) ?? []).length).toBe(9);
+    expect(what.textContent).toContain(
+      "Lawful basis: our legitimate interest in keeping a record of the agreement between us.",
+    );
     expect(what.textContent).toContain(
       "Flump does not ask who the other person is, and it does not link or invite them.",
     );

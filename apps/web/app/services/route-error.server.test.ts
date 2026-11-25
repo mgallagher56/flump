@@ -103,3 +103,39 @@ describe("actionErrorResponse", () => {
     expect(() => actionErrorResponse(redirect)).toThrow(redirect);
   });
 });
+
+describe("terms not accepted (terms acceptance)", () => {
+  const refusal = () => {
+    const err = new BackendError("forbidden", "/accounts", 403);
+    err.code = "terms_not_accepted";
+    return err;
+  };
+
+  it("sends a loader's refusal to the terms page, not an error page", () => {
+    const thrown = (() => {
+      try {
+        throwRouteError(refusal());
+      } catch (e) {
+        return e as Response;
+      }
+    })();
+    expect(thrown?.status).toBe(302);
+    expect(thrown?.headers.get("Location")).toBe("/terms-acceptance");
+  });
+
+  it("sends an action's refusal to the terms page, not 'no permission'", () => {
+    let thrown: unknown;
+    try {
+      actionErrorResponse(refusal());
+    } catch (e) {
+      thrown = e;
+    }
+    expect((thrown as Response).headers.get("Location")).toBe("/terms-acceptance");
+  });
+
+  it("keeps any other 403 an error", () => {
+    const other = new BackendError("forbidden", "/accounts", 403);
+    other.code = "recent_login_required";
+    expect(caught(other).init.status).toBe(403);
+  });
+});

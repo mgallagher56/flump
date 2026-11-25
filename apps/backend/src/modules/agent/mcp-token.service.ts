@@ -62,7 +62,13 @@ export class McpTokenService implements McpTokenStoreAdapter {
     // checked on every request. A new terms version coming into force stops the token until the
     // owner agrees in Flump; the token is refused, not revoked. The message says where to agree.
     // A failed read throws, so the request fails rather than passing.
-    if (!(await this.termsAcceptance.hasAgreedToTermsInForce(found.userId))) {
+    // Only for a live token: a revoked or expired one keeps its own refusal (the verifier's), so
+    // the message never sends someone to agree for a token that would fail anyway.
+    const live =
+      found.revokedAt === null &&
+      found.expiresAt !== null &&
+      new Date(found.expiresAt).getTime() > Date.now();
+    if (live && !(await this.termsAcceptance.hasAgreedToTermsInForce(found.userId))) {
       this.logger.warn(`mcp_token_denied tokenId=${found.id} reason=terms_not_accepted`);
       throw new AuthenticationError(
         "Open Flump and agree to the terms of use to use this AI connection again.",
