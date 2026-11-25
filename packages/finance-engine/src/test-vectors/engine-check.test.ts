@@ -12,10 +12,13 @@ describe("runEngineCheck", () => {
     const result = runEngineCheck();
     expect(result.failures).toEqual([]);
     expect(result.checked).toBe(expectedCount);
-    // Both regions are present: at least 37 Scotland income tax and 16 Scotland Gift Aid vectors.
-    expect(selectUkTaxVectors({ kind: "incomeTax", region: "SCOTLAND" }).length).toBeGreaterThan(
-      36,
-    );
+    // Both regions ran: a check that dropped Scotland would be short by its vectors.
+    const scotland =
+      selectUkTaxVectors({ kind: "incomeTax", region: "SCOTLAND" }).length +
+      selectUkTaxVectors({ kind: "giftAid", region: "SCOTLAND" }).length;
+    expect(scotland).toBeGreaterThan(50);
+    const ewniOnly = UK_TAX_VECTORS.filter((v) => v.region !== "SCOTLAND");
+    expect(runEngineCheck(ewniOnly).checked).toBe(expectedCount - scotland);
   });
 
   it("leaves out the kinds it has no evaluator for", () => {

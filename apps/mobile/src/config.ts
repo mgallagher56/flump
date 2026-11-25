@@ -53,7 +53,10 @@ export function readConfig(source: ConfigSource, options: { releaseBuild: boolea
   }
 
   if (url.protocol !== "https:" && url.protocol !== "http:") {
-    throw new MobileConfigError("invalid-api-url", "EXPO_PUBLIC_API_URL must use HTTPS.");
+    throw new MobileConfigError(
+      "invalid-api-url",
+      "EXPO_PUBLIC_API_URL must be an HTTPS address (or HTTP to a local host in a development build).",
+    );
   }
   if (url.protocol === "http:") {
     if (options.releaseBuild) {

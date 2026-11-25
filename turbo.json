@@ -25,6 +25,7 @@
     },
     "export": {
       "dependsOn": ["^build"],
+      "env": ["EXPO_PUBLIC_*"],
       "outputs": ["dist/**"]
     },
     "lint": {

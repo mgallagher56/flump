@@ -4,9 +4,11 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
   checkBundle,
+  checkSourceMap,
   DEV_ONLY_MARKERS,
   findBundles,
   PRODUCTION_MARKER,
+  packagesBundledTwice,
 } from "./check-mobile-bundle";
 
 const bundle = (text: string) => Buffer.from(`\u0000HBC${text}\u0000`, "latin1");
@@ -39,5 +41,41 @@ describe("findBundles", () => {
       { platform: "ios", files: [join(dist, "_expo/static/js/ios/entry-abc.hbc")] },
       { platform: "android", files: [] },
     ]);
+  });
+});
+
+describe("source map check (one copy of each package)", () => {
+  const one = "/node_modules/.bun/expo@58.0.26+aaa/node_modules/expo/build/Expo.js";
+  const sameInstall = "/node_modules/.bun/expo@58.0.26+aaa/node_modules/expo/virtual/streams.js";
+  const otherInstall = "/node_modules/.bun/expo@58.0.26+bbb/node_modules/expo/build/Expo.js";
+  const scoped = "/node_modules/.bun/@expo+log-box@58.0.15+ccc/node_modules/@expo/log-box/index.js";
+
+  test("one install per package passes", () => {
+    const map = JSON.stringify({
+      sources: [one, sameInstall, scoped, "/apps/mobile/app/index.tsx"],
+    });
+    expect(checkSourceMap("a.hbc", map)).toEqual([]);
+  });
+
+  test("the same package from two installs fails, even at the same version", () => {
+    expect(packagesBundledTwice([one, otherInstall, scoped])).toEqual(
+      new Map([["expo", ["expo@58.0.26+aaa", "expo@58.0.26+bbb"]]]),
+    );
+    expect(checkSourceMap("a.hbc", JSON.stringify({ sources: [one, otherInstall] }))).toEqual([
+      {
+        file: "a.hbc",
+        problem: "bundles expo from more than one install: expo@58.0.26+aaa, expo@58.0.26+bbb",
+      },
+    ]);
+  });
+
+  test("a missing, broken or empty source map fails rather than passing", () => {
+    expect(checkSourceMap("a.hbc", undefined)[0]?.problem).toBe("has no source map next to it");
+    expect(checkSourceMap("a.hbc", "{")[0]?.problem).toBe(
+      "has a source map that is not valid JSON",
+    );
+    expect(
+      checkSourceMap("a.hbc", JSON.stringify({ sources: ["/apps/mobile/a.ts"] }))[0]?.problem,
+    ).toBe("has a source map that lists no installed package");
   });
 });

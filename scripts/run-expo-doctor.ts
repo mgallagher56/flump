@@ -1,11 +1,19 @@
 /**
  * Runs expo-doctor on apps/mobile for CI (E12 S1a) and fails on every failed check but one known case.
  *
- * The repo's Bun isolated linker installs a second copy of a few Expo packages at the same version,
- * because of the peer cycle between `expo` and `@expo/cli`. Metro bundles one copy of each, so the
- * duplicate check's finding is tolerated only when every duplicate it lists has the same version as
- * the first copy. A duplicate at a different version, or any other failed check, fails the run.
- * The tolerance is recorded under "Guard changes" in the S1a PR and in docs/audit/plans/E12-spike-notes.md.
+ * Cause: the repo's Bun isolated linker installs a second copy of `expo`, `expo-constants`,
+ * `expo-linking` and `expo-status-bar` at the same version, because of the peer cycle between
+ * `expo` and `@expo/cli`. Metro still bundles one copy of each package; scripts/check-mobile-bundle.ts
+ * asserts that from the export's source map on every run.
+ *
+ * The tolerance is exact and fails closed: a failing run passes only when the summary says exactly
+ * one check failed, that check is the duplicate check, and every duplicated package it lists has one
+ * version. Any other failed check, a version split, or output this script cannot parse fails.
+ *
+ * Signed off by the coordinator on 25 November 2026 (Guard changes in the S1a PR; spike notes in
+ * docs/audit/plans/E12-spike-notes.md). Remove this tolerance, and call `expo-doctor` directly,
+ * when the repo moves to Bun's hoisted linker or Bun or Expo fix the peer cycle. The parser is written
+ * for expo-doctor 1.21.8, pinned exactly in apps/mobile/package.json.
  *
  *   bun scripts/run-expo-doctor.ts
  */
@@ -44,22 +52,40 @@ export function duplicateVersions(output: string): Map<string, string[]> {
   return result;
 }
 
+/** The "<passed>/<total> checks passed. <failed> checks failed." summary, or undefined when absent. */
+export function failedCount(output: string): number | undefined {
+  const m = output.match(/^(\d+)\/(\d+) checks passed\. (\d+) checks? failed\./m);
+  if (!m) return undefined;
+  const [passed, total, failed] = [Number(m[1]), Number(m[2]), Number(m[3])];
+  return passed + failed === total ? failed : undefined;
+}
+
 export function judge(output: string, exitCode: number): DoctorVerdict {
   if (exitCode === 0) return { ok: true, reasons: [] };
-  const reasons: string[] = [];
+  const fail = (reason: string): DoctorVerdict => ({ ok: false, reasons: [reason] });
+
+  const count = failedCount(output);
+  if (count === undefined)
+    return fail(`expo-doctor exited with ${exitCode}; its summary could not be read`);
   const failed = failedChecks(output);
-  if (failed.length === 0) reasons.push(`expo-doctor exited with ${exitCode} and named no check`);
-  for (const check of failed) {
-    if (check !== DUPLICATE_CHECK) {
-      reasons.push(`failed check: ${check}`);
-      continue;
-    }
-    const duplicates = duplicateVersions(output);
-    if (duplicates.size === 0) reasons.push("duplicate check failed but listed no package");
-    for (const [name, versions] of duplicates) {
-      if (versions.length < 2 || new Set(versions).size !== 1) {
-        reasons.push(`${name} is installed at more than one version: ${versions.join(", ")}`);
-      }
+  if (failed.length !== count) {
+    return fail(`the summary says ${count} check(s) failed but ${failed.length} could be read`);
+  }
+  const others = failed.filter((check) => check !== DUPLICATE_CHECK);
+  if (others.length > 0) return { ok: false, reasons: others.map((c) => `failed check: ${c}`) };
+
+  const headers = output
+    .split("\n")
+    .filter((line) => line.startsWith("Found duplicates for ")).length;
+  const duplicates = duplicateVersions(output);
+  if (duplicates.size === 0) return fail("duplicate check failed but listed no package");
+  if (duplicates.size !== headers || [...duplicates.values()].some((v) => v.length < 2)) {
+    return fail("a duplicate entry could not be read");
+  }
+  const reasons: string[] = [];
+  for (const [name, versions] of duplicates) {
+    if (new Set(versions).size !== 1) {
+      reasons.push(`${name} is installed at more than one version: ${versions.join(", ")}`);
     }
   }
   return { ok: reasons.length === 0, reasons };

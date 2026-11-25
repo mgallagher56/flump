@@ -10,7 +10,7 @@
     "lint": "biome check .",
     "check-types": "tsc --noEmit",
     "test": "jest",
-    "export": "expo export --platform ios --platform android --output-dir dist --clear",
+    "export": "expo export --platform ios --platform android --output-dir dist --source-maps --clear",
     "check:bundle": "bun ../../scripts/check-mobile-bundle.ts dist",
     "doctor": "bun ../../scripts/run-expo-doctor.ts",
     "doctor:raw": "expo-doctor"
