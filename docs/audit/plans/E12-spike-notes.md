@@ -26,6 +26,8 @@ Decisions: accepted on 2026-11-25 (O1 Expo, owner; O5 server home, Fable decider
 
 Metro needs no custom setting: `metro.config.js` is the plain `expo/metro-config` default.
 
+The plan names the Turbo task `build`; S1a calls it `export` instead, so the repo-wide `bun run build` (the web Build job) does not export the app. Only `📱 Mobile checks` runs it.
+
 ## Hermes and formatting
 
 - `expo export` compiles both production bundles to Hermes bytecode (`.hbc`), so Hermes accepts the syntax of the app and the shared packages.
