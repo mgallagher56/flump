@@ -4,8 +4,17 @@ import {
   type UkPensionInheritanceRules,
 } from "@flump/finance-engine";
 import { CollapsibleDrawer } from "@repo/ui";
-import type { FC } from "react";
-import { group, heading, link, links, note, stack, text } from "./UnusedPensionSavings.styles";
+import { type FC, useId } from "react";
+import {
+  group,
+  heading,
+  link,
+  links,
+  note,
+  srOnly,
+  stack,
+  text,
+} from "./UnusedPensionSavings.styles";
 
 export interface UnusedPensionSavingsProps {
   /** Today in the UK as an ISO date (yyyy-mm-dd): the "not before" line shows until the rules apply. */
@@ -65,7 +74,7 @@ export function unusedPensionSavingsLines(rules: UkPensionInheritanceRules) {
       "An estate is everything a person owns when they die.",
       "Anything left to a spouse or civil partner, or to charity, is free of inheritance tax.",
       "Death in service benefits and scheme pensions paid to dependants are not counted.",
-      "The people dealing with the estate report the pension and pay any tax. They can ask the pension scheme to pay its share.",
+      "The people dealing with the estate report the pension and pay any tax. They can usually ask the pension scheme to pay its share.",
       `Inheritance tax is due by the end of the ${ORDINALS[rules.paymentDueMonthAfterDeath] ?? `${rules.paymentDueMonthAfterDeath}th`} month after the death.`,
     ],
     thresholds: [
@@ -95,6 +104,11 @@ export const UnusedPensionSavings: FC<UnusedPensionSavingsProps> = ({
   rules = UK_PENSION_INHERITANCE_RULES,
 }) => {
   const lines = unusedPensionSavingsLines(rules);
+  // Unique per instance: Storybook shows light and dark side by side.
+  const baseId = useId();
+  const ihtId = `${baseId}-iht`;
+  const thresholdsId = `${baseId}-thresholds`;
+  const incomeTaxId = `${baseId}-income-tax`;
   const isLaw = rules.status === "enacted";
   const inForce = arePensionInheritanceRulesInForce(todayIso, rules);
   return (
@@ -107,14 +121,14 @@ export const UnusedPensionSavings: FC<UnusedPensionSavingsProps> = ({
         <div className={group()}>
           <p className={text()}>{lines.intro}</p>
           {!isLaw && (
-            <p className={text()} id="pension-iht-not-law">
+            <p className={text()} id="pension-iht-not-law" data-testid="pension-iht-not-law">
               {lines.notYetLaw}
             </p>
           )}
           {isLaw && !inForce && <p className={text()}>{lines.notBefore}</p>}
         </div>
-        <section className={group()} aria-labelledby="pension-iht-heading">
-          <h3 className={heading()} id="pension-iht-heading">
+        <section className={group()} aria-labelledby={ihtId}>
+          <h3 className={heading()} id={ihtId}>
             Inheritance tax
           </h3>
           {lines.inheritanceTax.map((line) => (
@@ -123,8 +137,8 @@ export const UnusedPensionSavings: FC<UnusedPensionSavingsProps> = ({
             </p>
           ))}
         </section>
-        <section className={group()} aria-labelledby="pension-iht-thresholds-heading">
-          <h3 className={heading()} id="pension-iht-thresholds-heading">
+        <section className={group()} aria-labelledby={thresholdsId}>
+          <h3 className={heading()} id={thresholdsId}>
             Thresholds
           </h3>
           {lines.thresholds.map((line) => (
@@ -133,8 +147,8 @@ export const UnusedPensionSavings: FC<UnusedPensionSavingsProps> = ({
             </p>
           ))}
         </section>
-        <section className={group()} aria-labelledby="pension-iht-income-tax-heading">
-          <h3 className={heading()} id="pension-iht-income-tax-heading">
+        <section className={group()} aria-labelledby={incomeTaxId}>
+          <h3 className={heading()} id={incomeTaxId}>
             Income tax for the person who inherits
           </h3>
           {lines.incomeTax.map((line) => (
@@ -154,6 +168,7 @@ export const UnusedPensionSavings: FC<UnusedPensionSavingsProps> = ({
               rel="noopener noreferrer"
             >
               Inheritance tax on GOV.UK
+              <span className={srOnly()}> (opens in a new tab)</span>
             </a>
             <a
               className={link()}
@@ -162,6 +177,7 @@ export const UnusedPensionSavings: FC<UnusedPensionSavingsProps> = ({
               rel="noopener noreferrer"
             >
               Tax on a pension you inherit on GOV.UK
+              <span className={srOnly()}> (opens in a new tab)</span>
             </a>
           </div>
         </div>

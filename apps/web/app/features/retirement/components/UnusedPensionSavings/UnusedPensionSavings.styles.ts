@@ -43,3 +43,6 @@ export const link = cva({
     _focusVisible: { outline: "2px solid", outlineColor: "border.focusRing", outlineOffset: "2px" },
   },
 });
+
+/** Says a link opens in a new tab, for screen readers only. */
+export const srOnly = cva({ base: { srOnly: true } });

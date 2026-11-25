@@ -1,4 +1,5 @@
 import {
+  getUkPensionAllowances,
   getUkStatePensionRules,
   reliefAtSourceGross,
   UK_SELF_EMPLOYED_PENSION_RULES,
@@ -6,7 +7,7 @@ import {
 } from "@flump/finance-engine";
 import { CollapsibleDrawer } from "@repo/ui";
 import type { FC } from "react";
-import { group, link, note, stack, text } from "./SelfEmployedPensions.styles";
+import { group, link, note, srOnly, stack, text } from "./SelfEmployedPensions.styles";
 
 export interface SelfEmployedPensionsProps {
   /** The engine's rules (one home for every figure). Injectable for stories and tests. */
@@ -38,13 +39,15 @@ const EXAMPLE_PAYMENT_GBP = 80;
 export function selfEmployedPensionLines(rules: UkSelfEmployedPensionRules) {
   const grossed = reliefAtSourceGross(EXAMPLE_PAYMENT_GBP, rules.taxYear);
   const minYears = getUkStatePensionRules(rules.taxYear).minQualifyingYears;
+  const annualAllowance = getUkPensionAllowances(rules.taxYear).pensionAnnualAllowance;
   return {
     intro: `Shown because your employment type is self-employed. UK rules for the ${taxYearWords(rules.taxYear)} tax year.`,
     facts: [
-      "There is no employer paying in and no automatic enrolment. A self-employed person sets up their own pension.",
+      "There is no employer paying in and no automatic enrolment. A self-employed person can set up their own pension.",
       `In most personal pensions, the provider adds basic rate tax relief. A payment of ${gbp.format(EXAMPLE_PAYMENT_GBP)} becomes ${gbp.format(grossed)} in the pension.`,
       "Higher and additional rate relief is claimed through Self Assessment. Scottish income tax rates give different amounts.",
       `Tax relief covers contributions up to a year's UK earnings. Where earnings are lower, it covers up to ${gbp.format(rules.basicAmountGbp)} a year, including the relief.`,
+      `Contributions above the annual allowance, ${gbp.format(annualAllowance)} for most people, can lead to a tax charge.`,
       "Pension contributions do not reduce Class 4 National Insurance.",
       `With profits of ${gbp.format(rules.class2SmallProfitsThresholdGbp)} or more, Class 2 National Insurance is treated as paid. That adds a qualifying year for the State Pension.`,
       `Below that, voluntary Class 2 contributions cost ${gbpPence.format(rules.class2VoluntaryWeeklyGbp)} a week. Any new State Pension takes at least ${minYears} qualifying years.`,
@@ -83,6 +86,7 @@ export const SelfEmployedPensions: FC<SelfEmployedPensionsProps> = ({
           rel="noopener noreferrer"
         >
           Tax relief on pension contributions on GOV.UK
+          <span className={srOnly()}> (opens in a new tab)</span>
         </a>
       </div>
     </CollapsibleDrawer>

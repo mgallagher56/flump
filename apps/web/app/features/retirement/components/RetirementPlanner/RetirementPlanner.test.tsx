@@ -13,7 +13,6 @@ import {
   EXTRA_CONTRIBUTION_HELPER,
   RetirementPlanner,
   type RetirementPlannerProps,
-  ukIsoDate,
 } from "./RetirementPlanner";
 
 // Router links as plain anchors, so their targets can be checked.
@@ -665,11 +664,13 @@ describe("RetirementPlanner", () => {
       expect(screen.getByText(EXTRA_CONTRIBUTION_HELPER)).toBeTruthy();
     });
 
-    it("works out today's date in the UK, not UTC", () => {
+    it("drops the not-before line from 6 April 2027 in the UK, not UTC", () => {
       // 23:30 UTC on 5 April 2027 is 00:30 BST on 6 April 2027.
-      expect(ukIsoDate(new Date("2027-04-05T23:30:00Z"))).toBe("2027-04-06");
-      // 23:30 UTC on 5 January 2027 is still 5 January in GMT.
-      expect(ukIsoDate(new Date("2027-01-05T23:30:00Z"))).toBe("2027-01-05");
+      renderPlanner({ planArgs: { ...planArgs, now: new Date("2027-04-05T23:30:00Z") } });
+      fireEvent.click(
+        screen.getByRole("button", { name: /What happens to unused pension savings/ }),
+      );
+      expect(screen.queryByText(/They do not apply before that date/)).toBeNull();
     });
   });
 
