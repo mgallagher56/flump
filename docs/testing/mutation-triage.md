@@ -3978,3 +3978,12 @@ Measured by a forced run on `mtd-income-tax.ts` and `rentalShareForRecord` in `t
 | ---------------------- | ---------------------------------------------------------------------------------- | ---------- | ---------------------------------------------------------------------------------------------------- |
 | mtd-income-tax.ts L162 | OptionalChaining `check?.status` to `check.status`                                 | Equivalent | The loop starts at 2024/25 and only goes up, so `checkMtdQualifyingIncome` never returns null there. |
 | tax-calculator.ts L476 | `record.accountId !== null && record.accountId !== undefined` parts to `true` or ` |            | `                                                                                                    | Equivalent | A null or undefined id indexes `byAccountId` as "null" or "undefined", which no account id equals, so `linked` is undefined either way. Moved unchanged from the inline `shareOf`. |
+
+## Engine check for the mobile app (E12 S1a, 25 November 2026)
+
+Measured with `--mutate "src/test-vectors/engine-check.ts"` in `packages/finance-engine`. 15 faults, 13 killed, 2 not covered (both in the unreachable `default` branch). Income tax and Gift Aid share one case after the first run showed that a fall-through between them was an equivalent fault.
+
+| Line                | Fault                                             | Class             | Reason                                                                                                                         |
+| ------------------- | ------------------------------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| engine-check.ts L58 | ConditionalExpression `default:` removed          | Not worth killing | Unreachable guard: `runEngineCheck` filters to `ENGINE_CHECK_KINDS` before `evaluate` runs, and every checked kind has a case. |
+| engine-check.ts L59 | StringLiteral in the "no evaluator" error emptied | Not worth killing | Message of the same unreachable guard.                                                                                         |
