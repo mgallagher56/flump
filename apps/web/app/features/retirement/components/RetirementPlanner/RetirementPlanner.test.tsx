@@ -8,7 +8,13 @@ import { describe, expect, it, vi } from "vitest";
 import { MAX_CONTRIBUTION_PERCENT } from "~/features/pension/contribution";
 import { retirementPlanUnsavedFixture } from "~/test/fixtures/contractResponses";
 import { retirementArgsFromLoader } from "../../retirementInput";
-import { RetirementPlanner, type RetirementPlannerProps } from "./RetirementPlanner";
+import {
+  CONTRIBUTION_BASIS_LINE,
+  EXTRA_CONTRIBUTION_HELPER,
+  RetirementPlanner,
+  type RetirementPlannerProps,
+  ukIsoDate,
+} from "./RetirementPlanner";
 
 // Router links as plain anchors, so their targets can be checked.
 vi.mock("react-router", async () => {
@@ -620,6 +626,51 @@ describe("RetirementPlanner", () => {
     expect(screen.getByTestId(`retirement-budget-line-amount-${id}`).textContent).toBe(
       "£260 / monthly, your 50% share",
     );
+  });
+
+  describe("pension rules sections (E33 S7)", () => {
+    it("shows the unused pension savings section to everyone, closed, and the self-employed one only when self-employed", () => {
+      const { unmount } = renderPlanner();
+      const iht = screen.getByRole("button", { name: /What happens to unused pension savings/ });
+      expect(iht.getAttribute("aria-expanded")).toBe("false");
+      expect(
+        screen.queryByRole("button", { name: /Pensions when you are self-employed/ }),
+      ).toBeNull();
+      unmount();
+      renderPlanner({ isSelfEmployed: true });
+      expect(
+        screen.getByRole("button", { name: /Pensions when you are self-employed/ }),
+      ).toBeTruthy();
+    });
+
+    it("shows the not-before line while today is before 6 April 2027 (NOW is in 2026)", () => {
+      renderPlanner();
+      fireEvent.click(
+        screen.getByRole("button", { name: /What happens to unused pension savings/ }),
+      );
+      expect(
+        screen.getByText(
+          "These rules apply to deaths on or after 6 April 2027. They do not apply before that date.",
+        ),
+      ).toBeTruthy();
+    });
+
+    it("states the contribution basis in the assumptions and on the extra contribution slider", () => {
+      renderPlanner();
+      fireEvent.click(screen.getByRole("button", { name: /Assumptions, pots and year by year/ }));
+      expect(screen.getByText(CONTRIBUTION_BASIS_LINE)).toBeTruthy();
+      expect(CONTRIBUTION_BASIS_LINE).toBe(
+        "Monthly pension contributions are counted as the full amount going into the pension, including tax relief the provider adds.",
+      );
+      expect(screen.getByText(EXTRA_CONTRIBUTION_HELPER)).toBeTruthy();
+    });
+
+    it("works out today's date in the UK, not UTC", () => {
+      // 23:30 UTC on 5 April 2027 is 00:30 BST on 6 April 2027.
+      expect(ukIsoDate(new Date("2027-04-05T23:30:00Z"))).toBe("2027-04-06");
+      // 23:30 UTC on 5 January 2027 is still 5 January in GMT.
+      expect(ukIsoDate(new Date("2027-01-05T23:30:00Z"))).toBe("2027-01-05");
+    });
   });
 
   describe("income tax in retirement (E33 S6)", () => {

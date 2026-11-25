@@ -16,10 +16,17 @@
  *   expected is the year's income tax on the taxable pension plus the State Pension. With method
  *   "ufpls" the tax-free part of the withdrawal (as ufplsTaxFreePart) is not taxed; with
  *   "lumpSum" the tax-free cash was taken at retirement, so the whole withdrawal is taxed.
+ * - reliefAtSourceGross (E33 S7): { paid }; expected is what reaches a relief at source pension for
+ *   that payment once the provider adds basic rate relief (higher rate relief through Self
+ *   Assessment not included).
  */
 import type { UkTaxVector, UkTaxVectorRegion, UkTaxVectorYear } from "./uk-tax.vectors.js";
 
-export type UkRetirementVectorKind = "ufplsTaxFreePart" | "taxFreeLumpSum" | "retirementYearTax";
+export type UkRetirementVectorKind =
+  | "ufplsTaxFreePart"
+  | "taxFreeLumpSum"
+  | "retirementYearTax"
+  | "reliefAtSourceGross";
 
 export type UkRetirementVector = Omit<UkTaxVector, "kind"> & {
   kind: UkRetirementVectorKind;
@@ -31,6 +38,7 @@ export const UK_RETIREMENT_VECTOR_KINDS: readonly UkRetirementVectorKind[] = [
   "ufplsTaxFreePart",
   "taxFreeLumpSum",
   "retirementYearTax",
+  "reliefAtSourceGross",
 ];
 
 export function selectUkRetirementVectors(
@@ -57,6 +65,10 @@ const INCOME_TAX_RATES = "https://www.gov.uk/income-tax-rates";
 const SCOTTISH_RATES = "https://www.gov.uk/scottish-income-tax";
 const STATE_PENSION = "https://www.gov.uk/new-state-pension/what-youll-get";
 const READ_ON = "2026-11-24";
+
+const PENSION_TAX_RELIEF = "https://www.gov.uk/tax-on-your-private-pension/pension-tax-relief";
+const PTM_BASIC_AMOUNT = "https://www.gov.uk/hmrc-internal-manuals/pensions-tax-manual/ptm044100";
+const S7_READ_ON = "2026-11-25";
 
 const ITEPA_637D = "https://www.legislation.gov.uk/ukpga/2003/1/section/637D";
 
@@ -260,5 +272,59 @@ export const UK_RETIREMENT_VECTORS: readonly UkRetirementVector[] = [
     signedOffBy: "fable-decider",
     signedOffAt: "2026-11-24",
     signedOffHash: "v2:29e7fa03f9e78f40c3fa647031b7dda9c3c8f1dccf4510fd8cbb58894731b002",
+  },
+  {
+    id: "reliefAtSourceGross.RV17.2026-27.ewni.paid80",
+    taxYear: "2026/27",
+    region: "ENGLAND_NI_WALES",
+    kind: "reliefAtSourceGross",
+    input: { paid: 80 },
+    expected: 100,
+    source: PENSION_TAX_RELIEF,
+    additionalSources: [INCOME_TAX_RATES],
+    sourceReadOn: S7_READ_ON,
+    derivation:
+      "RV17, relief at source on a personal pension payment, 2026/27. GOV.UK pension-tax-relief: with relief at source the pension provider claims tax relief at the basic rate (20%) and adds it to the pot. The 80 paid is what is left of a gross contribution after 20% basic rate tax: gross = 80 / (1 - 0.20) = 80 / 0.8 = 100. Relief added 20. Higher or additional rate relief, claimed through Self Assessment, is not part of what the provider adds.",
+    confidence: "high",
+    status: "VERIFIED",
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-25",
+    signedOffHash: "v2:95cb280fd41929fd7bc81165256c1553a21de8b49f7b1d8b538c9639ca98f2d7",
+  },
+  {
+    id: "reliefAtSourceGross.RV18.2026-27.ewni.paid2880",
+    taxYear: "2026/27",
+    region: "ENGLAND_NI_WALES",
+    kind: "reliefAtSourceGross",
+    input: { paid: 2880 },
+    expected: 3600,
+    source: PENSION_TAX_RELIEF,
+    additionalSources: [PTM_BASIC_AMOUNT],
+    sourceReadOn: S7_READ_ON,
+    derivation:
+      "RV18, the basic amount with no earnings, 2026/27. PTM044100 (FA 2004 s.190): relief is given on gross contributions up to the greater of 3,600 and relevant UK earnings, the 3,600 only under relief at source. A payment of 2,880 grossed up at the 20% basic rate: 2,880 / 0.8 = 3,600, exactly the basic amount. Relief added 720.",
+    confidence: "high",
+    status: "VERIFIED",
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-25",
+    signedOffHash: "v2:6e08847ad869efdf2a80e343cf6262c5708195afed405752ab4fb884b937ec12",
+  },
+  {
+    id: "reliefAtSourceGross.RV18b.2026-27.scotland.paid80",
+    taxYear: "2026/27",
+    region: "SCOTLAND",
+    kind: "reliefAtSourceGross",
+    input: { paid: 80 },
+    expected: 100,
+    source: PENSION_TAX_RELIEF,
+    additionalSources: [SCOTTISH_RATES],
+    sourceReadOn: S7_READ_ON,
+    derivation:
+      "RV18b, a Scottish taxpayer, 2026/27. GOV.UK pension-tax-relief: under relief at source the provider adds relief at 20% for Scottish taxpayers too, whatever their Scottish rate; anyone paying 19% still gets 20%, and those with income taxed at 21%, 42%, 45% or 48% claim the extra 1%, 22%, 25% or 28% through Self Assessment. So 80 / 0.8 = 100, as in RV17.",
+    confidence: "high",
+    status: "VERIFIED",
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-25",
+    signedOffHash: "v2:cace2dde3f8690dc312620d484dd4418d9a89b45902fad89c9f2ce750f2eb5a1",
   },
 ];

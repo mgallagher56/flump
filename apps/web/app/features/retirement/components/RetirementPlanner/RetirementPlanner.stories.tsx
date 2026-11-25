@@ -225,3 +225,35 @@ export const TaxFreeLumpSumDark: Story = {
   },
   play: lumpSumPlay,
 };
+
+/** E33 S7: a self-employed user sees both pension rules sections, closed until opened. */
+const selfEmployedPlay: Story["play"] = async ({ canvasElement }) => {
+  const canvas = within(canvasElement);
+  const iht = canvas.getByRole("button", { name: /What happens to unused pension savings/ });
+  await expect(iht).toHaveAttribute("aria-expanded", "false");
+  await userEvent.click(iht);
+  await expect(
+    canvas.getByText(
+      "These rules apply to deaths on or after 6 April 2027. They do not apply before that date.",
+    ),
+  ).toBeInTheDocument();
+  await userEvent.click(
+    canvas.getByRole("button", { name: /Pensions when you are self-employed/ }),
+  );
+  await expect(
+    canvas.getByText("Pension contributions do not reduce Class 4 National Insurance."),
+  ).toBeInTheDocument();
+};
+
+export const SelfEmployed: Story = {
+  args: { ...baseArgs, isSelfEmployed: true },
+  play: selfEmployedPlay,
+};
+
+export const SelfEmployedDark: Story = {
+  args: { ...baseArgs, isSelfEmployed: true },
+  parameters: {
+    themes: { themeOverride: "dark" },
+  },
+  play: selfEmployedPlay,
+};

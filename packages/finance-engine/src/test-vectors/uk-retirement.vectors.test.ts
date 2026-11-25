@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { retirementYearIncomeTax, taxFreeLumpSum, ufplsTaxFreePart } from "../retirement-tax.js";
 import { calculateEwniIncomeTax, calculateScottishIncomeTax } from "../uk-tax.js";
-import { getUkPensionAllowances } from "../uk-tax-year.js";
+import { getUkPensionAllowances, reliefAtSourceGross } from "../uk-tax-year.js";
 import { evaluateSignoff } from "./signoff.js";
 import {
   selectUkRetirementVectors,
@@ -37,15 +37,17 @@ function engineValue(v: UkRetirementVector): number {
         region: v.region,
       });
     }
+    case "reliefAtSourceGross":
+      return reliefAtSourceGross(num(v, "paid"), v.taxYear);
   }
 }
 
-describe("E33 S6 retirement vector catalogue", () => {
+describe("E33 S6 and S7 retirement vector catalogue", () => {
   it("every kind is present and RV10 to RV16 are covered", () => {
     for (const kind of UK_RETIREMENT_VECTOR_KINDS) {
       expect(selectUkRetirementVectors({ kind }).length, kind).toBeGreaterThan(0);
     }
-    for (const rv of ["RV10", "RV11", "RV12", "RV13", "RV14", "RV15", "RV16"]) {
+    for (const rv of ["RV10", "RV11", "RV12", "RV13", "RV14", "RV15", "RV16", "RV17", "RV18"]) {
       expect(
         UK_RETIREMENT_VECTORS.some((v) => v.id.includes(`.${rv}.`)),
         rv,
@@ -116,6 +118,10 @@ describe("E33 S6 retirement vector catalogue", () => {
     expect(get("retirementYearTax.RV16.")?.expected).toBe(35232);
     // RV13c: 25% of 1,500,000 = 375,000, capped at 268,275.
     expect(get("taxFreeLumpSum.RV13c.")?.expected).toBe(268275);
+    // RV17: 80 paid, grossed up at the 20% basic rate: 80 / 0.8 = 100.
+    expect(get("reliefAtSourceGross.RV17.")?.expected).toBe(100);
+    // RV18: 2,880 / 0.8 = 3,600, the basic amount for someone with no earnings.
+    expect(get("reliefAtSourceGross.RV18.")?.expected).toBe(3600);
   });
 
   it("RV10 equals the tax engine's figure for the same income", () => {
