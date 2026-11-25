@@ -245,3 +245,14 @@ export function assertLaunchReady(env: Env, details: BusinessDetails = BUSINESS_
     );
   }
 }
+
+/**
+ * True when the terms or the privacy notice has a version published but not yet in effect, so the
+ * apps can offer it early without asking the backend on every page while nothing is coming.
+ */
+export function hasUpcomingAcceptanceChange(now: Date): boolean {
+  const today = ukDate(now);
+  return (["terms", "privacy"] as const).some(
+    (key) => (legalPage(key).history[0]?.effectiveFrom ?? today) > today,
+  );
+}

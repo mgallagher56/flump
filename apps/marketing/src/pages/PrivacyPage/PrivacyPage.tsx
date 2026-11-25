@@ -104,6 +104,11 @@ export const PrivacyPage: FC = () => (
         Flump. Counters that limit how many requests an account or an internet address can make.
         Lawful basis: our legitimate interest in keeping Flump secure and stopping misuse.
       </p>
+      <p>
+        Which version of the terms you agreed to, which version of this notice we showed you, and
+        when. We keep this until you delete your account. Lawful basis: our legitimate interest in
+        keeping a record of the agreement between us.
+      </p>
 
       <h3>Server logs and error reports</h3>
       <p>
@@ -359,6 +364,10 @@ export const PrivacyPage: FC = () => (
         effect.
       </p>
       <ul className={versionHistory()}>
+        <li>
+          Version 0.2, 25 November 2026: adds the record of which terms you agreed to and which
+          version of this notice we showed you.
+        </li>
         <li>Version 0.1, 25 November 2026: first version, for the test phase.</li>
       </ul>
     </LegalSection>

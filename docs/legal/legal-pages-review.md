@@ -1,6 +1,6 @@
 # Legal pages: review record
 
-Status: version 0.1 of the four pages, 25 November 2026.
+Status: version 0.1 of the terms, cookies and accessibility pages and version 0.2 of the privacy notice, 25 November 2026.
 
 - **Written by:** Claude Fable (an AI model), from the code, the hosting settings and primary legal sources read that day.
 - **Approved by:** a separate Claude Fable reviewer that wrote none of the pages (owner decision, 25 November 2026: "use fable to write and approve the legal pages").
@@ -12,7 +12,7 @@ Decisions: open. The owner steps and the solicitor list below are not answered h
 
 | Page                        | Route            | Source                                                             | Verdict                     |
 | --------------------------- | ---------------- | ------------------------------------------------------------------ | --------------------------- |
-| Privacy notice              | `/privacy`       | `apps/marketing/src/pages/PrivacyPage/PrivacyPage.tsx`             | Approved on the third look  |
+| Privacy notice              | `/privacy`       | `apps/marketing/src/pages/PrivacyPage/PrivacyPage.tsx`             | 0.2 approved in round 6     |
 | Terms of use                | `/terms`         | `apps/marketing/src/pages/TermsPage/TermsPage.tsx`                 | Approved on the second look |
 | Cookies and browser storage | `/cookies`       | `apps/marketing/src/pages/CookiesPage/CookiesPage.tsx`             | Approved on the first look  |
 | Accessibility statement     | `/accessibility` | `apps/marketing/src/pages/AccessibilityPage/AccessibilityPage.tsx` | Approved on the second look |
@@ -60,11 +60,20 @@ Main gained two stored items. A started monthly check-in is now stored (#922), s
 
 **Verdict: approved**, the new line and both doc entries. The reviewer agreed that the rollback table needs no new notice text.
 
+### Round 6: terms acceptance at sign-up (privacy notice 0.2)
+
+Terms acceptance was built (the follow-up below). A separate Fable decider, recorded as `fable-decider`, signed the plan and its wording on 25 November 2026: approved with four changes, all applied. Fable is an AI model, not a solicitor.
+
+- **Framing.** The terms of use are a contract the person agrees to ("Agree and continue", with the line "By selecting Agree and continue, you agree to the terms of use" and the terms linked). The privacy notice is information they are shown, never agreed or consented to; a change to it alone asks them to read it and select "Continue". No checkbox, nothing pre-ticked, no marketing consent.
+- **Notice period.** Each page carries a version history with the date each version applies from (`LEGAL_PAGES`). A new terms version normally applies 14 days after it is published, as the terms promise; until then people may agree early or carry on.
+- **Privacy notice 0.2** adds one item under "Security records": "Which version of the terms you agreed to, which version of this notice we showed you, and when. We keep this until you delete your account. Lawful basis: our legitimate interest in keeping a record of the agreement between us."
+- `ropa.md` and `data-map.md` gained the record.
+
 ## Judgement calls the reviewer made
 
 - **Controller and processor for client details:** the user as controller and Flump as processor is the right split.
 - **Responsibility section (Consumer Rights Act 2015, Part 2):** fair and transparent in its reading; nothing found that is likely to be unenforceable. There is no cap, so a sole trader carries unlimited foreseeable loss.
-- **Acceptance of the terms:** nothing records it at sign-up. Not blocking for a friends beta; without notice at sign-up the terms, including the processor terms, may not bind. A follow-up before public launch.
+- **Acceptance of the terms:** recorded at sign-up since round 6, before onboarding and again when a version changes.
 - **No cookie banner:** correct. Sign-in, invite, theme, the opt-out record and the onboarding seed are strictly necessary (PECR Schedule A1 paragraph 4). The three optional sessionStorage keys rest on paragraph 6 and the switch is a sufficient simple, free means of objecting, on both sites.
 - **No regulatory-status sentence in the terms:** acceptable for the beta (that wording is the owner's, E7). A launch risk the owner must decide, because users may assume complaint and compensation schemes apply.
 
@@ -110,10 +119,20 @@ The stand-in name ends in "Ltd" and comes with a company number, while the tradi
 4. **By 3 December 2026:** create the daily retention cron service on Railway (`bun run retention:purge`). Then the backup job and its bucket rule, and state the backup period in the privacy notice.
 5. Decide the regulatory-status wording for the terms before a public launch.
 6. Decide whether to move hosting to EU West (`docs/runbooks/region-move.md`). The privacy notice and `ropa.md` change with it.
-7. Email testers when the terms change by more than a wording fix, and 30 days before ending an account or the test phase. The terms promise both, and nothing in the app sends email.
-8. Answer privacy requests within one month and acknowledge complaints within 30 days.
+7. Delete the `TERMS_VERSION` variable from the Railway backend service if it is set. The backend no longer reads it (terms versions come from `LEGAL_PAGES`) and logs one warning at boot while it is there.
+8. Email testers when the terms change by more than a wording fix, and 30 days before ending an account or the test phase. The terms promise both, and nothing in the app sends email.
+9. Answer privacy requests within one month and acknowledge complaints within 30 days.
 
 ## For a solicitor before public launch
+
+Open items for the owner from the terms acceptance decider (round 6):
+
+- Whether "agree or lose access" when the terms change is fair under the Consumer Rights Act 2015.
+- No record of acceptance survives account deletion, so there is no evidence of what a deleted account agreed to.
+- Nothing confirms that a person is 18 or over and lives in the UK, which the terms require.
+- Whether a wording-only fix to the terms could skip asking everyone to agree again (today every new version asks).
+
+Earlier items:
 
 - The financial regulation perimeter and the status wording.
 - Uncapped responsibility for loss, and the trading form.
@@ -124,6 +143,5 @@ The stand-in name ends in "Ltd" and comes with a company number, while the tradi
 
 ## Follow-ups for engineering
 
-- Show the terms and the privacy notice at invite acceptance and record the `consents` "terms" kind.
 - Add the legal routes' visual baselines from the pull request's CI run.
 - Add a row to this file, and bump the page's version, with every later change to the wording.

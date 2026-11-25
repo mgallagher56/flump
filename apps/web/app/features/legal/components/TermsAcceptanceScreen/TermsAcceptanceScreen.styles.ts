@@ -28,10 +28,6 @@ export const copy = cva({
   base: { textStyle: "body.md", color: "text.secondary", margin: 0 },
 });
 
-export const error = cva({
-  base: { textStyle: "body.md", color: "status.danger.text", margin: 0 },
-});
-
 export const actions = cva({
   base: { display: "flex", flexDirection: "column", gap: "4" },
 });

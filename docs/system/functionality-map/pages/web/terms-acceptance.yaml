@@ -1,0 +1,14 @@
+id: terms-acceptance
+app: web
+route: /terms-acceptance
+title: Terms of use
+auth: required
+purpose: Ask a signed-in person to agree to the terms of use and show them the privacy notice before they use Flump, again when either changes, and let someone who does not agree download their data, delete their account or sign out.
+route_file: apps/web/app/routes/terms-acceptance.tsx
+
+sections:
+  - id: terms-agreement
+    component: apps/web/app/features/legal/components/TermsAcceptanceScreen/TermsAcceptanceScreen.tsx
+
+  - id: terms-data-actions
+    component: apps/web/app/features/settings/components/DeleteAccountSection/DeleteAccountSection.tsx

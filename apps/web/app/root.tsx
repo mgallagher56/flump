@@ -11,6 +11,7 @@ import {
   Scripts,
   ScrollRestoration,
   useLoaderData,
+  useLocation,
   useRevalidator,
   useRouteError,
   useRouteLoaderData,
@@ -30,6 +31,11 @@ import i18n from "./i18n";
 import { registerSavedDataReload, revalidateRootData } from "./services/conflict";
 import { scrollRestorationKey } from "./utils/scrollRestorationKey";
 import "@repo/ui/fonts.css";
+import { TermsStatusResponse } from "@flump/api-contract";
+import { hasUpcomingAcceptanceChange } from "@flump/business-details";
+import { TermsChangeNotice } from "~/features/legal/components/TermsChangeNotice";
+import { isUpcoming } from "~/features/legal/terms";
+import { backendFetch } from "~/services/backend-client.server";
 import { getMarketingUrl } from "~/utils/marketingUrl";
 import styles from "./index.css?url";
 import { sentryPublicEnv } from "./observability/env";
@@ -40,6 +46,12 @@ import { isInviteOnly } from "./services/beta-mode.server";
 import { inviteGateMiddleware } from "./services/invite-gate.server";
 import { loadRootProfile } from "./services/root-profile.server";
 import { throwRouteError } from "./services/route-error.server";
+import {
+  isTermsExemptPath,
+  isTermsNotAccepted,
+  termsAcceptanceRedirect,
+  termsGateMiddleware,
+} from "./services/terms-gate.server";
 import { ThemeContext } from "./ThemeContext";
 import { getAuthSession } from "./utils/auth.server";
 import { watchLogoutForms } from "./utils/userStorage";
@@ -50,8 +62,9 @@ export const links = () => [
   { rel: "stylesheet", href: styles },
 ];
 
-// The invite gate runs inside the security middleware, so its refusal gets the same headers.
-export const middleware = [securityMiddleware, inviteGateMiddleware];
+// The invite and terms gates run inside the security middleware, so their answers get the same
+// headers. The terms gate runs after the invite gate: "not invited" comes before the terms.
+export const middleware = [securityMiddleware, inviteGateMiddleware, termsGateMiddleware];
 
 // A save refused with 412 reloads the profile too, so the next save sends its latest version.
 export const shouldRevalidate = revalidateRootData;
@@ -87,12 +100,43 @@ export const loader = async (args: LoaderFunctionArgs) => {
         if (!isInvitePath(new URL(args.request.url).pathname)) throwRouteError(error);
         notInvited = true;
       }
+      // Not yet agreed to the terms in force: the acceptance page, unless already on a page that
+      // works without agreeing (the acceptance page itself, sign-out, the export download). The
+      // terms gate catches full page loads first; this catches client navigations.
+      if (isTermsNotAccepted(error)) {
+        if (!isTermsExemptPath(new URL(args.request.url).pathname)) {
+          throw termsAcceptanceRedirect(args.request);
+        }
+      }
       // Keep the shell up without a profile; log only the kind and endpoint, never the token.
       if (error instanceof BackendError) {
         console.error("Root loader profile failed", { kind: error.kind, endpoint: error.endpoint });
       } else {
         throw error;
       }
+    }
+  }
+
+  // A coming change to the terms or privacy notice (published, not yet in force). Asked of the
+  // backend only while LEGAL_PAGES holds a version dated in the future, so a page load costs
+  // nothing extra the rest of the time. Best effort: a failed read shows no notice.
+  let termsUpcoming: { terms: boolean; privacyNotice: boolean; effectiveFrom: string } | null =
+    null;
+  if (userProfile && accessToken && hasUpcomingAcceptanceChange(new Date())) {
+    const status = await backendFetch("/user-profile/terms-acceptance", {
+      accessToken,
+      schema: TermsStatusResponse,
+      signal: args.request.signal,
+    }).catch(() => null);
+    if (status && isUpcoming(status)) {
+      const [effectiveFrom] = [status.terms.effectiveFrom, status.privacyNotice.effectiveFrom]
+        .sort()
+        .reverse();
+      termsUpcoming = {
+        terms: status.terms.changed,
+        privacyNotice: status.privacyNotice.changed,
+        effectiveFrom: effectiveFrom ?? status.terms.effectiveFrom,
+      };
     }
   }
 
@@ -114,6 +158,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
     user: notInvited ? null : user,
     notInvited,
     userProfile,
+    termsUpcoming,
     // The browser's only public config channel (E20-N8): the three non-secret Sentry keys that
     // entry.client.tsx reads from `window.ENV`. Never add a token, API URL or other secret here.
     ENV: sentryPublicEnv(process.env),
@@ -213,7 +258,8 @@ function AppShell({ user, focused = false, children }: AppShellProps) {
 }
 
 export default function App() {
-  const { user, ENV, isMobileClient, notInvited } = useLoaderData<typeof loader>();
+  const { user, ENV, isMobileClient, notInvited, termsUpcoming } = useLoaderData<typeof loader>();
+  const location = useLocation();
   const nonce = useNonce();
   const { theme, preference, setPreference, toggleTheme } = useThemePreference();
   const focused = useIsFocusedShell() || notInvited;
@@ -264,6 +310,12 @@ export default function App() {
         <ThemeContext.Provider value={{ theme, preference, setPreference, toggleTheme }}>
           <ResponsiveProvider serverIsMobile={isMobileClient}>
             <AppShell focused={focused} user={user}>
+              {termsUpcoming && !focused ? (
+                <TermsChangeNotice
+                  {...termsUpcoming}
+                  next={`${location.pathname}${location.search}`}
+                />
+              ) : null}
               <RouteOutlet />
             </AppShell>
           </ResponsiveProvider>

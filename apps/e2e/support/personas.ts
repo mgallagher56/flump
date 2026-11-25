@@ -854,7 +854,21 @@ export interface PersonaResult {
  * Makes the signed-in dev user look like `persona`. The page must be on the web app's origin
  * with a session (global setup signs in first). Throws with every failing status.
  */
+/**
+ * Agrees to the terms through the acceptance page when the app asks (a fresh database), the way a
+ * person does: the backend refuses every other call until the user has agreed. Once agreed, the
+ * page sends the browser straight on and nothing is clicked. A reset keeps the agreement.
+ */
+export async function agreeToTermsIfAsked(page: Page): Promise<void> {
+  await page.goto("/terms-acceptance");
+  if (new URL(page.url()).pathname !== "/terms-acceptance") return;
+  await page.waitForLoadState("networkidle");
+  await page.getByRole("button", { name: /^(Agree and continue|Continue)$/ }).click();
+  await page.waitForURL((url) => url.pathname !== "/terms-acceptance");
+}
+
 export async function applyPersona(page: Page, name: PersonaName): Promise<PersonaResult> {
+  await agreeToTermsIfAsked(page);
   // Smoke suite: wait for the user's next read window if this one is nearly spent (read-budget.ts).
   await paceReads();
   const plan = planFor(PERSONAS[name], seedNow());

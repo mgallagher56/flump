@@ -5,6 +5,7 @@ import {
   type BusinessDetails,
   companyLine,
   formatPrice,
+  hasUpcomingAcceptanceChange,
   isPublicLaunch,
   LEGAL_PAGES,
   LEGAL_REVIEW_NOTE,
@@ -189,6 +190,13 @@ describe("versions in effect (terms acceptance)", () => {
     expect(versionInEffect("terms", now).version).toBe("0.1");
     expect(versionInEffect("privacy", now).version).toBe("0.2");
     expect(versionsAtLeastInEffect("privacy", now)).toEqual(["0.2"]);
+  });
+
+  it("has nothing coming once every newest version is in effect", () => {
+    // The newest terms and privacy versions both apply from 25 November 2026.
+    expect(hasUpcomingAcceptanceChange(new Date("2026-11-25T00:30:00Z"))).toBe(false);
+    // The day before, the newest versions were still to come.
+    expect(hasUpcomingAcceptanceChange(new Date("2026-11-24T12:00:00Z"))).toBe(true);
   });
 
   it("refuses a date before any version applied", () => {

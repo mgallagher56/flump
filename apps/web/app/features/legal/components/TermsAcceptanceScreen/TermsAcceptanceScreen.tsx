@@ -1,4 +1,4 @@
-import { Button, ButtonLink, Card, PageBody } from "@repo/ui";
+import { Button, ButtonLink, Card, InlineAlert, PageBody } from "@repo/ui";
 import type { FC, ReactNode } from "react";
 import { Form } from "react-router";
 import {
@@ -16,7 +16,6 @@ import {
   actions,
   copy,
   dataStack,
-  error as errorText,
   heading,
   legalLink,
   screenCard,
@@ -119,11 +118,7 @@ export const TermsAcceptanceScreen: FC<TermsAcceptanceScreenProps> = ({
               can carry on until then.
             </p>
           ) : null}
-          {error ? (
-            <p className={errorText()} role="alert">
-              {ERRORS[error]}
-            </p>
-          ) : null}
+          {error ? <InlineAlert tone="danger">{ERRORS[error]}</InlineAlert> : null}
           <Form method="post" className={actions()} replace>
             <input type="hidden" name="termsVersion" value={status.terms.version} />
             <input type="hidden" name="privacyNoticeVersion" value={status.privacyNotice.version} />

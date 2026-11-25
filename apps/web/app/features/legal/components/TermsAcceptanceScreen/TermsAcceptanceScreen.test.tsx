@@ -169,7 +169,7 @@ describe("<TermsAcceptanceScreen />", () => {
 
   it("explains a version that changed while reading", async () => {
     setup({ error: "changed" });
-    expect((await screen.findByRole("alert")).textContent).toBe(
+    expect((await screen.findByRole("alert")).textContent).toContain(
       "The terms or privacy notice changed while you were reading. Read the new versions.",
     );
   });

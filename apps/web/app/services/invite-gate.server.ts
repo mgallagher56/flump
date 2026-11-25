@@ -29,6 +29,11 @@ const UNGATED = [
   /^\/csp-report\/?$/,
 ];
 
+/** True for a path the invite gate never checks (shared with the terms gate). */
+export function isUngatedPath(pathname: string): boolean {
+  return UNGATED.some((path) => path.test(pathname));
+}
+
 /** The same page, always on this site: leading slashes collapse so `//host` is never a target. */
 function samePage(request: Request): string {
   const url = new URL(request.url);
@@ -39,7 +44,7 @@ function samePage(request: Request): string {
 function isDocumentRequest(request: Request): boolean {
   if (request.method !== "GET") return false;
   const { pathname } = new URL(request.url);
-  return !pathname.endsWith(".data") && !UNGATED.some((path) => path.test(pathname));
+  return !pathname.endsWith(".data") && !isUngatedPath(pathname);
 }
 
 /**

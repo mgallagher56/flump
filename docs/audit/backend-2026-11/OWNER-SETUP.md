@@ -275,7 +275,7 @@ Four backend variables keep account deletion, the client-IP rate limit and terms
 | `DELETION_TOMBSTONE_KEY` | HMAC key for the hashed user id kept after an account is erased (`openssl rand -hex 32`, at least 32 characters). **Never rotate it**: old tombstones become unfindable | The backend does not start (SEC-A). Also refused when shorter than 32 characters |
 | `WEB_CLIENT_IP_HMAC_KEY` | Verifies the signed client-IP header from the web service (BE-07). Same value on the web service | The backend does not start (SEC-A) |
 | `WORKOS_API_KEY` | Lets account deletion remove the WorkOS login, and lets the password reset and name updates reach WorkOS | The backend does not start (SEC-A) |
-| `TERMS_VERSION` | The terms and privacy notice version people accept, for example `2026-11-01` (1 to 64 letters, digits, dots, dashes or underscores). Change it whenever the legal pages change | `POST /v1/user-profile/terms-acceptance` answers 503 `terms_not_configured`. A request naming any other version gets 409 `terms_version_mismatch` |
+| `TERMS_VERSION` | Retired by terms acceptance (25 November 2026): terms versions now come from `LEGAL_PAGES` in `packages/business-details`. Delete it from the backend service if it is set | Nothing: the backend ignores it. While it is set it logs one warning at boot and `/health/ready` counts it in `configWarnings` |
 
 ### 2. Database
 
@@ -288,7 +288,7 @@ The migration `AuditActionUserExported1795000000000` lets `audit_events` hold th
 
 ### How to know it worked
 
-- [ ] `GET /health/ready` answers 200 with `"configWarnings": 0` (`1` while `TERMS_VERSION` is unset, which is expected until the terms are published). Date: ____ When it is higher than expected, the names are in the backend boot log (Railway, backend service, deploy logs) as `warn` lines, one per unset variable, in this form: `<VARIABLE_NAME> is not set in production. See docs/audit/backend-2026-11/OWNER-SETUP.md (BE-04 / BE-15).`
+- [ ] `GET /health/ready` answers 200 with `"configWarnings": 0` (`1` while the retired `TERMS_VERSION` is still set; delete it). Date: ____ When it is higher than expected, the names are in the backend boot log (Railway, backend service, deploy logs) as `warn` lines, one per unset variable, in this form: `<VARIABLE_NAME> is not set in production. See docs/audit/backend-2026-11/OWNER-SETUP.md (BE-04 / BE-15).`
 - [ ] Download your data export in the web app, then in `railway connect Postgres`: `SELECT action FROM audit_events ORDER BY created_at DESC LIMIT 1;` shows `user.exported`.
 - [x] SEC-A has made the three keys required (owner confirmed them set on 15 November 2026).
 
