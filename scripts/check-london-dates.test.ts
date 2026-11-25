@@ -1,5 +1,8 @@
 import { describe, expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { countLocalDateReads, LONDON_DATE_HOME } from "./lib/london-dates";
+import { repoRoot } from "./lib/scan";
 
 describe("countLocalDateReads on the real past mistakes", () => {
   test("9add200d3: the current month from the device clock (apps/web/app/utils/accounts.ts)", () => {
@@ -25,6 +28,23 @@ describe("countLocalDateReads on the real past mistakes", () => {
 describe("countLocalDateReads rules", () => {
   test("the one home may hold the London formatter", () => {
     expect(countLocalDateReads('timeZone: "Europe/London",', LONDON_DATE_HOME)).toBe(0);
+  });
+
+  test("the home is uk-tax-year-calendar.ts, where getUkCalendarDate's formatter now lives", () => {
+    expect(LONDON_DATE_HOME).toBe("packages/finance-engine/src/uk-tax-year-calendar.ts");
+    const home = readFileSync(resolve(repoRoot, LONDON_DATE_HOME), "utf8");
+    expect(home.match(/timeZone: *["']Europe\/London["']/g)?.length).toBe(1);
+    expect(countLocalDateReads(home, LONDON_DATE_HOME)).toBe(0);
+  });
+
+  test("a second London formatter in any other finance-engine file counts", () => {
+    const copy = 'new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/London" });';
+    for (const file of [
+      "packages/finance-engine/src/uk-tax-year.ts",
+      "packages/finance-engine/src/retirement.ts",
+    ]) {
+      expect(countLocalDateReads(copy, file)).toBe(1);
+    }
   });
 
   test("UTC reads and a zoned toLocaleDateString are fine", () => {
