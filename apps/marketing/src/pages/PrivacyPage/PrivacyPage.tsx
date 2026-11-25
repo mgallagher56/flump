@@ -60,6 +60,7 @@ export const PrivacyPage: FC = () => (
         <li>your name, country, tax region, birth year and employment type</li>
         <li>your pay, housing costs, mortgage, pension and savings details</li>
         <li>your accounts and debts, their balances and their monthly history</li>
+        <li>the months in which you started or finished a monthly check-in</li>
         <li>budget entries, goals and your retirement plan</li>
         <li>income and cost records by tax year, with any notes and receipt files you add</li>
         <li>

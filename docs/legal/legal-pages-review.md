@@ -54,6 +54,12 @@ Advisory points applied: the AI log's contents, network logs and internet addres
 
 Seven sentences were split after approval to meet the 25-word copy law (three in the terms, one in the accessibility statement, three in the privacy notice). The reviewer read each new form as quoted to it, without re-opening the files, and approved all seven: no meaning changed and no protection is weaker.
 
+### Round 5: after the rebase onto main
+
+Main gained two stored items. A started monthly check-in is now stored (#922), so the privacy notice's list of what you enter gained one line: "the months in which you started or finished a monthly check-in". The reviewer checked it against the entity and the registry. A migration's rollback table of tax record ids (#916, kept 90 days) is already covered by the notice's line on copies kept to undo an update; it was added to `ropa.md` and `data-map.md`.
+
+**Verdict: approved**, the new line and both doc entries. The reviewer agreed that the rollback table needs no new notice text.
+
 ## Judgement calls the reviewer made
 
 - **Controller and processor for client details:** the user as controller and Flump as processor is the right split.

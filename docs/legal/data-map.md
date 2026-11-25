@@ -81,6 +81,10 @@ test checks the catalogue's `user_id` tables against the registry.
 - `liability_sign_backfill` (the BE-05 migration's before-image of old and new balance signs) has no
   user id; its rows go with the account by `ON DELETE CASCADE`. It is not in the export, because the
   current balances are.
+- `invoice_tax_record_category_backfill` (#916: the ids of the invoice-linked tax records a migration
+  moved to self-employed income, kept so the migration can be undone) has no user id either; its
+  rows go with the tax record by `ON DELETE CASCADE` and the retention job removes them after 90
+  days. It is not in the export, because the tax records are.
 - From the moment the tombstone commits, every authenticated route refuses the user's tokens with
   410 `{ error: "account_deleted" }` (not 401, so the web app does not loop through sign-in while the
   WorkOS login still exists). Only `DELETE /user-profile` stays open, for retries. `/mcp` is not
@@ -106,17 +110,17 @@ One JSON document, streamed as `flump-export-YYYY-MM-DD.json` with `Cache-Contro
 shape is `AccountExportDocument` in `packages/api-contract/src/domains/profile.ts`
 (`schemaVersion` 1):
 
-| Key                                              | Content                                                                        |
-| ------------------------------------------------ | ------------------------------------------------------------------------------ |
-| `schemaVersion`, `exportedAt`, `userId`, `notes` | Envelope: format version, export time (ISO 8601), the caller's id, plain notes |
-| `profile`                                        | `user_profiles` row (object, or null if never created)                         |
-| `accounts`, `accountDetails`, `transactions`     | Accounts, monthly balance history, transactions                                |
-| `bankConnections`                                | Linked banks: institution, status, expiry, last sync. Never the tokens         |
-| `bankOAuthStates`                                | Bank consents started in the last ten minutes: institution and expiry only     |
-| `budgetEntries`, `taxRecords`                    | Budget and tax records, receipts as base64 data URLs                           |
-| `snapshotCheckins`, `importBatches`              | Confirmed months; spreadsheet imports and their undo data                      |
-| `mcpTokens`, `agentAuditEvents`                  | AI connection token metadata (name, prefix, scopes, usage) and its audit log   |
-| `auditEvents`, `consents`                        | Sensitive-action records and consents (BE-06)                                  |
+| Key                                              | Content                                                                            |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------- |
+| `schemaVersion`, `exportedAt`, `userId`, `notes` | Envelope: format version, export time (ISO 8601), the caller's id, plain notes     |
+| `profile`                                        | `user_profiles` row (object, or null if never created)                             |
+| `accounts`, `accountDetails`, `transactions`     | Accounts, monthly balance history, transactions                                    |
+| `bankConnections`                                | Linked banks: institution, status, expiry, last sync. Never the tokens             |
+| `bankOAuthStates`                                | Bank consents started in the last ten minutes: institution and expiry only         |
+| `budgetEntries`, `taxRecords`                    | Budget and tax records, receipts as base64 data URLs                               |
+| `snapshotCheckins`, `importBatches`              | Months a check-in was started or finished; spreadsheet imports and their undo data |
+| `mcpTokens`, `agentAuditEvents`                  | AI connection token metadata (name, prefix, scopes, usage) and its audit log       |
+| `auditEvents`, `consents`                        | Sensitive-action records and consents (BE-06)                                      |
 
 Left out on purpose: bank access and refresh tokens, the bank OAuth state hash and PKCE verifier, MCP token hashes, the import retry key and the
 keyed hash of agent arguments. The login (email, password) lives in WorkOS and is not in the file.
