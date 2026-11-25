@@ -226,7 +226,7 @@ The four seams, and where each lands:
 
 **Seam budget.** The decision drops the seams if they cost more than about 5 agent-days in all. Each slice that does seam work states its share in its PR description under "Seam cost", and the plan keeps a running total here. Estimate today: seam 1 is a review rule (0), seam 2 is a lint rule in S1b (0.5), seam 3 is D1 (1), seam 4 is the part of S7 beyond a plain cache (1.5): about 3 in all. If the running total passes 5, the coordinator stops the seam work and records the app as plain option (a) in `DECISIONS.md`.
 
-Running total: 0 agent-days (no slice built).
+Running total: 0 agent-days (S1a did no seam work).
 
 **The cache (S7).** The last successful responses for the screens in the first release, kept 7 days, labelled with their age, read-only; writes need a connection (round 2, E12 D4-A). Platform facts, CONFIRMED on 25 November 2026:
 
