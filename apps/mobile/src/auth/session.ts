@@ -9,6 +9,9 @@
  * - Only a rejected refresh (WorkOS `invalid_grant`) or a refused fresh token ends a session and
  *   clears the device. A network failure never does.
  * - Sign-out clears the device first, with no network, then ends the WorkOS browser session.
+ * - The app never reads token lifetimes or the issuer: it refreshes when the API answers 401, and
+ *   the backend checks the issuer. So a different lifetime or issuer cannot wrongly sign anyone in;
+ *   a token the backend refuses ends the session (`checkAccount` gives `unauthorised`).
  */
 import type { AuthConfig } from "../config";
 import type { TokenResult, WorkosClient } from "../data/workos";
@@ -218,6 +221,10 @@ export function createSession(deps: SessionDeps): Session {
     if ((state as SessionState).status !== "signingOut") return;
     await clearDevice();
     if (sessionId && deps.endBrowserSessionOnSignOut) {
+      // Assumption (open until the owner's sign-in): WorkOS accepts flump://auth/callback as the
+      // logout return address. If it refuses, its page shows an error the person closes; the device
+      // is already clear, but the browser's WorkOS cookie may survive, so the next sign-in on this
+      // phone might not ask for the password.
       // Ends the WorkOS browser session, so the next sign-in asks for the password. Best effort:
       // the device is already clear, and no network or a closed sheet changes nothing.
       try {
