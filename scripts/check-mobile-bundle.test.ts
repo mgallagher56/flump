@@ -59,12 +59,13 @@ describe("source map check (one copy of each package)", () => {
 
   test("the same package from two installs fails, even at the same version", () => {
     expect(packagesBundledTwice([one, otherInstall, scoped])).toEqual(
-      new Map([["expo", ["expo@58.0.26+aaa", "expo@58.0.26+bbb"]]]),
+      new Map([["expo", [".bun/expo@58.0.26+aaa", ".bun/expo@58.0.26+bbb"]]]),
     );
     expect(checkSourceMap("a.hbc", JSON.stringify({ sources: [one, otherInstall] }))).toEqual([
       {
         file: "a.hbc",
-        problem: "bundles expo from more than one install: expo@58.0.26+aaa, expo@58.0.26+bbb",
+        problem:
+          "bundles expo from more than one install: .bun/expo@58.0.26+aaa, .bun/expo@58.0.26+bbb",
       },
     ]);
   });
@@ -77,5 +78,26 @@ describe("source map check (one copy of each package)", () => {
     expect(
       checkSourceMap("a.hbc", JSON.stringify({ sources: ["/apps/mobile/a.ts"] }))[0]?.problem,
     ).toBe("has a source map that lists no installed package");
+  });
+
+  test("a copy outside the Bun store still counts as a second install", () => {
+    expect(packagesBundledTwice([one, "/apps/mobile/node_modules/expo/build/Expo.js"])).toEqual(
+      new Map([["expo", [".bun/expo@58.0.26+aaa", "/apps/mobile/node_modules/expo"]]]),
+    );
+  });
+
+  test("a workspace package bundled from both src and dist fails", () => {
+    expect(
+      packagesBundledTwice([
+        "/packages/tokens/dist/native.generated.js",
+        "/packages/tokens/src/native.generated.ts",
+      ]),
+    ).toEqual(new Map([["workspace:tokens", ["packages/tokens/dist", "packages/tokens/src"]]]));
+  });
+
+  test("the app's own files and Metro's shims are not packages", () => {
+    expect(
+      packagesBundledTwice(["/apps/mobile/app/index.tsx", "\u0000shim:HMRClientProdShim.js"]),
+    ).toEqual(new Map());
   });
 });
