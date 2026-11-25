@@ -226,7 +226,7 @@ Flump is a monorepo managed with Turborepo (`turbo`) and Bun.
 
 - **Colocated Component Directory Law (Mandatory)**: Never create standalone, flat `.tsx` component files. Every component in `packages/ui` and `apps/web/app/features/*/components` MUST live in its own PascalCase directory with colocated files:
   - `ComponentName/ComponentName.tsx` (Component implementation)
-  - `ComponentName/ComponentName.styles.ts` (Panda CSS `cva` or `sva` recipes—no inline style soup)
+  - `ComponentName/ComponentName.styles.ts` (Panda CSS `cva` or `sva` recipes, no inline style soup)
   - `ComponentName/ComponentName.stories.tsx` (Storybook visual states + `play()` interaction test)
   - `ComponentName/ComponentName.test.tsx` (Vitest unit test)
   - `ComponentName/index.ts` (Barrel export)
@@ -239,7 +239,7 @@ Flump is a monorepo managed with Turborepo (`turbo`) and Bun.
   - `chart.*` (`primary`, `wealth`, `debt`, `warning`, `accentPurple`, `accentCyan`, `grid`, `series1`..`series5`)
 - **Tabular Numbers on All Financial Data**: Every currency value, percentage, date, table cell, and slider badge MUST apply `fontVariantNumeric: 'tabular-nums'` (`tabular-nums`) and format numbers via standard UK formatting (`Intl.NumberFormat('en-GB')` / `useFormatCurrency()`).
 - **Progressive Disclosure & Layout Laws**:
-  - **Single-Row KPI Strip**: Top-level page metrics must use `<KpiStrip>` (`lg:grid-cols-4` or `3`, max 4 items in a single horizontal row—never a tall 2x2 grid).
+  - **Single-Row KPI Strip**: Top-level page metrics must use `<KpiStrip>` (`lg:grid-cols-4` or `3`, max 4 items in a single horizontal row, never a tall 2x2 grid).
   - **2-Column Simulator Split**: Any calculator or forecaster (`/debt`, `/mortgage`, `/pension`, `/forecast`) must use `<SimulatorSplitLayout>` (`lg:col-span-5` or `4` sticky left parameter controls + `lg:col-span-7` or `8` right visual chart & outcome cards). Never stack slider parameters full-width above the chart they control.
   - **Compact Slider Inputs**: Always use `<SliderField>` (Label top-left, compact editable value pill top-right, slider below). Never render a full-width text input box below a slider.
   - **No Uncollapsed Raw Schedules**: Any table exceeding 8 rows (Amortisation schedules, 12-month ledgers, multi-year tax tables) must live inside a `<CollapsibleDrawer>` or secondary tab.
