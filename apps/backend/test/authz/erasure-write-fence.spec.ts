@@ -13,8 +13,8 @@ vi.mock("../../src/config/typeorm.options", async (importOriginal) =>
 /**
  * Privacy finding F1 through the whole chain: the real AppModule (AuthGuard, the write-fence
  * interceptor, the budget service, TypeORM) on real Postgres, with nothing stubbed. A write that
- * passed the AuthGuard while an erasure of the same user was under way is refused with 410 once
- * the erasure has finished, and leaves no row. The unit-level twin is
+ * passes the AuthGuard while an erasure of the same user is under way is refused (503), its retry
+ * after the erasure is refused (410), and no row is left. The unit-level twin is
  * src/modules/privacy/user-data-write-fence.integration.spec.ts.
  */
 const dbMode = resolveDbTestMode(process.env);
@@ -53,7 +53,7 @@ describe.skipIf(dbMode === "skip")("erasure write fence end to end (real Postgre
     throw new Error(`fewer than ${n} backends waited for the user-data lock`);
   };
 
-  it("refuses a write racing a finishing erasure with 410 and leaves no row", async () => {
+  it("refuses a write racing an erasure, then its retry, and leaves no row", async () => {
     const before = await h.call("post", "/budget-entries", h.tokens.a, {
       category: "housing",
       name: "before",
@@ -82,21 +82,30 @@ describe.skipIf(dbMode === "skip")("erasure write fence end to end (real Postgre
     const erasure = deletion().deleteAccount(USER_A);
     await lockWaiters(1);
 
-    // The racing request: no tombstone yet, so the AuthGuard lets it through. Its transaction
-    // queues for the shared lock behind the erasure.
-    const racing = h
-      .call("post", "/budget-entries", h.tokens.a, { category: "food", name: "racer", amount: 1 })
-      .then((res) => res);
-    await lockWaiters(2);
+    // The racing request: no tombstone yet, so the AuthGuard lets it through. The erasure is
+    // waiting for the lock, so the request's transaction is refused at once (503, try again)
+    // instead of holding a connection while it waits, and nothing is written.
+    const racing = await h.call("post", "/budget-entries", h.tokens.a, {
+      category: "food",
+      name: "racer",
+      amount: 1,
+    });
+    expect(racing.status).toBe(503);
+    expect(racing.body).toMatchObject({ code: "service_unavailable" });
+    await lockWaiters(1);
 
     // The in-flight write ends: the erasure takes the lock, sweeps, commits the tombstone and
-    // finishes; only then does the racing request get its lock and recheck the tombstone.
+    // finishes. The client's retry then meets the tombstone at the AuthGuard (410).
     releaseInFlight();
     await inFlight;
     // identity_pending: the harness has no WorkOS, so step (c) fails after the data is gone.
     await expect(erasure).resolves.toEqual({ status: "identity_pending" });
-    const res = await racing;
-    expect(res.status).toBe(410);
+    const retry = await h.call("post", "/budget-entries", h.tokens.a, {
+      category: "food",
+      name: "racer",
+      amount: 1,
+    });
+    expect(retry.status).toBe(410);
     expect(await budgetRows()).toBe(0);
   });
 });

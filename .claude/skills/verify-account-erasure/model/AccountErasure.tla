@@ -135,12 +135,21 @@ RequestWrite(r, t) ==
     /\ UNCHANGED <<ePc, eIdx, tombstone, lock, shared, sPc>>
 
 \* UserDataWriteFence.afterTransactionStart, first statement of the write's
-\* transaction: lockUserDataShared. Waits only while an erasure or reset holds
+\* transaction: tryLockUserDataShared. Granted while no erasure or reset holds
 \* the exclusive lock; other requests of the user hold it alongside.
 RequestLock(r) ==
     /\ RequestsLock /\ rPc[r] = "passed" /\ lock = "none"
     /\ shared' = shared \cup {r} /\ rPc' = [rPc EXCEPT ![r] = "locked"]
     /\ UNCHANGED <<ePc, eIdx, tombstone, lock, rows, late, sPc>>
+
+\* The same try when the lock is busy: an erasure or reset holds or waits for
+\* the exclusive lock, so the write is refused (503) without waiting. Allowed
+\* at any time here, which covers a queued exclusive request the model does not
+\* track; a refusal writes nothing.
+RequestBusy(r) ==
+    /\ RequestsLock /\ rPc[r] = "passed"
+    /\ rPc' = [rPc EXCEPT ![r] = "refused"]
+    /\ UNCHANGED <<ePc, eIdx, tombstone, lock, shared, rows, late, sPc>>
 
 \* The fence's second statement: isErasedForWrite, inside the lock. A refusal
 \* (410) rolls the transaction back, which frees the lock.
@@ -204,6 +213,7 @@ Next ==
     \/ \E r \in Requests : RequestGuard(r)
     \/ \E r \in Requests, t \in TableIds : RequestWrite(r, t)
     \/ \E r \in Requests : RequestLock(r)
+    \/ \E r \in Requests : RequestBusy(r)
     \/ \E r \in Requests : RequestRecheck(r)
     \/ \E r \in Requests, t \in TableIds : RequestLockedWrite(r, t)
     \/ ResetPrecheck \/ ResetLock \/ ResetCheck \/ ResetWrite

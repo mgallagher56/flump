@@ -91,9 +91,12 @@ export async function lockUserData(
  * the pair. Each statement of those is capped at the pool's statement_timeout (10 s) and each idle
  * gap at idle_in_transaction_session_timeout (30 s), but a transaction of several statements, a
  * large import say, can hold the lock past 5 s, and the erasure then failed for no fault of the
- * person's. 30 s covers that and a stuck idle transaction, which Postgres ends by then. The cost:
- * while the erasure or reset waits, the same user's new writes queue behind it and fail at their
- * own 5 s limit, which is acceptable for a person who is erasing or resetting their data.
+ * person's. 30 s covers that common case. It does not cover a stuck transaction: one that is idle
+ * after a long statement can hold the lock about 40 s, and one that keeps doing a little has no
+ * overall cap; the erasure then fails as before, and the person can try again. The cost of
+ * waiting: the user's new writes are refused with 503 meanwhile (UserDataWriteFence tries the
+ * shared lock without waiting, so they hold no connection), which is acceptable while a person
+ * is erasing or resetting their data.
  */
 export const USER_DATA_LOCK_WAIT_MS = 30_000;
 
@@ -103,4 +106,20 @@ const LOCK_STATEMENT_HEADROOM_MS = 5_000;
 /** The shared lock: many writes of one user hold it at once; it waits only for an erasure or reset. */
 export async function lockUserDataShared(manager: EntityManager, userId: string): Promise<void> {
   await manager.query(SHARED_DATA_LOCK_STATEMENT, [lockKey(userId)]);
+}
+
+/**
+ * The shared lock without waiting: false while an erasure or reset holds the exclusive lock or waits
+ * for it (Postgres refuses a shared request that conflicts with a queued exclusive one too). Shared
+ * holders never block each other, so a user's own writes always get it at once.
+ */
+export async function tryLockUserDataShared(
+  manager: EntityManager,
+  userId: string,
+): Promise<boolean> {
+  const [row] = (await manager.query(
+    `SELECT pg_try_advisory_xact_lock_shared(hashtextextended($1, 0)) AS "locked"`,
+    [lockKey(userId)],
+  )) as Array<{ locked: boolean }>;
+  return row?.locked === true;
 }

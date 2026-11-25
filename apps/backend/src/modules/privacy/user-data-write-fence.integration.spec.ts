@@ -1,5 +1,5 @@
 import "reflect-metadata";
-import { GoneException, Logger } from "@nestjs/common";
+import { GoneException, Logger, ServiceUnavailableException } from "@nestjs/common";
 import { defer, lastValueFrom } from "rxjs";
 import { DataSource, type DataSourceOptions } from "typeorm";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
@@ -217,6 +217,52 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       expect(await budgetRows(USER_A)).toBe(0);
     });
 
+    it("refuses a write at once while the erasure waits, even one whose own request holds the lock", async () => {
+      const gate = () => {
+        let open!: () => void;
+        const opened = new Promise<void>((r) => {
+          open = r;
+        });
+        return { open, opened };
+      };
+      const firstHolds = gate();
+      const erasureQueued = gate();
+      const releaseFirst = gate();
+      // One request: its first transaction holds the fence; the erasure (started outside the
+      // request) queues behind it; then the same request opens a second transaction. Waiting there
+      // would wait on itself.
+      const request = asRequest(USER_A, async () => {
+        const first = ds.transaction(async (m) => {
+          await m.save(budgetLine(USER_A, "first"));
+          firstHolds.open();
+          await releaseFirst.opened;
+        });
+        await erasureQueued.opened;
+        const started = Date.now();
+        const second = await ds
+          .getRepository(BudgetEntry)
+          .save(budgetLine(USER_A, "second"))
+          .then(
+            () => "saved",
+            (err: unknown) => err,
+          );
+        const waitedMs = Date.now() - started;
+        releaseFirst.open();
+        await first;
+        return { second, waitedMs };
+      });
+      await firstHolds.opened;
+      const erasure = deletion.deleteAccount(USER_A);
+      await advisoryLockWaiter();
+      erasureQueued.open();
+      const { second, waitedMs } = await request;
+      expect(second).toBeInstanceOf(ServiceUnavailableException);
+      // Refused without waiting for a lock (the pool's lock_timeout is 5 s).
+      expect(waitedMs).toBeLessThan(1_000);
+      await expect(erasure).resolves.toEqual({ status: "deleted" });
+      expect(await budgetRows(USER_A)).toBe(0);
+    });
+
     it("refuses an update that sets a user column outside a transaction, and allows other updates", async () => {
       await ds.getRepository(BudgetEntry).save(budgetLine(USER_A, "moved?"));
       // Repository.update runs no transaction of its own.
@@ -235,6 +281,17 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
           ),
         ),
       ).rejects.toThrow(/outside a transaction/);
+      // A subquery in a SET value, a WITH and a leading comment do not hide the user column.
+      for (const sql of [
+        `UPDATE budget_entries SET name = (SELECT 'x' FROM budget_entries LIMIT 1), "user_id" = $1 WHERE "user_id" = $2`,
+        `WITH v AS (SELECT 1) UPDATE budget_entries SET "user_id" = $1 WHERE "user_id" = $2`,
+        `/* moved */ UPDATE "public"."budget_entries" SET "user_id" = $1 WHERE "user_id" = $2`,
+      ]) {
+        await expect(asRequest(USER_A, () => ds.query(sql, [USER_B, USER_A]))).rejects.toThrow(
+          /outside a transaction/,
+        );
+      }
+      expect(await budgetRows(USER_A)).toBe(1);
       // Another column outside a transaction is allowed (an update cannot bring a row back).
       await asRequest(USER_A, () =>
         ds.getRepository(BudgetEntry).update({ userId: USER_A }, { name: "renamed" }),

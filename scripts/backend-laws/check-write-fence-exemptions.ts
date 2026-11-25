@@ -41,17 +41,16 @@ export interface FenceExemptionViolation {
 }
 
 const NAME = /\bwithoutWriteFence\b/g;
-const CALL = /\bwithoutWriteFence\s*(?:<[^>()]*>)?\s*\(/;
+const CALLS = /\bwithoutWriteFence\s*(?:<[^>()]*>)?\s*\(/g;
 
 /** Production source only: no tests, specs, fixtures or test helpers. */
 export function isCoveredFile(path: string): boolean {
   if (!/\.ts$/.test(path)) return false;
   if (/\.(test|spec)\.ts$/.test(path)) return false;
-  if (/(^|\/)(__fixtures__|testing)\//.test(path)) return false;
-  return path !== DEFINING_FILE;
+  return !/(^|\/)(__fixtures__|testing)\//.test(path);
 }
 
-/** The line with comments removed: a mention in prose is not a use. */
+/** The line with comments and string contents removed: a mention in prose is not a use. */
 function codeOf(line: string, inBlock: boolean): { code: string; inBlock: boolean } {
   let code = "";
   let i = 0;
@@ -67,6 +66,14 @@ function codeOf(line: string, inBlock: boolean): { code: string; inBlock: boolea
       i += 2;
     } else if (line.startsWith("//", i)) {
       break;
+    } else if (line[i] === '"' || line[i] === "'" || line[i] === "`") {
+      // A string is kept as an empty one: a message naming the function is not a use, and a `//`
+      // inside it (a URL) does not start a comment.
+      const quote = line[i];
+      let j = i + 1;
+      while (j < line.length && line[j] !== quote) j += line[j] === "\\" ? 2 : 1;
+      code += `${quote}${quote}`;
+      i = j + 1;
     } else {
       code += line[i];
       i += 1;
@@ -75,9 +82,19 @@ function codeOf(line: string, inBlock: boolean): { code: string; inBlock: boolea
   return { code, inBlock: block };
 }
 
+/** A plain import of the name (no alias), which is not a use by itself. */
+const PLAIN_IMPORT = /^\s*import\b[^;]*\{[^}]*\bwithoutWriteFence\b(?!\s+as\b)[^}]*\}/;
+
+/** The one line of the defining file that may name it in code: the definition. */
+const DEFINITION = /^export function withoutWriteFence<T>\(fn: \(\) => T\): T \{$/;
+
 /**
- * Uses of withoutWriteFence in one file that the list does not allow. In a file that is not listed,
- * any use counts (an import, an alias, a call). In a listed file, calls past its allowance count.
+ * Uses of withoutWriteFence in one file that the list does not allow.
+ * - A file that is not listed: any use (an import, an alias, a call).
+ * - A listed file: each direct call counts against its allowance (two on a line count as two), and
+ *   any other mention past a plain import is refused: an alias (`as wf`, `const f =
+ *   withoutWriteFence`) would let calls through under another name.
+ * - The defining file: anything but the definition (a wrapper exported from there, say).
  */
 export function findFenceExemptionViolations(
   file: string,
@@ -85,7 +102,7 @@ export function findFenceExemptionViolations(
 ): FenceExemptionViolation[] {
   const allowed = ALLOWED_CALLERS[file];
   const violations: FenceExemptionViolation[] = [];
-  let calls = 0;
+  let mentions = 0;
   let inBlock = false;
   source.split("\n").forEach((raw, index) => {
     const stripped = codeOf(raw, inBlock);
@@ -93,14 +110,23 @@ export function findFenceExemptionViolations(
     const uses = stripped.code.match(NAME)?.length ?? 0;
     if (uses === 0) return;
     const record = () => violations.push({ file, line: index + 1, text: raw.trim() });
+    if (file === DEFINING_FILE) {
+      if (!(uses === 1 && DEFINITION.test(stripped.code.trimEnd()))) record();
+      return;
+    }
     if (!allowed) {
       record();
       return;
     }
-    if (CALL.test(stripped.code)) {
-      calls += 1;
-      if (calls > allowed.calls) record();
+    if (uses === 1 && PLAIN_IMPORT.test(stripped.code)) return;
+    const calls = stripped.code.match(CALLS)?.length ?? 0;
+    // An alias or a reference that is not a call would let calls through under another name.
+    if (calls < uses) {
+      record();
+      return;
     }
+    mentions += calls;
+    if (mentions > allowed.calls) record();
   });
   return violations;
 }
