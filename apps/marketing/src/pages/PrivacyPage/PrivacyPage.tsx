@@ -7,6 +7,7 @@ import {
   LegalPage,
   LegalSection,
 } from "../../components/LegalPage";
+import { versionHistory } from "./PrivacyPage.styles";
 
 const SUBJECT = "Privacy request";
 
@@ -356,7 +357,7 @@ export const PrivacyPage: FC = () => (
         change affects how we use data you have already given us, we will tell you before it takes
         effect.
       </p>
-      <ul>
+      <ul className={versionHistory()}>
         <li>Version 0.1, 25 November 2026: first version, for the test phase.</li>
       </ul>
     </LegalSection>

@@ -46,6 +46,8 @@ async function footerLine(page: Page) {
 
 const PHONE_LINKS = ["Settings", "Calculators", "Send feedback"];
 const WIDE_LINKS = ["Settings", "Security", "Data and export", "All calculators", "Send feedback"];
+// Privacy and Terms (the legal pages on the marketing site) join where seven links fit.
+const WIDEST_LINKS = [...WIDE_LINKS, "Privacy", "Terms"];
 
 test.describe("signed-in footer", () => {
   test.use({ storageState: AUTH_STATE });
@@ -59,7 +61,9 @@ test.describe("signed-in footer", () => {
       await waitForHydration(page);
       await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
       const line = await footerLine(page);
-      expect(line.links).toEqual(width < 768 ? PHONE_LINKS : WIDE_LINKS);
+      expect(line.links).toEqual(
+        width < 768 ? PHONE_LINKS : width < 1024 ? WIDE_LINKS : WIDEST_LINKS,
+      );
       expect(line.companyShown, "company name shown only where it fits").toBe(width >= 1024);
       expect(line.centreSpread, "everything on one row").toBeLessThanOrEqual(4);
       // One row: the row is no taller than its tallest part (the logo or a 44px link target).
