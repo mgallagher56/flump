@@ -13,6 +13,8 @@ import type {
 } from "react-router";
 import { data, useLoaderData } from "react-router";
 import { apiConfig } from "~/config.server";
+import { isHouseholdIntent } from "~/features/household/household";
+import { householdAction, loadHouseholdSettings } from "~/features/household/household.server";
 import { DELETE_ACCOUNT_INTENT } from "~/features/settings/account";
 import { deleteAccountAction } from "~/features/settings/account.server";
 import { SettingsPage } from "~/features/settings/components/SettingsPage";
@@ -31,7 +33,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
   try {
     // The accounts only decide which net worth choices are offered. If they cannot be read the
     // page still loads and offers both (null: unknown is not "no").
-    const [userProfile, netWorthChoices, isBetaAdmin] = await Promise.all([
+    const [userProfile, netWorthChoices, isBetaAdmin, household] = await Promise.all([
       backendFetch("/user-profile", {
         accessToken,
         signal: args.request.signal,
@@ -54,11 +56,15 @@ export const loader = async (args: LoaderFunctionArgs) => {
         () => true,
         () => false,
       ),
+      // Households (E34 C3): the tab exists only when the backend answers. With its switch off it
+      // answers 404, and any failure counts the same: null, no tab (fail closed).
+      loadHouseholdSettings(accessToken, args.request.signal),
     ]);
     return data({
       userProfile,
       netWorthChoices,
       isBetaAdmin,
+      household,
       user,
       aiGuideUrl: `${getMarketingUrl(args.request.url)}/features/ai-connection#setup`,
       mcpServerUrl: `${apiConfig.apiBaseUrl.replace(/\/$/, "")}/mcp`,
@@ -70,7 +76,13 @@ export const loader = async (args: LoaderFunctionArgs) => {
 
 export const action = async (args: ActionFunctionArgs) => {
   const formData = await args.request.formData();
-  if (formData.get("intent") === DELETE_ACCOUNT_INTENT) return deleteAccountAction(args, formData);
+  const intent = formData.get("intent");
+  if (intent === DELETE_ACCOUNT_INTENT) return deleteAccountAction(args, formData);
+  if (isHouseholdIntent(intent)) {
+    const { accessToken } = await getAuthSession(args, { ensureSignedIn: true });
+    if (!accessToken) throwRouteError(new BackendError("unauthorised", "/household"));
+    return householdAction(args.request, accessToken, intent, formData);
+  }
   return data({ outcome: "failed" as const }, { status: 400 });
 };
 
@@ -82,7 +94,7 @@ export const shouldRevalidate: ShouldRevalidateFunction = ({
 }) => (formData?.get("intent") === DELETE_ACCOUNT_INTENT ? false : defaultShouldRevalidate);
 
 const ProfileRoute = (): ReactElement => {
-  const { userProfile, user, aiGuideUrl, mcpServerUrl, netWorthChoices, isBetaAdmin } =
+  const { userProfile, user, aiGuideUrl, mcpServerUrl, netWorthChoices, isBetaAdmin, household } =
     useLoaderData<typeof loader>();
 
   return (
@@ -90,6 +102,7 @@ const ProfileRoute = (): ReactElement => {
       aiGuideUrl={aiGuideUrl}
       initialProfile={userProfile}
       mcpServerUrl={mcpServerUrl}
+      household={household}
       isBetaAdmin={isBetaAdmin}
       netWorthChoices={netWorthChoices}
       user={user}

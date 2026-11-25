@@ -2948,6 +2948,13 @@ browser_storage:
       note: "the raw beta invite token from /invite/<token>, held until the person signs in; Path=/, HttpOnly, SameSite=Lax, Max-Age 3600; the web invite gate redeems it (POST /beta/invites/redeem) wherever a signed-in person not yet allowed lands, then clears it; only its SHA-256 hash is stored, in beta_invites.token_hash",
     }
   - {
+      key: flump_household_invite,
+      storage: cookie,
+      user_data: false,
+      path: apps/web/app/features/household/household-cookie.server.ts,
+      note: "the raw household invitation token from /household/join/<token> (E34 C3, behind the household switch), held until the person accepts on /household/join; Path=/household, HttpOnly, SameSite=Lax, Max-Age 3600; cleared on accepting or when the link cannot be used; only its SHA-256 hash is stored, in household_invitations.token_hash",
+    }
+  - {
       key: flump_dev_session,
       storage: cookie,
       user_data: false,

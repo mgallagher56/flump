@@ -35,6 +35,8 @@ excluded_routes:
     reason: Resource route receiving CSP violation reports; no UI.
   - route_file: apps/web/app/routes/healthz.ts
     reason: Deployment health check resource route returning JSON status; no UI.
+  - route_file: apps/web/app/routes/household.join.$token.tsx
+    reason: Pure redirect route storing a household invitation token in an HttpOnly cookie and redirecting to /household/join (E34 C3, behind the household switch).
   - route_file: apps/web/app/routes/invite.$token.tsx
     reason: Pure redirect route storing the invite token in an HttpOnly cookie and redirecting to /invite.
   - route_file: apps/web/app/routes/login._index.tsx

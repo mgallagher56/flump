@@ -1,0 +1,14 @@
+id: household-join
+app: web
+route: /household/join
+title: Join a household
+auth: required
+purpose: Show that joining a household shares nothing, then accept a household invitation link held in the household invitation cookie (E34 C3). The ordinary 404 when the backend's household switch is off.
+route_file: apps/web/app/routes/household.join._index.tsx
+
+sections:
+  - id: join-household
+    component: apps/web/app/routes/household.join._index.tsx
+
+  - id: household-help-line
+    component: apps/web/app/features/household/components/SharingHelpLine/SharingHelpLine.tsx

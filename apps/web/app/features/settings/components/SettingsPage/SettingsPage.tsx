@@ -2,13 +2,15 @@ import type { NetWorthChoicesAvailable } from "@flump/finance-engine";
 import { PageBody, PageHeader, Tabs } from "@repo/ui";
 import { type FC, useEffect, useState } from "react";
 import { useLocation } from "react-router";
+import { HouseholdTab } from "~/features/household/components/HouseholdTab";
+import type { HouseholdSettingsData } from "~/features/household/household";
 import { DataTab } from "~/features/settings/components/DataTab";
 import { ProfileTab } from "~/features/settings/components/ProfileTab";
 import { SecurityTab } from "~/features/settings/components/SecurityTab";
 import {
   parseSettingsTab,
-  SETTINGS_TAB_ITEMS,
   type SettingsTab,
+  settingsTabItems,
 } from "~/features/settings/settings-tabs";
 import { type UserProfile, useUserProfile } from "~/hooks/useUserProfile";
 import { headerAndTabs } from "./SettingsPage.styles";
@@ -24,6 +26,11 @@ export interface SettingsPageProps {
   netWorthChoices?: NetWorthChoicesAvailable | null;
   /** True for a beta admin: the Security tab links to the invites page. */
   isBetaAdmin?: boolean;
+  /**
+   * The household state from the loader (E34 C3). Null or absent when GET /household did not
+   * succeed: then there is no Household tab and `?tab=household` is an unknown tab.
+   */
+  household?: HouseholdSettingsData | null;
   /** The signed-in auth user. */
   user?: {
     email?: string;
@@ -45,7 +52,9 @@ export const SettingsPage: FC<SettingsPageProps> = ({
   mcpServerUrl,
   netWorthChoices,
   isBetaAdmin = false,
+  household = null,
 }) => {
+  const householdAvailable = household !== null;
   const { profile } = useUserProfile();
   const effectiveProfile = profile.id ? profile : initialProfile;
   const email = user?.email || effectiveProfile.email;
@@ -60,9 +69,9 @@ export const SettingsPage: FC<SettingsPageProps> = ({
     search = typeof window !== "undefined" ? window.location.search : "";
   }
   useEffect(() => {
-    const tab = parseSettingsTab(search);
+    const tab = parseSettingsTab(search, { householdAvailable });
     if (tab) setActiveTab(tab);
-  }, [search]);
+  }, [search, householdAvailable]);
 
   return (
     <PageBody id="settings-page" data-testid="settings-page">
@@ -72,7 +81,7 @@ export const SettingsPage: FC<SettingsPageProps> = ({
         <Tabs
           activationMode="manual"
           aria-label="Settings sections"
-          items={[...SETTINGS_TAB_ITEMS]}
+          items={[...settingsTabItems(householdAvailable)]}
           value={activeTab}
           onValueChange={(value) => setActiveTab(value as SettingsTab)}
         >
@@ -95,6 +104,11 @@ export const SettingsPage: FC<SettingsPageProps> = ({
           <Tabs.Panel value="data">
             <DataTab />
           </Tabs.Panel>
+          {household ? (
+            <Tabs.Panel value="household">
+              <HouseholdTab data={household} />
+            </Tabs.Panel>
+          ) : null}
         </Tabs>
       </div>
     </PageBody>
