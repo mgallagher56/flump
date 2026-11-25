@@ -7,11 +7,41 @@
  * does not switch, or screens that will not go, fail the run instead of being retried.
  */
 import { spawnSync } from "node:child_process";
-import { chmodSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { chmodSync, mkdtempSync, readFileSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 const script = join(__dirname, "run-android-flows.sh");
+/**
+ * The real tools the runner and the fakes use. The PATH holds the fakes and links to these only,
+ * nothing else (as scripts/lib/fake-bin.ts's isolatedPath, which needs Bun; this test runs on
+ * Node), so a real adb or maestro on the machine can never answer in place of a fake.
+ */
+const REAL_TOOLS = [
+  "bash",
+  "sh",
+  "sed",
+  "grep",
+  "find",
+  "mkdir",
+  "seq",
+  "sleep",
+  "cat",
+  "basename",
+  "dirname",
+  "touch",
+];
+
+function linkRealTools(bin: string) {
+  for (const tool of REAL_TOOLS) {
+    const found = spawnSync("/bin/sh", ["-c", `command -v ${tool}`], {
+      encoding: "utf8",
+    }).stdout.trim();
+    if (!found.startsWith("/")) throw new Error(`The real tool "${tool}" is not installed`);
+    symlinkSync(found, join(bin, tool));
+  }
+}
+
 const SHOTS = [
   "welcome",
   "engine-check",
@@ -57,9 +87,10 @@ exit 0
   );
   chmodSync(join(bin, "adb"), 0o755);
   chmodSync(join(bin, "maestro"), 0o755);
-  const result = spawnSync("bash", [script, join(dir, "app.apk"), join(dir, "out")], {
+  linkRealTools(bin);
+  const result = spawnSync(join(bin, "bash"), [script, join(dir, "app.apk"), join(dir, "out")], {
     encoding: "utf8",
-    env: { ...process.env, PATH: `${bin}:${process.env.PATH}`, SETTLE_TRIES: "2" },
+    env: { ...process.env, PATH: bin, SETTLE_TRIES: "2" },
   });
   const calls = readFileSync(log, "utf8").trim().split("\n");
   return { result, calls };
