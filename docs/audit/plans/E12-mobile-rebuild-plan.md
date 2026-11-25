@@ -37,10 +37,11 @@ Each item was checked against `origin/main` at `a0805b08`.
 | 9 | R1 to R6 to be recorded; doc edits listed in section 11 | Recorded in `DECISIONS.md` round 10. CROSS-PLATFORM, UX-GUIDELINES E2, the copy guide tagline and AGENTS.md section 10 (parity rows) are updated | Old section 11 is removed except the native file set wording (10.3) |
 | 10 | The tagline is "Flump: finance without the fog" | Same, fixed wording in `COPY-GUIDE.md` section 2.1 | No change |
 | 11 | Web pages listed for parity | Web has since gained Retirement (E33), invoicing (E37), mortgage estimates (E39), imports, beta invites and the joint marker on accounts (E34 C1, C2) | P4, the feature inventory rewrite, matters more; new parity slices S21 to S23 |
-| 12 | Legal pages wait for a solicitor | The owner delegated the legal pages to Fable on 25 November (coordinator's record of the owner's message) | Release gate stays "hosted privacy policy and terms"; who writes them changed |
+| 12 | Legal pages wait for a solicitor | Live on the marketing site since 25 November (E19): `/privacy`, `/terms`, `/cookies` and `/accessibility`, written by Fable and approved by an independent Fable reviewer at the owner's delegation, not reviewed by a solicitor. Web Settings links all four. None of them mentions a mobile app yet | The sign-in screen and S9 link them; S19 adds the app to the privacy notice, cookies page and data map before submission (section 8) |
 | 13 | Exact to be re-checked at the next revision | Re-checked today: still pre-1.0, no release, no React layer (CONFIRMED, github.com/expo/exact README) | `docs/technology-watch.md` updated |
 | 14 | `createApiClient` has no caller | Still true | S2b is its first caller |
 | 15 | Subagent models | AGENTS.md section 6 (tiers moved up on 13 November) | Section 2 updated |
+| 16 | The check-in stores only finished months | A started check-in is stored (25 November): saves sent with `checkIn: true` write a started `snapshot_checkins` row, `GET /snapshots/check-ins` returns `latestStartedMonth`, and Home says "Continue check-in" when the engine's `selectCheckInPartDone` says so | S3 sends `checkIn: true` and labels the way in the same way |
 
 ---
 
@@ -348,7 +349,7 @@ The fixture server serves canned `/v1` responses built and checked with the cont
 - **Signing.** EAS can hold the iOS certificates and the Android upload key. Who holds the keys is an owner step (OS6). The Play app signing key is held by Google after enrolment [U].
 - **Identifier.** `io.github.mgallagher56.flump` unless the owner has a domain by then. It cannot change after a listing exists (OS2).
 - **Versioning.** `apps/mobile` joins `release-please-config.json`. A release PR does not publish a build; a tag or a manual run does.
-- **Gates before any store submission.** Hosted privacy policy and terms; in-app deletion working end to end; privacy labels and the Play data safety form matching what the app collects, and saying the data is stored on Flump's servers (O5); no bank or encryption claims beyond the O5 marketing list; the S18 audits passed.
+- **Gates before any store submission.** The privacy notice and terms are hosted (E19, 25 November); before submission the privacy notice, the cookies page and `docs/legal/data-map.md` gain the app: the sign-in tokens in the secure store, the encrypted 7-day cache, and what the stores and Expo collect [U: whether PECR treats the cache as strictly necessary]; in-app deletion working end to end; privacy labels and the Play data safety form matching what the app collects, and saying the data is stored on Flump's servers (O5); no bank or encryption claims beyond the O5 marketing list; the S18 audits passed.
 
 ---
 
@@ -374,7 +375,7 @@ Each slice is one PR. Sizes are rough agent-days. "Depends on" names slices, bac
 | S6 | Accounts list, account detail with joint share line, net worth history | S5 | 6 |
 | S7 | Offline reading: SQLCipher cache, age labels, `restoredOffline`, backup exclusion (O5 seam 4) | S6 | 5 |
 | S8 | Add, edit and delete an account, including kind, credit limit and joint marker | S6 | 4 |
-| S9 | Settings: profile, net worth choices, theme, privacy mode, device lock, export, delete account | S5 | 6 |
+| S9 | Settings: profile, net worth choices, theme, privacy mode, device lock, export, delete account, links to the four legal pages | S5 | 6 |
 | S10 | Budget | S6 | 6 |
 | S11 | Debt and mortgage | S8 | 8 |
 | S12 | Pension and savings | S8 | 7 |
@@ -456,7 +457,7 @@ After S6 the page slices touch separate folders and can run two or three at a ti
 
 **Acceptance (S2b, with S2c for the flows)**
 
-1. The sign-in screen shows the logo, the tagline "Flump: finance without the fog", "Sign in", "Create account", and links to the privacy policy and terms.
+1. The sign-in screen shows the logo, the tagline "Flump: finance without the fog", "Sign in", "Create account", and links to the privacy notice (`/privacy`) and terms (`/terms`) on the marketing site.
 2. Sign-in opens the system browser sheet. A `state` mismatch is refused before any exchange. Cancelling returns to the screen with no error. A failed exchange shows a plain message with no WorkOS text.
 3. After sign-in, `GET /v1/user-profile` succeeds against a real backend (recorded by hand in the PR) and against the fixture server (in CI).
 4. The refresh token is in the secure store ("when unlocked, this device only") and nowhere else; the access token is never written to disk; neither appears in any log or error message.
@@ -473,7 +474,7 @@ After S6 the page slices touch separate folders and can run two or three at a ti
 
 **The flow.** As on web: a row on the signed-in screen when the month is due; one card per account in web's order with name, type, last recorded balance and month, and a position ("Account 2 of 6"); **Update** or **No change**; "No change to the rest" ends the walk-through keeping the remaining balances (owner, 20 November); a mortgage or loan with a saved rate and payment, whose saved balance equals the latest recorded month, shows the engine's `calculateCheckInBalance` figure with a "Calculated" badge; accounts left out of net worth say so; the summary shows what changed and net worth against last month from a fresh `GET /v1/portfolio-snapshot`, in plain words.
 
-**How it saves.** `PUT /v1/snapshots/:month` with the engine's payload builder. Saving needs a connection; without one the action is disabled and says why.
+**How it saves.** `PUT /v1/snapshots/:month` with the engine's payload builder, sent with `checkIn: true` (the engine's `checkInPayload` sets it), so the server stores the month as started and finishing marks it done. The row on the signed-in screen reads `latestStartedMonth` from `GET /v1/snapshots/check-ins` and says "Continue check-in" when `selectCheckInPartDone` is true, "Start monthly check-in" otherwise. Saving needs a connection; without one the action is disabled and says why.
 
 **Files.** `src/data/{queryClient,queryKeys,useDelayedLoading}.ts`; `src/features/check-in/{useCheckInData,checkInFlow,useSaveCheckIn}.ts`; `screens/{CheckIn,CheckInDone}/`; components `CurrencyInput`, `FormField`, `Money`, `StatusBadge`, `Skeleton`, `HeroFigure`, `Toast`; route `(app)/check-in.tsx` and the check-in row on `(app)/index.tsx`; fixture routes for `GET /v1/accounts`, `GET /v1/account-details`, `GET /v1/user-profile`, `GET /v1/portfolio-snapshot`, `PUT /v1/snapshots/:month`; flows `check-in-walkthrough.yaml` and `check-in-backend-down.yaml`. Words come from `packages/copy` (P5).
 
@@ -491,7 +492,8 @@ After S6 the page slices touch separate folders and can run two or three at a ti
 10. The summary's change figure matches web for the renting and home-owning households in `apps/e2e/support/personas.ts`, checked by hand and recorded in the PR.
 11. Accessibility: each card is one group with a spoken summary ("Current account, £1,204, recorded in October, account 2 of 6"); both actions are at least 48 by 48; the position change is announced; the flow works at 200% text, 320 points wide, with VoiceOver and with TalkBack.
 12. Both Maestro flows pass three runs in a row in the Android CI job, or the fallback in 7.1 is recorded.
-13. The PR adds its row to the parity log and states the result of the CROSS-PLATFORM section 7 checklist.
+13. Every check-in save sends `checkIn: true`; with a started month and some accounts still to do, the row says "Continue check-in", taken from `selectCheckInPartDone`, never worked out in the app.
+14. The PR adds its row to the parity log and states the result of the CROSS-PLATFORM section 7 checklist.
 
 ### 9.7 Later slices
 
@@ -501,7 +503,7 @@ Each is specified in full when the slice before it merges, from the web page as 
 - **S5:** before the hero is built, check that the backend's net worth for `GET /v1/portfolio-snapshot` is computed by the engine's net worth basis; if any part is computed only in a backend service, move it to the engine first (O5 seam 1).
 - **S6:** one balance per account everywhere; the joint share line as on web (E34 C1); history chart only from three recorded months; history not editable.
 - **S7:** SQLCipher with the key check; the database out of iCloud and Android backups; a test that a cold start with no network keeps saved data; a test that a restored backup without the key shows no cached data and asks to sign in.
-- **S9:** the two net worth switches (R1), export, deletion with the typed phrase, recent sign-in when asked.
+- **S9:** the two net worth switches (R1), export, deletion with the typed phrase, recent sign-in when asked; the four legal pages linked, opening in the browser. Web's optional browser storage switch has no mobile counterpart (parity log, 25 November).
 - **S10 to S13, S21, S22:** saved versus scenario: changing a scenario input changes no saved figure and sends no request.
 - **S16:** a new token is shown once and never cached.
 - **S18:** `security-reviewer` again on `apps/mobile/src/auth`, `src/data`, the cache and any backend route added for mobile (the first review is in S2b).
@@ -538,7 +540,7 @@ Adopted in `DECISIONS.md` round 2 (reversible defaults) or round 3, updated wher
 | D15 | Currencies | UK and pounds only, as web |
 | D16 | AGENTS.md native file set | Adopted in principle; wording approved in S1b (10.3) |
 | D17 | Signed-out wealth check | Not ported |
-| D20 | Privacy policy and deletion page | Release gates. Fable now writes the legal pages at the owner's delegation (25 November 2026), signer recorded truthfully |
+| D20 | Privacy policy and deletion page | Release gates. The four legal pages are live (E19, 25 November 2026), written and approved by Fable at the owner's delegation; S19 adds the app to them |
 | D21 | Sign-in methods | Email and password, and magic link |
 | D22 | Language | en-GB only |
 | D2, D24 | Store fees | After incorporation and the hardening milestone (round 3, item 16); paying is an owner step |
