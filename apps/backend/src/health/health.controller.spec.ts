@@ -54,6 +54,8 @@ describe("HealthController", () => {
       version: pkg.version,
       commit: "abcdef1",
       configWarnings: 0,
+      retentionLastRunHoursAgo: null,
+      retentionSchedule: "on",
     });
     expect(res.status).not.toHaveBeenCalled();
     expect(res.setHeader).toHaveBeenCalledWith("Cache-Control", "no-store");
@@ -126,6 +128,41 @@ describe("HealthController", () => {
     expect(dataSource.query).toHaveBeenCalledWith("SELECT count(*)::int AS n FROM migrations");
     expect(res.status).toHaveBeenCalledWith(503);
     expect(body).toEqual({ status: "unavailable" });
+  });
+
+  it("reports whole hours since the last retention run and the schedule switch (D5 revised)", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-26T12:00:00Z"));
+    const saved = process.env.RETENTION_SCHEDULE_ENABLED;
+    process.env.RETENTION_SCHEDULE_ENABLED = "false";
+    try {
+      // 25 hours 59 minutes ago: floors to 25, so a late run shows as over 24.
+      const { controller } = makeController(async () => [
+        { t: "retention_runs", at: new Date("2026-11-25T10:01:00Z") },
+      ]);
+      const body = await controller.ready(makeRes() as never);
+      expect(body).toMatchObject({ retentionLastRunHoursAgo: 25, retentionSchedule: "off" });
+      expect(ReadinessResponse.safeParse(body).success).toBe(true);
+    } finally {
+      if (saved === undefined) delete process.env.RETENTION_SCHEDULE_ENABLED;
+      else process.env.RETENTION_SCHEDULE_ENABLED = saved;
+    }
+  });
+
+  it("stays ready when the retention record cannot be read", async () => {
+    const { controller } = makeController(async () => [{ "?column?": 1 }]);
+    const ds = (controller as unknown as { dataSource: { query: ReturnType<typeof vi.fn> } })
+      .dataSource;
+    const base = ds.query.getMockImplementation() as (sql: string) => Promise<unknown>;
+    ds.query.mockImplementation((sql: string) =>
+      sql.includes("retention_runs") || sql.includes("to_regclass")
+        ? Promise.reject(new Error("relation missing"))
+        : base(sql),
+    );
+    const res = makeRes();
+    const body = await controller.ready(res as never);
+    expect(res.status).not.toHaveBeenCalled();
+    expect(body).toMatchObject({ status: "ok", retentionLastRunHoursAgo: null });
   });
 
   it("returns 200 when executed migrations equal loaded migrations", async () => {

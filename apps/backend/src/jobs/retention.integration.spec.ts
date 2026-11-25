@@ -1,5 +1,6 @@
+import { Logger } from "@nestjs/common";
 import { DataSource, type DataSourceOptions, type QueryRunner } from "typeorm";
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { AUDIT_DELETE_SETTING, allowAuditDelete } from "../audit/audit-delete-guard";
 import { recordAuditEvent } from "../audit/audit-events";
 import { grantConsent, withdrawConsent } from "../audit/consents";
@@ -8,7 +9,13 @@ import { assertSafeTestDatabase } from "../testing/assertSafeTestDatabase";
 import { resolveDbTestMode } from "../testing/dbTestMode";
 import { discoverMigrations } from "../testing/discoverMigrations";
 import { emptyTables } from "../testing/emptyTables";
-import { RETENTION_LOCK_KEY, RETENTION_POLICIES, runRetentionPurge } from "./retention";
+import {
+  RETENTION_LOCK_KEY,
+  RETENTION_POLICIES,
+  type RetentionPolicy,
+  runRetentionPurge,
+} from "./retention";
+import { RetentionScheduler } from "./retention.scheduler";
 
 // BE-06 (H12, M-PRIV2; rulings D4, D5) on real Postgres: the retention job deletes exactly the rows
 // past each cutoff, keeps the rest, is safe to run twice and skips while another run holds the
@@ -72,6 +79,8 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
         "accounts",
         "beta_members",
         "beta_invites",
+        "rate_limit_buckets",
+        "retention_runs",
       ]);
     });
 
@@ -286,6 +295,28 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
           [profile.id, column],
         );
       }
+      // Unconfirmed imports (7 days, then cleared): one whose expiry is exactly now (cleared) and
+      // one a second later (kept as staged). Both changed within 30 days, so neither is deleted.
+      for (const [i, expiry] of [ago("0 seconds"), ago("-1 second")].entries()) {
+        await ds.query(
+          `INSERT INTO import_batches (user_id, status, idempotency_key, payload, counts, validation_errors, expires_at, created_at, updated_at)
+           VALUES ($1, 'staged', $2, '{"accounts":[{"name":"Isa"}],"balances":[{"value":1}],"chunkKeys":["c1"]}', '{"accounts":1}', '{}', ${expiry}, ${ago("7 days")}, ${ago("7 days")})`,
+          [OWNER_ID, `staged-${i}`],
+        );
+      }
+      // Request counters: one expired a second ago (deleted), one expiring exactly now (kept: its
+      // window has not passed) and one live for another hour (kept).
+      for (const [key, expiry] of [
+        ["counter-past", ago("1 second")],
+        ["counter-edge", ago("0 seconds")],
+        ["counter-live", ago("-1 hour")],
+      ]) {
+        await ds.query(
+          `INSERT INTO rate_limit_buckets (key, window_start, count, expires_at)
+           VALUES ($1, ${ago("1 day")}, 1, ${expiry})`,
+          [key],
+        );
+      }
     }
 
     it("deletes every row past its cutoff and keeps the rest", async () => {
@@ -297,6 +328,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
           audit_events: 1,
           agent_audit_events: 1,
           import_batches: 1,
+          import_batches_staged_expired: 1,
           mcp_tokens_closed: 2,
           bank_oauth_states: 1,
           idempotency_keys: 1,
@@ -318,12 +350,37 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
           rental_share_onto_property_backfill: 1,
           budget_entry_share_backfill: 1,
           invoice_tax_record_category_backfill: 1,
+          rate_limit_buckets_expired: 1,
         },
         inactiveAccountsDue: 1,
       });
       expect(await count("audit_events")).toBe(1);
       expect(await count("agent_audit_events")).toBe(1);
-      expect(await count("import_batches")).toBe(1);
+      // The 29-day batch and both staged ones.
+      expect(await count("import_batches")).toBe(3);
+      const staged = await ds.query(
+        `SELECT idempotency_key AS k, status, payload, counts, updated_at FROM import_batches
+         WHERE idempotency_key LIKE 'staged-%' ORDER BY idempotency_key`,
+      );
+      // Cleared exactly as the imports service's lazy expiry does: names and values dropped,
+      // chunk keys and counts kept, and the 30-day clock restarted at the run.
+      expect(staged[0]).toMatchObject({
+        k: "staged-0",
+        status: "expired",
+        payload: { accounts: [], balances: [], chunkKeys: ["c1"] },
+        counts: { accounts: 1 },
+      });
+      expect(new Date(staged[0].updated_at).toISOString()).toBe(NOW.toISOString());
+      expect(staged[1]).toMatchObject({
+        k: "staged-1",
+        status: "staged",
+        payload: { accounts: [{ name: "Isa" }], balances: [{ value: 1 }], chunkKeys: ["c1"] },
+      });
+      expect(
+        (await ds.query("SELECT key FROM rate_limit_buckets ORDER BY key")).map(
+          (r: { key: string }) => r.key,
+        ),
+      ).toEqual(["counter-edge", "counter-live"]);
       expect(await count("mcp_tokens")).toBe(3);
       expect(await count("bank_oauth_states")).toBe(1);
       expect(await count("idempotency_keys")).toBe(1);
@@ -368,6 +425,139 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
         await other.query("SELECT pg_advisory_unlock($1)", [RETENTION_LOCK_KEY]);
         await other.release();
       }
+    });
+
+    const lastRun = async () =>
+      (
+        await ds.query(
+          `SELECT last_attempt_at, last_outcome, last_trigger, last_success_at, last_deleted, inactive_accounts_due
+           FROM retention_runs`,
+        )
+      ).map((r: Record<string, unknown>) => ({
+        ...r,
+        last_attempt_at: (r.last_attempt_at as Date).toISOString(),
+        last_success_at: r.last_success_at ? (r.last_success_at as Date).toISOString() : null,
+      }));
+    const DAY_MS = 24 * 60 * 60 * 1000;
+    const at = (ms: number) => new Date(NOW.getTime() + ms);
+
+    it("records each complete run: when, by what, and counts only", async () => {
+      await seed();
+      await runRetentionPurge(runner, NOW, RETENTION_POLICIES, { trigger: "schedule" });
+      const [row] = await lastRun();
+      expect(row).toMatchObject({
+        last_attempt_at: NOW.toISOString(),
+        last_success_at: NOW.toISOString(),
+        last_outcome: "ok",
+        last_trigger: "schedule",
+        inactive_accounts_due: 1,
+      });
+      expect(row.last_deleted).toMatchObject({ audit_events: 1, rate_limit_buckets_expired: 1 });
+      // A later command run replaces the one row.
+      await runRetentionPurge(runner, at(DAY_MS));
+      expect(await lastRun()).toEqual([
+        expect.objectContaining({
+          last_success_at: at(DAY_MS).toISOString(),
+          last_trigger: "command",
+          last_deleted: expect.objectContaining({ audit_events: 0 }),
+        }),
+      ]);
+    });
+
+    it("skips a run within a day of the last success, and runs at a day", async () => {
+      await runRetentionPurge(runner, NOW, RETENTION_POLICIES, { trigger: "schedule" });
+      await seed();
+      const opts = { trigger: "schedule" as const, skipIfSucceededWithinMs: DAY_MS };
+      const early = await runRetentionPurge(runner, at(DAY_MS - 1000), RETENTION_POLICIES, opts);
+      expect(early).toMatchObject({ skipped: true, skipReason: "recent" });
+      expect(await count("audit_events")).toBe(2);
+      const due = await runRetentionPurge(runner, at(DAY_MS), RETENTION_POLICIES, opts);
+      expect(due.skipped).toBe(false);
+      expect((await lastRun())[0].last_success_at).toBe(at(DAY_MS).toISOString());
+    });
+
+    it("a failed run is recorded as failed and keeps the last success", async () => {
+      await runRetentionPurge(runner, NOW);
+      const broken: RetentionPolicy = {
+        name: "broken",
+        table: "audit_events",
+        where: `"no_such_column" < $1::timestamptz`,
+        reason: "a policy that fails, for this test",
+      };
+      await expect(runRetentionPurge(runner, at(DAY_MS), [broken])).rejects.toThrow();
+      expect(await lastRun()).toEqual([
+        expect.objectContaining({
+          last_attempt_at: at(DAY_MS).toISOString(),
+          last_outcome: "failed",
+          last_success_at: NOW.toISOString(),
+        }),
+      ]);
+      // The lock was released: the next run goes ahead.
+      expect((await runRetentionPurge(runner, at(2 * DAY_MS))).skipped).toBe(false);
+    });
+
+    describe("the in-process schedule (D5 revised)", () => {
+      const savedSwitch = process.env.RETENTION_SCHEDULE_ENABLED;
+      afterEach(() => {
+        vi.restoreAllMocks();
+        if (savedSwitch === undefined) delete process.env.RETENTION_SCHEDULE_ENABLED;
+        else process.env.RETENTION_SCHEDULE_ENABLED = savedSwitch;
+      });
+
+      it("two instances checking at once purge once, and log names and counts only", async () => {
+        await seed();
+        const lines: string[] = [];
+        vi.spyOn(Logger.prototype, "log").mockImplementation((m: unknown) => {
+          lines.push(String(m));
+        });
+        const errors = vi.spyOn(Logger.prototype, "error").mockImplementation(() => undefined);
+        const a = new RetentionScheduler(ds);
+        const b = new RetentionScheduler(ds);
+        await Promise.all([a.check(NOW), b.check(NOW)]);
+        expect(errors).not.toHaveBeenCalled();
+        // One run's lines: one per policy plus the inactive count. The other instance skipped.
+        expect(lines).toHaveLength(RETENTION_POLICIES.length + 1);
+        for (const line of lines) {
+          expect(line).toMatch(/^retention ([a-z_]+ deleted=\d+|inactive_accounts_due=\d+)$/);
+        }
+        expect(await count("audit_events")).toBe(1);
+        expect((await lastRun())[0]).toMatchObject({
+          last_trigger: "schedule",
+          last_outcome: "ok",
+        });
+        await a.onModuleDestroy();
+        await b.onModuleDestroy();
+      });
+
+      it("does nothing while RETENTION_SCHEDULE_ENABLED is false, read at each check", async () => {
+        await seed();
+        const scheduler = new RetentionScheduler(ds);
+        process.env.RETENTION_SCHEDULE_ENABLED = "false";
+        await scheduler.check(NOW);
+        expect(await count("audit_events")).toBe(2);
+        expect(await count("rate_limit_buckets")).toBe(3);
+        expect(await lastRun()).toEqual([]);
+        process.env.RETENTION_SCHEDULE_ENABLED = "true";
+        await scheduler.check(NOW);
+        expect(await count("audit_events")).toBe(1);
+        await scheduler.onModuleDestroy();
+      });
+
+      it("sweeps expired request counters at every check, even between daily runs", async () => {
+        await runRetentionPurge(runner, NOW);
+        await seed();
+        const scheduler = new RetentionScheduler(ds);
+        // An hour later the daily purge is not due, but counters whose window has passed go. The
+        // one expiring at exactly that hour is kept.
+        await scheduler.check(at(60 * 60 * 1000));
+        expect(await count("audit_events")).toBe(2);
+        expect(
+          (await ds.query("SELECT key FROM rate_limit_buckets ORDER BY key")).map(
+            (r: { key: string }) => r.key,
+          ),
+        ).toEqual(["counter-live"]);
+        await scheduler.onModuleDestroy();
+      });
     });
 
     it("deletes in batches past the batch size", async () => {

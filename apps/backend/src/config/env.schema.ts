@@ -142,6 +142,11 @@ const backendEnvSchema = z.looseObject({
   // left in Railway does not fail boot.
   AGENT_AUDIT_PURGE_ENABLED: bool(),
 
+  // Retention (D5 revised, 25 Nov 2026): the backend's own daily purge. On unless set to false,
+  // which stops the schedule without a code change (read at each check). The optional Railway
+  // cron command is not affected.
+  RETENTION_SCHEDULE_ENABLED: bool(),
+
   // Ignored since terms acceptance (versions come from LEGAL_PAGES); still accepted, whatever its
   // value, so an old value left in Railway does not fail boot. Logged once at boot when set.
   TERMS_VERSION: text(),

@@ -94,6 +94,7 @@ import {
   RentalShareOntoPropertyAccounts1795550100000,
 } from "./RentalShareOntoPropertyAccounts1795550100000";
 import { RentLinesWholeRent1795490100000 } from "./RentLinesWholeRent1795490100000";
+import { RetentionRuns1795660000000 } from "./RetentionRuns1795660000000";
 import { SavingsRowsNotEssential1795450000000 } from "./SavingsRowsNotEssential1795450000000";
 import { SetupChecklistDismissed1795500100000 } from "./SetupChecklistDismissed1795500100000";
 import { StudentLoanPlanToProfile1795480200000 } from "./StudentLoanPlanToProfile1795480200000";
@@ -130,9 +131,10 @@ let MIGRATIONS: MigrationClass[] = [];
 // ClearTakeHomeSalaries1795530100000 and ClearResetPensionZeros1795530200000, and the slice 7
 // before-image (rental_share_onto_property_backfill, RentalShareOntoPropertyAccounts1795550100000),
 // and the invoice tax record category before-image (invoice_tax_record_category_backfill,
-// InvoiceTaxRecordCategory1795640000000).
+// InvoiceTaxRecordCategory1795640000000), and the retention purge's last-run record
+// (retention_runs, RetentionRuns1795660000000).
 const MIGRATION_ONLY_TABLES =
-  "'migrations', 'liability_sign_backfill', 'rate_limit_buckets', 'pension_rates_backfill', 'student_loan_plan_backfill', 'paye_salary_record_backfill', 'account_home_backfill', 'rent_share_backfill', 'mortgage_repayment_type_backfill', 'profile_column_drop_backfill', 'take_home_salary_backfill', 'reset_pension_zeros_backfill', 'rental_share_onto_property_backfill', 'budget_entry_share_backfill', 'invoice_tax_record_category_backfill'";
+  "'migrations', 'liability_sign_backfill', 'rate_limit_buckets', 'pension_rates_backfill', 'student_loan_plan_backfill', 'paye_salary_record_backfill', 'account_home_backfill', 'rent_share_backfill', 'mortgage_repayment_type_backfill', 'profile_column_drop_backfill', 'take_home_salary_backfill', 'reset_pension_zeros_backfill', 'rental_share_onto_property_backfill', 'budget_entry_share_backfill', 'invoice_tax_record_category_backfill', 'retention_runs'";
 
 /**
  * For the three slowest tests here (measured times on each). Like every test for an old migration,
@@ -1573,6 +1575,41 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       await ds.query("DELETE FROM migrations WHERE name = 'AddRateLimitBuckets1794632012000'");
       await ds.runMigrations();
       expect(await bucketTable()).toEqual(["rate_limit_buckets"]);
+    });
+  });
+
+  describe("RetentionRuns1795660000000 (D5 revised)", () => {
+    const runsTable = async (): Promise<string[]> =>
+      (
+        await ds.query(
+          "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'retention_runs'",
+        )
+      ).map((r: { table_name: string }) => r.table_name);
+
+    it("creates a one-row record that refuses a second row or an unknown outcome; down() drops it", async () => {
+      await ds.runMigrations();
+      expect(await runsTable()).toEqual(["retention_runs"]);
+      await ds.query(
+        "INSERT INTO retention_runs (last_attempt_at, last_outcome, last_trigger) VALUES (now(), 'ok', 'schedule')",
+      );
+      await expect(
+        ds.query(
+          "INSERT INTO retention_runs (id, last_attempt_at, last_outcome, last_trigger) VALUES (2, now(), 'ok', 'schedule')",
+        ),
+      ).rejects.toThrow(/CHK_retention_runs_one_row/);
+      await expect(ds.query("UPDATE retention_runs SET last_outcome = 'maybe'")).rejects.toThrow(
+        /CHK_retention_runs_outcome/,
+      );
+      await expect(ds.query("UPDATE retention_runs SET last_trigger = 'manual'")).rejects.toThrow(
+        /CHK_retention_runs_trigger/,
+      );
+
+      await runMigrationDown(new RetentionRuns1795660000000());
+      expect(await runsTable()).toEqual([]);
+      expect(await tables()).toEqual(ENTITY_TABLES);
+      await ds.query("DELETE FROM migrations WHERE name = 'RetentionRuns1795660000000'");
+      await ds.runMigrations();
+      expect(await runsTable()).toEqual(["retention_runs"]);
     });
   });
 

@@ -24,6 +24,13 @@ export const ReadinessResponse = z.discriminatedUnion("status", [
      * older servers. The service is still ready: only the feature each one gates is off.
      */
     configWarnings: z.number().int().nonnegative().optional(),
+    /**
+     * Whole hours since the last complete retention purge (D5 revised, 25 Nov 2026), or null when
+     * none is recorded. Over 24 means a run is late. Absent from older servers.
+     */
+    retentionLastRunHoursAgo: z.number().int().nonnegative().nullable().optional(),
+    /** Whether this instance's retention schedule is on (`RETENTION_SCHEDULE_ENABLED`). */
+    retentionSchedule: z.enum(["on", "off"]).optional(),
   }),
   z.strictObject({ status: z.literal("unavailable") }),
 ]);

@@ -6713,6 +6713,22 @@
                           "minimum": 0,
                           "type": "integer"
                         },
+                        "retentionLastRunHoursAgo": {
+                          "anyOf": [
+                            {
+                              "maximum": 9007199254740991,
+                              "minimum": 0,
+                              "type": "integer"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "retentionSchedule": {
+                          "enum": ["on", "off"],
+                          "type": "string"
+                        },
                         "status": {
                           "const": "ok",
                           "type": "string"

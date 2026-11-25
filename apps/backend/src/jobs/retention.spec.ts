@@ -29,6 +29,14 @@ describe("retention policies (BE-06, D4)", () => {
     expect(tables.filter((t) => t && !covered.has(t))).toEqual([]);
   });
 
+  it("a clear policy blanks rows and stops them matching, so its batch loop ends", () => {
+    const clears = RETENTION_POLICIES.filter((p) => p.clear);
+    expect(clears.map((p) => p.name)).toEqual(["import_batches_staged_expired"]);
+    // The where selects staged rows; the SET moves them to expired, outside the where.
+    expect(clears[0]?.where).toContain(`"status" = 'staged'`);
+    expect(clears[0]?.clear).toContain(`"status" = 'expired'`);
+  });
+
   it("names are unique and every policy says why", () => {
     const names = RETENTION_POLICIES.map((p) => p.name);
     expect(new Set(names).size).toBe(names.length);
@@ -53,13 +61,21 @@ describe("retention policies (BE-06, D4)", () => {
     expect(describeRetentionReport({ skipped: true, deleted: {}, inactiveAccountsDue: 0 })).toEqual(
       ["retention skipped: another run holds the lock"],
     );
+    expect(
+      describeRetentionReport({
+        skipped: true,
+        skipReason: "recent",
+        deleted: {},
+        inactiveAccountsDue: 0,
+      }),
+    ).toEqual(["retention skipped: a run finished recently"]);
   });
 });
 
 describe("retention and the audit_events delete guard (SEC-F)", () => {
   const NOW = new Date("2026-11-15T03:15:00Z");
   const audit = RETENTION_POLICIES.filter((p) => p.table === "audit_events");
-  const other = RETENTION_POLICIES.filter((p) => p.table === "import_batches");
+  const other = RETENTION_POLICIES.filter((p) => p.name === "import_batches");
 
   /** Records each statement's first words; `failDelete` makes the DELETE throw. */
   function fakeDb(failDelete = false): { db: Queryable; calls: string[] } {
@@ -74,6 +90,10 @@ describe("retention and the audit_events delete guard (SEC-F)", () => {
         }
         if (text.includes("set_config")) {
           calls.push(`set_config ${String(params?.[0])}=${String(params?.[1])}`);
+          return [];
+        }
+        if (text.includes('INSERT INTO "retention_runs"')) {
+          calls.push(`RECORD ${text.includes("'failed'") ? "failed" : "ok"}`);
           return [];
         }
         if (text.includes("pg_try_advisory_lock")) return [{ locked: true }];
@@ -104,6 +124,7 @@ describe("retention and the audit_events delete guard (SEC-F)", () => {
       "set_config flump.audit_delete=retention",
       "DELETE",
       "COMMIT",
+      "RECORD ok",
       "UNLOCK",
     ]);
   });
@@ -116,6 +137,7 @@ describe("retention and the audit_events delete guard (SEC-F)", () => {
       "set_config flump.audit_delete=retention",
       "DELETE",
       "ROLLBACK",
+      "RECORD failed",
       "UNLOCK",
     ]);
   });
@@ -123,6 +145,6 @@ describe("retention and the audit_events delete guard (SEC-F)", () => {
   it("other tables delete as before: no transaction and no reason", async () => {
     const { db, calls } = fakeDb();
     await runRetentionPurge(db, NOW, other);
-    expect(calls).toEqual(["DELETE", "UNLOCK"]);
+    expect(calls).toEqual(["DELETE", "RECORD ok", "UNLOCK"]);
   });
 });

@@ -1,10 +1,14 @@
 /**
  * Retention policies and the purge that applies them (BE-06; findings H12, M-PRIV2; rulings D4
- * and D5). Run daily by a Railway cron service (`retention-purge.ts`), never in the API process.
+ * and D5 as revised on 25 Nov 2026). The backend runs it itself, daily and shortly after boot
+ * (`retention.scheduler.ts`); `retention-purge.ts` is the same purge as a command, for the optional
+ * Railway cron service (`apps/backend/retention.railway.json`).
  *
- * Every policy is a DELETE of rows past a cutoff computed from one `now`, done in batches so no
- * statement holds locks for long. Running it twice, or two runs at once, is safe: a second pass
- * finds nothing to delete, and an advisory lock makes an overlapping run skip.
+ * Every policy is a DELETE (or, for `clear` policies, an UPDATE that blanks data) of rows past a
+ * cutoff computed from one `now`, done in batches so no statement holds locks for long. Running it
+ * twice, or two runs at once from any number of instances or triggers, is safe: a second pass finds
+ * nothing to do, and a session advisory lock makes an overlapping run skip. Each completed run
+ * writes the one-row `retention_runs` record (counts only).
  */
 
 import { IDEMPOTENCY_KEY_TTL_HOURS } from "@flump/api-contract";
@@ -32,6 +36,11 @@ export interface RetentionPolicy {
    * declared the `retention` reason, so each batch runs in its own transaction that sets it.
    */
   guardedAuditDelete?: boolean;
+  /**
+   * When set, matching rows are not deleted: this SET clause blanks the data instead, and must
+   * make the row stop matching `where` (so the batch loop ends). `$1` is the run's `now`.
+   */
+  clear?: string;
 }
 
 /** Ruling D4: audit records 13 months, import batches 30 days, inactive accounts 24 months. */
@@ -56,6 +65,19 @@ export const RETENTION_POLICIES: readonly RetentionPolicy[] = [
     // its values: account_details.import_batch_id is ON DELETE SET NULL. Undo ends with the batch.
     where: `"updated_at" < $1::timestamptz - interval '30 days'`,
     reason: "import batches are kept 30 days after their last change (D4)",
+  },
+  {
+    name: "import_batches_staged_expired",
+    table: "import_batches",
+    // The web app says imports not confirmed within 7 days are cleared. The imports service does
+    // this lazily for the user it serves (`expireStale` in modules/imports/import-helpers.ts); this
+    // does the same, with the same SQL, for users who never come back. The cleared batch then goes
+    // 30 days after this change, by the policy above.
+    where: `"status" = 'staged' AND "expires_at" <= $1::timestamptz`,
+    clear: `"status" = 'expired', "updated_at" = $1::timestamptz,
+            "payload" = jsonb_set(jsonb_set("payload", '{accounts}', '[]'), '{balances}', '[]')`,
+    reason:
+      "an import not confirmed within 7 days is cleared: its staged names and values are dropped (D4, imports copy)",
   },
   {
     name: "mcp_tokens_closed",
@@ -196,7 +218,19 @@ export const RETENTION_POLICIES: readonly RetentionPolicy[] = [
     reason:
       "before-image of the invoice-linked tax records moved to self-employed income, kept 90 days so the migration can be rolled back; after that its down() restores nothing",
   },
+  {
+    name: "rate_limit_buckets_expired",
+    table: "rate_limit_buckets",
+    // The store also sweeps expired rows every SWEEP_EVERY hits per process, which on low traffic
+    // may not come for a while. The schedule runs this policy on every check (retention.scheduler).
+    where: `"expires_at" < $1::timestamptz`,
+    reason:
+      "a request counter is worth nothing once its window (a day at most) has passed; the privacy notice says one day at most",
+  },
 ];
+
+/** Name of the request counter policy, which the schedule also runs between daily purges. */
+export const COUNTER_POLICY_NAME = "rate_limit_buckets_expired";
 
 /** Profiles with no authenticated request for this long are due for erasure (D4). */
 const INACTIVE_ACCOUNT_WHERE = `"last_active_at" < $1::timestamptz - interval '24 months'`;
@@ -205,8 +239,22 @@ const RETENTION_BATCH_SIZE = 5000;
 /** pg advisory lock key for the purge ("BE06" in ASCII), so overlapping runs skip. */
 export const RETENTION_LOCK_KEY = 0x42453036;
 
+type RetentionTrigger = "schedule" | "command";
+
+export interface RetentionRunOptions {
+  /** Who started the run, written to the last-run record. */
+  trigger?: RetentionTrigger;
+  /**
+   * Skip (reason "recent") when the last successful run is younger than this. Checked after the
+   * lock is taken, so two instances that both found a run due never run back to back.
+   */
+  skipIfSucceededWithinMs?: number;
+}
+
 export interface RetentionReport {
   skipped: boolean;
+  /** Why a run skipped: another run holds the lock, or a run succeeded recently. */
+  skipReason?: "locked" | "recent";
   deleted: Record<string, number>;
   /** Accounts past 24 months of inactivity. Reported, not erased: see the PR notes and runbook. */
   inactiveAccountsDue: number;
@@ -225,12 +273,15 @@ async function tableExists(db: Queryable, table: string): Promise<boolean> {
 }
 
 async function deleteBatch(db: Queryable, policy: RetentionPolicy, now: Date): Promise<number> {
+  const action = policy.clear
+    ? `UPDATE "${policy.table}" SET ${policy.clear}`
+    : `DELETE FROM "${policy.table}"`;
   return rowsOf(
     await db.query(
       `WITH doomed AS (
          SELECT ctid FROM "${policy.table}" WHERE ${policy.where} LIMIT ${RETENTION_BATCH_SIZE}
        )
-       DELETE FROM "${policy.table}" WHERE ctid IN (SELECT ctid FROM doomed) RETURNING 1`,
+       ${action} WHERE ctid IN (SELECT ctid FROM doomed) RETURNING 1`,
       [now],
     ),
   ).length;
@@ -258,7 +309,11 @@ async function deleteAuditBatch(
   }
 }
 
-async function purgeTable(db: Queryable, policy: RetentionPolicy, now: Date): Promise<number> {
+export async function purgeTable(
+  db: Queryable,
+  policy: RetentionPolicy,
+  now: Date,
+): Promise<number> {
   const batch = policy.guardedAuditDelete ? deleteAuditBatch : deleteBatch;
   let total = 0;
   for (;;) {
@@ -266,6 +321,53 @@ async function purgeTable(db: Queryable, policy: RetentionPolicy, now: Date): Pr
     total += deleted;
     if (deleted < RETENTION_BATCH_SIZE) return total;
   }
+}
+
+const RUNS_TABLE = "retention_runs";
+
+/** When the last complete run finished, or null when none has (or the table is missing). */
+export async function readLastRetentionSuccess(db: Queryable): Promise<Date | null> {
+  if (!(await tableExists(db, RUNS_TABLE))) return null;
+  const [row] = rowsOf(
+    await db.query(`SELECT "last_success_at" AS at FROM "${RUNS_TABLE}" WHERE "id" = 1`),
+  );
+  const at = row?.at;
+  if (at instanceof Date) return at;
+  return typeof at === "string" ? new Date(at) : null;
+}
+
+async function recordSuccess(
+  db: Queryable,
+  now: Date,
+  trigger: RetentionTrigger,
+  deleted: Record<string, number>,
+  inactiveAccountsDue: number,
+): Promise<void> {
+  if (!(await tableExists(db, RUNS_TABLE))) return;
+  await db.query(
+    `INSERT INTO "${RUNS_TABLE}"
+       ("id", "last_attempt_at", "last_outcome", "last_trigger", "last_success_at", "last_deleted", "inactive_accounts_due")
+     VALUES (1, $1, 'ok', $2, $1, $3::jsonb, $4)
+     ON CONFLICT ("id") DO UPDATE SET
+       "last_attempt_at" = EXCLUDED."last_attempt_at", "last_outcome" = 'ok',
+       "last_trigger" = EXCLUDED."last_trigger", "last_success_at" = EXCLUDED."last_success_at",
+       "last_deleted" = EXCLUDED."last_deleted",
+       "inactive_accounts_due" = EXCLUDED."inactive_accounts_due"`,
+    [now, trigger, JSON.stringify(deleted), inactiveAccountsDue],
+  );
+}
+
+/** A failed run keeps the last success (its time and counts) and marks the attempt failed. */
+async function recordFailure(db: Queryable, now: Date, trigger: RetentionTrigger): Promise<void> {
+  if (!(await tableExists(db, RUNS_TABLE))) return;
+  await db.query(
+    `INSERT INTO "${RUNS_TABLE}" ("id", "last_attempt_at", "last_outcome", "last_trigger")
+     VALUES (1, $1, 'failed', $2)
+     ON CONFLICT ("id") DO UPDATE SET
+       "last_attempt_at" = EXCLUDED."last_attempt_at", "last_outcome" = 'failed',
+       "last_trigger" = EXCLUDED."last_trigger"`,
+    [now, trigger],
+  );
 }
 
 /**
@@ -276,25 +378,43 @@ export async function runRetentionPurge(
   db: Queryable,
   now: Date = new Date(),
   policies: readonly RetentionPolicy[] = RETENTION_POLICIES,
+  options: RetentionRunOptions = {},
 ): Promise<RetentionReport> {
+  const trigger = options.trigger ?? "command";
   const [lock] = rowsOf(
     await db.query("SELECT pg_try_advisory_lock($1) AS locked", [RETENTION_LOCK_KEY]),
   );
-  if (!lock?.locked) return { skipped: true, deleted: {}, inactiveAccountsDue: 0 };
+  if (!lock?.locked) {
+    return { skipped: true, skipReason: "locked", deleted: {}, inactiveAccountsDue: 0 };
+  }
   try {
-    const deleted: Record<string, number> = {};
-    for (const policy of policies) {
-      deleted[policy.name] = (await tableExists(db, policy.table))
-        ? await purgeTable(db, policy, now)
-        : 0;
+    if (options.skipIfSucceededWithinMs !== undefined) {
+      const last = await readLastRetentionSuccess(db);
+      if (last && now.getTime() - last.getTime() < options.skipIfSucceededWithinMs) {
+        return { skipped: true, skipReason: "recent", deleted: {}, inactiveAccountsDue: 0 };
+      }
     }
-    const [due] = rowsOf(
-      await db.query(
-        `SELECT count(*)::int AS n FROM "user_profiles" WHERE ${INACTIVE_ACCOUNT_WHERE}`,
-        [now],
-      ),
-    );
-    return { skipped: false, deleted, inactiveAccountsDue: Number(due?.n ?? 0) };
+    try {
+      const deleted: Record<string, number> = {};
+      for (const policy of policies) {
+        deleted[policy.name] = (await tableExists(db, policy.table))
+          ? await purgeTable(db, policy, now)
+          : 0;
+      }
+      const [due] = rowsOf(
+        await db.query(
+          `SELECT count(*)::int AS n FROM "user_profiles" WHERE ${INACTIVE_ACCOUNT_WHERE}`,
+          [now],
+        ),
+      );
+      const inactiveAccountsDue = Number(due?.n ?? 0);
+      await recordSuccess(db, now, trigger, deleted, inactiveAccountsDue);
+      return { skipped: false, deleted, inactiveAccountsDue };
+    } catch (error) {
+      // A failure to record the failure (a dead connection) must not hide the first error.
+      await recordFailure(db, now, trigger).catch(() => undefined);
+      throw error;
+    }
   } finally {
     await db.query("SELECT pg_advisory_unlock($1)", [RETENTION_LOCK_KEY]);
   }
@@ -302,7 +422,13 @@ export async function runRetentionPurge(
 
 /** One line per policy plus the inactive count: names and counts only, never ids. */
 export function describeRetentionReport(report: RetentionReport): string[] {
-  if (report.skipped) return ["retention skipped: another run holds the lock"];
+  if (report.skipped) {
+    return [
+      report.skipReason === "recent"
+        ? "retention skipped: a run finished recently"
+        : "retention skipped: another run holds the lock",
+    ];
+  }
   return [
     ...Object.entries(report.deleted).map(([name, n]) => `retention ${name} deleted=${n}`),
     `retention inactive_accounts_due=${report.inactiveAccountsDue}`,

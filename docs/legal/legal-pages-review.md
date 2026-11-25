@@ -12,7 +12,7 @@ Decisions: open. The owner steps and the solicitor list below are not answered h
 
 | Page                        | Route            | Source                                                             | Verdict                     |
 | --------------------------- | ---------------- | ------------------------------------------------------------------ | --------------------------- |
-| Privacy notice              | `/privacy`       | `apps/marketing/src/pages/PrivacyPage/PrivacyPage.tsx`             | 0.2 approved in round 6     |
+| Privacy notice              | `/privacy`       | `apps/marketing/src/pages/PrivacyPage/PrivacyPage.tsx`             | 0.3 approved in round 7     |
 | Terms of use                | `/terms`         | `apps/marketing/src/pages/TermsPage/TermsPage.tsx`                 | Approved on the second look |
 | Cookies and browser storage | `/cookies`       | `apps/marketing/src/pages/CookiesPage/CookiesPage.tsx`             | Approved on the first look  |
 | Accessibility statement     | `/accessibility` | `apps/marketing/src/pages/AccessibilityPage/AccessibilityPage.tsx` | Approved on the second look |
@@ -69,6 +69,10 @@ Terms acceptance was built (the follow-up below). A separate Fable decider, reco
 - **Privacy notice 0.2** adds one item under "Security records": "Which version of the terms you agreed to, which version of this notice we showed you, and when. We keep this until your account is deleted. Lawful basis: our legitimate interest in keeping a record of the agreement between us."
 - `ropa.md` and `data-map.md` gained the record.
 
+### Round 7: the retention purge runs in the backend (privacy notice 0.3)
+
+D5 was revised so the backend runs the retention purge itself (`docs/audit/plans/DECISIONS.md`, 25 November 2026). An independent Fable decider, signed `fable-decider`, checked the timed lines against it. With the purge live, one line was not strictly true: a request counter can outlive its one-day window by up to 15 minutes before the sweep removes it, or longer after a failed check. "Request counters: one day at most." became "Request counters: each lasts one day at most and is removed shortly after." Privacy notice version 0.3. Not legal advice; Fable is not a solicitor.
+
 ## Judgement calls the reviewer made
 
 - **Controller and processor for client details:** the user as controller and Flump as processor is the right split.
@@ -116,7 +120,7 @@ The stand-in name ends in "Ltd" and comes with a company number, while the tradi
 1. **Before pointing real people at the pages:** sign the Railway DPA (DocuSign), accept the Sentry DPA, and check both companies' Data Privacy Framework listings. Record the dates in `ropa.md`.
 2. **Before pointing real people at the pages:** fill the controller's name and address and a mailbox that is read. UK GDPR Article 13 and section 164A are not met while the address is unmonitored.
 3. Register with the ICO and pay the data protection fee, if not done.
-4. **By 3 December 2026:** create the daily retention cron service on Railway (`bun run retention:purge`). Then the backup job and its bucket rule, and state the backup period in the privacy notice.
+4. **By 3 December 2026:** confirm the first retention run after the deploy that schedules it in the backend (D5 revised on 25 November 2026; the Railway cron service is now optional). Then the backup job and its bucket rule, and state the backup period in the privacy notice.
 5. Decide the regulatory-status wording for the terms before a public launch.
 6. Decide whether to move hosting to EU West (`docs/runbooks/region-move.md`). The privacy notice and `ropa.md` change with it.
 7. Delete the `TERMS_VERSION` variable from the Railway backend service if it is set. The backend no longer reads it (terms versions come from `LEGAL_PAGES`) and logs one warning at boot while it is there.

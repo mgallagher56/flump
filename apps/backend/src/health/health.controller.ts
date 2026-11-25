@@ -4,6 +4,8 @@ import { Controller, Get, HttpCode, HttpStatus, Inject, Res } from "@nestjs/comm
 import type { Response } from "express";
 import { DataSource } from "typeorm";
 import { BOOT_CONFIG, type BootConfig } from "../config/config.module";
+import { readLastRetentionSuccess } from "../jobs/retention";
+import { retentionScheduleEnabled } from "../jobs/retention.scheduler";
 import { SkipRateLimit } from "../security/rate-limit.decorator";
 
 const READINESS_TIMEOUT_MS = 2000;
@@ -26,6 +28,11 @@ const VERSION = readVersion();
 function readCommit(): string {
   const sha = process.env.RAILWAY_GIT_COMMIT_SHA?.trim();
   return sha ? sha.slice(0, 7) : "unknown";
+}
+
+function hoursSince(at: Date | null): number | null {
+  if (!at || Number.isNaN(at.getTime())) return null;
+  return Math.max(0, Math.floor((Date.now() - at.getTime()) / 3_600_000));
 }
 
 @Controller("health")
@@ -52,10 +59,12 @@ export class HealthController {
       const timeout = new Promise<never>((_, reject) => {
         timer = setTimeout(() => reject(new Error("timeout")), READINESS_TIMEOUT_MS);
       });
-      const [, rows] = await Promise.race([
+      const [, rows, retentionAt] = await Promise.race([
         Promise.all([
           this.dataSource.query("SELECT 1"),
           this.dataSource.query(MIGRATIONS_COUNT_SQL),
+          // Never makes the service unready: an unreadable record reads as no run.
+          readLastRetentionSuccess(this.dataSource).catch(() => null),
         ]),
         timeout,
       ]);
@@ -72,6 +81,10 @@ export class HealthController {
         version: VERSION,
         commit: readCommit(),
         configWarnings: this.bootConfig.configWarnings.length,
+        // D5 revised: whole hours since the last complete retention purge (null: none recorded),
+        // and whether this instance's schedule is on. Over 24 hours means a run is late.
+        retentionLastRunHoursAgo: hoursSince(retentionAt),
+        retentionSchedule: retentionScheduleEnabled(process.env) ? "on" : "off",
       };
     } catch {
       res.status(HttpStatus.SERVICE_UNAVAILABLE);

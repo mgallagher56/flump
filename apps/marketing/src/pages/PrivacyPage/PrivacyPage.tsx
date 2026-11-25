@@ -259,7 +259,8 @@ export const PrivacyPage: FC = () => (
           An unused link is removed 30 days after it is cancelled or expires.
         </li>
         <li>
-          <strong>Request counters:</strong> one day at most.
+          <strong>Request counters:</strong> each lasts one day at most and is removed shortly
+          after.
         </li>
         <li>
           <strong>Backups:</strong> any backup of the database is kept for a limited period. Deleted
@@ -364,6 +365,9 @@ export const PrivacyPage: FC = () => (
         effect.
       </p>
       <ul className={versionHistory()}>
+        <li>
+          Version 0.3, 25 November 2026: request counters are removed shortly after their day.
+        </li>
         <li>
           Version 0.2, 25 November 2026: adds the record of which terms you agreed to and which
           version of this notice we showed you.

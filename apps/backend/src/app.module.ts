@@ -13,6 +13,7 @@ import { ContractShadowInterceptor } from "./contract/contract-shadow.intercepto
 import { DeprecationInterceptor } from "./contract/deprecation.interceptor";
 import { IdempotencyInterceptor } from "./contract/idempotency.interceptor";
 import { HealthController } from "./health/health.controller";
+import { RetentionModule } from "./jobs/retention.module";
 import { AgentModule } from "./modules/agent/agent.module";
 import { BudgetModule } from "./modules/budget/budget.module";
 import { FinanceModule } from "./modules/finance/finance.module";
@@ -60,6 +61,7 @@ import { SecurityModule } from "./security/security.module";
     AgentModule,
     PrivacyModule,
     BetaModule,
+    RetentionModule,
   ],
   controllers: [AppController, HealthController],
   providers: [
