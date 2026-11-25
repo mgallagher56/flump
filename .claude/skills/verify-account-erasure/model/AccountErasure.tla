@@ -136,7 +136,10 @@ RequestWrite(r, t) ==
 
 \* UserDataWriteFence.afterTransactionStart, first statement of the write's
 \* transaction: tryLockUserDataShared. Granted while no erasure or reset holds
-\* the exclusive lock; other requests of the user hold it alongside.
+\* the exclusive lock; other requests of the user hold it alongside. The /mcp
+\* audit row (runAsUserRequest with waitForLock) takes lockUserDataShared and
+\* waits instead: the same step, taken once the lock is free; its lock_timeout
+\* ends in a refusal, which RequestBusy covers.
 RequestLock(r) ==
     /\ RequestsLock /\ rPc[r] = "passed" /\ lock = "none"
     /\ shared' = shared \cup {r} /\ rPc' = [rPc EXCEPT ![r] = "locked"]
