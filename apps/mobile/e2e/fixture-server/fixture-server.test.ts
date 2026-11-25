@@ -339,6 +339,22 @@ describe("control routes", () => {
     expect(res.status).toBe(400);
   });
 
+  it.each([
+    ['{"constructor":1}'],
+    ['{"toString":"x"}'],
+    ['{"__proto__":{"account":"not-invited"}}'],
+    ['["refresh"]'],
+  ])("refuses an inherited or non-object scenario %s with 400", async (body) => {
+    const res = await fetch(url("/__fixture/scenario"), {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body,
+    });
+    expect(res.status).toBe(400);
+    const { access_token } = await signIn();
+    expect((await getProfile(access_token)).status).toBe(200);
+  });
+
   it("reset restores the default scenario and clears the counts", async () => {
     server.setScenario({ account: "not-invited" });
     await signIn();

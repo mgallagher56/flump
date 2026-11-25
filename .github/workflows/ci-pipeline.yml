@@ -603,6 +603,11 @@ jobs:
     timeout-minutes: 45
     permissions:
       contents: read
+    # The workflow sets TURBO_TOKEN for every job; blank it here so no step, Gradle plugin or the
+    # third-party emulator action can read it, and turbo never reaches a remote cache.
+    env:
+      TURBO_TOKEN: ""
+      TURBO_TEAM: ""
 
     steps:
       - name: ⬇️ Checkout repo
