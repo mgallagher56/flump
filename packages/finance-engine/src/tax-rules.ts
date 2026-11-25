@@ -20,7 +20,7 @@
  */
 
 import { SUPPORTED_UK_TAX_YEARS } from "./types.js";
-import { getUkTaxYearContext } from "./uk-tax-year.js";
+import { getUkTaxYearContext } from "./uk-tax-year-calendar.js";
 
 // ---------------------------------------------------------------------------
 // Legal Disclaimer
@@ -681,8 +681,9 @@ export interface UKChildBenefitYear {
 /**
  * Child Benefit weekly rates per tax year and the High Income Child Benefit Charge
  * thresholds (GOV.UK child-benefit-tax-charge: over 50,000 at 1% per 100 up to 2023/24,
- * over 60,000 at 1% per 200 from 2024/25). 2021/22 weekly rates are UNVERIFIED (2020/21 from SI 2020/298 reg 5)
- * (see `docs/tax-sources/hicbc-child-benefit.md` and the `childBenefit` registry key).
+ * over 60,000 at 1% per 200 from 2024/25). Weekly rates for 2020/21 to 2026/27 were read in each
+ * year's uprating instrument by fable-decider on 2026-11-25 (see `docs/tax-sources/hicbc-child-benefit.md`
+ * and the `childBenefit` registry key).
  */
 export const UK_CHILD_BENEFIT: Record<string, UKChildBenefitYear> = {
   "2020/21": {

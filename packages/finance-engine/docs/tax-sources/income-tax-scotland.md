@@ -5,6 +5,22 @@ Note: gov.scot / mygov.scot pages returned 404 (UNVERIFIED from that source). Fi
 
 Rates identical in all rows where band exists: starter 19%, basic 20%, intermediate 21%.
 
+## Primary source: the Scottish rate resolutions (read 2026-11-25)
+
+`fable-decider` read each year's Scottish rate resolution, as agreed, at https://www.parliament.scot/chamber-and-committees/votes-and-motions/<ref> (and the same text in the Parliament's open-data motions feed). Every rate and limit below matches the resolution.
+
+| Year    | Motion    | Agreed           | Result   |
+| ------- | --------- | ---------------- | -------- |
+| 2020/21 | S5M-21090 | 4 March 2020     | verified |
+| 2021/22 | S5M-24225 | 25 February 2021 | verified |
+| 2022/23 | S6M-03019 | 2 February 2022  | verified |
+| 2023/24 | S6M-07853 | 9 February 2023  | verified |
+| 2024/25 | S6M-12252 | 22 February 2024 | verified |
+| 2025/26 | S6M-16531 | 20 February 2025 | verified |
+| 2026/27 | S6M-20844 | 19 February 2026 | verified |
+
+Frame: from 2024/25 the resolution says its rates apply to income "above the personal allowance", so every limit, 125,140 included, is taxable income above the allowance, as the engine stores it. That settles the 2026/27 frame ambiguity noted below. Before 2024/25 the resolution says only "for the purposes of section 11A of the Income Tax Act 2007"; the frame there rests on how s.11A works. Each resolution names its 20% band "the Scottish basic rate".
+
 ## Per-year verified figures
 
 Source URL pattern: https://www.gov.uk/guidance/rates-and-thresholds-for-employers-YYYY-to-YYYY (the "Scottish/Scotland PAYE tax rates" table on each page).

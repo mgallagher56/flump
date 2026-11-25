@@ -547,6 +547,8 @@ Committed by the owner in #909, and merged by the owner (the pull request says n
 
 Under the owner's rule of 2026-11-20, Fable deciders read GOV.UK and legislation.gov.uk on 24 November 2026 and signed as `fable-decider`: 140 vectors in #906 and the last 168 in #912 (five deciders, one per year, 2020/21 to 2024/25). All 308 are signed and the unsigned ratchet baseline is 0. 2020/21 to 2026/27 report verified; 2027/28 stays provisional. The decider found no wrong figure, except one engine fault fixed in #906: the engine charged Plan 5 student loan repayments in 2023/24 to 2025/26, but none are due before 2026/27 (SI 2009/470 reg 15(2BA)). Not verified by the deciders: Scottish rate resolutions (GOV.UK bands used) and Child Benefit rates from the statutory instruments.
 
+Update (2026-11-25): both gaps closed. A Fable decider (`fable-decider`) read every Scottish rate resolution for 2020/21 to 2026/27 on parliament.scot (S5M-21090, S5M-24225, S6M-03019, S6M-07853, S6M-12252, S6M-16531, S6M-20844) and every Child Benefit uprating instrument on legislation.gov.uk (SI 2020/298, 2021/156, 2022/231, 2023/237, 2024/247, 2025/292, 2026/232). Every figure matches; none was wrong. The registry (`uk-rule-sources.ts`) now marks Child Benefit 2021/22 and Scottish income tax 2026/27 verified.
+
 # E39 MA10 stays deferred (recorded 2026-11-25)
 
 MA10 (an MCP tool for mortgage estimates) was accepted as recommended on 2026-11-21: option A, defer. It needs the frozen simulate list reopened, which touches the model provider and the DPIA. So E39 S3 has no PR. S1c (#905) merged on 2026-11-24 without it.

@@ -113,33 +113,43 @@ const HICBC_PAGE = "https://www.gov.uk/child-benefit-tax-charge";
 // Weekly rates table (E25-T2, 2026-11-13): 2025 to 2026 26.05 / 17.25; 2026 to 2027 27.05 / 17.90.
 const CHILD_BENEFIT_RATES =
   "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance";
-// Uprating regulations (read 2026-11-13): 2023 regs 21.80 -> 24.00 and 14.45 -> 15.90 (so 2022/23 was 21.80 / 14.45);
-// 2024 regs 24.00 -> 25.60 and 15.90 -> 16.95.
-// SI 2020/298 reg 5 (read 2026-11-20): enhanced rate 20.70 -> 21.05, other cases 13.70 -> 13.95,
-// in force 6 April 2020 (reg 1(2)).
-const CHILD_BENEFIT_REGS_2020 = "https://www.legislation.gov.uk/uksi/2020/298/made";
-const CHILD_BENEFIT_REGS_2023 = "https://www.legislation.gov.uk/uksi/2023/237/made";
-const CHILD_BENEFIT_REGS_2024 = "https://www.legislation.gov.uk/uksi/2024/247/made";
+/** A supported year whose rates are law (every supported year except the provisional ones). */
+type UkLawYear = Exclude<UkTaxYear, UkProvisionalTaxYear>;
 
-function childBenefitSource(year: UkTaxYear): UkRuleSource {
-  switch (year) {
-    case "2020/21":
-      return verified(CHILD_BENEFIT_REGS_2020, [CHILD_BENEFIT_RATES]);
-    case "2021/22":
-      return unverified(
-        CHILD_BENEFIT_RATES,
-        "Child Benefit weekly rates (eldest or only child and other children) for this year are not on a GOV.UK page reached; the cited table starts at 2025 to 2026",
-      );
-    case "2022/23":
-      return verified(CHILD_BENEFIT_REGS_2023, [CHILD_BENEFIT_RATES]);
-    case "2023/24":
-      return verified(CHILD_BENEFIT_REGS_2023, [CHILD_BENEFIT_RATES]);
-    case "2024/25":
-      return verified(CHILD_BENEFIT_REGS_2024, [CHILD_BENEFIT_RATES]);
-    default:
-      return verified(CHILD_BENEFIT_RATES);
-  }
+// The instrument that sets each year's weekly rates by amending reg 2(1)(a) (enhanced rate, eldest
+// or only child) and (b) (other cases) of SI 2006/965. Each was read by fable-decider on 2026-11-25,
+// as made and as the point-in-time reg 2: every figure in UK_CHILD_BENEFIT matches. Each comes into
+// force on the first Monday on or after 6 April, the first week whose Monday is in the tax year.
+const CHILD_BENEFIT_INSTRUMENTS: Record<UkLawYear, string> = {
+  // SI 2020/298 reg 5: 20.70 -> 21.05, 13.70 -> 13.95, in force 6 April 2020.
+  "2020/21": "https://www.legislation.gov.uk/uksi/2020/298/made",
+  // SI 2021/156 reg 5: 21.05 -> 21.15, 13.95 -> 14.00, in force 12 April 2021.
+  "2021/22": "https://www.legislation.gov.uk/uksi/2021/156/made",
+  // SI 2022/231 reg 5: 21.15 -> 21.80, 14.00 -> 14.45, in force 11 April 2022.
+  "2022/23": "https://www.legislation.gov.uk/uksi/2022/231/made",
+  // SI 2023/237 reg 5: 21.80 -> 24.00, 14.45 -> 15.90, in force 10 April 2023.
+  "2023/24": "https://www.legislation.gov.uk/uksi/2023/237/made",
+  // SI 2024/247 reg 5: 24.00 -> 25.60, 15.90 -> 16.95, in force 8 April 2024.
+  "2024/25": "https://www.legislation.gov.uk/uksi/2024/247/made",
+  // SI 2025/292 art 2: 25.60 -> 26.05, 16.95 -> 17.25, in force 7 April 2025.
+  "2025/26": "https://www.legislation.gov.uk/uksi/2025/292/made",
+  // SI 2026/232 art 2: 26.05 -> 27.05, 17.25 -> 17.90, in force 6 April 2026.
+  "2026/27": "https://www.legislation.gov.uk/uksi/2026/232/made",
+};
+
+function childBenefitSource(year: UkLawYear): UkRuleSource {
+  return verified(CHILD_BENEFIT_INSTRUMENTS[year], [CHILD_BENEFIT_RATES]);
 }
+
+// Scottish rates and limits are set each year by the Scottish rate resolution (ITA 2007 s.11A).
+// fable-decider read each motion as agreed on 2026-11-25 at
+// https://www.parliament.scot/chamber-and-committees/votes-and-motions/<ref>, and every rate and
+// limit in UK_SCOTLAND_INCOME_TAX matches: 2020/21 S5M-21090 (4 March 2020), 2021/22 S5M-24225
+// (25 February 2021), 2022/23 S6M-03019 (2 February 2022), 2023/24 S6M-07853 (9 February 2023),
+// 2024/25 S6M-12252 (22 February 2024), 2025/26 S6M-16531 (20 February 2025), 2026/27 S6M-20844
+// (19 February 2026). From 2024/25 the resolution says its limits are income above the personal
+// allowance, the frame the engine uses, 125,140 included. Named, not linked: every registry URL is
+// on gov.uk or legislation.gov.uk.
 
 const PRE_2023: readonly UkTaxYear[] = ["2020/21", "2021/22", "2022/23"];
 
@@ -264,7 +274,7 @@ export const MTD_INCOME_TAX_SOURCES = {
   ]),
 } as const satisfies Record<"thresholds", UkRuleSource>;
 
-function buildYear(year: UkTaxYear): UkRuleSources {
+function buildYear(year: UkLawYear): UkRuleSources {
   const employer = employerPage(year);
   const is2026 = year === "2026/27";
   const pre2023 = PRE_2023.includes(year);
@@ -306,13 +316,8 @@ function buildYear(year: UkTaxYear): UkRuleSources {
         )
       : verified(INCOME_TAX_PAST, [ADJUSTED_NET_INCOME]),
     incomeTaxEwni: verified(INCOME_TAX_PAST, [INCOME_TAX_RATES]),
-    incomeTaxScotland: is2026
-      ? unverified(
-          INCOME_TAX_RATES,
-          "Scottish advanced/top boundary 125,140 is a published figure but its frame (taxable vs gross) is ambiguous between GOV.UK pages",
-          [INCOME_TAX_PAST],
-        )
-      : verified(INCOME_TAX_RATES, [INCOME_TAX_PAST]),
+    // Every rate and limit also read in that year's Scottish rate resolution (see above).
+    incomeTaxScotland: verified(INCOME_TAX_RATES, [INCOME_TAX_PAST]),
     niClass1,
     niClass4,
     employerNi:

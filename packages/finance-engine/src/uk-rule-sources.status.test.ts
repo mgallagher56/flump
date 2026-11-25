@@ -39,7 +39,6 @@ const UNVERIFIED_BY_YEAR: Record<string, readonly UkRuleKey[]> = {
     "personalAllowanceTaper",
     "niClass4",
     "statePension",
-    "childBenefit",
     ...ALWAYS_UNVERIFIED_BEFORE_2026,
   ],
   "2022/23": [
@@ -53,7 +52,8 @@ const UNVERIFIED_BY_YEAR: Record<string, readonly UkRuleKey[]> = {
   "2023/24": ["niClass1", "studentLoan", ...ALWAYS_UNVERIFIED_BEFORE_2026],
   "2024/25": ["studentLoan", ...ALWAYS_UNVERIFIED_BEFORE_2026],
   "2025/26": ["studentLoan", ...ALWAYS_UNVERIFIED_BEFORE_2026],
-  "2026/27": ["incomeTaxScotland"],
+  // 2026/27: the Scottish rate resolution states its limits above the personal allowance.
+  "2026/27": [],
   // 2027/28 is provisional (buildProvisionalYear): no Scottish table is published, and the
   // trading, property and payments-on-account figures rest on current guidance only.
   "2027/28": ["incomeTaxScotland", "tradingAllowance", "propertyAllowance", "paymentsOnAccount"],
@@ -131,10 +131,10 @@ describe("rule source status per year", () => {
     expect(notes).toHaveLength(8);
   });
 
-  it("has one note for 2026/27, where only Scottish income tax is not confirmed", () => {
-    // 2026/27: only the Scottish income tax group is unverified, so one note.
-    expect(ruleUnverifiedNotes("2026/27")).toHaveLength(1);
-    expect(ruleUnverifiedNotes("2026/27")[0]).toMatch(/Scottish/);
+  it("has no note for 2026/27, where every figure group is confirmed", () => {
+    // The Scottish 125,140 frame was the last open group; resolution S6M-20844 settles it.
+    expect(ruleUnverifiedNotes("2026/27")).toEqual([]);
+    expect(ruleUnverifiedNotes("2025/26").length).toBeGreaterThan(0);
   });
 });
 
@@ -186,28 +186,26 @@ describe("rule source pages per year", () => {
     expect(s.giftAid.additionalUrls).toEqual([ADJUSTED_NET_INCOME]);
   });
 
-  it("cites the uprating regulations for Child Benefit 2022/23 to 2024/25", () => {
-    const regs2023 = "https://www.legislation.gov.uk/uksi/2023/237/made";
-    const regs2024 = "https://www.legislation.gov.uk/uksi/2024/247/made";
-    expect(UK_RULE_SOURCES["2022/23"].childBenefit).toEqual({
-      url: regs2023,
-      additionalUrls: [CHILD_BENEFIT_RATES],
-      status: "verified",
-    });
-    expect(UK_RULE_SOURCES["2023/24"].childBenefit).toEqual({
-      url: regs2023,
-      additionalUrls: [CHILD_BENEFIT_RATES],
-      status: "verified",
-    });
-    expect(UK_RULE_SOURCES["2024/25"].childBenefit).toEqual({
-      url: regs2024,
-      additionalUrls: [CHILD_BENEFIT_RATES],
-      status: "verified",
-    });
-    expect(UK_RULE_SOURCES["2025/26"].childBenefit).toEqual({
-      url: CHILD_BENEFIT_RATES,
-      status: "verified",
-    });
+  it("cites the instrument that sets each year's Child Benefit rates, 2020/21 to 2026/27", () => {
+    // Read by fable-decider on 2026-11-25: each instrument amends reg 2(1)(a) and (b) of the Child
+    // Benefit (Rates) Regulations 2006 (SI 2006/965) to that year's weekly rates.
+    const leg = (si: string) => `https://www.legislation.gov.uk/uksi/${si}/made`;
+    const expected = {
+      "2020/21": leg("2020/298"),
+      "2021/22": leg("2021/156"),
+      "2022/23": leg("2022/231"),
+      "2023/24": leg("2023/237"),
+      "2024/25": leg("2024/247"),
+      "2025/26": leg("2025/292"),
+      "2026/27": leg("2026/232"),
+    } as const;
+    for (const [year, url] of Object.entries(expected)) {
+      expect(UK_RULE_SOURCES[year as keyof typeof expected].childBenefit, year).toEqual({
+        url,
+        additionalUrls: [CHILD_BENEFIT_RATES],
+        status: "verified",
+      });
+    }
   });
 
   it("cites the benefit and pension rates page that prints each State Pension year", () => {
