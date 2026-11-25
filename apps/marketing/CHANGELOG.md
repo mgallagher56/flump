@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.40.0](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.39.0...flump/marketing-v1.40.0) (2026-11-25)
+
+
+### Features ✨
+
+* **legal:** privacy notice, terms, cookies and accessibility pages (E19) ([1b9e429](https://github.com/mgallagher56/flump/commit/1b9e429ef9d6c168ffa2d3ab1caf05506a9dde18))
+* **tax:** Making Tax Digital notice on Self Assessment and Invoicing (E28 A1, A3) ([1444295](https://github.com/mgallagher56/flump/commit/14442959f582fd803e6b24fb0d26474e8eec359b))
+
+
+### Bug Fixes 🪲
+
+* **legal:** CI findings on the legal pages ([d408c6b](https://github.com/mgallagher56/flump/commit/d408c6b844926a470a94b1f7dc05c73427e4a2c4))
+
+
+### Documentation 📙
+
+* **legal:** started check-ins and the invoice backfill table, after the rebase ([8f1a130](https://github.com/mgallagher56/flump/commit/8f1a13036f85de60dbfed967fa50a620b581aaaa))
+
 ## [1.39.0](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.38.1...flump/marketing-v1.39.0) (2026-11-24)
 
 

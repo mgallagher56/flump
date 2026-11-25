@@ -1,5 +1,31 @@
 # Changelog
 
+## [1.46.0](https://github.com/mgallagher56/flump/compare/flump/backend-v1.45.0...flump/backend-v1.46.0) (2026-11-25)
+
+
+### Features ✨
+
+* **check-in:** Home says "Continue check-in" when this month's check-in is part done ([c815291](https://github.com/mgallagher56/flump/commit/c8152918c4b780462a9364a1aa94e9364170b998))
+* **verify-flump:** journeys for eleven features, and fixes for what they found ([b6d52d9](https://github.com/mgallagher56/flump/commit/b6d52d9caae7e78b19d93cd58cdbc27cabe70819))
+
+
+### Bug Fixes 🪲
+
+* **banking:** a sync that outlived its lease never replaces a newer sync's status (L1) ([652abfc](https://github.com/mgallagher56/flump/commit/652abfc4fc163f4d16686e3a212d638ad212e987))
+* **check-in:** an older backend that rejects checkIn gets the save again without it; authz cases for a started check-in ([6c61dd0](https://github.com/mgallagher56/flump/commit/6c61dd0ddb6eb0b7c46c6b94c0bc13dde4441411))
+* **invoicing:** synced invoice income counts in the Self Assessment estimate ([7886fab](https://github.com/mgallagher56/flump/commit/7886fabd031e29ae219c3e46ac26a58632f366a1))
+* **ops:** review findings: label the copied docker run lines, resolve paths, guard dev volumes ([2425b5b](https://github.com/mgallagher56/flump/commit/2425b5bdd459b3874c31cc2a127d33f66ba23bcc))
+* **privacy:** apply review: fenced writes try the lock and get 503 while an erasure waits; tighter law and update check ([b45dc8e](https://github.com/mgallagher56/flump/commit/b45dc8ed3cb75277a723b512ba40dd0ab3f09582))
+* **privacy:** erasure fence follow-ups (lock wait, e2e test, exemption law, update rule) ([3b5cbcb](https://github.com/mgallagher56/flump/commit/3b5cbcbc3fad1e3afe8ea915c2570e290dc93a43))
+* **privacy:** match the SET column without a built RegExp (Semgrep regex_dos); timeout on the three slowest migration tests only ([b52346b](https://github.com/mgallagher56/flump/commit/b52346b81aa7d79d5512a3275a0fa8739831d8b6))
+* **privacy:** the /mcp audit row waits for a reset; stage_import maps the fence's 503 and 410 ([a86b267](https://github.com/mgallagher56/flump/commit/a86b26736577153f6a9193fab43eff705a664e0b))
+* review findings: sign out on the pending account-deleted page, London dates in the invoicing journey, accurate journey headers ([87cb47e](https://github.com/mgallagher56/flump/commit/87cb47e231c846c10900c516ee0535e5b36e00ff))
+
+
+### Documentation 📙
+
+* **privacy:** the /mcp audit waits at most the pool's lock_timeout ([39ead57](https://github.com/mgallagher56/flump/commit/39ead57bca13f2198af5cbd43272a2abcaaeee3f))
+
 ## [1.45.0](https://github.com/mgallagher56/flump/compare/flump/backend-v1.44.0...flump/backend-v1.45.0) (2026-11-24)
 
 
