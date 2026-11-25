@@ -12,7 +12,8 @@ export interface ToastProps {
 
 /**
  * A quiet status message in the flow of the screen: no floating, no timer, no motion. It is read out
- * when a new message arrives (a live region on Android, an announcement on iOS, which has none).
+ * once when a new message arrives, by an announcement on both platforms: a live region would make
+ * Android say it twice, and one on a view that has only just appeared is not reliably read.
  */
 export function Toast({ message, testID }: ToastProps) {
   const theme = useTheme();
@@ -28,7 +29,6 @@ export function Toast({ message, testID }: ToastProps) {
       accessible
       // React Native has no "status" role on native; "summary" is the nearest it accepts.
       accessibilityRole="summary"
-      accessibilityLiveRegion="polite"
       style={styles.base}
       testID={testID}
     >

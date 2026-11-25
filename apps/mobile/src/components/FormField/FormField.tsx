@@ -22,9 +22,7 @@ export function FormField({ label, hint, error, children, testID }: FormFieldPro
   const styles = useMemo(() => createStyles(theme), [theme]);
   return (
     <View style={styles.base} testID={testID}>
-      <Text textStyle="label.md" style={styles.label}>
-        {label}
-      </Text>
+      <Text textStyle="label.md">{label}</Text>
       {children}
       {hint ? (
         <Text textStyle="body.sm" color="secondary">

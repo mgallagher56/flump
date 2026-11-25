@@ -44,15 +44,16 @@ export interface CheckInRowView {
  */
 export function checkInRow(
   state: CheckInDataState,
-  currentMonth: CheckInMonth,
+  now: { today: string; month: CheckInMonth },
 ): CheckInRowView | null {
   if (state.status === "loading") return null;
   if (state.status === "error") {
-    return { action: CHECK_IN.start, line: rowLine(currentMonth, undefined) };
+    return { action: CHECK_IN.start, line: rowLine(now.month, undefined) };
   }
   const { inputs } = state;
+  // Today is read on every render, not when the data arrived: the screen can stay open for days.
   const due = isCheckInDue({
-    today: inputs.today,
+    today: now.today,
     checkInDay: inputs.checkInDay,
     lastRecordedMonth: inputs.latestCompletedMonth,
   });
@@ -60,13 +61,13 @@ export function checkInRow(
   const partDone = selectCheckInPartDone({
     accounts: inputs.accounts,
     details: inputs.details,
-    currentMonth: inputs.month,
+    currentMonth: now.month,
     latestStartedMonth: inputs.latestStartedMonth,
     latestCompletedMonth: inputs.latestCompletedMonth,
   });
   return {
     action: partDone ? CHECK_IN.continue : CHECK_IN.start,
-    line: rowLine(inputs.month, inputs.latestCompletedMonth),
+    line: rowLine(now.month, inputs.latestCompletedMonth),
   };
 }
 

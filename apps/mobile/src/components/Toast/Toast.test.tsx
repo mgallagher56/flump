@@ -31,7 +31,8 @@ describe("Toast", () => {
     await render(ui("Saved your October balances."));
     const toast = screen.getByTestId("toast");
     expect(toast.props.accessibilityRole).toBe("summary");
-    expect(toast.props.accessibilityLiveRegion).toBe("polite");
+    // Announced, not a live region: Android would otherwise say it twice.
+    expect(toast.props.accessibilityLiveRegion).toBeUndefined();
     expect(screen.getByText("Saved your October balances.")).toBeOnTheScreen();
   });
 

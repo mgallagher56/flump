@@ -32,7 +32,12 @@ export interface CheckInInputs {
 export type CheckInDataState =
   | { status: "loading" }
   | { status: "error"; problem: ApiProblem; retry: () => void }
-  | { status: "ready"; inputs: CheckInInputs };
+  | {
+      status: "ready";
+      inputs: CheckInInputs;
+      /** A read is being fetched again: the check-in waits for it so it never opens on stale data. */
+      fetching: boolean;
+    };
 
 /** Today in Europe/London as "YYYY-MM-DD" and its month, from the engine's one London formatter. */
 export function londonToday(now: Date): { today: string; month: CheckInMonth } {
@@ -42,8 +47,10 @@ export function londonToday(now: Date): { today: string; month: CheckInMonth } {
 
 export function useCheckInData(now: () => Date = () => new Date()): CheckInDataState {
   const { accounts, details, profile, checkIns, refetch } = useCheckInQueries();
-  // A read being fetched again after "Try again" shows as loading, not as the old error.
-  const failed = [accounts, details, profile, checkIns].find((q) => q.error && !q.isFetching);
+  const all = [accounts, details, profile, checkIns];
+  // Failed only with nothing to show: a background refetch that fails keeps the data on screen, and
+  // a read being fetched again after "Try again" shows as loading, not as the old error.
+  const failed = all.find((q) => q.error && q.data === undefined && !q.isFetching);
   // The London date is read once per screen: a check-in open across midnight keeps its month.
   const [{ today, month }] = useState(() => londonToday(now()));
   const a = accounts.data;
@@ -68,6 +75,8 @@ export function useCheckInData(now: () => Date = () => new Date()): CheckInDataS
   }, [a, d, p, c, today, month]);
 
   if (failed) return { status: "error", problem: classifyApiError(failed.error), retry: refetch };
-  if (ready && inputs) return { status: "ready", inputs };
+  if (ready && inputs) {
+    return { status: "ready", inputs, fetching: all.some((q) => q.isFetching) };
+  }
   return { status: "loading" };
 }
