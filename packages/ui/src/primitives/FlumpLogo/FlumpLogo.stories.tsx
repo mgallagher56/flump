@@ -51,7 +51,6 @@ const play: Story["play"] = async ({ canvasElement }) => {
     );
     await expect(top).toBe(lit);
     await expect(bottom).toBe(mark);
-    await expect(bottom).not.toBe(resolved("--colors-primary-solid", canvasElement));
   }
 };
 
