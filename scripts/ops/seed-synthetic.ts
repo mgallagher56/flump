@@ -100,6 +100,12 @@ export const USER_DATA_TABLES = [
   "rate_limit_buckets",
 ] as const;
 
+/**
+ * Public tables that hold no user data and are kept as they are on a reseed: TypeORM's migration
+ * history, and the retention purge's one-row last-run record (times and counts only, D5 revised).
+ */
+const OPERATIONAL_TABLES: readonly string[] = ["migrations", "retention_runs"];
+
 export type PersonaAssignment = Partial<Record<PersonaKey, string>>;
 export type SeedCounts = Record<(typeof USER_DATA_TABLES)[number], number>;
 
@@ -231,7 +237,9 @@ export async function seedSynthetic(
     const unknown = tables
       .map((r) => String(r.table_name))
       .filter(
-        (name) => name !== "migrations" && !(USER_DATA_TABLES as readonly string[]).includes(name),
+        (name) =>
+          !OPERATIONAL_TABLES.includes(name) &&
+          !(USER_DATA_TABLES as readonly string[]).includes(name),
       );
     if (unknown.length > 0) {
       throw new Error(

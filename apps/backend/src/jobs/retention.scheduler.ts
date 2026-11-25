@@ -1,3 +1,4 @@
+import { randomInt } from "node:crypto";
 import {
   Injectable,
   Logger,
@@ -17,7 +18,7 @@ import {
 
 /** The first check waits this long after boot, plus up to a minute of jitter (D5 revised). */
 export const FIRST_CHECK_DELAY_MS = 3 * 60 * 1000;
-const FIRST_CHECK_JITTER_MS = 60 * 1000;
+export const FIRST_CHECK_JITTER_MS = 60 * 1000;
 /** Between checks. Each check sweeps expired request counters and runs the purge if it is due. */
 export const CHECK_INTERVAL_MS = 15 * 60 * 1000;
 /** A full purge is due once the last successful run is this old: daily. */
@@ -53,7 +54,7 @@ export class RetentionScheduler implements OnApplicationBootstrap, OnModuleDestr
     }
     // Scheduled even when off: the switch is read at each check, so turning it back on needs no
     // restart wherever the platform lets a variable change without one.
-    this.schedule(FIRST_CHECK_DELAY_MS + Math.floor(Math.random() * FIRST_CHECK_JITTER_MS));
+    this.schedule(FIRST_CHECK_DELAY_MS + randomInt(FIRST_CHECK_JITTER_MS));
   }
 
   async onModuleDestroy(): Promise<void> {
