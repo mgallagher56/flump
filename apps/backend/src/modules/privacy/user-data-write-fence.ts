@@ -20,6 +20,7 @@ import { AccountDeletionService } from "./account-deletion.service";
 import {
   type FencedRequest,
   fencedRequest,
+  lockUserDataShared,
   runAsUserRequest,
   tryLockUserDataShared,
 } from "./user-data-lock";
@@ -137,9 +138,12 @@ export class UserDataWriteFence implements EntitySubscriberInterface {
     // would hold a pooled connection per write for that time, and a user could fill the pool by
     // writing during their own reset; and a request whose other transaction holds the lock would
     // wait on itself. So the write is refused with 503 (try again); after an erasure the retry
-    // meets the AuthGuard's 410.
+    // meets the AuthGuard's 410. A write that must not be dropped (the /mcp audit row) waits
+    // instead, up to the pool's lock_timeout (runAsUserRequest's waitForLock).
     try {
-      if (!(await tryLockUserDataShared(runner.manager, userId))) {
+      if (request.waitForLock) {
+        await lockUserDataShared(runner.manager, userId);
+      } else if (!(await tryLockUserDataShared(runner.manager, userId))) {
         throw userDataBusyException();
       }
       if (await this.deletion.isErasedForWrite(userId, runner.manager)) {

@@ -1,5 +1,11 @@
 import { FlumpToolError, type VerifiedToken } from "@flump/mcp";
-import { BadRequestException, ConflictException, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  ConflictException,
+  GoneException,
+  NotFoundException,
+  ServiceUnavailableException,
+} from "@nestjs/common";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { RateLimitStore } from "../../security/rate-limit.store";
 import type { ImportBatchView } from "../imports/imports.service";
@@ -155,6 +161,17 @@ describe("McpImportsAdapter (E17 re-plan PR D)", () => {
     const { adapter, imports } = make();
     imports.stage.mockRejectedValueOnce(thrown);
     expect(await code(adapter.stageImport(STAGER, input()))).toBe(expected);
+  });
+
+  it.each([
+    [new ServiceUnavailableException(), true],
+    [new GoneException(), false],
+  ])("maps the write fence's %s to UNAVAILABLE, retryable %s", async (thrown, retryable) => {
+    const { adapter, imports } = make();
+    imports.stage.mockRejectedValueOnce(thrown);
+    const err = await adapter.stageImport(STAGER, input()).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(FlumpToolError);
+    expect((err as FlumpToolError).toBody()).toMatchObject({ code: "UNAVAILABLE", retryable });
   });
 
   it("lets an unexpected error through for the tool layer to mask as INTERNAL", async () => {

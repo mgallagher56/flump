@@ -19,7 +19,7 @@ import { LoggingBankConsentRevoker } from "../banking/bank-consent-revoker";
 import { UserProfileService } from "../profile/user-profile.service";
 import { AccountDeletionService } from "./account-deletion.service";
 import { AccountExportService } from "./account-export.service";
-import { lockUserData } from "./user-data-lock";
+import { lockUserData, runAsUserRequest, withoutWriteFence } from "./user-data-lock";
 import { UserDataWriteFence, UserDataWriteFenceInterceptor } from "./user-data-write-fence";
 
 // Privacy finding F1 (.claude/skills/verify-account-erasure) on real Postgres: a request that passed
@@ -261,6 +261,36 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       expect(waitedMs).toBeLessThan(1_000);
       await expect(erasure).resolves.toEqual({ status: "deleted" });
       expect(await budgetRows(USER_A)).toBe(0);
+    });
+
+    it("lets a waitForLock write (the /mcp audit) wait for a reset instead of being refused", async () => {
+      let release!: () => void;
+      const released = new Promise<void>((r) => {
+        release = r;
+      });
+      let holding!: () => void;
+      const held = new Promise<void>((r) => {
+        holding = r;
+      });
+      // A reset of A's holds the exclusive lock.
+      const reset = withoutWriteFence(() =>
+        ds.transaction(async (m) => {
+          await lockUserData(m, USER_A);
+          holding();
+          await released;
+        }),
+      );
+      await held;
+      const audit = runAsUserRequest(
+        USER_A,
+        () => ds.transaction((m) => m.save(budgetLine(USER_A, "audited"))),
+        { waitForLock: true },
+      );
+      await advisoryLockWaiter();
+      release();
+      await reset;
+      await audit;
+      expect(await budgetRows(USER_A)).toBe(1);
     });
 
     it("refuses an update that sets a user column outside a transaction, and allows other updates", async () => {
