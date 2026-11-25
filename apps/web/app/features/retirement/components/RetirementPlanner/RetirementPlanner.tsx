@@ -62,6 +62,8 @@ import {
 import { useScenarioState } from "~/hooks/useScenarioState";
 import { formatEstimate, roundEstimate } from "~/utils/roundEstimate";
 import { RetirementPotChart } from "../RetirementPotChart";
+import { SelfEmployedPensions } from "../SelfEmployedPensions";
+import { UnusedPensionSavings } from "../UnusedPensionSavings";
 import { WorkplaceSalaryNotSet } from "../WorkplaceSalaryNotSet";
 import {
   budgetLineAmount,
@@ -97,6 +99,24 @@ export interface RetirementPlannerProps {
    * leaves the contribution out, and the assumptions say so.
    */
   workplaceSalaryNotSet?: boolean;
+  /** The saved employment type is self-employed: shows "Pensions when you are self-employed". */
+  isSelfEmployed?: boolean;
+}
+
+/** The contribution basis, the same for every user (E33 S7). */
+export const CONTRIBUTION_BASIS_LINE =
+  "Monthly pension contributions are counted as the full amount going into the pension, including tax relief the provider adds.";
+export const EXTRA_CONTRIBUTION_HELPER =
+  "The amount going into the pension each month, including any tax relief.";
+
+/** A date as yyyy-mm-dd in the UK, for rules that start on a UK date. */
+export function ukIsoDate(date: Date): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/London",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(date);
 }
 
 /** Year of birth lives in the age and pay section of the Profile tab. */
@@ -425,6 +445,7 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
   saveSuccess = null,
   onSavePlan,
   workplaceSalaryNotSet = false,
+  isSelfEmployed = false,
 }) => {
   const savedPlan = planArgs.plan;
   const budgetEntries = planArgs.budgetEntries ?? [];
@@ -853,6 +874,7 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
                       step={50}
                       onChange={(v) => scenario.set("extraMonthly", v)}
                       formatValue={(v) => formatWholeGbp(v)}
+                      helperText={EXTRA_CONTRIBUTION_HELPER}
                     />
                   )}
                   <div className={fieldGroup()}>
@@ -957,6 +979,7 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
                           {pct(inflationRate)} inflation. These are a reference for three cases, not
                           a prediction. Figures are in today&apos;s prices, after income tax.
                         </p>
+                        <p className={mutedNote()}>{CONTRIBUTION_BASIS_LINE}</p>
                         {incomeTaxNotes(scenarioResult.tax).map((line) => (
                           <p key={line} className={mutedNote()}>
                             {line}
@@ -991,6 +1014,10 @@ export const RetirementPlanner: FC<RetirementPlannerProps> = ({
             />
           </ScenarioZone>
         )}
+
+        {/* E33 S7: UK rules as facts, closed by default; no estimate and none of the user's figures. */}
+        <UnusedPensionSavings todayIso={ukIsoDate(planArgs.now)} />
+        {isSelfEmployed && <SelfEmployedPensions />}
 
         {/* Owner decision RD11: the same quiet line for every user, with or without a plan. */}
         <MoneyHelperGuidance />

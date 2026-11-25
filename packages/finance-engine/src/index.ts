@@ -44,6 +44,7 @@ export * from "./tax-rules.js";
 export * from "./tax-year-verification.js";
 export * from "./types.js";
 export * from "./uk-hicbc.js";
+export * from "./uk-pension-death-rules.js";
 export * from "./uk-property-transaction-tax.js";
 export * from "./uk-rule-sources.js";
 export * from "./uk-scheduled-rules.js";

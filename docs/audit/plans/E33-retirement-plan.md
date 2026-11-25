@@ -149,7 +149,7 @@ Remaining:
 
 - S4 finish: a budget-built target where a line's amount changes in retirement. The engine supports a changed amount; the page offers only "Continues" and "Stops".
 - S6 (2026-11-24, merged in #908): income tax on pension withdrawals and State Pension, 25% of each withdrawal tax-free until the lump sum allowance is used (UFPLS) for saved figures, a tax-free lump sum at retirement as a what-if, figures after income tax. Vectors RV10 to RV16 in `uk-retirement.vectors.ts`, signed by `fable-decider` on 2026-11-24.
-- S7: inheritance tax on unused pensions from 6 April 2027 and the self-employed view. Needs E29b wording.
+- S7 (2026-11-25, in review): the law is enacted (Finance Act 2026 ss.66 to 71, deaths on or after 6 April 2027), read by a Fable decider from primary sources (`packages/finance-engine/docs/tax-sources/pensions-inheritance-tax.md`). A Fable decider chose facts, not an estimate: Flump holds no will, gifts or other belongings, and HMRC has not confirmed the apportionment formula or whether pensions count towards the £2m taper. Two closed sections on the Retirement page: "What happens to unused pension savings" for everyone, and "Pensions when you are self-employed" when the saved employment type is self-employed. Every figure and date lives in `uk-pension-death-rules.ts` with a status flag; "draft" shows a "not yet law" line. The coordinator approves the wording (owner delegation of 25 November 2026). Vectors RV17 to RV18b (relief at source) signed by `fable-decider`. No MCP change.
 - S8: MCP evals for the retirement tools (2026-11-24, merged in #904).
 - S9: mobile parity (E12) and the two-person view (E34).
 - Opening beyond the friends beta waits for E29b.

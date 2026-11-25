@@ -53,6 +53,14 @@ sections:
       - salary
       - pension-rates
 
+  - id: unused-pension-savings
+    component: apps/web/app/features/retirement/components/UnusedPensionSavings/UnusedPensionSavings.tsx
+
+  - id: self-employed-pensions
+    component: apps/web/app/features/retirement/components/SelfEmployedPensions/SelfEmployedPensions.tsx
+    facts_read:
+      - employment-type
+
   - id: moneyhelper-guidance
     component: packages/ui/src/patterns/MoneyHelperGuidance/MoneyHelperGuidance.tsx
 

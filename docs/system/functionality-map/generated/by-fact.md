@@ -155,6 +155,7 @@
 | `custom-budget-categories`        | `web.budget.category-list`                        | web/budget                 | `/app/budget`                  |
 | `custom-budget-categories`        | `web.budget.editor`                               | web/budget                 | `/app/budget`                  |
 | `employment-type`                 | `web.onboarding.step-review`                      | web/onboarding             | `/app/onboarding`              |
+| `employment-type`                 | `web.retirement.self-employed-pensions`           | web/retirement             | `/app/retirement`              |
 | `employment-type`                 | `web.self-assessment.headline-or-empty`           | web/self-assessment        | `/app/self-assessment`         |
 | `employment-type`                 | `web.settings.age-and-pay`                        | web/settings               | `/app/profile`                 |
 | `employment-type`                 | `web.take-home.hero-and-kpis`                     | web/take-home              | `/app/take-home`               |

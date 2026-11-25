@@ -87,3 +87,8 @@ export function retirementArgsFromLoader(
     taxRegion: data.userProfile?.taxRegion ?? null,
   };
 }
+
+/** True when the saved employment type is self-employed (E33 S7, the self-employed view). */
+export function isSelfEmployedFromLoader(profile: RetirementLoaderData["userProfile"]): boolean {
+  return profile?.employmentType === "self-employed";
+}

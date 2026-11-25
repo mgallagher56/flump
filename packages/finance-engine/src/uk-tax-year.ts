@@ -913,6 +913,18 @@ export function calculatePensionTaxFreePart(
 }
 
 /**
+ * What reaches a relief at source pension for a payment of `paidGbp`: the provider adds basic rate
+ * relief, so the payment is grossed up by 1 / (1 - basic rate). The basic rate is the England, Wales
+ * and NI one for every taxpayer, Scottish ones included (https://www.gov.uk/tax-on-your-private-pension/pension-tax-relief,
+ * read 2026-11-25). Higher and additional rate relief, claimed through Self Assessment, is not
+ * included. Rounded to pence; never below 0.
+ */
+export function reliefAtSourceGross(paidGbp: number, year: UkRatesYear): number {
+  const rules = getUkTaxYearRules(year);
+  return roundPence(Math.max(0, paidGbp) / (1 - rules.ewni.basicRate));
+}
+
+/**
  * Auto-enrolment qualifying earnings band, a year (DWP's annual review has kept it at these
  * figures). Not the National Insurance limits, which can differ.
  */

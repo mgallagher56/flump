@@ -2,7 +2,7 @@
 
 # Functionality map: overview
 
-Mapped pages: 34 | Sections: 200 | Excluded routes: 19
+Mapped pages: 34 | Sections: 202 | Excluded routes: 19
 
 ## web
 
@@ -246,6 +246,8 @@ Mapped pages: 34 | Sections: 200 | Excluded routes: 19
 | `kpis`                    | `apps/web/app/features/retirement/components/RetirementPlanner/RetirementPlanner.tsx`         | `retirement-plan`, `account-balance`, `tax-region`                                                                                                                           | `retirement-income` |
 | `what-if-zone`            | `apps/web/app/features/retirement/components/RetirementPlanner/RetirementPlanner.tsx`         | `retirement-plan`, `salary`, `pension-rates`, `account-balance`, `balance-history`, `tax-region`                                                                             | `retirement-income` |
 | `workplace-salary-notice` | `apps/web/app/features/retirement/components/WorkplaceSalaryNotSet/WorkplaceSalaryNotSet.tsx` | `salary`, `pension-rates`                                                                                                                                                    | -                   |
+| `unused-pension-savings`  | `apps/web/app/features/retirement/components/UnusedPensionSavings/UnusedPensionSavings.tsx`   | -                                                                                                                                                                            | -                   |
+| `self-employed-pensions`  | `apps/web/app/features/retirement/components/SelfEmployedPensions/SelfEmployedPensions.tsx`   | `employment-type`                                                                                                                                                            | -                   |
 | `moneyhelper-guidance`    | `packages/ui/src/patterns/MoneyHelperGuidance/MoneyHelperGuidance.tsx`                        | -                                                                                                                                                                            | -                   |
 | `plan-details`            | `apps/web/app/features/retirement/components/RetirementPlanner/RetirementPlanner.tsx`         | `retirement-plan`, `budget-entries`, `account-balance`                                                                                                                       | -                   |
 

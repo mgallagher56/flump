@@ -9,7 +9,11 @@ import {
   workplacePensionFromProfile,
 } from "@flump/finance-engine";
 import { describe, expect, it } from "vitest";
-import { retirementArgsFromLoader, workplaceSalaryNotSetFromLoader } from "./retirementInput";
+import {
+  isSelfEmployedFromLoader,
+  retirementArgsFromLoader,
+  workplaceSalaryNotSetFromLoader,
+} from "./retirementInput";
 
 const NOW = new Date("2026-11-17T12:00:00Z");
 
@@ -214,5 +218,15 @@ describe("workplaceSalaryNotSetFromLoader", () => {
       workplaceSalaryNotSetFromLoader({ pensionPercent: 5, employmentType: "self-employed" }),
     ).toBe(false);
     expect(workplaceSalaryNotSetFromLoader(null)).toBe(false);
+  });
+});
+
+describe("isSelfEmployedFromLoader", () => {
+  it("is true only for a saved self-employed employment type", () => {
+    expect(isSelfEmployedFromLoader({ employmentType: "self-employed" })).toBe(true);
+    expect(isSelfEmployedFromLoader({ employmentType: "employed" })).toBe(false);
+    expect(isSelfEmployedFromLoader({ employmentType: "other" })).toBe(false);
+    expect(isSelfEmployedFromLoader({ employmentType: null })).toBe(false);
+    expect(isSelfEmployedFromLoader(null)).toBe(false);
   });
 });

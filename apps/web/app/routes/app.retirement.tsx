@@ -10,6 +10,7 @@ import {
 } from "react-router";
 import { RetirementPlanner } from "~/features/retirement/components/RetirementPlanner";
 import {
+  isSelfEmployedFromLoader,
   retirementArgsFromLoader,
   workplaceSalaryNotSetFromLoader,
 } from "~/features/retirement/retirementInput";
@@ -124,6 +125,7 @@ export default function RetirementRoute(): ReactElement {
       saveSuccess={saveSuccess}
       onSavePlan={handleSavePlan}
       workplaceSalaryNotSet={workplaceSalaryNotSetFromLoader(loaderData.userProfile)}
+      isSelfEmployed={isSelfEmployedFromLoader(loaderData.userProfile)}
     />
   );
 }
