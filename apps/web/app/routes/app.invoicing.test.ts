@@ -131,6 +131,30 @@ describe("app.invoicing route loader and action (E37 S2)", () => {
     });
   });
 
+  it("loader reads accounts only when a rental record needs its share", async () => {
+    vi.setSystemTime(new Date("2026-11-25T12:00:00Z"));
+    backendReturnsEmptyLists();
+    workspace([
+      {
+        id: "r2",
+        type: "income",
+        source: "rental",
+        category: "rental_income",
+        name: "Rent",
+        amount: 12000,
+        frequency: "annual",
+        date: "2025-06-01",
+      },
+    ]);
+    const data = await loader(loaderArgs());
+    expect(backendFetchAll.mock.calls.map(([endpoint]) => endpoint)).toEqual([
+      "/tax-records",
+      "/accounts",
+    ]);
+    // 12,000 is not over 30,000 for 2025/26, and the year is finished, so only the general line.
+    expect(data.mtdPosition).toEqual({ kind: "unknown" });
+  });
+
   it("loader gives the general position to a self-employed user with no records", async () => {
     vi.setSystemTime(new Date("2026-11-25T12:00:00Z"));
     backendReturnsEmptyLists();

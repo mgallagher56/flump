@@ -142,6 +142,23 @@ describe("InvoicingWorkspace (E37 S2)", () => {
     expect(vatInput.value).toBe("");
   });
 
+  it("shows the notice slot under the figures and above the tabs", () => {
+    render(
+      <InvoicingWorkspace
+        settings={settingsFixture}
+        settingsEtag={null}
+        workLogs={[]}
+        invoices={[]}
+        todayIso="2026-11-21"
+        notice={<p>Slot content</p>}
+      />,
+    );
+    const slot = screen.getByText("Slot content");
+    const tabs = screen.getByRole("tablist", { name: "Invoicing sections" });
+    // The slot comes before the tabs in document order.
+    expect(slot.compareDocumentPosition(tabs) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it("submits a new work log entry with pre-filled default hourly rate and live line amount", () => {
     const onCreateWorkLog = vi.fn();
     render(

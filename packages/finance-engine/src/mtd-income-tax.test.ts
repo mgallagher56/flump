@@ -166,8 +166,8 @@ describe("checkMtdQualifyingIncome", () => {
     // A yearly record dated later in the year has not happened yet.
     const later = [record({ amount: 25_000, date: "2027-02-01" })];
     expect(checkMtdQualifyingIncome(later, "2026/27", "2026-11-25")?.status).toBe("unknown");
-    // 1 to 5 April belongs to the year that ends on 5 April: on 3 April 2027 March counts too,
-    // 10 x 3,000 = 30,000.
+    // On 3 April 2027 the year is still running and every month to March counts:
+    // 10 x 3,000 = 30,000. (1 to 5 April is bucketed into March, so the cut-off is March.)
     expect(
       checkMtdQualifyingIncome(monthly, "2026/27", "2027-04-03")?.recordedQualifyingIncomeGbp,
     ).toBe(30_000);
