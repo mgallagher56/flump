@@ -62,7 +62,12 @@ export {
   UserProfileResponse,
 } from "./domains/profile.js";
 export { RetirementPlanResponse } from "./domains/retirement.js";
-export { SnapshotCheckInsResponse, UpsertSnapshotResponse } from "./domains/snapshots.js";
+export {
+  AnswerWellbeingQuestionsResponse,
+  SnapshotCheckInsResponse,
+  UpsertSnapshotResponse,
+  WellbeingQuestionsStatusResponse,
+} from "./domains/snapshots.js";
 export {
   DeleteTaxRecordResponse,
   TaxRecordListResponse,

@@ -43,6 +43,7 @@ const profile = {
   taxRegion: "SCOTLAND",
   birthYear: 1990,
   checkInDay: null,
+  wellbeingQuestions: true,
   studentLoanPlans: [],
   housingStatus: "mortgage",
   monthlyHousingCost: 812.5,

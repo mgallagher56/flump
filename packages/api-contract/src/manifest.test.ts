@@ -3,8 +3,8 @@ import { allRoutes, CONTRACT_GROUPS, findRoute, NON_JSON_RESPONSE_ROUTES } from 
 import { checkAgainst } from "./validate.js";
 
 describe("route manifest", () => {
-  it("has 91 routes (64 before the 15 invoicing, 3 account-goal routes, the terms status route and 8 household routes) with unique ids and unique method+path pairs", () => {
-    expect(allRoutes).toHaveLength(91);
+  it("has 93 routes (64 before the 15 invoicing, 3 account-goal routes, the terms status route, 8 household routes and 2 wellbeing-question routes) with unique ids and unique method+path pairs", () => {
+    expect(allRoutes).toHaveLength(93);
     expect(new Set(allRoutes.map((r) => r.id)).size).toBe(allRoutes.length);
     expect(new Set(allRoutes.map((r) => `${r.method} ${r.path}`)).size).toBe(allRoutes.length);
   });

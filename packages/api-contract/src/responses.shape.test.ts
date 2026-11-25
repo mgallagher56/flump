@@ -55,6 +55,7 @@ describe("response shapes", () => {
         "taxRegion",
         "updatedAt",
         "userId",
+        "wellbeingQuestions",
       ]
     `);
   });
