@@ -1,3 +1,4 @@
+import { selectNetWorthTrend } from "@flump/finance-engine";
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, userEvent, waitFor, within } from "storybook/test";
 import { SampleModeProvider } from "~/context/SampleModeContext";
@@ -58,6 +59,37 @@ export const Populated: Story = {
     // "Choose what shows here" sits in the Your sections heading, beside the cards it changes.
     const [button] = canvas.getAllByRole("button", { name: "Choose what shows here" });
     await expect(button?.closest("#dashboard-sections-header")).not.toBeNull();
+  },
+};
+
+/** Seven recorded months: the trend bars sit beside the net worth figure, the latest solid. */
+export const WithTrendBars: Story = {
+  args: {
+    netWorthTrend: selectNetWorthTrend(
+      [
+        ["2026-05", 45200],
+        ["2026-06", 46900],
+        ["2026-07", 46300],
+        ["2026-08", 48000],
+        ["2026-09", 48800],
+        ["2026-10", 49680],
+        ["2026-11", 50000],
+      ].map(([month, netWorth]) => ({
+        month: String(month),
+        netWorth: Number(netWorth),
+        allCarried: false,
+      })),
+    ),
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const [hero] = canvas.getAllByTestId("hero-figure");
+    const [bars] = within(hero as HTMLElement).getAllByTestId("net-worth-trend");
+    await expect(bars?.querySelectorAll("rect")).toHaveLength(7);
+    await expect(
+      within(bars as HTMLElement).getByText("November 2026, the latest: £50,000"),
+    ).toBeInTheDocument();
+    await expect(canvas.getAllByText("£320 since October")[0]).toBeDefined();
   },
 };
 

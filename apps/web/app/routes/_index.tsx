@@ -7,6 +7,7 @@ import {
   PortfolioSnapshot,
   profileFactsFromProfile,
   recordedTotalsForTaxYear,
+  selectNetWorthTrend,
   selectTakeHome,
 } from "@flump/finance-engine";
 import type { ReactElement } from "react";
@@ -179,10 +180,14 @@ export const loader = async (args: LoaderFunctionArgs) => {
   );
   const prior = history.series.filter((p) => !p.allCarried && p.month < currentMonth).at(-1);
   const netWorthPrior = prior ? { month: prior.month, netWorth: prior.netWorth } : null;
+  // The hero's trend bars: the last seven recorded months from the same series, with their
+  // geometry worked out by the engine (null below three recorded months).
+  const netWorthTrend = selectNetWorthTrend(history.series);
 
   return {
     user,
     netWorthPrior,
+    netWorthTrend,
     // E30: the dashboard's monthly check-in card. Month keys only, no figures.
     checkIn: {
       currentMonth,
@@ -328,6 +333,7 @@ const Index = (): ReactElement => {
     debtData,
     checkIn,
     netWorthPrior,
+    netWorthTrend,
   } = data as any;
 
   if (user) {
@@ -361,6 +367,7 @@ const Index = (): ReactElement => {
         budgetData={safeBudgetData}
         checkIn={checkIn}
         netWorthPrior={netWorthPrior ?? null}
+        netWorthTrend={netWorthTrend ?? null}
         checklistProps={{
           hasAccounts,
           hasBudget,

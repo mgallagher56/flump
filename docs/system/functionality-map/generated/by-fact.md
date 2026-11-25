@@ -357,6 +357,7 @@
 | `net-worth`                         | `web.dashboard.hero`                              | web/dashboard              | `/`                            |
 | `net-worth`                         | `web.dashboard.sections-grid`                     | web/dashboard              | `/`                            |
 | `net-worth`                         | `web.history.check-in-sheet`                      | web/history                | `/app/accounts/history`        |
+| `net-worth-over-time`               | `web.dashboard.hero`                              | web/dashboard              | `/`                            |
 | `net-worth-over-time`               | `web.history.account-changes-drawer`              | web/history                | `/app/accounts/history`        |
 | `net-worth-over-time`               | `web.history.hero`                                | web/history                | `/app/accounts/history`        |
 | `net-worth-over-time`               | `web.history.history-chart`                       | web/history                | `/app/accounts/history`        |

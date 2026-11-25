@@ -1,4 +1,8 @@
-import { getUkTaxYearContext, type NetWorthLeftOut } from "@flump/finance-engine";
+import {
+  getUkTaxYearContext,
+  type NetWorthLeftOut,
+  type NetWorthTrend,
+} from "@flump/finance-engine";
 import {
   Button,
   DELTA_PANEL_COPY,
@@ -45,6 +49,7 @@ import { DashboardEmptyState } from "../DashboardEmptyState";
 import { DashboardKpiStrip, stripShowsDebt } from "../DashboardKpiStrip";
 import { DebtWidget, debtCardShowsEstimate } from "../DebtWidget";
 import { MortgageWidget } from "../MortgageWidget";
+import { NetWorthTrendBars } from "../NetWorthTrendBars";
 import { PensionWidget } from "../PensionWidget";
 import { SavingsWidget } from "../SavingsWidget";
 import { SetupChecklist, type SetupChecklistProps } from "../SetupChecklist";
@@ -67,6 +72,11 @@ export interface HomeDashboardProps {
   checkIn?: MonthlyCheckInCardProps | null;
   /** The latest recorded month before this one, for the hero's one delta. */
   netWorthPrior?: PriorNetWorth | null;
+  /**
+   * The hero's trend bars from `selectNetWorthTrend` (the last seven recorded months). Null with
+   * fewer than three recorded months: no bars are drawn and no line replaces them.
+   */
+  netWorthTrend?: NetWorthTrend | null;
   userProfile?: Partial<UserProfile> | UserProfile;
   accountsData: any;
   budgetData: any;
@@ -130,6 +140,7 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
   checklistProps,
   checkIn = null,
   netWorthPrior = null,
+  netWorthTrend = null,
   userProfile,
   accountsData,
   budgetData,
@@ -360,6 +371,8 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
     hasAccounts && Array.isArray(accountsData?.leftOut) ? accountsData.leftOut : [];
   const homeCounted = homeEstimate !== null && homeEstimate > 0 && !leftOut.includes("property");
   const heroLabel = homeCounted ? HERO_LABEL_WITH_HOME : HERO_LABEL;
+  // Beside the figure on a wide hero, under it on a phone; dropped when net worth is unknown.
+  const trendAside = netWorthTrend ? <NetWorthTrendBars trend={netWorthTrend} /> : undefined;
 
   const showsTaxEstimate = cards.includes("tax") && taxCardShowsEstimate(taxData);
   const showsDebtEstimate = cards.includes("debt") && debtCardShowsEstimate(debtData);
@@ -381,12 +394,14 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
 
       {delta ? (
         <HeroFigure
+          aside={trendAside}
           delta={delta}
           label={heroLabel}
           value={netWorth === null ? null : heroValue(netWorth)}
         />
       ) : (
         <HeroFigure
+          aside={trendAside}
           emptyAction={
             <Button asChild size="sm" variant="ghost">
               <SampleAwareLink to="/app/accounts">Add an account</SampleAwareLink>

@@ -269,6 +269,70 @@ describe("_index route", () => {
     }
   });
 
+  it("passes the trend bars for the last recorded months, joint share applied", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-11-14T12:00:00Z"));
+    try {
+      mockWorkspace({
+        user: { id: "u1", email: "real@example.com" },
+        // A joint account at the default 50% share: 4,000, 6,000 and 8,000 recorded count as
+        // 2,000, 3,000 and 4,000. November is not checked in, so it is not a bar.
+        accounts: [
+          { id: "c", name: "Joint", type: "Current Account", balance: 9000, ownership: "joint" },
+        ],
+        accountDetails: [
+          { accountId: "c", year: 2026, month: 8, value: 4000 },
+          { accountId: "c", year: 2026, month: 9, value: 6000 },
+          { accountId: "c", year: 2026, month: 10, value: 8000 },
+        ],
+        budgetEntries: [],
+        taxRecords: [],
+        userProfile: { onboardingCompleted: true },
+      } as any);
+      const data = (await loader({
+        request: new Request("http://localhost/"),
+        params: {},
+        context: {},
+      } as any)) as any;
+      // Range 0 to 4,000: heights 50, 75 and 100.
+      expect(
+        data.netWorthTrend.bars.map((b: any) => [b.month, b.netWorth, b.height, b.latest]),
+      ).toEqual([
+        ["2026-08", 2000, 50, false],
+        ["2026-09", 3000, 75, false],
+        ["2026-10", 4000, 100, true],
+      ]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("passes no trend bars below three recorded months", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-11-14T12:00:00Z"));
+    try {
+      mockWorkspace({
+        user: { id: "u1", email: "real@example.com" },
+        accounts: [{ id: "c", name: "Cash", type: "Saving", balance: 5320 }],
+        accountDetails: [
+          { accountId: "c", year: 2026, month: 9, value: 4800 },
+          { accountId: "c", year: 2026, month: 10, value: 5000 },
+        ],
+        budgetEntries: [],
+        taxRecords: [],
+        userProfile: { onboardingCompleted: true },
+      } as any);
+      const data = (await loader({
+        request: new Request("http://localhost/"),
+        params: {},
+        context: {},
+      } as any)) as any;
+      expect(data.netWorthTrend).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("has no earlier month for the hero delta without a history", async () => {
     mockWorkspace({
       user: { id: "u1", email: "real@example.com" },
