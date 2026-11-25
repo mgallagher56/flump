@@ -1,7 +1,7 @@
-import { StoragePreference } from "@repo/ui";
+import { OPTIONAL_STORAGE_KEY, StoragePreference, THEME_STORAGE_KEY } from "@repo/ui";
 import type { FC } from "react";
 import { LegalLink, LegalPage, LegalSection } from "../../components/LegalPage";
-import { item, itemList } from "./CookiesPage.styles";
+import { item, itemList, versionHistory } from "./CookiesPage.styles";
 
 interface StoredItem {
   /** The key as it appears in the browser's storage tools. */
@@ -36,13 +36,13 @@ export const NEEDED_ITEMS: StoredItem[] = [
     lifetime: "1 hour, or until the invite is used.",
   },
   {
-    name: "flump-theme",
+    name: THEME_STORAGE_KEY,
     kind: "Local storage, on this site and in the Flump app",
     purpose: "Remembers that you chose the light or the dark theme. Set only when you choose one.",
     lifetime: 'Until you choose "System theme" again, which removes it.',
   },
   {
-    name: "flump-optional-storage",
+    name: OPTIONAL_STORAGE_KEY,
     kind: "Local storage, on this site and in the Flump app",
     purpose: "Remembers that you switched off the optional notes below. Set only when you do.",
     lifetime: "Until you switch them back on, which removes it.",
@@ -174,7 +174,7 @@ export const CookiesPage: FC = () => (
 
     <LegalSection id="changes" title="Changes to this page">
       <p>When Flump starts or stops using an item, this page and its version change with it.</p>
-      <ul>
+      <ul className={versionHistory()}>
         <li>Version 0.1, 25 November 2026: first version, for the test phase.</li>
       </ul>
     </LegalSection>

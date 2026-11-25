@@ -1,2 +1,6 @@
-// This page is plain sections inside the shared legal page shell, which owns the styling.
-export { link, section, sectionHeading } from "../../components/LegalPage/LegalPage.styles";
+import { cva } from "@repo/ui/styled-system/css";
+
+/** The page's version history: quieter than the text above it. */
+export const versionHistory = cva({
+  base: { "&&": { color: "text.muted", listStyleType: "none", pl: "0" } },
+});

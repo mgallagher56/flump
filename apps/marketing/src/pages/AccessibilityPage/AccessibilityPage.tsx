@@ -1,5 +1,6 @@
 import type { FC } from "react";
 import { ContactEmail, ExternalLink, LegalPage, LegalSection } from "../../components/LegalPage";
+import { versionHistory } from "./AccessibilityPage.styles";
 
 const SUBJECT = "Accessibility";
 
@@ -100,7 +101,7 @@ export const AccessibilityPage: FC = () => (
         This statement was written from the checks that ran on its version date. We update it when
         the testing changes or when we learn of a problem.
       </p>
-      <ul>
+      <ul className={versionHistory()}>
         <li>Version 0.1, 25 November 2026: first version, for the test phase.</li>
       </ul>
     </LegalSection>

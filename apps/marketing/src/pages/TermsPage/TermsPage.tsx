@@ -2,6 +2,7 @@ import { BUSINESS_DETAILS } from "@flump/business-details";
 import { PROJECTION_NOTICE } from "@flump/finance-engine";
 import type { FC } from "react";
 import { ContactEmail, LegalLink, LegalPage, LegalSection } from "../../components/LegalPage";
+import { versionHistory } from "./TermsPage.styles";
 
 const SUBJECT = "Flump terms";
 
@@ -234,7 +235,7 @@ export const TermsPage: FC = () => (
         urgently for legal or security reasons may apply sooner. If you do not agree with a change,
         you can delete your account before it applies.
       </p>
-      <ul>
+      <ul className={versionHistory()}>
         <li>Version 0.1, 25 November 2026: first version, for the test phase.</li>
       </ul>
     </LegalSection>
