@@ -319,6 +319,9 @@ export function contractBody(method: string, path: string): unknown {
   if (/^\/accounts\/[^/]+$/.test(p))
     return m === "GET" ? accountWithDetailsFixture : accountFixture;
   if (p === "/user-profile" || p === "/user-profile/checklist") return profileFixture;
+  if (p === "/user-profile/terms-acceptance") {
+    return m === "GET" ? termsStatusFixture : { ...termsPairFixture, recorded: true };
+  }
   if (p === "/user-profile/reset-financial-data") {
     return { success: true, message: "Financial data reset", profile: profileFixture };
   }
@@ -363,6 +366,30 @@ export function contractBody(method: string, path: string): unknown {
   if (/^\/snapshots\/[^/]+$/.test(p)) return snapshotResponseFixture;
   return success;
 }
+
+/** The newest terms and privacy notice versions (LEGAL_PAGES). */
+const termsPairFixture = { termsVersion: "0.1", privacyNoticeVersion: "0.2" };
+
+/** GET /user-profile/terms-acceptance for someone who has not agreed yet. */
+export const termsStatusFixture = {
+  required: true,
+  agreed: false,
+  firstTime: true,
+  terms: {
+    version: "0.1",
+    updated: "25 November 2026",
+    effectiveFrom: "2026-11-25",
+    path: "/terms",
+    changed: false,
+  },
+  privacyNotice: {
+    version: "0.2",
+    updated: "25 November 2026",
+    effectiveFrom: "2026-11-25",
+    path: "/privacy",
+    changed: false,
+  },
+};
 
 /** A `fetch` stub answering every call with `contractBody` and `status`. */
 export const contractFetch =

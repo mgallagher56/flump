@@ -2,7 +2,7 @@
 
 # Functionality map: overview
 
-Mapped pages: 39 | Sections: 260 | Excluded routes: 23
+Mapped pages: 40 | Sections: 262 | Excluded routes: 23
 
 ## web
 
@@ -331,6 +331,16 @@ Mapped pages: 39 | Sections: 260 | Excluded routes: 23
 | `hero-and-kpis` | `apps/web/app/features/take-home/components/TakeHomeCalculator/TakeHomeCalculator.tsx` | `salary`, `typed-take-home`, `employment-type`, `tax-region`, `pension-rates`, `student-loan-plan` | `take-home` |
 | `breakdown`     | `apps/web/app/features/take-home/components/TakeHomeBreakdown/TakeHomeBreakdown.tsx`   | `salary`, `tax-region`, `pension-rates`, `student-loan-plan`                                       | `take-home` |
 | `scenario-zone` | `apps/web/app/features/take-home/components/TakeHomeCalculator/TakeHomeCalculator.tsx` | `salary`, `tax-region`, `pension-rates`, `student-loan-plan`                                       | `take-home` |
+
+### terms-acceptance: Terms of use
+
+- Route: `/terms-acceptance` (auth: `required`, file: `apps/web/app/routes/terms-acceptance.tsx`)
+- Purpose: Ask a signed-in person to agree to the terms of use and show them the privacy notice before they use Flump, again when either changes, and let someone who does not agree download their data, delete their account or sign out.
+
+| Section              | Component                                                                                 | Facts read | Figures |
+| -------------------- | ----------------------------------------------------------------------------------------- | ---------- | ------- |
+| `terms-agreement`    | `apps/web/app/features/legal/components/TermsAcceptanceScreen/TermsAcceptanceScreen.tsx`  | -          | -       |
+| `terms-data-actions` | `apps/web/app/features/settings/components/DeleteAccountSection/DeleteAccountSection.tsx` | -          | -       |
 
 ### tool-detail: Public money calculator
 

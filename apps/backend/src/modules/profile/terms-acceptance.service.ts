@@ -13,6 +13,8 @@ import { TermsAcceptance } from "../../entities/terms-acceptance.entity";
 
 /** At most this many positive results are cached per process; the oldest go first. */
 const CACHE_LIMIT = 10_000;
+/** How long a positive result is trusted before the table is read again. */
+export const AGREED_CACHE_MS = 30_000;
 
 /** The newest version of each page: what the person is shown and what an agreement records. */
 export function newestPair(): { termsVersion: string; privacyNoticeVersion: string } {
@@ -30,13 +32,15 @@ export function newestPair(): { termsVersion: string; privacyNoticeVersion: stri
  * An agreement to a version newer than the one in force counts (someone who agreed early is not
  * asked again when it comes into force). The AuthGuard calls `hasAgreedToTermsInForce` on every
  * authenticated request: one read by user id, served by the table's primary key. Only a positive
- * answer is cached, keyed by the user and the pair in force, so a version coming into force (a new
- * pair) is never answered from the cache, and a refusal is never cached. Erasure is caught by the
- * guard's erased-account check before this one, so a cached "agreed" cannot outlive the account.
+ * answer is cached, for 30 seconds, keyed by the user and the pair in force, so a version coming
+ * into force (a new pair) is never answered from the cache, and a refusal is never cached. Erasure
+ * is caught by the guard's erased-account check before this one, so a cached "agreed" cannot
+ * outlive the account; the time limit covers a row removed by hand.
  */
 @Injectable()
 export class TermsAcceptanceService implements TermsAcceptanceCheck {
-  private readonly agreed = new Map<string, true>();
+  /** Positive results only, keyed by user and the pair in force, with when each stops counting. */
+  private readonly agreed = new Map<string, number>();
 
   constructor(
     @InjectRepository(TermsAcceptance)
@@ -47,7 +51,9 @@ export class TermsAcceptanceService implements TermsAcceptanceCheck {
     const terms = versionInEffect("terms", now).version;
     const privacy = versionInEffect("privacy", now).version;
     const key = `${userId}\u0000${terms}\u0000${privacy}`;
-    if (this.agreed.has(key)) return true;
+    const until = this.agreed.get(key);
+    if (until !== undefined && until > now.getTime()) return true;
+    this.agreed.delete(key);
     // Throws on a failed read; the guard turns that into 503.
     const count = await this.repository.count({
       where: {
@@ -61,7 +67,7 @@ export class TermsAcceptanceService implements TermsAcceptanceCheck {
       const oldest = this.agreed.keys().next().value;
       if (oldest !== undefined) this.agreed.delete(oldest);
     }
-    this.agreed.set(key, true);
+    this.agreed.set(key, now.getTime() + AGREED_CACHE_MS);
     return true;
   }
 
