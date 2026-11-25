@@ -4,8 +4,6 @@ import Svg, { Defs, Ellipse, Path, RadialGradient, Stop } from "react-native-svg
 import { useTheme } from "../../theme/ThemeProvider";
 import { createStyles, type FlumpLogoSize, LOGO_ART, LOGO_SIZES } from "./FlumpLogo.styles";
 
-export type { FlumpLogoSize } from "./FlumpLogo.styles";
-
 export interface FlumpLogoProps {
   /** Defaults to `md`. */
   size?: FlumpLogoSize;

@@ -5,8 +5,6 @@ import { useTheme } from "../../theme/ThemeProvider";
 import type { FixedTextStyleKey } from "../../theme/textStyle";
 import { createStyles, scaledTextStyle, type TextColor } from "./Text.styles";
 
-export type { TextColor } from "./Text.styles";
-
 export interface TextProps
   extends Omit<NativeTextProps, "allowFontScaling" | "maxFontSizeMultiplier" | "numberOfLines"> {
   /** A token text style with a fixed size. Defaults to `body.md`. */

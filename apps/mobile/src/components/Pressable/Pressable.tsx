@@ -10,9 +10,10 @@ import {
 } from "react-native";
 import { useTheme } from "../../theme/ThemeProvider";
 import { Text } from "../Text";
+import { createStyles } from "./Pressable.styles";
 
 /** The roles a pressable may take. Every pressable has one; `button` is the default. */
-export type PressableRole =
+type PressableRole =
   | "button"
   | "link"
   | "checkbox"
@@ -71,11 +72,13 @@ export function Pressable({
   ...props
 }: PressableProps) {
   const theme = useTheme();
-  const target = theme.sizes["control.lg"];
+  const { target: box } = useMemo(() => createStyles(theme), [theme]);
+  const target = box.minHeight;
+  const label = accessibilityLabel ?? props["aria-label"];
   const visible = typeof children === "function" ? children(RESTING) : children;
 
   if (__DEV__) {
-    if (!accessibilityLabel?.trim() && !hasTextChild(visible)) {
+    if (!label?.trim() && !hasTextChild(visible)) {
       throw new Error(
         "Pressable needs an accessibilityLabel when it has no text of its own (plan section 2, platform rules).",
       );
@@ -93,11 +96,17 @@ export function Pressable({
           }
         }
       }
-      const minHeight = Math.max(typeof given.minHeight === "number" ? given.minHeight : 0, target);
-      const minWidth = Math.max(typeof given.minWidth === "number" ? given.minWidth : 0, target);
+      const minHeight = Math.max(
+        typeof given.minHeight === "number" ? given.minHeight : 0,
+        box.minHeight,
+      );
+      const minWidth = Math.max(
+        typeof given.minWidth === "number" ? given.minWidth : 0,
+        box.minWidth,
+      );
       return [given, { minHeight, minWidth }];
     },
-    [style, target],
+    [style, target, box],
   );
 
   return (
@@ -105,8 +114,10 @@ export function Pressable({
       {...props}
       accessibilityRole={accessibilityRole}
       accessibilityLabel={accessibilityLabel}
-      accessibilityState={{ ...accessibilityState, disabled: Boolean(disabled), busy }}
-      disabled={disabled}
+      // Busy is also disabled, as the web Button's pending state sets aria-disabled: no press
+      // feedback, no press events, and it is announced.
+      accessibilityState={{ ...accessibilityState, disabled: Boolean(disabled || busy), busy }}
+      disabled={Boolean(disabled || busy)}
       onPress={busy || disabled ? undefined : onPress}
       onLongPress={busy || disabled ? undefined : onLongPress}
       style={resolveStyle}

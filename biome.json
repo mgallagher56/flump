@@ -65,19 +65,6 @@
       }
     },
     {
-      "includes": ["apps/mobile/**"],
-      "linter": {
-        "rules": {
-          "correctness": {
-            "noReactNativeRawText": {
-              "level": "error",
-              "options": { "skip": ["Button"] }
-            }
-          }
-        }
-      }
-    },
-    {
       "includes": [
         "apps/mobile/app/**",
         "apps/mobile/src/**",
@@ -92,10 +79,19 @@
               "options": {
                 "paths": {
                   "react-native": {
-                    "importNames": ["Text", "Pressable", "TextInput"],
-                    "message": "Use the app's own Text, Pressable or input from src/components (E12 S1b): they keep text scalable, targets 48pt and controls named."
+                    "importNames": [
+                      "Text",
+                      "Pressable",
+                      "TextInput",
+                      "Button",
+                      "TouchableOpacity",
+                      "TouchableHighlight",
+                      "TouchableWithoutFeedback",
+                      "TouchableNativeFeedback"
+                    ],
+                    "message": "Use Text, Pressable or Button from src/components (an input wrapper joins them when a form needs one): they keep text scalable, targets at least 48pt and every control named (E12 S1b)."
                   },
-                  "@flump/api-client": "Only src/data talks to the API (O5 seam 2, plan section 4.6)."
+                  "@flump/api-client": "Use the API client exported by src/data (added in S2b): only src/data talks to the API (O5 seam 2, plan section 4.6)."
                 }
               }
             },
@@ -103,7 +99,8 @@
               "level": "error",
               "options": {
                 "deniedGlobals": {
-                  "fetch": "Only src/data talks to the API (O5 seam 2, plan section 4.6)."
+                  "fetch": "Use the API client exported by src/data (added in S2b): only src/data talks to the API (O5 seam 2, plan section 4.6).",
+                  "XMLHttpRequest": "Use the API client exported by src/data (added in S2b): only src/data talks to the API (O5 seam 2, plan section 4.6)."
                 }
               }
             }
@@ -120,7 +117,7 @@
               "level": "error",
               "options": {
                 "paths": {
-                  "@flump/api-client": "Only src/data talks to the API (O5 seam 2, plan section 4.6)."
+                  "@flump/api-client": "Use the API client exported by src/data (added in S2b): only src/data talks to the API (O5 seam 2, plan section 4.6)."
                 }
               }
             },
@@ -128,7 +125,8 @@
               "level": "error",
               "options": {
                 "deniedGlobals": {
-                  "fetch": "Only src/data talks to the API (O5 seam 2, plan section 4.6)."
+                  "fetch": "Use the API client exported by src/data (added in S2b): only src/data talks to the API (O5 seam 2, plan section 4.6).",
+                  "XMLHttpRequest": "Use the API client exported by src/data (added in S2b): only src/data talks to the API (O5 seam 2, plan section 4.6)."
                 }
               }
             }
@@ -146,8 +144,17 @@
               "options": {
                 "paths": {
                   "react-native": {
-                    "importNames": ["Text", "Pressable", "TextInput"],
-                    "message": "Use the app's own Text, Pressable or input from src/components (E12 S1b)."
+                    "importNames": [
+                      "Text",
+                      "Pressable",
+                      "TextInput",
+                      "Button",
+                      "TouchableOpacity",
+                      "TouchableHighlight",
+                      "TouchableWithoutFeedback",
+                      "TouchableNativeFeedback"
+                    ],
+                    "message": "Use Text, Pressable or Button from src/components (an input wrapper joins them when a form needs one), even inside src/data (E12 S1b)."
                   }
                 }
               }

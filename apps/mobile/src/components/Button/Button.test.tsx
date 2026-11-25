@@ -16,7 +16,7 @@ describe("Button", () => {
   it("primary is the teal fill with the foreground label, in each theme", async () => {
     await render(
       <ThemeProvider scheme="light">
-        <Button>Save</Button>
+        <Button label="Save" />
       </ThemeProvider>,
     );
     expect(boxOf("Save").backgroundColor).toBe(light.colors["primary.solid"]);
@@ -24,7 +24,7 @@ describe("Button", () => {
 
     await render(
       <ThemeProvider scheme="dark">
-        <Button>Save</Button>
+        <Button label="Save" />
       </ThemeProvider>,
     );
     expect(boxOf("Save").backgroundColor).toBe(dark.colors["primary.solid"]);
@@ -38,7 +38,7 @@ describe("Button", () => {
   ] as const)("%s uses the web recipe's tokens", async (variant, fill, edge, label) => {
     await render(
       <ThemeProvider scheme="light">
-        <Button variant={variant}>Go</Button>
+        <Button variant={variant} label="Go" />
       </ThemeProvider>,
     );
     const box = boxOf("Go");
@@ -50,8 +50,8 @@ describe("Button", () => {
   it("every size is at least 48 high; lg is 56", async () => {
     await render(
       <ThemeProvider scheme="light">
-        <Button size="sm">Small</Button>
-        <Button size="lg">Large</Button>
+        <Button size="sm" label="Small" />
+        <Button size="lg" label="Large" />
       </ThemeProvider>,
     );
     expect(boxOf("Small").minHeight).toBe(48);
@@ -62,7 +62,7 @@ describe("Button", () => {
   it("disabled uses the muted label and the theme's disabled fill, and is announced", async () => {
     await render(
       <ThemeProvider scheme="dark">
-        <Button disabled>Save</Button>
+        <Button disabled label="Save" />
       </ThemeProvider>,
     );
     expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
@@ -74,9 +74,7 @@ describe("Button", () => {
     const onPress = jest.fn();
     await render(
       <ThemeProvider scheme="light">
-        <Button pending onPress={onPress}>
-          Saving
-        </Button>
+        <Button pending onPress={onPress} label="Saving" />
       </ThemeProvider>,
     );
     const button = screen.getByRole("button", { name: "Saving" });
@@ -90,7 +88,7 @@ describe("Button", () => {
     const onPress = jest.fn();
     await render(
       <ThemeProvider scheme="light">
-        <Button onPress={onPress}>Save</Button>
+        <Button onPress={onPress} label="Save" />
       </ThemeProvider>,
     );
     await userEvent.setup().press(screen.getByRole("button", { name: "Save" }));
@@ -115,9 +113,7 @@ describe("Button", () => {
   it("link variant can be announced as a link", async () => {
     await render(
       <ThemeProvider scheme="light">
-        <Button variant="link" accessibilityRole="link">
-          Privacy notice
-        </Button>
+        <Button variant="link" accessibilityRole="link" label="Privacy notice" />
       </ThemeProvider>,
     );
     expect(screen.getByRole("link", { name: "Privacy notice" })).toBeOnTheScreen();

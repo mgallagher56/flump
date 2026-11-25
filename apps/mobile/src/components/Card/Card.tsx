@@ -9,8 +9,6 @@ import {
   PADDING_STYLE,
 } from "./Card.styles";
 
-export type { CardElevation, CardPadding, CardSurface } from "./Card.styles";
-
 export interface CardProps extends Omit<ViewProps, "style"> {
   children: ReactNode;
   /** Defaults to `default`. */

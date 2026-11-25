@@ -11,7 +11,7 @@ export const LOGO_SIZES: Record<FlumpLogoSize, number> = { sm: 32, md: 50, lg: 9
  * The web logo's colours: the mark lit from above by primary.hover over primary.solid, a shadow in
  * text.primary, and highlights in the button label colour, so it reads in both themes.
  */
-export const LOGO_COLOURS = {
+const LOGO_COLOURS = {
   bodyTop: "primary.hover",
   bodyBottom: "primary.solid",
   shadow: "text.primary",

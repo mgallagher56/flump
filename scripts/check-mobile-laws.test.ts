@@ -120,6 +120,12 @@ describe("each law fails on a mobile fixture", () => {
 function lint(path: string, source: string): { exitCode: number; output: string } {
   const root = fixtureTree({ [path]: source });
   writeFileSync(join(root, "biome.json"), readFileSync(join(repoRoot, "biome.json")));
+  // Biome turns on its React Native rules from the nearest package.json, so the app's comes too.
+  mkdirSync(join(root, "apps/mobile"), { recursive: true });
+  writeFileSync(
+    join(root, "apps/mobile/package.json"),
+    readFileSync(join(repoRoot, "apps/mobile/package.json")),
+  );
   const proc = Bun.spawnSync(
     [
       join(repoRoot, "node_modules/.bin/biome"),
@@ -138,6 +144,9 @@ describe("Biome: the raw primitives and the data door (apps/mobile)", () => {
   const rawPressable = `import { Pressable } from "react-native";\nexport const p = Pressable;\n`;
   const rawInput = `import { TextInput } from "react-native";\nexport const i = TextInput;\n`;
   const view = `import { View } from "react-native";\nexport const v = View;\n`;
+  const touchable = (name: string) =>
+    `import { ${name} } from "react-native";\nexport const t = ${name};\n`;
+  const callXhr = `export const x = () => new XMLHttpRequest();\n`;
   const apiClient = `import { createApiClient } from "@flump/api-client";\nexport const c = createApiClient;\n`;
   const callFetch = `export const load = () => fetch("https://example.test/v1");\n`;
 
@@ -150,6 +159,18 @@ describe("Biome: the raw primitives and the data door (apps/mobile)", () => {
     ["the API client in a component", "apps/mobile/src/components/Card/Card.tsx", apiClient],
     ["fetch in a component", "apps/mobile/src/components/Card/Card.tsx", callFetch],
     ["raw Text in the data door", "apps/mobile/src/data/client.ts", rawText],
+    ...[
+      "Button",
+      "TouchableOpacity",
+      "TouchableHighlight",
+      "TouchableWithoutFeedback",
+      "TouchableNativeFeedback",
+    ].map((name) => [
+      `React Native's ${name} in a screen`,
+      "apps/mobile/src/screens/Home/Home.tsx",
+      touchable(name),
+    ]),
+    ["XMLHttpRequest in a screen", "apps/mobile/src/screens/Home/Home.tsx", callXhr],
   ])("%s fails", (_name, path, source) => {
     const { exitCode, output } = lint(path, source);
     expect(exitCode).not.toBe(0);
@@ -163,6 +184,38 @@ describe("Biome: the raw primitives and the data door (apps/mobile)", () => {
     ["other React Native imports in a screen", "apps/mobile/src/screens/Home/Home.tsx", view],
   ])("%s passes", (_name, path, source) => {
     expect(lint(path, source)).toEqual({ exitCode: 0, output: expect.any(String) });
+  });
+
+  test("test and story files outside the two folders get no exemption", () => {
+    for (const path of [
+      "apps/mobile/src/screens/Home/Home.test.tsx",
+      "apps/mobile/src/screens/Home/Home.states.ts",
+      "apps/mobile/src/screens/Home/Home.stories.tsx",
+    ]) {
+      expect(lint(path, rawText).exitCode).not.toBe(0);
+      expect(lint(path, callFetch).exitCode).not.toBe(0);
+    }
+  });
+
+  test("each message names what to use instead", () => {
+    expect(lint("apps/mobile/src/screens/Home/Home.tsx", rawText).output).toContain(
+      "Use Text, Pressable or Button from src/components",
+    );
+    expect(lint("apps/mobile/src/screens/Home/Home.tsx", apiClient).output).toContain(
+      "Use the API client exported by src/data",
+    );
+    expect(lint("apps/mobile/src/screens/Home/Home.tsx", callFetch).output).toContain(
+      "Use the API client exported by src/data",
+    );
+  });
+
+  test("the overrides relax nothing: raw words inside any component, Button included, still fail", () => {
+    const words = `import { View } from "react-native";\nimport { Button } from "../../components/Button";\nexport const A = () => <View><Button>Save</Button></View>;\n`;
+    const { exitCode, output } = lint("apps/mobile/src/screens/Home/Home.tsx", words);
+    expect(exitCode).not.toBe(0);
+    expect(output).toContain("noReactNativeRawText");
+    const config = readFileSync(join(repoRoot, "biome.json"), "utf8");
+    expect(config).not.toContain('"skip"');
   });
 
   test("the rules stay inside apps/mobile", () => {

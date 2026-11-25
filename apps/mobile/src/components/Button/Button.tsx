@@ -1,7 +1,8 @@
 import { useMemo } from "react";
 import { ActivityIndicator, Platform, type StyleProp, type ViewStyle } from "react-native";
 import { useTheme } from "../../theme/ThemeProvider";
-import { Pressable, type PressableProps } from "../Pressable";
+import { Pressable } from "../Pressable";
+import type { PressableProps } from "../Pressable/Pressable";
 import { Text } from "../Text";
 import {
   type ButtonSize,
@@ -13,12 +14,13 @@ import {
   VARIANT_COLOURS,
 } from "./Button.styles";
 
-export type { ButtonSize, ButtonVariant } from "./Button.styles";
-
 export interface ButtonProps
   extends Omit<PressableProps, "children" | "style" | "accessibilityRole" | "android_ripple"> {
-  /** The words on the button, which are also its accessible name unless a label is given. */
-  children: string;
+  /**
+   * The words on the button, which are also its accessible name. A prop rather than children, so
+   * Biome's raw-text rule needs no exemption for Button.
+   */
+  label: string;
   /** Defaults to `primary`. */
   variant?: ButtonVariant;
   /** Defaults to `md`. */
@@ -37,7 +39,7 @@ export interface ButtonProps
  * that can succeed.
  */
 export function Button({
-  children,
+  label,
   variant = "primary",
   size = "md",
   pending = false,
@@ -85,7 +87,7 @@ export function Button({
         textStyle={SIZE_TEXT[size]}
         style={[styles.label, { color: labelColour }, variant === "link" ? styles.underline : null]}
       >
-        {children}
+        {label}
       </Text>
     </Pressable>
   );

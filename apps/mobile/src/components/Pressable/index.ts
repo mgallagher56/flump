@@ -1,1 +1,1 @@
-export { hasTextChild, Pressable, type PressableProps, type PressableRole } from "./Pressable";
+export { Pressable } from "./Pressable";
