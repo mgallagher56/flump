@@ -13,15 +13,19 @@ Page: https://www.gov.uk/child-benefit-tax-charge
 
 ## Child Benefit weekly rates (eldest or only child / each other child)
 
-| Year    | Rate          | Status     | Source                                                                                                                                                              |
-| ------- | ------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2020/21 | 21.05 / 13.95 | VERIFIED   | SI 2020/298 reg 5 (https://www.legislation.gov.uk/uksi/2020/298/made), in force 6 April 2020                                                                        |
-| 2021/22 | 21.15 / 14.00 | UNVERIFIED | No GOV.UK page reached; recalled from the uprating chain                                                                                                            |
-| 2022/23 | 21.80 / 14.45 | verified   | The 2023 uprating regulations name 21.80 and 14.45 as the rates they replace: https://www.legislation.gov.uk/uksi/2023/237/made                                     |
-| 2023/24 | 24.00 / 15.90 | verified   | Same regulations (in force 10 April 2023)                                                                                                                           |
-| 2024/25 | 25.60 / 16.95 | verified   | https://www.legislation.gov.uk/uksi/2024/247/made (in force 8 April 2024)                                                                                           |
-| 2025/26 | 26.05 / 17.25 | verified   | https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance |
-| 2026/27 | 27.05 / 17.90 | verified   | Same table                                                                                                                                                          |
+Each year's instrument amends reg 2(1)(a) (enhanced rate) and (b) (other cases) of the Child Benefit (Rates) Regulations 2006 (SI 2006/965). Read by `fable-decider` on 2026-11-25, as made and as the point-in-time reg 2, at legislation.gov.uk. Each instrument's "from" figure is the previous year's rate, so the chain is continuous from 20.70 / 13.70.
+
+| Year    | Rate          | Status   | Instrument (provision, in force)                                                    |
+| ------- | ------------- | -------- | ----------------------------------------------------------------------------------- |
+| 2020/21 | 21.05 / 13.95 | verified | SI 2020/298 reg 5, 6 April 2020: https://www.legislation.gov.uk/uksi/2020/298/made  |
+| 2021/22 | 21.15 / 14.00 | verified | SI 2021/156 reg 5, 12 April 2021: https://www.legislation.gov.uk/uksi/2021/156/made |
+| 2022/23 | 21.80 / 14.45 | verified | SI 2022/231 reg 5, 11 April 2022: https://www.legislation.gov.uk/uksi/2022/231/made |
+| 2023/24 | 24.00 / 15.90 | verified | SI 2023/237 reg 5, 10 April 2023: https://www.legislation.gov.uk/uksi/2023/237/made |
+| 2024/25 | 25.60 / 16.95 | verified | SI 2024/247 reg 5, 8 April 2024: https://www.legislation.gov.uk/uksi/2024/247/made  |
+| 2025/26 | 26.05 / 17.25 | verified | SI 2025/292 art 2, 7 April 2025: https://www.legislation.gov.uk/uksi/2025/292/made  |
+| 2026/27 | 27.05 / 17.90 | verified | SI 2026/232 art 2, 6 April 2026: https://www.legislation.gov.uk/uksi/2026/232/made  |
+
+Each instrument comes into force on the first Monday on or after 6 April. That is the first week whose Monday falls in the tax year, so one rate per tax year (counted by Mondays, below) matches the instruments.
 
 The regulations call the two rates "enhanced rate" and "other cases". Reading them as eldest or only child and other children matches the rates table for 2025/26 and 2026/27.
 

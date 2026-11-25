@@ -250,10 +250,12 @@ describe("computeUkTakeHome: behaviour", () => {
     expect(computeUkTakeHome({ ...base, taxYear: "2023/24" }).unverifiedRuleKeys).toContain(
       "niClass1",
     );
-    // 2026/27 Scottish 125,140 boundary frame is UNVERIFIED.
-    expect(computeUkTakeHome({ ...base, region: "SCOTLAND" }).unverifiedRuleKeys).toContain(
-      "incomeTaxScotland",
+    // 2024/25 Plan 2 is UNVERIFIED in the registry (studentLoan group); without a loan it is not listed.
+    const y2024 = { ...base, taxYear: "2024/25" };
+    expect(computeUkTakeHome({ ...y2024, studentLoans: ["plan2"] }).unverifiedRuleKeys).toContain(
+      "studentLoan",
     );
+    expect(computeUkTakeHome(y2024).unverifiedRuleKeys).toEqual([]);
   });
 
   it("uses the fallback rates year when the clock is past the latest supported year", () => {

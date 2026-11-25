@@ -231,10 +231,8 @@ describe("computeUkTakeHome: unverified rule groups", () => {
     expect(computeUkTakeHome(base).unverifiedRuleKeys).toEqual([]);
   });
 
-  it("lists the Scottish rates in 2026/27 only for Scotland", () => {
-    expect(computeUkTakeHome({ ...base, region: "SCOTLAND" }).unverifiedRuleKeys).toEqual([
-      "incomeTaxScotland",
-    ]);
+  it("lists no Scottish rates in 2026/27, now read in the Scottish rate resolution", () => {
+    expect(computeUkTakeHome({ ...base, region: "SCOTLAND" }).unverifiedRuleKeys).toEqual([]);
   });
 
   it("lists the 2024/25 student loan tables only when a loan is repaid", () => {
@@ -245,11 +243,11 @@ describe("computeUkTakeHome: unverified rule groups", () => {
     expect(computeUkTakeHome(y).unverifiedRuleKeys).toEqual([]);
   });
 
-  it("lists the 2021/22 Child Benefit rates only when Child Benefit is claimed", () => {
+  it("lists no Child Benefit rates for 2021/22 now SI 2021/156 is read, claimed or not", () => {
     const y = { ...base, taxYear: "2021/22", salary: 30_000 };
-    expect(computeUkTakeHome({ ...y, childBenefit: { children: 1 } }).unverifiedRuleKeys).toEqual([
-      "childBenefit",
-    ]);
+    expect(computeUkTakeHome({ ...y, childBenefit: { children: 1 } }).unverifiedRuleKeys).toEqual(
+      [],
+    );
     expect(computeUkTakeHome(y).unverifiedRuleKeys).toEqual([]);
   });
 

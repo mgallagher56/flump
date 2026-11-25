@@ -28,9 +28,10 @@ describe("computeUkTakeHome: when an estimate counts as verified", () => {
     );
   });
 
-  it("is unverified when only a rule group is unverified (2026/27 Scottish rates)", () => {
-    const b = computeUkTakeHome({ ...base, region: "SCOTLAND" });
-    expect(b.unverifiedRuleKeys).toEqual(["incomeTaxScotland"]);
+  it("is unverified when only a rule group is unverified (2024/25 student loan tables)", () => {
+    const b = computeUkTakeHome({ ...base, taxYear: "2024/25", studentLoans: ["plan2"] });
+    expect(b.unverifiedRuleKeys).toEqual(["studentLoan"]);
+    expect(b.verification).toEqual({ core: "verified", whatIf: "verified" });
     expect(b.isUnverifiedEstimate).toBe(true);
   });
 
