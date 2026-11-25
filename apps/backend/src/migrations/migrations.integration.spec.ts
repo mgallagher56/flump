@@ -2196,6 +2196,42 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
     });
   });
 
+  describe("CheckInStartedRows1795650000000 (CH-3, Continue check-in)", () => {
+    const NAME = "CheckInStartedRows1795650000000";
+    const rows = (): Promise<unknown[]> =>
+      ds.query(
+        `SELECT month, completed_at IS NOT NULL AS done FROM snapshot_checkins ORDER BY month`,
+      );
+
+    it("lets a started row leave completed_at empty, and a finished row still gets one", async () => {
+      await ds.runMigrations();
+      expect(await applied()).toContain(NAME);
+      await ds.query(
+        `INSERT INTO snapshot_checkins (user_id, month, completed_at) VALUES ('u1', '2026-11', NULL)`,
+      );
+      await ds.query(`INSERT INTO snapshot_checkins (user_id, month) VALUES ('u1', '2026-10')`);
+      expect(await rows()).toEqual([
+        { month: "2026-10", done: true },
+        { month: "2026-11", done: false },
+      ]);
+    });
+
+    it("drops started rows on revert and makes completed_at required again", async () => {
+      await ds.runMigrations();
+      await ds.query(
+        `INSERT INTO snapshot_checkins (user_id, month, completed_at) VALUES ('u1', '2026-11', NULL)`,
+      );
+      await ds.query(`INSERT INTO snapshot_checkins (user_id, month) VALUES ('u1', '2026-10')`);
+      await undoThrough(NAME);
+      expect(await rows()).toEqual([{ month: "2026-10", done: true }]);
+      await expect(
+        ds.query(
+          `INSERT INTO snapshot_checkins (user_id, month, completed_at) VALUES ('u1', '2026-09', NULL)`,
+        ),
+      ).rejects.toThrow(/not-null|null value/);
+    });
+  });
+
   describe("PensionAnswersNullable1795480000000 (slice 6, owner decision 3)", () => {
     const NAME = "PensionAnswersNullable1795480000000";
     const answers = (): Promise<unknown[]> =>

@@ -167,6 +167,8 @@ export interface SnapshotPayload {
     source?: "manual" | "confirmed" | "calculated";
   }>;
   complete?: boolean;
+  /** Sent by the check-in's own saves: the backend records the month's check-in as started. */
+  checkIn?: boolean;
 }
 
 /** History rows in the engine's snapshot shape (ids lower-cased, rows without an id dropped). */
@@ -513,6 +515,37 @@ export function resumeIndex(steps: readonly CheckInStep[]): number {
   return i === -1 ? steps.length : i;
 }
 
+export interface CheckInPartDoneInput {
+  accounts: readonly CheckInAccountInput[];
+  details: readonly AccountDetailInput[];
+  /** The Europe/London month the check-in is for. */
+  currentMonth: CheckInMonth;
+  /** The latest month a check-in was started for (`GET /snapshots/check-ins`); unknown is null. */
+  latestStartedMonth: CheckInMonth | null | undefined;
+  /** The latest finished check-in month; unknown is null. */
+  latestCompletedMonth: CheckInMonth | null | undefined;
+}
+
+/**
+ * Whether this month's check-in is part done, so the way in says "Continue check-in" (CH-3): the
+ * check-in saved a balance this month (its started row) and is not finished, at least one of its
+ * steps holds a figure for the month and at least one still has none. Only the check-in writes the
+ * started row, so a rename, a connected sync or an agent write never makes it part done. The steps
+ * are the check-in's own: connected accounts are left out and an account's first `backfill` row
+ * leaves its step open, so an account added mid-month is one still to do.
+ */
+export function selectCheckInPartDone(input: CheckInPartDoneInput): boolean {
+  const { currentMonth, latestStartedMonth, latestCompletedMonth } = input;
+  if (!latestStartedMonth || compareCheckInMonths(latestStartedMonth, currentMonth) !== 0) {
+    return false;
+  }
+  if (latestCompletedMonth && compareCheckInMonths(latestCompletedMonth, currentMonth) >= 0) {
+    return false;
+  }
+  const steps = buildCheckInSteps(input.accounts, input.details, currentMonth);
+  return steps.some((s) => s.recorded !== null) && steps.some((s) => s.recorded === null);
+}
+
 /** An answer to one step. */
 export type CheckInAnswer =
   | { kind: "update"; value: number }
@@ -572,6 +605,7 @@ export function checkInPayload(
       answeredIds.has(s.accountId) ||
       values.some((v) => v.accountId === s.accountId),
   );
+  if (values.length > 0) payload.checkIn = true;
   if (done && values.length > 0) payload.complete = true;
   return payload;
 }

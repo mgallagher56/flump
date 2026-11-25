@@ -240,6 +240,7 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
       batchSize: 500,
     },
     reset: { kind: "financial-clear", reason: "check-ins confirm balances that reset removes" },
+    // A row is a started check-in; completedAt (null until then) says it was finished (CH-3).
     valueMap: {
       facts: { month: "check-in-done", completedAt: "check-in-done" },
       notFacts: { userId: OWNER },

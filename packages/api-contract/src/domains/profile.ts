@@ -470,7 +470,8 @@ export const AccountExportTaxRecord = z.strictObject({
 /** `snapshotCheckins`: months whose balances the person confirmed. */
 export const AccountExportSnapshotCheckin = z.strictObject({
   month: z.string(),
-  completedAt: ExportTimestamp,
+  /** Null while the month's check-in is started but not finished. */
+  completedAt: NullableExportTimestamp,
 });
 
 /** `importBatches`: spreadsheet imports, staged or committed, with what each changed. */

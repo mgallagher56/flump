@@ -434,6 +434,23 @@ describe("HomeDashboard", () => {
     expect(screen.getByText("Last check-in: October 2026")).toBeTruthy();
   });
 
+  it("says Start monthly check-in, then Continue check-in once this month's is part done (CH-3)", () => {
+    const start = renderDashboard({ ...noDebt });
+    expect(screen.getByRole("link", { name: "Start monthly check-in" })).toBeTruthy();
+    expect(screen.queryByRole("link", { name: "Continue check-in" })).toBeNull();
+    start.unmount();
+    renderDashboard({
+      ...noDebt,
+      checkIn: { currentMonth: "2026-11", lastCheckInMonth: "2026-10", partDone: true },
+    });
+    expect(screen.getByRole("link", { name: "Continue check-in" })).toBeTruthy();
+    expect(screen.queryByRole("link", { name: "Start monthly check-in" })).toBeNull();
+    // Matter-of-fact: nothing about a missed or unfinished month.
+    expect(screen.getByTestId("monthly-check-in-card").textContent).not.toMatch(
+      /unfinished|overdue|streak|missed|still/i,
+    );
+  });
+
   it("hides the check-in row once this month is recorded", () => {
     renderDashboard({
       ...noDebt,

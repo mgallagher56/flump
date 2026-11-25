@@ -22,3 +22,13 @@ export const Due: Story = {
 };
 
 export const NothingRecorded: Story = { args: { lastCheckInMonth: null } };
+
+// This month's check-in saved some balances and some accounts are still to do (CH-3).
+export const PartDone: Story = {
+  args: { partDone: true },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getAllByRole("link", { name: "Continue check-in" })[0]).toBeVisible();
+    await expect(canvas.queryAllByRole("link", { name: "Start monthly check-in" })).toHaveLength(0);
+  },
+};

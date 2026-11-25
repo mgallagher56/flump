@@ -204,5 +204,41 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       expect(await svc.latestCompletedMonth(USER)).toBe("2026-10");
       expect(await svc.latestCompletedMonth("someone-else")).toBeNull();
     });
+
+    it("a check-in save starts the month; finishing it completes the same row (CH-3)", async () => {
+      const svc = snapshots();
+      const a = await intake().createAccount(USER, { name: "A", type: "Saving", balance: 1 });
+      const b = await intake().createAccount(USER, { name: "B", type: "Saving", balance: 2 });
+      // An account edit (no checkIn flag) records a balance but starts nothing.
+      await svc.upsertMonth(USER, "2026-11", { values: [{ accountId: a.id, value: 5 }] }, NOW);
+      expect(await svc.latestMonths(USER)).toEqual({ completed: null, started: null });
+      // An empty check-in save starts nothing either.
+      await svc.upsertMonth(USER, "2026-11", { values: [], checkIn: true }, NOW);
+      expect(await svc.latestMonths(USER)).toEqual({ completed: null, started: null });
+      await svc.upsertMonth(
+        USER,
+        "2026-11",
+        { values: [{ accountId: a.id, value: 6 }], checkIn: true },
+        NOW,
+      );
+      expect(await svc.latestMonths(USER)).toEqual({ completed: null, started: "2026-11" });
+      expect(await svc.latestCompletedMonth(USER)).toBeNull();
+      await svc.upsertMonth(
+        USER,
+        "2026-11",
+        { values: [{ accountId: b.id, value: 7 }], checkIn: true, complete: true },
+        NOW,
+      );
+      expect(await svc.latestMonths(USER)).toEqual({ completed: "2026-11", started: "2026-11" });
+      // A later check-in save in a finished month leaves it finished.
+      await svc.upsertMonth(
+        USER,
+        "2026-11",
+        { values: [{ accountId: a.id, value: 8 }], checkIn: true },
+        NOW,
+      );
+      expect(await svc.latestCompletedMonth(USER)).toBe("2026-11");
+      expect(await svc.latestMonths("someone-else")).toEqual({ completed: null, started: null });
+    });
   },
 );

@@ -1124,7 +1124,7 @@ facts:
     note: CH-1 and CH-2 were fixed by audit slice 4; CH-5 (the history elsewhere) is slice 3.
 
   - id: check-in-done
-    name: Whether a month's check-in was finished
+    name: Whether a month's check-in was started or finished
     area: accounts
     source_of_truth:
       { ref: snapshot_checkins, path: apps/backend/src/entities/snapshot-checkin.entity.ts }
@@ -1132,13 +1132,13 @@ facts:
       - {
           surface: check-in,
           path: apps/backend/src/modules/snapshots/snapshots.service.ts,
-          note: "only the check-in's last step; a new account's first row (source backfill) is not a check-in",
+          note: "the check-in's first saved balance writes the row with completed_at empty (started); its last step sets completed_at; account edits, sync and agent writes never write it",
         }
     readers:
       - {
           surface: dashboard,
           path: apps/backend/src/modules/snapshots/snapshots.controller.ts,
-          note: "GET /snapshots/check-ins, read by the reminder on the Dashboard and History",
+          note: "GET /snapshots/check-ins, read by the reminder on the Dashboard and History, and by selectCheckInPartDone for Continue check-in",
         }
       - { surface: export, path: apps/backend/src/modules/privacy/user-data-registry.ts }
     links: [L70]

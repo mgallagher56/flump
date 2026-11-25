@@ -358,7 +358,8 @@ export function contractBody(method: string, path: string): unknown {
   if (/^\/invoices\/[^/]+(\/issue|\/mark-paid|\/void|\/sync-to-tax)?$/.test(p)) {
     return { invoice: invoiceFixture };
   }
-  if (p === "/snapshots/check-ins") return { latestCompletedMonth: "2026-10" };
+  if (p === "/snapshots/check-ins")
+    return { latestCompletedMonth: "2026-10", latestStartedMonth: "2026-10" };
   if (/^\/snapshots\/[^/]+$/.test(p)) return snapshotResponseFixture;
   return success;
 }

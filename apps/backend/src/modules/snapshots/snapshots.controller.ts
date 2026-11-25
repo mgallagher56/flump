@@ -26,11 +26,15 @@ import { SnapshotsService } from "./snapshots.service";
 export class SnapshotsController {
   constructor(private readonly snapshots: SnapshotsService) {}
 
-  /** The latest month whose check-in was finished, for the check-in reminder (slice 4, L70). */
+  /**
+   * The latest month whose check-in was finished, and the latest one started, for the check-in
+   * reminder (slice 4, L70) and its "Continue check-in" label (CH-3).
+   */
   @Get("snapshots/check-ins")
   @HttpCode(200)
   async checkIns(@Req() req: AuthenticatedRequest): Promise<SnapshotCheckInsResponse> {
-    return { latestCompletedMonth: await this.snapshots.latestCompletedMonth(req.user.id) };
+    const { completed, started } = await this.snapshots.latestMonths(req.user.id);
+    return { latestCompletedMonth: completed, latestStartedMonth: started };
   }
 
   /**
