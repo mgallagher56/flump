@@ -92,7 +92,7 @@ Copied from AGENTS.md, the `docs/ux` documents, the copy guide and the owner dec
 
 **Look and words**
 
-- Colours, sizes, radii, shadows and durations come from `@flump/tokens/native` through `useTheme()`. No hex or rgb literal in `apps/mobile`. The palette is Direction C (teal, sand, warm charcoal); teal is the accent, apricot is debt, red is for errors and destructive actions only.
+- Colours, sizes, radii, shadows and durations come from `@flump/tokens/native` through `useTheme()`. No hex or rgb literal in `apps/mobile`. The palette is Midnight (dark) and Mint (light) since 24 November 2026, replacing Direction C; teal is the brand colour, apricot is debt, red is for errors and destructive actions only.
 - One headline figure per screen, in a `HeroFigure`, the same figure as the web page (table in `docs/design/e16-polish/PLAN.md` section 2). At most 4 figures in the first view and 12 before any disclosure.
 - Never judge anyone's finances. No "only" or "just" about money, no alarm colour or warning icon on an ordinary balance, no streaks, points or confetti, no comparison with other people, nothing that ranks renting below owning. A missed month is never mentioned.
 - Words follow the copy guide: plain, sentence case, en-GB, no exclamation marks. One approved word per idea ("debts", "what you own", "left over each month", "estimate"). Fixed notices come from shared constants and are never reworded.

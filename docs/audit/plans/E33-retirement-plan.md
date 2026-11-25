@@ -1,6 +1,6 @@
 # E33. Retirement plan: a target the user sets, tracked each month
 
-> **Status: plan approved. The owner accepted decisions RD1 to RD11 as recommended on 2026-11-17.** Slices S0 to S5 are merged (#750, #758). Written 2026-11-15 against `origin/main` at `8e08f0c8`. Not legal advice. Facts marked **[U]** were not confirmed in a primary source today.
+> **Status: plan approved. The owner accepted decisions RD1 to RD11 as recommended on 2026-11-17.** Slices S0 to S6 and S8 are merged (#750, #758, #908, #904). Written 2026-11-15 against `origin/main` at `8e08f0c8`. Not legal advice. Facts marked **[U]** were not confirmed in a primary source today.
 
 **Summary.** The owner asked for a retirement calculator where a user works out how much retirement would cost them and tracks savings, investments and pensions against it, taking account of whether a mortgage ends or rent continues for life. This plan proposes one new page, Retirement, built on one new engine module. The user sets the target themselves, as a typed yearly figure or built from their own budget lines. Housing in retirement follows their saved housing details: a mortgage that ends, a mortgage that continues, or rent for life, each shown with the same weight. The page shows an estimated yearly income from a chosen age, in today's money, beside the user's own target, and never says what anyone "needs". Progress is a monthly series taken from the check-in. E27 stays as the tax and withdrawal slices inside this epic. Ten slices, S0 to S9; S1 to S3 give a working page.
 
@@ -148,9 +148,9 @@ Done:
 Remaining:
 
 - S4 finish: a budget-built target where a line's amount changes in retirement. The engine supports a changed amount; the page offers only "Continues" and "Stops".
-- S6 (2026-11-24, in review): income tax on pension withdrawals and State Pension, 25% of each withdrawal tax-free until the lump sum allowance is used (UFPLS) for saved figures, a tax-free lump sum at retirement as a what-if, figures after income tax. Vectors RV10 to RV16 in `uk-retirement.vectors.ts`, signed by `fable-decider` on 2026-11-24.
+- S6 (2026-11-24, merged in #908): income tax on pension withdrawals and State Pension, 25% of each withdrawal tax-free until the lump sum allowance is used (UFPLS) for saved figures, a tax-free lump sum at retirement as a what-if, figures after income tax. Vectors RV10 to RV16 in `uk-retirement.vectors.ts`, signed by `fable-decider` on 2026-11-24.
 - S7: inheritance tax on unused pensions from 6 April 2027 and the self-employed view. Needs E29b wording.
-- S8: MCP evals for the retirement tools.
+- S8: MCP evals for the retirement tools (2026-11-24, merged in #904).
 - S9: mobile parity (E12) and the two-person view (E34).
 - Opening beyond the friends beta waits for E29b.
 
