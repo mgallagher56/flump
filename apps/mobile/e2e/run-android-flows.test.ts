@@ -1,0 +1,88 @@
+/**
+ * @jest-environment node
+ */
+/**
+ * run-android-flows.sh with a fake adb and maestro on PATH (E12 S2a). Pins the fix for CI run
+ * 45649031045: the app is stopped, and its screens gone, before each theme switch; a theme that
+ * does not switch, or screens that will not go, fail the run instead of being retried.
+ */
+import { spawnSync } from "node:child_process";
+import { chmodSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+
+const script = join(__dirname, "run-android-flows.sh");
+const SHOTS = [
+  "welcome",
+  "engine-check",
+  "sign-in",
+  "signed-in",
+  "sign-in-denied",
+  "not-invited",
+  "signed-out",
+  "session-ended",
+];
+
+function run(opts: { screensStay?: boolean; nightStuck?: boolean } = {}) {
+  const dir = mkdtempSync(join(tmpdir(), "flows-"));
+  const bin = join(dir, "bin");
+  const log = join(dir, "adb.log");
+  const night = join(dir, "night");
+  writeFileSync(night, "no");
+  spawnSync("mkdir", ["-p", bin]);
+  writeFileSync(
+    join(bin, "adb"),
+    `#!/usr/bin/env bash
+echo "$*" >> "${log}"
+case "$*" in
+  "shell dumpsys activity activities")
+    ${opts.screensStay ? 'echo "  * ActivityRecord{abc u0 app.flump.mobile/.MainActivity t9}"' : 'echo "  (nothing)"'} ;;
+  "shell cmd uimode night yes") ${opts.nightStuck ? "" : `echo yes > "${night}"`} ;;
+  "shell cmd uimode night no") echo no > "${night}" ;;
+  "shell cmd uimode night") echo "Night mode: $(cat "${night}")" ;;
+esac
+`,
+  );
+  // The fake maestro writes every screenshot the runner requires for the theme it is given.
+  writeFileSync(
+    join(bin, "maestro"),
+    `#!/usr/bin/env bash
+theme=$(printf '%s\\n' "$@" | sed -n 's/^THEME=//p')
+for s in ${SHOTS.join(" ")}; do touch "$s-$theme.png"; done
+`,
+  );
+  chmodSync(join(bin, "adb"), 0o755);
+  chmodSync(join(bin, "maestro"), 0o755);
+  const result = spawnSync("bash", [script, join(dir, "app.apk"), join(dir, "out")], {
+    encoding: "utf8",
+    env: { ...process.env, PATH: `${bin}:${process.env.PATH}`, SETTLE_TRIES: "2" },
+  });
+  const calls = readFileSync(log, "utf8").trim().split("\n");
+  return { result, calls };
+}
+
+describe("run-android-flows.sh", () => {
+  it("stops the app and waits for its screens to go before each theme switch", () => {
+    const { result, calls } = run();
+    expect(result.status).toBe(0);
+    for (const mode of ["no", "yes"]) {
+      const switchAt = calls.indexOf(`shell cmd uimode night ${mode}`);
+      const stopAt = calls.lastIndexOf("shell am force-stop app.flump.mobile", switchAt);
+      expect(stopAt).toBeGreaterThan(-1);
+      expect(calls.slice(stopAt, switchAt)).toContain("shell dumpsys activity activities");
+    }
+  });
+
+  it("fails, without retrying, when the screens are still alive after the force-stop", () => {
+    const { result, calls } = run({ screensStay: true });
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("still alive");
+    expect(calls).not.toContain("shell cmd uimode night no");
+  });
+
+  it("fails when night mode does not switch", () => {
+    const { result } = run({ nightStuck: true });
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("Night mode did not switch to yes");
+  });
+});
