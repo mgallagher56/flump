@@ -189,8 +189,9 @@ describe("versions in effect (terms acceptance)", () => {
   it("gives the current terms and privacy versions on and after their dates", () => {
     const now = new Date("2026-11-25T12:00:00Z");
     expect(versionInEffect("terms", now).version).toBe("0.1");
-    expect(versionInEffect("privacy", now).version).toBe("0.2");
-    expect(versionsAtLeastInEffect("privacy", now)).toEqual(["0.2"]);
+    // Privacy history, newest first: 0.3, 0.2, 0.1, all from 25 November 2026.
+    expect(versionInEffect("privacy", now).version).toBe("0.3");
+    expect(versionsAtLeastInEffect("privacy", now)).toEqual(["0.3"]);
   });
 
   it("has nothing coming once every newest version is in effect", () => {
@@ -204,9 +205,9 @@ describe("versions in effect (terms acceptance)", () => {
     // The e2e suites freeze the clock at 14 November 2026, before the first versions (25 November).
     const early = new Date("2026-11-14T12:00:00Z");
     expect(versionInEffect("terms", early).version).toBe("0.1");
-    // The privacy notice's first version is 0.1; 0.2 and newer satisfy it.
+    // The privacy notice's first version is 0.1; 0.2, 0.3 and newer satisfy it.
     expect(versionInEffect("privacy", early).version).toBe("0.1");
-    expect(versionsAtLeastInEffect("privacy", early)).toEqual(["0.2", "0.1"]);
+    expect(versionsAtLeastInEffect("privacy", early)).toEqual(["0.3", "0.2", "0.1"]);
   });
 });
 
