@@ -198,7 +198,7 @@ export class RetirementService {
       });
       if (!current) return null;
       if (expectedVersion) {
-        // claimVersion takes column names, so the owner is "user_id".
+        // The owner column, "user_id" (claimVersion also maps property names to columns).
         const claim = await claimVersion(
           repo,
           { id: current.id, user_id: userId },

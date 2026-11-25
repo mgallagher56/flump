@@ -16,7 +16,8 @@ const HOURS = "3";
 const RATE = "65";
 const TOTAL = "£195";
 // The browser's local date, as the date fields show it (yyyy-mm-dd).
-const today = new Date().toLocaleDateString("en-CA");
+// The app fills dates on the London clock, so compare with London, not this machine's zone.
+const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/London" }).format(new Date());
 
 await journey("invoicing", async ({ page, step, save }) => {
   const invoicesTab = () => page.getByRole("tab", { name: /^Invoices \(\d+\)$/ });
