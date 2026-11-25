@@ -1,3 +1,3 @@
-import { Welcome } from "../src/screens/Welcome";
+import { SessionGate } from "../src/screens/SessionGate";
 
-export default Welcome;
+export default SessionGate;

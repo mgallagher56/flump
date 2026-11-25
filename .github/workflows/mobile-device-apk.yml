@@ -1,0 +1,98 @@
+# E12 S2a: a development APK for the owner's own Android phone, built only when a PR carries the
+# `mobile-device-apk` label. Expo Go cannot take the flump://auth/callback sign-in redirect, so the
+# one real WorkOS sign-in needs a development build. Route A, approved by the coordinator on
+# 25 November 2026; route B (Android Studio on the owner's computer) is in apps/mobile/README.md.
+#
+# The APK is a debug build with the Expo development launcher and no JavaScript in it: Metro on the
+# owner's computer serves the app, with the owner's own EXPO_PUBLIC_* values. So no client id, API
+# address or fixture address is baked in, and scripts/check-device-apk.sh proves that before upload.
+# The repository is public: anyone signed in to GitHub can download the artifact, so it is kept
+# for 3 days and its SHA-256 goes in the job summary for the owner to check. Not a required check.
+name: Mobile device APK
+
+on:
+  pull_request:
+    branches:
+      - main
+    types: [labeled, synchronize]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mobile-device-apk-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  mobile-device-apk:
+    name: 📲 Mobile device APK (label)
+    if: contains(github.event.pull_request.labels.*.name, 'mobile-device-apk')
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    # No secrets in this job, and no Turbo remote cache.
+    env:
+      TURBO_TOKEN: ""
+      TURBO_TEAM: ""
+
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: ⚙️ Setup Bun and install dependencies
+        uses: ./.github/actions/bun-setup
+
+      - name: ⚙️ Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+
+      - name: ⚙️ Setup Java
+        uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      # Ordinary builds (the e2e APK) leave the development launcher out, so they load straight
+      # from Metro. This build is for a phone: switch the launcher on for this checkout only.
+      - name: 🔧 Include the development launcher
+        working-directory: apps/mobile
+        run: node -e "const f='package.json';const p=JSON.parse(require('fs').readFileSync(f,'utf8'));delete p.expo.autolinking;require('fs').writeFileSync(f,JSON.stringify(p,null,2)+'\n')"
+
+      - name: 📲 Debug APK for arm64 phones (expo prebuild and Gradle)
+        working-directory: apps/mobile
+        env:
+          CI: "1"
+        run: |
+          bunx expo prebuild --platform android --no-install --clean
+          cd android
+          ./gradlew :app:assembleDebug -PreactNativeArchitectures=arm64-v8a --no-daemon
+
+      - name: 🔒 Backup leaves out the secure store
+        run: bun scripts/check-android-backup.ts apps/mobile/android
+
+      - name: 🔎 No JavaScript, client id or fixture value in the APK
+        run: bash scripts/check-device-apk.sh apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk
+
+      - name: 🧾 SHA-256 in the job summary
+        run: |
+          apk=apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          sum=$(sha256sum "$apk" | cut -d' ' -f1)
+          {
+            echo "### Development APK for the owner's phone"
+            echo ""
+            echo "SHA-256 of \`app-debug.apk\`: \`$sum\`"
+            echo ""
+            echo "Steps: apps/mobile/README.md, \"A real sign-in on your Android phone\"."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: 📤 Upload the APK (kept 3 days)
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: flump-dev-apk
+          path: apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 3
+          if-no-files-found: error

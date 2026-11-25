@@ -16,7 +16,8 @@ import { join, resolve } from "node:path";
 /**
  * Strings that only development code contains: the device check screen (route `engine-check`) and
  * the vector catalogue (S1a), and the component gallery (route `gallery`) with the components'
- * named states that only it and the tests import (S1b).
+ * named states that only it and the tests import (S1b), and the sign-in check (route
+ * `sign-in-check`) that answers the S2a spike's questions against real WorkOS (S2a).
  */
 export const DEV_ONLY_MARKERS = [
   "Device check",
@@ -27,6 +28,8 @@ export const DEV_ONLY_MARKERS = [
   "Component gallery",
   "200% text",
   "Plain pressable",
+  "Run the sign-in check",
+  "Refresh token replaced on use",
 ] as const;
 
 /**

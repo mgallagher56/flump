@@ -1,0 +1,28 @@
+# E12 S2a: WorkOS rejects the refresh token on the next launch. The app clears the device and says
+# the sign-in ended; the launch after that shows the sign-in screen.
+appId: app.flump.mobile
+---
+- runScript:
+    file: ../scripts/fixture.js
+    env:
+      SCENARIO: "{}"
+- runFlow: ../subflows/launch-signed-out.yaml
+- runFlow:
+    file: ../subflows/sign-in.yaml
+    env:
+      AFTER: "You are signed in"
+- runScript:
+    file: ../scripts/scenario.js
+    env:
+      SCENARIO: '{"refresh": "rejected"}'
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible: "You have been signed out"
+    timeout: 60000
+- takeScreenshot: session-ended-${THEME}
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible: "Create account"
+    timeout: 60000

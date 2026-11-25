@@ -1,0 +1,25 @@
+# E12 S2a: sign-out clears the device. After a relaunch the sign-in screen shows, so no refresh
+# token was left in the secure store.
+appId: app.flump.mobile
+---
+- runScript:
+    file: ../scripts/fixture.js
+    env:
+      SCENARIO: "{}"
+- runFlow: ../subflows/launch-signed-out.yaml
+- runFlow:
+    file: ../subflows/sign-in.yaml
+    env:
+      AFTER: "You are signed in"
+- tapOn: "Sign out"
+- runFlow: ../subflows/browser-sheet.yaml
+- extendedWaitUntil:
+    visible: "Create account"
+    timeout: 60000
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible: "Create account"
+    timeout: 60000
+- assertNotVisible: "You are signed in"
+- takeScreenshot: signed-out-${THEME}

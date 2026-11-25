@@ -16,8 +16,11 @@ type Verdict = (typeof VERDICTS)[number];
 const STORE_STATUSES = ["duplicate", "cache", "derived", "legacy", "default"] as const;
 /** Statuses of a second code path for a figure (other_paths). */
 const CODE_PATH_STATUSES = ["duplicate", "wrapper", "legacy", "default"] as const;
-/** Where a browser key lives. */
-const BROWSER_STORAGES = ["localStorage", "sessionStorage", "cookie"] as const;
+/**
+ * Where a browser key lives. `secureStore` is the mobile app's expo-secure-store (E12 S2a); the
+ * scanner does not read apps/mobile yet, so those entries are kept by hand until S7.
+ */
+const BROWSER_STORAGES = ["localStorage", "sessionStorage", "cookie", "secureStore"] as const;
 
 /** The engine package: the only home for a shared figure's function (one engine function per figure). */
 const ENGINE_ROOT = "packages/finance-engine/src/";

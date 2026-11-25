@@ -60,12 +60,17 @@ const REGISTRY = "apps/backend/src/modules/privacy/user-data-registry.ts";
 const FINDINGS = "docs/audit/system-2026-11/FINDINGS.md";
 const baselinePath = resolve(import.meta.dir, "value-map-baseline.json");
 
-/** Where browser storage keys are written: the web app, the shared UI, the marketing site and the engine's storage driver. */
+/**
+ * Where browser storage keys are written: the web app, the shared UI, the marketing site, the
+ * engine's storage driver, and the mobile app's sign-in (its one secure store key, E12 S2a). The
+ * rest of apps/mobile joins with the offline cache (S7).
+ */
 const STORAGE_ROOTS = [
   "apps/web/app",
   "packages/ui/src",
   "apps/marketing/src",
   "packages/finance-engine/src",
+  "apps/mobile/src/auth",
 ];
 /** Where a second formula would be: web pages, backend services and the AI tools. */
 const FORMULA_ROOTS = ["apps/web/app", "apps/backend/src", "packages/mcp/src", ...MOBILE_SCAN_DIRS];

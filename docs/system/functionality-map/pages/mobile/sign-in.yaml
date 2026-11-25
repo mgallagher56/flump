@@ -1,0 +1,21 @@
+id: sign-in
+app: mobile
+route: /
+title: Flump
+auth: public
+purpose: First screen of the Expo app (E12 S2a). Signed out, it shows the name, the tagline, Sign in and Create account (WorkOS AuthKit in the system browser sheet, PKCE) and the privacy and terms links. After sign-in it checks the account with GET /v1/user-profile and shows the signed-in placeholder, Not invited, the session-ended screen or the offline screen.
+route_file: apps/mobile/app/index.tsx
+
+sections:
+  - id: gate
+    component: apps/mobile/src/screens/SessionGate/SessionGate.tsx
+  - id: sign-in
+    component: apps/mobile/src/screens/SignIn/SignIn.tsx
+  - id: signed-in
+    component: apps/mobile/src/screens/Home/Home.tsx
+  - id: not-invited
+    component: apps/mobile/src/screens/NotInvited/NotInvited.tsx
+  - id: session-ended
+    component: apps/mobile/src/screens/SessionEnded/SessionEnded.tsx
+  - id: offline
+    component: apps/mobile/src/screens/Offline/Offline.tsx

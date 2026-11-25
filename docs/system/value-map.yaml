@@ -2968,3 +2968,10 @@ browser_storage:
       path: apps/web/app/utils/sessionPolicy.server.ts,
       note: "the sealed sign-in session in development, and the old production name that is cleared",
     }
+  - {
+      key: flump.auth.refresh-token,
+      storage: secureStore,
+      user_data: false,
+      path: apps/mobile/src/auth/tokenStore.ts,
+      note: "mobile app (E12 S2a): the WorkOS refresh token, the only value the app stores; iOS Keychain when unlocked, this device only, Android Keystore-encrypted and left out of Auto Backup; deleted on sign-out, a rejected refresh and a refused fresh token; kept by hand, as the scanner does not read apps/mobile until S7",
+    }

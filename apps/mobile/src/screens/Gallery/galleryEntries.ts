@@ -5,6 +5,8 @@ import { Card } from "../../components/Card";
 import { cardStates } from "../../components/Card/Card.states";
 import { FlumpLogo } from "../../components/FlumpLogo";
 import { flumpLogoStates } from "../../components/FlumpLogo/FlumpLogo.states";
+import { InlineAlert } from "../../components/InlineAlert";
+import { inlineAlertStates } from "../../components/InlineAlert/InlineAlert.states";
 import { Pressable } from "../../components/Pressable";
 import { pressableStates } from "../../components/Pressable/Pressable.states";
 import { Screen } from "../../components/Screen";
@@ -44,4 +46,5 @@ export const GALLERY: readonly GalleryEntry[] = [
   entry("Card", Card, cardStates),
   entry("Screen", Screen, screenStates),
   entry("FlumpLogo", FlumpLogo, flumpLogoStates),
+  entry("InlineAlert", InlineAlert, inlineAlertStates),
 ];

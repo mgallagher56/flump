@@ -543,7 +543,7 @@ jobs:
           fi
           changed=$(git diff --name-only "origin/$BASE_REF...HEAD")
           if printf '%s\n' "$changed" \
-            | grep -E '^apps/mobile/|^packages/(finance-engine|format|tokens|api-contract|api-client|typescript-config)/|^scripts/(check-mobile-bundle|run-expo-doctor)\.ts$|^package\.json$|^biome\.json$|^bun\.lock$|^bunfig\.toml$|^turbo\.json$|^\.node-version$|^\.github/(workflows/ci-pipeline\.yml|actions/)'; then
+            | grep -E '^apps/mobile/|^packages/(finance-engine|format|tokens|api-contract|api-client|business-details|typescript-config)/|^scripts/(check-mobile-bundle|run-expo-doctor)\.ts$|^package\.json$|^biome\.json$|^bun\.lock$|^bunfig\.toml$|^turbo\.json$|^\.node-version$|^\.github/(workflows/ci-pipeline\.yml|actions/)'; then
             echo "run=true" >> "$GITHUB_OUTPUT"
           else
             echo "run=false" >> "$GITHUB_OUTPUT"
@@ -628,7 +628,7 @@ jobs:
           fi
           changed=$(git diff --name-only "origin/$BASE_REF...HEAD")
           if printf '%s\n' "$changed" \
-            | grep -E '^apps/mobile/|^packages/(finance-engine|format|tokens|api-contract|api-client|typescript-config)/|^package\.json$|^bun\.lock$|^bunfig\.toml$|^turbo\.json$|^\.node-version$|^\.github/(workflows/ci-pipeline\.yml|actions/)'; then
+            | grep -E '^apps/mobile/|^packages/(finance-engine|format|tokens|api-contract|api-client|business-details|typescript-config)/|^scripts/check-android-backup\.ts$|^package\.json$|^bun\.lock$|^bunfig\.toml$|^turbo\.json$|^\.node-version$|^\.github/(workflows/ci-pipeline\.yml|actions/)'; then
             echo "run=true" >> "$GITHUB_OUTPUT"
           else
             echo "run=false" >> "$GITHUB_OUTPUT"
@@ -679,11 +679,20 @@ jobs:
           cd android
           ./gradlew :app:assembleDebug -PreactNativeArchitectures=x86_64 --no-daemon
 
+      # Storage design (E12 S2a): Auto Backup and device transfer must leave out the secure store.
+      - name: 🔒 Backup leaves out the secure store
+        if: steps.changed.outputs.run == 'true'
+        run: bun scripts/check-android-backup.ts apps/mobile/android
+
       - name: 🧪 Start the fixture server and Metro
         if: steps.changed.outputs.run == 'true'
         env:
           CI: "1"
+          # The fixture server's own made-up values (E12 S2a); no real WorkOS id or address.
           EXPO_PUBLIC_API_URL: http://10.0.2.2:8787
+          EXPO_PUBLIC_WORKOS_API_URL: http://10.0.2.2:8787
+          EXPO_PUBLIC_WORKOS_CLIENT_ID: client_e2e_fixture
+          EXPO_PUBLIC_MARKETING_URL: https://flump.example
         run: |
           mkdir -p "$RUNNER_TEMP/e2e-logs"
           nohup bun apps/mobile/e2e/fixture-server/main.ts > "$RUNNER_TEMP/e2e-logs/fixture-server.log" 2>&1 &

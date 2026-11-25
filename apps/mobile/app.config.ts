@@ -22,7 +22,10 @@ const config: ExpoConfig = {
   },
   // Over-the-air updates come with a later slice (plan section 4.9); off until then.
   updates: { enabled: false },
-  plugins: ["expo-router"],
+  // expo-secure-store's plugin points Android Auto Backup and device transfer at rules that leave
+  // out the secure store (the refresh token). scripts/check-android-backup.ts checks the prebuild
+  // output in CI. Face ID is not used.
+  plugins: ["expo-router", ["expo-secure-store", { configureAndroidBackup: true }]],
   experiments: {
     typedRoutes: true,
   },

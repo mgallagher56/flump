@@ -1,0 +1,15 @@
+# E12 S2a: WorkOS sends the browser back with access_denied. The app stays on the sign-in screen
+# and says what happened and what to do next.
+appId: app.flump.mobile
+---
+- runScript:
+    file: ../scripts/fixture.js
+    env:
+      SCENARIO: '{"signIn": "denied"}'
+- runFlow: ../subflows/launch-signed-out.yaml
+- runFlow:
+    file: ../subflows/sign-in.yaml
+    env:
+      AFTER: "Sign-in was refused.*"
+- assertVisible: "Create account"
+- takeScreenshot: sign-in-denied-${THEME}
