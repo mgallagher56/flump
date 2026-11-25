@@ -73,7 +73,13 @@ If your change alters behaviour that the model describes, update the matching ac
 
 ## Coverage record
 
-Sync commit: `07b65a7ad96ccadfbfd8410d64a695796acbe7e1`. At that commit, the model was confirmed to describe this code:
+Sync commit: the commit on `main` titled `fix(mobile): S2c flow takes THEME from the runner; a default in the flow overrode -e`. Find it with:
+
+```bash
+sync=$(git log -1 --format=%H --fixed-strings --grep="fix(mobile): S2c flow takes THEME from the runner; a default in the flow overrode -e")
+```
+
+Name the sync commit by its title, not its hash: PRs are rebase-merged, which gives every commit a new hash on `main` (`bun scripts/check-skill-sync-commits.ts`, in `check:laws`, fails on a hash). At that commit, the model was confirmed to describe this code:
 
 | Model action                                             | Code                                                                                                                                                                                                                                                                                                                                                      |
 | -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -90,7 +96,7 @@ Sync commit: `07b65a7ad96ccadfbfd8410d64a695796acbe7e1`. At that commit, the mod
 Check whether the verification needs another look with this command. It lists every covered file, including the two `/mcp` writers in `apps/backend/src/modules/agent/` and the exemption law:
 
 ```bash
-git log --oneline 07b65a7ad96ccadfbfd8410d64a695796acbe7e1..HEAD -- apps/backend/src/modules/privacy/account-deletion.service.ts apps/backend/src/modules/privacy/user-data-registry.ts apps/backend/src/modules/privacy/user-data-lock.ts apps/backend/src/modules/privacy/user-data-write-fence.ts apps/backend/src/auth/auth.guard.ts apps/backend/src/modules/profile/user-profile.service.ts apps/backend/src/modules/agent/mcp-imports.adapter.ts apps/backend/src/modules/agent/mcp.service.ts scripts/backend-laws/check-write-fence-exemptions.ts
+git log --oneline "$sync"..HEAD -- apps/backend/src/modules/privacy/account-deletion.service.ts apps/backend/src/modules/privacy/user-data-registry.ts apps/backend/src/modules/privacy/user-data-lock.ts apps/backend/src/modules/privacy/user-data-write-fence.ts apps/backend/src/auth/auth.guard.ts apps/backend/src/modules/profile/user-profile.service.ts apps/backend/src/modules/agent/mcp-imports.adapter.ts apps/backend/src/modules/agent/mcp.service.ts scripts/backend-laws/check-write-fence-exemptions.ts
 ```
 
 Move the sync commit forward only after you have read those changes and confirmed that the model still describes the code at the new commit, even if the check passes.
