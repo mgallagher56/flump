@@ -499,7 +499,7 @@ The detail goes behind the info tip, not in the description: "savings" means the
 
 ### 25 November 2026: the light logo is teal
 
-Decider: the owner, who reported the light logo as black. The Midnight and Mint mock-ups draw the light logo as a charcoal dot, and #901 followed them by painting the mark with the charcoal button fill. By the owner's request the light mark is teal (`#084f45`, lit from above by `#0b6b5d`); dark stays mint (`#6fd0ba`, lit by `#9be3d2`). The mark has its own tokens, `primary.mark` and `primary.markLit`, so restyling the buttons never recolours the logo. Each clears 3:1 on the canvas, card and overlay in both themes (5.8:1 or more in light). **Enforced by** `tokens.a11y.test.ts` (teal or mint hue, never a neutral; 3:1), `FlumpLogo.test.tsx` and the FlumpLogo stories' play check.
+Decider: the owner, who reported the light logo as black. The Midnight and Mint mock-ups draw the light logo as a charcoal dot, and #901 followed them by painting the mark with the charcoal button fill. By the owner's request the light mark is teal (`#084f45`, lit from above by `#0b6b5d`); dark stays mint (`#6fd0ba`, lit by `#9be3d2`). The mark has its own tokens, `primary.mark` and `primary.markLit`, so restyling the buttons never recolours the logo. The favicon tile follows the same colours (owner, same day), pinned by `chrome-parity.laws.test.ts`. Each clears 3:1 on the canvas, card and overlay in both themes (5.8:1 or more in light). **Enforced by** `tokens.a11y.test.ts` (teal or mint hue, never a neutral; 3:1), `FlumpLogo.test.tsx` and the FlumpLogo stories' play check.
 
 ### 24 November 2026: Midnight and Mint replace Direction C
 

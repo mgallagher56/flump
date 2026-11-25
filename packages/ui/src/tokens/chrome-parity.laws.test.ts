@@ -1,6 +1,7 @@
 // @vitest-environment node
 import fs from "node:fs";
 import path from "node:path";
+import { colors, semanticTokens } from "@flump/tokens";
 import { describe, expect, it } from "vitest";
 import { NAV_BREAKPOINT, navConditions } from "./breakpoints";
 
@@ -164,6 +165,21 @@ describe("Shared chrome law (marketing and web)", () => {
       expect(fs.existsSync(path.join(REPO, "apps/web/public/favicon.ico"))).toBe(false);
       expect(read("apps/web/app/root.tsx")).toContain('href: "/favicon.svg"');
       expect(read("apps/marketing/index.html")).toContain('href="/favicon.svg"');
+    });
+
+    // Owner, 25 Nov 2026: "make the favicon teal to match". A static SVG cannot read tokens, so
+    // the tile's fills are pinned to the logo mark's resolved values: teal in light, mint in dark.
+    it("the favicon tile is the logo mark colour in each theme", () => {
+      const resolve = (ref: string) => {
+        const [, group, step] = /^\{colors\.(\w+)\.(\w+)\}$/.exec(ref) ?? [];
+        return (colors as Record<string, Record<string, { value: string }>>)[group][step].value;
+      };
+      const mark = semanticTokens.colors.primary.mark.value;
+      const svg = read("apps/web/public/favicon.svg").toLowerCase();
+      const [light, dark] = [...svg.matchAll(/\.b\{fill:(#[0-9a-f]{6})\}/g)].map((m) => m[1]);
+      expect(light, "light tile").toBe(resolve(mark.base).toLowerCase());
+      expect(svg, "dark variant").toContain("@media (prefers-color-scheme:dark)");
+      expect(dark, "dark tile").toBe(resolve(mark._dark).toLowerCase());
     });
   });
 
