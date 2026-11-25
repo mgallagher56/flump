@@ -371,7 +371,7 @@ export function contractBody(method: string, path: string): unknown {
 const termsPairFixture = { termsVersion: "0.1", privacyNoticeVersion: "0.2" };
 
 /** GET /user-profile/terms-acceptance for someone who has not agreed yet. */
-export const termsStatusFixture = {
+const termsStatusFixture = {
   required: true,
   agreed: false,
   firstTime: true,

@@ -153,13 +153,30 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       });
 
       const deadline = Date.now() + 60_000;
+      const auth = { Authorization: `Bearer ${DEV_TOKEN}` };
       while (Date.now() < deadline) {
         try {
-          const res = await fetch(`${baseUrl}/v1/accounts`, {
-            headers: { Authorization: `Bearer ${DEV_TOKEN}` },
-          });
-          if (res.ok) break;
-        } catch {
+          // Ready once the terms status answers. The dev user then agrees to the terms, as the
+          // acceptance page does: every other route answers 403 terms_not_accepted until then.
+          const res = await fetch(`${baseUrl}/v1/user-profile/terms-acceptance`, { headers: auth });
+          if (res.ok) {
+            const status = (await res.json()) as {
+              terms: { version: string };
+              privacyNotice: { version: string };
+            };
+            const agreed = await fetch(`${baseUrl}/v1/user-profile/terms-acceptance`, {
+              method: "POST",
+              headers: { ...auth, "Content-Type": "application/json" },
+              body: JSON.stringify({
+                termsVersion: status.terms.version,
+                privacyNoticeVersion: status.privacyNotice.version,
+              }),
+            });
+            if (!agreed.ok) throw new Error(`agreeing to the terms failed: ${agreed.status}`);
+            break;
+          }
+        } catch (error) {
+          if (error instanceof Error && error.message.startsWith("agreeing")) throw error;
           // Not listening yet.
         }
         if (backend.exitCode !== null) throw new Error(`backend exited early:\n${backendLog}`);
