@@ -6,15 +6,15 @@
 import { join } from "node:path";
 import { chromium } from "@playwright/test";
 import { applyPersona, PERSONAS, type PersonaName } from "../../../../apps/e2e/support/personas";
+import { requireEnv } from "./env.ts";
 
 const persona = (process.argv[2] ?? "homeowner") as PersonaName;
 if (!(persona in PERSONAS)) {
   console.error(`unknown persona ${persona}; one of: ${Object.keys(PERSONAS).join(", ")}`);
   process.exit(2);
 }
-const webUrl = process.env.VERIFY_WEB_URL;
-const stateDir = process.env.VERIFY_STATE_DIR;
-if (!webUrl || !stateDir) throw new Error("run through verify-flump up or verify-flump seed");
+const webUrl = requireEnv("VERIFY_WEB_URL");
+const stateDir = requireEnv("VERIFY_STATE_DIR");
 
 const browser = await chromium.launch();
 try {
