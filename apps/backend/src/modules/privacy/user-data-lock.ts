@@ -33,8 +33,9 @@ const fenceContext = new AsyncLocalStorage<FenceContext>();
 
 /**
  * Runs `fn` as part of a signed-in request of `userId`: its transactions take the write fence.
- * `waitForLock` is for a write that must not be dropped while the user's reset runs (the /mcp audit
- * row): it waits for the lock, holding its connection meanwhile, instead of getting a 503.
+ * `waitForLock` is for a write that should survive a short reset of the user's data (the /mcp audit
+ * row): it waits for the lock, up to the pool's 5 s lock_timeout and holding its connection
+ * meanwhile, instead of getting a 503.
  */
 export function runAsUserRequest<T>(
   userId: string,
