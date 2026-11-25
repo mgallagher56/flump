@@ -110,6 +110,12 @@ await journey("invoicing", async ({ page, step, save }) => {
   await step("note Self Assessment's income outside PAYE before the sync", async () => {
     await open(page, "/app/self-assessment");
     await expect(page.getByRole("heading", { level: 1, name: "Self Assessment" })).toBeVisible();
+    // Wait for the page to settle on the figure or on the empty state (a fresh selfemployed run
+    // has no tax records yet), so an absent strip reads as 0 only when it really is.
+    const empty = page.getByRole("region", {
+      name: "Add income outside PAYE to see an estimated tax bill",
+    });
+    await expect(outsidePaye.or(empty)).toBeVisible();
     before = await readOutsidePaye();
     expect(before).not.toBeNaN();
   });
