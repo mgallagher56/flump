@@ -43,7 +43,7 @@ Teardown is `V down` (see Cleanup).
 V doctor [run-id]
 ```
 
-Read-only. Checks: the run's Postgres container is running; each recorded server PID is the process listening on its port (so you are not driving someone else's server); backend `/health/ready` and web `/healthz` return 200; a request with the dev session cookie reaches the dashboard without a redirect; the seeded browser session exists; and the build matches the checkout (same commit and same uncommitted changes under `apps/` and `packages/`). Exit code 0 only when every line says `ok`. A `FAIL build is stale` line means your change is not in the running build: `V down`, then `V up`. Run doctor first whenever anything looks off.
+Read-only. Checks: the run's Postgres container is running; each recorded server PID is the process listening on its port (so you are not driving someone else's server); backend `/health/ready` and web `/healthz` return 200; a request with the dev session cookie reaches the dashboard without a redirect, or on a `--no-seed` run (no finished setup, or not invited) is accepted with no redirect to the marketing site and no 5xx; the seeded browser session exists; and the build matches the checkout (same commit and same uncommitted changes under `apps/` and `packages/`). Exit code 0 only when every line says `ok`. A `FAIL build is stale` line means your change is not in the running build: `V down`, then `V up`. Run doctor first whenever anything looks off.
 
 ## Drive
 
@@ -85,7 +85,7 @@ Rules that cost a run when ignored:
 
 - Wait for hydration (`open` or `hydrated`) before clicking script-driven controls: clicks before it are lost.
 - `api()` only reaches paths on the proxy's allow-list (`API_ALLOW_LIST` in `apps/web/app/services/api-proxy.server.ts`). Tax records, the retirement plan and imports are not on it: prove those through a second page view instead.
-- The run has one user. Journeys change its saved data. To get back to the persona's state, run `V seed <persona>`. That resets the user's financial data first, and the backend allows 10 resets an hour per user. If a seed fails with 429, `V down` and `V up` for a fresh database. Writes are rate limited too: after a few journeys and seeds in quick succession, seeding returns 429 on every write. To run many journeys, give each persona its own run (`V up --skip-build --persona <name>`) instead of reseeding one run again and again.
+- The run has one user. Journeys change its saved data. To get back to the persona's state, run `V seed <persona>`. That resets the user's financial data first, and the backend allows 10 resets an hour per user. If a seed fails with 429, `V down` and `V up` for a fresh database. Writes are rate limited too: after a few journeys and seeds in quick succession, seeding returns 429 on every write. To run many journeys, give each persona its own run (`V up --skip-build --persona <name>`) instead of reseeding one run again and again. In practice, two reseeds and seven journeys on one run used up the allowance in about two minutes. A seed that fails part way leaves the user reset but not set up, so doctor fails its dashboard line and every later journey on that run fails: `V down` it rather than driving on.
 - Never call backend endpoints directly to set up state for a journey you are proving; drive the UI. `V seed` is the only setup shortcut, and only for the baseline.
 
 ## Evidence

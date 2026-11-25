@@ -24,7 +24,7 @@ Preconditions:
 - **Record a balance.** In `getByRole("dialog", { name: "Monthly check-in" })` (it names the current month), fill textbox `New balance in pounds, Current account` with `3,600` and press Enter. `Updated £3,600` shows.
 - **Close.** Press Escape. The dialog closes and heading level 1 `Net worth history` shows.
 - **History.** Text matching `/^(Net worth recorded for |Up £|Down £|No change since )/` shows, and `api("/accounts")` has `Current account` at 3600. Reload `/app/accounts/history`: `getByTestId("snapshot-history")` names the current month.
-- **Part done.** Back on `/`, the card still shows (one row saved does not finish the check-in) and its link should read `Continue check-in` (Rule B17).
+- **Part done.** Back on `/`, the card still shows (one row saved does not finish the check-in) and its link reads `Continue check-in` (Rule B17): one step holds a figure and at least one is still empty.
 
 ## Gotchas
 

@@ -1,6 +1,6 @@
 # Main pages at phone width
 
-At phone width the signed-in app swaps the header navigation for a bottom bar (Home, Accounts, Budget, Pay, More pages) and a drawer for the other pages. Each main page fits the screen without sideways scrolling, shows its h1, and the bottom bar or the drawer marks the page the user is on.
+At phone width the signed-in app adds a bottom bar (Home, Accounts, Budget, Pay, More pages) and a drawer for the other pages; the header keeps its `Open navigation menu` button. Each main page fits the screen without sideways scrolling, shows its h1, and the bottom bar or the drawer marks the page the user is on.
 
 ## Sub-features
 

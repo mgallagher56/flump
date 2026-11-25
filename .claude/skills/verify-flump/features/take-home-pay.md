@@ -27,7 +27,7 @@ Preconditions:
 
 ## Gotchas
 
-- The tax and NI card is Income Tax and NI each rounded to the pound, then added, so it can differ by £1 from the rounded total.
+- Each card is rounded to the pound and any rounding gap goes into the largest card, so the three cards add up exactly to the hero (4,833 − 995 − 387 = 3,451).
 - The hero is always labelled `Unverified estimate`, whatever the tax year; that is intended, not a year-verification notice.
 - Figures follow the tax year on the machine's date; re-work any pinned figure by hand when the year changes.
 - Type into slider pills by clicking, selecting all and typing; `fill()` appends.
