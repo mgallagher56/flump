@@ -6,6 +6,7 @@
  */
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { baselineRaises } from "./lib/baseline-vs-main";
 import { compareToBaseline } from "./lib/design-tokens";
 import { countLocalDateReads, LONDON_DATE_HOME } from "./lib/london-dates";
 import { collectFiles, MOBILE_SCAN_DIRS, readSource, repoRoot, SCAN_DIRS } from "./lib/scan";
@@ -36,11 +37,18 @@ const baseline: Record<string, number> = existsSync(baselinePath)
   ? JSON.parse(readFileSync(baselinePath, "utf8"))
   : {};
 const { failures, stale } = compareToBaseline(counts, baseline);
+// The baseline itself may only shrink: an allowance new or higher than on main fails.
+const vsMain = baselineRaises("scripts/london-dates-baseline.json", baseline);
+if (vsMain.skipped) console.log(`Baseline comparison with main skipped: ${vsMain.skipped}`);
+for (const r of vsMain.raises)
+  console.error(
+    `scripts/london-dates-baseline.json raises ${r}. Baselines may only shrink; read UK dates with getUkCalendarDate instead (a raise needs the coordinator's sign-off, AGENTS.md section 15).`,
+  );
 for (const f of failures)
   console.error(
     `FAIL ${f.replace("violation(s)", "local-clock date read(s)")}: read UK dates with getUkCalendarDate from @repo/finance-engine (${LONDON_DATE_HOME}), or londonMonth in apps/web/app/utils/londonMonth.ts, never getMonth/getFullYear/getDate, toISOString().slice, toLocaleDateString without timeZone, or a new Europe/London formatter.`,
   );
 for (const s of stale)
   console.log(`IMPROVED ${s} (lock it in: bun scripts/check-london-dates.ts --write-baseline)`);
-if (failures.length) process.exit(1);
+if (failures.length || vsMain.raises.length) process.exit(1);
 console.log("check-london-dates: OK");
