@@ -5,7 +5,7 @@ The Take-home pay page works out monthly take-home pay from the saved salary, pe
 ## Sub-features
 
 - `thp-hero` the "Monthly take-home pay" hero, labelled as an estimate.
-- `thp-strip` monthly pay before tax, less tax and National Insurance, less pension (or student loan), equals the hero to within £2.
+- `thp-strip` monthly pay before tax, less tax and National Insurance, less pension (or student loan), equals the hero (exactly for the homeowner; the journey allows £2, see Gotchas).
 - `thp-pay-rise` the "A pay rise" what-if shows the change in take-home pay a month.
 - `thp-shared` the same take-home figure shows on Mortgage estimates.
 
@@ -27,7 +27,7 @@ Preconditions:
 
 ## Gotchas
 
-- Each card is rounded to the pound and any rounding gap goes into the largest card, so the three cards add up exactly to the hero (4,833 − 995 − 387 = 3,451).
+- Each part is rounded to the pound. A rounding gap of up to £3 goes into the largest deduction (Income Tax, inside the tax and NI card), so the strip normally adds up exactly to the hero (4,833 − 995 − 387 = 3,451); a larger gap is left as it is.
 - The hero is always labelled `Unverified estimate`, whatever the tax year; that is intended, not a year-verification notice.
 - Figures follow the tax year on the machine's date; re-work any pinned figure by hand when the year changes.
 - Type into slider pills by clicking, selecting all and typing; `fill()` appends.
