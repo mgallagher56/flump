@@ -13,10 +13,14 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
 const SCRIPT = resolve(import.meta.dir, "clean-test-dbs.sh");
+const BASH = Bun.which("bash") ?? "/bin/bash";
+// The script and the fake need only these. PATH holds nothing else, so a real `docker` (on Linux
+// runners it sits in /usr/bin) can never be reached, even in the test that removes the fake.
+const TOOLS = ["sed", "cat"];
 
 // A fake `docker` on PATH: it records every call and answers `ps` and `volume ls` from fixture
 // files, ignoring the filters. So the script's own label checks are what keep it safe here.
-const FAKE_DOCKER = `#!/usr/bin/env bash
+const FAKE_DOCKER = `#!${BASH}
 printf '%s\\n' "$*" >> "$FAKE_LOG"
 case "$1" in
   info) exit "\${FAKE_INFO_EXIT:-0}" ;;
@@ -38,10 +42,10 @@ function setup(containers: Row[], volumes: [name: string, purpose: string, workt
 }
 
 function run(args: string[], env: Record<string, string> = {}) {
-  const proc = Bun.spawnSync(["bash", SCRIPT, ...args], {
+  const proc = Bun.spawnSync([BASH, SCRIPT, ...args], {
     env: {
       ...process.env,
-      PATH: `${join(dir, "bin")}:/usr/bin:/bin`,
+      PATH: `${join(dir, "bin")}:${join(dir, "tools")}`,
       FAKE_LOG: join(dir, "log"),
       FAKE_PS: join(dir, "ps"),
       FAKE_VOLUMES: join(dir, "volumes"),
@@ -70,6 +74,12 @@ beforeEach(() => {
   // Labels hold the resolved path (git rev-parse --show-toplevel), so the fixtures do too.
   dir = realpathSync(mkdtempSync(join(tmpdir(), "clean-test-dbs-")));
   mkdirSync(join(dir, "bin"));
+  mkdirSync(join(dir, "tools"));
+  for (const tool of TOOLS) {
+    const path = Bun.which(tool);
+    if (!path) throw new Error(`${tool} not found`);
+    symlinkSync(path, join(dir, "tools", tool));
+  }
   writeFileSync(join(dir, "bin", "docker"), FAKE_DOCKER);
   chmodSync(join(dir, "bin", "docker"), 0o755);
   live = join(dir, "worktrees", "live-lane");
