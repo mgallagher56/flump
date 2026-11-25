@@ -1,7 +1,7 @@
-import { Banner } from "@repo/ui";
+import { Button } from "@repo/ui";
 import { type FC, useState } from "react";
 import { longDate, TERMS_ACCEPTANCE_PATH } from "~/features/legal/terms";
-import { noticeLink } from "./TermsChangeNotice.styles";
+import { noticeLink, noticeRow, noticeText } from "./TermsChangeNotice.styles";
 
 export interface TermsChangeNoticeProps {
   /** Which pages change. */
@@ -25,23 +25,28 @@ function sentence({
 /**
  * A coming change to the terms or the privacy notice (terms acceptance): the version is published
  * but not yet in force, so the person can read it and agree early, or hide this until their next
- * visit. Nothing is stored when it is hidden.
+ * visit. Nothing is stored when it is hidden. A quiet line below the page content, not an alert:
+ * nothing needs doing yet (UX-GUIDELINES E8, E9), and it never adds a second notice above the h1.
  */
 export const TermsChangeNotice: FC<TermsChangeNoticeProps> = (props) => {
   const [hidden, setHidden] = useState(false);
   if (hidden) return null;
   const href = `${TERMS_ACCEPTANCE_PATH}?next=${encodeURIComponent(props.next)}`;
   return (
-    <Banner
-      tone="info"
+    <section
+      aria-label="Coming change to our terms"
+      className={noticeRow()}
       data-testid="terms-change-notice"
-      onDismiss={() => setHidden(true)}
-      dismissLabel="Hide"
     >
-      {sentence(props)} {longDate(props.effectiveFrom)}.{" "}
-      <a className={noticeLink()} href={href}>
-        Read the changes
-      </a>
-    </Banner>
+      <p className={noticeText()}>
+        {sentence(props)} {longDate(props.effectiveFrom)}.{" "}
+        <a className={noticeLink()} href={href}>
+          Read the changes
+        </a>
+      </p>
+      <Button type="button" variant="ghost" size="sm" onClick={() => setHidden(true)}>
+        Hide this notice
+      </Button>
+    </section>
   );
 };

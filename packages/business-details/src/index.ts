@@ -137,6 +137,17 @@ export function legalPage(key: LegalPageKey): LegalPage {
   return page;
 }
 
+/** A page from a list of pages (`LEGAL_PAGES`, or a test's own list with other versions). */
+export function pageIn(pages: readonly LegalPage[], key: LegalPageKey): LegalPage {
+  const page = pages.find((candidate) => candidate.key === key);
+  if (!page) throw new Error(`Unknown legal page: ${key}`);
+  return page;
+}
+
+/** Builds a page entry from its history (tests use it for versions not yet published). */
+export const legalPageFromHistory = (fields: Omit<LegalPage, "version" | "updated">): LegalPage =>
+  withVersion(fields);
+
 /** The pages a person agrees to or is shown before using Flump (terms acceptance). */
 export type AcceptanceDocument = "terms" | "privacy";
 
@@ -154,9 +165,13 @@ export function ukDate(now: Date): string {
  * The version of a page that applies on this date: the newest whose `effectiveFrom` has come.
  * Throws when none has, which would mean a page with no version in force.
  */
-export function versionInEffect(key: AcceptanceDocument, now: Date): LegalPageVersion {
+export function versionInEffect(
+  key: AcceptanceDocument,
+  now: Date,
+  pages: readonly LegalPage[] = LEGAL_PAGES,
+): LegalPageVersion {
   const today = ukDate(now);
-  const found = legalPage(key).history.find((entry) => entry.effectiveFrom <= today);
+  const found = pageIn(pages, key).history.find((entry) => entry.effectiveFrom <= today);
   if (!found) throw new Error(`No version of ${key} is in effect on ${today}`);
   return found;
 }
@@ -165,9 +180,13 @@ export function versionInEffect(key: AcceptanceDocument, now: Date): LegalPageVe
  * Versions that satisfy the one in effect: it and every newer one (an early agreement to a version
  * not yet in force counts). Newest first.
  */
-export function versionsAtLeastInEffect(key: AcceptanceDocument, now: Date): string[] {
-  const history = legalPage(key).history;
-  const inEffect = versionInEffect(key, now);
+export function versionsAtLeastInEffect(
+  key: AcceptanceDocument,
+  now: Date,
+  pages: readonly LegalPage[] = LEGAL_PAGES,
+): string[] {
+  const history = pageIn(pages, key).history;
+  const inEffect = versionInEffect(key, now, pages);
   return history.slice(0, history.indexOf(inEffect) + 1).map((entry) => entry.version);
 }
 
@@ -250,9 +269,12 @@ export function assertLaunchReady(env: Env, details: BusinessDetails = BUSINESS_
  * True when the terms or the privacy notice has a version published but not yet in effect, so the
  * apps can offer it early without asking the backend on every page while nothing is coming.
  */
-export function hasUpcomingAcceptanceChange(now: Date): boolean {
+export function hasUpcomingAcceptanceChange(
+  now: Date,
+  pages: readonly LegalPage[] = LEGAL_PAGES,
+): boolean {
   const today = ukDate(now);
   return (["terms", "privacy"] as const).some(
-    (key) => (legalPage(key).history[0]?.effectiveFrom ?? today) > today,
+    (key) => (pageIn(pages, key).history[0]?.effectiveFrom ?? today) > today,
   );
 }

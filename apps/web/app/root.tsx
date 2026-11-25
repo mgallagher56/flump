@@ -310,13 +310,14 @@ export default function App() {
         <ThemeContext.Provider value={{ theme, preference, setPreference, toggleTheme }}>
           <ResponsiveProvider serverIsMobile={isMobileClient}>
             <AppShell focused={focused} user={user}>
+              <RouteOutlet />
+              {/* Below the page, never above its h1 (UX-GUIDELINES E8). */}
               {termsUpcoming && !focused ? (
                 <TermsChangeNotice
                   {...termsUpcoming}
                   next={`${location.pathname}${location.search}`}
                 />
               ) : null}
-              <RouteOutlet />
             </AppShell>
           </ResponsiveProvider>
         </ThemeContext.Provider>

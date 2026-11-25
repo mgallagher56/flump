@@ -1,7 +1,9 @@
 import type { LegalDocumentStatus, TermsStatusResponse } from "@flump/api-contract";
 import {
   type AcceptanceDocument,
-  legalPage,
+  LEGAL_PAGES,
+  type LegalPage,
+  pageIn,
   versionInEffect,
   versionsAtLeastInEffect,
 } from "@flump/business-details";
@@ -17,10 +19,13 @@ const CACHE_LIMIT = 10_000;
 export const AGREED_CACHE_MS = 30_000;
 
 /** The newest version of each page: what the person is shown and what an agreement records. */
-export function newestPair(): { termsVersion: string; privacyNoticeVersion: string } {
+export function newestPair(pages: readonly LegalPage[] = LEGAL_PAGES): {
+  termsVersion: string;
+  privacyNoticeVersion: string;
+} {
   return {
-    termsVersion: legalPage("terms").version,
-    privacyNoticeVersion: legalPage("privacy").version,
+    termsVersion: pageIn(pages, "terms").version,
+    privacyNoticeVersion: pageIn(pages, "privacy").version,
   };
 }
 
@@ -41,6 +46,8 @@ export function newestPair(): { termsVersion: string; privacyNoticeVersion: stri
 export class TermsAcceptanceService implements TermsAcceptanceCheck {
   /** Positive results only, keyed by user and the pair in force, with when each stops counting. */
   private readonly agreed = new Map<string, number>();
+  /** The legal pages and their versions. A test may set another list (a version coming up). */
+  pages: readonly LegalPage[] = LEGAL_PAGES;
 
   constructor(
     @InjectRepository(TermsAcceptance)
@@ -48,8 +55,8 @@ export class TermsAcceptanceService implements TermsAcceptanceCheck {
   ) {}
 
   async hasAgreedToTermsInForce(userId: string, now: Date = new Date()): Promise<boolean> {
-    const terms = versionInEffect("terms", now).version;
-    const privacy = versionInEffect("privacy", now).version;
+    const terms = versionInEffect("terms", now, this.pages).version;
+    const privacy = versionInEffect("privacy", now, this.pages).version;
     const key = `${userId}\u0000${terms}\u0000${privacy}`;
     const until = this.agreed.get(key);
     if (until !== undefined && until > now.getTime()) return true;
@@ -58,8 +65,8 @@ export class TermsAcceptanceService implements TermsAcceptanceCheck {
     const count = await this.repository.count({
       where: {
         userId,
-        termsVersionAgreed: In(versionsAtLeastInEffect("terms", now)),
-        privacyNoticeVersionShown: In(versionsAtLeastInEffect("privacy", now)),
+        termsVersionAgreed: In(versionsAtLeastInEffect("terms", now, this.pages)),
+        privacyNoticeVersionShown: In(versionsAtLeastInEffect("privacy", now, this.pages)),
       },
     });
     if (count === 0) return false;
@@ -77,7 +84,7 @@ export class TermsAcceptanceService implements TermsAcceptanceCheck {
       where: { userId },
       order: { acceptedAt: "DESC" },
     });
-    const newest = newestPair();
+    const newest = newestPair(this.pages);
     const latest = rows[0];
     const required = !(await this.hasAgreedToTermsInForce(userId, now));
     const agreed = rows.some(
@@ -86,7 +93,7 @@ export class TermsAcceptanceService implements TermsAcceptanceCheck {
         row.privacyNoticeVersionShown === newest.privacyNoticeVersion,
     );
     const document = (key: AcceptanceDocument, last: string | undefined): LegalDocumentStatus => {
-      const page = legalPage(key);
+      const page = pageIn(this.pages, key);
       const [current] = page.history;
       if (!current) throw new Error(`Legal page ${key} has no version`);
       return {

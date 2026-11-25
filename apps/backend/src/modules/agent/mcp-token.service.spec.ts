@@ -379,6 +379,19 @@ describe("McpTokenService.findTokenByHash terms check (terms acceptance)", () =>
     }
   });
 
+  it.each([
+    ["revoked", { revokedAt: new Date(Date.now() - 1000) }],
+    ["expired", { expiresAt: new Date(Date.now() - 1000) }],
+  ])("leaves a %s token to its own refusal, never asking to agree", async (_label, over) => {
+    const terms = fakeTermsAcceptance([]);
+    const service = new McpTokenService(
+      { findOne: vi.fn().mockResolvedValue({ ...row, ...over }) } as never,
+      fakeBetaMembership(),
+      terms,
+    );
+    expect((await service.findTokenByHash("h"))?.id).toBe("tok_1");
+  });
+
   it("returns the token of an owner who has agreed", async () => {
     const service = new McpTokenService(
       repo() as never,

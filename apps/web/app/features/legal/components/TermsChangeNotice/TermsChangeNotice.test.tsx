@@ -33,7 +33,7 @@ describe("<TermsChangeNotice />", () => {
     render(
       <TermsChangeNotice terms privacyNotice={false} effectiveFrom="2026-12-09" next="/app" />,
     );
-    fireEvent.click(screen.getByRole("button", { name: "Hide" }));
+    fireEvent.click(screen.getByRole("button", { name: "Hide this notice" }));
     expect(screen.queryByTestId("terms-change-notice")).toBeNull();
     expect(window.localStorage.length).toBe(0);
     expect(window.sessionStorage.length).toBe(0);

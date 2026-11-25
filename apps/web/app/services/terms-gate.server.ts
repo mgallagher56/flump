@@ -2,16 +2,11 @@ import type { LoaderFunctionArgs, MiddlewareFunction } from "react-router";
 import { redirect } from "react-router";
 import { TERMS_ACCEPTANCE_PATH } from "~/features/settings/account";
 import { getAuthSession } from "~/utils/auth.server";
-import { BackendError } from "./backend-error";
+import { isTermsNotAccepted } from "./backend-error";
 import { isUngatedPath } from "./invite-gate.server";
 import { loadRootProfile } from "./root-profile.server";
 
-/** True for the backend's 403 `terms_not_accepted`: the caller has not agreed to the terms in force. */
-export function isTermsNotAccepted(error: unknown): boolean {
-  return (
-    error instanceof BackendError && error.status === 403 && error.code === "terms_not_accepted"
-  );
-}
+export { isTermsNotAccepted };
 
 /**
  * Pages a person who has not agreed can still open: the invite gate's ungated paths (sign-in and
@@ -29,6 +24,8 @@ export function isTermsExemptPath(pathname: string): boolean {
 /** The acceptance page, coming back to this page (always a path on this site) afterwards. */
 export function termsAcceptanceRedirect(request: Request): Response {
   const url = new URL(request.url);
+  // A client navigation's single-fetch markers (`.data`, `_routes`) are not part of the page.
+  url.searchParams.delete("_routes");
   const here = `/${url.pathname.replace(/^\/+/, "").replace(/\.data$/, "")}${url.search}`;
   return redirect(`${TERMS_ACCEPTANCE_PATH}?next=${encodeURIComponent(here)}`, {
     headers: { "Cache-Control": "no-store" },

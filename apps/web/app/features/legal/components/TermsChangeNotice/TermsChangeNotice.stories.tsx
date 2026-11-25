@@ -16,7 +16,7 @@ export const TermsChanging: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await expect(canvas.getByRole("link", { name: "Read the changes" })).toBeDefined();
-    await userEvent.click(canvas.getByRole("button", { name: "Hide" }));
+    await userEvent.click(canvas.getByRole("button", { name: "Hide this notice" }));
     await expect(canvas.queryByTestId("terms-change-notice")).toBeNull();
   },
 };
