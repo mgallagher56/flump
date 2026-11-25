@@ -35,7 +35,7 @@ export const MTD_NOTICE_DETAILS_LABEL = "Show details";
  * Keeps the line to guidance: HMRC decides from the return, not Flump.
  * Confirmed by fable-decider on 2026-11-25 against GOV.UK and SI 2026/336 regulation 26.
  */
-export const MTD_HMRC_DECIDES =
+const MTD_HMRC_DECIDES =
   "HMRC works this out from your Self Assessment tax return, not from Flump. Some people are exempt.";
 
 const CHECK_LINK: MtdNoticeLink = {
