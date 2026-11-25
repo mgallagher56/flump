@@ -8,6 +8,12 @@ import { takeMigrationLock } from "../config/migration-lock";
 // writes nothing, and a new pair adds a row (earlier rows stay as the record of what applied when).
 // The AuthGuard reads it by user id on every authenticated request; the key's leading column
 // serves that read.
+// No foreign key on `user_id`, as for every other user-data table (consents, audit_events,
+// mcp_tokens, user_profiles...): users live in WorkOS and there is no users table to reference;
+// BE-08's keys tie child rows to `accounts`, not to a user. Erasure removes these rows through
+// USER_DATA_REGISTRY (`deleteOnErasure`), proven by user-data.integration.spec.ts ("deletion leaves
+// no row with the user's id in any table") and authz.user-profile.spec.ts ("export and erasure
+// cover the agreement record").
 // No existing data is read or changed. Live-safe: a new empty table under a lock timeout.
 // down() drops the table: the record of who agreed to what is lost, no financial data is.
 export class TermsAcceptances1795712000000 implements MigrationInterface {
