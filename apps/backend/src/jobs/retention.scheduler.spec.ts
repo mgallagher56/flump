@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   CHECK_INTERVAL_MS,
   FIRST_CHECK_DELAY_MS,
+  FIRST_CHECK_JITTER_MS,
   RetentionScheduler,
   retentionScheduleEnabled,
 } from "./retention.scheduler";
@@ -104,14 +105,14 @@ describe("RetentionScheduler (D5 revised)", () => {
 
   it("first checks a few minutes after boot, then every 15 minutes, and stops on shutdown", async () => {
     vi.useFakeTimers();
-    vi.spyOn(Math, "random").mockReturnValue(0);
     vi.spyOn(Logger.prototype, "log").mockImplementation(() => undefined);
     const { ds } = fakeDataSource();
     const scheduler = new RetentionScheduler(ds as never);
     scheduler.onApplicationBootstrap();
+    // Never before the delay; always by the delay plus the largest jitter.
     await vi.advanceTimersByTimeAsync(FIRST_CHECK_DELAY_MS - 1);
     expect(ds.createQueryRunner).not.toHaveBeenCalled();
-    await vi.advanceTimersByTimeAsync(1);
+    await vi.advanceTimersByTimeAsync(FIRST_CHECK_JITTER_MS + 1);
     expect(ds.createQueryRunner).toHaveBeenCalledTimes(1);
     await vi.advanceTimersByTimeAsync(CHECK_INTERVAL_MS);
     expect(ds.createQueryRunner).toHaveBeenCalledTimes(2);
