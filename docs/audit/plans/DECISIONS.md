@@ -572,6 +572,8 @@ Decided on 25 November 2026 by a Fable decider at the owner's delegation, and ad
 - Partner mode stays a one-person display switch. It never creates a link, an invitation, a prompt to add a partner, or a second person's income fields.
 - C2 (combining two person pictures) may be built only as pure engine functions, at low priority.
 
+**Later the same day.** Relayed by the coordinator; only the words in quotation marks are the owner's. The owner said: "we can continue with e34 and e35". Nothing else about E34 was decided: the gates on C3 above stand, and the help line wording (CD10), the household DPIA and any approach to a charity (CD7) are still the owner's to approve, sign or make.
+
 # Owner decision (2026-11-25): E12 mobile framework is Expo (O1)
 
 Given by the owner and relayed by the coordinator on 25 November 2026. Owner's words: "For mobile use Expo for both ios and android."
