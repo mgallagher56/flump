@@ -1,4 +1,5 @@
 import { createContext, type ReactNode, useContext, useEffect, useSyncExternalStore } from "react";
+import type { ApiClient } from "../data/apiClient";
 import type { Session } from "./session";
 import { INITIAL_STATE, type SessionState } from "./sessionMachine";
 
@@ -6,6 +7,8 @@ export interface AppSession {
   session: Session;
   /** The marketing site, for the legal links on the sign-in screen. */
   marketingOrigin: string;
+  /** The app's one API client, whose 401s ask this session to refresh (S3: screens read through it). */
+  api?: ApiClient;
 }
 
 /** Why there is no session: a bad config value, or native modules this app binary lacks. */

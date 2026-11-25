@@ -10,7 +10,7 @@ import * as WebBrowser from "expo-web-browser";
 import { Platform } from "react-native";
 import type { AuthConfig, MobileConfig } from "../config";
 import { createAccountCheck } from "../data/account";
-import { createAppApiClient } from "../data/apiClient";
+import { type ApiClient, createAppApiClient } from "../data/apiClient";
 import { createWorkosClient } from "../data/workos";
 import { type BrowserResult, createSession, type Session } from "./session";
 import { createTokenStore } from "./tokenStore";
@@ -32,7 +32,10 @@ async function openBrowser(url: string, redirectUri: string): Promise<BrowserRes
   return result.type === "success" ? { type: "success", url: result.url } : { type: "closed" };
 }
 
-export function createAppSession(config: { api: MobileConfig; auth: AuthConfig }): Session {
+export function createAppSession(config: { api: MobileConfig; auth: AuthConfig }): {
+  session: Session;
+  api: ApiClient;
+} {
   let session: Session | undefined;
   const api = createAppApiClient({
     apiBaseUrl: config.api.apiBaseUrl,
@@ -55,5 +58,5 @@ export function createAppSession(config: { api: MobileConfig; auth: AuthConfig }
     checkAccount: createAccountCheck(api),
     endBrowserSessionOnSignOut: Platform.OS === "android",
   });
-  return session;
+  return { session, api };
 }

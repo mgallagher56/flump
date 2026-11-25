@@ -87,14 +87,19 @@ describe("FlumpLogo", () => {
     const [gradient] = svgNodes("RNSVGRadialGradient");
     expect(gradient?.props.gradient).toEqual([
       0,
-      asSigned(set.colors["primary.hover"]),
+      asSigned(set.colors["primary.markLit"]),
       1,
-      asSigned(set.colors["primary.solid"]),
+      asSigned(set.colors["primary.mark"]),
     ]);
   });
 
   it("the two themes' logo colours differ, so a wrong scheme would show", () => {
-    expect(light.colors["primary.solid"]).not.toBe(dark.colors["primary.solid"]);
+    expect(light.colors["primary.mark"]).not.toBe(dark.colors["primary.mark"]);
+  });
+
+  it("is teal in light, not the charcoal button fill (owner, 25 November 2026)", () => {
+    expect(light.colors["primary.mark"]).not.toBe(light.colors["primary.solid"]);
+    expect(light.colors["primary.markLit"]).not.toBe(light.colors["primary.hover"]);
   });
 
   it("draws the same artwork as the web logo", () => {

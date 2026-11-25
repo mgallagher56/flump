@@ -6,6 +6,8 @@
 
 | Fact ID                           | Section                                           | Page                       | Route                          |
 | --------------------------------- | ------------------------------------------------- | -------------------------- | ------------------------------ |
+| `account-balance`                 | `mobile.check-in.cards`                           | mobile/check-in            | `/check-in`                    |
+| `account-balance`                 | `mobile.check-in.summary`                         | mobile/check-in            | `/check-in`                    |
 | `account-balance`                 | `web.account-detail.balance-history`              | web/account-detail         | `/app/accounts/:account`       |
 | `account-balance`                 | `web.account-detail.edit-account-dialog`          | web/account-detail         | `/app/accounts/:account`       |
 | `account-balance`                 | `web.account-detail.goal-section`                 | web/account-detail         | `/app/accounts/:account`       |
@@ -105,6 +107,9 @@
 | `account-type`                    | `web.savings.account-dialog`                      | web/savings                | `/app/savings`                 |
 | `account-type`                    | `web.savings.accounts-list`                       | web/savings                | `/app/savings`                 |
 | `account-type`                    | `web.savings.hero-and-kpis`                       | web/savings                | `/app/savings`                 |
+| `balance-history`                 | `mobile.check-in.cards`                           | mobile/check-in            | `/check-in`                    |
+| `balance-history`                 | `mobile.check-in.summary`                         | mobile/check-in            | `/check-in`                    |
+| `balance-history`                 | `mobile.sign-in.check-in-row`                     | mobile/sign-in             | `/`                            |
 | `balance-history`                 | `web.account-detail.balance-history`              | web/account-detail         | `/app/accounts/:account`       |
 | `balance-history`                 | `web.account-detail.goal-section`                 | web/account-detail         | `/app/accounts/:account`       |
 | `balance-history`                 | `web.account-detail.hero`                         | web/account-detail         | `/app/accounts/:account`       |
@@ -145,9 +150,12 @@
 | `card-limit-and-zero-percent-end` | `web.debt.debt-dialog`                            | web/debt                   | `/app/debt`                    |
 | `card-limit-and-zero-percent-end` | `web.debt.debts-list`                             | web/debt                   | `/app/debt`                    |
 | `card-limit-and-zero-percent-end` | `web.debt.hero-and-kpis`                          | web/debt                   | `/app/debt`                    |
+| `check-in-day`                    | `mobile.sign-in.check-in-row`                     | mobile/sign-in             | `/`                            |
 | `check-in-day`                    | `web.dashboard.housekeeping`                      | web/dashboard              | `/`                            |
 | `check-in-day`                    | `web.history.history-chart`                       | web/history                | `/app/accounts/history`        |
 | `check-in-day`                    | `web.settings.check-in-day`                       | web/settings               | `/app/profile`                 |
+| `check-in-done`                   | `mobile.check-in.cards`                           | mobile/check-in            | `/check-in`                    |
+| `check-in-done`                   | `mobile.sign-in.check-in-row`                     | mobile/sign-in             | `/`                            |
 | `check-in-done`                   | `web.accounts.check-in-sheet`                     | web/accounts               | `/app/accounts`                |
 | `check-in-done`                   | `web.dashboard.housekeeping`                      | web/dashboard              | `/`                            |
 | `check-in-done`                   | `web.history.check-in-sheet`                      | web/history                | `/app/accounts/history`        |
@@ -204,6 +212,8 @@
 | `mortgage-term-and-fix-end`       | `web.mortgage.hero-and-kpis`                      | web/mortgage               | `/app/mortgage`                |
 | `mortgage-term-and-fix-end`       | `web.mortgage.scenario-zone`                      | web/mortgage               | `/app/mortgage`                |
 | `mortgage-term-and-fix-end`       | `web.retirement.hero`                             | web/retirement             | `/app/retirement`              |
+| `net-worth-choices`               | `mobile.check-in.cards`                           | mobile/check-in            | `/check-in`                    |
+| `net-worth-choices`               | `mobile.check-in.summary`                         | mobile/check-in            | `/check-in`                    |
 | `net-worth-choices`               | `web.account-detail.hero`                         | web/account-detail         | `/app/accounts/:account`       |
 | `net-worth-choices`               | `web.accounts.accounts-lists`                     | web/accounts               | `/app/accounts`                |
 | `net-worth-choices`               | `web.accounts.net-worth-summary`                  | web/accounts               | `/app/accounts`                |
@@ -326,6 +336,7 @@
 
 | Figure ID                           | Section                                           | Page                       | Route                          |
 | ----------------------------------- | ------------------------------------------------- | -------------------------- | ------------------------------ |
+| `check-in-calculated-balance`       | `mobile.check-in.cards`                           | mobile/check-in            | `/check-in`                    |
 | `check-in-calculated-balance`       | `web.accounts.check-in-sheet`                     | web/accounts               | `/app/accounts`                |
 | `check-in-calculated-balance`       | `web.history.check-in-sheet`                      | web/history                | `/app/accounts/history`        |
 | `debt-free-date`                    | `web.dashboard.sections-grid`                     | web/dashboard              | `/`                            |
@@ -362,6 +373,7 @@
 | `mortgage-rate-comparison`          | `web.mortgage.scenario-zone`                      | web/mortgage               | `/app/mortgage`                |
 | `mtd-qualifying-income`             | `web.invoicing.mtd-notice`                        | web/invoicing              | `/app/invoicing`               |
 | `mtd-qualifying-income`             | `web.self-assessment.mtd-notice`                  | web/self-assessment        | `/app/self-assessment`         |
+| `net-worth`                         | `mobile.check-in.summary`                         | mobile/check-in            | `/check-in`                    |
 | `net-worth`                         | `web.accounts.accounts-lists`                     | web/accounts               | `/app/accounts`                |
 | `net-worth`                         | `web.accounts.check-in-sheet`                     | web/accounts               | `/app/accounts`                |
 | `net-worth`                         | `web.accounts.net-worth-summary`                  | web/accounts               | `/app/accounts`                |

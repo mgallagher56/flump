@@ -1,0 +1,27 @@
+id: check-in
+app: mobile
+route: /check-in
+title: Monthly check-in
+auth: required
+purpose: The monthly check-in on a phone (E12 S3), matching the web walk-through. One card per account in the engine's order, Update or No change (Keep this figure on a calculated loan), the one-press keep for the rest, then the summary. Each answer is saved with PUT /v1/snapshots/:month and checkIn true.
+route_file: apps/mobile/app/(app)/check-in.tsx
+
+sections:
+  - id: cards
+    component: apps/mobile/src/screens/CheckIn/CheckIn.tsx
+    facts_read:
+      - account-balance
+      - balance-history
+      - check-in-done
+      - net-worth-choices
+    figures_shown:
+      - check-in-calculated-balance
+
+  - id: summary
+    component: apps/mobile/src/screens/CheckInDone/CheckInDone.tsx
+    facts_read:
+      - account-balance
+      - balance-history
+      - net-worth-choices
+    figures_shown:
+      - net-worth

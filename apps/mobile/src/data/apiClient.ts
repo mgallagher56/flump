@@ -4,6 +4,9 @@
  * then retries once; a second 401 is `unauthorised`.
  */
 import { type ApiClient, type ClientPlatform, createApiClient } from "@flump/api-client";
+
+export type { ApiClient };
+
 import type { Session } from "../auth/session";
 
 export interface AppApiClientOptions {

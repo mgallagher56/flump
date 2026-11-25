@@ -1,11 +1,21 @@
 /**
  * @jest-environment node
  */
-import { createHash, createPublicKey, randomBytes, verify } from "node:crypto";
+import { createHash, createPublicKey, randomBytes, randomUUID, verify } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { createApiClient } from "@flump/api-client";
-import { ClientPolicyResponse, UserProfileResponse } from "@flump/api-contract";
+import {
+  AccountDetailListResponse,
+  AccountListResponse,
+  ClientPolicyResponse,
+  ErrorResponse,
+  SnapshotCheckInsResponse,
+  UpsertSnapshotResponse,
+  UserProfileResponse,
+} from "@flump/api-contract";
+import { calculateCheckInBalance } from "@flump/finance-engine";
+import { buildCheckInStore, checkInStepsFor } from "./fixtures";
 import { EMULATOR_HOST, FIXTURE_PORT, type FixtureServer, startFixtureServer } from "./server";
 
 /** PKCE pair built at runtime (RFC 7636, S256). */
@@ -100,7 +110,7 @@ describe("canned /v1", () => {
 
   it("answers an unknown /v1 route with 404, not a canned body", async () => {
     const { access_token } = await signIn();
-    const res = await fetch(url("/v1/accounts"), {
+    const res = await fetch(url("/v1/goals"), {
       headers: { authorization: `Bearer ${access_token}` },
     });
     expect(res.status).toBe(404);
@@ -401,5 +411,354 @@ describe("where it listens", () => {
       build: { e2e: { env: { EXPO_PUBLIC_API_URL: string } } };
     };
     expect(eas.build.e2e.env.EXPO_PUBLIC_API_URL).toBe(`http://${EMULATOR_HOST}:${FIXTURE_PORT}`);
+  });
+});
+
+describe("check-in routes (S3)", () => {
+  // The clock is 25 November 2026, 12:00 UTC, which is 12:00 in London (GMT since 25 October):
+  // the current month is 2026-11, the previous 2026-10 and the one before 2026-09.
+  async function signedIn() {
+    const { access_token } = await signIn();
+    return (path: string, init: RequestInit = {}) =>
+      fetch(url(path), {
+        ...init,
+        headers: {
+          authorization: `Bearer ${access_token}`,
+          "content-type": "application/json",
+          ...init.headers,
+        },
+      });
+  }
+
+  const put = (api: Awaited<ReturnType<typeof signedIn>>, month: string, body: unknown) =>
+    api(`/v1/snapshots/${month}`, { method: "PUT", body: JSON.stringify(body) });
+
+  async function readAll(api: Awaited<ReturnType<typeof signedIn>>) {
+    const accounts = AccountListResponse.parse(await (await api("/v1/accounts")).json());
+    const details = AccountDetailListResponse.parse(
+      await (await api("/v1/account-details")).json(),
+    );
+    const checkIns = SnapshotCheckInsResponse.parse(
+      await (await api("/v1/snapshots/check-ins")).json(),
+    );
+    const id = (name: string) => accounts.find((a) => a.name === name)?.id ?? "";
+    return { accounts, details, checkIns, id };
+  }
+
+  it("serves six manual accounts in saved order, each with no details, ignoring the query", async () => {
+    const api = await signedIn();
+    const res = await api("/v1/accounts?details=none&limit=50");
+    expect(res.status).toBe(200);
+    const accounts = AccountListResponse.parse(await res.json());
+    expect(accounts.map((a) => [a.name, a.type, a.balance])).toEqual([
+      ["Mortgage", "Mortgage", -185000],
+      ["Workplace pension", "Pension", 48000],
+      ["Credit card", "Credit Card", -650],
+      ["Current account", "Current", 2400],
+      ["Stocks and shares ISA", "Investment", 15500],
+      ["Easy access savings", "Saving", 8200],
+    ]);
+    expect(accounts.every((a) => a.connectionId === null && a.details.length === 0)).toBe(true);
+    expect(accounts[0]).toMatchObject({ interestRate: 4.5, monthlyContribution: 1100 });
+  });
+
+  it("serves last month for every account, the month before for three, and nothing this month", async () => {
+    const api = await signedIn();
+    const { accounts, details } = await readAll(api);
+    const byMonth = (month: number) =>
+      details
+        .filter((d) => d.year === 2026 && d.month === month)
+        .map((d) => [accounts.find((a) => a.id === d.accountId)?.name, d.value, d.asOfDate]);
+    // Last month's row is each account's balance, dated 31 October.
+    expect(byMonth(10)).toEqual(accounts.map((a) => [a.name, a.balance, "2026-10-31"]));
+    expect(byMonth(9)).toEqual([
+      ["Mortgage", -185400, "2026-09-30"],
+      ["Credit card", -820, "2026-09-30"],
+      ["Current account", 2100, "2026-09-30"],
+    ]);
+    expect(byMonth(11)).toEqual([]);
+    expect(new Set(details.map((d) => d.source))).toEqual(new Set(["manual"]));
+    expect(details).toHaveLength(9);
+  });
+
+  it("serves last month as both the started and the completed check-in", async () => {
+    const api = await signedIn();
+    const res = await api("/v1/snapshots/check-ins");
+    expect(SnapshotCheckInsResponse.parse(await res.json())).toEqual({
+      latestCompletedMonth: "2026-10",
+      latestStartedMonth: "2026-10",
+    });
+  });
+
+  it.each([
+    ["GET", "/v1/accounts"],
+    ["GET", "/v1/account-details"],
+    ["GET", "/v1/snapshots/check-ins"],
+    ["PUT", "/v1/snapshots/2026-11"],
+  ])(
+    "%s %s refuses a missing token with 401 and a person not invited with 403",
+    async (method, path) => {
+      const body = method === "PUT" ? JSON.stringify({ values: [] }) : undefined;
+      const anon = await fetch(url(path), { method, body });
+      expect(anon.status).toBe(401);
+      expect(ErrorResponse.parse(await anon.json()).code).toBe("unauthorized");
+      server.setScenario({ account: "not-invited" });
+      const api = await signedIn();
+      const res = await api(path, { method, body });
+      expect(res.status).toBe(403);
+      expect(ErrorResponse.parse(await res.json()).code).toBe("not_invited");
+      expect(server.stats().snapshotPuts).toBe(0);
+    },
+  );
+
+  it.each([
+    ["GET", "/v1/accounts"],
+    ["GET", "/v1/account-details"],
+    ["GET", "/v1/snapshots/check-ins"],
+    ["PUT", "/v1/snapshots/2026-11"],
+  ])(
+    "%s %s answers 503 service_unavailable in the unavailable data scenario",
+    async (method, path) => {
+      server.setScenario({ data: "unavailable" });
+      const api = await signedIn();
+      const res = await api(path, {
+        method,
+        body: method === "PUT" ? JSON.stringify({ values: [], complete: true }) : undefined,
+      });
+      expect(res.status).toBe(503);
+      expect(ErrorResponse.parse(await res.json()).code).toBe("service_unavailable");
+      server.setScenario({ data: "ok" });
+      expect(server.stats()).toMatchObject({ latestCompletedMonth: "2026-10", snapshotPuts: 0 });
+    },
+  );
+
+  it("serves no accounts, no rows and no check-in months in the empty scenario", async () => {
+    server.setScenario({ data: "empty" });
+    const api = await signedIn();
+    const { accounts, details, checkIns } = await readAll(api);
+    expect(accounts).toEqual([]);
+    expect(details).toEqual([]);
+    expect(checkIns).toEqual({ latestCompletedMonth: null, latestStartedMonth: null });
+  });
+
+  it.each([
+    ["a value that is not a number", "2026-11", { values: [{ value: "12" }] }, "body.values.0"],
+    ["an unknown key", "2026-11", { values: [], done: true }, "body"],
+    ["a month that does not exist", "2026-13", { values: [] }, "params.month"],
+  ])("refuses %s with 400 validation_failed and changes nothing", async (_, month, body, at) => {
+    const api = await signedIn();
+    const before = await readAll(api);
+    const card = before.id("Credit card");
+    const sent = JSON.parse(
+      JSON.stringify(body).replace('"value"', `"accountId":"${card}","value"`),
+    );
+    const res = await put(api, month, { ...sent, checkIn: true, complete: true });
+    expect(res.status).toBe(400);
+    const error = ErrorResponse.parse(await res.json());
+    expect(error.code).toBe("validation_failed");
+    expect(error.issues?.map((i) => i.path).some((p) => p.startsWith(at))).toBe(true);
+    const after = await readAll(api);
+    expect(after.details).toEqual(before.details);
+    expect(after.accounts).toEqual(before.accounts);
+    expect(after.checkIns).toEqual(before.checkIns);
+    expect(server.stats()).toMatchObject({ snapshotPuts: 1, putsWithoutCheckIn: 0 });
+  });
+
+  it("refuses a body that is not JSON (400 invalid_json) and counts saves without checkIn: true", async () => {
+    const api = await signedIn();
+    const res = await api("/v1/snapshots/2026-11", { method: "PUT", body: "{values" });
+    expect(res.status).toBe(400);
+    expect(ErrorResponse.parse(await res.json()).code).toBe("invalid_json");
+    expect(server.stats()).toMatchObject({ snapshotPuts: 1, putsWithoutCheckIn: 1 });
+    // A string is not `checkIn: true`: refused, and counted as a save without it.
+    const text = await put(api, "2026-11", { values: [], checkIn: "true" });
+    expect(text.status).toBe(400);
+    expect(server.stats()).toMatchObject({ snapshotPuts: 2, putsWithoutCheckIn: 2 });
+  });
+
+  it("refuses an unknown account with 404 and writes none of the batch", async () => {
+    const api = await signedIn();
+    const before = await readAll(api);
+    const res = await put(api, "2026-11", {
+      values: [
+        { accountId: before.id("Current account"), value: 1250 },
+        { accountId: randomUUID(), value: 10 },
+      ],
+      checkIn: true,
+    });
+    expect(res.status).toBe(404);
+    expect(ErrorResponse.parse(await res.json()).code).toBe("not_found");
+    const after = await readAll(api);
+    expect(after.details).toEqual(before.details);
+    expect(after.accounts).toEqual(before.accounts);
+    expect(after.checkIns.latestStartedMonth).toBe("2026-10");
+  });
+
+  it("stores a liability negative whatever the sign, keeps an asset's sign and moves both balances", async () => {
+    const api = await signedIn();
+    const { id } = await readAll(api);
+    const res = await put(api, "2026-11", {
+      values: [
+        { accountId: id("Credit card"), value: 700 },
+        { accountId: id("Current account"), value: -50.25, source: "confirmed" },
+      ],
+      checkIn: true,
+    });
+    expect(res.status).toBe(200);
+    // A current-month row is dated today (25 November); the liability 700 is stored as -700.
+    expect(UpsertSnapshotResponse.parse(await res.json())).toEqual({
+      month: "2026-11",
+      values: [
+        { accountId: id("Credit card"), value: -700, asOfDate: "2026-11-25", source: "manual" },
+        {
+          accountId: id("Current account"),
+          value: -50.25,
+          asOfDate: "2026-11-25",
+          source: "confirmed",
+        },
+      ],
+      completed: false,
+    });
+    const after = await readAll(api);
+    const balance = (name: string) => after.accounts.find((a) => a.name === name)?.balance;
+    expect([balance("Credit card"), balance("Current account"), balance("Mortgage")]).toEqual([
+      -700, -50.25, -185000,
+    ]);
+    // Nine seeded rows (ids 1 to 9), so the two new rows are 10 and 11.
+    const november = after.details.filter((d) => d.month === 11);
+    expect(november.map((d) => [d.id, d.accountId, d.value, d.year])).toEqual([
+      [10, id("Credit card"), -700, 2026],
+      [11, id("Current account"), -50.25, 2026],
+    ]);
+    expect(after.checkIns).toEqual({
+      latestStartedMonth: "2026-11",
+      latestCompletedMonth: "2026-10",
+    });
+    expect(server.stats()).toMatchObject({ snapshotPuts: 1, putsWithoutCheckIn: 0 });
+  });
+
+  it("replaces a past month's row in place, dated the month's last day, and leaves the balance", async () => {
+    const api = await signedIn();
+    const before = await readAll(api);
+    const card = before.id("Credit card");
+    const old = before.details.find((d) => d.accountId === card && d.month === 10);
+    clock += 1_000;
+    const res = await put(api, "2026-10", { values: [{ accountId: card, value: -900 }] });
+    expect(res.status).toBe(200);
+    const after = await readAll(api);
+    const rows = after.details.filter((d) => d.accountId === card && d.month === 10);
+    expect(rows).toEqual([
+      {
+        ...old,
+        value: -900,
+        asOfDate: "2026-10-31",
+        source: "manual",
+        updatedAt: new Date(clock).toISOString(),
+      },
+    ]);
+    expect(after.accounts.find((a) => a.id === card)?.balance).toBe(-650);
+    // No `checkIn`: the months stay, and the write is counted as one without it.
+    expect(after.checkIns).toEqual(before.checkIns);
+    expect(server.stats()).toMatchObject({ snapshotPuts: 1, putsWithoutCheckIn: 1 });
+  });
+
+  it("starts the month only for a check-in save with a value, and complete finishes it", async () => {
+    const api = await signedIn();
+    const { id } = await readAll(api);
+    const months = () => {
+      const { latestStartedMonth, latestCompletedMonth } = server.stats();
+      return [latestStartedMonth, latestCompletedMonth];
+    };
+    expect((await put(api, "2026-11", { values: [], checkIn: true })).status).toBe(200);
+    expect(months()).toEqual(["2026-10", "2026-10"]);
+    await put(api, "2026-11", {
+      values: [{ accountId: id("Mortgage"), value: 1 }],
+      checkIn: false,
+    });
+    expect(months()).toEqual(["2026-10", "2026-10"]);
+    await put(api, "2026-11", { values: [{ accountId: id("Mortgage"), value: 1 }], checkIn: true });
+    expect(months()).toEqual(["2026-11", "2026-10"]);
+    const done = await put(api, "2026-11", { values: [], checkIn: true, complete: true });
+    expect(UpsertSnapshotResponse.parse(await done.json()).completed).toBe(true);
+    expect(months()).toEqual(["2026-11", "2026-11"]);
+    // An earlier month never moves either back.
+    await put(api, "2026-09", { values: [], complete: true });
+    expect(months()).toEqual(["2026-11", "2026-11"]);
+    expect(server.stats()).toMatchObject({ snapshotPuts: 5, putsWithoutCheckIn: 2 });
+  });
+
+  it("reset restores the canned data, with new ids, and clears the counts", async () => {
+    const api = await signedIn();
+    const before = await readAll(api);
+    await put(api, "2026-11", {
+      values: [{ accountId: before.id("Credit card"), value: 1 }],
+      checkIn: true,
+      complete: true,
+    });
+    await fetch(url("/__fixture/reset"), { method: "POST" });
+    const again = await signedIn();
+    const after = await readAll(again);
+    const strip = (a: { name: string; balance: number }) => [a.name, a.balance];
+    expect(after.accounts.map(strip)).toEqual(before.accounts.map(strip));
+    expect(after.accounts[0]?.id).not.toBe(before.accounts[0]?.id);
+    expect(after.details).toHaveLength(9);
+    expect(after.checkIns).toEqual({
+      latestStartedMonth: "2026-10",
+      latestCompletedMonth: "2026-10",
+    });
+    expect(server.stats()).toMatchObject({ snapshotPuts: 0, putsWithoutCheckIn: 0 });
+  });
+
+  it("stats give the current month in London, not UTC", async () => {
+    expect((await (await fetch(url("/__fixture/stats"))).json()) as object).toMatchObject({
+      currentMonth: "2026-11",
+      latestStartedMonth: "2026-10",
+      latestCompletedMonth: "2026-10",
+      snapshotPuts: 0,
+      putsWithoutCheckIn: 0,
+    });
+    // 30 June 2026, 23:30 UTC is 1 July, 00:30 in London (BST, UTC+1).
+    clock = Date.UTC(2026, 5, 30, 23, 30);
+    expect(server.stats().currentMonth).toBe("2026-07");
+    clock = Date.UTC(2026, 5, 30, 22, 59);
+    expect(server.stats().currentMonth).toBe("2026-06");
+  });
+});
+
+describe("check-in steps for the fixture", () => {
+  const now = new Date(Date.UTC(2026, 10, 25, 12));
+  const store = buildCheckInStore("user_steps", now, "ok");
+  const steps = checkInStepsFor(store, now);
+
+  it("follow web's order, not the saved order", () => {
+    expect(steps.map((s) => [s.name, s.type])).toEqual([
+      ["Current account", "Current"],
+      ["Easy access savings", "Saving"],
+      ["Credit card", "Credit Card"],
+      ["Stocks and shares ISA", "Investment"],
+      ["Workplace pension", "Pension"],
+      ["Mortgage", "Mortgage"],
+    ]);
+    expect(steps.every((s) => s.recorded === null && s.lastMonth === "2026-10")).toBe(true);
+  });
+
+  it("offer a calculated figure for the mortgage only, from October's balance", () => {
+    expect(steps.filter((s) => s.calculated !== null).map((s) => s.name)).toEqual(["Mortgage"]);
+    const mortgage = steps.at(-1);
+    // The engine's figure for the fixture's own inputs, typed out here, not read from the fixture.
+    const expected = calculateCheckInBalance({
+      type: "Mortgage",
+      interestRate: 4.5,
+      monthlyPayment: 1100,
+      base: { value: -185000, month: "2026-10" },
+      month: "2026-11",
+      savedBalance: -185000,
+    });
+    expect(expected).not.toBeNull();
+    expect(mortgage?.calculated).toEqual(expected);
+    // Sanity check by hand: 185,000 x 4.5% / 12 = 693.75 interest, less the 1,100 payment, is
+    // 184,593.75 owed.
+    expect(mortgage?.calculated?.value).toBe(184593.75);
+    expect(mortgage?.lastValue).toBe(185000);
   });
 });

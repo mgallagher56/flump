@@ -2,7 +2,7 @@
 
 # Functionality map: overview
 
-Mapped pages: 40 | Sections: 262 | Excluded routes: 23
+Mapped pages: 41 | Sections: 265 | Excluded routes: 23
 
 ## web
 
@@ -577,17 +577,28 @@ Mapped pages: 40 | Sections: 262 | Excluded routes: 23
 
 ## mobile
 
+### check-in: Monthly check-in
+
+- Route: `/check-in` (auth: `required`, file: `apps/mobile/app/(app)/check-in.tsx`)
+- Purpose: The monthly check-in on a phone (E12 S3), matching the web walk-through. One card per account in the engine's order, Update or No change (Keep this figure on a calculated loan), the one-press keep for the rest, then the summary. Each answer is saved with PUT /v1/snapshots/:month and checkIn true.
+
+| Section   | Component                                             | Facts read                                                                 | Figures                       |
+| --------- | ----------------------------------------------------- | -------------------------------------------------------------------------- | ----------------------------- |
+| `cards`   | `apps/mobile/src/screens/CheckIn/CheckIn.tsx`         | `account-balance`, `balance-history`, `check-in-done`, `net-worth-choices` | `check-in-calculated-balance` |
+| `summary` | `apps/mobile/src/screens/CheckInDone/CheckInDone.tsx` | `account-balance`, `balance-history`, `net-worth-choices`                  | `net-worth`                   |
+
 ### sign-in: Flump
 
-- Route: `/` (auth: `public`, file: `apps/mobile/app/index.tsx`)
-- Purpose: First screen of the Expo app (E12 S2a). Signed out, it shows the name, the tagline, Sign in and Create account (WorkOS AuthKit in the system browser sheet, PKCE) and the privacy and terms links. After sign-in it checks the account with GET /v1/user-profile and shows the signed-in placeholder, Not invited, the session-ended screen or the offline screen.
+- Route: `/` (auth: `public`, file: `apps/mobile/app/(app)/index.tsx`)
+- Purpose: First screen of the Expo app (E12 S2a). Signed out, it shows the name, the tagline, Sign in and Create account (WorkOS AuthKit in the system browser sheet, PKCE) and the privacy and terms links. After sign-in it checks the account with GET /v1/user-profile and shows the signed-in placeholder (with the monthly check-in row when one is due, E12 S3), Not invited, the session-ended screen or the offline screen.
 
-| Section               | Component                                                         | Facts read | Figures |
-| --------------------- | ----------------------------------------------------------------- | ---------- | ------- |
-| `gate`                | `apps/mobile/src/screens/SessionGate/SessionGate.tsx`             | -          | -       |
-| `sign-in`             | `apps/mobile/src/screens/SignIn/SignIn.tsx`                       | -          | -       |
-| `signed-in`           | `apps/mobile/src/screens/Home/Home.tsx`                           | -          | -       |
-| `not-invited`         | `apps/mobile/src/screens/NotInvited/NotInvited.tsx`               | -          | -       |
-| `session-ended`       | `apps/mobile/src/screens/SessionEnded/SessionEnded.tsx`           | -          | -       |
-| `offline`             | `apps/mobile/src/screens/Offline/Offline.tsx`                     | -          | -       |
-| `sign-in-unavailable` | `apps/mobile/src/screens/SignInUnavailable/SignInUnavailable.tsx` | -          | -       |
+| Section               | Component                                                         | Facts read                                         | Figures |
+| --------------------- | ----------------------------------------------------------------- | -------------------------------------------------- | ------- |
+| `gate`                | `apps/mobile/src/screens/SessionGate/SessionGate.tsx`             | -                                                  | -       |
+| `sign-in`             | `apps/mobile/src/screens/SignIn/SignIn.tsx`                       | -                                                  | -       |
+| `signed-in`           | `apps/mobile/src/screens/Home/Home.tsx`                           | -                                                  | -       |
+| `check-in-row`        | `apps/mobile/src/screens/Home/Home.tsx`                           | `balance-history`, `check-in-done`, `check-in-day` | -       |
+| `not-invited`         | `apps/mobile/src/screens/NotInvited/NotInvited.tsx`               | -                                                  | -       |
+| `session-ended`       | `apps/mobile/src/screens/SessionEnded/SessionEnded.tsx`           | -                                                  | -       |
+| `offline`             | `apps/mobile/src/screens/Offline/Offline.tsx`                     | -                                                  | -       |
+| `sign-in-unavailable` | `apps/mobile/src/screens/SignInUnavailable/SignInUnavailable.tsx` | -                                                  | -       |

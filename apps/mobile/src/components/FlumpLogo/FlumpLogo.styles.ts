@@ -8,12 +8,13 @@ export type FlumpLogoSize = "sm" | "md" | "lg";
 export const LOGO_SIZES: Record<FlumpLogoSize, number> = { sm: 32, md: 50, lg: 96 };
 
 /**
- * The web logo's colours: the mark lit from above by primary.hover over primary.solid, a shadow in
- * text.primary, and highlights in the button label colour, so it reads in both themes.
+ * The web logo's colours: the logo's own mark tokens, primary.mark lit from above by
+ * primary.markLit (teal in light, mint in dark; not the charcoal button fill, owner 25 November
+ * 2026, style guide section 14), a shadow in text.primary, and highlights in the button label colour.
  */
 const LOGO_COLOURS = {
-  bodyTop: "primary.hover",
-  bodyBottom: "primary.solid",
+  bodyTop: "primary.markLit",
+  bodyBottom: "primary.mark",
   shadow: "text.primary",
   highlight: "primary.foreground",
 } as const satisfies Record<string, ColorKey>;

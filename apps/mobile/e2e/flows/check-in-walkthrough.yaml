@@ -1,0 +1,60 @@
+# E12 S3: the monthly check-in walk-through against the fixture's six accounts. Update the first
+# card, "No change" on the second, keep the next three, keep the mortgage's calculated figure, then
+# the summary. The fixture's stats prove the month was finished and every save sent checkIn: true.
+appId: app.flump.mobile
+---
+- runScript:
+    file: ../scripts/fixture.js
+    env:
+      SCENARIO: "{}"
+- runFlow: ../subflows/launch-signed-out.yaml
+- runFlow:
+    file: ../subflows/sign-in.yaml
+    env:
+      AFTER: "Start monthly check-in"
+- assertVisible: "You are signed in"
+- tapOn:
+    id: "check-in-row-action"
+- extendedWaitUntil:
+    visible: "Account 1 of 6"
+    timeout: 60000
+- tapOn:
+    id: "check-in-input"
+- inputText: "1250"
+- hideKeyboard
+- tapOn:
+    id: "check-in-update"
+- extendedWaitUntil:
+    visible: "Account 2 of 6"
+    timeout: 30000
+- tapOn:
+    id: "check-in-no-change"
+# Keeps the credit card, the ISA and the pension as they are.
+- extendedWaitUntil:
+    visible:
+      id: "check-in-keep-rest"
+    timeout: 30000
+- tapOn:
+    id: "check-in-keep-rest"
+- extendedWaitUntil:
+    visible: "Calculated"
+    timeout: 30000
+- tapOn:
+    id: "check-in-keep"
+- extendedWaitUntil:
+    visible:
+      id: "check-in-summary"
+    timeout: 60000
+- assertVisible:
+    text: "[A-Z][a-z]+ is checked in\\."
+- assertVisible: "What changed"
+- assertVisible: "Net worth"
+- takeScreenshot: check-in-summary-${THEME}
+- tapOn:
+    id: "check-in-done"
+- extendedWaitUntil:
+    visible: "You are signed in"
+    timeout: 30000
+- assertNotVisible: "Start monthly check-in"
+- runScript:
+    file: ../scripts/assert-check-in.js

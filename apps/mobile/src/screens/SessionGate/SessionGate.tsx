@@ -1,3 +1,4 @@
+import { router } from "expo-router";
 import { useSession, useStartProblem } from "../../auth/SessionProvider";
 import { Home } from "../Home";
 import { Loading } from "../Loading";
@@ -38,7 +39,7 @@ export function SessionGate() {
         />
       );
     case "signedIn":
-      return <Home onSignOut={signOut} />;
+      return <Home onSignOut={signOut} onOpenCheckIn={() => router.push("/check-in")} />;
     case "restoredOffline":
       return <Offline onRetry={() => void session.retry()} onSignOut={signOut} />;
     case "sessionEnded":

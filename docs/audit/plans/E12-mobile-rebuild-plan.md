@@ -226,7 +226,7 @@ The four seams, and where each lands:
 
 **Seam budget.** The decision drops the seams if they cost more than about 5 agent-days in all. Each slice that does seam work states its share in its PR description under "Seam cost", and the plan keeps a running total here. Estimate today: seam 1 is a review rule (0), seam 2 is a lint rule in S1b (0.5), seam 3 is D1 (1), seam 4 is the part of S7 beyond a plain cache (1.5): about 3 in all. If the running total passes 5, the coordinator stops the seam work and records the app as plain option (a) in `DECISIONS.md`.
 
-Running total: 0.5 agent-days (S1a 0; S1b 0.5, the data door rule in `biome.json`; S2c 0; S2a 0).
+Running total: 0.5 agent-days (S1a 0; S1b 0.5, the data door rule in `biome.json`; S2c 0; S2a 0; S3 0).
 
 **The cache (S7).** The last successful responses for the screens in the first release, kept 7 days, labelled with their age, read-only; writes need a connection (round 2, E12 D4-A). Platform facts, CONFIRMED on 25 November 2026:
 
@@ -500,6 +500,8 @@ After S6 the page slices touch separate folders and can run two or three at a ti
 12. Both Maestro flows pass three runs in a row in the Android CI job, or the fallback in 7.1 is recorded.
 13. Every check-in save sends `checkIn: true`; with a started month and some accounts still to do, the row says "Continue check-in", taken from `selectCheckInPartDone`, never worked out in the app.
 14. The PR adds its row to the parity log and states the result of the CROSS-PLATFORM section 7 checklist.
+
+**Built (S3, 25 November 2026).** `packages/copy` (P5) is not on main, so the words are in one module, `src/copy/checkIn.ts`, copied from web's `snapshotCopy.ts` and `CheckInRow.tsx`. Data: `src/data/{queryClient,queryKeys,useDelayedLoading,checkIn,problems,ApiProvider}`, TanStack Query 5 (reads retried twice on `unavailable` and `server` only; the cache is cleared whenever nobody is signed in). Flow: `src/features/check-in/{useCheckInData,checkInFlow,useSaveCheckIn}.ts` follow web's `useCheckIn`: each answer is one `PUT /v1/snapshots/:month` built by `checkInPayload` (so `checkIn: true`, and `complete` on the last), one save at a time, a synchronous guard against a double tap. The app imports the engine from a new narrow entry, `@flump/finance-engine/check-in`: the package root reaches the tax vector catalogue through `tax-year-verification.ts`, and Metro keeps every export, so the bundle search failed on it. Three changes from the text above: (1) `GET /v1/portfolio-snapshot` does not exist; the summary's net worth and change come from the engine's `buildCheckInSummary` over the data read when the check-in opened, as on web. (2) The row shows when there are no accounts yet, so the empty state (one sentence, a link to the website) is reachable until S5's setup row. (3) Saving offline: the screen knows only the session's `restoredOffline` state (no network listener yet); then saving is off and says why, and a failed save keeps the answer with "Try again". The 403 `terms_not_accepted` answer (PR #939, not merged) is classified in `src/data/problems.ts` as a seam; screens show the ordinary load error until the screen for it lands. Seam cost 0. Mobile logo: the logo body uses `primary.mark` lit by `primary.markLit`, teal in light, as web (owner, 25 November).
 
 ### 9.7 Later slices
 
