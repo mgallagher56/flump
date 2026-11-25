@@ -47,5 +47,5 @@ export const TERMS_REQUIRED_HEADING = "Please agree to our terms on the website"
 export const TERMS_REQUIRED_BODY =
   "You need to agree to our terms of use before you carry on. Sign in on the Flump website to read and agree to them, then come back and select Try again.";
 export const TERMS_REQUIRED_NOTE =
-  "If you do not agree, you cannot use Flump. You can still download your data or delete your account.";
+  "If you do not agree, you cannot use Flump. You can still download your data or delete your account on the website.";
 export const OPEN_WEBSITE = "Open the Flump website";

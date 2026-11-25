@@ -40,7 +40,13 @@ export function SessionGate() {
         />
       );
     case "signedIn":
-      return <Home onSignOut={signOut} onOpenCheckIn={() => router.push("/check-in")} />;
+      return (
+        <Home
+          onSignOut={signOut}
+          onOpenCheckIn={() => router.push("/check-in")}
+          marketingOrigin={marketingOrigin}
+        />
+      );
     case "restoredOffline":
       return <Offline onRetry={() => void session.retry()} onSignOut={signOut} />;
     case "sessionEnded":
