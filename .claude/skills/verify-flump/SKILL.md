@@ -25,6 +25,7 @@ Below, `V` means `.claude/skills/verify-flump/scripts/verify-flump`.
 ```bash
 V up                         # builds, starts, seeds the homeowner persona; prints the run id
 V up --persona renter        # another persona from apps/e2e/support/personas.ts
+V up --no-seed              # no persona and no saved session (journeys that sign in themselves)
 V up --skip-build            # reuse the current build output (only if nothing changed since)
 ```
 
@@ -54,7 +55,7 @@ V drive /abs/path/to/my-journey.ts # your own journey file
 VERIFY_HEADED=1 V drive dashboard  # watch it in a visible browser
 ```
 
-Shipped journeys: `journeys/accounts-add.ts`, `journeys/dashboard.ts`. The feature map in `features/` gives the recipe for each feature; when it has no shipped journey, write one in your scratchpad. Template:
+Shipped journeys are in `journeys/`, one per feature in `features/README.md`; each feature file names the persona its journey expects. Most change the run's saved data, so run `V seed <persona> <run-id>` between them. For a feature with no shipped journey, write one in your scratchpad. Template:
 
 ```ts
 import {
@@ -89,7 +90,7 @@ Rules that cost a run when ignored:
 
 ## Evidence
 
-Each run keeps its evidence in `.verify/evidence/<run-id>/` at the repo root (git-ignored; override the root with `VERIFY_EVIDENCE_ROOT`):
+Each run keeps its evidence in `~/.flump-verify/evidence/<run-id>/`, outside the checkout, so it survives `V down` and the worktree being deleted, and can never be committed (override the root with `VERIFY_EVIDENCE_ROOT`; keep it outside the repo):
 
 - `logs/`: `build.log`, `migrations.log`, `backend.log`, `web.log`, `marketing.log`, `seed.log`.
 - `journeys/<timestamp>-<name>/`: `NN-<step>.png` (full-page screenshot) and `NN-<step>.aria.yml` (ARIA snapshot) after each step; `FAILED-NN-<step>.*` for the step that failed; `journal.jsonl` (one line per step with URL, pass or fail, and the error); `problems.jsonl` (browser console errors and HTTP 5xx responses, if any); and whatever the journey `save()`d.
@@ -103,7 +104,7 @@ Proof standards:
 - Verify the side effect as well as what is visible: reload and see it again, read it back with `api()`, or see it reach the page that depends on it (a new account changes the dashboard net worth).
 - No mocks. The stack is real apart from sign-in, where the test-only dev session stands in for WorkOS exactly as in the e2e suite, and bank connections (TrueLayer, Monzo, Starling), which have no credentials locally and are not driven.
 - Read `problems.jsonl`: a passing journey with a 5xx or console error in it is a finding to report.
-- When you report a proof, give the journey name, the evidence folder, and the screenshots that show the change. Copy the folder somewhere durable (a PR comment, the shared notes folder) if the worktree will be deleted.
+- When you report a proof, give the journey name, the evidence folder, and the screenshots that show the change. The folder already outlives the worktree. Screenshots show only seeded test data; never commit them or paste them anywhere public unless that is still true.
 
 ## Cleanup
 
@@ -112,7 +113,7 @@ V down [run-id]   # defaults to the newest live run
 V list            # live runs, if you lost track
 ```
 
-`down` stops exactly the PIDs this run recorded (and their children) with TERM, then KILL after 2 seconds, removes this run's Postgres container, and deletes `.verify/state/<run-id>/`. It never kills by process name and never touches other containers. Evidence in `.verify/evidence/<run-id>/` stays. Run `down` after every run, including a failed `up` (a half-started run is still recorded and `down` cleans it). Delete old evidence folders yourself when they are no longer needed.
+`down` stops exactly the PIDs this run recorded (and their children) with TERM, then KILL after 2 seconds, removes this run's Postgres container, and deletes `.verify/state/<run-id>/`. It never kills by process name and never touches other containers. Evidence in `~/.flump-verify/evidence/<run-id>/` stays. Run `down` after every run, including a failed `up` (a half-started run is still recorded and `down` cleans it). Delete old evidence folders yourself when they are no longer needed.
 
 ## Helpers
 
@@ -121,6 +122,10 @@ All executable, run from the repo root:
 - `scripts/verify-flump`: the launcher described above. `V` with no arguments prints usage.
 - `scripts/lib.ts`: the journey harness, imported by journeys. Journeys run under `V drive`, which sets `NODE_PATH` to `apps/e2e/node_modules` so `@playwright/test` resolves, and sets `VERIFY_WEB_URL`, `VERIFY_BACKEND_URL`, `VERIFY_MARKETING_URL`, `VERIFY_STATE_DIR`, `VERIFY_EVIDENCE_DIR` and the `E2E_*_PORT` variables.
 - `scripts/seed.ts`: signs in and writes a persona with `applyPersona` from `apps/e2e/support/personas.ts`. Called by `V up` and `V seed <persona>`. Personas: `homeowner` (default), `renter`, `debtpayer`, `selfemployed`, `retiree`, `everything`.
+- `scripts/env.ts`: `requireEnv` and `optionalEnv`, the only way these scripts read `VERIFY_*` variables (lib re-exports `optionalEnv`). Use them rather than `process.env.X`, which Biome's turbo env rule flags.
+- `tsconfig.json`: type checks every script and journey here against `apps/e2e`'s Playwright. `bun run check:laws` runs it, so CI fails on a type error in a journey. Run it alone with `bunx tsc -p .claude/skills/verify-flump/tsconfig.json`.
+
+Several runs can live at once (one per agent, each with its own database and user). When more than one is live, pass the run id to every command (`V drive <journey> <run-id>`, `V seed <persona> <run-id>`, `V down <run-id>`), because the default is the newest run, which may be someone else's.
 
 ## Feature map
 

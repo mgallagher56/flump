@@ -1,6 +1,6 @@
 import { PreconditionFailedException } from "@nestjs/common";
 import { describe, expect, it, vi } from "vitest";
-import { expectedVersion, expectedVersions, setEtag, withVersionClaim } from "./etag";
+import { claimVersion, expectedVersion, expectedVersions, setEtag, withVersionClaim } from "./etag";
 
 describe("expectedVersions (BE-16: the If-Match list of PUT /snapshots/:month)", () => {
   it("is undefined without a header, so the write stays unconditional", () => {
@@ -126,5 +126,49 @@ describe("withVersionClaim", () => {
       withVersionClaim(repository, where, expected, () => new Error("missing"), work),
     ).rejects.toThrow("missing");
     expect(work).not.toHaveBeenCalled();
+  });
+});
+
+describe("claimVersion", () => {
+  /** A repository whose metadata maps `userId` to `user_id`, recording each SQL condition. */
+  const recordingRepository = (affected: number) => {
+    const conditions: string[] = [];
+    const builder: Record<string, unknown> = {};
+    for (const step of ["update", "set"]) builder[step] = () => builder;
+    builder.where = (sql: string) => {
+      conditions.push(sql);
+      return builder;
+    };
+    builder.execute = async () => ({ affected });
+    builder.getCount = async () => 1;
+    const columns: Record<string, string> = { id: "id", userId: "user_id" };
+    const repository = {
+      createQueryBuilder: () => builder,
+      metadata: {
+        findColumnWithPropertyName: (name: string) =>
+          name in columns ? { databaseName: columns[name] } : undefined,
+      },
+    };
+    return { repository: repository as never, conditions };
+  };
+  const expected = new Date("2026-11-14T09:30:00.123Z");
+
+  it("names the column, not the entity property, when given a property name", async () => {
+    const { repository, conditions } = recordingRepository(1);
+    await expect(claimVersion(repository, { id: "x", userId: "u" }, expected)).resolves.toBe(
+      "updated",
+    );
+    expect(conditions[0]).toContain(`"user_id" = :userId`);
+    expect(conditions[0]).not.toContain(`"userId"`);
+  });
+
+  it("keeps a column name that is not a property as it is", async () => {
+    const { repository, conditions } = recordingRepository(0);
+    await expect(claimVersion(repository, { id: "x", user_id: "u" }, expected)).resolves.toBe(
+      "stale",
+    );
+    // The update and the follow-up owner count both name the column.
+    expect(conditions[0]).toContain(`"id" = :id AND "user_id" = :user_id`);
+    expect(conditions[1]).toBe(`"t"."id" = :id AND "t"."user_id" = :user_id`);
   });
 });

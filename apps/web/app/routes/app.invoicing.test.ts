@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("react-router", async () => await vi.importActual("react-router"));
 
@@ -50,9 +50,14 @@ const actionArgs = (intent: string, fields: Record<string, string>) => {
 describe("app.invoicing route loader and action (E37 S2)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.useFakeTimers({ toFake: ["Date"] });
   });
 
-  it("loader fetches invoicing settings, work logs, and invoices and derives settingsEtag", async () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  const backendReturnsEmptyLists = () =>
     backendFetch.mockImplementation(async (endpoint: string) => {
       if (endpoint === "/invoicing/settings") return { settings: settingsFixture };
       if (endpoint === "/work-logs") return { entries: [], nextCursor: null };
@@ -60,13 +65,28 @@ describe("app.invoicing route loader and action (E37 S2)", () => {
       throw new Error(`Unexpected endpoint ${endpoint}`);
     });
 
+  it("loader fetches invoicing settings, work logs, and invoices and derives settingsEtag", async () => {
+    vi.setSystemTime(new Date("2026-11-25T12:00:00Z"));
+    backendReturnsEmptyLists();
+
     const data = await loader(loaderArgs());
     expect(data).toEqual({
       settings: settingsFixture,
       settingsEtag: '"2026-11-15T10:00:00.000Z"',
       workLogs: [],
       invoices: [],
+      today: "2026-11-25",
     });
+  });
+
+  it("loader's today is the Europe/London date, which is a day ahead of UTC late on a BST evening", async () => {
+    // 23:30 UTC on 31 March 2027 is 00:30 BST on 1 April 2027 (BST began 28 March 2027), so new
+    // work, issue and paid dates default to the London day, not the UTC one.
+    vi.setSystemTime(new Date("2027-03-31T23:30:00Z"));
+    backendReturnsEmptyLists();
+
+    const data = await loader(loaderArgs());
+    expect(data.today).toBe("2027-04-01");
   });
 
   it("action sends If-Match on conditional PATCH routes (/invoicing/settings, /work-logs/:id, /invoices/:id)", async () => {

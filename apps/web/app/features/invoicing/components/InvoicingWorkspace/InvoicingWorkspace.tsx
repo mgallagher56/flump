@@ -66,7 +66,8 @@ export interface InvoicingWorkspaceProps {
   settingsEtag: string | null;
   workLogs: readonly WorkLogEntryDto[];
   invoices: readonly InvoiceDto[];
-  todayIso?: string;
+  /** Today in Europe/London, "YYYY-MM-DD": the default work, issue and paid date. */
+  todayIso: string;
   initialTab?: "work-log" | "invoices" | "settings";
   isSubmitting?: boolean;
   onCreateWorkLog?: (payload: CreateWorkLogEntryRequest) => void;
@@ -118,7 +119,7 @@ export const InvoicingWorkspace: FC<InvoicingWorkspaceProps> = ({
   settingsEtag,
   workLogs,
   invoices,
-  todayIso = "2026-11-21",
+  todayIso,
   initialTab = "work-log",
   isSubmitting = false,
   onCreateWorkLog,

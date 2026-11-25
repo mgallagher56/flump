@@ -22,6 +22,7 @@ import {
   useLoaderData,
 } from "react-router";
 import { InvoicingWorkspace } from "~/features/invoicing/components/InvoicingWorkspace";
+import { londonDate } from "~/features/snapshot/snapshotModel";
 import { backendFetch } from "~/services/backend-client.server";
 import { ifMatchFromForm, revalidateOnConflict } from "~/services/conflict";
 import { actionErrorResponse, throwRouteError } from "~/services/route-error.server";
@@ -61,6 +62,8 @@ export const loader = async (args: LoaderFunctionArgs) => {
     settingsEtag,
     workLogs: workLogsRes.entries,
     invoices: invoicesRes.invoices,
+    // New work, issue and paid dates default to today on the Europe/London clock.
+    today: londonDate(),
   };
 };
 
@@ -220,6 +223,7 @@ export default function InvoicingRoute(): ReactElement {
       settingsEtag={loaderData.settingsEtag}
       workLogs={loaderData.workLogs}
       invoices={loaderData.invoices}
+      todayIso={loaderData.today}
       isSubmitting={fetcher.state !== "idle"}
       onCreateWorkLog={(payload) => submitAction("create-work-log", { payload })}
       onUpdateWorkLog={(id, payload, ifMatch) =>
