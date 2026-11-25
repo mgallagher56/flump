@@ -543,7 +543,7 @@ jobs:
           fi
           changed=$(git diff --name-only "origin/$BASE_REF...HEAD")
           if printf '%s\n' "$changed" \
-            | grep -E '^apps/mobile/|^packages/(finance-engine|format|tokens|api-contract|api-client|typescript-config)/|^scripts/(check-mobile-bundle|run-expo-doctor)\.ts$|^package\.json$|^bun\.lock$|^bunfig\.toml$|^turbo\.json$|^\.node-version$|^\.github/(workflows/ci-pipeline\.yml|actions/)'; then
+            | grep -E '^apps/mobile/|^packages/(finance-engine|format|tokens|api-contract|api-client|typescript-config)/|^scripts/(check-mobile-bundle|run-expo-doctor)\.ts$|^package\.json$|^biome\.json$|^bun\.lock$|^bunfig\.toml$|^turbo\.json$|^\.node-version$|^\.github/(workflows/ci-pipeline\.yml|actions/)'; then
             echo "run=true" >> "$GITHUB_OUTPUT"
           else
             echo "run=false" >> "$GITHUB_OUTPUT"

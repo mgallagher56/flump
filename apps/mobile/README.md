@@ -31,14 +31,14 @@ The Maestro flow `e2e/flows/engine-check.yaml` checks the device check on a debu
 
 ## Checks
 
-| Command (in `apps/mobile`) | What it does                                                                              |
-| -------------------------- | ----------------------------------------------------------------------------------------- |
-| `bun run lint`             | Biome                                                                                     |
-| `bun run check-types`      | TypeScript 7 over `expo/tsconfig.base`                                                    |
-| `bun run test`             | Jest with `jest-expo`, on Node                                                            |
-| `bun run export`           | Production export for iOS and Android into `dist` (needs the shared packages built)       |
-| `bun run check:bundle`     | Fails if the export contains the device check or the tax vectors                          |
-| `bun run doctor`           | `expo-doctor`, tolerating only same-version duplicate installs from Bun's isolated linker |
+| Command (in `apps/mobile`) | What it does                                                                                                                     |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `bun run lint`             | Biome                                                                                                                            |
+| `bun run check-types`      | TypeScript 7 over `expo/tsconfig.base`                                                                                           |
+| `bun run test`             | Jest with `jest-expo`, on Node                                                                                                   |
+| `bun run export`           | Production export for iOS and Android into `dist` (needs the shared packages built)                                              |
+| `bun run check:bundle`     | Fails if the export contains the device check or the tax vectors, or if its source maps show a package bundled from two installs |
+| `bun run doctor`           | `expo-doctor`, tolerating only its same-version duplicate finding from Bun's isolated linker (see `scripts/run-expo-doctor.ts`)  |
 
 CI runs all of these in the `📱 Mobile checks` job on GitHub's Linux runners. It does not build a native app, run a simulator or emulator, or prove Hermes at runtime.
 
