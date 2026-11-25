@@ -15,7 +15,9 @@ describe("typeOrmOptionsFromEnv", () => {
     expect(o.synchronize).toBe(false);
     expect(o.migrationsRun).toBe(true);
     expect(o.entities).toBe(ENTITIES);
-    expect(ENTITIES).toHaveLength(23);
+    // No count to keep in step: the privacy registry spec and the migrations spec derive their
+    // lists from ENTITIES. Each entity is listed once.
+    expect(new Set(ENTITIES).size).toBe(ENTITIES.length);
     expect(ENTITIES).toContain(BankConnection);
   });
 
