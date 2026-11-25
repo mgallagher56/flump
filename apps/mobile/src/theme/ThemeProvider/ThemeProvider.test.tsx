@@ -75,6 +75,22 @@ describe("ThemeProvider", () => {
     expect(screen.getAllByTestId("scale").map((n) => n.props.children)).toEqual(["1", "2"]);
   });
 
+  it("a release build ignores the preview text scale", async () => {
+    const globals = globalThis as unknown as { __DEV__: boolean };
+    const wasDev = globals.__DEV__;
+    globals.__DEV__ = false;
+    try {
+      await render(
+        <ThemeProvider scheme="light" textScale={2}>
+          <ScaleProbe />
+        </ThemeProvider>,
+      );
+      expect(screen.getByTestId("scale")).toHaveTextContent("1");
+    } finally {
+      globals.__DEV__ = wasDev;
+    }
+  });
+
   it("useTheme outside the provider throws a clear error", async () => {
     jest.spyOn(console, "error").mockImplementation(() => {});
     await expect(render(<Probe />)).rejects.toThrow("useTheme must be used inside ThemeProvider");

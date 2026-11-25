@@ -20,14 +20,10 @@ export function Welcome() {
       {__DEV__ ? (
         <>
           <Link href="/engine-check" asChild>
-            <Button variant="link" accessibilityRole="link">
-              Device check
-            </Button>
+            <Button variant="link" accessibilityRole="link" label="Device check" />
           </Link>
           <Link href="/gallery" asChild>
-            <Button variant="link" accessibilityRole="link">
-              Component gallery
-            </Button>
+            <Button variant="link" accessibilityRole="link" label="Component gallery" />
           </Link>
         </>
       ) : null}

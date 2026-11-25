@@ -12,7 +12,7 @@ import { screenStates } from "../../components/Screen/Screen.states";
 import { Text } from "../../components/Text";
 import { textStates } from "../../components/Text/Text.states";
 
-export interface GalleryState {
+interface GalleryState {
   readonly name: string;
   readonly render: () => ReactElement;
 }

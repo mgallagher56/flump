@@ -66,7 +66,9 @@ export interface ThemeProviderProps {
 export function ThemeProvider({ children, scheme, textScale = 1 }: ThemeProviderProps) {
   const system = useColorScheme();
   const resolved: ColorScheme = scheme ?? (system === "dark" ? "dark" : "light");
-  const theme = useMemo(() => buildTheme(resolved, textScale), [resolved, textScale]);
+  // A release build ignores the preview scale, so no screen can stop following the phone's text size.
+  const scale = __DEV__ ? textScale : 1;
+  const theme = useMemo(() => buildTheme(resolved, scale), [resolved, scale]);
   return <ThemeContext.Provider value={theme}>{children}</ThemeContext.Provider>;
 }
 

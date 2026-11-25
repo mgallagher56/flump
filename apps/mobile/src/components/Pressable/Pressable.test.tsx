@@ -82,6 +82,34 @@ describe("Pressable", () => {
     expect(screen.getByRole("button", { name: "Open menu" })).toBeOnTheScreen();
   });
 
+  it("an aria-label names it as well as accessibilityLabel does", async () => {
+    await render(
+      inTheme(
+        <Pressable aria-label="Close">
+          <View />
+        </Pressable>,
+      ),
+    );
+    expect(screen.getByRole("button", { name: "Close" })).toBeOnTheScreen();
+  });
+
+  it("busy gives no press feedback or press events", async () => {
+    const onPressIn = jest.fn();
+    await render(
+      inTheme(
+        <Pressable
+          busy
+          onPressIn={onPressIn}
+          style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1 })}
+        >
+          <Text>Busy</Text>
+        </Pressable>,
+      ),
+    );
+    await userEvent.setup().press(screen.getByText("Busy"));
+    expect(onPressIn).not.toHaveBeenCalled();
+  });
+
   it("takes its role from the prop, defaulting to button", async () => {
     await render(
       inTheme(

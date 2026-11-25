@@ -4,7 +4,7 @@ import type { Theme } from "../../theme/ThemeProvider";
 import { type FixedTextStyleKey, textStyle } from "../../theme/textStyle";
 
 /** The same colour names as the web `Text` (packages/ui Text.styles.ts), each a token. */
-export const TEXT_COLORS = {
+const TEXT_COLORS = {
   primary: "text.primary",
   secondary: "text.secondary",
   muted: "text.muted",

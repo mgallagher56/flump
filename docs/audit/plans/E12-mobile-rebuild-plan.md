@@ -445,7 +445,7 @@ After S6 the page slices touch separate folders and can run two or three at a ti
 3. The gallery shows every component in light, dark and 200% text, and the production export does not contain it.
 4. The PR states its seam cost (the data door rule).
 
-**Built (S1b, 25 November 2026).** The tax threshold literal check is the existing one tax engine guard, which already scans `apps/mobile` for the four thresholds and the rate fields; S1b adds a mobile fixture test instead of a second check. `noReactNativeRawText` skips `Button`, whose words are typed as a string and always drawn in `Text`. Jest has no layout engine, so "200% text without clipping" is checked structurally (sizes and line heights double, no fixed height around text, nothing truncates unless asked, system text size never turned off); the look at 200% on a phone is a hand check. `Card` has the `none` and `resting` elevations; `interactive` and `floating` need native shadow tokens and come with the first screen that uses them.
+**Built (S1b, 25 November 2026).** The tax threshold literal check is the existing one tax engine guard, which already scans `apps/mobile` for the four thresholds and the rate fields; S1b adds a mobile fixture test instead of a second check. `Button` takes its words as a `label` prop, so the mobile overrides only add rules and relax none (coordinator condition, 25 November 2026). Jest has no layout engine, so "200% text without clipping" is checked structurally (sizes and line heights double, no fixed height around text, nothing truncates unless asked, system text size never turned off); the look at 200% on a phone is a hand check. `Card` has the `none` and `resting` elevations; `interactive` and `floating` need native shadow tokens and come with the first screen that uses them.
 
 ### 9.5 S2a, S2b and S2c. Sign-in
 
@@ -553,7 +553,7 @@ Adopted in `DECISIONS.md` round 2 (reversible defaults) or round 3, updated wher
 
 ### 10.3 Smaller decisions taken in the slices
 
-- **S1b:** the AGENTS.md section 1 wording for the native file set. Proposed: "**`apps/mobile`**: every component lives in its own PascalCase directory with `ComponentName.tsx`, `ComponentName.styles.ts` (a StyleSheet factory that takes the theme), `ComponentName.test.tsx`, `ComponentName.states.ts` (named prop sets, shown by the dev gallery and used by the tests, in place of a Storybook file) and `index.ts`." The coordinator approves it (round 2 adopted it in principle).
+- **S1b:** the AGENTS.md section 1 wording for the native file set. Approved by the coordinator on 25 November 2026 and added verbatim: "**`apps/mobile`**: every component lives in its own PascalCase directory with `ComponentName.tsx`, `ComponentName.styles.ts` (a StyleSheet factory that takes the theme), `ComponentName.test.tsx`, `ComponentName.states.ts` (named prop sets, shown by the dev gallery and used by the tests, in place of a Storybook file) and `index.ts`." The coordinator approves it (round 2 adopted it in principle).
 - **S2a and S2b:** whether B-B is needed; whether iOS uses a private browser session.
 - **S3:** the shape of `packages/copy` (one module per flow, re-exported by web).
 - **S4:** native tabs or the JavaScript tab bar; whether the header menu button and the More tab both stay.
