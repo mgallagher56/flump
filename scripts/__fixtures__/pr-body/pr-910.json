@@ -1,0 +1,5 @@
+{
+  "author": "mgallagher56",
+  "body": "## What\nFixes B1 from the verify-bank-sync model. A sync refused with AUTH_EXPIRED no longer writes `needs_reconnect` over a reconnect that landed during it. The write is now a compare-and-swap on the token ciphertexts the verdict was about (`recordNeedsReconnect`). On a miss nothing is written and the user is asked to try again.\n\nIncludes #903's skill commit, so this PR replaces it (no stacking).\n\n## Why\nStale sync, wrong status and a confusing 409 before bank connections return (D11).\n\n## Tests\n4 new real-Postgres tests (fetch path, refresh path, plus no-reconnect and re-encrypted controls). The 2 race tests failed before the fix. check.sh passes: `current` includes `NeedsReconnectOnlyWhenTokenDead` and `broken-status-no-cas` fails without the CAS.\n\n## Review\nOpus security review: no findings above low. Opus code review: no bugs. Follow-up noted: the `error` status write is still unconditional.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n",
+  "title": "fix(banking): needs_reconnect only while the judged token is still stored (B1)"
+}
