@@ -1,7 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import { spawnSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { ALLOWED_READERS, checkFile, REMOVED_IMPLEMENTATIONS } from "./lib/one-tax-engine";
+import { MOBILE_SCAN_DIRS } from "./lib/scan";
 
 const messages = (file: string, source: string) => checkFile(file, source).map((v) => v.message);
 
@@ -69,5 +71,13 @@ describe("one tax engine law (E25 T15)", () => {
       /* nor this: rules.ni.class1.mainRate */
       const ni = calculateEmployeeNi(pay, getUkTaxYearRules(year));`;
     expect(messages("apps/web/app/features/take-home/x.ts", source)).toEqual([]);
+  });
+
+  test("a tax calculation in the mobile app fails, and the check scans the mobile app (E12 S1a)", () => {
+    const source = "const { mainRate } = rules.ni.class4;";
+    expect(messages("apps/mobile/src/screens/Pay/pay.ts", source)).toHaveLength(1);
+    const script = readFileSync(resolve(import.meta.dir, "check-one-tax-engine.ts"), "utf8");
+    expect(script).toContain("...MOBILE_SCAN_DIRS");
+    expect(MOBILE_SCAN_DIRS).toEqual(["apps/mobile/app", "apps/mobile/src"]);
   });
 });

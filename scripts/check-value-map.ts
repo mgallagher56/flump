@@ -29,6 +29,7 @@
 import { spawnSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
+import { MOBILE_SCAN_DIRS } from "./lib/scan";
 import { parseValueMap, type RepoView, RULES, staleViews, validateMap } from "./lib/value-map";
 import {
   type Baseline,
@@ -67,7 +68,7 @@ const STORAGE_ROOTS = [
   "packages/finance-engine/src",
 ];
 /** Where a second formula would be: web pages, backend services and the AI tools. */
-const FORMULA_ROOTS = ["apps/web/app", "apps/backend/src", "packages/mcp/src"];
+const FORMULA_ROOTS = ["apps/web/app", "apps/backend/src", "packages/mcp/src", ...MOBILE_SCAN_DIRS];
 const SKIP_DIR = new Set([
   "node_modules",
   "dist",

@@ -2,7 +2,7 @@
 
 # Functionality map: overview
 
-Mapped pages: 38 | Sections: 253 | Excluded routes: 19
+Mapped pages: 39 | Sections: 254 | Excluded routes: 20
 
 ## web
 
@@ -564,3 +564,14 @@ Mapped pages: 38 | Sections: 253 | Excluded routes: 19
 | `disputes`       | `apps/marketing/src/pages/TermsPage/TermsPage.tsx`      | -          | -       |
 | `related-pages`  | `apps/marketing/src/components/LegalPage/LegalPage.tsx` | -          | -       |
 | `site-footer`    | `apps/marketing/src/components/Footer/Footer.tsx`       | -          | -       |
+
+## mobile
+
+### welcome: Flump
+
+- Route: `/` (auth: `public`, file: `apps/mobile/app/index.tsx`)
+- Purpose: Placeholder first screen of the Expo app (E12 S1a). Shows the name and the tagline in the system's light or dark theme; reads no data and needs no sign-in.
+
+| Section | Component                                     | Facts read | Figures |
+| ------- | --------------------------------------------- | ---------- | ------- |
+| `brand` | `apps/mobile/src/screens/Welcome/Welcome.tsx` | -          | -       |

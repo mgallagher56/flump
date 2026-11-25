@@ -7,6 +7,7 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 import { checkFile, type OneTaxEngineViolation } from "./lib/one-tax-engine";
+import { MOBILE_SCAN_DIRS } from "./lib/scan";
 
 const repoRoot = resolve(import.meta.dir, "..");
 /** Source the product ships. */
@@ -18,6 +19,7 @@ const ROOTS = [
   "apps/web/app",
   "apps/marketing/src",
   "apps/backend/src",
+  ...MOBILE_SCAN_DIRS,
 ];
 const SKIP_DIR = new Set(["node_modules", "dist", "build", "styled-system", "__fixtures__"]);
 const SKIP_FILE = /\.(test|spec|stories|vectors|fixtures)\.tsx?$/;

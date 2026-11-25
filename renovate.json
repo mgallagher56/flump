@@ -41,6 +41,25 @@
       "matchDatasources": ["docker"],
       "matchPackageNames": ["mcr.microsoft.com/playwright"],
       "versioning": "regex:^v(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)-(?<compatibility>.+)$"
+    },
+    {
+      "description": "E12 S1a: an Expo SDK pins React, React Native and its native modules together, so they move as one group and only to the versions the SDK lists (check with expo-doctor in apps/mobile)",
+      "matchPackageNames": [
+        "expo",
+        "expo-*",
+        "@expo/*",
+        "jest-expo",
+        "react-native",
+        "react-native-*",
+        "@react-native/*",
+        "react",
+        "react-dom",
+        "@types/react",
+        "@types/react-dom"
+      ],
+      "groupName": "expo sdk and react",
+      "minimumReleaseAge": "7 days",
+      "automerge": false
     }
   ]
 }

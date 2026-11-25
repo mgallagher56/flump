@@ -57,6 +57,9 @@
       ],
       "entry": ["postcss.config.cjs", "src/foundations/*/index.ts"]
     },
+    "apps/mobile": {
+      "ignoreDependencies": ["@babel/runtime", "@babel/core"]
+    },
     "packages/*": {
       "ignoreDependencies": ["@repo/typescript-config"]
     },

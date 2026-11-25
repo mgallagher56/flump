@@ -1,0 +1,13 @@
+# E12 S1a: the device check (route `engine-check`) on Hermes. Needs a debug build, where __DEV__ is
+# true: `bunx expo run:android` (Android SDK and an emulator), then `maestro test e2e/flows/engine-check.yaml`.
+# Not run in CI yet: S2c adds the Android emulator job (`mobile-e2e-android`).
+appId: app.flump.mobile
+---
+- launchApp
+- assertVisible: "Finance without the fog"
+- tapOn: "Device check"
+- assertVisible: "Hermes"
+- assertVisible:
+    text: "All vectors pass.*"
+- assertVisible:
+    text: "All formatting cases match.*"

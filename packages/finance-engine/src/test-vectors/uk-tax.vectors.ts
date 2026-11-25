@@ -110,7 +110,7 @@ interface UkTaxVectorFailure {
   actual: number;
 }
 
-interface UkTaxVectorRunResult {
+export interface UkTaxVectorRunResult {
   checked: number;
   failures: UkTaxVectorFailure[];
 }

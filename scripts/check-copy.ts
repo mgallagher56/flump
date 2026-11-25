@@ -4,7 +4,7 @@ import { COPY_OWNERS, copyOwner } from "./lib/copy-owners";
 import { COPY_RULES, type CopyHit, type CopyRule, findCopyHits } from "./lib/copy-rules";
 import { extractCopyStrings, extractJsonStrings } from "./lib/copy-strings";
 import { compareToBaseline } from "./lib/design-tokens";
-import { collectFiles, readSource, repoRoot } from "./lib/scan";
+import { collectFiles, MOBILE_SCAN_DIRS, readSource, repoRoot } from "./lib/scan";
 
 export { COPY_RULES, type CopyHit, type CopyRule, findCopyHits };
 
@@ -26,6 +26,7 @@ export const COPY_SCAN_DIRS = [
   "packages/ui/src",
   "packages/mcp/src",
   "packages/finance-engine/src",
+  ...MOBILE_SCAN_DIRS,
 ];
 const LOCALE_FILES = ["apps/web/public/locales/en/common.json"];
 // Rule text, lexicons and generated code name the banned words on purpose.

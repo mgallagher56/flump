@@ -53,6 +53,7 @@ Refreshed on 2026-11-20 against `origin/main` and the merged pull requests up to
 | E41 | Mutation testing and faster tests | Merged (M4 in #847, M5 in #857); nothing in progress |
 | E17 | MCP write tools (PR D, #653) and web review of staged imports (PR E, #654) | Merged; nothing in progress |
 | E15 phase 8 and follow-ups | Visual regression guard (#651), follow-up sweep (#647) | Merged |
+| E12 mobile | Expo app slice S1a: `apps/mobile` skeleton, native theme, engine vectors on Hermes (dev screen), CI `📱 Mobile checks` (plan revision 4, `plans/E12-mobile-rebuild-plan.md` section 9.3; spike notes in `plans/E12-spike-notes.md`) | In review (2026-11-25); D1, B-A and P5 can run beside it |
 | E4 tax | 2027/28 tax year with property and savings rates | Merged (#833), marked provisional until the rates are law. CI fails from 1 April 2027 unless the provisional marker in `PROVISIONAL_UK_TAX_YEARS` is removed or extended |
 
 ### Owner actions
@@ -68,6 +69,7 @@ Refreshed on 2026-11-20 against `origin/main` and the merged pull requests up to
 | E24 | Custom domain and email; real company details and mailboxes; launch attestations |
 | E30 PR3 | Choose the email provider and get a PECR opinion for reminders |
 | E15, E16 | Approve screens in light and dark; attest that the E16 cuts are removed |
+| E12 | After S1a merges: add `📱 Mobile checks` to the branch rules (OS9). To see the app on a phone or simulator: a Mac with Xcode for the iOS simulator, an Android phone or emulator (OS17). Store accounts and signing (OS2 to OS8) wait for S19 |
 
 ## Order
 

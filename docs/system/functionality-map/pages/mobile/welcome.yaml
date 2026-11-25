@@ -1,0 +1,11 @@
+id: welcome
+app: mobile
+route: /
+title: Flump
+auth: public
+purpose: Placeholder first screen of the Expo app (E12 S1a). Shows the name and the tagline in the system's light or dark theme; reads no data and needs no sign-in.
+route_file: apps/mobile/app/index.tsx
+
+sections:
+  - id: brand
+    component: apps/mobile/src/screens/Welcome/Welcome.tsx
