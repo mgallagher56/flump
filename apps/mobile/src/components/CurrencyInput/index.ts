@@ -1,1 +1,1 @@
-export { CurrencyInput, parseMoneyInput } from "./CurrencyInput";
+export { CurrencyInput } from "./CurrencyInput";

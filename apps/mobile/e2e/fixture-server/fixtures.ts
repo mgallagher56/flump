@@ -87,7 +87,7 @@ export function cannedClientPolicy(minVersion: string) {
 /* ------------------------------------------------------------------------------------------ */
 
 /** The account types the backend stores negative whatever sign was sent (BE-05). */
-export const LIABILITY_TYPES: ReadonlySet<string> = new Set([
+const LIABILITY_TYPES: ReadonlySet<string> = new Set([
   "Mortgage",
   "Credit Card",
   "Loan",
@@ -110,7 +110,7 @@ export function londonMonth(now: Date): string {
 }
 
 /** "YYYY-MM-DD": the last day of a "YYYY-MM" month. */
-export function lastDayOfMonth(month: string): string {
+function lastDayOfMonth(month: string): string {
   const [year, m] = month.split("-").map(Number) as [number, number];
   // Day 0 of the next month is the last day of this one.
   const day = new Date(Date.UTC(year, m, 0)).getUTCDate();

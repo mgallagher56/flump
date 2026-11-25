@@ -15,17 +15,17 @@ import type {
 import { formatCurrency, formatMonthYear, formatPercent } from "@flump/format";
 
 /** "November 2026" for "2026-11". */
-export function monthLabel(month: CheckInMonth): string {
+function monthLabel(month: CheckInMonth): string {
   return formatMonthYear(`${month}-01`, { month: "long" });
 }
 
 /** "November" for "2026-11". */
-export function monthName(month: CheckInMonth): string {
+function monthName(month: CheckInMonth): string {
   return monthLabel(month).split(" ")[0] ?? month;
 }
 
 /** Whole pounds, as every figure is read: "£1,204", "−£300" with a true minus. */
-export function wholePounds(value: number): string {
+function wholePounds(value: number): string {
   return formatCurrency(Math.round(value));
 }
 
