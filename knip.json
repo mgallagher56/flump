@@ -58,7 +58,7 @@
       "entry": ["postcss.config.cjs", "src/foundations/*/index.ts"]
     },
     "apps/mobile": {
-      "entry": ["e2e/fixture-server/main.ts"],
+      "entry": ["e2e/fixture-server/main.ts", "e2e/scripts/*.js"],
       "ignoreDependencies": ["@babel/runtime"]
     },
     "packages/*": {
