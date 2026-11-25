@@ -29,6 +29,11 @@ export const SESSION_ENDED_BODY =
 export const OFFLINE_HEADING = "We could not reach Flump";
 export const OFFLINE_BODY = "You are still signed in. Check your connection and try again.";
 
+export const SIGN_IN_UNAVAILABLE_HEADING = "Sign-in is not available in this app";
+/** Developer-facing: only a host app such as Expo Go lacks these; a Flump build always has them. */
+export const signInUnavailableBody = (missing: readonly string[]) =>
+  `This app does not include what sign-in needs (${missing.join(", ")}). Open Flump in a development build to sign in.`;
+
 export const MISCONFIGURED_HEADING = "This build is misconfigured";
 export const MISCONFIGURED_BODY = "It cannot sign in. Install a build from the Flump team.";
 

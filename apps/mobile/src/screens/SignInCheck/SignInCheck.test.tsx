@@ -1,4 +1,5 @@
 import { render, screen, userEvent } from "@testing-library/react-native";
+import { MissingNativeModulesError } from "../../auth/nativeModules";
 import { NotSignedInError, type SignInCheckReport } from "../../auth/signInCheck";
 import { MobileConfigError } from "../../config";
 import { ThemeProvider } from "../../theme/ThemeProvider";
@@ -58,5 +59,11 @@ describe("SignInCheck (dev only)", () => {
   it("for anything else shows only the error's type, never its message", () => {
     const leaky = new TypeError("Network request failed for r_secret_value");
     expect(problemText(leaky)).toBe("The check could not run (TypeError).");
+  });
+
+  it("names native modules the app binary lacks (Expo Go)", () => {
+    expect(problemText(new MissingNativeModulesError(["ExpoCrypto"]))).toBe(
+      "This app does not include what sign-in needs (ExpoCrypto). Open Flump in a development build.",
+    );
   });
 });

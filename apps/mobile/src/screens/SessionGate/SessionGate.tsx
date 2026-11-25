@@ -1,4 +1,4 @@
-import { useSession } from "../../auth/SessionProvider";
+import { useSession, useStartProblem } from "../../auth/SessionProvider";
 import { Home } from "../Home";
 import { Loading } from "../Loading";
 import { Misconfigured } from "../Misconfigured";
@@ -6,11 +6,19 @@ import { NotInvited } from "../NotInvited";
 import { Offline } from "../Offline";
 import { SessionEnded } from "../SessionEnded";
 import { SignIn } from "../SignIn";
+import { SignInUnavailable } from "../SignInUnavailable";
 
 /** The first route: shows the screen for the session's state (plan section 5.2). */
 export function SessionGate() {
   const app = useSession();
-  if (!app) return <Misconfigured />;
+  const problem = useStartProblem();
+  if (!app) {
+    return problem.kind === "unavailable" ? (
+      <SignInUnavailable missing={problem.missing} />
+    ) : (
+      <Misconfigured />
+    );
+  }
   const { session, state, marketingOrigin } = app;
   const signIn = () => void session.signIn("sign-in");
   const signOut = () => void session.signOut();
