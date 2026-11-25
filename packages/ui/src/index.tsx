@@ -43,6 +43,7 @@ export * from "./patterns/SectionHeader";
 export * from "./patterns/SideNav";
 export * from "./patterns/SimulatorSplitLayout";
 export * from "./patterns/SiteFooter";
+export * from "./patterns/StoragePreference";
 export * from "./patterns/TakeHomeDeltaPanel";
 export * from "./patterns/TaxRatesStatusBanner";
 export * from "./patterns/ThemeToggle";

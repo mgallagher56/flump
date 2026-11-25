@@ -3,6 +3,7 @@ import { SiteFooter, type SiteFooterRenderLink } from "@repo/ui";
 import type { FC } from "react";
 import { Link as RouterLink } from "react-router";
 import { useInviteOnly } from "~/hooks/useInviteOnly";
+import { legalFooterLinks, useMarketingOrigin } from "~/utils/legalLinks";
 import { APP_VERSION, feedbackMailto } from "~/utils/support";
 
 const renderLink: SiteFooterRenderLink = (link, className, children) => (
@@ -18,6 +19,7 @@ const renderLink: SiteFooterRenderLink = (link, className, children) => (
  */
 export const SignedOutFooter: FC = () => {
   const inviteOnly = useInviteOnly();
+  const marketingOrigin = useMarketingOrigin();
   return (
     <SiteFooter
       blurb="UK debt, mortgage, student loan and tax calculators."
@@ -40,6 +42,7 @@ export const SignedOutFooter: FC = () => {
             },
           ],
         },
+        { heading: "Legal", links: legalFooterLinks(marketingOrigin) },
       ]}
       renderLink={renderLink}
     />

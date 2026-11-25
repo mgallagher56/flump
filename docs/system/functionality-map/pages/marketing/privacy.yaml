@@ -1,0 +1,50 @@
+id: privacy
+app: marketing
+route: /privacy
+title: Privacy notice | Flump
+auth: public
+purpose: Say what personal data Flump holds, why, who it is shared with, where it is kept, how long for, and how to use data protection rights or complain.
+route_file: apps/marketing/src/pages/PrivacyPage/PrivacyPage.tsx
+
+sections:
+  - id: site-header
+    component: apps/marketing/src/components/Header/Header.tsx
+
+  - id: header
+    component: apps/marketing/src/components/LegalPage/LegalPage.tsx
+
+  - id: who
+    component: apps/marketing/src/pages/PrivacyPage/PrivacyPage.tsx
+
+  - id: what
+    component: apps/marketing/src/pages/PrivacyPage/PrivacyPage.tsx
+
+  - id: clients
+    component: apps/marketing/src/pages/PrivacyPage/PrivacyPage.tsx
+
+  - id: sharing
+    component: apps/marketing/src/pages/PrivacyPage/PrivacyPage.tsx
+
+  - id: where
+    component: apps/marketing/src/pages/PrivacyPage/PrivacyPage.tsx
+
+  - id: how-long
+    component: apps/marketing/src/pages/PrivacyPage/PrivacyPage.tsx
+
+  - id: rights
+    component: apps/marketing/src/pages/PrivacyPage/PrivacyPage.tsx
+
+  - id: complaints
+    component: apps/marketing/src/pages/PrivacyPage/PrivacyPage.tsx
+
+  - id: other
+    component: apps/marketing/src/pages/PrivacyPage/PrivacyPage.tsx
+
+  - id: changes
+    component: apps/marketing/src/pages/PrivacyPage/PrivacyPage.tsx
+
+  - id: related-pages
+    component: apps/marketing/src/components/LegalPage/LegalPage.tsx
+
+  - id: site-footer
+    component: apps/marketing/src/components/Footer/Footer.tsx

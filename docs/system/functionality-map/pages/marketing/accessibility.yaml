@@ -1,0 +1,35 @@
+id: accessibility
+app: marketing
+route: /accessibility
+title: Accessibility statement | Flump
+auth: public
+purpose: Say what accessibility standard Flump aims for, what is and is not tested, and how to report a problem or ask for another format.
+route_file: apps/marketing/src/pages/AccessibilityPage/AccessibilityPage.tsx
+
+sections:
+  - id: site-header
+    component: apps/marketing/src/components/Header/Header.tsx
+
+  - id: header
+    component: apps/marketing/src/components/LegalPage/LegalPage.tsx
+
+  - id: aim
+    component: apps/marketing/src/pages/AccessibilityPage/AccessibilityPage.tsx
+
+  - id: tested
+    component: apps/marketing/src/pages/AccessibilityPage/AccessibilityPage.tsx
+
+  - id: not-tested
+    component: apps/marketing/src/pages/AccessibilityPage/AccessibilityPage.tsx
+
+  - id: report
+    component: apps/marketing/src/pages/AccessibilityPage/AccessibilityPage.tsx
+
+  - id: about
+    component: apps/marketing/src/pages/AccessibilityPage/AccessibilityPage.tsx
+
+  - id: related-pages
+    component: apps/marketing/src/components/LegalPage/LegalPage.tsx
+
+  - id: site-footer
+    component: apps/marketing/src/components/Footer/Footer.tsx

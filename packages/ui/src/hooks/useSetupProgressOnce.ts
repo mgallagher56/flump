@@ -1,5 +1,6 @@
 import { durations } from "@flump/tokens/native";
 import { useRef, useState } from "react";
+import { optionalSessionStorage } from "./optionalStorage";
 import { useHydratingRender } from "./useHydratingRender";
 import { useIsomorphicLayoutEffect } from "./useIsomorphicLayoutEffect";
 import { usePrefersReducedMotion } from "./usePrefersReducedMotion";
@@ -7,11 +8,10 @@ import { usePrefersReducedMotion } from "./usePrefersReducedMotion";
 const STORAGE_KEY = "flump.setup-step-count";
 
 export function getStoredStepCount(): number | null {
-  if (typeof window === "undefined" || typeof window.sessionStorage === "undefined") {
-    return null;
-  }
+  const storage = optionalSessionStorage();
+  if (!storage) return null;
   try {
-    const raw = window.sessionStorage.getItem(STORAGE_KEY);
+    const raw = storage.getItem(STORAGE_KEY);
     return raw !== null ? Number(raw) : null;
   } catch {
     return null;
@@ -19,9 +19,10 @@ export function getStoredStepCount(): number | null {
 }
 
 export function storeStepCount(count: number): void {
-  if (typeof window !== "undefined" && typeof window.sessionStorage !== "undefined") {
+  const storage = optionalSessionStorage();
+  if (storage) {
     try {
-      window.sessionStorage.setItem(STORAGE_KEY, String(count));
+      storage.setItem(STORAGE_KEY, String(count));
     } catch {
       // Ignored
     }

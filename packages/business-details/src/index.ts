@@ -53,6 +53,74 @@ export const BUSINESS_DETAILS: BusinessDetails = {
   },
 };
 
+export type LegalPageKey = "privacy" | "terms" | "cookies" | "accessibility";
+
+export interface LegalPage {
+  key: LegalPageKey;
+  /** Path on the marketing site, which is the one home of the legal pages. */
+  path: string;
+  /** Link text in footers and in the pages' own navigation. */
+  label: string;
+  /** The page's h1. */
+  title: string;
+  /** Bumped with every change to the page's wording. */
+  version: string;
+  /** The day this version was written, en-GB long form. */
+  updated: string;
+}
+
+/**
+ * The legal pages (E19). Both apps' footers and the pages themselves read paths, names and version
+ * lines from here. Change a page's wording and its `version` and `updated` in the same commit.
+ */
+export const LEGAL_PAGES: readonly LegalPage[] = [
+  {
+    key: "privacy",
+    path: "/privacy",
+    label: "Privacy",
+    title: "Privacy notice",
+    version: "0.1",
+    updated: "25 November 2026",
+  },
+  {
+    key: "terms",
+    path: "/terms",
+    label: "Terms",
+    title: "Terms of use",
+    version: "0.1",
+    updated: "25 November 2026",
+  },
+  {
+    key: "cookies",
+    path: "/cookies",
+    label: "Cookies and storage",
+    title: "Cookies and browser storage",
+    version: "0.1",
+    updated: "25 November 2026",
+  },
+  {
+    key: "accessibility",
+    path: "/accessibility",
+    label: "Accessibility",
+    title: "Accessibility statement",
+    version: "0.1",
+    updated: "25 November 2026",
+  },
+];
+
+export function legalPage(key: LegalPageKey): LegalPage {
+  const page = LEGAL_PAGES.find((candidate) => candidate.key === key);
+  if (!page) throw new Error(`Unknown legal page: ${key}`);
+  return page;
+}
+
+/**
+ * Who reviewed the legal pages. Stated on every page so nobody takes them for a solicitor's work.
+ * Change it only when a different review has actually happened.
+ */
+export const LEGAL_REVIEW_NOTE =
+  "Written and checked with AI tools for Flump's test phase. A solicitor has not reviewed this page.";
+
 /** Formats a price in pounds, en-GB: whole pounds without pence, otherwise two decimals. */
 export function formatPrice(amount: number): string {
   const whole = Number.isInteger(amount);

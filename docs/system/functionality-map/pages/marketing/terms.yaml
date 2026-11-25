@@ -1,0 +1,56 @@
+id: terms
+app: marketing
+route: /terms
+title: Terms of use | Flump
+auth: public
+purpose: Set out the agreement for using Flump in its test phase, covering guidance not advice, fair use, the AI connection, client details, responsibility, ending an account and changes.
+route_file: apps/marketing/src/pages/TermsPage/TermsPage.tsx
+
+sections:
+  - id: site-header
+    component: apps/marketing/src/components/Header/Header.tsx
+
+  - id: header
+    component: apps/marketing/src/components/LegalPage/LegalPage.tsx
+
+  - id: about
+    component: apps/marketing/src/pages/TermsPage/TermsPage.tsx
+
+  - id: test-phase
+    component: apps/marketing/src/pages/TermsPage/TermsPage.tsx
+
+  - id: guidance
+    component: apps/marketing/src/pages/TermsPage/TermsPage.tsx
+
+  - id: account
+    component: apps/marketing/src/pages/TermsPage/TermsPage.tsx
+
+  - id: use
+    component: apps/marketing/src/pages/TermsPage/TermsPage.tsx
+
+  - id: your-data
+    component: apps/marketing/src/pages/TermsPage/TermsPage.tsx
+
+  - id: ai
+    component: apps/marketing/src/pages/TermsPage/TermsPage.tsx
+
+  - id: client-details
+    component: apps/marketing/src/pages/TermsPage/TermsPage.tsx
+
+  - id: responsibility
+    component: apps/marketing/src/pages/TermsPage/TermsPage.tsx
+
+  - id: ending
+    component: apps/marketing/src/pages/TermsPage/TermsPage.tsx
+
+  - id: changes
+    component: apps/marketing/src/pages/TermsPage/TermsPage.tsx
+
+  - id: disputes
+    component: apps/marketing/src/pages/TermsPage/TermsPage.tsx
+
+  - id: related-pages
+    component: apps/marketing/src/components/LegalPage/LegalPage.tsx
+
+  - id: site-footer
+    component: apps/marketing/src/components/Footer/Footer.tsx

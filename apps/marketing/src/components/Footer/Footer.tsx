@@ -1,4 +1,4 @@
-import { BUSINESS_DETAILS, companyLine } from "@flump/business-details";
+import { BUSINESS_DETAILS, companyLine, LEGAL_PAGES } from "@flump/business-details";
 import { SiteFooter, type SiteFooterRenderLink, siteFooterLink } from "@repo/ui";
 import type { FC } from "react";
 import { Link } from "react-router-dom";
@@ -50,8 +50,6 @@ export const Footer: FC = () => {
             { key: "pricing", label: "Pricing", href: "/pricing" },
           ],
         },
-        // A "Legal" column joins these once the privacy, terms, cookie and accessibility pages
-        // exist (EPICS table row 2); none is linked before its page is written.
         {
           heading: "Company",
           links: [
@@ -65,6 +63,14 @@ export const Footer: FC = () => {
               external: true,
             },
           ],
+        },
+        {
+          heading: "Legal",
+          links: LEGAL_PAGES.map((page) => ({
+            key: page.key,
+            label: page.label,
+            href: page.path,
+          })),
         },
       ]}
       renderLink={renderLink}

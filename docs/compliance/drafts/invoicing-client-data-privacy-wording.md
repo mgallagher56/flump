@@ -1,6 +1,6 @@
 # Invoicing client details: proposed privacy wording
 
-**DRAFT for owner review, not published; legal wording is owner-only.**
+**Superseded on 25 November 2026.** The owner decided that Fable writes and approves the legal pages. The published wording is in the privacy notice (`/privacy`, "Details about your clients"), the terms (`/terms`, "Client details you add for invoicing") and `docs/legal/ropa.md`. This file is kept as the record of the draft.
 
 Status: draft, 22 November 2026. Decisions: open (the owner approves or rewrites every line before any of it goes on a legal page).
 

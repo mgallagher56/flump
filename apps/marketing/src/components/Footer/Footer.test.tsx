@@ -98,7 +98,19 @@ describe("Footer", () => {
       "Request an invite",
       expect.stringMatching(/^Sign in/),
     ]);
-    expect(screen.queryByRole("heading", { name: "Legal" })).toBeNull();
+  });
+
+  it("links the four legal pages under Legal, in the order of the shared list", () => {
+    renderFooter();
+    const legal = screen.getByRole("navigation", { name: "Legal" });
+    expect(
+      Array.from(legal.querySelectorAll("a")).map((a) => [a.textContent, a.getAttribute("href")]),
+    ).toEqual([
+      ["Privacy", "/privacy"],
+      ["Terms", "/terms"],
+      ["Cookies and storage", "/cookies"],
+      ["Accessibility", "/accessibility"],
+    ]);
   });
 
   it("shows placeholder business details as quiet text, with no warning colour or outline", () => {

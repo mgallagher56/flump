@@ -31,7 +31,7 @@ export interface SiteFooterLink {
    * Compact footer only: the widths it shows at, so the line never wraps. `belowMd` for a short
    * form on phones, `fromMd` for links that fit only from 768px. Default: every width.
    */
-  show?: "always" | "belowMd" | "fromMd";
+  show?: "always" | "belowMd" | "fromMd" | "fromLg";
 }
 
 export interface SiteFooterColumn {

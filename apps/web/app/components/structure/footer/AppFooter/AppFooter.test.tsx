@@ -2,9 +2,10 @@ import { render, screen, within } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { SUPPORT_EMAIL } from "~/utils/support";
-import { APP_FOOTER_LINKS, AppFooter, appFooterLine } from "./AppFooter";
+import { APP_FOOTER_LINKS, AppFooter, appFooterLegalLinks, appFooterLine } from "./AppFooter";
 
 vi.mock("react-router", () => ({
+  useRouteLoaderData: () => ({ marketingUrl: "https://flump.example" }),
   Link: ({ children, to, ...rest }: { children: ReactNode; to: string }) => (
     <a href={to} {...rest}>
       {children}
@@ -27,6 +28,8 @@ describe("AppFooter", () => {
       "/tools",
       "/tools",
       `mailto:${SUPPORT_EMAIL}`,
+      "https://flump.example/privacy",
+      "https://flump.example/terms",
     ]);
     expect(screen.getByText(appFooterLine(new Date().getFullYear()))).toBeDefined();
     // No brand heading, blurb or link columns: that was the tall footer.
@@ -44,6 +47,11 @@ describe("AppFooter", () => {
       "Data and export",
       "All calculators",
       "Send feedback",
+    ]);
+    // Privacy and Terms join from 1024px only: seven links do not fit the one line at 768px.
+    expect(appFooterLegalLinks("https://flump.example").map((l) => [l.label, l.show])).toEqual([
+      ["Privacy", "fromLg"],
+      ["Terms", "fromLg"],
     ]);
   });
 

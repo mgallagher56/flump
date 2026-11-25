@@ -30,6 +30,7 @@ import i18n from "./i18n";
 import { registerSavedDataReload, revalidateRootData } from "./services/conflict";
 import { scrollRestorationKey } from "./utils/scrollRestorationKey";
 import "@repo/ui/fonts.css";
+import { getMarketingUrl } from "~/utils/marketingUrl";
 import styles from "./index.css?url";
 import { sentryPublicEnv } from "./observability/env";
 import { securityMiddleware } from "./security/middleware.server";
@@ -107,6 +108,8 @@ export const loader = async (args: LoaderFunctionArgs) => {
     inviteOnly: await inviteOnlyRead,
     isMobileClient,
     locale,
+    // Origin of the marketing site, the home of the legal pages the footers link to. Public.
+    marketingUrl: getMarketingUrl(args.request.url),
     // Uninvited (only ever on an invite link): no user, so the chrome offers nothing of the app.
     user: notInvited ? null : user,
     notInvited,

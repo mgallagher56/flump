@@ -1,3 +1,4 @@
+export * from "./optionalStorage";
 export * from "./useChartAnimation";
 export * from "./useDelayedPending";
 export * from "./usePrefersReducedMotion";

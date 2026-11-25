@@ -2894,6 +2894,13 @@ browser_storage:
       note: "light, dark or system",
     }
   - {
+      key: flump-optional-storage,
+      storage: localStorage,
+      user_data: false,
+      path: packages/ui/src/hooks/optionalStorage.ts,
+      note: "off when the person switched off the optional sessionStorage keys (scroll position, scene and setup animation notes) on /cookies or in Settings; absent otherwise; one per origin",
+    }
+  - {
       key: flump.setup-step-count,
       storage: sessionStorage,
       user_data: false,

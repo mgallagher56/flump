@@ -1,3 +1,4 @@
+import { LEGAL_PAGES } from "@flump/business-details";
 import { FEATURES, FEATURES_INDEX } from "./featureAreas";
 
 /**
@@ -13,4 +14,5 @@ export const STATIC_PATHS: readonly string[] = [
   "/pricing",
   "/security",
   "/contact",
+  ...LEGAL_PAGES.map((page) => page.path),
 ];
