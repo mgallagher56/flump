@@ -24,6 +24,8 @@ interface Seed {
   balance: number;
   oct?: number;
   sep?: number;
+  /** Already recorded in the check-in month (a resumed or finished check-in). */
+  nov?: number;
   interestRate?: number;
   monthlyContribution?: number;
 }
@@ -92,6 +94,7 @@ export function household(
       for (const [month, value] of [
         [9, s.sep],
         [10, s.oct],
+        [11, s.nov],
       ] as const) {
         if (value === undefined) continue;
         rows.push({

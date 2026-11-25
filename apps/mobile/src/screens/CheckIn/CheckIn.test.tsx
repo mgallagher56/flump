@@ -254,6 +254,65 @@ describe("CheckIn walk-through", () => {
   });
 });
 
+describe("CheckIn resumed or finished", () => {
+  const recorded = (names: readonly string[]) =>
+    SEEDS.map((seed) =>
+      names.includes(seed.name) ? { ...seed, nov: Math.abs(seed.balance) } : seed,
+    );
+
+  it("a part-done month resumes at the first card with nothing recorded", async () => {
+    const h = household(recorded(["Current account"]), {
+      latestCompletedMonth: "2026-10",
+      latestStartedMonth: MONTH,
+    });
+    await open(fakeApi(routes(h)));
+    expect(screen.getByText("Account 2 of 6")).toBeOnTheScreen();
+    expect(screen.getByText("Easy access savings")).toBeOnTheScreen();
+  });
+
+  it("a finished month opens on the summary", async () => {
+    const h = household(recorded(SEEDS.map((x) => x.name)), {
+      latestCompletedMonth: MONTH,
+      latestStartedMonth: MONTH,
+    });
+    const api = fakeApi(routes(h));
+    const { ui } = withApi(
+      <CheckIn marketingOrigin="https://m.test.invalid" onClose={jest.fn()} now={NOW} />,
+      api.client,
+    );
+    await render(ui);
+    expect(await screen.findByText("November is checked in.")).toBeOnTheScreen();
+    expect(puts(api)).toHaveLength(0);
+  });
+
+  it("every account recorded but not finished: Finish saves complete with no balance", async () => {
+    const h = household(recorded(SEEDS.map((x) => x.name)), {
+      latestCompletedMonth: "2026-10",
+      latestStartedMonth: MONTH,
+    });
+    const api = fakeApi(routes(h));
+    await open(api);
+    await userEvent.setup().press(screen.getByRole("button", { name: "Finish check-in" }));
+    expect(await screen.findByText("November is checked in.")).toBeOnTheScreen();
+    expect(puts(api)).toEqual([{ values: [], complete: true }]);
+  });
+
+  it("Change a balance goes back to the cards and offers no second Finish", async () => {
+    const h = household(recorded(SEEDS.map((x) => x.name)), {
+      latestCompletedMonth: MONTH,
+      latestStartedMonth: MONTH,
+    });
+    const { ui } = withApi(
+      <CheckIn marketingOrigin="https://m.test.invalid" onClose={jest.fn()} now={NOW} />,
+      fakeApi(routes(h)).client,
+    );
+    await render(ui);
+    await userEvent.setup().press(await screen.findByRole("button", { name: "Change a balance" }));
+    expect(screen.getByText("Account 1 of 6")).toBeOnTheScreen();
+    expect(screen.queryByRole("button", { name: "Finish check-in" })).toBeNull();
+  });
+});
+
 describe("CheckIn loading, failure and empty", () => {
   it("a failed load shows the error with Try again, never 'no accounts'", async () => {
     let down = true;

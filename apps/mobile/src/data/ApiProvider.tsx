@@ -4,8 +4,9 @@
  * data hook then reports an error instead of calling anything.
  */
 import type { ApiClient } from "@flump/api-client";
-import { type QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { focusManager, type QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createContext, type ReactNode, useContext, useEffect } from "react";
+import { AppState } from "react-native";
 
 const ApiContext = createContext<ApiClient | null>(null);
 
@@ -24,6 +25,14 @@ export function ApiProvider({
   useEffect(() => {
     if (!signedIn) queryClient.clear();
   }, [signedIn, queryClient]);
+  // Back in the foreground counts as focus: stale reads are fetched again, and screens that read
+  // today's date (the check-in row) render again with it.
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", (state) => {
+      focusManager.setFocused(state === "active");
+    });
+    return () => sub.remove();
+  }, []);
   return (
     <QueryClientProvider client={queryClient}>
       <ApiContext.Provider value={client}>{children}</ApiContext.Provider>

@@ -33,7 +33,7 @@ export function Home({ onSignOut, onOpenCheckIn, now = () => new Date() }: HomeP
  */
 function CheckInRow({ onOpen, now }: { onOpen(): void; now: () => Date }) {
   const data = useCheckInData(now);
-  const row = checkInRow(data, londonToday(now()).month);
+  const row = checkInRow(data, londonToday(now()));
   if (!row) return null;
   return (
     <Card testID="check-in-row">

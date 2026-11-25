@@ -4,7 +4,7 @@ import {
   countsTowardNetWorth,
   doneKind,
 } from "@flump/finance-engine/check-in";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AccessibilityInfo, Linking, View } from "react-native";
 import { Button } from "../../components/Button";
 import { Card } from "../../components/Card";
@@ -28,6 +28,7 @@ import {
   lastMonthText,
   progressText,
   statementPromptText,
+  typeLabel,
 } from "../../copy/checkIn";
 import { useDelayedLoading } from "../../data/useDelayedLoading";
 import { type CheckInFlow, useCheckInFlow } from "../../features/check-in/checkInFlow";
@@ -56,13 +57,25 @@ export interface CheckInProps {
  */
 export function CheckIn({ offline = false, marketingOrigin, onClose, now }: CheckInProps) {
   const data = useCheckInData(now);
-  const skeleton = useDelayedLoading(data.status === "loading");
+  // The walk-through runs on one copy of the data: taken once every read has settled (never from a
+  // cache that is being fetched again after the last check-in), and kept while it is open, so a
+  // background refetch never resets the cards or the answers.
+  const [inputs, setInputs] = useState<CheckInInputs | null>(null);
+  const settled = data.status === "ready" && !data.fetching ? data.inputs : null;
+  useEffect(() => {
+    if (settled) setInputs((held) => held ?? settled);
+  }, [settled]);
+  const held = inputs ?? settled;
+  const skeleton = useDelayedLoading(!held && data.status !== "error");
 
-  if (data.status === "loading") {
+  if (held) {
     return (
-      <Screen edges={EDGES} testID="check-in-loading">
-        {skeleton ? <Skeleton label={CHECK_IN.loading} testID="check-in-skeleton" /> : null}
-      </Screen>
+      <Walkthrough
+        inputs={held}
+        offline={offline}
+        marketingOrigin={marketingOrigin}
+        onClose={onClose}
+      />
     );
   }
   if (data.status === "error") {
@@ -79,12 +92,9 @@ export function CheckIn({ offline = false, marketingOrigin, onClose, now }: Chec
     );
   }
   return (
-    <Walkthrough
-      inputs={data.inputs}
-      offline={offline}
-      marketingOrigin={marketingOrigin}
-      onClose={onClose}
-    />
+    <Screen edges={EDGES} testID="check-in-loading">
+      {skeleton ? <Skeleton label={CHECK_IN.loading} testID="check-in-skeleton" /> : null}
+    </Screen>
   );
 }
 
@@ -236,6 +246,7 @@ function StepCard({
   const done = flow.isDone(id);
   const outside = !countsTowardNetWorth(categorizeAccountType(step.type), inputs.basis);
   const fieldLabel = step.isLiability ? CHECK_IN.owedNow : CHECK_IN.newBalance;
+  const type = typeLabel(step.type, step.name);
   const update = () => {
     if (draft !== null) void flow.answer(step, { kind: "update", value: draft });
   };
@@ -251,14 +262,23 @@ function StepCard({
           lastMonth: step.lastMonth,
           position,
           total: flow.steps.length,
+          type,
+          outsideNetWorth: outside,
         })}
         style={styles.head}
       >
         <Text accessibilityRole="header" textStyle="heading.sm">
           {step.name}
         </Text>
-        {calc ? null : <Text color="secondary">{lastFigureText(step.lastValue)}</Text>}
-        <Text color="secondary">{lastMonthText(step.lastMonth)}</Text>
+        {type ? <Text color="secondary">{type}</Text> : null}
+        {calc ? null : (
+          <Text color="secondary" tabular>
+            {lastFigureText(step.lastValue)}
+          </Text>
+        )}
+        <Text color="secondary" tabular>
+          {lastMonthText(step.lastMonth)}
+        </Text>
         {outside ? <Text color="secondary">{CHECK_IN.outsideNetWorth}</Text> : null}
       </View>
 
@@ -266,7 +286,9 @@ function StepCard({
         <View style={styles.calculated} testID="check-in-calculated">
           <StatusBadge label={CHECK_IN.calculated} />
           <Money value={calc.value} size="lg" testID="check-in-calculated-figure" />
-          <Text color="secondary">{calculatedExplain(calc)}</Text>
+          <Text color="secondary" tabular>
+            {calculatedExplain(calc)}
+          </Text>
           {step.statementPrompt ? (
             <Text color="secondary">{statementPromptText(step.statementPrompt)}</Text>
           ) : null}

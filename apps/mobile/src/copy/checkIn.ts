@@ -53,7 +53,7 @@ export const CHECK_IN = {
   changeBalance: "Change a balance",
   finish: "Finish check-in",
   finishError: "We could not finish the check-in. Nothing has changed. Try again.",
-  outsideNetWorth: "Not counted in your net worth",
+  outsideNetWorth: "Not counted in net worth",
   loadErrorHeading: "We could not load your accounts",
   loadErrorBody: "Nothing has changed. Check your connection and try again.",
   empty: "Add an account first, then its balance appears here.",
@@ -73,6 +73,27 @@ export function rowLine(
   if (lastCheckInMonth) return `Last check-in: ${monthLabel(lastCheckInMonth)}`;
   if (lastCheckInMonth === null) return "No monthly check-in yet";
   return `Record your ${monthName(currentMonth)} balances`;
+}
+
+/** Web's account type names (`TYPE_LABEL` in AccountsGroupList), so both apps say the same. */
+const TYPE_LABEL: Readonly<Record<string, string>> = {
+  Current: "Current account",
+  Saving: "Savings",
+  Investment: "Investments",
+  Pension: "Pension",
+  Property: "Property",
+  Owed: "Owed to you",
+  Mortgage: "Mortgage",
+  "Credit Card": "Credit card",
+  Loan: "Loan",
+  Overdraft: "Overdraft",
+  "Student Loan": "Student loan",
+};
+
+/** The type line under a card's name, or null when the name already says it, as on web. */
+export function typeLabel(type: string, name: string): string | null {
+  const label = TYPE_LABEL[type] ?? type;
+  return label.toLowerCase() === name.toLowerCase() ? null : label;
 }
 
 /** "Account 2 of 6". */
@@ -101,10 +122,15 @@ export function cardSummary(input: {
   lastMonth: CheckInMonth | null;
   position: number;
   total: number;
+  /** The type line, when it is shown. */
+  type?: string | null;
+  outsideNetWorth?: boolean;
 }): string {
   const parts = [input.name];
+  if (input.type) parts.push(input.type);
   parts.push(input.figure === null ? "no balance recorded yet" : wholePounds(input.figure));
   if (input.lastMonth) parts.push(`recorded in ${monthLabel(input.lastMonth)}`);
+  if (input.outsideNetWorth) parts.push("not counted in net worth");
   parts.push(`account ${input.position} of ${input.total}`);
   return parts.join(", ");
 }
