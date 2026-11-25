@@ -24,6 +24,19 @@ import {
   UpdateBudgetEntryRequest,
 } from "./domains/budget.js";
 import {
+  AcceptHouseholdInvitationResponse,
+  CreateHouseholdInvitationRequest,
+  CreateHouseholdInvitationResponse,
+  HouseholdDoneResponse,
+  HouseholdInvitationPreviewResponse,
+  HouseholdInvitationTokenRequest,
+  HouseholdJointSummaryResponse,
+  HouseholdResponse,
+  LeaveHouseholdRequest,
+  UpdateHouseholdSharingRequest,
+  UpdateHouseholdSharingResponse,
+} from "./domains/household.js";
+import {
   CommitImportRequest,
   ImportIdParams,
   PreviewImportRequest,
@@ -168,6 +181,8 @@ export interface RouteDefinition {
  * - `mcpTokens.create`: the response holds the plaintext token, shown once; storing it to replay
  *   would keep a usable secret in the database.
  * - `beta.createInvite`: the response holds the raw invite token, shown once, for the same reason.
+ * - `household.createInvitation`: the response holds the raw invitation token, shown once, for the
+ *   same reason (E34 C3).
  * - `bankConnections.connect`: the request body carries a bank token or OAuth code; storing an
  *   unkeyed hash of it would keep a guessable fingerprint of a credential.
  */
@@ -175,6 +190,7 @@ export const IDEMPOTENCY_EXCLUDED_ROUTES = [
   "imports.stage",
   "mcpTokens.create",
   "beta.createInvite",
+  "household.createInvitation",
   "bankConnections.connect",
 ] as const;
 
@@ -205,6 +221,7 @@ export const CONTRACT_GROUPS = [
   "imports",
   "mcp-tokens",
   "beta",
+  "household",
   "app",
 ] as const;
 export type ContractGroup = (typeof CONTRACT_GROUPS)[number];
@@ -1066,6 +1083,97 @@ export const routes = {
       params: BetaMemberParams,
       group: "beta",
       response: BetaAdminDeleteResponse,
+    }),
+  },
+  /**
+   * Households (E34 C3). Behind the server's household switch, off by default everywhere: with it
+   * off every route here answers like an unknown route. No route removes the other person, changes
+   * their settings or reads anything of theirs except the joint accounts they chose to share.
+   */
+  household: {
+    get: defineRoute({
+      id: "household.get",
+      method: "GET",
+      path: "household",
+      auth: "user",
+      ownership: "user",
+      group: "household",
+      response: HouseholdResponse,
+    }),
+    /** A new link; replaces the caller's previous one. Not idempotent by key: the token is secret. */
+    createInvitation: defineRoute({
+      id: "household.createInvitation",
+      method: "POST",
+      status: 201,
+      path: "household/invitations",
+      auth: "user",
+      ownership: "user",
+      body: CreateHouseholdInvitationRequest,
+      group: "household",
+      response: CreateHouseholdInvitationResponse,
+    }),
+    cancelInvitation: defineRoute({
+      id: "household.cancelInvitation",
+      method: "DELETE",
+      path: "household/invitations",
+      auth: "user",
+      ownership: "user",
+      group: "household",
+      response: HouseholdDoneResponse,
+    }),
+    /** What joining shares (nothing). Strictly rate limited with accept. */
+    previewInvitation: defineRoute({
+      id: "household.previewInvitation",
+      method: "POST",
+      path: "household/invitations/preview",
+      auth: "user",
+      ownership: "user",
+      body: HouseholdInvitationTokenRequest,
+      group: "household",
+      response: HouseholdInvitationPreviewResponse,
+    }),
+    /** Single use; binds the household to the accepting account. Strictly rate limited. */
+    acceptInvitation: defineRoute({
+      id: "household.acceptInvitation",
+      method: "POST",
+      path: "household/invitations/accept",
+      auth: "user",
+      ownership: "user",
+      body: HouseholdInvitationTokenRequest,
+      group: "household",
+      response: AcceptHouseholdInvitationResponse,
+    }),
+    /** The caller's own sharing choice. A single switch, so no If-Match: POST, not PUT. */
+    updateSharing: defineRoute({
+      id: "household.updateSharing",
+      method: "POST",
+      path: "household/sharing",
+      auth: "user",
+      ownership: "user",
+      body: UpdateHouseholdSharingRequest,
+      group: "household",
+      response: UpdateHouseholdSharingResponse,
+    }),
+    /** Leave at once, alone; Flump tells the other person nothing (CD6, G5). */
+    leave: defineRoute({
+      id: "household.leave",
+      method: "POST",
+      path: "household/leave",
+      auth: "user",
+      ownership: "user",
+      body: LeaveHouseholdRequest,
+      group: "household",
+      response: HouseholdDoneResponse,
+    }),
+    /** The one shared screen: a read-only summary of shared joint accounts. */
+    jointSummary: defineRoute({
+      id: "household.jointSummary",
+      method: "GET",
+      path: "household/joint-summary",
+      auth: "user",
+      ownership: "user",
+      group: "household",
+      response: HouseholdJointSummaryResponse,
     }),
   },
   app: {
