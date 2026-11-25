@@ -9,7 +9,7 @@
  * exists to catch exactly those.
  *
  * Needs a throwaway Postgres, for example:
- *   docker run --rm -d --name flump-contract-pg -e POSTGRES_PASSWORD=postgres \
+ *   docker run --rm -d --name flump-contract-pg --label flump.purpose=test-db --label flump.worktree="$(git rev-parse --show-toplevel)" -e POSTGRES_PASSWORD=postgres \
  *     -e POSTGRES_DB=flump_contract_test -p 55433:5432 postgres:16-alpine
  *   TEST_DATABASE_URL=postgres://postgres:postgres@localhost:55433/flump_contract_test \
  *     bun run test -- contract

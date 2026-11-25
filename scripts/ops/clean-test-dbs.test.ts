@@ -1,5 +1,14 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  chmodSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  realpathSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
@@ -58,7 +67,8 @@ const calls = () => {
 const removals = () => calls().filter((c) => c.startsWith("rm ") || c.startsWith("volume rm "));
 
 beforeEach(() => {
-  dir = mkdtempSync(join(tmpdir(), "clean-test-dbs-"));
+  // Labels hold the resolved path (git rev-parse --show-toplevel), so the fixtures do too.
+  dir = realpathSync(mkdtempSync(join(tmpdir(), "clean-test-dbs-")));
   mkdirSync(join(dir, "bin"));
   writeFileSync(join(dir, "bin", "docker"), FAKE_DOCKER);
   chmodSync(join(dir, "bin", "docker"), 0o755);
@@ -104,6 +114,27 @@ describe("clean-test-dbs.sh for one worktree", () => {
     setup([["c1", "flump-live-pg", "test-db", live]], []);
     expect(run([`${live}/`]).exitCode).toBe(0);
     expect(removals()).toEqual(["rm -fv c1"]);
+  });
+
+  test("a symlinked or unresolved path to an existing worktree matches its resolved label", () => {
+    setup([["c1", "flump-live-pg", "test-db", live]], []);
+    symlinkSync(live, join(dir, "link"));
+    expect(run([join(dir, "link")]).exitCode).toBe(0);
+    expect(run([`${dir}/worktrees/../worktrees/live-lane`]).exitCode).toBe(0);
+    expect(removals()).toEqual(["rm -fv c1", "rm -fv c1"]);
+  });
+
+  test("never removes a volume named for the dev database, even when it carries the labels", () => {
+    setup(
+      [],
+      [
+        ["flump-postgres-data", "test-db", live],
+        ["v1", "test-db", live],
+      ],
+    );
+    const result = run([live]);
+    expect(removals()).toEqual(["volume rm v1"]);
+    expect(result.stderr).toContain("skipping flump-postgres-data");
   });
 
   test("never removes flump-postgres, even when it carries the labels", () => {

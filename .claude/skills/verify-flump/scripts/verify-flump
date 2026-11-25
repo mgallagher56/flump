@@ -33,8 +33,10 @@ worktree_root() { git -C "$REPO" rev-parse --show-toplevel 2>/dev/null || echo "
 UP_RUN_ID=""
 up_cleanup() {
   local rc=$?
-  trap - EXIT INT TERM
-  if [ -n "$UP_RUN_ID" ]; then
+  # Ignore a second Ctrl-C, so the teardown is not cut short before the container goes.
+  trap - EXIT
+  trap '' INT TERM
+  if [ -n "$UP_RUN_ID" ] && [ -f "$STATE_ROOT/$UP_RUN_ID/run.env" ]; then
     log "up did not finish; tearing down run $UP_RUN_ID (evidence kept)"
     cmd_down "$UP_RUN_ID" || true
   fi

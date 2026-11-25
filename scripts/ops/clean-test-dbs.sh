@@ -6,8 +6,9 @@
 #
 # Acts only on containers and volumes labelled flump.purpose=test-db with a flump.worktree=<path>
 # label (AGENTS.md section 18). Containers go with `docker rm -fv`, so their anonymous volumes go
-# too. Anything unlabelled is left alone, and the owner's dev database flump-postgres is never
-# touched, whatever its labels say. --dry-run only lists what would go.
+# too. Anything unlabelled is left alone, and the owner's dev database flump-postgres (and any
+# volume named after it) is never touched, whatever its labels say. --dry-run only lists what would
+# go. --orphans judges "gone" from this machine's file system, so run it where the worktrees live.
 set -uo pipefail
 
 PROTECTED="flump-postgres"
@@ -31,7 +32,10 @@ if [ "$orphans" = 1 ]; then
   [ -z "$target" ] || usage
 else
   case "$target" in /?*) ;; *) usage ;; esac
-  target="${target%/}"
+  # Labels hold the resolved path (git rev-parse --show-toplevel), so resolve symlinks, `..` and
+  # extra slashes while the worktree still exists.
+  if [ -d "$target" ]; then target="$(cd "$target" && pwd -P)"; fi
+  while [ "${target%/}" != "$target" ]; do target="${target%/}"; done
   [ -n "$target" ] || usage
 fi
 
@@ -89,6 +93,9 @@ while IFS="$SEP" read -r name purpose worktree; do
   [ -n "$name" ] || continue
   [ "$purpose" = test-db ] || continue
   selected "$worktree" || continue
+  case "$name" in
+    "$PROTECTED"*) echo "clean-test-dbs: skipping $name, named for the dev database" >&2; continue ;;
+  esac
   found=1
   if [ "$dry_run" = 1 ]; then
     echo "would remove volume $name$(why "$worktree")"
