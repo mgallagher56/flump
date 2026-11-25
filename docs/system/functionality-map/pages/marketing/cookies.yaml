@@ -1,0 +1,38 @@
+id: cookies
+app: marketing
+route: /cookies
+title: Cookies and browser storage | Flump
+auth: public
+purpose: List every cookie and browser storage item Flump uses with its purpose and lifetime, and let the visitor switch off the optional ones.
+route_file: apps/marketing/src/pages/CookiesPage/CookiesPage.tsx
+
+sections:
+  - id: site-header
+    component: apps/marketing/src/components/Header/Header.tsx
+
+  - id: header
+    component: apps/marketing/src/components/LegalPage/LegalPage.tsx
+
+  - id: summary
+    component: apps/marketing/src/pages/CookiesPage/CookiesPage.tsx
+
+  - id: needed
+    component: apps/marketing/src/pages/CookiesPage/CookiesPage.tsx
+
+  - id: optional
+    component: apps/marketing/src/pages/CookiesPage/CookiesPage.tsx
+
+  - id: page-counts
+    component: apps/marketing/src/pages/CookiesPage/CookiesPage.tsx
+
+  - id: clearing
+    component: apps/marketing/src/pages/CookiesPage/CookiesPage.tsx
+
+  - id: changes
+    component: apps/marketing/src/pages/CookiesPage/CookiesPage.tsx
+
+  - id: related-pages
+    component: apps/marketing/src/components/LegalPage/LegalPage.tsx
+
+  - id: site-footer
+    component: apps/marketing/src/components/Footer/Footer.tsx

@@ -16,6 +16,10 @@ const PAGES = [
   "/features/debt-and-borrowing",
   "/features/ai-connection",
   "/contact",
+  "/privacy",
+  "/terms",
+  "/cookies",
+  "/accessibility",
 ];
 
 const SINGLE = [

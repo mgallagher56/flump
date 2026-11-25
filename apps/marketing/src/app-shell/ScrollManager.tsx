@@ -1,3 +1,4 @@
+import { optionalSessionStorage } from "@repo/ui";
 import { useEffect, useLayoutEffect, useRef } from "react";
 import { type Location, NavigationType, useLocation, useNavigationType } from "react-router-dom";
 
@@ -12,9 +13,11 @@ const useClientLayoutEffect = typeof window === "undefined" ? useEffect : useLay
 
 type Positions = Record<string, number>;
 
+// Optional storage: nothing is read or written once the visitor switches it off on /cookies. Back
+// and forward inside one visit still restore, from the positions held in memory.
 function readPositions(): Positions {
   try {
-    const stored = window.sessionStorage.getItem(SCROLL_STORAGE_KEY);
+    const stored = optionalSessionStorage()?.getItem(SCROLL_STORAGE_KEY);
     return stored ? (JSON.parse(stored) as Positions) : {};
   } catch {
     return {};
@@ -23,7 +26,7 @@ function readPositions(): Positions {
 
 function writePositions(positions: Positions): void {
   try {
-    window.sessionStorage.setItem(SCROLL_STORAGE_KEY, JSON.stringify(positions));
+    optionalSessionStorage()?.setItem(SCROLL_STORAGE_KEY, JSON.stringify(positions));
   } catch {
     // Storage can be full or blocked (private mode); back then starts at the top instead.
   }

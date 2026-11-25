@@ -70,6 +70,7 @@ export const siteFooterCompactItem = cva({
       always: {},
       belowMd: { md: { display: "none" } },
       fromMd: { display: "none", md: { display: "list-item" } },
+      fromLg: { display: "none", lg: { display: "list-item" } },
     },
   },
   defaultVariants: { show: "always" },

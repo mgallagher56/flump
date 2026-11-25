@@ -5,6 +5,7 @@ import { useNavigate } from "react-router";
 import { RECENT_LOGIN_MESSAGE } from "~/features/settings/account";
 import { DataExportSection } from "~/features/settings/components/DataExportSection";
 import { DeleteAccountSection } from "~/features/settings/components/DeleteAccountSection";
+import { PrivacyChoicesSection } from "~/features/settings/components/PrivacyChoicesSection";
 import { SignInAgainButton } from "~/features/settings/components/SignInAgainButton";
 import { useDeleteAccount } from "~/features/settings/hooks/useDeleteAccount";
 import { sectionCard, statusText, tabStack } from "~/features/settings/settings.styles";
@@ -163,6 +164,8 @@ export const DataTab: FC = () => {
       />
 
       <DeleteAccountSection status={deleteStatus} onConfirm={handleDeleteAccount} />
+
+      <PrivacyChoicesSection />
     </div>
   );
 };

@@ -15,7 +15,7 @@ Refreshed on 2026-11-20 against `origin/main` and the merged pull requests up to
 | # | Epic / ticket | Work | State |
 |---|---|---|---|
 | 1 | E19 | Account deletion including the WorkOS user, and JSON data export | Done (BE-04, #668); export writes an audit row first (BE-15, #725). Until the owner sets `DELETION_TOMBSTONE_KEY`, deletion returns 503 and changes nothing |
-| 2 | E19 | Pages for the privacy policy, terms, cookie position and accessibility statement | In progress: written and approved by a Fable decider (owner decision of 2026-11-25, DECISIONS) |
+| 2 | E19 | Pages for the privacy policy, terms, cookie position and accessibility statement | Built (25 November 2026): `/privacy`, `/terms`, `/cookies` and `/accessibility` on the marketing site, written and approved by Fable per the owner decision of 25 November 2026 (`docs/legal/legal-pages-review.md`), not reviewed by a solicitor. Controller name, address and mailbox are placeholders; the owner steps are listed in the review file |
 | 3 | E11 F-11, E23 | E2E test of the new-user journey: sign up, onboarding, add account, budget entry | Done (#701) |
 | 4 | E20 | Enforce the full web CSP (report-only since #603) | Done: enforced on `main` (`apps/web/app/security/csp.server.ts`, guarded by BE-07; `CSP_REPORT_ONLY=true` is rollback-only) |
 | 5 | E18 | A production environment separate from staging, so releases go to staging first | Ruled out by the owner on 2026-11-25 ("we're not launching a prod enviornment"; DECISIONS). The Railway environment stays the only one |

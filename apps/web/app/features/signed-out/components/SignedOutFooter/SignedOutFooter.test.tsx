@@ -9,6 +9,7 @@ const beta = vi.hoisted(() => ({ inviteOnly: false }));
 vi.mock("~/hooks/useInviteOnly", () => ({ useInviteOnly: () => beta.inviteOnly }));
 
 vi.mock("react-router", () => ({
+  useRouteLoaderData: () => ({ marketingUrl: "https://flump.example" }),
   Link: ({ children, to }: { children: ReactNode; to: string }) => <a href={to}>{children}</a>,
 }));
 
@@ -43,6 +44,19 @@ describe("SignedOutFooter", () => {
     for (const tool of TOOL_CATALOGUE) {
       expect(screen.queryByRole("link", { name: tool.shortTitle })).toBeNull();
     }
+  });
+
+  it("links the four legal pages on the marketing site under Legal", () => {
+    render(<SignedOutFooter />);
+    const legal = screen.getByRole("navigation", { name: "Legal" });
+    expect(
+      Array.from(legal.querySelectorAll("a")).map((a) => [a.textContent, a.getAttribute("href")]),
+    ).toEqual([
+      ["Privacy", "https://flump.example/privacy"],
+      ["Terms", "https://flump.example/terms"],
+      ["Cookies and storage", "https://flump.example/cookies"],
+      ["Accessibility", "https://flump.example/accessibility"],
+    ]);
   });
 
   it("shows the company line from the business details config", () => {

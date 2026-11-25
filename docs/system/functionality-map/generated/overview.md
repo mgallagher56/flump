@@ -2,7 +2,7 @@
 
 # Functionality map: overview
 
-Mapped pages: 34 | Sections: 202 | Excluded routes: 19
+Mapped pages: 38 | Sections: 251 | Excluded routes: 19
 
 ## web
 
@@ -354,6 +354,23 @@ Mapped pages: 34 | Sections: 202 | Excluded routes: 19
 
 ## marketing
 
+### accessibility: Accessibility statement | Flump
+
+- Route: `/accessibility` (auth: `public`, file: `apps/marketing/src/pages/AccessibilityPage/AccessibilityPage.tsx`)
+- Purpose: Say what accessibility standard Flump aims for, what is and is not tested, and how to report a problem or ask for another format.
+
+| Section         | Component                                                          | Facts read | Figures |
+| --------------- | ------------------------------------------------------------------ | ---------- | ------- |
+| `site-header`   | `apps/marketing/src/components/Header/Header.tsx`                  | -          | -       |
+| `header`        | `apps/marketing/src/components/LegalPage/LegalPage.tsx`            | -          | -       |
+| `aim`           | `apps/marketing/src/pages/AccessibilityPage/AccessibilityPage.tsx` | -          | -       |
+| `tested`        | `apps/marketing/src/pages/AccessibilityPage/AccessibilityPage.tsx` | -          | -       |
+| `not-tested`    | `apps/marketing/src/pages/AccessibilityPage/AccessibilityPage.tsx` | -          | -       |
+| `report`        | `apps/marketing/src/pages/AccessibilityPage/AccessibilityPage.tsx` | -          | -       |
+| `about`         | `apps/marketing/src/pages/AccessibilityPage/AccessibilityPage.tsx` | -          | -       |
+| `related-pages` | `apps/marketing/src/components/LegalPage/LegalPage.tsx`            | -          | -       |
+| `site-footer`   | `apps/marketing/src/components/Footer/Footer.tsx`                  | -          | -       |
+
 ### ai-connection: AI connection | Flump
 
 - Route: `/features/ai-connection` (auth: `public`, file: `apps/marketing/src/pages/AiConnectionPage/AiConnectionPage.tsx`)
@@ -382,6 +399,24 @@ Mapped pages: 34 | Sections: 202 | Excluded routes: 19
 | `header`      | `apps/marketing/src/pages/ContactPage/ContactPage.tsx` | -          | -       |
 | `email-card`  | `apps/marketing/src/pages/ContactPage/ContactPage.tsx` | -          | -       |
 | `site-footer` | `apps/marketing/src/components/Footer/Footer.tsx`      | -          | -       |
+
+### cookies: Cookies and browser storage | Flump
+
+- Route: `/cookies` (auth: `public`, file: `apps/marketing/src/pages/CookiesPage/CookiesPage.tsx`)
+- Purpose: List every cookie and browser storage item Flump uses with its purpose and lifetime, and let the visitor switch off the optional ones.
+
+| Section         | Component                                               | Facts read | Figures |
+| --------------- | ------------------------------------------------------- | ---------- | ------- |
+| `site-header`   | `apps/marketing/src/components/Header/Header.tsx`       | -          | -       |
+| `header`        | `apps/marketing/src/components/LegalPage/LegalPage.tsx` | -          | -       |
+| `summary`       | `apps/marketing/src/pages/CookiesPage/CookiesPage.tsx`  | -          | -       |
+| `needed`        | `apps/marketing/src/pages/CookiesPage/CookiesPage.tsx`  | -          | -       |
+| `optional`      | `apps/marketing/src/pages/CookiesPage/CookiesPage.tsx`  | -          | -       |
+| `page-counts`   | `apps/marketing/src/pages/CookiesPage/CookiesPage.tsx`  | -          | -       |
+| `clearing`      | `apps/marketing/src/pages/CookiesPage/CookiesPage.tsx`  | -          | -       |
+| `changes`       | `apps/marketing/src/pages/CookiesPage/CookiesPage.tsx`  | -          | -       |
+| `related-pages` | `apps/marketing/src/components/LegalPage/LegalPage.tsx` | -          | -       |
+| `site-footer`   | `apps/marketing/src/components/Footer/Footer.tsx`       | -          | -       |
 
 ### feature-detail: Feature area detail | Flump
 
@@ -469,6 +504,28 @@ Mapped pages: 34 | Sections: 202 | Excluded routes: 19
 | `paid-plan`   | `apps/marketing/src/pages/PricingPage/PricingPage.tsx` | -          | -       |
 | `site-footer` | `apps/marketing/src/components/Footer/Footer.tsx`      | -          | -       |
 
+### privacy: Privacy notice | Flump
+
+- Route: `/privacy` (auth: `public`, file: `apps/marketing/src/pages/PrivacyPage/PrivacyPage.tsx`)
+- Purpose: Say what personal data Flump holds, why, who it is shared with, where it is kept, how long for, and how to use data protection rights or complain.
+
+| Section         | Component                                               | Facts read | Figures |
+| --------------- | ------------------------------------------------------- | ---------- | ------- |
+| `site-header`   | `apps/marketing/src/components/Header/Header.tsx`       | -          | -       |
+| `header`        | `apps/marketing/src/components/LegalPage/LegalPage.tsx` | -          | -       |
+| `who`           | `apps/marketing/src/pages/PrivacyPage/PrivacyPage.tsx`  | -          | -       |
+| `what`          | `apps/marketing/src/pages/PrivacyPage/PrivacyPage.tsx`  | -          | -       |
+| `clients`       | `apps/marketing/src/pages/PrivacyPage/PrivacyPage.tsx`  | -          | -       |
+| `sharing`       | `apps/marketing/src/pages/PrivacyPage/PrivacyPage.tsx`  | -          | -       |
+| `where`         | `apps/marketing/src/pages/PrivacyPage/PrivacyPage.tsx`  | -          | -       |
+| `how-long`      | `apps/marketing/src/pages/PrivacyPage/PrivacyPage.tsx`  | -          | -       |
+| `rights`        | `apps/marketing/src/pages/PrivacyPage/PrivacyPage.tsx`  | -          | -       |
+| `complaints`    | `apps/marketing/src/pages/PrivacyPage/PrivacyPage.tsx`  | -          | -       |
+| `other`         | `apps/marketing/src/pages/PrivacyPage/PrivacyPage.tsx`  | -          | -       |
+| `changes`       | `apps/marketing/src/pages/PrivacyPage/PrivacyPage.tsx`  | -          | -       |
+| `related-pages` | `apps/marketing/src/components/LegalPage/LegalPage.tsx` | -          | -       |
+| `site-footer`   | `apps/marketing/src/components/Footer/Footer.tsx`       | -          | -       |
+
 ### security: Security and privacy | Flump
 
 - Route: `/security` (auth: `public`, file: `apps/marketing/src/pages/SecurityPage/SecurityPage.tsx`)
@@ -481,3 +538,27 @@ Mapped pages: 34 | Sections: 202 | Excluded routes: 19
 | `security-facts`    | `apps/marketing/src/pages/SecurityPage/SecurityPage.tsx`                            | -          | -       |
 | `disclosure-policy` | `apps/marketing/src/components/DisclosurePolicySection/DisclosurePolicySection.tsx` | -          | -       |
 | `site-footer`       | `apps/marketing/src/components/Footer/Footer.tsx`                                   | -          | -       |
+
+### terms: Terms of use | Flump
+
+- Route: `/terms` (auth: `public`, file: `apps/marketing/src/pages/TermsPage/TermsPage.tsx`)
+- Purpose: Set out the agreement for using Flump in its test phase, covering guidance not advice, fair use, the AI connection, client details, responsibility, ending an account and changes.
+
+| Section          | Component                                               | Facts read | Figures |
+| ---------------- | ------------------------------------------------------- | ---------- | ------- |
+| `site-header`    | `apps/marketing/src/components/Header/Header.tsx`       | -          | -       |
+| `header`         | `apps/marketing/src/components/LegalPage/LegalPage.tsx` | -          | -       |
+| `about`          | `apps/marketing/src/pages/TermsPage/TermsPage.tsx`      | -          | -       |
+| `test-phase`     | `apps/marketing/src/pages/TermsPage/TermsPage.tsx`      | -          | -       |
+| `guidance`       | `apps/marketing/src/pages/TermsPage/TermsPage.tsx`      | -          | -       |
+| `account`        | `apps/marketing/src/pages/TermsPage/TermsPage.tsx`      | -          | -       |
+| `use`            | `apps/marketing/src/pages/TermsPage/TermsPage.tsx`      | -          | -       |
+| `your-data`      | `apps/marketing/src/pages/TermsPage/TermsPage.tsx`      | -          | -       |
+| `ai`             | `apps/marketing/src/pages/TermsPage/TermsPage.tsx`      | -          | -       |
+| `client-details` | `apps/marketing/src/pages/TermsPage/TermsPage.tsx`      | -          | -       |
+| `responsibility` | `apps/marketing/src/pages/TermsPage/TermsPage.tsx`      | -          | -       |
+| `ending`         | `apps/marketing/src/pages/TermsPage/TermsPage.tsx`      | -          | -       |
+| `changes`        | `apps/marketing/src/pages/TermsPage/TermsPage.tsx`      | -          | -       |
+| `disputes`       | `apps/marketing/src/pages/TermsPage/TermsPage.tsx`      | -          | -       |
+| `related-pages`  | `apps/marketing/src/components/LegalPage/LegalPage.tsx` | -          | -       |
+| `site-footer`    | `apps/marketing/src/components/Footer/Footer.tsx`       | -          | -       |

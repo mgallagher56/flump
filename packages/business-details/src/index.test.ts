@@ -6,6 +6,9 @@ import {
   companyLine,
   formatPrice,
   isPublicLaunch,
+  LEGAL_PAGES,
+  LEGAL_REVIEW_NOTE,
+  legalPage,
   placeholderFields,
   shortCompanyLine,
 } from "./index";
@@ -125,5 +128,34 @@ describe("shortCompanyLine", () => {
     // "© " + 2026 + " " + the legal name, nothing else.
     expect(shortCompanyLine(2026)).toBe(`© 2026 ${BUSINESS_DETAILS.legalName.value}`);
     expect(shortCompanyLine(2026)).not.toContain("Company number");
+  });
+});
+
+describe("legal pages", () => {
+  it("lists the four pages once each, with a path on the marketing site", () => {
+    expect(LEGAL_PAGES.map((page) => [page.key, page.path])).toEqual([
+      ["privacy", "/privacy"],
+      ["terms", "/terms"],
+      ["cookies", "/cookies"],
+      ["accessibility", "/accessibility"],
+    ]);
+  });
+
+  it("gives every page a version and a full en-GB date", () => {
+    for (const page of LEGAL_PAGES) {
+      expect(page.version, page.key).toMatch(/^\d+\.\d+$/);
+      expect(page.updated, page.key).toMatch(/^\d{1,2} [A-Z][a-z]+ \d{4}$/);
+    }
+  });
+
+  it("finds a page by key and refuses an unknown one", () => {
+    expect(legalPage("terms").title).toBe("Terms of use");
+    expect(() => legalPage("nope" as never)).toThrow("Unknown legal page: nope");
+  });
+
+  it("never credits a solicitor or the owner with the review", () => {
+    expect(LEGAL_REVIEW_NOTE).toBe(
+      "Written and checked with AI tools for Flump's test phase. A solicitor has not reviewed this page.",
+    );
   });
 });

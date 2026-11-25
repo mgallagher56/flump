@@ -3,6 +3,7 @@ import { HomeLogo, SiteFooter, type SiteFooterLink, type SiteFooterRenderLink } 
 import type { FC } from "react";
 import { Link as RouterLink } from "react-router";
 import { renderHomeLogoLink } from "~/components/navigation/renderHomeLogoLink";
+import { legalHref, useMarketingOrigin } from "~/utils/legalLinks";
 import { APP_VERSION, feedbackMailto } from "~/utils/support";
 import { appFooterSpacing } from "./AppFooter.styles";
 
@@ -19,7 +20,8 @@ const renderLink: SiteFooterRenderLink = (link, className, children) => (
  * The footer's links, as many as fit on one line at each width (owner ruling: the links stay on
  * the logo's line, never a second line). On phones: Settings, Calculators, Send feedback; Security
  * and Data and export are tabs on Settings. From 768px: all five, as the old footer had them.
- * When the privacy notice, terms, accessibility statement and cookie page exist, they go here too.
+ * Privacy and Terms join from 1024px and open the marketing site, the one home of the legal pages;
+ * all four legal pages are linked from Settings, "Data and export", at every width.
  */
 export const APP_FOOTER_LINKS: SiteFooterLink[] = [
   { key: "settings", label: "Settings", href: "/app/profile" },
@@ -35,20 +37,41 @@ export const APP_FOOTER_LINKS: SiteFooterLink[] = [
   },
 ];
 
+/** Privacy and Terms, on the marketing site, from 1024px (seven links do not fit at 768px). */
+export const appFooterLegalLinks = (marketingOrigin: string): SiteFooterLink[] => [
+  {
+    key: "privacy",
+    label: "Privacy",
+    href: legalHref("privacy", marketingOrigin),
+    external: true,
+    show: "fromLg",
+  },
+  {
+    key: "terms",
+    label: "Terms",
+    href: legalHref("terms", marketingOrigin),
+    external: true,
+    show: "fromLg",
+  },
+];
+
 /**
  * Signed-in web app footer: one line that marks the bottom of the page, at every width: the logo,
  * the links that fit, and the company name where it fits. The full company line (number and
  * registered office) is in the marketing site's footer and the signed-out pages' footer.
  */
-export const AppFooter: FC = () => (
-  <SiteFooter
-    bottom={appFooterLine(new Date().getFullYear())}
-    bottomFrom="lg"
-    className={appFooterSpacing()}
-    links={APP_FOOTER_LINKS}
-    linksLabel="Footer"
-    logo={<HomeLogo renderLink={renderHomeLogoLink} />}
-    renderLink={renderLink}
-    variant="compact"
-  />
-);
+export const AppFooter: FC = () => {
+  const marketingOrigin = useMarketingOrigin();
+  return (
+    <SiteFooter
+      bottom={appFooterLine(new Date().getFullYear())}
+      bottomFrom="lg"
+      className={appFooterSpacing()}
+      links={[...APP_FOOTER_LINKS, ...appFooterLegalLinks(marketingOrigin)]}
+      linksLabel="Footer"
+      logo={<HomeLogo renderLink={renderHomeLogoLink} />}
+      renderLink={renderLink}
+      variant="compact"
+    />
+  );
+};

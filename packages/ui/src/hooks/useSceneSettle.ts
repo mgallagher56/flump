@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { optionalSessionStorage } from "./optionalStorage";
 import { useHydratingRender } from "./useHydratingRender";
 import { useIsomorphicLayoutEffect } from "./useIsomorphicLayoutEffect";
 import { usePrefersReducedMotion } from "./usePrefersReducedMotion";
@@ -10,11 +11,10 @@ const memorySettled = new Set<string>();
 
 export function isSceneSettled(key: string): boolean {
   if (memorySettled.has(key)) return true;
-  if (typeof window === "undefined" || typeof window.sessionStorage === "undefined") {
-    return false;
-  }
+  const storage = optionalSessionStorage();
+  if (!storage) return false;
   try {
-    return window.sessionStorage.getItem(STORAGE_PREFIX + key) !== null;
+    return storage.getItem(STORAGE_PREFIX + key) !== null;
   } catch {
     return false;
   }
@@ -22,9 +22,10 @@ export function isSceneSettled(key: string): boolean {
 
 export function markSceneSettled(key: string): void {
   memorySettled.add(key);
-  if (typeof window !== "undefined" && typeof window.sessionStorage !== "undefined") {
+  const storage = optionalSessionStorage();
+  if (storage) {
     try {
-      window.sessionStorage.setItem(STORAGE_PREFIX + key, "1");
+      storage.setItem(STORAGE_PREFIX + key, "1");
     } catch {
       // Ignored
     }
