@@ -550,3 +550,22 @@ Under the owner's rule of 2026-11-20, Fable deciders read GOV.UK and legislation
 # E39 MA10 stays deferred (recorded 2026-11-25)
 
 MA10 (an MCP tool for mortgage estimates) was accepted as recommended on 2026-11-21: option A, defer. It needs the frozen simulate list reopened, which touches the model provider and the DPIA. So E39 S3 has no PR. S1c (#905) merged on 2026-11-24 without it.
+
+# Owner decisions given to the coordinator (2026-11-25)
+
+Relayed by the coordinator on 25 November 2026. Only the words in quotation marks are the owner's.
+
+- **No separate production environment.** The owner said: "we're not launching a prod enviornment". The Railway environment stays the only one (see "Railway production is staging" in round 6). E18's "staging first" item is ruled out, not waiting. This replaces the E18 owner action "create a production environment".
+- **Mobile uses Expo for iOS and Android.** The owner said: "For mobile use Expo for both ios and android". The question of which data stays on the device is decided by a Fable decider (in progress).
+- **Legal pages are written and approved by Fable.** The owner said: "use fable to write and approve the legal pages". E19 is in progress.
+- **Retirement S7 and S9 are the coordinator's to decide and approve.** S7 (inheritance tax on unused pensions, self-employed view) is in progress. S9 (mobile parity and the two-person view) is deferred until mobile and couples exist.
+- **Making Tax Digital (E28).** A research and change plan is in progress.
+
+# E34 shared finances for couples (2026-11-25)
+
+Decided on 25 November 2026 by a Fable decider at the owner's delegation, and adopted by the coordinator.
+
+- No invitation or shared view is built now, gated or not.
+- C3 onward stays after launch, after the specialist charity review (CD7) and the household DPIA.
+- Partner mode stays a one-person display switch. It never creates a link, an invitation, a prompt to add a partner, or a second person's income fields.
+- C2 (combining two person pictures) may be built only as pure engine functions, at low priority.
