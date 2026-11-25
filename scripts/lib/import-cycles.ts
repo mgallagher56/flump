@@ -47,16 +47,32 @@ export function runtimeImports(source: string, options: ImportCycleOptions = {})
   return found;
 }
 
+const WHITESPACE = new Set([" ", "\t", "\n", "\r"]);
+
+/** True when `text` starts with the `type` keyword followed by one of `next` (or nothing, if allowed). */
+function startsWithTypeKeyword(
+  text: string,
+  next: ReadonlySet<string>,
+  allowEnd: boolean,
+): boolean {
+  if (!text.startsWith("type")) return false;
+  const after = text.charAt(4);
+  return after === "" ? allowEnd : next.has(after);
+}
+
+const AFTER_CLAUSE_TYPE = new Set([...WHITESPACE, "{", "*"]);
+
 function isErased(clause: string, options: ImportCycleOptions): boolean {
-  if (/^type\b/.test(clause)) return true;
+  if (startsWithTypeKeyword(clause, AFTER_CLAUSE_TYPE, true)) return true;
   if (options.keepTypeSpecifierImports) return false;
-  const braces = /^\{([\s\S]*)\}$/.exec(clause);
-  if (!braces) return false;
-  const names = (braces[1] ?? "")
+  if (!clause.startsWith("{") || !clause.endsWith("}")) return false;
+  const names = clause
+    .slice(1, -1)
     .split(",")
     .map((s) => s.trim())
     .filter((s) => s !== "");
-  return names.length > 0 && names.every((n) => /^type\s/.test(n));
+  // `type` alone is a value binding named "type", not a type specifier.
+  return names.length > 0 && names.every((n) => startsWithTypeKeyword(n, WHITESPACE, false));
 }
 
 /** Resolves "./x.js" against `fromFile` to a key of `files` (x.ts, x.tsx or x/index.ts), if any. */
