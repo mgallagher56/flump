@@ -140,6 +140,7 @@ Leftover test databases filled the owner's disk once (23 containers and 24 GB of
 - Remove it with its volumes before the lane reports ready: `docker rm -fv <name>`, or `bash scripts/ops/clean-test-dbs.sh "$(git rev-parse --show-toplevel)"`.
 - When archiving a lane, the coordinator runs `bash scripts/ops/clean-test-dbs.sh <worktree path>`. `--orphans` removes those whose worktree is gone from this machine, so run it on the Mac the worktrees live on; `--dry-run` only lists. No Claude Code hook covers this: `WorktreeRemove` fires only for worktrees made by a `WorktreeCreate` hook.
 - Never touch `flump-postgres` (the owner's dev database) or anything not labelled as a Flump test database. The script refuses both.
+- The clean-up is for the local OrbStack Docker only: never a remote Docker host, never Railway or any hosted database, never CI. The script refuses unless the `orbstack` context is a socket in `~/.orbstack`, refuses when `CI` or `GITHUB_ACTIONS` is set, and no workflow may call it (`scripts/ci-config.test.ts` checks).
 
 ## 19. RULE TABLE
 
@@ -178,4 +179,5 @@ Each rule and what enforces it. "None" means only the reader enforces it: when a
 | Generated files (lockfile, changelogs, styled-system, `.env`) never hand-edited        | `.claude/hooks/protect-files.sh`                                                                                                                           |
 | No mock auth literals                                                                  | `bun run check:auth` in CI                                                                                                                                 |
 | Test databases labelled, removed before ready and on archive (18)                      | `scripts/ops/clean-test-dbs.sh` and `scripts/ops/clean-test-dbs.test.ts` (run by the coordinator when archiving); labelling and removal before ready: None |
+| Test database clean-up acts only on local OrbStack, never in CI (18)                   | `scripts/ops/clean-test-dbs.sh` refusals and `clean-test-dbs.test.ts`; `scripts/ci-config.test.ts` (no workflow, action or package script calls it)        |
 | Maestro flows take passed values from the runner                                       | None (one instance so far)                                                                                                                                 |

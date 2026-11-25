@@ -20,9 +20,13 @@ const BASH = Bun.which("bash") ?? "/bin/bash";
 
 // A fake `docker` on PATH: it records every call and answers `ps` and `volume ls` from fixture
 // files, ignoring the filters. So the script's own label checks are what keep it safe here.
+// `context inspect` answers with $FAKE_ENDPOINT. A leading `--host <endpoint>` is logged, then
+// skipped, so the tests can check every daemon call goes to the OrbStack socket.
 const FAKE_DOCKER = `#!${BASH}
 printf '%s\\n' "$*" >> "$FAKE_LOG"
+if [ "$1" = --host ]; then shift 2; fi
 case "$1" in
+  context) if [ -n "\${FAKE_ENDPOINT+x}" ]; then printf '%s\\n' "$FAKE_ENDPOINT"; else exit 1; fi ;;
   info) exit "\${FAKE_INFO_EXIT:-0}" ;;
   ps) cat "$FAKE_PS" ;;
   volume) if [ "$2" = ls ]; then cat "$FAKE_VOLUMES"; fi ;;
@@ -31,6 +35,8 @@ esac
 `;
 
 let dir: string;
+let home: string;
+let socket: string;
 let live: string;
 let gone: string;
 let bin: string;
@@ -42,16 +48,30 @@ function setup(containers: Row[], volumes: [name: string, purpose: string, workt
   writeFileSync(join(dir, "volumes"), volumes.map((r) => `${r.join("|")}\n`).join(""));
 }
 
-function run(args: string[], env: Record<string, string> = {}) {
+function run(args: string[], env: Record<string, string | undefined> = {}, cwd?: string) {
+  // CI runners set CI, and a developer may have DOCKER_HOST or DOCKER_CONTEXT set; each test
+  // starts without them and sets them only on purpose.
+  const {
+    CI: _ci,
+    GITHUB_ACTIONS: _gha,
+    DOCKER_HOST: _host,
+    DOCKER_CONTEXT: _context,
+    ...base
+  } = process.env;
+  const merged: Record<string, string | undefined> = {
+    ...base,
+    HOME: home,
+    PATH: bin,
+    FAKE_ENDPOINT: `unix://${socket}`,
+    FAKE_LOG: join(dir, "log"),
+    FAKE_PS: join(dir, "ps"),
+    FAKE_VOLUMES: join(dir, "volumes"),
+    ...env,
+  };
+  for (const key of Object.keys(merged)) if (merged[key] === undefined) delete merged[key];
   const proc = Bun.spawnSync([BASH, SCRIPT, ...args], {
-    env: {
-      ...process.env,
-      PATH: bin,
-      FAKE_LOG: join(dir, "log"),
-      FAKE_PS: join(dir, "ps"),
-      FAKE_VOLUMES: join(dir, "volumes"),
-      ...env,
-    },
+    cwd,
+    env: merged as Record<string, string>,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -62,19 +82,23 @@ function run(args: string[], env: Record<string, string> = {}) {
   };
 }
 
-const calls = () => {
+const rawCalls = () => {
   try {
     return readFileSync(join(dir, "log"), "utf8").trim().split("\n").filter(Boolean);
   } catch {
     return [];
   }
 };
+const calls = () => rawCalls().map((c) => c.replace(`--host unix://${socket} `, ""));
 const removals = () => calls().filter((c) => c.startsWith("rm ") || c.startsWith("volume rm "));
 
 beforeEach(() => {
   // Labels hold the resolved path (git rev-parse --show-toplevel), so the fixtures do too.
   dir = realpathSync(mkdtempSync(join(tmpdir(), "clean-test-dbs-")));
   bin = isolatedPath(dir, { fakes: { docker: FAKE_DOCKER } });
+  home = join(dir, "home");
+  mkdirSync(join(home, ".orbstack", "run"), { recursive: true });
+  socket = join(home, ".orbstack", "run", "docker.sock");
   live = join(dir, "worktrees", "live-lane");
   mkdirSync(live, { recursive: true });
   gone = join(dir, "worktrees", "gone-lane");
@@ -253,5 +277,110 @@ describe("clean-test-dbs.sh without Docker", () => {
     expect(result.exitCode).toBe(1);
     expect(result.stderr).toContain("daemon");
     expect(removals()).toEqual([]);
+  });
+});
+
+describe("clean-test-dbs.sh acts only on the local OrbStack Docker", () => {
+  test("sends every daemon call to the OrbStack socket by --host, after reading the orbstack context", () => {
+    setup([["c1", "flump-live-pg", "test-db", live]], [["v1", "test-db", live]]);
+    expect(run([live]).exitCode).toBe(0);
+    const [inspect, ...daemon] = rawCalls();
+    expect(inspect).toBe("context inspect orbstack --format {{.Endpoints.docker.Host}}");
+    expect(daemon.length).toBe(5); // info, ps, rm, volume ls, volume rm
+    for (const call of daemon) expect(call.startsWith(`--host unix://${socket} `)).toBe(true);
+  });
+
+  test("runs when DOCKER_CONTEXT is orbstack or DOCKER_HOST is the OrbStack socket", () => {
+    setup([["c1", "flump-live-pg", "test-db", live]], []);
+    expect(run([live], { DOCKER_CONTEXT: "orbstack" }).exitCode).toBe(0);
+    expect(run([live], { DOCKER_HOST: `unix://${socket}` }).exitCode).toBe(0);
+    expect(removals()).toEqual(["rm -fv c1", "rm -fv c1"]);
+  });
+
+  const refused = (result: ReturnType<typeof run>, ...calls: string[]) => {
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("refusing");
+    expect(rawCalls()).toEqual(calls);
+  };
+  const inspect = "context inspect orbstack --format {{.Endpoints.docker.Host}}";
+
+  test.each([
+    ["CI", { CI: "true" }],
+    ["CI, even with --dry-run", { CI: "1" }],
+    ["GitHub Actions, even with CI cleared", { CI: "", GITHUB_ACTIONS: "true" }],
+  ])("refuses to run in %s and calls no docker at all", (_name, env) => {
+    setup([["c1", "flump-live-pg", "test-db", live]], []);
+    refused(run(["--dry-run", live], env));
+  });
+
+  test("refuses in CI before the docker-missing early exit", () => {
+    rmSync(join(bin, "docker"));
+    expect(run([live], { CI: "true" }).exitCode).toBe(1);
+  });
+
+  test.each([
+    ["tcp://", "tcp://10.0.0.5:2375"],
+    ["ssh://", "ssh://deploy@build-box"],
+    ["the default socket", "unix:///var/run/docker.sock"],
+    ["Docker Desktop's socket", "unix://HOME/.docker/run/docker.sock"],
+  ])("refuses DOCKER_HOST set to %s", (_name, value) => {
+    setup([["c1", "flump-live-pg", "test-db", live]], []);
+    refused(run([live], { DOCKER_HOST: value.replace("HOME", home) }));
+  });
+
+  test.each(["desktop-linux", "default", "remote"])("refuses DOCKER_CONTEXT=%s", (context) => {
+    setup([["c1", "flump-live-pg", "test-db", live]], []);
+    refused(run([live], { DOCKER_CONTEXT: context }));
+  });
+
+  test("refuses, without falling back to another context, when there is no orbstack context", () => {
+    setup([["c1", "flump-live-pg", "test-db", live]], []);
+    refused(run([live], { FAKE_ENDPOINT: undefined }), inspect);
+  });
+
+  test.each([
+    ["tcp://", "tcp://10.0.0.5:2375"],
+    ["ssh://", "ssh://deploy@build-box"],
+    ["the default socket", "unix:///var/run/docker.sock"],
+    ["a socket outside the home .orbstack directory", "unix://HOME/.docker/run/docker.sock"],
+    ["a look-alike directory", "unix://HOME/.orbstack-evil/docker.sock"],
+    ["a .. escape", "unix://HOME/.orbstack/../.docker/run/docker.sock"],
+    ["an empty endpoint", ""],
+    ["a second line", "unix://HOME/.orbstack/run/docker.sock\ntcp://10.0.0.5:2375"],
+  ])("refuses an orbstack context whose endpoint is %s", (_name, endpoint) => {
+    setup([["c1", "flump-live-pg", "test-db", live]], []);
+    // The directories exist, so only the endpoint check can refuse, not a failed cd.
+    mkdirSync(join(home, ".orbstack-evil"));
+    mkdirSync(join(home, ".docker", "run"), { recursive: true });
+    refused(run([live], { FAKE_ENDPOINT: endpoint.replaceAll("HOME", home) }), inspect);
+  });
+
+  test("refuses a socket path that is a symlink out of the home .orbstack directory", () => {
+    setup([["c1", "flump-live-pg", "test-db", live]], []);
+    mkdirSync(join(home, ".docker", "run"), { recursive: true });
+    symlinkSync(join(home, ".docker", "run"), join(home, ".orbstack", "elsewhere"));
+    refused(
+      run([live], {
+        FAKE_ENDPOINT: `unix://${join(home, ".orbstack", "elsewhere", "docker.sock")}`,
+      }),
+      inspect,
+    );
+    symlinkSync(
+      join(home, ".docker", "run", "docker.sock"),
+      join(home, ".orbstack", "run", "linked.sock"),
+    );
+    rmSync(join(dir, "log"));
+    refused(
+      run([live], { FAKE_ENDPOINT: `unix://${join(home, ".orbstack", "run", "linked.sock")}` }),
+      inspect,
+    );
+  });
+
+  test("refuses when HOME is not an absolute path, even if it leads to a real .orbstack", () => {
+    setup([["c1", "flump-live-pg", "test-db", live]], []);
+    // Run from dir, where the relative "home" holds a real .orbstack/run.
+    refused(run([live], { HOME: "home" }, dir), inspect);
+    rmSync(join(dir, "log"));
+    refused(run([live], { HOME: undefined }), inspect);
   });
 });
