@@ -60,6 +60,8 @@ export const API_ALLOW_LIST: readonly ProxyRule[] = [
   { methods: ["PATCH"], pattern: `/accounts/${UUID}` },
   // E30 monthly check-in and back-fill: one month (YYYY-MM) per request.
   { methods: ["PUT"], pattern: "/snapshots/\\d{4}-(0[1-9]|1[0-2])" },
+  // E35 W5: the two optional questions after a finished check-in (whether due; the answer or skip).
+  { methods: ["GET", "POST"], pattern: "/snapshots/wellbeing-questions" },
   // AI connections (settings): list, create and revoke tokens, and preview the context pack.
   { methods: ["GET", "POST"], pattern: "/mcp-tokens" },
   { methods: ["DELETE"], pattern: `/mcp-tokens/${UUID}` },
