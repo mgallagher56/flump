@@ -108,4 +108,15 @@ describe("judge", () => {
     expect(failedCount("19/20 checks passed. 2 checks failed.")).toBeUndefined();
     expect(failedCount("no summary")).toBeUndefined();
   });
+
+  test("an entry line in another format cannot hide a version split", () => {
+    const output = duplicates("58.0.26").replace(
+      "     \u2514\u2500 linked to a different installation",
+      "     \u2514\u2500 linked to a different installation\n  \u2514\u2500 expo@58.0.25 (linked to ../x)",
+    );
+    expect(judge(output, 1)).toEqual({
+      ok: false,
+      reasons: ["a duplicate entry could not be read"],
+    });
+  });
 });

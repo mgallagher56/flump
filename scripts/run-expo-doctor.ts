@@ -20,6 +20,8 @@
 import { spawnSync } from "node:child_process";
 import { resolve } from "node:path";
 
+const UNREADABLE = "<unreadable>";
+
 export const DUPLICATE_CHECK = "Check that no duplicate dependencies are installed";
 
 export interface DoctorVerdict {
@@ -46,8 +48,12 @@ export function duplicateVersions(output: string): Map<string, string[]> {
       result.set(current, []);
       continue;
     }
-    const entry = line.match(/^\s*[├└]─\s+(\S+)@(\S+)\s+\(at:/);
-    if (current && entry?.[1] === current && entry[2]) result.get(current)?.push(entry[2]);
+    // Every "├─ name@" or "└─ name@" line in a block is an entry; one that does not end in "(at: …)"
+    // is recorded as unreadable, so it can never hide a version split.
+    const listed = line.match(/^\s*[├└]─\s+(\S+?)@(\S*)(.*)$/);
+    if (!current || listed?.[1] !== current) continue;
+    const version = listed[2];
+    result.get(current)?.push(version && /^\s+\(at:/.test(listed[3] ?? "") ? version : UNREADABLE);
   }
   return result;
 }
@@ -79,7 +85,10 @@ export function judge(output: string, exitCode: number): DoctorVerdict {
     .filter((line) => line.startsWith("Found duplicates for ")).length;
   const duplicates = duplicateVersions(output);
   if (duplicates.size === 0) return fail("duplicate check failed but listed no package");
-  if (duplicates.size !== headers || [...duplicates.values()].some((v) => v.length < 2)) {
+  if (
+    duplicates.size !== headers ||
+    [...duplicates.values()].some((v) => v.length < 2 || v.includes(UNREADABLE))
+  ) {
     return fail("a duplicate entry could not be read");
   }
   const reasons: string[] = [];

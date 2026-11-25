@@ -45,15 +45,35 @@ export function checkBundle(file: string, bytes: Buffer): BundleFinding[] {
   return findings;
 }
 
-/** Packages that a source map lists from more than one install directory, with those directories. */
+/**
+ * Where one bundled source file was installed from, keyed by package: a Bun store directory, any
+ * other `node_modules` folder, or a workspace package's top folder (so `src` and `dist` of the same
+ * package count as two copies). Sources outside all three (the app itself, Metro's shims) give none.
+ */
+export function installOf(source: string): { name: string; install: string } | undefined {
+  const bun = source.match(/node_modules\/\.bun\/([^/]+)\/node_modules\/((?:@[^/]+\/)?[^/]+)\//);
+  if (bun?.[1] && bun[2]) return { name: bun[2], install: `.bun/${bun[1]}` };
+  const plain = source.match(/^(.*node_modules\/((?:@[^/]+\/)?[^/]+))\//);
+  if (plain?.[1] && plain[2]) return { name: plain[2], install: plain[1] };
+  const workspace = source.match(/(?:^|\/)packages\/([^/]+)\/([^/]+)\//);
+  if (workspace?.[1] && workspace[2]) {
+    return {
+      name: `workspace:${workspace[1]}`,
+      install: `packages/${workspace[1]}/${workspace[2]}`,
+    };
+  }
+  return undefined;
+}
+
+/** Packages that a source map lists from more than one install, with those installs. */
 export function packagesBundledTwice(sources: readonly string[]): Map<string, string[]> {
   const installs = new Map<string, Set<string>>();
   for (const source of sources) {
-    const m = source.match(/node_modules\/\.bun\/([^/]+)\/node_modules\/((?:@[^/]+\/)?[^/]+)\//);
-    if (!m?.[1] || !m[2]) continue;
-    const dirs = installs.get(m[2]) ?? new Set<string>();
-    dirs.add(m[1]);
-    installs.set(m[2], dirs);
+    const found = installOf(source);
+    if (!found) continue;
+    const dirs = installs.get(found.name) ?? new Set<string>();
+    dirs.add(found.install);
+    installs.set(found.name, dirs);
   }
   return new Map(
     [...installs]
