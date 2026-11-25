@@ -10,6 +10,8 @@ const meta: Meta<typeof CheckInSummary> = {
     month: "2026-11",
     onDone: fn(),
     onChangeBalance: fn(),
+    // Not due: no story reaches the network. WithQuestions shows them under the summary.
+    wellbeing: { loadStatus: async () => false, send: async () => {} },
     summary: {
       changed: [
         {
@@ -64,3 +66,16 @@ export const NothingChanged: Story = {
 };
 
 export const NothingChangedDark: Story = { ...NothingChanged, globals: { theme: "dark" } };
+
+/** E35 W5: due this quarter, so the two optional questions show under Done. */
+export const WithQuestions: Story = {
+  args: { wellbeing: { loadStatus: async () => true, send: async () => {} } },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(await canvas.findByText("Two optional questions")).toBeDefined();
+    await userEvent.click(canvas.getByRole("button", { name: "Skip" }));
+    await expect(canvas.queryByText("Two optional questions")).toBeNull();
+  },
+};
+
+export const WithQuestionsDark: Story = { ...WithQuestions, globals: { theme: "dark" } };
