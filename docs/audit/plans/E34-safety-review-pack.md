@@ -2,9 +2,9 @@
 
 Decisions: open. This pack asks questions; it answers none of them.
 
-> **Status: draft, 25 November 2026. Not sent to anyone.** Written by Claude Fable (an AI model) from the plan [`E34-shared-finances-research.md`](E34-shared-finances-research.md). No charity has seen or reviewed it. Choosing whom to ask, and making contact, is the owner's alone. Nothing described here is built.
+> **Status: draft, 25 November 2026. Not sent to anyone.** Written by Claude Fable (an AI model) from the plan [`E34-shared-finances-research.md`](E34-shared-finances-research.md). No charity has seen or reviewed it. Choosing whom to ask, and making contact, is the owner's alone. On 25 November 2026 the owner chose "Build it gated now": C3 is being built in another lane behind a switch that is off by default. The switch stays off until the charity review, the signed DPIA and the approved help line wording exist, and only the owner turns it on. Nobody can use any of it.
 
-**Who this is for.** A specialist in economic abuse who has agreed to look at a feature before it is built. It needs no knowledge of the code. Reading time is about ten minutes.
+**Who this is for.** A specialist in economic abuse who has agreed to look at a feature before anyone can use it. It needs no knowledge of the code. Reading time is about ten minutes.
 
 ## 1. What Flump is
 
@@ -20,7 +20,7 @@ Two people who share some of their finances could link their Flump accounts into
 - Either person can stop sharing or leave at any time, alone.
 - Tax, ISAs and pensions are always worked out per person.
 
-Today only the first step exists: one person can mark an item as joint and record their share, with no second person involved. The household, the invitation and all sharing wait for this review.
+Today only the first step exists: one person can mark an item as joint and record their share, with no second person involved. The household, the invitation and all sharing are being built behind a switch that is off. Nobody can use them, and the switch stays off until this review has happened.
 
 ## 3. The ten safety rules
 
@@ -83,7 +83,7 @@ The questions we most need answered are first.
 
 ## 6. What we would change on your advice
 
-- **Any rule, screen or word in this pack.** None of it is built.
+- **Any rule, screen or word in this pack.** None of it is in use, and all of it can still change.
 - **Whether the feature goes ahead.** If the advice is that it should not be built, or not by a product of this size, the plan already names stopping at today's one-person "joint" marker as a defensible outcome.
 - **The help line:** whether it exists, which service it names and every word of it. We would not name a service that did not want to be named.
 - **Timing and visibility of leaving and un-sharing** (question 2).

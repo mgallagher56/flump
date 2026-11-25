@@ -57,4 +57,4 @@ And the closing sentence of the exceptions changes from "These two MoneyHelper l
 
 1. One option from section 3 (or none, which reverses CD10).
 2. The amendment in section 4, with the approval date filled in.
-3. Whether to wait for the specialist charity's view first. This proposal recommends waiting: the line ships with C3 at the earliest, and C3 waits for that review anyway.
+3. Whether to wait for the specialist charity's view first. This proposal recommends waiting: the line is shown with C3 at the earliest, and C3's switch stays off until that review exists anyway (owner, "Build it gated now", 25 November 2026).
