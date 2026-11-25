@@ -72,6 +72,19 @@ describe("checkPrBody rules", () => {
     }
   });
 
+  test("every review line form counts (#925, #916 and #912 used Reviewer and Reviewers)", () => {
+    for (const line of [
+      "**Reviewer**: x",
+      "Reviewers: x",
+      "**Reviewed**: x",
+      "## Review",
+      "Reviewed by: x",
+    ]) {
+      const body = GOOD.replace("**Reviewed by**: fresh opus reviewer.", line);
+      expect(checkPrBody({ title: "t", body })).toEqual([]);
+    }
+  });
+
   test("a heading word mid-sentence does not count", () => {
     const body = GOOD.replace("**Tests**: two cases", "Ran the Tests: two cases");
     expect(checkPrBody({ title: "t", body })).toEqual([expect.stringContaining('No "Tests"')]);
