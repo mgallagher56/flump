@@ -65,14 +65,20 @@ export function snapshotIfMatch(
 }
 
 /** A 400 validation error about `source` (an older backend's unrecognised key). */
-function rejectsSource(err: unknown): boolean {
+function rejectsKey(err: unknown, key: "source" | "checkIn"): boolean {
   if (!err || typeof err !== "object") return false;
   const { status, detail } = err as { status?: number; detail?: string };
   if (status !== 400) return false;
-  // Only a rejection that names `source` (an older backend's "Unrecognized key: source"): any other
+  // Only a rejection that names the key (an older backend's "Unrecognized key: source"): any other
   // 400 is a real error, and stripping the source would store a calculated figure as typed.
-  return typeof detail === "string" && /\bsource\b/i.test(detail);
+  return typeof detail === "string" && new RegExp(`\\b${key}\\b`, "i").test(detail);
 }
+
+/** The same payload without the check-in's started flag, for a backend that does not know it. */
+const withoutCheckIn = (payload: SnapshotPayload): SnapshotPayload => {
+  const { checkIn: _checkIn, ...rest } = payload;
+  return rest;
+};
 
 /**
  * Saves one month through `PUT /snapshots/:month` on the same-origin `/api` proxy, raises a toast
@@ -108,13 +114,22 @@ export function useSaveSnapshot(saved: readonly SavedSnapshotRow[] = []): SaveSn
     };
     const save = async ({ month, payload, saved, skipped, quiet = false }: SaveSnapshotArgs) => {
       try {
-        try {
-          await put(month, payload);
-        } catch (err) {
-          // Deploy order: a backend that does not know `source` yet rejects it. Save the same
-          // figures once more without it, and say nothing.
-          if (!hasSource(payload) || !rejectsSource(err)) throw err;
-          await put(month, withoutSource(payload));
+        // Deploy order: a backend that does not know `source` or `checkIn` (CH-3) yet rejects it.
+        // Save the same figures again without the key it names, and say nothing.
+        let body = payload;
+        for (let attempt = 0; ; attempt++) {
+          try {
+            await put(month, body);
+            break;
+          } catch (err) {
+            if (attempt < 2 && body.checkIn !== undefined && rejectsKey(err, "checkIn")) {
+              body = withoutCheckIn(body);
+            } else if (attempt < 2 && hasSource(body) && rejectsKey(err, "source")) {
+              body = withoutSource(body);
+            } else {
+              throw err;
+            }
+          }
         }
       } catch (err) {
         if (isConflict(err)) {

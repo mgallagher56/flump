@@ -91,6 +91,32 @@ describe.skipIf(dbMode === "skip")("authz: snapshots controller (real Postgres)"
     expect(b.body).toEqual({ latestCompletedMonth: null, latestStartedMonth: null });
   });
 
+  it("a started check-in is the caller's only, and naming another user's account starts nothing", async () => {
+    // User B's account in A's check-in save: the same 404 as unknown, and no started row.
+    const foreign = await put(PAST, h.tokens.a, {
+      values: [{ accountId: accountB, value: 5 }],
+      checkIn: true,
+    });
+    expect(foreign.status).toBe(404);
+    expect((await h.call("get", "/snapshots/check-ins", h.tokens.a)).body).toEqual({
+      latestCompletedMonth: null,
+      latestStartedMonth: null,
+    });
+    const started = await put(PAST, h.tokens.a, {
+      values: [{ accountId: accountA, value: 5 }],
+      checkIn: true,
+    });
+    expect(started.status).toBe(200);
+    expect((await h.call("get", "/snapshots/check-ins", h.tokens.a)).body).toEqual({
+      latestCompletedMonth: null,
+      latestStartedMonth: PAST,
+    });
+    expect((await h.call("get", "/snapshots/check-ins", h.tokens.b)).body).toEqual({
+      latestCompletedMonth: null,
+      latestStartedMonth: null,
+    });
+  });
+
   it("PUT /snapshots/:month: no, expired and dev-bypass tokens get 401 and nothing is written", async () => {
     exercised.add("PUT /snapshots/:month");
     for (const token of [undefined, h.tokens.expired, h.tokens.dev]) {
