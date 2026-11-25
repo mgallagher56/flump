@@ -90,7 +90,8 @@ export class McpService {
     try {
       // /mcp is outside the AuthGuard and its interceptor, so the token's user is set here: the
       // insert takes the user-data write fence and cannot land after the user's erasure. It waits
-      // for a reset of the same user rather than being refused, so the audit row is not dropped.
+      // up to the pool's 5 s lock_timeout for a reset of the same user rather than being refused; a
+      // longer wait still drops the row (logged below), as it did before the fence tried the lock.
       await runAsUserRequest(
         caller.token.userId,
         () =>

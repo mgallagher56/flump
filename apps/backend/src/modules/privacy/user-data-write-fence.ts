@@ -138,7 +138,7 @@ export class UserDataWriteFence implements EntitySubscriberInterface {
     // would hold a pooled connection per write for that time, and a user could fill the pool by
     // writing during their own reset; and a request whose other transaction holds the lock would
     // wait on itself. So the write is refused with 503 (try again); after an erasure the retry
-    // meets the AuthGuard's 410. A write that must not be dropped (the /mcp audit row) waits
+    // meets the AuthGuard's 410. A write that should survive a short reset (the /mcp audit row) waits
     // instead, up to the pool's lock_timeout (runAsUserRequest's waitForLock).
     try {
       if (request.waitForLock) {
