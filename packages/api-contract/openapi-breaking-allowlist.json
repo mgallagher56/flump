@@ -213,25 +213,5 @@
     "kind": "removed-request-field",
     "where": "PATCH /v1/user-profile request body.hasSecondIncome",
     "reason": "System audit slice 9 part three: hasSecondIncome was retired in PR 827, which stopped returning it and accepted and ignored it on PATCH for one release. That release is deployed, so the request now refuses it like any unknown field. No client in this repository sends it (web app, MCP server, e2e or scripts). The stored column stays until its drop. Coordinator brief, 20 November 2026."
-  },
-  {
-    "kind": "removed-request-field",
-    "where": "POST /v1/user-profile/terms-acceptance request body.version",
-    "reason": "Terms acceptance (25 Nov 2026, coordinator sign-off): the body records both page versions from LEGAL_PAGES instead of the retired TERMS_VERSION. No client called the route (no caller in apps/web, packages/mcp, packages/api-client or apps/mobile on main), and it answered 503 while TERMS_VERSION was unset. Remove in the first PR after this one merges."
-  },
-  {
-    "kind": "new-required-request-field",
-    "where": "POST /v1/user-profile/terms-acceptance request body.termsVersion",
-    "reason": "Terms acceptance (25 Nov 2026, coordinator sign-off): the body records both page versions from LEGAL_PAGES instead of the retired TERMS_VERSION. No client called the route (no caller in apps/web, packages/mcp, packages/api-client or apps/mobile on main), and it answered 503 while TERMS_VERSION was unset. Remove in the first PR after this one merges."
-  },
-  {
-    "kind": "new-required-request-field",
-    "where": "POST /v1/user-profile/terms-acceptance request body.privacyNoticeVersion",
-    "reason": "Terms acceptance (25 Nov 2026, coordinator sign-off): the body records both page versions from LEGAL_PAGES instead of the retired TERMS_VERSION. No client called the route (no caller in apps/web, packages/mcp, packages/api-client or apps/mobile on main), and it answered 503 while TERMS_VERSION was unset. Remove in the first PR after this one merges."
-  },
-  {
-    "kind": "removed-response-property",
-    "where": "POST /v1/user-profile/terms-acceptance 200 response.version",
-    "reason": "Terms acceptance (25 Nov 2026, coordinator sign-off): the body records both page versions from LEGAL_PAGES instead of the retired TERMS_VERSION. No client called the route (no caller in apps/web, packages/mcp, packages/api-client or apps/mobile on main), and it answered 503 while TERMS_VERSION was unset. Remove in the first PR after this one merges."
   }
 ]
