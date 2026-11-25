@@ -157,25 +157,37 @@ export class BankConnectionSync {
   }
 
   /**
-   * Records a failed sync's status only while the stored access token is still one the sync
-   * judged (B1): a compare-and-swap, so a stale sync never marks a connection the user has
-   * reconnected since. Returns false when the token was replaced (or the connection removed) and
+   * Records a sync's resulting status, only while this sync's lease is still the current one
+   * (L1): a sync that outlived SYNC_LEASE_MS never replaces the status a newer sync recorded. A
+   * failure (needs_reconnect or error) is also written only while the stored access token is
+   * still one the sync judged (B1), so a stale sync never marks a connection the user has
+   * reconnected since. Returns false when either check missed (or the connection was removed) and
    * nothing was written.
    */
-  async recordFailedStatus(
+  async recordStatus(
     connectionId: string,
     userId: string,
-    status: "needs_reconnect" | "error",
+    lease: string,
+    status: "connected" | "needs_reconnect" | "error",
     judged: JudgedToken,
   ): Promise<boolean> {
-    const result = await this.dataSource.query(
-      `UPDATE "bank_connections" SET "status" = $4, "updated_at" = now()
-       WHERE "id" = $1 AND "user_id" = $2
-         AND ("access_token" = ANY($3::text[])
-              OR ("access_token" IS NULL AND cardinality($3::text[]) = 0))
-       RETURNING "id"`,
-      [connectionId, userId, [...judged], status],
-    );
+    const result =
+      status === "connected"
+        ? await this.dataSource.query(
+            `UPDATE "bank_connections"
+             SET "status" = 'connected', "last_synced_at" = now(), "updated_at" = now()
+             WHERE "id" = $1 AND "user_id" = $2 AND "sync_started_at" = $3::timestamptz
+             RETURNING "id"`,
+            [connectionId, userId, lease],
+          )
+        : await this.dataSource.query(
+            `UPDATE "bank_connections" SET "status" = $5, "updated_at" = now()
+             WHERE "id" = $1 AND "user_id" = $2 AND "sync_started_at" = $3::timestamptz
+               AND ("access_token" = ANY($4::text[])
+                    OR ("access_token" IS NULL AND cardinality($4::text[]) = 0))
+             RETURNING "id"`,
+            [connectionId, userId, lease, [...judged], status],
+          );
     return returnedRows(result).length > 0;
   }
 

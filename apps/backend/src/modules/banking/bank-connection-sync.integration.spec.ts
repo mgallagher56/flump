@@ -625,6 +625,79 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("bank sync (real Post
     });
   });
 
+  // L1 (verify-bank-sync): a sync that outlives SYNC_LEASE_MS keeps running while a newer sync
+  // takes the lease. Its status write must not replace the newer sync's: every status write is
+  // conditional on the sync's own lease.
+  describe("a sync that outlived its lease (L1)", () => {
+    const lapseLease = (id: string) =>
+      ds.query(
+        `UPDATE bank_connections SET sync_started_at = now() - interval '10 minutes' WHERE id = $1`,
+        [id],
+      );
+    const timeout = () =>
+      new BankUnavailableError({
+        provider: "monzo",
+        operation: "fetch accounts",
+        reason: "timeout",
+      });
+
+    /** The first sync's fetch waits on `gate`; a newer sync runs once its lease has lapsed. */
+    const slowSyncThenNewer = async (
+      slowFetch: () => Promise<ProviderAccount[]>,
+      newerFetch: () => Promise<ProviderAccount[]>,
+    ) => {
+      const id = await insertConnection();
+      let open: () => void = () => {};
+      const gate = new Promise<void>((resolve) => {
+        open = resolve;
+      });
+      const provider = scriptedProvider(() => []);
+      provider.fetchAccounts
+        .mockImplementationOnce(async () => {
+          await gate;
+          return slowFetch();
+        })
+        .mockImplementationOnce(newerFetch);
+      const finance = financeWith(provider);
+      const slow = finance.syncBankConnection(PERSON, id);
+      await vi.waitFor(() => expect(provider.fetchAccounts).toHaveBeenCalledTimes(1));
+      await lapseLease(id);
+      const newer = await finance.syncBankConnection(PERSON, id);
+      open();
+      return { id, newer, slow: await slow };
+    };
+
+    it("a slow sync that succeeds leaves a newer sync's error in place", async () => {
+      const { id, newer, slow } = await slowSyncThenNewer(
+        async () => [account("a", 1)],
+        async () => {
+          throw timeout();
+        },
+      );
+      expect(newer).toMatchObject({ success: false, connection: { status: "error" } });
+      expect((await connectionRow(id)).status).toBe("error");
+      expect(slow).toMatchObject({
+        success: false,
+        connection: { status: "error" },
+        error: expect.stringMatching(/try again/i),
+      });
+    });
+
+    it("a slow sync that times out leaves a newer sync's connected in place", async () => {
+      const { id, newer, slow } = await slowSyncThenNewer(
+        async () => {
+          throw timeout();
+        },
+        async () => [account("a", 1)],
+      );
+      expect(newer).toMatchObject({ success: true, connection: { status: "connected" } });
+      const row = await connectionRow(id);
+      expect(row.status).toBe("connected");
+      expect(row.syncStartedAt).toBeNull();
+      expect(slow).toMatchObject({ success: false, connection: { status: "connected" } });
+    });
+  });
+
   describe("disconnect and consent (H10)", () => {
     it("revokes at the provider first, then deletes the connection and everything synced from it", async () => {
       const id = await insertConnection();
