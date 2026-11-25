@@ -8,9 +8,9 @@
  *
  * Needs an invite-only run where the run's user is not invited. Locally the beta is open unless a
  * beta admin is set, and the dev user is the only user, so start the run with an admin who is
- * someone else. Seeding then fails with 403 (the user is not invited), which is expected: the
- * servers stay up and this journey signs in itself through /login.
- *   BETA_ADMIN_USER_IDS=verify_other_admin verify-flump up --skip-build   # "seeding failed" is expected
+ * someone else, and skip seeding (it would fail with 403: the user cannot write data). This
+ * journey signs in itself through /login.
+ *   BETA_ADMIN_USER_IDS=verify_other_admin verify-flump up --skip-build --no-seed
  *   verify-flump drive data-rights-not-invited <run-id>
  *   verify-flump down <run-id>
  * It erases the run's user, so run it last on its run.

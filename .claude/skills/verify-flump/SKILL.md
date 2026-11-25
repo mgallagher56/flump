@@ -85,7 +85,7 @@ Rules that cost a run when ignored:
 
 - Wait for hydration (`open` or `hydrated`) before clicking script-driven controls: clicks before it are lost.
 - `api()` only reaches paths on the proxy's allow-list (`API_ALLOW_LIST` in `apps/web/app/services/api-proxy.server.ts`). Tax records, the retirement plan and imports are not on it: prove those through a second page view instead.
-- The run has one user. Journeys change its saved data. To get back to the persona's state, run `V seed <persona>`. That resets the user's financial data first, and the backend allows 10 resets an hour per user. If a seed fails with 429, `V down` and `V up` for a fresh database.
+- The run has one user. Journeys change its saved data. To get back to the persona's state, run `V seed <persona>`. That resets the user's financial data first, and the backend allows 10 resets an hour per user. If a seed fails with 429, `V down` and `V up` for a fresh database. Writes are rate limited too: after a few journeys and seeds in quick succession, seeding returns 429 on every write. To run many journeys, give each persona its own run (`V up --skip-build --persona <name>`) instead of reseeding one run again and again.
 - Never call backend endpoints directly to set up state for a journey you are proving; drive the UI. `V seed` is the only setup shortcut, and only for the baseline.
 
 ## Evidence

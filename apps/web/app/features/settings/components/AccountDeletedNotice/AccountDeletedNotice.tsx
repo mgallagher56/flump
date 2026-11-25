@@ -1,4 +1,4 @@
-import { ButtonLink, Card, PageBody } from "@repo/ui";
+import { Button, ButtonLink, Card, PageBody } from "@repo/ui";
 import { type FC, useEffect } from "react";
 import { FinishDeletionPanel } from "~/features/settings/components/FinishDeletionPanel";
 import { useDeleteAccount } from "~/features/settings/hooks/useDeleteAccount";
@@ -41,6 +41,13 @@ export const AccountDeletedNotice: FC<AccountDeletedNoticeProps> = ({
           data-testid="account-deleted-notice"
         >
           <FinishDeletion />
+          {/* The focused shell has no account menu, so the way out is here (root.tsx clears this
+              browser's storage for any form posting to /logout). */}
+          <form action="/logout" method="post">
+            <Button type="submit" variant="ghost">
+              Sign out
+            </Button>
+          </form>
         </div>
       </PageBody>
     );

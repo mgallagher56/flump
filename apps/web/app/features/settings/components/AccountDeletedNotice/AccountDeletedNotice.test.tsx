@@ -29,4 +29,17 @@ describe("<AccountDeletedNotice />", () => {
     expect(screen.getByRole("heading", { name: "Finish deleting your account" })).toBeDefined();
     expect(screen.queryByRole("heading", { name: "Your account has been deleted" })).toBeNull();
   });
+
+  it("offers a way to sign out while the deletion is pending (the page has no account menu)", () => {
+    render(<AccountDeletedNotice homeUrl="/" pending />);
+    const signOut = screen.getByRole("button", { name: "Sign out" });
+    const form = signOut.closest("form");
+    expect(form?.getAttribute("action")).toBe("/logout");
+    expect(form?.getAttribute("method")).toBe("post");
+  });
+
+  it("has no sign-out button once the account is deleted (already signed out)", () => {
+    render(<AccountDeletedNotice homeUrl="/" />);
+    expect(screen.queryByRole("button", { name: "Sign out" })).toBeNull();
+  });
 });

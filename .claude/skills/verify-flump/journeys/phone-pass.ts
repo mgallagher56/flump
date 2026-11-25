@@ -2,8 +2,9 @@
  * phone-pass: one pass of the main signed-in pages at phone width (375x812, touch). On each page:
  * no horizontal scroll (document scrollWidth no wider than the viewport), the phone navigation is
  * shown and marks the current page (a bottom-bar tab, or the row in the "More pages" drawer), and
- * the page's h1 is visible. Every page is checked before the journey fails, so one run lists every
- * page that breaks; results.json is the second, read-only view of what was measured.
+ * the page's h1 is visible. Measured checks (scroll width, h1) are collected for every page before
+ * the journey fails, so one run lists each page that breaks them; a navigation step that throws
+ * stops the run at that page. results.json is the second, read-only view of what was measured.
  * Run: verify-flump drive phone-pass <run-id>
  */
 import type { Page } from "@playwright/test";
