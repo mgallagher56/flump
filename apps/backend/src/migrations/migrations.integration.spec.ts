@@ -134,6 +134,17 @@ let MIGRATIONS: MigrationClass[] = [];
 const MIGRATION_ONLY_TABLES =
   "'migrations', 'liability_sign_backfill', 'rate_limit_buckets', 'pension_rates_backfill', 'student_loan_plan_backfill', 'paye_salary_record_backfill', 'account_home_backfill', 'rent_share_backfill', 'mortgage_repayment_type_backfill', 'profile_column_drop_backfill', 'take_home_salary_backfill', 'reset_pension_zeros_backfill', 'rental_share_onto_property_backfill', 'budget_entry_share_backfill', 'invoice_tax_record_category_backfill'";
 
+/**
+ * The groups for the oldest migrations reach their legacy schema by running the whole chain up and
+ * then undoing it back to that migration, so each test applies and reverts well over 100 migrations,
+ * and that grows with every new one. Measured on 25 Nov 2026: 1.5 to 2.5 s each with this file on
+ * its own, up to 6.2 s with the db project's files running side by side, and 18 s once in a full run
+ * on a loaded machine, past the 15 s default. A shorter route (migrating up only to the one before)
+ * would stop running the later migrations' down() steps, which these tests also exercise, so they
+ * keep the route and get this limit instead.
+ */
+const CHAIN_REPLAY_TIMEOUT_MS = 60_000;
+
 const ENTITY_TABLES = [
   "account_deletion_tombstones",
   "account_details",
@@ -370,7 +381,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       { access_token: null, status: "error" },
     ]);
   });
-  describe("RemoveSeededExampleData1794355400000", () => {
+  describe("RemoveSeededExampleData1794355400000", { timeout: CHAIN_REPLAY_TIMEOUT_MS }, () => {
     const MIGRATION = "RemoveSeededExampleData1794355400000";
 
     const insertTax = async (
@@ -633,7 +644,9 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
     });
   });
 
-  describe("EvolveAccountDetailsForSnapshots1794356100000 (E30)", () => {
+  describe("EvolveAccountDetailsForSnapshots1794356100000 (E30)", {
+    timeout: CHAIN_REPLAY_TIMEOUT_MS,
+  }, () => {
     const MIGRATION = "EvolveAccountDetailsForSnapshots1794356100000";
 
     // Brings the schema to the state before this migration (full up, then the downs back to and
@@ -757,7 +770,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
     });
   });
 
-  describe("DeleteSyncedTransactions1794355500000", () => {
+  describe("DeleteSyncedTransactions1794355500000", { timeout: CHAIN_REPLAY_TIMEOUT_MS }, () => {
     const MIGRATION = "DeleteSyncedTransactions1794355500000";
 
     const insertAccountWithTx = async (
@@ -817,7 +830,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
     });
   });
 
-  describe("AddMortgageTermColumns1794355600000", () => {
+  describe("AddMortgageTermColumns1794355600000", { timeout: CHAIN_REPLAY_TIMEOUT_MS }, () => {
     const MIGRATION = "AddMortgageTermColumns1794355600000";
 
     const termColumns = (): Promise<unknown[]> =>
@@ -872,7 +885,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
     });
   });
 
-  describe("AddProfileFacts1794355723000", () => {
+  describe("AddProfileFacts1794355723000", { timeout: CHAIN_REPLAY_TIMEOUT_MS }, () => {
     const MIGRATION = "AddProfileFacts1794355723000";
     const FACT_COLUMNS = [
       "birth_year",
@@ -1353,7 +1366,9 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
     });
   });
 
-  describe("AddImportBatchesAndAgentAudit1794356200000 (E17 PR C)", () => {
+  describe("AddImportBatchesAndAgentAudit1794356200000 (E17 PR C)", {
+    timeout: CHAIN_REPLAY_TIMEOUT_MS,
+  }, () => {
     const MIGRATION = "AddImportBatchesAndAgentAudit1794356200000";
 
     const account = async (): Promise<string> => {

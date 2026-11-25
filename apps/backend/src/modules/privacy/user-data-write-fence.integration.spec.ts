@@ -217,6 +217,37 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       expect(await budgetRows(USER_A)).toBe(0);
     });
 
+    it("refuses an update that sets a user column outside a transaction, and allows other updates", async () => {
+      await ds.getRepository(BudgetEntry).save(budgetLine(USER_A, "moved?"));
+      // Repository.update runs no transaction of its own.
+      await expect(
+        asRequest(USER_A, () =>
+          ds.getRepository(BudgetEntry).update({ userId: USER_A }, { userId: USER_B }),
+        ),
+      ).rejects.toThrow(/Update of budget_entries\.user_id outside a transaction/);
+      expect(await budgetRows(USER_A)).toBe(1);
+      // A raw statement with an alias is caught too.
+      await expect(
+        asRequest(USER_A, () =>
+          ds.query(
+            `UPDATE budget_entries AS b SET name = 'x', "user_id" = $1 WHERE b.user_id = $2`,
+            [USER_B, USER_A],
+          ),
+        ),
+      ).rejects.toThrow(/outside a transaction/);
+      // Another column outside a transaction is allowed (an update cannot bring a row back).
+      await asRequest(USER_A, () =>
+        ds.getRepository(BudgetEntry).update({ userId: USER_A }, { name: "renamed" }),
+      );
+      // The user column inside a transaction is allowed: the transaction holds the fence.
+      await asRequest(USER_A, () =>
+        ds.transaction((m) =>
+          m.getRepository(BudgetEntry).update({ userId: USER_A }, { userId: USER_B }),
+        ),
+      );
+      expect(await budgetRows(USER_B)).toBe(1);
+    });
+
     it("runs the erasure, its retry, the reset and the export inside a request without deadlock", async () => {
       await ds.getRepository(BudgetEntry).save(budgetLine(USER_B, "kept by reset? no"));
       const repo = <E extends object>(e: new () => E) => ds.getRepository(e);
