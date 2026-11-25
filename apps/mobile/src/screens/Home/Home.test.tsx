@@ -12,7 +12,12 @@ async function home(api: ReturnType<typeof fakeApi>) {
   const onSignOut = jest.fn();
   const onOpenCheckIn = jest.fn();
   const { ui } = withApi(
-    <Home onSignOut={onSignOut} onOpenCheckIn={onOpenCheckIn} now={NOW} />,
+    <Home
+      onSignOut={onSignOut}
+      onOpenCheckIn={onOpenCheckIn}
+      marketingOrigin="https://m.test.invalid"
+      now={NOW}
+    />,
     api.client,
   );
   await render(ui);
@@ -41,6 +46,19 @@ describe("Home", () => {
     // Let the reads answer.
     await new Promise((r) => setTimeout(r, 0));
     expect(screen.queryByTestId("check-in-row")).toBeNull();
+  });
+
+  it("terms not agreed mid-session: the terms screen instead of a home without a way on", async () => {
+    const api = fakeApi({
+      ...routes(household()),
+      "GET /accounts": () => fail("forbidden", 403, "terms_not_accepted"),
+    });
+    const { onSignOut } = await home(api);
+    expect(
+      await screen.findByRole("header", { name: "Please agree to our terms on the website" }),
+    ).toBeOnTheScreen();
+    await userEvent.setup().press(screen.getByRole("button", { name: "Sign out" }));
+    expect(onSignOut).toHaveBeenCalledTimes(1);
   });
 
   it("when the reads fail, the row still offers the check-in", async () => {
