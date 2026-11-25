@@ -90,6 +90,22 @@ describe("runtime import cycles (finance-engine)", () => {
     expect(runtimeImports('export { x } from "./a.js";')).toEqual(["./a.js"]);
   });
 
+  test("a type alias or other statement above an import does not swallow it", () => {
+    expect(runtimeImports('export type Foo = string;\nexport { b } from "./b";')).toEqual(["./b"]);
+    expect(runtimeImports('export type Foo = string;\nimport { b } from "./b";')).toEqual(["./b"]);
+    expect(runtimeImports('export type Foo = {\n  a: string\n}\nimport { b } from "./b";')).toEqual(
+      ["./b"],
+    );
+    expect(runtimeImports('export const n = 1\nimport { b } from "./b";')).toEqual(["./b"]);
+    const found = findImportCycles(
+      files({
+        "a.ts": 'export type T = 1;\nimport { b } from "./b";',
+        "b.ts": 'import { a } from "./a";',
+      }),
+    );
+    expect(found).toEqual([["a.ts", "b.ts", "a.ts"]]);
+  });
+
   test("dynamic import() and bare imports count", () => {
     expect(runtimeImports('const m = await import("./a.js");')).toEqual(["./a.js"]);
     expect(runtimeImports('import "./a.js";')).toEqual(["./a.js"]);
