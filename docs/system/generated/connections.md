@@ -149,7 +149,7 @@ flowchart LR
   f_balance_history -.-> s_retirement
   f_balance_history -.-> s_mcp_read
   f_balance_history -.-> s_context_pack
-  f_check_in_done(["Whether a month's check-in was finished"])
+  f_check_in_done(["Whether a month's check-in was started or finished"])
   s_check_in --> f_check_in_done
   f_check_in_done -.-> s_dashboard
   f_check_in_done -.-> s_export

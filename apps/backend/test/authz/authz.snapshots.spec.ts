@@ -86,9 +86,9 @@ describe.skipIf(dbMode === "skip")("authz: snapshots controller (real Postgres)"
     expect(done.status).toBe(200);
     const a = await h.call("get", "/snapshots/check-ins", h.tokens.a);
     expect(a.status).toBe(200);
-    expect(a.body).toEqual({ latestCompletedMonth: PAST });
+    expect(a.body).toEqual({ latestCompletedMonth: PAST, latestStartedMonth: PAST });
     const b = await h.call("get", "/snapshots/check-ins", h.tokens.b);
-    expect(b.body).toEqual({ latestCompletedMonth: null });
+    expect(b.body).toEqual({ latestCompletedMonth: null, latestStartedMonth: null });
   });
 
   it("PUT /snapshots/:month: no, expired and dev-bypass tokens get 401 and nothing is written", async () => {

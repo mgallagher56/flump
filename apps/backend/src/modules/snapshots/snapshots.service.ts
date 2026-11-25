@@ -23,6 +23,8 @@ interface SnapshotValueInput {
 export interface UpsertSnapshotInput {
   values: SnapshotValueInput[];
   complete?: boolean;
+  /** The save is a check-in answer: it starts the month's check-in (CH-3). */
+  checkIn?: boolean;
 }
 
 export interface UpsertSnapshotResult {
@@ -56,11 +58,25 @@ export class SnapshotsService {
    * balance edit also writes (system audit slice 4, CH-3, L70).
    */
   async latestCompletedMonth(userId: string): Promise<string | null> {
-    const rows: Array<{ month: string | null }> = await this.dataSource.query(
-      `SELECT max("month") AS "month" FROM "snapshot_checkins" WHERE "user_id" = $1`,
-      [userId],
-    );
-    return rows[0]?.month ?? null;
+    return (await this.latestMonths(userId)).completed;
+  }
+
+  /**
+   * The latest finished check-in month and the latest month a check-in was started for (finished
+   * or not), both from `snapshot_checkins`. A started row is written only by the check-in's own
+   * saves (`checkIn: true`), never by an account edit, a sync or an agent (CH-3).
+   */
+  async latestMonths(
+    userId: string,
+  ): Promise<{ completed: string | null; started: string | null }> {
+    const rows: Array<{ completed: string | null; started: string | null }> =
+      await this.dataSource.query(
+        `SELECT max("month") FILTER (WHERE "completed_at" IS NOT NULL) AS "completed",
+                max("month") AS "started"
+         FROM "snapshot_checkins" WHERE "user_id" = $1`,
+        [userId],
+      );
+    return { completed: rows[0]?.completed ?? null, started: rows[0]?.started ?? null };
   }
 
   /**
@@ -175,8 +191,18 @@ export class SnapshotsService {
         { source: "manual", importBatchId: null, current, updatedAt: now },
       );
       if (input.complete === true) {
+        // Finishes the month's check-in, whether or not a started row exists.
         await manager.query(
-          `INSERT INTO "snapshot_checkins" ("user_id", "month") VALUES ($1, $2)
+          `INSERT INTO "snapshot_checkins" ("user_id", "month", "completed_at") VALUES ($1, $2, now())
+           ON CONFLICT ("user_id", "month") DO UPDATE SET "completed_at" = now()
+           WHERE "snapshot_checkins"."completed_at" IS NULL`,
+          [userId, monthKey(target)],
+        );
+      } else if (input.checkIn === true && rows.length > 0) {
+        // A balance saved by the check-in starts the month's check-in (CH-3): the row says only
+        // that, with no finish time. Other writes (account edits, History, sync) never send it.
+        await manager.query(
+          `INSERT INTO "snapshot_checkins" ("user_id", "month", "completed_at") VALUES ($1, $2, NULL)
            ON CONFLICT ("user_id", "month") DO NOTHING`,
           [userId, monthKey(target)],
         );

@@ -684,6 +684,7 @@ The same defect is sometimes listed in two areas, because two reviewers reached 
 - Confidence: confirmed in code.
 
 ### CH-3 The check-in reminder hides once any single account is recorded
+- Status (25 Nov 2026): fixed. The reminder reads finished check-ins only (audit slice 4), a rename sends no balance (slice 4, `changedFields`), and Home says "Continue check-in" when part done: the check-in's own saves write a started `snapshot_checkins` row (`completed_at` empty, migration CheckInStartedRows1795650000000) and `selectCheckInPartDone` (FE/check-in.ts) needs that row plus at least one step with a figure this month and one without. The text below is the finding as written.
 - Confirmed in a browser: yes, check B9 in [BROWSER-EVIDENCE.md](./BROWSER-EVIDENCE.md).
 - Fact or figure: `isCheckInDue` returns false when `lastRecordedMonth` is this month (FE/check-in-day.ts:59). The Dashboard passes the latest month of any row of any account (WEB/routes/_index.tsx:189; WEB/features/snapshot/snapshotModel.ts:320-330). History uses the same test for its prompt (FE/recorded-month-comparison.ts:106).
 - What is wrong: A part-done check-in or an unrelated edit counts as "this month recorded".

@@ -52,7 +52,11 @@ describe("useCheckIn", () => {
     expect(onSave).toHaveBeenCalledTimes(1);
     expect(onSave.mock.calls[0]?.[0]).toEqual({
       month: "2026-11",
-      payload: { values: [{ accountId: everyday, value: 3412.5, source: "manual" }] },
+      // checkIn: the save starts the month's check-in, so Home can say "Continue check-in" (CH-3).
+      payload: {
+        values: [{ accountId: everyday, value: 3412.5, source: "manual" }],
+        checkIn: true,
+      },
       saved: 1,
       skipped: 0,
       quiet: true,

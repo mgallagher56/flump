@@ -281,6 +281,11 @@ export interface WorkspaceSnapshot {
    * call failed, which callers treat as unknown and so show the check-in reminder.
    */
   latestCheckInMonth?: string | null;
+  /**
+   * The newest month a check-in was started for, finished or not (CH-3, "Continue check-in"), with
+   * the same `null` and `undefined` meanings.
+   */
+  latestStartedCheckInMonth?: string | null;
 }
 
 export interface BackendBytes {
@@ -395,7 +400,7 @@ export async function loadWorkspaceSnapshot(
   let taxRecords: any[];
   let bankConnections: any[];
   const checkIns = includeCheckIns
-    ? fetchLatestCheckInMonth(accessToken, signal)
+    ? fetchCheckInMonths(accessToken, signal)
     : Promise.resolve(undefined);
   try {
     [accounts, userProfile, budgetEntries, taxRecords, bankConnections] = await Promise.all([
@@ -413,7 +418,7 @@ export async function loadWorkspaceSnapshot(
 
   // Every account read carries its monthly history (M24): no separate /account-details call.
   const accountDetails = accounts.flatMap((a) => a.details || []);
-  const latestCheckInMonth = await checkIns;
+  const checkInMonths = await checkIns;
 
   return {
     user,
@@ -424,27 +429,39 @@ export async function loadWorkspaceSnapshot(
     budgetEntries,
     taxRecords,
     bankConnections,
-    ...(includeCheckIns ? { latestCheckInMonth } : {}),
+    ...(includeCheckIns ? checkInFields(checkInMonths) : {}),
   };
 }
 
+interface CheckInMonths {
+  completed: string | null;
+  /** Undefined when the backend does not say (an older backend). */
+  started: string | null | undefined;
+}
+
 /**
- * The latest finished check-in month (`GET /snapshots/check-ins`, system audit slice 4, CH-3).
- * Fails soft: the reminder is only a way in, so an unknown answer (undefined) shows it.
+ * The latest finished and started check-in months (`GET /snapshots/check-ins`, system audit slice
+ * 4, CH-3). Fails soft: the reminder is only a way in, so an unknown answer (undefined) shows it.
  */
-function fetchLatestCheckInMonth(
+function fetchCheckInMonths(
   accessToken: string,
   signal: AbortSignal,
-): Promise<string | null | undefined> {
+): Promise<CheckInMonths | undefined> {
   return backendFetch("/snapshots/check-ins", {
     accessToken,
     signal,
     schema: SnapshotCheckInsResponse,
   }).then(
-    (res) => res.latestCompletedMonth,
+    (res) => ({ completed: res.latestCompletedMonth, started: res.latestStartedMonth }),
     () => undefined,
   );
 }
+
+/** The workspace fields for the check-in months; both undefined when unknown. */
+const checkInFields = (months: CheckInMonths | undefined) => ({
+  latestCheckInMonth: months?.completed,
+  latestStartedCheckInMonth: months?.started,
+});
 
 /** A workspace load with the financial picture built from it (decision 10, option B). */
 export interface WorkspacePicture extends WorkspaceSnapshot {
@@ -524,7 +541,7 @@ export async function loadWorkspacePicture(
   let loaded: LoadedFinancialPicture;
   let bankConnections: any[];
   const checkIns = includeCheckIns
-    ? fetchLatestCheckInMonth(accessToken, signal)
+    ? fetchCheckInMonths(accessToken, signal)
     : Promise.resolve(undefined);
   try {
     [loaded, bankConnections] = await Promise.all([
@@ -550,7 +567,7 @@ export async function loadWorkspacePicture(
     budgetEntries: loaded.rows.budgetEntries as any[],
     taxRecords: loaded.rows.taxRecords as any[],
     bankConnections,
-    ...(includeCheckIns ? { latestCheckInMonth: await checkIns } : {}),
+    ...(includeCheckIns ? checkInFields(await checkIns) : {}),
     picture: loaded.picture,
   };
 }

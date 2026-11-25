@@ -408,6 +408,8 @@ describe("answers and payloads", () => {
   it("does not mark the month complete with no values to save", () => {
     const steps = [step({ recorded: { value: 5, source: "manual" } })];
     expect(checkInPayload(steps, [], new Set(), { withSource: true }).complete).toBeUndefined();
+    // An empty save starts no check-in (the backend writes no started row for it either).
+    expect(checkInPayload(steps, [], new Set(), { withSource: true }).checkIn).toBeUndefined();
   });
 
   it("says a payload has a source when any one value carries it", () => {

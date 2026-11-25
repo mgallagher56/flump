@@ -18,6 +18,7 @@ import {
   isCheckInMonth,
   restAnswer,
   resumeIndex,
+  selectCheckInPartDone,
   selectSavedNetWorthSeries,
   statementPromptFor,
   stepFigure,
@@ -336,6 +337,7 @@ describe("answers and payloads", () => {
     const one = [answerValue(current, { kind: "noChange" })!];
     expect(checkInPayload(steps, one, new Set(), { withSource: true })).toEqual({
       values: [{ accountId: "c", value: 3400, source: "confirmed" }],
+      checkIn: true,
     });
     const all = steps.map((s) => answerValue(s, restAnswer(s))!);
     const payload = checkInPayload(steps, all, new Set(), { withSource: false });
@@ -813,5 +815,96 @@ describe("joint accounts count at the user's share (E34)", () => {
     );
     expect(summary.netWorth).toBe(3400 + 6000 - 100000);
     expect(summary.change).toBe(3400 + 6000 - 100000 - (3000 + 4500 - 100500));
+  });
+});
+
+describe("selectCheckInPartDone (CH-3: Continue check-in)", () => {
+  // Two manual accounts the check-in asks about, and one connected account it skips.
+  const A = { id: "A", name: "Current account", type: "Current", balance: 1000 };
+  const B = { id: "B", name: "Easy access savings", type: "Saving", balance: 5000 };
+  const K = { id: "K", name: "Bank feed", type: "Current", balance: 200, connectionId: "conn-1" };
+  const accts: CheckInAccountInput[] = [A, B, K];
+  const oct = [row("A", 10, 990), row("B", 10, 4900)];
+  const partDone = (over: Partial<Parameters<typeof selectCheckInPartDone>[0]>): boolean =>
+    selectCheckInPartDone({
+      accounts: accts,
+      details: oct,
+      currentMonth: MONTH,
+      latestStartedMonth: MONTH,
+      latestCompletedMonth: "2026-10",
+      ...over,
+    });
+
+  it("none saved: a started month with no figure yet, or nothing started, is not part done", () => {
+    expect(partDone({})).toBe(false);
+    expect(partDone({ latestStartedMonth: null })).toBe(false);
+  });
+
+  it("one saved through the check-in and one still to do is part done", () => {
+    expect(partDone({ details: [...oct, row("A", 11, 1010, "confirmed")] })).toBe(true);
+    // A typed figure counts the same as No change.
+    expect(partDone({ details: [...oct, row("B", 11, 5100, "manual")] })).toBe(true);
+  });
+
+  it("all saved is not part done, finished or not, and the connected account is never a step", () => {
+    const all = [...oct, row("A", 11, 1010, "confirmed"), row("B", 11, 5100)];
+    expect(partDone({ details: all })).toBe(false);
+    expect(partDone({ details: all, latestCompletedMonth: MONTH })).toBe(false);
+    // Finished this month with a figure still missing (an account added since) is not part done.
+    expect(partDone({ details: [...oct, row("A", 11, 1010)], latestCompletedMonth: MONTH })).toBe(
+      false,
+    );
+  });
+
+  it("a rename, a sync or an agent write alone is not part done: only the check-in starts one", () => {
+    // Before the fix a rename re-posted the balance as a current-month manual row.
+    const renamed = [...oct, row("A", 11, 1000, "manual")];
+    expect(partDone({ details: renamed, latestStartedMonth: null })).toBe(false);
+    expect(partDone({ details: renamed, latestStartedMonth: "2026-10" })).toBe(false);
+    const synced = [...oct, row("K", 11, 210, "connected")];
+    expect(partDone({ details: synced, latestStartedMonth: null })).toBe(false);
+    const agent = [...oct, row("B", 11, 5200, "agent")];
+    expect(partDone({ details: agent, latestStartedMonth: null })).toBe(false);
+  });
+
+  it("a month rollover: last month's unfinished check-in is not this month's", () => {
+    // Started in October with A saved, never finished; it is now November with nothing saved.
+    const october = [row("A", 9, 980), row("A", 10, 990)];
+    expect(
+      partDone({ details: october, latestStartedMonth: "2026-10", latestCompletedMonth: null }),
+    ).toBe(false);
+    // The first November save starts November.
+    expect(
+      partDone({
+        details: [...october, row("A", 11, 1000)],
+        latestStartedMonth: MONTH,
+        latestCompletedMonth: null,
+      }),
+    ).toBe(true);
+    // A later start month than the current one (a clock edge) is not this month either.
+    expect(partDone({ details: [...oct, row("A", 11, 1)], latestStartedMonth: "2026-12" })).toBe(
+      false,
+    );
+  });
+
+  it("an account added mid-month is a step still to do, even with every other one saved", () => {
+    const N = { id: "N", name: "New ISA", type: "Saving", balance: 300 };
+    const all = [...oct, row("A", 11, 1010), row("B", 11, 5100)];
+    // Adding an account writes its first row with source backfill: a figure, not an answer.
+    const withNew = [...all, row("N", 11, 300, "backfill")];
+    expect(partDone({ accounts: [...accts, N], details: withNew })).toBe(true);
+    // Once it is answered, nothing is left.
+    expect(
+      partDone({ accounts: [...accts, N], details: [...all, row("N", 11, 300, "confirmed")] }),
+    ).toBe(false);
+  });
+
+  it("a closed account drops out: its saved figure no longer makes the month part done", () => {
+    // A was the only account saved this month, then closed (removed with its history).
+    expect(partDone({ accounts: [B, K], details: [row("B", 10, 4900)] })).toBe(false);
+    // B was the only account left to do, then closed: nothing is left to continue.
+    expect(partDone({ accounts: [A, K], details: [row("A", 10, 990), row("A", 11, 1010)] })).toBe(
+      false,
+    );
   });
 });

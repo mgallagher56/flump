@@ -180,7 +180,8 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
         category: "food",
       }),
     );
-    await m.save(m.create(SnapshotCheckin, { userId, month: "2026-10" }));
+    // A started, unfinished check-in (CH-3): exported with an empty completedAt, erased like any.
+    await m.save(m.create(SnapshotCheckin, { userId, month: "2026-11", completedAt: null }));
     await m.save(
       m.create(AccountGoal, {
         userId,
@@ -909,6 +910,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
       expect((doc[t.key] as unknown[]).length, t.key).toBe(t.key === "auditEvents" ? 2 : 1);
     }
     expect(doc.accounts[0]).toMatchObject({ name: "A saver", balance: 1234.5 });
+    expect(doc.snapshotCheckins).toEqual([{ month: "2026-11", completedAt: null }]);
     expect(at(doc.taxRecords, 0).receiptData).toBe("data:image/png;base64,AAAA");
     expect(doc.mcpTokens[0]).toMatchObject({ name: "A Claude", tokenPrefix: "flp_abcd" });
     // Beta access is in the notes: joined, and the invite used with its label.

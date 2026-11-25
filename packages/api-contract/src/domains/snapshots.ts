@@ -40,6 +40,8 @@ export const SnapshotValue = z.strictObject({
 export const UpsertSnapshotRequest = z.strictObject({
   values: z.array(SnapshotValue).max(200),
   complete: z.boolean().optional(),
+  /** The save is a monthly check-in answer: with at least one value it starts the month's check-in. */
+  checkIn: z.boolean().optional(),
 });
 
 /** PUT /snapshots/:month: the stored values (signed by account type) and the check-in flag. */
@@ -65,6 +67,11 @@ export type UpsertSnapshotResponse = z.infer<typeof UpsertSnapshotResponse>;
  */
 export const SnapshotCheckInsResponse = z.strictObject({
   latestCompletedMonth: SnapshotMonth.nullable(),
+  /**
+   * The latest month a check-in was started for, finished or not (CH-3). Optional so a web app
+   * newer than the backend still reads the answer; absent reads as unknown.
+   */
+  latestStartedMonth: SnapshotMonth.nullable().optional(),
 });
 export type SnapshotCheckInsResponse = z.infer<typeof SnapshotCheckInsResponse>;
 

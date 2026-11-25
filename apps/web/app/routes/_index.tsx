@@ -7,6 +7,7 @@ import {
   PortfolioSnapshot,
   profileFactsFromProfile,
   recordedTotalsForTaxYear,
+  selectCheckInPartDone,
   selectNetWorthTrend,
   selectTakeHome,
 } from "@flump/finance-engine";
@@ -61,6 +62,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
     user,
     picture,
     latestCheckInMonth,
+    latestStartedCheckInMonth,
   } = await loadWorkspacePicture(args, { ensureSignedIn: false, includeCheckIns: true });
 
   if (!user || !picture) {
@@ -194,6 +196,14 @@ export const loader = async (args: LoaderFunctionArgs) => {
       // From completed check-ins only (CH-3): a balance saved on its own, or an account added
       // this month, does not hide the reminder. Unknown (the call failed) shows it.
       lastCheckInMonth: latestCheckInMonth,
+      // CH-3: the check-in saved a balance this month and some account still has none.
+      partDone: selectCheckInPartDone({
+        accounts: Array.isArray(accounts) ? accounts : [],
+        details,
+        currentMonth,
+        latestStartedMonth: latestStartedCheckInMonth,
+        latestCompletedMonth: latestCheckInMonth,
+      }),
       // UX Batch E: the row shows from the saved check-in day (a day, not a figure).
       checkInDay: userProfile?.checkInDay ?? null,
       today: londonDate(),

@@ -585,6 +585,30 @@ describe("_index route", () => {
     });
   });
 
+  it("passes partDone from the engine: a started check-in with an account still to do (CH-3)", async () => {
+    const thisMonth = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Europe/London",
+      year: "numeric",
+      month: "2-digit",
+    })
+      .format(new Date())
+      .slice(0, 7);
+    const [y, m] = thisMonth.split("-").map(Number) as [number, number];
+    const workspace = {
+      accounts: [
+        { id: "a", name: "Easy access", type: "Saving", balance: 3000 },
+        { id: "b", name: "Current account", type: "Current", balance: 900 },
+      ],
+      accountDetails: [{ accountId: "a", year: y, month: m, value: 3000, source: "confirmed" }],
+      latestCheckInMonth: "2026-01",
+    };
+    const started = await loadSignedIn({ ...workspace, latestStartedCheckInMonth: thisMonth });
+    expect(started.checkIn.partDone).toBe(true);
+    // The same balance with no check-in started this month (an edit wrote it) is not part done.
+    const notStarted = await loadSignedIn({ ...workspace, latestStartedCheckInMonth: null });
+    expect(notStarted.checkIn.partDone).toBe(false);
+  });
+
   it("mortgage rate is null when the account has none", async () => {
     const data = await loadSignedIn({
       accounts: [{ id: "m", name: "Home", type: "Mortgage", balance: -200000 }],

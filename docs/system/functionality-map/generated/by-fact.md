@@ -98,6 +98,7 @@
 | `account-type`                    | `web.account-detail.edit-account-dialog`          | web/account-detail         | `/app/accounts/:account`       |
 | `account-type`                    | `web.account-detail.hero`                         | web/account-detail         | `/app/accounts/:account`       |
 | `account-type`                    | `web.accounts.accounts-lists`                     | web/accounts               | `/app/accounts`                |
+| `account-type`                    | `web.dashboard.housekeeping`                      | web/dashboard              | `/`                            |
 | `account-type`                    | `web.debt.debt-dialog`                            | web/debt                   | `/app/debt`                    |
 | `account-type`                    | `web.debt.debts-list`                             | web/debt                   | `/app/debt`                    |
 | `account-type`                    | `web.history.account-changes-drawer`              | web/history                | `/app/accounts/history`        |
@@ -109,6 +110,7 @@
 | `balance-history`                 | `web.account-detail.hero`                         | web/account-detail         | `/app/accounts/:account`       |
 | `balance-history`                 | `web.accounts.check-in-sheet`                     | web/accounts               | `/app/accounts`                |
 | `balance-history`                 | `web.dashboard.hero`                              | web/dashboard              | `/`                            |
+| `balance-history`                 | `web.dashboard.housekeeping`                      | web/dashboard              | `/`                            |
 | `balance-history`                 | `web.history.account-changes-drawer`              | web/history                | `/app/accounts/history`        |
 | `balance-history`                 | `web.history.check-in-sheet`                      | web/history                | `/app/accounts/history`        |
 | `balance-history`                 | `web.history.hero`                                | web/history                | `/app/accounts/history`        |

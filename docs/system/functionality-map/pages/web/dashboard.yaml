@@ -43,6 +43,9 @@ sections:
       - enabled-pages-and-widgets
       - check-in-done
       - check-in-day
+      # "Continue check-in" (CH-3): which accounts the check-in has a figure for this month.
+      - account-type
+      - balance-history
 
   - id: sections-grid
     component: apps/web/app/features/dashboard/components/HomeDashboard/HomeDashboard.tsx

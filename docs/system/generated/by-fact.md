@@ -18,7 +18,7 @@ Where each value is stored, entered and used. One entry per stored fact, then on
 | [Second income and rental income on the profile](#second-and-rental-income)                                                              | fact   | pay         | Broken                                    |
 | [Account balance today](#account-balance)                                                                                                | fact   | accounts    | Holds                                     |
 | [Balance for each past month](#balance-history)                                                                                          | fact   | accounts    | Broken                                    |
-| [Whether a month's check-in was finished](#check-in-done)                                                                                | fact   | accounts    | Holds                                     |
+| [Whether a month's check-in was started or finished](#check-in-done)                                                                     | fact   | accounts    | Holds                                     |
 | [Optional user-set goal on an account](#account-goal)                                                                                    | fact   | accounts    | Holds                                     |
 | [Joint ownership and the user's share of an account](#ownership-share)                                                                   | fact   | accounts    | Broken                                    |
 | [Interest rate on an account](#account-rate)                                                                                             | fact   | accounts    | Holds with a manual step or a delay       |
@@ -404,7 +404,7 @@ Read by:
 - AI read tools: `packages/mcp/src/tools/read/getBalanceHistory.ts`
 - AI context pack: `packages/finance-engine/src/ai-context-pack.ts`
 
-### Whether a month's check-in was finished
+### Whether a month's check-in was started or finished
 
 <a id="check-in-done"></a>
 
@@ -418,11 +418,11 @@ Other stores:
 
 Entered or changed by:
 
-- Monthly check-in: `apps/backend/src/modules/snapshots/snapshots.service.ts` (only the check-in's last step; a new account's first row (source backfill) is not a check-in)
+- Monthly check-in: `apps/backend/src/modules/snapshots/snapshots.service.ts` (the check-in's first saved balance writes the row with completed_at empty (started); its last step sets completed_at; account edits, sync and agent writes never write it)
 
 Read by:
 
-- Dashboard: `apps/backend/src/modules/snapshots/snapshots.controller.ts` (GET /snapshots/check-ins, read by the reminder on the Dashboard and History)
+- Dashboard: `apps/backend/src/modules/snapshots/snapshots.controller.ts` (GET /snapshots/check-ins, read by the reminder on the Dashboard and History, and by selectCheckInPartDone for Continue check-in)
 - Data export and erasure: `apps/backend/src/modules/privacy/user-data-registry.ts`
 
 ### Optional user-set goal on an account

@@ -85,6 +85,7 @@ describe("CheckInSheet", () => {
             { accountId: CURRENT, value: 1500, source: "confirmed" },
             { accountId: MORTGAGE, value: 180000, source: "confirmed" },
           ],
+          checkIn: true,
           complete: true,
         },
         saved: 2,
@@ -223,6 +224,7 @@ describe("CheckInSheet", () => {
         month: "2026-11",
         payload: {
           values: [{ accountId: CURRENT, value: 1500, source: "confirmed" }],
+          checkIn: true,
         },
         saved: 1,
         skipped: 0,
@@ -232,6 +234,7 @@ describe("CheckInSheet", () => {
         month: "2026-11",
         payload: {
           values: [{ accountId: MORTGAGE, value: 180000, source: "confirmed" }],
+          checkIn: true,
           complete: true,
         },
         saved: 1,

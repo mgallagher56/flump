@@ -132,13 +132,15 @@ describe("backend-client.server", () => {
       .fn()
       .mockImplementation((url: string) =>
         url.includes("/v1/snapshots/check-ins")
-          ? Promise.resolve(jsonResponse({ latestCompletedMonth: "2026-10" }))
+          ? Promise.resolve(
+              jsonResponse({ latestCompletedMonth: "2026-10", latestStartedMonth: "2026-11" }),
+            )
           : inner(url),
       );
     const args = { request: new Request("http://x/") } as any;
-    expect((await loadWorkspaceSnapshot(args, { includeCheckIns: true })).latestCheckInMonth).toBe(
-      "2026-10",
-    );
+    const asked = await loadWorkspaceSnapshot(args, { includeCheckIns: true });
+    expect(asked.latestCheckInMonth).toBe("2026-10");
+    expect(asked.latestStartedCheckInMonth).toBe("2026-11");
     const plain = await loadWorkspaceSnapshot(args);
     expect(plain).not.toHaveProperty("latestCheckInMonth");
     const calls = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls;
@@ -161,6 +163,7 @@ describe("backend-client.server", () => {
     });
     expect(snapshot.accounts.length).toBe(1);
     expect(snapshot.latestCheckInMonth).toBeUndefined();
+    expect(snapshot.latestStartedCheckInMonth).toBeUndefined();
   });
 
   it("rejects with a 503 route error when the backend is unreachable", async () => {
@@ -380,6 +383,8 @@ describe("backend-client.server", () => {
       expect(urls().some((u) => u.includes("check-ins"))).toBe(false);
       const asked = await loadWorkspacePicture(args(), { includeCheckIns: true });
       expect(asked.latestCheckInMonth).toBe("2026-10");
+      // An older backend that does not send the started month leaves it unknown.
+      expect(asked.latestStartedCheckInMonth).toBeUndefined();
     });
 
     it("turns a failed read into a route error", async () => {
