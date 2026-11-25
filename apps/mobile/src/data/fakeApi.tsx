@@ -9,7 +9,7 @@ import { ThemeProvider } from "../theme/ThemeProvider";
 import { ApiProvider } from "./ApiProvider";
 import { createQueryClient } from "./queryClient";
 
-export interface FakeCall {
+interface FakeCall {
   method: string;
   path: string;
   body: unknown;

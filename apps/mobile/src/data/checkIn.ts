@@ -20,13 +20,13 @@ import { useEffect } from "react";
 import { useApi } from "./ApiProvider";
 import { queryKeys } from "./queryKeys";
 
-export type Accounts = AccountListResponse;
-export type AccountDetails = AccountDetailListResponse;
-export type UserProfile = UserProfileResponse;
-export type CheckIns = SnapshotCheckInsResponse;
+type Accounts = AccountListResponse;
+type AccountDetails = AccountDetailListResponse;
+type UserProfile = UserProfileResponse;
+type CheckIns = SnapshotCheckInsResponse;
 
 /** Thrown when there is no API client (a misconfigured build): reads as any load failure. */
-export class NoApiClientError extends Error {
+class NoApiClientError extends Error {
   constructor() {
     super("No API client");
     this.name = "NoApiClientError";
@@ -103,7 +103,7 @@ export async function putSnapshot(api: ApiClient | null, month: string, payload:
 }
 
 /** After a check-in closes: the saved balances, history and check-in months are read again. */
-export function invalidateCheckIn(queryClient: QueryClient): Promise<void> {
+function invalidateCheckIn(queryClient: QueryClient): Promise<void> {
   return Promise.all([
     queryClient.invalidateQueries({ queryKey: queryKeys.accounts() }),
     queryClient.invalidateQueries({ queryKey: queryKeys.accountDetails() }),

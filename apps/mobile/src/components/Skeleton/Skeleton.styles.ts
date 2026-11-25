@@ -2,7 +2,7 @@ import { StyleSheet } from "react-native";
 import type { Theme } from "../../theme/ThemeProvider";
 
 /** How wide the last block is, so the placeholder reads as a paragraph and not a table. */
-export const LAST_LINE_WIDTH = "60%";
+const LAST_LINE_WIDTH = "60%";
 
 /**
  * Static blocks on the sunken surface. No shimmer, so Reduce Motion is met by construction. Each
