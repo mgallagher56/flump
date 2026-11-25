@@ -8,15 +8,15 @@ When you check an entry, update "Last looked at" and the notes. Add a row for an
 
 - **Where:** <https://github.com/expo/exact>
 - **Asked for by:** the owner, 21 November 2026: "Should we consider Expo Exact in the future to create apps for every device?" and "add it to the general repo docs as a reminder to check in on progress of the Exact project".
-- **Last looked at:** 21 November 2026, the README only.
-- **Check again:** when the mobile app (E12) is next planned or re-planned, and at least every three months until then. Next check by the end of February 2027.
+- **Last looked at:** 25 November 2026, the README only (re-checked for E12 plan revision 4). Unchanged since 21 November: pre-1.0, "changes daily", no packaged release, no React layer.
+- **Check again:** every three months. Next check by the end of February 2027. The E12 framework is now decided (Expo, owner, 25 November 2026), so this is a watch for a later product or a second look at desktop and other devices, not a candidate for the current mobile app.
 
 **What it is.** A framework for writing one app that runs on many kinds of device. The README lists web, iOS, macOS and Linux as working, Android as working with polish in progress, Windows as early, and hosts for tvOS, watchOS, Android TV and the terminal. Screens are written in its own declarative language; data logic can be TypeScript, Rust or declarative HTTP. MIT licence.
 
 **Why Flump does not use it now.**
 
 - It is very early. The README says it is "pre-1.0 and changes daily", with no packaged release and no promise that today's code keeps working. It is built from a checkout of the repository.
-- It is not React. It has no JSX or React layer, and React Native and Flutter plugins do not work with it. The mobile plan ([`E12-mobile-rebuild-plan.md`](./audit/plans/E12-mobile-rebuild-plan.md), section 4.1) recommends Expo with React Native because that reuses the engine, contract, client, formatter and native theme already built. Exact would mean writing every screen again.
+- It is not React. It has no JSX or React layer, and React Native and Flutter plugins do not work with it. The mobile plan ([`E12-mobile-rebuild-plan.md`](./audit/plans/E12-mobile-rebuild-plan.md), section 4.1) chose Expo with React Native (owner, 25 November 2026) because that reuses the engine, contract, client, formatter and native theme already built. Exact would mean writing every screen again.
 - The README does not say how it handles sign-in, encrypted storage on the device or store submission. Those are the parts of a money app that most need a settled foundation.
 
 **What might carry over.** Its data logic can import plain JavaScript packages, so `@flump/finance-engine`, `@flump/format` and the API client might be usable. Not tested.

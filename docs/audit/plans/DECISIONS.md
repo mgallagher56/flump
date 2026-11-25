@@ -556,7 +556,7 @@ MA10 (an MCP tool for mortgage estimates) was accepted as recommended on 2026-11
 Relayed by the coordinator on 25 November 2026. Only the words in quotation marks are the owner's.
 
 - **No separate production environment.** The owner said: "we're not launching a prod enviornment". The Railway environment stays the only one (see "Railway production is staging" in round 6). E18's "staging first" item is ruled out, not waiting. This replaces the E18 owner action "create a production environment".
-- **Mobile uses Expo for iOS and Android.** The owner said: "For mobile use Expo for both ios and android". The question of which data stays on the device is decided by a Fable decider (in progress).
+- **Mobile uses Expo for iOS and Android.** The owner said: "For mobile use Expo for both ios and android". The question of which data stays on the device was decided by a Fable decider on the same day ("where mobile data lives", below).
 - **Legal pages are written and approved by Fable.** The owner said: "use fable to write and approve the legal pages". E19 is in progress.
 - **Retirement S7 and S9 are the coordinator's to decide and approve.** S7 (inheritance tax on unused pensions, self-employed view) is in progress. S9 (mobile parity and the two-person view) is deferred until mobile and couples exist.
 - **Making Tax Digital (E28).** A research and change plan is in progress.
@@ -569,3 +569,26 @@ Decided on 25 November 2026 by a Fable decider at the owner's delegation, and ad
 - C3 onward stays after launch, after the specialist charity review (CD7) and the household DPIA.
 - Partner mode stays a one-person display switch. It never creates a link, an invitation, a prompt to add a partner, or a second person's income fields.
 - C2 (combining two person pictures) may be built only as pure engine functions, at low priority.
+
+# Owner decision (2026-11-25): E12 mobile framework is Expo (O1)
+
+Given by the owner and relayed by the coordinator on 25 November 2026. Owner's words: "For mobile use Expo for both ios and android."
+
+- Settles decision O1 in [`E12-mobile-rebuild-plan.md`](E12-mobile-rebuild-plan.md) as option A: Expo with React Native, for iOS and Android, built with EAS. Revision 4 of the plan is written around it.
+- The coordinator's reading, not the owner's words: EAS starts on its free plan, and paying for builds stays an owner decision (plan section 11, OS3).
+- Supersedes: the 21 November note that "the E12 framework decision (O1) is still open". Exact stays on the watch list in `docs/technology-watch.md` as a reminder, not a candidate for E12.
+
+# Decision (2026-11-25): where mobile data lives (E12 O5), decided by a Fable decider at the owner's delegation
+
+Delegated by the owner on 25 November 2026: "I'll take the fable recommended decision on the data on device issue." The question, raised by the owner on 15 November: could the mobile apps keep data on the device only, with an optional user-approved encrypted backup to iCloud or Google Drive, accepting no switching to the web, as a selling point?
+
+Decided by an independent Fable `decider` subagent (read-only, briefed by the E12 lane with the options and the constraints read from the code). Signer: `fable-decider`. The owner did not review the reasoning; the owner accepted in advance whatever it recommended.
+
+- **Options weighed.** (a) Server as today, the phone a client of `/v1`. (b) On the device only, with an optional encrypted backup. (c) End-to-end encrypted sync, the server holding only ciphertext. (d) Server now, built so (c) stays possible later.
+- **Decision: (d), held narrow.** The server stays the one home for finance data and the phone is a `/v1` client with the encrypted read-only cache already on record (round 2, E12 D4-A). Four cheap rules keep an opt-in encrypted mode possible later. If those rules cost more than about 5 agent-days, they are dropped and the app ships as plain (a).
+- **Reasons.** The monthly check-in done on web one month and the phone the next, and the web app staying the main product, need one copy of the data. Couples sharing (E34) needs a server that reads and enforces sharing and the economic abuse safeguards. The AI connection reads server data (`apps/backend/src/modules/agent/`). Bank sync, when it returns, arrives at a server. Erasure and export are built on the server (`apps/backend/src/modules/privacy/`). Under (b) a lost phone without a backup loses its history and iOS to Android has no path; under (c) a lost key loses everything. (b) and (c) each add a second storage model or rewrite the backend's role for one developer.
+- **Rules now (the seams).** 1. No figure is computed only on the server: every figure comes from `@flump/finance-engine`; the server may check it, never be its only source. 2. Mobile screens reach data only through `@flump/api-client` and one query key factory. 3. Each stored value in `docs/system/value-map.yaml` gains a note of whether the server must read it (sharing, the AI connection, bank sync) or only stores it, filled in as slices touch values. 4. The phone's cache is encrypted with a device-only key in the secure store, left out of iCloud and Android backups, and cleared on sign-out. No end-to-end encryption code, key handling or schema change now.
+- **What would change it.** Beta or paying users naming server storage as the reason not to use Flump (then scope an opt-in encrypted mode with fewer features); the owner dropping couples sharing, the AI connection and bank sync (then (c) becomes realistic); the owner wanting a separate phone product with no account (then (b), as a different app); the privacy review flagging server-held data.
+- **Marketing.** May say, each once it is true and in the claims register (`docs/copy/COPY-GUIDE.md` section 7.4): the figures are worked out by open-source code anyone can read; no bank login is needed; you can delete your account in the app, at once; you can export everything; the copy on your phone is encrypted and removed when you sign out. Must not say: "your data never leaves your device", "end-to-end encrypted", "we cannot see your data", "zero-knowledge", "bank-grade", or anything in the present tense about a future encrypted mode.
+- **Not verified [U].** The backup and storage platform facts (checked separately in plan revision 4, section 4.6); database encryption at rest on Railway; the 3 to 5 agent-day cost of the seams is the decider's estimate.
+- Supersedes: nothing. Confirms round 2's E12 D4-A (encrypted read-only cache, 7 days, writes online only) as the offline behaviour.

@@ -8,7 +8,7 @@ A dated record of web changes that a mobile user would see or do differently, an
 - **The re-sweep session at the end of each design round appends the rows that are missing.** It lists the PRs merged in the round, compares them with this log, and adds a row for each one that qualifies.
 - Rows are appended, newest at the bottom of each table. A row is never deleted. When mobile matches, its "Mobile state" changes to "Done" with the mobile PR.
 - A change that a mobile user would not notice (refactors, tests, web-only layout, marketing pages, backend internals) gets no row.
-- "Slice" names the milestone in the plan (section 8) that carries the work.
+- "Slice" names the slice in the plan (section 9) that carries the work.
 - When a row changes what a slice must build, the plan is corrected in the same PR.
 
 Seeded on 2026-11-14 from the PRs merged on 13 and 14 November (the E15 Direction C pages, design polish round 1, the design system, the backend API work and the net worth choices). Descriptions come from the PR titles and the documents they changed; a slice checks the page itself before building.

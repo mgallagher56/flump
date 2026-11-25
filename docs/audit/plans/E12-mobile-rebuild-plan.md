@@ -1,620 +1,602 @@
 # E12 Mobile rebuild: implementation plan
 
-Revision 3, 2026-11-14. Written against `origin/main` at `fbd1e8f1`. Revision 2 (2026-11-11, 201 tasks) is in git history at `bf843c3a`; this revision replaces it.
+Revision 4, 2026-11-25. Written against `origin/main` at `a0805b08`. Revision 3 (2026-11-14) is in git history at `a0805b08`; this revision replaces it.
+
+Decisions: open. O1 (framework) and O5 (where data lives) were decided on 25 November 2026; O2 and O4 keep the defaults on record; the open items are in section 10.1. Slices S1a, D1, B-A and P5 touch none of the open items and can start now.
 
 ## State of the plan
 
-| Question                  | Answer                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| What is approved to build | **Nothing yet.** No mobile code exists. `apps/mobile-companion` is the parked old prototype and is not touched.                                                                                                                                                                                                                                                                                                              |
-| What is on record         | The owner decision that the app is rebuilt from scratch with the web app as the guide (`DECISIONS.md`, stated decisions). Round 2 of `DECISIONS.md` adopted this plan's own recommendations as defaults for the reversible choices (section 10.2). Round 3 decided the store account, legal sequence and money items (section 10.2). The owner rulings of 14 November (section 1). Round 2 also said the old milestones M0 to M3 "may proceed"; this revision still asks for approval, because the scope and the slices have changed since.                                                                                  |
-| What blocks a start       | 1. The owner approves this revision. 2. The owner answers decision O1 in section 10.1 (framework and build service). The other three there (developer accounts, push notifications, offline policy) are needed later: O2 by S19, O4 by S7, and O3 blocks nothing. 3. For slice S2 only: access to the WorkOS dashboard to register a redirect address. 4. For slice S3 only: the web check-in walk-through and its calculated-balance function are merged, so mobile copies a shipped flow.           |
-| What does not block       | Store accounts and legal questions (needed at S19, not before). Round 2 of the design polish on web (it changes pages, not the shared packages S1 to S3 use).                                                                                                                                                                                                                                                                |
-| What already exists       | The shared packages the app needs: `@flump/tokens` with a generated native theme, `@flump/format`, `@flump/api-contract`, `@flump/api-client`, `@flump/finance-engine`. The backend serves a versioned `/v1` API with account deletion and data export. Section 3 lists each with its state.                                                                                                                                 |
-| How it stays current      | [E12-mobile-parity-log.md](./E12-mobile-parity-log.md) records each web change a mobile user would notice. This plan is re-read against `main` at the end of each design round.                                                                                                                                                                                                                                              |
+| Question | Answer |
+| --- | --- |
+| What is decided | O1: Expo for iOS and Android (owner, 25 November 2026). O5: the server stays the one home for finance data, built so an encrypted mode stays possible later (Fable decider at the owner's delegation, 25 November 2026). Both are in `DECISIONS.md`. The rulings R1 to R6 of 14 November are in `DECISIONS.md` round 10. |
+| What can start now | S1a (project skeleton and CI), and beside it D1 (value map field), B-A (clock tolerance) and P5 (shared copy package, web only). None needs anything from the owner. |
+| What blocks later slices | S2a: owner step OS1 (a redirect address and a test user in the WorkOS dashboard), best requested now because it gates the largest risk (R3). S19: owner steps OS3 to OS8 and OS12 to OS16 (accounts, fees, signing, submission keys). S7: nothing now that O4 keeps its default. |
+| What already exists | The shared packages: `@flump/tokens` with a generated native theme, `@flump/format`, `@flump/api-contract`, `@flump/api-client`, `@flump/finance-engine` (now with the check-in rules), and the `/v1` API with deletion, export and the client policy route. Section 3. |
+| How it stays current | [E12-mobile-parity-log.md](./E12-mobile-parity-log.md) records each web change a mobile user would notice. This plan is re-read against `main` before each slice is specified in full. |
 
-**Goal:** a new `apps/mobile` app for iOS and Android that does what the Flump web app does, signed in through the real WorkOS flow, using the shared maths, formatting, API contract and design tokens, so that web, marketing and mobile feel like one product.
+**Goal:** a new `apps/mobile` Expo app for iOS and Android that does what the Flump web app does, signed in through the real WorkOS flow, using the shared maths, formatting, API contract and design tokens, so web, marketing and mobile feel like one product.
 
-**Companions:** [E12-feature-inventory.md](./E12-feature-inventory.md) (written 2026-11-11; out of date, see section 8.4), [`docs/ux/CROSS-PLATFORM.md`](../../ux/CROSS-PLATFORM.md), [`docs/ux/UX-GUIDELINES.md`](../../ux/UX-GUIDELINES.md), [`docs/ux/STYLE-GUIDE.md`](../../ux/STYLE-GUIDE.md), [`docs/copy/COPY-GUIDE.md`](../../copy/COPY-GUIDE.md), [`docs/api/versioning.md`](../../api/versioning.md).
+**Companions:** [E12-feature-inventory.md](./E12-feature-inventory.md) (written 2026-11-11, out of date: P4), [`docs/ux/CROSS-PLATFORM.md`](../../ux/CROSS-PLATFORM.md), [`docs/ux/UX-GUIDELINES.md`](../../ux/UX-GUIDELINES.md), [`docs/ux/STYLE-GUIDE.md`](../../ux/STYLE-GUIDE.md), [`docs/copy/COPY-GUIDE.md`](../../copy/COPY-GUIDE.md), [`docs/api/versioning.md`](../../api/versioning.md), [E34-shared-finances-research.md](./E34-shared-finances-research.md).
 
-**Confidence tags.** **VERIFIED IN CODE** means read in the repo at the commit above. **CONFIRMED** means read in a primary source, which is named. **UNCONFIRMED** means not verified; the text says where to check.
+**Confidence tags.** **CODE** means read in the repo at the commit above. **CONFIRMED** means read in a primary source on 25 November 2026, which is named. **[U]** means not confirmed; the text says where to check.
 
-## What changed in revision 3
+## What was stale in revision 3
 
-1. **Most of the old milestone 1 is done.** The token package and native theme, the formatter, the API contract and the typed client are on `main`. Their tasks are removed and section 3 records what exists.
-2. **The backend moved.** There is a `/v1` API with request validation, one error body, pagination, safe retries and an OpenAPI document. Account deletion with a tombstone, data export, rate limits and receipt download exist. Of the thirteen backend tickets in revision 2, six are done, two are dropped or parked, three stay open, one has its size cap done (B11) and one is partly done (B13). Section 5.5 has the table.
-3. **Bank linking is out of the mobile plan.** Owner ruling: bank sync waits until Flump has revenue. All bank screens, the bank flag and the bank decisions are parked (section 1.3).
-4. **The monthly check-in is the first feature.** Owner ruling. It is slice S3, straight after sign-in.
-5. **201 small tasks became 20 slices and one backend ticket, each one pull request**, with the first three specified in full (section 8). This follows the owner's rule of fewer, larger PRs.
-6. **Rules that AGENTS.md changed are corrected:** subagent models, the local pre-flight, the Direction C palette, en-GB only.
+Each item was checked against `origin/main` at `a0805b08`.
+
+| # | Revision 3 said | Now (CODE unless marked) | Effect |
+| --- | --- | --- | --- |
+| 1 | O1 framework open, blocks a start | Decided: Expo (owner, 25 November) | S1a can start |
+| 2 | `apps/mobile-companion` is parked; S20 deletes it | Deleted in #827. No Expo or React Native version is pinned anywhere in the repo now | S20 is removed. S1a picks the SDK with no old pin to match |
+| 3 | P2: the web check-in walk-through not merged | Merged (#709, #727). `CheckInSheet` is replaced by `CheckInStep`, `CheckInCard`, `CheckInSummary` | S3 copies a shipped flow |
+| 4 | P3: the check-in builders must move to the engine | Done. `packages/finance-engine/src/check-in.ts` holds the steps, order, calculated figure (`calculateCheckInBalance`), answers, payloads and summary; the server recomputes a `calculated` value and rejects one that differs. Web re-exports them from `apps/web/app/features/snapshot/checkInModel.ts` | S3 has no prerequisite move |
+| 5 | B-A: client policy route and clock tolerance both open | `GET /app/client-policy` is built (`apps/backend/src/config/client-policy.config.ts`, contract `packages/api-contract/src/domains/app.ts`). The verifier still passes no clock tolerance | B-A shrinks to the clock tolerance |
+| 6 | `NAV_BREAKPOINT` is 1024px; R4 not on web | `NAV_BREAKPOINT` is `48rem` (768px), built in #704 and #710 | R4 is web behaviour now |
+| 7 | Tabs: Home, Accounts, Budget, Tax and pay, More | `BOTTOM_BAR_TABS` is Home, Accounts, Budget, Pay, then a More button | Mobile tab labels follow web: "Pay" |
+| 8 | Palette is Direction C (teal, sand, charcoal) | Midnight (dark) and Mint (light) replaced it on 24 November (`DECISIONS.md`; `docs/ux/STYLE-GUIDE.md` section 14) | Mobile takes whatever `@flump/tokens/native` generates; no palette words in this plan |
+| 9 | R1 to R6 to be recorded; doc edits listed in section 11 | Recorded in `DECISIONS.md` round 10. CROSS-PLATFORM, UX-GUIDELINES E2, the copy guide tagline and AGENTS.md section 10 (parity rows) are updated | Old section 11 is removed except the native file set wording (10.3) |
+| 10 | The tagline is "Flump: finance without the fog" | Same, fixed wording in `COPY-GUIDE.md` section 2.1 | No change |
+| 11 | Web pages listed for parity | Web has since gained Retirement (E33), invoicing (E37), mortgage estimates (E39), imports, beta invites and the joint marker on accounts (E34 C1, C2) | P4, the feature inventory rewrite, matters more; new parity slices S21 to S23 |
+| 12 | Legal pages wait for a solicitor | The owner delegated the legal pages to Fable on 25 November (coordinator's record of the owner's message) | Release gate stays "hosted privacy policy and terms"; who writes them changed |
+| 13 | Exact to be re-checked at the next revision | Re-checked today: still pre-1.0, no release, no React layer (CONFIRMED, github.com/expo/exact README) | `docs/technology-watch.md` updated |
+| 14 | `createApiClient` has no caller | Still true | S2b is its first caller |
+| 15 | Subagent models | AGENTS.md section 6 (tiers moved up on 13 November) | Section 2 updated |
 
 ---
 
 ## 1. Owner rulings and scope
 
-### 1.1 Rulings of 14 November 2026
+### 1.1 Rulings
 
-These are owner rulings. Where one is not yet on `main` for web, the parity log says so, and mobile follows the ruling, not the older web behaviour.
-
-| #   | Ruling                                                                                                                                                                                                                                                                 | State on web                                                                                                                                     | What it means for mobile                                                                                                                                                                                                                                 |
-| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| R1  | **Net worth is the user's choice.** Two settings: property (home value and mortgage together, never one side alone) and student loan.                                                                                                                                  | Merged (PR 697). **VERIFIED IN CODE:** `netWorthCountsProperty` and `netWorthCountsStudentLoan` on the profile; `NetWorthBasis` in the engine.   | The app never works out net worth itself. It shows the figure from `GET /v1/portfolio-snapshot`, which already follows the choices, and says what is left out from `netWorthLeavesOut`. Settings has the same two switches (S9).                         |
-| R2  | **Bank sync is deferred until Flump has revenue.** When it comes it is balances only, through an aggregator.                                                                                                                                                           | Bank surfaces are being removed from web pages in polish round 2. The backend refuses to boot with the bank flag on until the bank launch gate passes (`apps/backend/src/config/boot-guards.ts`). | No bank screen, bank flag or bank wording in the app or its store listings. Section 1.3.                                                                                                                                                                 |
-| R3  | **The monthly check-in walks through each account** with "Update" or "No change", one card per account on phones. Mortgages and loans default to a calculated balance labelled "Calculated" that the user can override. It is the mobile app's most important flow.    | Not on `main` yet. Today web has one sheet listing every account (`CheckInSheet`, PR 640).                                                        | First feature slice (S3).                                                                                                                                                                                                                                |
-| R4  | **Navigation.** The bottom tab bar is for phones only (below 768px). The phone top bar keeps a menu button and the light and dark toggle.                                                                                                                              | Not on `main` yet. **VERIFIED IN CODE:** `NAV_BREAKPOINT` is `64rem` (1024px) in `packages/tokens/src/breakpoints.ts`.                            | Phones get a tab bar with the web's five entries. The header of each top-level screen has a menu button and a light and dark toggle (S4). Tablet layouts are out of the first release.                                                                   |
-| R5  | **Loading.** No skeleton for the first 200ms or so. Once shown, a skeleton stays for at least 400ms or so. No generic full-page skeleton between screens that have already loaded. Safe with reduced motion.                                                           | Partly. Web shows `PageSkeleton` after 200ms (UX-GUIDELINES E2). The minimum display time and the "between loaded screens" rule are not on main. | One hook, `useDelayedLoading`, owns the timing (S3). A screen whose data is in the cache shows the data at once. Shimmer stops under Reduce Motion.                                                                                                      |
-| R6  | **Tagline:** "Flump: finance without the fog".                                                                                                                                                                                                                         | Not in the copy guide or the marketing site yet.                                                                                                 | Shown on the sign-in screen (S2) and used as the store subtitle (S19).                                                                                                                                                                                   |
+Rulings R1 to R6 of 14 November 2026 stand as recorded in `DECISIONS.md` round 10. In short: R1 net worth follows the user's two choices (property, student loan) and the app shows the figure from `GET /v1/portfolio-snapshot`, which must itself come from the engine's net worth basis (`packages/finance-engine/src/net-worth-basis.ts`) under O5 seam 1, checked in S5; R2 bank sync waits until Flump has revenue; R3 the monthly check-in walks through each account and is the app's most important flow; R4 the tab bar is for phones, with a header menu button and a theme toggle; R5 loading appears after about 200ms and stays at least about 400ms; R6 the tagline.
 
 ### 1.2 Scope
 
-**First store release:** sign-in, the monthly check-in, Home, Accounts and account detail with history, adding and editing accounts, settings (profile, net worth choices, theme, export, delete account), offline reading. These are slices S1 to S9, then S18 and S19.
+**First store release:** sign-in, the monthly check-in, Home, Accounts and account detail with history, adding and editing accounts, settings (profile, net worth choices, theme, export, delete account), offline reading. Slices S1a to S9, then S18 and S19.
 
-**Full parity:** every page of the web app (budget, debt, mortgage, pension, savings, take-home, self assessment, tools, onboarding, AI connections, the sandbox). Slices S10 to S17.
+**Full parity:** every page of the web app. Slices S10 to S17 and S21 to S23.
 
-**Out of scope:** bank linking (1.3); push notifications and offline editing unless the owner decides otherwise (10.1); widgets, a watch app, tablet layouts, in-app purchases, marketing pages, CSV import (the web keeps it; mobile links to the website).
-
-### 1.3 Parked: bank linking
-
-Revision 2 planned bank connection screens (list, sync, disconnect, token entry, OAuth), a `BANK_CONNECTIONS_ENABLED` flag in the app, an allow-listed bank brand colour file, and decisions D6 and D19. All of it is removed from the milestones under ruling R2.
-
-What stays true:
-
-- The check-in treats every account as typed in by the user. The contract still has `connectionId` on accounts; a row that has one is shown read-only with its saved value, so an account connected in the future does not break the screen.
-- Store listings, screenshots and the privacy labels say nothing about bank sync.
-- When bank sync returns it is a new plan: balances only, through an aggregator, after revenue. Nothing in the app is built ahead for it.
-
-### 1.4 What the old app teaches
-
-The parked prototype had no tests, a mock sign-in, a mock token on every request, a client that switched to mock data on any failure, writes that reported success without saving, colours copied by hand, seven copies of a currency formatter, tax maths written again in the app, and no accessibility labels. Each is ruled out by a constraint in section 2.
+**Out of scope:** bank linking (R2); push notifications (O3); offline editing; widgets, watch, tablet layouts, in-app purchases, marketing pages; CSV import (mobile links to the website); a device-only mode (O5).
 
 ---
 
 ## 2. Rules every slice inherits
 
-Copied from AGENTS.md, the `docs/ux` documents, the copy guide and the owner decisions. Where this list and those documents disagree, they win.
+Copied from AGENTS.md, the `docs/ux` documents, the copy guide and the owner decisions. Where they disagree with this list, they win.
 
 **Process**
 
-- Read first: `AGENTS.md`; `docs/ux/CROSS-PLATFORM.md` (all of it); the sections of `docs/ux/UX-GUIDELINES.md` for what the screen does; `docs/ux/STYLE-GUIDE.md` section 12 for each component used; `docs/copy/COPY-GUIDE.md` for any words.
-- One slice is one PR. Do not stack a PR on another open PR.
-- Local checks before a push: `rtk bun run lint`, `rtk bun run check-types`, `rtk bun run check:laws`, and the tests for the packages the slice touches. CI runs the rest, and a PR is ready only when every CI check on its last commit is green (AGENTS.md section 5).
-- Subagent models follow AGENTS.md section 6: `opus` writes code and reviews it, `sonnet` does mechanical work, `haiku` runs exact lookups, `fable` writes plans and makes hard decisions without writing files.
-- Every PR that adds or changes a screen runs the parity checklist in CROSS-PLATFORM section 7, states the result, and adds its row to the parity log if it changes a shared flow.
+- Read first: `AGENTS.md`; `docs/ux/CROSS-PLATFORM.md`; the UX-GUIDELINES sections for the screen; STYLE-GUIDE section 12 for each component; the copy guide for any words.
+- One slice is one PR. No stacking.
+- Local checks before a push: `rtk bun run lint`, `rtk bun run check-types`, `rtk bun run check:laws`, and the tests of the packages touched. CI runs the rest.
+- Subagent models follow AGENTS.md section 6: `opus` for code and all review, `sonnet` for mechanical work, `fable` for plans and complicated decisions. Auth, security, data handling and money stay on `opus`.
+- Every PR that adds or changes a screen runs the CROSS-PLATFORM section 7 checklist and adds a parity log row where needed.
 
 **Money and data**
 
-- No money maths in the app. Tax, National Insurance, student loan, mortgage, debt, forecast, take-home and net worth come from `@flump/finance-engine` or from the backend. A check fails the build on tax thresholds written as literals in `apps/mobile`.
-- Tax years use the clock-injectable family in `packages/finance-engine/src/uk-tax-year.ts` (`getCurrentUkTaxYear(now)`, `resolveUkTaxYear`, `getUkTaxYearForDate`, `isSupportedUkTaxYear`, `getUkTaxYearRules`). An unsupported year shows "That tax year isn't supported yet".
-- Every figure is formatted by `@flump/format`: whole pounds where a figure is read, pence where the user types or reconciles, `Mar 2030` for dates, "Not set" for a missing value. Tabular numerals on every figure.
-- A failure never renders as an empty or zero state. Errors use the `BackendError` kinds from `@flump/api-client`. Saved data shown while offline is labelled with its age.
-- Zero is different from unknown. Unknown shows "Not set" and never 0.
-- Headline figures and KPI strips read saved data only. What-ifs live in a `ScenarioZone` labelled "Illustration, not saved", never write to saved data and never put money in a link.
+- No money maths in the app. Every figure comes from `@flump/finance-engine` or the backend. A check fails on tax thresholds written as literals in `apps/mobile`.
+- **O5 seam 1:** no figure exists only on the server. If a slice needs a figure that only a backend service computes, the computation moves into the engine first and the server calls it.
+- **O5 seam 2:** screens reach data only through `src/data/` (the `@flump/api-client` instance and one query key factory). A Biome rule forbids `fetch` and `@flump/api-client` imports outside `src/data/`.
+- Tax years use the clock-injectable family in `packages/finance-engine/src/uk-tax-year.ts`.
+- Every figure is formatted by `@flump/format`, with tabular numerals. Unknown shows "Not set", never 0. A failure never renders as empty or zero. Saved data shown offline carries its age.
+- Headline figures read saved data only. What-ifs live in a `ScenarioZone` labelled "Illustration, not saved" and never write.
 
 **Look and words**
 
 - Colours, sizes, radii, shadows and durations come from `@flump/tokens/native` through `useTheme()`. No hex or rgb literal in `apps/mobile`. The palette is Midnight (dark) and Mint (light) since 24 November 2026, replacing Direction C; teal is the brand colour, apricot is debt, red is for errors and destructive actions only.
 - One headline figure per screen, in a `HeroFigure`, the same figure as the web page (table in `docs/design/e16-polish/PLAN.md` section 2). At most 4 figures in the first view and 12 before any disclosure.
 - Never judge anyone's finances. No "only" or "just" about money, no alarm colour or warning icon on an ordinary balance, no streaks, points or confetti, no comparison with other people, nothing that ranks renting below owning. A missed month is never mentioned.
-- Words follow the copy guide: plain, sentence case, en-GB, no exclamation marks. One approved word per idea ("debts", "what you own", "left over each month", "estimate"). Fixed notices come from shared constants and are never reworded.
+- Words follow the copy guide: plain, sentence case, en-GB, no exclamation marks. One approved word per idea ("debts", "what you own", "left over each month", "estimate"). Fixed notices come from `packages/finance-engine/src/disclaimers.ts` and are never reworded.
 - Facts, not recommendations (`docs/compliance/advice-boundary-policy.md`).
 
 **Platform**
 
-- Native chrome on purpose: stack headers, the back gesture never blocked, native sheets and pickers, platform alerts for destructive confirmation, edge to edge on Android with insets handled. The table is CROSS-PLATFORM section 5.
-- Touch targets are at least 48 by 48. Text follows the system font size and is never switched off from scaling. Layouts hold at 200% text and at 320 points wide.
-- Every pressable has a role and a label. Motion honours Reduce Motion. Nothing needs dragging, hover or colour alone.
-- Loading follows ruling R5.
+- Native chrome: stack headers, the back gesture never blocked, native sheets and pickers, platform alerts for destructive confirmation, edge to edge on Android.
+- Touch targets at least 48 by 48. Text follows the system size; layouts hold at 200% text and 320 points wide.
+- Every pressable has a role and a label. Motion honours Reduce Motion.
 
 **Security**
 
-- No `mock-session-token`, `dev_user_123` or mock fallback anywhere in `apps/mobile`, and no exemption for it in `scripts/check-no-mock-auth.sh`.
-- The refresh token lives only in the device's secure store; the access token only in memory. No secret, API key or signing key in the bundle. The only public values are the API address, the WorkOS client id and the redirect scheme.
-- A network failure is not the end of a session. A session ends only when the token endpoint rejects the refresh token for good, or a request gets a second 401 after a successful refresh.
-- Every destructive action goes through `ConfirmDialog`: name the thing, state the consequence, label the button with the verb.
+- No mock tokens or mock fallbacks in `apps/mobile`; `scripts/check-no-mock-auth.sh` covers it.
+- The refresh token lives only in the secure store, readable when unlocked and on this device only; the access token only in memory. No secret in the bundle.
+- A network failure never ends a session. A session ends when the token endpoint rejects the refresh token, or a request gets a second 401 after a successful refresh.
+- Destructive actions go through `ConfirmDialog`.
 
-**Component files.** Each component lives in its own PascalCase directory with `X.tsx`, `X.styles.ts` (a StyleSheet factory that takes the theme), `X.test.tsx`, `X.states.ts` (named prop sets, used by the gallery and the tests, in place of a Storybook file) and `index.ts`. This native variant needs an AGENTS.md edit, which the owner approves in S1 (section 10.3).
+**Component files.** Each component lives in its own PascalCase directory with `X.tsx`, `X.styles.ts` (a StyleSheet factory that takes the theme), `X.test.tsx`, `X.states.ts` (named prop sets for the gallery and tests, in place of a Storybook file) and `index.ts`. The AGENTS.md wording is approved in S1 (10.3).
 
 ### The failures most likely to ship by accident
 
 Each is pinned by a test in the slice named.
 
 1. A failed request or no network shown as "no accounts yet" (S3, S5).
-2. A cold start with no network wiping the saved data or ending the session (S7).
-3. A 401 signing the user out, or many 401s causing many refreshes (S2).
+2. A cold start with no network wiping saved data or ending the session (S7).
+3. A 401 signing the user out, or many 401s causing many refreshes (S2b).
 4. A missing number shown as 0 (S3 and every calculator slice).
-5. Sign-out or account deletion leaving data or a working token on the device (S2, S9).
-6. A check-in that saves a guess: a calculated balance must be shown as "Calculated" and sent only when the user accepts it (S3).
+5. Sign-out or deletion leaving data or a working token on the device (S2b, S9).
+6. A check-in that saves a guess (S3).
+7. The offline cache restored onto another device from a backup (S7).
 
 ---
 
 ## 3. What exists today
 
-All **VERIFIED IN CODE** at the commit in the header.
+All **CODE** at `a0805b08`.
 
-| Thing                           | State                                                                                                                                                                                                                                                                                                                                                                                                                    | Left for mobile                                                                                                                                                       |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `@flump/tokens`                 | `packages/tokens`. Authored token files, `scripts/build-native-tokens.ts`, the committed `src/native.generated.ts` exported as `@flump/tokens/native` (light and dark colours and shadows, spacing, radii, sizes, font sizes, text styles, durations, easings, z-index, breakpoints). A drift test, a contrast matrix on the generated values, and a contract test against Panda's own export in `packages/ui`.           | The mobile-only contrast pairs (placeholder text, disabled text, tab bar icon states). Extending the literal scans to `apps/mobile`.                                  |
-| `@flump/format`                 | `packages/format`. `formatCurrency`, `formatCompactCurrency`, `formatPercent`, `speakCurrency`, `formatDate`, `formatRelativeTime`, `formatTaxYear`, `formatMonthYear`, `formatDuration`. A shared fixture runs on V8 and JavaScriptCore and is pinned to what the web `Money` component shows.                                                                                                                         | Running the same fixture on Hermes for iOS and Android (S1).                                                                                                          |
-| `@flump/api-contract`           | `packages/api-contract`. Zod schemas for requests and responses by domain (accounts, app, bank connections, budget, imports, MCP tokens, profile, snapshots, tax, transactions), the route manifest, the error body, pagination, header names, and a generated `openapi.json` guarded against breaking changes by `check:laws`.                                                                                         | A schema for the client policy endpoint (B-A).                                                                                                                        |
-| `@flump/api-client`             | `packages/api-client`. `createApiClient({ baseUrl, getAccessToken, onUnauthorised, client, fetch, timeoutMs })`. Calls `/v1`, validates every response with a contract schema, shares one refresh between concurrent 401s and retries once, sends `X-Flump-Client: mobile/<version> (<platform>)`, and has `getClientPolicy()` and `isBelowMin()`. `BackendError` has eight kinds. The web app and MCP client use the package's `callBackend` transport; `createApiClient` has no caller yet. | Nothing before S2. `getClientPolicy()` calls `/app/client-policy`, which the backend does not serve yet (B-A).                                                        |
-| `@flump/finance-engine`         | The only place for maths. Includes the net worth basis (`net-worth-basis.ts`), snapshots and history selectors (`snapshots.ts`), the financial picture (`picture/`), take-home, what-if and the tax-year family. Test vectors: `uk-tax.vectors.ts` and `uk-whatif.vectors.ts`, with an owner sign-off ratchet in `check:laws`.                                                                                          | The check-in row and payload builders live in `apps/web/app/features/snapshot/snapshotModel.ts`, which mobile cannot import. They move to the engine before S3.       |
-| Backend API                     | `/v1/...` is the stable surface; unversioned paths are deprecated aliases (`docs/api/versioning.md`). Strict request bodies, one error body with a `code` and `requestId`, cursor pagination, optional `Idempotency-Key` on creates and `If-Match` on updates. Money is a JSON number in pounds. Rate limits are stored in Postgres.                                                                                    | Section 5.5.                                                                                                                                                          |
-| Account deletion and export     | `DELETE /v1/user-profile` (typed phrase, recent sign-in required, one transaction, WorkOS user removed, tombstone kept 24 months, later tokens for that user rejected). `GET /v1/user-profile/export`. The web has a public `/account-deleted` page.                                                                                                                                                                    | The mobile screens (S9).                                                                                                                                              |
-| Web navigation data             | `apps/web/app/components/navigation/navConfig.ts`: `BOTTOM_BAR_TABS` (Home, Accounts, Budget, Tax and pay, then More) and `AUTH_NAV_ROUTES`.                                                                                                                                                                                                                                                                            | A test that the mobile tabs equal `BOTTOM_BAR_TABS` and the More list covers `AUTH_NAV_ROUTES` (S4). Settings, Connect AI and Free calculators are not in those lists on web, so the app lists them in its own module.                                                                                                          |
-| Docker images                   | The three Dockerfiles copy every workspace manifest through a `manifests` stage and install with Bun filters (`--filter './packages/*'` plus the app). A new `apps/mobile` workspace is copied as a manifest and not installed.                                                                                                                                                                                          | S1 proves it: the CI Docker job stays green.                                                                                                                          |
-| CI                              | `.github/workflows/ci-pipeline.yml`: lint and types, Vitest, ops script tests, build, Storybook accessibility, E2E smoke, Docker images, dependency audit. Separate advisory workflows for visual regression and the accessibility gate. Merges need green, up-to-date checks (BE-01).                                                                                                                                  | A `mobile-checks` job (S1) and `mobile-e2e-android` (S2). Each is added to `.github/required-checks.json` and, by the owner, to the branch rules (`docs/audit/backend-2026-11/OWNER-SETUP.md`, BE-01).                                                                |
-| Shared versions                 | `scripts/check-dependency-versions.ts` fails CI when a dependency differs between workspaces. Web, marketing and the parked app are all on React 19.3.1; the parked app pins Expo 58.0.23 and React Native 0.88.1. TypeScript is 7.0.2 and Bun 1.4.4 across the repo.                                                                                                                                                  | S1 records the Expo SDK chosen and keeps one React version.                                                                                                           |
-| Language                        | Web is English only (`supportedLngs: ["en"]`).                                                                                                                                                                                                                                                                                                                                                                           | Mobile is en-GB only. Strings sit in typed copy modules per feature.                                                                                                  |
-| Old app                         | `apps/mobile-companion` is parked. It is still named in `scripts/check-no-mock-auth.sh` and `.dockerignore`.                                                                                                                                                                                                                                                                                                             | Deleted in S20, in its own PR.                                                                                                                                        |
+| Thing | State | Left for mobile |
+| --- | --- | --- |
+| `@flump/tokens` | `packages/tokens`: authored tokens, `scripts/build-native-tokens.ts`, the committed `src/native.generated.ts` exported as `@flump/tokens/native` (light and dark colours, shadows, spacing, radii, sizes, type, durations, easings, breakpoints), with drift and contrast tests. Now Midnight and Mint | The mobile-only contrast pairs (placeholder, disabled, tab icon states); literal scans extended to `apps/mobile` |
+| `@flump/format` | Currency, percent, dates, tax years, durations; a shared fixture run on V8 and JavaScriptCore | Run the fixture on Hermes, iOS and Android (S1a) |
+| `@flump/api-contract` | Zod schemas by domain, the route manifest including `app/client-policy`, the error body, pagination, headers, a guarded `openapi.json` | Nothing before S2b |
+| `@flump/api-client` | `createApiClient({ baseUrl, getAccessToken, onUnauthorised, client, fetch, timeoutMs })`: `/v1`, response validation, one shared refresh per burst of 401s, `X-Flump-Client`, `getClientPolicy()`. No caller yet | First caller in S2b |
+| `@flump/finance-engine` | All maths. Now includes the check-in rules (`check-in.ts`, `check-in-day.ts`), net worth basis, snapshots, the picture, joint shares (`joint-share.ts`), disclaimers | Run its vectors on Hermes (S1) |
+| Backend API | `/v1` stable surface; strict bodies; one error body; cursor pagination; `Idempotency-Key` on creates and `If-Match` on updates; client policy route | B-A: clock tolerance |
+| Erasure and export | `apps/backend/src/modules/privacy/`: immediate deletion after a typed phrase with recent sign-in, tombstone, write fence, JSON and CSV export, registry of every table | Mobile screens (S9) |
+| Web navigation | `navConfig.ts`: `BOTTOM_BAR_TABS` (Home, Accounts, Budget, Pay) and a More button | S4 test that mobile matches |
+| Web copy | Feature copy lives in `apps/web/app/features/*/…Copy.ts`, which mobile cannot import. Fixed notices are in the engine | P5 |
+| CI | `.github/workflows/ci-pipeline.yml`: lint and types, Vitest, build, Storybook a11y, E2E smoke, Docker, audit; advisory visual and a11y workflows | `mobile-checks` (S1a) and `mobile-e2e-android` (S2c) |
+| Versions | React 19.3.1 (exact pins; `packages/ui` declares the range `^19.2.3`), TypeScript 7.0.2, Bun 1.4.4; `bunfig.toml` holds a 7-day release-age gate | S1a records the SDK and keeps one React |
 
 ---
 
 ## 4. Technology
 
-Recommendations, with the reasoning kept short. The four that need the owner are in section 10.1.
+### 4.1 Framework (decided: O1)
 
-### 4.1 Framework and build service
+**Expo with React Native, a development build (not Expo Go), Hermes, Expo Router, EAS Build and Submit.**
 
-| Option                                               | For                                                                                                                                                                                             | Against                                                                                                                        |
-| ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| **Expo (development build) with React Native**       | Same language and React as web. Imports the engine, contract, client, formatter and native theme as they are. Builds for both stores without owning a Mac build machine. The token pipeline and `docs/ux/CROSS-PLATFORM.md` were built for it. | Native module upgrades follow Expo's release pace.                                                                             |
-| React Native without Expo                            | Full native control.                                                                                                                                                                            | Hand-kept Xcode and Gradle projects for no gain here.                                                                          |
-| Flutter, or Swift and Kotlin                         | Closest platform feel.                                                                                                                                                                          | Cannot import the engine, so the maths would be written twice. Two or three codebases for one person.                          |
-| The web app in a wrapper                             | Cheapest.                                                                                                                                                                                       | The owner decided on a native rebuild. Both stores expect more than a wrapped website.                                         |
+Facts, CONFIRMED on docs.expo.dev on 25 November 2026:
 
-A newer option, Exact from the Expo team, was looked at on 21 November 2026 and is not ready to build on; it is tracked in [`docs/technology-watch.md`](../../technology-watch.md) and should be checked again when this plan is next revised.
+- The current SDK is 58 (15 October 2026), with React Native 0.88 and React 19.3.0. It needs iOS 16.4 or later (Xcode 26.4 or later) and Android 7 or later. The New Architecture is always on and cannot be turned off since SDK 55.
+- Metro configures itself for a monorepo from SDK 52 when `metro.config.js` uses `expo/metro-config`. Bun workspaces are supported through `workspaces`. Isolated installs are supported from SDK 54, though some libraries may fail with them, and the docs give no hoisted fallback for Bun. Only one copy of React and React Native is allowed.
+- Expo Router's version matches the SDK. Routes are typed automatically. Native tabs import from `expo-router/native-tabs` from SDK 58.
 
-**Recommendation: Expo with a development build, Hermes, the new architecture, Expo Router for navigation, and EAS Build and Submit on the free plan to start.**
+**[U] to settle in S1a:** whether SDK 58 accepts the repo's React 19.3.1 or wants 19.3.0 exactly (`expo-doctor` says; one React version is a law, AGENTS.md section 9); whether the repo's Bun install is isolated or hoisted; which export condition Metro picks for the shared packages (`module` points at `src`); whether TypeScript 7 works with Expo's base config. The release-age gate means SDK patch releases arrive a week late, which is fine.
 
-EAS cost (**CONFIRMED**, expo.dev/pricing, read 2026-11-14): the free plan includes 15 Android and 15 iOS builds a month, store submission, and over-the-air updates for 1,000 monthly users. The next plan is $19 a month with $45 of build credit. Builds run on a tag or by hand, not per PR, so the free plan is enough until release work starts.
+Exact was re-checked on 25 November and is not a candidate (`docs/technology-watch.md`).
 
-### 4.2 Navigation
+### 4.2 Project layout in the monorepo
 
-Expo Router, file-based. Groups: `(auth)` for sign-in, `(app)` for the signed-in app with a tab bar: **Home, Accounts, Budget, Tax and pay, More**, the same names, order and icons as the web's `BOTTOM_BAR_TABS`. "More" is an ordinary fifth tab that opens our own list (Savings, Pension, Debt, Mortgage, Self Assessment when switched on, Settings, Connect AI, Free calculators), not the system overflow.
+```text
+apps/mobile/                 @flump/mobile, a Bun workspace like apps/web
+  app.config.ts              name, scheme "flump", bundle ids, plugins
+  eas.json                   profiles: development, e2e, preview, production
+  metro.config.js            expo/metro-config, nothing custom unless S1a proves it is needed
+  app/                       Expo Router routes only, thin files that render a screen
+    _layout.tsx              providers: theme, session, query client
+    (auth)/sign-in.tsx
+    (app)/_layout.tsx        session gate, tab bar
+    (app)/(tabs)/{index,accounts,budget,pay,more}.tsx
+    (app)/check-in.tsx
+    (dev)/{gallery,engine-check}.tsx   left out of production builds
+  src/
+    config.ts                checked public config (API address, WorkOS client id, scheme)
+    auth/                    PKCE, token store, session machine, sign-out
+    data/                    the one data door: api client, query keys, cache (O5 seam 2)
+    features/<name>/         hooks and reducers per feature
+    screens/<Name>/          screen components
+    components/<Name>/       primitives, five files each
+    theme/                   ThemeProvider and useTheme over @flump/tokens/native
+    copy/                    mobile-only words
+  e2e/flows/                 Maestro flows
+  e2e/fixture-server/        canned /v1 and a WorkOS stand-in, built from the contract schemas
+```
 
-Under ruling R4 the header of each top-level screen carries a menu button, which opens the same list as the More tab, and a light and dark toggle. The theme also has a three-way setting in Settings (System, Light, Dark); the header toggle switches between light and dark and the setting can return to System. `docs/ux` describes the toggle as a setting only and says there is no second menu; section 11 lists the wording change for the coordinator.
+The generated `ios/` and `android/` folders are not committed (continuous native generation). Docker images copy the new manifest and do not install it, as for any workspace that is not filtered in.
 
-The tab bar is for phone widths. Tablets are out of the first release (`supportsTablet: false`), so no rail is built.
+### 4.3 What is shared and what is not
 
-### 4.3 State and data
+| Shared, imported as is | Not shared |
+| --- | --- |
+| `@flump/finance-engine`: every figure, the check-in rules, the net worth basis, disclaimers | `@repo/ui` and Panda CSS: web only. Mobile has its own components with the same names, variants and states (CROSS-PLATFORM section 3) |
+| `@flump/api-contract`: schemas and types; forms validate with them | React Router loaders and actions, the web proxy, cookies |
+| `@flump/api-client`: transport, refresh, errors | Storybook: replaced by `X.states.ts` and the dev gallery |
+| `@flump/format`: every figure and date | Web feature copy modules, until P5 moves the shared flows |
+| `@flump/tokens/native`: the generated theme | Playwright: replaced by Maestro |
+| Fixed wording: the engine's disclaimers; the tagline | The marketing site |
 
-TanStack Query for server state; React context for session and theme; local state for forms. Query keys come from one factory. Queries retry twice on `unavailable` and `server` only. A 401 is handled inside `@flump/api-client`, never by a screen.
+**P5, shared copy.** When a mobile slice needs words a web flow already uses (first S3, the check-in words in `apps/web/app/features/snapshot/snapshotCopy.ts`), that copy module moves to a new `packages/copy` workspace, imported by both apps, in the same PR. No mobile slice copies web words by hand. `scripts/check-copy.ts` is extended to the new package.
 
-The app talks to the backend directly on `/v1` with a bearer token. It does not go through the web app's proxy. Lists follow `X-Next-Cursor` when present. Creates send an `Idempotency-Key` so a retry after a dropped connection cannot create a second row; updates send `If-Match` with the `ETag` last seen and treat a 412 as "this changed elsewhere, reload".
+### 4.4 Navigation
 
-### 4.4 Forms and money entry
+Expo Router, file based. `(auth)` for sign-in; `(app)` for the signed-in app with a tab bar whose entries, order and icons equal web's `BOTTOM_BAR_TABS` plus More: **Home, Accounts, Budget, Pay, More**. More is an ordinary fifth tab that opens our own list (the pages web's drawer lists, plus Settings and Connect AI), not the system overflow. Native tabs (`expo-router/native-tabs`) are preferred for platform feel; S4 checks that they meet the label and target rules at 200% text before choosing them over the JavaScript tab bar [U].
 
-react-hook-form with the contract's Zod schemas. One `CurrencyInput` and one `PercentInput` with the decimal pad, tolerant parsing (a typed £, commas, spaces) and formatting on blur from `@flump/format`. Blank means "not given" and is sent as absent. Request bodies are strict on the backend, so a form sends only fields the contract names.
+Under R4 each top-level screen's header has a menu button that opens the More list, and a light and dark toggle. Whether both the menu button and the More tab stay is decided in S4 (10.3).
 
-### 4.5 Charts
+Deep links use the `flump://` scheme and, later, universal and app links on the website's domain. A link opened while signed out resumes after sign-in and never performs a write.
 
-`react-native-svg` with `d3-shape` and `d3-scale` behind a small charts module. Every chart sits in a `ChartFigure` with a visible one-sentence summary, a "Show data" list, direct labels, dashed forecasts and at most three series. Tap selects a point and shows a fixed readout. No chart is drawn with fewer than three points.
+### 4.5 State and data
 
-### 4.6 Storage, offline and updates
+TanStack Query for server state; React context for session and theme; local state for forms. Query keys from one factory in `src/data/queryKeys.ts`. Retries twice on `unavailable` and `server` only. A 401 is handled inside `@flump/api-client`.
 
-- Secure store for the refresh token only, readable when the device is unlocked, not synced to the cloud.
-- Offline policy is an owner decision (10.1). The default on record is an encrypted read-only cache of the last successful responses, kept 7 days, cleared on sign-out; writes need a connection.
-- Push notifications are an owner decision (10.1). The default on record is none at launch.
-- Over-the-air updates stay on the preview channel until the owner decides otherwise, because a change to how money is shown should go through store review.
+The app calls `/v1` directly with a bearer token. Creates send an `Idempotency-Key`; updates send `If-Match` and treat 412 as "this changed elsewhere, reload". Money is a JSON number in pounds.
 
-### 4.7 API compatibility
+### 4.6 Where data lives (decided: O5)
 
-An installed app stays on a phone for months. The policy in `docs/api/versioning.md` covers most of it: within `/v1` only additive changes, clients ignore unknown fields and treat an unknown error `code` as the generic one for its status, breaking changes go to `/v2` with `/v1` served for at least three months more.
+**The server is the one home for finance data. The phone is a client of the same `/v1` API as web, with an encrypted read-only cache.** Decided by a Fable decider at the owner's delegation; the record, reasons, triggers and marketing limits are in `DECISIONS.md` (25 November 2026). In three lines: the check-in across web and phone, couples sharing (E34), the AI connection and future bank sync all need a server that can read the data; a device-only app loses its history with the phone and splits the product; four cheap seams keep an opt-in encrypted mode possible later.
 
-Left to build:
+The four seams, and where each lands:
 
-- **Minimum version.** Backend ticket B-A adds `GET /v1/app/client-policy` returning `{ minVersion, recommendedVersion }` per platform. The app checks it on launch and on return to the foreground. Below the minimum it shows an "Update required" screen with a store link. If the check itself fails, the app carries on.
-- **Unknown values.** An account type the app does not know is shown neutrally with "Update the app to see this", never as an error and never as another type.
+| Seam | Rule | Lands in |
+| --- | --- | --- |
+| 1 | No figure only on the server; the engine computes, the server may check | Section 2 rule; every slice's review |
+| 2 | One data door: only `src/data/` talks to the API | S1b Biome rule; S2b and S3 follow it |
+| 3 | `docs/system/value-map.yaml` gains a field per value: does the server need to read it (sharing, AI connection, bank) or only store it | Slice D1, filled in as slices touch values |
+| 4 | Cache encrypted with a device-only key, out of backups, cleared on sign-out | S7 |
 
-### 4.8 Formatting on device
+**Seam budget.** The decision drops the seams if they cost more than about 5 agent-days in all. Each slice that does seam work states its share in its PR description under "Seam cost", and the plan keeps a running total here. Estimate today: seam 1 is a review rule (0), seam 2 is a lint rule in S1b (0.5), seam 3 is D1 (1), seam 4 is the part of S7 beyond a plain cache (1.5): about 3 in all. If the running total passes 5, the coordinator stops the seam work and records the app as plain option (a) in `DECISIONS.md`.
 
-Hermes uses each platform's own number and date formatting, so en-GB output can differ between iOS and Android. S1 runs the `@flump/format` fixture on both and records the result. If a platform differs, the formatter gains a pure fallback with the same tests.
+Running total: 0 agent-days (no slice built).
 
-### 4.9 Tests
+**The cache (S7).** The last successful responses for the screens in the first release, kept 7 days, labelled with their age, read-only; writes need a connection (round 2, E12 D4-A). Platform facts, CONFIRMED on 25 November 2026:
 
-| Layer                 | Tool                                                        | Scope                                                                                                     |
-| --------------------- | ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| Pure logic            | Vitest in the shared packages                               | Already in place for tokens, format, contract, client and engine                                          |
-| Components and logic  | Jest (jest-expo) with React Native Testing Library          | Primitives, screens with an injected client, the session machine, the check-in flow                       |
-| Engine on device      | A dev-only screen and a Maestro flow                        | Proves the bundled engine gives the same answers as its vectors on Hermes                                 |
-| End to end            | Maestro against a fixture server                            | Android in CI on every PR that touches `apps/mobile`; iOS by hand, because macOS runners cost ten times   |
-| Accessibility         | Assertions per screen, the token contrast matrix, a manual check per slice, full audits in S18 | Each slice's acceptance includes 200% text, 320 points wide, VoiceOver and TalkBack on its screens |
-| Wire shape            | The backend's own contract tests                            | Responses are parsed by `@flump/api-contract` on the server, so the fixture server is built from the same schemas |
+- `expo-secure-store` uses the Keychain on iOS and Keystore-encrypted storage on Android. `keychainAccessible` defaults to "when unlocked" and has "this device only" variants; this-device-only items do not move to a new device. Some iOS versions refused values over about 2048 bytes, so the store holds keys and tokens only (docs.expo.dev/versions/latest/sdk/securestore).
+- On Android, secure store data is left out of Auto Backup automatically when the app has no custom backup config. Auto Backup otherwise copies up to 25 MB per app to Google Drive, end-to-end encrypted on Android 9 or later when a screen lock is set (developer.android.com/identity/data/autobackup).
+- On iOS everything in the app container except `tmp` and `Library/Caches` is backed up unless marked excluded (Apple documentation).
+- `expo-sqlite` can be built with SQLCipher (`useSQLCipher` in its config plugin), opened with `PRAGMA key`. Without SQLCipher in the build the key does nothing silently, so a test checks `PRAGMA cipher_version` (docs.expo.dev/versions/latest/sdk/sqlite).
 
-The fixture server (`apps/mobile/e2e/fixture-server`) serves canned `/v1` responses, built and checked with the contract schemas, and a stand-in for WorkOS that issues test tokens, including expired and rejected ones. A separate `e2e` build profile points at it, so the app's sign-in code has no test branch. CI searches the production bundle for the fixture address and fails on a hit.
+So S7 uses SQLCipher with a random key kept in the secure store as "when unlocked, this device only", puts the database file in an excluded location on iOS, and adds an Android backup rule that leaves it out. A backup restored to a new phone carries no usable cache, which is the intent: the new phone signs in and fetches.
+
+**Lost or replaced phone.** Sign in on the new phone; everything is on the server. Nothing to restore.
+
+### 4.7 Forms and money entry
+
+react-hook-form with the contract's Zod schemas. One `CurrencyInput` and one `PercentInput` with the decimal pad, tolerant parsing, formatting on blur from `@flump/format`. Blank is sent as absent.
+
+### 4.8 Charts
+
+`react-native-svg` with `d3-shape` and `d3-scale` behind a small charts module. Every chart has a one-sentence summary, a "Show data" list, direct labels, dashed forecasts, at most three series and at least three points.
+
+### 4.9 Updates and compatibility
+
+- Over-the-air updates stay on the preview channel; a change to how money is shown goes through store review (round 2, D11-A). EAS Update's free plan covers 1,000 monthly active users (CONFIRMED, expo.dev/pricing).
+- The app checks `GET /v1/app/client-policy` on launch and on return to the foreground; below the minimum it shows "Update required" with a store link; if the check fails it carries on.
+- Within `/v1` changes are additive (`docs/api/versioning.md`). An unknown account type is shown neutrally with "Update the app to see this".
 
 ---
 
-## 5. Sign-in and security
+## 5. Sign-in with WorkOS on mobile
 
 ### 5.1 Facts
 
-**VERIFIED IN CODE**
+**CODE**
 
 - Web signs in with `@workos-inc/authkit-react-router` and forwards the access token to the backend as a bearer token.
-- The backend verifier (`apps/backend/src/auth/workos-jwt.verifier.ts`) checks an RS256 signature against the WorkOS key set for the client id, requires `exp` and `sub`, accepts one issuer (derived from the client id, or `WORKOS_ISSUER`), and, when a client id is configured, requires the token's `client_id` claim to equal it. Native sign-in must therefore use the same WorkOS client id as web.
-- The verifier passes no clock tolerance, so a phone whose clock runs fast can get a 401 on a fresh token (ticket B-A).
-- `BackendError` has a `not-invited` kind: during the closed beta a signed-in person who is not on the list is refused. The app needs a screen for it.
-- Deleting an account and resetting data need a typed phrase and a recent sign-in.
+- The backend verifier (`apps/backend/src/auth/workos-jwt.verifier.ts`) checks RS256 against the WorkOS key set, requires `exp` and `sub`, accepts one issuer, and requires the `client_id` claim to equal the configured client id. So native tokens must carry web's client id, or the verifier must learn a second one. That a native PKCE sign-in on web's client id works is [U], settled in S2a.
+- The verifier passes no clock tolerance (B-A).
+- `BackendError` has a `not-invited` kind for the closed beta.
+- Deletion and reset need a typed phrase and a recent sign-in.
 
-**CONFIRMED (WorkOS documentation, read 2026-11-11)**
+**CONFIRMED (workos.com/docs, read 25 November 2026)**
 
-- Exchanging a code needs no client secret when a PKCE code verifier is sent.
-- Refreshing a token lists the client secret as optional, and says refresh tokens may be replaced on use.
+- WorkOS has no React Native or Expo SDK or guide. The app uses the AuthKit API directly with PKCE.
+- The code exchange accepts no client secret when a `code_verifier` is sent.
+- A custom scheme redirect registered in the dashboard is shown in WorkOS's Android documentation.
 
-**UNCONFIRMED: settled at the start of S2, before its code is written**
+**[U]: settled at the start of S2 (the S2a spike), before code**
 
-- Whether a refresh with no secret works in practice, and the exact error for a refresh token that is no longer valid.
-- Whether using a refresh token makes the old one invalid at once.
+- Refresh without a secret. The API reference lists `client_secret` as required for the refresh grant, while the iOS SDK documentation describes a public client refreshing without one. S2a tries it against the WorkOS test environment. If it is refused, B-B (a backend route that holds the secret and refreshes for the app) is built first.
+- Whether a refresh token is replaced on use and the old one rejected at once.
 - How long an access token lasts.
-- Whether the WorkOS dashboard accepts a custom scheme redirect (`flump://auth/callback`) or needs a web link.
-- Whether WorkOS can end a session from a server, without opening a browser.
-- How the system sign-in sheet behaves with a private session on iOS and with Custom Tabs on Android.
+- How the system browser sheet behaves with a private session on iOS and Custom Tabs on Android, and whether signing out needs the browser.
 
-### 5.2 Session states
+### 5.2 Flow and states
 
-`loading` (reading the secure store), then one of: `signedOut`, `signedIn`, `restoredOffline` (a refresh token exists but cannot be checked without a network; saved data can be read, nothing can be written), `sessionEnded` (the refresh token was rejected), `notInvited`.
+1. The app opens the WorkOS sign-in page in the system browser sheet (`expo-web-browser` auth session) with a PKCE challenge and a `state`. It never sees the password.
+2. It checks `state`, exchanges the code with the verifier, keeps the access token in memory and the refresh token in the secure store ("when unlocked, this device only").
+3. Sign-out wipes the device first (secure store, cache, preferences, memory) without needing the network, then ends the WorkOS browser session where needed.
 
-- Cold start with a refresh token: try a refresh. Success gives `signedIn`. A network failure, timeout or server error gives `restoredOffline`. A rejection gives `sessionEnded` and clears the device.
-- A 401 during use: one shared refresh, one retry of the request. A second 401 or a rejected refresh ends the session. A refresh that fails for network reasons does not.
-- A new refresh token is saved before the new access token is used.
+States: `loading`, then `signedOut`, `signedIn`, `restoredOffline` (refresh token present, no network: read the cache, no writes), `sessionEnded` (refresh rejected; device cleared), `notInvited`. A 401 triggers one shared refresh and one retry; a second 401 or a rejected refresh ends the session; a network failure does not. A new refresh token is saved before the new access token is used.
 
-### 5.3 Flow
+### 5.3 Transport and privacy
 
-1. The app opens the WorkOS sign-in page in the system browser sheet with a PKCE challenge and a `state` value. It never sees the password.
-2. It checks `state`, exchanges the code with the verifier and no secret, keeps the access token in memory and the refresh token in the secure store.
-3. Sign-out wipes the device first (secure store, saved data, preferences, the token in memory) and does not depend on the network. It then ends the WorkOS browser session where the platform needs it.
+- HTTPS only in release builds; plain HTTP only to named local hosts in development and e2e builds. `src/config.ts` stops with "This build is misconfigured" on bad values.
+- CI searches the production bundle for secrets, mock tokens, local addresses, the fixture address and dev-only routes.
+- No tokens, balances or profile fields in release logs. Sentry as approved (round 3, item 7): no replay, no personal data.
+- Privacy mode hides amounts; the app switcher shows a covered screen; device lock (Face ID, fingerprint) is optional and never a way to sign in.
 
-If the S2 fact-finding shows a refresh without a secret is refused, the fallback is a small backend route that holds the secret and refreshes on the app's behalf. That is ticket B-B, built only then.
+### 5.4 Backend tickets
 
-### 5.4 Transport and privacy
-
-- HTTPS only in release builds. Development and e2e builds may use plain HTTP to named local hosts only.
-- `src/config.ts` checks the API address and WorkOS values at launch and stops with a plain "This build is misconfigured" screen if they are wrong.
-- CI searches the production bundle for secrets, mock tokens, local addresses and dev-only route names.
-- No tokens, balances or profile fields in release logs.
-- A privacy mode hides amounts; the app switcher shows a blurred screen; the secure store and saved data are left out of device backups.
-- Device lock (Face ID, fingerprint) is an optional setting that covers the screen. It is never a way to sign in.
-- Error tracking uses Sentry, which the owner approved for backend, web and later mobile (`DECISIONS.md` round 3, item 7): no session replay, no personal data, scrubbed before the production key is set.
-
-### 5.5 Backend tickets
-
-Revision 2 listed thirteen. Their state today:
-
-| Old id | Ticket                                              | State                                                                                                                                |
-| ------ | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| B1     | Account history edit routes                         | **Dropped.** Owner decision E16 D12-B removed history editing; history comes from the check-in (`PUT /v1/snapshots/:month`).         |
-| B2     | Refresh route holding the secret                    | Open, built only if S2 shows it is needed. Now **B-B**.                                                                              |
-| B3     | Request validation                                  | **Done** (BE-09, strict bodies).                                                                                                     |
-| B4     | Password reset uses the signed-in user's own email  | **Done.** `POST /user-profile/send-password-reset` takes no body.                                                                    |
-| B5     | Bank OAuth callback                                 | **Parked** with bank linking.                                                                                                        |
-| B6     | Account deletion with tombstone                     | **Done** (BE-04).                                                                                                                    |
-| B7     | Rate limiting                                       | **Done** (BE-07, Postgres store).                                                                                                    |
-| B8     | Balances as decimal strings                         | **Done.** Money is a JSON number (decision D9) and responses are validated.                                                          |
-| B9     | Clock tolerance in the token verifier               | Open. Now part of **B-A**.                                                                                                           |
-| B10    | Receipts left out of the list, own route, body limit | **Done.** `GET /tax-records/:id/receipt` exists and tax routes have their own body limit.                                           |
-| B11    | Avatar size limit                                   | Size cap **done** (about 256 KB, in the contract's profile schema). The avatar is still returned on every profile read.              |
-| B12    | Client policy endpoint                              | Open. Now part of **B-A**.                                                                                                           |
-| B13    | Public privacy policy and deletion pages            | Partly. `/account-deleted` exists on web. The marketing privacy and terms pages answer 404 and wait for the solicitor's text.        |
-
-Open backend work for mobile:
-
-- **B-A (one small PR, not blocking S1 to S3):** `GET /v1/app/client-policy` in the manifest and contract, unauthenticated, values from configuration with a default of no minimum; and a 30 second clock tolerance in the verifier with tests either side of it.
-- **B-B (only if needed):** the refresh route described in 5.3.
+- **B-A (small, not blocking S1 to S3):** a 30 second clock tolerance in the verifier, with tests either side. The client policy route is already built.
+- **B-B (only if S2a shows it is needed):** a refresh route holding the secret.
 
 ---
 
-## 6. Accessibility and design on a phone
+## 6. Accessibility and the theme on native
 
-The rules are in `docs/ux`. What this plan adds is how they are checked.
-
-- Target: WCAG 2.2 AA, read for apps as in WCAG2ICT.
-- Each slice's acceptance includes: every new screen at 200% text and 320 points wide with nothing clipped and the main action reachable; VoiceOver and TalkBack reach and name every control in a sensible order; Reduce Motion removes slides and shimmer; no interaction needs dragging.
-- Recalculated results are announced without moving focus. In a scenario the announcement starts with "Illustration:".
-- The component catalogue uses the names in the CROSS-PLATFORM parity matrix (section 3 there), with the same `variant`, `tone` and `size` values and the same states as `@repo/ui`. Mobile imports no `@repo/ui` code.
-- A dev-only gallery route renders every component in light, dark and 200% text from its `X.states.ts`. It and the engine check screen are left out of production builds, and CI searches the bundle to prove it.
-- Design laws on a phone: a `KpiStrip` of at most four is two columns or a paged row, never a tall stack; a simulator is one column with the outcome figure pinned above the inputs; a table over 8 rows goes in a `CollapsibleDrawer`; every slider is a `SliderField` with an editable value.
-
----
-
-## 7. Release
-
-- **Builds.** EAS profiles: `development` (development build), `e2e` (points at the fixture server), `preview` (internal), `production` (store).
-- **Distribution.** iOS through TestFlight, Android through Play internal testing first. A personal Play account opened after November 2023 must run a closed test with at least 12 testers for 14 days before going public (**UNCONFIRMED**, check Play Console help).
-- **Versioning.** `apps/mobile` joins `release-please-config.json` like the other apps. A release PR does not publish a build; a tag or a manual run does.
-- **Identifier.** `io.github.mgallagher56.flump`, unless the owner has a domain by then. It cannot change after a listing exists.
-- **Store rules read so far.** Apple's guidelines (**CONFIRMED** in substance, read 2026-11-11; quote the sub-clauses only after re-reading them): an app with account creation must offer deletion in the app; a login needs a reviewer account; money management apps "should be submitted by" the organisation providing the service, which is why an organisation account is recommended. Google's rules for personal finance apps are **UNCONFIRMED**.
-- **Reviewer access.** A real test account with sample data, entered through the app.
-- **Gates before any store submission.** A hosted privacy policy and terms (solicitor's text), in-app deletion working end to end, privacy labels matching what the app collects, no bank claims, the accessibility audits in S18 passed.
-
-### Costs
-
-| Item                                              | Cost                                           | Confidence                                |
-| ------------------------------------------------- | ---------------------------------------------- | ----------------------------------------- |
-| Apple Developer Program                           | $99 a year                                     | Confident                                 |
-| Google Play registration                          | $25 once                                       | Confident                                 |
-| D-U-N-S number for an organisation account        | Free, takes days to weeks                      | **UNCONFIRMED**, check each store         |
-| A company, if the owner does not have one         | Varies                                         | Owner                                     |
-| EAS Build, Submit and Update                      | Free plan to start; $19 a month if it runs out | **CONFIRMED**, expo.dev/pricing           |
-| WorkOS                                            | Already in use; same plan for native sign-in   | **UNCONFIRMED** whether mobile adds cost  |
-| GitHub Actions                                    | Linux minutes for Android e2e; iOS e2e by hand | Confident                                 |
-| Sentry                                            | Free tier, already chosen                      | On record                                 |
+- Target WCAG 2.2 AA, read for apps as in WCAG2ICT.
+- `ThemeProvider` reads `@flump/tokens/native` light and dark sets, follows the system scheme by default, remembers a three-way choice (System, Light, Dark) and the header toggle switches light and dark. No flash of the wrong theme on launch: the stored choice is read before the first screen renders.
+- Token contrast is already tested on the generated values; S1b adds the mobile-only pairs.
+- Each slice's acceptance: 200% text and 320 points wide with nothing clipped; VoiceOver and TalkBack reach and name every control in order; Reduce Motion removes slides and shimmer; nothing needs dragging.
+- Recalculated results are announced without moving focus; in a scenario the announcement starts with "Illustration:".
+- The dev gallery renders every component in light, dark and 200% text from `X.states.ts`. It and the engine check screen are left out of production builds, proved by the bundle search.
+- Full audits on real devices in S18.
 
 ---
 
-## 8. Milestones
+## 7. Testing and CI
 
-Each milestone is one PR. Sizes are rough agent-days judged by feel, not counted from tasks. "Depends on" names slices, backend tickets (B-), owner decisions (O, section 10.1) and prerequisites (P, section 8.2).
+### 7.1 Layers
 
-### 8.1 The list
+| Layer | Tool | Runs where | Paid minutes |
+| --- | --- | --- | --- |
+| Shared logic | Vitest in the packages (exists) | CI, Linux | None |
+| Components, screens, session machine, check-in flow | Jest with `jest-expo` (needs Jest 30 from SDK 58, CONFIRMED docs.expo.dev) and React Native Testing Library | CI `mobile-checks`, Linux | None |
+| Bundle | `expo export` for iOS and Android, then the bundle search | CI `mobile-checks`, Linux | None |
+| Project health | `expo-doctor` | CI `mobile-checks` | None |
+| Engine on device | Dev-only engine check screen plus a Maestro flow | Android emulator in CI; iOS simulator by hand | None |
+| End to end | Maestro CLI (free, open source) against the fixture server | Android emulator on a GitHub Linux runner, on PRs touching `apps/mobile` or the shared packages; iOS by hand on a Mac | None [U] |
+| Accessibility | Per-screen assertions, token contrast matrix, manual pass per slice, audits in S18 | CI and by hand | None |
 
-| Slice | What it delivers                                                                                         | Depends on             | Size |
-| ----- | -------------------------------------------------------------------------------------------------------- | ---------------------- | ---- |
-| S1    | Project skeleton and CI                                                                                  | O1                     | 5    |
-| S2    | Sign-in                                                                                                  | S1, P1                 | 8    |
-| S3    | Monthly check-in                                                                                         | S2, P2, P3             | 6    |
-| S4    | App shell: tab bar, More list, header with menu and theme toggle, update-required screen, deep links     | S3, B-A                | 4    |
-| S5    | Home: net worth hero under the user's choices, key figures, check-in row when due, setup row             | S4, P4                 | 4    |
-| S6    | Accounts list, account detail, net worth history                                                         | S5                     | 6    |
-| S7    | Offline reading (if O4 keeps the default): saved data, age label, restored-offline state                 | S6, O4                 | 5    |
-| S8    | Add, edit and delete an account                                                                          | S6                     | 4    |
-| S9    | Settings: profile, net worth choices, theme, privacy mode, device lock, data export, delete account      | S5                     | 6    |
-| S10   | Budget                                                                                                   | S6                     | 6    |
-| S11   | Debt and mortgage                                                                                        | S8                     | 8    |
-| S12   | Pension and savings                                                                                      | S8                     | 7    |
-| S13   | Take-home and self assessment                                                                            | S5                     | 7    |
-| S14   | Free calculators (the web's one catalogue of tools)                                                      | S4                     | 5    |
-| S15   | Onboarding                                                                                               | S8, S10                | 4    |
-| S16   | Connect AI: token list, create, revoke                                                                   | S9                     | 3    |
-| S17   | Sandbox with sample households, signed out                                                               | S5                     | 3    |
-| S18   | Hardening: full VoiceOver and TalkBack audits, performance, security review, offline edge cases          | S9 for the first release | 8  |
-| S19   | Release: build profiles, store assets, privacy labels, reviewer account, TestFlight and Play             | S18, O2                | 6    |
-| S20   | Retire `apps/mobile-companion`                                                                           | S19, owner             | 2    |
-| B-A   | Backend: client policy endpoint and clock tolerance                                                      | none                   | 1    |
+Maestro Cloud costs $250 per device per month and its official GitHub Action needs it (CONFIRMED, maestro.dev/pricing), so it is not used. Running Maestro on an Android emulator on a free GitHub runner is described only in a Maestro article, not the docs [U]: S2c proves it, three green runs in a row, or falls back to a manual Android pass recorded in each PR. Standard GitHub-hosted runners are free for public repositories [U, check docs.github.com billing before S2c].
 
-Totals: about 108 agent-days for everything; about 63 for the first store release (S1 to S9, B-A, S18 and S19). Calendar time is longer: review, rework, store waiting and the owner's own actions add roughly a third. Revision 2 counted 162 days; the difference is the shared packages and backend work that have since merged, and the bank screens that were removed.
+The fixture server serves canned `/v1` responses built and checked with the contract schemas, and a WorkOS stand-in that issues test tokens, including expired and rejected ones. An `e2e` build profile points at it; the sign-in code has no test branch.
 
-After S6 the page slices (S10 to S17) touch separate screen folders and can run two or three at a time.
+### 7.2 Builds without paid minutes
 
-### 8.2 Prerequisites outside `apps/mobile`
+- **CI never runs EAS Build.** Every PR check above runs on GitHub's Linux runners. The e2e Android app is built in the job with Gradle (`expo prebuild` and a debug build) [U, S2c proves the time fits].
+- **EAS free plan** (CONFIRMED, expo.dev/pricing and docs.expo.dev/billing/plans): 15 Android and 15 iOS builds a month at low priority, at most 1 macOS build at a time. Enough for internal test builds by hand or on a tag. The next plan is $19 a month with $45 of build credit and high priority.
+- **Local builds:** `eas build --local` runs on macOS or Linux (iOS needs a Mac with Xcode, fastlane and CocoaPods), one platform at a time, with no caching and no secret environment variables (CONFIRMED, docs.expo.dev/build-reference/local-builds). The docs do not state that local builds use no credits [U].
 
-| Id  | What                                                                                                                                                                                             | Where it lands                                    | Needed by |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------- | --------- |
-| P1  | WorkOS dashboard: a redirect address registered for the app, and a test user. Owner action.                                                                                                      | WorkOS                                            | S2        |
-| P2  | The web check-in walk-through under ruling R3 is merged, with its calculated-balance function in `@flump/finance-engine`.                                                                        | Web check-in PR                                   | S3        |
-| P3  | The check-in row and payload builders (`buildCheckInRows`, `buildSnapshotPayload`, the month helpers) move from `apps/web/app/features/snapshot/snapshotModel.ts` to the engine, with web importing them from there. No behaviour change. | Web check-in PR, or the first commit of S3        | S3        |
-| P4  | The feature inventory is written again from the web app after polish round 2 (`DECISIONS.md` round 2: before feature screens start).                                                             | `E12-feature-inventory.md`                        | S5 on     |
+---
 
-### 8.3 The first three slices in full
+## 8. Store and signing
 
-#### S1. Project skeleton and CI
+- **Profiles.** `development`, `e2e`, `preview` (internal), `production` (store).
+- **Distribution.** iOS through TestFlight and Android through Play internal testing first. A personal Play account created after 13 November 2023 must run a closed test with at least 12 testers opted in for 14 days in a row before production (CONFIRMED, Play Console help 14151465). An organisation account does not have this rule [U].
+- **Apple.** Apps that let people create an account must let them delete it in the app (Guideline 5.1.1(v), CONFIRMED). The Developer Program costs US$99 a year; organisation enrolment needs a D-U-N-S number (CONFIRMED, developer.apple.com). A login needs a reviewer account with sample data. Money management apps are expected to come from the organisation that provides the service, which is why an organisation account is on record (round 3).
+- **Google.** US$25 once. Every app completes the Financial features declaration, even with none; budgeting and net worth trackers are not named in its categories, so "no financial features" looks likely [U] (CONFIRMED that the form is required, Play Console help 13849271).
+- **Signing.** EAS can hold the iOS certificates and the Android upload key. Who holds the keys is an owner step (OS6). The Play app signing key is held by Google after enrolment [U].
+- **Identifier.** `io.github.mgallagher56.flump` unless the owner has a domain by then. It cannot change after a listing exists (OS2).
+- **Versioning.** `apps/mobile` joins `release-please-config.json`. A release PR does not publish a build; a tag or a manual run does.
+- **Gates before any store submission.** Hosted privacy policy and terms; in-app deletion working end to end; privacy labels and the Play data safety form matching what the app collects, and saying the data is stored on Flump's servers (O5); no bank or encryption claims beyond the O5 marketing list; the S18 audits passed.
 
-**Goal.** An empty Flump app that builds, themes itself from the shared tokens, proves the shared packages run on a device, and is covered by CI. No sign-in, no data.
+---
+
+## 9. Slices
+
+Each slice is one PR. Sizes are rough agent-days. "Depends on" names slices, backend tickets (B-), owner steps (OS, section 11) and prerequisites (P).
+
+### 9.1 The list
+
+| Slice | What it delivers | Depends on | Size |
+| --- | --- | --- | --- |
+| **S1a** | Project skeleton, Metro and Bun proof, theme provider, shared packages proved on Hermes, CI `mobile-checks`, spike notes | Nothing | 3 |
+| S1b | First six components, dev gallery, law script extensions, Biome rules (raw primitives, the data door), AGENTS.md native file set | S1a | 3 |
+| D1 | Value map field for "server must read" (O5 seam 3), filled for the values S1 to S9 touch | Nothing | 1 |
+| B-A | Backend: clock tolerance in the verifier | Nothing | 1 |
+| P5 | `packages/copy` with the check-in words moved from web; web-only PR | Nothing | 1 |
+| S2a | WorkOS spike: answer the [U] items in 5.1 against the test environment; B-B raised if needed | S1a, OS1 | 1 |
+| S2b | Auth: PKCE, token store, session machine, sign-in, session-ended and not-invited screens; `security-reviewer` on `src/auth` | S2a, S1b | 5 |
+| S2c | Fixture server with WorkOS stand-in, four Maestro flows, CI `mobile-e2e-android` | S1a | 3 |
+| **S3** | Monthly check-in | S2b, S2c, P5 | 6 |
+| S4 | App shell: tab bar, More list, header menu and theme toggle, update-required screen, deep links | S3 | 4 |
+| S5 | Home: net worth hero under the user's choices, key figures, check-in row when due, setup row | S4, P4 | 4 |
+| S6 | Accounts list, account detail with joint share line, net worth history | S5 | 6 |
+| S7 | Offline reading: SQLCipher cache, age labels, `restoredOffline`, backup exclusion (O5 seam 4) | S6 | 5 |
+| S8 | Add, edit and delete an account, including kind, credit limit and joint marker | S6 | 4 |
+| S9 | Settings: profile, net worth choices, theme, privacy mode, device lock, export, delete account | S5 | 6 |
+| S10 | Budget | S6 | 6 |
+| S11 | Debt and mortgage | S8 | 8 |
+| S12 | Pension and savings | S8 | 7 |
+| S13 | Pay (take-home) and self assessment | S5 | 7 |
+| S14 | Free calculators (the web's tools catalogue) | S4 | 5 |
+| S15 | Onboarding | S8, S10 | 4 |
+| S16 | Connect AI: token list, create, revoke | S9 | 3 |
+| S17 | Sandbox with sample households, signed out | S5 | 3 |
+| S18 | Hardening: VoiceOver and TalkBack audits, performance, `security-reviewer` on `src/auth` and `src/data`, offline edge cases | S9 | 8 |
+| S19 | Release: profiles, store assets, privacy labels, reviewer account, TestFlight and Play | S18, OS2 to OS8, OS12 to OS16 | 6 |
+| S21 | Retirement | S12 | 5 |
+| S22 | Mortgage estimates (affordability) | S11 | 4 |
+| S23 | Invoicing, if self-employed users want it on a phone (decide at P4) | S9 | 6 |
+
+Totals: about 67 agent-days to the first store release (S1a to S9 with D1, B-A and P5, then S18 and S19) and about 125 for everything listed.
+
+**Order to start.** S1a, D1, B-A and P5 can run at the same time now; they touch separate files. S2c can start once S1a merges, while S2a waits for OS1. S3 comes before the shell (S4) because it is the owner's first priority and needs only sign-in and a way to start it. Calendar time is longer by roughly a third for review, store waits and owner steps. E34 slice C7 (household on mobile) is planned with E34, after its C4 lands on web.
+
+After S6 the page slices touch separate folders and can run two or three at a time.
+
+### 9.2 Prerequisites outside `apps/mobile`
+
+| Id | What | Needed by | State |
+| --- | --- | --- | --- |
+| P1 | WorkOS redirect address and test user | S2a | Owner step OS1 |
+| P2 | Web check-in walk-through merged | S3 | **Done** (#709, #727) |
+| P3 | Check-in rules in the engine | S3 | **Done** (`check-in.ts`) |
+| P4 | Feature inventory rewritten from the web app as it is | S5 | Open |
+| P5 | Shared flow copy in `packages/copy` | S3 onward | Open; the check-in move is its own web-only PR, startable now |
+
+### 9.3 S1a. Project skeleton and CI (startable now)
+
+**Goal.** An empty Flump app that builds, themes itself from the shared tokens, proves the shared packages run on Hermes, and is covered by CI. No sign-in, no data, no components beyond what the placeholder screen needs. It answers risks R1 and R2 first.
 
 **Files**
 
-- `apps/mobile/package.json` (`@flump/mobile`), `app.config.ts`, `eas.json` (`development` profile), `tsconfig.json`, `metro.config.js`, `babel.config.js`, `jest.config.js`, `.gitignore` (generated `ios`, `android`, `.expo`).
-- `apps/mobile/app/_layout.tsx`, `app/index.tsx` (a placeholder screen with the logo and the tagline), `app/(dev)/gallery.tsx`, `app/(dev)/engine-check.tsx`.
-- `apps/mobile/src/config.ts` and its test; `src/copy/`; `src/theme/ThemeProvider/` (`useTheme()` over `@flump/tokens/native`, follows the system, remembers a choice).
-- `apps/mobile/src/components/{Text,Pressable,Button,Screen,Card,FlumpLogo}/`, each with the five native files.
-- `apps/mobile/e2e/flows/engine-check.yaml`.
+- `apps/mobile/package.json` (`@flump/mobile`), `app.config.ts`, `eas.json` (`development` profile), `tsconfig.json`, `metro.config.js`, `babel.config.js` if the SDK still needs one, `jest.config.js`, `.gitignore` (`ios`, `android`, `.expo`).
+- `app/_layout.tsx`, `app/index.tsx` (logo and the tagline), `app/(dev)/engine-check.tsx`.
+- `src/config.ts` and test; `src/theme/ThemeProvider/`.
+- `e2e/flows/engine-check.yaml`.
 - `packages/typescript-config/expo.json`.
-- `turbo.json` (mobile `lint`, `check-types`, `test`, `build` as a bundle export for both platforms), `biome.json` (an override that forbids the raw React Native `Text`, `Pressable` and `TextInput` outside the components folder), `renovate.json` (one group for `expo`, `expo-*`, `react-native`, `react`, `react-dom` and their types).
-- `.github/workflows/ci-pipeline.yml`: a `mobile-checks` job (lint, types, Jest, bundle export, bundle search, `expo-doctor`).
-- `scripts/check-design-tokens.ts`, `scripts/check-tabular-nums.ts`, `scripts/check-style-literals.ts` and `scripts/check-no-mock-auth.sh` extended to `apps/mobile`; a new check for tax thresholds written as literals outside the engine.
-- `AGENTS.md` section 1: the native file set (owner approves the wording, section 10.3).
-- `docs/audit/plans/E12-spike-notes.md`: what was found (below).
+- `turbo.json` (mobile `lint`, `check-types`, `test`, `build` as `expo export`), `renovate.json` (one group for `expo`, `expo-*`, `react-native`, `react`, `react-dom` and types).
+- `.github/workflows/ci-pipeline.yml`: `mobile-checks` (lint, types, Jest, export for both platforms, bundle search, `expo-doctor`). It runs on every PR, with a fast no-op pass when nothing under `apps/mobile` or the shared packages changed, so it can be required without blocking other PRs. It is added to `.github/required-checks.json` in the same PR; the owner adds it to the branch rules afterwards (OS9).
+- `docs/audit/plans/E12-spike-notes.md`.
 
 **Acceptance**
 
-1. `rtk bun install` leaves the web, backend and marketing builds green, and the CI Docker job passes with the new workspace present.
-2. The app starts on an iOS simulator and an Android emulator in light and dark, following the system setting, with no flash of the wrong theme.
-3. The engine check screen runs the engine's exported tax vectors on Hermes and shows "All vectors pass"; the Maestro flow asserts it on Android. The `@flump/format` fixture gives the expected strings on both platforms, or the difference is recorded and a fallback added.
+1. `rtk bun install` leaves web, backend and marketing green; the CI Docker job passes with the new workspace.
+2. The app starts on an iOS simulator and an Android emulator in light and dark, following the system, with no flash of the wrong theme (iOS checked by hand on a Mac, recorded in the PR).
+3. The engine check screen runs the engine's exported tax vectors on Hermes and shows "All vectors pass"; the Maestro flow asserts it on Android locally. The `@flump/format` fixture gives the expected strings on both platforms, or the difference is recorded and a fallback added.
 4. A Jest test imports `@flump/finance-engine`, `@flump/format`, `@flump/api-contract`, `@flump/api-client` and `@flump/tokens/native`.
-5. The repo resolves one React version; `scripts/check-dependency-versions.ts` passes; `expo-doctor` passes in CI.
-6. `src/config.ts` throws a named error for a missing address, a non-HTTPS address in a release build, and plain HTTP outside the named local hosts.
-7. The law checks fail on a fixture with a hex colour, an untabulated figure, a tax threshold literal and a mock token under `apps/mobile`, and pass on the real tree.
-8. `Pressable` enforces a 48 by 48 target and needs a label when it has no text child. Components render at 200% text without clipping.
-9. The production bundle export contains neither dev-only route.
-10. The spike notes record: the Expo SDK, React Native and React versions; whether Bun's installer needed any setting for Metro; which export condition Metro picked for the shared packages; which TypeScript compiler `apps/mobile` uses; the Hermes formatting result.
+5. One React version in the repo; `scripts/check-dependency-versions.ts` and `expo-doctor` pass.
+6. `src/config.ts` throws a named error for a missing address, a non-HTTPS address in a release build, and plain HTTP outside named local hosts.
+7. The production export contains no dev route.
+8. The spike notes record: SDK, React Native and React versions; the Bun linker and any Metro setting needed; the export condition Metro picked; the TypeScript compiler used; the Hermes formatting result; each [U] in 4.1 answered.
 
-**Depends on.** O1 (framework and build service). Nothing else.
+**Known risks.** Metro with Bun's workspace links; React patch mismatch with the SDK; TypeScript 7 with Expo's config. If React must differ, stop and ask the coordinator before any exception to AGENTS.md section 9.
 
-**Known risks.** Metro with Bun's workspace links; TypeScript 7 with Expo's base config; Expo wanting a different React from web. Each has a fallback recorded in revision 2, section 3.3, and the spike notes say which was needed.
+### 9.4 S1b. Components and law checks
 
-#### S2. Sign-in
-
-**Goal.** A person signs in with their Flump account through WorkOS, stays signed in across launches, and can sign out leaving nothing behind. Nothing here is mocked.
-
-**First step, before code.** A short script and a throwaway screen answer the six unconfirmed questions in 5.1 against the real WorkOS test environment, and call one protected `/v1` route with the token. The answers go in the spike notes and correct this plan in the same PR. If a refresh without a secret is refused, stop and raise B-B.
-
-**Files**
-
-- `apps/mobile/src/auth/`: `sessionMachine.ts`, `pkce.ts`, `authorizeUrl.ts`, `exchangeCode.ts`, `tokenStore.ts`, `tokenManager.ts`, `classifyRefreshFailure.ts`, `signOut.ts`, `SessionProvider.tsx`, each with a test.
-- `apps/mobile/src/data/apiClient.ts`: `createApiClient` wired to the token manager (`getAccessToken`, `onUnauthorised`, `client`).
-- `apps/mobile/src/screens/{SignIn,SessionEnded,NotInvited}/` and `src/components/{ErrorState,InlineAlert,ConfirmDialog}/`.
-- `apps/mobile/app/(auth)/sign-in.tsx`, `app/(app)/_layout.tsx` (the gate), `app/(app)/index.tsx` (a signed-in placeholder: "You are signed in" and "Sign out").
-- `apps/mobile/e2e/fixture-server/` and its tests; flows `signed-out-shows-sign-in.yaml`, `sign-in-happy-path.yaml`, `session-ended.yaml`, `sign-out-clears-device.yaml`; the `e2e` profile in `eas.json`.
-- `.github/workflows/ci-pipeline.yml`: a `mobile-e2e-android` job.
+**Files.** `src/components/{Text,Pressable,Button,Screen,Card,FlumpLogo}/`, five files each; `app/(dev)/gallery.tsx`; `src/copy/`; `src/data/` (an empty door); `biome.json` (forbid raw React Native `Text`, `Pressable`, `TextInput` outside `src/components`; forbid `fetch` and `@flump/api-client` imports outside `src/data`); `scripts/check-design-tokens.ts`, `check-tabular-nums.ts`, `check-style-literals.ts`, `check-no-mock-auth.sh` extended to `apps/mobile`; a new check for tax threshold literals outside the engine; `AGENTS.md` section 1, the native file set (10.3).
 
 **Acceptance**
+
+1. The law checks fail on fixtures with a hex colour, an untabulated figure, a tax threshold literal, a mock token, and a `fetch` outside `src/data` under `apps/mobile`, and pass on the real tree.
+2. `Pressable` enforces 48 by 48 and needs a label when it has no text child. Each component renders at 200% text without clipping, tested from its `X.states.ts`.
+3. The gallery shows every component in light, dark and 200% text, and the production export does not contain it.
+4. The PR states its seam cost (the data door rule).
+
+### 9.5 S2a, S2b and S2c. Sign-in
+
+**Goal.** A person signs in with their Flump account through WorkOS, stays signed in across launches, and can sign out leaving nothing behind. Nothing is mocked.
+
+**S2a, the spike (needs OS1).** A throwaway script and screen answer the [U] items in 5.1 against the WorkOS test environment, including whether a native PKCE sign-in on web's client id gives a token the backend verifier accepts, and call one protected `/v1` route with it. Answers go in the spike notes and correct this plan in the same PR. No app code is kept. If refresh without a secret is refused, stop and raise B-B.
+
+**S2b, auth.** Files: `src/auth/` (`sessionMachine`, `pkce`, `authorizeUrl`, `exchangeCode`, `tokenStore`, `tokenManager`, `classifyRefreshFailure`, `signOut`, `SessionProvider`, each tested); `src/data/apiClient.ts`; `screens/{SignIn,SessionEnded,NotInvited}/`; `components/{ErrorState,InlineAlert,ConfirmDialog}/`; routes `(auth)/sign-in.tsx`, `(app)/_layout.tsx` (the gate), `(app)/index.tsx` (a signed-in placeholder: "You are signed in" and "Sign out"). The `security-reviewer` agent reviews `src/auth` and `src/data` in this PR, as well as the usual review.
+
+**S2c, the e2e harness (needs only S1a).** Files: `e2e/fixture-server/` and its tests (canned `/v1` built from the contract schemas, and a WorkOS stand-in issuing test tokens, including expired and rejected ones); the `e2e` profile in `eas.json`; CI `mobile-e2e-android` (path-filtered as `mobile-checks` is, added to `required-checks.json` once it has passed three runs in a row). CI never uses a real WorkOS user; the test user in OS1 is for the S2a spike and the hand checks only. The four flows (`signed-out-shows-sign-in`, `sign-in-happy-path`, `session-ended`, `sign-out-clears-device`) land with S2b against this harness.
+
+**Acceptance (S2b, with S2c for the flows)**
 
 1. The sign-in screen shows the logo, the tagline "Flump: finance without the fog", "Sign in", "Create account", and links to the privacy policy and terms.
 2. Sign-in opens the system browser sheet. A `state` mismatch is refused before any exchange. Cancelling returns to the screen with no error. A failed exchange shows a plain message with no WorkOS text.
-3. After sign-in, a call to `GET /v1/user-profile` succeeds against a real backend (recorded by hand in the PR) and against the fixture server (in CI).
-4. The refresh token is in the secure store and nowhere else; the access token is never written to disk; neither appears in any log or error message.
+3. After sign-in, `GET /v1/user-profile` succeeds against a real backend (recorded by hand in the PR) and against the fixture server (in CI).
+4. The refresh token is in the secure store ("when unlocked, this device only") and nowhere else; the access token is never written to disk; neither appears in any log or error message.
 5. Every transition in 5.2 has a test. A network failure during refresh never leads to `sessionEnded`. A rejected refresh clears the device once.
 6. Ten requests that all get a 401 cause one refresh; each is retried once with the new token. A second 401 ends the session.
 7. A person who is not on the beta list sees the `NotInvited` screen with a way to sign out, not an error.
-8. Sign-out works with no network, empties the secure store, preferences and memory, and the next launch shows the sign-in screen. On a real iPhone and a real Android phone, signing in after signing out asks for the password again (checked by hand, recorded in the PR).
-9. Sign-in, session-ended and not-invited screens pass the per-slice accessibility checks in section 6.
-10. The four Maestro flows pass three runs in a row in the Android CI job. The production bundle contains no fixture address.
+8. Sign-out works with no network, empties the secure store, preferences and memory, and the next launch shows the sign-in screen. On a real iPhone and a real Android phone, signing in after signing out asks for the password again (by hand, recorded in the PR; needs OS17).
+9. The three screens pass the per-slice accessibility checks in section 6.
+10. The four Maestro flows pass three runs in a row in the Android CI job, or the fallback in 7.1 is recorded. The production bundle contains no fixture address.
 
-**Depends on.** S1; P1 (WorkOS dashboard access).
+### 9.6 S3. Monthly check-in
 
-#### S3. Monthly check-in
+**Goal.** Once a month a person confirms each balance in under two minutes, matching the web walk-through as built (#709, #727).
 
-**Goal.** Once a month a person confirms each balance in under two minutes: one card per account, "Update" or "No change", and at the end the change since last month. This is the flow the app exists for.
+**The flow.** As on web: a row on the signed-in screen when the month is due; one card per account in web's order with name, type, last recorded balance and month, and a position ("Account 2 of 6"); **Update** or **No change**; "No change to the rest" ends the walk-through keeping the remaining balances (owner, 20 November); a mortgage or loan with a saved rate and payment, whose saved balance equals the latest recorded month, shows the engine's `calculateCheckInBalance` figure with a "Calculated" badge; accounts left out of net worth say so; the summary shows what changed and net worth against last month from a fresh `GET /v1/portfolio-snapshot`, in plain words.
 
-**What the flow is**
+**How it saves.** `PUT /v1/snapshots/:month` with the engine's payload builder. Saving needs a connection; without one the action is disabled and says why.
 
-1. It starts from a row on the signed-in screen, shown when the month has not been recorded: "Update balances for November".
-2. One account per card, in the same order as web. Each card shows the account name, its type, the last recorded balance and the month it was recorded, and a position such as "Account 2 of 6".
-3. Two actions. **No change** records the shown balance for this month. **Update** opens a `CurrencyInput`, prefilled, and saves the typed balance.
-4. For a mortgage or a loan, the shown balance is the calculated one, from the engine, with a "Calculated" badge. The primary action accepts it; **Update** replaces it. If the details needed to calculate are missing, the card shows the last recorded balance like any other account and says nothing is calculated.
-5. An account left out of net worth by the user's choices says "Not counted in net worth".
-6. A card can be skipped by moving on; a skipped account is not sent.
-7. The end screen shows the change in net worth since last month, from a fresh `GET /v1/portfolio-snapshot`, in plain text: no colour judgement, no celebration.
-
-**How it saves.** One `PUT /v1/snapshots/:month` at the end with `{ values: [{ accountId, value }], complete: true }` (**VERIFIED IN CODE:** partial sets are allowed, the latest write wins, and the server stores a debt as negative whatever sign is sent). Leaving early offers to save the cards already answered, sent without `complete`. Saving needs a connection; without one the action is disabled and says why.
-
-**Files**
-
-- `packages/finance-engine/src/check-in.ts` if P3 has not already landed (the moved builders and their tests).
-- `apps/mobile/src/data/`: `queryClient.ts`, `queryKeys.ts`, `useDelayedLoading.ts` (ruling R5), each with a test.
-- `apps/mobile/src/features/check-in/`: `useCheckInData.ts` (accounts, account details, profile), `checkInFlow.ts` (a reducer: answers, position, finish), `useSaveCheckIn.ts`, each with a test.
-- `apps/mobile/src/screens/{CheckIn,CheckInDone}/`.
-- `apps/mobile/src/components/{CurrencyInput,FormField,Money,StatusBadge,Skeleton,HeroFigure,Toast}/`.
-- `apps/mobile/app/(app)/check-in.tsx`; the check-in row on `app/(app)/index.tsx`.
-- Fixture server routes for `GET /v1/accounts`, `GET /v1/account-details`, `GET /v1/user-profile`, `GET /v1/portfolio-snapshot`, `PUT /v1/snapshots/:month`; flows `check-in-walkthrough.yaml`, `check-in-backend-down.yaml`.
+**Files.** `src/data/{queryClient,queryKeys,useDelayedLoading}.ts`; `src/features/check-in/{useCheckInData,checkInFlow,useSaveCheckIn}.ts`; `screens/{CheckIn,CheckInDone}/`; components `CurrencyInput`, `FormField`, `Money`, `StatusBadge`, `Skeleton`, `HeroFigure`, `Toast`; route `(app)/check-in.tsx` and the check-in row on `(app)/index.tsx`; fixture routes for `GET /v1/accounts`, `GET /v1/account-details`, `GET /v1/user-profile`, `GET /v1/portfolio-snapshot`, `PUT /v1/snapshots/:month`; flows `check-in-walkthrough.yaml` and `check-in-backend-down.yaml`. Words come from `packages/copy` (P5).
 
 **Acceptance**
 
-1. With six accounts in the fixture, the walk-through shows six cards in web's order and ends with one `PUT` whose body passes `UpsertSnapshotRequest` and carries `complete: true`.
-2. "No change" sends the last recorded balance; "Update" sends the typed one; a skipped card sends nothing. A blank input is never sent as 0.
-3. A mortgage with complete details shows the engine's calculated balance with the "Calculated" badge. The figure equals the engine function's output for the same inputs (the function is injected and observed; the app does no arithmetic). Overriding sends the typed figure. With details missing, no calculated figure is shown.
-4. The row and payload logic is the engine's: the app has no copy of `buildCheckInRows` or `buildSnapshotPayload`.
-5. Loading: nothing is shown for the first 200ms; a skeleton that appears stays at least 400ms; moving between cards never shows a skeleton; under Reduce Motion the skeleton does not shimmer and cards change without sliding. Each is a timed test of `useDelayedLoading` or the screen.
-6. A failed load shows the error state with "Try again", never "no accounts". An empty account list (a successful empty response) shows one sentence and one button to add an account, which links to the website until S8.
+1. With six accounts in the fixture, the walk-through shows six cards in web's order and ends with one `PUT` whose body passes the contract's snapshot request schema and is built by the engine's payload builder.
+2. "No change" sends the last recorded balance; "Update" sends the typed one; "No change to the rest" keeps every remaining balance; a skipped card sends nothing. A blank input is never sent as 0.
+3. A mortgage with a saved rate and payment, whose saved balance equals the latest recorded month, shows `calculateCheckInBalance`'s figure with the "Calculated" badge; the figure equals the engine's output for the same inputs (the function is observed, the app does no arithmetic). Overriding sends the typed figure. Otherwise no calculated figure is shown.
+4. The app imports the steps, calculated figure, answers, payloads and summary from `packages/finance-engine/src/check-in.ts` and has no copy of them.
+5. Loading: nothing for the first 200ms; a skeleton that appears stays at least 400ms; moving between cards never shows a skeleton; under Reduce Motion nothing shimmers or slides. Each is a timed test with a fake clock.
+6. A failed load shows the error state with "Try again", never "no accounts". A successful empty list shows one sentence and one button to add an account, which links to the website until S8.
 7. A failed save keeps every answer on screen and offers to try again. A double tap sends one request.
 8. Amounts are whole pounds where read and accept pence where typed; every figure uses tabular numerals; a debt is shown without red.
 9. Nothing in the flow mentions a missed month, a streak or a target.
-10. The end screen's change figure matches web for the same seeded household (the renting and home-owning households in `apps/e2e/support/personas.ts`), checked by hand and recorded in the PR.
-11. Accessibility: each card is one group with a spoken summary ("Current account, £1,204, recorded in October, account 2 of 6"); both actions are 48 by 48 or larger; the position change is announced; the flow works at 200% text and 320 points wide, with VoiceOver and with TalkBack.
-12. Both Maestro flows pass three runs in a row in the Android CI job.
-13. The PR adds its row to the parity log and states the result of the parity checklist.
+10. The summary's change figure matches web for the renting and home-owning households in `apps/e2e/support/personas.ts`, checked by hand and recorded in the PR.
+11. Accessibility: each card is one group with a spoken summary ("Current account, £1,204, recorded in October, account 2 of 6"); both actions are at least 48 by 48; the position change is announced; the flow works at 200% text, 320 points wide, with VoiceOver and with TalkBack.
+12. Both Maestro flows pass three runs in a row in the Android CI job, or the fallback in 7.1 is recorded.
+13. The PR adds its row to the parity log and states the result of the CROSS-PLATFORM section 7 checklist.
 
-**Depends on.** S2; P2 and P3.
-
-**Why it comes before the app shell.** It is the owner's first priority, and it needs only sign-in and a way to start it. The tab bar, Home and the rest arrive around it from S4.
-
-### 8.4 Later slices
+### 9.7 Later slices
 
 Each is specified in full when the slice before it merges, from the web page as it then is and the parity log. Fixed now:
 
-- **S4** follows ruling R4 and section 4.2. Acceptance includes a test that the tabs equal `BOTTOM_BAR_TABS` and the More list covers `AUTH_NAV_ROUTES` in `navConfig.ts`, and that a link opened while signed out resumes after sign-in and never performs a write.
-- **S5** shows net worth from the snapshot with what it leaves out in words, at most three more figures, the check-in row when due and one setup row. No figure is worked out in the app.
-- **S6** shows one balance per account, the same on every screen (the web's R2-1 rule), one figure per row, a history chart only from three recorded months, and tables over 8 rows collapsed. History is not editable.
-- **S7** adds the `restoredOffline` behaviour in 5.2 and the test that a cold start with no network keeps saved data.
-- **S9** includes the two net worth switches (ruling R1), deletion with the typed phrase, and signing in again when the backend asks for a recent sign-in.
-- **S10 to S13** follow the saved versus scenario rule: every simulator screen has a test that changing a scenario input changes no saved figure and sends no request.
-- **S14** uses the web's catalogue of tools, with a test that the slugs match.
-- **S16** shows a new token once and keeps it out of saved data.
-- **S18** uses the `security-reviewer` agent on `apps/mobile/src/auth` and any backend route added for mobile.
-- **S20** deletes the old app in its own PR and removes its entries from `scripts/check-no-mock-auth.sh` and `.dockerignore`.
-
-The feature inventory was written on 11 November against a web app that has since lost the forecast page, non-UK tax, history editing, Spanish and the bank screens, and gained the check-in, imports, net worth choices and the tools catalogue. It is rewritten (P4) before S5.
-
----
-
-## 9. Risks
-
-| #   | Risk                                                                                          | Likelihood | Impact | What reduces it                                                                                         | Who    |
-| --- | --------------------------------------------------------------------------------------------- | ---------- | ------ | ------------------------------------------------------------------------------------------------------- | ------ |
-| R1  | Metro, Bun workspaces and the shared packages do not resolve, or React is duplicated          | Medium     | High   | S1 is the proof; fallbacks recorded in revision 2                                                       | Agent  |
-| R2  | WorkOS refuses a refresh without a secret, or a custom scheme redirect                        | Low to medium | High | Fact-finding at the start of S2; B-B as the fallback; a web link redirect                             | Agent, owner |
-| R3  | The web app keeps changing, so parity moves                                                   | High       | Medium | The parity log; slices specified late, from the page as it is; tests that compare nav and tool lists    | Owner  |
-| R4  | A store refuses the app: account type for a money app, reviewer access, privacy pages         | Medium     | High   | Organisation account (O2); real reviewer account; privacy pages as a gate; no bank claims               | Owner  |
-| R5  | A failure or old saved data shown as empty or zero                                            | Medium     | High   | One state helper; tests in S3, S5 and S7; the offline audit in S18                                      | Agent  |
-| R6  | Maths written again in the app                                                                | Medium     | High   | Literal check; engine-only rule; calculators tested by the inputs they pass                             | Agent  |
-| R7  | A token leaks through logs, crash reports, backups or the bundle                              | Low        | High   | 5.4; bundle search in CI; S18 review                                                                    | Agent  |
-| R8  | Installed versions break after a backend change                                               | Medium     | Medium | `/v1` additive-only policy; client header; the minimum version check (B-A)                              | Agent  |
-| R9  | Number formatting differs between iOS and Android                                             | Low        | Medium | The fixture on Hermes in S1; a pure fallback                                                            | Agent  |
-| R10 | A phone clock running fast causes sign-outs                                                   | Medium     | Medium | B-A clock tolerance; the client's own skew estimate                                                     | Agent  |
-| R11 | S3 is built against a check-in that web then changes                                          | Medium     | Medium | P2: wait for the web walk-through to merge; shared builders in the engine (P3)                          | Coordinator |
-| R12 | Expo and React Native upgrades churn                                                          | Medium     | Medium | One Renovate group; `expo-doctor`; Android e2e on every PR                                              | Agent  |
-| R13 | Store forms and data protection duties have no one assigned                                   | Medium     | High   | Section 10.2 holds; the owner's list in `DECISIONS.md`                                                  | Owner  |
-| R14 | The old app is deleted early, or kept and decays                                              | Low        | Medium | S20 last, in its own PR                                                                                 | Owner  |
+- **S4:** tabs equal `BOTTOM_BAR_TABS` plus More; the More list covers web's drawer entries; a test pins both.
+- **S5:** before the hero is built, check that the backend's net worth for `GET /v1/portfolio-snapshot` is computed by the engine's net worth basis; if any part is computed only in a backend service, move it to the engine first (O5 seam 1).
+- **S6:** one balance per account everywhere; the joint share line as on web (E34 C1); history chart only from three recorded months; history not editable.
+- **S7:** SQLCipher with the key check; the database out of iCloud and Android backups; a test that a cold start with no network keeps saved data; a test that a restored backup without the key shows no cached data and asks to sign in.
+- **S9:** the two net worth switches (R1), export, deletion with the typed phrase, recent sign-in when asked.
+- **S10 to S13, S21, S22:** saved versus scenario: changing a scenario input changes no saved figure and sends no request.
+- **S16:** a new token is shown once and never cached.
+- **S18:** `security-reviewer` again on `apps/mobile/src/auth`, `src/data`, the cache and any backend route added for mobile (the first review is in S2b).
 
 ---
 
 ## 10. Decisions
 
-### 10.1 Open decisions for the owner
+### 10.1 Decisions
 
-O1 blocks a start. O2 blocks S19, O4 blocks S7 and O3 blocks nothing, but all four shape the plan, so they are asked together. "On record" is what rounds 2 and 3 of `DECISIONS.md` adopted from the earlier draft; the owner has not yet confirmed any of it for a build.
-
-| #   | Decision                              | Options                                                                                                                                                                         | Recommendation                                                                                                                                                                                                                                         | Default on record                                   | Blocks                 |
-| --- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------- | ---------------------- |
-| O1  | Framework and build service           | A. Expo with React Native, built with EAS. B. React Native without Expo, built on your own Mac and CI. C. Flutter or fully native. D. Wrap the web app.                          | **A.** It is the only option that reuses the engine, contract, client, formatter and native theme already built, and you already work in React and TypeScript. Start on EAS's free plan (15 builds per platform a month); move to $19 a month if it runs out. | None. The earlier draft assumed A.                  | S1                     |
-| O2  | Apple and Google developer accounts   | A. Organisation accounts in both stores (needs a company and a D-U-N-S number). B. Personal accounts. C. No public listing: TestFlight and Play internal testing only, for now.  | **C now, A before a public release.** Nothing before S19 needs a store account, so spend nothing yet. Enrol as an organisation once there is a company: Apple $99 a year, Google $25 once. Apple's wording on money apps makes a personal account a likely refusal. Ask Apple before incorporating for this alone. | Organisation accounts, paid after incorporation and the hardening milestone; stay a sole trader until about 8 weeks before Apple enrolment (round 3, items 10, 15 and 16). | S19                    |
-| O3  | Push notifications                    | A. None at launch. B. One opt-in reminder when the monthly check-in is due. C. A wider set.                                                                                      | **A at launch, B as the first addition.** There is no backend for it today (no device tokens, no scheduler), and the UX guidelines allow only notifications the user asked for. A check-in reminder is the one that fits the product; plan it after the first release as its own slice. | A (round 2, D8-A).                                  | Nothing in S1 to S19   |
-| O4  | Offline policy                        | A. Read-only saved data, encrypted, kept 7 days, labelled with its age; changes need a connection. B. Nothing saved: no connection means an error screen. C. Full offline editing with sync. | **A.** Reading your figures on a train is a reason to have an app, and both stores expect more than a website in a wrapper. B is simpler and more private but loses that. C is a separate project and risks saving guesses. | A (round 2, D4-A).                                  | S7                     |
+| # | Decision | State | Blocks |
+| --- | --- | --- | --- |
+| O1 | Framework and build service | **Decided 25 November 2026 (owner):** Expo for iOS and Android, EAS on the free plan to start | Nothing now |
+| O2 | Apple and Google developer accounts | Default on record (round 3, items 10, 15, 16): organisation accounts after incorporation and the hardening milestone. Paying and enrolling are owner steps (section 11) | S19 |
+| O3 | Push notifications | Default on record (round 2, D8-A): none at launch. A check-in reminder is the first candidate after release, as its own plan | Nothing |
+| O4 | Offline policy | Default on record (round 2, D4-A), confirmed by O5: encrypted read-only cache, 7 days, writes online | Nothing now |
+| O5 | Where mobile data lives | **Decided 25 November 2026 (Fable decider, owner's delegation):** option (d), server as the one home, with four seams for a later opt-in encrypted mode (4.6) | Nothing |
 
 ### 10.2 On record from earlier rounds
 
-Adopted as defaults in `DECISIONS.md` round 2 (reversible choices) or held for the owner, a solicitor or money. Unchanged by this revision unless noted.
+Adopted in `DECISIONS.md` round 2 (reversible defaults) or round 3, updated where noted.
 
-| Old id   | Subject                                  | Position                                                                                                   |
-| -------- | ---------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| D1       | Platforms                                | iOS and Android together to internal testing                                                               |
-| D3       | WorkOS setup                             | Custom scheme redirect first, a web link later; secret-free refresh unless S2 shows otherwise              |
-| D5       | Deleting the old app                     | After parity is signed off, in its own PR                                                                  |
-| D6, D19  | Bank connection on mobile                | **Superseded by ruling R2.** Parked                                                                        |
-| D7       | Error tracking                           | Sentry, EU region, as approved for backend and web (round 3, item 7)                                       |
-| D9       | Account deletion                         | At once and for good after a typed phrase. Built on the backend                                            |
-| D10, D11 | Certificate pinning, over-the-air updates | No pinning; updates on the preview channel only                                                           |
-| D12      | Web on the shared client                 | **Done** (BE-10)                                                                                           |
-| D13      | How e2e signs in                         | Fixture server with a stand-in for WorkOS                                                                  |
-| D14      | Tablets                                  | Phone, portrait, first                                                                                     |
-| D15      | Mixed currencies                         | Follow web. Web is UK and pounds only now (E16 D6-B)                                                       |
-| D16      | AGENTS.md native variant                 | Adopted in principle; the law text is approved in S1 (10.3)                                                |
-| D17      | Signed-out wealth check                  | Not ported                                                                                                 |
-| D20      | Privacy policy and deletion page         | Release gates; text held for the solicitor                                                                 |
-| D21      | Sign-in methods                          | Email and password, and magic link                                                                         |
-| D22      | Spanish                                  | en-GB only                                                                                                 |
-| D23      | Token package                            | **Done** (PR 674)                                                                                          |
-| D2, D24  | Store fees and the cost table            | Decided in round 3, item 16: Apple and Google fees after incorporation and the hardening milestone. Paying is an owner action |
-| D18      | Legal entity                             | Decided in round 3, item 15: sole trader for now, incorporate about 8 weeks before Apple enrolment. Owner and solicitor steps |
-| D25      | Store compliance forms                   | Positions adopted in round 3, item 10, for the owner to file at S19. Its bank line falls away under ruling R2 |
-| D26      | Data protection duties                   | Sequence decided in round 3, item 15; the solicitor steps are owner actions                                |
-| D27      | Disclaimer and sign-in policy            | Reuse the web's approved notice text; email verification required                                          |
+| Old id | Subject | Position |
+| --- | --- | --- |
+| D1 | Platforms | iOS and Android together to internal testing |
+| D3 | WorkOS setup | Custom scheme redirect first, a web link later; secret-free refresh unless S2a shows otherwise |
+| D5 | Deleting the old app | **Done** (#827) |
+| D6, D19 | Bank connection on mobile | Superseded by ruling R2. Parked |
+| D7 | Error tracking | Sentry, EU region, no replay, no personal data (round 3, item 7) |
+| D9 | Account deletion | At once and for good after a typed phrase; built on the backend |
+| D10, D11 | Certificate pinning, over-the-air updates | No pinning; updates on the preview channel only |
+| D13 | How e2e signs in | Fixture server with a WorkOS stand-in |
+| D14 | Tablets | Phone, portrait, first |
+| D15 | Currencies | UK and pounds only, as web |
+| D16 | AGENTS.md native file set | Adopted in principle; wording approved in S1b (10.3) |
+| D17 | Signed-out wealth check | Not ported |
+| D20 | Privacy policy and deletion page | Release gates. Fable now writes the legal pages at the owner's delegation (25 November 2026), signer recorded truthfully |
+| D21 | Sign-in methods | Email and password, and magic link |
+| D22 | Language | en-GB only |
+| D2, D24 | Store fees | After incorporation and the hardening milestone (round 3, item 16); paying is an owner step |
+| D18 | Legal entity | Sole trader now; incorporate about 8 weeks before Apple enrolment (round 3, item 15) |
+| D25 | Store compliance forms | Positions in round 3, item 10, filed by the owner at S19; the bank line falls away under R2 |
+| D26 | Data protection duties | Sequence in round 3, item 15 |
+| D27 | Disclaimer and sign-in policy | The web's approved notice text; email verification required |
 
 ### 10.3 Smaller decisions taken in the slices
 
-- **S1:** the wording of the native file set in AGENTS.md section 1. Proposed text is in section 11.
-- **S2:** whether B-B is needed; whether iOS uses a private browser session.
-- **S4:** whether the header menu button and the More tab both stay, once the owner has seen them together on a phone.
+- **S1b:** the AGENTS.md section 1 wording for the native file set. Proposed: "**`apps/mobile`**: every component lives in its own PascalCase directory with `ComponentName.tsx`, `ComponentName.styles.ts` (a StyleSheet factory that takes the theme), `ComponentName.test.tsx`, `ComponentName.states.ts` (named prop sets, shown by the dev gallery and used by the tests, in place of a Storybook file) and `index.ts`." The coordinator approves it (round 2 adopted it in principle).
+- **S2a and S2b:** whether B-B is needed; whether iOS uses a private browser session.
+- **S3:** the shape of `packages/copy` (one module per flow, re-exported by web).
+- **S4:** native tabs or the JavaScript tab bar; whether the header menu button and the More tab both stay.
 
 ---
 
-## 11. Changes this plan needs in documents it does not own
+## 11. Owner-only steps and costs
 
-This revision edits no file but itself and the parity log. The coordinator decides who makes these.
+Agents never do these. Each is listed with when it is needed.
 
-**`docs/ux/CROSS-PLATFORM.md`**
+| # | Step | Needed by | Cost |
+| --- | --- | --- | --- |
+| OS1 | WorkOS dashboard: register the redirect `flump://auth/callback` for the existing client in the test environment, and create a test user for the S2a spike and the hand checks (CI uses the stand-in, not a real user). Best done now | S2a | None expected; whether native sign-in changes the WorkOS bill [U] |
+| OS2 | Choose the app identifier (`io.github.mgallagher56.flump` or a domain-based one). Permanent once a listing exists | S19 | None, or a domain |
+| OS3 | Create an Expo account and an EAS project for the app; decide whether to move to the $19 a month plan if 15 builds a platform a month run out | First EAS build (S19, or earlier for internal test builds) | Free; $19 a month if needed |
+| OS4 | Apple Developer Program enrolment, as an organisation after incorporation (round 3), with a D-U-N-S number | S19 | US$99 a year; D-U-N-S free [U] |
+| OS5 | Google Play developer registration, as an organisation; if personal, recruit 12 testers for a 14-day closed test | S19 | US$25 once |
+| OS6 | Signing: create or approve the iOS distribution certificate and the Android upload key, and decide whether EAS holds them | S19 | None |
+| OS7 | Store listings, privacy labels, the Play data safety form and the Financial features declaration, filed under the positions on record (round 3, item 10) and O5 | S19 | None |
+| OS8 | A reviewer account with sample data for Apple and Google | S19 | None |
+| OS9 | Add `mobile-checks` and `mobile-e2e-android` to the branch rules on GitHub, each after its PR has merged with the job in `required-checks.json` | After S1a and S2c | None |
+| OS10 | Sentry: a mobile project and its key, after the scrubber tests | S18 | Free tier |
+| OS11 | Incorporation, if not done, about 8 weeks before Apple enrolment (round 3, item 15) | Before OS4 | Varies |
+| OS12 | Submission keys for EAS Submit: an App Store Connect API key, and a Google Play service account with access to the app | S19 | None |
+| OS13 | The first Android upload may need to be made by hand in the Play Console before EAS Submit can upload [U] | S19 | None |
+| OS14 | An `EXPO_TOKEN` repository secret, if builds are started from tags in GitHub Actions | S19, if used | None |
+| OS15 | WorkOS production environment: register the app's redirect there too, before a store build points at it | S19 | None |
+| OS16 | Store answers: Apple's export compliance question, now that the cache uses SQLCipher (round 3 set `ITSAppUsesNonExemptEncryption=false`; whether that still holds is [U]); the account deletion web address Play asks for | S19 | None |
+| OS17 | A real iPhone and a real Android phone for the hand checks from S2b on, and a Mac with Xcode for iOS simulator checks | S1a (Mac), S2b (phones) | Owner's own devices |
+| OS18 | A domain, if universal and app links are wanted, and its association files | After the first release | Domain cost |
 
-- Section 3, `MobileBottomBar` row: "below 1024px" becomes "below 768px", once ruling R4 is on main.
-- Section 3, `ThemeToggle` row, mobile column: "A setting: System, Light, Dark" becomes "A light and dark toggle in the header of top-level screens, and a setting: System, Light, Dark".
-- Section 5, "Primary navigation" row, iOS and Android: add "The header of top-level screens keeps a menu button that opens the same list as More (owner ruling, 14 November 2026)".
-- Section 5, "Offline" row: add "subject to owner decision O4 in the E12 plan".
-- Section 7, "Record": add a checklist line, "If this change alters what a mobile user would see or do in a shared flow, was a row added to `docs/audit/plans/E12-mobile-parity-log.md`?".
-- References to "E12 2.6", "E12 2.8", "E12 5.1", "E12 5.2", "E12 section 2.11" and "T1.15 to T1.17" point at revision 2's numbering. In this revision they are sections 4.5, 4.6, 6, 3, 3 and 3.
+Other costs: GitHub Actions for Android e2e on a public repository, expected free [U]; Maestro CLI free, Maestro Cloud not used ($250 per device a month).
 
-**`docs/ux/UX-GUIDELINES.md`**
+---
 
-- N2: "there is no second, competing menu" needs the ruling R4 exception for the phone top bar's menu button.
-- E2: add the 400ms minimum display and "no full-page skeleton between screens that have already loaded" (ruling R5).
+## 12. Risks
 
-**`docs/copy/COPY-GUIDE.md`**
-
-- Add the tagline "Flump: finance without the fog" to the fixed wording (ruling R6).
-
-**`AGENTS.md`**
-
-- Section 1, a new paragraph: "**`apps/mobile`**: every component lives in its own PascalCase directory with `ComponentName.tsx`, `ComponentName.styles.ts` (a StyleSheet factory that takes the theme), `ComponentName.test.tsx`, `ComponentName.states.ts` (named prop sets, shown by the dev gallery and used by the tests, in place of a Storybook file) and `index.ts`."
-- Section 10, after the "What to read before UI work" table: "**Keep mobile in step.** A PR that changes what a user sees or does in a flow the mobile app shares (sign-in, the monthly check-in, navigation, net worth, accounts, settings, loading and error states, shared components, tokens, formatting or fixed wording) adds a dated row to [`docs/audit/plans/E12-mobile-parity-log.md`](./docs/audit/plans/E12-mobile-parity-log.md). The re-sweep session at the end of each design round checks the log against the merged PRs and appends any row that is missing."
-
-**`docs/audit/plans/DECISIONS.md`**
-
-- Record rulings R1 to R6 of 14 November, and that E12 D6 and D19 are superseded by R2.
+| # | Risk | Likelihood | Impact | What reduces it |
+| --- | --- | --- | --- | --- |
+| R1 | Metro, Bun workspaces and the shared packages do not resolve, or React is duplicated | Medium | High | S1a is the proof; Expo's monorepo support since SDK 52 |
+| R2 | SDK 58 wants React 19.3.0 while the repo has 19.3.1 | Medium | Medium | `expo-doctor` in S1a; ask before any version exception |
+| R3 | WorkOS refuses refresh without a secret | Medium | High | S2a spike; B-B |
+| R4 | Android e2e on free runners is too slow or flaky | Medium | Medium | S2c proves it; manual fallback recorded per PR |
+| R5 | The web app keeps changing, so parity moves | High | Medium | Parity log; slices specified late; tests that compare nav and tools lists |
+| R6 | A store refuses the app | Medium | High | Organisation account; reviewer account; privacy pages; claims within the O5 list |
+| R7 | A failure or old cached data shown as empty or zero | Medium | High | Tests in S3, S5, S7; S18 audit |
+| R8 | Maths written again in the app, or a figure only the server computes | Medium | High | Literal check; O5 seam 1 |
+| R9 | A token or the cache leaks through logs, backups or the bundle | Low | High | 5.3; 4.6 backup exclusion; bundle search; S18 |
+| R10 | A phone clock running fast causes sign-outs | Medium | Medium | B-A |
+| R11 | Marketing over-claims privacy | Medium | High | The O5 list in `DECISIONS.md`; claims register |
