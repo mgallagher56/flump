@@ -66,7 +66,7 @@ Terms acceptance was built (the follow-up below). A separate Fable decider, reco
 
 - **Framing.** The terms of use are a contract the person agrees to ("Agree and continue", with the line "By selecting Agree and continue, you agree to the terms of use" and the terms linked). The privacy notice is information they are shown, never agreed or consented to; a change to it alone asks them to read it and select "Continue". No checkbox, nothing pre-ticked, no marketing consent.
 - **Notice period.** Each page carries a version history with the date each version applies from (`LEGAL_PAGES`). A new terms version normally applies 14 days after it is published, as the terms promise; until then people may agree early or carry on.
-- **Privacy notice 0.2** adds one item under "Security records": "Which version of the terms you agreed to, which version of this notice we showed you, and when. We keep this until you delete your account. Lawful basis: our legitimate interest in keeping a record of the agreement between us."
+- **Privacy notice 0.2** adds one item under "Security records": "Which version of the terms you agreed to, which version of this notice we showed you, and when. We keep this until your account is deleted. Lawful basis: our legitimate interest in keeping a record of the agreement between us."
 - `ropa.md` and `data-map.md` gained the record.
 
 ## Judgement calls the reviewer made

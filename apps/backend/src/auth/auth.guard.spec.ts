@@ -448,7 +448,11 @@ describe("AuthGuard terms check (terms acceptance)", () => {
     );
     const error = await guard.canActivate(on(signedIn(), plain)).catch((e) => e);
     expect(error).toBeInstanceOf(ForbiddenException);
-    expect(body(error)).toMatchObject({ error: "terms_not_accepted" });
+    expect(body(error)).toEqual({
+      statusCode: 403,
+      error: "terms_not_accepted",
+      message: "Agree to the terms of use in Flump to carry on.",
+    });
     expect(check.hasAgreedToTermsInForce).toHaveBeenCalledWith("dev_user_123");
   });
 
@@ -500,6 +504,10 @@ describe("AuthGuard terms check (terms acceptance)", () => {
     });
     const error = await guard.canActivate(on(signedIn(), plain)).catch((e) => e);
     expect(status(error)).toBe(503);
+    expect(body(error)).toEqual({
+      code: "service_unavailable",
+      message: "The service is busy. Please try again shortly.",
+    });
   });
 
   it("fails closed with 503 when no terms check is provided, looking it up once", async () => {
@@ -525,6 +533,8 @@ describe("AuthGuard terms check (terms acceptance)", () => {
     const guard = new RealAuthGuard(new DevBypassVerifier(), moduleRef as never);
     await expect(guard.canActivate(on(signedIn(), plain))).resolves.toBe(true);
     expect(check.hasAgreedToTermsInForce).toHaveBeenCalledTimes(1);
+    // Looked up across the whole app, not only the auth module (the profile module provides it).
+    expect(moduleRef.get).toHaveBeenCalledWith(TERMS_ACCEPTANCE_CHECK, { strict: false });
   });
 
   it("answers not_invited before asking an uninvited caller to agree", async () => {

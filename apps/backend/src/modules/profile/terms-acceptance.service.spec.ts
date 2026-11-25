@@ -25,10 +25,20 @@ function serviceWith(rows: Row[]) {
     async ({ where }: { where: Record<string, unknown> }) =>
       rows.filter((row) => matches(where, row)).length,
   );
-  const find = vi.fn(async ({ where }: { where: Record<string, unknown> }) =>
-    rows
-      .filter((row) => matches(where, row))
-      .sort((a, b) => b.acceptedAt.getTime() - a.acceptedAt.getTime()),
+  // Honours `where` and `order` as the database would: unsorted unless asked for newest first.
+  const find = vi.fn(
+    async ({
+      where,
+      order,
+    }: {
+      where: Record<string, unknown>;
+      order?: Record<string, string>;
+    }) => {
+      const found = rows.filter((row) => matches(where, row));
+      return order?.acceptedAt === "DESC"
+        ? found.sort((a, b) => b.acceptedAt.getTime() - a.acceptedAt.getTime())
+        : found;
+    },
   );
   const execute = vi.fn(async () => ({ raw: [{}] }));
   const builder = {
@@ -86,6 +96,19 @@ describe("TermsAcceptanceService.hasAgreedToTermsInForce", () => {
     expect(count).toHaveBeenCalledTimes(4);
   });
 
+  it("forgets the oldest cached yes once 10,000 are held", async () => {
+    const rows: Row[] = [];
+    for (let i = 0; i <= 10_000; i++) rows.push(row(`u${i}`, "0.1", "0.2"));
+    const { service, count } = serviceWith(rows);
+    for (let i = 0; i <= 10_000; i++) await service.hasAgreedToTermsInForce(`u${i}`, NOW);
+    expect(count).toHaveBeenCalledTimes(10_001);
+    // u0 was cached first and pushed out by u10000; u1 is still cached.
+    await service.hasAgreedToTermsInForce("u1", NOW);
+    expect(count).toHaveBeenCalledTimes(10_001);
+    await service.hasAgreedToTermsInForce("u0", NOW);
+    expect(count).toHaveBeenCalledTimes(10_002);
+  });
+
   it("propagates a failed read, so the guard can fail closed", async () => {
     const { service, count } = serviceWith([]);
     count.mockRejectedValueOnce(new Error("connection refused"));
@@ -120,14 +143,33 @@ describe("TermsAcceptanceService.status", () => {
     expect(status.privacyNotice.changed).toBe(true);
   });
 
-  it("reads the latest agreement when there are several", async () => {
+  it("reads the caller's latest agreement when there are several", async () => {
     const { service } = serviceWith([
-      row("u1", "0.1", "0.1", "2026-11-20T10:00:00Z"),
       row("u1", "0.1", "0.2", "2026-11-26T09:00:00Z"),
+      row("u1", "0.1", "0.1", "2026-11-20T10:00:00Z"),
+      // Another user's rows never count for u1.
+      row("u2", "0.1", "0.1", "2026-11-26T11:00:00Z"),
     ]);
     const status = await service.status("u1", NOW);
     expect(status).toMatchObject({ required: false, agreed: true, firstTime: false });
     expect(status.privacyNotice.changed).toBe(false);
+  });
+});
+
+describe("TermsAcceptanceService.status, agreed", () => {
+  it("needs both the newest terms and the newest privacy notice", async () => {
+    // Terms 0.0 is not the newest (0.1), even with the newest privacy notice.
+    const { service } = serviceWith([row("u1", "0.0", "0.2")]);
+    expect((await service.status("u1", NOW)).agreed).toBe(false);
+  });
+
+  it("orders by time when reading the latest agreement", async () => {
+    // Stored oldest first: only an ordered read finds the 0.2 row as the latest.
+    const { service } = serviceWith([
+      row("u1", "0.1", "0.1", "2026-11-20T10:00:00Z"),
+      row("u1", "0.1", "0.2", "2026-11-26T09:00:00Z"),
+    ]);
+    expect((await service.status("u1", NOW)).privacyNotice.changed).toBe(false);
   });
 });
 
