@@ -6,7 +6,13 @@ import { EnvValidationError } from "../src/config/env.schema";
 import { AuditEvent } from "../src/entities/audit-event.entity";
 import { BudgetEntry } from "../src/entities/budget-entry.entity";
 import { resolveDbTestMode } from "../src/testing/dbTestMode";
-import { type AuthzHarness, bootAuthzHarness, type HttpMethod, USER_A } from "./authz/support";
+import {
+  type AuthzHarness,
+  bootAuthzHarness,
+  type HttpMethod,
+  USER_A,
+  USER_B,
+} from "./authz/support";
 
 // Migrations run on boot; see test/authz/support.ts.
 vi.mock("../src/config/typeorm.options", async (importOriginal) =>
@@ -17,9 +23,10 @@ vi.mock("../src/config/typeorm.options", async (importOriginal) =>
  * BE-15 and SEC-A: the real AppModule booted the way main.ts boots it (validateBootEnv, request
  * context, applySecurity) in a production-shaped environment on real Postgres: NODE_ENV=production
  * on Railway, every PRODUCTION_REQUIRED variable set (DELETION_TOMBSTONE_KEY,
- * WEB_CLIENT_IP_HMAC_KEY and WORKOS_API_KEY among them since SEC-A) and TERMS_VERSION unset. Proves
- * the service boots and works with the terms version off (terms acceptance refuses with its own 503
- * code), and that the same boot check refuses to start when any one of the three keys is missing.
+ * WEB_CLIENT_IP_HMAC_KEY and WORKOS_API_KEY among them since SEC-A) and the retired TERMS_VERSION
+ * still set, as it may be on Railway. Proves the service boots and works with it left in place
+ * (ignored, counted as one config warning), that the terms check refuses an account that has not
+ * agreed, and that the same boot check refuses to start when any one of the three keys is missing.
  * Auth is the authz harness's real WorkOsJwtVerifier on a throwaway JWKS; no guard is weakened.
  * Account deletion is not called here: with a WorkOS key set it would reach the real WorkOS API.
  */
@@ -44,7 +51,8 @@ const PRODUCTION_ENV: Record<string, string | undefined> = {
   DELETION_TOMBSTONE_KEY: runtimeValue("t"),
   WEB_CLIENT_IP_HMAC_KEY: runtimeValue("h"),
   WORKOS_API_KEY: runtimeValue("w"),
-  TERMS_VERSION: undefined,
+  // Retired by terms acceptance; a value left in Railway must not fail boot.
+  TERMS_VERSION: "2026-11-01",
   BANK_CONNECTIONS_ENABLED: undefined,
   CONTRACT_MODE: undefined,
   TRUST_PROXY_HOPS: undefined,
@@ -88,8 +96,8 @@ describe.skipIf(dbMode === "skip")("production-shaped environment (real Postgres
     Object.assign(process.env, savedEnv);
   });
 
-  it("boots with the three keys set and TERMS_VERSION unset; /health/ready counts only that one", async () => {
-    expect(process.env.TERMS_VERSION).toBeUndefined();
+  it("boots with the three keys set and the retired TERMS_VERSION still set; /health/ready counts it", async () => {
+    expect(process.env.TERMS_VERSION).toBe("2026-11-01");
     const res = await h.call("get", "/health/ready");
     statuses.push(`${res.status} GET /health/ready`);
     expect(res.status).toBe(200);
@@ -158,10 +166,25 @@ describe.skipIf(dbMode === "skip")("production-shaped environment (real Postgres
     expect(await budgetRows()).toBe(1);
   });
 
-  it("terms acceptance refuses with terms_not_configured", async () => {
-    const res = await call("post", "/user-profile/terms-acceptance", { version: "2026-11-01" });
-    expect(res.status).toBe(503);
-    expect(res.body).toMatchObject({ code: "terms_not_configured" });
+  it("refuses an account that has not agreed to the terms, and lets it through once it has", async () => {
+    // User B, whose first request this is: an agreement is cached once seen, and acceptance never
+    // reverts while the account exists, so the test removes B's row before B is ever checked.
+    await h.dataSource.query(`DELETE FROM "terms_acceptances" WHERE "user_id" = $1`, [USER_B]);
+    const asB = (method: HttpMethod, path: string, body?: object) =>
+      h.call(method, path, h.tokens.b, body);
+    const refused = await asB("get", "/budget-entries");
+    expect(refused.status).toBe(403);
+    expect(refused.body).toMatchObject({ code: "terms_not_accepted" });
+    const status = await asB("get", "/user-profile/terms-acceptance");
+    expect(status.status).toBe(200);
+    expect(status.body).toMatchObject({ required: true, firstTime: true });
+    const agreed = await asB("post", "/user-profile/terms-acceptance", {
+      termsVersion: status.body.terms.version,
+      privacyNoticeVersion: status.body.privacyNotice.version,
+    });
+    expect(agreed.status).toBe(200);
+    expect(agreed.body).toMatchObject({ recorded: true });
+    expect((await asB("get", "/budget-entries")).status).toBe(200);
   });
 
   it("data export succeeds and writes a user.exported audit row", async () => {

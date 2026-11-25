@@ -7,9 +7,14 @@ import {
 } from "@nestjs/common";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { AllowUninvited } from "./allow-uninvited";
-import { AuthGuard } from "./auth.guard";
+import { AuthGuard as RealAuthGuard } from "./auth.guard";
 import { DEV_BYPASS_TOKEN, DevBypassVerifier } from "./dev-bypass.verifier";
 import { AllowErasedAccount } from "./erased-account";
+import {
+  AllowWithoutTerms,
+  TERMS_ACCEPTANCE_CHECK,
+  type TermsAcceptanceCheck,
+} from "./terms-acceptance";
 import { createTestJwks } from "./testing/test-jwks";
 import type { TokenVerifier } from "./token-verifier";
 import { WorkOsJwtVerifier } from "./workos-jwt.verifier";
@@ -18,6 +23,28 @@ type Req = { path?: string; headers: Record<string, string | undefined>; user?: 
 
 const ctx = (request: Req): ExecutionContext =>
   ({ switchToHttp: () => ({ getRequest: () => request }) }) as unknown as ExecutionContext;
+
+/** A terms check that says everyone has agreed, for the tests about the other checks. */
+const agreedToTerms: TermsAcceptanceCheck = { hasAgreedToTermsInForce: async () => true };
+
+/**
+ * The guard with the terms check already agreed unless a test passes its own, so the tests below
+ * about tokens, the beta and erasure are not refused by the terms check that runs after them.
+ */
+class AuthGuard extends RealAuthGuard {
+  constructor(
+    ...args: [
+      ConstructorParameters<typeof RealAuthGuard>[0],
+      ConstructorParameters<typeof RealAuthGuard>[1]?,
+      ConstructorParameters<typeof RealAuthGuard>[2]?,
+      ConstructorParameters<typeof RealAuthGuard>[3]?,
+      ConstructorParameters<typeof RealAuthGuard>[4]?,
+    ]
+  ) {
+    const [verifier, moduleRef, erased, membership, terms] = args;
+    super(verifier, moduleRef, erased, membership, terms ?? agreedToTerms);
+  }
+}
 
 // Sample ids are built at runtime, never written as literals (AGENTS.md section 15).
 const ADMIN_ID = ["user", "admin"].join("_");
@@ -392,5 +419,144 @@ describe("AuthGuard erased-account check (BE-04)", () => {
     await expect(guard.canActivate(withHandler(request(), () => {}))).resolves.toBe(true);
     await expect(guard.canActivate(withHandler(request(), () => {}))).resolves.toBe(true);
     expect(moduleRef.get).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("AuthGuard terms check (terms acceptance)", () => {
+  const signedIn = (): Req => ({ headers: { authorization: `Bearer ${DEV_BYPASS_TOKEN}` } });
+  const on = (request: Req, handler: () => void): ExecutionContext =>
+    ({
+      switchToHttp: () => ({ getRequest: () => request }),
+      getHandler: () => handler,
+    }) as unknown as ExecutionContext;
+  const plain = () => {};
+  const termsCheck = (agreed: boolean) => {
+    const hasAgreedToTermsInForce = vi.fn(async () => agreed);
+    return { hasAgreedToTermsInForce };
+  };
+  const status = (error: unknown) => (error as { getStatus(): number }).getStatus();
+  const body = (error: unknown) => (error as { getResponse(): unknown }).getResponse();
+
+  it("refuses a caller who has not agreed with 403 terms_not_accepted", async () => {
+    const check = termsCheck(false);
+    const guard = new RealAuthGuard(
+      new DevBypassVerifier(),
+      undefined,
+      undefined,
+      undefined,
+      check,
+    );
+    const error = await guard.canActivate(on(signedIn(), plain)).catch((e) => e);
+    expect(error).toBeInstanceOf(ForbiddenException);
+    expect(body(error)).toMatchObject({ error: "terms_not_accepted" });
+    expect(check.hasAgreedToTermsInForce).toHaveBeenCalledWith("dev_user_123");
+  });
+
+  it("lets a caller who has agreed through", async () => {
+    const guard = new RealAuthGuard(
+      new DevBypassVerifier(),
+      undefined,
+      undefined,
+      undefined,
+      termsCheck(true),
+    );
+    await expect(guard.canActivate(on(signedIn(), plain))).resolves.toBe(true);
+  });
+
+  it("lets a caller who has not agreed through only on a handler marked AllowWithoutTerms", async () => {
+    class Routes {
+      @AllowWithoutTerms("test: reading the terms status")
+      exempt() {}
+    }
+    const check = termsCheck(false);
+    const guard = new RealAuthGuard(
+      new DevBypassVerifier(),
+      undefined,
+      undefined,
+      undefined,
+      check,
+    );
+    await expect(guard.canActivate(on(signedIn(), Routes.prototype.exempt))).resolves.toBe(true);
+    expect(check.hasAgreedToTermsInForce).not.toHaveBeenCalled();
+  });
+
+  it("checks the terms when the context names no handler", async () => {
+    const guard = new RealAuthGuard(
+      new DevBypassVerifier(),
+      undefined,
+      undefined,
+      undefined,
+      termsCheck(false),
+    );
+    const error = await guard.canActivate(ctx(signedIn())).catch((e) => e);
+    expect(body(error)).toMatchObject({ error: "terms_not_accepted" });
+  });
+
+  it("fails closed with 503 when the read fails, never a pass", async () => {
+    const guard = new RealAuthGuard(new DevBypassVerifier(), undefined, undefined, undefined, {
+      hasAgreedToTermsInForce: async () => {
+        throw new Error("connection refused");
+      },
+    });
+    const error = await guard.canActivate(on(signedIn(), plain)).catch((e) => e);
+    expect(status(error)).toBe(503);
+  });
+
+  it("fails closed with 503 when no terms check is provided, looking it up once", async () => {
+    const moduleRef = {
+      get: vi.fn((token: string) => {
+        throw new Error(`${token} not provided`);
+      }),
+    };
+    const guard = new RealAuthGuard(new DevBypassVerifier(), moduleRef as never);
+    for (let i = 0; i < 2; i++) {
+      const error = await guard.canActivate(on(signedIn(), plain)).catch((e) => e);
+      expect(status(error)).toBe(503);
+    }
+    const termsLookups = moduleRef.get.mock.calls.filter(([t]) => t === TERMS_ACCEPTANCE_CHECK);
+    expect(termsLookups).toHaveLength(1);
+  });
+
+  it("resolves the terms check lazily from the app", async () => {
+    const check = termsCheck(true);
+    const moduleRef = {
+      get: vi.fn((token: string) => (token === TERMS_ACCEPTANCE_CHECK ? check : null)),
+    };
+    const guard = new RealAuthGuard(new DevBypassVerifier(), moduleRef as never);
+    await expect(guard.canActivate(on(signedIn(), plain))).resolves.toBe(true);
+    expect(check.hasAgreedToTermsInForce).toHaveBeenCalledTimes(1);
+  });
+
+  it("answers not_invited before asking an uninvited caller to agree", async () => {
+    vi.stubEnv("BETA_ALLOWED_USER_IDS", ["user", "listed"].join("_"));
+    try {
+      const check = termsCheck(false);
+      const guard = new RealAuthGuard(
+        new DevBypassVerifier(),
+        undefined,
+        undefined,
+        undefined,
+        check,
+      );
+      const error = await guard.canActivate(on(signedIn(), plain)).catch((e) => e);
+      expect(body(error)).toMatchObject({ error: "not_invited" });
+      expect(check.hasAgreedToTermsInForce).not.toHaveBeenCalled();
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
+  it("answers 410 for an erased account before the terms", async () => {
+    const check = termsCheck(false);
+    const guard = new RealAuthGuard(
+      new DevBypassVerifier(),
+      undefined,
+      { isErased: async () => true },
+      undefined,
+      check,
+    );
+    const error = await guard.canActivate(on(signedIn(), plain)).catch((e) => e);
+    expect(error).toBeInstanceOf(GoneException);
+    expect(check.hasAgreedToTermsInForce).not.toHaveBeenCalled();
   });
 });

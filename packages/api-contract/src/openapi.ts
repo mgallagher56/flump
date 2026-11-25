@@ -90,7 +90,9 @@ const errorResponsesFor = (route: RouteDefinition): Record<string, JsonObject> =
     out["401"] = errorResponse("`unauthorized`: missing or invalid credentials.");
   }
   if (route.auth === "user") {
-    out["403"] = errorResponse("`forbidden` or `not_invited`: the account may not use this route.");
+    out["403"] = errorResponse(
+      "`forbidden` or `not_invited`: the account may not use this route. `terms_not_accepted`: the caller has not agreed to the terms of use in force; read GET /user-profile/terms-acceptance and record an agreement first.",
+    );
   }
   if (route.params || route.group === "imports") {
     out["404"] = errorResponse("`not_found`: no such resource for this user.");
@@ -124,22 +126,18 @@ const errorResponsesFor = (route: RouteDefinition): Record<string, JsonObject> =
   out["500"] = errorResponse("`internal_error`: an unexpected failure. Quote the requestId.");
   if (route.id === "profile.acceptTerms") {
     out["409"] = errorResponse(
-      "`terms_version_mismatch`: the version sent is not the one currently served. Fetch the current version and ask again.",
+      "`terms_version_mismatch`: the versions sent are not the newest. Read GET /user-profile/terms-acceptance and ask again.",
     );
   }
   if (route.auth !== "public") {
     out["503"] =
-      route.id === "profile.acceptTerms"
+      route.id === "profile.deleteUser"
         ? errorResponse(
-            "`terms_not_configured`: terms acceptance is not set up on this server. No Retry-After header is sent.",
+            "`account_deletion_unavailable`: account deletion is not set up on this server. Nothing was deleted. No Retry-After header is sent.",
           )
-        : route.id === "profile.deleteUser"
-          ? errorResponse(
-              "`account_deletion_unavailable`: account deletion is not set up on this server. Nothing was deleted. No Retry-After header is sent.",
-            )
-          : errorResponse(
-              "`service_unavailable`: busy or temporarily unavailable. See the Retry-After header.",
-            );
+        : errorResponse(
+            "`service_unavailable`: busy or temporarily unavailable. See the Retry-After header.",
+          );
   }
   return out;
 };

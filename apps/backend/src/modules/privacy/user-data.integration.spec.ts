@@ -23,6 +23,7 @@ import { McpToken } from "../../entities/mcp-token.entity";
 import { RetirementPlan } from "../../entities/retirement-plan.entity";
 import { SnapshotCheckin } from "../../entities/snapshot-checkin.entity";
 import { TaxRecord } from "../../entities/tax-record.entity";
+import { TermsAcceptance } from "../../entities/terms-acceptance.entity";
 import { Transaction } from "../../entities/transaction.entity";
 import { UserProfile } from "../../entities/user-profile.entity";
 import { WorkLogEntry } from "../../entities/work-log-entry.entity";
@@ -294,6 +295,13 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
     );
     await m.save(
       m.create(Consent, { userId, kind: "ai_access", version: "mcp:simulate", targetId: token.id }),
+    );
+    await m.save(
+      m.create(TermsAcceptance, {
+        userId,
+        termsVersionAgreed: "0.1",
+        privacyNoticeVersionShown: "0.2",
+      }),
     );
     // Invite-only beta: the link they used (the admin's row) and their member row.
     const [invite] = await m.query(
@@ -1086,6 +1094,8 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
       retirement_plans: 0,
       snapshot_checkins: 0,
       tax_records: 0,
+      // The record of the terms agreed to is not financial data: a reset keeps it.
+      terms_acceptances: 1,
       transactions: 0,
       user_profiles: 1,
       work_log_entries: 0,

@@ -92,7 +92,7 @@ describe("UserProfileController", () => {
       ),
       {} as never,
       {} as never,
-      null,
+      {} as never,
     );
   });
 
@@ -359,7 +359,7 @@ describe("UserProfileController account deletion and export (BE-04)", () => {
   const fresh = { id: "user-123", authTime: Math.floor(Date.now() / 1000) - 30 };
   const stale = { id: "user-123", authTime: Math.floor(Date.now() / 1000) - 3600 };
   const make = (deletion?: object, exporter?: object) =>
-    new UserProfileController({} as never, deletion as never, exporter as never, null);
+    new UserProfileController({} as never, deletion as never, exporter as never, {} as never);
 
   it.each([
     ["no body", undefined],
@@ -514,55 +514,55 @@ describe("UserProfileController account deletion and export (BE-04)", () => {
   });
 });
 
-describe("UserProfileController terms acceptance (BE-15, M-PRIV3)", () => {
+describe("UserProfileController terms acceptance", () => {
   const user = { id: "user-123" };
-  const make = (termsVersion: string | null, acceptTerms = vi.fn()) =>
-    new UserProfileController({ acceptTerms } as never, {} as never, {} as never, termsVersion);
+  // The newest versions in LEGAL_PAGES (packages/business-details): terms 0.1, privacy notice 0.2.
+  const newest = { termsVersion: "0.1", privacyNoticeVersion: "0.2" };
+  const make = (terms: { accept?: unknown; status?: unknown } = {}) =>
+    new UserProfileController({} as never, {} as never, {} as never, terms as never);
 
-  it("records the current version and reports whether this call wrote the row", async () => {
-    const acceptTerms = vi.fn().mockResolvedValue({ recorded: true });
-    const controller = make("2026-11-01", acceptTerms);
-    await expect(
-      controller.acceptTerms({ user } as never, { version: "2026-11-01" }),
-    ).resolves.toEqual({ version: "2026-11-01", recorded: true });
-    expect(acceptTerms).toHaveBeenCalledWith("user-123", "2026-11-01");
-  });
-
-  it("answers 503 terms_not_configured while TERMS_VERSION is unset, writing nothing", async () => {
-    const acceptTerms = vi.fn();
-    const thrown = await make(null, acceptTerms)
-      .acceptTerms({ user } as never, { version: "2026-11-01" })
-      .catch((e: unknown) => e);
-    expect(thrown).toBeInstanceOf(ServiceUnavailableException);
-    expect((thrown as ServiceUnavailableException).getResponse()).toMatchObject({
-      code: "terms_not_configured",
+  it("records the newest pair and reports whether this call wrote the row", async () => {
+    const accept = vi.fn().mockResolvedValue({ recorded: true });
+    await expect(make({ accept }).acceptTerms({ user } as never, newest)).resolves.toEqual({
+      ...newest,
+      recorded: true,
     });
-    expect(acceptTerms).not.toHaveBeenCalled();
+    expect(accept).toHaveBeenCalledWith("user-123", newest);
   });
 
-  it("answers 409 terms_version_mismatch for any other version, writing nothing", async () => {
-    const acceptTerms = vi.fn();
-    const thrown = await make("2026-11-01", acceptTerms)
-      .acceptTerms({ user } as never, { version: "2026-01-01" })
+  it.each([
+    ["an older terms version", { ...newest, termsVersion: "0.0" }],
+    ["an older privacy notice version", { ...newest, privacyNoticeVersion: "0.1" }],
+  ])("answers 409 terms_version_mismatch for %s, writing nothing", async (_label, body) => {
+    const accept = vi.fn();
+    const thrown = await make({ accept })
+      .acceptTerms({ user } as never, body)
       .catch((e: unknown) => e);
     expect(thrown).toBeInstanceOf(ConflictException);
     expect((thrown as ConflictException).getResponse()).toMatchObject({
       code: "terms_version_mismatch",
     });
-    expect(acceptTerms).not.toHaveBeenCalled();
+    expect(accept).not.toHaveBeenCalled();
   });
 
   it.each([
     ["no body", undefined],
-    ["an empty version", { version: "" }],
-    ["free text", { version: "I agree <b>" }],
-    ["an extra key", { version: "2026-11-01", userId: "user-other" }],
+    ["the retired single version", { version: "0.1" }],
+    ["free text", { ...newest, termsVersion: "I agree <b>" }],
+    ["an extra key", { ...newest, userId: "user-other" }],
   ])("refuses %s with a 400 even with contract enforcement off", async (_label, body) => {
-    const acceptTerms = vi.fn();
+    const accept = vi.fn();
     await expect(
-      make("2026-11-01", acceptTerms).acceptTerms({ user } as never, body as never),
+      make({ accept }).acceptTerms({ user } as never, body as never),
     ).rejects.toBeInstanceOf(BadRequestException);
-    expect(acceptTerms).not.toHaveBeenCalled();
+    expect(accept).not.toHaveBeenCalled();
+  });
+
+  it("answers the status for the caller", async () => {
+    const answer = { required: true };
+    const status = vi.fn().mockResolvedValue(answer);
+    await expect(make({ status }).termsStatus({ user } as never)).resolves.toBe(answer);
+    expect(status).toHaveBeenCalledWith("user-123");
   });
 
   it("is a 200 POST with the default write rate limit, like the other profile writes", () => {

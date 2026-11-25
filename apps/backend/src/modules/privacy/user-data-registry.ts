@@ -19,6 +19,7 @@ import { McpToken } from "../../entities/mcp-token.entity";
 import { RetirementPlan } from "../../entities/retirement-plan.entity";
 import { SnapshotCheckin } from "../../entities/snapshot-checkin.entity";
 import { TaxRecord } from "../../entities/tax-record.entity";
+import { TermsAcceptance } from "../../entities/terms-acceptance.entity";
 import { Transaction } from "../../entities/transaction.entity";
 import { UserProfile } from "../../entities/user-profile.entity";
 import { WorkLogEntry } from "../../entities/work-log-entry.entity";
@@ -766,6 +767,28 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
     valueMap: {
       noUserFacts: "a record of what the person agreed to and when, not a fact about their money",
       columns: ["id", "userId", "kind", "version", "targetId", "grantedAt", "withdrawnAt"],
+    },
+  }),
+  table({
+    entity: TermsAcceptance,
+    key: "termsAcceptances",
+    deleteOnErasure: true,
+    export: {
+      shape: "rows",
+      columns: ["termsVersionAgreed", "privacyNoticeVersionShown", "acceptedAt"],
+      excluded: { userId: USER_ID_IN_ENVELOPE },
+      orderBy: ["acceptedAt", "termsVersionAgreed", "privacyNoticeVersionShown"],
+      batchSize: 500,
+    },
+    reset: {
+      kind: "keep",
+      reason:
+        "the record of which terms the person agreed to is not financial data; the agreement still stands after a reset",
+    },
+    valueMap: {
+      noUserFacts:
+        "a record of which terms of use the person agreed to, which privacy notice they were shown, and when; not a fact about their money",
+      columns: ["userId", "termsVersionAgreed", "privacyNoticeVersionShown", "acceptedAt"],
     },
   }),
   table({

@@ -56,6 +56,7 @@ export {
   DeleteUserResponse,
   ResetFinancialDataResponse,
   SendPasswordResetResponse,
+  TermsStatusResponse,
   UpdateChecklistResponse,
   UpdateProfileResponse,
   UserProfileResponse,

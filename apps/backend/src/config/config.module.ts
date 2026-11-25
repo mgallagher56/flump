@@ -10,9 +10,9 @@ import { readClientPolicy } from "./client-policy.config";
 import { assertContractModeForEnv } from "./contract-mode.config";
 import { type DbConfig, resolveDbConfig } from "./db.config";
 import {
-  type PrivacyProductionVariable,
-  privacyConfigWarnings,
-  privacyWarningMessage,
+  type RetiredVariable,
+  retiredVariableMessage,
+  retiredVariablesSet,
 } from "./privacy.config";
 
 export const BOOT_CONFIG = "BOOT_CONFIG";
@@ -21,8 +21,8 @@ export interface BootConfig {
   db: DbConfig;
   /** GET /app/client-policy, resolved once at boot (N11) rather than from process.env per request. */
   clientPolicy: ClientPolicyResponse;
-  /** Privacy variables unset in production (BE-15, N1): logged at boot, named by /health/ready. */
-  privacyWarnings: readonly PrivacyProductionVariable[];
+  /** Retired variables still set: logged at boot by name, counted by /health/ready. */
+  configWarnings: readonly RetiredVariable[];
 }
 
 @Global()
@@ -45,11 +45,11 @@ export interface BootConfig {
         for (const warning of db.warnings) {
           logger.warn(warning);
         }
-        const privacyWarnings = privacyConfigWarnings(process.env);
-        for (const name of privacyWarnings) {
-          logger.warn(privacyWarningMessage(name));
+        const configWarnings = retiredVariablesSet(process.env);
+        for (const name of configWarnings) {
+          logger.warn(retiredVariableMessage(name));
         }
-        return { db, clientPolicy: readClientPolicy(process.env), privacyWarnings };
+        return { db, clientPolicy: readClientPolicy(process.env), configWarnings };
       },
     },
   ],

@@ -2,6 +2,7 @@ import { Button, Card, ConfirmDialog, PageSection } from "@repo/ui";
 import { UserX } from "lucide-react";
 import { type FC, useEffect, useRef, useState } from "react";
 import {
+  type AllowedReturnPath,
   DELETE_ACCOUNT_CONFIRMATION,
   type DeleteAccountStatus,
   RECENT_LOGIN_MESSAGE,
@@ -24,13 +25,19 @@ export interface DeleteAccountSectionProps {
   status: DeleteAccountStatus;
   /** Sends the delete request with the confirmation phrase. */
   onConfirm: () => void;
+  /** Where "Sign in again" comes back to. Defaults to the settings Data tab. */
+  reauthReturnPath?: AllowedReturnPath;
 }
 
 /**
  * "Delete your account": a danger row and a type-to-confirm dialog. The dialog stays open on
  * failure and on `identity_pending`, where repeating the request finishes the deletion.
  */
-export const DeleteAccountSection: FC<DeleteAccountSectionProps> = ({ status, onConfirm }) => {
+export const DeleteAccountSection: FC<DeleteAccountSectionProps> = ({
+  status,
+  onConfirm,
+  reauthReturnPath,
+}) => {
   const [open, setOpen] = useState(false);
   // Failures from an earlier attempt are not shown again when the dialog is reopened.
   const [attempted, setAttempted] = useState(false);
@@ -114,7 +121,9 @@ export const DeleteAccountSection: FC<DeleteAccountSectionProps> = ({ status, on
           pending={status === "submitting"}
           keepFocusWhilePending
           error={error}
-          errorAction={needsSignIn ? <SignInAgainButton /> : undefined}
+          errorAction={
+            needsSignIn ? <SignInAgainButton returnPath={reauthReturnPath} /> : undefined
+          }
           onConfirm={handleConfirm}
         />
       </Card>

@@ -29,8 +29,18 @@ export const REAUTH_RETURN_PATH = "/app/profile?tab=data";
 /** Signed-in page that finishes an erased account's deletion (the backend answered 410). */
 export const ACCOUNT_DELETION_PENDING_PATH = ACCOUNT_ERASED_PATH;
 
+/**
+ * The terms acceptance page (terms acceptance). Someone who has not agreed can delete their account
+ * there, so a "Sign in again" round trip from it comes back to it.
+ */
+export const TERMS_ACCEPTANCE_PATH = "/terms-acceptance";
+
 /** The only return paths `/logout` and `/login` accept, so neither is an open redirect. */
-const ALLOWED_RETURN_PATHS = [REAUTH_RETURN_PATH, ACCOUNT_DELETION_PENDING_PATH] as const;
+const ALLOWED_RETURN_PATHS = [
+  REAUTH_RETURN_PATH,
+  ACCOUNT_DELETION_PENDING_PATH,
+  TERMS_ACCEPTANCE_PATH,
+] as const;
 export type AllowedReturnPath = (typeof ALLOWED_RETURN_PATHS)[number];
 
 /** True only for one of the allowed return paths, compared exactly. */

@@ -55,6 +55,20 @@ export const BUSINESS_DETAILS: BusinessDetails = {
 
 export type LegalPageKey = "privacy" | "terms" | "cookies" | "accessibility";
 
+/** One version of a legal page. */
+export interface LegalPageVersion {
+  /** Bumped with every change to the page's wording. */
+  version: string;
+  /** The day this version was written, en-GB long form. */
+  updated: string;
+  /**
+   * The UK date this version applies from, `YYYY-MM-DD`. The terms promise at least 14 days'
+   * notice of a change, so a new terms version normally sets a date 14 days after it is published.
+   * Until then the version before it still applies and people may agree to the new one early.
+   */
+  effectiveFrom: string;
+}
+
 export interface LegalPage {
   key: LegalPageKey;
   /** Path on the marketing site, which is the one home of the legal pages. */
@@ -63,55 +77,98 @@ export interface LegalPage {
   label: string;
   /** The page's h1. */
   title: string;
-  /** Bumped with every change to the page's wording. */
+  /** The newest version: the one the page shows. Always `history[0].version`. */
   version: string;
-  /** The day this version was written, en-GB long form. */
+  /** The day the newest version was written. Always `history[0].updated`. */
   updated: string;
+  /** Every version, newest first. */
+  history: readonly LegalPageVersion[];
+}
+
+function withVersion(fields: Omit<LegalPage, "version" | "updated">): LegalPage {
+  const [newest] = fields.history;
+  if (!newest) throw new Error(`Legal page ${fields.key} has no version`);
+  return { ...fields, version: newest.version, updated: newest.updated };
 }
 
 /**
  * The legal pages (E19). Both apps' footers and the pages themselves read paths, names and version
- * lines from here. Change a page's wording and its `version` and `updated` in the same commit.
+ * lines from here, and the backend reads the terms and privacy versions people must agree to or be
+ * shown (terms acceptance). Change a page's wording and add a version at the top of its `history`
+ * in the same commit.
  */
 export const LEGAL_PAGES: readonly LegalPage[] = [
-  {
+  withVersion({
     key: "privacy",
     path: "/privacy",
     label: "Privacy",
     title: "Privacy notice",
-    version: "0.1",
-    updated: "25 November 2026",
-  },
-  {
+    history: [
+      { version: "0.2", updated: "25 November 2026", effectiveFrom: "2026-11-25" },
+      { version: "0.1", updated: "25 November 2026", effectiveFrom: "2026-11-25" },
+    ],
+  }),
+  withVersion({
     key: "terms",
     path: "/terms",
     label: "Terms",
     title: "Terms of use",
-    version: "0.1",
-    updated: "25 November 2026",
-  },
-  {
+    history: [{ version: "0.1", updated: "25 November 2026", effectiveFrom: "2026-11-25" }],
+  }),
+  withVersion({
     key: "cookies",
     path: "/cookies",
     label: "Cookies and storage",
     title: "Cookies and browser storage",
-    version: "0.1",
-    updated: "25 November 2026",
-  },
-  {
+    history: [{ version: "0.1", updated: "25 November 2026", effectiveFrom: "2026-11-25" }],
+  }),
+  withVersion({
     key: "accessibility",
     path: "/accessibility",
     label: "Accessibility",
     title: "Accessibility statement",
-    version: "0.1",
-    updated: "25 November 2026",
-  },
+    history: [{ version: "0.1", updated: "25 November 2026", effectiveFrom: "2026-11-25" }],
+  }),
 ];
 
 export function legalPage(key: LegalPageKey): LegalPage {
   const page = LEGAL_PAGES.find((candidate) => candidate.key === key);
   if (!page) throw new Error(`Unknown legal page: ${key}`);
   return page;
+}
+
+/** The pages a person agrees to or is shown before using Flump (terms acceptance). */
+export type AcceptanceDocument = "terms" | "privacy";
+
+/** Today's date in the UK, `YYYY-MM-DD`: version dates are UK dates. */
+export function ukDate(now: Date): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/London",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(now);
+}
+
+/**
+ * The version of a page that applies on this date: the newest whose `effectiveFrom` has come.
+ * Throws when none has, which would mean a page with no version in force.
+ */
+export function versionInEffect(key: AcceptanceDocument, now: Date): LegalPageVersion {
+  const today = ukDate(now);
+  const found = legalPage(key).history.find((entry) => entry.effectiveFrom <= today);
+  if (!found) throw new Error(`No version of ${key} is in effect on ${today}`);
+  return found;
+}
+
+/**
+ * Versions that satisfy the one in effect: it and every newer one (an early agreement to a version
+ * not yet in force counts). Newest first.
+ */
+export function versionsAtLeastInEffect(key: AcceptanceDocument, now: Date): string[] {
+  const history = legalPage(key).history;
+  const inEffect = versionInEffect(key, now);
+  return history.slice(0, history.indexOf(inEffect) + 1).map((entry) => entry.version);
 }
 
 /**

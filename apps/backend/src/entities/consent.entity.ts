@@ -5,9 +5,9 @@ import { Check, Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn 
  * - `ai_access`: an AI connection token was minted (target: the token); withdrawn on revoke.
  * - `bank_access`: a bank connection was authorised (target: the connection); withdrawn on
  *   disconnect.
- * - `terms`: the terms and privacy notice accepted, with their version (`TERMS_VERSION`). Written
- *   by POST /user-profile/terms-acceptance (BE-15), one row per user and version. The web
- *   acceptance step that calls it is a follow-up.
+ * - `terms`: retired. Terms acceptance is recorded in `terms_acceptances` (TermsAcceptance), with
+ *   both page versions. Nothing writes this kind now; the CHECK constraint still allows it, so any
+ *   row written before stays as history (exported, deleted with the account).
  */
 const CONSENT_KINDS = ["terms", "ai_access", "bank_access"] as const;
 export type ConsentKind = (typeof CONSENT_KINDS)[number];

@@ -117,6 +117,7 @@ export const ROUTE_MATRIX: Readonly<Record<string, MatrixRow>> = {
   "DELETE /user-profile": userProfile,
   "GET /user-profile/export": userProfile,
   "GET /user-profile/export/csv": userProfile,
+  "GET /user-profile/terms-acceptance": userProfile,
   "POST /user-profile/terms-acceptance": userProfile,
 
   // Retirement plan controller (E33).

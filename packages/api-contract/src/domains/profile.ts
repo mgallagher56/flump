@@ -238,31 +238,62 @@ export const DeleteUserResponse = z.strictObject({
 });
 export type DeleteUserResponse = z.infer<typeof DeleteUserResponse>;
 
-/** A terms and privacy notice version: a short identifier such as `2026-11-01`, no free text. */
-export const TermsVersion = z
-  .string()
-  .trim()
-  .min(1)
-  .max(64)
-  .regex(/^[A-Za-z0-9._-]+$/);
+/** A legal page version, as `LEGAL_PAGES` (`@flump/business-details`) numbers them: `0.1`. */
+export const LegalPageVersionNumber = z.string().regex(/^\d{1,4}\.\d{1,4}$/);
 
 /**
- * POST /user-profile/terms-acceptance request body (BE-15, M-PRIV3). `version` must be the
- * version the backend currently serves (`TERMS_VERSION`), or the request is refused with
- * `terms_version_mismatch`.
+ * POST /user-profile/terms-acceptance request body. The two versions the person was shown: the
+ * terms of use they agree to and the privacy notice they were shown (information, not consent).
+ * Both must be the newest versions, or the request is refused with `terms_version_mismatch`.
  */
-export const AcceptTermsRequest = z.strictObject({ version: TermsVersion });
+export const AcceptTermsRequest = z.strictObject({
+  termsVersion: LegalPageVersionNumber,
+  privacyNoticeVersion: LegalPageVersionNumber,
+});
 export type AcceptTermsRequest = z.infer<typeof AcceptTermsRequest>;
 
 /**
- * POST /user-profile/terms-acceptance. `recorded` is false when this version was already accepted
- * (the call is idempotent per version); a new version records a new acceptance.
+ * POST /user-profile/terms-acceptance. `recorded` is false when this pair was already recorded
+ * (the call is idempotent per pair); a new pair records a new row.
  */
 export const AcceptTermsResponse = z.strictObject({
-  version: TermsVersion,
+  termsVersion: LegalPageVersionNumber,
+  privacyNoticeVersion: LegalPageVersionNumber,
   recorded: z.boolean(),
 });
 export type AcceptTermsResponse = z.infer<typeof AcceptTermsResponse>;
+
+/** One legal page in GET /user-profile/terms-acceptance: its newest version. */
+export const LegalDocumentStatus = z.strictObject({
+  version: LegalPageVersionNumber,
+  /** The day the version was written, en-GB long form: "25 November 2026". */
+  updated: z.string(),
+  /** The UK date it applies from, `YYYY-MM-DD`. Later than today while it is not yet in force. */
+  effectiveFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  /** Path of the page on the marketing site, such as `/terms`. */
+  path: z.string(),
+  /** The person agreed to (or was shown) an earlier version and this one is new to them. */
+  changed: z.boolean(),
+});
+export type LegalDocumentStatus = z.infer<typeof LegalDocumentStatus>;
+
+/**
+ * GET /user-profile/terms-acceptance: whether the caller must agree before using Flump.
+ * - `required`: no agreement covers the versions in force; every other call answers 403
+ *   `terms_not_accepted` until one is recorded.
+ * - `agreed`: the newest versions are already recorded (nothing to show).
+ * - `firstTime`: the caller has never agreed to any version.
+ * Not required and not agreed means a newer version is published but not yet in force: show it,
+ * and let the person agree early or carry on.
+ */
+export const TermsStatusResponse = z.strictObject({
+  required: z.boolean(),
+  agreed: z.boolean(),
+  firstTime: z.boolean(),
+  terms: LegalDocumentStatus,
+  privacyNotice: LegalDocumentStatus,
+});
+export type TermsStatusResponse = z.infer<typeof TermsStatusResponse>;
 
 /** Version of the export document below. Bump on any breaking change to its shape. */
 export const ACCOUNT_EXPORT_SCHEMA_VERSION = 1;
@@ -550,6 +581,16 @@ export const AccountExportConsent = z.strictObject({
   withdrawnAt: NullableExportTimestamp,
 });
 
+/**
+ * `termsAcceptances`: each time the person agreed to the terms of use, with the privacy notice
+ * version they were shown then.
+ */
+export const AccountExportTermsAcceptance = z.strictObject({
+  termsVersionAgreed: z.string(),
+  privacyNoticeVersionShown: z.string(),
+  acceptedAt: ExportTimestamp,
+});
+
 export const AccountExportRetirementPlan = z.strictObject({
   id: Uuid,
   retirementAge: z.number().int().nullable(),
@@ -645,6 +686,7 @@ export const AccountExportDocument = z.strictObject({
   idempotencyKeys: z.array(AccountExportIdempotencyKey),
   auditEvents: z.array(AccountExportAuditEvent),
   consents: z.array(AccountExportConsent),
+  termsAcceptances: z.array(AccountExportTermsAcceptance),
   invoicingSettings: z.array(AccountExportInvoicingSettings),
   workLogEntries: z.array(AccountExportWorkLogEntry),
   invoices: z.array(AccountExportInvoice),
@@ -679,6 +721,7 @@ export const ACCOUNT_EXPORT_SECTIONS = {
   idempotencyKeys: AccountExportIdempotencyKey,
   auditEvents: AccountExportAuditEvent,
   consents: AccountExportConsent,
+  termsAcceptances: AccountExportTermsAcceptance,
   invoicingSettings: AccountExportInvoicingSettings,
   workLogEntries: AccountExportWorkLogEntry,
   invoices: AccountExportInvoice,

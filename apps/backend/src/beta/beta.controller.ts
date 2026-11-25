@@ -23,6 +23,7 @@ import {
 import { AllowUninvited } from "../auth/allow-uninvited";
 import { AuthGuard } from "../auth/auth.guard";
 import type { AuthenticatedRequest } from "../auth/authenticated-request";
+import { AllowWithoutTerms } from "../auth/terms-acceptance";
 import { RateLimit } from "../security/rate-limit.decorator";
 import { BetaAdminGuard } from "./beta-admin.guard";
 import { BetaInvitesService } from "./beta-invites.service";
@@ -39,6 +40,7 @@ export class BetaInvitesController {
   @Post("redeem")
   @HttpCode(200)
   @AllowUninvited()
+  @AllowWithoutTerms("an invite is redeemed before the terms are shown in the sign-up flow")
   @RateLimit("inviteRedeem")
   @UseGuards(AuthGuard)
   redeem(

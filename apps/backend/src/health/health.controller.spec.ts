@@ -14,14 +14,14 @@ function makeRes() {
 function makeController(
   query: () => Promise<unknown>,
   migrations: { loaded?: number; executed?: () => Promise<unknown> } = {},
-  privacyWarnings: BootConfig["privacyWarnings"] = [],
+  configWarnings: BootConfig["configWarnings"] = [],
 ) {
   const { loaded = 1, executed = async () => [{ n: loaded }] } = migrations;
   const dataSource = {
     migrations: Array.from({ length: loaded }, () => ({})),
     query: vi.fn((sql: string) => (sql.includes("FROM migrations") ? executed() : query())),
   };
-  const bootConfig = { privacyWarnings } as unknown as BootConfig;
+  const bootConfig = { configWarnings } as unknown as BootConfig;
   return { controller: new HealthController(dataSource as never, bootConfig), dataSource };
 }
 
@@ -59,7 +59,7 @@ describe("HealthController", () => {
     expect(res.setHeader).toHaveBeenCalledWith("Cache-Control", "no-store");
   });
 
-  it("readiness stays 200 and counts unset privacy variables in configWarnings, without naming them (BE-15, N1)", async () => {
+  it("readiness stays 200 and counts retired variables still set in configWarnings, without naming them", async () => {
     const { controller } = makeController(async () => [{ "?column?": 1 }], {}, ["TERMS_VERSION"]);
     const res = makeRes();
     const body = await controller.ready(res as never);

@@ -2,6 +2,7 @@ import { Logger } from "@nestjs/common";
 import { afterEach, describe, expect, it, type Mock, vi } from "vitest";
 import { encodeCursor } from "../../contract/pagination";
 import { fakeBetaMembership } from "../../testing/fake-beta-membership";
+import { fakeTermsAcceptance } from "../../testing/fake-terms-acceptance";
 import { at } from "../../testing/must";
 import { McpTokenService } from "./mcp-token.service";
 
@@ -16,9 +17,13 @@ describe("McpTokenService.findTokenByHash allowlist (E29-T8)", () => {
     revokedAt: null,
   };
   const membership = fakeBetaMembership();
+  let terms = fakeTermsAcceptance();
+  afterEach(() => {
+    terms = fakeTermsAcceptance();
+  });
   function withRepo(overrides: Partial<typeof row> | { expiresAt: null } = {}) {
     const repo = { findOne: vi.fn().mockResolvedValue({ ...row, ...overrides }) };
-    return new McpTokenService(repo as never, membership);
+    return new McpTokenService(repo as never, membership, terms);
   }
   const original = process.env;
 
@@ -210,7 +215,7 @@ describe("McpTokenService.recordRequest (E17-N6)", () => {
     const qb = fakeUpdateBuilder();
     const query = vi.fn().mockResolvedValue([]);
     const repo = { createQueryBuilder: vi.fn(() => qb), query };
-    const service = new McpTokenService(repo as never, fakeBetaMembership());
+    const service = new McpTokenService(repo as never, fakeBetaMembership(), fakeTermsAcceptance());
     await service.recordRequest("tok_1", 3);
     // BE-06: AI-connection use marks the owner active (at most daily), keyed by the token id.
     expect(query).toHaveBeenCalledWith(expect.stringContaining('"last_active_at" = now()'), [
@@ -231,7 +236,10 @@ describe("McpTokenService.recordRequest (E17-N6)", () => {
       query: vi.fn().mockRejectedValue(new Error("x")),
     };
     await expect(
-      new McpTokenService(repo as never, fakeBetaMembership()).recordRequest("tok_1", 1),
+      new McpTokenService(repo as never, fakeBetaMembership(), fakeTermsAcceptance()).recordRequest(
+        "tok_1",
+        1,
+      ),
     ).resolves.toBeUndefined();
   });
 });
@@ -258,6 +266,7 @@ describe("McpTokenService.listTokens expiry label", () => {
     new McpTokenService(
       { find: vi.fn().mockResolvedValue([token]) } as never,
       fakeBetaMembership(),
+      fakeTermsAcceptance(),
     );
 
   afterEach(() => vi.useRealTimers());
@@ -278,7 +287,11 @@ describe("McpTokenService.listTokens expiry label", () => {
     // Tenancy contract: the lookup is filtered by the caller's user id, so one user never sees
     // another's tokens; the list reads newest first.
     const find = vi.fn().mockResolvedValue([]);
-    await new McpTokenService({ find } as never, fakeBetaMembership()).listTokens("u_1");
+    await new McpTokenService(
+      { find } as never,
+      fakeBetaMembership(),
+      fakeTermsAcceptance(),
+    ).listTokens("u_1");
     expect(find).toHaveBeenCalledWith({ where: { userId: "u_1" }, order: { createdAt: "DESC" } });
   });
 });
@@ -300,10 +313,11 @@ describe("McpTokenService.listTokensPage (GET /mcp-tokens, BE-09)", () => {
 
   it("filters by the caller and orders newest first with the id as tiebreak", async () => {
     const { repo, calls } = builder();
-    const page = await new McpTokenService(repo as never, fakeBetaMembership()).listTokensPage(
-      "u_1",
-      { limit: 10 },
-    );
+    const page = await new McpTokenService(
+      repo as never,
+      fakeBetaMembership(),
+      fakeTermsAcceptance(),
+    ).listTokensPage("u_1", { limit: 10 });
     expect(calls).toContainEqual(["where", ["t.userId = :userId", { userId: "u_1" }]]);
     // Documented order: created_at descending, then id descending for equal times.
     expect(calls).toContainEqual(["orderBy", ['"t"."created_at"', "DESC"]]);
@@ -319,10 +333,67 @@ describe("McpTokenService.listTokensPage (GET /mcp-tokens, BE-09)", () => {
       "0b6f4e1a-9c2d-4e3f-a1b2-c3d4e5f60711",
     ]);
     await expect(
-      new McpTokenService(repo as never, fakeBetaMembership()).listTokensPage("u_1", {
+      new McpTokenService(
+        repo as never,
+        fakeBetaMembership(),
+        fakeTermsAcceptance(),
+      ).listTokensPage("u_1", {
         limit: 10,
         cursor,
       }),
     ).resolves.toEqual({ items: [], nextCursor: null });
+  });
+});
+
+describe("McpTokenService.findTokenByHash terms check (terms acceptance)", () => {
+  const row = {
+    id: "tok_1",
+    userId: "friend",
+    tokenHash: "h",
+    scopes: [],
+    anonymizeInstitutions: true,
+    expiresAt: new Date(Date.now() + 86_400_000),
+    revokedAt: null,
+  };
+  const repo = () => ({
+    findOne: vi.fn().mockResolvedValue({ ...row }),
+    update: vi.fn(),
+  });
+
+  it("refuses the token of an owner who has not agreed, saying where to agree, and revokes nothing", async () => {
+    const tokens = repo();
+    const warn = vi.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
+    try {
+      const service = new McpTokenService(
+        tokens as never,
+        fakeBetaMembership(),
+        fakeTermsAcceptance([]),
+      );
+      await expect(service.findTokenByHash("h")).rejects.toThrow(
+        "Open Flump and agree to the terms of use to use this AI connection again.",
+      );
+      expect(tokens.update).not.toHaveBeenCalled();
+      expect(warn).toHaveBeenCalledWith("mcp_token_denied tokenId=tok_1 reason=terms_not_accepted");
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  it("returns the token of an owner who has agreed", async () => {
+    const service = new McpTokenService(
+      repo() as never,
+      fakeBetaMembership(),
+      fakeTermsAcceptance(["friend"]),
+    );
+    expect((await service.findTokenByHash("h"))?.id).toBe("tok_1");
+  });
+
+  it("fails rather than passing when the terms read fails", async () => {
+    const service = new McpTokenService(repo() as never, fakeBetaMembership(), {
+      hasAgreedToTermsInForce: async () => {
+        throw new Error("connection refused");
+      },
+    });
+    await expect(service.findTokenByHash("h")).rejects.toThrow("connection refused");
   });
 });

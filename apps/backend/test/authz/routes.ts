@@ -4,6 +4,7 @@ import { GUARDS_METADATA, METHOD_METADATA, PATH_METADATA } from "@nestjs/common/
 import { AppModule } from "../../src/app.module";
 import { ALLOW_UNINVITED } from "../../src/auth/allow-uninvited";
 import { AuthGuard } from "../../src/auth/auth.guard";
+import { ALLOW_WITHOUT_TERMS } from "../../src/auth/terms-acceptance";
 import { moduleControllers } from "../../src/testing/module-controllers";
 
 export interface RegisteredRoute {
@@ -12,6 +13,11 @@ export interface RegisteredRoute {
   guarded: boolean;
   /** Marked `@AllowUninvited()`: the AuthGuard's beta refusal does not apply. */
   allowUninvited: boolean;
+  /**
+   * The reason given to `@AllowWithoutTerms(reason)`: the AuthGuard's terms check does not apply.
+   * Null on every other route, which the check covers because it runs inside AuthGuard.
+   */
+  allowWithoutTerms: string | null;
 }
 
 const VERBS: Partial<Record<number, string>> = {
@@ -42,6 +48,13 @@ function handlerNames(proto: object): string[] {
  * test/contract/route-inventory.spec.ts), with whether AuthGuard is applied at class or method
  * level. APP_GUARD providers are not counted: only an explicit AuthGuard proves authentication.
  */
+/** The decorator's reason, or null when absent. Any other stored value is a bug: fail loudly. */
+function readReason(value: unknown): string | null {
+  if (value === undefined) return null;
+  if (typeof value !== "string") throw new Error("routes.ts: AllowWithoutTerms without a reason");
+  return value;
+}
+
 export function registeredRoutes(): RegisteredRoute[] {
   const controllers = moduleControllers(AppModule);
   const routes: RegisteredRoute[] = [];
@@ -63,6 +76,7 @@ export function registeredRoutes(): RegisteredRoute[] {
         key: `${VERBS[verb]} ${joinPath(prefix, sub)}`,
         guarded: [...classGuards, ...methodGuards].includes(AuthGuard),
         allowUninvited: Reflect.getMetadata(ALLOW_UNINVITED, handler as object) === true,
+        allowWithoutTerms: readReason(Reflect.getMetadata(ALLOW_WITHOUT_TERMS, handler as object)),
       });
     }
   }
