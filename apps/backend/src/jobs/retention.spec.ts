@@ -5,6 +5,7 @@ import {
   describeRetentionReport,
   type Queryable,
   RETENTION_POLICIES,
+  RetentionLockNotReleasedError,
   runRetentionPurge,
 } from "./retention";
 
@@ -146,5 +147,40 @@ describe("retention and the audit_events delete guard (SEC-F)", () => {
     const { db, calls } = fakeDb();
     await runRetentionPurge(db, NOW, other);
     expect(calls).toEqual(["DELETE", "RECORD ok", "UNLOCK"]);
+  });
+
+  /** Unlock fails `failures` times; records ROLLBACK and each unlock attempt. */
+  function unlockFails(failures: number): { db: Queryable; calls: string[] } {
+    const calls: string[] = [];
+    let left = failures;
+    const db: Queryable = {
+      query: async (sql) => {
+        if (sql.includes("pg_try_advisory_lock")) return [{ locked: true }];
+        if (sql.includes("to_regclass")) return [{ t: null }];
+        if (sql.includes("count(*)")) return [{ n: 0 }];
+        if (sql.includes("pg_advisory_unlock")) {
+          calls.push("UNLOCK");
+          if (left-- > 0) throw new Error("current transaction is aborted");
+          return [];
+        }
+        if (sql.trim() === "ROLLBACK") calls.push("ROLLBACK");
+        return [];
+      },
+    };
+    return { db, calls };
+  }
+
+  it("an unlock refused by an aborted transaction rolls back and unlocks again", async () => {
+    const { db, calls } = unlockFails(1);
+    await expect(runRetentionPurge(db, NOW, other)).resolves.toMatchObject({ skipped: false });
+    expect(calls).toEqual(["UNLOCK", "ROLLBACK", "UNLOCK"]);
+  });
+
+  it("an unlock that fails twice throws RetentionLockNotReleasedError", async () => {
+    const { db, calls } = unlockFails(2);
+    await expect(runRetentionPurge(db, NOW, other)).rejects.toBeInstanceOf(
+      RetentionLockNotReleasedError,
+    );
+    expect(calls).toEqual(["UNLOCK", "ROLLBACK", "UNLOCK"]);
   });
 });

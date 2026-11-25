@@ -10,6 +10,7 @@ import { resolveDbTestMode } from "../testing/dbTestMode";
 import { discoverMigrations } from "../testing/discoverMigrations";
 import { emptyTables } from "../testing/emptyTables";
 import {
+  discardConnection,
   RETENTION_LOCK_KEY,
   RETENTION_POLICIES,
   type RetentionPolicy,
@@ -494,6 +495,40 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       ]);
       // The lock was released: the next run goes ahead.
       expect((await runRetentionPurge(runner, at(2 * DAY_MS))).skipped).toBe(false);
+    });
+
+    it("never removes a live request counter when the app clock runs ahead of the database", async () => {
+      await ds.query(
+        `INSERT INTO rate_limit_buckets (key, window_start, count, expires_at) VALUES
+           ('db-live', now(), 1, now() + interval '1 hour'),
+           ('db-past', now() - interval '2 hours', 1, now() - interval '1 second')`,
+      );
+      // The app thinks it is a day later than the database does.
+      const ahead = new Date(Date.now() + DAY_MS);
+      const counters = RETENTION_POLICIES.filter((p) => p.table === "rate_limit_buckets");
+      const report = await runRetentionPurge(runner, ahead, counters);
+      expect(report.deleted).toEqual({ rate_limit_buckets_expired: 1 });
+      expect(
+        (await ds.query("SELECT key FROM rate_limit_buckets")).map((r: { key: string }) => r.key),
+      ).toEqual(["db-live"]);
+    });
+
+    it("discarding a connection ends its session, so its lock is freed", async () => {
+      const holder = ds.createQueryRunner();
+      await holder.connect();
+      await holder.query("SELECT pg_advisory_lock($1)", [RETENTION_LOCK_KEY]);
+      await discardConnection(holder, new Error("lock not released"));
+      // pg ends the discarded client's socket; the server frees the session lock shortly after.
+      let locked = false;
+      for (let i = 0; i < 50 && !locked; i++) {
+        const [row] = await runner.query("SELECT pg_try_advisory_lock($1) AS locked", [
+          RETENTION_LOCK_KEY,
+        ]);
+        locked = row.locked;
+        if (!locked) await new Promise((r) => setTimeout(r, 20));
+      }
+      expect(locked).toBe(true);
+      await runner.query("SELECT pg_advisory_unlock($1)", [RETENTION_LOCK_KEY]);
     });
 
     describe("the in-process schedule (D5 revised)", () => {
