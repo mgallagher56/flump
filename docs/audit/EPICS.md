@@ -31,7 +31,7 @@ Refreshed on 2026-11-20 against `origin/main` and the merged pull requests up to
 | 15 | E2, E1 G-03 | Salary-sacrifice defaults; delete the mock token and fake accounts in the parked mobile app | Done (2026-11-21): `apps/mobile-companion` deleted (#827); salary-sacrifice defaults verified resolved (`TakeHomeCalculator.tsx`, `PensionContainer.tsx`, `useFinishOnboarding.ts`, nullable `isSalarySacrifice` in `user-profile.entity.ts` and `null` default in `user-profile.service.ts`) |
 | 16 | E15 | Pre-release visual pass | Done (2026-11-21: checked all 23 web and marketing screens in light and dark at 375 and 1280 px; fixed the Take-home 3-card `KpiStrip` phone layout conflict) |
 | 17 | E9 H-03 | Last 17 design-token violations | Done (2026-11-21: 0 violations remain in `scripts/design-token-baseline.json`) |
-| 18 | E27, E28, E30 v2 | Pension projection epic; MTD decision (before April 2027); snapshot v2 | Not started |
+| 18 | E27, E28, E30 v2 | Pension projection epic; MTD decision (before April 2027, plan written 2026-11-25); snapshot v2 | Not started |
 | 19 | Backend | Re-score follow-ups (backend-2026-11/RESCORE.md): BE-16 conditional writes, BE-17 performance and tests, BE-18 bank launch readiness, SEC-D receipt encryption, SEC-E CI and images, SEC-F audit-trail integrity; SEC-A waits for the owner's variables | Done in code: BE-01 to BE-14; BE-15 with SEC-B (#725); BE-16 (#733); BE-17 with SEC-E (#730); BE-18 (#752); SEC-D (#753); SEC-A and SEC-F (#738). SEC-A makes the keys required at production boot, so the owner's variables must be set before a production deploy |
 | 20 | E43 | User-POV functionality map (`docs/system/functionality-map/`) and 100% route-coverage enforcement in `check:laws` | Complete (2026-11-21: S0–S4 complete across all `apps/web` and `apps/marketing` routes; `unmapped_allowlist` retired and hard-error enforcement active; cut back to route and section level on 2026-11-22, no per-control entries) |
 | 21 | E16 | Design polish rounds 2 and 3 | Done: merged (#697 to #728). The R3 re-score is in `docs/design/e16-polish/RESCORE-R3.md` |
@@ -846,7 +846,7 @@ Checked against `origin/main` on 2026-11-14. A box is ticked only where there is
 
 # Added 2026-11-12 from the UK market research (E25 to E29)
 
-Source: [docs/research/market-research-2026-11.md](../research/market-research-2026-11.md) section 8. The numbers E25 to E29 do not collide with E1 to E24, so they are kept as proposed. Plans: [E25](plans/E25-plan.md) and [E29](plans/E29-plan.md) are ticketed; E26, E27 and E28 are not planned yet (E26 waits on E25 and E29). The E19 portability addendum (last subsection) extends E19 rather than opening an epic.
+Source: [docs/research/market-research-2026-11.md](../research/market-research-2026-11.md) section 8. The numbers E25 to E29 do not collide with E1 to E24, so they are kept as proposed. Plans: [E25](plans/E25-plan.md) and [E29](plans/E29-plan.md) are ticketed; E28 has a plan ([E28-mtd-plan.md](plans/E28-mtd-plan.md)); E26 and E27 are not planned yet (E26 waits on E25 and E29). The E19 portability addendum (last subsection) extends E19 rather than opening an epic.
 
 ## E25. UK tax-year rules and marginal-rate what-if planner
 
@@ -887,7 +887,7 @@ Source: [docs/research/market-research-2026-11.md](../research/market-research-2
 
 ## E28. MTD for Income Tax discovery spike
 
-- **Status (2026-11-25):** a research and change plan for Making Tax Digital is in progress (coordinator decision, DECISIONS). Earlier status follows.
+- **Status (2026-11-25):** rules re-read and change plan written in [E28-mtd-plan.md](plans/E28-mtd-plan.md) (Decisions: open). Recommendation: stay out and tell users who may be mandated (the discovery note's path (c)), decide records and quarterly export by February 2027 (its path (a)), rule out filing through HMRC for 2027-28 (its path (b); the 2026-27 window is closed). The plan uses its own letters, mapped in its section 3. Slices A1 (qualifying income check) and A2 (wording guard) can start now, before the owner decides, as the plan explains. Earlier status follows.
 - **Status (2026-11-18):** desk research done in [E28-mtd-discovery.md](plans/E28-mtd-discovery.md) (Decisions: accepted on 2026-11-21: do nothing now, decide on records and quarterly estimates by February 2027, rule out submission software for 2027-28). There is no user evidence yet (E30 plan, owner question O3), and the decision is due before April 2027. No "MTD-compliant" claim appears in the copy.
 - **Severity:** P3 (spike with a dated decision).
 - **Blocked by:** none for discovery; a submission build needs HMRC recognition work.
