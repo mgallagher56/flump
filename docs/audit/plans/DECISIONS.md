@@ -574,6 +574,8 @@ Decided on 25 November 2026 by a Fable decider at the owner's delegation, and ad
 
 **Later the same day.** Relayed by the coordinator; only the words in quotation marks are the owner's. The owner said: "we can continue with e34 and e35". Nothing else about E34 was decided: the gates on C3 above stand, and the help line wording (CD10), the household DPIA and any approach to a charity (CD7) are still the owner's to approve, sign or make.
 
+**Later still, 25 November 2026.** Relayed by the coordinator; only the words in quotation marks are the owner's. Asked whether the household invitation should still wait for the charity review and the signed DPIA, the owner chose "Build it gated now". C3 is being built in another lane behind an off-by-default switch. The switch stays off until the charity review, the signed DPIA and the approved help line wording exist, and only the owner turns it on. This replaces the first bullet above ("no invitation or shared view is built now, gated or not").
+
 # Owner decision (2026-11-25): E12 mobile framework is Expo (O1)
 
 Given by the owner and relayed by the coordinator on 25 November 2026. Owner's words: "For mobile use Expo for both ios and android."

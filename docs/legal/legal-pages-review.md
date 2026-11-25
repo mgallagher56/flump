@@ -124,7 +124,7 @@ The stand-in name ends in "Ltd" and comes with a company number, while the tradi
 
 ### E34 households (added 25 November 2026)
 
-Questions from the draft household DPIA ([`dpia-household.md`](./dpia-household.md)), written by Claude Fable (an AI model). None is answered. Nothing in E34 slices C3 to C5 is built. The section numbers are the DPIA's.
+Questions from the draft household DPIA ([`dpia-household.md`](./dpia-household.md)), written by Claude Fable (an AI model). None is answered. C3 is being built behind a switch that is off by default (owner, "Build it gated now", 25 November 2026); nobody can use it. The section numbers are the DPIA's.
 
 1. **Roles (3).** Is Flump a separate controller for each member, with no joint controllership between Flump and the members or between the members? Does the personal or household exemption (Article 2(2)(a)) cover a member who views the other's shared items, including a self-employed member's business items?
 2. **Lawful basis (4).** Is contract (Article 6(1)(b)) with the sharing member enough to show their item to the other member? What basis covers a joint item entered by one person before the other has joined?

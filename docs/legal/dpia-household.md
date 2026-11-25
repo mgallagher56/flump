@@ -2,7 +2,7 @@
 
 > **DRAFT v0.1, written by an AI model, not legal advice; for the owner to sign, then solicitor review.**
 >
-> This document was written on 25 November 2026 by Claude Fable (an AI model) from the plan [`E34-shared-finances-research.md`](../audit/plans/E34-shared-finances-research.md), [`data-map.md`](./data-map.md), [`ropa.md`](./ropa.md) and the legislation listed in section 13. It has not been reviewed by a solicitor, by a specialist charity or by the owner. A separate AI reviewer read it; its verdict is in section 12 and is not a legal opinion. **Nothing in slices C3 to C5 is built.** Every statement about how the feature works describes the plan, and must be re-checked against the code before this document is signed for a release.
+> This document was written on 25 November 2026 by Claude Fable (an AI model) from the plan [`E34-shared-finances-research.md`](../audit/plans/E34-shared-finances-research.md), [`data-map.md`](./data-map.md), [`ropa.md`](./ropa.md) and the legislation listed in section 13. It has not been reviewed by a solicitor, by a specialist charity or by the owner. A separate AI reviewer read it; its verdict is in section 12 and is not a legal opinion. **This draft was written from the plan, not from code.** On 25 November 2026 the owner chose "Build it gated now": C3 is being built in another lane behind a switch that is off by default. The switch stays off until the charity review, the signed DPIA and the approved help line wording exist, and only the owner turns it on. Every statement about how the feature works describes the plan, and must be re-checked against the code before this document is signed.
 
 Decisions: open. The owner decisions in section 11 are not answered here.
 
@@ -14,7 +14,7 @@ Decisions: open. The owner decisions in section 11 are not answered here.
 | Owner sign-off          | Not signed (section 12)                                                                             |
 | Solicitor review        | Not done. Questions are in [`legal-pages-review.md`](./legal-pages-review.md), "E34 households"     |
 | Specialist charity view | Not sought yet. The pack is [`E34-safety-review-pack.md`](../audit/plans/E34-safety-review-pack.md) |
-| Evidence base           | The plan, not code. C3 to C5 have no code                                                           |
+| Evidence base           | The plan, not code. C3 is being built behind an off switch; no code was read                        |
 
 What exists today (slice C1, merged): one person can mark an account, a debt or a budget entry as joint and record their own share. No second person is identified, linked or invited (`data-map.md`, "Joint items" row). Slice C2 is engine functions only and stores nothing. This DPIA covers what changes when a second person can join: C3 (household, invitation, leaving, "What I share", the help line), C4 (per-item sharing and the "Me / Household" switch) and C5 (shared budget, Breathing room and check-in). Section 7 covers a partner's AI connection (C7) because the plan asks this DPIA to settle the rule before anything is built.
 
@@ -210,7 +210,7 @@ A leak between members is a personal data breach. The owner must assess it for a
 
 ## 9. Risks and controls
 
-Likelihood and severity are the AI drafter's estimate on a low, medium, high scale, for the owner to challenge. Every control is **planned, not built**. "Residual" is the risk left once the control works as designed.
+Likelihood and severity are the AI drafter's estimate on a low, medium, high scale, for the owner to challenge. Every control is **planned, and none was checked against code**. "Residual" is the risk left once the control works as designed.
 
 | #   | Risk                                                                                                       | Likelihood | Severity | Control                                                                                                                                              | Residual                                                                                          |
 | --- | ---------------------------------------------------------------------------------------------------------- | ---------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
@@ -236,11 +236,11 @@ Likelihood and severity are the AI drafter's estimate on a low, medium, high sca
 | H20 | After someone leaves, the other person invites them again and again                                        | Low        | Medium   | An invitation is only a link the inviter sends themselves; Flump shows the invited person nothing until they open it                                 | Low inside Flump; the pressure happens outside it                                                 |
 | H21 | Nothing is logged, so a complaint or a leak between members cannot be investigated                         | Medium     | Medium   | Section 2.3: joining and leaving on the actor's own trail (H6)                                                                                       | Medium. Accepted as the price of G4                                                               |
 
-## 10. What must exist before C3 ships
+## 10. What must exist before the switch is turned on
 
 1. The specialist charity's view on the safety pack (CD7), and the changes it leads to, recorded in the pack.
 2. The owner's approval of the help line wording and the policy amendment (CD10): [`E34-help-line-wording.md`](../audit/plans/E34-help-line-wording.md).
-3. The solicitor's answers to the E34 questions. CD9 (accepted) and the 25 November 2026 entry in `DECISIONS.md` put C3 after launch and after the solicitor's view; shipping sooner would need the owner to reverse both, on the record.
+3. The solicitor's answers to the E34 questions, if the owner decides to wait for them (H4). The owner's three conditions for turning the switch on are items 1, 2 and 8; they do not name the solicitor.
 4. The owner's decisions in section 11.
 5. Privacy notice and terms updated for households (two data subjects, what the other person can see, silent leaving, the access request limits in 5.2), with a version bump and a review round.
 6. `data-map.md`, `ropa.md`, `USER_DATA_REGISTRY` and the value map updated in the build PR.
@@ -249,15 +249,15 @@ Likelihood and severity are the AI drafter's estimate on a low, medium, high sca
 
 ## 11. Decisions for the owner
 
-| #   | Question                                                                                                                                                               | This draft's recommendation                                                                                |
-| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| H1  | When one member deletes a joint item, does the other keep a copy?                                                                                                      | Yes (risk H11). The plan is silent                                                                         |
-| H2  | Retention in section 5.6: delete membership and household rows on leaving, keeping no "former member" record                                                           | Yes                                                                                                        |
-| H3  | Does a joint item the other member entered reach my AI connection without their opt-in?                                                                                | No (section 7). This changes one line of the plan's page table                                             |
-| H4  | Reverse CD9 and the 25 November 2026 decision, and ship C3 to the closed beta before launch and the solicitor's answers, if the charity review and this DPIA are done? | The owner's call; CD9 says C3 onward comes after launch and the solicitor's view                           |
-| H5  | Accept the residual risks in section 9, in particular H14 and H17, which no control removes                                                                            | The owner's call, after the charity's view                                                                 |
-| H6  | Are household actions written to the audit trail (section 2.3)?                                                                                                        | Joining and leaving on the actor's own trail, naming nobody else; sharing switches not at all              |
-| H7  | Does an item marked "joint" before or outside the household become visible on joining?                                                                                 | No. Joining shares nothing; "joint with this household" is chosen per item. This amends the plan's wording |
+| #   | Question                                                                                                                                 | This draft's recommendation                                                                                |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| H1  | When one member deletes a joint item, does the other keep a copy?                                                                        | Yes (risk H11). The plan is silent                                                                         |
+| H2  | Retention in section 5.6: delete membership and household rows on leaving, keeping no "former member" record                             | Yes                                                                                                        |
+| H3  | Does a joint item the other member entered reach my AI connection without their opt-in?                                                  | No (section 7). This changes one line of the plan's page table                                             |
+| H4  | Turn the switch on before the solicitor has answered, once the charity review, the signed DPIA and the approved help line wording exist? | The owner's call; CD9 says C3 onward comes after launch and the solicitor's view                           |
+| H5  | Accept the residual risks in section 9, in particular H14 and H17, which no control removes                                              | The owner's call, after the charity's view                                                                 |
+| H6  | Are household actions written to the audit trail (section 2.3)?                                                                          | Joining and leaving on the actor's own trail, naming nobody else; sharing switches not at all              |
+| H7  | Does an item marked "joint" before or outside the household become visible on joining?                                                   | No. Joining shares nothing; "joint with this household" is chosen per item. This amends the plan's wording |
 
 ## 12. Residual risk and sign-off
 
