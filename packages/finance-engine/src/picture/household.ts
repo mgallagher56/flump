@@ -64,12 +64,12 @@ export interface HouseholdTakeHome {
 
 /**
  * How the joint links were used. Counts only: none names a person or an item.
- * - `countedOnce`: linked items whose whole figures agree, counted once in full.
+ * - `countedOnce`: linked items whose two copies agree, counted once in full.
  * - `sharesNotSummingTo100`: of those, items whose two shares do not add up to 100%. The whole is
  *   still counted once; the shares only split it for each person's own view.
- * - `wholesDiffer`: linked items whose saved whole figures (balance, monthly amount or rate)
- *   differ. Each person's share of their own figure is counted, as in their own picture, since
- *   picking either figure would be a guess.
+ * - `copiesDiffer`: linked items whose two copies differ in a field a figure reads (the balance,
+ *   monthly amount, rate, credit limit, name, type or subtype). Each person's share of their own
+ *   copy is counted, as in their own picture, since picking either copy would be a guess.
  * - `notLinked`: joint accounts with no link. Counted at the share their owner gave.
  * - `ignoredLinks`: links that name a missing account, an account used by another link, an
  *   account that is not joint (ISAs and pensions never are), or two accounts of different kinds.
@@ -77,7 +77,7 @@ export interface HouseholdTakeHome {
 export interface HouseholdJointItems {
   countedOnce: number;
   sharesNotSummingTo100: number;
-  wholesDiffer: number;
+  copiesDiffer: number;
   notLinked: number;
   ignoredLinks: number;
 }
@@ -107,32 +107,53 @@ function categoryOf(account: RawAccount) {
   return categorizeAccountType(String(account.type || "other"));
 }
 
+/** Text fields a household figure reads (the home estimate label, buy-to-let by name or subtype). */
+const SAME_TEXT_FIELDS = [
+  "name",
+  "type",
+  "accountSubtype",
+  "currency",
+  "promoZeroPercentUntil",
+] as const;
+/** Number fields a household figure reads, besides the balance. */
+const SAME_NUMBER_FIELDS = ["monthlyContribution", "interestRate", "creditLimit"] as const;
+
+const storedText = (value: unknown) => (typeof value === "string" && value !== "" ? value : null);
+
 /**
- * The whole figures two copies of one joint item must agree on to count once: the balance (a
- * liability may be stored either sign, an asset keeps its sign), the monthly amount and the rate.
- * Two copies are of the same kind (checked by the caller), so one liability test covers both.
+ * Whether two copies of one joint item agree on every field a household figure reads, so either
+ * copy gives the same figures and the result does not depend on whose copy is kept. The balance
+ * of a liability or a student loan may be stored either sign (the snapshot counts its size); an
+ * asset keeps its sign. The copies are of the same kind (checked by the caller).
  */
-function wholesAgree(x: RawAccount, y: RawAccount): boolean {
-  const unsigned = isLiabilityCategory(categoryOf(x));
+function copiesAgree(x: RawAccount, y: RawAccount): boolean {
+  const category = categoryOf(x);
+  const unsigned = isLiabilityCategory(category) || category === "studentLoans";
   const balance = (acc: RawAccount) => {
     const n = storedNumber(acc.balance);
     return n === null ? null : round2(unsigned ? Math.abs(n) : n);
   };
-  const balanceAgrees = balance(x) === balance(y);
   return (
-    balanceAgrees &&
-    storedNumber(x.monthlyContribution) === storedNumber(y.monthlyContribution) &&
-    storedNumber(x.interestRate) === storedNumber(y.interestRate)
+    balance(x) === balance(y) &&
+    SAME_NUMBER_FIELDS.every((f) => storedNumber(x[f]) === storedNumber(y[f])) &&
+    SAME_TEXT_FIELDS.every((f) => storedText(x[f]) === storedText(y[f]))
   );
 }
 
-/** Ids are prefixed per person so two people's rows never collide. */
-function prefixed(account: RawAccount, index: number, prefix: string): RawAccount {
+/**
+ * Ids are prefixed per person so two people's rows never collide. A link to a copy that was
+ * dropped (`moved`) points at the copy that was kept instead.
+ */
+function prefixed(
+  account: RawAccount,
+  index: number,
+  prefix: string,
+  moved: ReadonlyMap<string, string> = new Map(),
+): RawAccount {
   const id = `${prefix}${String(account.id || `acc_${index}`)}`;
+  const target = storedText(account.linkedAccountId);
   const linked =
-    typeof account.linkedAccountId === "string" && account.linkedAccountId !== ""
-      ? `${prefix}${account.linkedAccountId}`
-      : account.linkedAccountId;
+    target === null ? account.linkedAccountId : (moved.get(target) ?? `${prefix}${target}`);
   return { ...account, id, linkedAccountId: linked };
 }
 
@@ -157,11 +178,12 @@ export function combineHouseholdAccounts(
   const usedB = new Set<string>();
   /** A's row to count in full, by A id; B's copy is then dropped. */
   const wholeInA = new Map<string, RawAccount>();
-  const droppedB = new Set<string>();
+  /** B's dropped copies, each with the id of A's copy that is kept. */
+  const droppedB = new Map<string, string>();
   const jointItems: HouseholdJointItems = {
     countedOnce: 0,
     sharesNotSummingTo100: 0,
-    wholesDiffer: 0,
+    copiesDiffer: 0,
     notLinked: 0,
     ignoredLinks: 0,
   };
@@ -181,8 +203,8 @@ export function combineHouseholdAccounts(
     }
     usedA.add(link.a);
     usedB.add(link.b);
-    if (!wholesAgree(x, y)) {
-      jointItems.wholesDiffer += 1;
+    if (!copiesAgree(x, y)) {
+      jointItems.copiesDiffer += 1;
       continue;
     }
     jointItems.countedOnce += 1;
@@ -191,7 +213,7 @@ export function combineHouseholdAccounts(
       jointItems.sharesNotSummingTo100 += 1;
     // Counted at 100%: the whole, once.
     wholeInA.set(link.a, { ...x, sharePercent: 100 });
-    droppedB.add(link.b);
+    droppedB.set(link.b, `a:${link.a}`);
   }
 
   for (const [id, acc] of aById) {
@@ -203,7 +225,9 @@ export function combineHouseholdAccounts(
 
   const accounts = [
     ...a.map((acc, i) => prefixed(wholeInA.get(ownId(acc, i)) ?? acc, i, "a:")),
-    ...b.flatMap((acc, i) => (droppedB.has(ownId(acc, i)) ? [] : [prefixed(acc, i, "b:")])),
+    ...b.flatMap((acc, i) =>
+      droppedB.has(ownId(acc, i)) ? [] : [prefixed(acc, i, "b:", droppedB)],
+    ),
   ];
   return { accounts, jointItems };
 }
@@ -220,9 +244,11 @@ export function selectHouseholdTakeHome(
   const x = selectTakeHome(a, { taxYear: opts.taxYear });
   const y = selectTakeHome(b, { taxYear: opts.taxYear });
   if (x.status !== "known" || y.status !== "known") {
+    // A refusal (a figure with a notice) is passed on whoever's it is; otherwise both unknowns
+    // share one reason (the same year, or facts not set), so the result does not depend on order.
     const unknowns = [x, y].filter((f) => f.status === "unknown");
-    const missing = [...new Set(unknowns.flatMap((f) => f.missing))] as MissingKey[];
-    const first = unknowns[0];
+    const missing = [...new Set(unknowns.flatMap((f) => f.missing))].sort() as MissingKey[];
+    const first = unknowns.find((f) => f.notice !== undefined) ?? unknowns[0];
     return figureUnknown<HouseholdTakeHome>(missing, first?.reason, first?.notice);
   }
   const sumOrNull = (p: number | null, q: number | null) =>

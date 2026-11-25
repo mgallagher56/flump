@@ -104,7 +104,7 @@ describe("a renting household (Sam and Dan, a joint bills account)", () => {
     expect(picture.jointItems).toEqual({
       countedOnce: 1,
       sharesNotSummingTo100: 0,
-      wholesDiffer: 0,
+      copiesDiffer: 0,
       notLinked: 0,
       ignoredLinks: 0,
     });
@@ -186,8 +186,48 @@ describe("a home-owning household (a joint home and mortgage)", () => {
     const picture = buildHouseholdPicture(owning(50, 50, { home: { balance: 300000 } }));
     expect(picture.netWorth.property).toBe(305000);
     expect(picture.debt.mortgage).toBe(186000);
-    expect(picture.jointItems.wholesDiffer).toBe(1);
+    expect(picture.jointItems.copiesDiffer).toBe(1);
     expect(picture.jointItems.countedOnce).toBe(1);
+  });
+
+  it("counts each person's own share when the copies are named or typed differently", () => {
+    // The label decides the home estimate, so one copy cannot stand for both: 155,000 + 155,000
+    // counted as each person counts it, with half labelled as the estimate.
+    const picture = buildHouseholdPicture(owning(50, 50, { home: { name: "Our home" } }));
+    expect(picture.netWorth.property).toBe(310000);
+    expect(picture.netWorth.homeEstimate).toBe(155000);
+    expect(picture.jointItems.copiesDiffer).toBe(1);
+    for (const change of [
+      { accountSubtype: "btl" },
+      { creditLimit: 100 },
+      { currency: "EUR" },
+      { promoZeroPercentUntil: "2027-01-01" },
+    ]) {
+      const p = buildHouseholdPicture(owning(50, 50, { home: change }));
+      expect(p.jointItems.copiesDiffer, JSON.stringify(change)).toBe(1);
+    }
+  });
+
+  it("points a mortgage at the kept copy of its home", () => {
+    // Homes agree, mortgages differ: the partner's mortgage stays and its home link moves to the
+    // homeowner's kept copy, never to the dropped one.
+    const input = owning(50, 50);
+    const { accounts } = combineHouseholdAccounts(
+      input.a.accounts,
+      input.b.accounts.map((acc) =>
+        acc.id === "partner-mortgage" ? { ...acc, balance: 180000 } : acc,
+      ),
+      HOME_LINKS,
+    );
+    const partnerMortgageRow = accounts.find((acc) => acc.id === "b:partner-mortgage");
+    expect(partnerMortgageRow?.linkedAccountId).toBe("a:homeowner-home");
+    expect(accounts.some((acc) => acc.id === "b:partner-home")).toBe(false);
+  });
+
+  it("treats a student loan saved with either sign as the same whole", () => {
+    const a = [joint({ id: "x", type: "Student Loan", balance: 900 }, 50)];
+    const b = [joint({ id: "y", type: "Student Loan", balance: -900 }, 50)];
+    expect(combineHouseholdAccounts(a, b, [{ a: "x", b: "y" }]).jointItems.countedOnce).toBe(1);
   });
 
   it("treats a liability saved with either sign as the same whole", () => {
@@ -210,7 +250,7 @@ describe("a home-owning household (a joint home and mortgage)", () => {
     const a = [joint({ id: "x", type: "Current", balance: 500 }, 50)];
     const b = [joint({ id: "y", type: "Current", balance: -500 }, 50)];
     const { jointItems } = combineHouseholdAccounts(a, b, [{ a: "x", b: "y" }]);
-    expect(jointItems.wholesDiffer).toBe(1);
+    expect(jointItems.copiesDiffer).toBe(1);
   });
 
   it("needs the monthly amount and the rate to agree as well as the balance", () => {
@@ -219,7 +259,7 @@ describe("a home-owning household (a joint home and mortgage)", () => {
     for (const change of [{ interestRate: 7 }, { monthlyContribution: 160 }, { balance: 5001 }]) {
       const b = [joint({ id: "y", ...base, ...change }, 50)];
       const { jointItems } = combineHouseholdAccounts(a, b, [{ a: "x", b: "y" }]);
-      expect(jointItems.wholesDiffer, JSON.stringify(change)).toBe(1);
+      expect(jointItems.copiesDiffer, JSON.stringify(change)).toBe(1);
     }
     const same = combineHouseholdAccounts(
       a,
@@ -237,6 +277,9 @@ describe("a home-owning household (a joint home and mortgage)", () => {
       owning(50, 50),
       owning(60, 60),
       owning(50, 50, { home: { balance: 1 } }),
+      // Only one copy carries the home estimate label: whose copy is kept must not matter.
+      owning(50, 50, { home: { name: "Our home" } }),
+      owning(50, 50, { home: { accountSubtype: "btl" } }),
     ]) {
       const swapped: HouseholdPictureInput = {
         a: input.b,
@@ -363,10 +406,10 @@ describe("household take-home", () => {
 });
 
 describe("householdIncomeTax vectors (E34 C2, hand-derived)", () => {
-  const employee = (annualSalary: number): ProfileFacts => ({
+  const employee = (annualSalary: number, region: string): ProfileFacts => ({
     annualSalary,
     employmentType: "employed",
-    taxRegion: "ENGLAND",
+    taxRegion: region === "SCOTLAND" ? "SCOTLAND" : "ENGLAND",
     studentLoanPlans: [],
     pensionPercent: 0,
     isSalarySacrifice: false,
@@ -377,8 +420,8 @@ describe("householdIncomeTax vectors (E34 C2, hand-derived)", () => {
     it(v.id, () => {
       const picture = buildHouseholdPicture(
         {
-          a: { profile: employee(v.input.grossIncomeA as number), accounts: [] },
-          b: { profile: employee(v.input.grossIncomeB as number), accounts: [] },
+          a: { profile: employee(v.input.grossIncomeA as number, v.region), accounts: [] },
+          b: { profile: employee(v.input.grossIncomeB as number, v.region), accounts: [] },
         },
         { taxYear: v.taxYear as UkTaxYear },
       );
@@ -406,6 +449,9 @@ describe("household edges", () => {
     expect(agreeOn({ monthlyContribution: null }, { monthlyContribution: undefined })).toBe(true);
     expect(agreeOn({ balance: undefined }, { balance: 0 })).toBe(false);
     expect(agreeOn({ balance: "5000" }, { balance: 5000 })).toBe(true);
+    // A text field missing in one copy and null in the other is missing in both.
+    expect(agreeOn({ accountSubtype: null }, { accountSubtype: undefined })).toBe(true);
+    expect(agreeOn({ accountSubtype: "" }, { accountSubtype: null })).toBe(true);
   });
 
   it("counts a joint account with no link when no links are given", () => {
@@ -413,7 +459,7 @@ describe("household edges", () => {
     expect(jointItems).toEqual({
       countedOnce: 0,
       sharesNotSummingTo100: 0,
-      wholesDiffer: 0,
+      copiesDiffer: 0,
       notLinked: 1,
       ignoredLinks: 0,
     });
@@ -484,6 +530,20 @@ describe("household edges", () => {
     ] as const) {
       expect(selectHouseholdTakeHome(x, y, { taxYear: "2027/28" })).toEqual(scot);
     }
+  });
+
+  it("gives the same unknown figure whichever person is first when both are unknown", () => {
+    const noSalary: ProfileFacts = { ...dan.profile, annualSalary: null, monthlyTakeHome: null };
+    const refused = selectHouseholdTakeHome(scottish.profile, noSalary, { taxYear: "2027/28" });
+    const swapped = selectHouseholdTakeHome(noSalary, scottish.profile, { taxYear: "2027/28" });
+    expect(swapped).toEqual(refused);
+    expect(refused.status).toBe("unknown");
+    const scot = selectTakeHome(scottish.profile, { taxYear: "2027/28" });
+    if (refused.status !== "unknown" || scot.status !== "unknown") throw new Error("unknown");
+    expect(refused.missing).toContain("annualSalary");
+    // The refusal and its notice are passed on, whichever person it belongs to.
+    expect(refused.reason).toBe("rates-not-published");
+    expect(refused.notice).toBe(scot.notice);
   });
 
   it("leaves the tax unknown when one take-home is typed and the other worked out", () => {
