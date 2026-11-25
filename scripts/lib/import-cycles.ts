@@ -26,7 +26,10 @@ function stripComments(source: string): string {
 export function runtimeImports(source: string, options: ImportCycleOptions = {}): string[] {
   const code = stripComments(source);
   const found: string[] = [];
-  const fromClause = /^[ \t]*(import|export)\s+([\s\S]*?)\s+from\s+["']([^"']+)["']/gm;
+  // The clause may not cross a `;` or the start of another import or export statement, so a
+  // statement with no `from` (such as `export type Foo = string`) never swallows the next import.
+  const fromClause =
+    /^[ \t]*(import|export)\s+((?:(?!\n[ \t]*(?:import|export)\b)[^;])*?)\s+from\s+["']([^"']+)["']/gm;
   for (const m of code.matchAll(fromClause)) {
     const clause = (m[2] ?? "").trim();
     const spec = m[3] ?? "";
