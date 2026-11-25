@@ -10,9 +10,24 @@
  * Canned /v1:
  *   GET  /v1/app/client-policy               public
  *   GET  /v1/user-profile                    bearer; 401 or 403 not_invited by scenario
+ *   GET  /v1/accounts                        bearer; six manual accounts, `details: []` (S3)
+ *   GET  /v1/account-details                 bearer; their monthly rows, nothing this month
+ *   GET  /v1/snapshots/check-ins             bearer; last month started and completed
+ *   PUT  /v1/snapshots/:month                bearer; applied as the backend does (fixtures.ts)
  *   anything else under /v1                  404 not_found, so a missing fixture is loud
+ *   The four check-in routes ignore query strings (`?details=none`, `?limit=`) and answer 401 and
+ *   403 not_invited as the profile does.
+ * Scenarios (POST /__fixture/scenario with a JSON patch; every reset restores the defaults):
+ *   account  invited | not-invited          not-invited: /v1 answers 403 not_invited
+ *   signIn   ok | denied                    denied: authorize returns error=access_denied
+ *   refresh  ok | rejected | unavailable    every refresh invalid_grant, or 503
+ *   accessTokenSeconds, minVersion          token lifetime; the client policy's minimum version
+ *   data     ok | unavailable | empty       the check-in routes: canned data, 503
+ *                                           service_unavailable, or no accounts and no months
  * Control (flows set the scenario before they launch the app):
- *   POST /__fixture/scenario, POST /__fixture/revoke, POST /__fixture/reset, GET /__fixture/stats
+ *   POST /__fixture/scenario, POST /__fixture/revoke, POST /__fixture/reset (also rebuilds the
+ *   check-in data), GET /__fixture/stats (counts, PUTs without `checkIn: true`, the check-in
+ *   months and the current London month)
  *
  * Refresh tokens are replaced on every use and the old one is rejected at once. Whether real
  * WorkOS does the same is an open question for the S2a spike; the stand-in takes the strict case.
@@ -20,7 +35,19 @@
 import { createHash, randomUUID } from "node:crypto";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import type { AddressInfo } from "node:net";
-import { cannedClientPolicy, cannedProfile, FIXTURE_PERSON } from "./fixtures";
+import { SnapshotMonth, UpsertSnapshotRequest } from "@flump/api-contract";
+import {
+  applySnapshot,
+  buildCheckInStore,
+  type CheckInStore,
+  cannedAccountDetails,
+  cannedAccounts,
+  cannedCheckIns,
+  cannedClientPolicy,
+  cannedProfile,
+  FIXTURE_PERSON,
+  londonMonth,
+} from "./fixtures";
 import { newSigningKey, opaque, publicJwk, signJwt, verifyJwt } from "./tokens";
 
 /** The port flows and the `e2e` build profile use. The production bundle must not contain it. */
@@ -45,6 +72,8 @@ interface Scenario {
   accessTokenSeconds: number;
   /** The client policy's minimum version, for the update-required screen. */
   minVersion: string;
+  /** The check-in routes: canned data, 503 service_unavailable, or no accounts at all. */
+  data: "ok" | "unavailable" | "empty";
 }
 
 const DEFAULT_SCENARIO: Scenario = {
@@ -53,6 +82,7 @@ const DEFAULT_SCENARIO: Scenario = {
   refresh: "ok",
   accessTokenSeconds: 300,
   minVersion: "0.0.0",
+  data: "ok",
 };
 
 const ALLOWED: { [K in keyof Scenario]: (v: unknown) => boolean } = {
@@ -61,6 +91,7 @@ const ALLOWED: { [K in keyof Scenario]: (v: unknown) => boolean } = {
   refresh: (v) => v === "ok" || v === "rejected" || v === "unavailable",
   accessTokenSeconds: (v) => typeof v === "number" && Number.isInteger(v) && v >= 0,
   minVersion: (v) => typeof v === "string" && /^\d{1,5}(\.\d{1,5}){0,2}$/.test(v),
+  data: (v) => v === "ok" || v === "unavailable" || v === "empty",
 };
 
 /** A scenario patch, or undefined when any key or value is unknown. */
@@ -74,11 +105,32 @@ function parseScenarioPatch(input: unknown): Partial<Scenario> | undefined {
   return input as Partial<Scenario>;
 }
 
-interface FixtureStats {
+interface FixtureCounts {
   exchanges: number;
   refreshes: number;
   apiRequests: number;
+  /** `PUT /v1/snapshots/:month` requests past the sign-in and scenario checks. */
+  snapshotPuts: number;
+  /** Of those, the ones whose body did not carry `checkIn: true`. */
+  putsWithoutCheckIn: number;
 }
+
+interface FixtureStats extends FixtureCounts {
+  latestStartedMonth: string | null;
+  latestCompletedMonth: string | null;
+  /** The London month of the server's clock: the month a check-in now writes. */
+  currentMonth: string;
+}
+
+const ZERO_COUNTS: FixtureCounts = {
+  exchanges: 0,
+  refreshes: 0,
+  apiRequests: 0,
+  snapshotPuts: 0,
+  putsWithoutCheckIn: 0,
+};
+
+const CHECK_IN_ROUTES = new Set(["/accounts", "/account-details", "/snapshots/check-ins"]);
 
 export interface FixtureServerOptions {
   /** 0 picks a free port (tests). */
@@ -124,12 +176,26 @@ export async function startFixtureServer(options: FixtureServerOptions): Promise
   const key = newSigningKey();
   const userId = `user_${opaque(12)}`;
 
+  /** The check-in data for `ok` and for `empty`, rebuilt (with new ids) on every reset. */
+  const buildStores = () => ({
+    ok: buildCheckInStore(userId, new Date(now()), "ok"),
+    empty: buildCheckInStore(userId, new Date(now()), "empty"),
+  });
+
   // Parse every canned body once now, so a contract change fails the start, not a flow.
   cannedProfile(userId, new Date(now()));
   cannedClientPolicy(DEFAULT_SCENARIO.minVersion);
+  let stores = buildStores();
 
   let scenario: Scenario = { ...DEFAULT_SCENARIO };
-  let counts: FixtureStats = { exchanges: 0, refreshes: 0, apiRequests: 0 };
+  let counts: FixtureCounts = { ...ZERO_COUNTS };
+  const store = (): CheckInStore => (scenario.data === "empty" ? stores.empty : stores.ok);
+  const stats = (): FixtureStats => ({
+    ...counts,
+    latestStartedMonth: store().latestStartedMonth,
+    latestCompletedMonth: store().latestCompletedMonth,
+    currentMonth: londonMonth(new Date(now())),
+  });
   const codes = new Map<string, PendingCode>();
   /** Refresh token to session. A used token is deleted, so reuse is rejected. */
   const refreshTokens = new Map<string, Session>();
@@ -244,20 +310,74 @@ export async function startFixtureServer(options: FixtureServerOptions): Promise
     return oauthError(res, 400, "unsupported_grant_type");
   }
 
-  function handleV1(path: string, req: IncomingMessage, res: ServerResponse) {
+  /** The signed-in, invited session, or undefined once the 401 or 403 has been sent. */
+  function invitedSession(req: IncomingMessage, res: ServerResponse): Session | undefined {
+    const session = sessionFor(req);
+    if (!session) {
+      apiError(res, 401, "unauthorized", "Sign in to continue.");
+      return undefined;
+    }
+    if (scenario.account === "not-invited") {
+      apiError(res, 403, "not_invited", "This account is not on the beta list.");
+      return undefined;
+    }
+    return session;
+  }
+
+  async function handleV1(path: string, req: IncomingMessage, res: ServerResponse) {
     counts.apiRequests += 1;
     if (req.method === "GET" && path === "/app/client-policy") {
       return json(res, 200, cannedClientPolicy(scenario.minVersion));
     }
     if (req.method === "GET" && path === "/user-profile") {
-      const session = sessionFor(req);
-      if (!session) return apiError(res, 401, "unauthorized", "Sign in to continue.");
-      if (scenario.account === "not-invited") {
-        return apiError(res, 403, "not_invited", "This account is not on the beta list.");
-      }
+      const session = invitedSession(req, res);
+      if (!session) return;
       return json(res, 200, cannedProfile(session.userId, new Date(now())));
     }
+    const snapshotMonth = /^\/snapshots\/([^/]+)$/.exec(path)?.[1];
+    const isSnapshotPut = req.method === "PUT" && snapshotMonth !== undefined;
+    if ((req.method === "GET" && CHECK_IN_ROUTES.has(path)) || isSnapshotPut) {
+      const session = invitedSession(req, res);
+      if (!session) return;
+      if (scenario.data === "unavailable") {
+        return apiError(res, 503, "service_unavailable", "The service is not available.");
+      }
+      if (isSnapshotPut) return handleSnapshotPut(snapshotMonth, session, req, res);
+      if (path === "/accounts") return json(res, 200, cannedAccounts(store()));
+      if (path === "/account-details") return json(res, 200, cannedAccountDetails(store()));
+      return json(res, 200, cannedCheckIns(store()));
+    }
     return apiError(res, 404, "not_found", "No canned response for this route.");
+  }
+
+  async function handleSnapshotPut(
+    rawMonth: string,
+    session: Session,
+    req: IncomingMessage,
+    res: ServerResponse,
+  ) {
+    const raw = await readJson(req);
+    counts.snapshotPuts += 1;
+    const checkIn = typeof raw === "object" && raw !== null && "checkIn" in raw && raw.checkIn;
+    // Anything but the boolean true counts, a string "true" included.
+    if (checkIn !== true) counts.putsWithoutCheckIn += 1;
+    if (raw === undefined) return apiError(res, 400, "invalid_json", "The body is not JSON.");
+    const month = SnapshotMonth.safeParse(rawMonth);
+    const body = UpsertSnapshotRequest.safeParse(raw);
+    if (!month.success || !body.success) {
+      const issues = [
+        ...(month.success ? [] : month.error.issues.map((i) => ({ ...i, part: "params.month" }))),
+        ...(body.success ? [] : body.error.issues.map((i) => ({ ...i, part: "body" }))),
+      ].map((i) => ({
+        path: [i.part, ...i.path.map(String)].join("."),
+        code: i.code,
+        message: i.message,
+      }));
+      return apiError(res, 400, "validation_failed", "The request is not valid.", issues);
+    }
+    const result = applySnapshot(store(), session.userId, month.data, body.data, new Date(now()));
+    if ("status" in result) return apiError(res, result.status, result.code, result.message);
+    return json(res, 200, result);
   }
 
   async function route(req: IncomingMessage, res: ServerResponse) {
@@ -294,14 +414,15 @@ export async function startFixtureServer(options: FixtureServerOptions): Promise
       reset();
       return void res.writeHead(204).end();
     }
-    if (req.method === "GET" && path === "/__fixture/stats") return json(res, 200, counts);
+    if (req.method === "GET" && path === "/__fixture/stats") return json(res, 200, stats());
 
     return json(res, 404, { error: "not_found" });
   }
 
   function reset() {
     scenario = { ...DEFAULT_SCENARIO };
-    counts = { exchanges: 0, refreshes: 0, apiRequests: 0 };
+    counts = { ...ZERO_COUNTS };
+    stores = buildStores();
     codes.clear();
     refreshTokens.clear();
     sessions.clear();
@@ -325,7 +446,7 @@ export async function startFixtureServer(options: FixtureServerOptions): Promise
       if (!checked) throw new Error("unknown scenario key or value");
       scenario = { ...scenario, ...checked };
     },
-    stats: () => ({ ...counts }),
+    stats,
     close: () =>
       new Promise<void>((resolve, reject) => {
         server.closeAllConnections();
@@ -343,11 +464,19 @@ function oauthError(res: ServerResponse, status: number, error: string) {
 }
 
 /** The backend's one error body (`ErrorResponse` in the contract), with the matching header. */
-function apiError(res: ServerResponse, status: number, code: string, message: string) {
+function apiError(
+  res: ServerResponse,
+  status: number,
+  code: string,
+  message: string,
+  issues?: { path: string; code: string; message: string }[],
+) {
   const requestId = randomUUID();
   res
     .writeHead(status, { "content-type": "application/json", "x-request-id": requestId })
-    .end(JSON.stringify({ code, message, requestId }));
+    .end(
+      JSON.stringify(issues ? { code, message, issues, requestId } : { code, message, requestId }),
+    );
 }
 
 async function readBody(req: IncomingMessage): Promise<string> {

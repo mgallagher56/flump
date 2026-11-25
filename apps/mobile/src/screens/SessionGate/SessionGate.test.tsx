@@ -2,12 +2,17 @@ import { act, render, screen, userEvent } from "@testing-library/react-native";
 import { SessionProvider } from "../../auth/SessionProvider";
 import type { Session } from "../../auth/session";
 import type { SessionState } from "../../auth/sessionMachine";
+import { ApiProvider } from "../../data/ApiProvider";
+import { createQueryClient } from "../../data/queryClient";
 import { ThemeProvider } from "../../theme/ThemeProvider";
 import { SessionGate } from "./SessionGate";
 
 jest.mock("expo-router", () => {
   const { Fragment } = require("react");
-  return { Link: ({ children }: { children: unknown }) => <Fragment>{children}</Fragment> };
+  return {
+    Link: ({ children }: { children: unknown }) => <Fragment>{children}</Fragment>,
+    router: { push: jest.fn() },
+  };
 });
 
 function fakeSession(initial: SessionState) {
@@ -39,7 +44,9 @@ async function gate(app: ReturnType<typeof fakeSession> | null) {
       <SessionProvider
         app={app ? { session: app.session, marketingOrigin: "https://s.test.invalid" } : null}
       >
-        <SessionGate />
+        <ApiProvider client={null} queryClient={createQueryClient()}>
+          <SessionGate />
+        </ApiProvider>
       </SessionProvider>
     </ThemeProvider>,
   );
@@ -79,6 +86,15 @@ describe("SessionGate", () => {
     await user.press(screen.getByRole("button", { name: "Sign out" }));
     expect(app.session.retry).toHaveBeenCalledTimes(1);
     expect(app.session.signOut).toHaveBeenCalledTimes(1);
+  });
+
+  it("signed in, the check-in row opens the check-in route", async () => {
+    const { router } = jest.requireMock("expo-router") as { router: { push: jest.Mock } };
+    await gate(fakeSession({ status: "signedIn" }));
+    await userEvent
+      .setup()
+      .press(await screen.findByRole("button", { name: "Start monthly check-in" }));
+    expect(router.push).toHaveBeenCalledWith("/check-in");
   });
 
   it("shows a sign-in notice from the session", async () => {

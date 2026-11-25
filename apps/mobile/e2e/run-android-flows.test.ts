@@ -22,6 +22,8 @@ const SHOTS = [
   "not-invited",
   "signed-out",
   "session-ended",
+  "check-in-summary",
+  "check-in-backend-down",
 ];
 
 function run(opts: { screensStay?: boolean; nightStuck?: boolean; failFlow?: string } = {}) {
@@ -75,8 +77,9 @@ describe("run-android-flows.sh", () => {
     const { result, calls } = run();
     expect(result.status).toBe(0);
     const flows = calls.filter((c) => c.startsWith("maestro "));
-    // Six flows in each theme (engine-check, not-invited, session-ended, sign-in, sign-in-denied, sign-out).
-    expect(flows).toHaveLength(12);
+    // Eight flows in each theme (check-in-backend-down, check-in-walkthrough, engine-check,
+    // not-invited, session-ended, sign-in, sign-in-denied, sign-out).
+    expect(flows).toHaveLength(16);
     for (const flow of flows) {
       const at = calls.indexOf(flow);
       const before = calls.slice(0, at);
@@ -91,7 +94,7 @@ describe("run-android-flows.sh", () => {
     const { result, calls } = run({ failFlow: "not-invited" });
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("Flow not-invited failed in light");
-    expect(calls.filter((c) => c.startsWith("maestro "))).toHaveLength(12);
+    expect(calls.filter((c) => c.startsWith("maestro "))).toHaveLength(16);
   });
 
   it("fails, without retrying, when the screens are still alive after the force-stop", () => {

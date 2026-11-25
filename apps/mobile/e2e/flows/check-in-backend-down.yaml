@@ -1,0 +1,31 @@
+# E12 S3: the check-in routes answer 503. The row still shows (unknown shows it, as on web), the
+# check-in says it could not load the accounts, never "no accounts", and Try again recovers once
+# the backend is back.
+appId: app.flump.mobile
+---
+- runScript:
+    file: ../scripts/fixture.js
+    env:
+      SCENARIO: '{"data": "unavailable"}'
+- runFlow: ../subflows/launch-signed-out.yaml
+- runFlow:
+    file: ../subflows/sign-in.yaml
+    env:
+      AFTER: "Start monthly check-in"
+- tapOn:
+    id: "check-in-row-action"
+# The app retries twice with backoff before it shows the error.
+- extendedWaitUntil:
+    visible: "We could not load your accounts"
+    timeout: 60000
+- assertNotVisible: "Add an account first, then its balance appears here."
+- takeScreenshot: check-in-backend-down-${THEME}
+- runScript:
+    file: ../scripts/scenario.js
+    env:
+      SCENARIO: '{"data": "ok"}'
+- tapOn:
+    id: "check-in-retry"
+- extendedWaitUntil:
+    visible: "Account 1 of 6"
+    timeout: 60000

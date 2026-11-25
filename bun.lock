@@ -23,7 +23,7 @@
     },
     "apps/backend": {
       "name": "backend",
-      "version": "1.45.0",
+      "version": "1.46.0",
       "dependencies": {
         "@flump/api-contract": "workspace:*",
         "@flump/banking": "workspace:*",
@@ -70,7 +70,7 @@
     },
     "apps/marketing": {
       "name": "marketing",
-      "version": "1.39.0",
+      "version": "1.40.0",
       "dependencies": {
         "@flump/business-details": "workspace:*",
         "@flump/finance-engine": "workspace:*",
@@ -112,6 +112,7 @@
         "@flump/finance-engine": "workspace:*",
         "@flump/format": "workspace:*",
         "@flump/tokens": "workspace:*",
+        "@tanstack/react-query": "5.108.0",
         "expo": "58.0.26",
         "expo-constants": "58.0.16",
         "expo-crypto": "58.0.8",
@@ -145,7 +146,7 @@
     },
     "apps/web": {
       "name": "@flump/web",
-      "version": "1.52.0",
+      "version": "1.53.0",
       "dependencies": {
         "@flump/api-client": "workspace:*",
         "@flump/api-contract": "workspace:*",
@@ -1326,6 +1327,10 @@
     "@stryker-mutator/util": ["@stryker-mutator/util@10.1.1", "", {}, "sha512-Z0zDzsmhoSykE1gT3DvD1knFxySgNMfBlpSSs1j87kWvjEMfeMqfLOk0bqEPRg/rTFIUNSEXLZapxePUhZmfZA=="],
 
     "@stryker-mutator/vitest-runner": ["@stryker-mutator/vitest-runner@10.1.1", "", { "dependencies": { "@stryker-mutator/api": "10.1.1", "@stryker-mutator/util": "10.1.1", "semver": "^7.7.4", "tslib": "~2.8.0" }, "peerDependencies": { "@stryker-mutator/core": "10.1.1", "vitest": ">=2.0.0" } }, "sha512-w/OmNt1vHD4Yeacy8Rxhl2Ue/9l662iyOW8XxM4rc9huixF6IySHW3cvhTs8JnMvG9tG7vS7ZZ52wUXx7xy1IQ=="],
+
+    "@tanstack/query-core": ["@tanstack/query-core@5.108.0", "", {}, "sha512-X9zJUtEV/0D2q9pmGS/Bza8S4bNovSBhZOtdhtu0fzsHwizC6C+Eh/q5CX3MQBchsRMrirWVQmv7Fp4OStzV9g=="],
+
+    "@tanstack/react-query": ["@tanstack/react-query@5.108.0", "", { "dependencies": { "@tanstack/query-core": "5.108.0" }, "peerDependencies": { "@types/react": "^18 || ^19", "react": "^18 || ^19" }, "optionalPeers": ["@types/react"] }, "sha512-DpMbB8pVorEZcsHRa0Z13KQGfmndqvJbuLy9h+xfP8XpuEZBOxzq+QfXGonQ0fAgRSWhc+QsfoRETSTWxAEAVw=="],
 
     "@testing-library/dom": ["@testing-library/dom@10.4.2", "", { "dependencies": { "@babel/code-frame": "^7.10.4", "@babel/runtime": "^7.12.5", "@types/aria-query": "^5.0.1", "aria-query": "5.3.0", "dom-accessibility-api": "^0.5.9", "lz-string": "^1.5.0", "picocolors": "1.1.1", "pretty-format": "^27.0.2" } }, "sha512-yzr2S9HyAIdhz2/6qHgbs665Q7PKVcDF05vsOlHPxG1mo36gKVesdYVeDLnXgfjJ03CrKRk08knc6+E/9m8v2Q=="],
 
