@@ -154,9 +154,11 @@
 | `check-in-done`                   | `web.history.hero`                                | web/history                | `/app/accounts/history`        |
 | `custom-budget-categories`        | `web.budget.category-list`                        | web/budget                 | `/app/budget`                  |
 | `custom-budget-categories`        | `web.budget.editor`                               | web/budget                 | `/app/budget`                  |
+| `employment-type`                 | `web.invoicing.mtd-notice`                        | web/invoicing              | `/app/invoicing`               |
 | `employment-type`                 | `web.onboarding.step-review`                      | web/onboarding             | `/app/onboarding`              |
 | `employment-type`                 | `web.retirement.self-employed-pensions`           | web/retirement             | `/app/retirement`              |
 | `employment-type`                 | `web.self-assessment.headline-or-empty`           | web/self-assessment        | `/app/self-assessment`         |
+| `employment-type`                 | `web.self-assessment.mtd-notice`                  | web/self-assessment        | `/app/self-assessment`         |
 | `employment-type`                 | `web.settings.age-and-pay`                        | web/settings               | `/app/profile`                 |
 | `employment-type`                 | `web.take-home.hero-and-kpis`                     | web/take-home              | `/app/take-home`               |
 | `enabled-pages-and-widgets`       | `web.dashboard.housekeeping`                      | web/dashboard              | `/`                            |
@@ -239,9 +241,11 @@
 | `pension-rates`                   | `web.take-home.breakdown`                         | web/take-home              | `/app/take-home`               |
 | `pension-rates`                   | `web.take-home.hero-and-kpis`                     | web/take-home              | `/app/take-home`               |
 | `pension-rates`                   | `web.take-home.scenario-zone`                     | web/take-home              | `/app/take-home`               |
+| `rental-share-for-tax`            | `web.invoicing.mtd-notice`                        | web/invoicing              | `/app/invoicing`               |
 | `rental-share-for-tax`            | `web.self-assessment-source.allowance-comparison` | web/self-assessment-source | `/app/self-assessment/:source` |
 | `rental-share-for-tax`            | `web.self-assessment.calculation-drawer`          | web/self-assessment        | `/app/self-assessment`         |
 | `rental-share-for-tax`            | `web.self-assessment.headline-or-empty`           | web/self-assessment        | `/app/self-assessment`         |
+| `rental-share-for-tax`            | `web.self-assessment.mtd-notice`                  | web/self-assessment        | `/app/self-assessment`         |
 | `repayment-type`                  | `web.account-detail.edit-account-dialog`          | web/account-detail         | `/app/accounts/:account`       |
 | `repayment-type`                  | `web.mortgage.cost-details-drawer`                | web/mortgage               | `/app/mortgage`                |
 | `repayment-type`                  | `web.mortgage.details-summary`                    | web/mortgage               | `/app/mortgage`                |
@@ -284,6 +288,7 @@
 | `student-loan-plan`               | `web.take-home.hero-and-kpis`                     | web/take-home              | `/app/take-home`               |
 | `student-loan-plan`               | `web.take-home.scenario-zone`                     | web/take-home              | `/app/take-home`               |
 | `tax-records`                     | `web.dashboard.sections-grid`                     | web/dashboard              | `/`                            |
+| `tax-records`                     | `web.invoicing.mtd-notice`                        | web/invoicing              | `/app/invoicing`               |
 | `tax-records`                     | `web.mortgage.btl-overview`                       | web/mortgage               | `/app/mortgage`                |
 | `tax-records`                     | `web.self-assessment-source.allowance-comparison` | web/self-assessment-source | `/app/self-assessment/:source` |
 | `tax-records`                     | `web.self-assessment-source.kpi-strip`            | web/self-assessment-source | `/app/self-assessment/:source` |
@@ -291,6 +296,7 @@
 | `tax-records`                     | `web.self-assessment.calculation-drawer`          | web/self-assessment        | `/app/self-assessment`         |
 | `tax-records`                     | `web.self-assessment.header`                      | web/self-assessment        | `/app/self-assessment`         |
 | `tax-records`                     | `web.self-assessment.headline-or-empty`           | web/self-assessment        | `/app/self-assessment`         |
+| `tax-records`                     | `web.self-assessment.mtd-notice`                  | web/self-assessment        | `/app/self-assessment`         |
 | `tax-records`                     | `web.self-assessment.records-and-years-drawers`   | web/self-assessment        | `/app/self-assessment`         |
 | `tax-records`                     | `web.self-assessment.sources-panel`               | web/self-assessment        | `/app/self-assessment`         |
 | `tax-region`                      | `web.dashboard.kpis`                              | web/dashboard              | `/`                            |
@@ -354,6 +360,8 @@
 | `mortgage-payment`                  | `web.mortgage.scenario-zone`                      | web/mortgage               | `/app/mortgage`                |
 | `mortgage-rate-comparison`          | `web.mortgage-estimates.scenario-zone`            | web/mortgage-estimates     | `/app/mortgage-estimates`      |
 | `mortgage-rate-comparison`          | `web.mortgage.scenario-zone`                      | web/mortgage               | `/app/mortgage`                |
+| `mtd-qualifying-income`             | `web.invoicing.mtd-notice`                        | web/invoicing              | `/app/invoicing`               |
+| `mtd-qualifying-income`             | `web.self-assessment.mtd-notice`                  | web/self-assessment        | `/app/self-assessment`         |
 | `net-worth`                         | `web.accounts.accounts-lists`                     | web/accounts               | `/app/accounts`                |
 | `net-worth`                         | `web.accounts.check-in-sheet`                     | web/accounts               | `/app/accounts`                |
 | `net-worth`                         | `web.accounts.net-worth-summary`                  | web/accounts               | `/app/accounts`                |

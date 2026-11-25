@@ -462,6 +462,23 @@ export function rentalSharesFromAccounts(accounts: readonly RentalShareAccount[]
   return { byAccountId, unlinked };
 }
 
+/**
+ * The person's share of one rental record, as a percentage: the share of the account it is linked
+ * to, else the share for unlinked records. Without `rentalShares`, `fallback` applies to every record.
+ */
+export function rentalShareForRecord(
+  record: Pick<TaxRecordFields, "accountId">,
+  rentalShares: RentalShares | undefined,
+  fallback: number,
+): number {
+  if (!rentalShares) return fallback;
+  const linked =
+    record.accountId !== null && record.accountId !== undefined
+      ? rentalShares.byAccountId[record.accountId]
+      : undefined;
+  return linked ?? rentalShares.unlinked.share;
+}
+
 export interface UkTaxCalculationOptions {
   /** Residential finance costs not relieved in earlier years (ITTOIA 2005 s.274AA(4)). */
   financeCostsBroughtForward?: number;
@@ -767,14 +784,8 @@ export function calculateUKTax(
   // on one property is set against the profit on another before the share is compared.
   const region = options.region ?? "ENGLAND_NI_WALES";
   const rentalShares = options.rentalShares;
-  const shareOf = (record: TaxRecordFields): number => {
-    if (!rentalShares) return propertyOwnershipShare;
-    const linked =
-      record.accountId !== null && record.accountId !== undefined
-        ? rentalShares.byAccountId[record.accountId]
-        : undefined;
-    return linked ?? rentalShares.unlinked.share;
-  };
+  const shareOf = (record: TaxRecordFields): number =>
+    rentalShareForRecord(record, rentalShares, propertyOwnershipShare);
   const unlinkedShare = rentalShares ? rentalShares.unlinked.share : propertyOwnershipShare;
   const rentalCategoryIds = new Set(RENTAL_CATEGORIES.map((c) => c.id));
   let rentalIncomeGrossShare = 0;

@@ -9,6 +9,7 @@ import {
   isBuyToLetAccount,
   isRecordActiveInTaxYear,
   isSupportedUkTaxYear,
+  type MtdIncomeTaxPosition,
   ratesContextForYear,
   type TaxCalculationResult,
   type TaxEstimateMissingFact,
@@ -37,6 +38,7 @@ import { useFetcherOutcome } from "~/features/feedback/hooks/useFetcherOutcome";
 import { AddIncomeMenu } from "~/features/tax/components/AddIncomeMenu";
 import { CalculatedFigures } from "~/features/tax/components/CalculatedFigures";
 import { CopyTaxYearModal } from "~/features/tax/components/CopyTaxYearModal";
+import { MtdNotice } from "~/features/tax/components/MtdNotice";
 import { TaxHeadline } from "~/features/tax/components/TaxHeadline";
 import { TaxRecordsTable } from "~/features/tax/components/TaxRecordsTable";
 import { TaxReservePanel } from "~/features/tax/components/TaxReservePanel";
@@ -51,6 +53,7 @@ import {
   rentalShareNotice,
   type TaxAccount,
 } from "~/features/tax/linkedAccounts";
+import { mtdNoticeCopy } from "~/features/tax/mtdNotice";
 import { SOURCE_PAGE_ORDER, taxYearFromParam } from "~/features/tax/source-pages";
 import {
   ACCOUNTS_PATH,
@@ -207,6 +210,7 @@ const TaxContainer: FC = () => {
       accounts={loaderData.accounts ?? []}
       records={loaderData.records ?? []}
       userProfile={userProfile}
+      mtdPosition={loaderData.mtdPosition}
     />
   );
 };
@@ -217,7 +221,8 @@ const SelfAssessmentPage: FC<{
   records: TaxRecord[];
   userProfile: LoaderData["userProfile"];
   accounts?: LoaderData["accounts"];
-}> = ({ records: initialRecords, userProfile, accounts = [] }) => {
+  mtdPosition?: MtdIncomeTaxPosition;
+}> = ({ records: initialRecords, userProfile, accounts = [], mtdPosition = { kind: "none" } }) => {
   const [searchParams] = useSearchParams();
 
   // Which year's rates apply today, and whether that is a fallback (E22)
@@ -507,6 +512,9 @@ const SelfAssessmentPage: FC<{
         records={initialRecords}
         taxYear={selectedTaxYear}
       />
+
+      {/* Making Tax Digital (E28): with the income sources it is about, apart from the header's notice. */}
+      <MtdNotice copy={mtdNoticeCopy(mtdPosition)} />
 
       <CalculatedFigures
         offers={offers}

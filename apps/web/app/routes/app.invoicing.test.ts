@@ -4,8 +4,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("react-router", async () => await vi.importActual("react-router"));
 
 const backendFetch = vi.fn();
+const loadWorkspaceSnapshot = vi.fn();
 vi.mock("~/services/backend-client.server", () => ({
   backendFetch: (...a: unknown[]) => backendFetch(...a),
+  loadWorkspaceSnapshot: (...a: unknown[]) => loadWorkspaceSnapshot(...a),
 }));
 vi.mock("~/utils/auth.server", () => ({
   getAuthSession: async () => ({ user: { id: "u1" }, accessToken: "tok" }),
@@ -57,13 +59,22 @@ describe("app.invoicing route loader and action (E37 S2)", () => {
     vi.useRealTimers();
   });
 
-  const backendReturnsEmptyLists = () =>
-    backendFetch.mockImplementation(async (endpoint: string) => {
+  const workspace = (taxRecords: unknown[] = [], employmentType: string | null = null) =>
+    loadWorkspaceSnapshot.mockResolvedValue({
+      taxRecords,
+      userProfile: { employmentType },
+      accounts: [],
+    });
+
+  const backendReturnsEmptyLists = () => {
+    workspace();
+    return backendFetch.mockImplementation(async (endpoint: string) => {
       if (endpoint === "/invoicing/settings") return { settings: settingsFixture };
       if (endpoint === "/work-logs") return { entries: [], nextCursor: null };
       if (endpoint === "/invoices") return { invoices: [], nextCursor: null };
       throw new Error(`Unexpected endpoint ${endpoint}`);
     });
+  };
 
   it("loader fetches invoicing settings, work logs, and invoices and derives settingsEtag", async () => {
     vi.setSystemTime(new Date("2026-11-25T12:00:00Z"));
@@ -76,7 +87,42 @@ describe("app.invoicing route loader and action (E37 S2)", () => {
       workLogs: [],
       invoices: [],
       today: "2026-11-25",
+      mtdPosition: { kind: "none" },
     });
+    expect(loadWorkspaceSnapshot).toHaveBeenCalledWith(expect.anything(), { includeTax: true });
+  });
+
+  it("loader gives the Making Tax Digital position from the recorded tax records", async () => {
+    vi.setSystemTime(new Date("2026-11-25T12:00:00Z"));
+    backendReturnsEmptyLists();
+    // 2025/26 self-employed income of £31,000 is over £30,000, the threshold for 6 April 2027.
+    workspace([
+      {
+        id: "r1",
+        type: "income",
+        source: "self-employed",
+        category: "self_employed_income",
+        name: "Invoices",
+        amount: "31000.00",
+        frequency: "annual",
+        date: "2025-06-01",
+        endDate: null,
+        notes: null,
+      },
+    ]);
+    const data = await loader(loaderArgs());
+    expect(data.mtdPosition).toMatchObject({
+      kind: "over",
+      check: { threshold: { startDate: "2027-04-06", thresholdGbp: 30_000 } },
+    });
+  });
+
+  it("loader gives the general position to a self-employed user with no records", async () => {
+    vi.setSystemTime(new Date("2026-11-25T12:00:00Z"));
+    backendReturnsEmptyLists();
+    workspace([], "self-employed");
+    const data = await loader(loaderArgs());
+    expect(data.mtdPosition).toEqual({ kind: "unknown" });
   });
 
   it("loader's today is the Europe/London date, which is a day ahead of UTC late on a BST evening", async () => {

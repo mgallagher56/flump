@@ -555,6 +555,12 @@ flowchart LR
   f_work_log_entries ==> g_invoicing_kpis
   f_invoices ==> g_invoicing_kpis
   g_invoicing_kpis -.-> s_invoicing
+  g_mtd_qualifying_income{{"Making Tax Digital qualifying income against its threshold"}}
+  f_tax_records ==> g_mtd_qualifying_income
+  f_employment_type ==> g_mtd_qualifying_income
+  f_rental_share_for_tax ==> g_mtd_qualifying_income
+  g_mtd_qualifying_income -.-> s_self_assessment
+  g_mtd_qualifying_income -.-> s_invoicing
 ```
 
 ## retirement

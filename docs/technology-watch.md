@@ -4,6 +4,19 @@ Tools and projects that Flump does not use, and that are worth another look late
 
 When you check an entry, update "Last looked at" and the notes. Add a row for anything new the owner asks to keep an eye on.
 
+## Making Tax Digital for Income Tax: records and export decision
+
+- **Where:** [E28-mtd-plan.md](./audit/plans/E28-mtd-plan.md) section 4, and <https://www.gov.uk/guidance/check-if-youre-eligible-for-making-tax-digital-for-income-tax>
+- **Asked for by:** the owner's decision of 25 November 2026: "accept the MTD recommendation and start the notice". The plan keeps option (b) as a decision due by February 2027.
+- **Last looked at:** 25 November 2026, the GOV.UK guidance, SI 2026/336 and the HMRC Developer Hub.
+- **Check again:** by 28 February 2027. Decide option (b), digital records and a quarterly export, against the plan's section 4 conditions. Re-read the thresholds and dates in `packages/finance-engine/src/mtd-income-tax.ts` at the same time.
+
+**What it is.** HMRC's rules for keeping digital records and sending quarterly updates through compatible software. Flump does not file with HMRC and shows a notice instead.
+
+**Why not now.** No interview evidence yet, unknown bridging import formats, and an open question on whether a records-only product needs HMRC recognition.
+
+**What would change that.** The conditions in the plan's section 4: interview answers, a published bridging import format, or HMRC confirming records-only status in writing.
+
 ## Exact (from the Expo team)
 
 - **Where:** <https://github.com/expo/exact>

@@ -2743,6 +2743,18 @@ figures:
     verdict: holds
     note: "E37 S0/S2: computes the 4 KPI strip figures for the invoicing workspace."
 
+  - id: mtd-qualifying-income
+    name: Making Tax Digital qualifying income against its threshold
+    area: tax
+    computed_by:
+      { function: mtdIncomeTaxPosition, path: packages/finance-engine/src/mtd-income-tax.ts }
+    inputs: [tax-records, employment-type, rental-share-for-tax]
+    shown_on:
+      - { surface: self-assessment, path: apps/web/app/routes/app.self-assessment.tsx }
+      - { surface: invoicing, path: apps/web/app/routes/app.invoicing.tsx }
+    verdict: holds
+    note: "E28 A1 and A3: gross self-employed and property income (the person's share), before expenses, for each measured tax year against the SI 2026/336 regulation 27 threshold. The notice states the date, figure and year, never that the user is mandated."
+
   - id: housing-room
     name: Left each month before housing
     area: mortgage

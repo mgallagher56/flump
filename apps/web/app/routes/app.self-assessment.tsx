@@ -2,6 +2,8 @@ import type { ReactElement } from "react";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 import { data } from "react-router";
 import TaxContainer from "~/containers/tax/TaxContainer";
+import { londonDate } from "~/features/snapshot/snapshotModel";
+import { mtdNoticePosition } from "~/features/tax/mtdNotice";
 import { taxAction } from "~/features/tax/taxActions.server";
 import { loadWorkspaceSnapshot } from "~/services/backend-client.server";
 import { revalidateOnConflict } from "~/services/conflict";
@@ -18,7 +20,15 @@ export const loader = async (args: LoaderFunctionArgs) => {
   const { taxRecords, userProfile, accounts, user } = await loadWorkspaceSnapshot(args, {
     includeTax: true,
   });
-  return data({ records: taxRecords, userProfile, accounts, user });
+  // Making Tax Digital notice (E28): worked out here, on the Europe/London date, so server and
+  // browser agree.
+  const mtdPosition = mtdNoticePosition({
+    records: taxRecords,
+    employmentType: userProfile?.employmentType ?? null,
+    accounts,
+    today: londonDate(),
+  });
+  return data({ records: taxRecords, userProfile, accounts, user, mtdPosition });
 };
 
 const TaxRoute = (): ReactElement => {

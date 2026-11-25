@@ -77,6 +77,7 @@ Where each value is stored, entered and used. One entry per stored fact, then on
 | [Calculated balance offered in the check-in](#check-in-calculated-balance)                                                               | figure | accounts    | Holds                                     |
 | [Invoice subtotal, VAT amount and total](#invoice-totals)                                                                                | figure | tax         | Holds                                     |
 | [Unbilled hours, unbilled amount, outstanding issued invoices and paid in tax year](#invoicing-kpis)                                     | figure | tax         | Holds                                     |
+| [Making Tax Digital qualifying income against its threshold](#mtd-qualifying-income)                                                     | figure | tax         | Holds                                     |
 | [Left each month before housing](#housing-room)                                                                                          | figure | mortgage    | Holds                                     |
 | [Estimated loan from monthly payment](#mortgage-budget-loan-estimate)                                                                    | figure | mortgage    | Holds                                     |
 | [Estimated borrowing range from income](#mortgage-income-multiple-range)                                                                 | figure | mortgage    | Holds                                     |
@@ -1641,6 +1642,25 @@ Other code paths that compute it:
 
 Shown on:
 
+- Invoicing and work log: `apps/web/app/routes/app.invoicing.tsx`
+
+### Making Tax Digital qualifying income against its threshold
+
+<a id="mtd-qualifying-income"></a>
+
+- Id: `mtd-qualifying-income` (derived figure)
+- Verdict: Holds. Findings: none. Links: none.
+- Computed by: `mtdIncomeTaxPosition` in `packages/finance-engine/src/mtd-income-tax.ts`
+- Built from: `tax-records`, `employment-type`, `rental-share-for-tax`
+- Note: E28 A1 and A3: gross self-employed and property income (the person's share), before expenses, for each measured tax year against the SI 2026/336 regulation 27 threshold. The notice states the date, figure and year, never that the user is mandated.
+
+Other code paths that compute it:
+
+- none
+
+Shown on:
+
+- Self Assessment: `apps/web/app/routes/app.self-assessment.tsx`
 - Invoicing and work log: `apps/web/app/routes/app.invoicing.tsx`
 
 ## Area: retirement

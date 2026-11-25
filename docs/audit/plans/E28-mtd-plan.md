@@ -1,6 +1,8 @@
 # E28. Making Tax Digital for Income Tax: rules, gap and change plan
 
-Decisions: open
+Decisions: accepted on 2026-11-25 (decision 1, and decision 2 as the user's own recorded position; decisions 3 to 5 stay open)
+
+> Owner, 25 November 2026: "accept the MTD recommendation and start the notice". Recorded in [DECISIONS.md](DECISIONS.md). Slice A3 (the notice) is built in the notice PR; slice A1 is the engine check it reads.
 
 > Owner, 25 November 2026: "Research Making tax digital and work out the changes we would need to make to accommodate it." This plan answers that. It builds on [E28-mtd-discovery.md](E28-mtd-discovery.md) (accepted on 21 November 2026) and replaces its section 1 with facts re-read today. Nothing is built from this document until the owner answers section 6, except slices A1 and A2 (section 4.1): A1 is needed by both (a) and (b), and A2 enforces the wording rule accepted on 21 November. This is not legal or tax advice.
 
@@ -213,6 +215,10 @@ Reasons:
 
 If (b) is chosen in February 2027, section 3 (b) is the starting scope; A1 carries over.
 
+### 4.2 Reminder: decide option (b) by the end of February 2027
+
+Decide records and a quarterly export, option (b), by 28 February 2027, against the conditions in section 4. The first 2027-28 update is due 7 August 2027. The same reminder is in [`docs/technology-watch.md`](../../technology-watch.md).
+
 ## 5. Evidence still missing
 
 - **How many beta users are in scope.** An aggregate count of users with self-employment or rental records, or ask the friends directly. No figures per person.
@@ -224,11 +230,11 @@ Nothing in this plan is designed around interview answers.
 
 ## 6. Owner decisions
 
-1. Accept option (a) now, with (b) decided by February 2027 and (c) ruled out for 2027-28 and until the section 4 conditions change.
-2. Approve the notice wording under E29a, and say whether it states the general rule only or the user's own estimated position.
-3. Run the five interviews: yes or no, by when, where notes live and when they are deleted.
-4. Whether to write to HMRC's SDS team about records-only status.
-5. Whether foreign property is in scope (still open from the discovery note).
+1. **Accepted on 25 November 2026.** Accept option (a) now, with (b) decided by February 2027 and (c) ruled out for 2027-28 and until the section 4 conditions change. The owner said: "accept the MTD recommendation and start the notice".
+2. **Answered on 25 November 2026.** The notice states the user's own recorded position against the rule, never that they are mandated. The coordinator approves the exact wording in the notice PR.
+3. Open. Run the five interviews: yes or no, by when, where notes live and when they are deleted.
+4. Open. Whether to write to HMRC's SDS team about records-only status.
+5. Open. Whether foreign property is in scope (still open from the discovery note).
 
 **Owner-only steps under (a):** contacting beta users for interviews, and sending any HMRC enquiry. No cost, no accounts, no outside service.
 
