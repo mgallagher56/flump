@@ -3,7 +3,7 @@ app: web
 route: /app/profile
 title: Settings
 auth: required
-purpose: Manage personal details, age and pay, tax basis, net worth choices, monthly check-in day, optional modules, sign-in security, AI connections, and data export or deletion.
+purpose: Manage personal details, age and pay, tax basis, net worth choices, monthly check-in day, optional modules, sign-in security, AI connections, data export or deletion, and (only when the backend's household switch is on) a household with one other person.
 route_file: apps/web/app/routes/app.profile.tsx
 
 sections:
@@ -62,3 +62,21 @@ sections:
 
   - id: delete-account
     component: apps/web/app/features/settings/components/DeleteAccountSection/DeleteAccountSection.tsx
+
+  - id: household-membership
+    component: apps/web/app/features/household/components/HouseholdTab/HouseholdTab.tsx
+
+  - id: household-invitation
+    component: apps/web/app/features/household/components/InvitationLinkPanel/InvitationLinkPanel.tsx
+
+  - id: household-what-i-share
+    component: apps/web/app/features/household/components/WhatIShareSection/WhatIShareSection.tsx
+
+  - id: household-joint-summary
+    component: apps/web/app/features/household/components/JointSummaryList/JointSummaryList.tsx
+
+  - id: household-leave
+    component: apps/web/app/features/household/components/LeaveHouseholdSection/LeaveHouseholdSection.tsx
+
+  - id: household-help-line
+    component: apps/web/app/features/household/components/SharingHelpLine/SharingHelpLine.tsx

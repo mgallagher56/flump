@@ -121,6 +121,48 @@ describe("<SettingsPage />", () => {
     expect(screen.getByTestId("reset-financial-data-trigger")).toBeDefined();
   });
 
+  it("has no Household tab without household data, and ?tab=household falls back like an unknown tab", () => {
+    window.history.pushState({}, "", "/app/profile?tab=household");
+    render(<SettingsPage household={null} initialProfile={profile} />);
+    expect(screen.queryByRole("tab", { name: "Household" })).toBeNull();
+    expect(screen.queryByTestId("settings-household-tab")).toBeNull();
+    expect(screen.getByRole("tab", { name: "Profile" }).getAttribute("aria-selected")).toBe("true");
+  });
+
+  it("adds a Household tab when the loader had household data, and ?tab=household opens it", async () => {
+    const router = createMemoryRouter(
+      [
+        {
+          path: "/app/profile",
+          element: (
+            <SettingsPage
+              household={{ state: { household: null, invitation: null }, jointSummary: null }}
+              initialProfile={profile}
+            />
+          ),
+        },
+      ],
+      { initialEntries: ["/app/profile?tab=household"] },
+    );
+    render(<RouterProvider router={router} />);
+    const names = within(screen.getByRole("tablist", { name: "Settings sections" }))
+      .getAllByRole("tab")
+      .map((t) => t.textContent);
+    expect(names).toEqual(["Profile", "Security", "Data", "Household"]);
+    await waitFor(() =>
+      expect(screen.getByRole("tab", { name: "Household" }).getAttribute("aria-selected")).toBe(
+        "true",
+      ),
+    );
+    expect(screen.getByTestId("settings-household-tab")).toBeDefined();
+  });
+
+  it("knows ?tab=household only when the tab is available", () => {
+    expect(parseSettingsTab("?tab=household")).toBeNull();
+    expect(parseSettingsTab("?tab=household", { householdAvailable: false })).toBeNull();
+    expect(parseSettingsTab("?tab=household", { householdAvailable: true })).toBe("household");
+  });
+
   it("parses the ?tab= deep link, including the old names", () => {
     expect(parseSettingsTab("?tab=security")).toBe("security");
     expect(parseSettingsTab("?tab=ai_connections")).toBe("security");
