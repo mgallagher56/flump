@@ -162,6 +162,8 @@ const backendEnvSchema = z.looseObject({
   /** Households (E34 C3). Off unless exactly true; only the owner turns it on (household-gate.ts). */
   HOUSEHOLD_ENABLED: text(),
   STARLING_USE_SANDBOX: bool(),
+  /** E35 W5: `true` stops the two optional questions after a check-in for everyone. */
+  WELLBEING_QUESTIONS_PAUSED: bool(),
 
   // API contract
   CONTRACT_MODE: lowerEnum(["enforce", "shadow", "off"]),

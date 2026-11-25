@@ -63,3 +63,13 @@ export function isRealDate(date: string): boolean {
 export function compareYearMonth(a: YearMonth, b: YearMonth): number {
   return a.year * 12 + a.month - (b.year * 12 + b.month);
 }
+
+/**
+ * The first day (YYYY-MM-DD) of the calendar quarter an instant falls in on the London clock:
+ * January, April, July or October the 1st (E35 W5).
+ */
+export function londonQuarterStart(now: Date = new Date()): string {
+  const { year, month } = londonYearMonth(now);
+  const firstMonth = Math.floor((month - 1) / 3) * 3 + 1;
+  return `${monthKey({ year, month: firstMonth })}-01`;
+}

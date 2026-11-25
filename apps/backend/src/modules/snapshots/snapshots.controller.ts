@@ -1,7 +1,9 @@
 import type {
+  AnswerWellbeingQuestionsResponse,
   SnapshotCheckInsResponse,
   SnapshotMonthParams,
   UpsertSnapshotRequest,
+  WellbeingQuestionsStatusResponse,
 } from "@flump/api-contract";
 import {
   Body,
@@ -10,6 +12,7 @@ import {
   Headers,
   HttpCode,
   Param,
+  Post,
   Put,
   Req,
   Res,
@@ -20,11 +23,15 @@ import { AuthGuard } from "../../auth/auth.guard";
 import type { AuthenticatedRequest } from "../../auth/authenticated-request";
 import { expectedVersions, setEtag } from "../../contract/etag";
 import { SnapshotsService } from "./snapshots.service";
+import { WellbeingQuestionsService } from "./wellbeing-questions.service";
 
 @Controller()
 @UseGuards(AuthGuard)
 export class SnapshotsController {
-  constructor(private readonly snapshots: SnapshotsService) {}
+  constructor(
+    private readonly snapshots: SnapshotsService,
+    private readonly wellbeing: WellbeingQuestionsService,
+  ) {}
 
   /**
    * The latest month whose check-in was finished, and the latest one started, for the check-in
@@ -35,6 +42,28 @@ export class SnapshotsController {
   async checkIns(@Req() req: AuthenticatedRequest): Promise<SnapshotCheckInsResponse> {
     const { completed, started } = await this.snapshots.latestMonths(req.user.id);
     return { latestCompletedMonth: completed, latestStartedMonth: started };
+  }
+
+  /** E35 W5: whether to offer the two optional questions after this check-in. */
+  @Get("snapshots/wellbeing-questions")
+  @HttpCode(200)
+  async wellbeingStatus(
+    @Req() req: AuthenticatedRequest,
+  ): Promise<WellbeingQuestionsStatusResponse> {
+    return this.wellbeing.status(req.user.id);
+  }
+
+  /**
+   * E35 W5: records the answer, or a skip, for the current London quarter. The free text is never
+   * logged; the body is handed straight to the service, which validates it.
+   */
+  @Post("snapshots/wellbeing-questions")
+  @HttpCode(200)
+  async answerWellbeing(
+    @Req() req: AuthenticatedRequest,
+    @Body() body: unknown,
+  ): Promise<AnswerWellbeingQuestionsResponse> {
+    return this.wellbeing.record(req.user.id, body);
   }
 
   /**

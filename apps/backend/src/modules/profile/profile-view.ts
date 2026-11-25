@@ -108,6 +108,7 @@ export function formatProfileRow(profile: UserProfile) {
     netWorthCountsProperty: profile.netWorthCountsProperty ?? true,
     netWorthCountsStudentLoan: profile.netWorthCountsStudentLoan ?? false,
     partnerMode: profile.partnerMode ?? false,
+    wellbeingQuestions: profile.wellbeingQuestions ?? true,
     annualSalary:
       profile.annualSalary !== null && profile.annualSalary !== undefined
         ? Number(profile.annualSalary)
@@ -259,4 +260,5 @@ export const PROFILE_UPDATE_DEFAULTS = (userId: string): Partial<UserProfile> =>
   netWorthCountsProperty: true,
   netWorthCountsStudentLoan: false,
   partnerMode: false,
+  wellbeingQuestions: true,
 });

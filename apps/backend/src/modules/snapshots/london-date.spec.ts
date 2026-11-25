@@ -4,6 +4,7 @@ import {
   isRealDate,
   lastDayOfMonth,
   londonDate,
+  londonQuarterStart,
   londonYearMonth,
   monthKey,
   parseMonthKey,
@@ -41,5 +42,29 @@ describe("london-date (E30 D3)", () => {
       0,
     );
     expect(compareYearMonth({ year: 2026, month: 1 }, { year: 2026, month: 1 })).toBe(0);
+  });
+});
+
+describe("londonQuarterStart (E35 W5)", () => {
+  it("starts a quarter at midnight London time, not UTC, in summer time", () => {
+    // BST began on 28 March 2027, so 31 Mar 23:30 UTC is 1 Apr 00:30 in London: the second quarter.
+    expect(londonQuarterStart(new Date("2027-03-31T23:30:00Z"))).toBe("2027-04-01");
+    // 22:59 UTC is 23:59 BST on 31 March: still the first quarter.
+    expect(londonQuarterStart(new Date("2027-03-31T22:59:00Z"))).toBe("2027-01-01");
+    // 30 Sep 23:00 UTC is 1 Oct 00:00 BST: the fourth quarter starts.
+    expect(londonQuarterStart(new Date("2026-09-30T23:00:00Z"))).toBe("2026-10-01");
+    expect(londonQuarterStart(new Date("2026-09-30T22:59:59Z"))).toBe("2026-07-01");
+    // 30 Jun 23:00 UTC is 1 Jul 00:00 BST.
+    expect(londonQuarterStart(new Date("2026-06-30T23:00:00Z"))).toBe("2026-07-01");
+  });
+
+  it("follows UTC in winter, when London is on GMT, across a year end", () => {
+    expect(londonQuarterStart(new Date("2026-12-31T23:59:59Z"))).toBe("2026-10-01");
+    expect(londonQuarterStart(new Date("2027-01-01T00:00:00Z"))).toBe("2027-01-01");
+  });
+
+  it("maps the middle and last month of a quarter to its first day", () => {
+    expect(londonQuarterStart(new Date("2026-05-15T12:00:00Z"))).toBe("2026-04-01");
+    expect(londonQuarterStart(new Date("2026-11-25T12:00:00Z"))).toBe("2026-10-01");
   });
 });

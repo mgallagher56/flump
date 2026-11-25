@@ -32,6 +32,7 @@ describe("UserProfileService (Deep Module)", () => {
   let mockWorkLogEntryRepo: DeleteRepo;
   let mockInvoiceRepo: DeleteRepo;
   let mockInvoicingSettingsRepo: DeleteRepo;
+  let mockWellbeingRepo: DeleteRepo;
 
   /** The service over the current doubles; `seams` replaces the default revoker or erased check. */
   const build = (seams: { bankConsentRevoker?: object; accountDeletion?: object } = {}) =>
@@ -107,6 +108,9 @@ describe("UserProfileService (Deep Module)", () => {
     mockInvoicingSettingsRepo = {
       delete: vi.fn().mockResolvedValue({ affected: 1 }),
     };
+    mockWellbeingRepo = {
+      delete: vi.fn().mockResolvedValue({ affected: 2 }),
+    };
     identityAdapter = new InMemoryIdentityAdapter();
     mockManagerQuery = vi.fn().mockResolvedValue([]);
     mockDataSource = {
@@ -131,6 +135,7 @@ describe("UserProfileService (Deep Module)", () => {
             if (entityClass.name === "WorkLogEntry") return mockWorkLogEntryRepo;
             if (entityClass.name === "Invoice") return mockInvoiceRepo;
             if (entityClass.name === "InvoicingSettings") return mockInvoicingSettingsRepo;
+            if (entityClass.name === "WellbeingAnswer") return mockWellbeingRepo;
             if (entityClass.name === "AuditEvent") return { insert: mockAuditInsert };
             if (entityClass.name === "Consent") return { update: mockConsentUpdate };
             return {};
@@ -533,6 +538,69 @@ describe("UserProfileService (Deep Module)", () => {
           /checkInDay must be a whole day/,
         );
       }
+    });
+  });
+
+  describe("wellbeing questions switch (E35 W5)", () => {
+    it("reads a profile with no stored choice as on", async () => {
+      mockUserProfileRepo.findOne.mockResolvedValue({ id: "profile-1", userId: "user-123" });
+      expect((await service.getProfile("user-123")).wellbeingQuestions).toBe(true);
+    });
+
+    it("switching off saves the switch and deletes the answers in one transaction", async () => {
+      mockUserProfileRepo.findOne.mockResolvedValue({
+        id: "profile-1",
+        userId: "user-123",
+        wellbeingQuestions: true,
+      });
+      const saved = await service.updateProfile("user-123", { wellbeingQuestions: false });
+      expect(saved.wellbeingQuestions).toBe(false);
+      expect(mockDataSource.transaction).toHaveBeenCalledTimes(1);
+      expect(at(mockUserProfileRepo.save.mock.calls, -1)[0]).toMatchObject({
+        wellbeingQuestions: false,
+      });
+      expect(mockWellbeingRepo.delete).toHaveBeenCalledWith({ userId: "user-123" });
+    });
+
+    it("a failed delete fails the save, so the switch never goes off with answers left", async () => {
+      mockUserProfileRepo.findOne.mockResolvedValue({ id: "profile-1", userId: "user-123" });
+      mockWellbeingRepo.delete.mockRejectedValueOnce(new Error("connection lost"));
+      await expect(
+        service.updateProfile("user-123", { wellbeingQuestions: false }),
+      ).rejects.toThrow("connection lost");
+    });
+
+    it("switching on, or an update that leaves the switch alone, deletes nothing", async () => {
+      mockUserProfileRepo.findOne.mockResolvedValue({
+        id: "profile-1",
+        userId: "user-123",
+        wellbeingQuestions: false,
+      });
+      const on = await service.updateProfile("user-123", { wellbeingQuestions: true });
+      expect(on.wellbeingQuestions).toBe(true);
+      await service.updateProfile("user-123", { checkInDay: 5 });
+      expect(mockWellbeingRepo.delete).not.toHaveBeenCalled();
+      expect(mockDataSource.transaction).not.toHaveBeenCalled();
+    });
+
+    it("rejects a switch value that is not a boolean with a 400", async () => {
+      mockUserProfileRepo.findOne.mockResolvedValue({ id: "profile-1", userId: "user-123" });
+      await expect(
+        service.updateProfile("user-123", { wellbeingQuestions: "no" as unknown as boolean }),
+      ).rejects.toThrow(/wellbeingQuestions must be true or false/);
+      expect(mockWellbeingRepo.delete).not.toHaveBeenCalled();
+    });
+
+    it("the financial data reset keeps the answers and the switch", async () => {
+      mockUserProfileRepo.findOne.mockResolvedValueOnce({
+        userId: "user-123",
+        wellbeingQuestions: false,
+      });
+      await service.resetFinancialData("user-123", "user@example.com");
+      expect(mockWellbeingRepo.delete).not.toHaveBeenCalled();
+      expect(at(mockUserProfileRepo.save.mock.calls, -1)[0]).toMatchObject({
+        wellbeingQuestions: false,
+      });
     });
   });
 
