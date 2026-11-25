@@ -244,11 +244,14 @@ export function selectHouseholdTakeHome(
   const x = selectTakeHome(a, { taxYear: opts.taxYear });
   const y = selectTakeHome(b, { taxYear: opts.taxYear });
   if (x.status !== "known" || y.status !== "known") {
-    // A refusal (a figure with a notice) is passed on whoever's it is; otherwise both unknowns
-    // share one reason (the same year, or facts not set), so the result does not depend on order.
+    // One fixed order, so the result does not depend on whose figure it is: a refusal (with its
+    // notice), then an unsupported year, then facts not set.
     const unknowns = [x, y].filter((f) => f.status === "unknown");
     const missing = [...new Set(unknowns.flatMap((f) => f.missing))].sort() as MissingKey[];
-    const first = unknowns.find((f) => f.notice !== undefined) ?? unknowns[0];
+    const first =
+      unknowns.find((f) => f.notice !== undefined) ??
+      unknowns.find((f) => f.reason === "unsupported-year") ??
+      unknowns[0];
     return figureUnknown<HouseholdTakeHome>(missing, first?.reason, first?.notice);
   }
   const sumOrNull = (p: number | null, q: number | null) =>
