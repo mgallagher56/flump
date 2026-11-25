@@ -16,7 +16,7 @@ Related runbooks (some land in parallel PRs, so a link may not resolve until tho
 
 > **Owner decision, 2026-11-13 (DECISIONS round 6):** the current Railway environment is the long-lived **staging** environment. Its existing services (backend, web, marketing and Postgres) are staging: set `SENTRY_ENVIRONMENT=staging`, and the ZAP baseline targets (`ZAP_TARGET_URLS`) are the current web and marketing URLs. A separate `production` environment will be created later; until then there is no production site. The sections below describe the target two-environment layout.
 
-> **Beta access on staging, 25 November 2026:** the owner removed `BETA_OPEN` from the Railway environment. Staging is invite or allow-list only: an account signs in only with a beta invite link or when it is in `BETA_ALLOWED_EMAILS` or `BETA_ALLOWED_USER_IDS` (`apps/backend/src/auth/beta-access.ts`).
+> **Beta access on staging, 25 November 2026:** the owner removed `BETA_OPEN` from the Railway environment. Staging is invite, allow-list or admin only: the app serves an account only while it holds an active beta invite, or is in `BETA_ALLOWED_EMAILS`, `BETA_ALLOWED_USER_IDS` or `BETA_ADMIN_USER_IDS` (`apps/backend/src/auth/beta-access.ts`). Anyone else can still sign in with WorkOS, but the app refuses them with the not-invited message.
 
 - One persistent Railway environment named `staging`, in the same project as production, created with Duplicate Environment.
 - Region: **EU West** for every service and for Postgres (round 3, item 8). Production moves to EU West through the region-move runbook, so both environments end up in the same region.
