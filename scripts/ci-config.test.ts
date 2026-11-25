@@ -468,6 +468,29 @@ const hardened = workflowFiles.map((file) => ({
   ) as HardenedWorkflow,
 }));
 
+describe("PR description check (AGENTS.md sections 8, 12, 15, 17)", () => {
+  const source = readFileSync(resolve(repoRoot, ".github/workflows/pr-description.yml"), "utf8");
+  const workflow = Bun.YAML.parse(source) as {
+    on: { pull_request: { types: string[] } };
+    jobs: Record<string, { steps: { run?: string }[] }>;
+  };
+
+  test("runs the local command on every description edit and push", () => {
+    expect(workflow.on.pull_request.types.sort()).toEqual([
+      "edited",
+      "opened",
+      "reopened",
+      "synchronize",
+    ]);
+    const runs = Object.values(workflow.jobs).flatMap((j) => j.steps.map((s) => s.run ?? ""));
+    expect(runs).toContain('bun scripts/check-pr-body.ts --event "$GITHUB_EVENT_PATH"');
+  });
+
+  test("never puts the PR title or body into a workflow expression (script injection)", () => {
+    expect(source).not.toMatch(/\$\{\{\s*github\.event\.pull_request\.(body|title)/);
+  });
+});
+
 describe("CI hardening (SEC-E)", () => {
   test("the workflow list is the one this file knows", () => {
     expect(workflowFiles.sort()).toEqual([
@@ -476,6 +499,7 @@ describe("CI hardening (SEC-E)", () => {
       "ci-pipeline.yml",
       "interaction-cost.yml",
       "load-smoke.yml",
+      "pr-description.yml",
       "release-please.yml",
       "security-scan.yml",
       "visual-regression.yml",

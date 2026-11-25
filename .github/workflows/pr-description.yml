@@ -1,0 +1,38 @@
+name: 📝 PR description
+
+# AGENTS.md sections 8, 11, 12, 15 and 17: a PR description is at most 1000 characters, has
+# "Tests", "Guard changes" and review lines, and no em dash. scripts/check-pr-body.ts holds the
+# rules; release-please and Renovate PRs are exempt. Its own workflow so that editing a
+# description re-runs this check alone, not the whole CI Pipeline. The body is read from the event
+# file, never interpolated into a shell. Locally:
+#   gh pr view <n> --json title,body,author | bun scripts/check-pr-body.ts -
+on:
+  pull_request:
+    branches:
+      - main
+    types: [opened, edited, reopened, synchronize]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  pr-description:
+    name: 📝 PR description
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.4.4
+
+      - name: 📝 Check the PR description
+        run: bun scripts/check-pr-body.ts --event "$GITHUB_EVENT_PATH"

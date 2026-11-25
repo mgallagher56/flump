@@ -1,0 +1,5 @@
+{
+  "author": "mgallagher56",
+  "body": "E12 S2c (plan 9.5): mobile e2e harness. S2a waits for OS1; S2b for S2a.\n\n- `apps/mobile/e2e/fixture-server`: WorkOS stand-in and canned `/v1`, loopback only\n- CI `🤖 Mobile e2e (Android)`: Maestro flows on an emulator, light and dark, screenshots kept 7 days. Not required yet\n- No data leaves CI: no secrets, no Maestro Cloud, no analytics\n- Proves Hermes on Android only; iOS unverified\n\n**Tests**: 41 fixture and installer tests, CI job config tests, Biome and bundle cases; each seen failing (10 mutations caught). None weakened.\n\n**Guard changes** (coordinator sign-off, 25 Nov): new job, not required; bundle markers; Biome import ban; knip entry.\n\n**Dependencies**: setup-java v6.3.0 (14 Nov), android-emulator-runner v2.38.0 (5 Jul), Maestro 2.12.1 (2 Nov), babel-jest 30.5.2 (18 Sep)\n\n**Seam cost**: 0\n\n**Reviewed by**: fresh opus reviewer and `security-reviewer` (opus). Findings fixed. Not verified: real WorkOS, iOS.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n",
+  "title": "feat(mobile): E12 S2c e2e harness and Android emulator CI"
+}
