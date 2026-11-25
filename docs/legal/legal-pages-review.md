@@ -124,13 +124,13 @@ The stand-in name ends in "Ltd" and comes with a company number, while the tradi
 1. **Before pointing real people at the pages:** sign the Railway DPA (DocuSign), accept the Sentry DPA, and check both companies' Data Privacy Framework listings. Record the dates in `ropa.md`.
 2. **Before pointing real people at the pages:** fill the controller's name and address and a mailbox that is read. UK GDPR Article 13 and section 164A are not met while the address is unmonitored.
 3. Register with the ICO and pay the data protection fee, if not done.
-1. **By 3 December 2026:** confirm the first retention run after the deploy that schedules it in the backend (D5 revised on 25 November 2026; the Railway cron service is now optional). Then the backup job and its bucket rule, and state the backup period in the privacy notice.
-2. Decide the regulatory-status wording for the terms before a public launch.
-3. Decide whether to move hosting to EU West (`docs/runbooks/region-move.md`). The privacy notice and `ropa.md` change with it.
-4. Delete the `TERMS_VERSION` variable from the Railway backend service if it is set. The backend no longer reads it (terms versions come from `LEGAL_PAGES`) and logs one warning at boot while it is there.
-5. Before the first question after a check-in is shown to a real person: write a short legitimate interests assessment for it, and read the free-text answers regularly (monthly is safer than quarterly), removing any that hold health details (`scripts/ops/wellbeing-measures`).
-6. Email testers when the terms change by more than a wording fix, and 30 days before ending an account or the test phase. The terms promise both, and nothing in the app sends email.
-7. Answer privacy requests within one month and acknowledge complaints within 30 days.
+4. **By 3 December 2026:** confirm the first retention run after the deploy that schedules it in the backend (D5 revised on 25 November 2026; the Railway cron service is now optional). Then the backup job and its bucket rule, and state the backup period in the privacy notice.
+5. Decide the regulatory-status wording for the terms before a public launch.
+6. Decide whether to move hosting to EU West (`docs/runbooks/region-move.md`). The privacy notice and `ropa.md` change with it.
+7. Delete the `TERMS_VERSION` variable from the Railway backend service if it is set. The backend no longer reads it (terms versions come from `LEGAL_PAGES`) and logs one warning at boot while it is there.
+8. Before the first question after a check-in is shown to a real person: write a short legitimate interests assessment for it, and read the free-text answers regularly (monthly is safer than quarterly), removing any that hold health details (`scripts/ops/wellbeing-measures`).
+9. Email testers when the terms change by more than a wording fix, and 30 days before ending an account or the test phase. The terms promise both, and nothing in the app sends email.
+10. Answer privacy requests within one month and acknowledge complaints within 30 days.
 
 ## For a solicitor before public launch
 
