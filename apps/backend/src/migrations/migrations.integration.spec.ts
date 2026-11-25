@@ -1606,7 +1606,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
 
       await runMigrationDown(new RetentionRuns1795660000000());
       expect(await runsTable()).toEqual([]);
-      expect(await tables()).toEqual(ENTITY_TABLES);
+      expect(await sortedTables()).toEqual(entityTables());
       await ds.query("DELETE FROM migrations WHERE name = 'RetentionRuns1795660000000'");
       await ds.runMigrations();
       expect(await runsTable()).toEqual(["retention_runs"]);
