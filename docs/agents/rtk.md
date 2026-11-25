@@ -9,7 +9,7 @@ The rule itself is [`AGENTS.md`](../../AGENTS.md) section 7. This page holds the
 - Run `rtk discover` to see which of your commands missed the proxy.
 - Not applicable: interactive commands, long-running dev servers (`bun run dev`, `storybook`), and commands whose raw output is itself the deliverable.
 - If a command's compressed output hides something needed (e.g. a full stack trace), use `rtk bypass <cmd>` for the raw output.
-- If `rtk` is not installed, install it (`brew install rtk`, or the official install script, which installs to `~/.local/bin` — ensure that is on `PATH`) and run `rtk init -g` for the Claude Code hook; fall back to the plain command only if installation is impossible.
+- If `rtk` is not installed, install it (`brew install rtk`, or the official install script, which installs to `~/.local/bin`; ensure that is on `PATH`) and run `rtk init -g` for the Claude Code hook; fall back to the plain command only if installation is impossible.
 
 [`rtk`](https://github.com/rtk-ai/rtk) is a CLI proxy that compresses noisy command output (60-90% fewer tokens). When running a command it supports, agents MUST prefix it with `rtk`.
 

@@ -13,7 +13,7 @@ You are refactoring and expanding **Flump**, a UK-native personal finance, debt 
    - `STAGE_3_WEALTH_OPTIMIZE` (UK £100k tax trap, Salary Sacrifice, ISA/SIPP allowances, Mortgage vs Invest, Section 24 BTL tax).
 3. **Eliminate State Fragmentation & Wizard Fatigue:**
    - Merge `/app/savings` into `/app/accounts` as a unified Net Worth, Yield & Allowance Hub.
-   - Centralize all core financial baseline variables (Gross Salary, Tax Code, Pension %, BTL Split) into a single `FinancialBaseline` store—removing duplicate inputs from `/app/profile`, `/app/pension`, and `/app/forecast`.
+   - Centralize all core financial baseline variables (Gross Salary, Tax Code, Pension %, BTL Split) into a single `FinancialBaseline` store, removing duplicate inputs from `/app/profile`, `/app/pension`, and `/app/forecast`.
    - Replace scattered module quick-start wizards with a single 90-second progressive `/onboarding` flow hydrated via a cross-subdomain seed cookie (`flump_onboarding_seed`).
 4. **Provider-Agnostic Banking Package (`@flump/banking`):** Isolate Plaid, TrueLayer, CSV statement parsing, and Sandbox mock connections behind a unified adapter interface with strict client/server subpath exports.
 
@@ -332,7 +332,7 @@ Build `apps/web/src/routes/debt/index.tsx`:
 
 - **Top 3 Metrics:**
 
-1. **Debt-Free Date** (e.g., `November 2028 — 14 months sooner with current plan`)
+1. **Debt-Free Date** (e.g., `November 2028: 14 months sooner with current plan`)
 2. **Total Unsecured Debt & Weighted APR**
 3. **Total Interest Saved vs. Minimum Payments**
 
@@ -341,7 +341,7 @@ Build `apps/web/src/routes/debt/index.tsx`:
 - Single slider: **`Monthly Extra Overpayment (£)`** (auto-clamped to the user's monthly budget surplus from `/app/budget`).
 
 - **0% Balance Transfer & Overdraft Alerts:** Highlight any card whose `promoAprExpiryDate` will expire before its projected payoff date.
-- **Primary Visual Chart:** **The Debt-to-Wealth Crossover Chart** — Area chart showing debt dropping to `£0` (red/amber zone) followed immediately by the 5-year positive wealth accumulation trajectory (emerald zone) when redirecting those exact monthly debt payments into an ISA.
+- **Primary Visual Chart:** **The Debt-to-Wealth Crossover Chart**: area chart showing debt dropping to `£0` (red/amber zone) followed immediately by the 5-year positive wealth accumulation trajectory (emerald zone) when redirecting those exact monthly debt payments into an ISA.
 
 ### 5.3 Upgrades to `/app/budget`
 
