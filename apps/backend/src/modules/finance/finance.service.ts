@@ -297,18 +297,11 @@ export class FinanceService {
       if (err instanceof ConnectionNeedsReconnectError) judged = err.judged;
     } finally {
       try {
-        if (status === "connected") {
-          // Only the status columns are written: the token columns may have just been refreshed.
-          await this.bankConnectionRepository.update(
-            { id, userId },
-            { status, lastSyncedAt: new Date() },
-          );
-        } else if (!(await sync.recordFailedStatus(id, userId, status, judged))) {
-          // Only while the judged token is still stored (B1): a reconnect that landed during this
-          // sync keeps its fresh token's status. Nothing is written, and the user is told to sync
-          // again, not to reconnect.
-          status = "error";
-        }
+        // Only the status columns are written: the token columns may have just been refreshed.
+        // Only under this sync's lease (L1), and a failure only while the judged token is still
+        // stored (B1): a newer sync, or a reconnect that landed during this sync, keeps its
+        // status. Nothing is written, and the user is told to sync again, not to reconnect.
+        if (!(await sync.recordStatus(id, userId, lease.id, status, judged))) status = "error";
       } catch (err) {
         this.logger.error(`Bank sync status not saved: ${safeErrorSummary(err)}`);
       } finally {
