@@ -10,6 +10,8 @@ import {
   formatWarmConfirmation,
 } from "../../snapshotCopy";
 import type { MonthKey } from "../../snapshotModel";
+import type { WellbeingQuestionsApi } from "../../wellbeingQuestions";
+import { WellbeingQuestions } from "../WellbeingQuestions";
 
 import {
   briefBlock,
@@ -38,6 +40,8 @@ export interface CheckInSummaryProps {
   onDone: () => void;
   /** Back to the accounts to correct one. */
   onChangeBalance: () => void;
+  /** The two optional questions' calls (E35 W5); the real API unless a test or story passes its own. */
+  wellbeing?: WellbeingQuestionsApi;
 }
 
 /**
@@ -53,9 +57,11 @@ export const CheckInSummary: FC<CheckInSummaryProps> = ({
   month,
   onDone,
   onChangeBalance,
+  wellbeing,
 }) => {
   const [showAll, setShowAll] = useState(false);
   const heading = useRef<HTMLHeadingElement>(null);
+  const done = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     heading.current?.focus();
   }, []);
@@ -141,10 +147,19 @@ export const CheckInSummary: FC<CheckInSummaryProps> = ({
         >
           {CHECK_IN_COPY.changeBalance}
         </Button>
-        <Button data-testid="checkin-done" id="checkin-done" onClick={onDone} type="button">
+        <Button
+          data-testid="checkin-done"
+          id="checkin-done"
+          onClick={onDone}
+          ref={done}
+          type="button"
+        >
           {CHECK_IN_COPY.done}
         </Button>
       </div>
+
+      {/* Below the actions, so Done stays where it is when the questions load in after it. */}
+      <WellbeingQuestions api={wellbeing} onFinished={() => done.current?.focus()} />
     </div>
   );
 };

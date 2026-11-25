@@ -13,7 +13,10 @@ const changes = (n: number): Summary["changed"] =>
     calculated: i === 0,
   }));
 
-const setup = (summary: Partial<Summary> = {}) => {
+// The questions are not due here: their own tests cover them, and no test reaches the network.
+const notDue = { loadStatus: async () => false, send: async () => {} };
+
+const setup = (summary: Partial<Summary> = {}, wellbeing = notDue) => {
   const onDone = vi.fn();
   const onChangeBalance = vi.fn();
   render(
@@ -28,6 +31,7 @@ const setup = (summary: Partial<Summary> = {}) => {
         previousMonth: "2026-10",
         ...summary,
       }}
+      wellbeing={wellbeing}
     />,
   );
   return { onDone, onChangeBalance };
@@ -118,5 +122,23 @@ describe("CheckInSummary", () => {
     expect(brief.textContent).toBe(
       "November in briefNet worth changed by −£1,150. Debts changed by +£320. 2 accounts updated.",
     );
+  });
+
+  it("shows the summary before the questions' status arrives, and the questions below Done", async () => {
+    let answer: (due: boolean) => void = () => {};
+    const send = vi.fn(async () => {});
+    setup({}, { loadStatus: () => new Promise<boolean>((r) => (answer = r)), send });
+    // Status still loading: the summary is all there, and no questions.
+    expect(screen.getByRole("heading", { name: "November is checked in." })).toBeDefined();
+    expect(screen.queryByRole("heading", { name: "Two optional questions" })).toBeNull();
+    answer(true);
+    const questions = await screen.findByTestId("wellbeing-questions");
+    const done = screen.getByRole("button", { name: "Done" });
+    expect(done.compareDocumentPosition(questions) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // Skip removes the card and hands the focus back to Done.
+    await userEvent.click(screen.getByRole("button", { name: "Skip" }));
+    expect(send).toHaveBeenCalledWith({ feeling: null, worseText: null });
+    expect(screen.queryByTestId("wellbeing-questions")).toBeNull();
+    expect(document.activeElement).toBe(done);
   });
 });
