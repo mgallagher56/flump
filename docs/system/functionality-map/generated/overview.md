@@ -2,7 +2,7 @@
 
 # Functionality map: overview
 
-Mapped pages: 38 | Sections: 251 | Excluded routes: 19
+Mapped pages: 38 | Sections: 253 | Excluded routes: 19
 
 ## web
 
@@ -155,14 +155,15 @@ Mapped pages: 38 | Sections: 251 | Excluded routes: 19
 - Route: `/app/invoicing` (auth: `required`, file: `apps/web/app/routes/app.invoicing.tsx`)
 - Purpose: Log billable self-employed hours, build and issue numbered invoices, record payments, export CSVs, print invoices, and sync paid totals to Self Assessment.
 
-| Section          | Component                                                                              | Facts read                                           | Figures                            |
-| ---------------- | -------------------------------------------------------------------------------------- | ---------------------------------------------------- | ---------------------------------- |
-| `header`         | `apps/web/app/features/invoicing/components/InvoicingWorkspace/InvoicingWorkspace.tsx` | -                                                    | -                                  |
-| `kpi-strip`      | `apps/web/app/features/invoicing/components/InvoicingWorkspace/InvoicingWorkspace.tsx` | `work-log-entries`, `invoices`                       | `invoicing-kpis`, `invoice-totals` |
-| `workspace-tabs` | `apps/web/app/features/invoicing/components/InvoicingWorkspace/InvoicingWorkspace.tsx` | -                                                    | -                                  |
-| `work-log-panel` | `apps/web/app/features/invoicing/components/InvoicingWorkspace/InvoicingWorkspace.tsx` | `work-log-entries`, `invoicing-settings`             | -                                  |
-| `invoices-panel` | `apps/web/app/features/invoicing/components/InvoicingWorkspace/InvoicingWorkspace.tsx` | `invoices`, `work-log-entries`, `invoicing-settings` | `invoice-totals`                   |
-| `settings-panel` | `apps/web/app/features/invoicing/components/InvoicingWorkspace/InvoicingWorkspace.tsx` | `invoicing-settings`                                 | -                                  |
+| Section          | Component                                                                              | Facts read                                               | Figures                            |
+| ---------------- | -------------------------------------------------------------------------------------- | -------------------------------------------------------- | ---------------------------------- |
+| `header`         | `apps/web/app/features/invoicing/components/InvoicingWorkspace/InvoicingWorkspace.tsx` | -                                                        | -                                  |
+| `kpi-strip`      | `apps/web/app/features/invoicing/components/InvoicingWorkspace/InvoicingWorkspace.tsx` | `work-log-entries`, `invoices`                           | `invoicing-kpis`, `invoice-totals` |
+| `mtd-notice`     | `apps/web/app/features/tax/components/MtdNotice/MtdNotice.tsx`                         | `tax-records`, `employment-type`, `rental-share-for-tax` | `mtd-qualifying-income`            |
+| `workspace-tabs` | `apps/web/app/features/invoicing/components/InvoicingWorkspace/InvoicingWorkspace.tsx` | -                                                        | -                                  |
+| `work-log-panel` | `apps/web/app/features/invoicing/components/InvoicingWorkspace/InvoicingWorkspace.tsx` | `work-log-entries`, `invoicing-settings`                 | -                                  |
+| `invoices-panel` | `apps/web/app/features/invoicing/components/InvoicingWorkspace/InvoicingWorkspace.tsx` | `invoices`, `work-log-entries`, `invoicing-settings`     | `invoice-totals`                   |
+| `settings-panel` | `apps/web/app/features/invoicing/components/InvoicingWorkspace/InvoicingWorkspace.tsx` | `invoicing-settings`                                     | -                                  |
 
 ### mortgage: Your mortgage
 
@@ -280,6 +281,7 @@ Mapped pages: 38 | Sections: 251 | Excluded routes: 19
 | `headline-or-empty`         | `apps/web/app/features/tax/components/TaxHeadline/TaxHeadline.tsx`             | `tax-records`, `salary`, `tax-region`, `employment-type`, `rental-share-for-tax`, `student-loan-plan` | `estimated-tax`, `personal-allowance-allocation`, `finance-costs-carried-forward` |
 | `calculation-drawer`        | `apps/web/app/features/tax/components/TaxReservePanel/TaxReservePanel.tsx`     | `tax-records`, `salary`, `rental-share-for-tax`                                                       | `estimated-tax`, `personal-allowance-allocation`, `finance-costs-carried-forward` |
 | `sources-panel`             | `apps/web/app/features/tax/components/TaxSourcesPanel/TaxSourcesPanel.tsx`     | `tax-records`, `account-balance`                                                                      | -                                                                                 |
+| `mtd-notice`                | `apps/web/app/features/tax/components/MtdNotice/MtdNotice.tsx`                 | `tax-records`, `employment-type`, `rental-share-for-tax`                                              | `mtd-qualifying-income`                                                           |
 | `calculated-figures`        | `apps/web/app/features/tax/components/CalculatedFigures/CalculatedFigures.tsx` | `account-balance`, `account-rate`                                                                     | -                                                                                 |
 | `records-and-years-drawers` | `apps/web/app/features/tax/components/TaxRecordsTable/TaxRecordsTable.tsx`     | `tax-records`                                                                                         | -                                                                                 |
 
