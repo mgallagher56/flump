@@ -1,7 +1,8 @@
+import { randomUUID } from "node:crypto";
 import { createTokenStore, REFRESH_TOKEN_KEY, type SecureStoreLike } from "./tokenStore";
 
 const ACCESSIBLE = 7; // Stands in for expo-secure-store's WHEN_UNLOCKED_THIS_DEVICE_ONLY.
-const token = () => `r_${Math.random().toString(36).slice(2)}`;
+const token = () => `r_${randomUUID()}`;
 
 function memoryStore() {
   const items = new Map<string, string>();

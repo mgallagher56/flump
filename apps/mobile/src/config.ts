@@ -47,7 +47,7 @@ export function readConfig(source: ConfigSource, options: { releaseBuild: boolea
 }
 
 /** The sign-in redirect registered with WorkOS (owner step OS1). The app's `scheme` is `flump`. */
-export const AUTH_REDIRECT_URI = "flump://auth/callback";
+const AUTH_REDIRECT_URI = "flump://auth/callback";
 
 const WORKOS_API_URL = "https://api.workos.com";
 
@@ -153,7 +153,7 @@ export function loadConfig(): MobileConfig {
 }
 
 /** The sign-in config for this build, from the values Expo inlined at bundle time. */
-export function loadAuthConfig(): AuthConfig {
+function loadAuthConfig(): AuthConfig {
   return readAuthConfig(
     {
       EXPO_PUBLIC_WORKOS_CLIENT_ID: process.env.EXPO_PUBLIC_WORKOS_CLIENT_ID,

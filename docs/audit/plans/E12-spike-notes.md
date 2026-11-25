@@ -63,6 +63,10 @@ These notes answer the [U] items in plan section 5.1. Evidence is named for each
 
 Pending: the owner runs the check on their phone (steps in the S2a report). Rows to fill in: issuer, claim names, access token lifetime, refresh with no client secret, refresh token replaced on use, old token reused, replacement after reuse, backend `GET /v1/user-profile`, and whether signing in after signing out asks for the password.
 
+### Storage rule as built
+
+The refresh token is deleted on sign-out (before any network call), on a rejected refresh (`invalid_grant`), on a fresh token the API refuses, and on sign-out from Not invited or the offline screen. A network failure never deletes it. A read error deletes nothing (changed from the first design on the review's finding that a locked iPhone throws for a good token, approved by the coordinator on 25 November 2026): the app shows the offline screen, and its Sign out clears the value. A sign-out during a refresh drops the late answer unsaved.
+
 ### Android backup
 
 Proved from the prebuild output, not assumed: `scripts/check-android-backup.ts` reads the generated manifest and the rule files it names, and fails unless Auto Backup (`full-backup-content`) and Android 12's cloud backup and device transfer all exclude the `SecureStore` shared preferences. It runs in `🤖 Mobile e2e (Android)` and in the device APK workflow. A run on 25 November found `android:fullBackupContent="@xml/secure_store_backup_rules"` and `android:dataExtractionRules="@xml/secure_store_data_extraction_rules"`. What a real backup and restore does on a phone is still a hand check.
