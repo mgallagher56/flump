@@ -33,15 +33,12 @@ const isCheckedKind = (kind: UkTaxVectorKind): kind is EngineCheckKind =>
 function evaluate(vector: UkTaxVector): number {
   const taxYear = vector.taxYear as UkTaxYear;
   switch (vector.kind) {
-    case "incomeTax": {
-      const { grossIncome } = vector.input as { grossIncome: number };
-      return calculateUkTax({ grossSalary: grossIncome, taxYear, region: vector.region })
-        .incomeTaxGbp;
-    }
+    // An income tax vector is a Gift Aid vector with no gift.
+    case "incomeTax":
     case "giftAid": {
       const { grossIncome, giftAidNet } = vector.input as {
         grossIncome: number;
-        giftAidNet: number;
+        giftAidNet?: number;
       };
       return calculateUkTax({
         grossSalary: grossIncome,
@@ -57,6 +54,7 @@ function evaluate(vector: UkTaxVector): number {
       };
       return calculateEmployerNISavings(grossSalary, salarySacrifice, taxYear);
     }
+    // Unreachable: runEngineCheck filters to ENGINE_CHECK_KINDS first (docs/testing/mutation-triage.md).
     default:
       throw new Error(`Engine check has no evaluator for vector kind ${vector.kind}`);
   }
