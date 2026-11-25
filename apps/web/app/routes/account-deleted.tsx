@@ -1,6 +1,7 @@
 import type { ReactElement } from "react";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 import { data, useLoaderData } from "react-router";
+import { FOCUSED_SHELL_HANDLE } from "~/features/onboarding/focusedShell";
 import { AccountDeletedNotice } from "~/features/settings/components/AccountDeletedNotice";
 import { getAuthSession } from "~/utils/auth.server";
 import { getMarketingUrl } from "~/utils/marketingUrl";
@@ -9,6 +10,9 @@ import { getMarketingUrl } from "~/utils/marketingUrl";
 // cleared the session cookies; the notice clears this browser's per-user storage on mount.
 // With `?state=pending` and a live session (the backend answered 410: data erased, login not yet
 // removed) it shows the last step instead, which repeats the delete request.
+// The data is gone, so the app navigation would lead nowhere: no header nav, bottom bar or footer.
+export const handle = FOCUSED_SHELL_HANDLE;
+
 export const loader = async (args: LoaderFunctionArgs) => {
   const { request } = args;
   let pending = false;

@@ -7,7 +7,8 @@ vi.mock("~/utils/auth.server", () => ({
   getAuthSession: (...a: unknown[]) => getAuthSession(...a),
 }));
 
-import { loader } from "./account-deleted";
+import { isFocusedShell } from "~/features/onboarding/focusedShell";
+import { handle, loader } from "./account-deleted";
 
 type DataResult = { data: { homeUrl: string; pending: boolean }; init: ResponseInit | null };
 
@@ -39,5 +40,14 @@ describe("account-deleted loader", () => {
     getAuthSession.mockResolvedValue({ accessToken: null, user: null });
     const res = await run("http://localhost/account-deleted?state=pending");
     expect(res.data.pending).toBe(false);
+  });
+});
+
+describe("account-deleted shell", () => {
+  // The data is gone, so the app's navigation, account menu and footer links lead nowhere: the
+  // page uses the focused shell, as the not-invited page does (found by verify-flump).
+  it("asks the app shell to leave out the navigation", () => {
+    expect(handle).toEqual({ focusedShell: true });
+    expect(isFocusedShell([{ handle }])).toBe(true);
   });
 });

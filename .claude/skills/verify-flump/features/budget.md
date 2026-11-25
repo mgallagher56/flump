@@ -17,13 +17,13 @@ The Budget page shows money in each month, spending by category and what is left
 
 Preconditions:
 
-- Baseline `homeowner` persona. No shipped journey: write one from the template in `SKILL.md` and run it with `V drive <path>`.
+- Baseline `homeowner` persona. Shipped journey: `V drive budget-add-entry <run-id>` (it names the entry `Gym <suffix>`). Run `V seed homeowner <run-id>` afterwards.
 
-- **Read left over.** Open `/app/budget`. Read the amount in `getByRole("group", { name: "Left over each month" })`.
+- **Read left over.** Open `/app/budget`. The `getByRole("group", { name: "Left over each month" })` group shows `£135` and the `Expenses` button `£1,040` (homeowner: 3,450 in, less 1,250 + 725 + 1,040 + 300).
 - **Edit mode.** Choose button `Edit budget`, then button `Add to expenses`.
 - **Add entry.** Fill textbox `New entry name in Expenses` with `Gym` and textbox `New entry amount in Expenses` with `40`, then choose button `Add to Expenses`. `getByLabel("Amount for Gym")` shows.
 - **Finish.** Choose `getByRole("button", { name: "Finish editing" }).first()`. The button whose name starts `Expenses` contains the new total.
-- **Left over.** The `Left over each month` group shows the earlier figure less £40.
+- **Left over.** The `Left over each month` group shows `£95` (£135 less £40) and `Expenses` shows `£1,080`.
 - **Persistence.** Reload, then `api("/budget-entries")` and check an entry named `Gym` with amount 40.
 
 ## Gotchas

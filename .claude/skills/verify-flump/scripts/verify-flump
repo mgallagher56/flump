@@ -2,7 +2,7 @@
 # verify-flump: launch, check, drive and tear down a disposable local Flump stack
 # (Postgres container + built backend, web and marketing) for verification runs.
 #
-#   verify-flump up [--persona <name>] [--skip-build]   start a new run, print its id
+#   verify-flump up [--persona <name>] [--skip-build] [--no-seed]   start a new run, print its id
 #   verify-flump doctor [run-id]                        read-only health check
 #   verify-flump drive <journey> [run-id]               run a Playwright journey script
 #   verify-flump seed <persona> [run-id]                switch the run's user to another persona
@@ -27,17 +27,26 @@ log() { echo "[verify-flump] $*" >&2; }
 
 free_port() { bun -e 'const s = Bun.listen({ hostname: "127.0.0.1", port: 0, socket: { data() {} } }); console.log(s.port); s.stop(true);'; }
 
+# The only live run. With several live (parallel agents), refuse to guess: a default of "newest"
+# once seeded one agent's persona into another agent's run.
 latest_run() {
   [ -d "$STATE_ROOT" ] || return 1
-  local newest
-  newest="$(ls -1t "$STATE_ROOT" 2>/dev/null | head -1)"
-  [ -n "$newest" ] || return 1
-  echo "$newest"
+  local runs count
+  runs="$(ls -1t "$STATE_ROOT" 2>/dev/null)"
+  count="$(printf '%s' "$runs" | grep -c . || true)"
+  [ "$count" -gt 0 ] || return 1
+  if [ "$count" -gt 1 ]; then echo "verify-flump: $count live runs; pass the run id (see: verify-flump list)" >&2; return 2; fi
+  echo "$runs"
 }
 
 load_run() {
   RUN_ID="${1:-}"
-  if [ -z "$RUN_ID" ]; then RUN_ID="$(latest_run)" || die "no live run; start one with: verify-flump up"; fi
+  if [ -z "$RUN_ID" ]; then
+    local rc=0
+    RUN_ID="$(latest_run)" || rc=$?
+    [ "$rc" -ne 2 ] || exit 1
+    [ "$rc" -eq 0 ] || die "no live run; start one with: verify-flump up"
+  fi
   STATE_DIR="$STATE_ROOT/$RUN_ID"
   [ -f "$STATE_DIR/run.env" ] || die "no live run called $RUN_ID (see: verify-flump list)"
   # shellcheck disable=SC1091
@@ -62,11 +71,12 @@ journey_env() {
 }
 
 cmd_up() {
-  local persona="homeowner" skip_build=0
+  local persona="homeowner" skip_build=0 seed=1
   while [ $# -gt 0 ]; do
     case "$1" in
       --persona) persona="$2"; shift 2 ;;
       --skip-build) skip_build=1; shift ;;
+      --no-seed) seed=0; shift ;; # journeys that sign in themselves (a not-invited user)
       *) die "unknown option $1" ;;
     esac
   done
@@ -158,10 +168,15 @@ cmd_up() {
   wait_http "$WEB_URL/healthz" web 120 "$WEB_PID"
   wait_http "$MARKETING_URL/" marketing 120 "$MARKETING_PID"
 
-  log "signing in and seeding the $persona persona"
-  journey_env
-  (cd "$REPO" && bun "$SKILL_DIR/scripts/seed.ts" "$persona") >"$EVIDENCE_DIR/logs/seed.log" 2>&1 \
-    || die "seeding failed; see $EVIDENCE_DIR/logs/seed.log"
+  if [ "$seed" = 1 ]; then
+    log "signing in and seeding the $persona persona"
+    journey_env
+    (cd "$REPO" && bun "$SKILL_DIR/scripts/seed.ts" "$persona") >"$EVIDENCE_DIR/logs/seed.log" 2>&1 \
+      || die "seeding failed; see $EVIDENCE_DIR/logs/seed.log"
+  else
+    sed -i '' "s/^PERSONA=.*/PERSONA=none/" "$STATE_DIR/run.env"
+    log "not seeded (--no-seed): journeys must sign in themselves"
+  fi
 
   log "ready: run $RUN_ID, web $WEB_URL, evidence $EVIDENCE_DIR"
   echo "$RUN_ID"
@@ -182,7 +197,8 @@ cmd_doctor() {
   check "web /healthz is 200" "[ \"\$(curl -s -o /dev/null -w '%{http_code}' $WEB_URL/healthz)\" = 200 ]"
   check "signed-in session reaches the dashboard (200, no redirect)" \
     "[ \"\$(curl -s -o /dev/null -w '%{http_code}' -b flump_dev_session=1 $WEB_URL/)\" = 200 ]"
-  check "browser session saved by seeding" "[ -s '$STATE_DIR/storage-state.json' ]"
+  if [ "$PERSONA" = none ]; then echo "ok   not seeded (--no-seed); no saved browser session expected"
+  else check "browser session saved by seeding" "[ -s '$STATE_DIR/storage-state.json' ]"; fi
   local rev tree
   rev="$(git -C "$REPO" rev-parse --short HEAD)"
   tree="$(git -C "$REPO" status --porcelain -- apps packages | shasum | cut -c1-12)"
@@ -217,7 +233,12 @@ cmd_seed() {
 
 cmd_down() {
   RUN_ID="${1:-}"
-  if [ -z "$RUN_ID" ]; then RUN_ID="$(latest_run)" || { log "no live run"; return 0; }; fi
+  if [ -z "$RUN_ID" ]; then
+    local rc=0
+    RUN_ID="$(latest_run)" || rc=$?
+    [ "$rc" -ne 2 ] || exit 1
+    [ "$rc" -eq 0 ] || { log "no live run"; return 0; }
+  fi
   STATE_DIR="$STATE_ROOT/$RUN_ID"
   [ -f "$STATE_DIR/run.env" ] || die "no live run called $RUN_ID"
   # shellcheck disable=SC1091

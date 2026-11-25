@@ -57,6 +57,10 @@ export function setEtag(res: HeaderSink | undefined, updatedAt: Date | string | 
  * millisecond precision the ETag carries. Inside a transaction the bumped row stays locked until
  * commit, so a concurrent update with the same ETag waits, re-checks and finds it stale.
  *
+ * `where` keys may be entity property names (`userId`) or column names (`user_id`): each is
+ * resolved through the entity metadata, because the condition is raw SQL and a property name
+ * there is a missing column.
+ *
  * Returns `updated` when the version matched, `stale` when the row exists with another version
  * and `missing` when no row matches `where` at all (the caller's usual 404).
  */
@@ -65,7 +69,10 @@ export async function claimVersion<T extends ObjectLiteral>(
   where: Record<string, string>,
   expected: Date,
 ): Promise<"updated" | "stale" | "missing"> {
-  const conditions = Object.keys(where).map((column) => `"${column}" = :${column}`);
+  const conditions = Object.keys(where).map(
+    (key) =>
+      `"${repository.metadata?.findColumnWithPropertyName(key)?.databaseName ?? key}" = :${key}`,
+  );
   const result = await repository
     .createQueryBuilder()
     .update()

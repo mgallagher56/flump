@@ -21,7 +21,7 @@ This directory is the maintained source for verifying the user-facing behaviour 
 ## Proof and skip reporting
 
 - Capture the user action and the resulting state, not only the final screen.
-- UI proof is the step screenshots and ARIA snapshots under `.verify/evidence/<run-id>/journeys/`.
+- UI proof is the step screenshots and ARIA snapshots under `~/.flump-verify/evidence/<run-id>/journeys/`.
 - A change to saved data needs a second, read-only view: a reload, an `api()` read-back, or the page that depends on it.
 - Report the feature ID and entry point with each proof, plus the evidence folder.
 - Report an unreachable path with the attempted step and the unmet precondition. Do not report a skipped entry point as verified through a different one.
@@ -42,6 +42,14 @@ Keep implementation details out of the map. Name only user paths, stable handles
 
 - [Sign in and the dashboard](./sign-in-dashboard.md) covers sign-in, the net worth headline and sign-out. Shipped journey: `dashboard`.
 - [Accounts](./accounts.md) covers adding an account and seeing it in the list, the read-back and the dashboard. Shipped journey: `accounts-add`.
-- [Budget](./budget.md) covers adding a spending entry in place and the "left over each month" figure.
-- [Monthly check-in](./monthly-check-in.md) covers recording this month's balances from the dashboard card and seeing them in history.
-- [Setup for a new user](./setup.md) covers the first-run setup flow from an empty user to the dashboard.
+- [Budget](./budget.md) covers adding a spending entry in place and the "left over each month" figure. Shipped journey: `budget-add-entry`.
+- [Monthly check-in](./monthly-check-in.md) covers recording this month's balances from the dashboard card and seeing them in history. Shipped journey: `monthly-check-in`.
+- [Setup for a new user](./setup.md) covers the first-run setup flow from an empty user to the dashboard. Shipped journey: `setup-new-user`.
+- [Mortgage estimates](./mortgage-estimates.md) covers the borrowing estimate and stamp duty taken off the deposit. Shipped journey: `mortgage-estimates`.
+- [Take-home pay](./take-home-pay.md) covers the take-home figure, its breakdown and a pay rise what-if. Shipped journey: `take-home-pay`.
+- [Student loan calculator](./student-loan-tool.md) covers a Plan 5 repayment above and below the threshold. Shipped journey: `student-loan-plan5`.
+- [Retirement plan](./retirement.md) covers income before and after tax and the lump sum what-if. Shipped journey: `retirement`.
+- [Self Assessment](./self-assessment.md) covers the year's bill and adding an expense. Shipped journey: `self-assessment`.
+- [Work log and invoicing](./invoicing.md) covers logging work, a draft invoice, issuing it and marking it paid. Shipped journey: `invoicing`.
+- [Data rights when not invited](./data-rights-not-invited.md) covers downloading data and deleting the account from the not-invited page. Shipped journey: `data-rights-not-invited`.
+- [Main pages at phone width](./phone-pass.md) covers each main page at 375 wide: no sideways scroll, the bottom bar and the h1. Shipped journey: `phone-pass`.

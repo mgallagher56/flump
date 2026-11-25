@@ -49,7 +49,13 @@ export async function open(page: Page, path: string): Promise<void> {
 export async function journey(
   name: string,
   body: (j: Journey) => Promise<void>,
-  options: { signedIn?: boolean } = {},
+  options: {
+    signedIn?: boolean;
+    /** Defaults to 1280x900. */
+    viewport?: { width: number; height: number };
+    /** Touch phone emulation (isMobile and hasTouch), for phone-width journeys. */
+    mobile?: boolean;
+  } = {},
 ): Promise<void> {
   const dir = join(
     env("VERIFY_EVIDENCE_DIR"),
@@ -69,7 +75,9 @@ export async function journey(
     browser = await chromium.launch({ headless: optionalEnv("VERIFY_HEADED") !== "1" });
     const context = await browser.newContext({
       baseURL: WEB_URL,
-      viewport: { width: 1280, height: 900 },
+      viewport: options.viewport ?? { width: 1280, height: 900 },
+      isMobile: options.mobile === true,
+      hasTouch: options.mobile === true,
       storageState: options.signedIn === false ? undefined : STORAGE_STATE,
     });
     const page = await context.newPage();
