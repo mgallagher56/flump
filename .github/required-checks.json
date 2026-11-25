@@ -46,6 +46,11 @@
       "job": "docker-build"
     },
     {
+      "name": "📱 Mobile checks",
+      "workflow": "ci-pipeline.yml",
+      "job": "mobile-checks"
+    },
+    {
       "name": "🛡️ Dependency audit",
       "workflow": "ci-pipeline.yml",
       "job": "audit"

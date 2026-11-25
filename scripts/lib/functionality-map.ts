@@ -9,7 +9,7 @@
  * touching the real repository.
  */
 
-export const FM_APPS = ["web", "marketing"] as const;
+export const FM_APPS = ["web", "marketing", "mobile"] as const;
 type FmApp = (typeof FM_APPS)[number];
 
 const FM_AUTH_MODES = ["required", "public", "anonymous-only", "admin"] as const;

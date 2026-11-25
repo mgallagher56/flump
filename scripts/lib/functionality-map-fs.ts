@@ -24,6 +24,9 @@ const VALUE_MAP_PATH = "docs/system/value-map.yaml";
 
 const WEB_ROUTES_DIR = "apps/web/app/routes";
 const IGNORED_WEB_ROUTE = /^(\.|.*(\.(test|spec)\.(js|jsx|ts|tsx))$)/;
+/** Expo Router routes (E12): every file under apps/mobile/app except layouts and tests. */
+const MOBILE_ROUTES_DIR = "apps/mobile/app";
+const IGNORED_MOBILE_ROUTE = /^(\.|_layout\.|.*\.(test|spec)\.(js|jsx|ts|tsx)$)/;
 
 function* walkFiles(dir: string): Generator<string> {
   if (!existsSync(dir)) return;
@@ -38,7 +41,7 @@ function* walkFiles(dir: string): Generator<string> {
   }
 }
 
-/** Discovers all web route files under `apps/web/app/routes` and marketing routes in `App.tsx`. */
+/** Discovers all web route files under `apps/web/app/routes`, marketing routes in `App.tsx` and mobile routes under `apps/mobile/app`. */
 export function discoverAllRoutes(repoRoot: string, repo: FmRepoView): string[] {
   const webRoutes: string[] = [];
   const webDir = resolve(repoRoot, WEB_ROUTES_DIR);
@@ -49,7 +52,13 @@ export function discoverAllRoutes(repoRoot: string, repo: FmRepoView): string[] 
     webRoutes.push(relative(repoRoot, full).split("\\").join("/"));
   }
   const marketingRoutes = discoverMarketingRoutes(repo);
-  return [...webRoutes, ...marketingRoutes].sort();
+  const mobileRoutes: string[] = [];
+  for (const full of walkFiles(resolve(repoRoot, MOBILE_ROUTES_DIR))) {
+    const name = basename(full);
+    if (IGNORED_MOBILE_ROUTE.test(name) || !/\.(ts|tsx|js|jsx)$/.test(name)) continue;
+    mobileRoutes.push(relative(repoRoot, full).split("\\").join("/"));
+  }
+  return [...webRoutes, ...marketingRoutes, ...mobileRoutes].sort();
 }
 
 export function createRepoView(repoRoot: string): FmRepoView {

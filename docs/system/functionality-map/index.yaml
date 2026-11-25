@@ -3,6 +3,8 @@ version: 1
 # Non-UI routes (API proxies, file downloads, health/security endpoints).
 # Every entry must match a real route file and state a reason.
 excluded_routes:
+  - route_file: apps/mobile/app/(dev)/engine-check.tsx
+    reason: Development-only device check (tax vectors and formatter fixture on the phone's JavaScript engine); production builds strip it and the route only redirects home.
   - route_file: apps/web/app/routes/$feature._index.tsx
     reason: Legacy feature redirect route sending known slugs to /app/* and throwing 404 for unknown top-level paths.
   - route_file: apps/web/app/routes/account.export.ts

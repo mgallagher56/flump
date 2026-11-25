@@ -1,7 +1,10 @@
 import { describe, expect, test } from "bun:test";
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
 import { compareToBaseline, countNoticeInfoUses, countTokenViolations } from "./lib/design-tokens";
 import { countReactIconsImports } from "./lib/react-icons";
-import { shouldSkip } from "./lib/scan";
+import { collectFiles, MOBILE_SCAN_DIRS, readSource, shouldSkip } from "./lib/scan";
 import { needsTabular } from "./lib/tabular-nums";
 
 describe("countTokenViolations", () => {
@@ -181,5 +184,34 @@ describe("countReactIconsImports", () => {
     expect(compareToBaseline({ "a.tsx": 2 }, { "a.tsx": 1 }).failures).toHaveLength(1);
     expect(compareToBaseline({ "new.tsx": 1 }, {}).failures).toHaveLength(1);
     expect(compareToBaseline({ "a.tsx": 1 }, { "a.tsx": 2 }).stale).toHaveLength(1);
+  });
+});
+
+describe("raw colours in the mobile app (E12 S1a)", () => {
+  test("a hex or rgb colour in an apps/mobile screen is counted, a token key is not", () => {
+    const root = mkdtempSync(join(tmpdir(), "mobile-colours-"));
+    mkdirSync(join(root, "apps/mobile/src/screens/Home"), { recursive: true });
+    mkdirSync(join(root, "apps/mobile/app"), { recursive: true });
+    writeFileSync(
+      join(root, "apps/mobile/src/screens/Home/Home.styles.ts"),
+      `export const s = { a: { color: "#0b6b5d" }, b: { color: "rgba(0,0,0,0.5)" } };`,
+    );
+    writeFileSync(
+      join(root, "apps/mobile/app/index.tsx"),
+      `const c = theme.colors["surface.canvas"];`,
+    );
+    const counts = collectFiles(root, MOBILE_SCAN_DIRS).map((f) => [
+      f,
+      countTokenViolations(readSource(root, f)),
+    ]);
+    expect(counts).toEqual([
+      ["apps/mobile/app/index.tsx", 0],
+      ["apps/mobile/src/screens/Home/Home.styles.ts", 2],
+    ]);
+  });
+
+  test("check-design-tokens scans the mobile app", () => {
+    const script = readFileSync(resolve(import.meta.dir, "check-design-tokens.ts"), "utf8");
+    expect(script).toContain("[...SCAN_DIRS, ...MOBILE_SCAN_DIRS]");
   });
 });
