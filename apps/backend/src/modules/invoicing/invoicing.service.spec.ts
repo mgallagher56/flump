@@ -1,3 +1,4 @@
+import { calculateUKTax } from "@flump/finance-engine";
 import { ConflictException, NotFoundException, PreconditionFailedException } from "@nestjs/common";
 import { describe, expect, it, vi } from "vitest";
 import { Invoice } from "../../entities/invoice.entity";
@@ -572,12 +573,23 @@ describe("InvoicingService & InvoicingController (E37 S1)", () => {
       userId: OWNER_A,
       type: "income",
       source: "self-employed",
-      category: "Freelance / Invoice",
+      category: "self_employed_income",
       name: "Invoice INV-0001 - Acme Ltd",
       amount: 1250,
       frequency: "one-off",
       date: "2026-11-21",
     });
+    // The Self Assessment estimate counts the synced row as self-employed income: a one-off
+    // 1,250 paid on 21 November 2026 falls in tax year 2026/27 (6 April 2026 to 5 April 2027),
+    // so the year's self-employed income is that one row, 1,250. No other records, no salary.
+    const row = taxRecordRows[0] as TaxRecord;
+    const estimate = calculateUKTax(
+      "2026/27",
+      [{ ...row, id: row.id, endDate: null, notes: null }],
+      0,
+      100,
+    );
+    expect(estimate.seIncomeGross).toBe(1250);
 
     // Idempotent second call does not create a duplicate TaxRecord
     const syncedAgain = (await controller.syncInvoiceToTax(req, paid.id, `"${synced.updatedAt}"`))

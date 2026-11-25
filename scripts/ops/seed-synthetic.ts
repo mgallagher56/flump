@@ -68,6 +68,9 @@ export const USER_DATA_TABLES = [
   "work_log_entries",
   "invoices",
   "invoicing_settings",
+  // Before-image of the invoice-linked tax records moved to self-employed income (child of
+  // tax_records, ON DELETE CASCADE).
+  "invoice_tax_record_category_backfill",
   "tax_records",
   "retirement_plans",
   // Slice 6 migration before-images (children of user_profiles by profile_id, ON DELETE CASCADE).

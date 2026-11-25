@@ -179,6 +179,18 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
           [rentLine?.id],
         );
       }
+      // The invoice tax record category before-image: one row past 90 days and one inside it.
+      const [taxRecord]: { id: string }[] = await ds.query(
+        `INSERT INTO tax_records (user_id, type, source, category, name, amount, date)
+         VALUES ($1, 'income', 'self-employed', 'self_employed_income', 'Invoice', 100, '2026-05-01') RETURNING id`,
+        [OWNER_ID],
+      );
+      for (const age of ["91 days", "89 days"]) {
+        await ds.query(
+          `INSERT INTO invoice_tax_record_category_backfill (tax_record_id, backfilled_at) VALUES ($1, ${ago(age)})`,
+          [taxRecord?.id],
+        );
+      }
       // The slice 7 before-image: one row past 90 days and one inside it.
       for (const age of ["91 days", "89 days"]) {
         await ds.query(
@@ -305,6 +317,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
           reset_pension_zeros_backfill: 1,
           rental_share_onto_property_backfill: 1,
           budget_entry_share_backfill: 1,
+          invoice_tax_record_category_backfill: 1,
         },
         inactiveAccountsDue: 1,
       });
@@ -324,6 +337,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       expect(await count("take_home_salary_backfill")).toBe(1);
       expect(await count("reset_pension_zeros_backfill")).toBe(1);
       expect(await count("rental_share_onto_property_backfill")).toBe(1);
+      expect(await count("invoice_tax_record_category_backfill")).toBe(1);
       expect(await count("beta_members")).toBe(2);
       expect(await count("beta_invites")).toBe(6);
       // Inactive accounts are reported, never erased by the purge.

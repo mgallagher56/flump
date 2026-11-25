@@ -16,6 +16,7 @@ import {
   calculateWorkLogAmount,
   formatInvoiceNumber,
   getUkTaxYearForDate,
+  SELF_EMPLOYED_INCOME_CATEGORY,
 } from "@flump/finance-engine";
 import {
   BadRequestException,
@@ -939,7 +940,7 @@ export class InvoicingService {
           userId,
           type: "income",
           source: "self-employed",
-          category: "Freelance / Invoice",
+          category: SELF_EMPLOYED_INCOME_CATEGORY,
           name: `Invoice ${invoice.invoiceNumber} - ${invoice.clientName}`,
           amount: Number(invoice.subtotal),
           frequency: "one-off",

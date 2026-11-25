@@ -75,6 +75,10 @@ import {
   WORK_LOG_INVOICE_KEY,
   WORK_LOG_INVOICE_OWNER_KEY,
 } from "./InvoiceOwnerKeys1795635000000";
+import {
+  INVOICE_TAX_RECORD_CATEGORY_BACKFILL_TABLE,
+  InvoiceTaxRecordCategory1795640000000,
+} from "./InvoiceTaxRecordCategory1795640000000";
 import { LinkBudgetLinesToAccounts1795490000000 } from "./LinkBudgetLinesToAccounts1795490000000";
 import { MoveBuyToLetProfileIntoAccounts1795470200000 } from "./MoveBuyToLetProfileIntoAccounts1795470200000";
 import { PensionAnswersNullable1795480000000 } from "./PensionAnswersNullable1795480000000";
@@ -124,9 +128,11 @@ let MIGRATIONS: MigrationClass[] = [];
 // BackfillMortgageRepaymentType1795530000000), the slice 9 column-drop before-image
 // (profile_column_drop_backfill, profile-column-drop.ts), and the profile before-images of
 // ClearTakeHomeSalaries1795530100000 and ClearResetPensionZeros1795530200000, and the slice 7
-// before-image (rental_share_onto_property_backfill, RentalShareOntoPropertyAccounts1795550100000).
+// before-image (rental_share_onto_property_backfill, RentalShareOntoPropertyAccounts1795550100000),
+// and the invoice tax record category before-image (invoice_tax_record_category_backfill,
+// InvoiceTaxRecordCategory1795640000000).
 const MIGRATION_ONLY_TABLES =
-  "'migrations', 'liability_sign_backfill', 'rate_limit_buckets', 'pension_rates_backfill', 'student_loan_plan_backfill', 'paye_salary_record_backfill', 'account_home_backfill', 'rent_share_backfill', 'mortgage_repayment_type_backfill', 'profile_column_drop_backfill', 'take_home_salary_backfill', 'reset_pension_zeros_backfill', 'rental_share_onto_property_backfill', 'budget_entry_share_backfill'";
+  "'migrations', 'liability_sign_backfill', 'rate_limit_buckets', 'pension_rates_backfill', 'student_loan_plan_backfill', 'paye_salary_record_backfill', 'account_home_backfill', 'rent_share_backfill', 'mortgage_repayment_type_backfill', 'profile_column_drop_backfill', 'take_home_salary_backfill', 'reset_pension_zeros_backfill', 'rental_share_onto_property_backfill', 'budget_entry_share_backfill', 'invoice_tax_record_category_backfill'";
 
 const ENTITY_TABLES = [
   "account_deletion_tombstones",
@@ -3721,6 +3727,111 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
         INVOICE_TAX_RECORD_KEY,
         WORK_LOG_INVOICE_KEY,
       ]);
+    });
+  });
+
+  describe("InvoiceTaxRecordCategory1795640000000 (synced invoices counted in the estimate)", () => {
+    const NAME = "InvoiceTaxRecordCategory1795640000000";
+    const record = async (userId: string, category: string, name = "Invoice"): Promise<string> =>
+      at<{ id: string }>(
+        await ds.query(
+          `INSERT INTO tax_records (user_id, type, source, category, name, amount, date)
+           VALUES ($1, 'income', 'self-employed', $2, $3, 100, '2026-05-01') RETURNING id`,
+          [userId, category, name],
+        ),
+        0,
+      ).id;
+    let invoiceSeq = 0;
+    const invoiceFor = async (userId: string, taxRecordId: string): Promise<void> => {
+      await ds.query(
+        `INSERT INTO invoices (user_id, invoice_number, client_name, issue_date, due_date, status, tax_record_id)
+         VALUES ($1, $2, 'Client', '2026-05-01', '2026-05-31', 'paid', $3)`,
+        [userId, `INV-${String(++invoiceSeq).padStart(4, "0")}`, taxRecordId],
+      );
+    };
+    const categoryOf = async (id: string): Promise<unknown> =>
+      at(
+        await ds.query<Array<{ category: string }>>(
+          "SELECT category FROM tax_records WHERE id = $1",
+          [id],
+        ),
+        0,
+      ).category;
+    const imageTable = async (): Promise<unknown> =>
+      at(
+        await ds.query<Array<{ t: string | null }>>("SELECT to_regclass($1) AS t", [
+          `public.${INVOICE_TAX_RECORD_CATEGORY_BACKFILL_TABLE}`,
+        ]),
+        0,
+      ).t;
+
+    it("moves only invoice-linked 'Freelance / Invoice' records, leaves a hand-typed one, logs a count, and runs once", async () => {
+      await ds.runMigrations();
+      await undoThrough(NAME);
+      // Stored before the migration, as on a live database.
+      const synced = await record("u1", "Freelance / Invoice");
+      await invoiceFor("u1", synced);
+      const handTyped = await record("u1", "Freelance / Invoice", "Invoice INV-0009 - Typed");
+      const alreadyCounted = await record("u1", "self_employed_income");
+      await invoiceFor("u1", alreadyCounted);
+
+      const logged = vi.spyOn(Logger.prototype, "log");
+      await ds.runMigrations();
+      expect(logged).toHaveBeenCalledWith("Invoice tax records moved to self-employed income: 1");
+      logged.mockRestore();
+      expect(await applied()).toContain(NAME);
+      expect(await categoryOf(synced)).toBe("self_employed_income");
+      expect(await categoryOf(handTyped)).toBe("Freelance / Invoice");
+      expect(await categoryOf(alreadyCounted)).toBe("self_employed_income");
+      expect(
+        await ds.query(`SELECT tax_record_id FROM ${INVOICE_TAX_RECORD_CATEGORY_BACKFILL_TABLE}`),
+      ).toEqual([{ tax_record_id: synced }]);
+
+      // A second run (another instance in a rolling deploy) finds the image and changes nothing.
+      const later = await record("u1", "Freelance / Invoice");
+      await invoiceFor("u1", later);
+      await runUpInTransaction(new InvoiceTaxRecordCategory1795640000000());
+      expect(await categoryOf(later)).toBe("Freelance / Invoice");
+    });
+
+    it("down restores exactly the records up changed, never a hand-typed or later-synced one, and drops the image", async () => {
+      await ds.runMigrations();
+      await undoThrough(NAME);
+      const synced = await record("u1", "Freelance / Invoice");
+      await invoiceFor("u1", synced);
+      const handTyped = await record("u1", "Freelance / Invoice", "Invoice INV-0009 - Typed");
+      const alreadyCounted = await record("u1", "self_employed_income");
+      await invoiceFor("u1", alreadyCounted);
+      await ds.runMigrations();
+      // Synced by the fixed writer after up(): linked and already self_employed_income.
+      const syncedAfter = await record("u1", "self_employed_income");
+      await invoiceFor("u1", syncedAfter);
+
+      await undoThrough(NAME);
+      expect(await categoryOf(synced)).toBe("Freelance / Invoice");
+      expect(await categoryOf(handTyped)).toBe("Freelance / Invoice");
+      expect(await categoryOf(alreadyCounted)).toBe("self_employed_income");
+      expect(await categoryOf(syncedAfter)).toBe("self_employed_income");
+      expect(await imageTable()).toBeNull();
+      // And up runs again on the reverted data.
+      await ds.runMigrations();
+      expect(await categoryOf(synced)).toBe("self_employed_income");
+      expect(await categoryOf(handTyped)).toBe("Freelance / Invoice");
+      expect(await tables()).toEqual(ENTITY_TABLES);
+    });
+
+    it("a deleted tax record takes its image row with it", async () => {
+      await ds.runMigrations();
+      await undoThrough(NAME);
+      const synced = await record("u1", "Freelance / Invoice");
+      await invoiceFor("u1", synced);
+      await ds.runMigrations();
+      await ds.query("DELETE FROM tax_records WHERE id = $1", [synced]);
+      expect(
+        await ds.query(
+          `SELECT count(*)::int AS n FROM ${INVOICE_TAX_RECORD_CATEGORY_BACKFILL_TABLE}`,
+        ),
+      ).toEqual([{ n: 0 }]);
     });
   });
 

@@ -124,8 +124,15 @@ export const RENTAL_CATEGORIES = [
   },
 ];
 
+/** The self-employed turnover category: income the Self Assessment estimate counts as trading. */
+export const SELF_EMPLOYED_INCOME_CATEGORY = "self_employed_income";
+
 export const SELF_EMPLOYED_CATEGORIES = [
-  { id: "self_employed_income", name: "Self-employed turnover or income", type: "income" as const },
+  {
+    id: SELF_EMPLOYED_INCOME_CATEGORY,
+    name: "Self-employed turnover or income",
+    type: "income" as const,
+  },
   {
     id: "office_costs",
     name: "Office, stationery, phone, internet, postage",

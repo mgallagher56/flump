@@ -1,10 +1,13 @@
 /**
  * invoicing: on /app/invoicing log billable work, build a draft invoice from it, issue it, mark
  * it paid, and see each status, then reload and see the paid invoice and its billed entry again.
- * Last, check the dates the page fills in are today's.
+ * Then check the dates the page fills in are today's. Last, add the paid invoice to Self
+ * Assessment and see the estimate count it: the Summary's "Income outside PAYE" rises by the
+ * invoice's subtotal, and the self-employed page lists the synced record.
  * Expects the selfemployed persona (no work log or invoices yet); any persona works.
  * Run: verify-flump seed selfemployed <run-id>, then verify-flump drive invoicing <run-id>
  * Work logs and invoices are not on the /api allow-list, so the saved state is proved by a reload.
+ * Tax records are not either, so the sync is proved on the Self Assessment pages.
  */
 import { expect, journey, open } from "../scripts/lib.ts";
 
@@ -17,6 +20,8 @@ const RATE = "65";
 const TOTAL = "£195";
 // The browser's local date, as the date fields show it (yyyy-mm-dd).
 // The app fills dates on the London clock, so compare with London, not this machine's zone.
+const pounds = (text: string) =>
+  Number(/£([\d,]+)/.exec(text)?.[1]?.replaceAll(",", "") ?? Number.NaN);
 const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/London" }).format(new Date());
 
 await journey("invoicing", async ({ page, step, save }) => {
@@ -52,7 +57,12 @@ await journey("invoicing", async ({ page, step, save }) => {
   });
 
   await step("the invoice is a draft for £195", async () => {
-    await invoicesTab().click();
+    // The tab's name carries the invoice count, which changes as the new draft lands, so a click
+    // can hit the old element; retry until the draft shows.
+    await expect(async () => {
+      await invoicesTab().click({ timeout: 2000 });
+      await expect(card).toBeVisible({ timeout: 2000 });
+    }).toPass({ timeout: 15000 });
     await expect(card).toContainText("Draft");
     await expect(card).toContainText(TOTAL);
   });
@@ -87,5 +97,45 @@ await journey("invoicing", async ({ page, step, save }) => {
     save("dates.json", { today, card: text });
     expect(text, "paid date").toContain(`Paid ${today}`);
     expect(text, "issue date").toContain(`Issued ${today}`);
+  });
+
+  // "Income outside PAYE" is the engine's total (incomeOutsidePaye), so it only moves when the
+  // estimate counts the record. With no income outside PAYE the strip is not drawn: read as 0.
+  const summary = page.getByRole("region", { name: "Summary" });
+  const outsidePaye = summary.locator("[data-kpi-card]").filter({ hasText: "Income outside PAYE" });
+  const readOutsidePaye = async (): Promise<number> =>
+    (await outsidePaye.count()) === 0 ? 0 : pounds((await outsidePaye.textContent()) ?? "");
+  let before = 0;
+
+  await step("note Self Assessment's income outside PAYE before the sync", async () => {
+    await open(page, "/app/self-assessment");
+    await expect(page.getByRole("heading", { level: 1, name: "Self Assessment" })).toBeVisible();
+    before = await readOutsidePaye();
+    expect(before).not.toBeNaN();
+  });
+
+  await step("add the paid invoice to Self Assessment", async () => {
+    await open(page, "/app/invoicing");
+    await invoicesTab().click();
+    await card.getByRole("button", { name: "Add to Self Assessment" }).click();
+    await expect(card).toContainText("Added to Self Assessment");
+    await expect(card.getByRole("link", { name: "View in Self Assessment" })).toBeVisible();
+  });
+
+  await step("the estimate counts the invoice: income outside PAYE rises by £195", async () => {
+    await card.getByRole("link", { name: "View in Self Assessment" }).click();
+    await expect(page).toHaveURL(/\/app\/self-assessment$/);
+    await expect(outsidePaye).toBeVisible();
+    const after = await readOutsidePaye();
+    save("self-assessment.json", { before, after, rise: after - before });
+    // The invoice's subtotal before VAT: 3 hours x £65 = £195, no VAT.
+    expect(after - before).toBe(195);
+  });
+
+  await step("the self-employed page lists the synced invoice", async () => {
+    await open(page, "/app/self-assessment/self-employed");
+    await expect(
+      page.getByRole("main").getByText(new RegExp(`^Invoice INV-\\d+ - ${CLIENT}$`)),
+    ).toBeVisible();
   });
 });
