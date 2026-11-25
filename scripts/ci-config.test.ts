@@ -273,6 +273,30 @@ const actionFiles = readdirSync(resolve(repoRoot, ".github/actions"))
   .map((dir) => `.github/actions/${dir}/action.yml`)
   .filter((rel) => existsSync(resolve(repoRoot, rel)));
 
+describe("test database clean-up stays off CI (AGENTS.md section 18)", () => {
+  // The script removes Docker containers and is for the local OrbStack Docker only. A workflow,
+  // composite action, CI helper script or package script that calls it is a mistake.
+  test("no workflow, action, CI script or package script calls clean-test-dbs", () => {
+    const files = [
+      ...workflowFiles.map((f) => `.github/workflows/${f}`),
+      ...actionFiles,
+      ...readdirSync(resolve(repoRoot, ".github/scripts")).map((f) => `.github/scripts/${f}`),
+      "package.json",
+      ...["apps", "packages"].flatMap((group) =>
+        readdirSync(resolve(repoRoot, group))
+          .map((name) => `${group}/${name}/package.json`)
+          .filter((rel) => existsSync(resolve(repoRoot, rel))),
+      ),
+    ];
+    expect(workflowFiles.length).toBeGreaterThan(0);
+    expect(actionFiles.length).toBeGreaterThan(0);
+    const callers = files.filter((rel) =>
+      readFileSync(resolve(repoRoot, rel), "utf8").includes("clean-test-dbs"),
+    );
+    expect(callers).toEqual([]);
+  });
+});
+
 /**
  * E36 2(a): allowlist for `trustedDependencies` across all workspace package.json files.
  * Every entry requires a non-empty documented reason. Empty by default: lifecycle scripts stay off.
