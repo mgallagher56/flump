@@ -13,6 +13,15 @@ export interface Tokens {
 
 /**
  * `rejected`: WorkOS refused the code or refresh token (`invalid_grant`), so the session is over.
+ *
+ * Assumptions not yet checked against real WorkOS (open spike questions, E12-spike-notes.md, "Open
+ * until the owner's sign-in"); each one fails safe if it is wrong:
+ * - A refresh needs no client secret. If WorkOS wants one it answers `invalid_client`, which is
+ *   `unavailable`: the session is never ended by it, but refresh stops working (B-B would follow).
+ * - A spent or revoked refresh token is answered 400 or 401 `invalid_grant`. Any other answer is
+ *   `unavailable`: the token is kept and the person stays on the offline screen, whose Sign out
+ *   clears it. Nothing is ever deleted on a guess.
+ * - Whether a refresh token is replaced on use does not matter here: the newest one is always kept.
  * `unavailable`: anything else (no network, a timeout, a 5xx, a 429, an odd body). A refresh token
  * is never given up on an `unavailable`.
  */

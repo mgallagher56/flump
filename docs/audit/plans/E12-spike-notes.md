@@ -59,9 +59,21 @@ These notes answer the [U] items in plan section 5.1. Evidence is named for each
 - **The issuer the backend expects** is `https://api.workos.com/user_management/<client id>` (`apps/backend/src/auth/workos-jwt.verifier.ts`; the owner decoded a staging token for that code). The verifier also requires `client_id` to equal the configured id. So a native token on web's client id passes only if WorkOS issues it the same way, which the check confirms.
 - **Refresh tokens on web are single-use** (`apps/web/app/utils/auth.server.ts`, the E20-N2 single-flight comment). The app assumes the same: one shared refresh, and the new refresh token saved before the new access token is used.
 
-### Answers from the owner's sign-in check
+### Open until the owner's sign-in
 
-Pending: the owner runs the check on their phone (steps in the S2a report). Rows to fill in: issuer, claim names, access token lifetime, refresh with no client secret, refresh token replaced on use, old token reused, replacement after reuse, backend `GET /v1/user-profile`, and whether signing in after signing out asks for the password.
+The owner's real sign-in is paused until he installs Android Studio (coordinator, 25 November 2026); the answers come back as a follow-up change. Until then each question is open, and the code makes the assumption below. Each one fails safe: a wrong guess can stop a feature working, but it never signs anyone in wrongly, keeps a token after sign-out or deletes a good one.
+
+| Question | What the code assumes | If the answer differs |
+| --- | --- | --- |
+| Issuer format | Nothing in the app; the backend accepts only `https://api.workos.com/user_management/<client id>` with `client_id` equal to web's | The backend refuses the token; the app ends the session and clears the device. Native sign-in would then need the verifier to learn the native issuer or client id |
+| Refresh token replaced on use, old one refused | Either way works: the newest token is always saved before the new access token is used, and one refresh is shared | No change needed. If reuse also kills the replacement, the single shared refresh already avoids reuse |
+| Access token lifetime | Nothing: the app refreshes when the API answers 401 | No change needed |
+| Refresh with no client secret | Works (WorkOS docs for a public client with PKCE) | WorkOS answers `invalid_client`, read as `unavailable`: the session is not ended, but once the access token expires the person stays on the offline screen until they sign out. B-B (a backend refresh route) is then built |
+| A spent refresh token's answer | 400 or 401 `invalid_grant` | Read as `unavailable`: the token is kept, the offline screen shows, and its Sign out clears it |
+| Sign-out redirect | WorkOS accepts `flump://auth/callback` as `return_to` on logout (Android only) | Its page shows an error the person closes. The device is already clear, but the browser's WorkOS cookie may survive, so the next sign-in might skip the password (a shared-phone risk until fixed by allowing the address in the WorkOS dashboard) |
+| Password asked again after sign-out | Yes on Android (logout page), yes on iOS (private session) | As the row above |
+
+The owner reads these off the dev-only Sign-in check and the sign-out by hand; the observations list is in the S2a report to the coordinator.
 
 ### Storage rule as built
 
