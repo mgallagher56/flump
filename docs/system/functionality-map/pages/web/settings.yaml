@@ -3,7 +3,7 @@ app: web
 route: /app/profile
 title: Settings
 auth: required
-purpose: Manage personal details, age and pay, tax basis, net worth choices, monthly check-in day, optional modules, sign-in security, AI connections, data export or deletion, and (only when the backend's household switch is on) a household with one other person.
+purpose: Manage personal details, age and pay, tax basis, net worth choices, monthly check-in day, the optional questions after a check-in, optional modules, sign-in security, AI connections, data export or deletion, and (only when the backend's household switch is on) a household with one other person.
 route_file: apps/web/app/routes/app.profile.tsx
 
 sections:
@@ -36,6 +36,9 @@ sections:
     component: apps/web/app/features/settings/components/CheckInDaySetting/CheckInDaySetting.tsx
     facts_read:
       - check-in-day
+
+  - id: wellbeing-questions
+    component: apps/web/app/features/settings/components/WellbeingQuestionsSetting/WellbeingQuestionsSetting.tsx
 
   - id: sections-you-use
     component: apps/web/app/features/settings/components/ProfileTab/ProfileTab.tsx
