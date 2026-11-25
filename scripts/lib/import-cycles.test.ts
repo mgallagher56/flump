@@ -65,6 +65,13 @@ describe("runtime import cycles (finance-engine)", () => {
     expect(found).toEqual([]);
   });
 
+  test("a binding named type, or starting with type, is a value import", () => {
+    expect(runtimeImports('import { type } from "./a.js";')).toEqual(["./a.js"]);
+    expect(runtimeImports('import typeX from "./a.js";')).toEqual(["./a.js"]);
+    expect(runtimeImports('import { typed } from "./a.js";')).toEqual(["./a.js"]);
+    expect(runtimeImports('import type{ A } from "./a.js";')).toEqual([]);
+  });
+
   test("a mixed import is a runtime edge", () => {
     expect(runtimeImports('import { type A, b } from "./a.js";')).toEqual(["./a.js"]);
     expect(runtimeImports('import D, { type A } from "./a.js";')).toEqual(["./a.js"]);
