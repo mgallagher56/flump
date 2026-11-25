@@ -13,4 +13,4 @@ The four `.dc.html` files are static design mock-ups. They hold sample data only
 
 **Tokens are the source of truth, not the mock-up hex.** The mock-ups use raw hex values so they open in a browser on their own. Code uses the semantic tokens in `packages/tokens/src/index.ts`. Where a mock-up and the tokens differ, the tokens win.
 
-The app and marketing mock-ups draw the light logo as a charcoal dot. The owner rejected that on 25 November 2026: the logo is teal in light and mint in dark (`primary.mark` and `primary.markLit`).
+The app and marketing mock-ups draw the light logo as a charcoal dot. By the owner's request of 25 November 2026 the light logo is teal instead; dark stays mint (`primary.mark` and `primary.markLit`; STYLE-GUIDE section 14). The mock-ups are not redrawn.

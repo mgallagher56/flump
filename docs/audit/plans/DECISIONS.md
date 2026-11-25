@@ -605,3 +605,12 @@ Relayed by the coordinator on 25 November 2026. Only the words in quotation mark
 - **Ruled out:** option (c), filing through HMRC's APIs, for 2027-28 and until the section 4 conditions change.
 - Plan decisions 3 to 5 (interviews, a letter to HMRC's SDS team, foreign property) were not answered and stay open.
 - **Notice, decided by the coordinator at the owner's delegation, 25 November 2026.** Wording approved with edits. The line is quiet and permanent: no dismiss button, no stored field, no alert styling, with the detail in a closed "Show details" section. It shows on Self Assessment and Invoicing only. The test is strictly more than the threshold (SI 2026/336 regulations 22 and 23), so the words say "over".
+
+# Owner request (2026-11-25): the light logo is teal, not charcoal
+
+Relayed by the coordinator on 25 November 2026. The owner reported the logo as black on the web app and marketing site.
+
+- **Cause.** #901 painted the logo with the button fill tokens (`primary.solid`, `primary.hover`), following the mock-ups' charcoal light logo, so the light mark was charcoal from 24 November 2026. The CI visual baselines of that day recorded it.
+- **Decision.** The light mark is teal (`#084f45` lit by `#0b6b5d`); dark stays mint. This changes the approved mock-ups at the owner's request; they are not redrawn and their README says so.
+- **Tokens.** The mark has its own semantic tokens, `primary.mark` and `primary.markLit`, so a button restyle cannot recolour it. Contrast in light: 8.6:1 or more for the body and 5.8:1 or more for the lit edge on canvas, card and overlay.
+- **Left for other lanes.** The Expo `FlumpLogo` in `apps/mobile` uses the same button tokens and is still charcoal in light (mobile lane).
