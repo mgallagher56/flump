@@ -406,4 +406,4 @@ Retirement (the page, its API and the two MCP retirement tools) is open to every
 
 ### How to know it worked
 
-- [ ] Signed in as any account the beta lets in (an invite link or the allow-list), `/app/retirement` loads. Staging has had no `BETA_OPEN` since 25 November 2026, so an account with neither cannot sign in at all. Date: ____
+- [ ] Signed in as any account the beta lets in (an active invite, the allow-list or an admin), `/app/retirement` loads. Staging has had no `BETA_OPEN` since 25 November 2026, so any other account can sign in but the app refuses it with the not-invited message. Date: ____
