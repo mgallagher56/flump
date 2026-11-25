@@ -169,14 +169,6 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
     });
     await ds.initialize();
     await resetSchema();
-    const names = ds.entityMetadatas
-      .filter((m) => m.tableType === "regular")
-      .map((m) => m.tableName);
-    const ordered: { name: string }[] = await ds.query(
-      "SELECT name FROM unnest($1::text[]) AS name ORDER BY name",
-      [names],
-    );
-    entityTableOrder = ordered.map((r) => r.name);
   });
 
   afterEach(async () => {
@@ -192,11 +184,15 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
 
   /**
    * The tables the entities declare (ENTITIES in config/typeorm.options.ts), so a new entity needs
-   * no edit here: the migrations must create exactly these. Postgres orders tables() by its
-   * collation, so both sides are compared in that order.
+   * no edit here: the migrations must create exactly these. Both sides are sorted in JS, so the
+   * comparison never depends on a Postgres collation.
    */
-  let entityTableOrder: string[] = [];
-  const entityTables = (): string[] => entityTableOrder;
+  const entityTables = (): string[] =>
+    ds.entityMetadatas
+      .filter((m) => m.tableType === "regular")
+      .map((m) => m.tableName)
+      .sort();
+  const sortedTables = async (): Promise<string[]> => (await tables()).sort();
 
   const tables = async (): Promise<string[]> => {
     const rows: { table_name: string }[] = await ds.query(
@@ -273,7 +269,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
 
   it("creates all twelve tables on an empty database", async () => {
     await ds.runMigrations();
-    expect(await tables()).toEqual(entityTables());
+    expect(await sortedTables()).toEqual(entityTables());
   });
 
   it("is idempotent: a second run changes nothing and records each migration once", async () => {
@@ -1433,7 +1429,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       ).rejects.toThrow(/CHK_account_details_source/);
       // And up again on top of the reverted schema.
       await ds.runMigrations();
-      expect(await tables()).toEqual(entityTables());
+      expect(await sortedTables()).toEqual(entityTables());
     });
   });
 
@@ -1469,7 +1465,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
 
       await ds.runMigrations();
       await insert(id, 5, "calculated");
-      expect(await tables()).toEqual(entityTables());
+      expect(await sortedTables()).toEqual(entityTables());
     });
   });
 
@@ -1530,7 +1526,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
         `DELETE FROM migrations WHERE name = 'AddAccountDeletionTombstones1794622492000'`,
       );
       await ds.runMigrations();
-      expect(await tables()).toEqual(entityTables());
+      expect(await sortedTables()).toEqual(entityTables());
     });
   });
 
@@ -1573,7 +1569,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
 
       await runMigrationDown(new AddRateLimitBuckets1794632012000());
       expect(await bucketTable()).toEqual([]);
-      expect(await tables()).toEqual(entityTables());
+      expect(await sortedTables()).toEqual(entityTables());
       await ds.query("DELETE FROM migrations WHERE name = 'AddRateLimitBuckets1794632012000'");
       await ds.runMigrations();
       expect(await bucketTable()).toEqual(["rate_limit_buckets"]);
@@ -3424,7 +3420,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       await ds.runMigrations();
       expect(await definitions()).toEqual([]);
       expect(await imageRows()).toHaveLength(12);
-      expect(await tables()).toEqual(entityTables());
+      expect(await sortedTables()).toEqual(entityTables());
     });
 
     it("undoing one drop restores only that column and keeps the other copies", async () => {
@@ -3491,7 +3487,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       expect(await dismissedColumn()).toEqual([]);
       await ds.runMigrations();
       expect(await dismissedColumn()).toHaveLength(1);
-      expect(await tables()).toEqual(entityTables());
+      expect(await sortedTables()).toEqual(entityTables());
     });
   });
 
@@ -3610,7 +3606,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       // And up runs again on the reverted schema.
       await ds.runMigrations();
       expect(await typeOf(copied)).toBe("interest-only");
-      expect(await tables()).toEqual(entityTables());
+      expect(await sortedTables()).toEqual(entityTables());
     });
   });
 
@@ -3862,7 +3858,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       await ds.runMigrations();
       expect(await categoryOf(synced)).toBe("self_employed_income");
       expect(await categoryOf(handTyped)).toBe("Freelance / Invoice");
-      expect(await tables()).toEqual(entityTables());
+      expect(await sortedTables()).toEqual(entityTables());
     });
 
     it("a deleted tax record takes its image row with it", async () => {

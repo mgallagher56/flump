@@ -26,7 +26,7 @@ const REQUIRED_HEADINGS: { name: string; pattern: RegExp; law: string }[] = [
   },
   {
     name: "Review",
-    pattern: /^[ \t]*(?:[-*][ \t]+)?(?:#{1,6}[ \t]*)?(?:\*\*)?Review(?:ed by)?\b/im,
+    pattern: /^[ \t]*(?:[-*][ \t]+)?(?:#{1,6}[ \t]*)?(?:\*\*)?Review(?:ers?|ed(?:[ \t]+by)?)?\b/im,
     law: "section 12",
   },
 ];
