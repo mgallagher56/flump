@@ -3,7 +3,7 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { compareToBaseline } from "./lib/design-tokens";
-import { collectFiles, readSource, repoRoot } from "./lib/scan";
+import { collectFiles, readSource, repoRoot, UI_SCAN_DIRS } from "./lib/scan";
 import {
   countStyleLiterals,
   emptyBaseline,
@@ -21,7 +21,7 @@ const HINTS: Record<(typeof STYLE_RULES)[number], string> = {
 };
 
 const counts = emptyBaseline();
-for (const file of collectFiles()) {
+for (const file of collectFiles(repoRoot, UI_SCAN_DIRS)) {
   if (isStyleScanExempt(file)) continue;
   const c = countStyleLiterals(file, readSource(repoRoot, file));
   for (const rule of STYLE_RULES) if (c[rule] > 0) counts[rule][file] = c[rule];

@@ -16,6 +16,8 @@ describe("Welcome", () => {
     );
     expect(screen.getByRole("header", { name: "Flump" })).toBeOnTheScreen();
     expect(screen.getByText("Finance without the fog")).toBeOnTheScreen();
+    // The logo is decorative beside the name, so a screen reader does not hear "Flump" twice.
+    expect(screen.queryByRole("image")).toBeNull();
   });
 
   it("offers the device check as a named link in a development build", async () => {
@@ -25,5 +27,6 @@ describe("Welcome", () => {
       </ThemeProvider>,
     );
     expect(screen.getByRole("link", { name: "Device check" })).toBeOnTheScreen();
+    expect(screen.getByRole("link", { name: "Component gallery" })).toBeOnTheScreen();
   });
 });
