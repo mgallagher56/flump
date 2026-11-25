@@ -1,6 +1,7 @@
 /**
- * Canned `/v1` bodies (E12 S2c). Each is parsed with its contract schema when the server starts,
- * so a contract change that breaks a canned body fails the fixture server's tests, not a flow.
+ * Canned `/v1` bodies (E12 S2c). Each is parsed with its contract schema whenever it is built: once
+ * when the server starts, so a contract change that breaks a canned body stops the server (and its
+ * tests) before any flow runs, and again on each request.
  */
 import { randomUUID } from "node:crypto";
 import {

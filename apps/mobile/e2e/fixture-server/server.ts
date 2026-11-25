@@ -67,8 +67,9 @@ const ALLOWED: { [K in keyof Scenario]: (v: unknown) => boolean } = {
 function parseScenarioPatch(input: unknown): Partial<Scenario> | undefined {
   if (typeof input !== "object" || input === null || Array.isArray(input)) return undefined;
   for (const [key, value] of Object.entries(input)) {
-    const check = ALLOWED[key as keyof Scenario];
-    if (!check?.(value)) return undefined;
+    // Own keys only: `constructor` or `toString` must not pass through the prototype.
+    if (!Object.hasOwn(ALLOWED, key)) return undefined;
+    if (!ALLOWED[key as keyof Scenario](value)) return undefined;
   }
   return input as Partial<Scenario>;
 }
@@ -122,6 +123,10 @@ export async function startFixtureServer(options: FixtureServerOptions): Promise
   const redirectUris = new Set(options.redirectUris ?? [APP_REDIRECT]);
   const key = newSigningKey();
   const userId = `user_${opaque(12)}`;
+
+  // Parse every canned body once now, so a contract change fails the start, not a flow.
+  cannedProfile(userId, new Date(now()));
+  cannedClientPolicy(DEFAULT_SCENARIO.minVersion);
 
   let scenario: Scenario = { ...DEFAULT_SCENARIO };
   let counts: FixtureStats = { exchanges: 0, refreshes: 0, apiRequests: 0 };

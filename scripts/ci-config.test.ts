@@ -689,3 +689,24 @@ describe("backend build", () => {
     expect(config).toMatch(/"tsBuildInfoFile":\s*"\.\/dist\//);
   });
 });
+
+describe("mobile e2e job (E12 S2c)", () => {
+  const workflow = readFileSync(
+    resolve(import.meta.dir, "../.github/workflows/ci-pipeline.yml"),
+    "utf8",
+  );
+  const job = workflow.slice(
+    workflow.indexOf("  mobile-e2e-android:"),
+    workflow.indexOf("\n  docker-build:"),
+  );
+
+  test("blanks the workflow-wide Turbo secret, so no step or third-party action sees it", () => {
+    expect(job).toMatch(/\n {4}env:\n {6}TURBO_TOKEN: ""\n {6}TURBO_TEAM: ""\n/);
+  });
+
+  test("is read-only and does not keep the checkout's credentials", () => {
+    expect(job).toMatch(/\n {4}permissions:\n {6}contents: read\n(?! {6})/);
+    expect(job).toContain("persist-credentials: false");
+    expect(job).not.toContain("secrets.");
+  });
+});
