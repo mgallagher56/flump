@@ -1,5 +1,33 @@
 # Changelog
 
+## [1.53.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.52.0...flump/web-v1.53.0) (2026-11-25)
+
+
+### Features ✨
+
+* **check-in:** Home says "Continue check-in" when this month's check-in is part done ([c815291](https://github.com/mgallagher56/flump/commit/c8152918c4b780462a9364a1aa94e9364170b998))
+* **dashboard:** net worth trend bars in the Home hero ([f28bb06](https://github.com/mgallagher56/flump/commit/f28bb06b8a85eb1a4bf0277648e69215545a76a4))
+* **legal:** privacy notice, terms, cookies and accessibility pages (E19) ([1b9e429](https://github.com/mgallagher56/flump/commit/1b9e429ef9d6c168ffa2d3ab1caf05506a9dde18))
+* **retirement:** E33 S7, pension inheritance tax rules from 6 April 2027 and the self-employed view ([816357f](https://github.com/mgallagher56/flump/commit/816357f4fcf669a1c101916b48afe511a9a329f9))
+* **tax:** Making Tax Digital notice on Self Assessment and Invoicing (E28 A1, A3) ([1444295](https://github.com/mgallagher56/flump/commit/14442959f582fd803e6b24fb0d26474e8eec359b))
+* **tax:** quiet permanent MTD line with closed details, approved wording; count only months to date; fail-soft Invoicing fetch ([eab5d0a](https://github.com/mgallagher56/flump/commit/eab5d0aa68941f639e1bdd48bc2e6e7426e954f2))
+* **verify-flump:** journeys for eleven features, and fixes for what they found ([b6d52d9](https://github.com/mgallagher56/flump/commit/b6d52d9caae7e78b19d93cd58cdbc27cabe70819))
+
+
+### Bug Fixes 🪲
+
+* **check-in:** an older backend that rejects checkIn gets the save again without it; authz cases for a started check-in ([6c61dd0](https://github.com/mgallagher56/flump/commit/6c61dd0ddb6eb0b7c46c6b94c0bc13dde4441411))
+* **legal:** CI findings on the legal pages ([d408c6b](https://github.com/mgallagher56/flump/commit/d408c6b844926a470a94b1f7dc05c73427e4a2c4))
+* **ops:** review findings: label the copied docker run lines, resolve paths, guard dev volumes ([2425b5b](https://github.com/mgallagher56/flump/commit/2425b5bdd459b3874c31cc2a127d33f66ba23bcc))
+* **retirement:** S7 review and approved wording: annual allowance line, can usually ask, new-tab text, unique ids, shared London date ([3a96cff](https://github.com/mgallagher56/flump/commit/3a96cff2f149a2f92c79b09b799b2a36ec9187d3))
+* review findings: sign out on the pending account-deleted page, London dates in the invoicing journey, accurate journey headers ([87cb47e](https://github.com/mgallagher56/flump/commit/87cb47e231c846c10900c516ee0535e5b36e00ff))
+* **web:** MTD HMRC sentence not exported (knip); test(e2e): Pay feature visual baselines with the HMRC line (CI run 45608035134) ([e46a25e](https://github.com/mgallagher56/flump/commit/e46a25e73537b1431bb7a176595399f98dfca370))
+
+
+### Tests 🧪
+
+* **tax:** Invoicing notice slot, rental accounts read, honest April comment ([c4f882b](https://github.com/mgallagher56/flump/commit/c4f882b76e77e7792d4029ae182b105f1fac01c5))
+
 ## [1.52.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.51.0...flump/web-v1.52.0) (2026-11-24)
 
 
