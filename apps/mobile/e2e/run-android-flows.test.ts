@@ -23,7 +23,7 @@ const SHOTS = [
   "session-ended",
 ];
 
-function run(opts: { screensStay?: boolean; nightStuck?: boolean } = {}) {
+function run(opts: { screensStay?: boolean; nightStuck?: boolean; failFlow?: string } = {}) {
   const dir = mkdtempSync(join(tmpdir(), "flows-"));
   const bin = join(dir, "bin");
   const log = join(dir, "adb.log");
@@ -48,7 +48,11 @@ esac
     join(bin, "maestro"),
     `#!/usr/bin/env bash
 theme=$(printf '%s\\n' "$@" | sed -n 's/^THEME=//p')
+flow=$(basename "\${@: -1}" .yaml)
+echo "maestro $flow $theme" >> "${log}"
 for s in ${SHOTS.join(" ")}; do touch "$s-$theme.png"; done
+${opts.failFlow ? `[ "$flow" = "${opts.failFlow}" ] && exit 1` : ""}
+exit 0
 `,
   );
   chmodSync(join(bin, "adb"), 0o755);
@@ -71,6 +75,29 @@ describe("run-android-flows.sh", () => {
       expect(stopAt).toBeGreaterThan(-1);
       expect(calls.slice(stopAt, switchAt)).toContain("shell dumpsys activity activities");
     }
+  });
+
+  it("runs one flow at a time, each after a stop and settle, in both themes", () => {
+    const { result, calls } = run();
+    expect(result.status).toBe(0);
+    const flows = calls.filter((c) => c.startsWith("maestro "));
+    // Six flows in each theme (engine-check, not-invited, session-ended, sign-in, sign-in-denied, sign-out).
+    expect(flows).toHaveLength(12);
+    for (const flow of flows) {
+      const at = calls.indexOf(flow);
+      const before = calls.slice(0, at);
+      const lastStop = before.lastIndexOf("shell am force-stop app.flump.mobile");
+      const lastFlow = before.map((c) => c.startsWith("maestro ")).lastIndexOf(true);
+      expect(lastStop).toBeGreaterThan(lastFlow);
+      expect(calls.slice(lastStop, at)).toContain("shell dumpsys activity activities");
+    }
+  });
+
+  it("a failed flow does not stop the others, and the run then fails", () => {
+    const { result, calls } = run({ failFlow: "not-invited" });
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("Flow not-invited failed in light");
+    expect(calls.filter((c) => c.startsWith("maestro "))).toHaveLength(12);
   });
 
   it("fails, without retrying, when the screens are still alive after the force-stop", () => {

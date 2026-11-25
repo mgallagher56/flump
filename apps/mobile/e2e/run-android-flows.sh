@@ -21,11 +21,16 @@ adb reverse tcp:8081 tcp:8081
 
 mkdir -p "$out"
 app_id=app.flump.mobile
+failed=0
 
-# Stops the app and waits until Android has destroyed its screens. Switching the theme while a
-# screen is live makes Android recreate it; a flow's clearState in that window once left Android's
-# delayed task removal killing the freshly launched app (CI run 45649031045, dark not-invited: a
-# black screen for 3 minutes). Not a retry: if the screens are still there after 10 s, the run fails.
+# Stops the app and waits until Android has destroyed its screens. Every flow starts with
+# clearState (pm clear). On an app whose screen is still live, pm clear removes the task and waits
+# for the screen to be destroyed; when that wait times out about a second later, Android kills the
+# app's process again, which by then is the one the flow has just launched: a black screen for
+# 3 minutes (CI runs 45649031045 and 45656969886, two different flows). With the app stopped and
+# its screens gone first, there is nothing for that removal to wait on. So the runner calls this
+# before every flow and every theme switch. Not a retry: if the screens are still there after 10 s,
+# the run fails.
 stop_app_and_settle() {
   adb shell am force-stop "$app_id"
   # SETTLE_TRIES is for the script's own test only; CI uses the default.
@@ -49,14 +54,25 @@ for theme in light dark; do
     exit 1
   fi
   mkdir -p "$out/$theme"
-  # takeScreenshot writes to the working directory.
-  (cd "$out/$theme" && maestro test --format junit --output "$out/$theme/report.xml" \
-    --test-output-dir "$out/$theme" -e THEME="$theme" "$flows")
+  # One flow at a time, so the app is stopped and settled before each flow's clearState. A failed
+  # flow does not stop the others: the run still fails once they have all run.
+  for flow in "$flows"/*.yaml; do
+    name="$(basename "$flow" .yaml)"
+    stop_app_and_settle
+    # takeScreenshot writes to the working directory.
+    if ! (cd "$out/$theme" && maestro test --format junit --output "$out/$theme/${name}.xml" \
+      --test-output-dir "$out/$theme" -e THEME="$theme" "$flow"); then
+      echo "Flow ${name} failed in ${theme}" >&2
+      failed=1
+    fi
+  done
   # A screenshot that was not written is a failure, not a silent gap in the artifact.
   for shot in welcome engine-check sign-in signed-in sign-in-denied not-invited signed-out session-ended; do
     if [ -z "$(find "$out/$theme" -name "${shot}-${theme}.png" -print -quit)" ]; then
       echo "Missing screenshot ${shot}-${theme}.png" >&2
-      exit 1
+      failed=1
     fi
   done
 done
+
+exit "$failed"
