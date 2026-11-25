@@ -1,0 +1,22 @@
+# E12 S2a: sign-in through the WorkOS stand-in (PKCE in the browser sheet), the account check, and a
+# relaunch that restores the session from the stored refresh token. THEME comes from the runner.
+appId: app.flump.mobile
+---
+- runScript:
+    file: ../scripts/fixture.js
+    env:
+      SCENARIO: "{}"
+- runFlow: ../subflows/launch-signed-out.yaml
+- assertVisible: "Privacy notice"
+- assertVisible: "Terms of use"
+- takeScreenshot: sign-in-${THEME}
+- runFlow:
+    file: ../subflows/sign-in.yaml
+    env:
+      AFTER: "You are signed in"
+- takeScreenshot: signed-in-${THEME}
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible: "You are signed in"
+    timeout: 60000

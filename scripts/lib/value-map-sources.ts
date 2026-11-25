@@ -299,9 +299,9 @@ const lineAt = (text: string, offset: number) => text.slice(0, offset).split("\n
 // Browser storage keys
 // ---------------------------------------------------------------------------------------------
 
-/** Files that touch browser storage or cookies. */
+/** Files that touch browser storage or cookies, or the mobile app's secure store. */
 const STORAGE_API =
-  /\b(?:localStorage|sessionStorage)\b|document\.cookie|[Ss]et-[Cc]ookie|createCookie|[Cc]ookie|COOKIE/;
+  /\b(?:localStorage|sessionStorage)\b|document\.cookie|[Ss]et-[Cc]ookie|createCookie|[Cc]ookie|COOKIE|\b(?:get|set|delete)ItemAsync\b/;
 /**
  * A key as Flump names them: `flump` (or the WorkOS session cookie `wos`), then `-`, `_` or `.`,
  * optionally behind a `__Host-` or `__Secure-` cookie prefix. A whole string literal with no

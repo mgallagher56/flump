@@ -5,6 +5,10 @@ version: 1
 excluded_routes:
   - route_file: apps/mobile/app/(dev)/engine-check.tsx
     reason: Development-only device check (tax vectors and formatter fixture on the phone's JavaScript engine); production builds strip it and the route only redirects home.
+  - route_file: apps/mobile/app/(dev)/sign-in-check.tsx
+    reason: Development-only sign-in check (E12 S2a) that answers the WorkOS questions after a real sign-in, showing no token values; production builds strip it and the route only redirects home.
+  - route_file: apps/mobile/app/auth/callback.tsx
+    reason: The sign-in redirect flump://auth/callback. The browser sheet hands it to the waiting sign-in; Android also opens the app there, and this route only redirects to the first screen.
   - route_file: apps/mobile/app/(dev)/gallery.tsx
     reason: Development-only component gallery (every component in light, dark and 200% text); production builds strip it and the route only redirects home.
   - route_file: apps/web/app/routes/$feature._index.tsx

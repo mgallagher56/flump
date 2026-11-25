@@ -241,6 +241,7 @@ describe("merge gate (BE-01)", () => {
       "visual-regression.yml",
       "backup.yml",
       "load-smoke.yml",
+      "mobile-device-apk.yml",
     ]) {
       for (const [id, job] of Object.entries(readWorkflow(file).jobs))
         for (const name of renderedNames(id, job)) {
@@ -499,6 +500,7 @@ describe("CI hardening (SEC-E)", () => {
       "ci-pipeline.yml",
       "interaction-cost.yml",
       "load-smoke.yml",
+      "mobile-device-apk.yml",
       "pr-description.yml",
       "release-please.yml",
       "security-scan.yml",
@@ -732,5 +734,94 @@ describe("mobile e2e job (E12 S2c)", () => {
     expect(job).toMatch(/\n {4}permissions:\n {6}contents: read\n(?! {6})/);
     expect(job).toContain("persist-credentials: false");
     expect(job).not.toContain("secrets.");
+  });
+});
+
+describe("mobile e2e job sign-in config (E12 S2a)", () => {
+  const workflow = readFileSync(
+    resolve(import.meta.dir, "../.github/workflows/ci-pipeline.yml"),
+    "utf8",
+  );
+
+  test("the only EXPO_PUBLIC_ values in CI are the fixture server's own", () => {
+    const values = [...workflow.matchAll(/^\s*(EXPO_PUBLIC_\w+):\s*(\S+)\s*$/gm)].map(
+      ([, name, value]) => `${name}=${value}`,
+    );
+    expect(values).toEqual([
+      "EXPO_PUBLIC_API_URL=http://10.0.2.2:8787",
+      "EXPO_PUBLIC_WORKOS_API_URL=http://10.0.2.2:8787",
+      "EXPO_PUBLIC_WORKOS_CLIENT_ID=client_e2e_fixture",
+      "EXPO_PUBLIC_MARKETING_URL=https://flump.example",
+    ]);
+  });
+
+  test("the e2e job checks the Android backup rules after prebuild", () => {
+    const job = workflow.slice(
+      workflow.indexOf("  mobile-e2e-android:"),
+      workflow.indexOf("\n  docker-build:"),
+    );
+    expect(job.indexOf("bun scripts/check-android-backup.ts apps/mobile/android")).toBeGreaterThan(
+      job.indexOf("expo prebuild"),
+    );
+  });
+
+  test("the eas.json e2e profile carries the same fixture values", () => {
+    const eas = JSON.parse(
+      readFileSync(resolve(import.meta.dir, "../apps/mobile/eas.json"), "utf8"),
+    ) as { build: { e2e: { env: Record<string, string> } } };
+    expect(eas.build.e2e.env).toEqual({
+      EXPO_PUBLIC_API_URL: "http://10.0.2.2:8787",
+      EXPO_PUBLIC_WORKOS_API_URL: "http://10.0.2.2:8787",
+      EXPO_PUBLIC_WORKOS_CLIENT_ID: "client_e2e_fixture",
+      EXPO_PUBLIC_MARKETING_URL: "https://flump.example",
+    });
+  });
+});
+
+describe("mobile device APK workflow (E12 S2a)", () => {
+  const workflow = readFileSync(
+    resolve(import.meta.dir, "../.github/workflows/mobile-device-apk.yml"),
+    "utf8",
+  );
+
+  test("runs only on the mobile-device-apk label", () => {
+    expect(workflow).toContain("types: [labeled, synchronize]");
+    expect(workflow).toContain(
+      "if: contains(github.event.pull_request.labels.*.name, 'mobile-device-apk')",
+    );
+  });
+
+  test("is read-only, keeps no credentials, blanks Turbo and uses no secrets or app config", () => {
+    expect(workflow).toMatch(/\npermissions:\n {2}contents: read\n/);
+    expect(workflow).toMatch(/\n {4}permissions:\n {6}contents: read\n(?! {6})/);
+    expect(workflow).toContain("persist-credentials: false");
+    expect(workflow).toMatch(/\n {4}env:\n {6}TURBO_TOKEN: ""\n {6}TURBO_TEAM: ""\n/);
+    expect(workflow).not.toContain("secrets.");
+    expect(workflow).not.toMatch(/^\s*EXPO_PUBLIC_\w+:/m);
+  });
+
+  test("checks the APK, prints its SHA-256 and keeps it 3 days", () => {
+    expect(workflow).toContain("bash scripts/check-device-apk.sh");
+    expect(workflow).toContain("bun scripts/check-android-backup.ts apps/mobile/android");
+    expect(workflow).toContain('sha256sum "$apk"');
+    expect(workflow).toContain("GITHUB_STEP_SUMMARY");
+    expect(workflow).toContain("retention-days: 3");
+    expect(workflow).toContain("-PreactNativeArchitectures=arm64-v8a");
+  });
+
+  test("pins every third-party action by commit SHA", () => {
+    const uses = [...workflow.matchAll(/uses:\s*(\S+)/g)].map(([, ref]) => ref ?? "");
+    for (const ref of uses.filter((r) => !r.startsWith("./"))) {
+      expect(ref).toMatch(/@[0-9a-f]{40}$/);
+    }
+    expect(uses.length).toBeGreaterThan(3);
+  });
+
+  test("is not a required check", () => {
+    const required = readFileSync(
+      resolve(import.meta.dir, "../.github/required-checks.json"),
+      "utf8",
+    );
+    expect(required).not.toContain("device APK");
   });
 });

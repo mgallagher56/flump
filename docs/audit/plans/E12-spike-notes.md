@@ -48,3 +48,33 @@ The device check route (`app/(dev)/engine-check.tsx`) loads its screen behind `_
 ## Seam cost
 
 S1a does no seam work: 0 agent-days (running total 0).
+
+## Slice S2a: sign-in with WorkOS
+
+These notes answer the [U] items in plan section 5.1. Evidence is named for each one: a primary source, the code, or the owner's run of the dev-only `sign-in-check` screen. That screen shows no token values, email or name.
+
+### Facts settled without a real sign-in
+
+- **Expo Go cannot finish the sign-in.** Expo Go handles only `exp://` links, so it never receives `flump://auth/callback`. A custom scheme needs a development build (docs.expo.dev, the authentication and linking guides; `@expo/cli` `BundlerDevServer.getNativeRuntimeUrl`; read 25 November 2026). The owner's real sign-in therefore runs in a debug build on their Android phone.
+- **The issuer the backend expects** is `https://api.workos.com/user_management/<client id>` (`apps/backend/src/auth/workos-jwt.verifier.ts`; the owner decoded a staging token for that code). The verifier also requires `client_id` to equal the configured id. So a native token on web's client id passes only if WorkOS issues it the same way, which the check confirms.
+- **Refresh tokens on web are single-use** (`apps/web/app/utils/auth.server.ts`, the E20-N2 single-flight comment). The app assumes the same: one shared refresh, and the new refresh token saved before the new access token is used.
+
+### Answers from the owner's sign-in check
+
+Pending: the owner runs the check on their phone (steps in the S2a report). Rows to fill in: issuer, claim names, access token lifetime, refresh with no client secret, refresh token replaced on use, old token reused, replacement after reuse, backend `GET /v1/user-profile`, and whether signing in after signing out asks for the password.
+
+### Android backup
+
+Proved from the prebuild output, not assumed: `scripts/check-android-backup.ts` reads the generated manifest and the rule files it names, and fails unless Auto Backup (`full-backup-content`) and Android 12's cloud backup and device transfer all exclude the `SecureStore` shared preferences. It runs in `🤖 Mobile e2e (Android)` and in the device APK workflow. A run on 25 November found `android:fullBackupContent="@xml/secure_store_backup_rules"` and `android:dataExtractionRules="@xml/secure_store_data_extraction_rules"`. What a real backup and restore does on a phone is still a hand check.
+
+### Not verified
+
+iOS (no Mac with Xcode here; the private browser session is configured but not seen), release builds against real WorkOS, and the WorkOS production environment (OS15).
+
+### Follow-up for S2b or S18
+
+On iOS a Keychain item survives an uninstall, so a reinstalled app finds the old refresh token and signs straight back in. The fix is a marker outside the Keychain (removed with the app) that, when missing on launch, clears the Keychain first. Not built in S2a, by the coordinator's decision.
+
+## Seam cost (S2a)
+
+0 agent-days: the sign-in code follows the existing data door rule (running total 0.5).

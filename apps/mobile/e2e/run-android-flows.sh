@@ -27,7 +27,7 @@ for theme in light dark; do
   (cd "$out/$theme" && maestro test --format junit --output "$out/$theme/report.xml" \
     --test-output-dir "$out/$theme" -e THEME="$theme" "$flows")
   # A screenshot that was not written is a failure, not a silent gap in the artifact.
-  for shot in welcome engine-check; do
+  for shot in welcome engine-check sign-in signed-in sign-in-denied not-invited signed-out session-ended; do
     if [ -z "$(find "$out/$theme" -name "${shot}-${theme}.png" -print -quit)" ]; then
       echo "Missing screenshot ${shot}-${theme}.png" >&2
       exit 1

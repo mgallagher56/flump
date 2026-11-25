@@ -2,7 +2,7 @@
 
 # Functionality map: overview
 
-Mapped pages: 39 | Sections: 254 | Excluded routes: 21
+Mapped pages: 39 | Sections: 259 | Excluded routes: 23
 
 ## web
 
@@ -567,11 +567,16 @@ Mapped pages: 39 | Sections: 254 | Excluded routes: 21
 
 ## mobile
 
-### welcome: Flump
+### sign-in: Flump
 
 - Route: `/` (auth: `public`, file: `apps/mobile/app/index.tsx`)
-- Purpose: Placeholder first screen of the Expo app (E12 S1a). Shows the name and the tagline in the system's light or dark theme; reads no data and needs no sign-in.
+- Purpose: First screen of the Expo app (E12 S2a). Signed out, it shows the name, the tagline, Sign in and Create account (WorkOS AuthKit in the system browser sheet, PKCE) and the privacy and terms links. After sign-in it checks the account with GET /v1/user-profile and shows the signed-in placeholder, Not invited, the session-ended screen or the offline screen.
 
-| Section | Component                                     | Facts read | Figures |
-| ------- | --------------------------------------------- | ---------- | ------- |
-| `brand` | `apps/mobile/src/screens/Welcome/Welcome.tsx` | -          | -       |
+| Section         | Component                                               | Facts read | Figures |
+| --------------- | ------------------------------------------------------- | ---------- | ------- |
+| `gate`          | `apps/mobile/src/screens/SessionGate/SessionGate.tsx`   | -          | -       |
+| `sign-in`       | `apps/mobile/src/screens/SignIn/SignIn.tsx`             | -          | -       |
+| `signed-in`     | `apps/mobile/src/screens/Home/Home.tsx`                 | -          | -       |
+| `not-invited`   | `apps/mobile/src/screens/NotInvited/NotInvited.tsx`     | -          | -       |
+| `session-ended` | `apps/mobile/src/screens/SessionEnded/SessionEnded.tsx` | -          | -       |
+| `offline`       | `apps/mobile/src/screens/Offline/Offline.tsx`           | -          | -       |

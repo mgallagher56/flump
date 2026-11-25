@@ -6,13 +6,15 @@
 # `maestro test -e THEME=light e2e/flows/engine-check.yaml`.
 appId: app.flump.mobile
 ---
-- launchApp:
-    stopApp: true
-# The first launch of a debug build waits for Metro to bundle the app.
-- extendedWaitUntil:
-    visible: "Finance without the fog"
-    timeout: 180000
+- runScript:
+    file: ../scripts/fixture.js
+    env:
+      SCENARIO: "{}"
+# Signed out, so the first screen is sign-in, which links the dev screens in a debug build.
+- runFlow: ../subflows/launch-signed-out.yaml
 - takeScreenshot: welcome-${THEME}
+- scrollUntilVisible:
+    element: "Device check"
 - tapOn: "Device check"
 - assertVisible: "Hermes"
 - assertVisible:

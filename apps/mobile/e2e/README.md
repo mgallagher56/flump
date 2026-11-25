@@ -2,12 +2,13 @@
 
 Maestro flows on an Android emulator against a local fixture server (E12 slice S2c, plan section 9.5). CI never signs in to real WorkOS and never calls a real backend.
 
-| Path                   | What it is                                                                                                                                                    |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `flows/`               | Maestro flows. Today: `engine-check.yaml` (the dev device check on Hermes, with screenshots of Welcome and the check). The four sign-in flows arrive with S2b |
-| `fixture-server/`      | A WorkOS stand-in and canned `/v1` on one port (8787), Node built-ins only. Signing key, ids and tokens are made at runtime. Listens on loopback only         |
-| `install-maestro.sh`   | Installs the pinned Maestro CLI and refuses a download whose SHA-256 differs from the one committed in the script                                             |
-| `run-android-flows.sh` | Installs the debug APK and runs every flow in light, then dark                                                                                                |
+| Path                    | What it is                                                                                                                                                                                                                                                                    |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `flows/`                | Maestro flows. `engine-check.yaml` (the dev device check on Hermes) and, since S2a, `sign-in`, `sign-in-denied`, `not-invited`, `sign-out` and `session-ended`. Each starts from a fixture reset (`scripts/fixture.js`) and a cleared app (`subflows/launch-signed-out.yaml`) |
+| `scripts/`, `subflows/` | Maestro scripts that set the fixture scenario, and shared steps. Not flows: `maestro test flows` runs only `flows/`                                                                                                                                                           |
+| `fixture-server/`       | A WorkOS stand-in and canned `/v1` on one port (8787), Node built-ins only. Signing key, ids and tokens are made at runtime. Listens on loopback only                                                                                                                         |
+| `install-maestro.sh`    | Installs the pinned Maestro CLI and refuses a download whose SHA-256 differs from the one committed in the script                                                                                                                                                             |
+| `run-android-flows.sh`  | Installs the debug APK and runs every flow in light, then dark                                                                                                                                                                                                                |
 
 ## The fixture server
 
@@ -31,6 +32,8 @@ Android Studio with an emulator running, then from `apps/mobile`:
 
 ```bash
 bun e2e/fixture-server/main.ts &
-EXPO_PUBLIC_API_URL=http://10.0.2.2:8787 bunx expo run:android
+EXPO_PUBLIC_API_URL=http://10.0.2.2:8787 EXPO_PUBLIC_WORKOS_API_URL=http://10.0.2.2:8787 \
+  EXPO_PUBLIC_WORKOS_CLIENT_ID=client_e2e_fixture EXPO_PUBLIC_MARKETING_URL=https://flump.example \
+  bunx expo run:android
 maestro test -e THEME=light e2e/flows
 ```

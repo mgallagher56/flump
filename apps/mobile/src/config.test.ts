@@ -1,4 +1,4 @@
-import { MobileConfigError, readConfig } from "./config";
+import { MobileConfigError, readAuthConfig, readConfig, readSiteConfig } from "./config";
 
 const dev = { releaseBuild: false };
 const release = { releaseBuild: true };
@@ -60,5 +60,88 @@ describe("readConfig", () => {
     "http://my.mac.local",
   ])("rejects plain HTTP to any other host in a development build (%s)", (address) => {
     expect(codeOf(() => readConfig({ EXPO_PUBLIC_API_URL: address }, dev))).toBe("http-not-local");
+  });
+});
+
+describe("readAuthConfig", () => {
+  // Built at runtime: a made-up id in WorkOS's shape, not a real one.
+  const clientId = `client_01${"TESTONLY".repeat(3)}`;
+
+  it("defaults the WorkOS address to api.workos.com and fixes the redirect", () => {
+    expect(readAuthConfig({ EXPO_PUBLIC_WORKOS_CLIENT_ID: clientId }, release)).toEqual({
+      clientId,
+      authBaseUrl: "https://api.workos.com",
+      redirectUri: "flump://auth/callback",
+    });
+  });
+
+  it("takes a WorkOS address override, keeping only its origin", () => {
+    expect(
+      readAuthConfig(
+        {
+          EXPO_PUBLIC_WORKOS_CLIENT_ID: clientId,
+          EXPO_PUBLIC_WORKOS_API_URL: "http://10.0.2.2:8787/anything",
+        },
+        dev,
+      ).authBaseUrl,
+    ).toBe("http://10.0.2.2:8787");
+  });
+
+  it.each([undefined, "", "  "])("rejects a missing client id (%p)", (value) => {
+    expect(codeOf(() => readAuthConfig({ EXPO_PUBLIC_WORKOS_CLIENT_ID: value }, dev))).toBe(
+      "missing-client-id",
+    );
+  });
+
+  it.each(["sk_test_abc", "client_", "client_has space", "client_a/b"])(
+    "rejects a value that is not a client id (%s)",
+    (value) => {
+      expect(codeOf(() => readAuthConfig({ EXPO_PUBLIC_WORKOS_CLIENT_ID: value }, dev))).toBe(
+        "invalid-client-id",
+      );
+    },
+  );
+
+  it.each(["http://10.0.2.2:8787", "https://elsewhere.example.com"])(
+    "refuses any WorkOS address override in a release build (%s)",
+    (address) => {
+      expect(
+        codeOf(() =>
+          readAuthConfig(
+            { EXPO_PUBLIC_WORKOS_CLIENT_ID: clientId, EXPO_PUBLIC_WORKOS_API_URL: address },
+            release,
+          ),
+        ),
+      ).toBe("workos-override-in-release");
+    },
+  );
+
+  it("rejects plain HTTP to a non-local WorkOS address in a development build", () => {
+    expect(
+      codeOf(() =>
+        readAuthConfig(
+          {
+            EXPO_PUBLIC_WORKOS_CLIENT_ID: clientId,
+            EXPO_PUBLIC_WORKOS_API_URL: "http://api.workos.com",
+          },
+          dev,
+        ),
+      ),
+    ).toBe("http-not-local");
+  });
+});
+
+describe("readSiteConfig", () => {
+  it("keeps the marketing site's origin", () => {
+    expect(
+      readSiteConfig({ EXPO_PUBLIC_MARKETING_URL: "https://site.example.com/path" }, release),
+    ).toEqual({ marketingOrigin: "https://site.example.com" });
+  });
+
+  it("is required, and HTTPS in a release build", () => {
+    expect(codeOf(() => readSiteConfig({}, release))).toBe("missing-api-url");
+    expect(
+      codeOf(() => readSiteConfig({ EXPO_PUBLIC_MARKETING_URL: "http://localhost:4321" }, release)),
+    ).toBe("insecure-api-url");
   });
 });

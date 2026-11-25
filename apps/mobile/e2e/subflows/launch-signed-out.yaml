@@ -1,0 +1,11 @@
+# Starts the app with nothing on the device (clearState wipes the secure store) and waits for the
+# sign-in screen. The first launch of a debug build waits for Metro to bundle the app.
+appId: app.flump.mobile
+---
+- launchApp:
+    clearState: true
+    stopApp: true
+- extendedWaitUntil:
+    visible: "Finance without the fog"
+    timeout: 180000
+- assertVisible: "Create account"

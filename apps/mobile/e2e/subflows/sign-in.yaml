@@ -1,0 +1,8 @@
+# From the sign-in screen: Sign in, through the browser sheet, to the screen named in AFTER.
+appId: app.flump.mobile
+---
+- tapOn: "Sign in"
+- runFlow: browser-sheet.yaml
+- extendedWaitUntil:
+    visible: ${AFTER}
+    timeout: 60000

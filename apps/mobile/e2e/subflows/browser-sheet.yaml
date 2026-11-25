@@ -1,0 +1,14 @@
+# Chrome's first-run prompts can cover a Custom Tab on a fresh emulator. Each tap is optional, so
+# a run without them goes straight on. The fixture's authorize page redirects at once, so there is
+# no sign-in form to fill: the stand-in never shows one and no password exists.
+appId: app.flump.mobile
+---
+- tapOn:
+    text: "Accept & continue"
+    optional: true
+- tapOn:
+    text: "No thanks"
+    optional: true
+- tapOn:
+    text: "Use without an account"
+    optional: true

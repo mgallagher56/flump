@@ -1,0 +1,18 @@
+# E12 S2a: a person not on the beta list signs in and sees Not invited with a way to sign out.
+appId: app.flump.mobile
+---
+- runScript:
+    file: ../scripts/fixture.js
+    env:
+      SCENARIO: '{"account": "not-invited"}'
+- runFlow: ../subflows/launch-signed-out.yaml
+- runFlow:
+    file: ../subflows/sign-in.yaml
+    env:
+      AFTER: "This account has not been invited yet"
+- takeScreenshot: not-invited-${THEME}
+- tapOn: "Sign out"
+- runFlow: ../subflows/browser-sheet.yaml
+- extendedWaitUntil:
+    visible: "Create account"
+    timeout: 60000
