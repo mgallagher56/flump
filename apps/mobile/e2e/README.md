@@ -22,7 +22,7 @@ Nothing in `app/` or `src/` may import from `e2e/` (Biome), and the production b
 
 ## CI: `🤖 Mobile e2e (Android)`
 
-On GitHub's Linux runner: `expo prebuild` and a Gradle debug build, the fixture server and Metro on the runner, an API 34 emulator, then `run-android-flows.sh`. Screenshots and logs are uploaded as the `mobile-e2e-android` artifact for 7 days. Read-only permissions, no secrets, no Maestro Cloud, Maestro analytics off. No retries: a red run is read from the artifact. Before each theme the runner stops the app and waits for its screens to go, so the theme switch never recreates a live screen while a flow clears the app (a black-screen failure seen once on 25 November); it fails, rather than retries, if they stay.
+On GitHub's Linux runner: `expo prebuild` and a Gradle debug build, the fixture server and Metro on the runner, an API 34 emulator, then `run-android-flows.sh`. Screenshots and logs are uploaded as the `mobile-e2e-android` artifact for 7 days. Read-only permissions, no secrets, no Maestro Cloud, Maestro analytics off. No retries: a red run is read from the artifact. The runner runs one flow at a time and, before each flow and each theme switch, stops the app and waits for its screens to go. A flow's `clearState` on a live screen let Android's delayed task removal kill the freshly launched app (a black screen, seen twice on 25 November). If the screens stay, the run fails rather than retries. A failed flow does not stop the others; each flow writes its own JUnit report.
 
 It proves Hermes at runtime on Android only. iOS is a hand check on a Mac. Not a required check until it has passed three runs in a row (owner step OS9).
 
