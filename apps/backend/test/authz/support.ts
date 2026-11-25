@@ -161,7 +161,18 @@ export async function bootAuthzHarness(options: HarnessOptions = {}): Promise<Au
   }
 
   const rateLimitStore = app.get(RateLimitStore);
-  const mcpHandler = app.get(McpService).getHttpHandler() as unknown as {
+  // A /mcp tool call starts its audit write and answers without waiting for it (fire and forget,
+  // packages/mcp fireAudit). Track each write so truncateAll can wait for it: a write still running
+  // holds locks the TRUNCATE needs, in the opposite order, and the two deadlock.
+  const mcp = app.get(McpService);
+  const recordAudit = mcp.recordAudit.bind(mcp);
+  mcp.recordAudit = (caller, event) => {
+    const write = recordAudit(caller, event);
+    pendingAuditWrites.add(write);
+    void write.finally(() => pendingAuditWrites.delete(write));
+    return write;
+  };
+  const mcpHandler = mcp.getHttpHandler() as unknown as {
     failedAuthLimiter: { fallback: { buckets: Map<string, unknown> } };
   };
 
@@ -193,6 +204,8 @@ export async function bootAuthzHarness(options: HarnessOptions = {}): Promise<Au
       mcpHandler.failedAuthLimiter.fallback.buckets.clear();
     },
     async close() {
+      // The last test's /mcp audit write may still run: closing the pool under it fails it.
+      await Promise.all([...pendingAuditWrites]);
       await app.close();
       warnSpy.mockRestore();
       for (const key of Object.keys(process.env)) {
@@ -228,19 +241,16 @@ export function parseResponseViolation(message: unknown): string[] {
 
 /** Empties every entity table (derived from the entity metadata, so a new entity is included). */
 export async function truncateAll(dataSource: DataSource): Promise<void> {
-  // audit_events refuses TRUNCATE (SEC-F); the helper deletes its rows the allowed way. A /mcp
-  // audit row is written after the response, under the user-data write fence (which reads the
-  // tombstone table first), so the previous test's write can deadlock with the TRUNCATE: retry.
-  for (let attempt = 1; ; attempt++) {
-    try {
-      await emptyEntityTables(dataSource);
-      return;
-    } catch (err) {
-      const code = (err as { driverError?: { code?: string } }).driverError?.code;
-      if (code !== "40P01" || attempt >= 3) throw err;
-    }
-  }
+  // A /mcp audit row can still be on its way when the previous test ends. Its transaction takes the
+  // write fence (reads the tombstone table) and then inserts, while the TRUNCATE locks every table
+  // in its own order, so the two would deadlock. recordAudit never rejects (it logs a failure).
+  await Promise.all([...pendingAuditWrites]);
+  // audit_events refuses TRUNCATE (SEC-F); the helper deletes its rows the allowed way.
+  await emptyEntityTables(dataSource);
 }
+
+/** /mcp audit writes started and not yet finished, across every harness in this process. */
+const pendingAuditWrites = new Set<Promise<void>>();
 
 /**
  * An error body without its `requestId` (BE-09): every response has its own id, so "identical to

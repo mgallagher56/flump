@@ -4,6 +4,14 @@ import type { EntityManager } from "typeorm";
 /** The statement that serialises a user's reset and erasure. Exported so tests can match it. */
 export const DATA_LOCK_STATEMENT = "SELECT pg_advisory_xact_lock(hashtextextended($1, 0))";
 
+/** Sets lockUserData's own lock and statement limits for the transaction. Exported for tests. */
+export const DATA_LOCK_WAIT_STATEMENT =
+  "SELECT set_config('lock_timeout', $1, true), set_config('statement_timeout', $2, true)";
+
+/** Puts both limits back to the connection's own values (the pool's). Exported for tests. */
+export const DATA_LOCK_WAIT_RESET_STATEMENT = `SELECT set_config(name, reset_val, true) FROM pg_settings
+     WHERE name IN ('lock_timeout', 'statement_timeout')`;
+
 /** The shared form of the same lock, taken by every write of a signed-in request (the write fence). */
 const SHARED_DATA_LOCK_STATEMENT = "SELECT pg_advisory_xact_lock_shared(hashtextextended($1, 0))";
 
@@ -53,15 +61,44 @@ export function fencedRequest(): FencedRequest | null {
  * signed-in request takes the shared form (UserDataWriteFence), so the erasure also waits for
  * writes in flight and a write that waited sees the tombstone. The lock is released when the
  * transaction ends.
+ *
+ * `waitMs` is a test seam; callers leave the default.
  */
-export async function lockUserData(manager: EntityManager, userId: string): Promise<void> {
+export async function lockUserData(
+  manager: EntityManager,
+  userId: string,
+  waitMs: number = USER_DATA_LOCK_WAIT_MS,
+): Promise<void> {
   // A transaction that already holds the shared lock would deadlock against another one asking
   // for the exclusive lock (each waits for the other's shared lock). Callers run withoutWriteFence.
   if (fencedRequest() !== null) {
     throw new Error("lockUserData needs withoutWriteFence: the write fence holds the shared lock");
   }
+  // Transaction-local (is_local = true), so they end with the transaction even if the lock fails.
+  // The statement limit sits above the lock limit, or the wait would end as a statement timeout.
+  await manager.query(DATA_LOCK_WAIT_STATEMENT, [
+    String(waitMs),
+    String(waitMs + LOCK_STATEMENT_HEADROOM_MS),
+  ]);
   await manager.query(DATA_LOCK_STATEMENT, [lockKey(userId)]);
+  // Back to the pool's limits (the connection's reset values) for the rest of the transaction.
+  await manager.query(DATA_LOCK_WAIT_RESET_STATEMENT);
 }
+
+/**
+ * How long the erasure and the reset wait for lockUserData: 30 s, not the pool's 5 s lock_timeout.
+ * What they wait for is the user's own fenced transactions (the shared lock) or the other one of
+ * the pair. Each statement of those is capped at the pool's statement_timeout (10 s) and each idle
+ * gap at idle_in_transaction_session_timeout (30 s), but a transaction of several statements, a
+ * large import say, can hold the lock past 5 s, and the erasure then failed for no fault of the
+ * person's. 30 s covers that and a stuck idle transaction, which Postgres ends by then. The cost:
+ * while the erasure or reset waits, the same user's new writes queue behind it and fail at their
+ * own 5 s limit, which is acceptable for a person who is erasing or resetting their data.
+ */
+export const USER_DATA_LOCK_WAIT_MS = 30_000;
+
+/** How far the statement limit sits above the lock wait while the lock is taken. */
+const LOCK_STATEMENT_HEADROOM_MS = 5_000;
 
 /** The shared lock: many writes of one user hold it at once; it waits only for an erasure or reset. */
 export async function lockUserDataShared(manager: EntityManager, userId: string): Promise<void> {

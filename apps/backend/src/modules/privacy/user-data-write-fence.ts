@@ -74,10 +74,25 @@ function insertTarget(sql: string): string | null {
   return INSERT_INTO.exec(sql)?.[1] ?? null;
 }
 
+const UPDATE_SET =
+  /^\s*UPDATE\s+(?:ONLY\s+)?(?:"?public"?\.)?"?([A-Za-z0-9_]+)"?(?:\s+(?:AS\s+)?"?\w+"?)?\s+SET\s+([\s\S]*?)(?:\bFROM\b|\bWHERE\b|\bRETURNING\b|$)/i;
+
+/** The table an UPDATE writes to and its SET list, or null for any other statement. */
+function updateTarget(sql: string): { table: string; set: string } | null {
+  const m = UPDATE_SET.exec(sql);
+  return m?.[1] && m[2] !== undefined ? { table: m[1], set: m[2] } : null;
+}
+
+/** True when a SET list assigns `column` (quoted or not, with or without an alias). */
+function assigns(set: string, column: string): boolean {
+  return new RegExp(`(?:^|[\\s,.])"?${column}"?\\s*=`, "i").test(set);
+}
+
 /** Takes the fence in every transaction of a signed-in request (see the comment at the top). */
 @Injectable()
 export class UserDataWriteFence implements EntitySubscriberInterface {
   private userTables: Set<string> | null = null;
+  private userColumns: Map<string, string> | null = null;
 
   constructor(
     private readonly dataSource: DataSource,
@@ -121,10 +136,10 @@ export class UserDataWriteFence implements EntitySubscriberInterface {
 
   /**
    * An insert outside a transaction cannot hold the lock until it commits, so in a signed-in
-   * request it is refused: wrap it in a transaction. Updates and deletes are not checked (the
-   * last-active stamp updates outside one). An update cannot bring back a deleted row, but one that
-   * sets a blanked user column (a beta invite's redeemer) relinks a row: keep those in a
-   * transaction, as the invite redemption is.
+   * request it is refused: wrap it in a transaction. So is an update that sets a table's user column
+   * (a beta invite's redeemer, a row's user_id): it can relink a row the erasure blanked or moved
+   * past. Other updates and deletes are allowed outside one (the last-active stamp, an idempotency
+   * key's result): an update cannot bring back a deleted row, and a delete only removes.
    */
   beforeQuery(event: BeforeQueryEvent): void {
     if (fencedRequest() === null || event.queryRunner.isTransactionActive) return;
@@ -132,14 +147,33 @@ export class UserDataWriteFence implements EntitySubscriberInterface {
     if (table && this.tables().has(table)) {
       throw new Error(`Insert into ${table} outside a transaction in a signed-in request`);
     }
+    const update = updateTarget(event.query);
+    const column = update ? this.columns().get(update.table) : undefined;
+    if (update && column && assigns(update.set, column)) {
+      throw new Error(
+        `Update of ${update.table}.${column} outside a transaction in a signed-in request`,
+      );
+    }
   }
 
   private tables(): Set<string> {
-    this.userTables ??= new Set(
-      [...USER_DATA_REGISTRY, ...USER_LINKED_TABLES].map(
-        (t) => this.dataSource.getMetadata(t.entity).tableName,
-      ),
-    );
+    this.userTables ??= new Set(this.columns().keys());
     return this.userTables;
+  }
+
+  /** Each user table and the column that holds the user's id. */
+  private columns(): Map<string, string> {
+    this.userColumns ??= new Map(
+      [
+        ...USER_DATA_REGISTRY.map((t) => ({ entity: t.entity, property: "userId" })),
+        ...USER_LINKED_TABLES.map((t) => ({ entity: t.entity, property: t.userColumn })),
+      ].map(({ entity, property }) => {
+        const metadata = this.dataSource.getMetadata(entity);
+        const column = metadata.findColumnWithPropertyName(property);
+        if (!column) throw new Error(`${metadata.tableName} has no ${property} column`);
+        return [metadata.tableName, column.databaseName];
+      }),
+    );
+    return this.userColumns;
   }
 }
