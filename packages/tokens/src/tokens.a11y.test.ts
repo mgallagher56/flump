@@ -929,3 +929,43 @@ describe("E17 accent namespace", () => {
     }
   });
 });
+
+/** Hue in degrees and HSL saturation (0 to 1) of an opaque colour. */
+function hueAndSaturation(value: string): { hue: number; saturation: number } {
+  const [r, g, b] = toRgb(value).map((c) => c / 255);
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const delta = max - min;
+  const lightness = (max + min) / 2;
+  if (delta === 0) return { hue: 0, saturation: 0 };
+  const saturation = delta / (1 - Math.abs(2 * lightness - 1));
+  const sector =
+    max === r ? ((g - b) / delta) % 6 : max === g ? (b - r) / delta + 2 : (r - g) / delta + 4;
+  return { hue: (sector * 60 + 360) % 360, saturation };
+}
+
+// Owner report, 25 Nov 2026: the light logo drew in the charcoal button fill (primary.solid and
+// primary.hover), so it read as a black ball. The mark has its own tokens in the brand teal and
+// mint family, which reach 3:1 as a graphic on every surface the logo sits on.
+describe("Logo mark tokens", () => {
+  const MARK = ["primary.mark", "primary.markLit"];
+  const LOGO_SURFACES = ["surface.canvas", "surface.card", "surface.overlay"];
+
+  it.each(MARK)("%s is a brand teal or mint in both themes, never a neutral", (token) => {
+    for (const theme of BOTH) {
+      // Teal #0b6b5d sits at hue 171; mint #6fd0ba at 166. Charcoal #2c323b is hue 216 and
+      // saturation 0.15, so a neutral fails both bounds.
+      const { hue, saturation } = hueAndSaturation(resolveColor(token, theme));
+      expect(hue, `${token} hue (${theme})`).toBeGreaterThanOrEqual(155);
+      expect(hue, `${token} hue (${theme})`).toBeLessThanOrEqual(185);
+      expect(saturation, `${token} saturation (${theme})`).toBeGreaterThanOrEqual(0.4);
+    }
+  });
+
+  it.each(MARK.flatMap((fg) => LOGO_SURFACES.map((bg) => [fg, bg])))(
+    "%s reaches 3:1 as a graphic on %s",
+    (fg, bg) => {
+      assertPair({ fg, bg, themes: BOTH, min: 3, role: "graphic" });
+    },
+  );
+});

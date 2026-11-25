@@ -42,6 +42,8 @@ export type ColorKey =
   | "primary.emphasis"
   | "primary.foreground"
   | "primary.hover"
+  | "primary.mark"
+  | "primary.markLit"
   | "primary.solid"
   | "primary.subtle"
   | "status.danger.bg"
@@ -130,6 +132,8 @@ export const light: NativeTheme = {
     "primary.emphasis": "#084f45",
     "primary.foreground": "#f8fcfa",
     "primary.hover": "#2c323b",
+    "primary.mark": "#084f45",
+    "primary.markLit": "#0b6b5d",
     "primary.solid": "#14171c",
     "primary.subtle": "#cfe9e2",
     "status.danger.bg": "#fbe5e0",
@@ -220,6 +224,8 @@ export const dark: NativeTheme = {
     "primary.emphasis": "#9be3d2",
     "primary.foreground": "#0e1a17",
     "primary.hover": "#9be3d2",
+    "primary.mark": "#6fd0ba",
+    "primary.markLit": "#9be3d2",
     "primary.solid": "#6fd0ba",
     "primary.subtle": "#1f3532",
     "status.danger.bg": "#3b2320",

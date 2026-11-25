@@ -22,6 +22,17 @@ describe("FlumpLogo primitive", () => {
     expect(container.querySelectorAll("stop")).toHaveLength(2);
   });
 
+  // Owner report, 25 Nov 2026: the light mark drew in the charcoal button fill and read as black.
+  // The stops take the logo's own tokens (teal in light, mint in dark: tokens.a11y.test.ts).
+  it("paints the body with the logo mark tokens, lit from above", () => {
+    const { container } = render(<FlumpLogo />);
+    const [top, bottom] = Array.from(container.querySelectorAll("stop")).map((s) =>
+      s.getAttribute("class"),
+    );
+    expect(top).toContain("colors.primary.markLit");
+    expect(bottom).toContain("colors.primary.mark)");
+  });
+
   it("gives each instance its own gradient id", () => {
     const { container } = render(
       <>

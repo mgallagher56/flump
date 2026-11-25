@@ -215,6 +215,10 @@ export const semanticTokens = {
       // A selected or hovered edge on a primary.subtle fill, and muted chart bars: 3:1 on the card.
       border: { value: { base: "#5a8f83", _dark: "#53877d" } },
       foreground: { value: { base: "{colors.mint.950}", _dark: "{colors.dark.onPrimary}" } },
+      // The logo mark: the blob's body, lit from above by markLit. Teal in light (mint fails 3:1 on
+      // a light ground), mint in dark. Never the charcoal button fill (owner, 25 Nov 2026).
+      mark: { value: { base: "{colors.teal.700}", _dark: "{colors.dark.primary}" } },
+      markLit: { value: { base: "{colors.teal.600}", _dark: "{colors.dark.primaryHover}" } },
     },
 
     // 1b. Accent. Decoration and wayfinding only: icon tiles, one small shape per scene, one chart
