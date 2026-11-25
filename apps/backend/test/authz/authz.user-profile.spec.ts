@@ -57,8 +57,8 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
   const resetSentTo: string[] = [];
   const deletedLogins: string[] = [];
 
-  // The newest versions in LEGAL_PAGES (packages/business-details): terms 0.1, privacy notice 0.3.
-  const NEWEST = { termsVersion: "0.1", privacyNoticeVersion: "0.3" };
+  // The newest versions in LEGAL_PAGES (packages/business-details): terms 0.1, privacy notice 0.4.
+  const NEWEST = { termsVersion: "0.1", privacyNoticeVersion: "0.4" };
 
   beforeAll(async () => {
     h = await bootAuthzHarness();
@@ -548,8 +548,8 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
     const after = await rows();
     expect(after.map((r) => [r.userId, r.termsVersionAgreed, r.privacyNoticeVersionShown])).toEqual(
       [
-        [USER_A, "0.1", "0.3"],
-        [USER_B, "0.1", "0.3"],
+        [USER_A, "0.1", "0.4"],
+        [USER_B, "0.1", "0.4"],
       ],
     );
     // A's row is untouched by B's calls.
@@ -563,7 +563,7 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
     expect(a.status).toBe(200);
     expect(a.body).toMatchObject({ required: false, agreed: true, firstTime: false });
     expect(a.body.terms).toMatchObject({ version: "0.1", path: "/terms", changed: false });
-    expect(a.body.privacyNotice).toMatchObject({ version: "0.3", path: "/privacy" });
+    expect(a.body.privacyNotice).toMatchObject({ version: "0.4", path: "/privacy" });
 
     const c = await h.call(
       "get",
@@ -621,7 +621,7 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
   it("export and erasure cover the agreement record", async () => {
     const exported = await h.call("get", "/user-profile/export", h.tokens.a).buffer(true);
     expect(JSON.parse(exported.text).termsAcceptances).toEqual([
-      expect.objectContaining({ termsVersionAgreed: "0.1", privacyNoticeVersionShown: "0.3" }),
+      expect.objectContaining({ termsVersionAgreed: "0.1", privacyNoticeVersionShown: "0.4" }),
     ]);
     const deleted = await h.call("delete", "/user-profile", h.tokens.a, { confirmation: "DELETE" });
     expect(deleted.status).toBe(200);
