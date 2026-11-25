@@ -21,11 +21,22 @@ export interface MtdNoticeLink {
 
 export interface MtdNoticeCopy {
   kind: "over" | "general";
-  sentences: readonly string[];
+  /** Always visible, as one short paragraph. */
+  lead: readonly string[];
+  /** Behind a closed "Show details" section. Empty for the general line. */
+  details: readonly string[];
+  /** In the details when there are some, else after the lead. */
   links: readonly MtdNoticeLink[];
 }
 
-export const MTD_NOTICE_DISMISS_LABEL = "Hide this notice";
+export const MTD_NOTICE_DETAILS_LABEL = "Show details";
+
+/**
+ * Keeps the line to guidance: HMRC decides from the return, not Flump.
+ * Confirmed by fable-decider on 2026-11-25 against GOV.UK and SI 2026/336 regulation 26.
+ */
+export const MTD_HMRC_DECIDES =
+  "HMRC works this out from your Self Assessment tax return, not from Flump. Some people are exempt.";
 
 const CHECK_LINK: MtdNoticeLink = {
   label: "Check if you need to use it on GOV.UK",
@@ -45,26 +56,36 @@ const taxYearInWords = (taxYear: string): string => {
   return `${start} to ${start + 1}`;
 };
 
+/**
+ * Wording approved by the coordinator at the owner's delegation, 25 November 2026. The test is
+ * strictly more than the threshold (SI 2026/336 regulations 22 and 23), so the words say "over".
+ */
 export function mtdNoticeCopy(position: MtdIncomeTaxPosition): MtdNoticeCopy | null {
   if (position.kind === "none") return null;
   if (position.kind === "unknown") {
     return {
       kind: "general",
-      sentences: [
+      lead: [
         "Making Tax Digital for Income Tax asks some self-employed people and landlords to keep digital records and send quarterly updates through software.",
         "Flump does not send anything to HMRC.",
       ],
+      details: [],
       links: [CHECK_LINK],
     };
   }
   const { threshold } = position.check;
   const figure = formatMoney(threshold.thresholdGbp).text;
+  const startDate = startDateInWords(threshold.startDate);
   return {
     kind: "over",
-    sentences: [
+    lead: [
+      `The self-employed and property income you recorded for the ${taxYearInWords(threshold.measuredTaxYear)} tax year, before expenses, is over ${figure}.`,
+      `Making Tax Digital for Income Tax may apply to you from ${startDate}.`,
+    ],
+    details: [
       "Making Tax Digital for Income Tax is a set of HMRC rules for keeping records and reporting self-employed and property income through software.",
-      `From ${startDateInWords(threshold.startDate)}, HMRC expects people over its threshold to keep digital records and send quarterly updates using compatible software.`,
-      `The self-employed and property income you recorded for the ${taxYearInWords(threshold.measuredTaxYear)} tax year, before expenses, is over ${figure}, the threshold for that date.`,
+      `From ${startDate}, HMRC expects people over its threshold to keep digital records and send quarterly updates using compatible software.`,
+      MTD_HMRC_DECIDES,
       "Flump does not send anything to HMRC and is not compatible software for this.",
     ],
     links: [CHECK_LINK, SIGN_UP_LINK],

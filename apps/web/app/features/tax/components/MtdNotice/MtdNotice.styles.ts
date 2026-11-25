@@ -1,15 +1,22 @@
 import { cva } from "@repo/ui/styled-system/css";
 
-/** The notice's sentences. Dates and pounds sit in the text, so numerals stay tabular. */
-export const sentences = cva({
+/** A quiet line in the page: no card, no status colour, no icon. */
+export const root = cva({
+  base: { display: "flex", flexDirection: "column", gap: "2", minWidth: 0 },
+});
+
+/** Dates and pounds sit in the text, so numerals stay tabular. */
+export const text = cva({
   base: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "2",
     margin: 0,
+    textStyle: "body.sm",
+    color: "text.secondary",
     fontVariantNumeric: "tabular-nums",
-    "& p": { margin: 0 },
   },
+});
+
+export const details = cva({
+  base: { display: "flex", flexDirection: "column", gap: "2" },
 });
 
 export const links = cva({
@@ -21,6 +28,7 @@ export const links = cva({
     margin: 0,
     padding: 0,
     listStyle: "none",
+    textStyle: "body.sm",
   },
 });
 

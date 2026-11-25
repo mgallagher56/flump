@@ -31,25 +31,34 @@ describe("mtdNoticeCopy", () => {
 
   it("states the 2024 to 2025 figure and date for the April 2026 group", () => {
     const copy = copyFor(52_000, "2024-06-01", "2024/25");
-    expect(copy?.sentences[1]).toBe(
+    expect(copy?.lead).toEqual([
+      "The self-employed and property income you recorded for the 2024 to 2025 tax year, before expenses, is over £50,000.",
+      "Making Tax Digital for Income Tax may apply to you from 6 April 2026.",
+    ]);
+    expect(copy?.details[1]).toBe(
       "From 6 April 2026, HMRC expects people over its threshold to keep digital records and send quarterly updates using compatible software.",
     );
-    expect(copy?.sentences[2]).toBe(
-      "The self-employed and property income you recorded for the 2024 to 2025 tax year, before expenses, is over £50,000, the threshold for that date.",
+    expect(copy?.details[2]).toBe(
+      "HMRC works this out from your Self Assessment tax return, not from Flump. Some people are exempt.",
     );
+    expect(copy?.links.map((l) => l.label)).toEqual([
+      "Check if you need to use it on GOV.UK",
+      "Sign up on GOV.UK",
+    ]);
   });
 
   it("states £20,000 and 6 April 2028 for the 2026 to 2027 tax year", () => {
     const copy = copyFor(21_000, "2026-06-01", "2026/27");
-    expect(copy?.sentences[1]).toContain("From 6 April 2028,");
-    expect(copy?.sentences[2]).toContain(
-      "for the 2026 to 2027 tax year, before expenses, is over £20,000,",
+    expect(copy?.lead[0]).toContain(
+      "for the 2026 to 2027 tax year, before expenses, is over £20,000.",
     );
+    expect(copy?.lead[1]).toContain("from 6 April 2028.");
   });
 
   it("gives the general line with only the check link when the position is unknown", () => {
     const copy = mtdNoticeCopy({ kind: "unknown" });
     expect(copy?.kind).toBe("general");
+    expect(copy?.details).toEqual([]);
     expect(copy?.links.map((l) => l.label)).toEqual(["Check if you need to use it on GOV.UK"]);
   });
 
@@ -58,7 +67,7 @@ describe("mtdNoticeCopy", () => {
       copyFor(52_000, "2024-06-01", "2024/25"),
       mtdNoticeCopy({ kind: "unknown" }),
     ]) {
-      for (const sentence of copy?.sentences ?? []) {
+      for (const sentence of [...(copy?.lead ?? []), ...(copy?.details ?? [])]) {
         expect(sentence.split(/\s+/).length).toBeLessThanOrEqual(25);
       }
     }
