@@ -122,6 +122,25 @@ The stand-in name ends in "Ltd" and comes with a company number, while the tradi
 - The information duties that apply once Flump charges.
 - The legitimate interest assessments behind the privacy notice.
 
+### E34 households (added 25 November 2026)
+
+Questions from the draft household DPIA ([`dpia-household.md`](./dpia-household.md)), written by Claude Fable (an AI model). None is answered. Nothing in E34 slices C3 to C5 is built. The section numbers are the DPIA's.
+
+1. **Roles (3).** Is Flump a separate controller for each member, with no joint controllership between Flump and the members or between the members? Does the personal or household exemption (Article 2(2)(a)) cover a member who views the other's shared items, including a self-employed member's business items?
+2. **Lawful basis (4).** Is contract (Article 6(1)(b)) with the sharing member enough to show their item to the other member? What basis covers a joint item entered by one person before the other has joined?
+3. **Special category data (4).** Does storing a link between two partners' accounts need an Article 9 condition?
+4. **Joint items and erasure (5.1).** One row while both are members, and a copy to the other member before either's data is erased. Does that meet both people's Article 15 and 17 rights? Is giving both the same export sound, given that Article 20 covers data a person "has provided"? An item one person marked joint before the household existed is not shown or copied to the other member unless its owner chooses that; is anything more needed?
+5. **Access requests about the other member (5.2).** May Flump refuse to give, and refuse to confirm or deny, the other member's shared items, the existence of unshared items, and the dates they joined or left, under Article 15(4) and the Data Protection Act 2018, Schedule 2, paragraph 16? What should the reply say so that it reveals nothing?
+6. **Leaving without notice (5.5).** Is it fair and transparent to tell the remaining member nothing when the other leaves or stops sharing, if both were told in advance at joining and in the privacy notice?
+7. **Retention (5.6).** Is deleting the membership and household rows on leaving, keeping only a joining and a leaving event on each person's own audit trail for 13 months, acceptable, or must anything be kept (for example to answer a later complaint)?
+8. **A breach between members (6).** If a fault shows one member's unshared data to the other, what must each be told, and how, where telling one could put the other at risk?
+9. **A partner's AI connection (7).** Does the item owner's opt-in switch change the role and lawful basis questions already open in `dpia-mcp.md` sections 3 and 4?
+10. **Terms.** What must the terms say about joint items (each borrower's liability is unchanged by the share recorded), about a member's responsibility for what they share, and about Flump's responsibility if sharing is misused by a member?
+11. **Duties around abuse.** Does naming a support service on the sharing screen, or knowing the feature can be misused, create any duty for a sole trader who is not FCA-regulated and has signed no code? Does anything in the Domestic Abuse Act 2021 bear on the design?
+12. **Is the DPIA mandatory, and is ICO prior consultation (Article 36) needed** if the owner judges the risk to a coerced member remains high?
+13. **A partner who never joins.** Is a person whose joint liability a user records, without their knowledge, owed a privacy notice of their own (Article 14)?
+14. **Tax wording.** The Marriage Allowance line in "Assumptions and UK rules" (plan section 2) and the Child Benefit charge for two incomes: is one neutral line each, the same for every user, within the advice boundary?
+
 ## Follow-ups for engineering
 
 - Show the terms and the privacy notice at invite acceptance and record the `consents` "terms" kind.
