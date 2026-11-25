@@ -19,6 +19,7 @@ import UserAvatar from "~/components/navigation/UserAvatar";
 import { AgeAndPaySection } from "~/features/settings/components/AgeAndPaySection";
 import { CheckInDaySetting } from "~/features/settings/components/CheckInDaySetting";
 import { NetWorthChoices } from "~/features/settings/components/NetWorthChoices";
+import { WellbeingQuestionsSetting } from "~/features/settings/components/WellbeingQuestionsSetting";
 import { fieldGrid, sectionCard, statusText, tabGrid } from "~/features/settings/settings.styles";
 import {
   type TaxRegion,
@@ -467,6 +468,11 @@ export const ProfileTab: FC<ProfileTabProps> = ({ profile, user, netWorthChoices
 
       <CheckInDaySetting
         checkInDay={profile.checkInDay ?? null}
+        onSave={(update) => updateProfile(update)}
+      />
+
+      <WellbeingQuestionsSetting
+        enabled={profile.wellbeingQuestions !== false}
         onSave={(update) => updateProfile(update)}
       />
 
