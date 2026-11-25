@@ -226,7 +226,7 @@ The four seams, and where each lands:
 
 **Seam budget.** The decision drops the seams if they cost more than about 5 agent-days in all. Each slice that does seam work states its share in its PR description under "Seam cost", and the plan keeps a running total here. Estimate today: seam 1 is a review rule (0), seam 2 is a lint rule in S1b (0.5), seam 3 is D1 (1), seam 4 is the part of S7 beyond a plain cache (1.5): about 3 in all. If the running total passes 5, the coordinator stops the seam work and records the app as plain option (a) in `DECISIONS.md`.
 
-Running total: 0.5 agent-days (S1a 0; S1b 0.5, the data door rule in `biome.json`).
+Running total: 0.5 agent-days (S1a 0; S1b 0.5, the data door rule in `biome.json`; S2c 0).
 
 **The cache (S7).** The last successful responses for the screens in the first release, kept 7 days, labelled with their age, read-only; writes need a connection (round 2, E12 D4-A). Platform facts, CONFIRMED on 25 November 2026:
 
@@ -470,6 +470,8 @@ After S6 the page slices touch separate folders and can run two or three at a ti
 9. The three screens pass the per-slice accessibility checks in section 6.
 10. The four Maestro flows pass three runs in a row in the Android CI job, or the fallback in 7.1 is recorded. The production bundle contains no fixture address.
 
+**Built (S2c, 25 November 2026).** Built before S2a and S2b because S2a waits for OS1. `e2e/fixture-server/` is one Node server on port 8787 (built-ins only, no new dependency), listening on loopback only, with its signing key, ids and tokens made at runtime. The WorkOS stand-in takes PKCE with S256 only and a state, refuses an unregistered redirect, a client secret and a reused or expired code, and replaces each refresh token on use (the strict answer to a 5.1 [U]; S2a records what real WorkOS does). Scenarios: not invited, sign-in denied, refresh rejected or unavailable, short-lived tokens, a revoke, a minimum version. The canned `/v1` serves the client policy and the profile, each parsed with its contract schema, and 404 for anything else. Biome stops `app/` and `src/` importing `e2e/`; the bundle check fails on the fixture address or `__fixture`. CI `🤖 Mobile e2e (Android)` builds a debug APK with Gradle, starts the fixture server and Metro, boots an API 34 emulator and runs the flows in light and dark with screenshots: today only `engine-check.yaml`, which proves Hermes on Android (iOS stays by hand). No retries; read-only permissions; no secrets; Maestro analytics off; Maestro pinned with a committed SHA-256 and not tracked by Renovate. It joins `required-checks.json` after three green runs (OS9). The `e2e` profile in `eas.json` documents the same build. Still blocked: S2a needs OS1 done and the owner signing in once with the test user while the spike runs (agents never type a password into WorkOS); S2b needs S2a's answers.
+
 ### 9.6 S3. Monthly check-in
 
 **Goal.** Once a month a person confirms each balance in under two minutes, matching the web walk-through as built (#709, #727).
@@ -566,7 +568,7 @@ Agents never do these. Each is listed with when it is needed.
 
 | # | Step | Needed by | Cost |
 | --- | --- | --- | --- |
-| OS1 | WorkOS dashboard: register the redirect `flump://auth/callback` for the existing client in the test environment, and create a test user for the S2a spike and the hand checks (CI uses the stand-in, not a real user). Best done now | S2a | None expected; whether native sign-in changes the WorkOS bill [U] |
+| OS1 | WorkOS dashboard: register the redirect `flump://auth/callback` for the existing client in the test environment, and create a test user for the S2a spike and the hand checks (CI uses the stand-in, not a real user). During the S2a spike, sign in once with that test user in the browser sheet the spike opens: agents never type a password into WorkOS. Best done now | S2a | None expected; whether native sign-in changes the WorkOS bill [U] |
 | OS2 | Choose the app identifier (`io.github.mgallagher56.flump` or a domain-based one). Permanent once a listing exists | S19 | None, or a domain |
 | OS3 | Create an Expo account and an EAS project for the app; decide whether to move to the $19 a month plan if 15 builds a platform a month run out | First EAS build (S19, or earlier for internal test builds) | Free; $19 a month if needed |
 | OS4 | Apple Developer Program enrolment, as an organisation after incorporation (round 3), with a D-U-N-S number | S19 | US$99 a year; D-U-N-S free [U] |

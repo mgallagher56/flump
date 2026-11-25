@@ -2,7 +2,7 @@
 
 The Expo app for iOS and Android (epic E12). Plan: `docs/audit/plans/E12-mobile-rebuild-plan.md`; what slice S1a found while setting it up: `docs/audit/plans/E12-spike-notes.md`.
 
-Today it is a skeleton (slices S1a and S1b): one placeholder screen with the logo, name and tagline, the native theme from `@flump/tokens/native` in light and dark (it follows the phone's setting), the first six components in `src/components` (`Text`, `Pressable`, `Button`, `Screen`, `Card`, `FlumpLogo`), and two development-only screens: **Device check**, which runs the engine's tax vectors and the shared formatter fixture on the phone's JavaScript engine, and **Component gallery**, which shows every component in every named state in light, dark and 200% text. No sign-in, no stored data and no network calls.
+Today it is a skeleton (slices S1a, S1b and S2c): one placeholder screen with the logo, name and tagline, the native theme from `@flump/tokens/native` in light and dark (it follows the phone's setting), the first six components in `src/components` (`Text`, `Pressable`, `Button`, `Screen`, `Card`, `FlumpLogo`), and two development-only screens: **Device check**, which runs the engine's tax vectors and the shared formatter fixture on the phone's JavaScript engine, and **Component gallery**, which shows every component in every named state in light, dark and 200% text. No sign-in, no stored data and no network calls. `e2e/` holds the end-to-end harness (S2c): a fixture server standing in for WorkOS and the API, and Maestro flows that CI runs on an Android emulator; see `e2e/README.md`.
 
 ## Run it locally
 
@@ -27,7 +27,7 @@ Switch the phone or simulator between light and dark to see the theme follow it.
 
 `EXPO_PUBLIC_API_URL` is optional in S1a; the device check only shows whether it is set and valid. It must be HTTPS in a release build; a development build also accepts plain HTTP to `localhost`, `127.0.0.1`, `[::1]`, `10.0.2.2` (the Android emulator's name for your computer) or a `name.local` address.
 
-The Maestro flow `e2e/flows/engine-check.yaml` checks the device check on a debug Android build (`bunx expo run:android`, then `maestro test e2e/flows/engine-check.yaml`).
+The Maestro flow `e2e/flows/engine-check.yaml` checks the device check on a debug Android build. CI's `🤖 Mobile e2e (Android)` job runs it in light and dark; to run it by hand, see `e2e/README.md`.
 
 ## Checks
 
@@ -40,7 +40,7 @@ The Maestro flow `e2e/flows/engine-check.yaml` checks the device check on a debu
 | `bun run check:bundle`     | Fails if the export contains the device check, the gallery or the tax vectors, or if its source maps show a package bundled from two installs |
 | `bun run doctor`           | `expo-doctor`, tolerating only its same-version duplicate finding from Bun's isolated linker (see `scripts/run-expo-doctor.ts`)               |
 
-CI runs all of these in the `📱 Mobile checks` job on GitHub's Linux runners. It does not build a native app, run a simulator or emulator, or prove Hermes at runtime.
+CI runs all of these in the `📱 Mobile checks` job on GitHub's Linux runners. It does not build a native app or run an emulator: the separate `🤖 Mobile e2e (Android)` job does, and proves Hermes at runtime on Android. Nothing in CI proves iOS.
 
 ## Rules
 

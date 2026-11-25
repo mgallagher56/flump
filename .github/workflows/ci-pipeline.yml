@@ -590,6 +590,132 @@ jobs:
         if: steps.changed.outputs.run == 'true'
         run: bun scripts/run-expo-doctor.ts
 
+  # E12 S2c: Maestro flows on an Android emulator against the e2e fixture server, on this Linux
+  # runner. No EAS, no Maestro Cloud, no secrets: the emulator talks only to the fixture server and
+  # Metro on the runner, and Maestro's analytics are off. It proves Hermes at runtime on Android
+  # only; iOS stays a hand check. Not a required check yet: it joins .github/required-checks.json
+  # after three green runs in a row (plan section 9.5, owner step OS9).
+  # Flake policy: no retries of anything. A red run is read from the uploaded screenshots and logs.
+  mobile-e2e-android:
+    name: 🤖 Mobile e2e (Android)
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: 🔎 Did the app or anything it uses change?
+        id: changed
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          set -eo pipefail
+          if [ -z "$BASE_REF" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          changed=$(git diff --name-only "origin/$BASE_REF...HEAD")
+          if printf '%s\n' "$changed" \
+            | grep -E '^apps/mobile/|^packages/(finance-engine|format|tokens|api-contract|api-client|typescript-config)/|^package\.json$|^bun\.lock$|^bunfig\.toml$|^turbo\.json$|^\.node-version$|^\.github/(workflows/ci-pipeline\.yml|actions/)'; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Without the Turbo cache: that cache needs `actions: write`, and this job keeps read-only.
+      - name: ⚙️ Setup Bun and install dependencies
+        if: steps.changed.outputs.run == 'true'
+        uses: ./.github/actions/bun-setup
+
+      - name: ⚙️ Setup Node
+        if: steps.changed.outputs.run == 'true'
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+
+      - name: ⚙️ Setup Java
+        if: steps.changed.outputs.run == 'true'
+        uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: ⚙️ Enable KVM for the emulator
+        if: steps.changed.outputs.run == 'true'
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: 📥 Install Maestro (pinned, checksum checked)
+        if: steps.changed.outputs.run == 'true'
+        run: |
+          bash apps/mobile/e2e/install-maestro.sh "$RUNNER_TEMP/maestro-cli"
+          echo "$RUNNER_TEMP/maestro-cli/maestro/bin" >> "$GITHUB_PATH"
+
+      - name: 🏗️ Build the shared packages
+        if: steps.changed.outputs.run == 'true'
+        run: bunx turbo run build --filter=@flump/mobile^...
+
+      - name: 🤖 Debug APK (expo prebuild and Gradle)
+        if: steps.changed.outputs.run == 'true'
+        working-directory: apps/mobile
+        env:
+          CI: "1"
+        run: |
+          bunx expo prebuild --platform android --no-install --clean
+          cd android
+          ./gradlew :app:assembleDebug -PreactNativeArchitectures=x86_64 --no-daemon
+
+      - name: 🧪 Start the fixture server and Metro
+        if: steps.changed.outputs.run == 'true'
+        env:
+          CI: "1"
+          EXPO_PUBLIC_API_URL: http://10.0.2.2:8787
+        run: |
+          mkdir -p "$RUNNER_TEMP/e2e-logs"
+          nohup bun apps/mobile/e2e/fixture-server/main.ts > "$RUNNER_TEMP/e2e-logs/fixture-server.log" 2>&1 &
+          (cd apps/mobile && nohup bunx expo start --port 8081 > "$RUNNER_TEMP/e2e-logs/metro.log" 2>&1 &)
+          for _ in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:8787/v1/app/client-policy > /dev/null \
+              && curl -fsS http://127.0.0.1:8081/status | grep -q packager-status:running; then
+              echo "Fixture server and Metro are up"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "The fixture server or Metro did not start" >&2
+          exit 1
+
+      - name: 📱 Maestro flows on the emulator (light and dark)
+        if: steps.changed.outputs.run == 'true'
+        uses: ReactiveCircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          script: bash apps/mobile/e2e/run-android-flows.sh apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk "$RUNNER_TEMP/maestro-out"
+
+      - name: 📸 Upload screenshots and logs
+        if: always() && steps.changed.outputs.run == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: mobile-e2e-android
+          path: |
+            ${{ runner.temp }}/maestro-out
+            ${{ runner.temp }}/e2e-logs
+          retention-days: 7
+          if-no-files-found: ignore
+
   # A change must never silently break the Railway images (E12 T2.23, BE-01 L10). The job is a
   # required check, so it always runs and reports; the build steps run whenever anything that
   # goes into an image changes (any app or package source, a manifest, the lockfile, a
