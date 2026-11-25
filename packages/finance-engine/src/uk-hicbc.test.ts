@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import { selectUkWhatIfVectors } from "./test-vectors/uk-whatif.vectors.js";
 import type { UkTaxYear } from "./types.js";
 import {
+  type CouplePerson,
   calculateChildBenefitAnnual,
+  calculateCoupleHicbc,
   calculateHicbc,
   calculateHicbcPercent,
   childBenefitWeeksInTaxYear,
@@ -192,5 +194,84 @@ describe("HICBC result fields", () => {
   it("exposes the thresholds on the year rules", () => {
     expect(rules("2024/25").hicbc.hicbcThresholdStart).toBe(60000);
     expect(rules("2023/24").hicbc.hicbcStepWidth).toBe(100);
+  });
+});
+
+const coupleRules = getUkTaxYearRules("2026/27");
+const couple = (a: number, b: number, claimant: CouplePerson, children = 2) =>
+  calculateCoupleHicbc({ adjustedNetIncome: { a, b }, claimant, children }, coupleRules);
+
+describe("hicbcCouple vectors (E34 C2, hand-derived)", () => {
+  const vectors = selectUkWhatIfVectors({ kind: "hicbcCouple" });
+  it("has vectors", () => expect(vectors.length).toBeGreaterThan(0));
+  for (const v of vectors) {
+    it(v.id, () => {
+      const result = calculateCoupleHicbc(
+        {
+          adjustedNetIncome: {
+            a: v.input.adjustedNetIncomeA as number,
+            b: v.input.adjustedNetIncomeB as number,
+          },
+          claimant: v.input.claimant as CouplePerson,
+          children: v.input.children as number,
+        },
+        rules(v.taxYear as UkTaxYear),
+      );
+      expect(result?.charge[v.input.person as CouplePerson]).toBe(v.expected);
+    });
+  }
+});
+
+/**
+ * ITEPA 2003 s.681B (https://www.legislation.gov.uk/ukpga/2003/1/section/681B, read 25 November
+ * 2026): the partner whose adjusted net income is higher owes the charge, whoever claims; on equal
+ * incomes the claimant owes it. 2026/27 two children: (27.05 + 17.90) x 53 = 2,382.35 -> 2,382.
+ */
+describe("calculateCoupleHicbc (E34 C2)", () => {
+  it("charges the higher-income partner, whoever claims", () => {
+    // 70,000: floor(10,000 / 200) = 50%; 2,382 x 50% = 1,191.
+    for (const claimant of ["a", "b"] as const) {
+      const r = couple(70000, 65000, claimant);
+      expect(r?.chargedPerson, claimant).toBe("a");
+      expect(r?.charge, claimant).toEqual({ a: 1191, b: 0 });
+      expect(r?.chargePercent).toBe(50);
+    }
+    expect(couple(65000, 70000, "a")?.charge).toEqual({ a: 0, b: 1191 });
+  });
+
+  it("charges the claimant when the incomes are equal", () => {
+    expect(couple(70000, 70000, "a")?.charge).toEqual({ a: 1191, b: 0 });
+    expect(couple(70000, 70000, "b")?.charge).toEqual({ a: 0, b: 1191 });
+    expect(couple(70000, 70000, "b")?.chargedPerson).toBe("b");
+  });
+
+  it("decides on a difference of one pound", () => {
+    // 70,001 exceeds 70,000; floor(10,001 / 200) = 50%.
+    expect(couple(70000, 70001, "a")?.charge).toEqual({ a: 0, b: 1191 });
+    expect(couple(70001, 70000, "b")?.charge).toEqual({ a: 1191, b: 0 });
+  });
+
+  it("charges nobody when the higher income is not over the threshold", () => {
+    const r = couple(60000, 40000, "b");
+    expect(r?.chargedPerson).toBeNull();
+    expect(r?.charge).toEqual({ a: 0, b: 0 });
+    expect(r?.netChildBenefit).toBe(2382.35);
+  });
+
+  it("never adds the two incomes", () => {
+    // 40,000 + 40,000 = 80,000 would be a 100% charge; each is under 60,000, so none is due.
+    expect(couple(40000, 40000, "a")?.charge).toEqual({ a: 0, b: 0 });
+  });
+
+  it("reports the Child Benefit and what is left after the charge", () => {
+    const r = couple(70000, 65000, "b");
+    expect(r?.childBenefitAnnual).toBe(2382.35);
+    // 2,382.35 - 1,191.
+    expect(r?.netChildBenefit).toBe(1191.35);
+  });
+
+  it("is null when either income is not a number", () => {
+    expect(couple(Number.NaN, 70000, "a")).toBeNull();
+    expect(couple(70000, Number.POSITIVE_INFINITY, "a")).toBeNull();
   });
 });

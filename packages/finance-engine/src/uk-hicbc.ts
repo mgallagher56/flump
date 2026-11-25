@@ -1,8 +1,9 @@
 /**
  * High Income Child Benefit Charge (E25-T3), individual basis only.
  *
- * The claimant is taken to be the higher earner, so the charge depends on their own adjusted net
- * income. No household (partner) comparison is made. The charge is 1% of the Child Benefit received
+ * `calculateHicbc` takes the claimant to be the higher earner, so the charge depends on their own
+ * adjusted net income. `calculateCoupleHicbc` (E34 C2) compares two partners' incomes to find who
+ * owes it, then applies the same individual charge to that partner. The charge is 1% of the Child Benefit received
  * for every full step of adjusted net income over the threshold (GBP100 over GBP50,000 up to 2023/24,
  * GBP200 over GBP60,000 from 2024/25), capped at 100%. The step rule is taken from GOV.UK
  * (https://www.gov.uk/child-benefit-tax-charge), because the ITEPA 2003 s.681C(2)(b) formula is an
@@ -95,5 +96,69 @@ export function calculateHicbc(
     chargePercent,
     charge,
     netChildBenefit: roundPence(benefit - charge),
+  };
+}
+
+/** One of the two people in a couple, as the caller names them. */
+export type CouplePerson = "a" | "b";
+
+export interface CoupleHicbcInput {
+  /** Each partner's adjusted net income for the tax year (ITA 2007 s.58), worked out per person. */
+  adjustedNetIncome: Record<CouplePerson, number>;
+  /** The partner entitled to Child Benefit (the one who claims it). */
+  claimant: CouplePerson;
+  children: number;
+}
+
+export interface CoupleHicbcResult {
+  /** The partner who owes the charge, or null when the charge is 0. */
+  chargedPerson: CouplePerson | null;
+  /** The charge each partner owes: the whole charge for one, 0 for the other. */
+  charge: Record<CouplePerson, number>;
+  chargePercent: number;
+  childBenefitAnnual: number;
+  netChildBenefit: number;
+}
+
+/**
+ * The High Income Child Benefit Charge for two partners (E34 C2), who are taken to be partners
+ * throughout the tax year: married or civil partners not separated, or living together as a
+ * couple (ITEPA 2003 s.681G, https://www.legislation.gov.uk/ukpga/2003/1/section/681G). The law
+ * tests each week (s.681B "throughout the week"); a year in which the couple were partners for
+ * only some weeks is not modelled here.
+ *
+ * Who is liable, ITEPA 2003 s.681B (https://www.legislation.gov.uk/ukpga/2003/1/section/681B,
+ * read 25 November 2026): condition A charges the claimant unless a partner's adjusted net income
+ * "exceeds" theirs; condition B charges the other partner only when their income "exceeds" the
+ * claimant's. So the partner with the higher income owes it, whoever claims (GOV.UK
+ * child-benefit-tax-charge: "whoever has the higher income"), and on equal incomes the claimant
+ * owes it. The amount is the individual charge on that partner's own income (`calculateHicbc`).
+ * Incomes are compared, never added. Returns null when either income is not a number, since the
+ * liable partner cannot then be known.
+ */
+export function calculateCoupleHicbc(
+  input: CoupleHicbcInput,
+  rules: UkTaxYearRules,
+): CoupleHicbcResult | null {
+  const { a, b } = input.adjustedNetIncome;
+  if (!Number.isFinite(a) || !Number.isFinite(b)) return null;
+  const other: CouplePerson = input.claimant === "a" ? "b" : "a";
+  const liable =
+    input.adjustedNetIncome[other] > input.adjustedNetIncome[input.claimant]
+      ? other
+      : input.claimant;
+  const result = calculateHicbc(
+    input.adjustedNetIncome[liable],
+    calculateChildBenefitAnnual(input.children, rules),
+    rules,
+  );
+  const charge: Record<CouplePerson, number> = { a: 0, b: 0 };
+  charge[liable] = result.charge;
+  return {
+    chargedPerson: result.charge > 0 ? liable : null,
+    charge,
+    chargePercent: result.chargePercent,
+    childBenefitAnnual: result.childBenefitAnnual,
+    netChildBenefit: result.netChildBenefit,
   };
 }

@@ -18,6 +18,11 @@
  * - scottishMarginal: { salary, deltaGross }; expected is the change in take-home inside a Scottish band.
  * - studentLoanMulti: { grossIncome, plans }; plans joined with "+"; expected is total annual repayment.
  * - reliefAtSource: { grossIncome, netContribution }; expected is income tax after the band extension.
+ * - hicbcCouple (E34 C2): { adjustedNetIncomeA, adjustedNetIncomeB, children, claimant, person }; claimant and
+ *   person are "a" or "b"; expected is the charge that `person` owes under ITEPA 2003 s.681B (the partner with
+ *   the higher adjusted net income, the claimant on equal incomes), 0 for the other partner.
+ * - householdIncomeTax (E34 C2): { grossIncomeA, grossIncomeB }; employment income only; expected is the two
+ *   people's income tax, each worked out on their own income, added. Never tax on the pooled income.
  * - salarySacrificeCap2029: { salary, sacrifice, cap, party }; expected is the extra NI the 6 April 2029
  *   2,000 cap would add. An illustration at 2026/27 rates, never applied implicitly.
  *
@@ -33,7 +38,9 @@ export type UkWhatIfVectorKind =
   | "scottishMarginal"
   | "studentLoanMulti"
   | "reliefAtSource"
-  | "salarySacrificeCap2029";
+  | "salarySacrificeCap2029"
+  | "hicbcCouple"
+  | "householdIncomeTax";
 
 export type UkTaxFeature = "core" | "hicbc" | "whatIf" | "scheduled";
 
@@ -51,6 +58,8 @@ export const UK_WHATIF_VECTOR_KINDS: readonly UkWhatIfVectorKind[] = [
   "studentLoanMulti",
   "reliefAtSource",
   "salarySacrificeCap2029",
+  "hicbcCouple",
+  "householdIncomeTax",
 ];
 
 export function selectUkWhatIfVectors(
@@ -2636,5 +2645,345 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
     signedOffHash: "v2:0c899c6f2654a241f11c89417724ced03b7a19ab40b82ecaa8a9d1b9de749a1f",
     rulingRef:
       "FA 2004 s.192(4), read on legislation.gov.uk on 20 Nov 2026, raises the basic and higher rate limits by the gross contribution on a claim where higher-rate tax is otherwise chargeable; this vector meets that condition and assumes the claim is made.",
+  },
+  {
+    id: "hicbcCouple.2026-27.a70000.b65000.children2.claimant-b.person-a",
+    taxYear: "2026/27",
+    region: "ENGLAND_NI_WALES",
+    kind: "hicbcCouple",
+    feature: "hicbc",
+    input: {
+      adjustedNetIncomeA: 70000,
+      adjustedNetIncomeB: 65000,
+      children: 2,
+      claimant: "b",
+      person: "a",
+    },
+    expected: 1191,
+    source: "https://www.gov.uk/child-benefit-tax-charge",
+    additionalSources: [
+      "https://www.legislation.gov.uk/ukpga/2003/1/section/681B",
+      "https://www.legislation.gov.uk/ukpga/2003/1/section/681G",
+      "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
+    ],
+    derivation:
+      "Two partners, A and B. Who is liable, ITEPA 2003 s.681B (https://www.legislation.gov.uk/ukpga/2003/1/section/681B, read 25 Nov 2026): condition A charges the claimant unless a partner's adjusted net income exceeds the claimant's; condition B charges the other partner only when their adjusted net income exceeds the claimant's. Partners throughout the year (s.681G, https://www.legislation.gov.uk/ukpga/2003/1/section/681G). Incomes are compared, never added. A's ANI 70000 exceeds the claimant B's 65000, so A is liable (condition B). Percentage min(100, floor((70000 - 60000) / 200)) = 50%; 2382 x 50% = 1191. Charge on A 1191. Child Benefit (27.05 + 17.90)/week = 44.95 x 53 weeks = 2382.35, rounded down to 2382 (weeks: the Mondays from 6 April 2026 to 5 April 2027, ITEPA 2003 s.681H(3), https://www.legislation.gov.uk/ukpga/2003/1/section/681H). Rule: 1% of Child Benefit per full 200 of ANI over 60,000, tax years from 2024/25 (GOV.UK child-benefit-tax-charge), capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order.",
+    confidence: "medium",
+    status: "UNVERIFIED",
+    unverifiedReason:
+      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026). Equal incomes: s.681B has no express rule; the claimant is liable on its wording (exceeds).",
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-25",
+    signedOffHash: "v2:8c391ffbc928b79bdde8fdd54c724174a98fc346467c6c16e8f49157b123eee8",
+    rulingRef:
+      "Read ITEPA 2003 s.681B, s.681C, s.681G, s.681H and the GOV.UK Child Benefit rates on 2026-11-25: A exceeds claimant B so condition B charges A; 44.95 x 53 Mondays = 2382, 50 per cent, charge 1191.",
+  },
+  {
+    id: "hicbcCouple.2026-27.a70000.b65000.children2.claimant-b.person-b",
+    taxYear: "2026/27",
+    region: "ENGLAND_NI_WALES",
+    kind: "hicbcCouple",
+    feature: "hicbc",
+    input: {
+      adjustedNetIncomeA: 70000,
+      adjustedNetIncomeB: 65000,
+      children: 2,
+      claimant: "b",
+      person: "b",
+    },
+    expected: 0,
+    source: "https://www.gov.uk/child-benefit-tax-charge",
+    additionalSources: [
+      "https://www.legislation.gov.uk/ukpga/2003/1/section/681B",
+      "https://www.legislation.gov.uk/ukpga/2003/1/section/681G",
+      "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
+    ],
+    derivation:
+      "Two partners, A and B. Who is liable, ITEPA 2003 s.681B (https://www.legislation.gov.uk/ukpga/2003/1/section/681B, read 25 Nov 2026): condition A charges the claimant unless a partner's adjusted net income exceeds the claimant's; condition B charges the other partner only when their adjusted net income exceeds the claimant's. Partners throughout the year (s.681G, https://www.legislation.gov.uk/ukpga/2003/1/section/681G). Incomes are compared, never added. A's ANI 70000 exceeds the claimant B's 65000, so condition A fails for B and B owes nothing; A owes the charge. Charge on B 0. Child Benefit (27.05 + 17.90)/week = 44.95 x 53 weeks = 2382.35, rounded down to 2382 (weeks: the Mondays from 6 April 2026 to 5 April 2027, ITEPA 2003 s.681H(3), https://www.legislation.gov.uk/ukpga/2003/1/section/681H). Rule: 1% of Child Benefit per full 200 of ANI over 60,000, tax years from 2024/25 (GOV.UK child-benefit-tax-charge), capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order.",
+    confidence: "medium",
+    status: "UNVERIFIED",
+    unverifiedReason:
+      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026). Equal incomes: s.681B has no express rule; the claimant is liable on its wording (exceeds).",
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-25",
+    signedOffHash: "v2:943fab09e521e8b95d05649a867011e63d90d364dd2e04e66dfdac88caff2021",
+    rulingRef:
+      "Read ITEPA 2003 s.681B, s.681C, s.681G and s.681H on legislation.gov.uk on 2026-11-25: partner A's adjusted net income exceeds claimant B's, so condition A in s.681B(3)(b) fails for B and B owes 0.",
+  },
+  {
+    id: "hicbcCouple.2026-27.a70000.b70000.children2.claimant-b.person-b",
+    taxYear: "2026/27",
+    region: "ENGLAND_NI_WALES",
+    kind: "hicbcCouple",
+    feature: "hicbc",
+    input: {
+      adjustedNetIncomeA: 70000,
+      adjustedNetIncomeB: 70000,
+      children: 2,
+      claimant: "b",
+      person: "b",
+    },
+    expected: 1191,
+    source: "https://www.gov.uk/child-benefit-tax-charge",
+    additionalSources: [
+      "https://www.legislation.gov.uk/ukpga/2003/1/section/681B",
+      "https://www.legislation.gov.uk/ukpga/2003/1/section/681G",
+      "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
+    ],
+    derivation:
+      "Two partners, A and B. Who is liable, ITEPA 2003 s.681B (https://www.legislation.gov.uk/ukpga/2003/1/section/681B, read 25 Nov 2026): condition A charges the claimant unless a partner's adjusted net income exceeds the claimant's; condition B charges the other partner only when their adjusted net income exceeds the claimant's. Partners throughout the year (s.681G, https://www.legislation.gov.uk/ukpga/2003/1/section/681G). Incomes are compared, never added. Equal ANI: no partner's income exceeds the claimant B's, so condition A charges B; condition B fails for A because A's income does not exceed B's. Percentage floor((70000 - 60000) / 200) = 50%; 2382 x 50% = 1191. Charge on B 1191. Child Benefit (27.05 + 17.90)/week = 44.95 x 53 weeks = 2382.35, rounded down to 2382 (weeks: the Mondays from 6 April 2026 to 5 April 2027, ITEPA 2003 s.681H(3), https://www.legislation.gov.uk/ukpga/2003/1/section/681H). Rule: 1% of Child Benefit per full 200 of ANI over 60,000, tax years from 2024/25 (GOV.UK child-benefit-tax-charge), capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order.",
+    confidence: "medium",
+    status: "UNVERIFIED",
+    unverifiedReason:
+      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026). Equal incomes: s.681B has no express rule; the claimant is liable on its wording (exceeds).",
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-25",
+    signedOffHash: "v2:8037ac4d50407a5812b32fa1a7ab61422cc599f0e451cc773f14e546468f5295",
+    rulingRef:
+      "Read ITEPA 2003 s.681B, s.681C, s.681H and the GOV.UK Child Benefit rates on 2026-11-25: with equal incomes no partner exceeds claimant B, so s.681B(3) condition A charges B; 2382 at 50 per cent gives 1191.",
+  },
+  {
+    id: "hicbcCouple.2026-27.a70000.b70000.children2.claimant-b.person-a",
+    taxYear: "2026/27",
+    region: "ENGLAND_NI_WALES",
+    kind: "hicbcCouple",
+    feature: "hicbc",
+    input: {
+      adjustedNetIncomeA: 70000,
+      adjustedNetIncomeB: 70000,
+      children: 2,
+      claimant: "b",
+      person: "a",
+    },
+    expected: 0,
+    source: "https://www.gov.uk/child-benefit-tax-charge",
+    additionalSources: [
+      "https://www.legislation.gov.uk/ukpga/2003/1/section/681B",
+      "https://www.legislation.gov.uk/ukpga/2003/1/section/681G",
+      "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
+    ],
+    derivation:
+      "Two partners, A and B. Who is liable, ITEPA 2003 s.681B (https://www.legislation.gov.uk/ukpga/2003/1/section/681B, read 25 Nov 2026): condition A charges the claimant unless a partner's adjusted net income exceeds the claimant's; condition B charges the other partner only when their adjusted net income exceeds the claimant's. Partners throughout the year (s.681G, https://www.legislation.gov.uk/ukpga/2003/1/section/681G). Incomes are compared, never added. Equal ANI: condition B needs A's income to exceed the claimant B's, and it does not, so A owes nothing. Charge on A 0. Child Benefit (27.05 + 17.90)/week = 44.95 x 53 weeks = 2382.35, rounded down to 2382 (weeks: the Mondays from 6 April 2026 to 5 April 2027, ITEPA 2003 s.681H(3), https://www.legislation.gov.uk/ukpga/2003/1/section/681H). Rule: 1% of Child Benefit per full 200 of ANI over 60,000, tax years from 2024/25 (GOV.UK child-benefit-tax-charge), capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order.",
+    confidence: "medium",
+    status: "UNVERIFIED",
+    unverifiedReason:
+      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026). Equal incomes: s.681B has no express rule; the claimant is liable on its wording (exceeds).",
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-25",
+    signedOffHash: "v2:e550d3bbf9e34775d7ab36f01beb110acec0f0e04a7b417926ab0fd1aa4cb1fe",
+    rulingRef:
+      "Read ITEPA 2003 s.681B and s.681G on legislation.gov.uk on 2026-11-25: s.681B(4)(c) needs A's adjusted net income to exceed claimant B's; equal incomes do not, and A is not entitled to Child Benefit, so A owes 0.",
+  },
+  {
+    id: "hicbcCouple.2026-27.a55000.b40000.children1.claimant-b.person-a",
+    taxYear: "2026/27",
+    region: "ENGLAND_NI_WALES",
+    kind: "hicbcCouple",
+    feature: "hicbc",
+    input: {
+      adjustedNetIncomeA: 55000,
+      adjustedNetIncomeB: 40000,
+      children: 1,
+      claimant: "b",
+      person: "a",
+    },
+    expected: 0,
+    source: "https://www.gov.uk/child-benefit-tax-charge",
+    additionalSources: [
+      "https://www.legislation.gov.uk/ukpga/2003/1/section/681B",
+      "https://www.legislation.gov.uk/ukpga/2003/1/section/681G",
+      "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
+    ],
+    derivation:
+      "Two partners, A and B. Who is liable, ITEPA 2003 s.681B (https://www.legislation.gov.uk/ukpga/2003/1/section/681B, read 25 Nov 2026): condition A charges the claimant unless a partner's adjusted net income exceeds the claimant's; condition B charges the other partner only when their adjusted net income exceeds the claimant's. Partners throughout the year (s.681G, https://www.legislation.gov.uk/ukpga/2003/1/section/681G). Incomes are compared, never added. A has the higher ANI, 55000, but it is not over 60,000 (s.681B(1)(a)), so no charge arises for anyone. Charge on A 0. Child Benefit 27.05/week (eldest) x 53 weeks = 1433.65, rounded down to 1433 (weeks: the Mondays from 6 April 2026 to 5 April 2027, ITEPA 2003 s.681H(3), https://www.legislation.gov.uk/ukpga/2003/1/section/681H). Rule: 1% of Child Benefit per full 200 of ANI over 60,000, tax years from 2024/25 (GOV.UK child-benefit-tax-charge), capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order.",
+    confidence: "medium",
+    status: "UNVERIFIED",
+    unverifiedReason:
+      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026). Equal incomes: s.681B has no express rule; the claimant is liable on its wording (exceeds).",
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-25",
+    signedOffHash: "v2:6a9c52c083635d2baed3a0803c0f28158bd89fa4eb5eed3a5e0b74e7fa03d8be",
+    rulingRef:
+      "Read ITEPA 2003 s.681B on legislation.gov.uk and GOV.UK child-benefit-tax-charge on 2026-11-25: A's adjusted net income of 55000 does not exceed 60000, so s.681B(1)(a) is not met and A owes 0.",
+  },
+  {
+    id: "hicbcCouple.2026-27.a90000.b61000.children1.claimant-a.person-a",
+    taxYear: "2026/27",
+    region: "ENGLAND_NI_WALES",
+    kind: "hicbcCouple",
+    feature: "hicbc",
+    input: {
+      adjustedNetIncomeA: 90000,
+      adjustedNetIncomeB: 61000,
+      children: 1,
+      claimant: "a",
+      person: "a",
+    },
+    expected: 1433,
+    source: "https://www.gov.uk/child-benefit-tax-charge",
+    additionalSources: [
+      "https://www.legislation.gov.uk/ukpga/2003/1/section/681B",
+      "https://www.legislation.gov.uk/ukpga/2003/1/section/681G",
+      "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
+    ],
+    derivation:
+      "Two partners, A and B. Who is liable, ITEPA 2003 s.681B (https://www.legislation.gov.uk/ukpga/2003/1/section/681B, read 25 Nov 2026): condition A charges the claimant unless a partner's adjusted net income exceeds the claimant's; condition B charges the other partner only when their adjusted net income exceeds the claimant's. Partners throughout the year (s.681G, https://www.legislation.gov.uk/ukpga/2003/1/section/681G). Incomes are compared, never added. The claimant A has the higher ANI, so A is liable (condition A). Percentage min(100, floor((90000 - 60000) / 200)) = min(100, 150) = 100%; 1433 x 100% = 1433. Charge on A 1433. Child Benefit 27.05/week (eldest) x 53 weeks = 1433.65, rounded down to 1433 (weeks: the Mondays from 6 April 2026 to 5 April 2027, ITEPA 2003 s.681H(3), https://www.legislation.gov.uk/ukpga/2003/1/section/681H). Rule: 1% of Child Benefit per full 200 of ANI over 60,000, tax years from 2024/25 (GOV.UK child-benefit-tax-charge), capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order.",
+    confidence: "medium",
+    status: "UNVERIFIED",
+    unverifiedReason:
+      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026). Equal incomes: s.681B has no express rule; the claimant is liable on its wording (exceeds).",
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-25",
+    signedOffHash: "v2:aacbaa3cc393bcdfa7f0a10e23f5d89c544d96ced9b30a3702070db60e669eb3",
+    rulingRef:
+      "Read ITEPA 2003 s.681B, s.681C, s.681H and the GOV.UK Child Benefit rates on 2026-11-25: claimant A has the higher income so condition A applies; 27.05 x 53 Mondays = 1433, percentage capped at 100, charge 1433.",
+  },
+  {
+    id: "hicbcCouple.2026-27.a90000.b61000.children1.claimant-a.person-b",
+    taxYear: "2026/27",
+    region: "ENGLAND_NI_WALES",
+    kind: "hicbcCouple",
+    feature: "hicbc",
+    input: {
+      adjustedNetIncomeA: 90000,
+      adjustedNetIncomeB: 61000,
+      children: 1,
+      claimant: "a",
+      person: "b",
+    },
+    expected: 0,
+    source: "https://www.gov.uk/child-benefit-tax-charge",
+    additionalSources: [
+      "https://www.legislation.gov.uk/ukpga/2003/1/section/681B",
+      "https://www.legislation.gov.uk/ukpga/2003/1/section/681G",
+      "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
+    ],
+    derivation:
+      "Two partners, A and B. Who is liable, ITEPA 2003 s.681B (https://www.legislation.gov.uk/ukpga/2003/1/section/681B, read 25 Nov 2026): condition A charges the claimant unless a partner's adjusted net income exceeds the claimant's; condition B charges the other partner only when their adjusted net income exceeds the claimant's. Partners throughout the year (s.681G, https://www.legislation.gov.uk/ukpga/2003/1/section/681G). Incomes are compared, never added. B's ANI 61000 is over 60,000 but does not exceed the claimant A's 90000, so condition B fails and B owes nothing. Charge on B 0. Child Benefit 27.05/week (eldest) x 53 weeks = 1433.65, rounded down to 1433 (weeks: the Mondays from 6 April 2026 to 5 April 2027, ITEPA 2003 s.681H(3), https://www.legislation.gov.uk/ukpga/2003/1/section/681H). Rule: 1% of Child Benefit per full 200 of ANI over 60,000, tax years from 2024/25 (GOV.UK child-benefit-tax-charge), capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order.",
+    confidence: "medium",
+    status: "UNVERIFIED",
+    unverifiedReason:
+      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026). Equal incomes: s.681B has no express rule; the claimant is liable on its wording (exceeds).",
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-25",
+    signedOffHash: "v2:dace28c372a0509ffd7edc4e440bbd056e6d15e246441c67fbe280e6f3eb41cc",
+    rulingRef:
+      "Read ITEPA 2003 s.681B and s.681G on legislation.gov.uk on 2026-11-25: B is over 60000 but does not exceed claimant A's 90000, so s.681B(4)(c) fails, B is not the claimant, and B owes 0.",
+  },
+  {
+    id: "hicbcCouple.2026-27.a62000.b79800.children3.claimant-a.person-b",
+    taxYear: "2026/27",
+    region: "ENGLAND_NI_WALES",
+    kind: "hicbcCouple",
+    feature: "hicbc",
+    input: {
+      adjustedNetIncomeA: 62000,
+      adjustedNetIncomeB: 79800,
+      children: 3,
+      claimant: "a",
+      person: "b",
+    },
+    expected: 3297,
+    source: "https://www.gov.uk/child-benefit-tax-charge",
+    additionalSources: [
+      "https://www.legislation.gov.uk/ukpga/2003/1/section/681B",
+      "https://www.legislation.gov.uk/ukpga/2003/1/section/681G",
+      "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
+    ],
+    derivation:
+      "Two partners, A and B. Who is liable, ITEPA 2003 s.681B (https://www.legislation.gov.uk/ukpga/2003/1/section/681B, read 25 Nov 2026): condition A charges the claimant unless a partner's adjusted net income exceeds the claimant's; condition B charges the other partner only when their adjusted net income exceeds the claimant's. Partners throughout the year (s.681G, https://www.legislation.gov.uk/ukpga/2003/1/section/681G). Incomes are compared, never added. B's ANI 79800 exceeds the claimant A's 62000, so B is liable (condition B). Percentage min(100, floor((79800 - 60000) / 200)) = 99%; 3331 x 99% = 3297.69, rounded down to 3297. Charge on B 3297. Child Benefit (27.05 + 2 x 17.90)/week = 62.85 x 53 weeks = 3331.05, rounded down to 3331 (weeks: the Mondays from 6 April 2026 to 5 April 2027, ITEPA 2003 s.681H(3), https://www.legislation.gov.uk/ukpga/2003/1/section/681H). Rule: 1% of Child Benefit per full 200 of ANI over 60,000, tax years from 2024/25 (GOV.UK child-benefit-tax-charge), capped at 100%. ITEPA 2003 s.681C(3) (https://www.legislation.gov.uk/ukpga/2003/1/section/681C) rounds down the total Child Benefit to whole pounds, the percentage to a whole number and the charge to whole pounds, in that order.",
+    confidence: "medium",
+    status: "UNVERIFIED",
+    unverifiedReason:
+      "UNVERIFIED: Child Benefit weeks are the Mondays in the tax year (ITEPA 2003 s.681H(3), decider ruling adopted 20 Nov 2026). Equal incomes: s.681B has no express rule; the claimant is liable on its wording (exceeds).",
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-25",
+    signedOffHash: "v2:40b623e1e71c8ae43e0a998442e400de313fb454c500241c1f98e7308686cf9f",
+    rulingRef:
+      "Read ITEPA 2003 s.681B, s.681C, s.681H and the GOV.UK Child Benefit rates on 2026-11-25: B exceeds claimant A so condition B charges B; 62.85 x 53 Mondays = 3331, 99 per cent = 3297.69, rounded down to 3297.",
+  },
+  {
+    id: "householdIncomeTax.ewni.2026-27.a30000.b30000",
+    taxYear: "2026/27",
+    region: "ENGLAND_NI_WALES",
+    kind: "householdIncomeTax",
+    feature: "whatIf",
+    input: { grossIncomeA: 30000, grossIncomeB: 30000 },
+    expected: 6972,
+    source:
+      "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
+    additionalSources: ["https://www.gov.uk/hmrc-internal-manuals/capital-gains-manual/cg22100"],
+    derivation:
+      "Two people, each with employment income only and no pension or reliefs. Income tax is charged on each person separately (independent taxation from 1990-91, Finance Act 1988; HMRC CG22100, https://www.gov.uk/hmrc-internal-manuals/capital-gains-manual/cg22100, read 25 Nov 2026), so each person's tax is worked out on their own income and the two are added. Income 30000: PA 12570, taxable 17430, basic 17430 x 20% = 3486. Income 30000: 3486 as above. Household 3486 + 3486 = 6972.",
+    confidence: "high",
+    status: "VERIFIED",
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-25",
+    signedOffHash: "v2:3ffe26dbf77cbe923e1f6c9532173867fb4a17df04bd2ebec73d1dddb9cc2067",
+    rulingRef:
+      "Read GOV.UK Income Tax rates and allowances and HMRC CG22100 on 2026-11-25: each person is taxed separately; 30000 less 12570 allowance = 17430 at 20 per cent = 3486 each, household 6972.",
+  },
+  {
+    id: "householdIncomeTax.ewni.2026-27.a110000.b20000",
+    taxYear: "2026/27",
+    region: "ENGLAND_NI_WALES",
+    kind: "householdIncomeTax",
+    feature: "whatIf",
+    input: { grossIncomeA: 110000, grossIncomeB: 20000 },
+    expected: 34918,
+    source:
+      "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
+    additionalSources: ["https://www.gov.uk/hmrc-internal-manuals/capital-gains-manual/cg22100"],
+    derivation:
+      "Two people, each with employment income only and no pension or reliefs. Income tax is charged on each person separately (independent taxation from 1990-91, Finance Act 1988; HMRC CG22100, https://www.gov.uk/hmrc-internal-manuals/capital-gains-manual/cg22100, read 25 Nov 2026), so each person's tax is worked out on their own income and the two are added. Income 110000: taper (110000 - 100000) / 2 = 5000, PA 7570, taxable 102430; basic 37700 x 20% = 7540; higher 64730 x 40% = 25892; total 33432. Income 20000: PA 12570, taxable 7430, basic 7430 x 20% = 1486. Household 33432 + 1486 = 34918. Pooling 130000 as one income would give a different figure; the law taxes each person.",
+    confidence: "high",
+    status: "VERIFIED",
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-25",
+    signedOffHash: "v2:dee2635a58dc7da4e82897843a9b406ba3c803ee3f7bc7e26268c1de0144b0b8",
+    rulingRef:
+      "Read GOV.UK Income Tax rates and allowances and HMRC CG22100 on 2026-11-25: taxed separately; A's allowance tapers to 7570, taxable 102430, tax 7540 + 25892 = 33432; B's tax is 1486; household 34918.",
+  },
+  {
+    id: "householdIncomeTax.ewni.2026-27.a60000.b12570",
+    taxYear: "2026/27",
+    region: "ENGLAND_NI_WALES",
+    kind: "householdIncomeTax",
+    feature: "whatIf",
+    input: { grossIncomeA: 60000, grossIncomeB: 12570 },
+    expected: 11432,
+    source:
+      "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
+    additionalSources: ["https://www.gov.uk/hmrc-internal-manuals/capital-gains-manual/cg22100"],
+    derivation:
+      "Two people, each with employment income only and no pension or reliefs. Income tax is charged on each person separately (independent taxation from 1990-91, Finance Act 1988; HMRC CG22100, https://www.gov.uk/hmrc-internal-manuals/capital-gains-manual/cg22100, read 25 Nov 2026), so each person's tax is worked out on their own income and the two are added. Income 60000: PA 12570, taxable 47430; basic 37700 x 20% = 7540; higher 9730 x 40% = 3892; total 11432. Income 12570: PA 12570, taxable 0, tax 0. Household 11432 + 0 = 11432.",
+    confidence: "high",
+    status: "VERIFIED",
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-25",
+    signedOffHash: "v2:9230eb80f36ac02b34320010489b3edd0fc0dedb7a162cda1d102f91d78417e2",
+    rulingRef:
+      "Read GOV.UK Income Tax rates and allowances and HMRC CG22100 on 2026-11-25: taxed separately; A's taxable 47430 gives 7540 + 3892 = 11432; B's 12570 is covered by the personal allowance, tax 0; household 11432.",
+  },
+  {
+    id: "householdIncomeTax.ewni.2026-27.a125140.b12570",
+    taxYear: "2026/27",
+    region: "ENGLAND_NI_WALES",
+    kind: "householdIncomeTax",
+    feature: "whatIf",
+    input: { grossIncomeA: 125140, grossIncomeB: 12570 },
+    expected: 42516,
+    source:
+      "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
+    additionalSources: ["https://www.gov.uk/hmrc-internal-manuals/capital-gains-manual/cg22100"],
+    derivation:
+      "Two people, each with employment income only and no pension or reliefs. Income tax is charged on each person separately (independent taxation from 1990-91, Finance Act 1988; HMRC CG22100, https://www.gov.uk/hmrc-internal-manuals/capital-gains-manual/cg22100, read 25 Nov 2026), so each person's tax is worked out on their own income and the two are added. Income 125140: taper (125140 - 100000) / 2 = 12570, PA 0, taxable 125140; basic 37700 x 20% = 7540; higher 87440 x 40% = 34976; total 42516. Income 12570: tax 0. Household 42516 + 0 = 42516.",
+    confidence: "high",
+    status: "VERIFIED",
+    signedOffBy: "fable-decider",
+    signedOffAt: "2026-11-25",
+    signedOffHash: "v2:c657b3abf7c07c94a0fcfe2cf29aca42c53ece578e333b95998032468611f724",
+    rulingRef:
+      "Read GOV.UK Income Tax rates and allowances and HMRC CG22100 on 2026-11-25: taxed separately; A's allowance tapers to nil, taxable 125140, tax 7540 + 34976 = 42516 with nothing at 45 per cent; B's tax 0; household 42516.",
   },
 ];

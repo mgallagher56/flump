@@ -1,5 +1,6 @@
 export * from "./build.js";
 export * from "./figure.js";
+export * from "./household.js";
 export * from "./input.js";
 export * from "./load.js";
 export * from "./selectors/account-link-offers.js";
