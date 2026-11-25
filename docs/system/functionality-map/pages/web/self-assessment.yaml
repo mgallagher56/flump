@@ -49,6 +49,15 @@ sections:
       - tax-records
       - account-balance
 
+  - id: mtd-notice
+    component: apps/web/app/features/tax/components/MtdNotice/MtdNotice.tsx
+    facts_read:
+      - tax-records
+      - employment-type
+      - rental-share-for-tax
+    figures_shown:
+      - mtd-qualifying-income
+
   - id: calculated-figures
     component: apps/web/app/features/tax/components/CalculatedFigures/CalculatedFigures.tsx
     facts_read:

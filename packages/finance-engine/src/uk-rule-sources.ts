@@ -250,6 +250,20 @@ export const UK_PROPERTY_TRANSACTION_TAX_SOURCES = {
   ltt: verified("https://www.gov.wales/land-transaction-tax-rates-and-bands"),
 } as const satisfies Record<"sdlt" | "lbtt" | "ltt", UkRuleSource>;
 
+/**
+ * Making Tax Digital for Income Tax thresholds and start dates (mtd-income-tax.ts): regulations
+ * 22 to 27 of SI 2026/336 as made, with GOV.UK's guidance on who must use it and qualifying income.
+ * Confirmed by fable-decider on 2026-11-25.
+ */
+export const MTD_INCOME_TAX_SOURCES = {
+  thresholds: verified("https://www.legislation.gov.uk/uksi/2026/336/regulation/27/made", [
+    "https://www.legislation.gov.uk/uksi/2026/336/regulation/23/made",
+    "https://www.legislation.gov.uk/uksi/2026/336/regulation/26/made",
+    "https://www.gov.uk/guidance/check-if-youre-eligible-for-making-tax-digital-for-income-tax",
+    "https://www.gov.uk/guidance/work-out-your-qualifying-income-for-making-tax-digital-for-income-tax",
+  ]),
+} as const satisfies Record<"thresholds", UkRuleSource>;
+
 function buildYear(year: UkTaxYear): UkRuleSources {
   const employer = employerPage(year);
   const is2026 = year === "2026/27";

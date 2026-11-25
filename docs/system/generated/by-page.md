@@ -122,7 +122,7 @@ What each page, tool and service writes, reads and shows.
 - Code: `apps/web/app/containers/tax/TaxContainer.tsx`
 - Writes: [Salary (yearly pay before tax)](by-fact.md#salary), [Rent received on a rental property](by-fact.md#buy-to-let-rent), [Self Assessment income and expense records](by-fact.md#tax-records), [Enabled pages and dashboard widgets](by-fact.md#enabled-pages-and-widgets)
 - Reads: [Salary (yearly pay before tax)](by-fact.md#salary), [Buy-to-let mortgage balance, rate and type](by-fact.md#buy-to-let-mortgage), [Rent received on a rental property](by-fact.md#buy-to-let-rent), [Self Assessment income and expense records](by-fact.md#tax-records), [Share of a rental property, as used for tax](by-fact.md#rental-share-for-tax)
-- Shows figures: [Estimated Self Assessment tax](by-fact.md#estimated-tax), [Mortgage interest carried forward to next year](by-fact.md#finance-costs-carried-forward)
+- Shows figures: [Estimated Self Assessment tax](by-fact.md#estimated-tax), [Mortgage interest carried forward to next year](by-fact.md#finance-costs-carried-forward), [Making Tax Digital qualifying income against its threshold](by-fact.md#mtd-qualifying-income)
 
 ## Invoicing and work log
 
@@ -130,7 +130,7 @@ What each page, tool and service writes, reads and shows.
 - Code: `apps/web/app/routes/app.invoicing.tsx`
 - Writes: [Self-employed invoicing settings (default hourly rate, business details, VAT number, invoice prefix and sequence)](by-fact.md#invoicing-settings), [Self-employed billable work log entries](by-fact.md#work-log-entries), [Self-employed invoices (number, status, client details, dates, optional VAT rate and totals)](by-fact.md#invoices)
 - Reads: [Self-employed invoicing settings (default hourly rate, business details, VAT number, invoice prefix and sequence)](by-fact.md#invoicing-settings), [Self-employed billable work log entries](by-fact.md#work-log-entries), [Self-employed invoices (number, status, client details, dates, optional VAT rate and totals)](by-fact.md#invoices)
-- Shows figures: [Invoice subtotal, VAT amount and total](by-fact.md#invoice-totals), [Unbilled hours, unbilled amount, outstanding issued invoices and paid in tax year](by-fact.md#invoicing-kpis)
+- Shows figures: [Invoice subtotal, VAT amount and total](by-fact.md#invoice-totals), [Unbilled hours, unbilled amount, outstanding issued invoices and paid in tax year](by-fact.md#invoicing-kpis), [Making Tax Digital qualifying income against its threshold](by-fact.md#mtd-qualifying-income)
 
 ## Settings
 

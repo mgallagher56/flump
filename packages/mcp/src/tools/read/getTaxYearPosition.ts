@@ -307,6 +307,8 @@ export const getTaxYearPosition = defineFlumpTool({
         notes: [
           "Total income here is salary plus self-employed profit, rental profit share before finance costs, taxable savings interest and dividends. Pension contributions and Gift Aid, which lower adjusted net income, are deducted only if recorded.",
           "The Child Benefit charge is worked out on the individual's own income only.",
+          // E28: so an assistant never implies Flump files returns or sends updates to HMRC.
+          "Flump does not send anything to HMRC or file tax returns.",
           ...(region === "SCOTLAND" && !refusal
             ? [
                 "The bands use Scottish rates. The tax and Self Assessment estimates use the tax page calculation, which applies England, Wales and Northern Ireland rates.",

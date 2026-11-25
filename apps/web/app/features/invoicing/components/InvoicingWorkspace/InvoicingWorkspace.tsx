@@ -27,7 +27,7 @@ import {
   PageHeader,
   Tabs,
 } from "@repo/ui";
-import { type FC, type FormEvent, useEffect, useMemo, useState } from "react";
+import { type FC, type FormEvent, type ReactNode, useEffect, useMemo, useState } from "react";
 import {
   actionRow,
   buttonGroup,
@@ -81,6 +81,8 @@ export interface InvoicingWorkspaceProps {
   onVoidInvoice?: (id: string, ifMatch: string) => void;
   onSyncInvoiceToTax?: (id: string, ifMatch: string) => void;
   onUpdateSettings?: (payload: UpdateInvoicingSettingsRequest, ifMatch: string | null) => void;
+  /** One quiet notice under the figures, such as the Making Tax Digital notice (E28). */
+  notice?: ReactNode;
 }
 
 const STATUS_LABELS: Record<InvoiceDto["status"], string> = {
@@ -133,6 +135,7 @@ export const InvoicingWorkspace: FC<InvoicingWorkspaceProps> = ({
   onVoidInvoice,
   onSyncInvoiceToTax,
   onUpdateSettings,
+  notice,
 }) => {
   const currentTaxYear = useMemo(() => getUkTaxYearForDate(todayIso), [todayIso]);
   const [activeTab, setActiveTab] = useState<string>(initialTab);
@@ -1483,6 +1486,8 @@ export const InvoicingWorkspace: FC<InvoicingWorkspaceProps> = ({
             subtext={`${money(kpis.paidInTaxYearSubtotal)} before VAT across ${kpis.paidInTaxYearCount} paid`}
           />
         </KpiStrip>
+
+        {notice}
 
         <Tabs
           aria-label="Invoicing sections"

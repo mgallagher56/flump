@@ -23,7 +23,9 @@ import {
 } from "react-router";
 import { InvoicingWorkspace } from "~/features/invoicing/components/InvoicingWorkspace";
 import { londonDate } from "~/features/snapshot/snapshotModel";
-import { backendFetch } from "~/services/backend-client.server";
+import { MtdNotice } from "~/features/tax/components/MtdNotice";
+import { mtdNoticeCopy, mtdNoticePosition } from "~/features/tax/mtdNotice";
+import { backendFetch, loadWorkspaceSnapshot } from "~/services/backend-client.server";
 import { ifMatchFromForm, revalidateOnConflict } from "~/services/conflict";
 import { actionErrorResponse, throwRouteError } from "~/services/route-error.server";
 import { getAuthSession, requireAccessToken } from "~/utils/auth.server";
@@ -36,7 +38,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
   const { accessToken } = await getAuthSession(args, { ensureSignedIn: true });
   const token = requireAccessToken({ accessToken });
 
-  const [settingsRes, workLogsRes, invoicesRes] = await Promise.all([
+  const [settingsRes, workLogsRes, invoicesRes, workspace] = await Promise.all([
     backendFetch("/invoicing/settings", {
       schema: InvoicingSettingsResponse,
       accessToken: token,
@@ -52,7 +54,10 @@ export const loader = async (args: LoaderFunctionArgs) => {
       accessToken: token,
       method: "GET",
     }).catch(throwRouteError),
+    // Tax records, profile and accounts, for the Making Tax Digital notice (E28).
+    loadWorkspaceSnapshot(args, { includeTax: true }),
   ]);
+  const today = londonDate();
 
   const settings = settingsRes.settings;
   const settingsEtag = settings.updatedAt ? `"${settings.updatedAt}"` : null;
@@ -63,7 +68,13 @@ export const loader = async (args: LoaderFunctionArgs) => {
     workLogs: workLogsRes.entries,
     invoices: invoicesRes.invoices,
     // New work, issue and paid dates default to today on the Europe/London clock.
-    today: londonDate(),
+    today,
+    mtdPosition: mtdNoticePosition({
+      records: workspace.taxRecords,
+      employmentType: workspace.userProfile?.employmentType ?? null,
+      accounts: workspace.accounts,
+      today,
+    }),
   };
 };
 
@@ -224,6 +235,7 @@ export default function InvoicingRoute(): ReactElement {
       workLogs={loaderData.workLogs}
       invoices={loaderData.invoices}
       todayIso={loaderData.today}
+      notice={<MtdNotice copy={mtdNoticeCopy(loaderData.mtdPosition)} />}
       isSubmitting={fetcher.state !== "idle"}
       onCreateWorkLog={(payload) => submitAction("create-work-log", { payload })}
       onUpdateWorkLog={(id, payload, ifMatch) =>

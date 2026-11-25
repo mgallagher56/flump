@@ -110,7 +110,7 @@ export const MONEY_AREAS: readonly MoneyArea[] = [
     facts: [
       "Enter your salary to see your take-home pay after Income Tax, National Insurance, pension and student loan.",
       "Model a pay rise to see how much of it you would keep.",
-      "If you are self-employed or let property, switch on Self Assessment. It keeps your income and costs for each tax year and shows an estimate of your tax bill.",
+      "If you are self-employed or let property, switch on Self Assessment. It keeps your income and costs for each tax year and shows an estimate of your tax bill. Flump does not file anything with HMRC.",
     ],
     depth: [
       "Payments on account",

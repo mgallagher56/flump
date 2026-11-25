@@ -5,6 +5,8 @@
  * Expects the selfemployed persona (Self Assessment on, Wales, no tax records yet).
  * Run: verify-flump seed selfemployed <run-id>, then verify-flump drive self-assessment <run-id>
  * Tax records are not on the /api allow-list, so the saved records are proved by a second page view.
+ * The Making Tax Digital notice (E28) shows its general line with no records, then the over line
+ * once £40,000 of trading income is recorded, and stays after the expense: it counts gross income.
  */
 import { expect, journey, open } from "../scripts/lib.ts";
 
@@ -29,11 +31,17 @@ const BILL_DROP = 520;
 const BILL_2026_27 = 6872;
 const now = new Date();
 const in2026to27 = now >= new Date("2026-04-06") && now < new Date("2027-04-06");
+// MTD (SI 2026/336 reg 27(c), signed fable-decider 2026-11-25): 2026/27 qualifying income over
+// £20,000 gives 6 April 2028. £40,000 of trading income is over it before and after the £3,000
+// expense, because the test is gross income, not profit. Pinned only inside 2026/27.
+const MTD_OVER_2026_27 =
+  "The self-employed and property income you recorded for the 2026 to 2027 tax year, before expenses, is over £20,000, the threshold for that date.";
 
 await journey("self-assessment", async ({ page, step, save }) => {
   const summary = page.getByRole("region", { name: "Summary" });
   const bill = summary.getByTestId("hero-figure");
   const dialog = page.getByRole("dialog", { name: "Add a record" });
+  const mtdNotice = page.locator("#mtd-notice");
   let before = 0;
 
   await step("/app/tax opens Self Assessment with no records yet", async () => {
@@ -43,6 +51,9 @@ await journey("self-assessment", async ({ page, step, save }) => {
     await expect(
       page.getByRole("region", { name: "Add income outside PAYE to see an estimated tax bill" }),
     ).toBeVisible();
+    // Self-employed, nothing recorded: the general Making Tax Digital line only.
+    await expect(mtdNotice).toHaveAttribute("data-kind", "general");
+    await expect(mtdNotice).toContainText("Flump does not send anything to HMRC.");
   });
 
   await step("open Add a record for self-employed income", async () => {
@@ -67,6 +78,19 @@ await journey("self-assessment", async ({ page, step, save }) => {
     if (in2026to27) expect(before).toBe(BILL_2026_27);
   });
 
+  await step("the Making Tax Digital notice states the figure and the date", async () => {
+    await expect(mtdNotice).toHaveAttribute("data-kind", "over");
+    await expect(mtdNotice).toContainText("is not compatible software for this");
+    if (in2026to27) {
+      await expect(mtdNotice).toContainText("From 6 April 2028, HMRC expects");
+      await expect(mtdNotice).toContainText(MTD_OVER_2026_27);
+    }
+    await expect(mtdNotice.getByRole("link", { name: /Sign up on GOV.UK/ })).toHaveAttribute(
+      "href",
+      "https://www.gov.uk/guidance/sign-up-for-making-tax-digital-for-income-tax",
+    );
+  });
+
   await step("add an expense of £3,000 from the summary", async () => {
     await summary.getByRole("button", { name: "Add an expense" }).click();
     await expect(dialog).toBeVisible();
@@ -83,6 +107,8 @@ await journey("self-assessment", async ({ page, step, save }) => {
     const after = pounds((await bill.textContent()) ?? "");
     save("bill.json", { before, after, drop: before - after });
     expect(before - after).toBe(BILL_DROP);
+    // Gross, not profit: the expense does not change the Making Tax Digital line.
+    await expect(mtdNotice).toHaveAttribute("data-kind", "over");
   });
 
   await step("the self-employed page lists both records", async () => {

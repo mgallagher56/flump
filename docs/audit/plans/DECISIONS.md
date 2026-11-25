@@ -592,3 +592,13 @@ Decided by an independent Fable `decider` subagent (read-only, briefed by the E1
 - **Marketing.** May say, each once it is true and in the claims register (`docs/copy/COPY-GUIDE.md` section 7.4): the figures are worked out by open-source code anyone can read; no bank login is needed; you can delete your account in the app, at once; you can export everything; the copy on your phone is encrypted and removed when you sign out. Must not say: "your data never leaves your device", "end-to-end encrypted", "we cannot see your data", "zero-knowledge", "bank-grade", or anything in the present tense about a future encrypted mode.
 - **Not verified [U].** The backup and storage platform facts (checked separately in plan revision 4, section 4.6); database encryption at rest on Railway; the 3 to 5 agent-day cost of the seams is the decider's estimate.
 - Supersedes: nothing. Confirms round 2's E12 D4-A (encrypted read-only cache, 7 days, writes online only) as the offline behaviour.
+
+# E28 Making Tax Digital: option (a) accepted (2026-11-25)
+
+Relayed by the coordinator on 25 November 2026. Only the words in quotation marks are the owner's.
+
+- The owner said: "accept the MTD recommendation and start the notice".
+- **Now:** option (a) in [E28-mtd-plan.md](E28-mtd-plan.md). Flump stays out of MTD filing and shows a calm notice to users whose recorded income may be over a threshold. It never says a user is or is not mandated.
+- **By the end of February 2027:** decide option (b), records and a quarterly export, against the plan's section 4 conditions. The reminder is in [`docs/technology-watch.md`](../../technology-watch.md).
+- **Ruled out:** option (c), filing through HMRC's APIs, for 2027-28 and until the section 4 conditions change.
+- Plan decisions 3 to 5 (interviews, a letter to HMRC's SDS team, foreign property) were not answered and stay open. Decision 2 (notice wording) is approved by the coordinator in the notice PR.

@@ -127,11 +127,16 @@ describe("get_tax_year_position notes, provenance and bands", () => {
     });
   });
 
-  it("outside Scotland has the two general notes and nothing about Scottish rates", async () => {
+  it("outside Scotland has the three general notes and nothing about Scottish rates", async () => {
     const e = await position(facts({ employmentType: "employed", annualSalary: 40000 }), [rent()]);
-    expect(e.result.notes).toHaveLength(2);
+    expect(e.result.notes).toHaveLength(3);
     for (const n of e.result.notes) expect(n.length).toBeGreaterThan(0);
     expect(e.result.notes.join(" ")).not.toMatch(/Scottish/);
+  });
+
+  it("says Flump does not send anything to HMRC or file returns (E28)", async () => {
+    const e = await position(facts({ employmentType: "self-employed" }), [rent()]);
+    expect(e.result.notes).toContain("Flump does not send anything to HMRC or file tax returns.");
   });
 
   it("reads taxable non-savings income from the engine's allowance split", async () => {

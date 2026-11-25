@@ -3969,3 +3969,12 @@ Measured with `--mutate "src/net-worth-trend.ts"` in `packages/finance-engine`. 
 | Line                   | Fault                                                  | Class      | Reason                                                                                              |
 | ---------------------- | ------------------------------------------------------ | ---------- | --------------------------------------------------------------------------------------------------- |
 | net-worth-trend.ts L99 | EqualityOperator `p.netWorth >= 0` to `p.netWorth > 0` | Equivalent | Only a month at exactly 0 takes the other branch, and then `high - 0` and `high` give the same top. |
+
+## MTD for Income Tax qualifying income (E28 A1, 25 November 2026)
+
+Measured by a forced run on `mtd-income-tax.ts` and `rentalShareForRecord` in `tax-calculator.ts`. Faults killed by a test have no row.
+
+| Line                   | Fault                                                                              | Class      | Reason                                                                                               |
+| ---------------------- | ---------------------------------------------------------------------------------- | ---------- | ---------------------------------------------------------------------------------------------------- |
+| mtd-income-tax.ts L162 | OptionalChaining `check?.status` to `check.status`                                 | Equivalent | The loop starts at 2024/25 and only goes up, so `checkMtdQualifyingIncome` never returns null there. |
+| tax-calculator.ts L476 | `record.accountId !== null && record.accountId !== undefined` parts to `true` or ` |            | `                                                                                                    | Equivalent | A null or undefined id indexes `byAccountId` as "null" or "undefined", which no account id equals, so `linked` is undefined either way. Moved unchanged from the inline `shareOf`. |
