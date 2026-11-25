@@ -302,7 +302,7 @@ E34 C2, measured 25 November 2026 on `household.ts` alone after review: 3 faults
 | Line | Fault                                                        | Class      | Reason                                                                                                                            |
 | ---- | ------------------------------------------------------------ | ---------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | L107 | StringLiteral `""` (the `"other"` fallback type)             | Equivalent | `categorizeAccountType` gives "other" for an empty type and for "other", so the fallback text changes nothing                     |
-| L252 | OptionalChaining `first.reason`, `first.notice` (two faults) | Equivalent | The branch runs only when at least one take-home is unknown, so `unknowns[0]` is always set; `?.` only satisfies the type checker |
+| L255 | OptionalChaining `first.reason`, `first.notice` (two faults) | Equivalent | The branch runs only when at least one take-home is unknown, so `unknowns[0]` is always set; `?.` only satisfies the type checker |
 
 ### `src/picture/input.ts`
 

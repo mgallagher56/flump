@@ -546,6 +546,17 @@ describe("household edges", () => {
     expect(refused.notice).toBe(scot.notice);
   });
 
+  it("names an unsupported year over facts not set, whichever person is first", () => {
+    // A person with facts missing is "not-set" before the year is checked; a person with every
+    // fact gets "unsupported-year". The household reason must not depend on the order.
+    const noSalary: ProfileFacts = { ...dan.profile, annualSalary: null, monthlyTakeHome: null };
+    const year = "2010/11" as UkTaxYear;
+    const one = selectHouseholdTakeHome(sam.profile, noSalary, { taxYear: year });
+    const two = selectHouseholdTakeHome(noSalary, sam.profile, { taxYear: year });
+    expect(one).toEqual(two);
+    expect(one.status === "unknown" && one.reason).toBe("unsupported-year");
+  });
+
   it("leaves the tax unknown when one take-home is typed and the other worked out", () => {
     const typed: ProfileFacts = { ...dan.profile, annualSalary: null, monthlyTakeHome: 2000 };
     for (const [x, y] of [
