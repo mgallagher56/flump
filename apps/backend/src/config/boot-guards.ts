@@ -1,6 +1,11 @@
 import { hasBetaAdmins, isBetaOpen, isBetaRestricted } from "../auth/beta-access";
 import { isProductionLike } from "../auth/mcp-access";
 import { type BackendEnv, isProduction, parseBackendEnv } from "./env.schema";
+import {
+  HOUSEHOLD_LAUNCH_CONDITIONS,
+  HOUSEHOLD_LAUNCH_CONDITIONS_MET,
+  isHouseholdEnabled,
+} from "./household-gate";
 import { BANK_LAUNCH_GATE_PASSED } from "./launch-gate";
 
 type Raw = Record<string, string | undefined>;
@@ -36,9 +41,24 @@ export class BankLaunchGateError extends Error {
   }
 }
 
+/**
+ * `HOUSEHOLD_ENABLED=true` in a production-like process before the owner has recorded the three
+ * launch conditions (E34 C3, config/household-gate.ts). Only the owner turns households on.
+ */
+export class HouseholdGateError extends Error {
+  override readonly name = "HouseholdGateError";
+  constructor() {
+    super(
+      `HOUSEHOLD_ENABLED set to true is refused in production and on Railway until HOUSEHOLD_LAUNCH_CONDITIONS_MET in config/household-gate.ts is true. Only the owner sets it, once these exist: ${HOUSEHOLD_LAUNCH_CONDITIONS.join("; ")}`,
+    );
+  }
+}
+
 export interface BootGuardOptions {
   /** Injected so tests can prove the gate opens; production always uses the constant. */
   bankLaunchGatePassed?: boolean;
+  /** Injected so tests can prove the household gate opens; production always uses the constant. */
+  householdConditionsMet?: boolean;
 }
 
 /** Throws the first guard that fails. Each message names variables only, never values. */
@@ -46,6 +66,10 @@ export function assertBootGuards(env: Raw, options: BootGuardOptions = {}): void
   const gatePassed = options.bankLaunchGatePassed ?? BANK_LAUNCH_GATE_PASSED;
   if (env.BANK_CONNECTIONS_ENABLED?.trim().toLowerCase() === "true" && !gatePassed) {
     throw new BankLaunchGateError();
+  }
+  const householdMet = options.householdConditionsMet ?? HOUSEHOLD_LAUNCH_CONDITIONS_MET;
+  if (isProductionLike(env) && isHouseholdEnabled(env) && !householdMet) {
+    throw new HouseholdGateError();
   }
   // The same production-like test the open-beta rule uses (isBetaInviteOnly), so a deployment
   // can never boot into the local "open with no variables" branch: NODE_ENV=production or Railway.
