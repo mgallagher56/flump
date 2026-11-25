@@ -50,6 +50,10 @@ Advisory points applied: the AI log's contents, network logs and internet addres
 - A subsection added after round 2 at the coordinator's request, "Accounts and costs you share with someone" (joint items and partner mode: one person records a joint item and their share; no second person is identified, linked or invited), was checked against the entities and found true. The reviewer's one omission in the docs (`property_ownership_share`) was added to `ropa.md` and `data-map.md`.
 - Not verified in this round: that every joint figure is counted at the user's share.
 
+### Round 4: sentence splits
+
+Seven sentences were split after approval to meet the 25-word copy law (three in the terms, one in the accessibility statement, three in the privacy notice). The reviewer read each new form as quoted to it, without re-opening the files, and approved all seven: no meaning changed and no protection is weaker.
+
 ## Judgement calls the reviewer made
 
 - **Controller and processor for client details:** the user as controller and Flump as processor is the right split.
