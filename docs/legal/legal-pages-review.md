@@ -143,5 +143,8 @@ Earlier items:
 
 ## Follow-ups for engineering
 
+- Remove the four terms-acceptance entries from `packages/api-contract/openapi-breaking-allowlist.json` in the first PR after terms acceptance merges; the checker fails on unused entries.
+- The mobile app must handle 403 `terms_not_accepted` with its own acceptance screen before it is released (E12 parity log, 25 November 2026).
+
 - Add the legal routes' visual baselines from the pull request's CI run.
 - Add a row to this file, and bump the page's version, with every later change to the wording.
