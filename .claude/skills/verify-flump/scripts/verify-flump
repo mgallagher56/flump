@@ -219,10 +219,17 @@ cmd_doctor() {
   check "marketing pid $MARKETING_PID owns port $MARKETING_PORT" "owns_port $MARKETING_PID $MARKETING_PORT"
   check "backend /health/ready is 200" "[ \"\$(curl -s -o /dev/null -w '%{http_code}' $BACKEND_URL/health/ready)\" = 200 ]"
   check "web /healthz is 200" "[ \"\$(curl -s -o /dev/null -w '%{http_code}' $WEB_URL/healthz)\" = 200 ]"
-  check "signed-in session reaches the dashboard (200, no redirect)" \
-    "[ \"\$(curl -s -o /dev/null -w '%{http_code}' -b flump_dev_session=1 $WEB_URL/)\" = 200 ]"
-  if [ "$PERSONA" = none ]; then echo "ok   not seeded (--no-seed); no saved browser session expected"
-  else check "browser session saved by seeding" "[ -s '$STATE_DIR/storage-state.json' ]"; fi
+  if [ "$PERSONA" = none ]; then
+    # An unseeded user has no finished setup or is not invited, so the dashboard is not the answer:
+    # the session only has to be accepted (no redirect to the signed-out marketing site, no 5xx).
+    check "signed-in session is accepted (not seeded: no redirect to marketing, no 5xx)" \
+      "curl -s -o /dev/null -w '%{http_code} %{redirect_url}' -b flump_dev_session=1 $WEB_URL/ | grep -Eqv '^5|$MARKETING_URL'"
+    echo "ok   not seeded (--no-seed); no saved browser session expected"
+  else
+    check "signed-in session reaches the dashboard (200, no redirect)" \
+      "[ \"\$(curl -s -o /dev/null -w '%{http_code}' -b flump_dev_session=1 $WEB_URL/)\" = 200 ]"
+    check "browser session saved by seeding" "[ -s '$STATE_DIR/storage-state.json' ]"
+  fi
   local rev tree
   rev="$(git -C "$REPO" rev-parse --short HEAD)"
   tree="$(git -C "$REPO" status --porcelain -- apps packages | shasum | cut -c1-12)"

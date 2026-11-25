@@ -13,7 +13,7 @@ A user signs in and lands on the dashboard ("Your money"), whose headline is the
 
 - Open `/login` (locally the test-only dev session stands in for WorkOS).
 - Open `/` when signed in.
-- Choose the `Account menu` button, then the `Sign out` menu item.
+- Choose the `Your account menu` button, then the `Sign out` menu item.
 
 ## Driving it with verify-flump
 
@@ -23,8 +23,8 @@ Preconditions:
 
 - **Whole recipe.** Run `V drive dashboard`. It prints `PASS dashboard` and four `ok` steps.
 - **Sign in.** Signed out, go to `/login`. The URL becomes `/` and `heading` level 1 `Your money` shows.
-- **Net worth.** `[data-tone="hero"]` filtered by `Net worth` contains `£231,400`, and `[data-figure="netWorth"]` has a count of 1.
-- **Sign out.** After hydration, choose `getByRole("button", { name: "Account menu" }).first()`, then `getByRole("menuitem", { name: "Sign out" })`. The URL is the run's marketing URL.
+- **Net worth.** `[data-tone="hero"]` filtered by `Net worth` (for homeowner the label reads `Net worth, including your home estimate`) contains `£231,400`, and `[data-figure="netWorth"]` has a count of 1.
+- **Sign out.** After hydration, choose `getByRole("button", { name: "Account menu" }).first()` (the full name is `Your account menu`; the substring match finds it), then `getByRole("menuitem", { name: "Sign out" })`. The URL is the run's marketing URL.
 - **Signed out.** Go to `/`. The URL is the marketing URL again.
 
 ## Gotchas
