@@ -110,7 +110,7 @@ Settings → Branches → the rule for `main` (or Settings → Rules → Ruleset
 | Required approving reviews | 0 | A solo owner cannot review their own PR. CI is the gate (D13) |
 | Require status checks to pass before merging | On | |
 | Require branches to be up to date before merging (`strict`) | **On** | A PR behind `main` must re-run CI on the merged result. AGENTS.md section 5 assumes this |
-| Required status checks | The 12 names below, exactly | |
+| Required status checks | The 14 names below, exactly | |
 | Do not allow bypassing the above settings (`enforce_admins`) | **On** | Admins are exempt today, so the gate can be skipped by accident |
 | Allow force pushes | Off | |
 | Allow deletions | Off | |
@@ -127,12 +127,14 @@ Required status checks. These names are copied from `.github/required-checks.jso
 | `♿ Storybook a11y (dark)` | CI Pipeline | 2 min |
 | `🎭 E2E smoke` | CI Pipeline | 1 to 1.5 min |
 | `🐳 Docker images` | CI Pipeline | 2 to 3 min when an image input changed; 20 s otherwise |
+| `📱 Mobile checks` | CI Pipeline | about 1 min; a few seconds when nothing the app uses changed |
+| `🤖 Mobile e2e (Android)` | CI Pipeline | about 10 min; a few seconds when nothing the app uses changed (in `required-checks.json` since 25 November 2026, after seven green runs in a row on `main`) |
 | `🛡️ Dependency audit` | CI Pipeline | 20 s |
 | `🔑 Secret scan (gitleaks)` | Security Scan | 10 s |
 | `🔎 SAST (Semgrep CE)` | Security Scan | 1.5 to 2 min |
 | `💾 Backup and restore roundtrip` | Backup restore test (BE-03) | about 1.5 min |
 
-The jobs run in parallel, so a PR still finishes in about 3 minutes. Remove the old `♿ Storybook a11y` entries or the old Semgrep name if the picker still lists them under their previous names.
+The jobs run in parallel, so a PR still finishes in about 3 minutes, or about 10 when the mobile app or a package it uses changed. Remove the old `♿ Storybook a11y` entries or the old Semgrep name if the picker still lists them under their previous names.
 
 Not required, on purpose:
 
@@ -404,4 +406,4 @@ Retirement (the page, its API and the two MCP retirement tools) is open to every
 
 ### How to know it worked
 
-- [ ] Signed in as a listed account, `/app/retirement` loads. Signed in as an unlisted account (with `BETA_OPEN` not `true`), it shows the normal "We cannot find that page". Date: ____
+- [ ] Signed in as any account the beta lets in (an invite link or the allow-list), `/app/retirement` loads. Staging has had no `BETA_OPEN` since 25 November 2026, so an account with neither cannot sign in at all. Date: ____

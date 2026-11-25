@@ -51,6 +51,11 @@
       "job": "mobile-checks"
     },
     {
+      "name": "🤖 Mobile e2e (Android)",
+      "workflow": "ci-pipeline.yml",
+      "job": "mobile-e2e-android"
+    },
+    {
       "name": "🛡️ Dependency audit",
       "workflow": "ci-pipeline.yml",
       "job": "audit"

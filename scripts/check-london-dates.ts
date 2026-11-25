@@ -9,7 +9,7 @@ import { resolve } from "node:path";
 import { baselineRaises } from "./lib/baseline-vs-main";
 import { compareToBaseline } from "./lib/design-tokens";
 import { countLocalDateReads, LONDON_DATE_HOME } from "./lib/london-dates";
-import { collectFiles, MOBILE_SCAN_DIRS, readSource, repoRoot, SCAN_DIRS } from "./lib/scan";
+import { collectTrackedFiles, MOBILE_SCAN_DIRS, readSource, repoRoot, SCAN_DIRS } from "./lib/scan";
 
 export const LONDON_DATE_SCAN_DIRS = [
   ...SCAN_DIRS,
@@ -22,7 +22,8 @@ export const LONDON_DATE_SCAN_DIRS = [
 
 const baselinePath = resolve(import.meta.dir, "london-dates-baseline.json");
 const counts: Record<string, number> = {};
-for (const file of collectFiles(repoRoot, LONDON_DATE_SCAN_DIRS)) {
+// Tracked files only, so an untracked local file cannot change the result.
+for (const file of collectTrackedFiles(repoRoot, LONDON_DATE_SCAN_DIRS)) {
   const n = countLocalDateReads(readSource(repoRoot, file), file);
   if (n > 0) counts[file] = n;
 }
