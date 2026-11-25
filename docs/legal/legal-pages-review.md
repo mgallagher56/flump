@@ -132,6 +132,8 @@ Open items for the owner from the terms acceptance decider (round 6):
 - Nothing confirms that a person is 18 or over and lives in the UK, which the terms require.
 - Whether a wording-only fix to the terms could skip asking everyone to agree again (today every new version asks).
 
+**Owner decision, 25 November 2026:** the owner accepted these four points for the beta ("approve the points in terms of use", said to the coordinator session). This is the owner's decision to go ahead with them as they are during the test phase, not a solicitor's review. They stay on this list for a solicitor before public launch.
+
 Earlier items:
 
 - The financial regulation perimeter and the status wording.
