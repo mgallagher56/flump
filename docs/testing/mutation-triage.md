@@ -3961,3 +3961,11 @@ Measured with `--mutate "src/uk-tax-year.ts:926-944,src/uk-take-home.ts:214-220,
 | uk-take-home.ts L218      | OptionalChaining `plans[p]?.threshold` to `plans[p].threshold`    | Equivalent | The branch runs only when `isStudentLoanRepayable` is true, which needs the entry to exist; unlisted plans have already thrown in `calculateStudentLoanRepayment`. |
 | uk-take-home.ts L220      | EqualityOperator `threshold(b) < threshold(a)` to `<=`            | Equivalent | No year lists two undergraduate plans with the same threshold, and only Plan 5 is ever not repayable, so two plans never tie (not even at Infinity).               |
 | uk-tax-thresholds.ts L201 | ArrayDeclaration `s.studentLoans ?? []` to `["Stryker was here"]` | Equivalent | The junk key is not a plan, so `isStudentLoanRepayable` is false and the filter drops it; the result is the same empty list.                                       |
+
+## Home net worth trend bars (25 November 2026)
+
+Measured with `--mutate "src/net-worth-trend.ts"` in `packages/finance-engine`. 72 faults, 71 killed after the month-pattern tests were added, 1 equivalent.
+
+| Line                   | Fault                                                  | Class      | Reason                                                                                              |
+| ---------------------- | ------------------------------------------------------ | ---------- | --------------------------------------------------------------------------------------------------- |
+| net-worth-trend.ts L99 | EqualityOperator `p.netWorth >= 0` to `p.netWorth > 0` | Equivalent | Only a month at exactly 0 takes the other branch, and then `high - 0` and `high` give the same top. |

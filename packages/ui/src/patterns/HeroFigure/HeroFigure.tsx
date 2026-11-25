@@ -40,6 +40,12 @@ interface HeroFigureBaseProps {
    * figures such as net worth and balances never carry it. Not drawn when the value is unknown.
    */
   estimateLabel?: string;
+  /**
+   * One small drawing beside the figure (the Home net worth trend bars), at the end of the block
+   * on a wide card and under the figure on a narrow one, never squeezed. It carries its own text
+   * alternative. Not drawn when the value is unknown.
+   */
+  aside?: ReactNode;
   /** Formatting for a numeric `value`. */
   valueFormat?: Pick<MoneyProps, "compact" | "currency" | "fractionDigits" | "signDisplay">;
   /** Replaces "Not set" when the value is unknown. */
@@ -108,6 +114,7 @@ export const HeroFigure: FC<HeroFigureProps> = ({
   estimateLabel,
   delta,
   subline,
+  aside,
   notSetLabel = "Not set",
   emptyPrompt,
   emptyAction,
@@ -116,7 +123,7 @@ export const HeroFigure: FC<HeroFigureProps> = ({
 }) => {
   const labelId = useId();
   const unknown = isUnknown(value);
-  const slots = heroFigure({ tone: unknown ? "plain" : "hero" });
+  const slots = heroFigure({ tone: unknown ? "plain" : "hero", withAside: Boolean(aside) });
 
   if (unknown) {
     return (
@@ -142,6 +149,36 @@ export const HeroFigure: FC<HeroFigureProps> = ({
     );
   }
 
+  const content = (
+    <div className={slots.content}>
+      <div className={slots.labelRow}>
+        <p className={slots.label} id={labelId}>
+          {label}
+        </p>
+        {explain ? <InfoTip term={label}>{explain}</InfoTip> : null}
+      </div>
+      {estimateLabel ? (
+        <p className={slots.estimate} data-estimate-label="true">
+          {estimateLabel}
+        </p>
+      ) : null}
+      {isValidElement(value) ? (
+        <div className={slots.value}>{value}</div>
+      ) : (
+        <p className={slots.value}>{renderValue(value, valueFormat)}</p>
+      )}
+      {delta ? (
+        <p className={slots.delta}>
+          <Icon icon={DELTA_ICON[delta.direction]} size="sm" />
+          <VisuallyHidden>{DELTA_SPOKEN[delta.direction]}</VisuallyHidden>
+          <span>{delta.text}</span>
+        </p>
+      ) : subline ? (
+        <p className={slots.subline}>{subline}</p>
+      ) : null}
+    </div>
+  );
+
   return (
     // biome-ignore lint/a11y/useSemanticElements: a labelled group of text, not a form fieldset.
     <div
@@ -152,33 +189,14 @@ export const HeroFigure: FC<HeroFigureProps> = ({
       id={id}
       role="group"
     >
-      <div className={slots.content}>
-        <div className={slots.labelRow}>
-          <p className={slots.label} id={labelId}>
-            {label}
-          </p>
-          {explain ? <InfoTip term={label}>{explain}</InfoTip> : null}
+      {aside ? (
+        <div className={slots.body}>
+          {content}
+          <div className={slots.aside}>{aside}</div>
         </div>
-        {estimateLabel ? (
-          <p className={slots.estimate} data-estimate-label="true">
-            {estimateLabel}
-          </p>
-        ) : null}
-        {isValidElement(value) ? (
-          <div className={slots.value}>{value}</div>
-        ) : (
-          <p className={slots.value}>{renderValue(value, valueFormat)}</p>
-        )}
-        {delta ? (
-          <p className={slots.delta}>
-            <Icon icon={DELTA_ICON[delta.direction]} size="sm" />
-            <VisuallyHidden>{DELTA_SPOKEN[delta.direction]}</VisuallyHidden>
-            <span>{delta.text}</span>
-          </p>
-        ) : subline ? (
-          <p className={slots.subline}>{subline}</p>
-        ) : null}
-      </div>
+      ) : (
+        content
+      )}
     </div>
   );
 };

@@ -162,6 +162,39 @@ describe("HeroFigure", () => {
   });
 });
 
+describe("HeroFigure with an aside", () => {
+  const aside = <span data-testid="aside">Bars</span>;
+
+  it("draws the aside after the figure, in its own slot beside the content", () => {
+    render(<HeroFigure aside={aside} label="Net worth" value={1000} />);
+    const group = screen.getByRole("group", { name: "Net worth" });
+    const drawn = screen.getByTestId("aside");
+    // The figure comes first in reading order, then the aside.
+    expect(group.textContent).toBe("Net worth£1,000Bars");
+    // Side by side only from a 30rem card; stacked under the figure below it.
+    const body = drawn.parentElement?.parentElement;
+    expect(body?.className).toContain("flex-d_column");
+    expect(body?.className).toContain("[@container_hero-figure_(min-width:_30rem)]:flex-d_row");
+    // The disc's end padding gives way to the aside.
+    expect(group.className).toContain("md:pe_6");
+    expect(group.className).not.toContain("md:pe_24");
+  });
+
+  it("keeps the old structure and end padding without an aside", () => {
+    render(<HeroFigure label="Net worth" value={1000} />);
+    const group = screen.getByRole("group", { name: "Net worth" });
+    expect(group.className).toContain("md:pe_24");
+    expect(group.firstElementChild?.className).toContain("flex-d_column");
+    expect(group.firstElementChild?.className).not.toContain("min-width:_30rem");
+  });
+
+  it("drops the aside when the value is unknown", () => {
+    render(<HeroFigure aside={aside} label="Net worth" value={null} />);
+    expect(screen.queryByTestId("aside")).toBeNull();
+    expect(screen.getByText("Not set")).toBeDefined();
+  });
+});
+
 describe("HeroFigure with a worded value", () => {
   it("shows a value given as text as it is, in the hero, not as Not set", () => {
     render(<HeroFigure id="hf" label="Breathing room" value="About 4 months" />);

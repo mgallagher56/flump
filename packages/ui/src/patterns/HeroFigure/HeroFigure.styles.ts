@@ -11,6 +11,11 @@ import { sva } from "../../../styled-system/css";
  */
 const NARROW_CARD = "@container hero-figure (min-width: 10.01rem) and (max-width: 14rem)";
 const NARROWEST_CARD = "@container hero-figure (max-width: 10rem)";
+/**
+ * Wide enough for the figure at hero size (about 16.5rem for "£1,234,567") plus an aside of about
+ * 8rem and a gap. Below it the aside goes under the figure: a 375px phone leaves about 19rem.
+ */
+const WIDE_CARD = "@container hero-figure (min-width: 30rem)";
 
 /**
  * E16 P2: the page's one headline figure. `hero` is the single headline block per page
@@ -21,7 +26,9 @@ const NARROWEST_CARD = "@container hero-figure (max-width: 10rem)";
 export const heroFigure = sva({
   slots: [
     "root",
+    "body",
     "content",
+    "aside",
     "labelRow",
     "label",
     "estimate",
@@ -52,12 +59,26 @@ export const heroFigure = sva({
       containerType: "inline-size",
       containerName: "hero-figure",
     },
+    // Only drawn with an aside: the figure and the aside side by side on a wide card, the aside
+    // under the figure on a narrow one, so neither is ever squeezed.
+    body: {
+      display: "flex",
+      flexDirection: "column",
+      gap: "4",
+      minWidth: "0",
+      [WIDE_CARD]: {
+        flexDirection: "row",
+        alignItems: "flex-end",
+        justifyContent: "space-between",
+      },
+    },
     content: {
       display: "flex",
       flexDirection: "column",
       gap: "1",
       minWidth: "0",
     },
+    aside: { flexShrink: "0", minWidth: "0" },
     labelRow: { display: "flex", alignItems: "center", gap: "1", minWidth: "0" },
     label: {
       textStyle: "label.md",
@@ -121,6 +142,11 @@ export const heroFigure = sva({
     },
   },
   variants: {
+    // The end padding kept room for a disc that is gone; with an aside the block uses its width.
+    withAside: {
+      true: { root: { paddingInlineEnd: { md: "6" } } },
+      false: {},
+    },
     tone: {
       hero: {
         root: {
@@ -167,5 +193,5 @@ export const heroFigure = sva({
       },
     },
   },
-  defaultVariants: { tone: "hero" },
+  defaultVariants: { tone: "hero", withAside: false },
 });

@@ -1,3 +1,4 @@
+import { selectNetWorthTrend } from "@flump/finance-engine";
 import { countFigures, expectPageRules } from "@repo/ui/testing";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
@@ -239,6 +240,40 @@ describe("HomeDashboard", () => {
     expect(screen.getByTestId("hero-figure").textContent).toContain(
       "Net worth, including your home estimate",
     );
+  });
+
+  it("draws the trend bars inside the hero beside the figure, and none without a trend", () => {
+    const trend = selectNetWorthTrend([
+      { month: "2026-09", netWorth: 48800, allCarried: false },
+      { month: "2026-10", netWorth: 49680, allCarried: false },
+      { month: "2026-11", netWorth: 50000, allCarried: false },
+    ]);
+    const { unmount } = renderDashboard({ ...noDebt, netWorthTrend: trend });
+    const hero = screen.getByTestId("hero-figure");
+    const bars = within(hero).getByTestId("net-worth-trend");
+    expect(bars.querySelectorAll("rect")).toHaveLength(3);
+    expect(within(bars).getByText("November 2026, the latest: £50,000")).toBeDefined();
+    // The one delta stays; the bars add no second change figure.
+    expect(hero.textContent).toMatch(/since October/);
+    unmount();
+    renderDashboard({ ...noDebt, netWorthTrend: null });
+    expect(screen.queryByTestId("net-worth-trend")).toBeNull();
+    expect(screen.getByTestId("hero-figure").textContent).not.toContain("check-in");
+  });
+
+  it("drops the trend bars when net worth is unknown", () => {
+    const trend = selectNetWorthTrend([
+      { month: "2026-09", netWorth: 1, allCarried: false },
+      { month: "2026-10", netWorth: 2, allCarried: false },
+      { month: "2026-11", netWorth: 3, allCarried: false },
+    ]);
+    renderDashboard({
+      ...noDebt,
+      checklistProps: { ...noDebt.checklistProps, hasAccounts: false },
+      accountsData: { netWorth: null, accountsCount: 0 },
+      netWorthTrend: trend,
+    });
+    expect(screen.queryByTestId("net-worth-trend")).toBeNull();
   });
 
   it("net worth choices: one quiet line under the hero, and no home label once property is left out", () => {

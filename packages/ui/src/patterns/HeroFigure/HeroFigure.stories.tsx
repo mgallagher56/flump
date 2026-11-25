@@ -178,3 +178,59 @@ export const WithExplain: Story = {
   },
 };
 export const WithExplainDark: Story = { ...WithExplain, globals: { theme: "dark" } };
+
+/** A small drawing beside the figure (the Home trend bars): beside it on a wide card. */
+const asideArgs = {
+  aside: (
+    <span
+      className={css({
+        display: "block",
+        width: "24",
+        height: "12",
+        borderWidth: "1px",
+        borderColor: "currentColor",
+      })}
+      data-testid="hero-aside"
+    />
+  ),
+};
+
+const asidePlay: Story["play"] = async ({ canvasElement }) => {
+  const canvas = within(canvasElement);
+  const group = canvas.getByRole("group", { name: "Net worth" });
+  const aside = canvas.getByTestId("hero-aside");
+  await expect(group).toContainElement(aside);
+  // Beside the figure on this 40rem card: the aside's top is above the figure's bottom.
+  const figure = canvas.getByText("£241,000");
+  await expect(aside.getBoundingClientRect().top).toBeLessThan(
+    figure.getBoundingClientRect().bottom,
+  );
+};
+
+export const WithAside: Story = { args: asideArgs, globals: { theme: "light" }, play: asidePlay };
+
+export const WithAsideDark: Story = {
+  args: asideArgs,
+  globals: { theme: "dark" },
+  play: asidePlay,
+};
+
+const asidePhonePlay: Story["play"] = async ({ canvasElement }) => {
+  const canvas = within(canvasElement);
+  const aside = canvas.getByTestId("hero-aside");
+  const figure = canvas.getByText("£241,000");
+  // Under the figure on a phone, never squeezed beside it.
+  await expect(aside.getBoundingClientRect().top).toBeGreaterThanOrEqual(
+    figure.getBoundingClientRect().bottom,
+  );
+};
+
+/** At 375px the aside goes under the figure. */
+export const WithAsidePhone: Story = {
+  args: asideArgs,
+  parameters: { viewport: { defaultViewport: "mobile1" } },
+  globals: { theme: "light" },
+  play: asidePhonePlay,
+};
+
+export const WithAsidePhoneDark: Story = { ...WithAsidePhone, globals: { theme: "dark" } };

@@ -20,6 +20,7 @@ sections:
       - home-value
     figures_shown:
       - net-worth
+      - net-worth-over-time
 
   - id: kpis
     component: apps/web/app/features/dashboard/components/DashboardKpiStrip/DashboardKpiStrip.tsx
