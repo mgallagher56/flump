@@ -13,6 +13,7 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
+import { isolatedPath } from "../lib/fake-bin";
 
 const SCRIPT = resolve(import.meta.dir, "backup-dump.sh");
 const PGURL = "postgres://prod_user:s3cretprodpw@prod.example.com:5432/flump";
@@ -147,11 +148,9 @@ describe("backup-dump.sh output (stub tools)", () => {
   });
 
   test("--age-recipient also writes an encrypted copy", () => {
-    const bin = join(work, "bin-age");
-    mkdirSync(bin, { recursive: true });
-    const age = join(bin, "age");
-    writeFileSync(age, `#!/usr/bin/env bash\ncp "\${@: -1}" "\${@: -2:1}"\n`);
-    chmodSync(age, 0o755);
+    const PATH = isolatedPath(join(work, "bin-age"), {
+      fakes: { age: `#!/usr/bin/env bash\ncp "\${@: -1}" "\${@: -2:1}"\n` },
+    });
     const outDir = join(work, "backups-age");
     const r = run(
       [
@@ -160,7 +159,7 @@ describe("backup-dump.sh output (stub tools)", () => {
         "--age-recipient",
         "age1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq",
       ],
-      { PATH: `${bin}:${process.env.PATH ?? ""}` },
+      { PATH },
     );
     expect(r.exitCode).toBe(0);
     expect(r.stdout).toContain("encrypted_file:");

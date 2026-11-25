@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { chmodSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
+import { isolatedPath } from "../lib/fake-bin";
 
 const SCRIPT = resolve(import.meta.dir, "restore-drill.sh");
 
@@ -98,7 +99,7 @@ esac
       chmodSync(fake, 0o755);
       const out = join(dir, "out", "counts.txt");
       const result = run(["--owner", "x", "--out", out, import.meta.path], {
-        PATH: `${dir}:${process.env.PATH ?? ""}`,
+        PATH: isolatedPath(dir, { fakes: { docker: readFileSync(fake, "utf8") } }),
         DRILL_PASSWORD: PASSWORD,
         DRILL_USE_DOCKER_TOOLS: "1",
       });
