@@ -2,10 +2,10 @@
  * What went wrong with a `/v1` call, in the few kinds a screen acts on. Screens never look inside a
  * `BackendError` themselves (O5 seam 2).
  *
- * `termsNotAccepted` is a seam for PR #939 (terms acceptance at sign-up, not merged when S3 was
- * built): the backend will answer every authenticated route with 403 `terms_not_accepted` until the
- * person agrees on the website. The kind is classified now so the screen that sends them to the
- * website plugs in here; until then screens treat it as any other load failure.
+ * `termsNotAccepted` (PR #939): the backend answers every authenticated route with 403
+ * `terms_not_accepted` until the person agrees to the terms in force. The account check turns it
+ * into the session's `termsRequired` state; a screen whose read gets it mid-session shows the same
+ * screen (`TermsRequired`), which sends the person to the website to agree.
  */
 import { BackendError } from "@flump/api-client";
 

@@ -149,6 +149,7 @@ describe("restore on launch", () => {
 
   it.each<[AccountCheck, string]>([
     ["not-invited", "notInvited"],
+    ["terms-not-accepted", "termsRequired"],
     ["unavailable", "restoredOffline"],
   ])("an account check of %s goes to %s and keeps the token", async (check, status) => {
     const h = harness({ stored: "r_old", account: async () => check });
@@ -287,6 +288,17 @@ describe("sign-in", () => {
     await session.signIn();
     expect(session.getState()).toEqual({ status: "signedOut", notice });
     expect(h.tokens.save).not.toHaveBeenCalled();
+  });
+
+  it("terms not agreed: Try again checks the account again, and agreeing signs in", async () => {
+    let check: AccountCheck = "terms-not-accepted";
+    const h = harness({ stored: "r_old", account: async () => check });
+    const session = createSession(h.deps);
+    await session.restore();
+    expect(session.getState()).toEqual({ status: "termsRequired" });
+    check = "ok";
+    await session.retry();
+    expect(session.getState()).toEqual({ status: "signedIn" });
   });
 
   it("a person not on the beta lands on Not invited", async () => {

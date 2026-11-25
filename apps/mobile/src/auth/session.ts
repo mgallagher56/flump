@@ -35,7 +35,12 @@ import type { TokenStore } from "./tokenStore";
 export type BrowserResult = { type: "success"; url: string } | { type: "closed" };
 
 /** The account check after sign-in: `GET /v1/user-profile` with the new token. */
-export type AccountCheck = "ok" | "not-invited" | "unauthorised" | "unavailable";
+export type AccountCheck =
+  | "ok"
+  | "not-invited"
+  | "terms-not-accepted"
+  | "unauthorised"
+  | "unavailable";
 
 /** As `@flump/api-client`'s `RefreshOutcome`. */
 type RefreshOutcome = "refreshed" | "ended" | "retryable";
@@ -120,6 +125,7 @@ export function createSession(deps: SessionDeps): Session {
     const account = await deps.checkAccount();
     if (account === "ok") dispatch({ type: "SIGNED_IN" });
     else if (account === "not-invited") dispatch({ type: "NOT_INVITED" });
+    else if (account === "terms-not-accepted") dispatch({ type: "TERMS_REQUIRED" });
     else if (account === "unavailable") dispatch({ type: "OFFLINE" });
     else await endSession();
   }
@@ -208,7 +214,7 @@ export function createSession(deps: SessionDeps): Session {
   }
 
   async function retry() {
-    if (state.status !== "restoredOffline") return;
+    if (state.status !== "restoredOffline" && state.status !== "termsRequired") return;
     dispatch({ type: "RETRY_STARTED" });
     await restore();
   }

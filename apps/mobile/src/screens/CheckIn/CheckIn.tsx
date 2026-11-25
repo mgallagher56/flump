@@ -36,6 +36,7 @@ import { type CheckInInputs, useCheckInData } from "../../features/check-in/useC
 import { useSaveCheckIn } from "../../features/check-in/useSaveCheckIn";
 import { useTheme } from "../../theme/ThemeProvider";
 import { CheckInDone } from "../CheckInDone";
+import { TermsRequired } from "../TermsRequired";
 import { createStyles } from "./CheckIn.styles";
 
 /** Under the stack header, which already clears the top edge. */
@@ -78,9 +79,11 @@ export function CheckIn({ offline = false, marketingOrigin, onClose, now }: Chec
       />
     );
   }
+  if (data.status === "error" && data.problem === "termsNotAccepted") {
+    // The terms changed while signed in (PR #939): agree on the website, then read again.
+    return <TermsRequired marketingOrigin={marketingOrigin} onRetry={data.retry} />;
+  }
   if (data.status === "error") {
-    // `data.problem` says why (terms not agreed is a seam for PR #939); every reason reads the same
-    // until the screens for them land.
     return (
       <Screen edges={EDGES} testID="check-in-load-error">
         <Text accessibilityRole="header" textStyle="heading.md">

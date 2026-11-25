@@ -69,6 +69,7 @@ describe("SessionGate", () => {
     [{ status: "restoredOffline" }, "Try again"],
     [{ status: "sessionEnded" }, "Sign in"],
     [{ status: "notInvited" }, "Sign out"],
+    [{ status: "termsRequired" }, "Try again"],
   ])("%j shows a %s button", async (state, button) => {
     await gate(fakeSession(state));
     expect(screen.getByRole("button", { name: button })).toBeOnTheScreen();
@@ -95,6 +96,16 @@ describe("SessionGate", () => {
       .setup()
       .press(await screen.findByRole("button", { name: "Start monthly check-in" }));
     expect(router.push).toHaveBeenCalledWith("/check-in");
+  });
+
+  it("terms not agreed: Try again and Sign out reach the session", async () => {
+    const app = fakeSession({ status: "termsRequired" });
+    await gate(app);
+    const user = userEvent.setup();
+    await user.press(screen.getByRole("button", { name: "Try again" }));
+    await user.press(screen.getByRole("button", { name: "Sign out" }));
+    expect(app.session.retry).toHaveBeenCalledTimes(1);
+    expect(app.session.signOut).toHaveBeenCalledTimes(1);
   });
 
   it("shows a sign-in notice from the session", async () => {

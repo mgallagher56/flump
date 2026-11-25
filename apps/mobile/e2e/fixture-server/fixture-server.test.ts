@@ -141,6 +141,29 @@ describe("canned /v1", () => {
       client.request("/user-profile", { schema: UserProfileResponse }),
     ).rejects.toMatchObject({ kind: "not-invited", status: 403 });
   });
+
+  it("refuses a person who has not agreed to the terms with 403 terms_not_accepted (PR #939)", async () => {
+    server.setScenario({ terms: "required" });
+    const { access_token } = await signIn();
+    const client = createApiClient({ baseUrl: server.origin, getAccessToken: () => access_token });
+    await expect(
+      client.request("/user-profile", { schema: UserProfileResponse }),
+    ).rejects.toMatchObject({ kind: "forbidden", status: 403, code: "terms_not_accepted" });
+    server.setScenario({ terms: "agreed" });
+    await expect(
+      client.request("/user-profile", { schema: UserProfileResponse }),
+    ).resolves.toMatchObject({ email: expect.any(String) });
+  });
+
+  it("not invited comes before terms not agreed, as on the backend", async () => {
+    server.setScenario({ account: "not-invited", terms: "required" });
+    const { access_token } = await signIn();
+    expect((await getProfile(access_token)).status).toBe(403);
+    const client = createApiClient({ baseUrl: server.origin, getAccessToken: () => access_token });
+    await expect(
+      client.request("/user-profile", { schema: UserProfileResponse }),
+    ).rejects.toMatchObject({ kind: "not-invited" });
+  });
 });
 
 describe("WorkOS stand-in: authorize", () => {
@@ -507,6 +530,10 @@ describe("check-in routes (S3)", () => {
       const res = await api(path, { method, body });
       expect(res.status).toBe(403);
       expect(ErrorResponse.parse(await res.json()).code).toBe("not_invited");
+      server.setScenario({ account: "invited", terms: "required" });
+      const refused = await api(path, { method, body });
+      expect(refused.status).toBe(403);
+      expect(ErrorResponse.parse(await refused.json()).code).toBe("terms_not_accepted");
       expect(server.stats().snapshotPuts).toBe(0);
     },
   );

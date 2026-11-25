@@ -17,6 +17,8 @@ export type SessionState =
   /** WorkOS rejected the refresh token, or the API refused a fresh token; the device is cleared. */
   | { status: "sessionEnded" }
   | { status: "notInvited" }
+  /** Signed in, but the API answers 403 `terms_not_accepted` until the terms are agreed on the website. */
+  | { status: "termsRequired" }
   | { status: "signingOut" };
 
 export type SessionEvent =
@@ -28,6 +30,7 @@ export type SessionEvent =
   | { type: "OFFLINE" }
   | { type: "RETRY_STARTED" }
   | { type: "NOT_INVITED" }
+  | { type: "TERMS_REQUIRED" }
   | { type: "SESSION_ENDED" }
   | { type: "SIGN_OUT_STARTED" }
   | { type: "SIGNED_OUT" };
@@ -44,11 +47,20 @@ const FROM: { [E in SessionEvent["type"]]: readonly SessionState["status"][] } =
   SIGN_IN_FAILED: ["signingIn"],
   SIGNED_IN: ["loading", "signingIn"],
   OFFLINE: ["loading", "signingIn"],
-  RETRY_STARTED: ["restoredOffline"],
+  // From the terms screen too: once agreed on the website, Try again checks the account again.
+  RETRY_STARTED: ["restoredOffline", "termsRequired"],
   NOT_INVITED: ["loading", "signingIn"],
+  TERMS_REQUIRED: ["loading", "signingIn"],
   // A rejected refresh can arrive in any signed-in state, including mid sign-in.
-  SESSION_ENDED: ["loading", "signingIn", "signedIn", "restoredOffline", "notInvited"],
-  SIGN_OUT_STARTED: ["signedIn", "restoredOffline", "notInvited", "sessionEnded"],
+  SESSION_ENDED: [
+    "loading",
+    "signingIn",
+    "signedIn",
+    "restoredOffline",
+    "notInvited",
+    "termsRequired",
+  ],
+  SIGN_OUT_STARTED: ["signedIn", "restoredOffline", "notInvited", "termsRequired", "sessionEnded"],
   SIGNED_OUT: ["signingOut"],
 };
 
@@ -71,6 +83,8 @@ export function sessionReducer(state: SessionState, event: SessionEvent): Sessio
       return { status: "loading" };
     case "NOT_INVITED":
       return { status: "notInvited" };
+    case "TERMS_REQUIRED":
+      return { status: "termsRequired" };
     case "SESSION_ENDED":
       return { status: "sessionEnded" };
     case "SIGN_OUT_STARTED":

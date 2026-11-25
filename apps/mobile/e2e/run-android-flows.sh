@@ -68,7 +68,7 @@ for theme in light dark; do
   done
   # A screenshot that was not written is a failure, not a silent gap in the artifact.
   for shot in welcome engine-check sign-in signed-in sign-in-denied not-invited signed-out session-ended \
-    check-in-summary check-in-backend-down; do
+    check-in-summary check-in-backend-down terms-required; do
     if [ -z "$(find "$out/$theme" -name "${shot}-${theme}.png" -print -quit)" ]; then
       echo "Missing screenshot ${shot}-${theme}.png" >&2
       failed=1

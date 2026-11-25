@@ -335,6 +335,27 @@ describe("CheckIn loading, failure and empty", () => {
     expect(await screen.findByText("Account 1 of 6")).toBeOnTheScreen();
   });
 
+  it("terms not agreed mid-session: the terms screen, then the cards once agreed", async () => {
+    let agreed = false;
+    const h = household();
+    const api = fakeApi({
+      ...routes(h),
+      "GET /accounts": () => (agreed ? h.accounts : fail("forbidden", 403, "terms_not_accepted")),
+    });
+    const { ui } = withApi(
+      <CheckIn marketingOrigin="https://m.test.invalid" onClose={jest.fn()} now={NOW} />,
+      api.client,
+    );
+    await render(ui);
+    expect(
+      await screen.findByRole("header", { name: "Please agree to our terms on the website" }),
+    ).toBeOnTheScreen();
+    expect(screen.queryByText("We could not load your accounts")).toBeNull();
+    agreed = true;
+    await userEvent.setup().press(screen.getByRole("button", { name: "Try again" }));
+    expect(await screen.findByText("Account 1 of 6")).toBeOnTheScreen();
+  });
+
   it("an empty list shows one sentence and one button to the website", async () => {
     const open = jest.spyOn(Linking, "openURL").mockResolvedValue(undefined);
     const h = household([], { latestCompletedMonth: null, latestStartedMonth: null });

@@ -15,8 +15,8 @@
  *   GET  /v1/snapshots/check-ins             bearer; last month started and completed
  *   PUT  /v1/snapshots/:month                bearer; applied as the backend does (fixtures.ts)
  *   anything else under /v1                  404 not_found, so a missing fixture is loud
- *   The four check-in routes ignore query strings (`?details=none`, `?limit=`) and answer 401 and
- *   403 not_invited as the profile does.
+ *   The four check-in routes ignore query strings (`?details=none`, `?limit=`) and answer 401,
+ *   403 not_invited and 403 terms_not_accepted as the profile does.
  * Scenarios (POST /__fixture/scenario with a JSON patch; every reset restores the defaults):
  *   account  invited | not-invited          not-invited: /v1 answers 403 not_invited
  *   signIn   ok | denied                    denied: authorize returns error=access_denied
@@ -24,6 +24,8 @@
  *   accessTokenSeconds, minVersion          token lifetime; the client policy's minimum version
  *   data     ok | unavailable | empty       the check-in routes: canned data, 503
  *                                           service_unavailable, or no accounts and no months
+ *   terms    agreed | required              required: authenticated /v1 answers 403
+ *                                           terms_not_accepted (PR #939), after not_invited
  * Control (flows set the scenario before they launch the app):
  *   POST /__fixture/scenario, POST /__fixture/revoke, POST /__fixture/reset (also rebuilds the
  *   check-in data), GET /__fixture/stats (counts, PUTs without `checkIn: true`, the check-in
@@ -74,6 +76,8 @@ interface Scenario {
   minVersion: string;
   /** The check-in routes: canned data, 503 service_unavailable, or no accounts at all. */
   data: "ok" | "unavailable" | "empty";
+  /** `required`: authenticated `/v1` answers 403 terms_not_accepted until the terms are agreed. */
+  terms: "agreed" | "required";
 }
 
 const DEFAULT_SCENARIO: Scenario = {
@@ -83,6 +87,7 @@ const DEFAULT_SCENARIO: Scenario = {
   accessTokenSeconds: 300,
   minVersion: "0.0.0",
   data: "ok",
+  terms: "agreed",
 };
 
 const ALLOWED: { [K in keyof Scenario]: (v: unknown) => boolean } = {
@@ -92,6 +97,7 @@ const ALLOWED: { [K in keyof Scenario]: (v: unknown) => boolean } = {
   accessTokenSeconds: (v) => typeof v === "number" && Number.isInteger(v) && v >= 0,
   minVersion: (v) => typeof v === "string" && /^\d{1,5}(\.\d{1,5}){0,2}$/.test(v),
   data: (v) => v === "ok" || v === "unavailable" || v === "empty",
+  terms: (v) => v === "agreed" || v === "required",
 };
 
 /** A scenario patch, or undefined when any key or value is unknown. */
@@ -319,6 +325,11 @@ export async function startFixtureServer(options: FixtureServerOptions): Promise
     }
     if (scenario.account === "not-invited") {
       apiError(res, 403, "not_invited", "This account is not on the beta list.");
+      return undefined;
+    }
+    // The backend's order of refusals: erased, not invited, then terms not agreed (PR #939).
+    if (scenario.terms === "required") {
+      apiError(res, 403, "terms_not_accepted", "Agree to the terms to continue.");
       return undefined;
     }
     return session;
