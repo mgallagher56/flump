@@ -754,6 +754,25 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
     expect(rows.map((r) => r.budget_entry_id)).toEqual([lineB]);
   });
 
+  it("erases the invoice tax record category before-image with the user's tax records", async () => {
+    await seed(USER_A, "A");
+    await seed(USER_B, "B");
+    const recordOf = async (userId: string) =>
+      at(await ds.getRepository(TaxRecord).findBy({ userId }), 0).id;
+    for (const userId of [USER_A, USER_B]) {
+      await ds.query(
+        "INSERT INTO invoice_tax_record_category_backfill (tax_record_id) VALUES ($1)",
+        [await recordOf(userId)],
+      );
+    }
+    const recordB = await recordOf(USER_B);
+    await expect(deletion.deleteAccount(USER_A)).resolves.toEqual({ status: "deleted" });
+    const rows: { tax_record_id: string }[] = await ds.query(
+      "SELECT tax_record_id FROM invoice_tax_record_category_backfill",
+    );
+    expect(rows.map((r) => r.tax_record_id)).toEqual([recordB]);
+  });
+
   it("also removes history and transactions keyed to the user's accounts under another user_id", async () => {
     await seed(USER_A, "A");
     const account = at(await ds.getRepository(Account).findBy({ userId: USER_A }), 0);

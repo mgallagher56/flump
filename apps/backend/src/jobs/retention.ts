@@ -189,6 +189,13 @@ export const RETENTION_POLICIES: readonly RetentionPolicy[] = [
     reason:
       "E34 C1 one-home share before-image, kept 90 days so its migration can be rolled back; after that its down() restores nothing",
   },
+  {
+    name: "invoice_tax_record_category_backfill",
+    table: "invoice_tax_record_category_backfill",
+    where: `"backfilled_at" < $1::timestamptz - interval '90 days'`,
+    reason:
+      "before-image of the invoice-linked tax records moved to self-employed income, kept 90 days so the migration can be rolled back; after that its down() restores nothing",
+  },
 ];
 
 /** Profiles with no authenticated request for this long are due for erasure (D4). */
