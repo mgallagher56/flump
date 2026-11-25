@@ -5,9 +5,40 @@
  */
 
 /** A line that records or uses the sync commit. */
-const SYNC_LINE = /sync commit|\.\.HEAD\b/i;
-/** A commit hash: 7 to 40 hex characters with at least one digit and one letter. */
-const HASH = /\b(?=[0-9a-f]*\d)(?=[0-9a-f]*[a-f])[0-9a-f]{7,40}\b/;
+function isSyncLine(text: string): boolean {
+  return text.toLowerCase().includes("sync commit") || text.includes("..HEAD");
+}
+
+const isWordChar = (c: string) =>
+  (c >= "a" && c <= "z") || (c >= "A" && c <= "Z") || (c >= "0" && c <= "9") || c === "_";
+
+/** A commit hash: a whole word of 7 to 40 lowercase hex characters, with a digit and a letter. */
+function isHash(word: string): boolean {
+  if (word.length < 7 || word.length > 40) return false;
+  let digit = false;
+  let letter = false;
+  for (const c of word) {
+    if (c >= "0" && c <= "9") digit = true;
+    else if (c >= "a" && c <= "f") letter = true;
+    else return false;
+  }
+  return digit && letter;
+}
+
+/** The words of a line, split by hand rather than with a pattern. */
+function words(text: string): string[] {
+  const out: string[] = [];
+  let current = "";
+  for (const c of text) {
+    if (isWordChar(c)) current += c;
+    else if (current) {
+      out.push(current);
+      current = "";
+    }
+  }
+  if (current) out.push(current);
+  return out;
+}
 
 export interface SyncHashHit {
   line: number;
@@ -16,8 +47,8 @@ export interface SyncHashHit {
 
 export function findSyncHashes(markdown: string): SyncHashHit[] {
   return markdown.split("\n").flatMap((text, i) => {
-    if (!SYNC_LINE.test(text)) return [];
-    const match = HASH.exec(text);
-    return match ? [{ line: i + 1, hash: match[0] }] : [];
+    if (!isSyncLine(text)) return [];
+    const hash = words(text).find(isHash);
+    return hash ? [{ line: i + 1, hash }] : [];
   });
 }

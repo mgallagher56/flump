@@ -12,7 +12,7 @@ import { join } from "node:path";
  * The shell and coreutils in BASE_TOOLS are linked whenever they are installed; `tools` names any
  * other real tool the script needs, and a missing one throws.
  */
-export const BASE_TOOLS = [
+const BASE_TOOLS = [
   "bash",
   "sh",
   "env",

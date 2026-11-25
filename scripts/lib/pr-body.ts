@@ -3,7 +3,7 @@
  * scripts/check-pr-body.ts; CI runs it in .github/workflows/pr-description.yml.
  */
 
-export const PR_BODY_MAX_CHARS = 1000;
+const PR_BODY_MAX_CHARS = 1000;
 
 /**
  * Release-please and Renovate write their own bodies; the laws are for agent-written PRs.
@@ -43,7 +43,7 @@ export interface PrBodyInput {
   headRef?: string;
 }
 
-export function isExempt({ author, headRef }: PrBodyInput): boolean {
+function isExempt({ author, headRef }: PrBodyInput): boolean {
   return (
     (author !== undefined && EXEMPT_AUTHORS.has(author)) ||
     (headRef !== undefined && RELEASE_PLEASE_BRANCH.test(headRef))
