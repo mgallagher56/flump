@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import {
-  chmodSync,
   copyFileSync,
   existsSync,
   mkdirSync,
@@ -13,6 +12,7 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
+import { isolatedPath } from "./lib/fake-bin";
 
 // verify-flump runs against a throwaway copy of the repo layout (fake build output, a git repo
 // for the worktree label) and a fake `docker` that records calls. Migrations then fail for real
@@ -30,6 +30,7 @@ esac
 
 let dir: string;
 let repo: string;
+let path: string;
 
 beforeEach(() => {
   dir = mkdtempSync(join(tmpdir(), "verify-flump-teardown-"));
@@ -58,9 +59,11 @@ beforeEach(() => {
     "-m",
     "x",
   ]);
-  mkdirSync(join(dir, "bin"));
-  writeFileSync(join(dir, "bin", "docker"), FAKE_DOCKER);
-  chmodSync(join(dir, "bin", "docker"), 0o755);
+  // The fake docker plus the real tools `up` uses before the failing migration; no real docker.
+  path = isolatedPath(dir, {
+    fakes: { docker: FAKE_DOCKER },
+    tools: ["git", "bun", "curl", "openssl"],
+  });
 });
 
 afterEach(() => {
@@ -73,7 +76,7 @@ function start(env: Record<string, string> = {}) {
     {
       env: {
         ...process.env,
-        PATH: `${join(dir, "bin")}:${process.env.PATH}`,
+        PATH: path,
         FAKE_LOG: join(dir, "log"),
         VERIFY_ROOT: join(dir, "verify"),
         VERIFY_EVIDENCE_ROOT: join(dir, "evidence"),
