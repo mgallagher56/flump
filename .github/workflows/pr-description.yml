@@ -2,10 +2,11 @@ name: 📝 PR description
 
 # AGENTS.md sections 8, 11, 12, 15 and 17: a PR description is at most 1000 characters, has
 # "Tests", "Guard changes" and review lines, and no em dash. scripts/check-pr-body.ts holds the
-# rules; release-please and Renovate PRs are exempt. Its own workflow so that editing a
+# rules. Exempt: Renovate by author, release-please by its release-please-- head branch (its PRs
+# are opened with the owner's token, so the author is a person). Its own workflow so that editing a
 # description re-runs this check alone, not the whole CI Pipeline. The body is read from the event
 # file, never interpolated into a shell. Locally:
-#   gh pr view <n> --json title,body,author | bun scripts/check-pr-body.ts -
+#   gh pr view <n> --json title,body,author,headRefName | bun scripts/check-pr-body.ts -
 on:
   pull_request:
     branches:
