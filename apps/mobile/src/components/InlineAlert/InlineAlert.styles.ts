@@ -4,7 +4,7 @@ import type { Theme } from "../../theme/ThemeProvider";
 /** `danger` for something that went wrong; `info` for a neutral notice. Red is for errors only. */
 export type InlineAlertTone = "danger" | "info";
 
-export const TONE_COLOURS = {
+const TONE_COLOURS = {
   danger: { fill: "status.danger.bg", edge: "status.danger.border" },
   info: { fill: "status.info.bg", edge: "status.info.border" },
 } as const satisfies Record<InlineAlertTone, { fill: string; edge: string }>;

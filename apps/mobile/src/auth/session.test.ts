@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from "node:crypto";
+import { createHash, randomBytes, randomUUID } from "node:crypto";
 import type { TokenResult, WorkosClient } from "../data/workos";
 import { readQuery } from "./authorizeUrl";
 import type { PkceCrypto } from "./pkce";
@@ -22,7 +22,7 @@ const newTokens = () => {
   counter += 1;
   return {
     accessToken: accessFor(`session_${counter}`),
-    refreshToken: `r_${counter}_${Math.random()}`,
+    refreshToken: `r_${counter}_${randomUUID()}`,
   };
 };
 
@@ -175,6 +175,19 @@ describe("restore on launch", () => {
     expect(session.getState()).toEqual({ status: "restoredOffline" });
     expect(h.tokens.clear).not.toHaveBeenCalled();
     expect(h.workos.refresh).not.toHaveBeenCalled();
+  });
+
+  it("a token the store can never read: offline, kept, and Sign out from there clears it", async () => {
+    const h = harness({ stored: "r_unreadable" });
+    (h.tokens.read as jest.Mock).mockRejectedValue(new Error("cannot decrypt"));
+    const session = createSession(h.deps);
+    await session.restore();
+    expect(session.getState()).toEqual({ status: "restoredOffline" });
+    expect(h.tokens.peek()).toBe("r_unreadable");
+    await session.signOut();
+    expect(h.tokens.clear).toHaveBeenCalledTimes(1);
+    expect(h.tokens.peek()).toBeNull();
+    expect(session.getState()).toEqual({ status: "signedOut", notice: null });
   });
 
   it("retry from offline tries again and signs in", async () => {

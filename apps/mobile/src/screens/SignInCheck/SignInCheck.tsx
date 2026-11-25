@@ -56,7 +56,7 @@ export function SignInCheck({ run = defaultRun }: { run?: () => Promise<SignInCh
   );
 }
 
-export function rows(report: SignInCheckReport): [string, string][] {
+function rows(report: SignInCheckReport): [string, string][] {
   return [
     ["Issuer", report.issuer ?? "none"],
     ["Claim names", report.claimNames.join(", ") || "none"],

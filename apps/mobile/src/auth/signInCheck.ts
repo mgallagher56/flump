@@ -12,7 +12,7 @@ import { readClaims } from "./claims";
 import type { AccountCheck } from "./session";
 import type { TokenStore } from "./tokenStore";
 
-export type CallOutcome = "accepted" | "rejected" | "unavailable";
+type CallOutcome = "accepted" | "rejected" | "unavailable";
 
 export interface SignInCheckReport {
   readonly issuer: string | null;

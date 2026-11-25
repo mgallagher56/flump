@@ -35,7 +35,7 @@ export type BrowserResult = { type: "success"; url: string } | { type: "closed" 
 export type AccountCheck = "ok" | "not-invited" | "unauthorised" | "unavailable";
 
 /** As `@flump/api-client`'s `RefreshOutcome`. */
-export type RefreshOutcome = "refreshed" | "ended" | "retryable";
+type RefreshOutcome = "refreshed" | "ended" | "retryable";
 
 export interface SessionDeps {
   config: Pick<AuthConfig, "authBaseUrl" | "clientId" | "redirectUri">;

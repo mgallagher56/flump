@@ -1,9 +1,10 @@
+import { randomUUID } from "node:crypto";
 import { createWorkosClient } from "./workos";
 
 const config = { authBaseUrl: "https://auth.test.invalid", clientId: "client_TESTONLY" };
 // Built at runtime, never real.
-const access = () => `a.${Math.random().toString(36).slice(2)}.c`;
-const refresh = () => `r_${Math.random().toString(36).slice(2)}`;
+const access = () => `a.${randomUUID()}.c`;
+const refresh = () => `r_${randomUUID()}`;
 
 function fakeFetch(status: number, body: unknown) {
   const calls: { url: string; init: RequestInit }[] = [];
