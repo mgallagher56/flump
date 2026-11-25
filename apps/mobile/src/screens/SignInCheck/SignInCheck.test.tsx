@@ -1,7 +1,8 @@
 import { render, screen, userEvent } from "@testing-library/react-native";
 import { NotSignedInError, type SignInCheckReport } from "../../auth/signInCheck";
+import { MobileConfigError } from "../../config";
 import { ThemeProvider } from "../../theme/ThemeProvider";
-import { SignInCheck } from "./SignInCheck";
+import { problemText, SignInCheck } from "./SignInCheck";
 
 const report: SignInCheckReport = {
   issuer: "https://issuer.test.invalid/x",
@@ -41,6 +42,21 @@ describe("SignInCheck (dev only)", () => {
       </ThemeProvider>,
     );
     await userEvent.setup().press(screen.getByRole("button", { name: "Run the sign-in check" }));
-    expect(screen.getByText("Sign in first.")).toBeOnTheScreen();
+    expect(screen.getByText(/^Sign in first\. Expo Go cannot finish a sign-in/)).toBeOnTheScreen();
+  });
+
+  it("names the missing setting when the build is misconfigured", () => {
+    expect(
+      problemText(
+        new MobileConfigError("missing-client-id", "EXPO_PUBLIC_WORKOS_CLIENT_ID is not set."),
+      ),
+    ).toBe(
+      "This build is misconfigured: EXPO_PUBLIC_WORKOS_CLIENT_ID is not set. Set it in apps/mobile/.env.local and restart Metro.",
+    );
+  });
+
+  it("for anything else shows only the error's type, never its message", () => {
+    const leaky = new TypeError("Network request failed for r_secret_value");
+    expect(problemText(leaky)).toBe("The check could not run (TypeError).");
   });
 });
