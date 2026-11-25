@@ -126,6 +126,18 @@ export const PrivacyPage: FC = () => (
         phase.
       </p>
 
+      <h3>Two questions after a check-in</h3>
+      <p>
+        After a monthly check-in, Flump may ask two optional questions, at most once in each quarter
+        of the year. One asks how you feel about your money. The other asks whether anything made
+        you feel worse. We hold your answers, or that you skipped, and which quarter it was. We read
+        the written answers and count the others to check that Flump helps and makes no one feel
+        worse. We do not use them to message you, score you or treat you differently from anyone
+        else. Please leave out health details and anything else sensitive. You can switch the
+        questions off in Settings, which also deletes your earlier answers. Lawful basis: our
+        legitimate interest in checking that Flump does people good.
+      </p>
+
       <h3>Messages you send us</h3>
       <p>
         If you email us, we keep your message and address to reply and to keep a record of what we
@@ -263,6 +275,11 @@ export const PrivacyPage: FC = () => (
           after.
         </li>
         <li>
+          <strong>Answers to the two questions after a check-in:</strong> 13 months from the start
+          of the quarter you were asked in. Sooner if you switch the questions off or delete your
+          account.
+        </li>
+        <li>
           <strong>Backups:</strong> any backup of the database is kept for a limited period. Deleted
           data can stay in a backup until it expires. We will state the period here once scheduled
           backups are running.
@@ -309,7 +326,7 @@ export const PrivacyPage: FC = () => (
       <p>
         <strong>
           You can object to any use that rests on our legitimate interest. That covers security
-          records, logs, error reports and invite records.
+          records, logs, error reports, invite records and the two questions after a check-in.
         </strong>{" "}
         Tell us why it affects you. We will stop unless we have a strong reason to carry on, such as
         keeping other people's accounts secure.
@@ -365,6 +382,7 @@ export const PrivacyPage: FC = () => (
         effect.
       </p>
       <ul className={versionHistory()}>
+        <li>Version 0.4, 26 November 2026: added the two optional questions after a check-in.</li>
         <li>
           Version 0.3, 25 November 2026: request counters are removed shortly after their day.
         </li>

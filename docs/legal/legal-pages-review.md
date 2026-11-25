@@ -73,6 +73,10 @@ Terms acceptance was built (the follow-up below). A separate Fable decider, reco
 
 D5 was revised so the backend runs the retention purge itself (`docs/audit/plans/DECISIONS.md`, 25 November 2026). An independent Fable decider, signed `fable-decider`, checked the timed lines against it. With the purge live, one line was not strictly true: a request counter can outlive its one-day window by up to 15 minutes before the sweep removes it, or longer after a failed check. "Request counters: one day at most." became "Request counters: each lasts one day at most and is removed shortly after." Privacy notice version 0.3. Not legal advice; Fable is not a solicitor.
 
+### Round 8: the two optional questions after a check-in (privacy notice 0.4)
+
+E35 W5 adds two optional questions after a check-in, at most once a calendar quarter. A Fable decider chose the lawful basis (legitimate interest for the choice and the free text, no Article 9 condition relied on), the period (13 months from the quarter's first day) and the default (on; switching off deletes earlier answers), and drafted the text. A separate Fable decider, signed `fable-decider`, reviewed it against the design. It required three changes: "at most once in each quarter of the year" in place of "once every three months", "which quarter it was", and "treat you differently from anyone else" in place of "change what you see", since the stop rules can pause a feature for everyone. All three were applied verbatim, and the second look approved it, with the `ropa.md` row 13 and the `data-map.md` row. Not legal advice; Fable is not a solicitor. The reviewer checked against the design while the backend was being built; the code was checked afterwards by the lane's own reviews. On rebases onto main the version became 0.4, after round 6 took 0.2 and round 7 took 0.3.
+
 ## Judgement calls the reviewer made
 
 - **Controller and processor for client details:** the user as controller and Flump as processor is the right split.
@@ -120,12 +124,13 @@ The stand-in name ends in "Ltd" and comes with a company number, while the tradi
 1. **Before pointing real people at the pages:** sign the Railway DPA (DocuSign), accept the Sentry DPA, and check both companies' Data Privacy Framework listings. Record the dates in `ropa.md`.
 2. **Before pointing real people at the pages:** fill the controller's name and address and a mailbox that is read. UK GDPR Article 13 and section 164A are not met while the address is unmonitored.
 3. Register with the ICO and pay the data protection fee, if not done.
-4. **By 3 December 2026:** confirm the first retention run after the deploy that schedules it in the backend (D5 revised on 25 November 2026; the Railway cron service is now optional). Then the backup job and its bucket rule, and state the backup period in the privacy notice.
-5. Decide the regulatory-status wording for the terms before a public launch.
-6. Decide whether to move hosting to EU West (`docs/runbooks/region-move.md`). The privacy notice and `ropa.md` change with it.
-7. Delete the `TERMS_VERSION` variable from the Railway backend service if it is set. The backend no longer reads it (terms versions come from `LEGAL_PAGES`) and logs one warning at boot while it is there.
-8. Email testers when the terms change by more than a wording fix, and 30 days before ending an account or the test phase. The terms promise both, and nothing in the app sends email.
-9. Answer privacy requests within one month and acknowledge complaints within 30 days.
+1. **By 3 December 2026:** confirm the first retention run after the deploy that schedules it in the backend (D5 revised on 25 November 2026; the Railway cron service is now optional). Then the backup job and its bucket rule, and state the backup period in the privacy notice.
+2. Decide the regulatory-status wording for the terms before a public launch.
+3. Decide whether to move hosting to EU West (`docs/runbooks/region-move.md`). The privacy notice and `ropa.md` change with it.
+4. Delete the `TERMS_VERSION` variable from the Railway backend service if it is set. The backend no longer reads it (terms versions come from `LEGAL_PAGES`) and logs one warning at boot while it is there.
+5. Before the first question after a check-in is shown to a real person: write a short legitimate interests assessment for it, and read the free-text answers regularly (monthly is safer than quarterly), removing any that hold health details (`scripts/ops/wellbeing-measures`).
+6. Email testers when the terms change by more than a wording fix, and 30 days before ending an account or the test phase. The terms promise both, and nothing in the app sends email.
+7. Answer privacy requests within one month and acknowledge complaints within 30 days.
 
 ## For a solicitor before public launch
 
