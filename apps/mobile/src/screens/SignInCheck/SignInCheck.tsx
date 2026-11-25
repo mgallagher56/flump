@@ -1,13 +1,13 @@
 import * as SecureStore from "expo-secure-store";
 import { useState } from "react";
 import { View } from "react-native";
-import { runSignInCheck, type SignInCheckReport } from "../../auth/signInCheck";
+import { NotSignedInError, runSignInCheck, type SignInCheckReport } from "../../auth/signInCheck";
 import { createTokenStore } from "../../auth/tokenStore";
 import { Button } from "../../components/Button";
 import { Card } from "../../components/Card";
 import { Screen } from "../../components/Screen";
 import { Text } from "../../components/Text";
-import { loadSignInConfig } from "../../config";
+import { loadSignInConfig, MobileConfigError } from "../../config";
 import { checkAccountWithToken } from "../../data/account";
 import { createWorkosClient } from "../../data/workos";
 
@@ -26,11 +26,7 @@ export function SignInCheck({ run = defaultRun }: { run?: () => Promise<SignInCh
     try {
       setReport(await run());
     } catch (error) {
-      setProblem(
-        error instanceof Error && error.name === "NotSignedInError"
-          ? "Sign in first."
-          : "The check could not run.",
-      );
+      setProblem(problemText(error));
     } finally {
       setPending(false);
     }
@@ -70,6 +66,22 @@ function rows(report: SignInCheckReport): [string, string][] {
     ["Replacement after that reuse", report.replacementAfterReuse],
     ["Backend GET /v1/user-profile", report.backend],
   ];
+}
+
+/**
+ * Why the check could not run, in words the owner can act on. Config errors name the variable,
+ * never its value; anything else gives only the error's type, never its message, so no response
+ * text or token can reach the screen.
+ */
+export function problemText(error: unknown): string {
+  if (error instanceof MobileConfigError) {
+    return `This build is misconfigured: ${error.message} Set it in apps/mobile/.env.local and restart Metro.`;
+  }
+  if (error instanceof NotSignedInError) {
+    return "Sign in first. Expo Go cannot finish a sign-in (it never receives the flump:// redirect), so use a development build.";
+  }
+  const kind = error instanceof Error ? error.name : "unknown error";
+  return `The check could not run (${kind}).`;
 }
 
 function defaultRun(): Promise<SignInCheckReport> {
