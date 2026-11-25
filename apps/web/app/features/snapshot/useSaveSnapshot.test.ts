@@ -140,6 +140,39 @@ describe("useSaveSnapshot against an older backend", () => {
     expect(toast).not.toHaveBeenCalled();
   });
 
+  it("saves again without checkIn, then without source, when an older backend names each (CH-3)", async () => {
+    const checkInSave = {
+      ...withSource,
+      payload: { ...withSource.payload, checkIn: true },
+    };
+    apiFetch
+      .mockRejectedValueOnce(badRequest('Unrecognized key: "checkIn"'))
+      .mockResolvedValueOnce({});
+    const { result } = renderHook(() => useSaveSnapshot());
+    let ok = false;
+    await act(async () => {
+      ok = await result.current(checkInSave);
+    });
+    expect(ok).toBe(true);
+    // Only checkIn goes: the source stays, so a calculated figure is never stored as typed.
+    expect(apiFetch.mock.calls[1]?.[1].body).toEqual({
+      values: [{ accountId: "a", value: 10, source: "confirmed" }],
+    });
+
+    apiFetch.mockReset();
+    apiFetch
+      .mockRejectedValueOnce(badRequest('Unrecognized keys: "checkIn"'))
+      .mockRejectedValueOnce(badRequest('Unrecognized key: "source"'))
+      .mockResolvedValueOnce({});
+    await act(async () => {
+      ok = await result.current(checkInSave);
+    });
+    expect(ok).toBe(true);
+    expect(apiFetch).toHaveBeenCalledTimes(3);
+    expect(apiFetch.mock.calls[2]?.[1].body).toEqual({ values: [{ accountId: "a", value: 10 }] });
+    expect(toast).not.toHaveBeenCalled();
+  });
+
   it("retries only once, and not for other errors", async () => {
     apiFetch.mockRejectedValue(badRequest("source is not allowed"));
     const { result } = renderHook(() => useSaveSnapshot());
