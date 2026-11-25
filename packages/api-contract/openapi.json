@@ -16847,6 +16847,230 @@
         "tags": ["snapshots"]
       }
     },
+    "/v1/snapshots/wellbeing-questions": {
+      "get": {
+        "operationId": "snapshots.wellbeingStatus",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "due": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": ["due"],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Success."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`unauthorized`: missing or invalid credentials."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`forbidden` or `not_invited`: the account may not use this route."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`rate_limited`: too many requests. See the Retry-After header."
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`internal_error`: an unexpected failure. Quote the requestId."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`service_unavailable`: busy or temporarily unavailable. See the Retry-After header."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": ["snapshots"]
+      },
+      "post": {
+        "operationId": "snapshots.answerWellbeing",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "feeling": {
+                    "anyOf": [
+                      {
+                        "enum": ["more_in_control", "about_the_same", "more_worried"],
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "worseText": {
+                    "anyOf": [
+                      {
+                        "maxLength": 1000,
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": ["feeling", "worseText"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "recorded": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": ["recorded"],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Success."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`validation_failed`: the request does not match the contract."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`unauthorized`: missing or invalid credentials."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`forbidden` or `not_invited`: the account may not use this route."
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`payload_too_large`: the request body is over the size limit."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`constraint_violation`: the data breaks a stored rule and was not saved."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`rate_limited`: too many requests. See the Retry-After header."
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`internal_error`: an unexpected failure. Quote the requestId."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`service_unavailable`: busy or temporarily unavailable. See the Retry-After header."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": ["snapshots"]
+      }
+    },
     "/v1/snapshots/{month}": {
       "put": {
         "operationId": "snapshots.upsert",
@@ -19111,6 +19335,9 @@
                     "userId": {
                       "minLength": 1,
                       "type": "string"
+                    },
+                    "wellbeingQuestions": {
+                      "type": "boolean"
                     }
                   },
                   "required": [
@@ -19146,6 +19373,7 @@
                     "taxRegion",
                     "birthYear",
                     "checkInDay",
+                    "wellbeingQuestions",
                     "studentLoanPlans",
                     "housingStatus",
                     "monthlyHousingCost",
@@ -19520,6 +19748,9 @@
                         "type": "null"
                       }
                     ]
+                  },
+                  "wellbeingQuestions": {
+                    "type": "boolean"
                   }
                 },
                 "type": "object"
@@ -19778,6 +20009,9 @@
                     "userId": {
                       "minLength": 1,
                       "type": "string"
+                    },
+                    "wellbeingQuestions": {
+                      "type": "boolean"
                     }
                   },
                   "required": [
@@ -19813,6 +20047,7 @@
                     "taxRegion",
                     "birthYear",
                     "checkInDay",
+                    "wellbeingQuestions",
                     "studentLoanPlans",
                     "housingStatus",
                     "monthlyHousingCost",
@@ -20213,6 +20448,9 @@
                     "userId": {
                       "minLength": 1,
                       "type": "string"
+                    },
+                    "wellbeingQuestions": {
+                      "type": "boolean"
                     }
                   },
                   "required": [
@@ -20248,6 +20486,7 @@
                     "taxRegion",
                     "birthYear",
                     "checkInDay",
+                    "wellbeingQuestions",
                     "studentLoanPlans",
                     "housingStatus",
                     "monthlyHousingCost",
@@ -20762,6 +21001,9 @@
                         "userId": {
                           "minLength": 1,
                           "type": "string"
+                        },
+                        "wellbeingQuestions": {
+                          "type": "boolean"
                         }
                       },
                       "required": [
@@ -20797,6 +21039,7 @@
                         "taxRegion",
                         "birthYear",
                         "checkInDay",
+                        "wellbeingQuestions",
                         "studentLoanPlans",
                         "housingStatus",
                         "monthlyHousingCost",
