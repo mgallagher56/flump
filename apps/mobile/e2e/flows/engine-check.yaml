@@ -1,13 +1,23 @@
-# E12 S1a: the device check (route `engine-check`) on Hermes. Needs a debug build, where __DEV__ is
-# true: `bunx expo run:android` (Android SDK and an emulator), then `maestro test e2e/flows/engine-check.yaml`.
-# Not run in CI yet: S2c adds the Android emulator job (`mobile-e2e-android`).
+# E12 S1a, S2c: the device check (route `engine-check`) on Hermes, with screenshots of Welcome and
+# the device check for the theme the runner set (THEME is `light` or `dark`).
+# Needs a debug build, where __DEV__ is true: CI's `🤖 Mobile e2e (Android)` job runs it through
+# e2e/run-android-flows.sh; by hand, `bunx expo run:android`, then
+# `maestro test -e THEME=light e2e/flows/engine-check.yaml`.
 appId: app.flump.mobile
+env:
+  THEME: light
 ---
-- launchApp
-- assertVisible: "Finance without the fog"
+- launchApp:
+    stopApp: true
+# The first launch of a debug build waits for Metro to bundle the app.
+- extendedWaitUntil:
+    visible: "Finance without the fog"
+    timeout: 180000
+- takeScreenshot: welcome-${THEME}
 - tapOn: "Device check"
 - assertVisible: "Hermes"
 - assertVisible:
     text: "All vectors pass.*"
 - assertVisible:
     text: "All formatting cases match.*"
+- takeScreenshot: engine-check-${THEME}

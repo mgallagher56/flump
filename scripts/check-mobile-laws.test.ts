@@ -149,6 +149,8 @@ describe("Biome: the raw primitives and the data door (apps/mobile)", () => {
   const callXhr = `export const x = () => new XMLHttpRequest();\n`;
   const apiClient = `import { createApiClient } from "@flump/api-client";\nexport const c = createApiClient;\n`;
   const callFetch = `export const load = () => fetch("https://example.test/v1");\n`;
+  const fixture = (from: string) =>
+    `import { startFixtureServer } from "${from}";\nexport const f = startFixtureServer;\n`;
 
   test.each([
     ["raw Text in a screen", "apps/mobile/src/screens/Home/Home.tsx", rawText],
@@ -171,6 +173,26 @@ describe("Biome: the raw primitives and the data door (apps/mobile)", () => {
       touchable(name),
     ]),
     ["XMLHttpRequest in a screen", "apps/mobile/src/screens/Home/Home.tsx", callXhr],
+    [
+      "the e2e fixture server in a screen",
+      "apps/mobile/src/screens/Home/Home.tsx",
+      fixture("../../../e2e/fixture-server/server"),
+    ],
+    [
+      "the e2e fixture server in a route",
+      "apps/mobile/app/index.tsx",
+      fixture("../e2e/fixture-server"),
+    ],
+    [
+      "the e2e fixture server in a component",
+      "apps/mobile/src/components/Card/Card.tsx",
+      fixture("../../../e2e/fixture-server/fixtures"),
+    ],
+    [
+      "the e2e fixture server in the data door",
+      "apps/mobile/src/data/apiClient.ts",
+      fixture("../../e2e/fixture-server/server"),
+    ],
   ])("%s fails", (_name, path, source) => {
     const { exitCode, output } = lint(path, source);
     expect(exitCode).not.toBe(0);

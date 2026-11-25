@@ -58,7 +58,8 @@
       "entry": ["postcss.config.cjs", "src/foundations/*/index.ts"]
     },
     "apps/mobile": {
-      "ignoreDependencies": ["@babel/runtime", "@babel/core"]
+      "entry": ["e2e/fixture-server/main.ts"],
+      "ignoreDependencies": ["@babel/runtime"]
     },
     "packages/*": {
       "ignoreDependencies": ["@repo/typescript-config"]

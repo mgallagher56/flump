@@ -6,6 +6,7 @@ import {
   checkBundle,
   checkSourceMap,
   DEV_ONLY_MARKERS,
+  FIXTURE_MARKERS,
   findBundles,
   PRODUCTION_MARKER,
   packagesBundledTwice,
@@ -22,6 +23,16 @@ describe("checkBundle", () => {
     expect(checkBundle("a.hbc", bundle(`${PRODUCTION_MARKER} ${marker}`))).toEqual([
       { file: "a.hbc", problem: `contains development-only text "${marker}"` },
     ]);
+  });
+
+  test.each(FIXTURE_MARKERS)("fails a bundle that contains the e2e fixture marker %p", (marker) => {
+    expect(checkBundle("a.hbc", bundle(`${PRODUCTION_MARKER} http://${marker}/v1`))).toEqual([
+      { file: "a.hbc", problem: `contains e2e fixture text "${marker}"` },
+    ]);
+  });
+
+  test("names the fixture address and the control route prefix", () => {
+    expect([...FIXTURE_MARKERS]).toEqual(["10.0.2.2:8787", "__fixture"]);
   });
 
   test("fails a bundle without the tagline, so an empty or unreadable file cannot pass", () => {

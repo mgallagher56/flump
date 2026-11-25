@@ -29,6 +29,13 @@ export const DEV_ONLY_MARKERS = [
   "Plain pressable",
 ] as const;
 
+/**
+ * Strings only the e2e fixture server and the `e2e` build profile carry (S2c): the address the
+ * emulator uses to reach the fixture server, and its control route prefix. A production bundle
+ * that contains either was built against the fixture server or imported it.
+ */
+export const FIXTURE_MARKERS = ["10.0.2.2:8787", "__fixture"] as const;
+
 /** A string every production bundle must contain (the tagline on the first screen). */
 export const PRODUCTION_MARKER = "Finance without the fog";
 
@@ -46,6 +53,9 @@ export function checkBundle(file: string, bytes: Buffer): BundleFinding[] {
     file,
     problem: `contains development-only text "${m}"`,
   }));
+  for (const m of FIXTURE_MARKERS) {
+    if (text.includes(m)) findings.push({ file, problem: `contains e2e fixture text "${m}"` });
+  }
   if (!text.includes(PRODUCTION_MARKER)) {
     findings.push({ file, problem: `does not contain "${PRODUCTION_MARKER}"` });
   }

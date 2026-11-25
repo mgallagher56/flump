@@ -92,7 +92,13 @@
                     "message": "Use Text, Pressable or Button from src/components (an input wrapper joins them when a form needs one): they keep text scalable, targets at least 48pt and every control named (E12 S1b)."
                   },
                   "@flump/api-client": "Use the API client exported by src/data (added in S2b): only src/data talks to the API (O5 seam 2, plan section 4.6)."
-                }
+                },
+                "patterns": [
+                  {
+                    "group": ["**/e2e/**"],
+                    "message": "The e2e fixture server is test tooling and never part of the app: nothing in app/ or src/ imports from e2e/ (E12 S2c)."
+                  }
+                ]
               }
             },
             "noRestrictedGlobals": {
@@ -118,7 +124,13 @@
               "options": {
                 "paths": {
                   "@flump/api-client": "Use the API client exported by src/data (added in S2b): only src/data talks to the API (O5 seam 2, plan section 4.6)."
-                }
+                },
+                "patterns": [
+                  {
+                    "group": ["**/e2e/**"],
+                    "message": "The e2e fixture server is test tooling and never part of the app: nothing in app/ or src/ imports from e2e/ (E12 S2c)."
+                  }
+                ]
               }
             },
             "noRestrictedGlobals": {
@@ -156,7 +168,13 @@
                     ],
                     "message": "Use Text, Pressable or Button from src/components (an input wrapper joins them when a form needs one), even inside src/data (E12 S1b)."
                   }
-                }
+                },
+                "patterns": [
+                  {
+                    "group": ["**/e2e/**"],
+                    "message": "The e2e fixture server is test tooling and never part of the app: nothing in app/ or src/ imports from e2e/ (E12 S2c)."
+                  }
+                ]
               }
             }
           }
