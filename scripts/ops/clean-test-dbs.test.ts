@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import {
-  chmodSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
@@ -11,12 +10,13 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
+import { isolatedPath } from "../lib/fake-bin";
 
 const SCRIPT = resolve(import.meta.dir, "clean-test-dbs.sh");
 const BASH = Bun.which("bash") ?? "/bin/bash";
-// The script and the fake need only these. PATH holds nothing else, so a real `docker` (on Linux
-// runners it sits in /usr/bin) can never be reached, even in the test that removes the fake.
-const TOOLS = ["sed", "cat"];
+// PATH is isolatedPath (scripts/lib/fake-bin.ts): the fake plus the shell tools, so a real
+// `docker` (on Linux runners it sits in /usr/bin) can never be reached, even in the test that
+// removes the fake.
 
 // A fake `docker` on PATH: it records every call and answers `ps` and `volume ls` from fixture
 // files, ignoring the filters. So the script's own label checks are what keep it safe here.
@@ -33,6 +33,7 @@ esac
 let dir: string;
 let live: string;
 let gone: string;
+let bin: string;
 
 type Row = [id: string, name: string, purpose: string, worktree: string];
 
@@ -45,7 +46,7 @@ function run(args: string[], env: Record<string, string> = {}) {
   const proc = Bun.spawnSync([BASH, SCRIPT, ...args], {
     env: {
       ...process.env,
-      PATH: `${join(dir, "bin")}:${join(dir, "tools")}`,
+      PATH: bin,
       FAKE_LOG: join(dir, "log"),
       FAKE_PS: join(dir, "ps"),
       FAKE_VOLUMES: join(dir, "volumes"),
@@ -73,15 +74,7 @@ const removals = () => calls().filter((c) => c.startsWith("rm ") || c.startsWith
 beforeEach(() => {
   // Labels hold the resolved path (git rev-parse --show-toplevel), so the fixtures do too.
   dir = realpathSync(mkdtempSync(join(tmpdir(), "clean-test-dbs-")));
-  mkdirSync(join(dir, "bin"));
-  mkdirSync(join(dir, "tools"));
-  for (const tool of TOOLS) {
-    const path = Bun.which(tool);
-    if (!path) throw new Error(`${tool} not found`);
-    symlinkSync(path, join(dir, "tools", tool));
-  }
-  writeFileSync(join(dir, "bin", "docker"), FAKE_DOCKER);
-  chmodSync(join(dir, "bin", "docker"), 0o755);
+  bin = isolatedPath(dir, { fakes: { docker: FAKE_DOCKER } });
   live = join(dir, "worktrees", "live-lane");
   mkdirSync(live, { recursive: true });
   gone = join(dir, "worktrees", "gone-lane");
@@ -248,7 +241,7 @@ describe("clean-test-dbs.sh --orphans", () => {
 
 describe("clean-test-dbs.sh without Docker", () => {
   test("exits 0 when the docker command is missing, since nothing can be running", () => {
-    rmSync(join(dir, "bin", "docker"));
+    rmSync(join(bin, "docker"));
     const result = run([live]);
     expect(result.exitCode).toBe(0);
     expect(result.stderr).toContain("docker not found");
