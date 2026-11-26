@@ -1,8 +1,9 @@
 import { userEvent } from "@testing-library/react-native";
-import { router as appRouter, Stack } from "expo-router";
+import { router as appRouter, type Href, Stack } from "expo-router";
 import { act, renderRouter, screen, testRouter } from "expo-router/testing-library";
 import { Linking } from "react-native";
 import * as signedInLayout from "../../app/(app)/_layout";
+import NotFoundRoute from "../../app/(app)/+not-found";
 import TabsLayout from "../../app/(app)/(tabs)/_layout";
 import AccountsTab from "../../app/(app)/(tabs)/accounts";
 import BudgetTab from "../../app/(app)/(tabs)/budget";
@@ -91,6 +92,7 @@ async function openApp(initialUrl: string, initial: SessionState = { status: "si
       "(app)/(tabs)/pay": PayTab,
       "(app)/(tabs)/more": MoreTab,
       "(app)/page/[key]": MorePageRoute,
+      "(app)/+not-found": NotFoundRoute,
       "(app)/check-in": () => <Text>Check-in stand-in</Text>,
     },
     { initialUrl },
@@ -182,6 +184,69 @@ describe("the signed-in routes", () => {
     expect(screen.getByRole("header", { name: "We could not find that page" })).toBeOnTheScreen();
     await userEvent.setup().press(screen.getByRole("button", { name: "Go to More" }));
     expect(router.getPathname()).toBe("/more");
+  });
+
+  describe("a link the app does not know", () => {
+    const ownPage = () =>
+      expect(screen.getByText("The link may be old or mistyped.")).toBeOnTheScreen();
+    const noRouterPage = () => {
+      expect(screen.queryByText(/Unmatched Route/)).toBeNull();
+      expect(screen.queryByText(/Sitemap/)).toBeNull();
+    };
+
+    it("cold: its own page inside the app, with one way back, to Home", async () => {
+      const { router } = await openApp("/nope");
+      ownPage();
+      noRouterPage();
+      expect(screen.getAllByRole("button", { name: /Go to/ })).toHaveLength(1);
+      await userEvent.setup().press(screen.getByRole("button", { name: "Go to Home" }));
+      expect(router.getPathname()).toBe("/");
+      expect(tab("Home").props.accessibilityState).toMatchObject({ selected: true });
+    });
+
+    it("warm: opened while the app is on a tab, the same page, and Back returns to the tab", async () => {
+      await openApp("/budget");
+      // An unknown path is, by definition, not one of the typed routes.
+      await act(async () => appRouter.push("/nope/deeper" as unknown as Href));
+      ownPage();
+      noRouterPage();
+      await act(async () => appRouter.back());
+      expect(tab("Budget").props.accessibilityState).toMatchObject({ selected: true });
+    });
+
+    it.each<[SessionState, string]>([
+      [{ status: "signedOut", notice: null }, "Sign in"],
+      [{ status: "sessionEnded" }, "You have been signed out"],
+      [{ status: "notInvited" }, "This account has not been invited yet"],
+      [{ status: "termsRequired" }, "Please agree to our terms on the website"],
+    ])("cold, %j: the gate's screen comes first, never the page", async (state, shown) => {
+      await openApp("/nope", state);
+      expect(screen.getAllByText(shown).length).toBeGreaterThan(0);
+      expect(screen.queryByText("The link may be old or mistyped.")).toBeNull();
+      noRouterPage();
+    });
+
+    it.each<[SessionState, string]>([
+      [{ status: "sessionEnded" }, "You have been signed out"],
+      [{ status: "termsRequired" }, "Please agree to our terms on the website"],
+    ])("warm, then %j: the gate's screen replaces the page", async (state, heading) => {
+      const { app } = await openApp("/nope");
+      ownPage();
+      await act(async () => app.set(state));
+      expect(screen.getByRole("header", { name: heading })).toBeOnTheScreen();
+      expect(screen.queryByText("The link may be old or mistyped.")).toBeNull();
+    });
+
+    it("restored offline: the page still shows, it needs no data", async () => {
+      await openApp("/nope", { status: "restoredOffline" });
+      ownPage();
+    });
+
+    it("signed out, then signed in: lands on the page", async () => {
+      const { app } = await openApp("/nope", { status: "signedOut", notice: null });
+      await act(async () => app.set({ status: "signedIn" }));
+      ownPage();
+    });
   });
 
   it("a link opened signed out shows sign-in, then its own screen once signed in", async () => {

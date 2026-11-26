@@ -3,17 +3,24 @@ import { ThemeProvider } from "../../theme/ThemeProvider";
 import { PageNotFound } from "./PageNotFound";
 
 describe("PageNotFound", () => {
-  it("says the page was not found and offers one way back, to More", async () => {
-    jest.useRealTimers();
-    const onGoToMore = jest.fn();
-    await render(
-      <ThemeProvider scheme="light">
-        <PageNotFound onGoToMore={onGoToMore} />
-      </ThemeProvider>,
-    );
-    expect(screen.getByRole("header", { name: "We could not find that page" })).toBeOnTheScreen();
-    expect(screen.getAllByRole("button")).toHaveLength(1);
-    await userEvent.setup().press(screen.getByRole("button", { name: "Go to More" }));
-    expect(onGoToMore).toHaveBeenCalledTimes(1);
-  });
+  it.each([
+    ["more", "The link may be old. Go to More to find what you need.", "Go to More"],
+    ["home", "The link may be old or mistyped.", "Go to Home"],
+  ] as const)(
+    "way %s: says the page was not found and offers one way back",
+    async (way, body, label) => {
+      jest.useRealTimers();
+      const onGo = jest.fn();
+      await render(
+        <ThemeProvider scheme="light">
+          <PageNotFound way={way} onGo={onGo} />
+        </ThemeProvider>,
+      );
+      expect(screen.getByRole("header", { name: "We could not find that page" })).toBeOnTheScreen();
+      expect(screen.getByText(body)).toBeOnTheScreen();
+      expect(screen.getAllByRole("button")).toHaveLength(1);
+      await userEvent.setup().press(screen.getByRole("button", { name: label }));
+      expect(onGo).toHaveBeenCalledTimes(1);
+    },
+  );
 });
