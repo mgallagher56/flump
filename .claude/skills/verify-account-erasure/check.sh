@@ -21,7 +21,8 @@ expectations='current|pass
 promise|pass
 broken-writes-no-fence|ErasureLeavesNothing
 broken-reset-no-lock|ResetNeverOutlivesErasure
-broken-no-straggler-sweep|StragglerSweepCatchesEarlierWrites'
+broken-no-straggler-sweep|StragglerSweepCatchesEarlierWrites
+broken-partner-no-lock|ErasureLeavesNothing'
 
 only="$*"
 work=$(mktemp -d)

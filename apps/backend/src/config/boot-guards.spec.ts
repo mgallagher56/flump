@@ -164,6 +164,26 @@ describe("household gate guard (E34 C3)", () => {
     ).toThrow(HouseholdGateError);
   });
 
+  it("cannot be reached on Railway or in production by any other spelling: on means refused", () => {
+    const spellings = ["true", "TRUE", " True ", "1", "yes", "on", "enabled", "t", "true1", ""];
+    for (const where of [PROD, { ...PROD, NODE_ENV: "development", RAILWAY_ENVIRONMENT: "x" }]) {
+      for (const value of spellings) {
+        const env = { ...where, HOUSEHOLD_ENABLED: value };
+        // Either the switch reads off, or boot refuses: never on with the conditions unmet.
+        if (isHouseholdEnabled(env)) {
+          expect(() => assertBootGuards(env), value).toThrow(HouseholdGateError);
+        } else {
+          expect(() => assertBootGuards(env), value).not.toThrow();
+        }
+      }
+      expect(spellings.filter((v) => isHouseholdEnabled({ HOUSEHOLD_ENABLED: v }))).toEqual([
+        "true",
+        "TRUE",
+        " True ",
+      ]);
+    }
+  });
+
   it("allows it in a local process, for the disposable test stack", () => {
     expect(() =>
       assertBootGuards({ NODE_ENV: "development", HOUSEHOLD_ENABLED: "true" }),
