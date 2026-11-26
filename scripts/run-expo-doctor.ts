@@ -181,8 +181,14 @@ export function judgeSdkVersions(
   const warnings: string[] = [];
   for (const m of table.mismatches) {
     const at = published.get(releaseKey(m));
-    if (!at || Number.isNaN(at.getTime()) || at.getTime() > now.getTime()) {
+    if (!at || Number.isNaN(at.getTime())) {
       reasons.push(`npm gave no publish date for ${releaseKey(m)}`);
+      continue;
+    }
+    if (at.getTime() > now.getTime()) {
+      reasons.push(
+        `npm gives a publish date in the future for ${releaseKey(m)}: ${at.toISOString()}`,
+      );
       continue;
     }
     const due = new Date(at.getTime() + COOLING_OFF_DAYS * DAY_MS);
