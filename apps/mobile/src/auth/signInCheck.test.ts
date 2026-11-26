@@ -258,4 +258,24 @@ describe("runSignInCheck", () => {
     expect(JSON.stringify(report)).not.toContain("r1");
     expect(report.backend).toBe("not-invited");
   });
+
+  it("a sign-out the server did not confirm (route not deployed) tries no token after it", async () => {
+    const tokens = store("r1");
+    const { workos, wait } = workosWithGrace();
+    const report = await runSignInCheck({
+      tokens,
+      workos,
+      checkAccountWith: async () => "ok",
+      wait,
+      endServerSession: jest.fn(async (_token: string) => "unavailable" as const),
+    });
+    expect(report).toMatchObject({
+      serverSignOut: "unavailable",
+      oldRefreshTokenAfterSignOut: "not-tried",
+      newestRefreshTokenAfterSignOut: "not-tried",
+    });
+    // r1 -> r2, the replay, refused after the wait, r2 -> r3; nothing after the sign-out.
+    expect(workos.refresh).toHaveBeenCalledTimes(4);
+    expect(tokens.peek()).toBeNull();
+  });
 });

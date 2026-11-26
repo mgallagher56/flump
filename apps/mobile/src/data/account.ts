@@ -25,8 +25,8 @@ export function createAccountCheck(client: ApiClient): () => Promise<AccountChec
       }
       // The client has already refreshed once and retried: a 401 now means the session is over.
       if (error.kind === "unauthorised") return "unauthorised";
-      // The server answered, but not in a shape this version understands: out of step, not offline.
-      if (error.kind === "bad-response") return "out-of-step";
+      // With no body parsed, a `bad-response` here can only be a body cut off mid-stream (a dropped
+      // connection), so it falls through to `unavailable` with the other network failures.
       return "unavailable";
     }
   };

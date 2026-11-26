@@ -178,25 +178,12 @@ describe("restore on launch", () => {
     ["not-invited", "notInvited"],
     ["terms-not-accepted", "termsRequired"],
     ["unavailable", "restoredOffline"],
-    // Version skew is not "offline" (PR #951): its own state, token kept.
-    ["out-of-step", "outOfStep"],
   ])("an account check of %s goes to %s and keeps the token", async (check, status) => {
     const h = harness({ stored: "r_old", account: async () => check });
     const session = createSession(h.deps);
     await session.restore();
     expect(session.getState()).toEqual({ status });
     expect(h.tokens.peek()).not.toBeNull();
-  });
-
-  it("from out of step, Try again checks the account again and signs in", async () => {
-    let check: AccountCheck = "out-of-step";
-    const h = harness({ stored: "r_old", account: async () => check });
-    const session = createSession(h.deps);
-    await session.restore();
-    expect(session.getState()).toEqual({ status: "outOfStep" });
-    check = "ok";
-    await session.retry();
-    expect(session.getState()).toEqual({ status: "signedIn" });
   });
 
   it("a fresh token the API refuses ends the session and clears the device", async () => {

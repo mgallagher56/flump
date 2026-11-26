@@ -36,7 +36,6 @@ export type AccountCheck =
   | "not-invited"
   | "terms-not-accepted"
   | "unauthorised"
-  | "out-of-step"
   | "unavailable";
 
 /** As `@flump/api-client`'s `RefreshOutcome`. */
@@ -126,7 +125,6 @@ export function createSession(deps: SessionDeps): Session {
     else if (account === "not-invited") dispatch({ type: "NOT_INVITED" });
     else if (account === "terms-not-accepted") dispatch({ type: "TERMS_REQUIRED" });
     else if (account === "unavailable") dispatch({ type: "OFFLINE" });
-    else if (account === "out-of-step") dispatch({ type: "OUT_OF_STEP" });
     else await endSession();
   }
 
@@ -220,13 +218,7 @@ export function createSession(deps: SessionDeps): Session {
   }
 
   async function retry() {
-    if (
-      state.status !== "restoredOffline" &&
-      state.status !== "termsRequired" &&
-      state.status !== "outOfStep"
-    ) {
-      return;
-    }
+    if (state.status !== "restoredOffline" && state.status !== "termsRequired") return;
     dispatch({ type: "RETRY_STARTED" });
     await restore();
   }
