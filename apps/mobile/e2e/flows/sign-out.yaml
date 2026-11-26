@@ -20,9 +20,11 @@ appId: app.flump.mobile
 # Cancel keeps the person signed in.
 - tapOn:
     id: "android:id/button2"
+# "You are signed in" is behind the dialog all along, so wait for the dialog itself to go.
 - extendedWaitUntil:
-    visible: "You are signed in"
+    notVisible: "Sign out of Flump\\?"
     timeout: 10000
+- assertVisible: "You are signed in"
 - runScript:
     file: ../scripts/assert-session.js
     env:
