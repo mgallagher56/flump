@@ -24,7 +24,7 @@ export function PageNotFound({ way, onGo }: { way: keyof typeof WAYS; onGo(): vo
       body={WAYS[way].body}
       edges={["right", "bottom", "left"]}
     >
-      <Button label={WAYS[way].label} onPress={onGo} />
+      <Button label={WAYS[way].label} testID="page-not-found-action" onPress={onGo} />
     </StatusMessage>
   );
 }

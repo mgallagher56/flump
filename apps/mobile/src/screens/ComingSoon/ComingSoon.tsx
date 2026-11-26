@@ -6,6 +6,8 @@ import { COMING_SOON_BODY, comingSoonAction, OPEN_FLUMP_WEBSITE } from "../../co
 import { useShell, webLink } from "../../navigation/shell";
 
 export interface ComingSoonProps {
+  /** The page's key (web's), for the screen's test id: `coming-soon-<key>`. */
+  pageKey: string;
   /** The page's name, as web's navigation says it. */
   label: string;
   /** The same page on the website. */
@@ -16,10 +18,10 @@ export interface ComingSoonProps {
  * A page whose own slice is not built yet (E12 S4, plan 9.7): what it is, that it is on the
  * website today, and a link to it there. Never a figure. The header above already names the page.
  */
-export function ComingSoon({ label, webRoute }: ComingSoonProps) {
+export function ComingSoon({ pageKey, label, webRoute }: ComingSoonProps) {
   const link = webLink(useShell(), webRoute);
   return (
-    <Screen edges={["right", "bottom", "left"]}>
+    <Screen edges={["right", "bottom", "left"]} testID={`coming-soon-${pageKey}`}>
       <Text textStyle="body.md" color="secondary">
         {COMING_SOON_BODY}
       </Text>

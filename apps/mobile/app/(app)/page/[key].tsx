@@ -14,7 +14,7 @@ export default function MorePageRoute() {
     <>
       <Stack.Screen options={{ title: page?.label ?? "" }} />
       {page ? (
-        <ComingSoon label={page.label} webRoute={page.webRoute} />
+        <ComingSoon pageKey={page.key} label={page.label} webRoute={page.webRoute} />
       ) : (
         <PageNotFound way="more" onGo={() => router.navigate("/more")} />
       )}
