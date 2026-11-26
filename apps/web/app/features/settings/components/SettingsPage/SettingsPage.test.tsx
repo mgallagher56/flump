@@ -1,5 +1,6 @@
 import { expectPageRules } from "@repo/ui/testing";
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { renderToString } from "react-dom/server";
 import { createMemoryRouter, MemoryRouter, RouterProvider, useNavigate } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { parseSettingsTab } from "~/features/settings/settings-tabs";
@@ -155,6 +156,42 @@ describe("<SettingsPage />", () => {
       ),
     );
     expect(screen.getByTestId("settings-household-tab")).toBeDefined();
+  });
+
+  it("renders the starting tab the loader chose in the first HTML: who the household is with and how to leave", () => {
+    const router = createMemoryRouter(
+      [
+        {
+          path: "/app/profile",
+          element: (
+            <SettingsPage
+              household={{
+                state: {
+                  household: {
+                    sharesJointSummary: false,
+                    joinedAt: "2026-11-20T09:00:00.000Z",
+                    withName: "Sam",
+                  },
+                  invitation: null,
+                },
+                jointSummary: [],
+              }}
+              initialProfile={profile}
+              initialTab="household"
+            />
+          ),
+        },
+      ],
+      { initialEntries: ["/app/profile?tab=household"] },
+    );
+    // Server rendering runs no effects, so this is what the first HTML shows.
+    const html = renderToString(<RouterProvider router={router} />);
+    const page = document.createElement("div");
+    page.innerHTML = html;
+    const selected = page.querySelector('[role="tab"][aria-selected="true"]');
+    expect(selected?.textContent).toBe("Household");
+    expect(page.textContent).toContain("You share a household with Sam.");
+    expect(within(page).getByRole("button", { name: "Leave household" })).toBeDefined();
   });
 
   it("knows ?tab=household only when the tab is available", () => {

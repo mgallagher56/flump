@@ -14,6 +14,17 @@ describe("normalisePath", () => {
     expect(normalisePath(`/invite/${token}`)).not.toContain(token);
   });
 
+  it("never logs a household invitation token (web /household/join/<token>), whatever its length", () => {
+    // Built at runtime so no token-shaped literal sits in the source.
+    const token = ["Hq7", "m".repeat(37), "_-2"].join("");
+    expect(normalisePath(`/household/join/${token}`)).toBe("/household/join/:id");
+    // A short or cut-off token is still a secret: collapsed by its place, not its shape.
+    expect(normalisePath("/household/join/shortone")).toBe("/household/join/:id");
+    expect(normalisePath("/invite/shortone")).toBe("/invite/:id");
+    expect(normalisePath("/household/join")).toBe("/household/join");
+    expect(normalisePath("/household/shortone")).toBe("/household/shortone");
+  });
+
   it("drops the query string and fragment", () => {
     expect(normalisePath("/callback?code=abc123&state=xyz789")).toBe("/callback");
     expect(normalisePath("/callback#frag")).toBe("/callback");

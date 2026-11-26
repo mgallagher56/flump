@@ -6,7 +6,11 @@ import { FinanceController } from "../../src/modules/finance/finance.controller"
 import { HouseholdController } from "../../src/modules/household/household.controller";
 import { UserProfileController } from "../../src/modules/profile/user-profile.controller";
 import { TaxController } from "../../src/modules/tax/tax.controller";
-import { RATE_LIMIT_CLASS, RATE_LIMIT_SKIP } from "../../src/security/rate-limit.decorator";
+import {
+  ADDRESS_KEYED_RATE_LIMIT_CLASSES,
+  RATE_LIMIT_CLASS,
+  RATE_LIMIT_SKIP,
+} from "../../src/security/rate-limit.decorator";
 import { must } from "../../src/testing/must";
 
 describe("rate limit classes on real controllers", () => {
@@ -42,6 +46,9 @@ describe("rate limit classes on real controllers", () => {
     expect(classOf(HouseholdController.prototype, "createInvitation")).toBe(
       "householdInviteCreate",
     );
+    // Accepting and previewing are counted per address as well as per person, so one address
+    // cannot try links across many accounts.
+    expect(ADDRESS_KEYED_RATE_LIMIT_CLASSES.has("householdInviteAccept")).toBe(true);
   });
 
   it("puts receipt downloads in the tighter receiptRead class", () => {

@@ -16,20 +16,36 @@ type Reply = { status: number; body: unknown };
 const NOT_IN_ONE: Reply = { status: 200, body: { household: null, invitation: null } };
 const GATE_OFF: Reply = { status: 404, body: { statusCode: 404, message: "Not found" } };
 
-/** Answers each backend path (after /v1/) with its reply; anything else fails the test. */
+/** The switch as an anonymous `GET /household` sees it: 401 when on, 404 when off. */
+const ANON_ON: Reply = { status: 401, body: { statusCode: 401, message: "Unauthorized" } };
+
+/**
+ * Answers each backend path (after /v1/) with its reply; anything else fails the test. A call
+ * without an Authorization header is keyed `anon:<path>`, and the anonymous switch probe answers
+ * 401 (on) unless the replies say otherwise.
+ */
 const backend = (replies: Record<string, Reply>) => {
-  globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
-    const path = String(input).replace(/^.*\/v1\//, "");
-    const reply = replies[path];
-    if (!reply) throw new Error(`unexpected ${path}`);
+  const all: Record<string, Reply> = { "anon:household": ANON_ON, ...replies };
+  globalThis.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const reply = all[keyFor(input, init)];
+    if (!reply) throw new Error(`unexpected ${keyFor(input, init)}`);
     return new Response(JSON.stringify(reply.body), {
       status: reply.status,
       headers: { "Content-Type": "application/json" },
     });
   }) as typeof fetch;
 };
+const keyFor = (input: RequestInfo | URL, init?: RequestInit) => {
+  const path = String(input).replace(/^.*\/v1\//, "");
+  const headers = new Headers(init?.headers);
+  return headers.has("Authorization") ? path : `anon:${path}`;
+};
 const calledPaths = () =>
-  vi.mocked(globalThis.fetch).mock.calls.map(([input]) => String(input).replace(/^.*\/v1\//, ""));
+  vi.mocked(globalThis.fetch).mock.calls.map(([input, init]) => keyFor(input, init));
+const bodyOf = (call: number) => {
+  const [, init] = vi.mocked(globalThis.fetch).mock.calls[call] as [string, RequestInit];
+  return { method: init.method, body: JSON.parse(String(init.body)) as unknown };
+};
 
 const args = (method: "GET" | "POST", cookie?: string) =>
   ({
@@ -48,32 +64,102 @@ const caught = (p: Promise<unknown>) =>
     (e: unknown) => e as Response,
   );
 
+const SIGN_IN = "https://auth.example.test/sign-in";
+const signedIn = () =>
+  vi.mocked(getAuthSession).mockResolvedValue({
+    user: { id: "user_b" },
+    accessToken: "tok",
+    headers: undefined,
+  } as never);
+/** Signed out: the real `ensureSignedIn` throws a redirect to sign in. */
+const signedOut = () =>
+  vi
+    .mocked(getAuthSession)
+    .mockRejectedValue(new Response(null, { status: 302, headers: { Location: SIGN_IN } }));
+const SESSIONS = [
+  ["signed in", signedIn],
+  ["signed out", signedOut],
+] as const;
+
+const tokenArgs = (token: string) =>
+  ({
+    request: new Request(`https://app.example/household/join/${token}`),
+    params: { token },
+    context: {},
+  }) as never;
+
+/** The ordinary unknown-page answer, exactly as the catch-all route (`$.tsx`) throws it. */
+async function expectOrdinary404(thrown: Response | null) {
+  expect(thrown).toBeInstanceOf(Response);
+  expect(thrown?.status).toBe(404);
+  expect(thrown?.statusText).toBe("Not Found");
+  expect(thrown?.headers.get("Set-Cookie")).toBeNull();
+  expect(thrown?.headers.get("Location")).toBeNull();
+  expect(await thrown?.text()).toBe("Not Found");
+}
+
+afterEach(() => {
+  globalThis.fetch = realFetch;
+  vi.clearAllMocks();
+});
+
 describe("/household/join/<token>", () => {
-  it("moves a well-formed token into its own short-lived HttpOnly cookie and drops it from the URL", async () => {
-    const response = (await tokenLoader({
-      request: new Request(`https://app.example/household/join/${TOKEN}`),
-      params: { token: TOKEN },
-      context: {},
-    } as never)) as Response;
-    expect(response.status).toBe(302);
+  it.each(SESSIONS)(
+    "with the switch off (%s), is the ordinary 404 and sets no cookie",
+    async (_label, session) => {
+      session();
+      backend({ "anon:household": GATE_OFF });
+      await expectOrdinary404(await caught(tokenLoader(tokenArgs(TOKEN))));
+      expect(calledPaths()).toEqual(["anon:household"]);
+      expect(getAuthSession).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([
+    ["a server error", { status: 500, body: { statusCode: 500 } }],
+    ["a 403", { status: 403, body: { statusCode: 403 } }],
+  ] as const)("treats %s from the switch probe as off (fail closed)", async (_label, reply) => {
+    backend({ "anon:household": reply });
+    await expectOrdinary404(await caught(tokenLoader(tokenArgs(TOKEN))));
+  });
+
+  it("treats an unreachable backend as off", async () => {
+    globalThis.fetch = vi.fn(async () => {
+      throw new TypeError("fetch failed");
+    }) as typeof fetch;
+    await expectOrdinary404(await caught(tokenLoader(tokenArgs(TOKEN))));
+  });
+
+  it.each(SESSIONS)(
+    "with the switch on (%s), moves a well-formed token into its own short-lived HttpOnly cookie and drops it from the URL",
+    async (_label, session) => {
+      session();
+      backend({});
+      const response = (await tokenLoader(tokenArgs(TOKEN))) as Response;
+      expect(response.status).toBe(302);
+      expect(response.headers.get("Location")).toBe("/household/join");
+      const cookie = response.headers.get("Set-Cookie") ?? "";
+      expect(cookie).toContain(`flump_household_invite=${TOKEN};`);
+      expect(cookie).not.toContain("flump_invite=");
+      expect(cookie).toContain("Path=/household;");
+      expect(cookie).toContain("HttpOnly");
+      expect(cookie).toContain("SameSite=Lax");
+      expect(cookie).toContain("Secure");
+      expect(cookie).toContain("Max-Age=3600");
+      expect(response.headers.get("Cache-Control")).toBe("no-store");
+      expect(calledPaths()).toEqual(["anon:household"]);
+    },
+  );
+
+  it("with the switch on, a 200 from the probe also counts as on", async () => {
+    backend({ "anon:household": NOT_IN_ONE });
+    const response = (await tokenLoader(tokenArgs(TOKEN))) as Response;
     expect(response.headers.get("Location")).toBe("/household/join");
-    const cookie = response.headers.get("Set-Cookie") ?? "";
-    expect(cookie).toContain(`flump_household_invite=${TOKEN};`);
-    expect(cookie).not.toContain("flump_invite=");
-    expect(cookie).toContain("Path=/household;");
-    expect(cookie).toContain("HttpOnly");
-    expect(cookie).toContain("SameSite=Lax");
-    expect(cookie).toContain("Secure");
-    expect(cookie).toContain("Max-Age=3600");
-    expect(response.headers.get("Cache-Control")).toBe("no-store");
   });
 
   it("clears the cookie for a malformed token", async () => {
-    const response = (await tokenLoader({
-      request: new Request("https://app.example/household/join/short"),
-      params: { token: "short" },
-      context: {},
-    } as never)) as Response;
+    backend({});
+    const response = (await tokenLoader(tokenArgs("short"))) as Response;
     expect(response.headers.get("Location")).toBe("/household/join");
     expect(response.headers.get("Set-Cookie")).toContain("flump_household_invite=; ");
     expect(response.headers.get("Set-Cookie")).toContain("Max-Age=0");
@@ -82,32 +168,52 @@ describe("/household/join/<token>", () => {
 
 describe("/household/join", () => {
   beforeEach(() => {
-    vi.mocked(getAuthSession).mockResolvedValue({
-      user: { id: "user_b" },
-      accessToken: "tok",
-      headers: undefined,
-    } as never);
-  });
-  afterEach(() => {
-    globalThis.fetch = realFetch;
-    vi.clearAllMocks();
+    signedIn();
   });
 
-  it("with the switch off, the page is the ordinary 404 and nothing else is asked", async () => {
-    backend({ household: GATE_OFF });
+  it.each(SESSIONS)(
+    "with the switch off (%s), the page is the ordinary 404, before sign-in or anything else is asked",
+    async (_label, session) => {
+      session();
+      backend({ "anon:household": GATE_OFF });
+      await expectOrdinary404(await caught(joinLoader(args("GET", COOKIE))));
+      expect(calledPaths()).toEqual(["anon:household"]);
+      expect(getAuthSession).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each(SESSIONS)(
+    "with the switch off (%s), accepting is the ordinary 404 too and the link is not sent",
+    async (_label, session) => {
+      session();
+      backend({ "anon:household": GATE_OFF });
+      await expectOrdinary404(await caught(joinAction(args("POST", COOKIE))));
+      expect(calledPaths()).toEqual(["anon:household"]);
+      expect(getAuthSession).not.toHaveBeenCalled();
+    },
+  );
+
+  it("with the switch on and signed out, asks the visitor to sign in", async () => {
+    signedOut();
+    backend({});
     const thrown = await caught(joinLoader(args("GET", COOKIE)));
-    expect(thrown).toBeInstanceOf(Response);
-    expect(thrown?.status).toBe(404);
-    expect(thrown?.statusText).toBe("Not Found");
-    expect(await thrown?.text()).toBe("Not Found");
-    expect(calledPaths()).toEqual(["household"]);
+    expect(thrown?.status).toBe(302);
+    expect(thrown?.headers.get("Location")).toBe(SIGN_IN);
+    expect(calledPaths()).toEqual(["anon:household"]);
   });
 
-  it("with the switch off, accepting is the ordinary 404 too and the link is not sent", async () => {
-    backend({ household: GATE_OFF });
+  it("with the switch on and signed out, accepting asks the visitor to sign in", async () => {
+    signedOut();
+    backend({});
     const thrown = await caught(joinAction(args("POST", COOKIE)));
-    expect(thrown?.status).toBe(404);
-    expect(calledPaths()).toEqual(["household"]);
+    expect(thrown?.headers.get("Location")).toBe(SIGN_IN);
+    expect(calledPaths()).toEqual(["anon:household"]);
+  });
+
+  it("if the signed-in probe answers 404 after all, the page is still the ordinary 404", async () => {
+    backend({ household: GATE_OFF });
+    await expectOrdinary404(await caught(joinLoader(args("GET", COOKIE))));
+    expect(calledPaths()).toEqual(["anon:household", "household"]);
   });
 
   it("previews a usable link without accepting it, and keeps the cookie for accepting", async () => {
@@ -118,17 +224,15 @@ describe("/household/join", () => {
     const result = (await joinLoader(args("GET", COOKIE))) as DataResult;
     expect(result.data.outcome).toBe("ready");
     expect(result.init.headers["Set-Cookie"]).toBeUndefined();
-    expect(calledPaths()).toEqual(["household", "household/invitations/preview"]);
-    const [, init] = vi.mocked(globalThis.fetch).mock.calls[1] as [string, RequestInit];
-    expect(init.method).toBe("POST");
-    expect(JSON.parse(String(init.body))).toEqual({ token: TOKEN });
+    expect(calledPaths()).toEqual(["anon:household", "household", "household/invitations/preview"]);
+    expect(bodyOf(2)).toEqual({ method: "POST", body: { token: TOKEN } });
   });
 
   it("with no cookie, says the link cannot be used without asking about it", async () => {
     backend({ household: NOT_IN_ONE });
     const result = (await joinLoader(args("GET"))) as DataResult;
     expect(result.data.outcome).toBe("unusable");
-    expect(calledPaths()).toEqual(["household"]);
+    expect(calledPaths()).toEqual(["anon:household", "household"]);
   });
 
   it("410 invite_unusable gets the one neutral outcome and clears the cookie", async () => {
@@ -160,7 +264,7 @@ describe("/household/join", () => {
     });
     const result = (await joinLoader(args("GET", COOKIE))) as DataResult;
     expect(result.data.outcome).toBe("already");
-    expect(calledPaths()).toEqual(["household"]);
+    expect(calledPaths()).toEqual(["anon:household", "household"]);
   });
 
   it("accepting joins, clears the cookie and opens the Household tab", async () => {
@@ -172,8 +276,7 @@ describe("/household/join", () => {
     expect(response.status).toBe(302);
     expect(response.headers.get("Location")).toBe("/app/profile?tab=household");
     expect(response.headers.get("Set-Cookie")).toContain("Max-Age=0");
-    const [, init] = vi.mocked(globalThis.fetch).mock.calls[1] as [string, RequestInit];
-    expect(JSON.parse(String(init.body))).toEqual({ token: TOKEN });
+    expect(bodyOf(2)).toEqual({ method: "POST", body: { token: TOKEN } });
   });
 
   it("accepting with 409 already_in_household gets its own outcome", async () => {

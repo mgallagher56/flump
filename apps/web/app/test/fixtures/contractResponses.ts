@@ -349,6 +349,7 @@ export function contractBody(method: string, path: string): unknown {
   if (p === "/beta/admin/invites" && m === "GET") return { invites: [] };
   if (p === "/beta/admin/members") return { members: [] };
   if (p === "/beta/invites/redeem") return { status: "joined" };
+  if (p === "/household" && m === "GET") return { household: null, invitation: null };
   if (p === "/retirement-plan") return { plan: retirementPlanFixture };
   if (p === "/invoicing/settings") return { settings: invoicingSettingsFixture };
   if (p === "/work-logs") {

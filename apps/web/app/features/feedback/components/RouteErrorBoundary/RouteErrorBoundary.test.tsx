@@ -291,6 +291,10 @@ describe("routeKeyFor covers every dynamic route", () => {
       ["/app/tax/receipts/rcpt-42", "/app/tax/receipts/:id"],
       ["/app/tax/receipts/plain", "/app/tax/receipts/:id"],
     ],
+    "household.join.$token": [
+      [`/household/join/${"y".repeat(43)}`, "/household/join/:id"],
+      ["/household/join/plain", "/household/join/:id"],
+    ],
     "invite.$token": [
       [`/invite/${"x".repeat(43)}`, "/invite/:id"],
       ["/invite/plain", "/invite/:id"],

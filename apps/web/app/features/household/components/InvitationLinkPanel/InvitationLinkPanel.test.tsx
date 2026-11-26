@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { InvitationLinkPanel, type InvitationLinkPanelProps } from "./InvitationLinkPanel";
 
@@ -49,11 +49,42 @@ describe("<InvitationLinkPanel />", () => {
       screen.getByText(/stops working on 27 Nov 2026\. It will not be shown again\./),
     ).toBeDefined();
     expect(screen.queryByRole("button", { name: /Make a/ })).toBeNull();
+    expect(screen.getByRole("status").textContent).toBe("");
     fireEvent.click(screen.getByRole("button", { name: "Copy link" }));
     expect(writeText).toHaveBeenCalledWith(LINK);
     expect(await screen.findByRole("button", { name: "Copied" })).toBeDefined();
+    // Said once through the polite live region, for screen readers.
+    await waitFor(() => expect(screen.getByRole("status").textContent).toBe("Link copied"));
+    expect(screen.queryByText(/We could not copy the link/)).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Cancel link" }));
     expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+
+  it("labels the link field with visible text", () => {
+    renderPanel({ link: LINK });
+    const label = screen.getByText("Invitation link", { selector: "label" });
+    const field = screen.getByRole("textbox", { name: "Invitation link" });
+    expect(label.getAttribute("for")).toBe(field.id);
+  });
+
+  it.each([
+    ["no clipboard", () => vi.stubGlobal("navigator", {})],
+    [
+      "a clipboard that refuses",
+      () =>
+        vi.stubGlobal("navigator", {
+          clipboard: { writeText: vi.fn().mockRejectedValue(new Error("denied")) },
+        }),
+    ],
+  ])("with %s, says plainly to copy the link by hand and announces nothing", async (_l, stub) => {
+    stub();
+    renderPanel({ link: LINK });
+    fireEvent.click(screen.getByRole("button", { name: "Copy link" }));
+    expect(
+      await screen.findByText("We could not copy the link. Select it above and copy it yourself."),
+    ).toBeDefined();
+    expect(screen.getByRole("button", { name: "Copy link" })).toBeDefined();
+    expect(screen.getByRole("status").textContent).toBe("");
   });
 
   it("with an open link already shown, gives its end date, a new link and cancel, but not the link", () => {

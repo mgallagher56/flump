@@ -7,7 +7,14 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } 
 import { Account } from "../../src/entities/account.entity";
 import { UserProfile } from "../../src/entities/user-profile.entity";
 import { HouseholdService } from "../../src/modules/household/household.service";
+import {
+  CLIENT_IP_HEADER,
+  CLIENT_IP_KEY_ENV,
+  CLIENT_IP_SIG_HEADER,
+  signClientIp,
+} from "../../src/security/signed-client-ip";
 import { resolveDbTestMode } from "../../src/testing/dbTestMode";
+import { seedTermsAcceptance } from "../../src/testing/seedTermsAcceptance";
 import { ROUTE_MATRIX } from "./matrix";
 import {
   type AuthzHarness,
@@ -84,9 +91,12 @@ describe.skipIf(dbMode === "skip")("authz: households (real Postgres)", () => {
   const off = () => {
     delete process.env.HOUSEHOLD_ENABLED;
   };
+  // A made-up test key, not a real secret: 40 characters, over the 32 the backend needs.
+  const CLIENT_IP_KEY = "h".repeat(40);
 
   beforeAll(async () => {
-    h = await bootAuthzHarness({ likeMain: true });
+    // A signing key, so a test can send a request from a chosen browser address.
+    h = await bootAuthzHarness({ likeMain: true, env: { [CLIENT_IP_KEY_ENV]: CLIENT_IP_KEY } });
   }, 60_000);
 
   afterAll(async () => {
@@ -154,9 +164,10 @@ describe.skipIf(dbMode === "skip")("authz: households (real Postgres)", () => {
     );
   const accountsOf = (userId: string) =>
     h.dataSource.query(`SELECT * FROM accounts WHERE user_id = $1 ORDER BY id`, [userId]);
-  /** A third person, signed in now, with a run-time id. */
+  /** A third person, signed in now, with a run-time id, who has agreed to the newest terms. */
   const thirdPerson = async () => {
     const id = `user_hh_${randomBytes(6).toString("hex")}`;
+    await seedTermsAcceptance(h.dataSource, [id]);
     return { id, token: await h.signIn(id) };
   };
 
@@ -465,6 +476,25 @@ describe.skipIf(dbMode === "skip")("authz: households (real Postgres)", () => {
       );
       await expectUnusable(await accept(h.tokens.b, stale.token), "inviter in a household");
       await expectUnusable(await preview(h.tokens.b, stale.token), "inviter in a household");
+      // A fresh budget again for the last three kinds.
+      await h.resetRateLimits();
+      // Used: C's link, already accepted by A.
+      await expectUnusable(await accept(h.tokens.b, fromC.token), "used");
+      // Expired: a fourth person's link, past its end.
+      const d = await thirdPerson();
+      const expiring = await createLink(d.token);
+      await h.dataSource.query(
+        `UPDATE household_invitations SET expires_at = now() - interval '1 millisecond'
+         WHERE inviter_user_id = $1`,
+        [d.id],
+      );
+      await expectUnusable(await accept(h.tokens.b, expiring.token), "expired");
+      // Wrong: a real open link with its last character changed.
+      const e = await thirdPerson();
+      const open = await createLink(e.token);
+      const last = open.token.slice(-1) === "A" ? "B" : "A";
+      await expectUnusable(await accept(h.tokens.b, `${open.token.slice(0, -1)}${last}`), "wrong");
+      expect(bodies).toHaveLength(9);
       expect(new Set(bodies.map((b) => JSON.stringify(b))).size).toBe(1);
       expect(bodies[0]).toEqual({
         code: "invite_unusable",
@@ -698,20 +728,23 @@ describe.skipIf(dbMode === "skip")("authz: households (real Postgres)", () => {
     });
 
     it("rate limits: five previews or accepts an hour per person and per address", async () => {
+      /** A preview or accept sent as if from the browser address `ip` (signed by the web). */
+      const from = (ip: string, route: "preview" | "accept", token: string) =>
+        h
+          .call("post", `/household/invitations/${route}`, token, { token: unknownToken() })
+          .set(CLIENT_IP_HEADER, ip)
+          .set(CLIENT_IP_SIG_HEADER, signClientIp(CLIENT_IP_KEY, ip));
+      const [first, second, third] = ["203.0.113.11", "203.0.113.22", "203.0.113.33"];
       for (let i = 0; i < 5; i++) {
-        expect((await preview(h.tokens.b, unknownToken())).status).toBe(410);
+        expect((await from(first, "preview", h.tokens.b)).status).toBe(410);
       }
-      const sixth = await accept(h.tokens.b, unknownToken());
-      expect(sixth.status).toBe(429);
-      // The same address, another person: counted per address too.
+      // Per person: from an address with nothing counted, B is still limited.
+      expect((await from(second, "accept", h.tokens.b)).status).toBe(429);
+      // Per address: another account at the first address cannot accept (probe tokens) either.
       const c = await thirdPerson();
-      expect((await preview(c.token, unknownToken())).status).toBe(429);
-      await h.resetRateLimits();
-      // Per person: from another address B is still limited (the per-user bucket).
-      for (let i = 0; i < 5; i++) {
-        expect((await accept(h.tokens.b, unknownToken())).status).toBe(410);
-      }
-      expect((await preview(h.tokens.b, unknownToken())).status).toBe(429);
+      expect((await from(first, "accept", c.token)).status).toBe(429);
+      // Neither: that person at a third address is not.
+      expect((await from(third, "preview", c.token)).status).toBe(410);
     });
 
     it("rate limits: ten new links an hour per person", async () => {

@@ -31,6 +31,11 @@ export interface SettingsPageProps {
    * succeed: then there is no Household tab and `?tab=household` is an unknown tab.
    */
   household?: HouseholdSettingsData | null;
+  /**
+   * The tab to open first, chosen by the loader from `?tab=` so the first HTML already shows it
+   * (the household join flow lands on `?tab=household`). Profile when absent.
+   */
+  initialTab?: SettingsTab;
   /** The signed-in auth user. */
   user?: {
     email?: string;
@@ -53,14 +58,16 @@ export const SettingsPage: FC<SettingsPageProps> = ({
   netWorthChoices,
   isBetaAdmin = false,
   household = null,
+  initialTab = "profile",
 }) => {
   const householdAvailable = household !== null;
   const { profile } = useUserProfile();
   const effectiveProfile = profile.id ? profile : initialProfile;
   const email = user?.email || effectiveProfile.email;
 
-  const [activeTab, setActiveTab] = useState<SettingsTab>("profile");
-  // Deep link from the account menu (?tab=security). Read after mount so SSR markup matches.
+  const [activeTab, setActiveTab] = useState<SettingsTab>(initialTab);
+  // A later change of `?tab=` on the client (the account menu's link to ?tab=security) switches
+  // tab; the first render uses the loader's choice, so the server and client markup match.
   let search = "";
   try {
     // biome-ignore lint/correctness/useHookAtTopLevel: fallback when rendered outside Router in unit tests

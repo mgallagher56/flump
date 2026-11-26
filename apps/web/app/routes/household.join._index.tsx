@@ -20,7 +20,12 @@ import {
   INVITE_UNUSABLE_MESSAGE,
   JOIN_BUSY_MESSAGE,
 } from "~/features/household/household";
-import { isAlreadyInHousehold, isBackendStatus } from "~/features/household/household.server";
+import {
+  householdNotFound,
+  householdSwitchOn,
+  isAlreadyInHousehold,
+  isBackendStatus,
+} from "~/features/household/household.server";
 import {
   clearHouseholdInviteCookie,
   readHouseholdInviteCookie,
@@ -37,9 +42,6 @@ export const meta: MetaFunction = ({ error }) => [
   { title: error ? "We cannot find that page | Flump" : "Join a household | Flump" },
 ];
 
-/** The web's ordinary unknown-route answer, the same as the catch-all route (`$.tsx`). */
-const notFound = () => new Response("Not Found", { status: 404, statusText: "Not Found" });
-
 /**
  * Asks the backend whether households are on. With the switch off it answers 404, and this page
  * then answers exactly like a page that does not exist. Any other failure is an ordinary error.
@@ -48,7 +50,7 @@ async function probeHousehold(accessToken: string, signal: AbortSignal) {
   try {
     return await backendFetch("/household", { accessToken, signal, schema: HouseholdResponse });
   } catch (error) {
-    if (isBackendStatus(error, 404)) throw notFound();
+    if (isBackendStatus(error, 404)) throw householdNotFound();
     throwRouteError(error);
   }
 }
@@ -58,11 +60,16 @@ function outcomeFor(error: unknown): Exclude<JoinOutcome, "ready"> {
   if (isBackendStatus(error, 410, "invite_unusable")) return "unusable";
   if (isAlreadyInHousehold(error)) return "already";
   if (isBackendStatus(error, 429)) return "busy";
-  if (isBackendStatus(error, 404)) throw notFound();
+  if (isBackendStatus(error, 404)) throw householdNotFound();
   throwRouteError(error);
 }
 
+/**
+ * With the switch off the page answers like one that does not exist, signed in or out: the switch
+ * is asked first, without a session, so no one is sent to sign in for a page that is not there.
+ */
 async function signedInToken(args: LoaderFunctionArgs | ActionFunctionArgs) {
+  if (!(await householdSwitchOn(args.request.signal))) throw householdNotFound();
   const { accessToken } = await getAuthSession(args, { ensureSignedIn: true });
   if (!accessToken) throwRouteError(new BackendError("unauthorised", "/household"));
   return accessToken;

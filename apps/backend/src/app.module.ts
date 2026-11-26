@@ -64,7 +64,6 @@ import { SecurityModule } from "./security/security.module";
     BetaModule,
     RetentionModule,
     HouseholdModule,
-    HouseholdModule,
   ],
   controllers: [AppController, HealthController],
   providers: [

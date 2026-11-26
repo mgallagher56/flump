@@ -53,4 +53,12 @@ describe("<LeaveHouseholdSection />", () => {
       "We could not reach Flump. Check your connection and try again.",
     );
   });
+
+  it("while leaving, the confirm button says Leaving… and cannot be pressed again", async () => {
+    renderSection({ pending: true });
+    fireEvent.click(screen.getByRole("button", { name: "Leave household" }));
+    const dialog = await screen.findByRole("alertdialog");
+    const confirm = within(dialog).getByRole("button", { name: "Leaving…" }) as HTMLButtonElement;
+    expect(confirm.disabled).toBe(true);
+  });
 });

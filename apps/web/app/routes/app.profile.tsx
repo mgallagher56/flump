@@ -18,6 +18,7 @@ import { householdAction, loadHouseholdSettings } from "~/features/household/hou
 import { DELETE_ACCOUNT_INTENT } from "~/features/settings/account";
 import { deleteAccountAction } from "~/features/settings/account.server";
 import { SettingsPage } from "~/features/settings/components/SettingsPage";
+import { parseSettingsTab } from "~/features/settings/settings-tabs";
 import type { UserProfile } from "~/hooks/useUserProfile";
 import { backendFetch, backendFetchAll } from "~/services/backend-client.server";
 import { BackendError } from "~/services/backend-error";
@@ -60,8 +61,15 @@ export const loader = async (args: LoaderFunctionArgs) => {
       // answers 404, and any failure counts the same: null, no tab (fail closed).
       loadHouseholdSettings(accessToken, args.request.signal),
     ]);
+    // Chosen here so the first HTML already shows the tab `?tab=` names; unknown names and a
+    // Household tab that is not there open Profile.
+    const initialTab =
+      parseSettingsTab(new URL(args.request.url).search, {
+        householdAvailable: household !== null,
+      }) ?? "profile";
     return data({
       userProfile,
+      initialTab,
       netWorthChoices,
       isBetaAdmin,
       household,
@@ -94,8 +102,16 @@ export const shouldRevalidate: ShouldRevalidateFunction = ({
 }) => (formData?.get("intent") === DELETE_ACCOUNT_INTENT ? false : defaultShouldRevalidate);
 
 const ProfileRoute = (): ReactElement => {
-  const { userProfile, user, aiGuideUrl, mcpServerUrl, netWorthChoices, isBetaAdmin, household } =
-    useLoaderData<typeof loader>();
+  const {
+    userProfile,
+    user,
+    aiGuideUrl,
+    mcpServerUrl,
+    netWorthChoices,
+    isBetaAdmin,
+    household,
+    initialTab,
+  } = useLoaderData<typeof loader>();
 
   return (
     <SettingsPage
@@ -103,6 +119,7 @@ const ProfileRoute = (): ReactElement => {
       initialProfile={userProfile}
       mcpServerUrl={mcpServerUrl}
       household={household}
+      initialTab={initialTab}
       isBetaAdmin={isBetaAdmin}
       netWorthChoices={netWorthChoices}
       user={user}
