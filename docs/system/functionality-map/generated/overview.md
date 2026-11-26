@@ -2,7 +2,7 @@
 
 # Functionality map: overview
 
-Mapped pages: 41 | Sections: 266 | Excluded routes: 23
+Mapped pages: 42 | Sections: 274 | Excluded routes: 24
 
 ## web
 
@@ -104,6 +104,16 @@ Mapped pages: 41 | Sections: 266 | Excluded routes: 23
 | `history-chart`          | `apps/web/app/features/snapshot/components/NetWorthHistoryChart/NetWorthHistoryChart.tsx` | `balance-history`, `net-worth-choices`, `check-in-day`                     | `net-worth-over-time`                      |
 | `account-changes-drawer` | `apps/web/app/features/snapshot/components/MonthlyChangeTable/MonthlyChangeTable.tsx`     | `balance-history`, `account-name`, `account-type`                          | `net-worth-over-time`                      |
 | `check-in-sheet`         | `apps/web/app/features/snapshot/components/CheckInSheet/CheckInSheet.tsx`                 | `account-balance`, `balance-history`, `check-in-done`                      | `check-in-calculated-balance`, `net-worth` |
+
+### household-join: Join a household
+
+- Route: `/household/join` (auth: `required`, file: `apps/web/app/routes/household.join._index.tsx`)
+- Purpose: Show that joining a household shares nothing, then accept a household invitation link held in the household invitation cookie (E34 C3). The ordinary 404 when the backend's household switch is off.
+
+| Section               | Component                                                                        | Facts read | Figures |
+| --------------------- | -------------------------------------------------------------------------------- | ---------- | ------- |
+| `join-household`      | `apps/web/app/routes/household.join._index.tsx`                                  | -          | -       |
+| `household-help-line` | `apps/web/app/features/household/components/SharingHelpLine/SharingHelpLine.tsx` | -          | -       |
 
 ### import-review: Review import
 
@@ -301,24 +311,30 @@ Mapped pages: 41 | Sections: 266 | Excluded routes: 23
 ### settings: Settings
 
 - Route: `/app/profile` (auth: `required`, file: `apps/web/app/routes/app.profile.tsx`)
-- Purpose: Manage personal details, age and pay, tax basis, net worth choices, monthly check-in day, optional modules, sign-in security, AI connections, and data export or deletion.
+- Purpose: Manage personal details, age and pay, tax basis, net worth choices, monthly check-in day, optional modules, sign-in security, AI connections, data export or deletion, and (only when the backend's household switch is on) a household with one other person.
 
-| Section                | Component                                                                                 | Facts read                                                 | Figures |
-| ---------------------- | ----------------------------------------------------------------------------------------- | ---------------------------------------------------------- | ------- |
-| `header`               | `apps/web/app/features/settings/components/SettingsPage/SettingsPage.tsx`                 | -                                                          | -       |
-| `profile-details`      | `apps/web/app/features/settings/components/ProfileTab/ProfileTab.tsx`                     | -                                                          | -       |
-| `age-and-pay`          | `apps/web/app/features/settings/components/AgeAndPaySection/AgeAndPaySection.tsx`         | `birth-year`, `employment-type`, `salary`, `pension-rates` | -       |
-| `tax-basis`            | `apps/web/app/features/settings/components/ProfileTab/ProfileTab.tsx`                     | `tax-region`, `student-loan-plan`                          | -       |
-| `net-worth-choices`    | `apps/web/app/features/settings/components/NetWorthChoices/NetWorthChoices.tsx`           | `net-worth-choices`                                        | -       |
-| `check-in-day`         | `apps/web/app/features/settings/components/CheckInDaySetting/CheckInDaySetting.tsx`       | `check-in-day`                                             | -       |
-| `sections-you-use`     | `apps/web/app/features/settings/components/ProfileTab/ProfileTab.tsx`                     | `partner-mode`                                             | -       |
-| `security-sign-in`     | `apps/web/app/features/settings/components/SecurityTab/SecurityTab.tsx`                   | -                                                          | -       |
-| `security-invites`     | `apps/web/app/features/settings/components/SecurityTab/SecurityTab.tsx`                   | -                                                          | -       |
-| `ai-connections`       | `apps/web/app/features/ai-connections/components/McpConnectionCard/McpConnectionCard.tsx` | -                                                          | -       |
-| `security-imports`     | `apps/web/app/features/settings/components/SecurityTab/SecurityTab.tsx`                   | -                                                          | -       |
-| `data-export`          | `apps/web/app/features/settings/components/DataExportSection/DataExportSection.tsx`       | -                                                          | -       |
-| `reset-financial-data` | `apps/web/app/features/settings/components/DataTab/DataTab.tsx`                           | -                                                          | -       |
-| `delete-account`       | `apps/web/app/features/settings/components/DeleteAccountSection/DeleteAccountSection.tsx` | -                                                          | -       |
+| Section                   | Component                                                                                    | Facts read                                                 | Figures |
+| ------------------------- | -------------------------------------------------------------------------------------------- | ---------------------------------------------------------- | ------- |
+| `header`                  | `apps/web/app/features/settings/components/SettingsPage/SettingsPage.tsx`                    | -                                                          | -       |
+| `profile-details`         | `apps/web/app/features/settings/components/ProfileTab/ProfileTab.tsx`                        | -                                                          | -       |
+| `age-and-pay`             | `apps/web/app/features/settings/components/AgeAndPaySection/AgeAndPaySection.tsx`            | `birth-year`, `employment-type`, `salary`, `pension-rates` | -       |
+| `tax-basis`               | `apps/web/app/features/settings/components/ProfileTab/ProfileTab.tsx`                        | `tax-region`, `student-loan-plan`                          | -       |
+| `net-worth-choices`       | `apps/web/app/features/settings/components/NetWorthChoices/NetWorthChoices.tsx`              | `net-worth-choices`                                        | -       |
+| `check-in-day`            | `apps/web/app/features/settings/components/CheckInDaySetting/CheckInDaySetting.tsx`          | `check-in-day`                                             | -       |
+| `sections-you-use`        | `apps/web/app/features/settings/components/ProfileTab/ProfileTab.tsx`                        | `partner-mode`                                             | -       |
+| `security-sign-in`        | `apps/web/app/features/settings/components/SecurityTab/SecurityTab.tsx`                      | -                                                          | -       |
+| `security-invites`        | `apps/web/app/features/settings/components/SecurityTab/SecurityTab.tsx`                      | -                                                          | -       |
+| `ai-connections`          | `apps/web/app/features/ai-connections/components/McpConnectionCard/McpConnectionCard.tsx`    | -                                                          | -       |
+| `security-imports`        | `apps/web/app/features/settings/components/SecurityTab/SecurityTab.tsx`                      | -                                                          | -       |
+| `data-export`             | `apps/web/app/features/settings/components/DataExportSection/DataExportSection.tsx`          | -                                                          | -       |
+| `reset-financial-data`    | `apps/web/app/features/settings/components/DataTab/DataTab.tsx`                              | -                                                          | -       |
+| `delete-account`          | `apps/web/app/features/settings/components/DeleteAccountSection/DeleteAccountSection.tsx`    | -                                                          | -       |
+| `household-membership`    | `apps/web/app/features/household/components/HouseholdTab/HouseholdTab.tsx`                   | -                                                          | -       |
+| `household-invitation`    | `apps/web/app/features/household/components/InvitationLinkPanel/InvitationLinkPanel.tsx`     | -                                                          | -       |
+| `household-what-i-share`  | `apps/web/app/features/household/components/WhatIShareSection/WhatIShareSection.tsx`         | -                                                          | -       |
+| `household-joint-summary` | `apps/web/app/features/household/components/JointSummaryList/JointSummaryList.tsx`           | -                                                          | -       |
+| `household-leave`         | `apps/web/app/features/household/components/LeaveHouseholdSection/LeaveHouseholdSection.tsx` | -                                                          | -       |
+| `household-help-line`     | `apps/web/app/features/household/components/SharingHelpLine/SharingHelpLine.tsx`             | -                                                          | -       |
 
 ### take-home: Take-home pay
 

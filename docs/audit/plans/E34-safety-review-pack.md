@@ -43,7 +43,7 @@ We know these reduce risk and do not remove it. A person can still be made to sh
 
 ## 4. The screens, in words
 
-**Inviting.** In Settings, a person chooses "Create a household". Flump shows a link that works once and expires after seven days. The person sends it however they like. Flump sends no email or message, and the link carries no names or figures.
+**Inviting.** In Settings, a person chooses "Make a link". Flump shows a link that works once and expires after 48 hours. The person sends it however they like. Flump sends no email or message, and the link carries no names or figures.
 
 **Joining.** The invited person opens the link and signs in with their own account. One screen says: joining shares nothing by itself; you choose what to share, item by item; either of you can stop sharing or leave at any time, and Flump will not announce it. They accept, or close the page. Not accepting sends no message; the link simply expires.
 
@@ -54,6 +54,8 @@ We know these reduce risk and do not remove it. A person can still be made to sh
 **Stopping sharing.** I turn an item's switch off. It leaves the other person's view straight away. Nothing is sent to them.
 
 **Leaving.** In Settings, "Leave household", with one confirmation step for me and none for anyone else. My shared items leave the other person's view. We each keep our own copy of joint items. Nothing is sent. The same happens if I delete my account.
+
+**What the first version shows (slice C3, built behind a switch that is off).** The first version is narrower than the screens above. "What I share" has a single switch, off to begin with: show the accounts I have marked joint in a read-only household summary (name, type and whole balance). The household summary lists the joint accounts each person chose to show and who added each one, with no totals; an account both people added appears twice until a later slice can pair the two copies. There is no "Me / Household" switch, no per-item sharing, no editing by the other person and no household name yet. The invited person sees nothing about the inviter before accepting; once they accept, the screen says at once who the household is with (their first name, or "the other person") and how to leave. The switch stays off until your review, the owner's signature on the privacy assessment and the owner's approval of the help line wording exist, and only the owner turns it on.
 
 **What the other person can notice.** We send no message, but they can see, next time they look, that items have gone or that the "Household" switch is no longer there.
 
@@ -75,7 +77,7 @@ The questions we most need answered are first.
 8. **Invitations.** Is a link that the inviter sends themselves safer than an email from Flump, as we assume? Should declining be possible in a way the inviter cannot distinguish from "not opened yet"? Should the joining screen show the inviter's name? After someone leaves, the other person can make a new link and send it again; should anything limit that?
 9. **AI assistant connections (G9).** A person can connect an AI assistant to read their own Flump data. We plan that a partner's shared items reach it only if the item's owner switches that on. Is "off by default, owner's switch" enough, or should it not be offered?
 10. **Words.** We call it a "household" and the people "members", and we avoid any word that ranks them. Are there words here that you know cause harm or confusion?
-11. **Free text.** A household can have a name, and joint items have names, that both people see and either can change. Could that be used to send unwanted messages, and should we remove it?
+11. **Free text.** We have left out a household name for now. Joint items have names that both people see, and in a later version either could change them. Could that be used to send unwanted messages, and should we remove it?
 12. **Records.** To avoid monitoring we plan to keep almost no record of who shared what and when. That also means we could not investigate a complaint afterwards. Is that the right balance?
 13. **Requests for data.** Each person can ask us for a copy of their data. We plan never to include, confirm or deny anything about the other person. Do you see such requests used to probe a partner, and is there anything else to guard?
 14. **One developer** runs Flump and can read the database. Does that change your view of whether this should be offered?
@@ -87,7 +89,7 @@ The questions we most need answered are first.
 - **Whether the feature goes ahead.** If the advice is that it should not be built, or not by a product of this size, the plan already names stopping at today's one-person "joint" marker as a defensible outcome.
 - **The help line:** whether it exists, which service it names and every word of it. We would not name a service that did not want to be named.
 - **Timing and visibility of leaving and un-sharing** (question 2).
-- **What is offered at all:** the AI connection for shared items, editing of joint items by both, the household name.
+- **What is offered at all:** the AI connection for shared items, editing of joint items by both, a household name (none in the first version).
 
 What would be hard to change: each person having their own login, and tax being worked out per person. Both follow from how the product and UK tax work.
 
