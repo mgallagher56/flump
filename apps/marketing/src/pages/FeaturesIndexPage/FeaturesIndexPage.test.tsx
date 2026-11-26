@@ -3,6 +3,7 @@ import { render, screen, within } from "@testing-library/react";
 import { HelmetProvider } from "react-helmet-async";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
+import { ALL_FEATURE_LINES } from "../../utils/featureIndex";
 import { FeaturesIndexPage } from "./FeaturesIndexPage";
 
 const renderPage = () =>
@@ -18,28 +19,33 @@ describe("FeaturesIndexPage", () => {
   it("is titled 'Flump features' and never 'What Flump covers' (D1)", () => {
     renderPage();
     expect(screen.getByRole("heading", { level: 1, name: "Flump features" })).toBeDefined();
-    expect(
-      screen.getByText("Five areas, laid out the same way here and in the app."),
-    ).toBeDefined();
+    expect(screen.getByText("Everything Flump does, one line each.")).toBeDefined();
     expect(document.body.textContent).not.toMatch(/what flump covers/i);
     expectPageRules(screen.getByRole("main"), { projectionNotices: 0 });
   });
 
-  it("lists the five areas in the app's order, then the AI connection, each linked", () => {
+  it("shows Start here, then every group, each area heading linked to its page", () => {
     renderPage();
-    const list = screen.getByRole("list", { name: "Flump features" });
-    const links = within(list).getAllByRole("link");
-    expect(links.map((link) => [link.textContent, link.getAttribute("href")])).toEqual([
+    expect(screen.getByRole("navigation", { name: "Start here" })).toBeDefined();
+    const headings = screen
+      .getAllByRole("heading", { level: 2 })
+      .filter((heading) => heading.id.startsWith("group-"));
+    expect(
+      headings.map((heading) => [
+        heading.textContent,
+        heading.querySelector("a")?.getAttribute("href") ?? null,
+      ]),
+    ).toEqual([
+      ["Home and setup", null],
       ["Accounts", "/features/accounts"],
       ["Budget", "/features/budget"],
       ["Pay", "/features/pay"],
       ["Savings and pension", "/features/savings-and-pension"],
       ["Debt and borrowing", "/features/debt-and-borrowing"],
       ["AI connection", "/features/ai-connection"],
+      ["Settings and your data", null],
     ]);
-    expect(
-      within(list).getByText("Switched on for an account on request during testing."),
-    ).toBeDefined();
+    expect(document.querySelectorAll("main details")).toHaveLength(ALL_FEATURE_LINES.length);
   });
 
   it("offers the invite and the interactive preview", () => {
