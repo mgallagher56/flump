@@ -16,8 +16,6 @@ export const SIGN_IN_NOTICES: Record<SignInNotice, string> = {
   unavailable: "We could not reach Flump. Check your connection and try again.",
 };
 
-export const SIGNED_IN_HEADING = "You are signed in";
-
 export const NOT_INVITED_HEADING = "This account has not been invited yet";
 export const NOT_INVITED_BODY =
   "Flump is in a private test. If you were expecting an invitation, check you signed in with the address it was sent to. If you were sent an invite link, open it again while signed in.";

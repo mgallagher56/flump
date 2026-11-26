@@ -43,3 +43,10 @@ export const webLink = (
 
 /** Web's onboarding, where a person with no profile yet sets up. */
 export const SET_UP_WEB_ROUTE = "/app/onboarding";
+
+/** Web's accounts page, where an account is added until the app can (S8). */
+export const ADD_ACCOUNT_WEB_ROUTE = "/app/accounts";
+/** Web's net worth choices in Settings (`NET_WORTH_SETTINGS_HREF`), until the app has them (S9). */
+export const NET_WORTH_SETTINGS_WEB_ROUTE = "/app/profile?tab=profile#net-worth";
+/** Web's form for adding the home's value (`ADD_HOME_VALUE_HREF`), until the app has it (S8). */
+export const ADD_HOME_VALUE_WEB_ROUTE = "/app/accounts?add=property";

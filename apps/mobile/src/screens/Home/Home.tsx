@@ -1,70 +1,154 @@
+import { Linking } from "react-native";
 import { Button } from "../../components/Button";
 import { Card } from "../../components/Card";
+import { ErrorState } from "../../components/ErrorState";
+import { HeroFigure } from "../../components/HeroFigure";
+import { NetWorthBasisLine } from "../../components/NetWorthBasisLine";
+import { NetWorthTrendBars } from "../../components/NetWorthTrendBars";
+import { Screen } from "../../components/Screen";
 import { Text } from "../../components/Text";
-import { SIGNED_IN_HEADING } from "../../copy/auth";
 import { CHECK_IN } from "../../copy/checkIn";
+import { changeLine, HOME } from "../../copy/home";
+import { OPEN_FLUMP_WEBSITE } from "../../copy/navigation";
+import { useDelayedLoading } from "../../data/useDelayedLoading";
 import { checkInRow } from "../../features/check-in/checkInFlow";
-import {
-  type CheckInDataState,
-  londonToday,
-  useCheckInData,
-} from "../../features/check-in/useCheckInData";
+import { type CheckInDataState, londonToday } from "../../features/check-in/useCheckInData";
+import { type HomeDataState, useHomeData } from "../../features/home/useHomeData";
 import type { WebLink } from "../../navigation/shell";
-import { DevLinks } from "../DevLinks";
 import { NotSetUp } from "../NotSetUp";
-import { StatusMessage } from "../StatusMessage";
 import { TermsRequired } from "../TermsRequired";
 
 /** Home sits under the tab header and above the tab bar, which pad the top and bottom. */
 const TAB_EDGES = ["right", "left"] as const;
+
+/** The website pages Home links to until the app has them (S8, S9). */
+export interface HomeWebLinks {
+  /** Web's onboarding, for a person who has not finished setting up. */
+  setUp: WebLink;
+  /** Where an account is added (S8). */
+  addAccount: WebLink;
+  /** The net worth choices in Settings (S9). */
+  changeWhatCounts: WebLink;
+  /** Where a home estimate is added (S8). */
+  addEstimate: WebLink;
+}
 
 export interface HomeProps {
   /** Sign out, offered by the terms screen; otherwise it lives in the More list (S4). */
   onSignOut(): void;
   /** The website, for the terms screen. */
   marketingOrigin: string;
-  /** The website's setup page, for a person who has not finished setting up. */
-  setUp: WebLink;
+  links: HomeWebLinks;
   onOpenCheckIn(): void;
   /** Injected clock for tests. */
   now?: () => Date;
 }
 
+const open = (link: WebLink) => () => void Linking.openURL(link.url);
+
 /**
- * The Home tab until S5 brings the figures: the check-in row when one is due (S3). Sign out moved to
- * the More list with the tab bar (S4).
+ * The Home tab (E12 S5, plan 9.8): the net worth hero with its change and trend bars, the line
+ * saying what the figure leaves out, then the check-in row when one is due. Offline is the shell's
+ * (the route shows `Offline`); terms and setup are their own screens in the tab.
  */
 export function Home({
   onSignOut,
   onOpenCheckIn,
   marketingOrigin,
-  setUp,
+  links,
   now = () => new Date(),
 }: HomeProps) {
-  const data = useCheckInData(now);
+  const { home, checkIn } = useHomeData(now);
   // The terms changed while signed in (PR #939): every read is refused until they are agreed.
-  if (data.status === "error" && data.problem === "termsNotAccepted") {
+  if (home.status === "error" && home.problem === "termsNotAccepted") {
     return (
       <TermsRequired
         marketingOrigin={marketingOrigin}
-        onRetry={data.retry}
+        onRetry={home.retry}
         onSignOut={onSignOut}
         edges={TAB_EDGES}
       />
     );
   }
-  if (data.status === "notSetUp") {
+  if (home.status === "notSetUp") return <NotSetUp setUp={links.setUp} edges={TAB_EDGES} />;
+  return (
+    <Screen edges={TAB_EDGES} testID="home">
+      <NetWorth home={home} links={links} />
+      <CheckInRow data={checkIn} onOpen={onOpenCheckIn} now={now} />
+    </Screen>
+  );
+}
+
+/** The hero and its one line, or what stands in for them while loading or after a failed read. */
+function NetWorth({
+  home,
+  links,
+}: {
+  home: Exclude<HomeDataState, { status: "notSetUp" }>;
+  links: HomeWebLinks;
+}) {
+  // Nothing for 200 ms, then blocks the hero's size for at least 400 ms. A refetch keeps the hero.
+  const skeleton = useDelayedLoading(home.status === "loading");
+  if (home.status === "error") {
+    // Never "Add an account" or £0 for a failed read; out of step never blames the connection.
     return (
-      <NotSetUp setUp={setUp} edges={TAB_EDGES}>
-        <DevLinks />
-      </NotSetUp>
+      <ErrorState
+        heading={CHECK_IN.loadErrorHeading}
+        body={
+          home.problem === "outOfStep" ? CHECK_IN.loadErrorOutOfStepBody : CHECK_IN.loadErrorBody
+        }
+        retryLabel={CHECK_IN.tryAgain}
+        testID="home-error"
+        retryTestID="home-retry"
+        onRetry={home.retry}
+      />
     );
   }
+  if (home.status === "loading" || skeleton) {
+    return skeleton ? (
+      <HeroFigure
+        label={HOME.heroLabel}
+        value={null}
+        loading
+        loadingLabel={HOME.loading}
+        testID="home-hero-loading"
+      />
+    ) : null;
+  }
+  const { hero } = home;
+  if (!hero) {
+    return (
+      <HeroFigure
+        label={HOME.heroLabel}
+        value={null}
+        emptyPrompt={HOME.emptyPrompt}
+        emptyAction={{
+          label: links.addAccount.exact ? HOME.addAccount : OPEN_FLUMP_WEBSITE,
+          onPress: open(links.addAccount),
+          testID: "home-add-account",
+        }}
+        testID="home-empty"
+      />
+    );
+  }
+  const exact = links.changeWhatCounts.exact && links.addEstimate.exact;
   return (
-    <StatusMessage heading={SIGNED_IN_HEADING} edges={TAB_EDGES}>
-      <CheckInRow data={data} onOpen={onOpenCheckIn} now={now} />
-      <DevLinks />
-    </StatusMessage>
+    <>
+      <HeroFigure
+        label={hero.homeCounted ? HOME.heroLabelWithHome : HOME.heroLabel}
+        value={hero.netWorth}
+        change={hero.change ? changeLine(hero.change, hero.currentMonth) : null}
+        testID="home-hero"
+      >
+        {hero.trend ? <NetWorthTrendBars trend={hero.trend} /> : null}
+      </HeroFigure>
+      <NetWorthBasisLine
+        leftOut={hero.leftOut}
+        onChangeWhatCounts={open(links.changeWhatCounts)}
+        onAddEstimate={open(links.addEstimate)}
+        websiteLabel={exact ? undefined : OPEN_FLUMP_WEBSITE}
+      />
+    </>
   );
 }
 

@@ -26,7 +26,10 @@ export type IconName =
   | "log-out"
   | "menu"
   | "chevron-right"
-  | "chevron-left";
+  | "chevron-left"
+  | "arrow-up"
+  | "arrow-down"
+  | "minus";
 
 export interface TabItem {
   /** Web's key. */
