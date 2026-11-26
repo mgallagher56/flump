@@ -10,9 +10,12 @@ import {
   useSession,
 } from "../src/auth/SessionProvider";
 import { loadSignInConfig } from "../src/config";
+import { HOME_TITLE } from "../src/copy/brand";
 import { CHECK_IN } from "../src/copy/checkIn";
 import { ApiProvider } from "../src/data/ApiProvider";
 import { createQueryClient } from "../src/data/queryClient";
+import { useUpdateRequired } from "../src/features/app-update/useUpdateRequired";
+import { UpdateRequired } from "../src/screens/UpdateRequired";
 import { ThemeProvider, useTheme } from "../src/theme/ThemeProvider";
 
 /**
@@ -26,8 +29,10 @@ function startApp(): { app: AppSession | null; problem?: StartProblem } {
   try {
     const config = loadSignInConfig();
     const { createAppSession }: typeof AuthDeps = require("../src/auth/authDeps");
-    const { session, api } = createAppSession(config);
-    return { app: { session, api, marketingOrigin: config.site.marketingOrigin } };
+    const { session, api, checkForUpdate } = createAppSession(config);
+    return {
+      app: { session, api, checkForUpdate, marketingOrigin: config.site.marketingOrigin },
+    };
   } catch {
     return { app: null, problem: { kind: "misconfigured" } };
   }
@@ -46,7 +51,8 @@ function ThemedStack() {
           headerShadowVisible: false,
         }}
       >
-        <Stack.Screen name="(app)/index" options={{ headerShown: false }} />
+        {/* The title is what iOS's back button on the next screen reads (it showed "(app)/index"). */}
+        <Stack.Screen name="(app)/index" options={{ headerShown: false, title: HOME_TITLE }} />
         <Stack.Screen name="(app)/check-in" options={{ title: CHECK_IN.title }} />
         <Stack.Screen name="auth/callback" options={{ headerShown: false }} />
         {__DEV__ ? (
@@ -61,6 +67,16 @@ function ThemedStack() {
       </Stack>
     </>
   );
+}
+
+/**
+ * The version gate (plan section 4.9), above every route: below the server's minimum nothing else
+ * shows, signed in or not. The check fails open.
+ */
+function UpdateGate({ children }: { children: ReactNode }) {
+  const app = useSession();
+  const { required, recheck } = useUpdateRequired(app?.checkForUpdate);
+  return required ? <UpdateRequired onCheckAgain={recheck} /> : children;
 }
 
 /** The API client and the query cache, which is dropped whenever nobody is signed in. */
@@ -89,7 +105,9 @@ export default function RootLayout() {
       {/* A null app makes the first route say why sign-in is off; dev screens still open. */}
       <SessionProvider app={app} problem={problem}>
         <DataLayer queryClient={queryClient}>
-          <ThemedStack />
+          <UpdateGate>
+            <ThemedStack />
+          </UpdateGate>
         </DataLayer>
       </SessionProvider>
     </ThemeProvider>

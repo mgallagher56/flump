@@ -4,3 +4,6 @@
  */
 export const APP_NAME = "Flump";
 export const TAGLINE = "Finance without the fog";
+
+/** The first screen's title, which iOS's back button on the next screen reads. */
+export const HOME_TITLE = APP_NAME;

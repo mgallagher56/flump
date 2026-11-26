@@ -6,10 +6,12 @@
  *   GET  /user_management/authorize          PKCE (S256 only) and state; redirects back with a code
  *   POST /user_management/authenticate       authorization_code and refresh_token grants, no secret
  *   GET  /sso/jwks/:clientId                 the public signing key
- *   GET  /user_management/sessions/logout    sends the browser back to a registered address
  * Canned /v1:
  *   GET  /v1/app/client-policy               public
  *   GET  /v1/user-profile                    bearer; 401 or 403 not_invited by scenario
+ *   POST /v1/session/sign-out                bearer; revokes the token's session (sid), 204.
+ *                                           Like the backend, it serves people who are not
+ *                                           invited or have not agreed to the terms
  *   GET  /v1/accounts                        bearer; six manual accounts, `details: []` (S3)
  *   GET  /v1/account-details                 bearer; their monthly rows, nothing this month
  *   GET  /v1/snapshots/check-ins             bearer; last month started and completed
@@ -29,10 +31,11 @@
  * Control (flows set the scenario before they launch the app):
  *   POST /__fixture/scenario, POST /__fixture/revoke, POST /__fixture/reset (also rebuilds the
  *   check-in data), GET /__fixture/stats (counts, PUTs without `checkIn: true`, the check-in
- *   months and the current London month)
+ *   months, the current London month, the sign-outs and the last authorize's `max_age`)
  *
- * Refresh tokens are replaced on every use and the old one is rejected at once. Whether real
- * WorkOS does the same is an open question for the S2a spike; the stand-in takes the strict case.
+ * Refresh tokens are replaced on every use. As real WorkOS does (workos.com/docs/authkit/
+ * session-resilience, read 26 November 2026; seen on the owner's devices), a used token sent again
+ * within 30 seconds returns the same new pair, and is refused with `invalid_grant` after that.
  */
 import { createHash, randomUUID } from "node:crypto";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
@@ -62,6 +65,8 @@ const APP_REDIRECT = "flump://auth/callback";
 const LOOPBACK_HOSTS = new Set(["127.0.0.1", "::1", "localhost"]);
 
 const CODE_LIFETIME_MS = 10 * 60 * 1000;
+/** WorkOS's refresh token grace period: "The grace period is 30 seconds." */
+export const REFRESH_GRACE_MS = 30 * 1000;
 
 interface Scenario {
   /** `not-invited`: `/v1` answers 403 not_invited, as the closed beta does. */
@@ -119,6 +124,8 @@ interface FixtureCounts {
   snapshotPuts: number;
   /** Of those, the ones whose body did not carry `checkIn: true`. */
   putsWithoutCheckIn: number;
+  /** `POST /v1/session/sign-out` requests that revoked a session. */
+  signOuts: number;
 }
 
 interface FixtureStats extends FixtureCounts {
@@ -126,6 +133,8 @@ interface FixtureStats extends FixtureCounts {
   latestCompletedMonth: string | null;
   /** The London month of the server's clock: the month a check-in now writes. */
   currentMonth: string;
+  /** The `max_age` of the last authorize request, or null when it had none (or none yet). */
+  lastAuthorizeMaxAge: string | null;
 }
 
 const ZERO_COUNTS: FixtureCounts = {
@@ -134,6 +143,7 @@ const ZERO_COUNTS: FixtureCounts = {
   apiRequests: 0,
   snapshotPuts: 0,
   putsWithoutCheckIn: 0,
+  signOuts: 0,
 };
 
 const CHECK_IN_ROUTES = new Set(["/accounts", "/account-details", "/snapshots/check-ins"]);
@@ -195,16 +205,20 @@ export async function startFixtureServer(options: FixtureServerOptions): Promise
 
   let scenario: Scenario = { ...DEFAULT_SCENARIO };
   let counts: FixtureCounts = { ...ZERO_COUNTS };
+  let lastAuthorizeMaxAge: string | null = null;
   const store = (): CheckInStore => (scenario.data === "empty" ? stores.empty : stores.ok);
   const stats = (): FixtureStats => ({
     ...counts,
     latestStartedMonth: store().latestStartedMonth,
     latestCompletedMonth: store().latestCompletedMonth,
     currentMonth: londonMonth(new Date(now())),
+    lastAuthorizeMaxAge,
   });
   const codes = new Map<string, PendingCode>();
-  /** Refresh token to session. A used token is deleted, so reuse is rejected. */
+  /** Refresh token to session. A used token moves to `spent`. */
   const refreshTokens = new Map<string, Session>();
+  /** A used refresh token, the answer it got and when: replayed within the grace period. */
+  const spent = new Map<string, { session: Session; body: unknown; usedAt: number }>();
   const sessions = new Map<string, Session>();
   let publicOrigin = options.publicOrigin ?? "";
 
@@ -254,6 +268,7 @@ export async function startFixtureServer(options: FixtureServerOptions): Promise
     const redirectUri = q.get("redirect_uri") ?? "";
     const state = q.get("state") ?? "";
     const challenge = q.get("code_challenge") ?? "";
+    lastAuthorizeMaxAge = q.get("max_age");
     // Anything wrong with the request itself is refused here, never sent to the redirect address.
     if (
       q.get("client_id") !== options.clientId ||
@@ -306,11 +321,20 @@ export async function startFixtureServer(options: FixtureServerOptions): Promise
       if (scenario.refresh === "unavailable") {
         return json(res, 503, { error: "service_unavailable" });
       }
-      refreshTokens.delete(body.refresh_token ?? "");
-      if (!session || session.revoked || scenario.refresh === "rejected") {
+      const token = body.refresh_token ?? "";
+      if (scenario.refresh === "rejected") {
+        refreshTokens.delete(token);
         return oauthError(res, 400, "invalid_grant");
       }
-      return json(res, 200, issueTokens(session));
+      const replay = spent.get(token);
+      if (replay && !replay.session.revoked && now() - replay.usedAt < REFRESH_GRACE_MS) {
+        return json(res, 200, replay.body);
+      }
+      refreshTokens.delete(token);
+      if (!session || session.revoked) return oauthError(res, 400, "invalid_grant");
+      const issued = issueTokens(session);
+      spent.set(token, { session, body: issued, usedAt: now() });
+      return json(res, 200, issued);
     }
 
     return oauthError(res, 400, "unsupported_grant_type");
@@ -339,6 +363,15 @@ export async function startFixtureServer(options: FixtureServerOptions): Promise
     counts.apiRequests += 1;
     if (req.method === "GET" && path === "/app/client-policy") {
       return json(res, 200, cannedClientPolicy(scenario.minVersion));
+    }
+    if (req.method === "POST" && path === "/session/sign-out") {
+      // As the backend: the session comes from the verified token only, and a person who is not
+      // invited or has not agreed to the terms can still sign out.
+      const session = sessionFor(req);
+      if (!session) return apiError(res, 401, "unauthorized", "Sign in to continue.");
+      session.revoked = true;
+      counts.signOuts += 1;
+      return void res.writeHead(204).end();
     }
     if (req.method === "GET" && path === "/user-profile") {
       const session = invitedSession(req, res);
@@ -404,11 +437,6 @@ export async function startFixtureServer(options: FixtureServerOptions): Promise
     if (req.method === "GET" && path === `/sso/jwks/${options.clientId}`) {
       return json(res, 200, { keys: [publicJwk(key)] });
     }
-    if (req.method === "GET" && path === "/user_management/sessions/logout") {
-      const returnTo = url.searchParams.get("return_to") ?? "";
-      if (!redirectUris.has(returnTo)) return oauthError(res, 400, "invalid_request");
-      return void res.writeHead(302, { location: returnTo }).end();
-    }
     if (path.startsWith("/v1/")) return handleV1(path.slice("/v1".length), req, res);
 
     if (req.method === "POST" && path === "/__fixture/scenario") {
@@ -436,7 +464,9 @@ export async function startFixtureServer(options: FixtureServerOptions): Promise
     stores = buildStores();
     codes.clear();
     refreshTokens.clear();
+    spent.clear();
     sessions.clear();
+    lastAuthorizeMaxAge = null;
   }
 
   const server = createServer((req, res) => {

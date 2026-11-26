@@ -1,0 +1,24 @@
+# E12 S2b: signing in again after a sign-out works, and asks WorkOS for a fresh sign-in
+# (max_age=0), so a WorkOS session left in the browser never signs anyone in without asking.
+appId: app.flump.mobile
+---
+- runScript:
+    file: ../scripts/fixture.js
+    env:
+      SCENARIO: "{}"
+- runFlow: ../subflows/launch-signed-out.yaml
+- runFlow:
+    file: ../subflows/sign-in.yaml
+    env:
+      AFTER: "You are signed in"
+- runFlow: ../subflows/sign-out.yaml
+- runFlow:
+    file: ../subflows/sign-in.yaml
+    env:
+      AFTER: "You are signed in"
+- runScript:
+    file: ../scripts/assert-session.js
+    env:
+      SIGN_OUTS: "1"
+      MAX_AGE: "0"
+- takeScreenshot: signed-in-again-${THEME}

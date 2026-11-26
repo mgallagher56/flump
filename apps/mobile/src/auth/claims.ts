@@ -41,10 +41,3 @@ export function readClaims(accessToken: string): Record<string, unknown> | undef
     return undefined;
   }
 }
-
-/** The WorkOS session id (`sid`), or undefined. */
-export function readSessionId(accessToken: string | null): string | undefined {
-  if (!accessToken) return undefined;
-  const sid = readClaims(accessToken)?.sid;
-  return typeof sid === "string" && sid.length > 0 ? sid : undefined;
-}

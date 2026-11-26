@@ -1,0 +1,25 @@
+# E12 S2b: a build below the server's minimum version shows only "Update Flump to carry on", signed
+# in or not. Once the server allows this version, Check again lets the person carry on.
+appId: app.flump.mobile
+---
+- runScript:
+    file: ../scripts/fixture.js
+    env:
+      SCENARIO: '{"minVersion": "99.0.0"}'
+- launchApp:
+    clearState: true
+    stopApp: true
+# The first launch of a debug build waits for Metro to bundle the app.
+- extendedWaitUntil:
+    visible: "Update Flump to carry on"
+    timeout: 180000
+- assertNotVisible: "Create account"
+- takeScreenshot: update-required-${THEME}
+- runScript:
+    file: ../scripts/scenario.js
+    env:
+      SCENARIO: '{"minVersion": "0.0.0"}'
+- tapOn: "Check again"
+- extendedWaitUntil:
+    visible: "Create account"
+    timeout: 60000

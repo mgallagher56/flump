@@ -1,5 +1,6 @@
 import { createContext, type ReactNode, useContext, useEffect, useSyncExternalStore } from "react";
 import type { ApiClient } from "../data/apiClient";
+import type { UpdateCheck } from "../data/clientPolicy";
 import type { Session } from "./session";
 import { INITIAL_STATE, type SessionState } from "./sessionMachine";
 
@@ -9,6 +10,8 @@ export interface AppSession {
   marketingOrigin: string;
   /** The app's one API client, whose 401s ask this session to refresh (S3: screens read through it). */
   api?: ApiClient;
+  /** The version gate: true when this build is below the server's minimum (plan section 4.9). */
+  checkForUpdate?: UpdateCheck;
 }
 
 /** Why there is no session: a bad config value, or native modules this app binary lacks. */

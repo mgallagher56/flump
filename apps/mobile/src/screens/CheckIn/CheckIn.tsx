@@ -9,6 +9,7 @@ import { AccessibilityInfo, Linking, View } from "react-native";
 import { Button } from "../../components/Button";
 import { Card } from "../../components/Card";
 import { CurrencyInput } from "../../components/CurrencyInput";
+import { ErrorState } from "../../components/ErrorState";
 import { FormField } from "../../components/FormField";
 import { InlineAlert } from "../../components/InlineAlert";
 import { Money } from "../../components/Money";
@@ -86,11 +87,13 @@ export function CheckIn({ offline = false, marketingOrigin, onClose, now }: Chec
   if (data.status === "error") {
     return (
       <Screen edges={EDGES} testID="check-in-load-error">
-        <Text accessibilityRole="header" textStyle="heading.md">
-          {CHECK_IN.loadErrorHeading}
-        </Text>
-        <Text color="secondary">{CHECK_IN.loadErrorBody}</Text>
-        <Button label={CHECK_IN.tryAgain} testID="check-in-retry" onPress={data.retry} />
+        <ErrorState
+          heading={CHECK_IN.loadErrorHeading}
+          body={CHECK_IN.loadErrorBody}
+          retryLabel={CHECK_IN.tryAgain}
+          retryTestID="check-in-retry"
+          onRetry={data.retry}
+        />
       </Screen>
     );
   }
