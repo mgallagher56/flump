@@ -635,6 +635,7 @@ export const PAGES_NOT_LISTED: Readonly<Record<string, string>> = {
   "import-review": "Part of 'Imports to review': the page that opens one import.",
   invoicing: "Reached only by its address today; no page in the app links to it.",
   "terms-acceptance": "Agreeing to the terms, not a feature.",
+  "household-join": "Households are behind an off switch (owner, 26 November 2026: not listed).",
 };
 
 /** "Start here": a few goals in plain words, each pointing at the lines it involves. */
