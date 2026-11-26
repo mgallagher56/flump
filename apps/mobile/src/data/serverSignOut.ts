@@ -23,7 +23,15 @@ export function createServerSignOut(
       timeoutMs: SIGN_OUT_TIMEOUT_MS,
     });
     try {
-      await client.request("/session/sign-out", { method: "POST", schema: null, allowEmpty: true });
+      await client.request("/session/sign-out", {
+        method: "POST",
+        schema: null,
+        allowEmpty: true,
+        // No Idempotency-Key: the route takes none (a repeat is already harmless), and the client
+        // would make it with `crypto.randomUUID()`, which Hermes does not have, so the call threw
+        // before it was sent (seen in CI's Android run, 26 November 2026).
+        idempotencyKey: false,
+      });
       return "ended";
     } catch (error) {
       return error instanceof BackendError && error.kind === "unauthorised"
