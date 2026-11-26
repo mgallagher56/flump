@@ -716,6 +716,11 @@ jobs:
           arch: x86_64
           target: google_apis
           disable-animations: true
+          # The default AVD gets 2560 MB. Right after boot, Google Play services, the first Metro
+          # bundle and Chrome's first run in the first sign-in ran it out of memory: the low-memory
+          # killer fired, Zygote could not fork Chrome's process, Android force-stopped Chrome and
+          # the app sat on the sign-in screen (CI run 45750932431, check-in-backend-down in light).
+          ram-size: 4096M
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           script: bash apps/mobile/e2e/run-android-flows.sh apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk "$RUNNER_TEMP/maestro-out"
 

@@ -759,6 +759,13 @@ describe("mobile e2e job (E12 S2c)", () => {
     expect(job).toContain("persist-credentials: false");
     expect(job).not.toContain("secrets.");
   });
+
+  test("gives the emulator 4096 MB, enough for Chrome's first run on a fresh boot", () => {
+    // With the AVD default of 2560 MB, Zygote failed to fork Chrome's process (out of memory) in
+    // the first sign-in after boot and the flow stayed on the sign-in screen (run 45750932431).
+    const ram = job.match(/\n {10}ram-size: (\d+)M\n/);
+    expect(Number(ram?.[1])).toBeGreaterThanOrEqual(4096);
+  });
 });
 
 describe("mobile e2e job sign-in config (E12 S2a)", () => {
