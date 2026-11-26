@@ -85,5 +85,5 @@ Signed tokens checked on every request; one user's rows are keyed by user id; ba
 3. Decide whether to move hosting to EU West (`docs/runbooks/region-move.md`); the privacy notice and this record change with it.
 4. Confirm the first in-process retention run after deploy (OWNER-SETUP BE-06) before 3 December 2026. Create the backup job with its bucket rule, then state the backup period in the privacy notice.
 5. Set a retention period for support messages, and confirm the 24-month tombstone period (D1).
-6. Keep a short written legitimate interests assessment for row 14 (the questions after a check-in), read every free-text answer each quarter and delete any that holds health details.
+6. Keep a short written legitimate interests assessment for row 14 (the questions after a check-in), read every free-text answer at least monthly and delete any that holds health details.
 7. Confirm the lawful bases above and the controller and processor split for client details, with a solicitor before a public launch.
