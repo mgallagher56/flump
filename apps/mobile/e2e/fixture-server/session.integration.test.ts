@@ -16,6 +16,10 @@ import { createAppApiClient } from "../../src/data/apiClient";
 import { createServerSignOut } from "../../src/data/serverSignOut";
 import { createWorkosClient } from "../../src/data/workos";
 import { type FixtureServer, startFixtureServer } from "./server";
+import { newSigningKey } from "./tokens";
+
+/** One key for the file: a fresh RSA key per test cost seconds of CI time. */
+const signingKey = newSigningKey();
 
 const CLIENT_ID = ["client", "e2e", randomBytes(4).toString("hex")].join("_");
 const REDIRECT = "flump://auth/callback";
@@ -23,7 +27,7 @@ const REDIRECT = "flump://auth/callback";
 let server: FixtureServer;
 
 beforeEach(async () => {
-  server = await startFixtureServer({ port: 0, clientId: CLIENT_ID });
+  server = await startFixtureServer({ port: 0, clientId: CLIENT_ID, signingKey });
 });
 
 afterEach(async () => {

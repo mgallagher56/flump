@@ -57,7 +57,7 @@ import {
   FIXTURE_PERSON,
   londonMonth,
 } from "./fixtures";
-import { newSigningKey, opaque, publicJwk, signJwt, verifyJwt } from "./tokens";
+import { newSigningKey, opaque, publicJwk, type SigningKey, signJwt, verifyJwt } from "./tokens";
 
 /** The port flows and the `e2e` build profile use. The production bundle must not contain it. */
 export const FIXTURE_PORT = 8787;
@@ -172,6 +172,11 @@ export interface FixtureServerOptions {
   redirectUris?: readonly string[];
   /** Injected clock in milliseconds, so tests never wait. */
   now?: () => number;
+  /**
+   * The token signing key. Made fresh by default; tests pass one made once per file, because an
+   * RSA key per test costs seconds of CPU on CI that other suites then wait for.
+   */
+  signingKey?: SigningKey;
 }
 
 export interface FixtureServer {
@@ -202,7 +207,7 @@ export async function startFixtureServer(options: FixtureServerOptions): Promise
     throw new Error(`The fixture server listens on loopback only, not ${host}.`);
   }
   const redirectUris = new Set(options.redirectUris ?? [APP_REDIRECT]);
-  const key = newSigningKey();
+  const key = options.signingKey ?? newSigningKey();
   const userId = `user_${opaque(12)}`;
 
   /** The check-in data for `ok` and for `empty`, rebuilt (with new ids) on every reset. */
