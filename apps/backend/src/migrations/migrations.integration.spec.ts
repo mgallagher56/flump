@@ -2219,8 +2219,8 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
     });
   });
 
-  describe("AddWellbeingAnswers1795670000000 (E35 W5)", () => {
-    const NAME = "AddWellbeingAnswers1795670000000";
+  describe("AddWellbeingAnswers1795720000000 (E35 W5)", () => {
+    const NAME = "AddWellbeingAnswers1795720000000";
 
     it("defaults the switch on, refuses an unknown feeling and a second row for a quarter", async () => {
       await ds.runMigrations();

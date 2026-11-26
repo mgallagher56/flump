@@ -14,8 +14,8 @@ export const WELLBEING_SWITCH_DOWN_REFUSAL =
  * The revert refuses while any answer is stored, or while anyone has switched the questions off
  * (dropping the column and adding it back would switch them on again for that person).
  */
-export class AddWellbeingAnswers1795670000000 implements MigrationInterface {
-  name = "AddWellbeingAnswers1795670000000";
+export class AddWellbeingAnswers1795720000000 implements MigrationInterface {
+  name = "AddWellbeingAnswers1795720000000";
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await takeMigrationLock(queryRunner);
