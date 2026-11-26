@@ -1,0 +1,23 @@
+# E12 S5: Home with no accounts yet: the hero's prompt and a way to add an account on the website,
+# never £0, and the check-in row in its S3 state.
+# The runner runs it in light and in dark, stopping and settling the app first; no retries.
+appId: app.flump.mobile
+---
+- runScript:
+    file: ../scripts/fixture.js
+    env:
+      SCENARIO: '{"data": "empty"}'
+- runFlow: ../subflows/launch-signed-out.yaml
+- runFlow: ../subflows/sign-in-to-home.yaml
+- extendedWaitUntil:
+    visible:
+      id: "home-empty"
+    timeout: 30000
+- assertVisible:
+    id: "home-add-account"
+- assertNotVisible:
+    id: "home-hero"
+- assertNotVisible: "£0"
+- assertVisible:
+    id: "check-in-row"
+- takeScreenshot: home-empty-${THEME}

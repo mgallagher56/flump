@@ -153,11 +153,208 @@ const SEED: readonly SeedAccount[] = [
   { name: "Easy access savings", type: "Saving", subtype: "easy_access", balance: 8200 },
 ];
 
+/* ------------------------------------------------------------------------------------------ */
+/* Home's households (E12 S5, plan section 9.8)                                                */
+/* ------------------------------------------------------------------------------------------ */
+
+/**
+ * An account of a household from `apps/e2e/support/personas.ts`, copied here because that module
+ * imports Playwright. `fixtures.test.ts` pins every figure to the source. As there, a liability's
+ * balance is given positive (the backend stores it negative) and `monthlyChange` is how much the
+ * balance grew each month.
+ */
+export interface PersonaAccount {
+  name: string;
+  type: AccountWithDetailsDto["type"];
+  balance: number;
+  monthlyChange: number;
+  interestRate?: number;
+  monthlyContribution?: number;
+  termMonths?: number;
+  studentLoanPlan?: "PLAN_2";
+}
+
+/** personas.ts `HISTORY_MONTHS`: months of history written before the current month. */
+export const PERSONA_HISTORY_MONTHS = 6;
+
+/** personas.ts `RENTER`: age 29, renting, a Plan 2 student loan and one credit card. */
+export const RENTER_ACCOUNTS: readonly PersonaAccount[] = [
+  { name: "Current account", type: "Current", balance: 1300, monthlyChange: 20 },
+  {
+    name: "Easy access savings",
+    type: "Saving",
+    balance: 3200,
+    interestRate: 4,
+    monthlyContribution: 150,
+    monthlyChange: 150,
+  },
+  {
+    name: "Workplace pension",
+    type: "Pension",
+    balance: 9000,
+    interestRate: 5,
+    monthlyChange: 260,
+  },
+  {
+    name: "Credit card",
+    type: "Credit Card",
+    balance: 1800,
+    interestRate: 24.9,
+    monthlyContribution: 60,
+    monthlyChange: -35,
+  },
+  {
+    name: "Student loan",
+    type: "Student Loan",
+    balance: 38500,
+    interestRate: 6.2,
+    studentLoanPlan: "PLAN_2",
+    monthlyChange: 120,
+  },
+];
+
+/** personas.ts `HOMEOWNER`: age 44, a repayment mortgage, a car loan and a credit card. */
+export const HOMEOWNER_ACCOUNTS: readonly PersonaAccount[] = [
+  { name: "Current account", type: "Current", balance: 3400, monthlyChange: 40 },
+  {
+    name: "Easy access savings",
+    type: "Saving",
+    balance: 7600,
+    interestRate: 4,
+    monthlyContribution: 200,
+    monthlyChange: 220,
+  },
+  {
+    name: "Cash ISA",
+    type: "Saving",
+    balance: 10000,
+    interestRate: 4.2,
+    monthlyContribution: 100,
+    monthlyChange: 135,
+  },
+  { name: "Home", type: "Property", balance: 310000, monthlyChange: 500 },
+  {
+    name: "Residential mortgage",
+    type: "Mortgage",
+    balance: 186000,
+    interestRate: 4.5,
+    termMonths: 218,
+    monthlyContribution: 1250,
+    monthlyChange: -550,
+  },
+  {
+    name: "Workplace pension",
+    type: "Pension",
+    balance: 96000,
+    interestRate: 5,
+    monthlyChange: 900,
+  },
+  {
+    name: "Car loan",
+    type: "Loan",
+    balance: 8400,
+    interestRate: 7.9,
+    monthlyContribution: 265,
+    termMonths: 34,
+    monthlyChange: -210,
+  },
+  {
+    name: "Credit card",
+    type: "Credit Card",
+    balance: 1200,
+    interestRate: 22.9,
+    monthlyContribution: 40,
+    monthlyChange: -20,
+  },
+];
+
+const round2 = (n: number) => Math.round(n * 100) / 100;
+/** As the backend stores it: a liability negative whatever sign was sent (BE-05). */
+const stored = (type: string, value: number) =>
+  LIABILITY_TYPES.has(type) ? -Math.abs(value) : value;
+
+/**
+ * A persona's store as personas.ts seeds it: today's balances, and the six months before this one
+ * recorded through the check-in (`max(0, balance - monthlyChange * monthsBack)`, as `planFor`), the
+ * last of them completed. Nothing is recorded this month.
+ */
+function buildPersonaStore(
+  userId: string,
+  now: Date,
+  seeds: readonly PersonaAccount[],
+): CheckInStore {
+  const iso = now.toISOString();
+  const current = londonMonth(now);
+  const accounts = AccountListResponse.parse(
+    seeds.map((seed) => ({
+      id: randomUUID(),
+      name: seed.name,
+      type: seed.type,
+      accountSubtype: null,
+      balance: stored(seed.type, seed.balance),
+      interestRate: seed.interestRate ?? null,
+      monthlyContribution: seed.monthlyContribution ?? null,
+      creditLimit: null,
+      promoZeroPercentUntil: null,
+      termMonths: seed.termMonths ?? null,
+      fixedRateEndDate: null,
+      isCurrent: true,
+      currency: "GBP",
+      studentLoanPlan: seed.studentLoanPlan ?? null,
+      ownership: "sole",
+      sharePercent: null,
+      linkedAccountId: null,
+      repaymentType: seed.type === "Mortgage" ? "repayment" : null,
+      connectionId: null,
+      createdAt: iso,
+      updatedAt: iso,
+      details: [],
+    })),
+  );
+  let nextDetailId = 1;
+  const details: AccountDetailDto[] = [];
+  for (let back = PERSONA_HISTORY_MONTHS; back >= 1; back -= 1) {
+    const month = addCheckInMonths(current, -back);
+    const [year, m] = month.split("-").map(Number) as [number, number];
+    accounts.forEach((account, i) => {
+      const seed = seeds[i] as PersonaAccount;
+      details.push({
+        id: nextDetailId++,
+        accountId: account.id,
+        userId,
+        year,
+        month: m,
+        value: stored(seed.type, round2(Math.max(0, seed.balance - seed.monthlyChange * back))),
+        asOfDate: lastDayOfMonth(month),
+        source: "manual",
+        importBatchId: null,
+        updatedAt: iso,
+      });
+    });
+  }
+  const previous = addCheckInMonths(current, -1);
+  return {
+    accounts,
+    details: AccountDetailListResponse.parse(details),
+    latestStartedMonth: previous,
+    latestCompletedMonth: previous,
+    nextDetailId,
+  };
+}
+
 /**
  * A fresh check-in store, every body parsed with its contract schema. `empty` has no accounts,
- * no rows and no check-in months. Ids are made at runtime, so each reset has new ones.
+ * no rows and no check-in months; `owner` and `renter` are the home-owning and renting households
+ * of `apps/e2e/support/personas.ts` with six recorded months. Ids are made at runtime, so each
+ * reset has new ones.
  */
-export function buildCheckInStore(userId: string, now: Date, kind: "ok" | "empty"): CheckInStore {
+export function buildCheckInStore(
+  userId: string,
+  now: Date,
+  kind: "ok" | "empty" | "owner" | "renter",
+): CheckInStore {
+  if (kind === "owner") return buildPersonaStore(userId, now, HOMEOWNER_ACCOUNTS);
+  if (kind === "renter") return buildPersonaStore(userId, now, RENTER_ACCOUNTS);
   if (kind === "empty") {
     return {
       accounts: [],
@@ -234,6 +431,18 @@ export function checkInStepsFor(store: CheckInStore, now: Date): CheckInStep[] {
 
 export function cannedAccounts(store: CheckInStore): AccountListResponse {
   return AccountListResponse.parse(store.accounts.map((a) => ({ ...a, details: [] })));
+}
+
+/**
+ * The `malformed` answer: the accounts with the first one's balance taken out after parsing, the
+ * one field Home cannot do without, so the app must show that it is out of step.
+ */
+export function malformedAccounts(store: CheckInStore): unknown[] {
+  return cannedAccounts(store).map((a, i) => {
+    if (i > 0) return a;
+    const { balance: _balance, ...rest } = a;
+    return rest;
+  });
 }
 
 export function cannedAccountDetails(store: CheckInStore): AccountDetailListResponse {

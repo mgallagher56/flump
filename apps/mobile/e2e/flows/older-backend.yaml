@@ -8,9 +8,6 @@ appId: app.flump.mobile
     env:
       SCENARIO: '{"backend": "older"}'
 - runFlow: ../subflows/launch-signed-out.yaml
-- runFlow:
-    file: ../subflows/sign-in.yaml
-    env:
-      AFTER: "You are signed in"
+- runFlow: ../subflows/sign-in-to-home.yaml
 - assertNotVisible: "We could not reach Flump"
 - takeScreenshot: older-backend-${THEME}

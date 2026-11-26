@@ -10,13 +10,11 @@ appId: app.flump.mobile
 - assertVisible: "Privacy notice"
 - assertVisible: "Terms of use"
 - takeScreenshot: sign-in-${THEME}
-- runFlow:
-    file: ../subflows/sign-in.yaml
-    env:
-      AFTER: "You are signed in"
+- runFlow: ../subflows/sign-in-to-home.yaml
 - takeScreenshot: signed-in-${THEME}
 - stopApp
 - launchApp
 - extendedWaitUntil:
-    visible: "You are signed in"
+    visible:
+      id: "home"
     timeout: 60000

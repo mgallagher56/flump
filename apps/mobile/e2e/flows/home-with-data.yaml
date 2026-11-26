@@ -1,0 +1,60 @@
+# E12 S5: Home's net worth hero for the home-owning and renting households of
+# apps/e2e/support/personas.ts (six recorded months each): the figure, the change since last
+# month, the trend bars, and for the renter the line saying the student loan is not counted. Then
+# an account with no balance (`malformed`): the out-of-step words with Try again.
+# The runner runs it in light and in dark, stopping and settling the app first; no retries.
+appId: app.flump.mobile
+---
+- runScript:
+    file: ../scripts/fixture.js
+    env:
+      SCENARIO: '{"data": "owner"}'
+- runFlow: ../subflows/launch-signed-out.yaml
+- runFlow: ../subflows/sign-in-to-home.yaml
+- extendedWaitUntil:
+    visible:
+      id: "home-hero"
+    timeout: 30000
+- assertVisible:
+    id: "home-hero-change"
+- assertVisible:
+    id: "net-worth-trend"
+- assertNotVisible:
+    id: "net-worth-basis-line"
+- takeScreenshot: home-owner-${THEME}
+# The renter: a relaunch reads the new household (the cache lives only while the app runs).
+- runScript:
+    file: ../scripts/scenario.js
+    env:
+      SCENARIO: '{"data": "renter"}'
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: "home-hero"
+    timeout: 60000
+- assertVisible:
+    id: "home-hero-change"
+- assertVisible:
+    id: "net-worth-trend"
+- assertVisible:
+    id: "net-worth-basis-line-action"
+- takeScreenshot: home-renter-${THEME}
+# Out of step: never "Add an account", never the connection.
+- runScript:
+    file: ../scripts/scenario.js
+    env:
+      SCENARIO: '{"data": "malformed"}'
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: "home-error"
+    timeout: 60000
+- assertVisible:
+    id: "home-retry"
+- assertNotVisible:
+    id: "home-hero"
+- assertNotVisible:
+    id: "home-empty"
+- takeScreenshot: home-out-of-step-${THEME}

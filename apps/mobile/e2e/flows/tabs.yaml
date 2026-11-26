@@ -9,10 +9,7 @@ appId: app.flump.mobile
     env:
       SCENARIO: "{}"
 - runFlow: ../subflows/launch-signed-out.yaml
-- runFlow:
-    file: ../subflows/sign-in.yaml
-    env:
-      AFTER: "You are signed in"
+- runFlow: ../subflows/sign-in-to-home.yaml
 - assertVisible:
     id: "tab-home"
 # The five tabs share one row at the normal text size: each is to the right of the one before it,

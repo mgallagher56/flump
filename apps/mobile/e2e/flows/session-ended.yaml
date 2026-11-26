@@ -7,10 +7,7 @@ appId: app.flump.mobile
     env:
       SCENARIO: "{}"
 - runFlow: ../subflows/launch-signed-out.yaml
-- runFlow:
-    file: ../subflows/sign-in.yaml
-    env:
-      AFTER: "You are signed in"
+- runFlow: ../subflows/sign-in-to-home.yaml
 - runScript:
     file: ../scripts/scenario.js
     env:
