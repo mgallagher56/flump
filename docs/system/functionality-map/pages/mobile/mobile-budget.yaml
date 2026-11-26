@@ -1,0 +1,11 @@
+id: mobile-budget
+app: mobile
+route: /budget
+title: Budget
+auth: required
+purpose: The Budget tab (E12 S4). Until its own slice it is a plain placeholder that says Budget is on the Flump website for now and opens the same web page (/app/budget) in the system browser. It shows no figures and reads nothing.
+route_file: apps/mobile/app/(app)/(tabs)/budget.tsx
+
+sections:
+  - id: placeholder
+    component: apps/mobile/src/screens/ComingSoon/ComingSoon.tsx

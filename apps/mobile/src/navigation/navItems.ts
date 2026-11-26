@@ -1,7 +1,9 @@
 /**
  * The app's navigation, mirrored from web's `navConfig.ts` (E12 S4, plan 9.7): the tab bar is web's
  * `BOTTOM_BAR_TABS` plus More, and the More list is what web's phone drawer lists below the bottom
- * bar (`withoutBarPages(AUTH_NAV_ROUTES)`, then `DRAWER_FOOTER_ROUTES`). Plain data with no
+ * bar (`withoutBarPages(AUTH_NAV_ROUTES)`, then `DRAWER_FOOTER_ROUTES`), less Self Assessment: it
+ * is opt-in per person and its page is off until switched on, so it waits for S9's shared filter
+ * rather than lead someone to a page they have not switched on (coordinator, 26 November 2026). Plain data with no
  * imports, so web's Vitest suite reads it: `apps/web/app/components/navigation/mobileNavParity.test.tsx`
  * fails when the two drift. Labels are web's English locale strings.
  */
@@ -13,7 +15,6 @@ export type IconName =
   | "wallet"
   | "calculator"
   | "ellipsis"
-  | "file-text"
   | "piggy-bank"
   | "coins"
   | "briefcase"
@@ -56,8 +57,6 @@ export const TABS = [
   { key: "more", label: "More", icon: "ellipsis", routeName: "more" },
 ] as const satisfies readonly TabItem[];
 
-export type TabKey = (typeof TABS)[number]["key"];
-
 export interface MorePage {
   /** Web's key, and the deep link `flump://page/<key>`. */
   readonly key: string;
@@ -72,20 +71,11 @@ export interface MoreGroup {
   readonly pages: readonly MorePage[];
 }
 
-/** Web's drawer groups, without the pages the tab bar already reaches. */
+/**
+ * Web's drawer groups, without the pages the tab bar already reaches. Pay's group held only Self
+ * Assessment, which is left out until S9 (above), so it is not here.
+ */
 export const MORE_GROUPS = [
-  {
-    key: "taxAndPay",
-    label: "Pay",
-    pages: [
-      {
-        key: "tax",
-        label: "Self Assessment",
-        icon: "file-text",
-        webRoute: "/app/self-assessment",
-      },
-    ],
-  },
   {
     key: "savingsAndPension",
     label: "Savings and pension",
@@ -118,7 +108,7 @@ export const MORE_FOOTER = [
 ] as const satisfies readonly MorePage[];
 
 /** Every page the More list opens, in its order. */
-export const MORE_PAGES: readonly MorePage[] = [
+const MORE_PAGES: readonly MorePage[] = [
   ...MORE_GROUPS.flatMap((group): readonly MorePage[] => group.pages),
   ...MORE_FOOTER,
 ];

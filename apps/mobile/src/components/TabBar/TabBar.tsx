@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { TAB_BAR_LABEL } from "../../copy/navigation";
+import { TAB_BAR_LABEL, tabPosition } from "../../copy/navigation";
 import type { IconName } from "../../navigation/navItems";
 import { useTheme } from "../../theme/ThemeProvider";
 import { Icon } from "../Icon";
@@ -9,7 +9,7 @@ import { Pressable } from "../Pressable";
 import { Text } from "../Text";
 import { createStyles, LABEL_STYLE, tabLayout } from "./TabBar.styles";
 
-export interface TabBarItem {
+interface TabBarItem {
   readonly key: string;
   readonly label: string;
   readonly icon: IconName;
@@ -60,7 +60,7 @@ export function TabBar({ items, activeKey, onSelect }: TabBarProps) {
               <Pressable
                 accessibilityRole="tab"
                 accessibilityState={{ selected }}
-                accessibilityHint={`${index + 1} of ${items.length}`}
+                accessibilityHint={tabPosition(index + 1, items.length)}
                 testID={`tab-${item.key}`}
                 style={[styles.tab, selected ? styles.selected : null]}
                 onPress={() => {

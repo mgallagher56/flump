@@ -55,6 +55,16 @@ const loadMobile = async () => {
 
 const EN: Record<string, string> = enCommon;
 
+/**
+ * Drawer rows the app leaves out on purpose. Each one depends on a per-person switch that the app
+ * does not read until S9 brings the shared filter, and a row leading to a page someone has not
+ * switched on is worse than no row (coordinator, 26 November 2026). Self Assessment is opt-in and
+ * its page shows "switched off" until turned on. The other switchable pages (Savings, Pension,
+ * Retirement, Cards and loans, Mortgage) are on by default and still open on web when switched off, so
+ * they stay. A new conditional row must be added here, or to the app, on purpose.
+ */
+const LEFT_OUT_UNTIL_S9: ReadonlySet<string> = new Set(["tax"]);
+
 /** "piggy-bank" -> lucide's PiggyBank component. */
 const lucideIcon = (name: string) => {
   const pascal = name.replace(/(^|-)(\w)/g, (_m, _dash, c: string) => c.toUpperCase());
@@ -86,9 +96,23 @@ describe("the mobile More list mirrors the phone drawer", () => {
     icon: route.icon,
   });
 
+  it("leaves out only the named exceptions, each of which is a real drawer row", async () => {
+    const { MORE_GROUPS } = await loadMobile();
+    const drawerKeys = withoutBarPages(AUTH_NAV_ROUTES).flatMap((g) =>
+      (g.children ?? []).map((p) => p.key),
+    );
+    const mobileKeys = MORE_GROUPS.flatMap((g) => g.pages.map((p) => p.key));
+    expect(drawerKeys.filter((key) => !mobileKeys.includes(key))).toEqual([...LEFT_OUT_UNTIL_S9]);
+  });
+
   it("has the drawer's groups and pages, without the tab bar's, in order", async () => {
     const { MORE_GROUPS } = await loadMobile();
-    const drawer = withoutBarPages(AUTH_NAV_ROUTES);
+    const drawer = withoutBarPages(AUTH_NAV_ROUTES)
+      .map((group) => ({
+        ...group,
+        children: group.children?.filter((page) => !LEFT_OUT_UNTIL_S9.has(page.key)),
+      }))
+      .filter((group) => (group.children ?? []).length > 0);
     // Every drawer entry left once the bar's pages go is a group (Accounts and Budget are tabs).
     expect(drawer.every((route) => route.children)).toBe(true);
     expect(
@@ -121,7 +145,6 @@ describe("the mobile icon shapes are lucide's", () => {
     "wallet",
     "calculator",
     "ellipsis",
-    "file-text",
     "piggy-bank",
     "coins",
     "briefcase",

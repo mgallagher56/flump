@@ -8,7 +8,7 @@ export const LABEL_STYLE = "label.sm" as const;
  * From this text scale the icons go and only the label names the tab, as web's bar at large text
  * (phone audit P19), so the bar does not take a quarter of the screen.
  */
-export const LABEL_ONLY_FROM = 1.5;
+const LABEL_ONLY_FROM = 1.5;
 
 /**
  * Average width of a label character as a share of the font size: generous for the system sans

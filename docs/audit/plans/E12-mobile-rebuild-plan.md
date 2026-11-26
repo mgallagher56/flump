@@ -518,9 +518,9 @@ After S6 the page slices touch separate folders and can run two or three at a ti
 - **Menu button and More tab:** both stay, as the 14 November ruling and web as built (`Header.tsx`). The button sits on the right of the header and opens the More tab. Review at S18.
 - **One source:** mirror, not move. `navConfig.ts` imports lucide-react and web's `AppPageKey`, and the drawer's footer rows are JSX, so a shared package means a new workspace and several changed web files. Mobile keeps plain data in `src/navigation/navItems.ts`. A Vitest test in `apps/web` pins it, because `mobile-checks` does not run on web-only PRs.
 - **Icons:** the lucide shapes web uses, copied as SVG paths into one `Icon` component (ISC licence noted), no new dependency.
-- **Switched-off pages:** filtered later, in S9. `isPageEnabled` lives in `apps/web/app/utils/pageConfig.ts`, and a second copy of that rule is worse than an extra row. S4 lists every row, Self Assessment included.
+- **Switched-off pages:** the shared filter comes in S9. Until then More leaves out the rows that depend on a per-person switch and lead to a page that is off until switched on: Self Assessment (opt-in). The other switchable pages are on by default and still open on web when switched off, so they stay. The parity test names the exception, so a new conditional row cannot appear by accident (coordinator, 26 November 2026). S4 reads no profile field for this.
 - **Kept:** tabs, More list, header with title and menu button, placeholders, `flump://` links to each tab, the More pages and the check-in. A link opened signed out shows sign-in and lands on its screen afterwards.
-- **Deferred:** the header theme toggle goes to S9 with the stored three-way choice (`ThemeProvider` follows the system only today). Universal and app links go to S19.
+- **Deferred:** the header theme toggle goes to S9 with the stored three-way choice (`ThemeProvider` follows the system only today), approved by the coordinator on 26 November 2026. Universal and app links go to S19.
 
 **The flow.** `SessionGate` moves from the first route into `(app)/_layout.tsx` and wraps the shell.
 
@@ -530,7 +530,7 @@ After S6 the page slices touch separate folders and can run two or three at a ti
 
 Home keeps the "You are signed in" heading, the check-in row with its empty state, and the dev links, until S5. Accounts, Budget and Pay show `ComingSoon`: the page name, one sentence ("Accounts is not in the app yet. You can use it on the Flump website."), and a link to the same web page. No figures.
 
-More lists, in web's drawer order: Self Assessment, Savings, Pension, Retirement, Cards and loans, Mortgage, Settings, Connect AI, Calculators, then Sign out (with the existing confirmation). Each page row opens `ComingSoon` for its page. The Home sign-out button goes.
+More lists, in web's drawer order: Savings, Pension, Retirement, Cards and loans, Mortgage, Settings, Connect AI, Calculators, then Sign out (with the existing confirmation). Sign out also stays on the offline, terms and Not invited screens. Each page row opens `ComingSoon` for its page. The Home sign-out button goes.
 
 **Files.**
 
@@ -545,7 +545,7 @@ More lists, in web's drawer order: Self Assessment, Savings, Pension, Retirement
 
 **Acceptance**
 
-1. The parity test fails if mobile's tabs differ from `BOTTOM_BAR_TABS` plus More in key, order, label, route or icon, or if the More rows differ from `withoutBarPages(AUTH_NAV_ROUTES)` plus `DRAWER_FOOTER_ROUTES`. Labels equal `apps/web/public/locales/en/common.json`.
+1. The parity test fails if mobile's tabs differ from `BOTTOM_BAR_TABS` plus More in key, order, label, route or icon, or if the More rows differ from `withoutBarPages(AUTH_NAV_ROUTES)`, less a named exception list (Self Assessment until S9), plus `DRAWER_FOOTER_ROUTES`. Labels equal `apps/web/public/locales/en/common.json`.
 2. Every placeholder names its page, shows no figure, and its link opens `webAppOrigin` plus that row's web route (Connect AI: `CONNECT_AI_ROUTE`).
 3. Home shows the check-in row, "Continue check-in" and the empty state exactly as in S3. Its tests pass unchanged apart from sign-out.
 4. Session states: a Jest test per state proves which replace the shell and that `restoredOffline` keeps the tab bar, with Try again on Home. The existing terms, session-ended and sign-out flows still pass.
@@ -558,7 +558,7 @@ More lists, in web's drawer order: Self Assessment, Savings, Pension, Retirement
 11. Lint, types, `check:laws` and the mobile and web tests pass, including the mobile law checks for the new directories.
 12. The parity log marks the navigation rows done or part done and records the theme toggle and the filter deferred to S9. The PR states the CROSS-PLATFORM section 7 result.
 
-**Built (S4, 26 November 2026).** As above, with these details. `SessionGate` wraps `app/(app)/_layout.tsx` and gives the tabs a shell context (`src/navigation/shell.ts`: offline, sign out, Try again, the two websites). The tab bar lays its tabs out by an estimate of the longest label's width (`tabLayout` in `TabBar.styles.ts`): five a row at the normal size on 320 points, two a row over three rows at 200% text, icons gone from 1.5 times; the real fit is a device check. The More list is a pushed page per row (`page/[key]`), so the tab bar hides there and Back returns to More. The web test also pins each icon's shapes to lucide-react's. `EXPO_PUBLIC_WEB_APP_URL` is optional; without it placeholder links open the marketing site's home page. Expo Router's route tests (`src/navigation/routes.test.tsx`) needed `standard-navigation` added to Jest's transform list.
+**Built (S4, 26 November 2026).** As above, with these details. `SessionGate` wraps `app/(app)/_layout.tsx` and gives the tabs a shell context (`src/navigation/shell.ts`: offline, sign out, Try again, the two websites). The tab bar lays its tabs out by an estimate of the longest label's width (`tabLayout` in `TabBar.styles.ts`): five a row at the normal size on 320 points, two a row over three rows at 200% text, icons gone from 1.5 times; the real fit is a device check. The More list is a pushed page per row (`page/[key]`), so the tab bar hides there and Back returns to More. The web test also pins each icon's shapes to lucide-react's. `EXPO_PUBLIC_WEB_APP_URL` is optional (coordinator, 26 November 2026); without it placeholder links open the marketing site's home page; links open in the system browser, never an in-app sheet. The tabs are the `(app)` stack's initial route, so a page opened cold by a link has Back to them. `app/+native-intent.ts` ignores Android's copy of the sign-in redirect while the app is open, so a link opened signed out lands on its screen after sign-in. Expo Router's route tests (`src/navigation/routes.test.tsx`) needed `standard-navigation` added to Jest's transform list.
 
 ### 9.8 Later slices
 

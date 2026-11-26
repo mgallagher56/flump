@@ -1,8 +1,8 @@
 import { userEvent } from "@testing-library/react-native";
-import { Stack } from "expo-router";
-import { act, renderRouter, screen } from "expo-router/testing-library";
+import { router as appRouter, Stack } from "expo-router";
+import { act, renderRouter, screen, testRouter } from "expo-router/testing-library";
 import { Linking } from "react-native";
-import SignedInLayout from "../../app/(app)/_layout";
+import * as signedInLayout from "../../app/(app)/_layout";
 import TabsLayout from "../../app/(app)/(tabs)/_layout";
 import AccountsTab from "../../app/(app)/(tabs)/accounts";
 import BudgetTab from "../../app/(app)/(tabs)/budget";
@@ -83,7 +83,7 @@ async function openApp(initialUrl: string, initial: SessionState = { status: "si
   const router = await renderRouter(
     {
       _layout: Root,
-      "(app)/_layout": SignedInLayout,
+      "(app)/_layout": signedInLayout,
       "(app)/(tabs)/_layout": TabsLayout,
       "(app)/(tabs)/index": HomeTab,
       "(app)/(tabs)/accounts": AccountsTab,
@@ -170,6 +170,11 @@ describe("the signed-in routes", () => {
     expect(
       screen.getByText("Pension is not in the app yet. You can use it on the Flump website."),
     ).toBeOnTheScreen();
+    // Opened cold, the tabs are still beneath it: Back goes to them, not out of the app.
+    expect(testRouter.canGoBack()).toBe(true);
+    await act(async () => appRouter.back());
+    expect(screen.queryByText(/Pension is not in the app yet/)).toBeNull();
+    expect(tab("Home").props.accessibilityState).toMatchObject({ selected: true });
   });
 
   it("an unknown page says so and offers one way back, to More", async () => {

@@ -1,0 +1,11 @@
+id: mobile-accounts
+app: mobile
+route: /accounts
+title: Accounts
+auth: required
+purpose: The Accounts tab (E12 S4). Until its own slice it is a plain placeholder that says Accounts is on the Flump website for now and opens the same web page (/app/accounts) in the system browser. It shows no figures and reads nothing.
+route_file: apps/mobile/app/(app)/(tabs)/accounts.tsx
+
+sections:
+  - id: placeholder
+    component: apps/mobile/src/screens/ComingSoon/ComingSoon.tsx

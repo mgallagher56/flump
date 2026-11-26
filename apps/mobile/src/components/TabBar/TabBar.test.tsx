@@ -38,7 +38,7 @@ describe("TabBar", () => {
     const list = screen.getByTestId("tab-bar");
     expect([list.props.accessibilityRole, list.props.accessibilityLabel]).toEqual([
       "tablist",
-      "Primary navigation",
+      "Main navigation",
     ]);
     const tabs = screen.getAllByRole("tab");
     expect(tabs.map((tab) => tab.props.testID)).toEqual([

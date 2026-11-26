@@ -2,7 +2,7 @@
 
 # Functionality map: overview
 
-Mapped pages: 42 | Sections: 276 | Excluded routes: 24
+Mapped pages: 47 | Sections: 282 | Excluded routes: 25
 
 ## web
 
@@ -605,10 +605,56 @@ Mapped pages: 42 | Sections: 276 | Excluded routes: 24
 | `cards`   | `apps/mobile/src/screens/CheckIn/CheckIn.tsx`         | `account-balance`, `balance-history`, `check-in-done`, `net-worth-choices` | `check-in-calculated-balance` |
 | `summary` | `apps/mobile/src/screens/CheckInDone/CheckInDone.tsx` | `account-balance`, `balance-history`, `net-worth-choices`                  | `net-worth`                   |
 
+### mobile-accounts: Accounts
+
+- Route: `/accounts` (auth: `required`, file: `apps/mobile/app/(app)/(tabs)/accounts.tsx`)
+- Purpose: The Accounts tab (E12 S4). Until its own slice it is a plain placeholder that says Accounts is on the Flump website for now and opens the same web page (/app/accounts) in the system browser. It shows no figures and reads nothing.
+
+| Section       | Component                                           | Facts read | Figures |
+| ------------- | --------------------------------------------------- | ---------- | ------- |
+| `placeholder` | `apps/mobile/src/screens/ComingSoon/ComingSoon.tsx` | -          | -       |
+
+### mobile-budget: Budget
+
+- Route: `/budget` (auth: `required`, file: `apps/mobile/app/(app)/(tabs)/budget.tsx`)
+- Purpose: The Budget tab (E12 S4). Until its own slice it is a plain placeholder that says Budget is on the Flump website for now and opens the same web page (/app/budget) in the system browser. It shows no figures and reads nothing.
+
+| Section       | Component                                           | Facts read | Figures |
+| ------------- | --------------------------------------------------- | ---------- | ------- |
+| `placeholder` | `apps/mobile/src/screens/ComingSoon/ComingSoon.tsx` | -          | -       |
+
+### mobile-more: More
+
+- Route: `/more` (auth: `required`, file: `apps/mobile/app/(app)/(tabs)/more.tsx`)
+- Purpose: The More tab (E12 S4), also opened by each tab's header menu button. It lists what web's phone drawer lists below the bottom bar, in its groups and order (Savings, Pension, Retirement, Cards and loans, Mortgage), then Settings, Connect AI and Calculators, then Sign out, which asks first. Self Assessment, opt-in per person, arrives with S9's filter. It reads nothing.
+
+| Section | Component                               | Facts read | Figures |
+| ------- | --------------------------------------- | ---------- | ------- |
+| `list`  | `apps/mobile/src/screens/More/More.tsx` | -          | -       |
+
+### mobile-more-page: A More page
+
+- Route: `/page/:key` (auth: `required`, file: `apps/mobile/app/(app)/page/[key].tsx`)
+- Purpose: A page opened from the More list, also by flump://page/<key> (E12 S4). Until its own slice it says the page is on the Flump website for now and opens the same web page in the system browser. An unknown key shows not found with one way back, to More. It shows no figures and reads nothing.
+
+| Section       | Component                                               | Facts read | Figures |
+| ------------- | ------------------------------------------------------- | ---------- | ------- |
+| `placeholder` | `apps/mobile/src/screens/ComingSoon/ComingSoon.tsx`     | -          | -       |
+| `not-found`   | `apps/mobile/src/screens/PageNotFound/PageNotFound.tsx` | -          | -       |
+
+### mobile-pay: Pay
+
+- Route: `/pay` (auth: `required`, file: `apps/mobile/app/(app)/(tabs)/pay.tsx`)
+- Purpose: The Pay tab (E12 S4). Until its own slice it is a plain placeholder that says Pay is on the Flump website for now and opens the same web page (/app/take-home) in the system browser. It shows no figures and reads nothing.
+
+| Section       | Component                                           | Facts read | Figures |
+| ------------- | --------------------------------------------------- | ---------- | ------- |
+| `placeholder` | `apps/mobile/src/screens/ComingSoon/ComingSoon.tsx` | -          | -       |
+
 ### sign-in: Flump
 
-- Route: `/` (auth: `public`, file: `apps/mobile/app/(app)/index.tsx`)
-- Purpose: First screen of the Expo app (E12 S2a). Signed out, it shows the name, the tagline, Sign in and Create account (WorkOS AuthKit in the system browser sheet, PKCE) and the privacy and terms links. After sign-in it checks the account with GET /v1/user-profile and shows the signed-in placeholder (with the monthly check-in row when one is due, E12 S3), Not invited, the terms screen (403 terms_not_accepted sends the person to the website to agree), the session-ended screen or the offline screen.
+- Route: `/` (auth: `public`, file: `apps/mobile/app/(app)/(tabs)/index.tsx`)
+- Purpose: First screen of the Expo app (E12 S2a). Signed out, it shows the name, the tagline, Sign in and Create account (WorkOS AuthKit in the system browser sheet, PKCE) and the privacy and terms links. After sign-in it checks the account with GET /v1/user-profile and shows the Home tab inside the tab bar (E12 S4) with the monthly check-in row when one is due (E12 S3); restored without reaching Flump, Home shows the offline screen while the tabs stay, Not invited, the terms screen (403 terms_not_accepted sends the person to the website to agree)or the session-ended screen.
 
 | Section               | Component                                                         | Facts read                                         | Figures |
 | --------------------- | ----------------------------------------------------------------- | -------------------------------------------------- | ------- |
