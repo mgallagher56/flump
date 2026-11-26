@@ -1,4 +1,4 @@
-import { selectNetWorthChange } from "@flump/finance-engine";
+import { type RecordedMonthPoint, selectNetWorthChange } from "@flump/finance-engine";
 import type { KpiDelta } from "@repo/ui";
 
 /** A recorded month's net worth, as the loader passes it to the dashboard. No other figures. */
@@ -9,6 +9,21 @@ export interface PriorNetWorth {
 }
 
 const MONTH_RE = /^(\d{4})-(0[1-9]|1[0-2])$/;
+
+/**
+ * The month the hero compares with and its total, as the loader passes it on: the engine's
+ * `selectNetWorthChange` picks it (E12 S5), so web and the mobile app compare with the same month.
+ * `null` when there is no earlier recorded month or today's figure is unknown.
+ */
+export function priorNetWorth(
+  netWorth: number | null,
+  series: readonly RecordedMonthPoint[],
+  currentMonth: string,
+): PriorNetWorth | null {
+  const change = selectNetWorthChange(netWorth, series, currentMonth);
+  const prior = change ? series.find((p) => p.month === change.priorMonth) : undefined;
+  return prior ? { month: prior.month, netWorth: prior.netWorth } : null;
+}
 
 /** "October", or "October 2025" when the month is not in the current year. */
 export const sinceLabel = (month: string, currentMonth: string): string => {

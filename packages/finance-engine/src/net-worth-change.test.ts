@@ -59,4 +59,20 @@ describe("selectNetWorthChange", () => {
       change: 300,
     });
   });
+
+  it("keeps the last point given for a month that appears twice", () => {
+    // Two October points: the later one (300) counts: 400 - 300 = 100.
+    const series = [rec("2026-10", 250), rec("2026-10", 300)];
+    expect(selectNetWorthChange(400, series, "2026-11")?.change).toBe(100);
+  });
+
+  it("ignores months that are almost YYYY-MM", () => {
+    // Each of these sorts after September and before November, but none is a month.
+    for (const month of ["2026-10-01", "2026-10 2026-10", "2026-1", "2026-00"]) {
+      expect(selectNetWorthChange(500, [rec("2026-09", 200), rec(month, 1)], "2026-11")).toEqual({
+        priorMonth: "2026-09",
+        change: 300,
+      });
+    }
+  });
 });

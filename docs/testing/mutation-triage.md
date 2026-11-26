@@ -4042,3 +4042,11 @@ Measured by forced runs of `src/auth/workos-jwt.verifier.ts:68-101` (the `verify
 | Line     | Fault                                                  | Class      | Reason                                                                                                                                                                                      |
 | -------- | ------------------------------------------------------ | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | L96; L97 | OptionalChaining `e.code`, `e.claim` (diagnostic line) | Equivalent | Everything that reaches the catch is an Error object: jose's errors, the JWKS getter's and the verifier's own `throw new Error`. `e` is never null or undefined, so `e?.x` and `e.x` agree. |
+
+## Home hero change since last month (E12 S5, 26 November 2026)
+
+`packages/finance-engine/src/net-worth-change.ts`, `--mutate` on the whole file: 42 faults, 41 killed, 1 survivor.
+
+| Line | Fault                                             | Class      | Reason                                                                                                                                                 |
+| ---- | ------------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| L33  | ConditionalExpression `netWorth === null` → false | Equivalent | `Number.isFinite(null)` is false (it does not coerce), so a null figure still returns null through the second test. The first test is there for types. |
