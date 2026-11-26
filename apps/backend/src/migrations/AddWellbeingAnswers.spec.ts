@@ -1,10 +1,10 @@
 import type { QueryRunner } from "typeorm";
 import { describe, expect, it, vi } from "vitest";
 import {
-  AddWellbeingAnswers1795720000000,
+  AddWellbeingAnswers1795740000000,
   WELLBEING_ANSWERS_DOWN_REFUSAL,
   WELLBEING_SWITCH_DOWN_REFUSAL,
-} from "./AddWellbeingAnswers1795720000000";
+} from "./AddWellbeingAnswers1795740000000";
 
 function runnerWith(state: {
   tableExists: boolean;
@@ -27,10 +27,10 @@ const drops = (query: ReturnType<typeof vi.fn>) =>
   sqls(query).filter((sql) => sql.includes("DROP"));
 const present = { tableExists: true, columnExists: true };
 
-describe("AddWellbeingAnswers1795720000000", () => {
+describe("AddWellbeingAnswers1795740000000", () => {
   it("up waits at most 10 s for the user_profiles lock, set before the ALTER", async () => {
     const { query, runner } = runnerWith({ ...present, hasRows: false, anyOff: false });
-    await new AddWellbeingAnswers1795720000000().up(runner);
+    await new AddWellbeingAnswers1795740000000().up(runner);
     const order = sqls(query);
     const timeout = order.indexOf("SET LOCAL lock_timeout = '10s'");
     const alter = order.findIndex((sql) => sql.startsWith(`ALTER TABLE "user_profiles"`));
@@ -41,7 +41,7 @@ describe("AddWellbeingAnswers1795720000000", () => {
 
   it("down refuses while any answer is stored, and drops nothing", async () => {
     const { query, runner } = runnerWith({ ...present, hasRows: true, anyOff: false });
-    await expect(new AddWellbeingAnswers1795720000000().down(runner)).rejects.toThrow(
+    await expect(new AddWellbeingAnswers1795740000000().down(runner)).rejects.toThrow(
       WELLBEING_ANSWERS_DOWN_REFUSAL,
     );
     expect(drops(query)).toEqual([]);
@@ -49,7 +49,7 @@ describe("AddWellbeingAnswers1795720000000", () => {
 
   it("down refuses while anyone has switched the questions off, and drops nothing", async () => {
     const { query, runner } = runnerWith({ ...present, hasRows: false, anyOff: true });
-    await expect(new AddWellbeingAnswers1795720000000().down(runner)).rejects.toThrow(
+    await expect(new AddWellbeingAnswers1795740000000().down(runner)).rejects.toThrow(
       WELLBEING_SWITCH_DOWN_REFUSAL,
     );
     expect(drops(query)).toEqual([]);
@@ -57,7 +57,7 @@ describe("AddWellbeingAnswers1795720000000", () => {
 
   it("down locks each table before its check, then drops the column and the table", async () => {
     const { query, runner } = runnerWith({ ...present, hasRows: false, anyOff: false });
-    await new AddWellbeingAnswers1795720000000().down(runner);
+    await new AddWellbeingAnswers1795740000000().down(runner);
     const order = sqls(query);
     const lockAnswers = order.indexOf(`LOCK TABLE "wellbeing_answers" IN ACCESS EXCLUSIVE MODE`);
     const checkAnswers = order.findIndex((sql) => sql.includes(`FROM "wellbeing_answers"`));
@@ -80,7 +80,7 @@ describe("AddWellbeingAnswers1795720000000", () => {
       hasRows: true,
       anyOff: true,
     });
-    await new AddWellbeingAnswers1795720000000().down(runner);
+    await new AddWellbeingAnswers1795740000000().down(runner);
     expect(sqls(query).some((sql) => sql.startsWith("LOCK TABLE"))).toBe(false);
     expect(drops(query)).toHaveLength(2);
   });
