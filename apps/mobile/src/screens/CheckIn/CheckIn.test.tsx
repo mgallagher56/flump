@@ -445,6 +445,26 @@ describe("CheckIn loading, failure and empty", () => {
     },
   );
 
+  it("no profile yet but another read failed: the load error, never 'not set up'", async () => {
+    const api = fakeApi({
+      ...routes(household()),
+      "GET /user-profile": () => undefined,
+      "GET /snapshots/check-ins": () => fail("forbidden", 403),
+    });
+    const { ui } = withApi(
+      <CheckIn
+        marketingOrigin="https://m.test.invalid"
+        setUp={SET_UP}
+        onClose={jest.fn()}
+        now={NOW}
+      />,
+      api.client,
+    );
+    await render(ui);
+    expect(await screen.findByText("We could not load your accounts")).toBeOnTheScreen();
+    expect(screen.queryByText("Finish setting up Flump on the website")).toBeNull();
+  });
+
   it("reads only the profile fields it uses: one added or dropped elsewhere still opens the cards", async () => {
     const { checkInDay, netWorthCountsProperty, onboardingCompleted } = household().profile;
     const api = fakeApi({

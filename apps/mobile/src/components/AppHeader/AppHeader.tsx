@@ -39,9 +39,14 @@ export function AppHeader({ title, onOpenMenu, onBack }: AppHeaderProps) {
             <Icon name="chevron-left" color="primary" />
           </Pressable>
         ) : null}
-        <Text accessibilityRole="header" textStyle="heading.sm" style={styles.title}>
-          {title}
-        </Text>
+        {/* A page with no name (an unknown link) has no heading, not an empty one. */}
+        {title ? (
+          <Text accessibilityRole="header" textStyle="heading.sm" style={styles.title}>
+            {title}
+          </Text>
+        ) : (
+          <View style={styles.title} />
+        )}
         {onOpenMenu ? (
           <Pressable
             accessibilityRole="button"

@@ -10,7 +10,7 @@ import {
   textStyles,
 } from "@flump/tokens/native";
 import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from "react";
-import { Appearance, AppState, type ColorSchemeName, useColorScheme } from "react-native";
+import { Appearance, AppState, type ColorSchemeName } from "react-native";
 
 type ColorScheme = "light" | "dark";
 
@@ -60,20 +60,22 @@ export interface ThemeProviderProps {
 }
 
 /**
- * The system light or dark setting, live. React Native's own hook hears a change made while the app
- * is open; a change made in the phone's settings while the app was in the background was not heard
- * until a restart on an Android 17 emulator (device check, 26 November 2026), so the setting is
- * read again each time the app comes back to the front.
+ * The system light or dark setting, live. One value that two sources write: React Native's change
+ * listener, for a change made while the app is open, and a fresh read each time the app comes back
+ * to the front, because a change made in the phone's settings while the app was in the background
+ * was not heard until a restart on an Android 17 emulator (device check, 26 November 2026).
  */
 function useSystemScheme(): ColorSchemeName | null {
-  const heard = useColorScheme();
-  const [scheme, setScheme] = useState<ColorSchemeName | null>(heard);
-  useEffect(() => setScheme(heard), [heard]);
+  const [scheme, setScheme] = useState<ColorSchemeName | null>(() => Appearance.getColorScheme());
   useEffect(() => {
-    const subscription = AppState.addEventListener("change", (state) => {
+    const appearance = Appearance.addChangeListener(({ colorScheme }) => setScheme(colorScheme));
+    const appState = AppState.addEventListener("change", (state) => {
       if (state === "active") setScheme(Appearance.getColorScheme());
     });
-    return () => subscription.remove();
+    return () => {
+      appearance.remove();
+      appState.remove();
+    };
   }, []);
   return scheme;
 }
