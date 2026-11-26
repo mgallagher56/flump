@@ -17,6 +17,7 @@ import { RetentionModule } from "./jobs/retention.module";
 import { AgentModule } from "./modules/agent/agent.module";
 import { BudgetModule } from "./modules/budget/budget.module";
 import { FinanceModule } from "./modules/finance/finance.module";
+import { HouseholdModule } from "./modules/household/household.module";
 import { ImportsModule } from "./modules/imports/imports.module";
 import { InvoicingModule } from "./modules/invoicing/invoicing.module";
 import { PrivacyModule } from "./modules/privacy/privacy.module";
@@ -62,6 +63,8 @@ import { SecurityModule } from "./security/security.module";
     PrivacyModule,
     BetaModule,
     RetentionModule,
+    HouseholdModule,
+    HouseholdModule,
   ],
   controllers: [AppController, HealthController],
   providers: [

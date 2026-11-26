@@ -80,6 +80,7 @@ describe("HTTP success status", () => {
         "beta.createInvite",
         "budget.addCategory",
         "budget.create",
+        "household.createInvitation",
         "imports.stage",
         "invoicing.createInvoice",
         "invoicing.createWorkLog",

@@ -426,6 +426,7 @@ describe("log volume limits", () => {
           "imports",
           "mcp-tokens",
           "beta",
+          "household",
           "app",
         ]),
       );

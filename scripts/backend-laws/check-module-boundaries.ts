@@ -33,6 +33,8 @@ export const MODULE_DEPENDENCIES: Readonly<Record<string, readonly string[]>> = 
   privacy: ["banking"],
   profile: ["banking", "privacy", "snapshots"],
   retirement: ["privacy"],
+  // privacy: the user-data lock, the erased-account check and the one leave function (E34 C3).
+  household: ["privacy"],
   // privacy: /mcp writes run as the token's user under the user-data write fence (finding F1).
   agent: ["finance", "imports", "privacy", "profile", "retirement"],
 };

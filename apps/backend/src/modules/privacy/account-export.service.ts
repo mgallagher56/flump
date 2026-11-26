@@ -78,7 +78,11 @@ export class AccountExportService {
         schemaVersion: ACCOUNT_EXPORT_SCHEMA_VERSION,
         exportedAt: now.toISOString(),
         userId,
-        notes: [...EXPORT_NOTES, ...(await betaAccessNotes(manager, userId))],
+        notes: [
+          ...EXPORT_NOTES,
+          ...(await betaAccessNotes(manager, userId)),
+          ...(await householdNotes(manager, userId)),
+        ],
       };
       // The envelope without its closing brace, then each section appended to it.
       await write(JSON.stringify(head).slice(0, -1));
@@ -309,4 +313,35 @@ function exportRow(table: UserDataTable, row: Record<string, unknown>): Record<s
       return [c, val ?? null];
     }),
   );
+}
+
+/**
+ * The household tables (E34 C3, USER_LINKED_TABLES) as notes: whether the person is in a household,
+ * since when, their own sharing choice and when their open invitation link stops working. Never the
+ * other person's id, name or items. Nothing is written for a person with neither row. Only the
+ * columns the registry lists for export are read.
+ */
+async function householdNotes(manager: EntityManager, userId: string): Promise<string[]> {
+  const notes: string[] = [];
+  const members: Array<{ joined_at: Date; shares_joint_summary: boolean }> = await manager.query(
+    `SELECT "joined_at", "shares_joint_summary" FROM "household_members" WHERE "user_id" = $1`,
+    [userId],
+  );
+  for (const m of members) {
+    notes.push(
+      m.shares_joint_summary
+        ? `Household: you joined a household on ${day(m.joined_at)}. You show the accounts you marked joint in its summary.`
+        : `Household: you joined a household on ${day(m.joined_at)}. You do not show your accounts in its summary.`,
+    );
+  }
+  const invitations: Array<{ expires_at: Date }> = await manager.query(
+    `SELECT "expires_at" FROM "household_invitations" WHERE "inviter_user_id" = $1`,
+    [userId],
+  );
+  for (const i of invitations) {
+    notes.push(
+      `Household invitation link: you have an open link that stops working on ${day(i.expires_at)}.`,
+    );
+  }
+  return notes;
 }

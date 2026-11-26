@@ -12,6 +12,9 @@ import { BetaInvite } from "../entities/beta-invite.entity";
 import { BetaMember } from "../entities/beta-member.entity";
 import { BudgetEntry } from "../entities/budget-entry.entity";
 import { Consent } from "../entities/consent.entity";
+import { Household } from "../entities/household.entity";
+import { HouseholdInvitation } from "../entities/household-invitation.entity";
+import { HouseholdMember } from "../entities/household-member.entity";
 import { IdempotencyKey } from "../entities/idempotency-key.entity";
 import { ImportBatch } from "../entities/import-batch.entity";
 import { Invoice } from "../entities/invoice.entity";
@@ -52,6 +55,9 @@ export const ENTITIES: Function[] = [
   InvoicingSettings,
   WorkLogEntry,
   Invoice,
+  Household,
+  HouseholdMember,
+  HouseholdInvitation,
 ];
 
 // Relative to this file so it resolves under both `bun src/...` (ts) and dist/ (js).

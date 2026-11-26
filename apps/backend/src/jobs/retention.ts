@@ -122,6 +122,14 @@ export const RETENTION_POLICIES: readonly RetentionPolicy[] = [
       "an invite link is kept 30 days after it was cancelled, used or expired (the admin's list shows that long), and a used one while its member row exists",
   },
   {
+    name: "household_invitations_expired",
+    table: "household_invitations",
+    // An expired link can never be used (accept and preview check expires_at), so it goes at once.
+    where: `"expires_at" < $1::timestamptz`,
+    reason:
+      "a household invitation link works for 48 hours; once expired it is unusable and is deleted (E34 C3, G4)",
+  },
+  {
     name: "account_deletion_tombstones",
     table: "account_deletion_tombstones",
     where: `"expires_at" < $1::timestamptz`,

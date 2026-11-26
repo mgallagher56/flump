@@ -86,6 +86,7 @@ Where each value is stored, entered and used. One entry per stored fact, then on
 | [Default mortgage rate band by LTV](#mortgage-ltv-rate-band)                                                                             | figure | mortgage    | Holds                                     |
 | [Property price after stamp duty and other buying costs](#property-price-after-buying-costs)                                             | figure | mortgage    | Holds                                     |
 | [Estimated stamp duty (SDLT, LBTT, LTT)](#property-transaction-tax)                                                                      | figure | mortgage    | Holds                                     |
+| [Household joint summary](#household-joint-summary)                                                                                      | figure | accounts    | Holds                                     |
 
 ## Area: pay
 
@@ -802,6 +803,24 @@ Other code paths that compute it:
 Shown on:
 
 - Monthly check-in: `packages/finance-engine/src/check-in.ts`
+
+### Household joint summary
+
+<a id="household-joint-summary"></a>
+
+- Id: `household-joint-summary` (derived figure)
+- Verdict: Holds. Findings: none. Links: none.
+- Computed by: `selectJointSummaryItems` in `packages/finance-engine/src/household-joint-summary.ts`
+- Built from: `account-balance`, `ownership-share`
+- Note: E34 C3: the joint accounts of each household member who chose to share them, the viewer included; the whole stored balance with no share applied; no total until slice C2 pairs two people's copies of one account. Who may be read is decided by jointSummarySourceUserIds (apps/backend/src/modules/household/household-visibility.ts). Household membership, the sharing choice and open invitation links are tables with no fact about the person's money (user-data-registry.ts, noUserFacts). Not shown to AI connections.
+
+Other code paths that compute it:
+
+- none
+
+Shown on:
+
+- Settings: `apps/backend/src/modules/household/household.service.ts` (GET /household/joint-summary, read by the Household tab in Settings (E34 C3, behind the household switch))
 
 ## Area: home
 

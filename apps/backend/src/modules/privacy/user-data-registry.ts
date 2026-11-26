@@ -11,6 +11,8 @@ import { BetaInvite } from "../../entities/beta-invite.entity";
 import { BetaMember } from "../../entities/beta-member.entity";
 import { BudgetEntry } from "../../entities/budget-entry.entity";
 import { Consent } from "../../entities/consent.entity";
+import { HouseholdInvitation } from "../../entities/household-invitation.entity";
+import { HouseholdMember } from "../../entities/household-member.entity";
 import { IdempotencyKey } from "../../entities/idempotency-key.entity";
 import { ImportBatch } from "../../entities/import-batch.entity";
 import { Invoice } from "../../entities/invoice.entity";
@@ -1039,9 +1041,11 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
 ];
 
 /**
- * The invite-only beta's tables (invite links). Neither is an export section: the export names the
- * user's membership and the invite they used in its notes (account-export.service.ts). Members go
- * first: an erasure deletes the member row, then blanks the invite's link to the user.
+ * The invite-only beta's tables (invite links) and the household tables (E34 C3). None is an export
+ * section: the export names the user's beta membership, the invite they used and their household
+ * membership and open invitation in its notes (account-export.service.ts). Beta members go first:
+ * an erasure deletes the member row, then blanks the invite's link to the user. The erasure closes
+ * the person's household (leaveHousehold) before this sweep, so the household rows are already gone.
  */
 export const USER_LINKED_TABLES: readonly UserLinkedTable[] = [
   table({
@@ -1102,6 +1106,53 @@ export const USER_LINKED_TABLES: readonly UserLinkedTable[] = [
       ],
     },
   }),
+  table({
+    entity: HouseholdMember,
+    userColumn: "userId",
+    erasure: "delete-rows",
+    export: {
+      via: "the export's notes: that the person is in a household, since when, and their own sharing choice",
+      columns: ["joinedAt", "sharesJointSummary"],
+      excluded: {
+        householdId:
+          "an internal id that would only link the person to the other member, never exported",
+        userId: USER_ID_IN_ENVELOPE,
+        slot: "which of the two places the person holds, a database cap, not a fact about them",
+      },
+    },
+    reset: {
+      kind: "keep",
+      reason: "a household is not financial data; a reset leaves the person in it",
+    },
+    valueMap: {
+      noUserFacts:
+        "who is in which household and whether they share their joint accounts, not a fact about the person's money",
+      columns: ["householdId", "userId", "slot", "sharesJointSummary", "joinedAt"],
+    },
+  }),
+  table({
+    entity: HouseholdInvitation,
+    userColumn: "inviterUserId",
+    erasure: "delete-rows",
+    export: {
+      via: "the export's notes: when the person's open household invitation link stops working",
+      columns: ["expiresAt"],
+      excluded: {
+        id: "the link's own id, meaningless outside Flump",
+        tokenHash: "secret: the hash that identifies the link, never exported",
+        inviterUserId: USER_ID_IN_ENVELOPE,
+        createdAt: "when the link was made, given by its expiry less 48 hours",
+      },
+    },
+    reset: {
+      kind: "keep",
+      reason: "an open invitation link is not financial data",
+    },
+    valueMap: {
+      noUserFacts: "an open household invitation link, not a fact about the person's money",
+      columns: ["id", "tokenHash", "inviterUserId", "createdAt", "expiresAt"],
+    },
+  }),
 ];
 
 /** Row counts per registry table, for audit events. Counts only, never values. */
@@ -1115,6 +1166,8 @@ export type RemovedCounts = Partial<Record<AccountExportKey, number>>;
 export const NON_USER_ENTITIES: Readonly<Record<string, string>> = {
   AccountDeletionTombstone:
     "proof of erasure: a keyed hash of the user id and timestamps, no user id and no personal data",
+  Household:
+    "a household's id and creation time only; who is in it lives in household_members (a linked table)",
 };
 
 /**

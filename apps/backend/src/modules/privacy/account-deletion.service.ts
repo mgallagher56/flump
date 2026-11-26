@@ -13,6 +13,7 @@ import { BankConnection } from "../../entities/bank-connection.entity";
 import { Transaction } from "../../entities/transaction.entity";
 import { USER_IDENTITY_ADAPTER, type UserIdentityAdapter } from "../../identity/identity.adapter";
 import { BANK_CONSENT_REVOKER, type BankConsentRevoker } from "../banking/bank-consent-revoker";
+import { leaveHousehold } from "./household-leave";
 import {
   resolveTombstoneKey,
   TOMBSTONE_KEY_ENV_VAR,
@@ -185,42 +186,47 @@ export class AccountDeletionService implements ErasedAccountCheck {
     await this.revokeBankConsent(userId);
 
     // (b) One transaction: every registry table, children first, then the tombstone.
-    const { tombstone, removed, linked } = await this.dataSource.transaction(async (manager) => {
-      // First statement: serialise with a financial-data reset of the same user (see lockUserData).
-      await lockUserData(manager, userId);
-      const removed = await this.sweep(manager, userId);
-      const linked = await this.sweepLinked(manager, userId);
-      const now = new Date();
-      const tombstones = manager.getRepository(AccountDeletionTombstone);
-      // A retry keeps the first deletion time: ON CONFLICT DO NOTHING, then read the row back.
-      const inserted = await tombstones
-        .createQueryBuilder()
-        .insert()
-        .values({
-          subjectHash,
-          deletedAt: now,
-          identityDeletedAt: null,
-          expiresAt: tombstoneExpiry(now),
-        })
-        .orIgnore()
-        .returning(["id"])
-        .execute();
-      // Opportunistic retention: tombstones past their 24 months go on the next write.
-      await tombstones.delete({ expiresAt: LessThan(now) });
-      const tombstone = await tombstones.findOneByOrFail({ subjectHash });
-      // BE-06 (H12): one audit row per erasure, written with the tombstone it describes. No user
-      // id (the account is gone): the tombstone id links the two. A retry finds the first
-      // tombstone (the insert was ignored and returned no row) and records nothing new.
-      if (Array.isArray(inserted.raw) && inserted.raw.length > 0) {
-        await recordAuditEvent(manager, {
-          userId: null,
-          action: "user.deleted",
-          targetId: tombstone.id,
-          metadata: { removed },
-        });
-      }
-      return { tombstone, removed, linked };
-    });
+    const { tombstone, removed, linked, household } = await this.dataSource.transaction(
+      async (manager) => {
+        // First statement: serialise with a financial-data reset of the same user (see lockUserData).
+        await lockUserData(manager, userId);
+        const removed = await this.sweep(manager, userId);
+        // E34 C3: close the person's household first (the other person loses only their membership
+        // row) and remove their open invitation link; the same function as leaving.
+        const household = await leaveHousehold(manager, userId);
+        const linked = await this.sweepLinked(manager, userId);
+        const now = new Date();
+        const tombstones = manager.getRepository(AccountDeletionTombstone);
+        // A retry keeps the first deletion time: ON CONFLICT DO NOTHING, then read the row back.
+        const inserted = await tombstones
+          .createQueryBuilder()
+          .insert()
+          .values({
+            subjectHash,
+            deletedAt: now,
+            identityDeletedAt: null,
+            expiresAt: tombstoneExpiry(now),
+          })
+          .orIgnore()
+          .returning(["id"])
+          .execute();
+        // Opportunistic retention: tombstones past their 24 months go on the next write.
+        await tombstones.delete({ expiresAt: LessThan(now) });
+        const tombstone = await tombstones.findOneByOrFail({ subjectHash });
+        // BE-06 (H12): one audit row per erasure, written with the tombstone it describes. No user
+        // id (the account is gone): the tombstone id links the two. A retry finds the first
+        // tombstone (the insert was ignored and returned no row) and records nothing new.
+        if (Array.isArray(inserted.raw) && inserted.raw.length > 0) {
+          await recordAuditEvent(manager, {
+            userId: null,
+            action: "user.deleted",
+            targetId: tombstone.id,
+            metadata: { removed },
+          });
+        }
+        return { tombstone, removed, linked, household };
+      },
+    );
 
     // (b2) Sweep again now the tombstone is committed. Signed-in requests and /mcp cannot write
     // after (b) (UserDataWriteFence: they wait for the lock, then see the tombstone). A write that
@@ -228,6 +234,7 @@ export class AccountDeletionService implements ErasedAccountCheck {
     // run on every retry) removes it. One that commits after this pass is not caught.
     const stragglers = await this.dataSource.transaction(async (manager) => ({
       removed: await this.sweep(manager, userId),
+      household: await leaveHousehold(manager, userId),
       linked: await this.sweepLinked(manager, userId),
     }));
     for (const [k, n] of Object.entries(stragglers.removed) as [AccountExportKey, number][]) {
@@ -244,6 +251,9 @@ export class AccountDeletionService implements ErasedAccountCheck {
       this.logger.log({ event: "account_deleted", tombstoneId: tombstone.id, removed });
       this.logger.log(
         `account_deleted_beta_access tombstoneId=${tombstone.id} members=${betaMembers} invitesUnlinked=${betaInvitesUnlinked}`,
+      );
+      this.logger.log(
+        `account_deleted_household tombstoneId=${tombstone.id} householdsClosed=${household.households + stragglers.household.households} invitationsRemoved=${household.invitations + stragglers.household.invitations}`,
       );
     } catch {
       // logging failure is ignored

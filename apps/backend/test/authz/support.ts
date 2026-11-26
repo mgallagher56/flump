@@ -80,6 +80,8 @@ export interface AuthzHarness {
    */
   tokenFor(userId: string): Promise<string>;
   call(method: HttpMethod, path: string, token?: string, body?: object): request.Test;
+  /** A fresh signed token for any user id (a third person, say), signed in now. */
+  signIn(userId: string): Promise<string>;
   /** Per-user and per-IP limits (tokenMint 5/h, destructive 10/h) would otherwise 429 the matrix. */
   resetRateLimits(): Promise<void>;
   close(): Promise<void>;
@@ -210,6 +212,7 @@ export async function bootAuthzHarness(options: HarnessOptions = {}): Promise<Au
       if (token) req = req.set("Authorization", `Bearer ${token}`);
       return body ? req.send(body) : req;
     },
+    signIn: (userId) => jwt.sign({ sub: userId, auth_time: Math.floor(Date.now() / 1000) }),
     async resetRateLimits() {
       (rateLimitStore as unknown as { buckets: Map<string, unknown> }).buckets.clear();
       // The sensitive buckets and the /mcp failed-auth limiter (10 failures a minute per IP,
