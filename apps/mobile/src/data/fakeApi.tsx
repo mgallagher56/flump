@@ -45,7 +45,13 @@ export function fakeApi(routes: Record<string, FakeRoute>) {
       const data = await route(options.body);
       // A route that answers nothing is an empty body: allowed only where the caller allows it.
       if (data === undefined && options.allowEmpty) return undefined;
-      return options.schema ? options.schema.parse(data) : data;
+      if (!options.schema) return data;
+      // As the real client: an answer its schema refuses is `bad-response` (out of step).
+      try {
+        return options.schema.parse(data);
+      } catch {
+        fail("bad-response", 200);
+      }
     },
   );
   const client = { request, getClientPolicy: jest.fn() } as unknown as ApiClient;
