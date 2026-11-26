@@ -1,4 +1,5 @@
 import {
+  Bot,
   Briefcase,
   Building2,
   Calculator,
@@ -8,6 +9,7 @@ import {
   type LucideIcon,
   PiggyBank,
   Scale,
+  Settings,
   TrendingDown,
   Wallet,
 } from "lucide-react";
@@ -42,6 +44,17 @@ export const SANDBOX_HOME_NAV_ROUTE: NavRouteItem = {
 
 /** Where "Connect AI" lands: the AI tab of the settings page. */
 export const CONNECT_AI_ROUTE = "/app/profile?tab=ai_connections";
+
+/**
+ * The rows under the pages in the phone drawer, signed in: Settings, Connect AI (the same icon as
+ * the account menu's, P68) and Calculators. The key names the row for `currentFooterRow`; the
+ * label is the locale key. The mobile app's More list mirrors these (mobileNavParity.test.ts).
+ */
+export const DRAWER_FOOTER_ROUTES = [
+  { key: "settings", route: "/app/profile", icon: Settings },
+  { key: "connectAi", route: CONNECT_AI_ROUTE, icon: Bot },
+  { key: "tools", label: "freeCalculators", route: "/tools", icon: Calculator },
+] as const satisfies readonly (NavRouteItem & { route: string; icon: LucideIcon })[];
 
 export const HOME_NAV_ROUTE: NavRouteItem = { key: "home", route: "/", icon: House };
 

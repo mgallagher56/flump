@@ -1,15 +1,16 @@
 import { buttonVariants, HomeLogo, Icon, NavDrawer } from "@repo/ui";
 import { cx } from "@repo/ui/styled-system/css";
-import { Bot, Calculator, LogOut, Settings } from "lucide-react";
+import { LogOut } from "lucide-react";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 import { Form, Link, useLocation } from "react-router";
+import { navLabel } from "~/components/navigation/buildNavManifest";
 import NavMenu from "~/components/navigation/NavMenu";
 import { mobileLink } from "~/components/navigation/NavMenu/NavMenu.styles";
 import {
   AUTH_NAV_ROUTES,
   BOTTOM_BAR_TABS,
-  CONNECT_AI_ROUTE,
+  DRAWER_FOOTER_ROUTES,
   filterNavRoutes,
   HOME_NAV_ROUTE,
   type NavRouteItem,
@@ -41,14 +42,13 @@ const SANDBOX_DISABLED_KEYS = new Set(
 const footerLinkClass = (current: boolean) =>
   cx(buttonVariants({ variant: current ? "secondary" : "ghost" }), mobileLink());
 
+type FooterRowKey = (typeof DRAWER_FOOTER_ROUTES)[number]["key"];
+
 /**
  * Which footer row is the current page. Settings and Connect AI share `/app/profile`, so the tab
  * decides between them; a plain NavLink would mark both.
  */
-export function currentFooterRow(
-  pathname: string,
-  search: string,
-): "settings" | "connectAi" | "tools" | undefined {
+export function currentFooterRow(pathname: string, search: string): FooterRowKey | undefined {
   if (pathname === "/tools" || pathname.startsWith("/tools/")) return "tools";
   if (pathname !== "/app/profile" && !pathname.startsWith("/app/profile/")) return undefined;
   return new URLSearchParams(search).get("tab") === "ai_connections" ? "connectAi" : "settings";
@@ -62,7 +62,7 @@ const BAR_KEYS = new Set([...BOTTOM_BAR_TABS.map((tab) => tab.key), "takeHome"])
  * second list of Home, Accounts, Budget and Pay. A group keeps its pages the bar cannot reach (Self
  * Assessment under Pay).
  */
-function withoutBarPages(routes: NavRouteItem[]): NavRouteItem[] {
+export function withoutBarPages(routes: NavRouteItem[]): NavRouteItem[] {
   return routes.flatMap((route) => {
     if (!route.children) return BAR_KEYS.has(route.key) ? [] : [route];
     const children = route.children.filter((child) => !BAR_KEYS.has(child.key));
@@ -100,19 +100,12 @@ const MobileNavDrawer: FC<MobileNavDrawerProps> = ({ isOpen, onClose, user, sand
           {!!user && (
             <>
               {/* Same row as the pages above: icon, then label. */}
-              <Link {...rowProps("settings")} to="/app/profile" onClick={onClose}>
-                <Icon icon={Settings} size="sm" />
-                <span>{t("settings", "Settings")}</span>
-              </Link>
-              <Link {...rowProps("connectAi")} to={CONNECT_AI_ROUTE} onClick={onClose}>
-                {/* The same icon as the account menu's "Connect AI" (P68). */}
-                <Icon icon={Bot} size="sm" />
-                <span>{t("connectAi", "Connect AI")}</span>
-              </Link>
-              <Link {...rowProps("tools")} to="/tools" onClick={onClose}>
-                <Icon icon={Calculator} size="sm" />
-                <span>{t("freeCalculators", "Free calculators")}</span>
-              </Link>
+              {DRAWER_FOOTER_ROUTES.map((row) => (
+                <Link key={row.key} {...rowProps(row.key)} to={row.route} onClick={onClose}>
+                  <Icon icon={row.icon} size="sm" />
+                  <span>{navLabel(t, "label" in row ? row.label : row.key)}</span>
+                </Link>
+              ))}
             </>
           )}
           {/* The theme switch lives in the top bar at every width, so the drawer leaves it out. */}

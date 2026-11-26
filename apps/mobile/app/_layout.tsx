@@ -11,10 +11,10 @@ import {
 } from "../src/auth/SessionProvider";
 import { loadSignInConfig } from "../src/config";
 import { HOME_TITLE } from "../src/copy/brand";
-import { CHECK_IN } from "../src/copy/checkIn";
 import { ApiProvider } from "../src/data/ApiProvider";
 import { createQueryClient } from "../src/data/queryClient";
 import { useUpdateRequired } from "../src/features/app-update/useUpdateRequired";
+import { useStackScreenOptions } from "../src/navigation/stackOptions";
 import { UpdateRequired } from "../src/screens/UpdateRequired";
 import { ThemeProvider, useTheme } from "../src/theme/ThemeProvider";
 
@@ -31,7 +31,13 @@ function startApp(): { app: AppSession | null; problem?: StartProblem } {
     const { createAppSession }: typeof AuthDeps = require("../src/auth/authDeps");
     const { session, api, checkForUpdate } = createAppSession(config);
     return {
-      app: { session, api, checkForUpdate, marketingOrigin: config.site.marketingOrigin },
+      app: {
+        session,
+        api,
+        checkForUpdate,
+        marketingOrigin: config.site.marketingOrigin,
+        webAppOrigin: config.site.webAppOrigin,
+      },
     };
   } catch {
     return { app: null, problem: { kind: "misconfigured" } };
@@ -40,20 +46,13 @@ function startApp(): { app: AppSession | null; problem?: StartProblem } {
 
 function ThemedStack() {
   const theme = useTheme();
+  const screenOptions = useStackScreenOptions();
   return (
     <>
       <StatusBar style={theme.scheme === "dark" ? "light" : "dark"} />
-      <Stack
-        screenOptions={{
-          contentStyle: { backgroundColor: theme.colors["surface.canvas"] },
-          headerStyle: { backgroundColor: theme.colors["surface.canvas"] },
-          headerTintColor: theme.colors["text.primary"],
-          headerShadowVisible: false,
-        }}
-      >
-        {/* The title is what iOS's back button on the next screen reads (it showed "(app)/index"). */}
-        <Stack.Screen name="(app)/index" options={{ headerShown: false, title: HOME_TITLE }} />
-        <Stack.Screen name="(app)/check-in" options={{ title: CHECK_IN.title }} />
+      <Stack screenOptions={screenOptions}>
+        {/* Signed in: the gate, the tabs and their pages, with their own stack (S4). */}
+        <Stack.Screen name="(app)" options={{ headerShown: false, title: HOME_TITLE }} />
         <Stack.Screen name="auth/callback" options={{ headerShown: false }} />
         {__DEV__ ? (
           <Stack.Screen name="(dev)/engine-check" options={{ title: "Device check" }} />

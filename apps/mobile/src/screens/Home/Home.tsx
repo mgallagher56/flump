@@ -1,7 +1,7 @@
 import { Button } from "../../components/Button";
 import { Card } from "../../components/Card";
 import { Text } from "../../components/Text";
-import { SIGN_OUT, SIGNED_IN_HEADING } from "../../copy/auth";
+import { SIGNED_IN_HEADING } from "../../copy/auth";
 import { CHECK_IN } from "../../copy/checkIn";
 import { checkInRow } from "../../features/check-in/checkInFlow";
 import {
@@ -14,6 +14,7 @@ import { StatusMessage } from "../StatusMessage";
 import { TermsRequired } from "../TermsRequired";
 
 export interface HomeProps {
+  /** Sign out, offered by the terms screen; otherwise it lives in the More list (S4). */
   onSignOut(): void;
   /** The website, for the terms screen. */
   marketingOrigin: string;
@@ -22,7 +23,10 @@ export interface HomeProps {
   now?: () => Date;
 }
 
-/** The signed-in placeholder until the app shell (S4), with the check-in row when one is due (S3). */
+/**
+ * The Home tab until S5 brings the figures: the check-in row when one is due (S3). Sign out moved to
+ * the More list with the tab bar (S4).
+ */
 export function Home({
   onSignOut,
   onOpenCheckIn,
@@ -39,7 +43,6 @@ export function Home({
   return (
     <StatusMessage heading={SIGNED_IN_HEADING}>
       <CheckInRow data={data} onOpen={onOpenCheckIn} now={now} />
-      <Button label={SIGN_OUT} variant="secondary" onPress={onSignOut} />
       <DevLinks />
     </StatusMessage>
   );

@@ -1,4 +1,6 @@
 import { type ComponentType, createElement, Fragment, type ReactElement, useState } from "react";
+import { AppHeader } from "../../components/AppHeader";
+import { appHeaderStates } from "../../components/AppHeader/AppHeader.states";
 import { Button } from "../../components/Button";
 import { buttonStates } from "../../components/Button/Button.states";
 import { Card } from "../../components/Card";
@@ -16,8 +18,12 @@ import { FormField } from "../../components/FormField";
 import { formFieldStates } from "../../components/FormField/FormField.states";
 import { HeroFigure } from "../../components/HeroFigure";
 import { heroFigureStates } from "../../components/HeroFigure/HeroFigure.states";
+import { Icon } from "../../components/Icon";
+import { iconStates } from "../../components/Icon/Icon.states";
 import { InlineAlert } from "../../components/InlineAlert";
 import { inlineAlertStates } from "../../components/InlineAlert/InlineAlert.states";
+import { ListRow } from "../../components/ListRow";
+import { listRowStates } from "../../components/ListRow/ListRow.states";
 import { Money } from "../../components/Money";
 import { moneyStates } from "../../components/Money/Money.states";
 import { Pressable } from "../../components/Pressable";
@@ -28,6 +34,8 @@ import { Skeleton } from "../../components/Skeleton";
 import { skeletonStates } from "../../components/Skeleton/Skeleton.states";
 import { StatusBadge } from "../../components/StatusBadge";
 import { statusBadgeStates } from "../../components/StatusBadge/StatusBadge.states";
+import { TabBar } from "../../components/TabBar";
+import { tabBarStates } from "../../components/TabBar/TabBar.states";
 import { Text } from "../../components/Text";
 import { textStates } from "../../components/Text/Text.states";
 import { Toast } from "../../components/Toast";
@@ -98,4 +106,8 @@ export const GALLERY: readonly GalleryEntry[] = [
   entry("CurrencyInput", CurrencyInput, currencyInputStates),
   entry("FormField", FormField, formFieldStates),
   entry("Toast", Toast, toastStates),
+  entry("Icon", Icon, iconStates),
+  entry("TabBar", TabBar, tabBarStates),
+  entry("AppHeader", AppHeader, appHeaderStates),
+  entry("ListRow", ListRow, listRowStates),
 ];

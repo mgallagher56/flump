@@ -31,11 +31,11 @@ describe("Home", () => {
   beforeEach(() => jest.useFakeTimers());
   afterEach(() => jest.useRealTimers());
 
-  it("says the person is signed in and offers Sign out", async () => {
+  it("says the person is signed in; Sign out is in the More list now, not here (S4)", async () => {
     const { onSignOut } = await home(fakeApi(routes(household())));
     expect(screen.getByRole("header", { name: "You are signed in" })).toBeOnTheScreen();
-    await userEvent.setup().press(screen.getByRole("button", { name: "Sign out" }));
-    expect(onSignOut).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("button", { name: "Sign out" })).toBeNull();
+    expect(onSignOut).not.toHaveBeenCalled();
   });
 
   it("shows the check-in row when the month is due, and opens the check-in", async () => {

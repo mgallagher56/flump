@@ -166,10 +166,16 @@ function loadAuthConfig(): AuthConfig {
 export interface SiteConfig {
   /** The marketing site, home of the legal pages the sign-in screen links to. */
   readonly marketingOrigin: string;
+  /**
+   * The web app, where a page the app does not have yet is opened (E12 S4). Optional: a build
+   * without it links those pages to the marketing site's home page instead.
+   */
+  readonly webAppOrigin: string | null;
 }
 
 export interface SiteConfigSource {
   readonly EXPO_PUBLIC_MARKETING_URL?: string;
+  readonly EXPO_PUBLIC_WEB_APP_URL?: string;
 }
 
 export function readSiteConfig(
@@ -182,6 +188,9 @@ export function readSiteConfig(
       source.EXPO_PUBLIC_MARKETING_URL,
       options,
     ),
+    webAppOrigin: source.EXPO_PUBLIC_WEB_APP_URL?.trim()
+      ? checkedOrigin("EXPO_PUBLIC_WEB_APP_URL", source.EXPO_PUBLIC_WEB_APP_URL, options)
+      : null,
   };
 }
 
@@ -192,7 +201,10 @@ export function loadSignInConfig(): { api: MobileConfig; auth: AuthConfig; site:
     api: loadConfig(),
     auth: loadAuthConfig(),
     site: readSiteConfig(
-      { EXPO_PUBLIC_MARKETING_URL: process.env.EXPO_PUBLIC_MARKETING_URL },
+      {
+        EXPO_PUBLIC_MARKETING_URL: process.env.EXPO_PUBLIC_MARKETING_URL,
+        EXPO_PUBLIC_WEB_APP_URL: process.env.EXPO_PUBLIC_WEB_APP_URL,
+      },
       options,
     ),
   };
