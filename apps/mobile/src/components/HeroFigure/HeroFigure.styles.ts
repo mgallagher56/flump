@@ -41,4 +41,5 @@ export const createStyles = (theme: Theme) =>
     labelBlock: { width: LABEL_BLOCK_WIDTH },
     figureBlock: { width: FIGURE_BLOCK_WIDTH },
     lineBlock: { width: LINE_BLOCK_WIDTH },
+    slotBlock: { alignSelf: "stretch" },
   });

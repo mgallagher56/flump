@@ -11,6 +11,11 @@ appId: app.flump.mobile
 - assertVisible: "Terms of use"
 - takeScreenshot: sign-in-${THEME}
 - runFlow: ../subflows/sign-in-to-home.yaml
+# The hero, not the loading blocks: `home` is on the screen while it loads too.
+- extendedWaitUntil:
+    visible:
+      id: "home-hero"
+    timeout: 30000
 - takeScreenshot: signed-in-${THEME}
 - stopApp
 - launchApp

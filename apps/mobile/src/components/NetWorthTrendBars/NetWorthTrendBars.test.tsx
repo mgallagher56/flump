@@ -53,6 +53,7 @@ describe("NetWorthTrendBars", () => {
     expect(
       screen.getByTestId("net-worth-trend-plot", hidden).props.accessibilityElementsHidden,
     ).toBe(true);
+    expect(screen.getByTestId("net-worth-trend").props.accessibilityRole).toBe("image");
     expect(screen.getByTestId("net-worth-trend").props.accessibilityLabel).toBe(
       "Net worth at your last 3 monthly check-ins, oldest first. June 2026: £3,000. No check-in for July 2026. August 2026: £3,500. September 2026, the latest: £4,000.",
     );

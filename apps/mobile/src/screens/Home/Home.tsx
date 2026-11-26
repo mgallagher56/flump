@@ -4,7 +4,7 @@ import { Card } from "../../components/Card";
 import { ErrorState } from "../../components/ErrorState";
 import { HeroFigure } from "../../components/HeroFigure";
 import { NetWorthBasisLine } from "../../components/NetWorthBasisLine";
-import { NetWorthTrendBars } from "../../components/NetWorthTrendBars";
+import { NetWorthTrendBars, TREND_PLOT_HEIGHT } from "../../components/NetWorthTrendBars";
 import { Screen } from "../../components/Screen";
 import { Text } from "../../components/Text";
 import { CHECK_IN } from "../../copy/checkIn";
@@ -111,6 +111,9 @@ function NetWorth({
         value={null}
         loading
         loadingLabel={HOME.loading}
+        // Room for the trend bars, which most households with a few check-ins have: a hero
+        // without them (under three recorded months) is that much shorter when it arrives.
+        loadingSlotHeight={TREND_PLOT_HEIGHT}
         testID="home-hero-loading"
       />
     ) : null;

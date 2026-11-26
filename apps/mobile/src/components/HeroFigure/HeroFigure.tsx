@@ -40,6 +40,8 @@ export interface HeroFigureProps {
   loading?: boolean;
   /** Read out in place of the blocks while loading. Defaults to the label. */
   loadingLabel?: string;
+  /** While loading: the height of what `children` will draw (the trend bars), kept as one block. */
+  loadingSlotHeight?: number;
   /** Drawn under the figure and its change (the trend bars), with its own text alternative. */
   children?: ReactNode;
   testID?: string;
@@ -63,6 +65,7 @@ export function HeroFigure({
   emptyAction,
   loading = false,
   loadingLabel,
+  loadingSlotHeight,
   children,
   testID,
 }: HeroFigureProps) {
@@ -90,6 +93,14 @@ export function HeroFigure({
             />
           ))}
         </View>
+        {loadingSlotHeight ? (
+          <View
+            testID={`${testID ?? "hero"}-skeleton-slot`}
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+            style={[styles.block, styles.slotBlock, { height: loadingSlotHeight }]}
+          />
+        ) : null}
       </View>
     );
   }

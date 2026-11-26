@@ -36,7 +36,13 @@ export function NetWorthTrendBars({ trend, testID = "net-worth-trend" }: NetWort
     bar.missedBefore ? [null, bar] : [bar],
   );
   return (
-    <View accessible accessibilityLabel={trendSummary(trend)} testID={testID} style={styles.root}>
+    <View
+      accessible
+      accessibilityRole="image"
+      accessibilityLabel={trendSummary(trend)}
+      testID={testID}
+      style={styles.root}
+    >
       <View
         accessibilityElementsHidden
         importantForAccessibility="no-hide-descendants"

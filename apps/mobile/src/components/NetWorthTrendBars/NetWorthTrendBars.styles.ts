@@ -1,9 +1,9 @@
 import { type DimensionValue, StyleSheet } from "react-native";
 import type { Theme } from "../../theme/ThemeProvider";
 
-/** The plot's height in points: about web's drawn size on a phone. */
-const PLOT_HEIGHT = 56;
-/** The widest a bar gets; slots share the width, so thirteen slots (seven bars, six breaks) fit 288. */
+/** The plot's height in points: about web's drawn size on a phone. The hero's loading state keeps this much room. */
+export const TREND_PLOT_HEIGHT = 56;
+/** The widest a bar gets; slots share the width, so thirteen slots (seven bars, six breaks) fit. */
 const BAR_MAX_WIDTH = 24;
 /** About web's 1.5 point outline at the drawn size, so a very small month still shows. */
 const BAR_STROKE = 1.5;
@@ -17,10 +17,10 @@ export const createStyles = (theme: Theme) =>
   StyleSheet.create({
     root: { alignSelf: "stretch" },
     plot: {
-      height: PLOT_HEIGHT,
+      height: TREND_PLOT_HEIGHT,
       flexDirection: "row",
       gap: theme.spacing["2"],
-      maxWidth: BAR_MAX_WIDTH * 13 + 8 * 12,
+      maxWidth: BAR_MAX_WIDTH * 13 + theme.spacing["2"] * 12,
     },
     slot: { flex: 1, maxWidth: BAR_MAX_WIDTH, height: "100%" },
     bar: {

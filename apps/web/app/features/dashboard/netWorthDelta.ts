@@ -21,7 +21,8 @@ export function priorNetWorth(
   currentMonth: string,
 ): PriorNetWorth | null {
   const change = selectNetWorthChange(netWorth, series, currentMonth);
-  const prior = change ? series.find((p) => p.month === change.priorMonth) : undefined;
+  // The engine keeps the last point for a month given twice, so this does too.
+  const prior = change ? series.findLast((p) => p.month === change.priorMonth) : undefined;
   return prior ? { month: prior.month, netWorth: prior.netWorth } : null;
 }
 
