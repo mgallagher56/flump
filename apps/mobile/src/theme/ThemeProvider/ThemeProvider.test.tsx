@@ -1,14 +1,28 @@
 import { dark, light } from "@flump/tokens/native";
 import { act, render, screen } from "@testing-library/react-native";
-import { Appearance, AppState, type AppStateStatus, useColorScheme } from "react-native";
+import { Appearance, AppState, type AppStateStatus } from "react-native";
 import { Text } from "../../components/Text";
 import { ThemeProvider, useTheme } from "./ThemeProvider";
 
-jest.mock("react-native/Libraries/Utilities/useColorScheme", () => ({
-  __esModule: true,
-  default: jest.fn(),
-}));
-const mockedScheme = jest.mocked(useColorScheme);
+/** The system setting as React Native reports it, and the two ways the app hears it change. */
+let systemScheme: "light" | "dark" | null = "light";
+let appearanceListeners: ((p: { colorScheme: "light" | "dark" | null }) => void)[] = [];
+let appStateListeners: ((state: AppStateStatus) => void)[] = [];
+beforeEach(() => {
+  systemScheme = "light";
+  appearanceListeners = [];
+  appStateListeners = [];
+  jest.spyOn(Appearance, "getColorScheme").mockImplementation(() => systemScheme);
+  jest.spyOn(Appearance, "addChangeListener").mockImplementation((listener) => {
+    appearanceListeners.push(listener as (typeof appearanceListeners)[number]);
+    return { remove: jest.fn() } as never;
+  });
+  jest.spyOn(AppState, "addEventListener").mockImplementation((_type, listener) => {
+    appStateListeners.push(listener as (state: AppStateStatus) => void);
+    return { remove: jest.fn() } as never;
+  });
+});
+afterEach(() => jest.restoreAllMocks());
 
 function Probe() {
   const theme = useTheme();
@@ -29,7 +43,7 @@ describe("ThemeProvider", () => {
     ["light", "light", light.colors["surface.canvas"]],
     [null, "light", light.colors["surface.canvas"]],
   ] as const)("system %p gives the %s token set", async (system, scheme, canvas) => {
-    mockedScheme.mockReturnValue(system as never);
+    systemScheme = system;
     await render(
       <ThemeProvider>
         <Probe />
@@ -42,33 +56,44 @@ describe("ThemeProvider", () => {
     expect(dark.colors["surface.canvas"]).not.toBe(light.colors["surface.canvas"]);
   });
 
-  it("reads the system setting again when the app comes back to the front", async () => {
-    mockedScheme.mockReturnValue("light");
-    const listeners: ((state: AppStateStatus) => void)[] = [];
-    jest.spyOn(AppState, "addEventListener").mockImplementation((_type, listener) => {
-      listeners.push(listener as (state: AppStateStatus) => void);
-      return { remove: jest.fn() } as never;
-    });
-    const getScheme = jest.spyOn(Appearance, "getColorScheme").mockReturnValue("light");
+  const canvasOf = (scheme: "light" | "dark") =>
+    `${scheme} ${(scheme === "dark" ? dark : light).colors["surface.canvas"]}`;
+
+  it("follows a change made while the app is open", async () => {
     await render(
       <ThemeProvider>
         <Probe />
       </ThemeProvider>,
     );
-    expect(screen.getByTestId("probe")).toHaveTextContent(
-      `light ${light.colors["surface.canvas"]}`,
-    );
-    // Switched to dark in the phone's settings while the app was in the background.
-    getScheme.mockReturnValue("dark");
     await act(async () => {
-      for (const listener of listeners) listener("active");
+      for (const listener of appearanceListeners) listener({ colorScheme: "dark" });
     });
-    expect(screen.getByTestId("probe")).toHaveTextContent(`dark ${dark.colors["surface.canvas"]}`);
-    jest.restoreAllMocks();
+    expect(screen.getByTestId("probe")).toHaveTextContent(canvasOf("dark"));
+  });
+
+  it("reads the setting again on return to the front, then still follows a change while open", async () => {
+    await render(
+      <ThemeProvider>
+        <Probe />
+      </ThemeProvider>,
+    );
+    expect(screen.getByTestId("probe")).toHaveTextContent(canvasOf("light"));
+    // Switched to dark in the phone's settings while the app was in the background, unheard.
+    systemScheme = "dark";
+    await act(async () => {
+      for (const listener of appStateListeners) listener("active");
+    });
+    expect(screen.getByTestId("probe")).toHaveTextContent(canvasOf("dark"));
+    // Back to light from quick settings with the app open: heard, even though light was the
+    // value the app last heard from that listener.
+    await act(async () => {
+      for (const listener of appearanceListeners) listener({ colorScheme: "light" });
+    });
+    expect(screen.getByTestId("probe")).toHaveTextContent(canvasOf("light"));
   });
 
   it("a forced scheme wins over the system setting", async () => {
-    mockedScheme.mockReturnValue("light");
+    systemScheme = "light";
     await render(
       <ThemeProvider scheme="dark">
         <Probe />
@@ -78,7 +103,7 @@ describe("ThemeProvider", () => {
   });
 
   it("carries the scheme's shadows from the tokens", async () => {
-    mockedScheme.mockReturnValue("light");
+    systemScheme = "light";
     await render(
       <ThemeProvider scheme="dark">
         <ShadowProbe />

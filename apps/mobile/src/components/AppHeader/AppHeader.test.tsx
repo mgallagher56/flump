@@ -23,6 +23,31 @@ describe("AppHeader", () => {
     expect(onOpenMenu).toHaveBeenCalledTimes(1);
   });
 
+  it("on a stacked page: a named 48 point Back button before the title", async () => {
+    jest.useRealTimers();
+    const onBack = jest.fn();
+    await render(
+      <ThemeProvider scheme="light">
+        <AppHeader title="Pension" onBack={onBack} />
+      </ThemeProvider>,
+    );
+    const back = screen.getByRole("button", { name: "Back" });
+    expect(StyleSheet.flatten(back.props.style)).toMatchObject({ minHeight: 48, minWidth: 48 });
+    expect(screen.getByRole("header", { name: "Pension" })).toBeOnTheScreen();
+    await userEvent.setup().press(back);
+    expect(onBack).toHaveBeenCalledTimes(1);
+  });
+
+  it("with no title (an unknown link) has no empty heading for a screen reader to land on", async () => {
+    await render(
+      <ThemeProvider scheme="light">
+        <AppHeader title="" onBack={jest.fn()} />
+      </ThemeProvider>,
+    );
+    expect(screen.queryByRole("header")).toBeNull();
+    expect(screen.getByRole("button", { name: "Back" })).toBeOnTheScreen();
+  });
+
   it("has no menu button where there is nothing to open (More itself)", async () => {
     await render(
       <ThemeProvider scheme="light">

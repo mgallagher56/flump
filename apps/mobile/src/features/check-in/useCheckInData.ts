@@ -77,8 +77,11 @@ export function useCheckInData(now: () => Date = () => new Date()): CheckInDataS
   }, [a, d, p, c, today, month]);
 
   if (failed) return { status: "error", problem: classifyApiError(failed.error), retry: refetch };
-  // As web, which sends a person to onboarding until it is finished.
-  if (p === null || p?.onboardingCompleted === false) return { status: "notSetUp" };
+  // As web, which sends a person to onboarding until it is finished. Only once every read has
+  // answered: a slower read that then fails shows its error, never "not set up" first.
+  if (p === null || p?.onboardingCompleted === false) {
+    return a && d && c ? { status: "notSetUp" } : { status: "loading" };
+  }
   if (ready && inputs) {
     return { status: "ready", inputs, fetching: all.some((q) => q.isFetching) };
   }
