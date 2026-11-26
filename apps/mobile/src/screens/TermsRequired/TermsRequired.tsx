@@ -1,4 +1,5 @@
 import { Linking } from "react-native";
+import type { Edge } from "react-native-safe-area-context";
 import { Button } from "../../components/Button";
 import { Text } from "../../components/Text";
 import {
@@ -18,6 +19,8 @@ export interface TermsRequiredProps {
   onRetry(): void;
   /** Left out where the screen shows inside a signed-in screen that has its own way out. */
   onSignOut?: () => void;
+  /** Safe-area edges; inside a tab, the header and tab bar pad the top and bottom. */
+  edges?: readonly Edge[];
 }
 
 /**
@@ -25,9 +28,9 @@ export interface TermsRequiredProps {
  * agreed. The phone does not show or record the agreement: it sends the person to the website, then
  * checks again. A plain way on, not an error.
  */
-export function TermsRequired({ marketingOrigin, onRetry, onSignOut }: TermsRequiredProps) {
+export function TermsRequired({ marketingOrigin, onRetry, onSignOut, edges }: TermsRequiredProps) {
   return (
-    <StatusMessage heading={TERMS_REQUIRED_HEADING} body={TERMS_REQUIRED_BODY}>
+    <StatusMessage heading={TERMS_REQUIRED_HEADING} body={TERMS_REQUIRED_BODY} edges={edges}>
       <Button
         label={OPEN_WEBSITE}
         accessibilityRole="link"
