@@ -14,8 +14,8 @@ export interface MoreProps {
 
 /**
  * The More tab (E12 S4, plan 9.7): what web's phone drawer lists below the bottom bar, in its
- * groups and order, then Settings, Connect AI and Calculators, then Sign out. Every page shows
- * every row for now; switched-off pages are left out from S9.
+ * groups and order, then Settings, Connect AI and Calculators, then Sign out. Self Assessment, an
+ * opt-in page, arrives with S9's filter for switched-off pages.
  */
 export function More({ onOpenPage, onSignOut }: MoreProps) {
   return (

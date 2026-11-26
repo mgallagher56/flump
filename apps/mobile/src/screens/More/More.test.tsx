@@ -19,12 +19,10 @@ describe("More", () => {
   it("lists web's drawer groups and pages in order, then the footer rows, then Sign out", async () => {
     await more();
     expect(screen.getAllByRole("header").map((h) => h.props.children)).toEqual([
-      "Pay",
       "Savings and pension",
       "Debt and borrowing",
     ]);
     expect(screen.getAllByRole("link").map((row) => row.props.testID)).toEqual([
-      "more-row-tax",
       "more-row-savings",
       "more-row-pension",
       "more-row-retirement",
@@ -36,6 +34,8 @@ describe("More", () => {
     ]);
     expect(screen.getByRole("link", { name: "Cards and loans" })).toBeOnTheScreen();
     expect(screen.getByRole("button", { name: "Sign out" })).toBeOnTheScreen();
+    // Opt-in per person; left out until S9's shared filter (navItems.ts).
+    expect(screen.queryByText("Self Assessment")).toBeNull();
   });
 
   it("opens a page by its key, and Sign out asks through onSignOut", async () => {

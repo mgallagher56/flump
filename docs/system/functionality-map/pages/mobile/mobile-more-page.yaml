@@ -1,0 +1,13 @@
+id: mobile-more-page
+app: mobile
+route: /page/:key
+title: A More page
+auth: required
+purpose: A page opened from the More list, also by flump://page/<key> (E12 S4). Until its own slice it says the page is on the Flump website for now and opens the same web page in the system browser. An unknown key shows not found with one way back, to More. It shows no figures and reads nothing.
+route_file: apps/mobile/app/(app)/page/[key].tsx
+
+sections:
+  - id: placeholder
+    component: apps/mobile/src/screens/ComingSoon/ComingSoon.tsx
+  - id: not-found
+    component: apps/mobile/src/screens/PageNotFound/PageNotFound.tsx

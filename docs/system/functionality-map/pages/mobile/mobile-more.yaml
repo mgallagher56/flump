@@ -1,0 +1,11 @@
+id: mobile-more
+app: mobile
+route: /more
+title: More
+auth: required
+purpose: The More tab (E12 S4), also opened by each tab's header menu button. It lists what web's phone drawer lists below the bottom bar, in its groups and order (Savings, Pension, Retirement, Cards and loans, Mortgage), then Settings, Connect AI and Calculators, then Sign out, which asks first. Self Assessment, opt-in per person, arrives with S9's filter. It reads nothing.
+route_file: apps/mobile/app/(app)/(tabs)/more.tsx
+
+sections:
+  - id: list
+    component: apps/mobile/src/screens/More/More.tsx

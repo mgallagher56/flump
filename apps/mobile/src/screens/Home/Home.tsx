@@ -13,6 +13,9 @@ import { DevLinks } from "../DevLinks";
 import { StatusMessage } from "../StatusMessage";
 import { TermsRequired } from "../TermsRequired";
 
+/** Home sits under the tab header and above the tab bar, which pad the top and bottom. */
+const TAB_EDGES = ["right", "left"] as const;
+
 export interface HomeProps {
   /** Sign out, offered by the terms screen; otherwise it lives in the More list (S4). */
   onSignOut(): void;
@@ -41,7 +44,7 @@ export function Home({
     );
   }
   return (
-    <StatusMessage heading={SIGNED_IN_HEADING}>
+    <StatusMessage heading={SIGNED_IN_HEADING} edges={TAB_EDGES}>
       <CheckInRow data={data} onOpen={onOpenCheckIn} now={now} />
       <DevLinks />
     </StatusMessage>

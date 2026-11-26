@@ -1,0 +1,11 @@
+id: mobile-pay
+app: mobile
+route: /pay
+title: Pay
+auth: required
+purpose: The Pay tab (E12 S4). Until its own slice it is a plain placeholder that says Pay is on the Flump website for now and opens the same web page (/app/take-home) in the system browser. It shows no figures and reads nothing.
+route_file: apps/mobile/app/(app)/(tabs)/pay.tsx
+
+sections:
+  - id: placeholder
+    component: apps/mobile/src/screens/ComingSoon/ComingSoon.tsx

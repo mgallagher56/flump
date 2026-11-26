@@ -4,13 +4,14 @@
  * docs/copy/COPY-GUIDE.md: say what is here today and where the rest is, never a promise or a date.
  */
 
-/** The tab bar's name for screen readers, as web's bottom bar `nav` label. */
-export const TAB_BAR_LABEL = "Primary navigation";
+/** The tab bar's name for screen readers, as web's bottom bar `nav` label (`AppBottomBar`). */
+export const TAB_BAR_LABEL = "Main navigation";
+
+/** Read after a tab's name: its place in the bar. */
+export const tabPosition = (position: number, count: number) => `${position} of ${count}`;
 
 /** The header's menu button, as web's top bar button. It opens the More list. */
 export const OPEN_MENU = "Open navigation menu";
-
-export const MORE_TITLE = "More";
 
 /** A page whose own slice is not built yet: what it is, and that it is on the website today. */
 export const comingSoonBody = (page: string) =>
