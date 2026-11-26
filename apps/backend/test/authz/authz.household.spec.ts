@@ -352,11 +352,7 @@ describe.skipIf(dbMode === "skip")("authz: households (real Postgres)", () => {
       for (const token of [h.tokens.a, h.tokens.b]) {
         const state = await getHousehold(token);
         expect(Object.keys(state).sort()).toEqual(["household", "invitation"]);
-        expect(Object.keys(state.household).sort()).toEqual([
-          "joinedAt",
-          "sharesJointSummary",
-          "withName",
-        ]);
+        expect(Object.keys(state.household).sort()).toEqual(["sharesJointSummary", "withName"]);
         expect(state.household.sharesJointSummary).toBe(false);
         expect(state.invitation).toBeNull();
         const s = await summary(token);

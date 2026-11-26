@@ -6788,9 +6788,6 @@
                         {
                           "additionalProperties": false,
                           "properties": {
-                            "joinedAt": {
-                              "type": "string"
-                            },
                             "sharesJointSummary": {
                               "type": "boolean"
                             },
@@ -6798,7 +6795,7 @@
                               "type": ["string", "null"]
                             }
                           },
-                          "required": ["sharesJointSummary", "joinedAt", "withName"],
+                          "required": ["sharesJointSummary", "withName"],
                           "type": "object"
                         },
                         {

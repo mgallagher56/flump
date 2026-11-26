@@ -15,7 +15,7 @@ const NOT_IN_ONE: HouseholdSettingsData = {
 
 const inOne = (withName: string | null, sharesJointSummary = false): HouseholdSettingsData => ({
   state: {
-    household: { sharesJointSummary, joinedAt: "2026-11-20T09:00:00.000Z", withName },
+    household: { sharesJointSummary, withName },
     invitation: null,
   },
   jointSummary: [],

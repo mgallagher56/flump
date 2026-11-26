@@ -11,7 +11,6 @@ const meta: Meta<typeof HouseholdTab> = {
       state: {
         household: {
           sharesJointSummary: true,
-          joinedAt: "2026-11-20T09:00:00.000Z",
           withName: "Sam",
         },
         invitation: null,

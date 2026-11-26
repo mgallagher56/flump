@@ -255,7 +255,6 @@ describe("/household/join", () => {
         body: {
           household: {
             sharesJointSummary: false,
-            joinedAt: "2026-11-20T09:00:00.000Z",
             withName: null,
           },
           invitation: null,

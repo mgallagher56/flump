@@ -13,6 +13,11 @@
  * 2. The owner's signature on the household DPIA (docs/legal/dpia-household.md).
  * 3. The owner's approval of the help line wording on the sharing screen (decision CD10).
  *
+ * Before turning it on, the public cookies page and the privacy notice must list the household
+ * invitation cookie `flump_household_invite` (and the notice the household itself), and the
+ * cookie's `NOT_LISTED` entry in apps/marketing/src/pages/CookiesPage/CookiesPage.test.tsx is
+ * removed in the same change.
+ *
  * A production-like process (NODE_ENV=production or Railway) refuses to boot with the switch on
  * while `HOUSEHOLD_LAUNCH_CONDITIONS_MET` is false (HouseholdGateError in boot-guards.ts). The owner
  * sets the constant to true in a PR of their own once the three conditions are met, then sets the
