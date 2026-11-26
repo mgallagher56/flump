@@ -837,3 +837,37 @@ describe("WorkOS stand-in: max_age", () => {
     expect(server.stats().lastAuthorizeMaxAge).toBeNull();
   });
 });
+
+describe("fixture stats: waiting for a sign-out", () => {
+  const stats = (query = "") =>
+    fetch(url(`/__fixture/stats${query}`)).then(
+      async (r) => (await r.json()) as { signOuts: number },
+    );
+
+  it("with signOutsAtLeast, answers only once the sign-out has landed", async () => {
+    const mine = await signIn();
+    let answered = false;
+    const waiting = stats("?signOutsAtLeast=1").then((s) => {
+      answered = true;
+      return s;
+    });
+    // A full round trip to the server while the stats request waits: still no answer.
+    expect((await getProfile(mine.access_token)).status).toBe(200);
+    expect(answered).toBe(false);
+    await fetch(url("/v1/session/sign-out"), {
+      method: "POST",
+      headers: { authorization: `Bearer ${mine.access_token}` },
+    });
+    expect((await waiting).signOuts).toBe(1);
+  });
+
+  it("answers at once when the count is already there, or when none is asked for", async () => {
+    expect((await stats()).signOuts).toBe(0);
+    const mine = await signIn();
+    await fetch(url("/v1/session/sign-out"), {
+      method: "POST",
+      headers: { authorization: `Bearer ${mine.access_token}` },
+    });
+    expect((await stats("?signOutsAtLeast=1")).signOuts).toBe(1);
+  });
+});

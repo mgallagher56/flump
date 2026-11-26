@@ -30,7 +30,9 @@
  *                                           terms_not_accepted (PR #939), after not_invited
  * Control (flows set the scenario before they launch the app):
  *   POST /__fixture/scenario, POST /__fixture/revoke, POST /__fixture/reset (also rebuilds the
- *   check-in data), GET /__fixture/stats (counts, PUTs without `checkIn: true`, the check-in
+ *   check-in data), GET /__fixture/stats (with `?signOutsAtLeast=N` it first waits, up to 10
+ *   seconds, for that many server sign-outs: the app shows the sign-in screen before its sign-out
+ *   call lands, so a flow must not read the count at once; counts, PUTs without `checkIn: true`, the check-in
  *   months, the current London month, the sign-outs and the last authorize's `max_age`)
  *
  * Refresh tokens are replaced on every use. As real WorkOS does (workos.com/docs/authkit/
@@ -67,6 +69,8 @@ const LOOPBACK_HOSTS = new Set(["127.0.0.1", "::1", "localhost"]);
 const CODE_LIFETIME_MS = 10 * 60 * 1000;
 /** WorkOS's refresh token grace period: "The grace period is 30 seconds." */
 const REFRESH_GRACE_MS = 30 * 1000;
+/** How long a stats request waits for an expected sign-out (real time: the app's call is real). */
+const SIGN_OUT_WAIT_MS = 10 * 1000;
 
 interface Scenario {
   /** `not-invited`: `/v1` answers 403 not_invited, as the closed beta does. */
@@ -206,6 +210,23 @@ export async function startFixtureServer(options: FixtureServerOptions): Promise
   let scenario: Scenario = { ...DEFAULT_SCENARIO };
   let counts: FixtureCounts = { ...ZERO_COUNTS };
   let lastAuthorizeMaxAge: string | null = null;
+  /** Stats requests waiting for the next sign-out. */
+  const signOutWaiters: (() => void)[] = [];
+
+  /** Resolves once `signOuts` reaches `target`, or after `SIGN_OUT_WAIT_MS` (the caller then fails). */
+  async function untilSignOuts(target: number) {
+    const deadline = Date.now() + SIGN_OUT_WAIT_MS;
+    while (counts.signOuts < target && Date.now() < deadline) {
+      await new Promise<void>((resolve) => {
+        const timer = setTimeout(resolve, deadline - Date.now());
+        timer.unref();
+        signOutWaiters.push(() => {
+          clearTimeout(timer);
+          resolve();
+        });
+      });
+    }
+  }
   const store = (): CheckInStore => (scenario.data === "empty" ? stores.empty : stores.ok);
   const stats = (): FixtureStats => ({
     ...counts,
@@ -251,7 +272,11 @@ export async function startFixtureServer(options: FixtureServerOptions): Promise
     };
   }
 
-  /** The signed-in session for a bearer token, or undefined (missing, forged, expired, revoked). */
+  /**
+   * The signed-in session for a bearer token, or undefined (missing, forged, expired, revoked).
+   * Stricter than real life: the backend checks access tokens locally, so after a revoke it still
+   * accepts one until it expires (at most 300 seconds). Here a revoke ends them at once.
+   */
   function sessionFor(req: IncomingMessage): Session | undefined {
     const auth = req.headers.authorization ?? "";
     if (!auth.startsWith("Bearer ")) return undefined;
@@ -371,6 +396,7 @@ export async function startFixtureServer(options: FixtureServerOptions): Promise
       if (!session) return apiError(res, 401, "unauthorized", "Sign in to continue.");
       session.revoked = true;
       counts.signOuts += 1;
+      for (const wake of signOutWaiters.splice(0)) wake();
       return void res.writeHead(204).end();
     }
     if (req.method === "GET" && path === "/user-profile") {
@@ -453,7 +479,11 @@ export async function startFixtureServer(options: FixtureServerOptions): Promise
       reset();
       return void res.writeHead(204).end();
     }
-    if (req.method === "GET" && path === "/__fixture/stats") return json(res, 200, stats());
+    if (req.method === "GET" && path === "/__fixture/stats") {
+      const wanted = Number(url.searchParams.get("signOutsAtLeast") ?? "0");
+      if (Number.isInteger(wanted) && wanted > 0) await untilSignOuts(wanted);
+      return json(res, 200, stats());
+    }
 
     return json(res, 404, { error: "not_found" });
   }
