@@ -901,6 +901,11 @@ describe("mobile e2e job (E12 S2c)", () => {
     expect([...SHARED_PACKAGES].sort()).toEqual([...workspaces, "typescript-config"].sort());
   });
 
+  test("the JDK is an exact version, so runners agree on the APK cache key", () => {
+    // "17" gave 17.0.21+9 on one runner and 17.0.21.1+2 on another (26 November 2026).
+    expect(step("⚙️ Setup Java")).toMatch(/java-version: "\d+\.\d+\.\d+(\.\d+)?\+\d+"$/m);
+  });
+
   test("the job's Bun matches the Bun setup action's", () => {
     const action = readFileSync(
       resolve(import.meta.dir, "../.github/actions/bun-setup/action.yml"),

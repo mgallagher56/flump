@@ -646,12 +646,14 @@ jobs:
         with:
           node-version-file: .node-version
 
+      # An exact JDK: "17" gave different patch builds on different runners (17.0.21+9 and
+      # 17.0.21.1+2 on 26 November), and the JDK is part of the APK cache key, so the cache missed.
       - name: ⚙️ Setup Java
         if: steps.changed.outputs.run == 'true'
         uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: "17.0.21+9"
 
       - name: ⚙️ Enable KVM for the emulator
         if: steps.changed.outputs.run == 'true'
