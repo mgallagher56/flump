@@ -10,14 +10,26 @@ export const TAB_BAR_LABEL = "Main navigation";
 /** Read after a tab's name: its place in the bar. */
 export const tabPosition = (position: number, count: number) => `${position} of ${count}`;
 
-/** The header's menu button, as web's top bar button. It opens the More list. */
-export const OPEN_MENU = "Open navigation menu";
+/** The header's menu button: it opens the More tab, so it says so (web's opens a drawer). */
+export const OPEN_MENU = "Open More";
 
-/** A page whose own slice is not built yet: what it is, and that it is on the website today. */
-export const comingSoonBody = (page: string) =>
-  `${page} is not in the app yet. You can use it on the Flump website.`;
+/** A stacked page's header button. */
+export const BACK = "Back";
+
+/**
+ * A page whose own slice is not built yet. The header names the page, so the sentence does not,
+ * and reads the same for "Pension" and "Cards and loans".
+ */
+export const COMING_SOON_BODY =
+  "This page is not in the app yet. You can use it on the Flump website.";
 
 export const comingSoonAction = (page: string) => `Open ${page} on the website`;
+
+/** Any website button when this build has no web app address: where it really goes. */
+export const OPEN_FLUMP_WEBSITE = "Open the Flump website";
+
+/** More's last group: Settings, Connect AI, Calculators and Sign out (web's drawer has no heading). */
+export const MORE_SETTINGS_HEADING = "Settings and tools";
 
 /** A link to a page the app does not know (an old or mistyped `flump://` link). */
 export const PAGE_NOT_FOUND_HEADING = "We could not find that page";

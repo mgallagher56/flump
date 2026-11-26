@@ -31,13 +31,20 @@ export function fakeApi(routes: Record<string, FakeRoute>) {
   const request = jest.fn(
     async (
       path: string,
-      options: { method?: string; body?: unknown; schema?: { parse(u: unknown): unknown } | null },
+      options: {
+        method?: string;
+        body?: unknown;
+        schema?: { parse(u: unknown): unknown } | null;
+        allowEmpty?: boolean;
+      },
     ) => {
       const method = options.method ?? "GET";
       calls.push({ method, path, body: options.body });
       const route = routes[`${method} ${path}`];
       if (!route) fail("not-found", 404);
       const data = await route(options.body);
+      // A route that answers nothing is an empty body: allowed only where the caller allows it.
+      if (data === undefined && options.allowEmpty) return undefined;
       return options.schema ? options.schema.parse(data) : data;
     },
   );

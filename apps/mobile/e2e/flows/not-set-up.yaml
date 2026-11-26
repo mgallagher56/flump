@@ -1,0 +1,21 @@
+# E12 S4 (device check, 26 November 2026): a person who has not finished setting up on the website
+# is sent there to set up, never told the app could not load their accounts. Signs in as a profile
+# with onboarding not finished, then opens the check-in by its link: the same words.
+appId: app.flump.mobile
+---
+- runScript:
+    file: ../scripts/fixture.js
+    env:
+      SCENARIO: '{"profile": "not-set-up"}'
+- runFlow: ../subflows/launch-signed-out.yaml
+- runFlow:
+    file: ../subflows/sign-in.yaml
+    env:
+      AFTER: "Finish setting up Flump on the website"
+- assertNotVisible: "Start monthly check-in"
+- takeScreenshot: not-set-up-${THEME}
+- openLink: flump://check-in
+- extendedWaitUntil:
+    visible: "Finish setting up Flump on the website"
+    timeout: 10000
+- assertNotVisible: "We could not load your accounts"

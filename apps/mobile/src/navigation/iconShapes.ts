@@ -62,6 +62,11 @@ export const ICON_SHAPES: Readonly<Record<IconName, readonly IconShape[]>> = {
     ["path", { d: "M12 18h.01" }],
     ["path", { d: "M8 18h.01" }],
   ],
+  banknote: [
+    ["rect", { width: "20", height: "12", x: "2", y: "6", rx: "2" }],
+    ["circle", { cx: "12", cy: "12", r: "2" }],
+    ["path", { d: "M6 12h.01M18 12h.01" }],
+  ],
   ellipsis: [
     ["circle", { cx: "12", cy: "12", r: "1" }],
     ["circle", { cx: "19", cy: "12", r: "1" }],
@@ -126,4 +131,5 @@ export const ICON_SHAPES: Readonly<Record<IconName, readonly IconShape[]>> = {
     ["path", { d: "M4 19h16" }],
   ],
   "chevron-right": [["path", { d: "m9 18 6-6-6-6" }]],
+  "chevron-left": [["path", { d: "m15 18-6-6 6-6" }]],
 };

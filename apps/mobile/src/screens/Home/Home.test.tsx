@@ -3,6 +3,9 @@ import { fail, fakeApi, withApi } from "../../data/fakeApi";
 import { household, MONTH, NOW, routes } from "../../features/check-in/checkInTestData";
 import { Home } from "./Home";
 
+/** The website's setup page (a placeholder address). */
+const SET_UP = { url: "https://app.test.invalid/app/onboarding", exact: true };
+
 jest.mock("expo-router", () => {
   const { Fragment } = require("react");
   return { Link: ({ children }: { children: unknown }) => <Fragment>{children}</Fragment> };
@@ -16,6 +19,7 @@ async function home(api: ReturnType<typeof fakeApi>) {
       onSignOut={onSignOut}
       onOpenCheckIn={onOpenCheckIn}
       marketingOrigin="https://m.test.invalid"
+      setUp={SET_UP}
       now={NOW}
     />,
     api.client,
@@ -67,6 +71,14 @@ describe("Home", () => {
     ).toBeOnTheScreen();
     await userEvent.setup().press(screen.getByRole("button", { name: "Sign out" }));
     expect(onSignOut).toHaveBeenCalledTimes(1);
+  });
+
+  it("no profile yet: the way to set up on the website, not a check-in row", async () => {
+    await home(fakeApi({ ...routes(household()), "GET /user-profile": () => undefined }));
+    expect(
+      await screen.findByRole("header", { name: "Finish setting up Flump on the website" }),
+    ).toBeOnTheScreen();
+    expect(screen.queryByTestId("check-in-row")).toBeNull();
   });
 
   it("when the reads fail, the row still offers the check-in", async () => {

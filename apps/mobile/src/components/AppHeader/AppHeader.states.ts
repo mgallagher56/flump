@@ -7,4 +7,5 @@ export const appHeaderStates = {
   withMenu: { title: "Accounts", onOpenMenu: noop },
   more: { title: "More" },
   longTitle: { title: "Savings and pension", onOpenMenu: noop },
+  stacked: { title: "Pension", onBack: noop },
 } satisfies Record<string, AppHeaderProps>;

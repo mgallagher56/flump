@@ -16,6 +16,8 @@ export const createStyles = (theme: Theme) =>
       paddingRight: theme.spacing["1"],
       paddingVertical: theme.spacing["1"],
     },
+    // Back sits where the gutter would, so the title lines up with the page below it.
+    rowWithBack: { paddingLeft: theme.spacing["1"] },
     // The title takes the room left by the button and wraps at large text rather than clip.
     title: { flex: 1, paddingVertical: theme.spacing["2"] },
     menu: { alignItems: "center", justifyContent: "center", borderRadius: theme.radii.full },

@@ -3,6 +3,7 @@ import { ListRow } from "../../components/ListRow";
 import { Screen } from "../../components/Screen";
 import { Text } from "../../components/Text";
 import { SIGN_OUT } from "../../copy/auth";
+import { MORE_SETTINGS_HEADING } from "../../copy/navigation";
 import { MORE_FOOTER, MORE_GROUPS } from "../../navigation/navItems";
 
 export interface MoreProps {
@@ -37,6 +38,9 @@ export function More({ onOpenPage, onSignOut }: MoreProps) {
         </View>
       ))}
       <View>
+        <Text accessibilityRole="header" textStyle="label.md" color="secondary">
+          {MORE_SETTINGS_HEADING}
+        </Text>
         {MORE_FOOTER.map((page) => (
           <ListRow
             key={page.key}

@@ -65,6 +65,13 @@ const EN: Record<string, string> = enCommon;
  */
 const LEFT_OUT_UNTIL_S9: ReadonlySet<string> = new Set(["tax"]);
 
+/**
+ * Tab icons the app draws differently on purpose. Pay: web gives Pay and Calculators the same
+ * calculator, which the device check found confusing in the app's More list beside the tab bar
+ * (coordinator, 26 November 2026). Web keeps its icon until its phone screenshots are redone.
+ */
+const ICON_EXCEPTIONS: Readonly<Record<string, unknown>> = { taxAndPay: lucide.Banknote };
+
 /** "piggy-bank" -> lucide's PiggyBank component. */
 const lucideIcon = (name: string) => {
   const pascal = name.replace(/(^|-)(\w)/g, (_m, _dash, c: string) => c.toUpperCase());
@@ -80,7 +87,7 @@ describe("the mobile tab bar mirrors BOTTOM_BAR_TABS plus More", () => {
       // The bar shows the locale string for the key (buildBottomBarItems), not the fallback label.
       expect(mobile.label).toBe(EN[tab.key]);
       expect(mobile.webRoute).toBe(tab.to);
-      expect(lucideIcon(mobile.icon)).toBe(tab.icon);
+      expect(lucideIcon(mobile.icon)).toBe(ICON_EXCEPTIONS[tab.key] ?? tab.icon);
     });
     const more = TABS[TABS.length - 1] as MobileTab;
     // buildBottomBarItems: label "more" (no locale entry, so its fallback), the Ellipsis icon.
@@ -144,6 +151,7 @@ describe("the mobile icon shapes are lucide's", () => {
     "scale",
     "wallet",
     "calculator",
+    "banknote",
     "ellipsis",
     "piggy-bank",
     "coins",
@@ -155,6 +163,7 @@ describe("the mobile icon shapes are lucide's", () => {
     "log-out",
     "menu",
     "chevron-right",
+    "chevron-left",
   ])("%s draws the same shapes", async (name) => {
     const { ICON_SHAPES } = await loadMobile();
     const component = lucideIcon(name) as Parameters<typeof createElement>[0];

@@ -9,7 +9,9 @@ import {
   londonToday,
   useCheckInData,
 } from "../../features/check-in/useCheckInData";
+import type { WebLink } from "../../navigation/shell";
 import { DevLinks } from "../DevLinks";
+import { NotSetUp } from "../NotSetUp";
 import { StatusMessage } from "../StatusMessage";
 import { TermsRequired } from "../TermsRequired";
 
@@ -21,6 +23,8 @@ export interface HomeProps {
   onSignOut(): void;
   /** The website, for the terms screen. */
   marketingOrigin: string;
+  /** The website's setup page, for a person who has not finished setting up. */
+  setUp: WebLink;
   onOpenCheckIn(): void;
   /** Injected clock for tests. */
   now?: () => Date;
@@ -34,6 +38,7 @@ export function Home({
   onSignOut,
   onOpenCheckIn,
   marketingOrigin,
+  setUp,
   now = () => new Date(),
 }: HomeProps) {
   const data = useCheckInData(now);
@@ -46,6 +51,13 @@ export function Home({
         onSignOut={onSignOut}
         edges={TAB_EDGES}
       />
+    );
+  }
+  if (data.status === "notSetUp") {
+    return (
+      <NotSetUp setUp={setUp} edges={TAB_EDGES}>
+        <DevLinks />
+      </NotSetUp>
     );
   }
   return (

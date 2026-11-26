@@ -32,6 +32,7 @@ export const SHOTS = [
   "tab-more",
   "more-page",
   "link-not-found",
+  "not-set-up",
 ];
 
 export function run(

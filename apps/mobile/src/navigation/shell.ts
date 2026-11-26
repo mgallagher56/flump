@@ -21,11 +21,25 @@ export function useShell(): Shell {
   return shell;
 }
 
+/** A link to the website: where it goes, and whether that is the page itself. */
+export interface WebLink {
+  readonly url: string;
+  /** False when this build has no web app address and the link goes to the marketing home page. */
+  readonly exact: boolean;
+}
+
 /**
  * The same page on the website. Without the web app's address in this build, the marketing site's
- * home page, rather than a page that may not exist there.
+ * home page, rather than a page that may not exist there; `exact` says which, so the button can say
+ * truthfully where it goes.
  */
-export const webPageUrl = (
+export const webLink = (
   shell: Pick<Shell, "marketingOrigin" | "webAppOrigin">,
   route: string,
-) => (shell.webAppOrigin ? `${shell.webAppOrigin}${route}` : shell.marketingOrigin);
+): WebLink =>
+  shell.webAppOrigin
+    ? { url: `${shell.webAppOrigin}${route}`, exact: true }
+    : { url: shell.marketingOrigin, exact: false };
+
+/** Web's onboarding, where a person with no profile yet sets up. */
+export const SET_UP_WEB_ROUTE = "/app/onboarding";

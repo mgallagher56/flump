@@ -9,8 +9,8 @@ import {
   spacing,
   textStyles,
 } from "@flump/tokens/native";
-import { createContext, type ReactNode, useContext, useMemo } from "react";
-import { useColorScheme } from "react-native";
+import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from "react";
+import { Appearance, AppState, type ColorSchemeName, useColorScheme } from "react-native";
 
 type ColorScheme = "light" | "dark";
 
@@ -60,11 +60,30 @@ export interface ThemeProviderProps {
 }
 
 /**
+ * The system light or dark setting, live. React Native's own hook hears a change made while the app
+ * is open; a change made in the phone's settings while the app was in the background was not heard
+ * until a restart on an Android 17 emulator (device check, 26 November 2026), so the setting is
+ * read again each time the app comes back to the front.
+ */
+function useSystemScheme(): ColorSchemeName | null {
+  const heard = useColorScheme();
+  const [scheme, setScheme] = useState<ColorSchemeName | null>(heard);
+  useEffect(() => setScheme(heard), [heard]);
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state === "active") setScheme(Appearance.getColorScheme());
+    });
+    return () => subscription.remove();
+  }, []);
+  return scheme;
+}
+
+/**
  * Follows the system light or dark setting. React Native reads the setting before the first render,
  * so the first frame already has the right colours.
  */
 export function ThemeProvider({ children, scheme, textScale = 1 }: ThemeProviderProps) {
-  const system = useColorScheme();
+  const system = useSystemScheme();
   const resolved: ColorScheme = scheme ?? (system === "dark" ? "dark" : "light");
   // A release build ignores the preview scale, so no screen can stop following the phone's text size.
   const scale = __DEV__ ? textScale : 1;

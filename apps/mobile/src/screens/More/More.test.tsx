@@ -21,6 +21,8 @@ describe("More", () => {
     expect(screen.getAllByRole("header").map((h) => h.props.children)).toEqual([
       "Savings and pension",
       "Debt and borrowing",
+      // Every group has a heading, the last one too (device check).
+      "Settings and tools",
     ]);
     expect(screen.getAllByRole("link").map((row) => row.props.testID)).toEqual([
       "more-row-savings",

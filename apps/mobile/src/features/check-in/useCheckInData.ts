@@ -31,6 +31,8 @@ export interface CheckInInputs {
 
 export type CheckInDataState =
   | { status: "loading" }
+  /** No profile yet, or setup not finished on the website: nothing to check in until it is. */
+  | { status: "notSetUp" }
   | { status: "error"; problem: ApiProblem; retry: () => void }
   | {
       status: "ready";
@@ -57,7 +59,7 @@ export function useCheckInData(now: () => Date = () => new Date()): CheckInDataS
   const d = details.data;
   const p = profile.data;
   const c = checkIns.data;
-  const ready = a && d && p && c;
+  const ready = a && d && p !== undefined && c;
 
   // Rebuilt only when an answer changes, so the engine's steps keep their identity between renders.
   const inputs = useMemo<CheckInInputs | null>(() => {
@@ -75,6 +77,8 @@ export function useCheckInData(now: () => Date = () => new Date()): CheckInDataS
   }, [a, d, p, c, today, month]);
 
   if (failed) return { status: "error", problem: classifyApiError(failed.error), retry: refetch };
+  // As web, which sends a person to onboarding until it is finished.
+  if (p === null || p?.onboardingCompleted === false) return { status: "notSetUp" };
   if (ready && inputs) {
     return { status: "ready", inputs, fetching: all.some((q) => q.isFetching) };
   }

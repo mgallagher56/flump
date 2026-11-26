@@ -2,8 +2,8 @@ import { Linking } from "react-native";
 import { Button } from "../../components/Button";
 import { Screen } from "../../components/Screen";
 import { Text } from "../../components/Text";
-import { comingSoonAction, comingSoonBody } from "../../copy/navigation";
-import { useShell, webPageUrl } from "../../navigation/shell";
+import { COMING_SOON_BODY, comingSoonAction, OPEN_FLUMP_WEBSITE } from "../../copy/navigation";
+import { useShell, webLink } from "../../navigation/shell";
 
 export interface ComingSoonProps {
   /** The page's name, as web's navigation says it. */
@@ -17,17 +17,17 @@ export interface ComingSoonProps {
  * website today, and a link to it there. Never a figure. The header above already names the page.
  */
 export function ComingSoon({ label, webRoute }: ComingSoonProps) {
-  const shell = useShell();
+  const link = webLink(useShell(), webRoute);
   return (
     <Screen edges={["right", "bottom", "left"]}>
       <Text textStyle="body.md" color="secondary">
-        {comingSoonBody(label)}
+        {COMING_SOON_BODY}
       </Text>
       <Button
-        label={comingSoonAction(label)}
+        label={link.exact ? comingSoonAction(label) : OPEN_FLUMP_WEBSITE}
         accessibilityRole="link"
         testID="coming-soon-open-website"
-        onPress={() => void Linking.openURL(webPageUrl(shell, webRoute))}
+        onPress={() => void Linking.openURL(link.url)}
       />
     </Screen>
   );

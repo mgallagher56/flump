@@ -31,8 +31,9 @@ describe("ComingSoon", () => {
 
   it("says the page is on the website, with no figure, and links to the same page there", async () => {
     await show(shellWith("https://app.test.invalid"));
+    // The header names the page, so the sentence reads the same for "Cards and loans".
     expect(
-      screen.getByText("Pension is not in the app yet. You can use it on the Flump website."),
+      screen.getByText("This page is not in the app yet. You can use it on the Flump website."),
     ).toBeOnTheScreen();
     expect(screen.queryByText(/£|\d/)).toBeNull();
     await userEvent
@@ -41,11 +42,10 @@ describe("ComingSoon", () => {
     expect(Linking.openURL).toHaveBeenCalledWith("https://app.test.invalid/app/pension");
   });
 
-  it("without the web app's address, links to the marketing site's home page", async () => {
+  it("without the web app's address, says the button opens the Flump website, and goes there", async () => {
     await show(shellWith(null));
-    await userEvent
-      .setup()
-      .press(screen.getByRole("link", { name: "Open Pension on the website" }));
+    expect(screen.queryByRole("link", { name: "Open Pension on the website" })).toBeNull();
+    await userEvent.setup().press(screen.getByRole("link", { name: "Open the Flump website" }));
     expect(Linking.openURL).toHaveBeenCalledWith("https://site.test.invalid");
   });
 });
