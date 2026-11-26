@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { execFileSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { relative, resolve } from "node:path";
 import { IP_RATE_LIMIT } from "../apps/backend/src/security/rate-limit.decorator";
 import { RateLimitStore } from "../apps/backend/src/security/rate-limit.store";
 import {
@@ -231,6 +231,57 @@ describe("merge gate (BE-01)", () => {
       const include = (ci.jobs[id]?.strategy?.matrix?.include ?? []) as { shard?: string }[];
       expect(include.map((leg) => leg.shard).filter(Boolean)).toEqual(["1/2", "2/2"]);
     }
+  });
+
+  // The a11y shards are `turbo run test:storybook --filter=@flump/web`, replayed from the cache
+  // when their hash is unchanged. A story outside apps/web whose files are in no hash never runs:
+  // the FeatureIndex story (PR #950) reached main red that way. Each story glob in
+  // .storybook/main.ts must be in apps/web, in a workspace dependency whose build or generate
+  // task the Storybook tasks depend on, or in the task's own `inputs`.
+  test("every story the Storybook tasks run is in their Turbo hash", () => {
+    const webDir = resolve(repoRoot, "apps/web");
+    const main = readFileSync(resolve(webDir, ".storybook/main.ts"), "utf8");
+    const storyGlobs = [...main.matchAll(/"(\.\.\/[^"]*\.stories\.[^"]*)"/g)].map((m) =>
+      relative(repoRoot, resolve(webDir, ".storybook", m[1] as string)),
+    );
+    expect(storyGlobs.some((glob) => glob.startsWith("apps/marketing/"))).toBe(true);
+
+    type Task = { dependsOn?: string[]; inputs?: string[] };
+    const rootTasks = (readJson("turbo.json") as { tasks: Record<string, Task> }).tasks;
+    const webTasks = (
+      Bun.JSONC.parse(readFileSync(resolve(webDir, "turbo.json"), "utf8")) as {
+        tasks: Record<string, Task>;
+      }
+    ).tasks;
+    const web = readJson("apps/web/package.json") as Record<string, Record<string, string>>;
+    const webDeps = { ...web.dependencies, ...web.devDependencies };
+
+    const problems: string[] = [];
+    for (const task of ["test:storybook", "test:storybook:dark", "build-storybook:test"]) {
+      const dependsOn = rootTasks[task]?.dependsOn ?? [];
+      const inputs = webTasks[task]?.inputs ?? [];
+      for (const glob of storyGlobs) {
+        const workspace = glob.split("/").slice(0, 2).join("/");
+        if (workspace === "apps/web") continue;
+        const pkg = readJson(`${workspace}/package.json`) as {
+          name: string;
+          scripts?: Record<string, string>;
+        };
+        const hashedAsDependency =
+          webDeps[pkg.name]?.startsWith("workspace:") &&
+          ["build", "generate"].some((s) => pkg.scripts?.[s] && dependsOn.includes(`^${s}`));
+        const hashedAsInput =
+          inputs.includes("$TURBO_DEFAULT$") &&
+          inputs.some(
+            (input) =>
+              input.startsWith("$TURBO_ROOT$/") &&
+              input.endsWith("/**") &&
+              glob.startsWith(input.slice("$TURBO_ROOT$/".length, -"**".length)),
+          );
+        if (!hashedAsDependency && !hashedAsInput) problems.push(`${task}: ${glob}`);
+      }
+    }
+    expect(problems).toEqual([]);
   });
 
   test("no two jobs across workflows render the same check name", () => {

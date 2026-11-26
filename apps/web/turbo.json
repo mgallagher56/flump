@@ -12,6 +12,32 @@
     // (backend#build builds those dependencies first) without the backend's own tests.
     "test:coverage": {
       "dependsOn": ["$TURBO_EXTENDS$", "backend#build"]
+    },
+    // .storybook/main.ts also runs the stories in apps/marketing/src, and marketing is not a
+    // dependency of this app, so its files were in no hash: a new marketing story reached main
+    // without the a11y job running it (the shards replayed from the cache). Declare them as
+    // inputs. packages/ui stories need no entry: @repo/ui is a dependency, and its generate and
+    // build tasks hash its files. scripts/ci-config.test.ts checks every story glob is covered.
+    "test:storybook": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/apps/marketing/src/**",
+        "$TURBO_ROOT$/apps/marketing/package.json"
+      ]
+    },
+    "test:storybook:dark": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/apps/marketing/src/**",
+        "$TURBO_ROOT$/apps/marketing/package.json"
+      ]
+    },
+    "build-storybook:test": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/apps/marketing/src/**",
+        "$TURBO_ROOT$/apps/marketing/package.json"
+      ]
     }
   }
 }
