@@ -95,6 +95,11 @@ export const USER_DATA_TABLES = [
   // (BETA_ADMIN_USER_IDS) create new links.
   "beta_members",
   "beta_invites",
+  // E34 C3 households (switched off): members first (household_members.household_id references
+  // households, ON DELETE CASCADE). Cleared so a reseed starts with no household and no open link.
+  "household_members",
+  "household_invitations",
+  "households",
   // BE-07 shared rate-limit counters (keys built from user ids and client IPs, short windows):
   // cleared so a reseed starts every persona with fresh limits.
   "rate_limit_buckets",
