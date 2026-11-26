@@ -21,7 +21,7 @@ import {
   quarantineSummary,
 } from "../apps/e2e/quarantine";
 import { webServers } from "../apps/e2e/support/servers";
-import { KEYED_STEPS, workflowStep } from "./android-apk-cache-key";
+import { type BunLock, KEYED_STEPS, lockClosure, workflowStep } from "./android-apk-cache-key";
 import { SHARED_PACKAGES } from "./mobile-e2e-scope";
 
 const repoRoot = resolve(import.meta.dir, "..");
@@ -892,15 +892,13 @@ describe("mobile e2e job (E12 S2c)", () => {
     }
   });
 
-  test("the smoke set's packages are exactly the workspace packages the app depends on", () => {
-    const pkg = JSON.parse(
-      readFileSync(resolve(import.meta.dir, "../apps/mobile/package.json"), "utf8"),
-    ) as { dependencies: Record<string, string>; devDependencies: Record<string, string> };
-    const workspace = Object.keys({ ...pkg.dependencies, ...pkg.devDependencies })
-      .filter((d) => d.startsWith("@flump/") || d === "@repo/typescript-config")
-      .map((d) => d.split("/")[1])
-      .sort();
-    expect([...SHARED_PACKAGES].sort()).toEqual(workspace);
+  test("the smoke set's packages are exactly the workspace packages the app uses, transitively", () => {
+    const lock = Bun.JSONC.parse(readFileSync(resolve(repoRoot, "bun.lock"), "utf8")) as BunLock;
+    const workspaces = lockClosure(lock, "apps/mobile")
+      .map((line) => line.match(/@workspace:packages\/([\w-]+)$/)?.[1])
+      .filter((dir): dir is string => dir !== undefined);
+    // typescript-config is a devDependency of every package: how they are built, not run.
+    expect([...SHARED_PACKAGES].sort()).toEqual([...workspaces, "typescript-config"].sort());
   });
 
   test("the job's Bun matches the Bun setup action's", () => {

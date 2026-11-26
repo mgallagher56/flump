@@ -65,7 +65,10 @@ describe("run-android-flows.sh themes and flow sets", () => {
       .filter((f) => f.endsWith(".yaml"))
       .map((f) => readFileSync(join(flowsDir, f), "utf8"))
       .join("\n");
-    const all = [...text.matchAll(/^\s*- takeScreenshot: (.*)$/gm)].map((m) => m[1] ?? "");
+    // The runner reads top-level steps only, so an indented one (inside runFlow, when or repeat)
+    // would never be checked: none is allowed.
+    expect(text).not.toMatch(/^\s+- takeScreenshot:/m);
+    const all = [...text.matchAll(/^- takeScreenshot: (.*)$/gm)].map((m) => m[1] ?? "");
     const perTheme = /^(.+)-\$\{THEME\}$/;
     expect(all.filter((name) => !perTheme.test(name))).toEqual([]);
     expect(all.map((name) => name.replace(perTheme, "$1")).sort()).toEqual([...SHOTS].sort());
