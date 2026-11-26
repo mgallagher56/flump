@@ -191,6 +191,22 @@ describe("the SDK version check's cooling-off", () => {
     );
   });
 
+  test("a moment before 7 days it still passes", () => {
+    const justBefore = new Date(RELEASED.getTime() + 7 * 24 * 60 * 60 * 1000 - 1);
+    expect(judge(fresh, 1, { published: allFresh, now: justBefore }).ok).toBe(true);
+  });
+
+  test("a publish date in the future fails", () => {
+    const tomorrow = new Date(NOW.getTime() + 24 * 60 * 60 * 1000);
+    const published = times({ ...Object.fromEntries(allFresh), "expo@58.1.0": tomorrow });
+    expect(judgeSdkVersions(fresh, published, NOW)).toEqual({
+      ok: false,
+      reasons: [
+        `npm gives a publish date in the future for expo@58.1.0: ${tomorrow.toISOString()}`,
+      ],
+    });
+  });
+
   test("one old release among fresh ones fails", () => {
     const published = times({
       "expo@58.1.0": RELEASED,
