@@ -34,6 +34,30 @@ describe("WorkOsJwtVerifier", { timeout: 15_000 }, () => {
     expect(user.email).toBeUndefined();
   });
 
+  it("passes a non-empty string sid through as sessionId", async () => {
+    const { t, verifier } = await setup();
+    const sid = `session_${"a1".repeat(6)}`;
+    await expect(verifier.verify(await t.sign({ sub: "user_1", sid }))).resolves.toEqual({
+      id: "user_1",
+      sessionId: sid,
+    });
+  });
+
+  it("leaves sessionId unset when sid is absent, empty or not a string", async () => {
+    const { t, verifier } = await setup();
+    for (const claims of [{}, { sid: "" }, { sid: 12345 }, { sid: null }, { sid: ["s"] }]) {
+      const user = await verifier.verify(await t.sign({ sub: "user_1", ...claims }));
+      expect(user.id, JSON.stringify(claims)).toBe("user_1");
+      expect(user.sessionId, JSON.stringify(claims)).toBeUndefined();
+    }
+  });
+
+  it("keeps a one-character sid (the edge of the non-empty check)", async () => {
+    const { t, verifier } = await setup();
+    const user = await verifier.verify(await t.sign({ sub: "user_1", sid: "s" }));
+    expect(user.sessionId).toBe("s");
+  });
+
   it("rejects a token signed by a different key", async () => {
     const { t, verifier } = await setup();
     await expect(verifier.verify(await t.foreignSign({ sub: "user_1" }))).rejects.toThrow(
@@ -240,6 +264,29 @@ describe("WorkOsJwtVerifier diagnostics", { timeout: 15_000 }, () => {
       lines.some((l) => l.includes("claim=iss") && l.includes("ERR_JWT_CLAIM_VALIDATION_FAILED")),
     ).toBe(true);
     expect(lines.some((l) => l.includes(token) || l.includes("evil.example"))).toBe(false);
+  });
+
+  it("warns with the error class alone when the failure has no code or claim", async () => {
+    const { t, verifier } = await setup();
+    const warn = vi.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
+    await expect(verifier.verify(await t.sign({ sid: "s" }, { noSub: true }))).rejects.toThrow(
+      "invalid token",
+    );
+    const lines = warn.mock.calls.map((c) => String(c[0]));
+    warn.mockRestore();
+    expect(lines).toEqual(["token verification failed: Error"]);
+  });
+
+  it("warns with the class, jose code and claim name in that order", async () => {
+    const { t, verifier } = await setup();
+    const warn = vi.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
+    const token = await t.sign({ sub: "user_1" }, { issuer: "https://evil.example/" });
+    await expect(verifier.verify(token)).rejects.toThrow("invalid token");
+    const lines = warn.mock.calls.map((c) => String(c[0]));
+    warn.mockRestore();
+    expect(lines).toEqual([
+      "token verification failed: JWTClaimValidationFailed ERR_JWT_CLAIM_VALIDATION_FAILED claim=iss",
+    ]);
   });
 
   it("logs the expected issuer once at init", async () => {

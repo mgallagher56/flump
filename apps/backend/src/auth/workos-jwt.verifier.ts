@@ -85,6 +85,8 @@ export class WorkOsJwtVerifier implements TokenVerifier {
           typeof payload.auth_time === "number" && Number.isFinite(payload.auth_time)
             ? payload.auth_time
             : undefined,
+        sessionId:
+          typeof payload.sid === "string" && payload.sid.length > 0 ? payload.sid : undefined,
       };
     } catch (error) {
       // Failure class, jose code and failing claim name only: never the token,

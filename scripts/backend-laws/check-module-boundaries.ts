@@ -27,6 +27,8 @@ export const MODULE_DEPENDENCIES: Readonly<Record<string, readonly string[]>> = 
   budget: [],
   tax: [],
   invoicing: [],
+  // The caller's own WorkOS session (mobile sign-out, E12 S2b): identity is platform code.
+  session: [],
   banking: ["snapshots"],
   imports: ["snapshots", "finance"],
   finance: ["banking", "snapshots"],
