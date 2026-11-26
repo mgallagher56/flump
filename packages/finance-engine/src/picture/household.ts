@@ -15,8 +15,9 @@ import { selectTakeHome } from "./selectors/take-home.js";
 
 /**
  * E34 C2: a household picture from two person pictures. Engine only: no route, screen or tool
- * reads it yet (DECISIONS, 25 November 2026: no household is built before the charity review and
- * a household DPIA).
+ * reads it yet. The household itself (C3) is built behind an off-by-default switch that stays off
+ * until the charity review, the signed household DPIA and the approved help line wording exist,
+ * and only the owner turns it on (DECISIONS, 25 November 2026, "Build it gated now").
  *
  * Rules this function keeps (E34 plan sections 2, 3 and 7):
  * - Tax is worked out per person with the existing engine (`selectTakeHome` on each person's own
