@@ -8,7 +8,7 @@ Maestro flows on an Android emulator against a local fixture server (E12 slice S
 | `scripts/`, `subflows/` | Maestro scripts that set the fixture scenario, and shared steps. Not flows: `maestro test flows` runs only `flows/`                                                                                                                                                                                                                                               |
 | `fixture-server/`       | A WorkOS stand-in and canned `/v1` on one port (8787), Node built-ins only. Signing key, ids and tokens are made at runtime. Listens on loopback only                                                                                                                                                                                                             |
 | `install-maestro.sh`    | Installs the pinned Maestro CLI and refuses a download whose SHA-256 differs from the one committed in the script                                                                                                                                                                                                                                                 |
-| `run-android-flows.sh`  | Installs the debug APK and runs every flow in light, then dark                                                                                                                                                                                                                                                                                                    |
+| `run-android-flows.sh`  | Installs the debug APK and runs the given flow set (`full` or `smoke`) once per given theme (`light`, `dark` or both)                                                                                                                                                                                                                                             |
 
 ## The fixture server
 
@@ -32,9 +32,22 @@ Nothing in `app/` or `src/` may import from `e2e/` (Biome), and the production b
 
 ## CI: `🤖 Mobile e2e (Android)`
 
-On GitHub's Linux runner: `expo prebuild` and a Gradle debug build, the fixture server and Metro on the runner, an API 34 emulator, then `run-android-flows.sh`. Screenshots and logs are uploaded as the `mobile-e2e-android` artifact for 7 days. Read-only permissions, no secrets, no Maestro Cloud, Maestro analytics off. No retries: a red run is read from the artifact. The runner runs one flow at a time and, before each flow and each theme switch, stops the app and waits for its screens to go. A flow's `clearState` on a live screen let Android's delayed task removal kill the freshly launched app (a black screen, seen twice on 25 November). If the screens stay, the run fails rather than retries. The emulator has 4096 MB: with the AVD default of 2560 MB, the first sign-in after boot ran it out of memory, Zygote could not fork Chrome's process and the flow stayed on the sign-in screen (26 November). A failed flow does not stop the others; each flow writes its own JUnit report.
+On GitHub's Linux runner: `expo prebuild`, the debug APK, the fixture server and Metro on the runner, an API 34 emulator, then `run-android-flows.sh`. Screenshots and logs are uploaded as the `mobile-e2e-android` artifact for 7 days. Read-only permissions, no secrets, no Maestro Cloud, Maestro analytics off. No retries: a red run is read from the artifact. It is a required check and reports on every pull request.
 
-It proves Hermes at runtime on Android only. iOS is a hand check on a Mac. Not a required check until it has passed three runs in a row (owner step OS9).
+What runs (owner, 26 November 2026; `scripts/mobile-e2e-scope.ts`, its reason is in the job summary):
+
+| Event                                                                                                                                                                                          | Flows                            | Themes      |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- | ----------- |
+| Push to `main`, and nightly at 02:23 UTC                                                                                                                                                       | every flow                       | light, dark |
+| Pull request changing `apps/mobile/**`, this job's scripts or workflow block, `.github/actions/`, the root `package.json`, `bunfig.toml`, `.node-version`, or the app's packages in `bun.lock` | every flow                       | light       |
+| Pull request changing only the shared packages the app uses (`finance-engine`, `api-contract`, `api-client`, `tokens`, `format`, `business-details`, `typescript-config`) or `turbo.json`      | smoke: `engine-check`, `sign-in` | light       |
+| Any other pull request                                                                                                                                                                         | none: the job passes in seconds  |             |
+
+The debug APK holds no JavaScript (Metro serves it), so it is cached. `scripts/android-apk-cache-key.ts` keys it on the prebuild output, `package.json`, the app config, the app's transitive lockfile set (native modules, Gradle plugins and Hermes included), the JDK and Android tools, and the workflow's prebuild and Gradle steps; every module autolinking would build must be in that set. Anything it cannot account for gives no key and the APK is built. Restores take an exact key only. Prebuild and the backup check run on a hit too. The nightly run always builds. The job summary says whether the APK was built or restored, and the key's inputs.
+
+The runner runs one flow at a time and, before each flow and each theme switch, stops the app and waits for its screens to go. A flow's `clearState` on a live screen let Android's delayed task removal kill the freshly launched app (a black screen, seen twice on 25 November). If the screens stay, the run fails rather than retries. The emulator has 4096 MB: with the AVD default of 2560 MB, the first sign-in after boot ran it out of memory, Zygote could not fork Chrome's process and the flow stayed on the sign-in screen (26 November). A failed flow does not stop the others; each flow writes its own JUnit report. Every screenshot a flow that ran takes (`takeScreenshot: <name>-${THEME}`) must exist for each theme that ran.
+
+It proves Hermes at runtime on Android only. iOS is a hand check on a Mac.
 
 ## By hand
 

@@ -27,7 +27,7 @@ Switch the phone or simulator between light and dark to see the theme follow it.
 
 Sign-in needs four values, all public configuration, never secrets (Expo puts every `EXPO_PUBLIC_*` value in the bundle): `EXPO_PUBLIC_API_URL` (the backend), `EXPO_PUBLIC_WORKOS_CLIENT_ID` (the WorkOS client id, `client_...`; never an API key), `EXPO_PUBLIC_MARKETING_URL` (the site with the legal pages) and, for the e2e build only, `EXPO_PUBLIC_WORKOS_API_URL` (defaults to `https://api.workos.com`). A missing or unsafe value shows "This build is misconfigured". Expo Go cannot finish a sign-in: it never receives the `flump://auth/callback` redirect, so a real sign-in needs a development build (`bunx expo run:android`). It must be HTTPS in a release build; a development build also accepts plain HTTP to `localhost`, `127.0.0.1`, `[::1]`, `10.0.2.2` (the Android emulator's name for your computer) or a `name.local` address.
 
-The Maestro flow `e2e/flows/engine-check.yaml` checks the device check on a debug Android build. CI's `🤖 Mobile e2e (Android)` job runs it in light and dark; to run it by hand, see `e2e/README.md`.
+The Maestro flow `e2e/flows/engine-check.yaml` checks the device check on a debug Android build. CI's `🤖 Mobile e2e (Android)` job runs it on every run (light on pull requests, light and dark on `main` and nightly); to run it by hand, see `e2e/README.md`.
 
 ## A real sign-in on your Android phone
 
