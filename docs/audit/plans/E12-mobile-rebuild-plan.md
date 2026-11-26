@@ -167,6 +167,7 @@ apps/mobile/                 @flump/mobile, a Bun workspace like apps/web
     (auth)/sign-in.tsx
     (app)/_layout.tsx        session gate, tab bar
     (app)/(tabs)/{index,accounts,budget,pay,more}.tsx
+    (app)/page/[key].tsx     a More page, also flump://page/<key> (S4)
     (app)/check-in.tsx
     (dev)/{gallery,engine-check}.tsx   left out of production builds
   src/
@@ -199,9 +200,9 @@ The generated `ios/` and `android/` folders are not committed (continuous native
 
 ### 4.4 Navigation
 
-Expo Router, file based. `(auth)` for sign-in; `(app)` for the signed-in app with a tab bar whose entries, order and icons equal web's `BOTTOM_BAR_TABS` plus More: **Home, Accounts, Budget, Pay, More**. More is an ordinary fifth tab that opens our own list (the pages web's drawer lists, plus Settings and Connect AI), not the system overflow. Native tabs (`expo-router/native-tabs`) are preferred for platform feel; S4 checks that they meet the label and target rules at 200% text before choosing them over the JavaScript tab bar [U].
+Expo Router, file based. `(auth)` for sign-in; `(app)` for the signed-in app with a tab bar whose entries, order and icons equal web's `BOTTOM_BAR_TABS` plus More: **Home, Accounts, Budget, Pay, More**. More is an ordinary fifth tab that opens our own list (the pages web's drawer lists, plus Settings and Connect AI), not the system overflow. S4 chose the JavaScript tab bar with our own `TabBar` over native tabs (`expo-router/native-tabs`): its roles, targets and large-text layout can be tested in Jest, which native tabs cannot (9.7).
 
-Under R4 each top-level screen's header has a menu button that opens the More list, and a light and dark toggle. Whether both the menu button and the More tab stay is decided in S4 (10.3).
+Under R4 each top-level screen's header has a menu button that opens the More list, and a light and dark toggle. Both the menu button and the More tab stay (S4, 10.3); the toggle comes with S9.
 
 Deep links use the `flump://` scheme and, later, universal and app links on the website's domain. A link opened while signed out resumes after sign-in and never performs a write.
 
@@ -524,7 +525,7 @@ After S6 the page slices touch separate folders and can run two or three at a ti
 **The flow.** `SessionGate` moves from the first route into `(app)/_layout.tsx` and wraps the shell.
 
 - `loading`, `signingOut`, `signedOut`, `signingIn`, `sessionEnded`, `notInvited` and `termsRequired` **replace** the shell, as now. Nobody can use a tab in those states. The update gate stays above everything.
-- `restoredOffline` **sits within** it: the tab bar and More stay, and each tab's body shows `Offline` with Try again. S7 turns it into cached reading.
+- `restoredOffline` **sits within** it: the tab bar and More stay, and Home, the one tab that reads data, shows `Offline` with Try again; the placeholders need no data. S7 turns it into cached reading.
 - A terms refusal met mid-session shows `TermsRequired` in the tab's body, as Home does now.
 
 Home keeps the "You are signed in" heading, the check-in row with its empty state, and the dev links, until S5. Accounts, Budget and Pay show `ComingSoon`: the page name, one sentence ("Accounts is not in the app yet. You can use it on the Flump website."), and a link to the same web page. No figures.
@@ -535,10 +536,10 @@ More lists, in web's drawer order: Self Assessment, Savings, Pension, Retirement
 
 - Routes: `app/_layout.tsx` (one `(app)` entry); new `app/(app)/_layout.tsx`, `(app)/(tabs)/{_layout,index,accounts,budget,pay,more}.tsx`, `(app)/page/[key].tsx`.
 - Data and words: `src/navigation/navItems.ts` (plain data, no imports); `src/copy/navigation.ts`.
-- Components, five files each: `TabBar`, `AppHeader`, `ListRow`, `Icon`.
+- Components, five files each: `TabBar`, `AppHeader`, `ListRow`, `Icon` (shapes in `src/navigation/iconShapes.ts`).
 - Screens: `screens/{More,ComingSoon}/`; `SessionGate` (takes children, offers sign-out through context); `Home`.
 - Config: `src/config.ts` gains an optional `webAppOrigin` from `EXPO_PUBLIC_WEB_APP_URL`, checked as the marketing address is. When it is unset the placeholder links to the marketing home page, so no existing build breaks. `eas.json`, the CI e2e env, README.
-- Web, small: export `withoutBarPages` from `MobileNavDrawer.tsx`; lift the three footer routes into `DRAWER_FOOTER_ROUTES` in `navConfig.ts`; new `apps/web/app/components/navigation/mobileNavParity.test.ts`.
+- Web, small: export `withoutBarPages` from `MobileNavDrawer.tsx`; lift the three footer routes into `DRAWER_FOOTER_ROUTES` in `navConfig.ts`; new `apps/web/app/components/navigation/mobileNavParity.test.tsx`.
 - End to end: `e2e/flows/tabs.yaml`; `e2e/subflows/sign-out.yaml` (through More); the screenshot list in `e2e/run-android-flows.sh` and its test; gallery entries.
 - Docs: 4.2 and 4.4 corrected; 10.3 filled in; parity log.
 
@@ -547,7 +548,7 @@ More lists, in web's drawer order: Self Assessment, Savings, Pension, Retirement
 1. The parity test fails if mobile's tabs differ from `BOTTOM_BAR_TABS` plus More in key, order, label, route or icon, or if the More rows differ from `withoutBarPages(AUTH_NAV_ROUTES)` plus `DRAWER_FOOTER_ROUTES`. Labels equal `apps/web/public/locales/en/common.json`.
 2. Every placeholder names its page, shows no figure, and its link opens `webAppOrigin` plus that row's web route (Connect AI: `CONNECT_AI_ROUTE`).
 3. Home shows the check-in row, "Continue check-in" and the empty state exactly as in S3. Its tests pass unchanged apart from sign-out.
-4. Session states: a Jest test per state proves which replace the shell and that `restoredOffline` keeps the tab bar with Try again in each tab. The existing terms, session-ended and sign-out flows still pass.
+4. Session states: a Jest test per state proves which replace the shell and that `restoredOffline` keeps the tab bar, with Try again on Home. The existing terms, session-ended and sign-out flows still pass.
 5. Each tab has role `tab` inside a `tablist`, announces selected, and is at least 48 by 48. The current tab and current More row are marked without colour alone.
 6. At 320 points wide and 200% text no label is clipped, shortened or broken mid-word: at large text the icons go and the bar lays its tabs out in as many columns as the longest label fits, wrapping to more rows. Proved in Jest at 320 points and 200% text, in light and dark; the fit is checked on a device.
 7. The colour pairs the bar draws (label and icon, selected and not) are pairs the shared contrast matrix already checks, or join it (section 6).
@@ -556,6 +557,8 @@ More lists, in web's drawer order: Self Assessment, Savings, Pension, Retirement
 10. The gallery shows `TabBar`, `AppHeader`, `ListRow` and `Icon` in light, dark and 200% text. Dev screens stay out of the production bundle.
 11. Lint, types, `check:laws` and the mobile and web tests pass, including the mobile law checks for the new directories.
 12. The parity log marks the navigation rows done or part done and records the theme toggle and the filter deferred to S9. The PR states the CROSS-PLATFORM section 7 result.
+
+**Built (S4, 26 November 2026).** As above, with these details. `SessionGate` wraps `app/(app)/_layout.tsx` and gives the tabs a shell context (`src/navigation/shell.ts`: offline, sign out, Try again, the two websites). The tab bar lays its tabs out by an estimate of the longest label's width (`tabLayout` in `TabBar.styles.ts`): five a row at the normal size on 320 points, two a row over three rows at 200% text, icons gone from 1.5 times; the real fit is a device check. The More list is a pushed page per row (`page/[key]`), so the tab bar hides there and Back returns to More. The web test also pins each icon's shapes to lucide-react's. `EXPO_PUBLIC_WEB_APP_URL` is optional; without it placeholder links open the marketing site's home page. Expo Router's route tests (`src/navigation/routes.test.tsx`) needed `standard-navigation` added to Jest's transform list.
 
 ### 9.8 Later slices
 

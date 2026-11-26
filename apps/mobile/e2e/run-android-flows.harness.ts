@@ -25,6 +25,12 @@ export const SHOTS = [
   "signed-in-again",
   "sign-out-confirm",
   "update-required",
+  "tab-home",
+  "tab-accounts",
+  "tab-budget",
+  "tab-pay",
+  "tab-more",
+  "more-page",
 ];
 
 export function run(

@@ -1,4 +1,4 @@
-# E12 S2a and S2b: sign-out asks first, then clears the device and returns straight to the sign-in
+# E12 S2a and S2b: sign-out (in the More list since S4) asks first, then clears the device and returns straight to the sign-in
 # screen with no browser window, after revoking the session on the server. After a relaunch the
 # sign-in screen still shows, so no refresh token was left in the secure store.
 appId: app.flump.mobile
@@ -12,7 +12,15 @@ appId: app.flump.mobile
     file: ../subflows/sign-in.yaml
     env:
       AFTER: "You are signed in"
-- tapOn: "Sign out"
+- tapOn:
+    id: "tab-more"
+- scrollUntilVisible:
+    element:
+      id: "more-sign-out"
+    direction: DOWN
+    timeout: 10000
+- tapOn:
+    id: "more-sign-out"
 - extendedWaitUntil:
     visible: "Sign out of Flump\\?"
     timeout: 10000
@@ -20,11 +28,12 @@ appId: app.flump.mobile
 # Cancel keeps the person signed in.
 - tapOn:
     id: "android:id/button2"
-# "You are signed in" is behind the dialog all along, so wait for the dialog itself to go.
+# The More list is behind the dialog all along, so wait for the dialog itself to go.
 - extendedWaitUntil:
     notVisible: "Sign out of Flump\\?"
     timeout: 10000
-- assertVisible: "You are signed in"
+- assertVisible:
+    id: "more-sign-out"
 - runScript:
     file: ../scripts/assert-session.js
     env:

@@ -1,7 +1,18 @@
 # From a signed-in screen: Sign out, confirm in the platform dialog, and wait for the sign-in
-# screen. No browser opens (E12 S2b): the app clears the device and revokes on the server.
+# screen. No browser opens (E12 S2b): the app clears the device and revokes on the server. With the
+# tab bar on screen, Sign out is in the More list (E12 S4); a screen without it (Not invited) has
+# its own Sign out button, so the More tab is optional here.
 appId: app.flump.mobile
 ---
+- tapOn:
+    id: "tab-more"
+    optional: true
+# The More list's Sign out is its last row; on a short screen it is below the fold.
+- scrollUntilVisible:
+    element:
+      text: "Sign out"
+    direction: DOWN
+    timeout: 10000
 - tapOn: "Sign out"
 - extendedWaitUntil:
     visible: "Sign out of Flump\\?"

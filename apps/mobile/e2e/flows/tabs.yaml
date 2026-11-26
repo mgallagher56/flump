@@ -1,0 +1,62 @@
+# E12 S4: the tab bar and the More list. Signs in, visits each tab (Home, Accounts, Budget, Pay,
+# More), opens More from the header's menu button and one More page, with a screenshot of each.
+# The runner runs it in light and in dark, stopping and settling the app first; no retries.
+appId: app.flump.mobile
+---
+- runScript:
+    file: ../scripts/fixture.js
+    env:
+      SCENARIO: "{}"
+- runFlow: ../subflows/launch-signed-out.yaml
+- runFlow:
+    file: ../subflows/sign-in.yaml
+    env:
+      AFTER: "You are signed in"
+- assertVisible:
+    id: "tab-home"
+- takeScreenshot: tab-home-${THEME}
+- tapOn:
+    id: "tab-accounts"
+- extendedWaitUntil:
+    visible: "Accounts is not in the app yet. You can use it on the Flump website."
+    timeout: 10000
+- assertVisible: "Open Accounts on the website"
+- takeScreenshot: tab-accounts-${THEME}
+- tapOn:
+    id: "tab-budget"
+- extendedWaitUntil:
+    visible: "Budget is not in the app yet. You can use it on the Flump website."
+    timeout: 10000
+- takeScreenshot: tab-budget-${THEME}
+- tapOn:
+    id: "tab-taxAndPay"
+- extendedWaitUntil:
+    visible: "Pay is not in the app yet. You can use it on the Flump website."
+    timeout: 10000
+- takeScreenshot: tab-pay-${THEME}
+# The header's menu button opens More, as web's phone top bar.
+- tapOn:
+    id: "header-menu"
+- extendedWaitUntil:
+    visible:
+      id: "more-row-pension"
+    timeout: 10000
+- assertVisible: "Savings and pension"
+- takeScreenshot: tab-more-${THEME}
+- tapOn:
+    id: "more-row-pension"
+- extendedWaitUntil:
+    visible: "Pension is not in the app yet. You can use it on the Flump website."
+    timeout: 10000
+- takeScreenshot: more-page-${THEME}
+# Back to More, then to Home by its tab: the check-in row is still there.
+- back
+- extendedWaitUntil:
+    visible:
+      id: "more-row-pension"
+    timeout: 10000
+- tapOn:
+    id: "tab-home"
+- extendedWaitUntil:
+    visible: "Start monthly check-in"
+    timeout: 30000
