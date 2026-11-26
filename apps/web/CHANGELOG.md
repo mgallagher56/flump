@@ -1,5 +1,34 @@
 # Changelog
 
+## [1.54.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.53.0...flump/web-v1.54.0) (2026-11-26)
+
+
+### Features ✨
+
+* **legal:** terms acceptance at sign-up, backend guard, endpoints and migration (WIP) ([c66be15](https://github.com/mgallagher56/flump/commit/c66be158c45c8ae5d0cdd00d6ca8ce8b977765ba))
+* **legal:** web terms gate, acceptance page, coming-change notice, docs and maps (WIP) ([f68b39f](https://github.com/mgallagher56/flump/commit/f68b39f7b3144185b7e4e8cfeb47cb8e138dbeb0))
+* **web:** E35 W5 Settings switch for the questions after a check-in ([63e9f49](https://github.com/mgallagher56/flump/commit/63e9f49749d2b2aa6701e9b0c892473d44089ef8))
+* **web:** E35 W5 two optional questions under a finished check-in ([ceadd7a](https://github.com/mgallagher56/flump/commit/ceadd7ae6bf94b751a06aef006fd3e63b39f2f62))
+* **web:** household tab and join pages for E34 C3, shown only when the backend answers ([6c45145](https://github.com/mgallagher56/flump/commit/6c451452214f47304771daa19aaf2d5b7771d60a))
+* **web:** the proxy forwards the questions-after-a-check-in routes; profile fixtures carry the switch ([7efcae6](https://github.com/mgallagher56/flump/commit/7efcae6dbf3d44ce8cd0e666cfce2eb81e37a49a))
+
+
+### Bug Fixes 🪲
+
+* **e34:** migration timestamp after main and open PRs; linear regexes; erasure model matches (b2) ([0ea30ac](https://github.com/mgallagher56/flump/commit/0ea30ac19e72d8cb0c659fcb59c74dcb1643b7f0))
+* **e34:** no join date in the household API; launch docs name the invite cookie ([bb85d12](https://github.com/mgallagher56/flump/commit/bb85d12190fdcbe634aa378e1250cce09df8f608))
+* **e34:** review fixes for C3: household pages 404 before any cookie or sign-in when off ([4ec6703](https://github.com/mgallagher56/flump/commit/4ec67039db23ef7c5813a00040ac5aff61d36013))
+* **legal:** CI: web contract test agrees to the terms, bun resolves business-details from source, unused fixture export, privacy page baselines ([a38d5e0](https://github.com/mgallagher56/flump/commit/a38d5e0c0f1c2b66f00304c59121f8f8557fa4c6))
+* **legal:** read the coming-change status on the home page only, not on every page ([69113b7](https://github.com/mgallagher56/flump/commit/69113b75724425689e9879264fcd9657d28cd021))
+* **legal:** review findings: terms refusal redirects from route errors, injectable page history with version-change tests, live-token MCP check, quiet coming-change line ([f0e8392](https://github.com/mgallagher56/flump/commit/f0e8392762d6cb44478625383a3b8240f6b3ecf7))
+* **marketing:** the feature index opens from the keyboard, and the a11y job runs new stories ([0b9a2c8](https://github.com/mgallagher56/flump/commit/0b9a2c8a8f19628305b0594bb7c6d9514fdee589))
+* **web,marketing:** the favicon tile is teal in light to match the logo (owner, 25 Nov 2026) ([a713ff0](https://github.com/mgallagher56/flump/commit/a713ff0252a0677f5854e21374f6ef30efc853fb))
+
+
+### Miscellaneous 🙃
+
+* narrow the questions proxy rule to no query; note the measures' limits ([ccd78c3](https://github.com/mgallagher56/flump/commit/ccd78c335ce74a82bce4050608948af7693a8198))
+
 ## [1.53.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.52.0...flump/web-v1.53.0) (2026-11-25)
 
 

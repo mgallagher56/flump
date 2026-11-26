@@ -1,5 +1,37 @@
 # Changelog
 
+## [1.41.0](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.40.0...flump/marketing-v1.41.0) (2026-11-26)
+
+
+### Features ✨
+
+* **backend:** run the retention purge in the backend daily (D5 revised) ([38c85eb](https://github.com/mgallagher56/flump/commit/38c85eb3a25755ea98995784a9c8415477d3b68e))
+* **legal:** allow-list entries, mutation kills, verify-flump recipe, decider wording fix ([021ccbc](https://github.com/mgallagher56/flump/commit/021ccbc37adc1c19fc42d1feb4a8cd6a68634334))
+* **legal:** web terms gate, acceptance page, coming-change notice, docs and maps (WIP) ([f68b39f](https://github.com/mgallagher56/flump/commit/f68b39f7b3144185b7e4e8cfeb47cb8e138dbeb0))
+* **marketing:** /features is a grouped index of every feature ([cc57959](https://github.com/mgallagher56/flump/commit/cc579597f82b393f62f8f4d904f5951a1b2d56fa))
+
+
+### Bug Fixes 🪲
+
+* **e34:** migration timestamp after main and open PRs; linear regexes; erasure model matches (b2) ([0ea30ac](https://github.com/mgallagher56/flump/commit/0ea30ac19e72d8cb0c659fcb59c74dcb1643b7f0))
+* **legal:** review findings: terms refusal redirects from route errors, injectable page history with version-change tests, live-token MCP check, quiet coming-change line ([f0e8392](https://github.com/mgallagher56/flump/commit/f0e8392762d6cb44478625383a3b8240f6b3ecf7))
+* **marketing:** review findings on the features index ([c06badd](https://github.com/mgallagher56/flump/commit/c06baddd636731b23789fabab7fa15dbd119e59a))
+* **marketing:** Start here lists each goal's links one per line ([3f5bdd3](https://github.com/mgallagher56/flump/commit/3f5bdd32bb4e51bb89a976abae0c064914e8bc63))
+* **marketing:** the feature index opens from the keyboard, and the a11y job runs new stories ([0b9a2c8](https://github.com/mgallagher56/flump/commit/0b9a2c8a8f19628305b0594bb7c6d9514fdee589))
+* **marketing:** the features index leaves out household-join (off switch) ([df1bde2](https://github.com/mgallagher56/flump/commit/df1bde2914c0f7563cc4366786c510c7b9ccfb3f))
+* **web,marketing:** the favicon tile is teal in light to match the logo (owner, 25 Nov 2026) ([a713ff0](https://github.com/mgallagher56/flump/commit/a713ff0252a0677f5854e21374f6ef30efc853fb))
+
+
+### Documentation 📙
+
+* **legal:** privacy notice 0.2, ROPA and data map for the questions after a check-in (E35 W5) ([879bb86](https://github.com/mgallagher56/flump/commit/879bb8681f9269eba15d20720a6412f2e55ba41b))
+
+
+### Tests 🧪
+
+* **marketing:** the cookies page test reads browser storage kinds only; the phone's secure store is the mobile app's (coordinator sign-off) ([a5185c1](https://github.com/mgallagher56/flump/commit/a5185c1f1de6ab4a18467686d4422e870e6c5183))
+* the terms-acceptance checks follow privacy notice 0.3; privacy page lists the new group ([004d535](https://github.com/mgallagher56/flump/commit/004d535a51b3f88d1dbd019c1169374791dd0c38))
+
 ## [1.40.0](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.39.0...flump/marketing-v1.40.0) (2026-11-25)
 
 
