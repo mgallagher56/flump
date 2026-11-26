@@ -1,0 +1,446 @@
+/*
+ * Prototype 1: CSS only. Semantic token variables only.
+ *
+ * Two kinds of motion:
+ * - Responses (hover, focus, press): always on, short, transform and shadow only. Under reduced
+ *   motion they keep their colour and shadow changes and lose their movement.
+ * - Arrivals (the headline, band headings, tiles, steps, index lines): scroll-driven CSS
+ *   animations (`animation-timeline: view()`), only where the browser supports them and only when
+ *   motion is allowed. Without support they are simply there.
+ * Arrivals use the individual `translate`/`scale` properties, hover uses `transform`, so a
+ * finished arrival never pins a hover.
+ */
+
+/* Responses: always present, motion only when allowed. */
+
+.p1 :is([data-proto^="cta"], #get-started a, header a[href]:not([aria-label])) {
+  position: relative;
+  isolation: isolate;
+  transition:
+    transform 160ms var(--proto-ease-out),
+    box-shadow 200ms var(--proto-ease-out),
+    background-color 160ms ease;
+}
+
+/* The primary call to action catches a band of light on hover. */
+.p1 [data-proto="cta-primary"],
+.p1 #get-started a {
+  overflow: hidden;
+}
+
+.p1 [data-proto="cta-primary"]::after,
+.p1 #get-started a::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  z-index: -1;
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    color-mix(in oklab, var(--colors-primary-foreground) 28%, transparent) 50%,
+    transparent 70%
+  );
+  translate: -110% 0;
+  pointer-events: none;
+}
+
+.p1 :is([data-proto^="cta"], #get-started a):hover {
+  box-shadow: var(--shadows-card-hover);
+}
+
+/* The real footer and header links: an underline that draws in from the left. */
+.p1 footer a:not([aria-label]) {
+  text-decoration: none;
+  background-image: linear-gradient(currentColor, currentColor);
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 0% 1px;
+  transition: background-size 220ms var(--proto-ease-out);
+}
+
+.p1 footer a:not([aria-label]):is(:hover, :focus-visible) {
+  background-size: 100% 1px;
+}
+
+/* Feature tiles: the whole tile answers, a teal edge draws across the top. */
+.p1 .proto-tiles li {
+  position: relative;
+  transition:
+    transform 220ms var(--proto-ease-out),
+    box-shadow 220ms var(--proto-ease-out),
+    border-color 220ms ease;
+}
+
+.p1 .proto-tiles li::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  border-radius: inherit;
+  background: var(--colors-primary);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 320ms var(--proto-ease-out);
+}
+
+/* The tile's own link covers the tile, so the whole tile is one target with one name. */
+.p1 .proto-tiles li a::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.p1 .proto-tiles li:is(:hover, :focus-within) {
+  box-shadow: var(--shadows-card-hover);
+  border-color: var(--colors-primary-border);
+}
+
+.p1 .proto-tiles li:is(:hover, :focus-within)::before {
+  transform: scaleX(1);
+}
+
+/* The tile link's focus ring goes round the whole tile. */
+.p1 .proto-tiles li a:focus-visible {
+  outline: none;
+}
+
+.p1 .proto-tiles li:has(a:focus-visible) {
+  outline: 2px solid var(--colors-border-focus-ring);
+  outline-offset: 3px;
+}
+
+/* "More detail" lines: a teal bar over the grey rule. */
+.p1 .proto-depth li {
+  position: relative;
+}
+
+.p1 .proto-depth li::before {
+  content: "";
+  position: absolute;
+  left: -2px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--colors-primary);
+  transform-origin: top;
+  transition: transform 220ms var(--proto-ease-out);
+}
+
+.p1 .proto-depth li:is(:hover, :focus-within)::before {
+  transform: scaleX(2);
+}
+
+/* The steps are a real sequence, so they carry their number. */
+.p1 .proto-steps {
+  counter-reset: p1-step;
+}
+
+.p1 .proto-steps > li {
+  counter-increment: p1-step;
+  position: relative;
+}
+
+.p1 .proto-steps > li::before {
+  content: counter(p1-step);
+  display: inline-grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  margin-bottom: 12px;
+  border-radius: 999px;
+  background: var(--colors-primary-subtle);
+  color: var(--colors-primary-emphasis);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The sample dashboard rests at a slight tilt and settles flat when the reader reaches for it. */
+.p1 .p1-preview {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  perspective: 1200px;
+}
+
+.p1 .p1-preview > figure {
+  transition:
+    transform 500ms var(--proto-ease-out),
+    box-shadow 500ms var(--proto-ease-out);
+}
+
+.p1 .p1-preview:is(:hover, :focus-within) > figure {
+  box-shadow: var(--shadows-floating);
+}
+
+/* The logo orb catches the light: a highlight sweeps across it and it gives a small squash. */
+.p1 [data-testid="home-logo"] a {
+  position: relative;
+  border-radius: 999px;
+}
+
+.p1 [data-testid="home-logo"] a svg {
+  transform-origin: 50% 85%;
+}
+
+.p1 [data-testid="home-logo"] a::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  pointer-events: none;
+  background: radial-gradient(
+    circle at var(--p1-light-x, 20%) var(--p1-light-y, 15%),
+    color-mix(in oklab, white 70%, transparent) 0,
+    transparent 28%
+  );
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+
+.p1 [data-testid="home-logo"] a:is(:hover, :focus-visible)::after {
+  opacity: 1;
+}
+
+/* The scroll cue: a hairline in the orb's teal. */
+.p1 .p1-progress {
+  position: fixed;
+  inset: 0 0 auto;
+  height: 3px;
+  z-index: 70;
+  background: var(--colors-primary);
+  transform-origin: left;
+  transform: scaleX(0);
+  pointer-events: none;
+  display: none;
+}
+
+/* Movement: allowed by the system and not switched off in the panel. */
+
+@property --p1-light-x {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 20%;
+}
+
+@property --p1-light-y {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 15%;
+}
+
+@keyframes p1-defog {
+  from {
+    opacity: 0.25;
+    filter: blur(8px);
+    translate: 0 0.15em;
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    translate: 0 0;
+  }
+}
+
+@keyframes p1-sheen {
+  to {
+    translate: 110% 0;
+  }
+}
+
+@keyframes p1-squash {
+  0% {
+    transform: scale(1, 1);
+  }
+  30% {
+    transform: scale(1.08, 0.92);
+  }
+  55% {
+    transform: scale(0.96, 1.05);
+  }
+  80% {
+    transform: scale(1.02, 0.99);
+  }
+  100% {
+    transform: scale(1, 1);
+  }
+}
+
+@keyframes p1-light {
+  from {
+    --p1-light-x: 15%;
+    --p1-light-y: 10%;
+  }
+  to {
+    --p1-light-x: 38%;
+    --p1-light-y: 32%;
+  }
+}
+
+@keyframes p1-rise {
+  from {
+    opacity: 0;
+    translate: 0 28px;
+    scale: 0.97;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+    scale: 1;
+  }
+}
+
+@keyframes p1-step-in {
+  from {
+    opacity: 0;
+    translate: 0 36px;
+    rotate: x 18deg;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+    rotate: x 0deg;
+  }
+}
+
+@keyframes p1-bar-in {
+  from {
+    scale: 1 0;
+  }
+  to {
+    scale: 1 1;
+  }
+}
+
+@keyframes p1-line-in {
+  from {
+    opacity: 0.2;
+    translate: -12px 0;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@keyframes p1-progress {
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes p1-settle {
+  from {
+    transform: rotateX(14deg) translateY(24px);
+  }
+  to {
+    transform: rotateX(4deg) translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .p1[data-motion="full"] :is([data-proto^="cta"], #get-started a):hover {
+    transform: translateY(-2px);
+  }
+
+  .p1[data-motion="full"] :is([data-proto^="cta"], #get-started a, header a[href]):active {
+    transform: translateY(0) scale(0.97);
+    transition-duration: 60ms;
+  }
+
+  .p1[data-motion="full"] :is([data-proto="cta-primary"], #get-started a):hover::after {
+    animation: p1-sheen 700ms var(--proto-ease-out) forwards;
+  }
+
+  .p1[data-motion="full"] .proto-tiles li:is(:hover, :focus-within) {
+    transform: translateY(-4px);
+  }
+
+  .p1[data-motion="full"] .proto-depth li > span {
+    transition: transform 220ms var(--proto-ease-out);
+  }
+
+  .p1[data-motion="full"] .proto-depth li:is(:hover, :focus-within) > span {
+    transform: translateX(4px);
+  }
+
+  .p1[data-motion="full"] [data-testid="home-logo"] a:is(:hover, :focus-visible) svg {
+    animation: p1-squash 650ms var(--proto-ease-out);
+  }
+
+  .p1[data-motion="full"] [data-testid="home-logo"] a:is(:hover, :focus-visible)::after {
+    animation: p1-light 650ms var(--proto-ease-out) forwards;
+  }
+
+  /* The one load moment: the headline clears word by word, like fog lifting. */
+  .p1[data-motion="full"] .p1-word {
+    display: inline-block;
+    animation: p1-defog 900ms var(--proto-ease-out) both;
+    animation-delay: calc(120ms + var(--proto-i) * 70ms);
+  }
+
+  .p1[data-motion="full"] .p1-lead {
+    animation: p1-defog 900ms var(--proto-ease-out) both;
+    animation-delay: 560ms;
+  }
+
+  .p1[data-motion="full"] .p1-preview > figure {
+    transform: rotateX(4deg);
+    animation: p1-settle 1100ms var(--proto-ease-out) both;
+    animation-delay: 300ms;
+  }
+
+  .p1[data-motion="full"] .p1-preview:is(:hover, :focus-within) > figure {
+    transform: rotateX(0deg) translateY(-4px);
+    animation: none;
+  }
+
+  @supports (animation-timeline: view()) {
+    .p1[data-motion="full"] .p1-progress {
+      display: block;
+      animation: p1-progress linear both;
+      animation-timeline: scroll(root);
+    }
+
+    /* Band headings clear from the fog as they arrive. */
+    .p1[data-motion="full"] .proto-reveal :is(h2, h2 + p) {
+      animation: p1-defog linear both;
+      animation-timeline: view();
+      animation-range: entry 10% cover 30%;
+    }
+
+    .p1[data-motion="full"] .proto-tiles li {
+      animation: p1-rise linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 90%;
+    }
+
+    /* Tiles in one row arrive left to right. */
+    .p1[data-motion="full"] .proto-tiles li:nth-child(3n + 2) {
+      animation-range: entry 10% entry 100%;
+    }
+
+    .p1[data-motion="full"] .proto-tiles li:nth-child(3n) {
+      animation-range: entry 20% cover 30%;
+    }
+
+    .p1[data-motion="full"] .proto-steps > li {
+      transform-origin: 50% 100%;
+      animation: p1-step-in linear both;
+      animation-timeline: view();
+      animation-range: entry calc(var(--proto-i) * 8%) cover calc(25% + var(--proto-i) * 6%);
+    }
+
+    .p1[data-motion="full"] .proto-depth li::before {
+      animation: p1-bar-in linear both;
+      animation-timeline: view();
+      animation-range: entry 20% cover 40%;
+    }
+
+    .p1[data-motion="full"] .proto-depth li > span {
+      animation: p1-line-in linear both;
+      animation-timeline: view();
+      animation-range: entry 20% cover 35%;
+    }
+  }
+}

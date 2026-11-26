@@ -1,0 +1,796 @@
+/*
+ * Prototype 2: scroll storytelling. Semantic token variables only.
+ *
+ * Every rule outside the motion block is the finished, still page: the fog and haze start at
+ * opacity 0, so with no support, no script or reduced motion the figures are sharp. The motion
+ * block runs the fog backwards from thick to clear as the reader scrolls (scroll-driven CSS, tied
+ * to scroll position, never to time), except the slow drift inside each fog layer.
+ */
+
+.proto {
+  --p2-header: 4rem;
+  /* Mist a shade lighter than the canvas: pale in Mint, a moonlit haze in Midnight. */
+  --p2-fog: color-mix(in oklab, var(--colors-surface-canvas) 55%, var(--colors-surface-card));
+}
+
+:root.dark .proto,
+:root[data-theme="dark"] .proto {
+  --p2-fog: color-mix(in oklab, var(--colors-surface-canvas) 82%, var(--colors-text-primary));
+}
+
+/* The hero. */
+
+.p2-hero {
+  position: relative;
+  overflow: clip;
+  padding: 40px 16px 56px;
+  background: var(--colors-surface-canvas);
+}
+
+.p2-stage {
+  position: relative;
+  max-width: 72rem;
+  margin: 0 auto;
+  display: grid;
+  gap: 32px;
+  justify-items: center;
+  timeline-scope: --p2-dash;
+}
+
+.p2-copy {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  gap: 20px;
+  justify-items: center;
+  text-align: center;
+  max-width: 40rem;
+}
+
+.p2-copy :is(h1, p) {
+  margin: 0;
+}
+
+.p2-dash {
+  position: relative;
+  z-index: 0;
+  width: 100%;
+  max-width: 36rem;
+  view-timeline: --p2-dash block;
+}
+
+.p2-haze {
+  position: absolute;
+  inset: -14px;
+  border-radius: 28px;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.p2-haze--thick {
+  -webkit-backdrop-filter: blur(14px) saturate(0.7);
+  backdrop-filter: blur(14px) saturate(0.7);
+  background: color-mix(in oklab, var(--p2-fog) 30%, transparent);
+}
+
+.p2-haze--thin {
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  background: color-mix(in oklab, var(--p2-fog) 20%, transparent);
+}
+
+.p2-fog {
+  position: absolute;
+  inset: -30% -40%;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.p2-fog__layer {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+}
+
+.p2-fog__layer::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+/* Soft banks of fog at four depths; the nearer ones are larger, softer and move further. */
+.p2-fog__layer--1::before {
+  background:
+    radial-gradient(
+      38% 22% at 62% 62%,
+      color-mix(in oklab, var(--p2-fog) 85%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      30% 18% at 40% 70%,
+      color-mix(in oklab, var(--p2-fog) 70%, transparent),
+      transparent 70%
+    );
+}
+
+.p2-fog__layer--2::before {
+  background:
+    radial-gradient(
+      34% 20% at 35% 58%,
+      color-mix(in oklab, var(--p2-fog) 80%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      26% 16% at 70% 76%,
+      color-mix(in oklab, var(--p2-fog) 75%, transparent),
+      transparent 70%
+    );
+}
+
+.p2-fog__layer--3::before {
+  background:
+    radial-gradient(
+      44% 26% at 55% 68%,
+      color-mix(in oklab, var(--p2-fog) 70%, transparent),
+      transparent 72%
+    ),
+    radial-gradient(
+      28% 14% at 25% 64%,
+      color-mix(in oklab, var(--colors-surface-subtle) 80%, transparent),
+      transparent 70%
+    );
+}
+
+.p2-fog__layer--4::before {
+  background:
+    radial-gradient(
+      50% 30% at 48% 60%,
+      color-mix(in oklab, var(--p2-fog) 60%, transparent),
+      transparent 75%
+    ),
+    radial-gradient(
+      30% 20% at 80% 58%,
+      color-mix(in oklab, var(--colors-surface-subtle) 70%, transparent),
+      transparent 70%
+    );
+}
+
+.p2-hint {
+  position: relative;
+  z-index: 2;
+  margin: 0;
+  display: none;
+  font-size: 0.875rem;
+  color: var(--colors-text-secondary);
+}
+
+/* Large screens: the hero is two screens tall and the stage stays put while the fog clears. */
+@media (min-width: 64rem) and (min-height: 40rem) {
+  /* Two screens tall only when the fog animates (motion block below); otherwise one. */
+  .p2-hero {
+    padding: 0 24px;
+    view-timeline: --p2-hero block;
+  }
+
+  .p2-stage {
+    position: sticky;
+    top: var(--p2-header);
+    height: calc(100vh - var(--p2-header));
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+    align-items: center;
+    align-content: center;
+    gap: 56px;
+  }
+
+  .p2-copy {
+    justify-items: start;
+    text-align: left;
+  }
+
+  .p2-copy > div {
+    justify-content: flex-start;
+  }
+
+  .p2-hint {
+    position: absolute;
+    bottom: 28px;
+    left: 50%;
+    translate: -50% 0;
+  }
+
+  .p2-fog {
+    inset: -20% -30% -20% 10%;
+  }
+}
+
+/* The five-area stepper. Stacked list by default. */
+
+.p2-areas {
+  position: relative;
+  padding: 64px 16px;
+  background: var(--colors-surface-card);
+}
+
+.p2-areas__pin {
+  max-width: 72rem;
+  margin: 0 auto;
+  display: grid;
+  gap: 24px;
+}
+
+.p2-areas__head h2 {
+  margin: 0 0 8px;
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  line-height: 1.15;
+}
+
+.p2-areas__head p {
+  margin: 0;
+}
+
+.p2-areas__nav {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+}
+
+.p2-areas__nav li {
+  display: grid;
+  gap: 6px;
+}
+
+.p2-areas__nav a {
+  color: var(--colors-primary);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.p2-areas__bar {
+  display: none;
+}
+
+.p2-areas__panels {
+  display: grid;
+  gap: 16px;
+}
+
+.p2-area {
+  display: grid;
+  gap: 20px;
+  padding: 24px;
+  border-radius: 24px;
+  border: 1px solid var(--colors-border);
+  background: var(--colors-surface-canvas);
+}
+
+.p2-area__text {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+
+.p2-area__text :is(h3, p, ul) {
+  margin: 0;
+}
+
+.p2-area__text h3 {
+  font-size: 1.5rem;
+}
+
+.p2-area__text ul {
+  padding-left: 1.1em;
+  color: var(--colors-text-secondary);
+}
+
+.p2-link {
+  color: var(--colors-primary);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.p2-link:hover {
+  color: var(--colors-primary-emphasis);
+}
+
+.p2-sample {
+  margin: 0;
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  perspective: 800px;
+}
+
+.p2-sample figcaption {
+  justify-self: start;
+  padding: 2px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--colors-border);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--colors-text-secondary);
+}
+
+.p2-sample__card {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: var(--colors-surface-card);
+  border: 1px solid var(--colors-border-subtle);
+  box-shadow: var(--shadows-card);
+}
+
+.p2-sample__label {
+  color: var(--colors-text-secondary);
+  font-size: 0.9375rem;
+}
+
+.p2-sample__value {
+  font-family: var(--fonts-numeric, inherit);
+  font-weight: 700;
+  font-size: 1.125rem;
+  color: var(--colors-text-primary);
+  white-space: nowrap;
+}
+
+.p2-sample__value small {
+  font-weight: 500;
+  font-size: 0.8125rem;
+  color: var(--colors-text-secondary);
+}
+
+.p2-areas__foot {
+  max-width: 72rem;
+  margin: 24px auto 0;
+}
+
+@media (min-width: 48rem) {
+  .p2-area {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    padding: 32px;
+    gap: 32px;
+  }
+}
+
+/* Enhanced by the GSAP stepper: the panels sit on top of each other inside the pinned stage. */
+.p2-areas[data-enhanced="true"] .p2-areas__pin {
+  min-height: calc(100vh - var(--p2-header));
+  align-content: center;
+  padding-block: 16px;
+}
+
+.p2-areas[data-enhanced="true"] .p2-areas__panels {
+  grid-template-areas: "stack";
+}
+
+.p2-areas[data-enhanced="true"] .p2-area {
+  grid-area: stack;
+}
+
+.p2-areas[data-enhanced="true"] .p2-areas__nav {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.p2-areas[data-enhanced="true"] .p2-areas__nav a {
+  color: var(--colors-text-secondary);
+  text-decoration: none;
+  font-size: 0.875rem;
+  line-height: 1.25;
+  transition: color 200ms ease;
+}
+
+.p2-areas[data-enhanced="true"] .p2-areas__nav li[data-active="true"] a {
+  color: var(--colors-text-primary);
+}
+
+.p2-areas[data-enhanced="true"] .p2-areas__nav a:hover {
+  text-decoration: underline;
+}
+
+.p2-areas[data-enhanced="true"] .p2-areas__nav li {
+  position: relative;
+  padding-top: 9px;
+}
+
+/* The track each bar fills. */
+.p2-areas[data-enhanced="true"] .p2-areas__nav li::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  border-radius: 3px;
+  background: var(--colors-border);
+}
+
+.p2-areas[data-enhanced="true"] .p2-areas__bar {
+  display: block;
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  border-radius: 3px;
+  background: var(--colors-primary);
+}
+
+@media (max-width: 47.99rem) {
+  .p2-areas[data-enhanced="true"] .p2-areas__pin {
+    align-content: start;
+    gap: 16px;
+  }
+
+  .p2-areas[data-enhanced="true"] .p2-areas__head h2 {
+    font-size: 1.625rem;
+  }
+
+  /* Phones: the step bars only. Each panel names its area and links to it, so nothing is lost. */
+  .p2-areas[data-enhanced="true"] .p2-areas__head p,
+  .p2-areas[data-enhanced="true"] .p2-areas__nav a {
+    display: none;
+  }
+
+  .p2-areas[data-enhanced="true"] .p2-areas__nav li {
+    padding-top: 3px;
+  }
+
+  .p2-area__text h3 {
+    font-size: 1.25rem;
+  }
+
+  .p2-areas[data-enhanced="true"] .p2-area {
+    padding: 18px;
+    gap: 14px;
+  }
+
+  .p2-areas[data-enhanced="true"] .p2-sample {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .p2-areas[data-enhanced="true"] .p2-sample figcaption {
+    grid-column: 1 / -1;
+  }
+
+  .p2-areas[data-enhanced="true"] .p2-sample__card {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 10px;
+    gap: 4px;
+  }
+
+  .p2-areas[data-enhanced="true"] .p2-sample__label {
+    font-size: 0.75rem;
+    line-height: 1.25;
+  }
+
+  .p2-areas[data-enhanced="true"] .p2-sample__value {
+    font-size: 1rem;
+  }
+
+  .p2-areas[data-enhanced="true"] .p2-sample__value small {
+    display: block;
+  }
+}
+
+/* Bands with depth. */
+
+.p2-band {
+  position: relative;
+  overflow: clip;
+}
+
+.p2-depth {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.p2-depth__shape {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 35% 30%,
+    color-mix(in oklab, var(--colors-primary) 30%, transparent),
+    color-mix(in oklab, var(--colors-primary) 6%, transparent) 70%
+  );
+  mix-blend-mode: multiply;
+}
+
+:root.dark .p2-depth__shape,
+:root[data-theme="dark"] .p2-depth__shape {
+  mix-blend-mode: screen;
+}
+
+.p2-depth--a .p2-depth__shape--far {
+  width: 220px;
+  height: 220px;
+  right: -60px;
+  top: 12%;
+  opacity: 0.5;
+}
+
+.p2-depth--a .p2-depth__shape--mid {
+  width: 120px;
+  height: 120px;
+  right: 8%;
+  bottom: 6%;
+  opacity: 0.6;
+}
+
+.p2-depth--a .p2-depth__shape--near {
+  width: 64px;
+  height: 64px;
+  left: -16px;
+  top: 30%;
+  opacity: 0.7;
+}
+
+.p2-depth--b .p2-depth__shape--far {
+  width: 260px;
+  height: 260px;
+  left: -120px;
+  bottom: 10%;
+  opacity: 0.45;
+}
+
+.p2-depth--b .p2-depth__shape--mid {
+  width: 90px;
+  height: 90px;
+  right: 3%;
+  top: 14%;
+  opacity: 0.55;
+}
+
+.p2-depth--b .p2-depth__shape--near {
+  width: 48px;
+  height: 48px;
+  right: 22%;
+  bottom: 4%;
+  opacity: 0.7;
+}
+
+/* Movement. */
+
+@keyframes p2-clear {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes p2-part-left {
+  from {
+    opacity: var(--p2-fog-max, 1);
+    translate: 0 0;
+  }
+  to {
+    opacity: 0;
+    translate: var(--p2-part, -30%) -6%;
+  }
+}
+
+@keyframes p2-drift {
+  from {
+    transform: translate3d(-3%, 0, 0);
+  }
+  to {
+    transform: translate3d(3%, -2%, 0);
+  }
+}
+
+@keyframes p2-resolve {
+  from {
+    color: var(--colors-text-secondary);
+    scale: 1.035;
+  }
+  to {
+    color: var(--colors-text-primary);
+    scale: 1;
+  }
+}
+
+@keyframes p2-dash-in {
+  from {
+    scale: 0.94;
+    translate: 0 24px;
+  }
+  to {
+    scale: 1;
+    translate: 0 0;
+  }
+}
+
+@keyframes p2-parallax {
+  from {
+    translate: 0 var(--p2-from, 60px);
+  }
+  to {
+    translate: 0 var(--p2-to, -60px);
+  }
+}
+
+@keyframes p2-band-rise {
+  from {
+    scale: 0.94;
+    translate: 0 40px;
+    border-radius: 48px;
+  }
+  to {
+    scale: 1;
+    translate: 0 0;
+    border-radius: 0;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    /*
+     * Phones and small windows: the hero scrolls normally and the fog clears as the dashboard
+     * travels up the screen. Large screens: the stage is pinned and the fog clears over the
+     * hero's two screens of scroll.
+     */
+    .proto[data-motion="full"] {
+      --p2-tl: --p2-dash;
+      --p2-rn: cover;
+      --p2-fog-max: 0.6;
+      --p2-s: 30%;
+      --p2-len: 24%;
+    }
+
+    @media (min-width: 64rem) and (min-height: 40rem) {
+      .proto[data-motion="full"] {
+        --p2-tl: --p2-hero;
+        --p2-rn: contain;
+        --p2-fog-max: 1;
+        --p2-s: 2%;
+        --p2-len: 70%;
+      }
+
+      .proto[data-motion="full"] .p2-hero {
+        height: 230vh;
+      }
+
+      .proto[data-motion="full"] .p2-hint {
+        display: block;
+        animation: p2-clear linear both;
+        animation-timeline: var(--p2-tl);
+        animation-range: var(--p2-rn) 0% var(--p2-rn) 12%;
+      }
+    }
+
+    .proto[data-motion="full"] .p2-haze,
+    .proto[data-motion="full"] .p2-fog__layer {
+      animation-name: p2-clear;
+      animation-timing-function: linear;
+      animation-fill-mode: both;
+      animation-timeline: var(--p2-tl);
+    }
+
+    .proto[data-motion="full"] .p2-haze--thick {
+      animation-range: var(--p2-rn) calc(var(--p2-s) + var(--p2-len) * 0.05) var(--p2-rn)
+        calc(var(--p2-s) + var(--p2-len) * 0.55);
+    }
+
+    .proto[data-motion="full"] .p2-haze--thin {
+      animation-range: var(--p2-rn) calc(var(--p2-s) + var(--p2-len) * 0.35) var(--p2-rn)
+        calc(var(--p2-s) + var(--p2-len) * 1);
+    }
+
+    /* Nearer fog parts first and furthest; the far bank lingers. */
+    .proto[data-motion="full"] .p2-fog__layer {
+      animation-name: p2-part-left;
+    }
+
+    .proto[data-motion="full"] .p2-fog__layer--4 {
+      --p2-part: 45%;
+      animation-range: var(--p2-rn) var(--p2-s) var(--p2-rn) calc(var(--p2-s) + var(--p2-len) * 0.5);
+    }
+
+    .proto[data-motion="full"] .p2-fog__layer--3 {
+      --p2-part: -38%;
+      animation-range: var(--p2-rn) calc(var(--p2-s) + var(--p2-len) * 0.1) var(--p2-rn)
+        calc(var(--p2-s) + var(--p2-len) * 0.65);
+    }
+
+    .proto[data-motion="full"] .p2-fog__layer--2 {
+      --p2-part: 24%;
+      animation-range: var(--p2-rn) calc(var(--p2-s) + var(--p2-len) * 0.25) var(--p2-rn)
+        calc(var(--p2-s) + var(--p2-len) * 0.85);
+    }
+
+    .proto[data-motion="full"] .p2-fog__layer--1 {
+      --p2-part: -14%;
+      animation-range: var(--p2-rn) calc(var(--p2-s) + var(--p2-len) * 0.4) var(--p2-rn)
+        calc(var(--p2-s) + var(--p2-len) * 1);
+    }
+
+    /* The slow drift inside each bank, on its own element so it never fights the scroll. */
+    .proto[data-motion="full"] .p2-fog__layer::before {
+      animation: p2-drift 14s ease-in-out infinite alternate;
+    }
+
+    .proto[data-motion="full"] .p2-fog__layer--2::before {
+      animation-duration: 19s;
+      animation-direction: alternate-reverse;
+    }
+
+    .proto[data-motion="full"] .p2-fog__layer--3::before {
+      animation-duration: 23s;
+    }
+
+    .proto[data-motion="full"] .p2-fog__layer--4::before {
+      animation-duration: 29s;
+      animation-direction: alternate-reverse;
+    }
+
+    /* The headline sharpens alongside: from secondary to primary text, both AA on the canvas. */
+    .proto[data-motion="full"] .p2-title {
+      transform-origin: 0 50%;
+      animation: p2-resolve linear both;
+      animation-timeline: var(--p2-tl);
+      animation-range: var(--p2-rn) var(--p2-s) var(--p2-rn) calc(var(--p2-s) + var(--p2-len) * 0.8);
+    }
+
+    .proto[data-motion="full"] .p2-dash > figure {
+      animation: p2-dash-in linear both;
+      animation-timeline: var(--p2-tl);
+      animation-range: var(--p2-rn) var(--p2-s) var(--p2-rn) calc(var(--p2-s) + var(--p2-len));
+    }
+
+    /* Depth layers: the far shape barely moves, the near one moves most. */
+    .proto[data-motion="full"] .p2-depth__shape {
+      animation: p2-parallax linear both;
+      animation-timeline: view();
+      animation-range: cover 0% cover 100%;
+    }
+
+    .proto[data-motion="full"] .p2-depth__shape--far {
+      --p2-from: 40px;
+      --p2-to: -40px;
+    }
+
+    .proto[data-motion="full"] .p2-depth__shape--mid {
+      --p2-from: 140px;
+      --p2-to: -140px;
+    }
+
+    .proto[data-motion="full"] .p2-depth__shape--near {
+      --p2-from: 260px;
+      --p2-to: -260px;
+    }
+
+    /* The three steps travel at slightly different speeds, then line up. */
+    .proto[data-motion="full"] .p2-band .proto-steps > li {
+      --p2-from: calc(40px + var(--proto-i) * 50px);
+      --p2-to: 0px;
+      animation: p2-parallax linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 45%;
+    }
+
+    .proto[data-motion="full"] .p2-band .proto-depth li {
+      --p2-from: calc(24px + var(--proto-i) * 18px);
+      --p2-to: 0px;
+      animation: p2-parallax linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 35%;
+    }
+
+    /* The solid mint security band rises like a card being set down. */
+    .proto[data-motion="full"] .p2-band--security > * {
+      animation: p2-band-rise linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 35%;
+    }
+  }
+}

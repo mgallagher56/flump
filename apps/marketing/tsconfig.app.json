@@ -15,6 +15,7 @@
     "strict": true,
     "paths": {
       "@/*": ["./src/*"],
+      "@flump/marketing-prototypes": ["./prototypes/stub.ts"],
       "@repo/ui/styled-system/*": ["./styled-system/*"],
       "@repo/ui/*": ["../../packages/ui/*"]
     }

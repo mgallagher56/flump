@@ -17,13 +17,19 @@ const themeInitScript = (): Plugin => ({
   transformIndexHtml: (html) => html.replace("/* theme-init */", THEME_INIT_SCRIPT),
 });
 
-export default defineConfig({
+// Throwaway motion prototypes (26 Nov 2026): the dev server resolves the real routes, every build
+// resolves the stub, so a production bundle has no trace of them, GSAP or three.js.
+const prototypesEntry = (command: string) =>
+  path.resolve(__dirname, command === "serve" ? "./prototypes/index.tsx" : "./prototypes/stub.ts");
+
+export default defineConfig(({ command }) => ({
   plugins: [react(), themeInitScript()],
   define: {
     "import.meta.env.VITE_SHOW_PAID_PLAN": JSON.stringify(showPaidPlan ? "true" : "false"),
   },
   resolve: {
     alias: {
+      "@flump/marketing-prototypes": prototypesEntry(command),
       "@": path.resolve(__dirname, "./src"),
       "@repo/ui/styled-system": path.resolve(__dirname, "./styled-system"),
       "@repo/ui/calculators": path.resolve(__dirname, "../../packages/ui/src/calculators/index.ts"),
@@ -43,4 +49,4 @@ export default defineConfig({
       include: [/node_modules/],
     },
   },
-});
+}));

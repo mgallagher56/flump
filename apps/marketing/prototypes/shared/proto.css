@@ -1,0 +1,143 @@
+/* Dev-only prototype chrome. Semantic token variables only. */
+
+.proto {
+  /* Every prototype animation reads these, so the toggle and the system setting stop them all. */
+  --proto-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --proto-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--colors-surface-canvas);
+}
+
+.proto :focus-visible {
+  outline: 2px solid var(--colors-border-focus-ring);
+  outline-offset: 2px;
+}
+
+.proto-panel {
+  position: fixed;
+  right: 12px;
+  bottom: 12px;
+  z-index: 60;
+  width: min(300px, calc(100vw - 24px));
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--colors-border);
+  background: color-mix(in oklab, var(--colors-surface-card) 92%, transparent);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadows-floating);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--colors-text-primary);
+}
+
+.proto-panel[data-open="false"] {
+  width: auto;
+}
+
+.proto-panel__row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.proto-panel nav a {
+  color: var(--colors-primary);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.proto-panel nav a[aria-current="page"] {
+  color: var(--colors-text-primary);
+  text-decoration-thickness: 2px;
+}
+
+.proto-panel__chip,
+.proto-panel__toggle {
+  font: inherit;
+  color: var(--colors-text-primary);
+  background: var(--colors-surface-subtle);
+  border: 1px solid var(--colors-border);
+  border-radius: 999px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+
+.proto-panel__toggle[aria-pressed="true"] {
+  background: var(--colors-primary);
+  border-color: var(--colors-primary);
+  color: var(--colors-primary-foreground);
+}
+
+.proto-panel__toggle:disabled {
+  cursor: not-allowed;
+}
+
+.proto-panel__note {
+  margin: 0;
+  color: var(--colors-text-secondary);
+}
+
+.proto-panel__stats {
+  margin: 0;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 10px;
+}
+
+.proto-panel__stats dt {
+  color: var(--colors-text-secondary);
+}
+
+.proto-panel__stats dd {
+  margin: 0;
+}
+
+/* The index page. */
+.proto-index {
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: 64px 16px;
+  display: grid;
+  gap: 24px;
+}
+
+.proto-index h1 {
+  margin: 0;
+  font-size: clamp(2rem, 6vw, 3rem);
+  line-height: 1.1;
+}
+
+.proto-index ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 12px;
+}
+
+.proto-index li a {
+  display: grid;
+  gap: 4px;
+  padding: 20px;
+  border-radius: 16px;
+  border: 1px solid var(--colors-border);
+  background: var(--colors-surface-card);
+  color: var(--colors-text-primary);
+  text-decoration: none;
+}
+
+.proto-index li a strong {
+  font-size: 1.25rem;
+  color: var(--colors-primary);
+}
+
+.proto-index li a span {
+  color: var(--colors-text-secondary);
+}

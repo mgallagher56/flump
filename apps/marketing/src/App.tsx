@@ -1,3 +1,4 @@
+import { prototypeRoutes } from "@flump/marketing-prototypes";
 import { Route, Routes } from "react-router-dom";
 import { ThemeProvider } from "./context/ThemeContext";
 import { AccessibilityPage } from "./pages/AccessibilityPage";
@@ -39,6 +40,8 @@ export default function App() {
         <Route path="/terms" element={<TermsPage />} />
         <Route path="/cookies" element={<CookiesPage />} />
         <Route path="/accessibility" element={<AccessibilityPage />} />
+        {/* Development only: null in every build (vite.config.ts). */}
+        {prototypeRoutes}
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </ThemeProvider>

@@ -1,0 +1,27 @@
+{
+  "measuredAt": "2026-11-26",
+  "note": "Minified and gzipped (CSS unminified), excluding what production already ships and the dev panel.",
+  "prototypes": {
+    "p1": {
+      "initialGzip": 712,
+      "lazyGzip": 0,
+      "initialRaw": 1576,
+      "lazyRaw": 0,
+      "cssGzip": 2836
+    },
+    "p2": {
+      "initialGzip": 2461,
+      "lazyGzip": 46981,
+      "initialRaw": 6153,
+      "lazyRaw": 118092,
+      "cssGzip": 4016
+    },
+    "p3": {
+      "initialGzip": 3227,
+      "lazyGzip": 189094,
+      "initialRaw": 7710,
+      "lazyRaw": 685959,
+      "cssGzip": 4903
+    }
+  }
+}

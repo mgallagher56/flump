@@ -1,0 +1,190 @@
+/*
+ * Prototype 3: the 3D hero. Semantic token variables only. The canvas and the still image sit in
+ * a sticky stage behind the copy; the copy and the sample dashboard scroll over it normally.
+ */
+
+.p3-hero {
+  --p3-header: 4rem;
+  position: relative;
+  display: grid;
+  grid-template-areas: "stack";
+  min-height: 190vh;
+  background: var(--colors-surface-canvas);
+  overflow: clip;
+}
+
+.p3-stage {
+  grid-area: stack;
+  align-self: start;
+  position: sticky;
+  top: var(--p3-header);
+  height: calc(100svh - var(--p3-header));
+  z-index: 0;
+  pointer-events: none;
+}
+
+.p3-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 900ms ease;
+}
+
+.p3-hero[data-scene="live"] .p3-canvas {
+  opacity: 1;
+}
+
+.p3-copy {
+  grid-area: stack;
+  align-self: start;
+  position: relative;
+  z-index: 2;
+  min-height: calc(100svh - var(--p3-header));
+  display: grid;
+  align-content: end;
+  justify-items: center;
+  gap: 18px;
+  padding: 24px 16px 56px;
+  text-align: center;
+}
+
+.p3-copy :is(h1, p) {
+  margin: 0;
+  max-width: 36rem;
+}
+
+.p3-dash {
+  grid-area: stack;
+  align-self: end;
+  justify-self: center;
+  position: relative;
+  z-index: 2;
+  width: min(36rem, calc(100% - 32px));
+  padding-bottom: 12vh;
+}
+
+.p3-scene-note {
+  grid-area: stack;
+  align-self: end;
+  justify-self: start;
+  position: relative;
+  z-index: 2;
+  margin: 0 0 12px 16px;
+  font-size: 0.75rem;
+  color: var(--colors-text-secondary);
+}
+
+/* The still image: the same orb in the same place, drawn with gradients from the tokens. */
+.p3-still {
+  position: absolute;
+  inset: 0;
+  transition: opacity 900ms ease;
+  --p3-orb: min(46vw, 15rem);
+  --p3-orb-x: 50%;
+  --p3-orb-y: 30%;
+}
+
+.p3-hero[data-scene="live"] .p3-still {
+  opacity: 0;
+}
+
+.p3-still__orb,
+.p3-still__shadow,
+.p3-still__fog {
+  position: absolute;
+  left: var(--p3-orb-x);
+  top: var(--p3-orb-y);
+  translate: -50% -50%;
+}
+
+.p3-still__orb {
+  width: var(--p3-orb);
+  height: calc(var(--p3-orb) * 0.92);
+  border-radius: 50% 50% 48% 48% / 54% 54% 46% 46%;
+  background:
+    radial-gradient(
+      28% 18% at 36% 24%,
+      color-mix(in oklab, var(--colors-primary-foreground) 75%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      circle at 40% 32%,
+      var(--colors-primary-mark-lit),
+      var(--colors-primary-mark) 70%
+    );
+  box-shadow:
+    inset -10px -16px 30px
+    color-mix(in oklab, var(--colors-primary-mark) 70%, var(--colors-text-primary)),
+    inset 6px 8px 18px color-mix(in oklab, var(--colors-primary-mark-lit) 50%, transparent);
+}
+
+.p3-still__shadow {
+  top: calc(var(--p3-orb-y) + var(--p3-orb) * 0.52);
+  width: calc(var(--p3-orb) * 1.1);
+  height: calc(var(--p3-orb) * 0.14);
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in oklab, var(--colors-text-primary) 28%, transparent),
+    transparent
+  );
+}
+
+.p3-still__fog {
+  width: calc(var(--p3-orb) * 3.4);
+  height: calc(var(--p3-orb) * 1.6);
+  background:
+    radial-gradient(
+      30% 26% at 18% 60%,
+      color-mix(in oklab, var(--colors-surface-canvas) 85%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      26% 24% at 84% 56%,
+      color-mix(in oklab, var(--colors-surface-canvas) 80%, transparent),
+      transparent 70%
+    );
+}
+
+.p3-still__fog--back {
+  top: calc(var(--p3-orb-y) - var(--p3-orb) * 0.1);
+  opacity: 0.7;
+}
+
+.p3-still__fog--front {
+  top: calc(var(--p3-orb-y) + var(--p3-orb) * 0.35);
+}
+
+/* Phones and tablets: the orb sits above the copy, so the stage scrolls with the page rather than
+   staying put; otherwise the copy would slide over the orb. The fog still parts with scroll. */
+@media (max-width: 63.99rem) {
+  .p3-stage {
+    position: relative;
+    top: 0;
+  }
+}
+
+@media (min-width: 64rem) {
+  .p3-copy {
+    justify-items: start;
+    align-content: center;
+    text-align: left;
+    padding: 24px max(24px, calc((100vw - 72rem) / 2)) 64px;
+  }
+
+  .p3-copy > div {
+    justify-content: flex-start;
+  }
+
+  .p3-copy :is(h1, p) {
+    max-width: 30rem;
+  }
+
+  .p3-still {
+    --p3-orb: min(28vw, 24rem);
+    --p3-orb-x: 70%;
+    --p3-orb-y: 50%;
+  }
+}
