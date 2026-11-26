@@ -121,17 +121,18 @@ export const detailText = cva({
   base: { textStyle: "body.sm", color: "text.primary", margin: 0 },
 });
 
+/** A standalone link (style guide B5): teal, 600, no underline until hovered. */
 export const moreLink = cva({
   base: {
     textStyle: "body.sm",
     fontWeight: "semibold",
     color: "primary",
-    textDecoration: "underline",
+    textDecoration: "none",
     textUnderlineOffset: "3px",
     display: "inline-flex",
     alignItems: "center",
     minHeight: "11",
-    _hover: { color: "primary.emphasis" },
+    _hover: { color: "primary.emphasis", textDecoration: "underline" },
     _focusVisible: { outline: "2px solid", outlineColor: "border.focusRing", outlineOffset: "2px" },
   },
 });

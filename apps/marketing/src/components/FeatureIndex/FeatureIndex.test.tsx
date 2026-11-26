@@ -54,6 +54,13 @@ describe("FeatureIndex", () => {
     expect(detailsOf("net-worth").open).toBe(false);
   });
 
+  it("renders and opens nothing when the hash is malformed", () => {
+    window.history.replaceState(null, "", "/features#%E0");
+    render(<FeatureIndex />);
+    expect(screen.getByRole("heading", { level: 2, name: "Budget" })).toBeDefined();
+    expect(ALL_FEATURE_LINES.some((line) => detailsOf(line.id).open)).toBe(false);
+  });
+
   it("opens a line when the hash changes later, and ignores a hash that is not a line", () => {
     render(<FeatureIndex />);
     act(() => {

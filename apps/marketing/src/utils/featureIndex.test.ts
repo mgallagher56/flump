@@ -44,6 +44,16 @@ const linePages = ALL_FEATURE_LINES.flatMap((line) => ("page" in line.app ? [lin
 const sentences = (text: string) => text.split(/(?<=\.)\s+/);
 
 describe("featureIndex: one source of truth with the app", () => {
+  it("reads every page of the functionality map, refusing values it cannot parse", () => {
+    expect(mapPages.length).toBeGreaterThan(10);
+    for (const page of mapPages) {
+      expect(page.id, JSON.stringify(page)).toMatch(/^[a-z]+(-[a-z]+)*$/);
+      expect(page.route, page.id).toMatch(/^\//);
+      expect(["public", "required", "anonymous-only", "admin"], page.id).toContain(page.auth);
+      expect(page.sections.length, page.id).toBeGreaterThan(0);
+    }
+  });
+
   it("reads the functionality map (guards the parser)", () => {
     expect(pageById.get("budget")?.route).toBe("/app/budget");
     expect(pageById.get("budget")?.sections).toContain("breathing-room");
