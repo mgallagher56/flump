@@ -31,9 +31,8 @@ export interface FeatureIndexProps {
   groupHrefs?: Readonly<Partial<Record<FeatureGroup["key"], string>>>;
 }
 
-/** Opens the line the URL's hash names and scrolls to it (`/features#breathing-room`). */
-const openLineFromHash = () => {
-  const id = decodeURIComponent(window.location.hash.slice(1));
+/** Opens the line with this id, scrolls to it and focuses its summary. Ignores any other id. */
+export const openFeatureLine = (id: string) => {
   if (!id) return;
   const target = document.getElementById(id);
   if (!(target instanceof HTMLDetailsElement)) return;
@@ -41,6 +40,16 @@ const openLineFromHash = () => {
   const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
   target.scrollIntoView?.({ block: "start", behavior: reduceMotion ? "auto" : "smooth" });
   target.querySelector("summary")?.focus({ preventScroll: true });
+};
+
+/** Opens the line the URL's hash names (`/features#breathing-room`). */
+const openLineFromHash = () => {
+  const raw = window.location.hash.slice(1);
+  try {
+    openFeatureLine(decodeURIComponent(raw));
+  } catch {
+    // A malformed hash (`#%E0`) names no line; leave the page as it is.
+  }
 };
 
 const Line: FC<{ line: FeatureLine }> = ({ line }) => (
@@ -77,7 +86,8 @@ const Line: FC<{ line: FeatureLine }> = ({ line }) => (
 /**
  * Every feature as one line, grouped by area (owner, 26 November 2026, option A). Each line is a
  * native `details`: readable and openable without JavaScript, announced as an expandable button,
- * and opened by its hash. Nothing animates, so there is no motion to reduce.
+ * and opened by its hash. Only the chevron turns, and only when motion is welcome; scrolling to a
+ * line jumps instead of gliding when reduced motion is asked for.
  */
 export const FeatureIndex: FC<FeatureIndexProps> = ({
   groups = FEATURE_GROUPS,

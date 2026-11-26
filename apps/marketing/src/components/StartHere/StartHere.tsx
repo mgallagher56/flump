@@ -1,5 +1,6 @@
 import type { FC } from "react";
 import { ALL_FEATURE_LINES, START_HERE } from "../../utils/featureIndex";
+import { openFeatureLine } from "../FeatureIndex";
 import { goal, goalItem, goalLink, goalLinks, goalList, heading, strip } from "./StartHere.styles";
 
 const nameOf = (id: string): string => {
@@ -24,7 +25,14 @@ export const StartHere: FC = () => (
           <ul aria-label={entry.goal} className={goalLinks()}>
             {entry.lines.map((id) => (
               <li key={id}>
-                <a className={goalLink()} href={`#${id}`}>
+                <a
+                  className={goalLink()}
+                  href={`#${id}`}
+                  onClick={() => {
+                    // The same hash again fires no hashchange, so open the line here.
+                    if (window.location.hash === `#${id}`) openFeatureLine(id);
+                  }}
+                >
                   {nameOf(id)}
                 </a>
               </li>

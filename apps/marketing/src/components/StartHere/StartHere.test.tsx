@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { START_HERE } from "../../utils/featureIndex";
 import { StartHere } from "./StartHere";
@@ -16,6 +16,23 @@ describe("StartHere", () => {
         entry.lines.map((id) => `#${id}`),
       );
     }
+  });
+
+  it("reopens a line its link names even when the hash already points there", () => {
+    window.history.replaceState(null, "", "/features#net-worth");
+    render(
+      <>
+        <StartHere />
+        <details id="net-worth">
+          <summary>Net worth</summary>
+        </details>
+      </>,
+    );
+    const details = document.getElementById("net-worth") as HTMLDetailsElement;
+    expect(details.open).toBe(false);
+    fireEvent.click(screen.getByRole("link", { name: "Net worth" }));
+    expect(details.open).toBe(true);
+    window.history.replaceState(null, "", "/");
   });
 
   it("names each link after the line it opens", () => {
