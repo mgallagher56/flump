@@ -128,7 +128,7 @@ Required status checks. These names are copied from `.github/required-checks.jso
 | `🎭 E2E smoke` | CI Pipeline | 1 to 1.5 min |
 | `🐳 Docker images` | CI Pipeline | 2 to 3 min when an image input changed; 20 s otherwise |
 | `📱 Mobile checks` | CI Pipeline | about 1 min; a few seconds when nothing the app uses changed |
-| `🤖 Mobile e2e (Android)` | CI Pipeline | on a pull request: about 12 min when the app changed and the APK is cached (about 21 min when it is built), about 4.5 min when only shared packages changed (smoke set), a few seconds otherwise; light only on pull requests. On `main` and nightly at 02:23 UTC: every flow in light and dark with a fresh build, about 35 min, inside the 45 min timeout (in `required-checks.json` since 25 November 2026, after seven green runs in a row on `main`; narrowed on 26 November 2026, see `apps/mobile/e2e/README.md`) |
+| `🤖 Mobile e2e (Android)` | CI Pipeline | on a pull request: about 9.5 min when the app changed and the APK is cached (about 21 min when it is built), about 4.5 min when only shared packages changed (smoke set), a few seconds otherwise; light only on pull requests. On `main` and nightly at 02:23 UTC: every flow in light and dark with a fresh build, about 35 min, inside the 45 min timeout (in `required-checks.json` since 25 November 2026, after seven green runs in a row on `main`; narrowed on 26 November 2026, see `apps/mobile/e2e/README.md`) |
 | `🛡️ Dependency audit` | CI Pipeline | 20 s |
 | `🔑 Secret scan (gitleaks)` | Security Scan | 10 s |
 | `🔎 SAST (Semgrep CE)` | Security Scan | 1.5 to 2 min |
