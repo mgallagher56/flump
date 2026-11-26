@@ -148,6 +148,10 @@ On iOS a Keychain item survives an uninstall, so a reinstalled app would find th
 
 0 agent-days: the sign-in code follows the existing data door rule (running total 0.5).
 
+### Follow-up: POST from the app needs a UUID source
+
+`@flump/api-client` makes each POST's `Idempotency-Key` with `crypto.randomUUID()`, which Hermes does not have, so a POST throws before it is sent. CI's Android run of 26 November caught it on the sign-out call, which was failing silently; that call now sends no key (the route takes none). Jest runs on Node, which has `randomUUID`, so unit tests cannot see it; `serverSignOut.test.ts` now runs without it. Before the first mobile POST that needs a key (a create, or the wellbeing answers), the client should take a UUID function from the app (`expo-crypto`'s `randomUUID`).
+
 ## Seam cost (S2b)
 
 0 agent-days: the server sign-out call and the version check sit in `src/data`, behind the existing data door rule (running total 0.5).

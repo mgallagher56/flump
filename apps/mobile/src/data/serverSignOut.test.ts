@@ -19,6 +19,8 @@ const callOf = (fn: jest.Mock) => {
   return { url, init, headers: new Headers(init.headers) };
 };
 
+afterEach(() => jest.restoreAllMocks());
+
 describe("createServerSignOut", () => {
   it("posts to /v1/session/sign-out with exactly the given token, and a 204 is ended", async () => {
     const fetchImpl = fetchAnswering(204);
@@ -28,6 +30,14 @@ describe("createServerSignOut", () => {
     expect(url).toBe(`${API}/v1/session/sign-out`);
     expect(init.method).toBe("POST");
     expect(headers.get("authorization")).toBe(`Bearer ${token}`);
+  });
+
+  it("works where crypto.randomUUID does not exist, as on Hermes, and sends no Idempotency-Key", async () => {
+    jest.spyOn(globalThis, "crypto", "get").mockReturnValue({} as Crypto);
+    const fetchImpl = fetchAnswering(204);
+    expect(await createServerSignOut(API, fetchImpl)(token)).toBe("ended");
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+    expect(callOf(fetchImpl).headers.get("idempotency-key")).toBeNull();
   });
 
   it("a 401 is unauthorised, with no refresh and no second call", async () => {
