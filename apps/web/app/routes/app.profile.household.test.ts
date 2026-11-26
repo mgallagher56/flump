@@ -83,6 +83,39 @@ describe("settings loader: the household probe (fail closed)", () => {
   });
 });
 
+describe("settings loader: the starting tab is chosen on the server", () => {
+  beforeEach(() => {
+    backendFetch.mockReset();
+  });
+
+  const startingTab = async (search: string) => {
+    const result = (await loader({
+      request: new Request(`https://app.example/app/profile${search}`),
+      params: {},
+      context: {},
+    } as never)) as unknown as { data: { initialTab: string } };
+    return result.data.initialTab;
+  };
+
+  it.each([
+    ["?tab=household", "household"],
+    ["?tab=security", "security"],
+    ["?tab=data", "data"],
+    ["?tab=profile_security", "profile"],
+    ["?tab=ai_connections", "security"],
+    ["?tab=nope", "profile"],
+    ["", "profile"],
+  ])("with households on, %s opens %s", async (search, expected) => {
+    answer({ "/household": NOT_IN_ONE });
+    expect(await startingTab(search)).toBe(expected);
+  });
+
+  it("with households off, ?tab=household opens Profile like an unknown tab", async () => {
+    answer({ "/household": new BackendError("not-found", "/household", 404) });
+    expect(await startingTab("?tab=household")).toBe("profile");
+  });
+});
+
 const runAction = async (fields: Record<string, string>) => {
   const body = new URLSearchParams(fields);
   const result = (await action({

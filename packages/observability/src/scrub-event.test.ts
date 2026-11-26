@@ -417,3 +417,33 @@ describe("invite tokens (web /invite/<token>)", () => {
     expect(scrubEvent({ transaction: "GET /v1/accounts" })?.transaction).toBe("GET /v1/accounts");
   });
 });
+
+describe("household invitation tokens (web /household/join/<token>)", () => {
+  // Built at runtime so no token-shaped literal sits in the source. Short and letters only, so
+  // only the path rule (not the generic token shapes) can catch it.
+  const token = ["Hh", "q".repeat(6)].join("");
+
+  it("never keeps the token in a request URL, transaction name or navigation breadcrumb", () => {
+    const event = scrubEvent({
+      transaction: `GET /household/join/${token}`,
+      request: { url: `https://app.example.com/household/join/${token}?ref=x` },
+    });
+    const crumb = scrubBreadcrumb({
+      category: "navigation",
+      data: { from: `/household/join/${token}`, to: "/household/join" },
+    });
+    expect(JSON.stringify({ event, crumb })).not.toContain(token);
+    expect(event?.transaction).toBe("GET /household/join/[redacted]");
+    expect(event?.request?.url).toBe("https://app.example.com/household/join/[redacted]");
+    expect(crumb?.data).toEqual({ from: "/household/join/[redacted]", to: "/household/join" });
+  });
+
+  it("leaves the bare /household/join page and other household paths alone", () => {
+    expect(scrubEvent({ transaction: "GET /household/join" })?.transaction).toBe(
+      "GET /household/join",
+    );
+    expect(scrubEvent({ transaction: `GET /household/${token}` })?.transaction).toBe(
+      `GET /household/${token}`,
+    );
+  });
+});

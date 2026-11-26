@@ -1,6 +1,15 @@
-import { Button, Card, InlineAlert, PageSection, TextInput } from "@repo/ui";
+import {
+  Button,
+  Card,
+  controlProps,
+  FormField,
+  InlineAlert,
+  LiveRegion,
+  PageSection,
+  TextInput,
+} from "@repo/ui";
 import { Link2 } from "lucide-react";
-import { type FC, useId, useState } from "react";
+import { type FC, useState } from "react";
 import { formatInviteDate } from "~/features/invites/inviteFormat";
 import { linkActions, linkInput, linkNote, linkRow, linkStack } from "./InvitationLinkPanel.styles";
 
@@ -30,13 +39,19 @@ export const InvitationLinkPanel: FC<InvitationLinkPanelProps> = ({
   onCreate,
   onCancel,
 }) => {
-  const inputId = useId();
-  const [copiedLink, setCopiedLink] = useState<string | null>(null);
+  const [copied, setCopied] = useState<{ link: string; ok: boolean } | null>(null);
   const copy = async () => {
-    if (!link || !navigator.clipboard) return;
-    await navigator.clipboard.writeText(link);
-    setCopiedLink(link);
+    if (!link) return;
+    try {
+      if (!navigator.clipboard) throw new Error("no clipboard");
+      await navigator.clipboard.writeText(link);
+      setCopied({ link, ok: true });
+    } catch {
+      setCopied({ link, ok: false });
+    }
   };
+  // Only about the link on screen: a new link starts with nothing said.
+  const copyResult = copied && copied.link === link ? copied : null;
   const busy = pending !== null;
 
   const makeButton = (label: string) => (
@@ -61,19 +76,34 @@ export const InvitationLinkPanel: FC<InvitationLinkPanelProps> = ({
       <Card className={linkStack()}>
         {link ? (
           <>
-            <div className={linkRow()}>
-              <TextInput
-                aria-label="Invitation link"
-                className={linkInput()}
-                id={inputId}
-                readOnly
-                value={link}
-                onFocus={(event) => event.currentTarget.select()}
-              />
-              <Button type="button" variant="primary" onClick={copy}>
-                {copiedLink === link ? "Copied" : "Copy link"}
-              </Button>
-            </div>
+            <FormField label="Invitation link">
+              {(field) => (
+                <div className={linkRow()}>
+                  <TextInput
+                    {...controlProps(field)}
+                    className={linkInput()}
+                    readOnly
+                    value={link}
+                    onFocus={(event) => event.currentTarget.select()}
+                  />
+                  <Button type="button" variant="primary" onClick={copy}>
+                    {copyResult?.ok ? "Copied" : "Copy link"}
+                  </Button>
+                </div>
+              )}
+            </FormField>
+            {copyResult?.ok === false ? (
+              <p className={linkNote()}>
+                We could not copy the link. Select it above and copy it yourself.
+              </p>
+            ) : null}
+            <LiveRegion
+              announceInitial
+              debounceMs={0}
+              message={copyResult?.ok ? "Link copied" : ""}
+              politeness="polite"
+              visuallyHidden
+            />
             <p className={linkNote()}>
               {expiresAt
                 ? `It works once and stops working on ${formatInviteDate(expiresAt)}.`

@@ -81,9 +81,10 @@ function redactSegment(segment: string): string {
 
 /**
  * Secret path segments: the segment after `invite` is a single-use invite token (web
- * `/invite/<token>`), so it is replaced whatever it looks like.
+ * `/invite/<token>`), and the segment after `household/join` a household invitation token (web
+ * `/household/join/<token>`, E34 C3), so each is replaced whatever it looks like.
  */
-const SECRET_SEGMENT_AFTER = /(^|[\\/])(invite)([\\/])[^\\/]+/gi;
+const SECRET_SEGMENT_AFTER = /(^|[\\/])(invite|household[\\/]join)([\\/])[^\\/]+/gi;
 
 /** Redacts each path segment on its own, so long but harmless paths keep their shape. */
 function redactPath(path: string): string {

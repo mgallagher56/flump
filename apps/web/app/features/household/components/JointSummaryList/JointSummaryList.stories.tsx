@@ -34,3 +34,5 @@ export const NothingShown: Story = { args: { items: [] } };
 export const NothingShownDark: Story = { args: { items: [] }, globals: { theme: "dark" } };
 
 export const CouldNotLoad: Story = { args: { items: null } };
+
+export const CouldNotLoadDark: Story = { ...CouldNotLoad, globals: { theme: "dark" } };

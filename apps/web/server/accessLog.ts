@@ -16,6 +16,8 @@ const HEX_SEGMENT = /^[0-9a-f]{12,}$/i;
 // By design every segment of 20+ characters collapses, including long kebab-case slugs: a
 // passphrase-style segment (`correct-horse-battery-staple`) is indistinguishable from one, and
 // short static route names (/app/budget, /login) stay readable.
+/** Paths whose next segment is a secret link token, collapsed whatever it looks like. */
+const SECRET_AFTER = new Set(["/invite", "/household/join"]);
 const SCHEME_AUTHORITY = /^[a-z][a-z0-9+.-]*:\/\/[^/?#]*/i;
 
 /**
@@ -28,9 +30,11 @@ export function normalisePath(url: string): string {
   // Absolute-form request targets (`GET http://user:pass@host/x`) carry credentials in the
   // authority; drop scheme and authority first.
   const raw = url.replace(SCHEME_AUTHORITY, "").split(/[?#]/, 1)[0] || "/";
-  const segments = raw.split("/").map((segment) => {
+  const parts = raw.split("/");
+  const segments = parts.map((segment, index) => {
     if (segment === "") return segment;
     if (
+      SECRET_AFTER.has(parts.slice(0, index).join("/")) ||
       UUID.test(segment) ||
       DIGITS_SEGMENT.test(segment) ||
       HEX_SEGMENT.test(segment) ||

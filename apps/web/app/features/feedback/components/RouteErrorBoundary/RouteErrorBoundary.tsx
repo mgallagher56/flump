@@ -15,6 +15,8 @@ const ID_ROUTES: readonly RegExp[] = [
   /^(\/app\/tax\/receipts\/)[^/]+/,
   // An invite token: a secret, never in a feedback subject whatever it looks like.
   /^(\/invite\/)[^/]+/,
+  // A household invitation token (E34 C3): a secret too.
+  /^(\/household\/join\/)[^/]+/,
 ];
 
 /**

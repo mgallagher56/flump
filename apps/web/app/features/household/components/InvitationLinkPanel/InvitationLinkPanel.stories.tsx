@@ -52,3 +52,5 @@ export const WithError: Story = {
       "You are already in a household. To join a different one, leave your current household first.",
   },
 };
+
+export const WithErrorDark: Story = { ...WithError, globals: { theme: "dark" } };
