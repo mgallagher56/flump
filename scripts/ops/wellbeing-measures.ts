@@ -7,6 +7,12 @@
 // `--today` replaces London today (for a repeatable reading); without it the database works out
 // today on the Europe/London clock.
 //
+// Limits to keep in mind when reading: `accounts_with_figure` counts accounts that exist today, so
+// a deleted account drops out of past months and earlier totals can shift between readings.
+// `debts_with_goal` takes "owed now" from the account's current balance, not its latest monthly
+// figure. Someone who switches the questions off and on again in one quarter can be asked twice
+// that quarter, because switching off deletes their answers.
+//
 // What it prints, as `label|value|...` lines, aggregate only:
 //   - per quarter: how many answered "More in control", "About the same" and "More worried", how
 //     many gave no feeling but wrote something, how many skipped both, and how many wrote text
