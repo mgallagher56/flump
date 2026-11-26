@@ -65,6 +65,7 @@ export function cannedProfile(userId: string, now: Date): UserProfileResponse {
     taxRegion: null,
     birthYear: null,
     checkInDay: null,
+    wellbeingQuestions: true,
     studentLoanPlans: null,
     housingStatus: null,
     monthlyHousingCost: null,
