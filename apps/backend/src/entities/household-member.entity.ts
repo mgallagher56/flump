@@ -1,7 +1,7 @@
 import { Check, Column, Entity, PrimaryColumn, Unique } from "typeorm";
 
 /**
- * One person in a household (E34 C3, AddHouseholds1795660000000). Two equal people: no role and no
+ * One person in a household (E34 C3, AddHouseholds1795730000000). Two equal people: no role and no
  * "created by" (G6). One household per person (`UQ_household_members_user_id`) and two people at
  * most (`UQ_household_members_household_slot` with slot 1 or 2), both enforced by the database.
  * FK_household_members_household: households(id) ON DELETE CASCADE, so closing a household removes

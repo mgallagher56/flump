@@ -30,11 +30,9 @@ export function normalisePath(url: string): string {
   // Absolute-form request targets (`GET http://user:pass@host/x`) carry credentials in the
   // authority; drop scheme and authority first.
   const raw = url.replace(SCHEME_AUTHORITY, "").split(/[?#]/, 1)[0] || "/";
-  const parts = raw.split("/");
-  const segments = parts.map((segment, index) => {
+  const segments = raw.split("/").map((segment) => {
     if (segment === "") return segment;
     if (
-      SECRET_AFTER.has(parts.slice(0, index).join("/")) ||
       UUID.test(segment) ||
       DIGITS_SEGMENT.test(segment) ||
       HEX_SEGMENT.test(segment) ||
@@ -44,6 +42,12 @@ export function normalisePath(url: string): string {
     }
     return segment;
   });
+  // The segment after a secret-link path is collapsed whatever it looks like.
+  for (let index = 1; index < segments.length; index++) {
+    if (segments[index] !== "" && SECRET_AFTER.has(segments.slice(0, index).join("/"))) {
+      segments[index] = ":id";
+    }
+  }
   const joined = segments.join("/");
   return joined === "" ? "/" : joined.slice(0, 200);
 }
