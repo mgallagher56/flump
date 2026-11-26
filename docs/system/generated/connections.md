@@ -100,6 +100,7 @@ flowchart LR
 flowchart LR
   s_onboarding["Onboarding"]
   s_dashboard["Dashboard"]
+  s_mobile_home["Mobile app Home"]
   s_accounts["Accounts"]
   s_account_detail["Account page"]
   s_history["History"]
@@ -226,6 +227,7 @@ flowchart LR
   g_net_worth -.-> s_history
   g_net_worth -.-> s_mcp_read
   g_net_worth -.-> s_context_pack
+  g_net_worth -.-> s_mobile_home
   g_net_worth_over_time{{"Net worth over time"}}
   f_balance_history ==> g_net_worth_over_time
   f_account_balance ==> g_net_worth_over_time
@@ -235,6 +237,13 @@ flowchart LR
   g_net_worth_over_time -.-> s_dashboard
   g_net_worth_over_time -.-> s_mcp_read
   g_net_worth_over_time -.-> s_context_pack
+  g_net_worth_change{{"Net worth change since last month"}}
+  f_balance_history ==> g_net_worth_change
+  f_account_balance ==> g_net_worth_change
+  f_ownership_share ==> g_net_worth_change
+  f_net_worth_choices ==> g_net_worth_change
+  g_net_worth_change -.-> s_dashboard
+  g_net_worth_change -.-> s_mobile_home
   g_total_debts{{"Total debts"}}
   f_account_balance ==> g_total_debts
   f_ownership_share ==> g_total_debts
