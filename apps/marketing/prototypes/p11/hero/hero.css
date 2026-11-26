@@ -1,0 +1,299 @@
+/* Prototype 11: the hero from prototype 4 (copied), More detail sheets and the closing pile. Token variables only. */
+
+/* ---------- Hero ---------- */
+
+.p11-hero {
+  position: relative;
+  overflow-x: clip;
+  background: var(--colors-surface-canvas);
+  padding: 2rem 16px 2.5rem;
+}
+
+.p11-hero__inner {
+  max-width: 76rem;
+  margin: 0 auto;
+  display: grid;
+  gap: 1.75rem;
+}
+
+.p11-hero__copy {
+  display: grid;
+  gap: 1.1rem;
+  justify-items: center;
+  text-align: center;
+}
+
+.p11-hero__title {
+  text-wrap: balance;
+}
+
+.p11-hero__lead {
+  max-width: 34ch;
+}
+
+.p11-hero__cue {
+  margin-top: 0.25rem;
+}
+
+.p11-stage {
+  --p11-lx: 0.3;
+  --p11-ly: 0.2;
+  position: relative;
+  width: 100%;
+  max-width: 40rem;
+  margin: 0 auto;
+}
+
+.p11-scene {
+  position: relative;
+  perspective: 1300px;
+  perspective-origin: 50% 40%;
+}
+
+@media (min-width: 1024px) {
+  .p11-hero {
+    padding: 0 24px;
+  }
+
+  .p11-hero__inner {
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+    align-items: center;
+    gap: 3rem;
+    min-height: calc(100svh - 4rem);
+    padding: 1.5rem 0;
+  }
+
+  .p11-hero__copy {
+    justify-items: start;
+    text-align: left;
+  }
+
+  .p11-hero__copy > div:has(> a[data-proto]) {
+    justify-content: flex-start;
+  }
+}
+
+/* ---------- The dashboard (always sharp, never blurred) ---------- */
+
+.p11-dash {
+  position: relative;
+  margin: 0;
+  display: grid;
+  gap: 0.9rem;
+  padding: 1rem;
+  border-radius: 1.25rem;
+  border: 1px solid var(--colors-border);
+  background: var(--colors-surface-card);
+  box-shadow: var(--shadows-floating);
+  overflow: hidden;
+  text-align: left;
+}
+
+.p11-dash__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.p11-dash__title {
+  margin: 0;
+  font-family: var(--fonts-heading);
+  font-size: 1.0625rem;
+  font-weight: 650;
+  color: var(--colors-text-primary);
+}
+
+.p11-dash__tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+}
+
+.p11-dash__hero {
+  grid-column: 1 / -1;
+}
+
+.p11-dash__tiles [data-kpi-card] {
+  min-width: 0;
+}
+
+.p11-value {
+  position: relative;
+  display: inline-block;
+}
+
+.p11-value__text {
+  display: inline-block;
+}
+
+.p11-value__slot {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 3.2em;
+  height: 0.16em;
+  margin-top: -0.08em;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--colors-text-secondary) 40%, transparent);
+  opacity: 0;
+}
+
+.p11-made {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.p11-made__title {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--colors-text-secondary);
+}
+
+.p11-made__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.15rem 1rem;
+}
+
+.p11-made__row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 2.6rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.3rem 0 0.3rem 0.55rem;
+  border-top: 1px solid var(--colors-border-subtle);
+}
+
+.p11-made__bar {
+  position: absolute;
+  left: 0;
+  top: 0.45rem;
+  bottom: 0.45rem;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--colors-primary);
+  transform-origin: 50% 0%;
+}
+
+.p11-made__text {
+  display: grid;
+  min-width: 0;
+}
+
+.p11-made__name {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--colors-text-primary);
+  line-height: 1.25;
+}
+
+.p11-made__detail {
+  font-size: 0.75rem;
+  color: var(--colors-text-secondary);
+  line-height: 1.3;
+}
+
+.p11-made__figure {
+  font-size: 0.875rem;
+  font-weight: 650;
+  color: var(--colors-text-primary);
+  white-space: nowrap;
+}
+
+.p11-dash__caption {
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--colors-text-secondary);
+}
+
+.p11-dash__glint {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(
+    104deg,
+    transparent 38%,
+    color-mix(in oklab, var(--colors-primary) 16%, transparent) 50%,
+    transparent 62%
+  );
+}
+
+@media (min-width: 640px) {
+  .p11-dash {
+    padding: 1.25rem 1.4rem;
+    gap: 1rem;
+  }
+
+  .p11-made__list {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Closing: the pieces gathered into one pile. */
+.p11-deck {
+  position: relative;
+  width: 20rem;
+  max-width: 100%;
+  height: 9rem;
+  margin: 0 auto;
+}
+
+.p11-deck__piece {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
+}
+
+.p11-deck__piece:nth-child(1) {
+  rotate: -9deg;
+  margin-left: -6.2rem;
+  margin-top: 0.4rem;
+}
+
+.p11-deck__piece:nth-child(2) {
+  rotate: -5deg;
+  margin-left: -3.6rem;
+  margin-top: -0.2rem;
+}
+
+.p11-deck__piece:nth-child(3) {
+  rotate: -1deg;
+  margin-left: -1.2rem;
+  margin-top: 0.6rem;
+}
+
+.p11-deck__piece:nth-child(4) {
+  rotate: 3deg;
+  margin-left: 1.4rem;
+  margin-top: 0.2rem;
+}
+
+.p11-deck__piece:nth-child(5) {
+  rotate: 6deg;
+  margin-left: 3.8rem;
+  margin-top: 0.9rem;
+}
+
+.p11-deck__piece:nth-child(6) {
+  rotate: 9deg;
+  margin-left: 6.2rem;
+  margin-top: 0.5rem;
+}
+
+@media (min-width: 768px) {
+  .p11-deck {
+    width: 30rem;
+    height: 12rem;
+  }
+
+  .p11-deck .p11-piece--mini {
+    font-size: 8px;
+  }
+}

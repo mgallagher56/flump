@@ -55,11 +55,12 @@ export const EASE = {
   inOut: "cubic-bezier(0.45, 0, 0.3, 1)",
 } as const;
 
-export type Backdrop = "a" | "b";
+export type Backdrop = "a" | "b" | "both";
 
 export const BACKDROP_LABEL: Record<Backdrop, string> = {
   a: "Sky and teal",
   b: "Violet and rose",
+  both: "Both sets together",
 };
 
 export interface PaceState {
@@ -125,20 +126,23 @@ const write = (key: string, value: string) => {
 };
 
 /** Pace and backdrop choices, remembered in this browser only (a dev convenience). */
-export function usePaceState(): PaceState {
+export function usePaceState(defaultBackdrop: Backdrop = "a"): PaceState {
+  // Pages that default to both sets remember their own choice, so earlier pages keep theirs.
+  const backdropKey =
+    defaultBackdrop === "a" ? "flump-proto-backdrop" : `flump-proto-backdrop-${defaultBackdrop}`;
   const [pace, setPaceState] = useState<Pace>("calm");
-  const [backdrop, setBackdropState] = useState<Backdrop>("a");
+  const [backdrop, setBackdropState] = useState<Backdrop>(defaultBackdrop);
   useEffect(() => {
     setPaceState(read<Pace>("flump-proto-pace", ["calm", "medium", "brisk"], "calm"));
-    setBackdropState(read<Backdrop>("flump-proto-backdrop", ["a", "b"], "a"));
-  }, []);
+    setBackdropState(read<Backdrop>(backdropKey, ["a", "b", "both"], defaultBackdrop));
+  }, [backdropKey, defaultBackdrop]);
   const setPace = (value: Pace) => {
     setPaceState(value);
     write("flump-proto-pace", value);
   };
   const setBackdrop = (value: Backdrop) => {
     setBackdropState(value);
-    write("flump-proto-backdrop", value);
+    write(backdropKey, value);
   };
   return make(pace, setPace, backdrop, setBackdrop);
 }

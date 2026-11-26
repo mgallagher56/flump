@@ -8,6 +8,9 @@
   display: flex;
   flex-direction: column;
   background-color: var(--colors-surface-canvas);
+  /* Pieces in flight and edge bubbles never make the page scroll sideways. clip (not hidden)
+     creates no scroll container, so sticky and pinned parts keep working. */
+  overflow-x: clip;
 }
 
 .proto :focus-visible {
@@ -161,4 +164,21 @@
   border: 1px solid var(--colors-border);
   border-radius: 8px;
   padding: 2px 6px;
+}
+
+/* Phones: the folded panel is only its Show button, so it covers as little as possible. */
+@media (max-width: 30rem) {
+  .proto-panel[data-open="false"] {
+    padding: 4px;
+    right: 8px;
+    bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .proto-panel[data-open="false"] strong {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
 }

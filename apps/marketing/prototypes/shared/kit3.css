@@ -110,6 +110,22 @@
   --bubble-edge: color-mix(in oklab, var(--colors-chart-series4) 22%, transparent);
 }
 
+/* Both sets together (round four): bubbles alternate between the two sets. */
+.proto[data-backdrop="both"] {
+  --bubble-1: var(--colors-surface-tint-sky);
+  --bubble-2: var(--colors-surface-tint-teal);
+  --bubble-edge: color-mix(in oklab, var(--colors-chart-series6) 22%, transparent);
+  --bubble-alt-1: var(--colors-surface-tint-violet);
+  --bubble-alt-2: var(--colors-surface-tint-rose);
+  --bubble-alt-edge: color-mix(in oklab, var(--colors-chart-series4) 22%, transparent);
+}
+
+.proto[data-backdrop="both"] .proto-bubbles__bubble:nth-child(even) {
+  --bubble-1: var(--bubble-alt-1);
+  --bubble-2: var(--bubble-alt-2);
+  --bubble-edge: var(--bubble-alt-edge);
+}
+
 .proto-bubbles {
   position: absolute;
   inset: 0;

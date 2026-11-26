@@ -1,0 +1,152 @@
+/* Prototype 11b: the CSS journey. Semantic token variables only; timing from the pace tokens. */
+
+.p11b-journey {
+  position: relative;
+}
+
+/* ----- The stage: sticky behind the stops, one screen tall, only while the journey is on screen. */
+
+.p11b-stage {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  margin-bottom: -100svh;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  display: none;
+}
+
+.p11b-journey[data-enhanced="true"] .p11b-stage {
+  display: block;
+}
+
+.p11b-journey__intro,
+.p11b-journey > [data-journey-stop] {
+  position: relative;
+  z-index: 1;
+}
+
+.p11b-stage__routes {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.p11b-route {
+  will-change: transform;
+}
+
+.p11b-route__track,
+.p11b-route__drawn,
+.p11b-route__reveal {
+  fill: none;
+  stroke-linecap: round;
+}
+
+/* The way ahead: prototype 9's bead line, small quiet beads. */
+.p11b-route__track {
+  stroke: color-mix(in oklab, var(--colors-text-secondary) 42%, transparent);
+  stroke-width: 3.5;
+  stroke-dasharray: 0 13;
+}
+
+/* The way travelled: larger beads over the small ones, coloured from the stop's own colour to its
+   accent (the gradient), revealed up to the orb by the mask. */
+.p11b-route__drawn {
+  stroke-width: 7;
+  stroke-dasharray: 0 13;
+}
+
+/* An alpha mask, so any opaque colour reveals. */
+.p11b-route mask {
+  mask-type: alpha;
+}
+
+.p11b-route__reveal {
+  stroke: var(--colors-text-primary);
+  stroke-width: 24;
+}
+
+/* ----- Glass orbs: prototype 11's GlassOrb (one image family), sized and moved here. ----- */
+
+.p11b-orb {
+  --size: 5.5rem;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--size);
+  height: var(--size);
+  will-change: transform;
+}
+
+/* The lead orb's colour changes with the journey; registered so the change is a smooth blend. */
+@property --p11b-tone {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+
+.p11b-orb[data-tone="sky"] {
+  --p11b-tone: var(--colors-chart-series6);
+}
+
+.p11b-orb[data-tone="teal"] {
+  --p11b-tone: var(--colors-chart-series1);
+}
+
+.p11b-orb[data-tone="violet"] {
+  --p11b-tone: var(--colors-chart-series4);
+}
+
+.p11b-orb[data-tone="rose"] {
+  --p11b-tone: var(--colors-chart-series5);
+}
+
+.p11b-journey .p11b-orb > .p11-orb {
+  --orb: var(--p11b-tone);
+  --orb-size: var(--size);
+  display: block;
+}
+
+.proto[data-motion="full"] .p11b-orb {
+  transition: --p11b-tone calc(var(--t-entry) * 2) var(--ease-in-out);
+}
+
+/* The lead orb's coloured light on the page behind it, the glow p9's point lights gave. */
+.p11b-orb__glow {
+  position: absolute;
+  inset: -60%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    color-mix(in oklab, var(--p11b-tone) 34%, transparent) 0,
+    color-mix(in oklab, var(--p11b-tone) 12%, transparent) 38%,
+    transparent 68%
+  );
+  pointer-events: none;
+}
+
+.p11b-orb[data-size="mid"] {
+  --size: 2.75rem;
+}
+
+.p11b-orb[data-size="small"] {
+  --size: 1.625rem;
+}
+
+@media (max-width: 47.99rem) {
+  .p11b-orb {
+    --size: 3.25rem;
+  }
+
+  .p11b-orb[data-size="mid"] {
+    --size: 1.75rem;
+  }
+
+  .p11b-orb[data-size="small"] {
+    --size: 1.125rem;
+  }
+}

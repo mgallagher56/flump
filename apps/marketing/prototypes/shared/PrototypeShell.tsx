@@ -1,4 +1,5 @@
 import { type FC, type ReactNode, useEffect, useState } from "react";
+import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import weights from "../weights.json";
 import { MotionContext, useMotionState } from "./motion";
@@ -25,7 +26,9 @@ export type PrototypeId =
   | "p7"
   | "p8"
   | "p9"
-  | "p10";
+  | "p10"
+  | "p11"
+  | "p11b";
 
 const NAMES: Record<PrototypeId, string> = {
   p1: "1. Micro-interactions",
@@ -39,6 +42,8 @@ const NAMES: Record<PrototypeId, string> = {
   p8: "8. Assembled",
   p9: "9. The journey",
   p10: "10. Both",
+  p11: "11. Both, reworked",
+  p11b: "11b. Both, reworked, no three.js",
 };
 
 interface Sample {
@@ -104,7 +109,8 @@ const DevPanel: FC<{
   motion: ReturnType<typeof useMotionState>;
   startsOpen: boolean;
   pace?: PaceState;
-}> = ({ id, motion, startsOpen, pace }) => {
+  showBackdrop?: boolean;
+}> = ({ id, motion, startsOpen, pace, showBackdrop = true }) => {
   const fps = useFrameRate();
   const [open, setOpen] = useState(startsOpen);
   const weight = weights.prototypes[id];
@@ -159,19 +165,21 @@ const DevPanel: FC<{
                   ))}
                 </select>
               </label>
-              <label>
-                Bubbles{" "}
-                <select
-                  onChange={(e) => pace.setBackdrop(e.target.value as Backdrop)}
-                  value={pace.backdrop}
-                >
-                  {(Object.keys(BACKDROP_LABEL) as Backdrop[]).map((key) => (
-                    <option key={key} value={key}>
-                      {BACKDROP_LABEL[key]}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              {showBackdrop && (
+                <label>
+                  Bubbles{" "}
+                  <select
+                    onChange={(e) => pace.setBackdrop(e.target.value as Backdrop)}
+                    value={pace.backdrop}
+                  >
+                    {(Object.keys(BACKDROP_LABEL) as Backdrop[]).map((key) => (
+                      <option key={key} value={key}>
+                        {BACKDROP_LABEL[key]}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
             </div>
           )}
           <dl className="proto-panel__stats">
@@ -202,15 +210,21 @@ export const PrototypeShell: FC<{
   panel?: "open" | "closed";
   /** Round three: the shared pace tokens, the Speed and Bubbles controls (see pace.tsx). */
   paced?: boolean;
-}> = ({ id, children, panel = "open", paced = false }) => {
+  /** The bubble colours a paced page starts with. */
+  backdrop?: Backdrop;
+}> = ({ id, children, panel = "open", paced = false, backdrop = "a" }) => {
   const motion = useMotionState();
-  const pace = usePaceState();
+  const pace = usePaceState(backdrop);
   return (
     <MotionContext.Provider value={motion}>
+      <Helmet>
+        <title>{`${NAMES[id]} | Flump motion prototype`}</title>
+      </Helmet>
       <PaceContext.Provider value={pace}>
         <div
           className={`proto ${id}`}
-          data-backdrop={paced ? pace.backdrop : undefined}
+          // A page that starts with both sets always shows both (no either-or, round four).
+          data-backdrop={paced ? (backdrop === "both" ? "both" : pace.backdrop) : undefined}
           data-motion={motion.reduced ? "reduce" : "full"}
           data-pace={paced ? pace.pace : undefined}
           style={paced ? ({ "--pace": pace.factor } as React.CSSProperties) : undefined}
@@ -220,6 +234,7 @@ export const PrototypeShell: FC<{
             id={id}
             motion={motion}
             pace={paced ? pace : undefined}
+            showBackdrop={backdrop !== "both"}
             startsOpen={panel === "open"}
           />
         </div>

@@ -8,7 +8,8 @@ import "./kit.css";
  *
  * Stops are the elements marked `data-proto-section`, in document order. Each must sit in normal
  * flow (not a pinned element) and be labelled by a heading (`aria-labelledby`); its
- * `data-proto-name` gives the short name for the label. A stop can also be a marker element that
+ * `data-proto-name` gives the short name for the label; `data-proto-line` optionally moves the
+ * point where it becomes current (see update below). A stop can also be a marker element that
  * is only a scroll position, for scenes that step through one pinned or 3D section.
  *
  * Moving scrolls the stop to the top (smooth unless motion is reduced) and moves focus to its
@@ -20,16 +21,39 @@ export const SectionNav: FC = () => {
   const [current, setCurrent] = useState(0);
   const liveRef = useRef<HTMLParagraphElement>(null);
 
+  // Step out of the way while the page scrolls, back after a short pause (never while focused).
+  useEffect(() => {
+    const html = document.documentElement;
+    let timer = 0;
+    const onScroll = () => {
+      html.dataset.protoScrolling = "true";
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        delete html.dataset.protoScrolling;
+      }, 700);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.clearTimeout(timer);
+      delete html.dataset.protoScrolling;
+    };
+  }, []);
+
   useEffect(() => {
     const found = Array.from(document.querySelectorAll<HTMLElement>("[data-proto-section]"));
     setStops(found);
     const header = () => document.querySelector("header")?.offsetHeight ?? 0;
     const update = () => {
       // The current stop is the last one whose top has passed the upper third of the screen.
-      const line = header() + window.innerHeight * 0.33;
+      // A stop becomes current once its top passes a line under the header: a third of the
+      // screen by default, or its own `data-proto-line` (a fraction of the screen) for stops that
+      // overlap on purpose, such as the journey's, which are finished when their top meets the header.
+      const lineFor = (stop: HTMLElement) =>
+        header() + window.innerHeight * Number(stop.dataset.protoLine ?? 0.33);
       let index = 0;
       found.forEach((stop, i) => {
-        if (stop.getBoundingClientRect().top <= line) index = i;
+        if (stop.getBoundingClientRect().top <= lineFor(stop)) index = i;
       });
       setCurrent(index);
     };

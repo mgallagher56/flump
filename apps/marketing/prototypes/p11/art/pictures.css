@@ -1,0 +1,601 @@
+/*
+ * Prototype 11's pictures: the hero pieces' family (paper, cards, a jar) composed into the live
+ * scenes' subjects. Semantic token variables only. Sizes in em; the picture's font size keeps the
+ * smallest text at about 12px or more at 375 and 1280.
+ */
+
+.p11-pic {
+  position: relative;
+  margin: 0;
+  width: 22em;
+  max-width: 100%;
+  font-size: clamp(14px, 12px + 0.42vw, 20px);
+  font-family: var(--fonts-body);
+  line-height: 1.2;
+}
+
+.p11-pic__stage {
+  position: relative;
+  width: 22em;
+  height: var(--pic-h, 15em);
+  margin-inline: auto;
+}
+
+.p11-pic__layer {
+  position: absolute;
+}
+
+.p11-pic__arc {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.p11-pic__arc path {
+  fill: none;
+  stroke: var(--colors-border-strong);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-dasharray: 0.1 9;
+}
+
+.p11-pic__sprout {
+  position: absolute;
+  width: 2.6em;
+  height: 2.9em;
+  overflow: visible;
+}
+
+.p11-pic__stem {
+  fill: none;
+  stroke: var(--colors-chart-series2);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+}
+
+.p11-pic__leaf {
+  fill: var(--colors-chart-series2);
+}
+
+.p11-pic__leaf--b {
+  fill: color-mix(in oklab, var(--colors-chart-series2) 80%, var(--colors-surface-card));
+}
+
+.p11-pic__leaf--c {
+  fill: color-mix(in oklab, var(--colors-chart-series2) 65%, var(--colors-primary));
+}
+
+.p11-pic__chip {
+  position: absolute;
+  padding: 0.35em 0.8em;
+  border-radius: 999px;
+  border: 1px solid var(--colors-border);
+  background: var(--colors-surface-card);
+  box-shadow: 0 0.8em 1.4em -0.9em color-mix(in oklab, var(--colors-text-primary) 45%, transparent);
+  color: var(--colors-text-primary);
+  font-size: 0.875em;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ---------- empty-accounts ---------- */
+
+.p11-pic--empty-accounts {
+  --pic-h: 16.5em;
+}
+
+.p11-pic__slot {
+  width: 12em;
+  height: 7.6em;
+  display: grid;
+  place-items: center;
+  border-radius: 0.9em;
+  border: 2px dashed var(--colors-border-strong);
+  background: color-mix(in oklab, var(--colors-surface-card) 70%, transparent);
+  color: var(--colors-text-secondary);
+  font-size: 1em;
+  font-weight: 600;
+}
+
+.p11-pic--empty-accounts .p11-card {
+  width: 14.5em;
+  height: 9.2em;
+}
+
+/* ---------- empty-goals ---------- */
+
+.p11-pic--empty-goals {
+  --pic-h: 15em;
+}
+
+.p11-pic-goal {
+  width: 16em;
+  border-radius: 0.6em;
+}
+
+.p11-pic-goal__target {
+  position: relative;
+  justify-self: center;
+  width: 7.5em;
+  height: 7.5em;
+  margin-top: 0.4em;
+}
+
+.p11-pic-goal__target > span {
+  position: absolute;
+  border-radius: 50%;
+  border: 0.55em solid color-mix(in oklab, var(--colors-primary) 30%, var(--colors-surface-card));
+}
+
+.p11-pic-goal__target > span:nth-child(1) {
+  inset: 0;
+}
+
+.p11-pic-goal__target > span:nth-child(2) {
+  inset: 1.25em;
+  border-color: color-mix(in oklab, var(--colors-primary) 55%, var(--colors-surface-card));
+}
+
+.p11-pic-goal__target > span:nth-child(3) {
+  inset: 2.6em;
+  border: 0;
+  background: var(--colors-primary);
+}
+
+.p11-pic-goal__pole {
+  position: absolute;
+  left: calc(50% - 1px);
+  bottom: 50%;
+  width: 2px;
+  height: 4.4em;
+  background: var(--colors-text-primary);
+}
+
+.p11-pic-goal__flag {
+  position: absolute;
+  left: calc(50% + 1px);
+  bottom: calc(50% + 2.8em);
+  width: 2.2em;
+  height: 1.5em;
+  background: var(--colors-chart-series3);
+  clip-path: polygon(0 0, 100% 50%, 0 100%);
+}
+
+.p11-pic-goal__note {
+  margin: 0;
+  color: var(--colors-text-secondary);
+  font-size: max(12px, 0.9em);
+  text-align: center;
+}
+
+/* ---------- empty-savings ---------- */
+
+.p11-pic--empty-savings {
+  --pic-h: 15.5em;
+}
+
+.p11-pic-jar__coins {
+  position: absolute;
+  left: 1.2em;
+  right: 1.2em;
+  bottom: 0.8em;
+  display: grid;
+  justify-items: center;
+}
+
+.p11-pic-jar__coins i {
+  display: block;
+  width: 4.6em;
+  height: 1.1em;
+  margin-top: -0.45em;
+  border-radius: 50%;
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--colors-chart-series3) 70%, var(--colors-surface-card)),
+    color-mix(in oklab, var(--colors-chart-series3) 90%, var(--colors-text-primary))
+  );
+  box-shadow: inset 0 0.15em 0 color-mix(in oklab, var(--colors-surface-card) 50%, transparent);
+}
+
+.p11-pic-jar__coins i:nth-child(odd) {
+  translate: 0.4em 0;
+}
+
+.p11-pic-jar__meta {
+  color: var(--colors-text-secondary);
+  font-size: max(12px, 0.85em);
+}
+
+/* ---------- empty-debt ---------- */
+
+.p11-pic--empty-debt {
+  --pic-h: 14.5em;
+}
+
+.p11-pic-debt__step {
+  width: 8.4em;
+  gap: 0.25em;
+  padding: 0.8em 0.9em;
+  border-radius: 0.6em;
+  justify-items: start;
+}
+
+.p11-pic-debt__when {
+  color: var(--colors-text-secondary);
+  font-size: max(12px, 0.85em);
+}
+
+.p11-pic-debt__value {
+  font-size: 1.35em;
+  font-weight: 700;
+}
+
+/* ---------- empty-pension: a pot with a sprout ---------- */
+
+.p11-pic--empty-pension {
+  --pic-h: 15.5em;
+}
+
+.p11-pic-pot {
+  left: 5.5em;
+  top: 4.4em;
+  width: 11em;
+  display: grid;
+  justify-items: center;
+}
+
+.p11-pic-pot__rim {
+  width: 11em;
+  height: 1.6em;
+  border-radius: 0.4em;
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--colors-chart-series3) 55%, var(--colors-surface-card)),
+    color-mix(in oklab, var(--colors-chart-series3) 75%, var(--colors-surface-card))
+  );
+  box-shadow: 0 0.25em 0 color-mix(in oklab, var(--colors-text-primary) 18%, transparent);
+}
+
+.p11-pic-pot__body {
+  position: relative;
+  width: 9.4em;
+  height: 8.6em;
+  clip-path: polygon(0 0, 100% 0, 88% 100%, 12% 100%);
+  background: linear-gradient(
+    100deg,
+    color-mix(in oklab, var(--colors-chart-series3) 70%, var(--colors-surface-card)),
+    color-mix(in oklab, var(--colors-chart-series3) 85%, var(--colors-surface-card)) 55%,
+    color-mix(in oklab, var(--colors-chart-series3) 80%, var(--colors-text-primary))
+  );
+  box-shadow: inset 0.6em 0 1em -0.6em
+    color-mix(in oklab, var(--colors-surface-card) 50%, transparent);
+}
+
+.p11-pic-pot__label {
+  top: 1.4em;
+  left: 1.3em;
+  right: 1.3em;
+}
+
+.p11-pic-pot__sprout {
+  left: 9.6em;
+  top: 0.8em;
+  width: 3.4em;
+  height: 3.8em;
+}
+
+/* ---------- check-in: the calendar card ---------- */
+
+.p11-pic--check-in,
+.p11-pic--check-in-done {
+  --pic-h: 21em;
+}
+
+.p11-art-checkin__card {
+  left: 2.6em;
+  top: 0.4em;
+  width: 18.4em;
+  gap: 0.8em;
+  border-radius: 0.6em;
+}
+
+.p11-pic-cal__head {
+  justify-content: space-between;
+}
+
+.p11-pic-cal__behind {
+  left: 0;
+  top: 2.6em;
+  rotate: -6deg;
+  opacity: 0.9;
+}
+
+.p11-art-checkin__days {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.25em;
+}
+
+.p11-art-checkin__day {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1.4;
+  border-radius: 0.4em;
+  background: color-mix(in oklab, var(--colors-text-primary) 4%, transparent);
+  color: var(--colors-text-secondary);
+  font-size: max(12px, 0.85em);
+}
+
+.p11-art-checkin__day[data-today] {
+  background: var(--colors-primary);
+  color: var(--colors-primary-foreground);
+  font-weight: 700;
+  box-shadow: 0 0.4em 0.8em -0.4em color-mix(in oklab, var(--colors-primary) 70%, transparent);
+}
+
+.p11-art-checkin__rows dt {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+}
+
+.p11-art-checkin__tick {
+  width: 0.95em;
+  height: 0.95em;
+  border-radius: 50%;
+  background:
+    linear-gradient(
+      -45deg,
+      transparent 46%,
+      var(--colors-primary-foreground) 46% 58%,
+      transparent 58%
+    )
+    55% 60% / 60% 45% no-repeat,
+    var(--colors-primary);
+}
+
+.p11-pic-stamp {
+  position: absolute;
+  right: 0.4em;
+  top: 7.4em;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  width: 6.4em;
+  height: 6.4em;
+  border-radius: 50%;
+  border: 0.2em solid var(--colors-primary);
+  outline: 1px solid var(--colors-primary);
+  outline-offset: -0.55em;
+  background: color-mix(in oklab, var(--colors-surface-card) 88%, transparent);
+  color: var(--colors-primary);
+  font-size: 0.95em;
+  font-weight: 700;
+  rotate: -12deg;
+  text-align: center;
+}
+
+/* ---------- onboarding: three rising paper steps ---------- */
+
+.p11-pic--onboarding {
+  --pic-h: 15em;
+}
+
+.p11-art-steps__list {
+  position: absolute;
+  left: 0.4em;
+  right: 0.4em;
+  bottom: 0.4em;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: end;
+  gap: 0.6em;
+}
+
+.p11-art-steps__step {
+  align-content: end;
+  gap: 0.15em;
+  padding: 0.8em;
+  border-radius: 0.6em;
+}
+
+.p11-art-steps__step[data-step="1"] {
+  min-height: 5.5em;
+}
+
+.p11-art-steps__step[data-step="2"] {
+  min-height: 7.8em;
+}
+
+.p11-art-steps__step[data-step="3"] {
+  min-height: 10.2em;
+}
+
+.p11-art-steps__num {
+  font-size: 1.3em;
+  font-weight: 700;
+  color: var(--colors-primary);
+}
+
+.p11-art-steps__label {
+  font-size: 0.95em;
+  font-weight: 650;
+}
+
+.p11-art-steps__detail {
+  color: var(--colors-text-secondary);
+  font-size: max(12px, 0.85em);
+}
+
+.p11-art-steps__sprout {
+  right: 3em;
+  top: 0.7em;
+}
+
+/* ---------- not-found: a signpost ---------- */
+
+.p11-pic--not-found {
+  --pic-h: 14em;
+}
+
+.p11-pic-sign__post {
+  position: absolute;
+  left: calc(50% - 0.4em);
+  top: 1.4em;
+  bottom: 1em;
+  width: 0.8em;
+  border-radius: 0.4em;
+  background: linear-gradient(
+    90deg,
+    var(--colors-surface-contrast),
+    color-mix(in oklab, var(--colors-surface-contrast) 75%, var(--colors-text-on-contrast))
+  );
+}
+
+:is(html.dark, [data-theme="dark"]) .p11-pic-sign__post {
+  background: var(--colors-border-strong);
+}
+
+.p11-pic-sign {
+  position: absolute;
+  padding: 0.75em 1.6em 0.75em 1em;
+  font-size: 1.05em;
+  font-weight: 700;
+  white-space: nowrap;
+  border-radius: 0.3em;
+}
+
+.p11-pic-sign--right {
+  left: calc(50% - 1em);
+  top: 2.4em;
+  padding-right: 2.2em;
+  clip-path: polygon(0 0, calc(100% - 1.2em) 0, 100% 50%, calc(100% - 1.2em) 100%, 0 100%);
+}
+
+.p11-pic-sign--left {
+  right: calc(50% - 1em);
+  top: 6em;
+  padding-left: 2.2em;
+  padding-right: 1em;
+  clip-path: polygon(1.2em 0, 100% 0, 100% 100%, 1.2em 100%, 0 50%);
+}
+
+.p11-pic-sign__ground {
+  position: absolute;
+  left: 3em;
+  right: 3em;
+  bottom: 0.6em;
+  height: 0.8em;
+  border-radius: 50%;
+  background: color-mix(in oklab, var(--colors-text-primary) 10%, transparent);
+}
+
+/* ---------- Security: the card and its seal ---------- */
+
+.p11-pic--security {
+  --pic-h: 12.5em;
+  width: 17em;
+}
+
+.p11-pic--security .p11-pic__stage {
+  width: 17em;
+}
+
+.p11-pic-sec {
+  left: 0;
+  top: 0.6em;
+  width: 15em;
+  border-radius: 0.6em;
+}
+
+.p11-pic-seal {
+  position: absolute;
+  right: 0;
+  top: 0;
+  display: grid;
+  place-items: center;
+  width: 3.8em;
+  height: 3.8em;
+  border-radius: 50%;
+  background: var(--colors-primary);
+  box-shadow: 0 0.8em 1.4em -0.8em color-mix(in oklab, var(--colors-primary) 80%, transparent);
+}
+
+.p11-pic-seal svg {
+  width: 2em;
+  height: 2em;
+  fill: none;
+  stroke: var(--colors-primary-foreground);
+  stroke-width: 1.8;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+/* ---------- Features tiles: the area's piece ---------- */
+
+.p11-tile-pic {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  min-height: 11em;
+  margin-bottom: 4px;
+  font-size: clamp(14px, 12.4px + 0.3vw, 17px);
+  line-height: 1.2;
+}
+
+.p11-tile-pic .p11-piece {
+  rotate: -2deg;
+}
+
+.p11-tile-pic[data-area="budget"] .p11-piece,
+.p11-tile-pic[data-area="savings-and-pension"] .p11-piece {
+  rotate: 2deg;
+}
+
+.p11-tile-pic .p11-jar {
+  font-size: 0.86em;
+}
+
+.p11-pic-qa {
+  width: 15.5em;
+  border-radius: 0.6em;
+}
+
+.p11-pic-qa p {
+  margin: 0;
+  padding: 0.55em 0.8em;
+  border-radius: 0.8em;
+  font-size: 0.9em;
+  line-height: 1.35;
+}
+
+.p11-pic-qa__q {
+  justify-self: end;
+  max-width: 85%;
+  background: var(--colors-primary);
+  color: var(--colors-primary-foreground);
+  border-bottom-right-radius: 0.2em;
+}
+
+.p11-pic-qa__a {
+  justify-self: start;
+  max-width: 85%;
+  background: var(--colors-surface-subtle);
+  color: var(--colors-text-primary);
+  border-bottom-left-radius: 0.2em;
+}
+
+/* Larger where the picture carries the band: beside the steps and on the closing band. */
+.p11-rough .p11-pic,
+.p11-tone--contrast .p11-pic {
+  font-size: clamp(14px, 9px + 0.85vw, 24px);
+}

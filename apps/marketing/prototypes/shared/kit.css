@@ -126,3 +126,42 @@
     animation: proto-bob 1.6s ease-in-out infinite;
   }
 }
+
+/* Review fixes (round four): the control never sits on content for long. It steps aside while
+   the page scrolls (unless it has focus), is smaller on phones, and the page ends with room for it. */
+.proto-sectionnav,
+.proto-panel {
+  transition:
+    opacity 240ms ease,
+    translate 240ms ease;
+}
+
+:root[data-proto-scrolling] .proto-sectionnav:not(:focus-within),
+:root[data-proto-scrolling] .proto-panel[data-open="false"]:not(:focus-within) {
+  opacity: 0;
+  translate: 0 12px;
+  pointer-events: none;
+}
+
+.proto:has(.proto-sectionnav) footer {
+  padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+}
+
+@media (max-width: 30rem) {
+  .proto-sectionnav {
+    left: 8px;
+    bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+    gap: 2px;
+    padding: 3px;
+  }
+
+  .proto-sectionnav__button {
+    width: 40px;
+    height: 40px;
+  }
+
+  .proto-sectionnav__label {
+    padding: 0 4px;
+    font-size: 0.75rem;
+  }
+}

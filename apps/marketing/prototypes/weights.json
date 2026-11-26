@@ -24,60 +24,74 @@
       "cssGzip": 4903
     },
     "p1b": {
-      "initialGzip": 3931,
+      "initialGzip": 3999,
       "lazyGzip": 0,
-      "initialRaw": 10931,
+      "initialRaw": 11297,
       "lazyRaw": 0,
-      "cssGzip": 5149
+      "cssGzip": 5425
     },
     "p4": {
-      "initialGzip": 6615,
+      "initialGzip": 6699,
       "lazyGzip": 76877,
-      "initialRaw": 19510,
+      "initialRaw": 19878,
       "lazyRaw": 192759,
-      "cssGzip": 5640
+      "cssGzip": 5902
     },
     "p5": {
-      "initialGzip": 8213,
+      "initialGzip": 8299,
       "lazyGzip": 74558,
-      "initialRaw": 23217,
+      "initialRaw": 23584,
       "lazyRaw": 187181,
-      "cssGzip": 4151
+      "cssGzip": 4435
     },
     "p6": {
-      "initialGzip": 6786,
+      "initialGzip": 6863,
       "lazyGzip": 142490,
-      "initialRaw": 15344,
+      "initialRaw": 15710,
       "lazyRaw": 563764,
-      "cssGzip": 2665
+      "cssGzip": 2937
     },
     "p7": {
-      "initialGzip": 4907,
+      "initialGzip": 4983,
       "lazyGzip": 148077,
-      "initialRaw": 12972,
+      "initialRaw": 13338,
       "lazyRaw": 584719,
-      "cssGzip": 2256
+      "cssGzip": 2537
     },
     "p8": {
-      "initialGzip": 14837,
-      "lazyGzip": 76920,
-      "initialRaw": 45315,
+      "initialGzip": 14965,
+      "lazyGzip": 76919,
+      "initialRaw": 45755,
       "lazyRaw": 192800,
-      "cssGzip": 8587
+      "cssGzip": 8864
     },
     "p9": {
-      "initialGzip": 11429,
+      "initialGzip": 11531,
       "lazyGzip": 224245,
-      "initialRaw": 29684,
+      "initialRaw": 30123,
       "lazyRaw": 772067,
-      "cssGzip": 3338
+      "cssGzip": 3611
     },
     "p10": {
-      "initialGzip": 17311,
+      "initialGzip": 17413,
       "lazyGzip": 226547,
-      "initialRaw": 49968,
+      "initialRaw": 50408,
       "lazyRaw": 777695,
-      "cssGzip": 7343
+      "cssGzip": 7614
+    },
+    "p11": {
+      "initialGzip": 18983,
+      "lazyGzip": 223597,
+      "initialRaw": 59919,
+      "lazyRaw": 769807,
+      "cssGzip": 14246
+    },
+    "p11b": {
+      "initialGzip": 20549,
+      "lazyGzip": 76912,
+      "initialRaw": 64095,
+      "lazyRaw": 192813,
+      "cssGzip": 15030
     }
   }
 }

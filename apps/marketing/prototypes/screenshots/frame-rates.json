@@ -150,5 +150,33 @@
     "slowPct": 0,
     "scene": "Scene: 3D",
     "gpu": "ANGLE (Apple, ANGLE Metal Renderer: Apple M2, Unspecified Version)"
+  },
+  "p11b desktop 1280": {
+    "frames": 583,
+    "avgFps": 60,
+    "p95Ms": 17,
+    "slowPct": 0
+  },
+  "p11b phone 375, CPU 4x slower": {
+    "frames": 642,
+    "avgFps": 60,
+    "p95Ms": 17,
+    "slowPct": 0
+  },
+  "p11 desktop 1280": {
+    "frames": 583,
+    "avgFps": 60,
+    "p95Ms": 17,
+    "slowPct": 0,
+    "scene": "Scene: 3D",
+    "gpu": "ANGLE (Apple, ANGLE Metal Renderer: Apple M2, Unspecified Version)"
+  },
+  "p11 phone 375, CPU 4x slower": {
+    "frames": 642,
+    "avgFps": 60,
+    "p95Ms": 17,
+    "slowPct": 0,
+    "scene": "Scene: 3D",
+    "gpu": "ANGLE (Apple, ANGLE Metal Renderer: Apple M2, Unspecified Version)"
   }
 }

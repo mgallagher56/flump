@@ -26,6 +26,8 @@ const ENTRIES = {
   p8: "p8/P8.tsx",
   p9: "p9/P9.tsx",
   p10: "p10/P10.tsx",
+  p11: "p11/P11.tsx",
+  p11b: "p11b/P11b.tsx",
 } as const;
 
 /**
@@ -42,8 +44,7 @@ const isShared = (specifier: string, resolved?: string) =>
 /** Round one lists its CSS; for 4 to 7, every CSS file in the folder plus the shared kit. */
 const folderCss = (id: string) => [
   "shared/kit.css",
-  ...fs
-    .readdirSync(path.join(root, id))
+  ...(fs.readdirSync(path.join(root, id), { recursive: true }) as string[])
     .filter((f) => f.endsWith(".css"))
     .map((f) => `${id}/${f}`),
 ];
@@ -59,6 +60,9 @@ const CSS: Record<string, readonly string[]> = {
   p8: folderCss("p8"),
   p9: folderCss("p9"),
   p10: folderCss("p10"),
+  p11: folderCss("p11"),
+  // 11b reuses 11's stops and pictures, so it carries their CSS too.
+  p11b: [...folderCss("p11b"), ...folderCss("p11").filter((f) => f !== "shared/kit.css")],
 };
 const cssGzip = (files: readonly string[]) =>
   gzipSync(files.map((f) => fs.readFileSync(path.join(root, f), "utf8")).join("\n")).length;

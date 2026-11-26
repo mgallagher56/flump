@@ -1,0 +1,106 @@
+/*
+ * Prototype 11's image family: clear glass orbs and glass cards, drawn in CSS. Semantic token
+ * variables only. The chart series give the colour (sky, teal, violet, rose); the clear centre
+ * shows the page through it, so on Midnight it reads as clear glass, not pearl.
+ */
+
+.p11-orb {
+  --orb: var(--colors-chart-series6);
+  --orb-size: 4.5rem;
+  --orb-light: var(--colors-text-on-contrast);
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: var(--orb-size);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background:
+    /* specular highlight, top left */
+    radial-gradient(
+      circle at 31% 24%,
+      color-mix(in oklab, var(--orb-light) 92%, transparent) 0 4%,
+      color-mix(in oklab, var(--orb-light) 30%, transparent) 9%,
+      transparent 20%
+    ),
+    /* caustic: light gathered on the far side, lower right */
+    radial-gradient(
+      circle at 66% 78%,
+      color-mix(in oklab, var(--orb) 46%, transparent) 0,
+      transparent 42%
+    ),
+    /* the body: clear in the middle, coloured towards the rim */
+    radial-gradient(
+      circle at 50% 50%,
+      color-mix(in oklab, var(--orb) 6%, transparent) 0 46%,
+      color-mix(in oklab, var(--orb) 26%, transparent) 78%,
+      color-mix(in oklab, var(--orb) 58%, transparent) 100%
+    );
+  box-shadow:
+    inset 0 0 0 1px color-mix(in oklab, var(--orb) 55%, transparent),
+    inset 0 calc(var(--orb-size) * 0.08) calc(var(--orb-size) * 0.1)
+    color-mix(in oklab, var(--orb-light) 28%, transparent),
+    inset 0 calc(var(--orb-size) * -0.1) calc(var(--orb-size) * 0.18)
+    color-mix(in oklab, var(--orb) 34%, transparent),
+    0 calc(var(--orb-size) * 0.22) calc(var(--orb-size) * 0.3) calc(var(--orb-size) * -0.16)
+    color-mix(in oklab, var(--orb) 55%, transparent);
+}
+
+/* A thin bright rim on the lit side, like a glass edge catching the light. */
+.p11-orb::after {
+  content: "";
+  position: absolute;
+  inset: 3%;
+  border-radius: 50%;
+  border: 1.5px solid transparent;
+  border-top-color: color-mix(in oklab, var(--orb-light) 55%, transparent);
+  border-left-color: color-mix(in oklab, var(--orb-light) 25%, transparent);
+  rotate: -12deg;
+  pointer-events: none;
+}
+
+.p11-orb[data-tone="sky"] {
+  --orb: var(--colors-chart-series6);
+}
+
+.p11-orb[data-tone="teal"] {
+  --orb: var(--colors-chart-series1);
+}
+
+.p11-orb[data-tone="violet"] {
+  --orb: var(--colors-chart-series4);
+}
+
+.p11-orb[data-tone="rose"] {
+  --orb: var(--colors-chart-series5);
+}
+
+.p11-orb__icon {
+  position: relative;
+  width: 44%;
+  height: 44%;
+  color: var(--orb);
+}
+
+/* In light mode the specular light must still read on a pale page: a touch stronger body. */
+html:not(.dark) .p11-orb {
+  --orb-light: var(--colors-surface-card);
+}
+
+/* ---------- Glass card: the family's flat pieces (cards, sheets, calendars). ---------- */
+
+.p11-glass {
+  position: relative;
+  border-radius: 20px;
+  border: 1px solid var(--colors-border);
+  background:
+    linear-gradient(
+      155deg,
+      color-mix(in oklab, var(--colors-text-on-contrast) 7%, transparent),
+      transparent 42%
+    ),
+    var(--colors-surface-card);
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, var(--colors-text-on-contrast) 14%, transparent),
+    var(--shadows-card);
+}

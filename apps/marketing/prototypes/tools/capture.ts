@@ -19,12 +19,12 @@ const { chromium } = require("@playwright/test") as typeof import("@playwright/t
 
 const [mode = "shots", base = "http://localhost:3001", only] = process.argv.slice(2);
 /** Optional third argument: one prototype, such as "3". */
-type Id = "1" | "1b" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10";
-const IDS = (["1", "1b", "2", "3", "4", "5", "6", "7", "8", "9", "10"] as const).filter(
-  (id) => !only || id === only,
-);
+type Id = "1" | "1b" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10" | "11" | "11b";
+const IDS = (
+  ["1", "1b", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "11b"] as const
+).filter((id) => !only || id === only);
 /** Prototypes whose page loads a 3D scene after first paint (wait longer, report the scene). */
-const HAS_SCENE = new Set<Id>(["3", "6", "7", "9", "10"]);
+const HAS_SCENE = new Set<Id>(["3", "6", "7", "9", "10", "11"]);
 const outDir = path.resolve(import.meta.dir, "../screenshots");
 fs.mkdirSync(outDir, { recursive: true });
 

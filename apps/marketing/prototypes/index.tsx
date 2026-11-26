@@ -12,6 +12,9 @@ import { P7 } from "./p7/P7";
 import { P8 } from "./p8/P8";
 import { P9 } from "./p9/P9";
 import { P10 } from "./p10/P10";
+import { P11 } from "./p11/P11";
+import { P11Images } from "./p11/P11Images";
+import { P11b } from "./p11b/P11b";
 import "./shared/proto.css";
 
 interface Entry {
@@ -96,6 +99,28 @@ const ROUND_THREE: Entry[] = [
   },
 ];
 
+const ROUND_FOUR: Entry[] = [
+  {
+    path: "11",
+    Page: P11,
+    title: "11. Both, reworked",
+    about:
+      "Prototype 10 with a longer journey whose cards rest while the orb moves, glass images throughout.",
+  },
+  {
+    path: "11b",
+    Page: P11b,
+    title: "11b. Both, reworked, no three.js",
+    about: "The same page with the journey built from CSS depth and GSAP only, for comparison.",
+  },
+  {
+    path: "11-images",
+    Page: P11Images,
+    title: "11 images",
+    about: "Each spot illustration from the live site beside the image that replaces it in 11.",
+  },
+];
+
 const List: FC<{ entries: Entry[] }> = ({ entries }) => (
   <ol>
     {entries.map((entry) => (
@@ -117,8 +142,10 @@ const PrototypeIndex = () => (
       <p>
         Throwaway versions of the home page, for judging the feel. Development only: a production
         build has none of this. Each page has a panel with a reduce motion switch, the frame rate
-        and the added weight. Prototypes 8 to 10 also have Speed and Bubbles controls.
+        and the added weight. Prototypes 8 to 11b also have Speed and Bubbles controls.
       </p>
+      <h2>Round four: reworked</h2>
+      <List entries={ROUND_FOUR} />
       <h2>Round three: combined</h2>
       <List entries={ROUND_THREE} />
       <h2>Round two</h2>
@@ -131,7 +158,7 @@ const PrototypeIndex = () => (
 
 export const prototypeRoutes: ReactNode = [
   <Route element={<PrototypeIndex />} key="index" path="/prototypes" />,
-  ...[...ROUND_ONE, ...ROUND_TWO, ...ROUND_THREE].map(({ path, Page }) => (
+  ...[...ROUND_ONE, ...ROUND_TWO, ...ROUND_THREE, ...ROUND_FOUR].map(({ path, Page }) => (
     <Route element={<Page />} key={path} path={`/prototypes/${path}`} />
   )),
 ];

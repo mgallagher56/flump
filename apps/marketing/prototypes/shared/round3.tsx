@@ -127,7 +127,12 @@ const LAYOUTS: Record<"a" | "b" | "c", Bubble[]> = {
 };
 
 export const Bubbles: FC<{ layout?: "a" | "b" | "c" }> = ({ layout = "a" }) => (
-  <div aria-hidden="true" className="proto-bubbles">
+  <div
+    aria-hidden="true"
+    className="proto-bubbles"
+    // Inline so the layer never takes space, even before its stylesheet arrives (no layout shift).
+    style={{ position: "absolute", inset: 0, overflow: "clip", pointerEvents: "none" }}
+  >
     {LAYOUTS[layout].map((b, i) => (
       <span
         className="proto-bubbles__bubble"

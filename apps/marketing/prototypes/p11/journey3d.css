@@ -1,0 +1,72 @@
+/* Prototype 11's travelling layer (three.js). Semantic token variables only. */
+
+.p11-journey--3d {
+  background: var(--colors-surface-canvas);
+}
+
+/* Sticky inside the journey, one screen tall, pulled out of the flow so the stops scroll over it. */
+.p11-jstage {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  margin-bottom: -100svh;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.p11-jstage .proto-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* The still: four glass orbs at the edges, out of the way of the copy. */
+.p11-jstage__still {
+  position: absolute;
+  inset: 0;
+}
+
+.p11-journey[data-scene="live"] .p11-jstage__still {
+  display: none;
+}
+
+.p11-jstage__still .p11-still-orb {
+  position: absolute;
+}
+
+.p11-still-orb--1 {
+  --orb-size: 9rem;
+  left: -3rem;
+  top: 18%;
+}
+
+.p11-still-orb--2 {
+  --orb-size: 5rem;
+  right: 4%;
+  top: 9%;
+}
+
+.p11-still-orb--3 {
+  --orb-size: 3.5rem;
+  left: 46%;
+  bottom: 5%;
+}
+
+.p11-still-orb--4 {
+  --orb-size: 7rem;
+  right: -2rem;
+  bottom: 14%;
+}
+
+@media (max-width: 47.99rem) {
+  .p11-still-orb--1,
+  .p11-still-orb--4 {
+    --orb-size: 4.5rem;
+  }
+
+  .p11-still-orb--2 {
+    display: none;
+  }
+}
