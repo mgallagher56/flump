@@ -1,3 +1,4 @@
+import { selectNetWorthChange } from "@flump/finance-engine";
 import type { KpiDelta } from "@repo/ui";
 
 /** A recorded month's net worth, as the loader passes it to the dashboard. No other figures. */
@@ -30,7 +31,7 @@ const pounds = (value: number): string =>
 
 /**
  * The hero's one delta (E16 P6): today's net worth against the latest recorded month before this
- * one, in whole pounds. The arrow and its spoken word carry the direction, so the text has no sign
+ * one, in whole pounds, from the engine's `selectNetWorthChange`. The arrow and its spoken word carry the direction, so the text has no sign
  * ("£320 since October"). `null` when no earlier month is recorded.
  */
 export function netWorthDelta(
@@ -38,9 +39,15 @@ export function netWorthDelta(
   prior: PriorNetWorth | null | undefined,
   currentMonth: string,
 ): KpiDelta | null {
-  if (netWorth === null || !Number.isFinite(netWorth) || !prior) return null;
-  if (!Number.isFinite(prior.netWorth) || prior.month >= currentMonth) return null;
-  const change = Math.round(netWorth) - Math.round(prior.netWorth);
+  if (!prior) return null;
+  // The arithmetic is the engine's (E12 S5), so web and the mobile app show the same change.
+  const result = selectNetWorthChange(
+    netWorth,
+    [{ month: prior.month, netWorth: prior.netWorth, allCarried: false }],
+    currentMonth,
+  );
+  if (!result) return null;
+  const { change } = result;
   const since = sinceLabel(prior.month, currentMonth);
   if (change === 0) return { direction: "flat", text: `Same as ${since}`, polarity: "asset" };
   return {

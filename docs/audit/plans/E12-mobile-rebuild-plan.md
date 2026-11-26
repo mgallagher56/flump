@@ -560,11 +560,85 @@ More lists, in web's drawer order: Savings, Pension, Retirement, Cards and loans
 
 **Built (S4, 26 November 2026).** As above, with these details. `SessionGate` wraps `app/(app)/_layout.tsx` and gives the tabs a shell context (`src/navigation/shell.ts`: offline, sign out, Try again, the two websites). The tab bar lays its tabs out by an estimate of the longest label's width (`tabLayout` in `TabBar.styles.ts`): five a row at the normal size on 320 points, two a row over three rows at 200% text, icons gone from 1.5 times; the real fit is a device check. The More list is a pushed page per row (`page/[key]`), so the tab bar hides there and Back returns to More. The web test also pins each icon's shapes to lucide-react's. `EXPO_PUBLIC_WEB_APP_URL` is optional (coordinator, 26 November 2026); without it placeholder links open the marketing site's home page; links open in the system browser, never an in-app sheet. The tabs are the `(app)` stack's initial route, so a page opened cold by a link has Back to them. `app/+native-intent.ts` ignores Android's copy of the sign-in redirect while the app is open, so a link opened signed out lands on its screen after sign-in. Expo Router's route tests (`src/navigation/routes.test.tsx`) needed `standard-navigation` added to Jest's transform list. After the coordinator's device check: any unknown link (`flump://nope`) lands on `app/(app)/+not-found.tsx`, inside the gate, with one way back to Home, instead of Expo Router's own page; the router plugin's `sitemap: false` removes the development-build route list. After the full device check (26 November 2026): the tab bar is one View per row of equal flex cells, because Android rounded five 20% cells up and wrapped the fifth at normal text; stacked pages draw the same header with Back; icons grow with the text size up to double; the header button says "Open More"; More's last group is headed "Settings and tools"; placeholders say "This page is not in the app yet" and, with no web app address, "Open the Flump website"; Pay uses lucide's banknote, not web's calculator, which Calculators keeps (the parity test's one icon exception; web follows when its phone screenshots are redone); the check-in reads only the profile fields it uses, so a person with no profile yet or with setup unfinished is sent to the website to set up instead of seeing a load error; and the theme reads the system setting again when the app returns to the front.
 
-### 9.8 Later slices
+### 9.8 S5. Net worth on Home
+
+**Goal.** Home answers "what is my net worth today" with the same figure, label and change as web's Home (`apps/web/app/routes/_index.tsx`, `HomeDashboard.tsx`), under the person's stored net worth choices.
+
+**Seam check (26 November 2026).** No backend service works out net worth. There is no net worth route; web's Home loader builds the figure with the engine's `loadFinancialPicture` (`apps/web/app/services/backend-client.server.ts:548`), whose `buildFinancialPicture` calls `selectNetWorth` with `netWorthBasisFromProfile` (`packages/finance-engine/src/picture/build.ts:136`, `:233`); the backend's AI tools use the same loader (`apps/backend/src/modules/agent/financial-picture.service.ts:85`). The backend stores the two choices only (`user-profile.service.ts:333`). `netWorthImpactGbp` in `banking/providers/provider.interface.ts:44` is one imported account's sign, not a total. One hero figure was worked out outside the engine, on web: the change since the last recorded month (the loader picks the month at `routes/_index.tsx:183`, and `features/dashboard/netWorthDelta.ts` subtracts). It moves to the engine in this slice, with no change to any figure.
+
+**What web has, and where each part lands.**
+
+- **S5:** the hero (label, figure, the one change line, trend bars) and the line under it saying what the figure leaves out; the check-in row; every state below.
+- **S6:** the Accounts section card, account rows, history. The hero's bars link nowhere until then.
+- **S9:** the two net worth switches. S5 reads `netWorthCountsProperty` and `netWorthCountsStudentLoan` and shows their effect; "Change what counts" opens the website's settings (`/app/profile?tab=profile#net-worth`) until S9. Also "Choose what shows here" and the section order.
+- **S10 and later:** the two-figure strip ("Left over each month", then "What you owe" or "Pension pots"), the other section cards and the notice at their foot. Left over and breathing room do not share the hero on web: left over is in the strip, breathing room on the Budget card. Both need the whole financial picture, which reaches the tax vector catalogue (`picture/build.ts` to `debt-payoff.ts` to `uk-tax.ts` to `tax-year-verification.ts`).
+- **S15:** the setup checklist row. The no-profile state from S4 stays.
+
+**The flow.** Home, top to bottom: the hero; the leaves-out line when it applies; the check-in row when due. The "You are signed in" heading goes (the hero is the heading). The dev links move to the foot of the More list, still behind `__DEV__`.
+
+- **Hero label:** "Net worth", or "Net worth, including your home estimate" when a home estimate is counted (web's `homeCounted` rule).
+- **Figure:** whole pounds; a minus is spoken as "minus".
+- **Change:** today against the latest recorded month before this one, under the same choices: "£320 since October" with an arrow and a spoken direction, or "Same as October". None when no earlier month is recorded. A fall has no colour of its own.
+- **Trend bars:** the last seven recorded months from `selectNetWorthTrend`, under the figure, latest solid, others outlined, a break as an empty slot; nothing below three recorded months or when every month is equal. Drawn with plain views from the engine's percentages.
+- **Leaves-out line:** "Not counting your property, mortgage or student loan." with "Change what counts"; or "Your home's value is not counted until you add an estimate." with "Add an estimate" (website until S8). One line at most.
+
+**States.**
+
+- **Loading:** nothing for 200 ms, then a skeleton the size of the hero that stays at least 400 ms; the hero replaces it with no jump. A refetch never shows it.
+- **No accounts:** the hero shows "Add an account to see your net worth." and "Add an account" (website until S8), never £0. The check-in row keeps its S3 empty state.
+- **No profile or setup unfinished:** `NotSetUp`, as S4.
+- **Out of step** (`bad-response`): the check-in's out-of-step words, with Try again; never "check your connection".
+- **Offline** (`restoredOffline`): `Offline` with Try again, tab bar kept, as S4. **Unavailable** (`unavailable`, `server`, after two retries): `ErrorState` with Try again. **Terms:** `TermsRequired` in the tab body.
+- **Refused figure:** net worth is never refused (`selectNetWorth` reads account rows only, no tax rates). Web's refusals on Home sit in the strip, the cards and the rates banner, none of which S5 draws, so S5 calls no tax-year function. They arrive with the figures they belong to (S10, S13).
+
+**How it reads data.** No new endpoint. Web builds Home from `/user-profile`, `/accounts`, `/budget-entries`, `/tax-records` and `/snapshots/check-ins` through the engine's `loadFinancialPicture`, and its hero uses only accounts, their monthly rows and the two profile choices. Mobile reads the four queries S3 already has (`src/data/checkIn.ts`: accounts, account details, profile, check-ins), shared with the check-in row by query key, so Home makes no second request.
+
+Figures, all from a new narrow entry `@flump/finance-engine/net-worth` (the root pulls in the vector catalogue):
+
+- today: `selectNetWorth(new PortfolioSnapshot(accounts, details), netWorthBasisFromProfile(profile))`, as `buildFinancialPicture` does;
+- series: `selectSavedNetWorthSeries(accounts, details, londonMonth, basis)`; bars: `selectNetWorthTrend(series)`;
+- change: the new engine selector `selectNetWorthChange` in `packages/finance-engine/src/net-worth-change.ts` (since month and whole-pound change); web's loader and `netWorthDelta` keep only the words and call it;
+- leaves-out words: `joinNetWorthLeftOut`.
+
+**Older and newer backends.** Home's reads parse picks of the contract schemas that ignore unknown fields and allow the fields Home can live without to be absent (S3's `CheckInProfile` pattern). A missing net worth choice falls back inside `netWorthBasisFromProfile`, never in the app. Only a missing `id`, `type` or `balance` is out of step.
+
+**Files.**
+
+- Engine: `src/net-worth-change.ts` and test; `src/net-worth-entry.ts` with a reach test as `check-in-entry.test.ts`; `package.json` export; the value map gains the change as a shared figure (law 16).
+- Web, small: `netWorthDelta.ts` and the loader in `routes/_index.tsx` call the new selector; a Vitest test pins mobile's Home strings to web's.
+- Mobile data: `src/features/home/useHomeData.ts` (one state: loading, notSetUp, error with problem, ready); `src/copy/home.ts`; `SIGNED_IN_HEADING` removed.
+- Mobile components, five files each: `HeroFigure` gains the change, an empty prompt with action, and a slot under the figure; new `NetWorthTrendBars`, `NetWorthBasisLine`. Tokens only.
+- Screens: `screens/Home/`, `screens/More/` (dev links).
+- Fixture server: new `data` values `owner` and `renter` built from `apps/e2e/support/personas.ts` with recorded months, and `malformed` (an account with no balance). Each body is parsed with its contract schema.
+- End to end: `e2e/flows/home-with-data.yaml`, `home-empty.yaml`; flows that asserted "You are signed in" assert the `home` test id; the screenshot list and its test; gallery entries.
+- Docs: parity log; this section's Built paragraph.
+
+**Acceptance**
+
+1. For the renting and home-owning households in `apps/e2e/support/personas.ts`, the hero's label, figure, change line and each trend bar's month and figure equal web's Home, checked by hand and recorded in the PR.
+2. **Seam (O5 seam 1):** every hero figure (today, change, each bar, the leaves-out list) comes from an engine selector that web and mobile both call. No subtraction or sum of money in `apps/mobile/src` or in web's `netWorthDelta.ts`, and no backend service computes any of them. The PR states "Seam cost".
+3. The `net-worth` entry reaches no `test-vectors` module and not `tax-year-verification.ts`; the bundle search still passes.
+4. Stored choices: with property not counted, the figure, change and bars leave out the home and its mortgage and the line says so; the same for the student loan. Home has no control that changes a choice.
+5. Loading: nothing before 200 ms; a skeleton shown stays 400 ms; the hero's frame equals the skeleton's. Timed tests with a fake clock; no shimmer under Reduce Motion.
+6. A failed read never shows "Add an account" or £0. One Jest test per state: no accounts, not set up, out of step, unavailable, offline, terms. Out of step never mentions the connection.
+7. Everything S4 put on Home still passes: check-in row, "Continue check-in", its empty state, not set up, offline with Try again, terms.
+8. An older backend (fields missing) and a newer one (unknown fields) each still show the hero; `malformed` shows out of step.
+9. Accessibility: the hero is one group, spoken as "Net worth, £52,100, up £320 since October"; the bars are hidden from the reader and the months are read from a list, as web. Tabular numerals, whole pounds. At 200% text and 320 points wide nothing is clipped and the bars sit under the figure.
+10. A negative net worth and a fall use the hero's ordinary text colour: no red, warning icon or praise for a rise. The wording is the same up or down. The renter's hero is the same component with the plain label.
+11. Colour pairs drawn are in the shared contrast matrix or join it, in both themes.
+12. `home-with-data.yaml` and `home-empty.yaml` assert by test id, settle the app first, use no retries, take light and dark screenshots.
+13. The React Navigation dev warning "configured linking in multiple places" has its cause recorded. If the root or a navigation container mounts twice, it is fixed; if it comes from the library alone, the PR says so with the evidence.
+14. The gallery shows the hero (figure, change, empty, with bars), `NetWorthTrendBars` and `NetWorthBasisLine` in light, dark and 200% text.
+15. Lint, types, `check:laws` and the engine, web and mobile tests pass.
+16. The parity log marks the Home hero rows and records the strip, cards, rates banner and checklist as waiting. The PR states the CROSS-PLATFORM section 7 result.
+
+**Open questions sent to the coordinator (26 November 2026), built to the recommendation until answered:** the two-figure strip waits for S10; no tax rates banner on Home until a rates-based figure is shown; "Change what counts" links to the website's settings; the setup checklist row waits for S15; the dev links move to the foot of More.
+
+### 9.9 Later slices
 
 Each is specified in full when the slice before it merges, from the web page as it then is and the parity log. Fixed now:
 
-- **S5:** before the hero is built, check that the backend's net worth for `GET /v1/portfolio-snapshot` is computed by the engine's net worth basis; if any part is computed only in a backend service, move it to the engine first (O5 seam 1).
+- **S5:** specified in 9.8. `GET /v1/portfolio-snapshot` does not exist; the hero is built by engine selectors over the reads S3 already makes, and the one figure web worked out outside the engine (the change since the last recorded month) moves into the engine first (O5 seam 1).
 - **S6:** one balance per account everywhere; the joint share line as on web (E34 C1); history chart only from three recorded months; history not editable.
 - **S7:** SQLCipher with the key check; the database out of iCloud and Android backups; a test that a cold start with no network keeps saved data; a test that a restored backup without the key shows no cached data and asks to sign in.
 - **S9:** the two net worth switches (R1), export, deletion with the typed phrase, recent sign-in when asked; the four legal pages linked, opening in the browser. Web's optional browser storage switch has no mobile counterpart (parity log, 25 November).

@@ -16,6 +16,11 @@
       "import": "./dist/check-in-entry.js",
       "default": "./src/check-in-entry.ts"
     },
+    "./net-worth": {
+      "types": "./dist/net-worth-entry.d.ts",
+      "import": "./dist/net-worth-entry.js",
+      "default": "./src/net-worth-entry.ts"
+    },
     "./testing": {
       "types": "./dist/picture/__fixtures__/index.d.ts",
       "import": "./dist/picture/__fixtures__/index.js",

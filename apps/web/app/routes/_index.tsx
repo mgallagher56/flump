@@ -8,6 +8,7 @@ import {
   profileFactsFromProfile,
   recordedTotalsForTaxYear,
   selectCheckInPartDone,
+  selectNetWorthChange,
   selectNetWorthTrend,
   selectTakeHome,
 } from "@flump/finance-engine";
@@ -180,7 +181,9 @@ export const loader = async (args: LoaderFunctionArgs) => {
     currentMonth,
     basis,
   );
-  const prior = history.series.filter((p) => !p.allCarried && p.month < currentMonth).at(-1);
+  // The engine picks the month (E12 S5): the same rule the mobile app's hero reads.
+  const change = selectNetWorthChange(netWorth, history.series, currentMonth);
+  const prior = change ? history.series.find((p) => p.month === change.priorMonth) : undefined;
   const netWorthPrior = prior ? { month: prior.month, netWorth: prior.netWorth } : null;
   // The hero's trend bars: the last seven recorded months from the same series, with their
   // geometry worked out by the engine (null below three recorded months).
