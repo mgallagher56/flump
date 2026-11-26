@@ -66,7 +66,7 @@ const LOOPBACK_HOSTS = new Set(["127.0.0.1", "::1", "localhost"]);
 
 const CODE_LIFETIME_MS = 10 * 60 * 1000;
 /** WorkOS's refresh token grace period: "The grace period is 30 seconds." */
-export const REFRESH_GRACE_MS = 30 * 1000;
+const REFRESH_GRACE_MS = 30 * 1000;
 
 interface Scenario {
   /** `not-invited`: `/v1` answers 403 not_invited, as the closed beta does. */

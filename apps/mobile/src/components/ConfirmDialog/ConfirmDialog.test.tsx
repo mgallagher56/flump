@@ -1,7 +1,10 @@
-import { render } from "@testing-library/react-native";
+import { render, renderHook } from "@testing-library/react-native";
+import type { ReactNode } from "react";
 import { Alert, type AlertButton, type AlertOptions } from "react-native";
+import { ThemeProvider, useTheme } from "../../theme/ThemeProvider";
 import { ConfirmDialog, type ConfirmDialogProps } from "./ConfirmDialog";
 import { confirmDialogStates } from "./ConfirmDialog.states";
+import { createStyles } from "./ConfirmDialog.styles";
 
 type AlertCall = [string, string, AlertButton[], AlertOptions];
 
@@ -24,6 +27,18 @@ function setup(overrides: Partial<ConfirmDialogProps> = {}) {
 afterEach(() => jest.restoreAllMocks());
 
 describe("ConfirmDialog", () => {
+  it("draws nothing of its own: the platform draws the dialog, so it has no styles", async () => {
+    const { props } = setup({ visible: false });
+    const view = await render(<ConfirmDialog {...props} />);
+    expect(view.toJSON()).toBeNull();
+    const { result } = await renderHook(() => useTheme(), {
+      wrapper: ({ children }: { children: ReactNode }) => (
+        <ThemeProvider scheme="light">{children}</ThemeProvider>
+      ),
+    });
+    expect(Object.keys(createStyles(result.current))).toEqual([]);
+  });
+
   it("shows the platform alert with the title, consequence, Cancel and the action, in that order", async () => {
     const { alert, props, lastCall } = setup();
     await render(<ConfirmDialog {...props} />);
