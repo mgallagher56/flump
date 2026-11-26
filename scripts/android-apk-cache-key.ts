@@ -291,6 +291,9 @@ if (import.meta.main) {
     summary(
       `### 🔑 Debug APK cache key\n\n\`${key}\`\n\n| Input | sha256 |\n| --- | --- |\n${rows.join("\n")}\n\n`,
     );
+    for (const i of inputs) console.log(`${sha(i.value).slice(0, 12)}  ${i.label}`);
+    // The toolchain in full: it is read from the runner, not the repo.
+    console.log(inputs.find((i) => i.label === "toolchain")?.value);
     console.log(key);
   } catch (error) {
     const reason = (error instanceof Error ? error.message : String(error)).split("\n")[0];
