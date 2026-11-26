@@ -16,7 +16,7 @@ Maestro flows on an Android emulator against a local fixture server (E12 slice S
 bun apps/mobile/e2e/fixture-server/main.ts
 ```
 
-The emulator reaches it as `http://10.0.2.2:8787` (the `e2e` profile in `eas.json` sets `EXPO_PUBLIC_API_URL` to that). Routes and scenarios are listed at the top of `fixture-server/server.ts`. A flow chooses a scenario before launching the app, for example with Maestro's `runScript` and `http.post` to `/__fixture/scenario` with `{"refresh": "rejected"}`. It refreshes the strict way: each refresh token works once. Whether real WorkOS does the same is a question for the S2a spike.
+The emulator reaches it as `http://10.0.2.2:8787` (the `e2e` profile in `eas.json` sets `EXPO_PUBLIC_API_URL` to that). Routes and scenarios are listed at the top of `fixture-server/server.ts`. A flow chooses a scenario before launching the app, for example with Maestro's `runScript` and `http.post` to `/__fixture/scenario` with `{"refresh": "rejected"}`. Each refresh replaces the refresh token; the old one gives back the same new pair for 30 seconds and is refused after that, as real WorkOS does (the owner's sign-in on 26 November 2026, spike notes).
 
 ### Check-in data (S3)
 
@@ -38,12 +38,17 @@ It proves Hermes at runtime on Android only. iOS is a hand check on a Mac. Not a
 
 ## By hand
 
-Android Studio with an emulator running, then from `apps/mobile`:
+Android Studio with an emulator running, then from `apps/mobile`.
+
+**Never alongside the real settings.** A debug build loads its JavaScript from Metro on port 8081, whatever port a second Metro uses, so a second Metro for the fixture does nothing while the real one runs: the app keeps loading the real bundle (seen 26 November 2026). And Expo reads `.env.local` unless told not to, while Metro's cache can keep values from an earlier start. So: stop every other Metro first, start this one with `EXPO_NO_DOTENV=1` (Expo then reads no `.env` file at all, so the real `.env.local` cannot leak in) and `--clear` (no cached values).
 
 ```bash
+lsof -ti tcp:8081 | xargs kill   # stops any Metro already on 8081, the real-config one included
 bun e2e/fixture-server/main.ts &
-EXPO_PUBLIC_API_URL=http://10.0.2.2:8787 EXPO_PUBLIC_WORKOS_API_URL=http://10.0.2.2:8787 \
+EXPO_NO_DOTENV=1 EXPO_PUBLIC_API_URL=http://10.0.2.2:8787 EXPO_PUBLIC_WORKOS_API_URL=http://10.0.2.2:8787 \
   EXPO_PUBLIC_WORKOS_CLIENT_ID=client_e2e_fixture EXPO_PUBLIC_MARKETING_URL=https://flump.example \
-  bunx expo run:android
+  bunx expo run:android --port 8081
 maestro test -e THEME=light e2e/flows
 ```
+
+You know it took when Sign in comes straight back signed in with no WorkOS page: the fixture's authorize page redirects at once. If a WorkOS page appears, the app is on the real settings; stop and start again from the first line. Go back to the real settings the same way: stop this Metro, then start yours without `EXPO_NO_DOTENV`.

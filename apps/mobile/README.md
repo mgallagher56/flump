@@ -33,7 +33,7 @@ The Maestro flow `e2e/flows/engine-check.yaml` checks the device check on a debu
 
 Expo Go cannot finish a sign-in, so this needs a development build of Flump on the phone. Two free routes, no new account. Either way, the app's code comes from Metro on your computer, with your own settings, and nothing secret is ever typed into the app except your password, on the WorkOS page.
 
-**Settings (both routes).** Keep `.env.local` in the main checkout's `apps/mobile`, not in a session worktree: a worktree is removed when its session ends, and the file goes with it. Check out the branch you are testing there, copy `apps/mobile/.env.example` to `apps/mobile/.env.local` (git ignores it) and fill in the three lines:
+**Settings (both routes).** Keep `.env.local` in the main checkout's `apps/mobile`, not in a session worktree: a worktree is removed when its session ends, and the file goes with it. Check out the branch you are testing there, copy `apps/mobile/.env.example` to `apps/mobile/.env.local` (git ignores it) and fill in the three lines. To run against the fixture server instead, follow "By hand" in [`e2e/README.md`](./e2e/README.md): it stops this Metro first and starts one that cannot read `.env.local`.
 
 ```text
 EXPO_PUBLIC_API_URL=<the staging backend's https address>
