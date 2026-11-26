@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import "reflect-metadata";
 import { AccountExportDocument } from "@flump/api-contract";
 import { Logger } from "@nestjs/common";
@@ -35,6 +35,7 @@ import { emptyEntityTables } from "../../testing/emptyTables";
 import { at } from "../../testing/must";
 import { LoggingBankConsentRevoker } from "../banking/bank-consent-revoker";
 import { AccountIntakeService } from "../finance/account-intake.service";
+import { HouseholdService } from "../household/household.service";
 import { UserProfileService } from "../profile/user-profile.service";
 import { AccountDeletionService } from "./account-deletion.service";
 import { AccountExportService, ExportDeadlineError } from "./account-export.service";
@@ -314,6 +315,20 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
       `INSERT INTO beta_members (user_id, invite_id, added_at) VALUES ($1, $2, '2026-11-01T10:00:00Z')`,
       [userId, invite.id],
     );
+    // E34 C3: in a household with a partner of their own (never the other seeded user), sharing
+    // their joint accounts, and holding an open invitation link.
+    const partner = partnerOf(label);
+    const [household] = await m.query(`INSERT INTO households DEFAULT VALUES RETURNING id`);
+    await m.query(
+      `INSERT INTO household_members (household_id, user_id, slot, shares_joint_summary, joined_at)
+       VALUES ($1, $2, 1, true, '2026-11-02T10:00:00Z'), ($1, $3, 2, false, '2026-11-02T10:00:00Z')`,
+      [household.id, userId, partner],
+    );
+    await m.query(
+      `INSERT INTO household_invitations (token_hash, inviter_user_id, expires_at)
+       VALUES ($1, $2, '2026-11-20T10:00:00Z')`,
+      [createHash("sha256").update(randomBytes(32)).digest("hex"), userId],
+    );
     await m.save(
       m.create(UserProfile, {
         userId,
@@ -325,6 +340,16 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
       }),
     );
   };
+
+  /** Each seeded user's household partner, built at run time. */
+  const partners = new Map<string, string>();
+  const partnerOf = (label: string): string => {
+    const id = partners.get(label) ?? `partner_${label}_${randomBytes(6).toString("hex")}`;
+    partners.set(label, id);
+    return id;
+  };
+  const membershipOf = async (userId: string) =>
+    ds.query(`SELECT household_id, slot FROM household_members WHERE user_id = $1`, [userId]);
 
   /** Every public table with a user_id column, straight from the catalogue (not the entities). */
   const userIdTables = async (): Promise<string[]> => {
@@ -438,6 +463,15 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
       { label: "For A", redeemed_by_user_id: null },
       { label: "For B", redeemed_by_user_id: USER_B },
     ]);
+    // E34 C3: A's household closed, so A's partner lost only their membership row; B's household,
+    // B's partner and B's invitation are untouched. A's open invitation link is gone.
+    expect(await membershipOf(partnerOf("A"))).toEqual([]);
+    expect(await membershipOf(partnerOf("B"))).toHaveLength(1);
+    expect(Number((await ds.query(`SELECT count(*) AS n FROM households`))[0].n)).toBe(1);
+    const inviters: { inviter_user_id: string }[] = await ds.query(
+      `SELECT inviter_user_id FROM household_invitations`,
+    );
+    expect(inviters).toEqual([{ inviter_user_id: USER_B }]);
   });
 
   it("erases cascade-only rows (the BE-05 sign before-image) with the user's accounts", async () => {
@@ -927,6 +961,16 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
       'Beta invite link: you used it on 2026-11-01. Its label was "For A".',
     );
     expect(text).not.toContain("For B");
+    // E34 C3: the household membership, the person's own sharing choice and their open link are
+    // notes; never the partner's id or anything of theirs.
+    expect(doc.notes).toContain(
+      "Household: you joined a household on 2026-11-02. You show the accounts you marked joint in its summary.",
+    );
+    expect(doc.notes).toContain(
+      "Household invitation link: you have an open link that stops working on 2026-11-20.",
+    );
+    expect(text).not.toContain(partnerOf("A"));
+    expect(text).not.toContain(partnerOf("B"));
 
     // Nothing of B's, and no secret of anyone's.
     expect(text).not.toContain(USER_B);
@@ -1085,6 +1129,8 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
       // Beta access is not financial data: a reset keeps it.
       beta_members: 1,
       budget_entries: 0,
+      // Nor is a household: a reset leaves the person in it.
+      household_members: 1,
       idempotency_keys: 0,
       consents: 1,
       import_batches: 0,
@@ -1209,6 +1255,133 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
 
       const accounts = await intake().getAccounts(USER_A);
       expect(accounts.map((a) => a.name)).toEqual(["A"]);
+    });
+  });
+
+  describe("households (E34 C3): erasure serialises with accept and leave", () => {
+    const savedSwitch = process.env.HOUSEHOLD_ENABLED;
+    let households: HouseholdService;
+    let inviter: string;
+    let joiner: string;
+
+    beforeEach(() => {
+      process.env.HOUSEHOLD_ENABLED = "true";
+      households = new HouseholdService(ds, deletion);
+      inviter = `user_hh_inviter_${randomBytes(6).toString("hex")}`;
+      joiner = `user_hh_joiner_${randomBytes(6).toString("hex")}`;
+    });
+
+    afterEach(() => {
+      if (savedSwitch === undefined) delete process.env.HOUSEHOLD_ENABLED;
+      else process.env.HOUSEHOLD_ENABLED = savedSwitch;
+    });
+
+    const householdRows = async () => ({
+      households: Number((await ds.query(`SELECT count(*) AS n FROM households`))[0].n),
+      members: Number((await ds.query(`SELECT count(*) AS n FROM household_members`))[0].n),
+      invitations: Number((await ds.query(`SELECT count(*) AS n FROM household_invitations`))[0].n),
+    });
+
+    /** Resolves once `n` backends wait for an advisory lock. */
+    const advisoryLockWaiters = async (n: number) => {
+      for (let i = 0; i < 300; i++) {
+        const [row] = (await ds.query(
+          `SELECT count(*)::int AS n FROM pg_locks
+           WHERE locktype = 'advisory' AND NOT granted
+             AND database = (SELECT oid FROM pg_database WHERE datname = current_database())`,
+        )) as Array<{ n: number }>;
+        if ((row?.n ?? 0) >= n) return;
+        await new Promise((r) => setTimeout(r, 10));
+      }
+      throw new Error(`fewer than ${n} backends waited for the user-data lock`);
+    };
+
+    it("an accept that waited for the inviter's erasure sees it and is refused; nothing is left", async () => {
+      const { token } = await households.createInvitation(inviter);
+      // Hold the inviter's shared lock, so the erasure queues for its exclusive lock first and the
+      // accept then queues behind the erasure (Postgres grants in order).
+      const holder = ds.createQueryRunner();
+      await holder.connect();
+      await holder.startTransaction();
+      await holder.query("SELECT pg_advisory_xact_lock_shared(hashtextextended($1, 0))", [
+        `user-data:${inviter}`,
+      ]);
+      const erasure = deletion.deleteAccount(inviter);
+      await advisoryLockWaiters(1);
+      const accept = households.acceptInvitation(joiner, token).then(
+        () => "joined",
+        (err: { status?: number }) => err.status,
+      );
+      await advisoryLockWaiters(2);
+      await holder.commitTransaction();
+      await holder.release();
+
+      await expect(erasure).resolves.toEqual({ status: "deleted" });
+      expect(await accept).toBe(410);
+      expect(await householdRows()).toEqual({ households: 0, members: 0, invitations: 0 });
+    });
+
+    it("an accept that commits before the erasure is undone by it: the household closes", async () => {
+      const { token } = await households.createInvitation(inviter);
+      await households.acceptInvitation(joiner, token);
+      expect(await householdRows()).toEqual({ households: 1, members: 2, invitations: 0 });
+      await expect(deletion.deleteAccount(inviter)).resolves.toEqual({ status: "deleted" });
+      expect(await householdRows()).toEqual({ households: 0, members: 0, invitations: 0 });
+      // The joiner reads as never joined.
+      await expect(households.get(joiner)).resolves.toEqual({ household: null, invitation: null });
+    });
+
+    it("leave and the other person's erasure at once: both finish, and nothing is left", async () => {
+      for (let i = 0; i < 5; i++) {
+        const a = `${inviter}_${i}`;
+        const b = `${joiner}_${i}`;
+        const { token } = await households.createInvitation(a);
+        await households.acceptInvitation(b, token);
+        const [left, erased] = await Promise.all([households.leave(b), deletion.deleteAccount(a)]);
+        expect(left).toEqual({ success: true });
+        expect(erased).toEqual({ status: "deleted" });
+        expect(await householdRows()).toEqual({ households: 0, members: 0, invitations: 0 });
+      }
+    });
+
+    it("an erasure of the joiner leaves the inviter's own data untouched", async () => {
+      const m = ds.manager;
+      await m.save(
+        m.create(Account, {
+          userId: inviter,
+          name: "Shared bills",
+          type: "Current",
+          balance: 812.34,
+          ownership: "joint",
+        }),
+      );
+      const before = await ds.query(`SELECT * FROM accounts WHERE user_id = $1 ORDER BY id`, [
+        inviter,
+      ]);
+      const { token } = await households.createInvitation(inviter);
+      await households.acceptInvitation(joiner, token);
+      await households.updateSharing(inviter, true);
+      await expect(deletion.deleteAccount(joiner)).resolves.toEqual({ status: "deleted" });
+      expect(
+        await ds.query(`SELECT * FROM accounts WHERE user_id = $1 ORDER BY id`, [inviter]),
+      ).toEqual(before);
+      expect(await householdRows()).toEqual({ households: 0, members: 0, invitations: 0 });
+    });
+
+    it("no invitation can be made or accepted with the switch off, in the service too", async () => {
+      const { token } = await households.createInvitation(inviter);
+      process.env.HOUSEHOLD_ENABLED = "false";
+      await expect(households.createInvitation(joiner)).rejects.toMatchObject({ status: 404 });
+      await expect(households.acceptInvitation(joiner, token)).rejects.toMatchObject({
+        status: 404,
+      });
+      await expect(households.previewInvitation(joiner, token)).rejects.toMatchObject({
+        status: 404,
+      });
+      expect(await householdRows()).toEqual({ households: 0, members: 0, invitations: 1 });
+      // Erasure runs whatever the switch says.
+      await expect(deletion.deleteAccount(inviter)).resolves.toEqual({ status: "deleted" });
+      expect(await householdRows()).toEqual({ households: 0, members: 0, invitations: 0 });
     });
   });
 });

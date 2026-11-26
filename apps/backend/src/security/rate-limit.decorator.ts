@@ -29,6 +29,13 @@ export const RATE_LIMIT_POLICIES = {
    * address (ADDRESS_KEYED_RATE_LIMIT_CLASSES), so guessing links from many accounts is slow too.
    */
   inviteRedeem: [{ limit: 5, windowMs: HOUR }],
+  /**
+   * Previewing and accepting a household invitation link (E34 C3), one budget for both: as strict
+   * as `inviteRedeem`, five tries an hour, per user and per client address.
+   */
+  householdInviteAccept: [{ limit: 5, windowMs: HOUR }],
+  /** Making a household invitation link (each replaces the last): ten an hour per user. */
+  householdInviteCreate: [{ limit: 10, windowMs: HOUR }],
 } as const satisfies Record<string, readonly RateLimitWindow[]>;
 
 /**
@@ -55,6 +62,8 @@ export const SHARED_RATE_LIMIT_CLASSES: ReadonlySet<RateLimitClass> = new Set<Ra
   "bulkWrite",
   "dataExport",
   "inviteRedeem",
+  "householdInviteAccept",
+  "householdInviteCreate",
 ]);
 
 /**
@@ -67,6 +76,8 @@ export const FAIL_CLOSED_RATE_LIMIT_CLASSES: ReadonlySet<RateLimitClass> = new S
   "tokenMint",
   "destructive",
   "inviteRedeem",
+  "householdInviteAccept",
+  "householdInviteCreate",
 ]);
 
 /**
@@ -74,7 +85,7 @@ export const FAIL_CLOSED_RATE_LIMIT_CLASSES: ReadonlySet<RateLimitClass> = new S
  * uses), each against the class's own windows. A request is refused when either is spent.
  */
 export const ADDRESS_KEYED_RATE_LIMIT_CLASSES: ReadonlySet<RateLimitClass> =
-  new Set<RateLimitClass>(["inviteRedeem"]);
+  new Set<RateLimitClass>(["inviteRedeem", "householdInviteAccept"]);
 
 export const RATE_LIMIT_CLASS = "flump:rate-limit-class";
 export const RATE_LIMIT_SKIP = "flump:rate-limit-skip";

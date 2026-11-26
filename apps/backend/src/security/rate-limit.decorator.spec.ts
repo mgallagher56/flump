@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { isExemptPath, RATE_LIMIT_POLICIES } from "./rate-limit.decorator";
+import {
+  ADDRESS_KEYED_RATE_LIMIT_CLASSES,
+  FAIL_CLOSED_RATE_LIMIT_CLASSES,
+  isExemptPath,
+  RATE_LIMIT_POLICIES,
+  SHARED_RATE_LIMIT_CLASSES,
+} from "./rate-limit.decorator";
 import { RateLimitStore } from "./rate-limit.store";
 
 const MIN = 60_000;
@@ -34,5 +40,25 @@ describe("credential policy (E20 section 6: 3 per 15 minutes, 10 per day)", () =
     expect(refused.allowed).toBe(false);
     // The day window is 24 * 60 * 60 * 1000 = 86 400 000 ms.
     expect(refused.exceeded?.windowMs).toBe(86_400_000);
+  });
+});
+
+describe("household invitation classes (E34 C3)", () => {
+  it("previewing and accepting is as strict as redeeming a beta invite: 5 an hour", () => {
+    expect(RATE_LIMIT_POLICIES.householdInviteAccept).toEqual([{ limit: 5, windowMs: 3_600_000 }]);
+    expect(RATE_LIMIT_POLICIES.householdInviteAccept).toEqual(RATE_LIMIT_POLICIES.inviteRedeem);
+  });
+
+  it("making a link is 10 an hour", () => {
+    expect(RATE_LIMIT_POLICIES.householdInviteCreate).toEqual([{ limit: 10, windowMs: 3_600_000 }]);
+  });
+
+  it("both are shared across replicas and fail closed; accepting is counted per address too", () => {
+    for (const cls of ["householdInviteAccept", "householdInviteCreate"] as const) {
+      expect(SHARED_RATE_LIMIT_CLASSES.has(cls)).toBe(true);
+      expect(FAIL_CLOSED_RATE_LIMIT_CLASSES.has(cls)).toBe(true);
+    }
+    expect(ADDRESS_KEYED_RATE_LIMIT_CLASSES.has("householdInviteAccept")).toBe(true);
+    expect(ADDRESS_KEYED_RATE_LIMIT_CLASSES.has("householdInviteCreate")).toBe(false);
   });
 });

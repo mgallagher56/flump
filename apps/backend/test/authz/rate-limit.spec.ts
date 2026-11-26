@@ -3,6 +3,7 @@ import { HealthController } from "../../src/health/health.controller";
 import { McpController } from "../../src/modules/agent/mcp.controller";
 import { BudgetController } from "../../src/modules/budget/budget.controller";
 import { FinanceController } from "../../src/modules/finance/finance.controller";
+import { HouseholdController } from "../../src/modules/household/household.controller";
 import { UserProfileController } from "../../src/modules/profile/user-profile.controller";
 import { TaxController } from "../../src/modules/tax/tax.controller";
 import { RATE_LIMIT_CLASS, RATE_LIMIT_SKIP } from "../../src/security/rate-limit.decorator";
@@ -29,6 +30,18 @@ describe("rate limit classes on real controllers", () => {
     expect(classOf(TaxController.prototype, "deleteTaxRecord")).toBe("destructive");
     expect(classOf(TaxController.prototype, "createBulkTaxRecords")).toBe("bulkWrite");
     expect(classOf(BudgetController.prototype, "deleteBudgetEntry")).toBe("destructive");
+  });
+
+  it("puts household invitation links in their own strict classes (E34 C3)", () => {
+    expect(classOf(HouseholdController.prototype, "previewInvitation")).toBe(
+      "householdInviteAccept",
+    );
+    expect(classOf(HouseholdController.prototype, "acceptInvitation")).toBe(
+      "householdInviteAccept",
+    );
+    expect(classOf(HouseholdController.prototype, "createInvitation")).toBe(
+      "householdInviteCreate",
+    );
   });
 
   it("puts receipt downloads in the tighter receiptRead class", () => {

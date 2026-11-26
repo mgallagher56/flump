@@ -20,7 +20,8 @@ export type MatrixRow =
         | "mcp-tokens"
         | "snapshots"
         | "imports"
-        | "beta";
+        | "beta"
+        | "household";
     }
   | { status: "public"; reason: string; spec?: "mcp" };
 
@@ -33,6 +34,7 @@ const mcpTokens = { status: "covered", spec: "mcp-tokens" } as const;
 const snapshots = { status: "covered", spec: "snapshots" } as const;
 const imports = { status: "covered", spec: "imports" } as const;
 const beta = { status: "covered", spec: "beta" } as const;
+const household = { status: "covered", spec: "household" } as const;
 const mcpTransport = {
   status: "public",
   reason: "MCP transport, authenticates with a PAT itself (authz.mcp.spec.ts)",
@@ -152,6 +154,17 @@ export const ROUTE_MATRIX: Readonly<Record<string, MatrixRow>> = {
   "DELETE /beta/admin/invites/:id": beta,
   "GET /beta/admin/members": beta,
   "DELETE /beta/admin/members/:userId": beta,
+
+  // Households (E34 C3), behind the household switch: an unknown route while it is off. Every
+  // route is the caller's own; none reads or changes the other person's settings (G6).
+  "GET /household": household,
+  "POST /household/invitations": household,
+  "DELETE /household/invitations": household,
+  "POST /household/invitations/preview": household,
+  "POST /household/invitations/accept": household,
+  "POST /household/sharing": household,
+  "POST /household/leave": household,
+  "GET /household/joint-summary": household,
 };
 
 /** Routes allowed to carry no AuthGuard. Anything else without one fails the meta-test. */

@@ -80,6 +80,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
         "accounts",
         "beta_members",
         "beta_invites",
+        "household_invitations",
         "rate_limit_buckets",
         "retention_runs",
       ]);
@@ -285,6 +286,17 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       // Used by an account since erased: its member row is gone and the link to the user blanked.
       await invite("used-erased-old", { redeemed: "31 days" });
       await invite("used-erased-recent", { redeemed: "29 days" });
+      // Household invitation links (E34 C3): an expired one goes at once, one still open stays.
+      for (const [n, expires] of [
+        ["1", ago("1 second")],
+        ["2", ago("-1 second")],
+      ] as const) {
+        await ds.query(
+          `INSERT INTO household_invitations (token_hash, inviter_user_id, expires_at)
+           VALUES ($1, $2, ${expires})`,
+          [`household-hash-${n}`, `${OWNER_ID}_${n}`],
+        );
+      }
       // The slice 9 column-drop before-image is kept 30 days: one row past it and one inside it.
       for (const [age, column] of [
         ["31 days", "monthly_savings_target"],
@@ -337,6 +349,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
           beta_members_removed: 1,
           // Its freed invite, the old cancelled and expired links, and the old erased user's link.
           beta_invites_closed: 4,
+          household_invitations_expired: 1,
           account_deletion_tombstones: 1,
           liability_sign_backfill: 1,
           pension_rates_backfill: 1,
@@ -398,6 +411,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       expect(await count("invoice_tax_record_category_backfill")).toBe(1);
       expect(await count("beta_members")).toBe(2);
       expect(await count("beta_invites")).toBe(6);
+      expect(await count("household_invitations")).toBe(1);
       // Inactive accounts are reported, never erased by the purge.
       expect(await count("user_profiles")).toBe(2);
     });

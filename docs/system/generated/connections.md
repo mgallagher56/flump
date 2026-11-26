@@ -109,6 +109,7 @@ flowchart LR
   s_debt["Debt"]
   s_pension["Pension"]
   s_retirement["Retirement plan"]
+  s_settings["Settings"]
   s_picture["Engine picture (headline figures)"]
   s_account_service["Backend account service"]
   s_imports["Staged import"]
@@ -269,6 +270,10 @@ flowchart LR
   f_account_rate ==> g_check_in_calculated_balance
   f_account_monthly_amount ==> g_check_in_calculated_balance
   g_check_in_calculated_balance -.-> s_check_in
+  g_household_joint_summary{{"Household joint summary"}}
+  f_account_balance ==> g_household_joint_summary
+  f_ownership_share ==> g_household_joint_summary
+  g_household_joint_summary -.-> s_settings
 ```
 
 ## home

@@ -2864,6 +2864,25 @@ figures:
     verdict: holds
     note: "E39 S1b (MA7): main-home SDLT (England & NI), LBTT (Scotland), and LTT (Wales) with first-time buyer relief where applicable. The engine takes an explicit jurisdiction and what-if price; only the prefill helper defaultPropertyTaxJurisdictionForTaxRegion reads tax-region. E39 S2 shows it as a scenario on /app/mortgage-estimates with the place always chosen by the user (no prefill) and nothing stored."
 
+  - id: household-joint-summary
+    name: Household joint summary
+    area: accounts
+    computed_by:
+      {
+        function: selectJointSummaryItems,
+        path: packages/finance-engine/src/household-joint-summary.ts,
+      }
+    other_paths: []
+    inputs: [account-balance, ownership-share]
+    shown_on:
+      - {
+          surface: settings,
+          path: apps/backend/src/modules/household/household.service.ts,
+          note: "GET /household/joint-summary, read by the Household tab in Settings (E34 C3, behind the household switch)",
+        }
+    verdict: holds
+    note: "E34 C3: the joint accounts of each household member who chose to share them, the viewer included; the whole stored balance with no share applied; no total until slice C2 pairs two people's copies of one account. Who may be read is decided by jointSummarySourceUserIds (apps/backend/src/modules/household/household-visibility.ts). Household membership, the sharing choice and open invitation links are tables with no fact about the person's money (user-data-registry.ts, noUserFacts). Not shown to AI connections."
+
 # Every browser storage and cookie key the code writes, user data or not. A key that holds a copy of
 # a fact names it under fact:. A trailing * means every key with that prefix.
 browser_storage:

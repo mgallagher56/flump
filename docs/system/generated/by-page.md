@@ -138,7 +138,7 @@ What each page, tool and service writes, reads and shows.
 - Code: `apps/web/app/features/settings/components/ProfileTab/ProfileTab.tsx`
 - Writes: [Salary (yearly pay before tax)](by-fact.md#salary), [Employment type](by-fact.md#employment-type), [Workplace pension rates and how the pension is paid](by-fact.md#pension-rates), [Year of birth](by-fact.md#birth-year), [Tax region](by-fact.md#tax-region), [Student loan plan](by-fact.md#student-loan-plan), [Name and profile picture](by-fact.md#name-and-avatar), [Partner mode toggle](by-fact.md#partner-mode), [Net worth choices (count the home, count the student loan)](by-fact.md#net-worth-choices), [Check-in day of the month](by-fact.md#check-in-day), [Enabled pages and dashboard widgets](by-fact.md#enabled-pages-and-widgets)
 - Reads: [Name and profile picture](by-fact.md#name-and-avatar)
-- Shows figures: none
+- Shows figures: [Household joint summary](by-fact.md#household-joint-summary)
 
 ## Engine picture (headline figures)
 

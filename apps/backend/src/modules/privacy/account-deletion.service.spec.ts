@@ -120,7 +120,7 @@ describe("AccountDeletionService", () => {
       ...USER_DATA_REGISTRY.map((t) => t.entity.name),
       ...USER_LINKED_TABLES.filter((t) => t.erasure === "delete-rows").map((t) => t.entity.name),
     ];
-    expect(order.slice(-1)).toEqual(["BetaMember"]);
+    expect(order.slice(-3)).toEqual(["BetaMember", "HouseholdMember", "HouseholdInvitation"]);
     expect(f.deletes).toEqual([...order, ...order]);
     const blank = { entity: "BetaInvite", where: { redeemedByUserId: "user_A" } };
     expect(f.updates).toEqual([
@@ -128,6 +128,10 @@ describe("AccountDeletionService", () => {
       { ...blank, patch: { redeemedByUserId: null } },
     ]);
     expect(f.ds.transaction).toHaveBeenCalledTimes(2);
+    const leaveStatements = [
+      [expect.stringContaining(`DELETE FROM "households"`), ["user_A"]],
+      [expect.stringContaining(`DELETE FROM "household_invitations"`), ["user_A"]],
+    ];
     // SEC-F: each sweep declares the erasure reason inside its own transaction.
     // The erasure transaction first takes the per-user lock it shares with the reset, waiting up
     // to 30 s for it (statement limit 30 s + 5 s headroom), then goes back to the pool's limits.
@@ -136,7 +140,10 @@ describe("AccountDeletionService", () => {
       [DATA_LOCK_STATEMENT, ["user-data:user_A"]],
       [DATA_LOCK_WAIT_RESET_STATEMENT],
       ["SELECT set_config($1, $2, true)", ["flump.audit_delete", "erasure"]],
+      // E34 C3: the household closes (leaveHousehold) after the sweep, before the linked tables.
+      ...leaveStatements,
       ["SELECT set_config($1, $2, true)", ["flump.audit_delete", "erasure"]],
+      ...leaveStatements,
     ]);
     expect(identity.deletedUsers).toEqual(["user_A"]);
     expect(revoke).toHaveBeenCalledWith("user_A", [
@@ -159,6 +166,11 @@ describe("AccountDeletionService", () => {
     const beta = events.map(String).filter((e) => e.startsWith("account_deleted_beta_access"));
     expect(beta).toEqual([
       "account_deleted_beta_access tombstoneId=11111111-1111-4111-8111-111111111111 members=2 invitesUnlinked=2",
+    ]);
+    // The household counts too: no user id, never the other person's.
+    const household = events.map(String).filter((e) => e.startsWith("account_deleted_household"));
+    expect(household).toEqual([
+      "account_deleted_household tombstoneId=11111111-1111-4111-8111-111111111111 householdsClosed=0 invitationsRemoved=0",
     ]);
   });
 
