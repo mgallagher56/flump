@@ -19,6 +19,8 @@ import { createWorkosClient } from "../../data/workos";
 /**
  * Dev only: the S2a spike against real WorkOS. Sign in first, then run it once and read the rows
  * out. It shows no token values, email or name. Afterwards, sign out: the check rotates tokens.
+ * Do not sign out while it runs: it saves the newest refresh token without the session's guard,
+ * so a sign-out during its 65 second wait would be undone.
  */
 export function SignInCheck({ run = defaultRun }: { run?: () => Promise<SignInCheckReport> }) {
   const [report, setReport] = useState<SignInCheckReport | null>(null);

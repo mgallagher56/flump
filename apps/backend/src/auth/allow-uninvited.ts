@@ -6,7 +6,8 @@ export const ALLOW_UNINVITED = "flump:allow-uninvited";
  * Lets a signed-in caller who is not (yet, or no longer) in the invite-only beta through the
  * AuthGuard's beta refusal. Only for POST /beta/invites/redeem, which is how they join, and for the
  * person's data rights: their data export (JSON and CSV) and deleting their account, which a
- * removed member must still be able to do. The erased-account check still applies: an erased
- * account can never redeem.
+ * removed member must still be able to do; and POST /session/sign-out, so the mobile app's Not
+ * invited screen can end its own WorkOS session (E12 S2b). The erased-account check still applies:
+ * an erased account can never redeem.
  */
 export const AllowUninvited = () => SetMetadata(ALLOW_UNINVITED, true);
