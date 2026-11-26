@@ -117,6 +117,16 @@ describe("canned /v1", () => {
     expect(profile.firstName).toBe("Sam");
   });
 
+  it("serves a person who has not finished setup, or has no profile yet, by scenario", async () => {
+    const { access_token } = await signIn();
+    server.setScenario({ profile: "not-set-up" });
+    const notSetUp = await getProfile(access_token);
+    expect(UserProfileResponse.parse(await notSetUp.json()).onboardingCompleted).toBe(false);
+    server.setScenario({ profile: "none" });
+    const none = await getProfile(access_token);
+    expect([none.status, await none.text()]).toEqual([200, ""]);
+  });
+
   it("answers an unknown /v1 route with 404, not a canned body", async () => {
     const { access_token } = await signIn();
     const res = await fetch(url("/v1/goals"), {

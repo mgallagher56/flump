@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { TAB_BAR_LABEL, tabPosition } from "../../copy/navigation";
 import type { IconName } from "../../navigation/navItems";
 import { useTheme } from "../../theme/ThemeProvider";
+import { useTextScale } from "../../theme/useTextScale";
 import { Icon } from "../Icon";
 import { Pressable } from "../Pressable";
 import { Text } from "../Text";
@@ -22,6 +23,12 @@ export interface TabBarProps {
   onSelect(key: string): void;
 }
 
+/** The items in rows of `columns`. */
+const rowsOf = <T,>(items: readonly T[], columns: number): T[][] =>
+  Array.from({ length: Math.ceil(items.length / columns) }, (_, r) =>
+    items.slice(r * columns, (r + 1) * columns),
+  );
+
 /**
  * The phone navigation (E12 S4, plan 9.7), drawn as web's bottom bar: icon over label, the current
  * tab on a teal pill. A `tablist` of `tab`s with the current one announced as selected; every tab
@@ -33,8 +40,7 @@ export function TabBar({ items, activeKey, onSelect }: TabBarProps) {
   const styles = useMemo(() => createStyles(theme), [theme]);
   const window = useWindowDimensions();
   const [width, setWidth] = useState(window.width);
-  // A gallery or test preview sets the scale itself and turns the phone's setting off (Text).
-  const textScale = theme.textScale !== 1 ? theme.textScale : window.fontScale;
+  const textScale = useTextScale();
   const longest = Math.max(...items.map((item) => item.label.length));
   const layout = tabLayout({
     count: items.length,
@@ -50,40 +56,48 @@ export function TabBar({ items, activeKey, onSelect }: TabBarProps) {
         accessibilityRole="tablist"
         accessibilityLabel={TAB_BAR_LABEL}
         testID="tab-bar"
-        style={styles.list}
         onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
       >
-        {items.map((item, index) => {
-          const selected = item.key === activeKey;
-          return (
-            <View key={item.key} style={[styles.cell, { width: layout.cellWidth }]}>
-              <Pressable
-                accessibilityRole="tab"
-                accessibilityState={{ selected }}
-                accessibilityHint={tabPosition(index + 1, items.length)}
-                testID={`tab-${item.key}`}
-                style={[styles.tab, selected ? styles.selected : null]}
-                onPress={() => {
-                  if (!selected) onSelect(item.key);
-                }}
-              >
-                {layout.showIcons ? (
-                  <Icon
-                    name={item.icon}
-                    color={selected ? "accent" : "secondary"}
-                    testID={`tab-${item.key}-icon`}
-                  />
-                ) : null}
-                <Text
-                  textStyle={LABEL_STYLE}
-                  style={[styles.label, selected ? styles.labelSelected : null]}
-                >
-                  {item.label}
-                </Text>
-              </Pressable>
-            </View>
-          );
-        })}
+        {rowsOf(items, layout.columns).map((row, r) => (
+          <View key={row.map((item) => item.key).join()} testID="tab-row" style={styles.row}>
+            {row.map((item, c) => {
+              const index = r * layout.columns + c;
+              const selected = item.key === activeKey;
+              return (
+                <View key={item.key} testID={`tab-cell-${item.key}`} style={styles.cell}>
+                  <Pressable
+                    accessibilityRole="tab"
+                    accessibilityState={{ selected }}
+                    accessibilityHint={tabPosition(index + 1, items.length)}
+                    testID={`tab-${item.key}`}
+                    style={[styles.tab, selected ? styles.selected : null]}
+                    onPress={() => {
+                      if (!selected) onSelect(item.key);
+                    }}
+                  >
+                    {layout.showIcons ? (
+                      <Icon
+                        name={item.icon}
+                        color={selected ? "accent" : "secondary"}
+                        testID={`tab-${item.key}-icon`}
+                      />
+                    ) : null}
+                    <Text
+                      textStyle={LABEL_STYLE}
+                      style={[styles.label, selected ? styles.labelSelected : null]}
+                    >
+                      {item.label}
+                    </Text>
+                  </Pressable>
+                </View>
+              );
+            })}
+            {/* A short last row keeps the other rows' cell width (three and two, not 33% and 50%). */}
+            {Array.from({ length: layout.columns - row.length }, (_, i) => (
+              <View key={`spacer-${i}`} style={styles.cell} />
+            ))}
+          </View>
+        ))}
       </View>
     </SafeAreaView>
   );

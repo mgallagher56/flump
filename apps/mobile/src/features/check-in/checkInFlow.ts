@@ -46,7 +46,8 @@ export function checkInRow(
   state: CheckInDataState,
   now: { today: string; month: CheckInMonth },
 ): CheckInRowView | null {
-  if (state.status === "loading") return null;
+  // Not set up: Home shows the way to set up instead of a row.
+  if (state.status === "loading" || state.status === "notSetUp") return null;
   if (state.status === "error") {
     return { action: CHECK_IN.start, line: rowLine(now.month, undefined) };
   }

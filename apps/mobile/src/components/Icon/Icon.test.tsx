@@ -1,11 +1,18 @@
 import { dark, light } from "@flump/tokens/native";
 import { render, screen } from "@testing-library/react-native";
+import { Dimensions } from "react-native";
 import { ICON_SHAPES } from "../../navigation/iconShapes";
 import { ThemeProvider } from "../../theme/ThemeProvider";
 import { Icon } from "./Icon";
 import { iconStates } from "./Icon.states";
 
 const HIDDEN = { includeHiddenElements: true } as const;
+
+/** React Native's Jest window has a font scale of 2; set the phone's text size for one test. */
+const textSize = (fontScale: number) =>
+  jest.spyOn(Dimensions, "get").mockReturnValue({ width: 390, height: 800, scale: 2, fontScale });
+
+afterEach(() => jest.restoreAllMocks());
 
 describe("Icon", () => {
   it("draws every shape of the named icon on lucide's 24 grid with a 2 point round stroke", async () => {
@@ -46,7 +53,8 @@ describe("Icon", () => {
   it.each([
     ["sm", 16],
     ["md", 24],
-  ] as const)("size %s is %d points square", async (size, side) => {
+  ] as const)("size %s is %d points square at the normal text size", async (size, side) => {
+    textSize(1);
     await render(
       <ThemeProvider scheme="light">
         <Icon testID="i" name="house" size={size} />
@@ -54,6 +62,23 @@ describe("Icon", () => {
     );
     expect(screen.getByTestId("i", HIDDEN).props.style).toEqual({ width: side, height: side });
   });
+
+  it.each([
+    [1.5, 36],
+    [2, 48],
+    [3, 48],
+  ])(
+    "grows with the phone's text size: at %d times, md is %d points, never more than double",
+    async (scale, side) => {
+      textSize(scale);
+      await render(
+        <ThemeProvider scheme="light">
+          <Icon testID="i" name="house" />
+        </ThemeProvider>,
+      );
+      expect(screen.getByTestId("i", HIDDEN).props.style).toEqual({ width: side, height: side });
+    },
+  );
 
   it.each(Object.entries(iconStates))("%s renders", async (_name, props) => {
     await render(

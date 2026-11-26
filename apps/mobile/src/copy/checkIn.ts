@@ -55,10 +55,14 @@ export const CHECK_IN = {
   finishError: "We could not finish the check-in. Nothing has changed. Try again.",
   outsideNetWorth: "Not counted in net worth",
   loadErrorHeading: "We could not load your accounts",
-  loadErrorBody: "Nothing has changed. Check your connection and try again.",
+  loadErrorBody: "Check your connection and try again.",
   /** Flump answered in a shape this version does not understand: not a connection problem. */
   loadErrorOutOfStepBody:
-    "Nothing has changed. This version of the app did not understand Flump's answer. Try again later, or update the app if an update is available.",
+    "This version of the app did not understand Flump's answer. Try again later, or update the app if an update is available.",
+  /** A person with no profile yet, or who has not finished setup on the website. */
+  notSetUpHeading: "Finish setting up Flump on the website",
+  notSetUpBody: "Your accounts and monthly check-in appear here once setup is done.",
+  notSetUpAction: "Finish setup on the website",
   empty: "Add an account first, then its balance appears here.",
   addAccount: "Add an account on the website",
   offline: "Saving needs a connection. Your answers will save once you are back online.",

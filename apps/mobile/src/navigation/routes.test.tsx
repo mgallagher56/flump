@@ -15,6 +15,7 @@ import { type AppSession, SessionProvider } from "../auth/SessionProvider";
 import type { Session } from "../auth/session";
 import type { SessionState } from "../auth/sessionMachine";
 import { Text } from "../components/Text";
+import { signOutConfirmMessage } from "../copy/auth";
 import { ApiProvider } from "../data/ApiProvider";
 import type { ApiClient } from "../data/apiClient";
 import { fakeApi, testQueryClient } from "../data/fakeApi";
@@ -134,17 +135,19 @@ describe("the signed-in routes", () => {
     expect(router.getPathname()).toBe(path);
     expect(tab(name).props.accessibilityState).toMatchObject({ selected: true });
     expect(screen.getByRole("header", { name })).toBeOnTheScreen();
-    expect(screen.getByText(`${name} is not in the app yet. You can use it on the Flump website.`));
+    expect(
+      screen.getByText("This page is not in the app yet. You can use it on the Flump website."),
+    ).toBeOnTheScreen();
     await user.press(screen.getByRole("link", { name: `Open ${name} on the website` }));
     expect(Linking.openURL).toHaveBeenCalledWith(url);
   });
 
   it("the header's menu button opens More, which has no menu button of its own", async () => {
     const { router } = await openApp("/budget");
-    await userEvent.setup().press(screen.getByRole("button", { name: "Open navigation menu" }));
+    await userEvent.setup().press(screen.getByRole("button", { name: "Open More" }));
     expect(router.getPathname()).toBe("/more");
     expect(tab("More").props.accessibilityState).toMatchObject({ selected: true });
-    expect(screen.queryByRole("button", { name: "Open navigation menu" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Open More" })).toBeNull();
   });
 
   it("a More row opens its page, which links to the same web page", async () => {
@@ -170,12 +173,12 @@ describe("the signed-in routes", () => {
     const { router } = await openApp("/page/pension");
     expect(router.getPathname()).toBe("/page/pension");
     expect(
-      screen.getByText("Pension is not in the app yet. You can use it on the Flump website."),
+      screen.getByText("This page is not in the app yet. You can use it on the Flump website."),
     ).toBeOnTheScreen();
     // Opened cold, the tabs are still beneath it: Back goes to them, not out of the app.
     expect(testRouter.canGoBack()).toBe(true);
     await act(async () => appRouter.back());
-    expect(screen.queryByText(/Pension is not in the app yet/)).toBeNull();
+    expect(screen.queryByText(/This page is not in the app yet/)).toBeNull();
     expect(tab("Home").props.accessibilityState).toMatchObject({ selected: true });
   });
 
@@ -255,7 +258,7 @@ describe("the signed-in routes", () => {
     expect(screen.queryByRole("tab")).toBeNull();
     await act(async () => app.set({ status: "signedIn" }));
     expect(router.getPathname()).toBe("/page/pension");
-    expect(screen.getByText(/Pension is not in the app yet/)).toBeOnTheScreen();
+    expect(screen.getByText(/This page is not in the app yet/)).toBeOnTheScreen();
   });
 
   it("restored offline: the tabs stay, Home says so with Try again, More still works", async () => {
@@ -280,15 +283,25 @@ describe("the signed-in routes", () => {
     expect(screen.getByRole("header", { name: heading })).toBeOnTheScreen();
   });
 
-  it("Sign out in More asks first, then signs out", async () => {
+  it("Sign out in More goes through S2b's confirm dialog: Cancel keeps the session, Sign out ends it", async () => {
     const alert = jest
       .spyOn(require("react-native").Alert, "alert")
       .mockImplementation(() => {}) as jest.SpyInstance;
     const { app } = await openApp("/more");
-    await userEvent.setup().press(screen.getByRole("button", { name: "Sign out" }));
-    expect(alert.mock.calls[0]?.[0]).toBe("Sign out of Flump?");
-    const buttons = (alert.mock.calls[0]?.[2] ?? []) as { text: string; onPress?: () => void }[];
-    await act(async () => buttons.find((b) => b.text === "Sign out")?.onPress?.());
+    const user = userEvent.setup();
+    const ask = async () => {
+      await user.press(screen.getByRole("button", { name: "Sign out" }));
+      const call = alert.mock.calls.at(-1) ?? [];
+      return call as [string, string, { text: string; onPress?: () => void }[]];
+    };
+    const [title, message, buttons] = await ask();
+    // The dialog's own words for this platform (Jest runs as iOS), not a direct sign-out.
+    expect([title, message]).toEqual(["Sign out of Flump?", signOutConfirmMessage("ios")]);
+    expect(app.session.signOut).not.toHaveBeenCalled();
+    await act(async () => buttons.find((b) => b.text === "Cancel")?.onPress?.());
+    expect(app.session.signOut).not.toHaveBeenCalled();
+    const [, , again] = await ask();
+    await act(async () => again.find((b) => b.text === "Sign out")?.onPress?.());
     expect(app.session.signOut).toHaveBeenCalledTimes(1);
   });
 

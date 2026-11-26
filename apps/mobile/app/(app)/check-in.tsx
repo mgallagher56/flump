@@ -1,6 +1,7 @@
 import { Redirect, router } from "expo-router";
 import { useSession } from "../../src/auth/SessionProvider";
 import { useRefreshCheckInOnLeave } from "../../src/data/checkIn";
+import { SET_UP_WEB_ROUTE, webLink } from "../../src/navigation/shell";
 import { CheckIn } from "../../src/screens/CheckIn";
 
 /**
@@ -18,6 +19,10 @@ export default function CheckInRoute() {
     <CheckIn
       offline={status === "restoredOffline"}
       marketingOrigin={app.marketingOrigin}
+      setUp={webLink(
+        { marketingOrigin: app.marketingOrigin, webAppOrigin: app.webAppOrigin ?? null },
+        SET_UP_WEB_ROUTE,
+      )}
       onClose={close}
     />
   );

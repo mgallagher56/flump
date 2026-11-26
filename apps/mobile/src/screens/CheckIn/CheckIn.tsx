@@ -35,8 +35,10 @@ import { useDelayedLoading } from "../../data/useDelayedLoading";
 import { type CheckInFlow, useCheckInFlow } from "../../features/check-in/checkInFlow";
 import { type CheckInInputs, useCheckInData } from "../../features/check-in/useCheckInData";
 import { useSaveCheckIn } from "../../features/check-in/useSaveCheckIn";
+import type { WebLink } from "../../navigation/shell";
 import { useTheme } from "../../theme/ThemeProvider";
 import { CheckInDone } from "../CheckInDone";
+import { NotSetUp } from "../NotSetUp";
 import { TermsRequired } from "../TermsRequired";
 import { createStyles } from "./CheckIn.styles";
 
@@ -48,6 +50,8 @@ export interface CheckInProps {
   offline?: boolean;
   /** For the empty state's link to the website, until accounts can be added here (S8). */
   marketingOrigin: string;
+  /** The website's setup page, for a person who has not finished setting up. */
+  setUp: WebLink;
   onClose(): void;
   /** Injected clock for tests. */
   now?: () => Date;
@@ -57,7 +61,7 @@ export interface CheckInProps {
  * The monthly check-in (E12 S3, plan 9.6): loading, a failed load (never shown as "no accounts"),
  * the empty state, the walk-through and the summary.
  */
-export function CheckIn({ offline = false, marketingOrigin, onClose, now }: CheckInProps) {
+export function CheckIn({ offline = false, marketingOrigin, setUp, onClose, now }: CheckInProps) {
   const data = useCheckInData(now);
   // The walk-through runs on one copy of the data: taken once every read has settled (never from a
   // cache that is being fetched again after the last check-in), and kept while it is open, so a
@@ -68,7 +72,7 @@ export function CheckIn({ offline = false, marketingOrigin, onClose, now }: Chec
     if (settled) setInputs((held) => held ?? settled);
   }, [settled]);
   const held = inputs ?? settled;
-  const skeleton = useDelayedLoading(!held && data.status !== "error");
+  const skeleton = useDelayedLoading(!held && data.status === "loading");
 
   if (held) {
     return (
@@ -83,6 +87,9 @@ export function CheckIn({ offline = false, marketingOrigin, onClose, now }: Chec
   if (data.status === "error" && data.problem === "termsNotAccepted") {
     // The terms changed while signed in (PR #939): agree on the website, then read again.
     return <TermsRequired marketingOrigin={marketingOrigin} onRetry={data.retry} />;
+  }
+  if (data.status === "notSetUp") {
+    return <NotSetUp setUp={setUp} edges={EDGES} />;
   }
   if (data.status === "error") {
     return (

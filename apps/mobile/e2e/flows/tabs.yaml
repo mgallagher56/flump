@@ -15,24 +15,46 @@ appId: app.flump.mobile
       AFTER: "You are signed in"
 - assertVisible:
     id: "tab-home"
+# The five tabs share one row at the normal text size: each is to the right of the one before it,
+# so a fifth tab pushed onto a second row (device check, 26 November 2026) fails here.
+- assertVisible:
+    id: "tab-accounts"
+    rightOf:
+      id: "tab-home"
+- assertVisible:
+    id: "tab-budget"
+    rightOf:
+      id: "tab-accounts"
+- assertVisible:
+    id: "tab-taxAndPay"
+    rightOf:
+      id: "tab-budget"
+- assertVisible:
+    id: "tab-more"
+    rightOf:
+      id: "tab-taxAndPay"
+- assertNotVisible:
+    id: "tab-more"
+    below:
+      id: "tab-home"
 - takeScreenshot: tab-home-${THEME}
 - tapOn:
     id: "tab-accounts"
 - extendedWaitUntil:
-    visible: "Accounts is not in the app yet. You can use it on the Flump website."
+    visible: "This page is not in the app yet. You can use it on the Flump website."
     timeout: 10000
 - assertVisible: "Open Accounts on the website"
 - takeScreenshot: tab-accounts-${THEME}
 - tapOn:
     id: "tab-budget"
 - extendedWaitUntil:
-    visible: "Budget is not in the app yet. You can use it on the Flump website."
+    visible: "This page is not in the app yet. You can use it on the Flump website."
     timeout: 10000
 - takeScreenshot: tab-budget-${THEME}
 - tapOn:
     id: "tab-taxAndPay"
 - extendedWaitUntil:
-    visible: "Pay is not in the app yet. You can use it on the Flump website."
+    visible: "This page is not in the app yet. You can use it on the Flump website."
     timeout: 10000
 - takeScreenshot: tab-pay-${THEME}
 # The header's menu button opens More, as web's phone top bar.
@@ -47,7 +69,7 @@ appId: app.flump.mobile
 - tapOn:
     id: "more-row-pension"
 - extendedWaitUntil:
-    visible: "Pension is not in the app yet. You can use it on the Flump website."
+    visible: "This page is not in the app yet. You can use it on the Flump website."
     timeout: 10000
 - takeScreenshot: more-page-${THEME}
 # Back to More, then to Home by its tab: the check-in row is still there.

@@ -17,7 +17,7 @@ describe("AppHeader", () => {
       </ThemeProvider>,
     );
     expect(screen.getByRole("header", { name: "Budget" })).toBeOnTheScreen();
-    const menu = screen.getByRole("button", { name: "Open navigation menu" });
+    const menu = screen.getByRole("button", { name: "Open More" });
     expect(StyleSheet.flatten(menu.props.style)).toMatchObject({ minHeight: 48, minWidth: 48 });
     await user.press(menu);
     expect(onOpenMenu).toHaveBeenCalledTimes(1);

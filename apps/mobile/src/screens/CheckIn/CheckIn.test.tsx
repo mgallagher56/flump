@@ -11,12 +11,21 @@ import { fail, fakeApi, withApi } from "../../data/fakeApi";
 import { household, MONTH, NOW, routes, SEEDS } from "../../features/check-in/checkInTestData";
 import { CheckIn } from "./CheckIn";
 
+/** The website's setup page (a placeholder address). */
+const SET_UP = { url: "https://app.test.invalid/app/onboarding", exact: true };
+
 const PUT = `PUT /snapshots/${MONTH}`;
 
 async function open(api: ReturnType<typeof fakeApi>, props: { offline?: boolean } = {}) {
   const onClose = jest.fn();
   const { ui } = withApi(
-    <CheckIn marketingOrigin="https://m.test.invalid" onClose={onClose} now={NOW} {...props} />,
+    <CheckIn
+      marketingOrigin="https://m.test.invalid"
+      setUp={SET_UP}
+      onClose={onClose}
+      now={NOW}
+      {...props}
+    />,
     api.client,
   );
   await render(ui);
@@ -297,7 +306,12 @@ describe("CheckIn resumed or finished", () => {
     });
     const api = fakeApi(routes(h));
     const { ui } = withApi(
-      <CheckIn marketingOrigin="https://m.test.invalid" onClose={jest.fn()} now={NOW} />,
+      <CheckIn
+        marketingOrigin="https://m.test.invalid"
+        setUp={SET_UP}
+        onClose={jest.fn()}
+        now={NOW}
+      />,
       api.client,
     );
     await render(ui);
@@ -323,7 +337,12 @@ describe("CheckIn resumed or finished", () => {
       latestStartedMonth: MONTH,
     });
     const { ui } = withApi(
-      <CheckIn marketingOrigin="https://m.test.invalid" onClose={jest.fn()} now={NOW} />,
+      <CheckIn
+        marketingOrigin="https://m.test.invalid"
+        setUp={SET_UP}
+        onClose={jest.fn()}
+        now={NOW}
+      />,
       fakeApi(routes(h)).client,
     );
     await render(ui);
@@ -344,7 +363,12 @@ describe("CheckIn loading, failure and empty", () => {
       "GET /accounts": () => (down ? fail("forbidden", 403) : h.accounts),
     });
     const { ui } = withApi(
-      <CheckIn marketingOrigin="https://m.test.invalid" onClose={jest.fn()} now={NOW} />,
+      <CheckIn
+        marketingOrigin="https://m.test.invalid"
+        setUp={SET_UP}
+        onClose={jest.fn()}
+        now={NOW}
+      />,
       api.client,
     );
     await render(ui);
@@ -362,13 +386,78 @@ describe("CheckIn loading, failure and empty", () => {
       "GET /accounts": () => fail("bad-response", 200),
     });
     const { ui } = withApi(
-      <CheckIn marketingOrigin="https://m.test.invalid" onClose={jest.fn()} now={NOW} />,
+      <CheckIn
+        marketingOrigin="https://m.test.invalid"
+        setUp={SET_UP}
+        onClose={jest.fn()}
+        now={NOW}
+      />,
       api.client,
     );
     await render(ui);
     expect(await screen.findByText("We could not load your accounts")).toBeOnTheScreen();
     expect(screen.getByText(/did not understand Flump's answer/)).toBeOnTheScreen();
     expect(screen.queryByText(/connection/)).toBeNull();
+  });
+
+  it("a failed load leads with what to do, not 'Nothing has changed' (a 4xx is not retried)", async () => {
+    const api = fakeApi({ ...routes(household()), "GET /accounts": () => fail("forbidden", 403) });
+    const { ui } = withApi(
+      <CheckIn
+        marketingOrigin="https://m.test.invalid"
+        setUp={SET_UP}
+        onClose={jest.fn()}
+        now={NOW}
+      />,
+      api.client,
+    );
+    await render(ui);
+    expect(await screen.findByText("Check your connection and try again.")).toBeOnTheScreen();
+    expect(screen.queryByText(/Nothing has changed/)).toBeNull();
+  });
+
+  it.each([
+    ["no profile yet (an empty answer)", () => undefined],
+    ["setup not finished", () => ({ ...household().profile, onboardingCompleted: false })],
+  ])(
+    "%s: sends the person to the website to set up, never 'could not load'",
+    async (_name, profile) => {
+      jest.spyOn(Linking, "openURL").mockResolvedValue(undefined);
+      const api = fakeApi({ ...routes(household()), "GET /user-profile": profile });
+      const { ui } = withApi(
+        <CheckIn
+          marketingOrigin="https://m.test.invalid"
+          setUp={SET_UP}
+          onClose={jest.fn()}
+          now={NOW}
+        />,
+        api.client,
+      );
+      await render(ui);
+      expect(
+        await screen.findByRole("header", { name: "Finish setting up Flump on the website" }),
+      ).toBeOnTheScreen();
+      expect(screen.queryByText(/could not load|did not understand/)).toBeNull();
+      await userEvent
+        .setup()
+        .press(screen.getByRole("link", { name: "Finish setup on the website" }));
+      expect(Linking.openURL).toHaveBeenCalledWith(SET_UP.url);
+    },
+  );
+
+  it("reads only the profile fields it uses: one added or dropped elsewhere still opens the cards", async () => {
+    const { checkInDay, netWorthCountsProperty, onboardingCompleted } = household().profile;
+    const api = fakeApi({
+      ...routes(household()),
+      "GET /user-profile": () => ({
+        checkInDay,
+        netWorthCountsProperty,
+        onboardingCompleted,
+        fieldFromALaterBackend: "something new",
+      }),
+    });
+    await open(api);
+    expect(screen.getByText("Account 1 of 6")).toBeOnTheScreen();
   });
 
   it("terms not agreed mid-session: the terms screen, then the cards once agreed", async () => {
@@ -379,7 +468,12 @@ describe("CheckIn loading, failure and empty", () => {
       "GET /accounts": () => (agreed ? h.accounts : fail("forbidden", 403, "terms_not_accepted")),
     });
     const { ui } = withApi(
-      <CheckIn marketingOrigin="https://m.test.invalid" onClose={jest.fn()} now={NOW} />,
+      <CheckIn
+        marketingOrigin="https://m.test.invalid"
+        setUp={SET_UP}
+        onClose={jest.fn()}
+        now={NOW}
+      />,
       api.client,
     );
     await render(ui);
@@ -397,7 +491,12 @@ describe("CheckIn loading, failure and empty", () => {
     const h = household([], { latestCompletedMonth: null, latestStartedMonth: null });
     const api = fakeApi(routes(h));
     const { ui } = withApi(
-      <CheckIn marketingOrigin="https://m.test.invalid" onClose={jest.fn()} now={NOW} />,
+      <CheckIn
+        marketingOrigin="https://m.test.invalid"
+        setUp={SET_UP}
+        onClose={jest.fn()}
+        now={NOW}
+      />,
       api.client,
     );
     await render(ui);
@@ -419,7 +518,12 @@ describe("CheckIn loading timing", () => {
       "GET /accounts": () => new Promise(() => {}),
     });
     const { ui } = withApi(
-      <CheckIn marketingOrigin="https://m.test.invalid" onClose={jest.fn()} now={NOW} />,
+      <CheckIn
+        marketingOrigin="https://m.test.invalid"
+        setUp={SET_UP}
+        onClose={jest.fn()}
+        now={NOW}
+      />,
       api.client,
     );
     await render(ui);

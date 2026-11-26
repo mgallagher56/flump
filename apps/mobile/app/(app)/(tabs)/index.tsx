@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import { useShell } from "../../../src/navigation/shell";
+import { SET_UP_WEB_ROUTE, useShell, webLink } from "../../../src/navigation/shell";
 import { Home } from "../../../src/screens/Home";
 import { Offline } from "../../../src/screens/Offline";
 
@@ -15,6 +15,7 @@ export default function HomeTab() {
       onSignOut={shell.signOut}
       onOpenCheckIn={() => router.push("/check-in")}
       marketingOrigin={shell.marketingOrigin}
+      setUp={webLink(shell, SET_UP_WEB_ROUTE)}
     />
   );
 }

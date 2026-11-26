@@ -1,6 +1,6 @@
 import { dark, light } from "@flump/tokens/native";
-import { render, screen } from "@testing-library/react-native";
-import { useColorScheme } from "react-native";
+import { act, render, screen } from "@testing-library/react-native";
+import { Appearance, AppState, type AppStateStatus, useColorScheme } from "react-native";
 import { Text } from "../../components/Text";
 import { ThemeProvider, useTheme } from "./ThemeProvider";
 
@@ -40,6 +40,31 @@ describe("ThemeProvider", () => {
 
   it("the two token sets differ, so a wrong scheme would show", async () => {
     expect(dark.colors["surface.canvas"]).not.toBe(light.colors["surface.canvas"]);
+  });
+
+  it("reads the system setting again when the app comes back to the front", async () => {
+    mockedScheme.mockReturnValue("light");
+    const listeners: ((state: AppStateStatus) => void)[] = [];
+    jest.spyOn(AppState, "addEventListener").mockImplementation((_type, listener) => {
+      listeners.push(listener as (state: AppStateStatus) => void);
+      return { remove: jest.fn() } as never;
+    });
+    const getScheme = jest.spyOn(Appearance, "getColorScheme").mockReturnValue("light");
+    await render(
+      <ThemeProvider>
+        <Probe />
+      </ThemeProvider>,
+    );
+    expect(screen.getByTestId("probe")).toHaveTextContent(
+      `light ${light.colors["surface.canvas"]}`,
+    );
+    // Switched to dark in the phone's settings while the app was in the background.
+    getScheme.mockReturnValue("dark");
+    await act(async () => {
+      for (const listener of listeners) listener("active");
+    });
+    expect(screen.getByTestId("probe")).toHaveTextContent(`dark ${dark.colors["surface.canvas"]}`);
+    jest.restoreAllMocks();
   });
 
   it("a forced scheme wins over the system setting", async () => {

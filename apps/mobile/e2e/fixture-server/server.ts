@@ -30,6 +30,8 @@
  *                                           `wellbeingQuestions`), or with a field from a later one
  *   terms    agreed | required              required: authenticated /v1 answers 403
  *                                           terms_not_accepted (PR #939), after not_invited
+ *   profile  set-up | not-set-up | none     not-set-up: onboardingCompleted false; none: the
+ *                                           profile answers 200 with no body (no profile yet)
  * Control (flows set the scenario before they launch the app):
  *   POST /__fixture/scenario, POST /__fixture/revoke, POST /__fixture/reset (also rebuilds the
  *   check-in data), GET /__fixture/stats (with `?signOutsAtLeast=N` it first waits, up to 10
@@ -94,6 +96,8 @@ interface Scenario {
    * E35 W5 does not send; `newer` adds a field the app has never heard of.
    */
   backend: "current" | "older" | "newer";
+  /** A person who has not finished setup on the website, or has no profile at all yet. */
+  profile: "set-up" | "not-set-up" | "none";
 }
 
 const DEFAULT_SCENARIO: Scenario = {
@@ -105,6 +109,7 @@ const DEFAULT_SCENARIO: Scenario = {
   data: "ok",
   terms: "agreed",
   backend: "current",
+  profile: "set-up",
 };
 
 const ALLOWED: { [K in keyof Scenario]: (v: unknown) => boolean } = {
@@ -116,6 +121,7 @@ const ALLOWED: { [K in keyof Scenario]: (v: unknown) => boolean } = {
   data: (v) => v === "ok" || v === "unavailable" || v === "empty",
   terms: (v) => v === "agreed" || v === "required",
   backend: (v) => v === "current" || v === "older" || v === "newer",
+  profile: (v) => v === "set-up" || v === "not-set-up" || v === "none",
 };
 
 /** A scenario patch, or undefined when any key or value is unknown. */
@@ -421,6 +427,8 @@ export async function startFixtureServer(options: FixtureServerOptions): Promise
       };
       if (scenario.backend === "older") delete profile.wellbeingQuestions;
       if (scenario.backend === "newer") profile.fieldFromALaterBackend = "something new";
+      if (scenario.profile === "none") return void res.writeHead(200).end();
+      if (scenario.profile === "not-set-up") profile.onboardingCompleted = false;
       return json(res, 200, profile);
     }
     const snapshotMonth = /^\/snapshots\/([^/]+)$/.exec(path)?.[1];

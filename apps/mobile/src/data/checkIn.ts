@@ -22,7 +22,21 @@ import { queryKeys } from "./queryKeys";
 
 type Accounts = AccountListResponse;
 type AccountDetails = AccountDetailListResponse;
-type UserProfile = UserProfileResponse;
+/**
+ * The profile fields the check-in reads, taken from the contract's own definitions, each allowed to
+ * be absent, and other fields ignored. Not the whole strict profile: a field added to or dropped
+ * from the profile elsewhere (staging runs older than main) must not stop the check-in, as S2b's
+ * account check reads no body for the same reason. An empty answer is a person with no profile yet.
+ */
+const CheckInProfile = UserProfileResponse.pick({
+  onboardingCompleted: true,
+  checkInDay: true,
+  netWorthCountsProperty: true,
+  netWorthCountsStudentLoan: true,
+})
+  .partial()
+  .loose();
+type UserProfile = ReturnType<typeof CheckInProfile.parse>;
 type CheckIns = SnapshotCheckInsResponse;
 
 /** Thrown when there is no API client (a misconfigured build): reads as any load failure. */
@@ -41,7 +55,8 @@ function need(api: ApiClient | null): ApiClient {
 export interface CheckInQueries {
   accounts: { data?: Accounts; error: unknown; isFetching: boolean };
   details: { data?: AccountDetails; error: unknown; isFetching: boolean };
-  profile: { data?: UserProfile; error: unknown; isFetching: boolean };
+  /** Null: the backend answered with no profile (a person who has not set up yet). */
+  profile: { data?: UserProfile | null; error: unknown; isFetching: boolean };
   checkIns: { data?: CheckIns; error: unknown; isFetching: boolean };
   /** Fetches whatever failed again. */
   refetch(): void;
@@ -69,8 +84,13 @@ export function useCheckInQueries(): CheckInQueries {
       },
       {
         queryKey: queryKeys.userProfile(),
-        queryFn: ({ signal }: { signal: AbortSignal }) =>
-          need(api).request("/user-profile", { schema: UserProfileResponse, signal }),
+        queryFn: async ({ signal }: { signal: AbortSignal }) =>
+          // A query's data cannot be undefined, so no body is null.
+          (await need(api).request("/user-profile", {
+            schema: CheckInProfile,
+            allowEmpty: true,
+            signal,
+          })) ?? null,
       },
       {
         queryKey: queryKeys.checkIns(),

@@ -1,7 +1,7 @@
 import { Stack } from "expo-router";
 import { HOME_TITLE } from "../../src/copy/brand";
 import { CHECK_IN } from "../../src/copy/checkIn";
-import { useStackScreenOptions } from "../../src/navigation/stackOptions";
+import { useSignedInStackOptions } from "../../src/navigation/stackOptions";
 import { SessionGate } from "../../src/screens/SessionGate";
 
 /**
@@ -16,7 +16,7 @@ export const unstable_settings = { anchor: "(tabs)" };
  * while someone is signed in, the tabs with the pages they open on top.
  */
 export default function SignedInLayout() {
-  const screenOptions = useStackScreenOptions();
+  const screenOptions = useSignedInStackOptions();
   return (
     <SessionGate>
       <Stack screenOptions={screenOptions}>

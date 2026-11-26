@@ -33,8 +33,6 @@ export interface TabLayoutInput {
 export interface TabLayout {
   readonly columns: number;
   readonly rows: number;
-  /** Each cell's share of the bar. */
-  readonly cellWidth: `${number}%`;
   readonly showIcons: boolean;
 }
 
@@ -53,12 +51,7 @@ export function tabLayout({
   const fits = Math.max(1, Math.min(count, Math.floor(width / labelWidth)));
   const rows = Math.ceil(count / fits);
   const columns = Math.ceil(count / rows);
-  return {
-    columns,
-    rows,
-    cellWidth: `${100 / columns}%`,
-    showIcons: textScale < LABEL_ONLY_FROM,
-  };
+  return { columns, rows, showIcons: textScale < LABEL_ONLY_FROM };
 }
 
 export const createStyles = (theme: Theme) =>
@@ -71,8 +64,11 @@ export const createStyles = (theme: Theme) =>
       paddingBottom: theme.spacing["1"],
       paddingHorizontal: theme.spacing["1"],
     },
-    list: { flexDirection: "row", flexWrap: "wrap" },
-    cell: { alignItems: "stretch" },
+    // One View per row and equal flex cells, never a wrapping row of percentage widths: Android
+    // rounds each 20% cell to whole pixels, and five rounded up overran the bar and pushed the fifth
+    // tab onto a second row at the normal size (device check, 26 November 2026).
+    row: { flexDirection: "row" },
+    cell: { flex: 1, flexBasis: 0, alignItems: "stretch" },
     tab: {
       alignItems: "center",
       justifyContent: "center",

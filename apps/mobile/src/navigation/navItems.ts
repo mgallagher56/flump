@@ -14,6 +14,7 @@ export type IconName =
   | "scale"
   | "wallet"
   | "calculator"
+  | "banknote"
   | "ellipsis"
   | "piggy-bank"
   | "coins"
@@ -24,7 +25,8 @@ export type IconName =
   | "bot"
   | "log-out"
   | "menu"
-  | "chevron-right";
+  | "chevron-right"
+  | "chevron-left";
 
 export interface TabItem {
   /** Web's key. */
@@ -50,7 +52,9 @@ export const TABS = [
   {
     key: "taxAndPay",
     label: "Pay",
-    icon: "calculator",
+    // Not web's calculator: Calculators in More has that one (device check, 26 November 2026).
+    // web's mobileNavParity test names this as its one icon exception.
+    icon: "banknote",
     routeName: "pay",
     webRoute: "/app/take-home",
   },
