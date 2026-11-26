@@ -4,6 +4,8 @@
  * this folder may name `@flump/api-client`. Nothing in the app imports it.
  */
 import { type ApiClient, BackendError } from "@flump/api-client";
+import type { QueryClient } from "@tanstack/react-query";
+import { cleanup } from "@testing-library/react-native";
 import type { ReactElement } from "react";
 import { ThemeProvider } from "../theme/ThemeProvider";
 import { ApiProvider } from "./ApiProvider";
@@ -43,9 +45,30 @@ export function fakeApi(routes: Record<string, FakeRoute>) {
   return { client, calls, request };
 }
 
+const clients = new Set<QueryClient>();
+
+// Each cache is emptied after its test: a query left in it holds a 5 minute garbage-collection
+// timer, which kept the Jest process (or worker) from exiting. The screen is unmounted first (if
+// RNTL's own clean-up has not done it already), then the cache is cleared, which stops the timers.
+// Guarded as RNTL guards its own clean-up, so importing this file outside Jest does not throw.
+if (typeof afterEach === "function") {
+  afterEach(async () => {
+    await cleanup();
+    for (const queryClient of clients) queryClient.clear();
+    clients.clear();
+  });
+}
+
+/** The app's query client, made for one test and emptied after it. */
+export function testQueryClient(): QueryClient {
+  const queryClient = createQueryClient();
+  clients.add(queryClient);
+  return queryClient;
+}
+
 /** Wraps a screen in the theme and the data door, with a fresh cache for each test. */
 export function withApi(ui: ReactElement, client: ApiClient | null) {
-  const queryClient = createQueryClient();
+  const queryClient = testQueryClient();
   return {
     queryClient,
     ui: (

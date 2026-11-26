@@ -5,7 +5,7 @@ import {
   checkInPayload,
 } from "@flump/finance-engine/check-in";
 import { formatCurrency } from "@flump/format";
-import { act, fireEvent, render, screen, userEvent } from "@testing-library/react-native";
+import { act, render, screen, userEvent } from "@testing-library/react-native";
 import { AccessibilityInfo, Linking } from "react-native";
 import { fail, fakeApi, withApi } from "../../data/fakeApi";
 import { household, MONTH, NOW, routes, SEEDS } from "../../features/check-in/checkInTestData";
@@ -26,6 +26,13 @@ async function open(api: ReturnType<typeof fakeApi>, props: { offline?: boolean 
 
 const puts = (api: ReturnType<typeof fakeApi>) =>
   api.calls.filter((c) => c.method === "PUT").map((c) => c.body as Record<string, unknown>);
+
+// Every test runs on Jest's clock. A user press holds for React Native's 130 ms minimum, the query
+// cache tells the screen about an answer on a 0 ms timer and the loading rule waits 200 ms: on real
+// timers a long walk-through spent seconds of wall-clock time on these and timed out on a busy CI
+// runner. On fake timers they run at once and in order, and nothing is left running afterwards.
+beforeEach(() => jest.useFakeTimers());
+afterEach(() => jest.useRealTimers());
 
 describe("CheckIn walk-through", () => {
   it("shows one card per account in web's order and ends with a complete save", async () => {
@@ -207,10 +214,15 @@ describe("CheckIn walk-through", () => {
         }),
     });
     await open(api);
-    const noChange = screen.getByTestId("check-in-no-change");
+    // Both taps land before the screen re-renders, so before the button shows it is saving. They
+    // arrive as two clicks on the button's native view (how a screen reader's double tap presses
+    // it) inside one act. Two fireEvent.press calls would each open an act of their own, and
+    // without awaiting the first those acts overlap; awaiting it re-renders the button as disabled.
+    const click = screen.getByTestId("check-in-no-change").props.onClick as (e: object) => void;
+    const tap = { nativeEvent: {}, target: 1, currentTarget: 1, stopPropagation: () => {} };
     await act(async () => {
-      fireEvent.press(noChange);
-      fireEvent.press(noChange);
+      click(tap);
+      click(tap);
     });
     await act(async () => release());
     await screen.findByText("Account 2 of 6");
@@ -377,9 +389,6 @@ describe("CheckIn loading, failure and empty", () => {
 });
 
 describe("CheckIn loading timing", () => {
-  beforeEach(() => jest.useFakeTimers());
-  afterEach(() => jest.useRealTimers());
-
   it("shows nothing for 200 ms, then a skeleton", async () => {
     const api = fakeApi({
       ...routes(household()),

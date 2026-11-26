@@ -1,4 +1,4 @@
-import { render, screen, userEvent } from "@testing-library/react-native";
+import { act, render, screen, userEvent } from "@testing-library/react-native";
 import { fail, fakeApi, withApi } from "../../data/fakeApi";
 import { household, MONTH, NOW, routes } from "../../features/check-in/checkInTestData";
 import { Home } from "./Home";
@@ -25,6 +25,12 @@ async function home(api: ReturnType<typeof fakeApi>) {
 }
 
 describe("Home", () => {
+  // On Jest's clock a press's 130 ms hold costs nothing, and a read that answers after the last
+  // assertion is never delivered to Home outside act: its 0 ms notify timer is dropped with the
+  // fake clock. A test that needs the reads waits for them.
+  beforeEach(() => jest.useFakeTimers());
+  afterEach(() => jest.useRealTimers());
+
   it("says the person is signed in and offers Sign out", async () => {
     const { onSignOut } = await home(fakeApi(routes(household())));
     expect(screen.getByRole("header", { name: "You are signed in" })).toBeOnTheScreen();
@@ -41,10 +47,12 @@ describe("Home", () => {
 
   it("no row once this month is checked in", async () => {
     const h = household(undefined, { latestCompletedMonth: MONTH, latestStartedMonth: MONTH });
-    await home(fakeApi(routes(h)));
+    const api = fakeApi(routes(h));
+    await home(api);
     await screen.findByRole("header", { name: "You are signed in" });
-    // Let the reads answer.
-    await new Promise((r) => setTimeout(r, 0));
+    // Let every read answer and the screen hear of it, inside act.
+    await act(async () => jest.advanceTimersByTimeAsync(0));
+    expect(api.request).toHaveBeenCalledTimes(4);
     expect(screen.queryByTestId("check-in-row")).toBeNull();
   });
 
