@@ -632,7 +632,9 @@ Figures, all from a new narrow entry `@flump/finance-engine/net-worth` (the root
 15. Lint, types, `check:laws` and the engine, web and mobile tests pass.
 16. The parity log marks the Home hero rows and records the strip, cards, rates banner and checklist as waiting. The PR states the CROSS-PLATFORM section 7 result.
 
-**Open questions sent to the coordinator (26 November 2026), built to the recommendation until answered:** the two-figure strip waits for S10; no tax rates banner on Home until a rates-based figure is shown; "Change what counts" links to the website's settings; the setup checklist row waits for S15; the dev links move to the foot of More.
+**Decided by the coordinator (26 November 2026).** Moving the change into the engine is a shared money code move with no figure change: characterisation tests (`apps/web/app/features/dashboard/heroChange.characterisation.test.ts`) were run against the old web code first and pass unchanged against the selector; web's old code is deleted. No tax rates banner on Home until a rates-based figure is shown. "Change what counts" opens the website's settings until S9, saying so, with S4's fallback. The setup checklist waits for S15. The dev links move to the foot of More under `__DEV__`, kept out of production bundles; the sign-in check stays reachable by its deep link.
+
+**The two-figure strip need not wait for S10.** "Left over each month" and "What you owe" come from `picture.budget` and `picture.debtSummary`, and the whole picture reaches the tax vector catalogue through the take-home figure that a linked budget row reads (`uk-take-home.ts` to `tax-year-verification.ts`) and through `debt-payoff.ts`. A narrow engine entry for those two figures, as S3 and S5 did for theirs, would bring the strip to Home earlier. Cost: about 2 agent-days. Most of it is cutting the vector check out of the take-home import path without changing a figure (characterisation tests first, as here); the rest is two more reads (`/budget-entries`, `/tax-records`), the stale-rates and unpublished-year refusals the strip carries on web, and their states.
 
 ### 9.9 Later slices
 
