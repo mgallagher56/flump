@@ -1,5 +1,59 @@
 # Changelog
 
+## [1.47.0](https://github.com/mgallagher56/flump/compare/flump/backend-v1.46.0...flump/backend-v1.47.0) (2026-11-26)
+
+
+### Features ✨
+
+* **backend:** E35 W5 answers kept 13 months, and out of reach of MCP tools ([991e82a](https://github.com/mgallagher56/flump/commit/991e82a94fcbdc31a619eb5c37bafcb0c19bb5ec))
+* **backend:** E35 W5 wellbeing questions storage, switch and routes ([867802a](https://github.com/mgallagher56/flump/commit/867802a92b09d7d24e0a89babcbbd7eb9ca16f23))
+* **backend:** household switch, off by default, with a boot guard and a check:laws rule ([1a1a16d](https://github.com/mgallagher56/flump/commit/1a1a16dfcb8242e9b19fbfad2338d906f1201402))
+* **backend:** households for E34 C3, behind the household switch ([dd6ad36](https://github.com/mgallagher56/flump/commit/dd6ad366232373761bab6e2fb1c0b453d0dd1d71))
+* **backend:** POST /v1/session/sign-out ends the mobile app's own WorkOS session (E12 S2b) ([e763093](https://github.com/mgallagher56/flump/commit/e76309337569daf26c0bffe4bf690e1a1392afa0))
+* **backend:** run the retention purge in the backend daily (D5 revised) ([38c85eb](https://github.com/mgallagher56/flump/commit/38c85eb3a25755ea98995784a9c8415477d3b68e))
+* **backend:** sign-out gets a strict rate limit and an audit row; more guard tests (E12 S2b, coordinator conditions) ([2443165](https://github.com/mgallagher56/flump/commit/244316586ca9c7c2c0357ce3dc7e29c2256d4895))
+* **legal:** allow-list entries, mutation kills, verify-flump recipe, decider wording fix ([021ccbc](https://github.com/mgallagher56/flump/commit/021ccbc37adc1c19fc42d1feb4a8cd6a68634334))
+* **legal:** terms acceptance at sign-up, backend guard, endpoints and migration (WIP) ([c66be15](https://github.com/mgallagher56/flump/commit/c66be158c45c8ae5d0cdd00d6ca8ce8b977765ba))
+* **legal:** web terms gate, acceptance page, coming-change notice, docs and maps (WIP) ([f68b39f](https://github.com/mgallagher56/flump/commit/f68b39f7b3144185b7e4e8cfeb47cb8e138dbeb0))
+
+
+### Bug Fixes 🪲
+
+* **backend:** CI findings: seed script keeps retention_runs, crypto jitter for Semgrep, privacy page baselines from CI ([4e385b0](https://github.com/mgallagher56/flump/commit/4e385b0d4db3f99204fffd773b3cbd0e9baf7d2f))
+* **backend:** migration test uses main's entityTables after the rebase ([705e528](https://github.com/mgallagher56/flump/commit/705e528b70160281b2a8f340ae7c5ae00d643b07))
+* **backend:** retention review findings: database clock for counters, own catch for the counter sweep, close a connection that keeps the lock ([7025a1b](https://github.com/mgallagher56/flump/commit/7025a1bd87fa15aaa9a6aa0edbbc061f231a70ce))
+* **e34:** migration timestamp after main and open PRs; linear regexes; erasure model matches (b2) ([0ea30ac](https://github.com/mgallagher56/flump/commit/0ea30ac19e72d8cb0c659fcb59c74dcb1643b7f0))
+* **e34:** no join date in the household API; launch docs name the invite cookie ([bb85d12](https://github.com/mgallagher56/flump/commit/bb85d12190fdcbe634aa378e1250cce09df8f608))
+* **e34:** review fixes for C3: household pages 404 before any cookie or sign-in when off ([4ec6703](https://github.com/mgallagher56/flump/commit/4ec67039db23ef7c5813a00040ac5aff61d36013))
+* **laws:** review findings: Reviewer lines count, JS-sorted table compare, rule table names [#929](https://github.com/mgallagher56/flump/issues/929) ([e03accc](https://github.com/mgallagher56/flump/commit/e03accc372ed30c25ca00c4dc1b406c0d2313451))
+* **legal:** review findings: terms refusal redirects from route errors, injectable page history with version-change tests, live-token MCP check, quiet coming-change line ([f0e8392](https://github.com/mgallagher56/flump/commit/f0e8392762d6cb44478625383a3b8240f6b3ecf7))
+
+
+### Documentation 📙
+
+* **backend:** why terms_acceptances has no user_id foreign key ([7e9c223](https://github.com/mgallagher56/flump/commit/7e9c223af8e23d53f0636a36358936eac769fa07))
+* security review notes (sign-out exemption comment, access token after revoke, the dev check and sign-out) ([40aa1bb](https://github.com/mgallagher56/flump/commit/40aa1bb692ea9d7cd53467b6fbb92f5c8bd9013c))
+
+
+### Refactor 🔥
+
+* **backend:** the wellbeing migration sorts after every migration on main (1795720000000) ([4d4b4af](https://github.com/mgallagher56/flump/commit/4d4b4afa829ca8e8cdc33471d59985972342e872))
+
+
+### Tests 🧪
+
+* authz pins privacy notice 0.3; privacy page baselines from CI ([e34807a](https://github.com/mgallagher56/flump/commit/e34807aa736207df00ee339c453e7894517785dd))
+* **backend:** a wellbeing answer racing an erasure is refused and leaves no row (real Postgres) ([c97fec7](https://github.com/mgallagher56/flump/commit/c97fec70ed88b6df734464e6353cba817277b93c))
+* **backend:** the migrations spec derives its table list from the entities; no entity count ([11e94d7](https://github.com/mgallagher56/flump/commit/11e94d72993e420a3ba600b780507a40de2ff756))
+* **e34:** erasure model covers a partner's accept; the switch has no other spelling on Railway or production ([eb4aae2](https://github.com/mgallagher56/flump/commit/eb4aae2571c1e8def03bc033709fd2d38ad90005))
+* privacy notice 0.3 is the newest version after the rebase onto terms acceptance ([029a377](https://github.com/mgallagher56/flump/commit/029a3778efc69da9311b2a9afda6e8548a837d02))
+* the terms-acceptance checks follow privacy notice 0.3; privacy page lists the new group ([004d535](https://github.com/mgallagher56/flump/commit/004d535a51b3f88d1dbd019c1169374791dd0c38))
+
+
+### Miscellaneous 🙃
+
+* rebase onto [#947](https://github.com/mgallagher56/flump/issues/947): the wellbeing migration sorts last (1795740000000), ROPA row 14, maps regenerated ([fcba001](https://github.com/mgallagher56/flump/commit/fcba0016a00cec979e4980728a2495fe7cd837d6))
+
 ## [1.46.0](https://github.com/mgallagher56/flump/compare/flump/backend-v1.45.0...flump/backend-v1.46.0) (2026-11-25)
 
 
