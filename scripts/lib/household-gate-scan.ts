@@ -14,12 +14,29 @@ export function isScannedForHouseholdSwitch(file: string): boolean {
 }
 
 /**
- * `HOUSEHOLD_ENABLED` followed by `=` or `:` and `true`, quoted or not, any case. Whitespace and
- * quotes are stripped first (one character class, linear), so the match itself needs no
- * repetition that could backtrack.
+ * `HOUSEHOLD_ENABLED` followed by `=` or `:` and `true`, quoted or not, any case. Plain string
+ * scanning, no regular expression: whitespace and quotes are dropped character by character, then
+ * each occurrence of the name is checked for `=true` or `:true` not followed by a word character.
  */
-const STRIP = /[\s"'`]/g;
-const SWITCH_ON = /household_enabled[:=]true(?![a-z0-9_])/;
+const NAME = "household_enabled";
+const DROPPED = new Set(['"', "'", "`"]);
+const isWordChar = (c: string | undefined): boolean =>
+  c !== undefined && ((c >= "a" && c <= "z") || (c >= "0" && c <= "9") || c === "_");
+
+const flatten = (line: string): string =>
+  [...line.toLowerCase()].filter((c) => c.trim() !== "" && !DROPPED.has(c)).join("");
+
+function turnsSwitchOn(line: string): boolean {
+  const flat = flatten(line);
+  for (let at = flat.indexOf(NAME); at !== -1; at = flat.indexOf(NAME, at + 1)) {
+    const rest = at + NAME.length;
+    const sign = flat[rest];
+    if ((sign === "=" || sign === ":") && flat.startsWith("true", rest + 1)) {
+      if (!isWordChar(flat[rest + 5])) return true;
+    }
+  }
+  return false;
+}
 
 /** A comment line in shell, env, YAML or TypeScript: describing the switch is not turning it on. */
 const isComment = (line: string): boolean => {
@@ -31,7 +48,5 @@ const isComment = (line: string): boolean => {
 export function findHouseholdSwitchOn(source: string): number[] {
   return source
     .split("\n")
-    .flatMap((line, i) =>
-      !isComment(line) && SWITCH_ON.test(line.replace(STRIP, "").toLowerCase()) ? [i + 1] : [],
-    );
+    .flatMap((line, i) => (!isComment(line) && turnsSwitchOn(line) ? [i + 1] : []));
 }
