@@ -1,0 +1,10 @@
+# From the sign-in screen: Sign in, through the browser sheet, to Home (its `home` test id, E12 S5:
+# the hero replaced the "You are signed in" heading).
+appId: app.flump.mobile
+---
+- tapOn: "Sign in"
+- runFlow: browser-sheet.yaml
+- extendedWaitUntil:
+    visible:
+      id: "home"
+    timeout: 60000

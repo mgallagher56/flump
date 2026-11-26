@@ -12,7 +12,8 @@ appId: app.flump.mobile
     file: ../subflows/sign-in.yaml
     env:
       AFTER: "Start monthly check-in"
-- assertVisible: "You are signed in"
+- assertVisible:
+    id: "home-hero"
 - tapOn:
     id: "check-in-row-action"
 - extendedWaitUntil:
@@ -53,7 +54,8 @@ appId: app.flump.mobile
 - tapOn:
     id: "check-in-done"
 - extendedWaitUntil:
-    visible: "You are signed in"
+    visible:
+      id: "home"
     timeout: 30000
 - assertNotVisible: "Start monthly check-in"
 - runScript:

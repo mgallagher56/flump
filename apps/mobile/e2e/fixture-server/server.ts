@@ -25,7 +25,11 @@
  *   refresh  ok | rejected | unavailable    every refresh invalid_grant, or 503
  *   accessTokenSeconds, minVersion          token lifetime; the client policy's minimum version
  *   data     ok | unavailable | empty       the check-in routes: canned data, 503
- *                                           service_unavailable, or no accounts and no months
+ *            | owner | renter | malformed   service_unavailable, or no accounts and no months;
+ *                                           owner and renter: personas.ts's home-owning and
+ *                                           renting households with six recorded months (S5);
+ *                                           malformed: the ok data with one account's balance
+ *                                           missing from GET /accounts (out of step)
  *   backend  current | older | newer        the profile as a backend from before E35 sends it (no
  *                                           `wellbeingQuestions`), or with a field from a later one
  *   terms    agreed | required              required: authenticated /v1 answers 403
@@ -58,6 +62,7 @@ import {
   cannedProfile,
   FIXTURE_PERSON,
   londonMonth,
+  malformedAccounts,
 } from "./fixtures";
 import { newSigningKey, opaque, publicJwk, type SigningKey, signJwt, verifyJwt } from "./tokens";
 
@@ -87,8 +92,11 @@ interface Scenario {
   accessTokenSeconds: number;
   /** The client policy's minimum version, for the update-required screen. */
   minVersion: string;
-  /** The check-in routes: canned data, 503 service_unavailable, or no accounts at all. */
-  data: "ok" | "unavailable" | "empty";
+  /**
+   * The check-in routes: canned data, 503 service_unavailable, no accounts at all, a persona's
+   * household (Home, S5), or the canned data with an account missing its balance.
+   */
+  data: "ok" | "unavailable" | "empty" | "owner" | "renter" | "malformed";
   /** `required`: authenticated `/v1` answers 403 terms_not_accepted until the terms are agreed. */
   terms: "agreed" | "required";
   /**
@@ -118,7 +126,13 @@ const ALLOWED: { [K in keyof Scenario]: (v: unknown) => boolean } = {
   refresh: (v) => v === "ok" || v === "rejected" || v === "unavailable",
   accessTokenSeconds: (v) => typeof v === "number" && Number.isInteger(v) && v >= 0,
   minVersion: (v) => typeof v === "string" && /^\d{1,5}(\.\d{1,5}){0,2}$/.test(v),
-  data: (v) => v === "ok" || v === "unavailable" || v === "empty",
+  data: (v) =>
+    v === "ok" ||
+    v === "unavailable" ||
+    v === "empty" ||
+    v === "owner" ||
+    v === "renter" ||
+    v === "malformed",
   terms: (v) => v === "agreed" || v === "required",
   backend: (v) => v === "current" || v === "older" || v === "newer",
   profile: (v) => v === "set-up" || v === "not-set-up" || v === "none",
@@ -216,10 +230,12 @@ export async function startFixtureServer(options: FixtureServerOptions): Promise
   const key = options.signingKey ?? newSigningKey();
   const userId = `user_${opaque(12)}`;
 
-  /** The check-in data for `ok` and for `empty`, rebuilt (with new ids) on every reset. */
+  /** The check-in data for each data scenario, rebuilt (with new ids) on every reset. */
   const buildStores = () => ({
     ok: buildCheckInStore(userId, new Date(now()), "ok"),
     empty: buildCheckInStore(userId, new Date(now()), "empty"),
+    owner: buildCheckInStore(userId, new Date(now()), "owner"),
+    renter: buildCheckInStore(userId, new Date(now()), "renter"),
   });
 
   // Parse every canned body once now, so a contract change fails the start, not a flow.
@@ -247,7 +263,11 @@ export async function startFixtureServer(options: FixtureServerOptions): Promise
       });
     }
   }
-  const store = (): CheckInStore => (scenario.data === "empty" ? stores.empty : stores.ok);
+  const store = (): CheckInStore => {
+    const { data } = scenario;
+    if (data === "empty" || data === "owner" || data === "renter") return stores[data];
+    return stores.ok;
+  };
   const stats = (): FixtureStats => ({
     ...counts,
     latestStartedMonth: store().latestStartedMonth,
@@ -440,7 +460,10 @@ export async function startFixtureServer(options: FixtureServerOptions): Promise
         return apiError(res, 503, "service_unavailable", "The service is not available.");
       }
       if (isSnapshotPut) return handleSnapshotPut(snapshotMonth, session, req, res);
-      if (path === "/accounts") return json(res, 200, cannedAccounts(store()));
+      if (path === "/accounts") {
+        if (scenario.data === "malformed") return json(res, 200, malformedAccounts(store()));
+        return json(res, 200, cannedAccounts(store()));
+      }
       if (path === "/account-details") return json(res, 200, cannedAccountDetails(store()));
       return json(res, 200, cannedCheckIns(store()));
     }

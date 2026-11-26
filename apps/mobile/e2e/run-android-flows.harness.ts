@@ -33,6 +33,10 @@ export const SHOTS = [
   "more-page",
   "link-not-found",
   "not-set-up",
+  "home-owner",
+  "home-renter",
+  "home-out-of-step",
+  "home-empty",
 ];
 
 export function run(
