@@ -53,9 +53,10 @@ describe("authz route coverage", () => {
     expect(offenders).toHaveLength(1);
   });
 
-  it("lets an uninvited caller through only to join and to their own data rights", () => {
+  it("lets an uninvited caller through only to join, to sign out and to their own data rights", () => {
     // Redeeming an invite is how they join; a removed member must still be able to export their
-    // data and delete their account. Nothing else may skip the beta refusal.
+    // data and delete their account, and the mobile app's Not invited screen offers Sign out (E12
+    // S2b). Nothing else may skip the beta refusal.
     expect(
       routes
         .filter((r) => r.allowUninvited)
@@ -66,6 +67,7 @@ describe("authz route coverage", () => {
       "GET /user-profile/export",
       "GET /user-profile/export/csv",
       "POST /beta/invites/redeem",
+      "POST /session/sign-out",
     ]);
   });
 
@@ -73,8 +75,8 @@ describe("authz route coverage", () => {
     // Terms acceptance. Every AuthGuard route runs the terms check unless marked
     // @AllowWithoutTerms(reason); /mcp and its REST route check the token owner's agreement in
     // McpTokenService.findTokenByHash. A person who does not agree must still be able to read and
-    // record the agreement, get a copy of their data and delete their account; an invite is
-    // redeemed before the terms are shown. Adding a route here needs the coordinator's sign-off
+    // record the agreement, get a copy of their data, delete their account and sign out (the mobile
+    // Terms screen offers Sign out, E12 S2b); an invite is redeemed before the terms are shown. Adding a route here needs the coordinator's sign-off
     // (AGENTS.md section 15).
     const exempt = routes.filter((r) => r.allowWithoutTerms !== null);
     expect(exempt.map((r) => r.key).sort()).toEqual([
@@ -83,6 +85,7 @@ describe("authz route coverage", () => {
       "GET /user-profile/export/csv",
       "GET /user-profile/terms-acceptance",
       "POST /beta/invites/redeem",
+      "POST /session/sign-out",
       "POST /user-profile/terms-acceptance",
     ]);
     for (const route of exempt) {

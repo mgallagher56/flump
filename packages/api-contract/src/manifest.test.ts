@@ -1,10 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { allRoutes, CONTRACT_GROUPS, findRoute, NON_JSON_RESPONSE_ROUTES } from "./manifest.js";
+import {
+  allRoutes,
+  CONTRACT_GROUPS,
+  findRoute,
+  NON_JSON_RESPONSE_ROUTES,
+  successStatusOf,
+} from "./manifest.js";
 import { checkAgainst } from "./validate.js";
 
 describe("route manifest", () => {
-  it("has 93 routes (64 before the 15 invoicing, 3 account-goal routes, the terms status route, 8 household routes and 2 wellbeing-question routes) with unique ids and unique method+path pairs", () => {
-    expect(allRoutes).toHaveLength(93);
+  it("has 94 routes (64 before the 15 invoicing, 3 account-goal routes, the terms status route, 8 household routes, 2 wellbeing-question routes and the session sign-out) with unique ids and unique method+path pairs", () => {
+    expect(allRoutes).toHaveLength(94);
     expect(new Set(allRoutes.map((r) => r.id)).size).toBe(allRoutes.length);
     expect(new Set(allRoutes.map((r) => `${r.method} ${r.path}`)).size).toBe(allRoutes.length);
   });
@@ -27,18 +33,40 @@ describe("route manifest", () => {
       .filter((r) => ["POST", "PATCH", "PUT"].includes(r.method) && !r.body)
       .map((r) => r.id)
       .sort();
-    expect(bodyless).toEqual(["bankConnections.refresh", "mcp.post", "profile.sendPasswordReset"]);
+    expect(bodyless).toEqual([
+      "bankConnections.refresh",
+      "mcp.post",
+      "profile.sendPasswordReset",
+      "session.signOut",
+    ]);
   });
 
-  it("every route declares a response schema, except the non-JSON ones (E21)", () => {
+  it("every route declares a response schema, except the non-JSON ones (E21) and 204s", () => {
     const missing = allRoutes
-      .filter((r) => !r.response)
+      .filter((r) => !r.response && successStatusOf(r) !== 204)
       .map((r) => r.id)
       .sort();
     expect(missing).toEqual([...NON_JSON_RESPONSE_ROUTES].sort());
     for (const id of NON_JSON_RESPONSE_ROUTES) {
       expect(allRoutes.find((r) => r.id === id)?.response).toBeUndefined();
     }
+  });
+
+  it("a 204 route has no response schema, and the only POST 204 is the session sign-out", () => {
+    const noContent = allRoutes.filter((r) => successStatusOf(r) === 204);
+    for (const route of noContent) expect(route.response, route.id).toBeUndefined();
+    expect(noContent.filter((r) => r.method === "POST").map((r) => r.id)).toEqual([
+      "session.signOut",
+    ]);
+  });
+
+  it("declares the session sign-out as an authenticated, bodyless POST answering 204", () => {
+    expect(findRoute("POST", "session/sign-out")).toMatchObject({
+      id: "session.signOut",
+      auth: "user",
+      status: 204,
+    });
+    expect(findRoute("POST", "session/sign-out")?.body).toBeUndefined();
   });
 
   it("findRoute matches on method and path template", () => {

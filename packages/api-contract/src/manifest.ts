@@ -157,7 +157,7 @@ export interface RouteDefinition {
   /**
    * The 2xx JSON body after serialisation (dates as ISO strings, decimals as numbers). Strict
    * objects, so a field the backend starts returning is a violation until the contract lists it.
-   * Absent only for routes in NON_JSON_RESPONSE_ROUTES.
+   * Absent only for routes in NON_JSON_RESPONSE_ROUTES and for 204 routes, which have no body.
    */
   readonly response?: z.ZodType;
   /**
@@ -1037,6 +1037,23 @@ export const routes = {
       ownership: "user",
       group: "mcp-tokens",
       response: McpInputResponse,
+    }),
+  },
+  session: {
+    /**
+     * The mobile app's own sign-out (E12 S2b): ends the caller's WorkOS session with no browser. No
+     * body; the session id comes only from the verified token's `sid` claim. Open to a caller who is
+     * not invited or has not agreed to the terms, since those screens offer Sign out. 503
+     * `service_unavailable` when WorkOS could not end it.
+     */
+    signOut: defineRoute({
+      id: "session.signOut",
+      method: "POST",
+      path: "session/sign-out",
+      auth: "user",
+      ownership: "user",
+      group: "app",
+      status: 204,
     }),
   },
   beta: {

@@ -6,6 +6,12 @@ export interface AuthenticatedUser {
    * claim, kept across token refreshes). Absent when the token does not carry it.
    */
   authTime?: number;
+  /**
+   * The WorkOS session the token belongs to (the verified `sid` claim), so the app can end its own
+   * session on sign-out. Absent when the token does not carry a non-empty string `sid`, and always
+   * absent under the dev bypass.
+   */
+  sessionId?: string;
 }
 
 export interface TokenVerifier {

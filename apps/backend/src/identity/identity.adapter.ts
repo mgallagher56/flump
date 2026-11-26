@@ -17,9 +17,18 @@ export interface UserIdentityAdapter {
    * Deleting the WorkOS user also ends its WorkOS sessions.
    */
   deleteUser(userId: string): Promise<void>;
+  /**
+   * Ends one WorkOS session (sign-out from the mobile app, E12 S2b). Resolves when the session is
+   * ended, including when the provider says it is already gone (404), so a repeat is safe. Throws
+   * on any other failure, and when no WorkOS client is configured.
+   */
+  revokeSession(sessionId: string): Promise<void>;
 }
 
-/** True for the provider's "no such user" answer, which a retried deletion treats as done. */
+/**
+ * True for the provider's "no such user" or "no such session" answer, which a retried deletion or
+ * sign-out treats as done.
+ */
 function isIdentityNotFound(err: unknown): boolean {
   const e = err as { status?: unknown; name?: unknown } | null;
   return e?.status === 404 || e?.name === "NotFoundException";
@@ -83,6 +92,20 @@ export class WorkOSIdentityAdapter implements UserIdentityAdapter {
       throw err;
     }
   }
+
+  /**
+   * Throws without a client, like deleteUser: ending a session must really happen. The dev setup
+   * never gets here, since the dev-bypass user carries no session id.
+   */
+  async revokeSession(sessionId: string): Promise<void> {
+    if (!this.client) throw new Error("WorkOS client not configured");
+    try {
+      await this.client.userManagement.revokeSession({ sessionId });
+    } catch (err: unknown) {
+      if (isIdentityNotFound(err)) return;
+      throw err;
+    }
+  }
 }
 
 /**
@@ -95,6 +118,9 @@ export class InMemoryIdentityAdapter implements UserIdentityAdapter {
   public deletedUsers: string[] = [];
   /** Set to make the next deleteUser calls fail (simulates a WorkOS outage). */
   public deleteFailure: Error | null = null;
+  public revokedSessions: string[] = [];
+  /** Set to make the next revokeSession calls fail (simulates a WorkOS outage). */
+  public revokeFailure: Error | null = null;
 
   async updateName(userId: string, firstName?: string, lastName?: string): Promise<void> {
     this.updatedNames.push({ userId, firstName, lastName });
@@ -111,5 +137,10 @@ export class InMemoryIdentityAdapter implements UserIdentityAdapter {
   async deleteUser(userId: string): Promise<void> {
     if (this.deleteFailure) throw this.deleteFailure;
     this.deletedUsers.push(userId);
+  }
+
+  async revokeSession(sessionId: string): Promise<void> {
+    if (this.revokeFailure) throw this.revokeFailure;
+    this.revokedSessions.push(sessionId);
   }
 }

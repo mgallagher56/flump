@@ -4032,3 +4032,13 @@ Measured with `bunx stryker run --mutate "src/auth/auth.guard.ts,src/auth/terms-
 | Line | Fault                                                   | Class             | Reason                                                                                                       |
 | ---- | ------------------------------------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------ |
 | L91  | ConditionalExpression and StringLiteral (empty history) | Not worth killing | A guard that cannot fire: `LEGAL_PAGES` is built by `withVersion`, which throws at load on an empty history. |
+
+## Mobile sign-out (E12 S2b, 26 November 2026)
+
+Measured by forced runs of `src/auth/workos-jwt.verifier.ts:68-101` (the `verify` method, with the new `sid` claim), `src/modules/session/session.controller.ts` and `src/identity/identity.adapter.ts` (the port and `revokeSession`). The controller and the adapter have no surviving fault, nor does the new `sessionId` line. Two new tests that pin the exact warning line also kill the log faults on L95 to L98 that earlier runs reported. The faults still not caught on L76, L79 and L85 are the rows under "Auth and guards" above, and the "unknown" text there given as L93 is now L95. Line numbers below are those of this change.
+
+#### `src/auth/workos-jwt.verifier.ts`
+
+| Line     | Fault                                                  | Class      | Reason                                                                                                                                                                                      |
+| -------- | ------------------------------------------------------ | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L96; L97 | OptionalChaining `e.code`, `e.claim` (diagnostic line) | Equivalent | Everything that reaches the catch is an Error object: jose's errors, the JWKS getter's and the verifier's own `throw new Error`. `e` is never null or undefined, so `e?.x` and `e.x` agree. |

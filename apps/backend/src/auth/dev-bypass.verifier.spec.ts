@@ -8,6 +8,9 @@ describe("DevBypassVerifier", () => {
     expect(DEV_USER.id).toBe("dev_user_123");
     // Counts as just signed in, so the recent-login check does not block local development.
     expect(Math.abs((user.authTime ?? 0) - Date.now() / 1000)).toBeLessThan(5);
+    // No WorkOS session behind the dev user, so sign-out has nothing to revoke.
+    expect(user.sessionId).toBeUndefined();
+    expect("sessionId" in user).toBe(false);
   });
 
   it("rejects any other token", async () => {

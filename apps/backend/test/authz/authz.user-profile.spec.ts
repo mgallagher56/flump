@@ -56,6 +56,9 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
   const lookedUp: string[] = [];
   const resetSentTo: string[] = [];
   const deletedLogins: string[] = [];
+  const revokedSessions: string[] = [];
+  // Sample WorkOS session ids, built at runtime.
+  const sessionOf = (who: string) => ["session", who, "sample"].join("_");
 
   // The newest versions in LEGAL_PAGES (packages/business-details): terms 0.1, privacy notice 0.4.
   const NEWEST = { termsVersion: "0.1", privacyNoticeVersion: "0.4" };
@@ -73,6 +76,9 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
     vi.spyOn(adapter, "updateName").mockImplementation(async () => undefined);
     vi.spyOn(adapter, "deleteUser").mockImplementation(async (userId) => {
       deletedLogins.push(userId);
+    });
+    vi.spyOn(adapter, "revokeSession").mockImplementation(async (sessionId) => {
+      revokedSessions.push(sessionId);
     });
   }, 60_000);
 
@@ -93,6 +99,7 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
     lookedUp.length = 0;
     resetSentTo.length = 0;
     deletedLogins.length = 0;
+    revokedSessions.length = 0;
     const patched = await h.call("patch", "/user-profile", h.tokens.a, {
       firstName: "A Secret Name",
       annualSalary: 50000,
@@ -162,6 +169,7 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
         method: "post",
         path: "/user-profile/send-password-reset",
       },
+      { key: "POST /session/sign-out", method: "post", path: "/session/sign-out" },
       {
         key: "POST /user-profile/reset-financial-data",
         method: "post",
@@ -213,6 +221,7 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
         expect(lookedUp).toEqual([]);
         expect(resetSentTo).toEqual([]);
         expect(deletedLogins).toEqual([]);
+        expect(revokedSessions).toEqual([]);
         ran(route.key, "authn");
       },
     );
@@ -638,6 +647,44 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
     expect(resetSentTo).toEqual([emails[USER_B]]);
     expect(resetSentTo).not.toContain(emails[USER_A]);
     ran("POST /user-profile/send-password-reset");
+  });
+
+  it("POST /session/sign-out: ends only the session in the caller's token, body and query ignored", async () => {
+    const tokenB = await h.signIn(USER_B, { sid: sessionOf("b") });
+    const res = await h
+      .call("post", `/session/sign-out?sessionId=${sessionOf("q")}`, tokenB)
+      .send({ sessionId: sessionOf("a"), sid: sessionOf("a") });
+    expect(res.status).toBe(204);
+    expect(res.text).toBe("");
+    expect(revokedSessions).toEqual([sessionOf("b")]);
+
+    // A token with no session id: 204 and nothing ended.
+    const none = await h.call("post", "/session/sign-out", h.tokens.a);
+    expect(none.status).toBe(204);
+    expect(revokedSessions).toEqual([sessionOf("b")]);
+    ran("POST /session/sign-out");
+  });
+
+  it("POST /session/sign-out: reaches the revoke for a person not invited and one who has not agreed to the terms", async () => {
+    const saved = process.env.BETA_ALLOWED_USER_IDS;
+    process.env.BETA_ALLOWED_USER_IDS = USER_A;
+    try {
+      const uninvited = await h.signIn(USER_B, { sid: sessionOf("uninvited") });
+      // The beta refusal holds elsewhere, so the exemption is this route's own.
+      expect((await h.call("get", "/user-profile", uninvited)).status).toBe(403);
+      expect((await h.call("post", "/session/sign-out", uninvited)).status).toBe(204);
+    } finally {
+      if (saved === undefined) delete process.env.BETA_ALLOWED_USER_IDS;
+      else process.env.BETA_ALLOWED_USER_IDS = saved;
+    }
+    const pending = await h.signIn(["user", "terms", "pending"].join("_"), {
+      sid: sessionOf("pending"),
+    });
+    const refused = await h.call("get", "/user-profile", pending);
+    expect(refused.status).toBe(403);
+    expect(JSON.stringify(refused.body)).toContain("terms_not_accepted");
+    expect((await h.call("post", "/session/sign-out", pending)).status).toBe(204);
+    expect(revokedSessions).toEqual([sessionOf("uninvited"), sessionOf("pending")]);
   });
 
   it("GET /retirement-plan: requires auth and returns only the caller's plan", async () => {
