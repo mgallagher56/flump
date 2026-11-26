@@ -23,6 +23,7 @@ export * from "./mortgage-affordability.js";
 export * from "./mortgage-rate-assumptions.js";
 export * from "./mtd-income-tax.js";
 export * from "./net-worth-basis.js";
+export * from "./net-worth-change.js";
 export * from "./net-worth-trend.js";
 export * from "./paye-salary-for-tax.js";
 export * from "./persistence.js";
