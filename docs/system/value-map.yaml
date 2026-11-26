@@ -25,6 +25,12 @@ surfaces:
     }
   - { id: dashboard, name: Dashboard, kind: page, route: /, path: apps/web/app/routes/_index.tsx }
   - {
+      id: mobile-home,
+      name: Mobile app Home,
+      kind: page,
+      path: apps/mobile/src/features/home/useHomeData.ts,
+    }
+  - {
       id: accounts,
       name: Accounts,
       kind: page,
@@ -2219,6 +2225,7 @@ figures:
       - { surface: history, path: apps/web/app/features/snapshot/snapshotModel.ts }
       - { surface: mcp-read, path: packages/mcp/src/tools/read/getFinancialSnapshot.ts }
       - { surface: context-pack, path: packages/finance-engine/src/ai-context-pack.ts }
+      - { surface: mobile-home, path: apps/mobile/src/features/home/useHomeData.ts }
     links: [L51, L52]
     verdict: holds
 
@@ -2236,6 +2243,27 @@ figures:
     links: [L05, L51, L68]
     verdict: broken
     findings: [CH-1, CH-2, CH-5]
+
+  - id: net-worth-change
+    name: Net worth change since last month
+    area: accounts
+    computed_by:
+      { function: selectNetWorthChange, path: packages/finance-engine/src/net-worth-change.ts }
+    other_paths: []
+    inputs: [balance-history, account-balance, ownership-share, net-worth-choices]
+    shown_on:
+      - {
+          surface: dashboard,
+          path: apps/web/app/routes/_index.tsx,
+          note: "the Home hero's change line; netWorthDelta.ts keeps only the words (E12 S5)",
+        }
+      - {
+          surface: mobile-home,
+          path: apps/mobile/src/features/home/useHomeData.ts,
+          note: "the mobile Home hero (E12 S5), from the same selector over the same series",
+        }
+    links: []
+    verdict: holds
 
   - id: total-debts
     name: Total debts

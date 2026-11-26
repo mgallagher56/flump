@@ -59,6 +59,7 @@ Where each value is stored, entered and used. One entry per stored fact, then on
 | [Currency and country](#currency-and-country)                                                                                            | fact   | preferences | Not checked                               |
 | [Net worth today](#net-worth)                                                                                                            | figure | accounts    | Holds                                     |
 | [Net worth over time](#net-worth-over-time)                                                                                              | figure | accounts    | Broken                                    |
+| [Net worth change since last month](#net-worth-change)                                                                                   | figure | accounts    | Holds                                     |
 | [Total debts](#total-debts)                                                                                                              | figure | accounts    | Duplicated (two stores that can disagree) |
 | [Debt-free date and interest](#debt-free-date)                                                                                           | figure | accounts    | Duplicated (two stores that can disagree) |
 | [Home equity](#home-equity)                                                                                                              | figure | home        | Holds                                     |
@@ -690,6 +691,7 @@ Shown on:
 - History: `apps/web/app/features/snapshot/snapshotModel.ts`
 - AI read tools: `packages/mcp/src/tools/read/getFinancialSnapshot.ts`
 - AI context pack: `packages/finance-engine/src/ai-context-pack.ts`
+- Mobile app Home: `apps/mobile/src/features/home/useHomeData.ts`
 
 ### Net worth over time
 
@@ -710,6 +712,24 @@ Shown on:
 - Dashboard: `apps/web/app/routes/_index.tsx`
 - AI read tools: `packages/mcp/src/tools/read/getBalanceHistory.ts`
 - AI context pack: `packages/finance-engine/src/ai-context-pack.ts`
+
+### Net worth change since last month
+
+<a id="net-worth-change"></a>
+
+- Id: `net-worth-change` (derived figure)
+- Verdict: Holds. Findings: none. Links: none.
+- Computed by: `selectNetWorthChange` in `packages/finance-engine/src/net-worth-change.ts`
+- Built from: `balance-history`, `account-balance`, `ownership-share`, `net-worth-choices`
+
+Other code paths that compute it:
+
+- none
+
+Shown on:
+
+- Dashboard: `apps/web/app/routes/_index.tsx` (the Home hero's change line; netWorthDelta.ts keeps only the words (E12 S5))
+- Mobile app Home: `apps/mobile/src/features/home/useHomeData.ts` (the mobile Home hero (E12 S5), from the same selector over the same series)
 
 ### Total debts
 
