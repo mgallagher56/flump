@@ -21,6 +21,10 @@ export const SHOTS = [
   "check-in-summary",
   "check-in-backend-down",
   "terms-required",
+  "older-backend",
+  "signed-in-again",
+  "sign-out-confirm",
+  "update-required",
 ];
 
 export function run(
