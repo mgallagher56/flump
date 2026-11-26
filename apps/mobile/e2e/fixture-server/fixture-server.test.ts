@@ -17,6 +17,10 @@ import {
 import { calculateCheckInBalance } from "@flump/finance-engine";
 import { buildCheckInStore, checkInStepsFor } from "./fixtures";
 import { EMULATOR_HOST, FIXTURE_PORT, type FixtureServer, startFixtureServer } from "./server";
+import { newSigningKey } from "./tokens";
+
+/** One key for the file: a fresh RSA key per test cost seconds of CI time. */
+const signingKey = newSigningKey();
 
 /** PKCE pair built at runtime (RFC 7636, S256). */
 function pkcePair() {
@@ -33,7 +37,12 @@ let clock: number;
 
 beforeEach(async () => {
   clock = Date.UTC(2026, 10, 25, 12, 0, 0);
-  server = await startFixtureServer({ port: 0, clientId: CLIENT_ID, now: () => clock });
+  server = await startFixtureServer({
+    port: 0,
+    clientId: CLIENT_ID,
+    now: () => clock,
+    signingKey,
+  });
 });
 
 afterEach(async () => {
