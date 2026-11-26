@@ -14,8 +14,8 @@ import { takeMigrationLock } from "../config/migration-lock";
 const HOUSEHOLD_DOWN_REFUSAL =
   "households, household_members or household_invitations has rows; reverting would close every household";
 
-export class AddHouseholds1795660000000 implements MigrationInterface {
-  name = "AddHouseholds1795660000000";
+export class AddHouseholds1795730000000 implements MigrationInterface {
+  name = "AddHouseholds1795730000000";
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await takeMigrationLock(queryRunner);

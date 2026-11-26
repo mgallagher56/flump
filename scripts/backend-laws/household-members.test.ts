@@ -45,7 +45,7 @@ describe("household membership law (E34 C3)", () => {
   test("allows the household module, migrations and the listed privacy files only", () => {
     const query = "await m.query(`SELECT 1 FROM household_members`);";
     expect(lines("apps/backend/src/modules/household/household.service.ts", query)).toEqual([]);
-    expect(lines("apps/backend/src/migrations/AddHouseholds1795660000000.ts", query)).toEqual([]);
+    expect(lines("apps/backend/src/migrations/AddHouseholds1795730000000.ts", query)).toEqual([]);
     expect(lines("apps/backend/src/modules/privacy/household-leave.ts", query)).toEqual([]);
     expect(lines("apps/backend/src/modules/privacy/user-data-write-fence.ts", query)).toEqual([1]);
     expect(lines("apps/backend/src/modules/agent/mcp.service.ts", query)).toEqual([1]);

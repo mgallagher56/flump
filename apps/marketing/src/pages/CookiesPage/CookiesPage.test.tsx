@@ -27,6 +27,8 @@ const NOT_LISTED: Record<string, string> = {
   "wos-session": "the development name of the session cookie, and the old name that is cleared",
   flump_setup_checklist_dismissed: "no longer written or read, only removed on sign-out",
   flump_runway_calculator_settings: "no longer written, only removed",
+  flump_household_invite:
+    "set only when households are switched on (E34 C3, off until the owner turns them on); listed here then",
 };
 
 /** The browser storage kinds the cookies page covers: the two websites write only these. */

@@ -191,8 +191,11 @@ export class AccountDeletionService implements ErasedAccountCheck {
         // First statement: serialise with a financial-data reset of the same user (see lockUserData).
         await lockUserData(manager, userId);
         const removed = await this.sweep(manager, userId);
-        // E34 C3: close the person's household first (the other person loses only their membership
-        // row) and remove their open invitation link; the same function as leaving.
+        // E34 C3: after the registry sweep, close the person's household (the other person loses
+        // only their membership row) and remove their open invitation link; the same function as
+        // leaving. The order is safe: it all runs in this one transaction under the exclusive
+        // lockUserData, so no fenced request can join, leave or share in between, and the household
+        // tables have no foreign key to any registry table, so neither delete depends on the other.
         const household = await leaveHousehold(manager, userId);
         const linked = await this.sweepLinked(manager, userId);
         const now = new Date();

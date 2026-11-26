@@ -24,9 +24,9 @@
 \* the model reads rows, so that is the same as at commit. Failures, rollbacks
 \* and the WorkOS step (c), (d) are out of scope.
 \*
-\* Households (E34 C3): the third table is household_members. Step (b) clears it
-\* (leaveHousehold, between sweep and sweepLinked) but the straggler sweep (b2)
-\* does not, so a row committed there after (b) would survive. The user's own
+\* Households (E34 C3): the third table is household_members. Steps (b) and (b2)
+\* both clear it (leaveHousehold, between sweep and sweepLinked), so like every
+\* table a row committed there after (b2) would survive. The user's own
 \* join, leave and share are ordinary fenced requests (leave deletes and share
 \* updates the user's existing row, so neither can add one; join inserts and is
 \* RequestLockedWrite on table 3). The one new writer is a partner: another
@@ -46,7 +46,7 @@ CONSTANTS
 
 Tables == <<"accounts", "profile", "household_members">>   \* USER_DATA_REGISTRY order, then leaveHousehold
 TableIds == 1..Len(Tables)
-StragglerTables == 1..2   \* (b2) sweeps the registry only, not household_members
+StragglerTables == TableIds   \* (b2) runs sweep, leaveHousehold and sweepLinked again
 HouseholdTable == 3
 Writers == Requests \cup Partners \cup {"existing", "reset"}
 
