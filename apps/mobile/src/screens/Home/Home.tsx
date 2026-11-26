@@ -40,7 +40,12 @@ export function Home({
   // The terms changed while signed in (PR #939): every read is refused until they are agreed.
   if (data.status === "error" && data.problem === "termsNotAccepted") {
     return (
-      <TermsRequired marketingOrigin={marketingOrigin} onRetry={data.retry} onSignOut={onSignOut} />
+      <TermsRequired
+        marketingOrigin={marketingOrigin}
+        onRetry={data.retry}
+        onSignOut={onSignOut}
+        edges={TAB_EDGES}
+      />
     );
   }
   return (
