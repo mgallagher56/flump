@@ -21,6 +21,8 @@ import {
   quarantineSummary,
 } from "../apps/e2e/quarantine";
 import { webServers } from "../apps/e2e/support/servers";
+import { KEYED_STEPS, workflowStep } from "./android-apk-cache-key";
+import { SHARED_PACKAGES } from "./mobile-e2e-scope";
 
 const repoRoot = resolve(import.meta.dir, "..");
 
@@ -157,7 +159,10 @@ function runsOnPullRequest(condition: string | undefined): boolean {
     .replace(/\$\{\{|\}\}/g, "")
     .replace(/always\(\)/g, "true")
     .replace(/!cancelled\(\)/g, "true")
-    .replace(/github\.event_name/g, "'pull_request'");
+    .replace(/github\.event_name/g, "'pull_request'")
+    // A pull_request event has no schedule; a cron string is compared only inside quotes.
+    .replace(/github\.event\.schedule/g, "''")
+    .replace(/'[\d *]+'/g, "'cron'");
   if (!/^[\s'a-z_!=|&()]+$/.test(js)) throw new Error(`unsupported if: ${condition}`);
   return Boolean(new Function(`return (${js});`)());
 }
@@ -816,6 +821,95 @@ describe("mobile e2e job (E12 S2c)", () => {
     // the first sign-in after boot and the flow stayed on the sign-in screen (run 45750932431).
     const ram = job.match(/\n {10}ram-size: (\d+)M\n/);
     expect(Number(ram?.[1])).toBeGreaterThanOrEqual(4096);
+  });
+
+  // Owner, 26 November 2026: a cached APK, light only on pull requests, the smoke set for
+  // shared-package pull requests, and a nightly full run.
+  const step = (name: string) => workflowStep(workflow, name);
+
+  test("the APK cache key covers the prebuild and Gradle steps, which exist as named", () => {
+    expect(KEYED_STEPS).toEqual([
+      "🤖 Expo prebuild (Android)",
+      "🤖 Debug APK (Gradle, unless cached)",
+    ]);
+    expect(step(KEYED_STEPS[0])).toContain("bunx expo prebuild --platform android");
+    expect(step(KEYED_STEPS[1])).toContain("./gradlew :app:assembleDebug");
+  });
+
+  test("the APK is restored only on an exact, non-empty key and never on the nightly run", () => {
+    const restore = step("📦 Restore the debug APK");
+    expect(restore).toContain("uses: actions/cache/restore@");
+    expect(restore).toContain("key: ${{ steps.apk-key.outputs.key }}");
+    expect(restore).toContain("steps.apk-key.outputs.key != ''");
+    expect(restore).toContain("github.event_name != 'schedule'");
+    expect(job).not.toContain("restore-keys");
+    expect(step("🔑 Debug APK cache key")).toContain("run: bun scripts/android-apk-cache-key.ts");
+    // The key reads the prebuild output, so it is worked out after prebuild.
+    expect(job.indexOf("bun scripts/android-apk-cache-key.ts")).toBeGreaterThan(
+      job.indexOf("bunx expo prebuild"),
+    );
+  });
+
+  test("Gradle runs unless the APK was restored, and the APK is saved only when built under a key", () => {
+    expect(step(KEYED_STEPS[1])).toContain("steps.apk-cache.outputs.cache-hit != 'true'");
+    const save = step("📦 Save the debug APK");
+    expect(save).toContain("uses: actions/cache/save@");
+    expect(save).toContain("steps.apk-cache.outputs.cache-hit != 'true'");
+    expect(save).toContain("steps.apk-key.outputs.key != ''");
+    expect(save).toContain("github.event_name != 'schedule'");
+  });
+
+  test("prebuild and the backup check run on a cache hit too, and the summary names the APK's source", () => {
+    for (const name of [KEYED_STEPS[0], "🔒 Backup leaves out the secure store"]) {
+      expect(step(name)).toContain("if: steps.changed.outputs.run == 'true'\n");
+    }
+    const summary = step("🧾 Say where the APK came from");
+    expect(summary).toContain("GITHUB_STEP_SUMMARY");
+    expect(summary).toContain("restored from the cache, key");
+  });
+
+  test("the scope script picks the themes and flow set, and the runner is given both", () => {
+    expect(step("🔎 What does this change run?")).toContain("run: bun scripts/mobile-e2e-scope.ts");
+    const flows = step("📱 Maestro flows on the emulator");
+    expect(flows).toContain("THEMES: ${{ steps.changed.outputs.themes }}");
+    expect(flows).toContain("FLOWS: ${{ steps.changed.outputs.flows }}");
+    expect(flows).toContain('run-android-flows.sh "$RUNNER_TEMP/apk/app-debug.apk"');
+    expect(flows).toContain('"$THEMES" "$FLOWS"');
+  });
+
+  test("the job runs on a nightly schedule, and the audit stays weekly", () => {
+    expect(workflow).toContain('    - cron: "23 2 * * *"\n');
+    expect(job).toContain(
+      "if: github.event_name != 'schedule' || github.event.schedule == '23 2 * * *'",
+    );
+    const audit = workflow.slice(workflow.indexOf("\n  audit:"));
+    expect(audit).toContain("if: github.event.schedule != '23 2 * * *'");
+  });
+
+  test("the job reports on every pull request: its first steps have no condition", () => {
+    for (const name of ["⬇️ Checkout repo", "⚙️ Setup Bun", "🔎 What does this change run?"]) {
+      expect(workflowStep(job, name)).not.toContain("if:");
+    }
+  });
+
+  test("the smoke set's packages are exactly the workspace packages the app depends on", () => {
+    const pkg = JSON.parse(
+      readFileSync(resolve(import.meta.dir, "../apps/mobile/package.json"), "utf8"),
+    ) as { dependencies: Record<string, string>; devDependencies: Record<string, string> };
+    const workspace = Object.keys({ ...pkg.dependencies, ...pkg.devDependencies })
+      .filter((d) => d.startsWith("@flump/") || d === "@repo/typescript-config")
+      .map((d) => d.split("/")[1])
+      .sort();
+    expect([...SHARED_PACKAGES].sort()).toEqual(workspace);
+  });
+
+  test("the job's Bun matches the Bun setup action's", () => {
+    const action = readFileSync(
+      resolve(import.meta.dir, "../.github/actions/bun-setup/action.yml"),
+      "utf8",
+    );
+    const version = (text: string) => text.match(/bun-version: (\S+)/)?.[1];
+    expect(version(step("⚙️ Setup Bun"))).toBe(version(action));
   });
 });
 

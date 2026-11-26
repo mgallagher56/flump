@@ -1,16 +1,32 @@
 #!/usr/bin/env bash
-# Runs every Maestro flow on the booted Android emulator, once in light and once in dark (E12 S2c).
+# Runs Maestro flows on the booted Android emulator, once per theme (E12 S2c).
 # Called by CI's `🤖 Mobile e2e (Android)` job inside the emulator action.
 #
-#   bash apps/mobile/e2e/run-android-flows.sh <debug-apk> <output-dir>
+#   bash apps/mobile/e2e/run-android-flows.sh <debug-apk> <output-dir> <themes> <flow-set>
+#
+# <themes> is "light", "dark" or "light dark"; <flow-set> is "full" (every flow) or "smoke"
+# (engine-check and sign-in). scripts/mobile-e2e-scope.ts chooses both for each CI event.
 #
 # Flake policy: no retries. A failed flow fails the job; screenshots and Maestro's logs are in
 # <output-dir> (uploaded as an artifact) to read why.
 set -euo pipefail
 
-apk="${1:?usage: run-android-flows.sh <debug-apk> <output-dir>}"
-out="${2:?usage: run-android-flows.sh <debug-apk> <output-dir>}"
+usage="usage: run-android-flows.sh <debug-apk> <output-dir> <themes> <flow-set>"
+apk="${1:?$usage}"
+out="${2:?$usage}"
+themes="${3:?$usage}"
+flow_set="${4:?$usage}"
 flows="$(cd "$(dirname "$0")" && pwd)/flows"
+
+for theme in $themes; do
+  case "$theme" in light | dark) ;; *) echo "Unknown theme ${theme}" >&2; exit 2 ;; esac
+done
+if [ -z "${themes// /}" ]; then echo "No theme given" >&2; exit 2; fi
+case "$flow_set" in
+  full) run_flows=("$flows"/*.yaml) ;;
+  smoke) run_flows=("$flows/engine-check.yaml" "$flows/sign-in.yaml") ;;
+  *) echo "Unknown flow set ${flow_set}" >&2; exit 2 ;;
+esac
 
 export MAESTRO_CLI_NO_ANALYTICS=1
 export MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED=true
@@ -44,7 +60,7 @@ stop_app_and_settle() {
   exit 1
 }
 
-for theme in light dark; do
+for theme in $themes; do
   stop_app_and_settle
   if [ "$theme" = dark ]; then adb shell cmd uimode night yes; else adb shell cmd uimode night no; fi
   # The theme is set before any flow starts; a mismatch is a runner fault, not a flaky flow.
@@ -56,7 +72,7 @@ for theme in light dark; do
   mkdir -p "$out/$theme"
   # One flow at a time, so the app is stopped and settled before each flow's clearState. A failed
   # flow does not stop the others: the run still fails once they have all run.
-  for flow in "$flows"/*.yaml; do
+  for flow in "${run_flows[@]}"; do
     name="$(basename "$flow" .yaml)"
     stop_app_and_settle
     # takeScreenshot writes to the working directory.
@@ -66,9 +82,9 @@ for theme in light dark; do
       failed=1
     fi
   done
-  # A screenshot that was not written is a failure, not a silent gap in the artifact.
-  for shot in welcome engine-check sign-in signed-in sign-in-denied not-invited signed-out session-ended \
-    check-in-summary check-in-backend-down terms-required; do
+  # A screenshot that was not written is a failure, not a silent gap in the artifact: every
+  # takeScreenshot in a flow that ran must have left its file.
+  for shot in $(sed -n 's/^- takeScreenshot: \(.*\)-\${THEME}$/\1/p' "${run_flows[@]}"); do
     if [ -z "$(find "$out/$theme" -name "${shot}-${theme}.png" -print -quit)" ]; then
       echo "Missing screenshot ${shot}-${theme}.png" >&2
       failed=1
