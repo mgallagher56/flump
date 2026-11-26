@@ -135,7 +135,37 @@ describe("readSiteConfig", () => {
   it("keeps the marketing site's origin", () => {
     expect(
       readSiteConfig({ EXPO_PUBLIC_MARKETING_URL: "https://site.example.com/path" }, release),
-    ).toEqual({ marketingOrigin: "https://site.example.com" });
+    ).toEqual({ marketingOrigin: "https://site.example.com", webAppOrigin: null });
+  });
+
+  it("keeps the web app's origin when set, checked as the marketing site's is", () => {
+    const site = "https://site.example.com";
+    expect(
+      readSiteConfig(
+        { EXPO_PUBLIC_MARKETING_URL: site, EXPO_PUBLIC_WEB_APP_URL: " https://app.example.com/x " },
+        release,
+      ).webAppOrigin,
+    ).toBe("https://app.example.com");
+    expect(
+      readSiteConfig({ EXPO_PUBLIC_MARKETING_URL: site, EXPO_PUBLIC_WEB_APP_URL: "  " }, release)
+        .webAppOrigin,
+    ).toBeNull();
+    expect(
+      codeOf(() =>
+        readSiteConfig(
+          { EXPO_PUBLIC_MARKETING_URL: site, EXPO_PUBLIC_WEB_APP_URL: "http://localhost:5173" },
+          release,
+        ),
+      ),
+    ).toBe("insecure-api-url");
+    expect(
+      codeOf(() =>
+        readSiteConfig(
+          { EXPO_PUBLIC_MARKETING_URL: site, EXPO_PUBLIC_WEB_APP_URL: "nope" },
+          release,
+        ),
+      ),
+    ).toBe("invalid-api-url");
   });
 
   it("is required, and HTTPS in a release build", () => {

@@ -507,11 +507,60 @@ After S6 the page slices touch separate folders and can run two or three at a ti
 
 **Built (S3, 25 November 2026).** `packages/copy` (P5) is not on main, so the words are in one module, `src/copy/checkIn.ts`, copied from web's `snapshotCopy.ts` and `CheckInRow.tsx`. Data: `src/data/{queryClient,queryKeys,useDelayedLoading,checkIn,problems,ApiProvider}`, TanStack Query 5 (reads retried twice on `unavailable` and `server` only; the cache is cleared whenever nobody is signed in). Flow: `src/features/check-in/{useCheckInData,checkInFlow,useSaveCheckIn}.ts` follow web's `useCheckIn`: each answer is one `PUT /v1/snapshots/:month` built by `checkInPayload` (so `checkIn: true`, and `complete` on the last), one save at a time, a synchronous guard against a double tap. The app imports the engine from a new narrow entry, `@flump/finance-engine/check-in`: the package root reaches the tax vector catalogue through `tax-year-verification.ts`, and Metro keeps every export, so the bundle search failed on it. Three changes from the text above: (1) `GET /v1/portfolio-snapshot` does not exist; the summary's net worth and change come from the engine's `buildCheckInSummary` over the data read when the check-in opened, as on web. (2) The row shows when there are no accounts yet, so the empty state (one sentence, a link to the website) is reachable until S5's setup row. (3) Saving offline: the screen knows only the session's `restoredOffline` state (no network listener yet); then saving is off and says why, and a failed save keeps the answer with "Try again". The 403 `terms_not_accepted` answer (PR #939, merged during S3) is handled: the account check turns it into a `termsRequired` session state, and a check-in read that gets it mid-session shows the same `TermsRequired` screen, which sends the person to the website to agree, then Try again checks again. The app does not record the agreement itself (still open in the parity log); the fixture server has a `terms` scenario and the flow `terms-required.yaml`. Seam cost 0. Mobile logo: the logo body uses `primary.mark` lit by `primary.markLit`, teal in light, as web (owner, 25 November).
 
-### 9.7 Later slices
+### 9.7 S4. Tabs and the More list
+
+**Goal.** A signed-in person moves between Home, Accounts, Budget, Pay and More as on web's phone layout, and every destination says honestly what it is today.
+
+**Decisions (10.3, small and reversible).**
+
+- **Tab bar:** the JavaScript tab bar (expo-router `Tabs` with our own `TabBar` through the `tabBar` prop). Native tabs cannot be measured in Jest, and our `Text` never caps the font scale, so the bar must adapt to large text, which only our own bar can prove.
+- **Menu button and More tab:** both stay, as the 14 November ruling and web as built (`Header.tsx`). The button sits on the right of the header and opens the More tab. Review at S18.
+- **One source:** mirror, not move. `navConfig.ts` imports lucide-react and web's `AppPageKey`, and the drawer's footer rows are JSX, so a shared package means a new workspace and several changed web files. Mobile keeps plain data in `src/navigation/navItems.ts`. A Vitest test in `apps/web` pins it, because `mobile-checks` does not run on web-only PRs.
+- **Icons:** the lucide shapes web uses, copied as SVG paths into one `Icon` component (ISC licence noted), no new dependency.
+- **Switched-off pages:** filtered later, in S9. `isPageEnabled` lives in `apps/web/app/utils/pageConfig.ts`, and a second copy of that rule is worse than an extra row. S4 lists every row, Self Assessment included.
+- **Kept:** tabs, More list, header with title and menu button, placeholders, `flump://` links to each tab, the More pages and the check-in. A link opened signed out shows sign-in and lands on its screen afterwards.
+- **Deferred:** the header theme toggle goes to S9 with the stored three-way choice (`ThemeProvider` follows the system only today). Universal and app links go to S19.
+
+**The flow.** `SessionGate` moves from the first route into `(app)/_layout.tsx` and wraps the shell.
+
+- `loading`, `signingOut`, `signedOut`, `signingIn`, `sessionEnded`, `notInvited` and `termsRequired` **replace** the shell, as now. Nobody can use a tab in those states. The update gate stays above everything.
+- `restoredOffline` **sits within** it: the tab bar and More stay, and each tab's body shows `Offline` with Try again. S7 turns it into cached reading.
+- A terms refusal met mid-session shows `TermsRequired` in the tab's body, as Home does now.
+
+Home keeps the "You are signed in" heading, the check-in row with its empty state, and the dev links, until S5. Accounts, Budget and Pay show `ComingSoon`: the page name, one sentence ("Accounts is not in the app yet. You can use it on the Flump website."), and a link to the same web page. No figures.
+
+More lists, in web's drawer order: Self Assessment, Savings, Pension, Retirement, Cards and loans, Mortgage, Settings, Connect AI, Calculators, then Sign out (with the existing confirmation). Each page row opens `ComingSoon` for its page. The Home sign-out button goes.
+
+**Files.**
+
+- Routes: `app/_layout.tsx` (one `(app)` entry); new `app/(app)/_layout.tsx`, `(app)/(tabs)/{_layout,index,accounts,budget,pay,more}.tsx`, `(app)/page/[key].tsx`.
+- Data and words: `src/navigation/navItems.ts` (plain data, no imports); `src/copy/navigation.ts`.
+- Components, five files each: `TabBar`, `AppHeader`, `ListRow`, `Icon`.
+- Screens: `screens/{More,ComingSoon}/`; `SessionGate` (takes children, offers sign-out through context); `Home`.
+- Config: `src/config.ts` gains an optional `webAppOrigin` from `EXPO_PUBLIC_WEB_APP_URL`, checked as the marketing address is. When it is unset the placeholder links to the marketing home page, so no existing build breaks. `eas.json`, the CI e2e env, README.
+- Web, small: export `withoutBarPages` from `MobileNavDrawer.tsx`; lift the three footer routes into `DRAWER_FOOTER_ROUTES` in `navConfig.ts`; new `apps/web/app/components/navigation/mobileNavParity.test.ts`.
+- End to end: `e2e/flows/tabs.yaml`; `e2e/subflows/sign-out.yaml` (through More); the screenshot list in `e2e/run-android-flows.sh` and its test; gallery entries.
+- Docs: 4.2 and 4.4 corrected; 10.3 filled in; parity log.
+
+**Acceptance**
+
+1. The parity test fails if mobile's tabs differ from `BOTTOM_BAR_TABS` plus More in key, order, label, route or icon, or if the More rows differ from `withoutBarPages(AUTH_NAV_ROUTES)` plus `DRAWER_FOOTER_ROUTES`. Labels equal `apps/web/public/locales/en/common.json`.
+2. Every placeholder names its page, shows no figure, and its link opens `webAppOrigin` plus that row's web route (Connect AI: `CONNECT_AI_ROUTE`).
+3. Home shows the check-in row, "Continue check-in" and the empty state exactly as in S3. Its tests pass unchanged apart from sign-out.
+4. Session states: a Jest test per state proves which replace the shell and that `restoredOffline` keeps the tab bar with Try again in each tab. The existing terms, session-ended and sign-out flows still pass.
+5. Each tab has role `tab` inside a `tablist`, announces selected, and is at least 48 by 48. The current tab and current More row are marked without colour alone.
+6. At 320 points wide and 200% text no label is clipped, shortened or broken mid-word: at large text the icons go and the bar lays its tabs out in as many columns as the longest label fits, wrapping to more rows. Proved in Jest at 320 points and 200% text, in light and dark; the fit is checked on a device.
+7. The colour pairs the bar draws (label and icon, selected and not) are pairs the shared contrast matrix already checks, or join it (section 6).
+8. `flump://accounts`, `flump://more` and `flump://page/pension` open their screens. Signed out they show sign-in, then the screen. An unknown key shows not found with one way back. No link performs a write.
+9. `tabs.yaml` signs in, visits each tab, opens More and one More page, with a screenshot of each, in light and dark. The runner settles the app first, with no retries.
+10. The gallery shows `TabBar`, `AppHeader`, `ListRow` and `Icon` in light, dark and 200% text. Dev screens stay out of the production bundle.
+11. Lint, types, `check:laws` and the mobile and web tests pass, including the mobile law checks for the new directories.
+12. The parity log marks the navigation rows done or part done and records the theme toggle and the filter deferred to S9. The PR states the CROSS-PLATFORM section 7 result.
+
+### 9.8 Later slices
 
 Each is specified in full when the slice before it merges, from the web page as it then is and the parity log. Fixed now:
 
-- **S4:** tabs equal `BOTTOM_BAR_TABS` plus More; the More list covers web's drawer entries; a test pins both.
 - **S5:** before the hero is built, check that the backend's net worth for `GET /v1/portfolio-snapshot` is computed by the engine's net worth basis; if any part is computed only in a backend service, move it to the engine first (O5 seam 1).
 - **S6:** one balance per account everywhere; the joint share line as on web (E34 C1); history chart only from three recorded months; history not editable.
 - **S7:** SQLCipher with the key check; the database out of iCloud and Android backups; a test that a cold start with no network keeps saved data; a test that a restored backup without the key shows no cached data and asks to sign in.
@@ -566,7 +615,7 @@ Adopted in `DECISIONS.md` round 2 (reversible defaults) or round 3, updated wher
 - **S1b:** the AGENTS.md section 1 wording for the native file set. Approved by the coordinator on 25 November 2026 and added verbatim: "**`apps/mobile`**: every component lives in its own PascalCase directory with `ComponentName.tsx`, `ComponentName.styles.ts` (a StyleSheet factory that takes the theme), `ComponentName.test.tsx`, `ComponentName.states.ts` (named prop sets, shown by the dev gallery and used by the tests, in place of a Storybook file) and `index.ts`." The coordinator approves it (round 2 adopted it in principle).
 - **S2a and S2b:** whether B-B is needed (no: refresh needs no secret); whether iOS uses a private browser session (yes). S2b, by a Fable decider on 26 November 2026: refresh token reuse within WorkOS's 30 second grace period is acceptable for the beta; sign-out opens no browser and revokes on the server (`POST /v1/session/sign-out`); every sign-in sends `max_age=0`, always, with no "signed out on purpose" marker. Suggested to the owner, not required: in the WorkOS dashboard's Sessions tab, an inactivity timeout (14 days) and a maximum session length (30 days).
 - **S3:** the shape of `packages/copy` (one module per flow, re-exported by web).
-- **S4:** native tabs or the JavaScript tab bar; whether the header menu button and the More tab both stay.
+- **S4:** the JavaScript tab bar, not native tabs; the header menu button and the More tab both stay (9.7, by a Fable planner on 26 November 2026).
 
 ---
 

@@ -3,8 +3,11 @@ import { Alert, type AlertButton, Platform } from "react-native";
 import { SessionProvider } from "../../auth/SessionProvider";
 import type { Session } from "../../auth/session";
 import type { SessionState } from "../../auth/sessionMachine";
+import { Button } from "../../components/Button";
+import { Text } from "../../components/Text";
 import { ApiProvider } from "../../data/ApiProvider";
 import { testQueryClient } from "../../data/fakeApi";
+import { useShell } from "../../navigation/shell";
 import { ThemeProvider } from "../../theme/ThemeProvider";
 import { SessionGate } from "./SessionGate";
 
@@ -15,6 +18,18 @@ jest.mock("expo-router", () => {
     router: { push: jest.fn() },
   };
 });
+
+/** Stands in for the tabs: shows what the shell gives a signed-in screen. */
+function ShellProbe() {
+  const shell = useShell();
+  return (
+    <>
+      <Text testID="shell">{`${shell.offline ? "offline" : "online"} ${shell.webAppOrigin}`}</Text>
+      <Button label="Sign out" onPress={shell.signOut} />
+      <Button label="Try again" onPress={shell.retry} />
+    </>
+  );
+}
 
 function fakeSession(initial: SessionState) {
   let state = initial;
@@ -43,11 +58,21 @@ async function gate(app: ReturnType<typeof fakeSession> | null) {
   await render(
     <ThemeProvider scheme="light">
       <SessionProvider
-        app={app ? { session: app.session, marketingOrigin: "https://s.test.invalid" } : null}
+        app={
+          app
+            ? {
+                session: app.session,
+                marketingOrigin: "https://s.test.invalid",
+                webAppOrigin: "https://app.test.invalid",
+              }
+            : null
+        }
       >
         {/* A cache emptied after the test, so none of its timers outlives it. */}
         <ApiProvider client={null} queryClient={testQueryClient()}>
-          <SessionGate />
+          <SessionGate>
+            <ShellProbe />
+          </SessionGate>
         </ApiProvider>
       </SessionProvider>
     </ThemeProvider>,
@@ -63,9 +88,8 @@ function answerAlert(alert: jest.SpyInstance, label: string) {
 }
 
 describe("SessionGate", () => {
-  // On Jest's clock a press's 130 ms hold costs nothing. Signed in, the gate shows Home, whose reads
-  // fail at once with no API client; a failure that lands after the last assertion is never
-  // delivered outside act, as its 0 ms notify timer is dropped with the fake clock.
+  // On Jest's clock a press's 130 ms hold costs nothing. Signed in, the gate shows its children
+  // (here a probe of the shell; the real tabs are tested through the router in routes.test.tsx).
   let alert: jest.SpyInstance;
   beforeEach(() => {
     jest.useFakeTimers();
@@ -141,13 +165,27 @@ describe("SessionGate", () => {
     expect(alert.mock.calls[0]?.[1]).toBe(message);
   });
 
-  it("signed in, the check-in row opens the check-in route", async () => {
-    const { router } = jest.requireMock("expo-router") as { router: { push: jest.Mock } };
-    await gate(fakeSession({ status: "signedIn" }));
-    await userEvent
-      .setup()
-      .press(await screen.findByRole("button", { name: "Start monthly check-in" }));
-    expect(router.push).toHaveBeenCalledWith("/check-in");
+  it.each<[SessionState, string | null]>([
+    [{ status: "signedIn" }, "online https://app.test.invalid"],
+    [{ status: "restoredOffline" }, "offline https://app.test.invalid"],
+    [{ status: "loading" }, null],
+    [{ status: "signedOut", notice: null }, null],
+    [{ status: "sessionEnded" }, null],
+    [{ status: "notInvited" }, null],
+    [{ status: "termsRequired" }, null],
+  ])("%j: the signed-in shell shows only while signed in (%s)", async (state, shell) => {
+    await gate(fakeSession(state));
+    if (shell === null) expect(screen.queryByTestId("shell")).toBeNull();
+    else expect(screen.getByTestId("shell")).toHaveTextContent(shell);
+  });
+
+  it("an ended session takes the shell away and shows the session-ended screen", async () => {
+    const app = fakeSession({ status: "signedIn" });
+    await gate(app);
+    expect(screen.getByTestId("shell")).toBeOnTheScreen();
+    await act(async () => app.set({ status: "sessionEnded" }));
+    expect(screen.queryByTestId("shell")).toBeNull();
+    expect(screen.getByRole("header", { name: "You have been signed out" })).toBeOnTheScreen();
   });
 
   it("terms not agreed: Try again and Sign out reach the session", async () => {

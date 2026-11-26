@@ -8,6 +8,8 @@ export interface AppSession {
   session: Session;
   /** The marketing site, for the legal links on the sign-in screen. */
   marketingOrigin: string;
+  /** The web app, for pages the app does not have yet (S4); null links them to the marketing site. */
+  webAppOrigin?: string | null;
   /** The app's one API client, whose 401s ask this session to refresh (S3: screens read through it). */
   api?: ApiClient;
   /** The version gate: true when this build is below the server's minimum (plan section 4.9). */

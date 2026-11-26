@@ -1,27 +1,41 @@
-import { router } from "expo-router";
-import { type ReactElement, useState } from "react";
+import { type ReactElement, type ReactNode, useMemo, useState } from "react";
 import { Platform } from "react-native";
 import { useSession, useStartProblem } from "../../auth/SessionProvider";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
 import { SIGN_OUT, SIGN_OUT_CONFIRM_TITLE, signOutConfirmMessage } from "../../copy/auth";
-import { Home } from "../Home";
+import { type Shell, ShellContext } from "../../navigation/shell";
 import { Loading } from "../Loading";
 import { Misconfigured } from "../Misconfigured";
 import { NotInvited } from "../NotInvited";
-import { Offline } from "../Offline";
 import { SessionEnded } from "../SessionEnded";
 import { SignIn } from "../SignIn";
 import { SignInUnavailable } from "../SignInUnavailable";
 import { TermsRequired } from "../TermsRequired";
 
 /**
- * The first route: shows the screen for the session's state (plan section 5.2). Every Sign out
- * asks first, saying what sign-out does on this platform.
+ * Around every signed-in route (`app/(app)/_layout.tsx`): shows the screen for the session's state
+ * (plan section 5.2), and the signed-in shell (`children`, the tabs and their pages) only while
+ * someone is signed in. Restored without reaching Flump, the shell stays and Home says so (S4,
+ * plan 9.7). Every Sign out asks first, saying what sign-out does on this platform.
  */
-export function SessionGate() {
+export function SessionGate({ children }: { children?: ReactNode }) {
   const app = useSession();
   const problem = useStartProblem();
   const [confirmingSignOut, setConfirmingSignOut] = useState(false);
+  const status = app?.state.status;
+  const shell = useMemo<Shell | null>(
+    () =>
+      app
+        ? {
+            offline: status === "restoredOffline",
+            signOut: () => setConfirmingSignOut(true),
+            retry: () => void app.session.retry(),
+            marketingOrigin: app.marketingOrigin,
+            webAppOrigin: app.webAppOrigin ?? null,
+          }
+        : null,
+    [app, status],
+  );
   if (!app) {
     return problem.kind === "unavailable" ? (
       <SignInUnavailable missing={problem.missing} />
@@ -68,15 +82,8 @@ export function SessionGate() {
           />
         );
       case "signedIn":
-        return (
-          <Home
-            onSignOut={signOut}
-            onOpenCheckIn={() => router.push("/check-in")}
-            marketingOrigin={marketingOrigin}
-          />
-        );
       case "restoredOffline":
-        return <Offline onRetry={() => void session.retry()} onSignOut={signOut} />;
+        return <ShellContext.Provider value={shell}>{children}</ShellContext.Provider>;
       case "sessionEnded":
         return <SessionEnded onSignIn={signIn} />;
       case "notInvited":
