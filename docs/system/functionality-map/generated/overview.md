@@ -2,7 +2,7 @@
 
 # Functionality map: overview
 
-Mapped pages: 42 | Sections: 274 | Excluded routes: 24
+Mapped pages: 42 | Sections: 275 | Excluded routes: 24
 
 ## web
 
@@ -467,13 +467,14 @@ Mapped pages: 42 | Sections: 274 | Excluded routes: 24
 ### features: Flump features | Flump
 
 - Route: `/features` (auth: `public`, file: `apps/marketing/src/pages/FeaturesIndexPage/FeaturesIndexPage.tsx`)
-- Purpose: Present all five money areas of Flump and the AI connection in one index page with links to each feature page.
+- Purpose: List every feature of Flump as one line, grouped by area, with a short Start here strip; each line opens in place to two or three sentences and a link to the matching section of an area page.
 
 | Section         | Component                                                          | Facts read | Figures |
 | --------------- | ------------------------------------------------------------------ | ---------- | ------- |
 | `site-header`   | `apps/marketing/src/components/Header/Header.tsx`                  | -          | -       |
 | `header`        | `apps/marketing/src/pages/FeaturesIndexPage/FeaturesIndexPage.tsx` | -          | -       |
-| `feature-tiles` | `apps/marketing/src/components/FeatureTiles/FeatureTiles.tsx`      | -          | -       |
+| `start-here`    | `apps/marketing/src/components/StartHere/StartHere.tsx`            | -          | -       |
+| `feature-index` | `apps/marketing/src/components/FeatureIndex/FeatureIndex.tsx`      | -          | -       |
 | `site-footer`   | `apps/marketing/src/components/Footer/Footer.tsx`                  | -          | -       |
 
 ### home: All your money. One clear picture. | Flump

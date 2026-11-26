@@ -1,10 +1,12 @@
 import { Button } from "@repo/ui";
 import type { FC } from "react";
-import { FeatureTiles } from "../../components/FeatureTiles";
+import { FeatureIndex } from "../../components/FeatureIndex";
 import { Footer } from "../../components/Footer";
 import { Header } from "../../components/Header";
 import { PageMeta } from "../../components/PageMeta";
-import { FEATURES_INDEX } from "../../utils/featureAreas";
+import { StartHere } from "../../components/StartHere";
+import { AI_CONNECTION, FEATURES_INDEX, MONEY_AREAS } from "../../utils/featureAreas";
+import type { FeatureGroup } from "../../utils/featureIndex";
 import { signupCta } from "../../utils/site";
 import {
   container,
@@ -17,9 +19,15 @@ import {
   pageShell,
 } from "./FeaturesIndexPage.styles";
 
+/** Each area's group heading links to its own page. */
+const GROUP_HREFS: Partial<Record<FeatureGroup["key"], string>> = Object.fromEntries(
+  [...MONEY_AREAS, AI_CONNECTION].map((feature) => [feature.key, feature.path]),
+);
+
 /**
- * "Flump features" (E42 S3, D1): the map of the app. The five areas in the app's order, then the AI
- * connection, one card each with its lead and a link named for where it goes.
+ * "Flump features" (D1): every feature as one line, grouped by area like a documentation home
+ * (owner, 26 November 2026, option A). A short "Start here" strip, then the index; nothing is
+ * explained until a line is opened.
  */
 export const FeaturesIndexPage: FC = () => {
   const cta = signupCta();
@@ -52,7 +60,9 @@ export const FeaturesIndexPage: FC = () => {
             </div>
           </section>
 
-          <FeatureTiles headingLevel={2} />
+          <StartHere />
+
+          <FeatureIndex groupHrefs={GROUP_HREFS} />
         </div>
       </main>
 

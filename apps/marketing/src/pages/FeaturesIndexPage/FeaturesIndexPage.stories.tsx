@@ -25,8 +25,10 @@ type Story = StoryObj<typeof FeaturesIndexPage>;
 const assertPage: Story["play"] = async ({ canvasElement }) => {
   const canvas = within(canvasElement);
   await expect(canvas.getByRole("heading", { level: 1, name: "Flump features" })).toBeVisible();
-  const list = canvas.getByRole("list", { name: "Flump features" });
-  await expect(within(list).getAllByRole("link")).toHaveLength(6);
+  await expect(canvas.getByRole("navigation", { name: "Start here" })).toBeVisible();
+  await expect(
+    canvas.getByRole("heading", { level: 2, name: "Settings and your data" }),
+  ).toBeVisible();
 };
 
 export const Light: Story = { globals: { theme: "light" }, play: assertPage };

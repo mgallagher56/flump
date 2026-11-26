@@ -215,15 +215,12 @@ export const FEATURES_INDEX = {
   path: "/features",
   navLabel: "Features",
   title: "Flump features",
-  lead: "Five areas, laid out the same way here and in the app.",
-  intro: [
-    "The five areas are accounts, budget, pay, savings and pension, and debt and borrowing. Use one area or all five.",
-    "Each starts from a few rough figures. Each has more detail underneath for when you want it. Together they make one picture of your money, on your Home page.",
-  ],
+  lead: "Everything Flump does, one line each.",
+  intro: ["Grouped by area, in the same order as the app. Select a line to read a little more."],
   meta: {
     title: "Flump features | Flump",
     description:
-      "The five areas of Flump: accounts, budget, pay, savings and pension, and debt and borrowing. Start with rough figures and add detail when you want it.",
+      "Every Flump feature in one list, grouped by area: accounts, budget, pay, savings and pension, debt and borrowing, and the AI connection.",
   },
 } as const;
 

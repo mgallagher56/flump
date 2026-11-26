@@ -87,7 +87,7 @@ export const SecurityPage: FC = () => (
 
         <ul aria-label="Security facts" className={factList()}>
           {SECURITY_FACTS.map((fact) => (
-            <li className={factItem()} data-fact={fact.id} key={fact.id}>
+            <li className={factItem()} data-fact={fact.id} id={fact.id} key={fact.id}>
               <IconTile icon={fact.icon} tone="teal" />
               <p className={factText()}>{fact.text}</p>
             </li>
