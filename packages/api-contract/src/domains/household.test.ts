@@ -31,16 +31,25 @@ describe("household contract (E34 C3)", () => {
     ).toBe(false);
   });
 
-  it("G4: the household state names nothing of the other person", () => {
+  it("G4: the household state gives the other person's name and nothing else of theirs", () => {
     const withOther = {
-      household: { sharesJointSummary: false, joinedAt: "2026-11-25T10:00:00.000Z" },
+      household: {
+        sharesJointSummary: false,
+        joinedAt: "2026-11-25T10:00:00.000Z",
+        withName: null,
+      },
       invitation: null,
       otherMember: { id: "u" },
     };
     expect(HouseholdResponse.safeParse(withOther).success).toBe(false);
     expect(
       HouseholdResponse.safeParse({
-        household: { sharesJointSummary: false, joinedAt: "2026-11-25T10:00:00.000Z", lastSeen: 1 },
+        household: {
+          sharesJointSummary: false,
+          joinedAt: "2026-11-25T10:00:00.000Z",
+          withName: "Sam",
+          lastSeen: 1,
+        },
         invitation: null,
       }).success,
     ).toBe(false);

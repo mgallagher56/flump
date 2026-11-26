@@ -21,8 +21,9 @@ import { AccountType } from "./accounts.js";
  */
 
 /**
- * How long an unused invitation link works. Open question 2 for the coordinator (the plan said
- * seven days; the brief asks for short-lived): built at 48 hours, one constant to change.
+ * How long an unused invitation link works: 48 hours, replacing the plan's seven days (coordinator,
+ * 25 November 2026). A link that grants a shared view should not wait long, and the inviter can
+ * make a new one at any time.
  */
 export const HOUSEHOLD_INVITATION_TTL_HOURS = 48;
 
@@ -34,6 +35,12 @@ export const HouseholdMembershipDto = z.strictObject({
   /** Whether the caller shows their joint accounts in the household summary. Off by default. */
   sharesJointSummary: z.boolean(),
   joinedAt: IsoDateTime,
+  /**
+   * Who the household is with, so the accepted state says it at once (coordinator, 25 November
+   * 2026): the other member's first name from their own profile, else their display name, else
+   * null (the screen then says "the other person"). Nothing else about them.
+   */
+  withName: z.string().nullable(),
 });
 export type HouseholdMembershipDto = z.infer<typeof HouseholdMembershipDto>;
 
