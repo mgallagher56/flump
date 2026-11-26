@@ -38,23 +38,30 @@ appId: app.flump.mobile
     below:
       id: "tab-home"
 - takeScreenshot: tab-home-${THEME}
+# Navigation is checked by test id; the placeholder's words once, on Accounts. The button's words
+# depend on whether the build has the web app's address, so the flow checks its id, not its label.
 - tapOn:
     id: "tab-accounts"
 - extendedWaitUntil:
-    visible: "This page is not in the app yet. You can use it on the Flump website."
+    visible:
+      id: "coming-soon-accounts"
     timeout: 10000
-- assertVisible: "Open Accounts on the website"
+- assertVisible: "This page is not in the app yet. You can use it on the Flump website."
+- assertVisible:
+    id: "coming-soon-open-website"
 - takeScreenshot: tab-accounts-${THEME}
 - tapOn:
     id: "tab-budget"
 - extendedWaitUntil:
-    visible: "This page is not in the app yet. You can use it on the Flump website."
+    visible:
+      id: "coming-soon-budget"
     timeout: 10000
 - takeScreenshot: tab-budget-${THEME}
 - tapOn:
     id: "tab-taxAndPay"
 - extendedWaitUntil:
-    visible: "This page is not in the app yet. You can use it on the Flump website."
+    visible:
+      id: "coming-soon-taxAndPay"
     timeout: 10000
 - takeScreenshot: tab-pay-${THEME}
 # The header's menu button opens More, as web's phone top bar.
@@ -64,16 +71,17 @@ appId: app.flump.mobile
     visible:
       id: "more-row-pension"
     timeout: 10000
-- assertVisible: "Savings and pension"
 - takeScreenshot: tab-more-${THEME}
 - tapOn:
     id: "more-row-pension"
 - extendedWaitUntil:
-    visible: "This page is not in the app yet. You can use it on the Flump website."
+    visible:
+      id: "coming-soon-pension"
     timeout: 10000
 - takeScreenshot: more-page-${THEME}
-# Back to More, then to Home by its tab: the check-in row is still there.
-- back
+# The stacked page's own Back button returns to More; then Home by its tab, check-in row and all.
+- tapOn:
+    id: "header-back"
 - extendedWaitUntil:
     visible:
       id: "more-row-pension"
@@ -81,16 +89,20 @@ appId: app.flump.mobile
 - tapOn:
     id: "tab-home"
 - extendedWaitUntil:
-    visible: "Start monthly check-in"
+    visible:
+      id: "check-in-row-action"
     timeout: 30000
 # A link the app does not know lands on the app's own page, never Expo Router's, with one way back.
 - openLink: flump://nope
 - extendedWaitUntil:
-    visible: "The link may be old or mistyped."
+    visible:
+      id: "page-not-found-action"
     timeout: 10000
 - assertNotVisible: "Sitemap"
 - takeScreenshot: link-not-found-${THEME}
-- tapOn: "Go to Home"
+- tapOn:
+    id: "page-not-found-action"
 - extendedWaitUntil:
-    visible: "Start monthly check-in"
+    visible:
+      id: "check-in-row-action"
     timeout: 30000

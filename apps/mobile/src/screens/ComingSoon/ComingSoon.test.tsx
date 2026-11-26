@@ -16,7 +16,7 @@ async function show(shell: Shell) {
   await render(
     <ThemeProvider scheme="light">
       <ShellContext.Provider value={shell}>
-        <ComingSoon label="Pension" webRoute="/app/pension" />
+        <ComingSoon pageKey="pension" label="Pension" webRoute="/app/pension" />
       </ShellContext.Provider>
     </ThemeProvider>,
   );
