@@ -128,9 +128,8 @@ export class HouseholdService {
     const members: Array<{
       household_id: string;
       shares_joint_summary: boolean;
-      joined_at: Date;
     }> = await this.dataSource.query(
-      `SELECT "household_id", "shares_joint_summary", "joined_at"
+      `SELECT "household_id", "shares_joint_summary"
        FROM "household_members" WHERE "user_id" = $1`,
       [userId],
     );
@@ -151,7 +150,6 @@ export class HouseholdService {
       );
       household = {
         sharesJointSummary: member.shares_joint_summary === true,
-        joinedAt: iso(member.joined_at),
         withName: names[0]?.name ?? null,
       };
     }

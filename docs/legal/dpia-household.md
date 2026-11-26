@@ -248,6 +248,7 @@ Likelihood and severity are the AI drafter's estimate on a low, medium, high sca
 6. `data-map.md`, `ropa.md`, `USER_DATA_REGISTRY` and the value map updated in the build PR.
 7. The backup restore runbook step (5.6).
 8. This document re-checked against the code, each "planned" replaced by a `path:line` reference, and signed.
+9. The public cookies page lists the household invitation cookie `flump_household_invite`, and the privacy notice covers it (item 5). The cookie's not-listed entry in `apps/marketing/src/pages/CookiesPage/CookiesPage.test.tsx` is removed in the same change.
 
 ## 11. Decisions for the owner
 

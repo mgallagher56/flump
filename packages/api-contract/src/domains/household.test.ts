@@ -35,18 +35,27 @@ describe("household contract (E34 C3)", () => {
     const withOther = {
       household: {
         sharesJointSummary: false,
-        joinedAt: "2026-11-25T10:00:00.000Z",
         withName: null,
       },
       invitation: null,
       otherMember: { id: "u" },
     };
     expect(HouseholdResponse.safeParse(withOther).success).toBe(false);
+    // No join date either: the screen does not need one, and the export keeps the person's own.
     expect(
       HouseholdResponse.safeParse({
         household: {
           sharesJointSummary: false,
+          withName: null,
           joinedAt: "2026-11-25T10:00:00.000Z",
+        },
+        invitation: null,
+      }).success,
+    ).toBe(false);
+    expect(
+      HouseholdResponse.safeParse({
+        household: {
+          sharesJointSummary: false,
           withName: "Sam",
           lastSeen: 1,
         },

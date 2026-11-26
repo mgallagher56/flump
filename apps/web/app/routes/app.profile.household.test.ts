@@ -15,7 +15,7 @@ import { action, loader } from "./app.profile";
 
 const PROFILE = { id: "u1", email: "a@example.com" };
 const IN_HOUSEHOLD = {
-  household: { sharesJointSummary: false, joinedAt: "2026-11-20T09:00:00.000Z", withName: "Sam" },
+  household: { sharesJointSummary: false, withName: "Sam" },
   invitation: null,
 };
 const NOT_IN_ONE = { household: null, invitation: null };

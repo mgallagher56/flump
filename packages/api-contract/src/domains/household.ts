@@ -30,11 +30,13 @@ export const HOUSEHOLD_INVITATION_TTL_HOURS = 48;
 /** A raw invitation token: 32 random bytes, base64url without padding (43 characters). */
 export const HouseholdInvitationToken = z.string().regex(/^[A-Za-z0-9_-]{43}$/);
 
-/** The caller's own membership. Never the other person's id, name, settings or activity (G4). */
+/**
+ * The caller's own membership. Never the other person's id, settings or activity (G4), and no join
+ * date: the screen does not need one (the person's own export says when they joined).
+ */
 export const HouseholdMembershipDto = z.strictObject({
   /** Whether the caller shows their joint accounts in the household summary. Off by default. */
   sharesJointSummary: z.boolean(),
-  joinedAt: IsoDateTime,
   /**
    * Who the household is with, so the accepted state says it at once (coordinator, 25 November
    * 2026): the other member's first name from their own profile, else their display name, else

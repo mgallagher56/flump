@@ -26,6 +26,10 @@ export class HouseholdMember {
   @Column({ name: "shares_joint_summary", type: "boolean", default: false })
   sharesJointSummary: boolean;
 
+  /**
+   * When the household began (both rows are written in one statement, so the same for both). Read
+   * only by this person's own export; never returned by the API or shown to the other person (G4).
+   */
   @Column({ name: "joined_at", type: "timestamptz", default: () => "now()" })
   joinedAt: Date;
 }

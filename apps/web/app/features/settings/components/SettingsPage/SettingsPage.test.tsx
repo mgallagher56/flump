@@ -169,7 +169,6 @@ describe("<SettingsPage />", () => {
                 state: {
                   household: {
                     sharesJointSummary: false,
-                    joinedAt: "2026-11-20T09:00:00.000Z",
                     withName: "Sam",
                   },
                   invitation: null,
