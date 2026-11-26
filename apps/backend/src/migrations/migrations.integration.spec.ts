@@ -43,6 +43,7 @@ import { AddNetWorthChoices1794800000000 } from "./AddNetWorthChoices17948000000
 import { AddProfileFacts1794355723000 } from "./AddProfileFacts1794355723000";
 import { AddRateLimitBuckets1794632012000 } from "./AddRateLimitBuckets1794632012000";
 import { AddUserIdIndexes1794358100000, USER_ID_INDEXES } from "./AddUserIdIndexes1794358100000";
+import { AuditActionSessionSignedOut1795750000000 } from "./AuditActionSessionSignedOut1795750000000";
 import { AuditActionUserExported1795000000000 } from "./AuditActionUserExported1795000000000";
 import { AuditEventsDeleteAndTruncateGuards1795100000000 } from "./AuditEventsDeleteAndTruncateGuards1795100000000";
 import { BackfillAnnualTaxRecordEndDate1794355900000 } from "./BackfillAnnualTaxRecordEndDate1794355900000";
@@ -4545,6 +4546,62 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       await runUpInTransaction(withClock(BEFORE_CUTOFF));
       await ds.query("DELETE FROM user_profiles WHERE user_id = 'a-reset'");
       expect(await imageRows()).toBe(0);
+    });
+  });
+  describe("AuditActionSessionSignedOut1795750000000 (E12 S2b)", () => {
+    const NAME = "AuditActionSessionSignedOut1795750000000";
+    const insertAction = (action: string): Promise<unknown> =>
+      ds.query("INSERT INTO audit_events (user_id, action) VALUES ('u1', $1)", [action]);
+    const actionCheck = async (): Promise<string> => {
+      const rows: Array<{ def: string }> = await ds.query(
+        `SELECT pg_get_constraintdef(oid) AS def FROM pg_constraint
+          WHERE conname = 'CHK_audit_events_action'`,
+      );
+      return at(rows, 0)?.def ?? "";
+    };
+    /** Undoes any migrations after this one, so this one is the last applied. */
+    const undoLaterMigrations = async (): Promise<void> => {
+      while ((await applied()).at(-1) !== NAME) {
+        await ds.undoLastMigration();
+      }
+    };
+
+    it("up allows session.signed_out, keeps user.exported, and still rejects actions outside the list", async () => {
+      await ds.runMigrations();
+      expect(await applied()).toContain(NAME);
+      await insertAction("session.signed_out");
+      await insertAction("user.exported");
+      await expect(insertAction("made.up")).rejects.toThrow(/CHK_audit_events_action/);
+    });
+
+    it("down with no session.signed_out rows restores the previous check", async () => {
+      await ds.runMigrations();
+      await undoLaterMigrations();
+      await ds.undoLastMigration();
+      expect(await applied()).not.toContain(NAME);
+      expect(await actionCheck()).not.toContain("session.signed_out");
+      expect(await actionCheck()).toContain("user.exported");
+      await expect(insertAction("session.signed_out")).rejects.toThrow(/CHK_audit_events_action/);
+      await ds.runMigrations();
+    });
+
+    it("down is refused while a session.signed_out row exists, and changes nothing", async () => {
+      await ds.runMigrations();
+      await insertAction("session.signed_out");
+      await undoLaterMigrations();
+      await expect(ds.undoLastMigration()).rejects.toThrow(
+        "audit_events contains session.signed_out rows; export or archive them before reverting",
+      );
+      expect(await applied()).toContain(NAME);
+      expect(await actionCheck()).toContain("session.signed_out");
+    });
+
+    it("up is idempotent", async () => {
+      await ds.runMigrations();
+      await expect(
+        runUpInTransaction(new AuditActionSessionSignedOut1795750000000()),
+      ).resolves.toBe(undefined);
+      await insertAction("session.signed_out");
     });
   });
 });
