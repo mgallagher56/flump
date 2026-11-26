@@ -325,7 +325,7 @@ States: `loading`, then `signedOut`, `signedIn`, `restoredOffline` (refresh toke
 | Shared logic | Vitest in the packages (exists) | CI, Linux | None |
 | Components, screens, session machine, check-in flow | Jest with `jest-expo` (needs Jest 30 from SDK 58, CONFIRMED docs.expo.dev) and React Native Testing Library | CI `mobile-checks`, Linux | None |
 | Bundle | `expo export` for iOS and Android, then the bundle search | CI `mobile-checks`, Linux | None |
-| Project health | `expo-doctor` | CI `mobile-checks` | None |
+| Project health | `expo-doctor` | CI `mobile-checks` | Same-version duplicates; an SDK release under 7 days old warns (26 November 2026) |
 | Engine on device | Dev-only engine check screen plus a Maestro flow | Android emulator in CI; iOS simulator by hand | None |
 | End to end | Maestro CLI (free, open source) against the fixture server | Android emulator on a GitHub Linux runner, on PRs touching `apps/mobile` or the shared packages; iOS by hand on a Mac | None [U] |
 | Accessibility | Per-screen assertions, token contrast matrix, manual pass per slice, audits in S18 | CI and by hand | None |
