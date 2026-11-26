@@ -6793,9 +6793,12 @@
                             },
                             "sharesJointSummary": {
                               "type": "boolean"
+                            },
+                            "withName": {
+                              "type": ["string", "null"]
                             }
                           },
-                          "required": ["sharesJointSummary", "joinedAt"],
+                          "required": ["sharesJointSummary", "joinedAt", "withName"],
                           "type": "object"
                         },
                         {

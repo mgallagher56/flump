@@ -104,7 +104,7 @@ Flump uses WorkOS AuthKit with a JWT verifier (`apps/backend/src/auth/workos-jwt
 | Option | How | View |
 | --- | --- | --- |
 | I1. WorkOS organisations and its Invitation API | A household is a WorkOS organisation; WorkOS emails an invitation to an address and creates a membership on acceptance (WorkOS docs, read 2026-11-15) | Puts household structure with a third party, brings roles Flump does not want (G6), and adds organisation context to every session |
-| I2. Flump's own invitation | Flump stores a single-use code that expires in seven days. The inviter passes the link on themselves. The invited person signs in with their own login, sees what joining shares, and accepts | **Recommended.** No email provider is needed (still undecided, E30 PR3), no figures leave Flump, and WorkOS stays an identity provider only |
+| I2. Flump's own invitation | Flump stores a single-use code that expires in seven days (48 hours as built in C3, see below). The inviter passes the link on themselves. The invited person signs in with their own login, sees what joining shares, and accepts | **Recommended.** No email provider is needed (still undecided, E30 PR3), no figures leave Flump, and WorkOS stays an identity provider only |
 
 During the closed beta the invited person must also be on the allowlist (`apps/backend/src/auth/beta-access.ts`).
 
@@ -126,6 +126,14 @@ During the closed beta the invited person must also be on the allowlist (`apps/b
 | C5 | Shared budget, Breathing room and check-in for joint items | C4 |
 | C6 | Retirement for two (E33 S9); the Child Benefit charge for two incomes | C4; E33 |
 | C7 | MCP `household` scope; mobile parity | C4; E17; E12 |
+
+**C3 as built (25 November 2026), behind the off-by-default `HOUSEHOLD_ENABLED` switch** (owner: "Build it gated now"; coordinator answers the same day):
+
+- An invitation link lasts 48 hours, not seven days: a link that grants a shared view should not wait long, and the inviter can make a new one at any time.
+- The invited person sees nothing about the inviter before accepting; once accepted, the screen says at once who the household is with (their first name, or "the other person") and how to leave. Open point for the charity review: is not seeing who you would join safer or less safe?
+- The shared summary is joint accounts only, with no household total until C2 can pair the two people's copies of one account; until then an account both people added can appear twice, and the screen says so plainly.
+- No household name. The help line shows option A from `E34-help-line-wording.md`, marked in code and on screen as not yet approved by the owner.
+- The switch stays off until the charity review (CD7), the owner's signature on the household DPIA and the approved help line wording (CD10) exist. Only the owner turns it on, first by setting `HOUSEHOLD_LAUNCH_CONDITIONS_MET` in `apps/backend/src/config/household-gate.ts` to true in a PR of their own.
 
 **First slice: C1.** It is useful alone: a person with a joint mortgage sees figures that match their life, with no invitation and no new way to be watched. It also lays the ownership field every later slice needs.
 
