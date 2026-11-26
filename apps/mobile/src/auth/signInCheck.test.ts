@@ -36,6 +36,7 @@ function workosFrom(answers: Record<string, TokenResult>): WorkosClient {
 }
 
 const noWait = () => jest.fn(async (_ms: number) => {});
+const signOutOk = () => jest.fn(async (_token: string) => "ended" as const);
 
 /**
  * WorkOS as documented and as seen on the owner's devices: each refresh token is replaced on use,
@@ -67,7 +68,13 @@ function workosWithGrace() {
   const wait = jest.fn(async (ms: number) => {
     clock += ms;
   });
-  return { workos, wait };
+  /** The server sign-out: every live and spent token of the session stops working. */
+  const endServerSession = jest.fn(async (_token: string) => {
+    live.clear();
+    used.clear();
+    return "ended" as const;
+  });
+  return { workos, wait, endServerSession };
 }
 
 const claims = { iss: "https://issuer.test.invalid/x", sub: "u", sid: "s", iat: 1000, exp: 1300 };
@@ -80,6 +87,7 @@ describe("runSignInCheck", () => {
         workos: workosFrom({}),
         checkAccountWith: jest.fn(),
         wait: noWait(),
+        endServerSession: signOutOk(),
       }),
     ).rejects.toBeInstanceOf(NotSignedInError);
   });
@@ -96,6 +104,7 @@ describe("runSignInCheck", () => {
       }),
       checkAccountWith,
       wait,
+      endServerSession: signOutOk(),
     });
     expect(report).toEqual({
       issuer: "https://issuer.test.invalid/x",
@@ -108,21 +117,27 @@ describe("runSignInCheck", () => {
       reuseGaveSameTokens: null,
       oldRefreshTokenAfterWait: "not-tried",
       replacementAfterReuse: "accepted",
+      lateReuseGaveSameTokens: null,
+      // r3 is not in the table, so the stand-in refuses both after the sign-out.
+      serverSignOut: "ended",
+      oldRefreshTokenAfterSignOut: "rejected",
+      newestRefreshTokenAfterSignOut: "rejected",
       backend: "ok",
     });
     expect(checkAccountWith).toHaveBeenCalledWith(access(claims));
     expect(wait).not.toHaveBeenCalled();
-    expect(tokens.peek()).toBe("r3");
+    expect(tokens.peek()).toBeNull();
   });
 
   it("WorkOS's grace period: the same pair at once, refused after the wait, the newest still works", async () => {
     const tokens = store("r1");
-    const { workos, wait } = workosWithGrace();
+    const { workos, wait, endServerSession } = workosWithGrace();
     const report = await runSignInCheck({
       tokens,
       workos,
       checkAccountWith: async () => "ok",
       wait,
+      endServerSession,
     });
     expect(report).toMatchObject({
       refreshTokenReplaced: true,
@@ -130,13 +145,19 @@ describe("runSignInCheck", () => {
       reuseGaveSameTokens: true,
       oldRefreshTokenAfterWait: "rejected",
       replacementAfterReuse: "accepted",
+      lateReuseGaveSameTokens: null,
+      serverSignOut: "ended",
+      oldRefreshTokenAfterSignOut: "rejected",
+      newestRefreshTokenAfterSignOut: "rejected",
     });
     expect(wait).toHaveBeenCalledTimes(1);
     expect(wait).toHaveBeenCalledWith(REUSE_WAIT_MS);
     // 65 seconds: past the documented 30 second grace period with room to spare.
     expect(REUSE_WAIT_MS).toBe(65_000);
-    // r1 -> r2 (the refresh), r2 again (the replay), refused after the wait, r2 -> r3.
-    expect(tokens.peek()).toBe("r3");
+    // r1 -> r2 (the refresh), r2 again (the replay), refused after the wait, r2 -> r3, then the
+    // server sign-out ends it all and the store is emptied.
+    expect(endServerSession).toHaveBeenCalledTimes(1);
+    expect(tokens.peek()).toBeNull();
   });
 
   it("reuse detection: a refused reuse also kills the replacement, and the store is cleared", async () => {
@@ -149,6 +170,7 @@ describe("runSignInCheck", () => {
       }),
       checkAccountWith: async () => "ok",
       wait: noWait(),
+      endServerSession: signOutOk(),
     });
     expect(report.oldRefreshTokenReused).toBe("rejected");
     expect(report.replacementAfterReuse).toBe("rejected");
@@ -170,15 +192,21 @@ describe("runSignInCheck", () => {
       workos,
       checkAccountWith: async () => "ok",
       wait: noWait(),
+      endServerSession: signOutOk(),
     });
     expect(report).toMatchObject({
       oldRefreshTokenReused: "accepted",
       reuseGaveSameTokens: false,
       oldRefreshTokenAfterWait: "accepted",
       replacementAfterReuse: "accepted",
+      // A fresh pair each time: the token family forks.
+      lateReuseGaveSameTokens: false,
+      // This WorkOS honours no sign-out at all: both still work, which the report shows.
+      oldRefreshTokenAfterSignOut: "accepted",
+      newestRefreshTokenAfterSignOut: "accepted",
     });
-    // r1 -> r2, r1 -> r3, r1 -> r4 after the wait, r4 -> r5.
-    expect(tokens.peek()).toBe("r5");
+    // r1 -> r2, r1 -> r3, r1 -> r4 after the wait, r4 -> r5, then cleared after the sign-out.
+    expect(tokens.peek()).toBeNull();
   });
 
   it("not replaced: no reuse is tried", async () => {
@@ -190,6 +218,7 @@ describe("runSignInCheck", () => {
       workos,
       checkAccountWith: async () => "ok",
       wait: noWait(),
+      endServerSession: signOutOk(),
     });
     expect(report.refreshTokenReplaced).toBe(false);
     expect(report.oldRefreshTokenReused).toBe("not-tried");
@@ -205,6 +234,7 @@ describe("runSignInCheck", () => {
         workos: workosFrom({ r1: { ok: false, reason } }),
         checkAccountWith,
         wait: noWait(),
+        endServerSession: signOutOk(),
       });
       expect(report.refreshWithoutSecret).toBe(reason);
       expect(report.backend).toBe("not-tried");
@@ -221,6 +251,7 @@ describe("runSignInCheck", () => {
       }),
       checkAccountWith: async () => "not-invited",
       wait: noWait(),
+      endServerSession: signOutOk(),
     });
     expect(report.accessLifetimeSeconds).toBeNull();
     expect(JSON.stringify(report)).not.toContain(secretish);

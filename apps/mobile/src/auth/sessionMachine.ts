@@ -19,6 +19,11 @@ export type SessionState =
   | { status: "notInvited" }
   /** Signed in, but the API answers 403 `terms_not_accepted` until the terms are agreed on the website. */
   | { status: "termsRequired" }
+  /**
+   * Signed in, but the API's answer is not one this version of the app understands (version skew:
+   * an older or newer backend). Nothing is cleared; this is not "offline".
+   */
+  | { status: "outOfStep" }
   | { status: "signingOut" };
 
 export type SessionEvent =
@@ -31,6 +36,7 @@ export type SessionEvent =
   | { type: "RETRY_STARTED" }
   | { type: "NOT_INVITED" }
   | { type: "TERMS_REQUIRED" }
+  | { type: "OUT_OF_STEP" }
   | { type: "SESSION_ENDED" }
   | { type: "SIGN_OUT_STARTED" }
   | { type: "SIGNED_OUT" };
@@ -48,9 +54,10 @@ const FROM: { [E in SessionEvent["type"]]: readonly SessionState["status"][] } =
   SIGNED_IN: ["loading", "signingIn"],
   OFFLINE: ["loading", "signingIn"],
   // From the terms screen too: once agreed on the website, Try again checks the account again.
-  RETRY_STARTED: ["restoredOffline", "termsRequired"],
+  RETRY_STARTED: ["restoredOffline", "termsRequired", "outOfStep"],
   NOT_INVITED: ["loading", "signingIn"],
   TERMS_REQUIRED: ["loading", "signingIn"],
+  OUT_OF_STEP: ["loading", "signingIn"],
   // A rejected refresh can arrive in any signed-in state, including mid sign-in.
   SESSION_ENDED: [
     "loading",
@@ -59,8 +66,16 @@ const FROM: { [E in SessionEvent["type"]]: readonly SessionState["status"][] } =
     "restoredOffline",
     "notInvited",
     "termsRequired",
+    "outOfStep",
   ],
-  SIGN_OUT_STARTED: ["signedIn", "restoredOffline", "notInvited", "termsRequired", "sessionEnded"],
+  SIGN_OUT_STARTED: [
+    "signedIn",
+    "restoredOffline",
+    "notInvited",
+    "termsRequired",
+    "outOfStep",
+    "sessionEnded",
+  ],
   SIGNED_OUT: ["signingOut"],
 };
 
@@ -85,6 +100,8 @@ export function sessionReducer(state: SessionState, event: SessionEvent): Sessio
       return { status: "notInvited" };
     case "TERMS_REQUIRED":
       return { status: "termsRequired" };
+    case "OUT_OF_STEP":
+      return { status: "outOfStep" };
     case "SESSION_ENDED":
       return { status: "sessionEnded" };
     case "SIGN_OUT_STARTED":

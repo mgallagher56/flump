@@ -26,6 +26,8 @@
  *   accessTokenSeconds, minVersion          token lifetime; the client policy's minimum version
  *   data     ok | unavailable | empty       the check-in routes: canned data, 503
  *                                           service_unavailable, or no accounts and no months
+ *   backend  current | older | newer        the profile as a backend from before E35 sends it (no
+ *                                           `wellbeingQuestions`), or with a field from a later one
  *   terms    agreed | required              required: authenticated /v1 answers 403
  *                                           terms_not_accepted (PR #939), after not_invited
  * Control (flows set the scenario before they launch the app):
@@ -87,6 +89,11 @@ interface Scenario {
   data: "ok" | "unavailable" | "empty";
   /** `required`: authenticated `/v1` answers 403 terms_not_accepted until the terms are agreed. */
   terms: "agreed" | "required";
+  /**
+   * Version skew (PR #951): `older` leaves out `wellbeingQuestions`, which a backend from before
+   * E35 W5 does not send; `newer` adds a field the app has never heard of.
+   */
+  backend: "current" | "older" | "newer";
 }
 
 const DEFAULT_SCENARIO: Scenario = {
@@ -97,6 +104,7 @@ const DEFAULT_SCENARIO: Scenario = {
   minVersion: "0.0.0",
   data: "ok",
   terms: "agreed",
+  backend: "current",
 };
 
 const ALLOWED: { [K in keyof Scenario]: (v: unknown) => boolean } = {
@@ -107,6 +115,7 @@ const ALLOWED: { [K in keyof Scenario]: (v: unknown) => boolean } = {
   minVersion: (v) => typeof v === "string" && /^\d{1,5}(\.\d{1,5}){0,2}$/.test(v),
   data: (v) => v === "ok" || v === "unavailable" || v === "empty",
   terms: (v) => v === "agreed" || v === "required",
+  backend: (v) => v === "current" || v === "older" || v === "newer",
 };
 
 /** A scenario patch, or undefined when any key or value is unknown. */
@@ -402,7 +411,12 @@ export async function startFixtureServer(options: FixtureServerOptions): Promise
     if (req.method === "GET" && path === "/user-profile") {
       const session = invitedSession(req, res);
       if (!session) return;
-      return json(res, 200, cannedProfile(session.userId, new Date(now())));
+      const profile: Record<string, unknown> = {
+        ...cannedProfile(session.userId, new Date(now())),
+      };
+      if (scenario.backend === "older") delete profile.wellbeingQuestions;
+      if (scenario.backend === "newer") profile.fieldFromALaterBackend = "something new";
+      return json(res, 200, profile);
     }
     const snapshotMonth = /^\/snapshots\/([^/]+)$/.exec(path)?.[1];
     const isSnapshotPut = req.method === "PUT" && snapshotMonth !== undefined;

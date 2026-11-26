@@ -5,13 +5,13 @@ const clientThat = (request: () => Promise<unknown>) =>
   ({ request: jest.fn(request), getClientPolicy: jest.fn() }) as unknown as ApiClient;
 
 describe("createAccountCheck", () => {
-  it("reads the profile with the contract schema and reports ok", async () => {
-    const client = clientThat(async () => ({}));
+  it("asks only for the status: the profile body is not parsed (version skew, PR #951)", async () => {
+    const client = clientThat(async () => undefined);
     expect(await createAccountCheck(client)()).toBe("ok");
-    expect(client.request).toHaveBeenCalledWith(
-      "/user-profile",
-      expect.objectContaining({ schema: expect.anything() }),
-    );
+    expect(client.request).toHaveBeenCalledWith("/user-profile", {
+      schema: null,
+      allowEmpty: true,
+    });
   });
 
   it.each<[BackendErrorKind, string]>([
@@ -20,7 +20,7 @@ describe("createAccountCheck", () => {
     ["unavailable", "unavailable"],
     ["server", "unavailable"],
     ["forbidden", "unavailable"],
-    ["bad-response", "unavailable"],
+    ["bad-response", "out-of-step"],
   ])("a %s error is %s", async (kind, expected) => {
     const client = clientThat(async () => {
       throw new BackendError(kind, "/user-profile");

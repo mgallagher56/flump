@@ -347,6 +347,22 @@ describe("CheckIn loading, failure and empty", () => {
     expect(await screen.findByText("Account 1 of 6")).toBeOnTheScreen();
   });
 
+  it("an answer this version cannot read says so, never 'check your connection'", async () => {
+    const h = household();
+    const api = fakeApi({
+      ...routes(h),
+      "GET /accounts": () => fail("bad-response", 200),
+    });
+    const { ui } = withApi(
+      <CheckIn marketingOrigin="https://m.test.invalid" onClose={jest.fn()} now={NOW} />,
+      api.client,
+    );
+    await render(ui);
+    expect(await screen.findByText("We could not load your accounts")).toBeOnTheScreen();
+    expect(screen.getByText(/did not understand Flump's answer/)).toBeOnTheScreen();
+    expect(screen.queryByText(/connection/)).toBeNull();
+  });
+
   it("terms not agreed mid-session: the terms screen, then the cards once agreed", async () => {
     let agreed = false;
     const h = household();
