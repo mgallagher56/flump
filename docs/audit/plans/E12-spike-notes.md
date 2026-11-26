@@ -148,6 +148,11 @@ On iOS a Keychain item survives an uninstall, so a reinstalled app would find th
 
 0 agent-days: the sign-in code follows the existing data door rule (running total 0.5).
 
+### Two development-build findings (coordinator, Android 17 emulator, 26 November 2026)
+
+- The "Open debugger to view warnings" banner the owner saw after sign-out and sign-in is the development client's own "Cannot connect to Expo CLI ... 10.0.2.2:8081" warning: the dev tooling lost its link to Metro around the browser sheet. Not app code; it cannot appear in a release build. The flows do not assert on it.
+- Android 17 asks a development build for the local network permission (`android.permission.ACCESS_LOCAL_NETWORK`) to reach Metro; denied, the app shows a red "loadJSBundleFromAssets" screen, and `adb shell pm grant app.flump.mobile android.permission.ACCESS_LOCAL_NETWORK` fixes it (README). The e2e runner needs nothing: Maestro's `launchApp` already tries to grant every permission (CI's maestro.log shows it trying `ACCESS_LOCAL_NETWORK`, refused as unknown on the API 34 image), so a newer image gets it granted the same way.
+
 ### Follow-up: POST from the app needs a UUID source
 
 `@flump/api-client` makes each POST's `Idempotency-Key` with `crypto.randomUUID()`, which Hermes does not have, so a POST throws before it is sent. CI's Android run of 26 November caught it on the sign-out call, which was failing silently; that call now sends no key (the route takes none). Jest runs on Node, which has `randomUUID`, so unit tests cannot see it; `serverSignOut.test.ts` now runs without it. Before the first mobile POST that needs a key (a create, or the wellbeing answers), the client should take a UUID function from the app (`expo-crypto`'s `randomUUID`).

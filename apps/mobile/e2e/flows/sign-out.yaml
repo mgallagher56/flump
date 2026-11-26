@@ -40,5 +40,4 @@ appId: app.flump.mobile
     visible: "Create account"
     timeout: 60000
 - assertNotVisible: "You are signed in"
-- assertNotVisible: "Open debugger to view warnings"
 - takeScreenshot: signed-out-${THEME}

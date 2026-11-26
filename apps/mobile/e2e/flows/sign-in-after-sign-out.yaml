@@ -21,7 +21,4 @@ appId: app.flump.mobile
     env:
       SIGN_OUTS: "1"
       MAX_AGE: "0"
-# The owner's Android run on 26 November showed React Native's dev banner after sign-out and
-# sign-in. A debug build shows it for any console warning or unhandled rejection.
-- assertNotVisible: "Open debugger to view warnings"
 - takeScreenshot: signed-in-again-${THEME}

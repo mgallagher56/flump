@@ -60,7 +60,11 @@ bunx turbo run build --filter=@flump/mobile^...
 
 **Route B: build it yourself with Android Studio.** Install Android Studio (free; it brings the Android SDK). On the phone, turn on Developer options and USB debugging, and connect it by USB. Then, in `apps/mobile`: `bunx expo run:android --device` and pick the phone. Keep the cable in while you test.
 
-**The sign-in.** Tap Sign in, sign in with the test user on the WorkOS page, and you see "You are signed in". Then open **Sign-in check**, tap "Run the sign-in check" once and read out the rows: they show no token values, email or name. Go back, tap Sign out (route A briefly opens the WorkOS page), then tap Sign in again and note whether it asks for your password.
+**The sign-in.** Tap Sign in, sign in with the test user on the WorkOS page, and you see "You are signed in". Then open **Sign-in check**, tap "Run the sign-in check" once and read out the rows: they show no token values, email or name. It waits 65 seconds partway; do not sign out while it runs. Go back, tap Sign out and confirm (no browser opens), then tap Sign in again and note whether it asks for your password.
+
+**Android 17 and newer: the local network permission.** A development build asks to use the local network, which it needs to reach Metro. If the prompt is denied, the app shows a red "loadJSBundleFromAssets" screen. Grant it with `adb shell pm grant app.flump.mobile android.permission.ACCESS_LOCAL_NETWORK` (or in the app's settings) and reopen the app. A release build loads no code from Metro and does not ask.
+
+**"Open debugger to view warnings".** In a development build this banner can appear after the browser sheet. It is the development client's own "Cannot connect to Expo CLI" warning: it lost its link to Metro while the browser was in front. It is not app code and cannot appear in a release build.
 
 **Removing it afterwards.** Long-press the Flump icon and uninstall it (this removes its stored sign-in too). In Android settings, turn off "Install unknown apps" for the app you opened the APK with (route A) or turn off USB debugging (route B). Delete the downloaded APK and, if you like, `apps/mobile/.env.local`.
 
