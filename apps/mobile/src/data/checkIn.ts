@@ -7,8 +7,8 @@
  */
 import type { ApiClient } from "@flump/api-client";
 import {
-  AccountDetailListResponse,
-  AccountListResponse,
+  AccountDetailDto,
+  AccountWithDetailsDto,
   SnapshotCheckInsResponse,
   UpsertSnapshotRequest,
   UpsertSnapshotResponse,
@@ -20,8 +20,27 @@ import { useEffect } from "react";
 import { useApi } from "./ApiProvider";
 import { queryKeys } from "./queryKeys";
 
-type Accounts = AccountListResponse;
-type AccountDetails = AccountDetailListResponse;
+/**
+ * The account fields Home and the check-in read (plan 9.8, older and newer backends): the
+ * contract's own definitions, unknown fields ignored, and every field the screens can live without
+ * allowed to be absent. Only a missing `id`, `type` or `balance` is out of step. The history comes
+ * from /account-details, so `details` is not read here.
+ */
+const AppAccount = AccountWithDetailsDto.omit({ details: true })
+  .partial()
+  .required({ id: true, type: true, balance: true })
+  .loose();
+const AppAccountList = AppAccount.array();
+/** A monthly row: which account, which month and its value are needed; the rest may be absent. */
+const AppAccountDetail = AccountDetailDto.partial()
+  .required({ accountId: true, year: true, month: true, value: true })
+  .loose();
+const AppAccountDetailList = AppAccountDetail.array();
+/** The check-in months, unknown fields ignored. */
+const AppCheckIns = SnapshotCheckInsResponse.loose();
+
+type Accounts = ReturnType<typeof AppAccountList.parse>;
+type AccountDetails = ReturnType<typeof AppAccountDetailList.parse>;
 /**
  * The profile fields the check-in reads, taken from the contract's own definitions, each allowed to
  * be absent, and other fields ignored. Not the whole strict profile: a field added to or dropped
@@ -37,7 +56,7 @@ const CheckInProfile = UserProfileResponse.pick({
   .partial()
   .loose();
 type UserProfile = ReturnType<typeof CheckInProfile.parse>;
-type CheckIns = SnapshotCheckInsResponse;
+type CheckIns = ReturnType<typeof AppCheckIns.parse>;
 
 /** Thrown when there is no API client (a misconfigured build): reads as any load failure. */
 class NoApiClientError extends Error {
@@ -72,7 +91,7 @@ export function useCheckInQueries(): CheckInQueries {
         // The history comes from /account-details, so the account list carries none.
         queryFn: ({ signal }: { signal: AbortSignal }) =>
           need(api).request("/accounts", {
-            schema: AccountListResponse,
+            schema: AppAccountList,
             query: { details: "none" },
             signal,
           }),
@@ -80,7 +99,7 @@ export function useCheckInQueries(): CheckInQueries {
       {
         queryKey: queryKeys.accountDetails(),
         queryFn: ({ signal }: { signal: AbortSignal }) =>
-          need(api).request("/account-details", { schema: AccountDetailListResponse, signal }),
+          need(api).request("/account-details", { schema: AppAccountDetailList, signal }),
       },
       {
         queryKey: queryKeys.userProfile(),
@@ -95,7 +114,7 @@ export function useCheckInQueries(): CheckInQueries {
       {
         queryKey: queryKeys.checkIns(),
         queryFn: ({ signal }: { signal: AbortSignal }) =>
-          need(api).request("/snapshots/check-ins", { schema: SnapshotCheckInsResponse, signal }),
+          need(api).request("/snapshots/check-ins", { schema: AppCheckIns, signal }),
       },
     ],
   });
