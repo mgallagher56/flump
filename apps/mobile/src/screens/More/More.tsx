@@ -5,6 +5,7 @@ import { Text } from "../../components/Text";
 import { SIGN_OUT } from "../../copy/auth";
 import { MORE_SETTINGS_HEADING } from "../../copy/navigation";
 import { MORE_FOOTER, MORE_GROUPS } from "../../navigation/navItems";
+import { DevLinks } from "../DevLinks";
 
 export interface MoreProps {
   /** Opens a page from the list, by its key (`flump://page/<key>`). */
@@ -16,7 +17,9 @@ export interface MoreProps {
 /**
  * The More tab (E12 S4, plan 9.7): what web's phone drawer lists below the bottom bar, in its
  * groups and order, then Settings, Connect AI and Calculators, then Sign out. Self Assessment, an
- * opt-in page, arrives with S9's filter for switched-off pages.
+ * opt-in page, arrives with S9's filter for switched-off pages. In a development build the device
+ * check, gallery and sign-in check links sit at the foot (moved from Home in S5); `DevLinks` is
+ * stripped from a production export.
  */
 export function More({ onOpenPage, onSignOut }: MoreProps) {
   return (
@@ -58,6 +61,7 @@ export function More({ onOpenPage, onSignOut }: MoreProps) {
           onPress={onSignOut}
         />
       </View>
+      <DevLinks />
     </Screen>
   );
 }

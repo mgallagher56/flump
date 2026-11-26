@@ -26,6 +26,10 @@ import { ListRow } from "../../components/ListRow";
 import { listRowStates } from "../../components/ListRow/ListRow.states";
 import { Money } from "../../components/Money";
 import { moneyStates } from "../../components/Money/Money.states";
+import { NetWorthBasisLine } from "../../components/NetWorthBasisLine";
+import { netWorthBasisLineStates } from "../../components/NetWorthBasisLine/NetWorthBasisLine.states";
+import { NetWorthTrendBars } from "../../components/NetWorthTrendBars";
+import { netWorthTrendBarsStates } from "../../components/NetWorthTrendBars/NetWorthTrendBars.states";
 import { Pressable } from "../../components/Pressable";
 import { pressableStates } from "../../components/Pressable/Pressable.states";
 import { Screen } from "../../components/Screen";
@@ -103,6 +107,8 @@ export const GALLERY: readonly GalleryEntry[] = [
   entry("StatusBadge", StatusBadge, statusBadgeStates),
   entry("Skeleton", Skeleton, skeletonStates),
   entry("HeroFigure", HeroFigure, heroFigureStates),
+  entry("NetWorthTrendBars", NetWorthTrendBars, netWorthTrendBarsStates),
+  entry("NetWorthBasisLine", NetWorthBasisLine, netWorthBasisLineStates),
   entry("CurrencyInput", CurrencyInput, currencyInputStates),
   entry("FormField", FormField, formFieldStates),
   entry("Toast", Toast, toastStates),

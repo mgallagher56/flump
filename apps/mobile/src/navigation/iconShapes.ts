@@ -1,5 +1,5 @@
 /**
- * The lucide icons web's navigation draws, copied as plain shapes so the app needs no icon
+ * The lucide icons web's navigation (and the Home hero's change line) draws, copied as plain shapes so the app needs no icon
  * dependency (E12 S4). From lucide-react 1.74.0, ISC licence (https://lucide.dev/license), drawn on
  * a 24 by 24 grid with a 2 point round stroke. Plain data (one type import, erased): web's
  * `mobileNavParity.test.tsx` checks each against lucide-react's own shape.
@@ -132,4 +132,14 @@ export const ICON_SHAPES: Readonly<Record<IconName, readonly IconShape[]>> = {
   ],
   "chevron-right": [["path", { d: "m9 18 6-6-6-6" }]],
   "chevron-left": [["path", { d: "m15 18-6-6 6-6" }]],
+  // The Home hero's change line (E12 S5), as web's HeroFigure delta.
+  "arrow-up": [
+    ["path", { d: "m5 12 7-7 7 7" }],
+    ["path", { d: "M12 19V5" }],
+  ],
+  "arrow-down": [
+    ["path", { d: "M12 5v14" }],
+    ["path", { d: "m19 12-7 7-7-7" }],
+  ],
+  minus: [["path", { d: "M5 12h14" }]],
 };

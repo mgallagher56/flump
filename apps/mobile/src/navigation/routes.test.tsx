@@ -113,7 +113,7 @@ describe("the signed-in routes", () => {
   it("opens on Home with the tab bar, Home selected", async () => {
     const { router } = await openApp("/");
     expect(router.getPathname()).toBe("/");
-    expect(await screen.findByRole("header", { name: "You are signed in" })).toBeOnTheScreen();
+    expect(await screen.findByTestId("home-hero")).toBeOnTheScreen();
     expect(screen.getAllByRole("tab").map((t) => t.props.testID)).toEqual([
       "tab-home",
       "tab-accounts",

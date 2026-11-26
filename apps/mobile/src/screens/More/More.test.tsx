@@ -2,6 +2,11 @@ import { render, screen, userEvent } from "@testing-library/react-native";
 import { ThemeProvider } from "../../theme/ThemeProvider";
 import { More } from "./More";
 
+jest.mock("expo-router", () => {
+  const { Fragment } = require("react");
+  return { Link: ({ children }: { children: unknown }) => <Fragment>{children}</Fragment> };
+});
+
 async function more() {
   const onOpenPage = jest.fn();
   const onSignOut = jest.fn();
@@ -33,6 +38,10 @@ describe("More", () => {
       "more-row-settings",
       "more-row-connectAi",
       "more-row-tools",
+      // The development links at the foot (S5: moved from Home; Jest runs as a development build).
+      "dev-link-engine-check",
+      "dev-link-gallery",
+      "dev-link-sign-in-check",
     ]);
     expect(screen.getByRole("link", { name: "Cards and loans" })).toBeOnTheScreen();
     expect(screen.getByRole("button", { name: "Sign out" })).toBeOnTheScreen();
