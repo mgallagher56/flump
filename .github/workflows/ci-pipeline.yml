@@ -8,8 +8,11 @@ on:
     branches:
       - main
   # Weekly dependency audit (Mondays 06:17 UTC): new advisories land without a code change.
+  # Nightly (02:23 UTC): the mobile e2e job runs every flow in light and dark with a fresh APK
+  # build, so what pull requests leave out (dark, most flows, a cold build) is still run each day.
   schedule:
     - cron: "17 6 * * 1"
+    - cron: "23 2 * * *"
 
 env:
   TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
@@ -593,12 +596,16 @@ jobs:
   # E12 S2c: Maestro flows on an Android emulator against the e2e fixture server, on this Linux
   # runner. No EAS, no Maestro Cloud, no secrets: the emulator talks only to the fixture server and
   # Metro on the runner, and Maestro's analytics are off. It proves Hermes at runtime on Android
-  # only; iOS stays a hand check. Not a required check yet: it joins .github/required-checks.json
-  # after three green runs in a row (plan section 9.5, owner step OS9).
+  # only; iOS stays a hand check. A required check: it reports on every pull request.
+  # What runs (owner, 26 November 2026; scripts/mobile-e2e-scope.ts): every flow in light and dark
+  # on push to main and nightly; every flow in light on a pull request that changes the app; the
+  # smoke set in light on one that changes only shared packages; nothing otherwise.
+  # The debug APK holds no JavaScript, so it is restored from the cache when its key matches
+  # (scripts/android-apk-cache-key.ts); the nightly run always builds it.
   # Flake policy: no retries of anything. A red run is read from the uploaded screenshots and logs.
   mobile-e2e-android:
     name: 🤖 Mobile e2e (Android)
-    if: github.event_name != 'schedule'
+    if: github.event_name != 'schedule' || github.event.schedule == '23 2 * * *'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
@@ -616,23 +623,17 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: 🔎 Did the app or anything it uses change?
+      # Bun only (no install), so a pull request with nothing for this job passes in seconds.
+      - name: ⚙️ Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.4.4
+
+      - name: 🔎 What does this change run?
         id: changed
         env:
           BASE_REF: ${{ github.base_ref }}
-        run: |
-          set -eo pipefail
-          if [ -z "$BASE_REF" ]; then
-            echo "run=true" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          changed=$(git diff --name-only "origin/$BASE_REF...HEAD")
-          if printf '%s\n' "$changed" \
-            | grep -E '^apps/mobile/|^packages/(finance-engine|format|tokens|api-contract|api-client|business-details|typescript-config)/|^scripts/check-android-backup\.ts$|^package\.json$|^bun\.lock$|^bunfig\.toml$|^turbo\.json$|^\.node-version$|^\.github/(workflows/ci-pipeline\.yml|actions/)'; then
-            echo "run=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "run=false" >> "$GITHUB_OUTPUT"
-          fi
+        run: bun scripts/mobile-e2e-scope.ts
 
       # Without the Turbo cache: that cache needs `actions: write`, and this job keeps read-only.
       - name: ⚙️ Setup Bun and install dependencies
@@ -669,20 +670,68 @@ jobs:
         if: steps.changed.outputs.run == 'true'
         run: bunx turbo run build --filter=@flump/mobile^...
 
-      - name: 🤖 Debug APK (expo prebuild and Gradle)
+      # Runs on every build and every cache hit: its output is part of the APK cache key, and the
+      # backup check below reads it.
+      - name: 🤖 Expo prebuild (Android)
         if: steps.changed.outputs.run == 'true'
         working-directory: apps/mobile
         env:
           CI: "1"
-        run: |
-          bunx expo prebuild --platform android --no-install --clean
-          cd android
-          ./gradlew :app:assembleDebug -PreactNativeArchitectures=x86_64 --no-daemon
+        run: bunx expo prebuild --platform android --no-install --clean
 
       # Storage design (E12 S2a): Auto Backup and device transfer must leave out the secure store.
       - name: 🔒 Backup leaves out the secure store
         if: steps.changed.outputs.run == 'true'
         run: bun scripts/check-android-backup.ts apps/mobile/android
+
+      # An empty key (the script could not account for every input) means build, never restore.
+      - name: 🔑 Debug APK cache key
+        if: steps.changed.outputs.run == 'true'
+        id: apk-key
+        run: bun scripts/android-apk-cache-key.ts
+
+      # Exact key only, no fallback to a partial key: a near match is a different app. The nightly run builds.
+      - name: 📦 Restore the debug APK
+        if: steps.changed.outputs.run == 'true' && steps.apk-key.outputs.key != '' && github.event_name != 'schedule'
+        id: apk-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/apk
+          key: ${{ steps.apk-key.outputs.key }}
+
+      - name: 🤖 Debug APK (Gradle, unless cached)
+        if: steps.changed.outputs.run == 'true' && steps.apk-cache.outputs.cache-hit != 'true'
+        working-directory: apps/mobile/android
+        env:
+          CI: "1"
+        run: |
+          ./gradlew :app:assembleDebug -PreactNativeArchitectures=x86_64 --no-daemon
+          mkdir -p "$RUNNER_TEMP/apk"
+          cp app/build/outputs/apk/debug/app-debug.apk "$RUNNER_TEMP/apk/app-debug.apk"
+
+      - name: 📦 Save the debug APK
+        if: steps.changed.outputs.run == 'true' && steps.apk-key.outputs.key != '' && steps.apk-cache.outputs.cache-hit != 'true' && github.event_name != 'schedule'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/apk
+          key: ${{ steps.apk-key.outputs.key }}
+
+      - name: 🧾 Say where the APK came from
+        if: steps.changed.outputs.run == 'true'
+        env:
+          KEY: ${{ steps.apk-key.outputs.key }}
+          HIT: ${{ steps.apk-cache.outputs.cache-hit }}
+        run: |
+          if [ "$HIT" = "true" ]; then
+            line="Debug APK restored from the cache, key \`$KEY\`."
+          elif [ -n "$KEY" ]; then
+            line="Debug APK built (no cached APK for key \`$KEY\`, or a nightly run)."
+          else
+            line="Debug APK built: no cache key."
+          fi
+          echo "$line"
+          printf '%s\n\n' "$line" >> "$GITHUB_STEP_SUMMARY"
+          test -s "$RUNNER_TEMP/apk/app-debug.apk"
 
       - name: 🧪 Start the fixture server and Metro
         if: steps.changed.outputs.run == 'true'
@@ -708,9 +757,12 @@ jobs:
           echo "The fixture server or Metro did not start" >&2
           exit 1
 
-      - name: 📱 Maestro flows on the emulator (light and dark)
+      - name: 📱 Maestro flows on the emulator
         if: steps.changed.outputs.run == 'true'
         uses: ReactiveCircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        env:
+          THEMES: ${{ steps.changed.outputs.themes }}
+          FLOWS: ${{ steps.changed.outputs.flows }}
         with:
           api-level: 34
           arch: x86_64
@@ -722,7 +774,7 @@ jobs:
           # the app sat on the sign-in screen (CI run 45750932431, check-in-backend-down in light).
           ram-size: 4096M
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
-          script: bash apps/mobile/e2e/run-android-flows.sh apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk "$RUNNER_TEMP/maestro-out"
+          script: bash apps/mobile/e2e/run-android-flows.sh "$RUNNER_TEMP/apk/app-debug.apk" "$RUNNER_TEMP/maestro-out" "$THEMES" "$FLOWS"
 
       - name: 📸 Upload screenshots and logs
         if: always() && steps.changed.outputs.run == 'true'
@@ -1062,6 +1114,8 @@ jobs:
 
   audit:
     name: 🛡️ Dependency audit
+    # Every event but the nightly mobile e2e schedule: the audit stays weekly on the schedule.
+    if: github.event.schedule != '23 2 * * *'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
