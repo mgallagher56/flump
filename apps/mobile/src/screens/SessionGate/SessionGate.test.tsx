@@ -3,7 +3,7 @@ import { SessionProvider } from "../../auth/SessionProvider";
 import type { Session } from "../../auth/session";
 import type { SessionState } from "../../auth/sessionMachine";
 import { ApiProvider } from "../../data/ApiProvider";
-import { createQueryClient } from "../../data/queryClient";
+import { testQueryClient } from "../../data/fakeApi";
 import { ThemeProvider } from "../../theme/ThemeProvider";
 import { SessionGate } from "./SessionGate";
 
@@ -44,7 +44,8 @@ async function gate(app: ReturnType<typeof fakeSession> | null) {
       <SessionProvider
         app={app ? { session: app.session, marketingOrigin: "https://s.test.invalid" } : null}
       >
-        <ApiProvider client={null} queryClient={createQueryClient()}>
+        {/* A cache emptied after the test, so none of its timers outlives it. */}
+        <ApiProvider client={null} queryClient={testQueryClient()}>
           <SessionGate />
         </ApiProvider>
       </SessionProvider>
@@ -53,6 +54,12 @@ async function gate(app: ReturnType<typeof fakeSession> | null) {
 }
 
 describe("SessionGate", () => {
+  // On Jest's clock a press's 130 ms hold costs nothing. Signed in, the gate shows Home, whose reads
+  // fail at once with no API client; a failure that lands after the last assertion is never
+  // delivered outside act, as its 0 ms notify timer is dropped with the fake clock.
+  beforeEach(() => jest.useFakeTimers());
+  afterEach(() => jest.useRealTimers());
+
   it("restores on launch and shows Loading until the session settles", async () => {
     const app = fakeSession({ status: "loading" });
     await gate(app);
