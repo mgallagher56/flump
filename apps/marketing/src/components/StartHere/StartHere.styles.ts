@@ -47,9 +47,10 @@ export const goalLinks = cva({
     listStyle: "none",
     margin: 0,
     padding: 0,
+    // One link per line, the same in every column (coordinator, 26 November 2026).
     display: "flex",
-    flexWrap: "wrap",
-    columnGap: "4",
+    flexDirection: "column",
+    alignItems: "flex-start",
   },
 });
 
