@@ -8,13 +8,13 @@ import {
   profileFactsFromProfile,
   recordedTotalsForTaxYear,
   selectCheckInPartDone,
-  selectNetWorthChange,
   selectNetWorthTrend,
   selectTakeHome,
 } from "@flump/finance-engine";
 import type { ReactElement } from "react";
 import { type LoaderFunctionArgs, type MetaFunction, redirect, useLoaderData } from "react-router";
 import { HomeDashboard } from "~/features/dashboard/components/HomeDashboard";
+import { priorNetWorth } from "~/features/dashboard/netWorthDelta";
 import { pickResidentialMortgage } from "~/features/mortgage/residentialMortgage";
 import {
   buildSnapshotHistory,
@@ -182,9 +182,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
     basis,
   );
   // The engine picks the month (E12 S5): the same rule the mobile app's hero reads.
-  const change = selectNetWorthChange(netWorth, history.series, currentMonth);
-  const prior = change ? history.series.find((p) => p.month === change.priorMonth) : undefined;
-  const netWorthPrior = prior ? { month: prior.month, netWorth: prior.netWorth } : null;
+  const netWorthPrior = priorNetWorth(netWorth, history.series, currentMonth);
   // The hero's trend bars: the last seven recorded months from the same series, with their
   // geometry worked out by the engine (null below three recorded months).
   const netWorthTrend = selectNetWorthTrend(history.series);
