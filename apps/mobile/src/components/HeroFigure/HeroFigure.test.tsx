@@ -171,6 +171,22 @@ describe("HeroFigure", () => {
     },
   );
 
+  it("loading keeps one block the height of what will sit under the figure, and none without it", async () => {
+    const view = await render(
+      <ThemeProvider scheme="light">
+        <HeroFigure label="Net worth" value={null} loading loadingSlotHeight={56} testID="h" />
+      </ThemeProvider>,
+    );
+    const slot = screen.getByTestId("h-skeleton-slot", { includeHiddenElements: true });
+    expect(StyleSheet.flatten(slot.props.style).height).toBe(56);
+    await view.rerender(
+      <ThemeProvider scheme="light">
+        <HeroFigure label="Net worth" value={null} loading testID="h" />
+      </ThemeProvider>,
+    );
+    expect(screen.queryByTestId("h-skeleton-slot", { includeHiddenElements: true })).toBeNull();
+  });
+
   it.each(Object.entries(heroFigureStates).filter(([name]) => name !== "loading"))(
     "%s holds at 200%% text",
     async (_name, props) => {

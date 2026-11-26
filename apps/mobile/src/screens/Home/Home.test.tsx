@@ -242,6 +242,13 @@ describe("Home", () => {
     expect(screen.queryByTestId("home-hero-loading")).toBeNull();
     await act(async () => jest.advanceTimersByTimeAsync(1));
     expect(screen.getByLabelText("Loading your net worth")).toBeOnTheScreen();
+    // Room for the trend bars too, so the hero that arrives takes the same frame.
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId("home-hero-loading-skeleton-slot", { includeHiddenElements: true }).props
+          .style,
+      ).height,
+    ).toBe(56);
     // The answer comes 50 ms later; the blocks stay until 400 ms after they showed.
     await act(async () => {
       answer(h.accounts);
