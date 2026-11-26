@@ -1,4 +1,4 @@
-import { buildAuthorizeUrl, buildLogoutUrl, parseCallback, readQuery } from "./authorizeUrl";
+import { buildAuthorizeUrl, parseCallback, readQuery } from "./authorizeUrl";
 
 const config = {
   authBaseUrl: "https://auth.test.invalid",
@@ -19,23 +19,23 @@ describe("buildAuthorizeUrl", () => {
       code_challenge_method: "S256",
       state: "s1",
       provider: "authkit",
+      max_age: "0",
     });
+  });
+
+  it("always asks WorkOS for a fresh sign-in (max_age=0), for sign-up too", () => {
+    // workos.com/docs/reference/authkit/authentication/get-authorization-url (read 26 Nov 2026):
+    // "A value of 0 forces the user to re-authenticate". A remembered WorkOS session in the
+    // browser must never sign anyone in without asking (shared phones; Fable decider, S2b).
+    for (const screen of ["sign-in", "sign-up"] as const) {
+      const url = buildAuthorizeUrl(config, { challenge: "c".repeat(43), state: "s1" }, screen);
+      expect(readQuery(url.split("?")[1] ?? "").max_age).toBe("0");
+    }
   });
 
   it("opens the sign-up page for Create account", () => {
     const url = buildAuthorizeUrl(config, { challenge: "c".repeat(43), state: "s1" }, "sign-up");
     expect(readQuery(url.split("?")[1] ?? "").screen_hint).toBe("sign-up");
-  });
-});
-
-describe("buildLogoutUrl", () => {
-  it("ends the WorkOS session and comes back to the app", () => {
-    const url = buildLogoutUrl(config, "session_1");
-    expect(url.split("?")[0]).toBe("https://auth.test.invalid/user_management/sessions/logout");
-    expect(readQuery(url.split("?")[1] ?? "")).toEqual({
-      session_id: "session_1",
-      return_to: "flump://auth/callback",
-    });
   });
 });
 

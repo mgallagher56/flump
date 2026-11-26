@@ -1,10 +1,15 @@
-import { type ComponentType, createElement, type ReactElement } from "react";
+import { type ComponentType, createElement, Fragment, type ReactElement, useState } from "react";
 import { Button } from "../../components/Button";
 import { buttonStates } from "../../components/Button/Button.states";
 import { Card } from "../../components/Card";
 import { cardStates } from "../../components/Card/Card.states";
+import { ConfirmDialog } from "../../components/ConfirmDialog";
+import type { ConfirmDialogProps } from "../../components/ConfirmDialog/ConfirmDialog";
+import { confirmDialogStates } from "../../components/ConfirmDialog/ConfirmDialog.states";
 import { CurrencyInput } from "../../components/CurrencyInput";
 import { currencyInputStates } from "../../components/CurrencyInput/CurrencyInput.states";
+import { ErrorState } from "../../components/ErrorState";
+import { errorStateStates } from "../../components/ErrorState/ErrorState.states";
 import { FlumpLogo } from "../../components/FlumpLogo";
 import { flumpLogoStates } from "../../components/FlumpLogo/FlumpLogo.states";
 import { FormField } from "../../components/FormField";
@@ -52,6 +57,29 @@ function entry<P extends object>(
   };
 }
 
+/**
+ * The dialog is the platform's alert, so the gallery shows a button that opens it rather than
+ * opening one alert per panel on arrival.
+ */
+function ConfirmDialogPreview(props: ConfirmDialogProps) {
+  const [open, setOpen] = useState(false);
+  return createElement(
+    Fragment,
+    null,
+    createElement(Button, {
+      label: `Open: ${props.confirmLabel}`,
+      variant: "secondary",
+      onPress: () => setOpen(true),
+    }),
+    createElement(ConfirmDialog, {
+      ...props,
+      visible: open,
+      onConfirm: () => setOpen(false),
+      onCancel: () => setOpen(false),
+    }),
+  );
+}
+
 /** Every component in `src/components`, with every named state from its `X.states.ts`. */
 export const GALLERY: readonly GalleryEntry[] = [
   entry("Text", Text, textStates),
@@ -61,6 +89,8 @@ export const GALLERY: readonly GalleryEntry[] = [
   entry("Screen", Screen, screenStates),
   entry("FlumpLogo", FlumpLogo, flumpLogoStates),
   entry("InlineAlert", InlineAlert, inlineAlertStates),
+  entry("ErrorState", ErrorState, errorStateStates),
+  entry("ConfirmDialog", ConfirmDialogPreview, confirmDialogStates),
   entry("Money", Money, moneyStates),
   entry("StatusBadge", StatusBadge, statusBadgeStates),
   entry("Skeleton", Skeleton, skeletonStates),

@@ -1,4 +1,5 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
+import type { ServerSignOutResult } from "../data/serverSignOut";
 import type { TokenResult, WorkosClient } from "../data/workos";
 import { readQuery } from "./authorizeUrl";
 import type { PkceCrypto } from "./pkce";
@@ -52,6 +53,7 @@ interface Harness {
   workos: { exchangeCode: jest.Mock; refresh: jest.Mock };
   browser: jest.Mock;
   account: jest.Mock;
+  serverSignOut: jest.Mock;
 }
 
 function harness(
@@ -61,6 +63,7 @@ function harness(
     exchange?: (code: string, verifier: string) => Promise<TokenResult>;
     browser?: (url: string) => Promise<BrowserResult>;
     account?: () => Promise<AccountCheck>;
+    serverSignOut?: (accessToken: string) => Promise<ServerSignOutResult>;
   } = {},
 ): Harness {
   const tokens = memoryTokens(over.stored ?? null);
@@ -81,6 +84,9 @@ function harness(
       }),
   );
   const account = jest.fn(over.account ?? (async (): Promise<AccountCheck> => "ok"));
+  const serverSignOut = jest.fn(
+    over.serverSignOut ?? (async (): Promise<ServerSignOutResult> => "ended"),
+  );
   const deps: SessionDeps = {
     config,
     crypto,
@@ -88,9 +94,9 @@ function harness(
     tokens,
     openBrowser: browser,
     checkAccount: account,
-    endBrowserSessionOnSignOut: true,
+    endServerSession: serverSignOut,
   };
-  return { deps, tokens, workos, browser, account };
+  return { deps, tokens, workos, browser, account, serverSignOut };
 }
 
 async function signedOutSession(h: Harness) {
@@ -101,6 +107,27 @@ async function signedOutSession(h: Harness) {
 }
 
 describe("restore on launch", () => {
+  it("runs the reinstall wipe once, before the first read of the store", async () => {
+    const h = harness({ stored: "r_old" });
+    const order: string[] = [];
+    h.deps.beforeFirstRestore = jest.fn(async () => {
+      order.push("wipe");
+    });
+    (h.tokens.read as jest.Mock).mockImplementation(async () => {
+      order.push("read");
+      throw new Error("locked");
+    });
+    const session = createSession(h.deps);
+    await session.restore();
+    expect(order).toEqual(["wipe", "read"]);
+    expect(session.getState()).toEqual({ status: "restoredOffline" });
+    // Retry goes through restore again, but the wipe ran once: it must never clear a token that
+    // this installation saved.
+    await session.retry();
+    expect(order).toEqual(["wipe", "read", "read"]);
+    expect(h.deps.beforeFirstRestore).toHaveBeenCalledTimes(1);
+  });
+
   it("with nothing stored, shows the sign-in screen and calls nobody", async () => {
     const h = harness();
     await signedOutSession(h);
@@ -411,69 +438,120 @@ describe("sign-out", () => {
     expect(session.getState()).toEqual({ status: "signedOut", notice: null });
   });
 
-  it("clears the device before any network, then ends the WorkOS session", async () => {
+  it("clears the device and shows signed out before any network, then revokes on the server with the held token", async () => {
     const h = harness();
     const session = await signedOutSession(h);
     await session.signIn();
-    const sid = JSON.parse(
-      Buffer.from(String(session.getAccessToken()).split(".")[1] ?? "", "base64url").toString(),
-    ).sid;
-    const atLogout: { stored: string | null; access: string | null }[] = [];
-    h.browser.mockImplementation(async () => {
-      atLogout.push({ stored: h.tokens.peek(), access: session.getAccessToken() });
-      return { type: "success", url: "flump://auth/callback" };
+    const held = session.getAccessToken();
+    h.browser.mockClear();
+    const atCall: { stored: string | null; access: string | null; status: string }[] = [];
+    h.serverSignOut.mockImplementation(async () => {
+      atCall.push({
+        stored: h.tokens.peek(),
+        access: session.getAccessToken(),
+        status: session.getState().status,
+      });
+      return "ended";
     });
     await session.signOut();
-    expect(atLogout).toEqual([{ stored: null, access: null }]);
-    const logoutUrl = String(h.browser.mock.calls.at(-1)?.[0]);
-    expect(logoutUrl.split("?")[0]).toBe(
-      "https://auth.test.invalid/user_management/sessions/logout",
-    );
-    expect(readQuery(logoutUrl.split("?")[1] ?? "").session_id).toBe(sid);
+    expect(atCall).toEqual([{ stored: null, access: null, status: "signedOut" }]);
+    expect(h.serverSignOut).toHaveBeenCalledTimes(1);
+    expect(h.serverSignOut).toHaveBeenCalledWith(held);
+    // No browser on either platform: the stuck Custom Tab of the S2a design cannot happen.
+    expect(h.browser).not.toHaveBeenCalled();
     expect(session.getState()).toEqual({ status: "signedOut", notice: null });
   });
 
-  it("works with no network: a failing browser still leaves the device clear and signed out", async () => {
+  it("an expired access token: one refresh in memory, never saved, then one more try with the new token", async () => {
     const h = harness();
     const session = await signedOutSession(h);
     await session.signIn();
-    h.browser.mockRejectedValue(new Error("offline"));
+    const storedAtSignOut = h.tokens.peek();
+    const fresh = newTokens();
+    h.workos.refresh.mockResolvedValue({ ok: true, tokens: fresh });
+    h.serverSignOut.mockResolvedValueOnce("unauthorised").mockResolvedValueOnce("ended");
+    (h.tokens.save as jest.Mock).mockClear();
     await session.signOut();
+    expect(h.workos.refresh).toHaveBeenCalledTimes(1);
+    expect(h.workos.refresh).toHaveBeenCalledWith(storedAtSignOut);
+    expect(h.serverSignOut).toHaveBeenCalledTimes(2);
+    expect(h.serverSignOut).toHaveBeenLastCalledWith(fresh.accessToken);
+    expect(h.tokens.save).not.toHaveBeenCalled();
+    expect(h.tokens.peek()).toBeNull();
+    expect(session.getAccessToken()).toBeNull();
+  });
+
+  it.each<ServerSignOutResult>(["ended", "unavailable"])(
+    "a server answer of %s is final: no refresh, no second call",
+    async (answer) => {
+      const h = harness();
+      const session = await signedOutSession(h);
+      await session.signIn();
+      h.serverSignOut.mockResolvedValue(answer);
+      await session.signOut();
+      expect(h.serverSignOut).toHaveBeenCalledTimes(1);
+      expect(h.workos.refresh).not.toHaveBeenCalled();
+      expect(session.getState()).toEqual({ status: "signedOut", notice: null });
+    },
+  );
+
+  it("a refresh that fails after a 401 ends the attempt quietly", async () => {
+    const h = harness();
+    const session = await signedOutSession(h);
+    await session.signIn();
+    h.serverSignOut.mockResolvedValue("unauthorised");
+    h.workos.refresh.mockResolvedValue({ ok: false, reason: "rejected" });
+    await session.signOut();
+    expect(h.serverSignOut).toHaveBeenCalledTimes(1);
+    expect(session.getState()).toEqual({ status: "signedOut", notice: null });
+  });
+
+  it("works with no network: a throwing server call still leaves the device clear and signed out", async () => {
+    const h = harness();
+    const session = await signedOutSession(h);
+    await session.signIn();
+    h.serverSignOut.mockRejectedValue(new Error("offline"));
+    await expect(session.signOut()).resolves.toBeUndefined();
     expect(h.tokens.peek()).toBeNull();
     expect(session.getState()).toEqual({ status: "signedOut", notice: null });
   });
 
-  it("from Not invited signs out the same way", async () => {
+  it("from Not invited signs out the same way, revoke included", async () => {
     const h = harness({ account: async () => "not-invited" });
     const session = await signedOutSession(h);
     await session.signIn();
     await session.signOut();
+    expect(h.serverSignOut).toHaveBeenCalledTimes(1);
     expect(h.tokens.peek()).toBeNull();
     expect(session.getState()).toEqual({ status: "signedOut", notice: null });
   });
 
-  it("opens no logout page where the sign-in sheet keeps no cookies (iOS)", async () => {
-    const h = harness();
-    h.deps.endBrowserSessionOnSignOut = false;
-    const session = await signedOutSession(h);
-    await session.signIn();
-    h.browser.mockClear();
-    await session.signOut();
-    expect(h.browser).not.toHaveBeenCalled();
-    expect(h.tokens.peek()).toBeNull();
-    expect(session.getState()).toEqual({ status: "signedOut", notice: null });
-  });
-
-  it("offline, with no access token, clears the device and opens no browser", async () => {
+  it("offline with no access token: tries the stored refresh token once, and with no answer calls nothing", async () => {
     const h = harness({
       stored: "r_old",
       refresh: async () => ({ ok: false, reason: "unavailable" }),
     });
     const session = createSession(h.deps);
     await session.restore();
+    h.workos.refresh.mockClear();
     await session.signOut();
+    expect(h.workos.refresh).toHaveBeenCalledTimes(1);
+    expect(h.workos.refresh).toHaveBeenCalledWith("r_old");
+    expect(h.serverSignOut).not.toHaveBeenCalled();
     expect(h.browser).not.toHaveBeenCalled();
     expect(h.tokens.peek()).toBeNull();
+    expect(session.getState()).toEqual({ status: "signedOut", notice: null });
+  });
+
+  it("a store that cannot be read at sign-out still clears, and the access token alone is used", async () => {
+    const h = harness();
+    const session = await signedOutSession(h);
+    await session.signIn();
+    (h.tokens.read as jest.Mock).mockRejectedValue(new Error("locked"));
+    h.serverSignOut.mockResolvedValue("unauthorised");
+    await session.signOut();
+    expect(h.tokens.clear).toHaveBeenCalled();
+    expect(h.workos.refresh).not.toHaveBeenCalled();
     expect(session.getState()).toEqual({ status: "signedOut", notice: null });
   });
 });

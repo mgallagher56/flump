@@ -1,5 +1,6 @@
-# E12 S2a: sign-out clears the device. After a relaunch the sign-in screen shows, so no refresh
-# token was left in the secure store.
+# E12 S2a and S2b: sign-out asks first, then clears the device and returns straight to the sign-in
+# screen with no browser window, after revoking the session on the server. After a relaunch the
+# sign-in screen still shows, so no refresh token was left in the secure store.
 appId: app.flump.mobile
 ---
 - runScript:
@@ -12,10 +13,25 @@ appId: app.flump.mobile
     env:
       AFTER: "You are signed in"
 - tapOn: "Sign out"
-- runFlow: ../subflows/browser-sheet.yaml
 - extendedWaitUntil:
-    visible: "Create account"
-    timeout: 60000
+    visible: "Sign out of Flump\\?"
+    timeout: 10000
+- takeScreenshot: sign-out-confirm-${THEME}
+# Cancel keeps the person signed in.
+- tapOn:
+    id: "android:id/button2"
+- extendedWaitUntil:
+    visible: "You are signed in"
+    timeout: 10000
+- runScript:
+    file: ../scripts/assert-session.js
+    env:
+      SIGN_OUTS: "0"
+- runFlow: ../subflows/sign-out.yaml
+- runScript:
+    file: ../scripts/assert-session.js
+    env:
+      SIGN_OUTS: "1"
 - stopApp
 - launchApp
 - extendedWaitUntil:

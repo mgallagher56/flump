@@ -33,17 +33,13 @@ export function buildAuthorizeUrl(
     code_challenge_method: "S256",
     state: pkce.state,
     provider: "authkit",
+    // Always a fresh sign-in: a WorkOS session left in the browser (Android's Custom Tab shares
+    // Chrome's cookies) never signs anyone in without asking. iOS's private sheet has none anyway.
+    // "A value of 0 forces the user to re-authenticate" (get-authorization-url, read 26 Nov 2026).
+    max_age: "0",
   };
   if (screen === "sign-up") params.screen_hint = "sign-up";
   return `${config.authBaseUrl}/user_management/authorize?${query(params)}`;
-}
-
-/** Ends the WorkOS browser session for `sessionId` (the access token's `sid`), then returns to the app. */
-export function buildLogoutUrl(config: Endpoints, sessionId: string): string {
-  return `${config.authBaseUrl}/user_management/sessions/logout?${query({
-    session_id: sessionId,
-    return_to: config.redirectUri,
-  })}`;
 }
 
 /** The decoded pairs of a query string. A repeated key keeps its first value. */

@@ -8,20 +8,16 @@
  * - A new refresh token is saved before the new access token is used.
  * - Only a rejected refresh (WorkOS `invalid_grant`) or a refused fresh token ends a session and
  *   clears the device. A network failure never does.
- * - Sign-out clears the device first, with no network, then ends the WorkOS browser session.
+ * - Sign-out clears the device first, with no network, then asks the backend to revoke the
+ *   WorkOS session. It never opens a browser.
  * - The app never reads token lifetimes or the issuer: it refreshes when the API answers 401, and
  *   the backend checks the issuer. So a different lifetime or issuer cannot wrongly sign anyone in;
  *   a token the backend refuses ends the session (`checkAccount` gives `unauthorised`).
  */
 import type { AuthConfig } from "../config";
+import type { ServerSignOutResult } from "../data/serverSignOut";
 import type { TokenResult, WorkosClient } from "../data/workos";
-import {
-  type AuthorizeScreen,
-  buildAuthorizeUrl,
-  buildLogoutUrl,
-  parseCallback,
-} from "./authorizeUrl";
-import { readSessionId } from "./claims";
+import { type AuthorizeScreen, buildAuthorizeUrl, parseCallback } from "./authorizeUrl";
 import { createPkce, createState, type PkceCrypto } from "./pkce";
 import {
   INITIAL_STATE,
@@ -52,11 +48,13 @@ export interface SessionDeps {
   tokens: TokenStore;
   openBrowser(url: string, redirectUri: string): Promise<BrowserResult>;
   checkAccount(): Promise<AccountCheck>;
+  /** `POST /v1/session/sign-out` with exactly this access token: the backend revokes its `sid`. */
+  endServerSession(accessToken: string): Promise<ServerSignOutResult>;
   /**
-   * Open the WorkOS logout page on sign-out. True on Android, where Custom Tabs share the browser's
-   * cookies. False on iOS, where the sign-in sheet uses a private session that keeps no cookies.
+   * Runs once, before the first read of the store on launch: on iOS, clears a Keychain item left
+   * by an earlier installation (`reinstall.ts`). Must not throw.
    */
-  endBrowserSessionOnSignOut: boolean;
+  beforeFirstRestore?(): Promise<void>;
 }
 
 export interface Session {
@@ -168,8 +166,14 @@ export function createSession(deps: SessionDeps): Session {
     return refreshing;
   }
 
+  let prepared = false;
+
   async function restore() {
     if (state.status !== "loading") return;
+    if (!prepared) {
+      prepared = true;
+      await deps.beforeFirstRestore?.();
+    }
     let stored: string | null;
     try {
       stored = await deps.tokens.read();
@@ -221,25 +225,41 @@ export function createSession(deps: SessionDeps): Session {
 
   async function signOut() {
     if (state.status === "signingOut") return;
-    const sessionId = readSessionId(accessToken);
+    // Held in local variables only, for the server call after the device is clear.
+    const heldAccess = accessToken;
     dispatch({ type: "SIGN_OUT_STARTED" });
     // Re-read: dispatch may have moved it (TypeScript still holds the earlier narrowing).
     if ((state as SessionState).status !== "signingOut") return;
-    await clearDevice();
-    if (sessionId && deps.endBrowserSessionOnSignOut) {
-      // Assumption (open until the owner's sign-in): WorkOS accepts flump://auth/callback as the
-      // logout return address. If it refuses, its page shows an error the person closes; the device
-      // is already clear, but the browser's WorkOS cookie may survive, so the next sign-in on this
-      // phone might not ask for the password.
-      // Ends the WorkOS browser session, so the next sign-in asks for the password. Best effort:
-      // the device is already clear, and no network or a closed sheet changes nothing.
-      try {
-        await deps.openBrowser(buildLogoutUrl(deps.config, sessionId), deps.config.redirectUri);
-      } catch {
-        // Nothing to undo.
-      }
+    let heldRefresh: string | null = null;
+    try {
+      heldRefresh = await deps.tokens.read();
+    } catch {
+      // A locked store: the server call falls back to the access token alone.
     }
+    await clearDevice();
     dispatch({ type: "SIGNED_OUT" });
+    await endServerSession(heldAccess, heldRefresh);
+  }
+
+  /**
+   * Asks the backend to revoke this sign-in's WorkOS session (E12 S2b, decided by a Fable decider
+   * on 26 November 2026): no browser opens on either platform. Best effort and silent: the device
+   * is already clear, and with no network the session lasts until WorkOS's own timeouts. If the
+   * access token has expired (it lasts 300 seconds), one refresh is made in memory only, never
+   * saved, and the call is tried once more with the new token.
+   */
+  async function endServerSession(access: string | null, refreshToken: string | null) {
+    try {
+      if (access) {
+        const first = await deps.endServerSession(access);
+        if (first !== "unauthorised") return;
+      }
+      if (!refreshToken) return;
+      const fresh = await deps.workos.refresh(refreshToken);
+      if (fresh.ok) await deps.endServerSession(fresh.tokens.accessToken);
+    } catch {
+      // Nothing to undo: the device is clear.
+    }
   }
 
   return {

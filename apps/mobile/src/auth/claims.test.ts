@@ -1,4 +1,4 @@
-import { readClaims, readSessionId } from "./claims";
+import { readClaims } from "./claims";
 
 const encode = (value: unknown) => Buffer.from(JSON.stringify(value), "utf8").toString("base64url");
 // A token shape built at runtime; the signature part is never checked here.
@@ -20,12 +20,5 @@ describe("claims", () => {
     ["a JSON array", `a.${encode([1])}.c`],
   ])("returns undefined for %s", (_name, token) => {
     expect(readClaims(token)).toBeUndefined();
-  });
-
-  it("finds the session id, and nothing when it is missing or not text", () => {
-    expect(readSessionId(jwt({ sid: "session_9" }))).toBe("session_9");
-    expect(readSessionId(jwt({ sid: 9 }))).toBeUndefined();
-    expect(readSessionId(jwt({}))).toBeUndefined();
-    expect(readSessionId(null)).toBeUndefined();
   });
 });

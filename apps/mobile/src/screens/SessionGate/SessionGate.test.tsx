@@ -1,4 +1,5 @@
-import { act, render, screen, userEvent } from "@testing-library/react-native";
+import { act, fireEvent, render, screen, userEvent } from "@testing-library/react-native";
+import { Alert, type AlertButton, Platform } from "react-native";
 import { SessionProvider } from "../../auth/SessionProvider";
 import type { Session } from "../../auth/session";
 import type { SessionState } from "../../auth/sessionMachine";
@@ -53,12 +54,27 @@ async function gate(app: ReturnType<typeof fakeSession> | null) {
   );
 }
 
+/** The platform alert's answer: presses the named button of the last alert shown. */
+function answerAlert(alert: jest.SpyInstance, label: string) {
+  const buttons = (alert.mock.calls.at(-1)?.[2] ?? []) as AlertButton[];
+  const button = buttons.find((b) => b.text === label);
+  if (!button) throw new Error(`No ${label} button in the alert`);
+  button.onPress?.();
+}
+
 describe("SessionGate", () => {
   // On Jest's clock a press's 130 ms hold costs nothing. Signed in, the gate shows Home, whose reads
   // fail at once with no API client; a failure that lands after the last assertion is never
   // delivered outside act, as its 0 ms notify timer is dropped with the fake clock.
-  beforeEach(() => jest.useFakeTimers());
-  afterEach(() => jest.useRealTimers());
+  let alert: jest.SpyInstance;
+  beforeEach(() => {
+    jest.useFakeTimers();
+    alert = jest.spyOn(Alert, "alert").mockImplementation(() => {});
+  });
+  afterEach(() => {
+    jest.useRealTimers();
+    jest.restoreAllMocks();
+  });
 
   it("restores on launch and shows Loading until the session settles", async () => {
     const app = fakeSession({ status: "loading" });
@@ -93,7 +109,36 @@ describe("SessionGate", () => {
     await user.press(screen.getByRole("button", { name: "Try again" }));
     await user.press(screen.getByRole("button", { name: "Sign out" }));
     expect(app.session.retry).toHaveBeenCalledTimes(1);
+    expect(app.session.signOut).not.toHaveBeenCalled();
+    await act(async () => answerAlert(alert, "Sign out"));
     expect(app.session.signOut).toHaveBeenCalledTimes(1);
+  });
+
+  it("Sign out asks first; Cancel keeps the person signed in", async () => {
+    const app = fakeSession({ status: "signedIn" });
+    await gate(app);
+    await userEvent.setup().press(screen.getByRole("button", { name: "Sign out" }));
+    expect(alert).toHaveBeenCalledTimes(1);
+    expect(alert.mock.calls[0]?.[0]).toBe("Sign out of Flump?");
+    await act(async () => answerAlert(alert, "Cancel"));
+    expect(app.session.signOut).not.toHaveBeenCalled();
+    // Asking again shows the dialog again.
+    await userEvent.setup().press(screen.getByRole("button", { name: "Sign out" }));
+    expect(alert).toHaveBeenCalledTimes(2);
+  });
+
+  it.each([
+    ["ios", "This removes your sign-in from this phone. Your data stays in your Flump account."],
+    [
+      "android",
+      "This removes your sign-in from this phone. Your data stays in your Flump account. If you sign in with Google, the Google account in this phone's browser can sign you back in without a password.",
+    ],
+  ] as const)("on %s the dialog says what sign-out does there", async (os, message) => {
+    jest.replaceProperty(Platform, "OS", os);
+    await gate(fakeSession({ status: "signedIn" }));
+    // fireEvent: a user-event press runs Android's ripple, which needs a native view.
+    await act(async () => fireEvent.press(screen.getByRole("button", { name: "Sign out" })));
+    expect(alert.mock.calls[0]?.[1]).toBe(message);
   });
 
   it("signed in, the check-in row opens the check-in route", async () => {
@@ -111,6 +156,7 @@ describe("SessionGate", () => {
     const user = userEvent.setup();
     await user.press(screen.getByRole("button", { name: "Try again" }));
     await user.press(screen.getByRole("button", { name: "Sign out" }));
+    await act(async () => answerAlert(alert, "Sign out"));
     expect(app.session.retry).toHaveBeenCalledTimes(1);
     expect(app.session.signOut).toHaveBeenCalledTimes(1);
   });

@@ -5,7 +5,7 @@
  * The app's real sign-in code (src/auth, src/data) against the fixture server's WorkOS stand-in and
  * canned /v1 (E12 S2a). Only the browser sheet and the secure store are stand-ins: the sheet follows
  * the authorize redirect with fetch, and the store is a memory map. PKCE, the exchange, the refresh,
- * the account check and the logout are the code the phone runs.
+ * the account check and the server sign-out are the code the phone runs.
  */
 import { createHash, randomBytes } from "node:crypto";
 import { type BrowserResult, createSession, type Session } from "../../src/auth/session";
@@ -13,6 +13,7 @@ import { runSignInCheck } from "../../src/auth/signInCheck";
 import { createTokenStore, type SecureStoreLike } from "../../src/auth/tokenStore";
 import { checkAccountWithToken, createAccountCheck } from "../../src/data/account";
 import { createAppApiClient } from "../../src/data/apiClient";
+import { createServerSignOut } from "../../src/data/serverSignOut";
 import { createWorkosClient } from "../../src/data/workos";
 import { type FixtureServer, startFixtureServer } from "./server";
 
@@ -71,7 +72,7 @@ function app(items?: ReturnType<typeof memorySecureStore>) {
     tokens,
     openBrowser: browser,
     checkAccount: createAccountCheck(api),
-    endBrowserSessionOnSignOut: true,
+    endServerSession: createServerSignOut(server.origin),
   });
   return { session, secure, api };
 }
@@ -147,24 +148,52 @@ describe("sign-in against the WorkOS stand-in", () => {
     expect(first.secure.items.size).toBe(1);
   });
 
-  it("sign-out clears the device and opens the WorkOS logout", async () => {
+  it("sign-out clears the device, opens no browser and revokes the session on the server", async () => {
     const phone = await signedIn();
+    const stored = [...phone.secure.items.values()][0] ?? "";
     visited.length = 0;
     await phone.session.signOut();
     expect(phone.session.getState()).toEqual({ status: "signedOut", notice: null });
     expect(phone.secure.items.size).toBe(0);
-    expect(visited).toEqual([`${server.origin}/user_management/sessions/logout`]);
+    expect(visited).toEqual([]);
+    expect(server.stats().signOuts).toBe(1);
+    // The refresh token taken off the phone no longer works anywhere.
+    const workos = createWorkosClient({ authBaseUrl: server.origin, clientId: CLIENT_ID });
+    expect(await workos.refresh(stored)).toEqual({ ok: false, reason: "rejected" });
+  });
+
+  it("sign-out with an expired access token refreshes in memory once and still revokes", async () => {
+    const phone = await signedIn();
+    server.setScenario({ accessTokenSeconds: 0 });
+    // A refresh now issues an already expired access token, so the server call answers 401 first.
+    await phone.session.refresh();
+    const refreshesBefore = server.stats().refreshes;
+    server.setScenario({ accessTokenSeconds: 300 });
+    await phone.session.signOut();
+    expect(server.stats().refreshes).toBe(refreshesBefore + 1);
+    expect(server.stats().signOuts).toBe(1);
+    expect(phone.secure.items.size).toBe(0);
+  });
+
+  it("every sign-in asks WorkOS for a fresh login (max_age=0), sign-in after sign-out included", async () => {
+    const phone = await signedIn();
+    expect(server.stats().lastAuthorizeMaxAge).toBe("0");
+    await phone.session.signOut();
+    await phone.session.signIn();
+    expect(phone.session.getState()).toEqual({ status: "signedIn" });
+    expect(server.stats().lastAuthorizeMaxAge).toBe("0");
   });
 });
 
 describe("the dev sign-in check against the WorkOS stand-in", () => {
-  it("reports the stand-in's strict rotation, its issuer and lifetime, and the backend's answer", async () => {
+  it("reports the stand-in's rotation, its issuer and lifetime, and the backend's answer", async () => {
     const phone = await signedIn();
     const config = { authBaseUrl: server.origin, clientId: CLIENT_ID };
     const report = await runSignInCheck({
       tokens: createTokenStore(phone.secure.store, 1),
       workos: createWorkosClient(config),
       checkAccountWith: (token) => checkAccountWithToken(server.origin, token),
+      wait: async () => {},
     });
     expect(report).toEqual({
       issuer: `${server.origin}/user_management/${CLIENT_ID}`,
@@ -173,7 +202,10 @@ describe("the dev sign-in check against the WorkOS stand-in", () => {
       accessLifetimeSeconds: 300,
       refreshWithoutSecret: "accepted",
       refreshTokenReplaced: true,
-      oldRefreshTokenReused: "rejected",
+      // Inside the stand-in's 30 second grace period (its clock does not move here).
+      oldRefreshTokenReused: "accepted",
+      reuseGaveSameTokens: true,
+      oldRefreshTokenAfterWait: "accepted",
       replacementAfterReuse: "accepted",
       backend: "ok",
     });

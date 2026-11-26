@@ -307,16 +307,32 @@ describe("WorkOS stand-in: refresh", () => {
   const refresh = (token: string) =>
     authenticate({ grant_type: "refresh_token", refresh_token: token });
 
-  it("replaces the refresh token on use and rejects the old one at once", async () => {
+  it("replaces the refresh token on use; the old one replays the same pair for 30 seconds, then is refused", async () => {
     const first = await signIn();
     const res = await refresh(first.refresh_token);
     expect(res.status).toBe(200);
     const next = (await res.json()) as { access_token: string; refresh_token: string };
     expect(next.refresh_token).not.toBe(first.refresh_token);
     expect((await getProfile(next.access_token)).status).toBe(200);
-    const again = await refresh(first.refresh_token);
-    expect(again.status).toBe(400);
-    expect(((await again.json()) as { error: string }).error).toBe("invalid_grant");
+    // 29.999 seconds later: inside the grace period, the same pair comes back.
+    clock += 29_999;
+    const replay = await refresh(first.refresh_token);
+    expect(replay.status).toBe(200);
+    expect(await replay.json()).toEqual(next);
+    // At exactly 30 seconds the grace period is over.
+    clock += 1;
+    const late = await refresh(first.refresh_token);
+    expect(late.status).toBe(400);
+    expect(((await late.json()) as { error: string }).error).toBe("invalid_grant");
+    // The replacement still works: no reuse detection ends the session.
+    expect((await refresh(next.refresh_token)).status).toBe(200);
+  });
+
+  it("a revoked session's spent token is refused even inside the grace period", async () => {
+    const first = await signIn();
+    await refresh(first.refresh_token);
+    await fetch(url("/__fixture/revoke"), { method: "POST" });
+    expect((await refresh(first.refresh_token)).status).toBe(400);
   });
 
   it("rejects every refresh in the rejected scenario", async () => {
@@ -395,26 +411,6 @@ describe("control routes", () => {
     expect(server.stats()).toMatchObject({ refreshes: 0, exchanges: 0 });
     const { access_token } = await signIn();
     expect((await getProfile(access_token)).status).toBe(200);
-  });
-
-  it("the sign-out page sends the browser back to the given return address", async () => {
-    const res = await fetch(
-      url(`/user_management/sessions/logout?return_to=${encodeURIComponent(REDIRECT)}`),
-      { redirect: "manual" },
-    );
-    expect(res.status).toBe(302);
-    expect(res.headers.get("location")).toBe(REDIRECT);
-  });
-
-  it("the sign-out page refuses an unregistered return address", async () => {
-    const res = await fetch(
-      url("/user_management/sessions/logout?return_to=https%3A%2F%2Fexample.com"),
-      {
-        redirect: "manual",
-      },
-    );
-    expect(res.status).toBe(400);
-    expect(res.headers.get("location")).toBeNull();
   });
 });
 
@@ -787,5 +783,57 @@ describe("check-in steps for the fixture", () => {
     // 184,593.75 owed.
     expect(mortgage?.calculated?.value).toBe(184593.75);
     expect(mortgage?.lastValue).toBe(185000);
+  });
+});
+
+describe("canned /v1: sign-out (E12 S2b)", () => {
+  const signOut = (token?: string) =>
+    fetch(url("/v1/session/sign-out"), {
+      method: "POST",
+      headers: token ? { authorization: `Bearer ${token}` } : {},
+    });
+  const refresh = (token: string) =>
+    authenticate({ grant_type: "refresh_token", refresh_token: token });
+
+  it("revokes the token's own session: its access and refresh tokens stop working", async () => {
+    const mine = await signIn();
+    const other = await signIn();
+    const res = await signOut(mine.access_token);
+    expect(res.status).toBe(204);
+    expect(server.stats().signOuts).toBe(1);
+    expect((await getProfile(mine.access_token)).status).toBe(401);
+    expect((await refresh(mine.refresh_token)).status).toBe(400);
+    // Another session of the same person is untouched.
+    expect((await getProfile(other.access_token)).status).toBe(200);
+  });
+
+  it("refuses a missing or revoked token with 401 and counts nothing", async () => {
+    expect((await signOut()).status).toBe(401);
+    const mine = await signIn();
+    await signOut(mine.access_token);
+    expect((await signOut(mine.access_token)).status).toBe(401);
+    expect(server.stats().signOuts).toBe(1);
+  });
+
+  it.each([
+    ["not invited", { account: "not-invited" }],
+    ["terms not agreed", { terms: "required" }],
+  ] as const)("serves a person who is %s", async (_name, patch) => {
+    const mine = await signIn();
+    server.setScenario(patch);
+    expect((await signOut(mine.access_token)).status).toBe(204);
+  });
+});
+
+describe("WorkOS stand-in: max_age", () => {
+  it("records the last authorize's max_age, and null when none was sent; reset forgets it", async () => {
+    expect(server.stats().lastAuthorizeMaxAge).toBeNull();
+    await authorize(pkcePair().challenge, "s", { max_age: "0" });
+    expect(server.stats().lastAuthorizeMaxAge).toBe("0");
+    await authorize(pkcePair().challenge, "s");
+    expect(server.stats().lastAuthorizeMaxAge).toBeNull();
+    await authorize(pkcePair().challenge, "s", { max_age: "0" });
+    await fetch(url("/__fixture/reset"), { method: "POST" });
+    expect(server.stats().lastAuthorizeMaxAge).toBeNull();
   });
 });

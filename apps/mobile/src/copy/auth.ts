@@ -49,3 +49,24 @@ export const TERMS_REQUIRED_BODY =
 export const TERMS_REQUIRED_NOTE =
   "If you do not agree, you cannot use Flump. You can still download your data or delete your account on the website.";
 export const OPEN_WEBSITE = "Open the Flump website";
+
+/** The version gate (plan section 4.9). No store link until the app has a listing (S19). */
+export const UPDATE_REQUIRED_HEADING = "Update Flump to carry on";
+export const UPDATE_REQUIRED_BODY =
+  "This version of the app is no longer supported. Install the latest version from where you got Flump, then open it again.";
+export const CHECK_AGAIN = "Check again";
+
+/**
+ * The sign-out confirmation (E12 S2b). It says what sign-out does on each platform, as the owner
+ * saw it on 26 November 2026: the phone keeps no sign-in and the next sign-in asks again
+ * (`max_age=0`), but on Android a Google account signed in to the phone's browser can still sign
+ * in with one tap, which Flump cannot clear. Wording from a Fable decider, adjusted to claim only
+ * what was seen.
+ */
+export const SIGN_OUT_CONFIRM_TITLE = "Sign out of Flump?";
+const SIGN_OUT_CONFIRM_BASE =
+  "This removes your sign-in from this phone. Your data stays in your Flump account.";
+export const signOutConfirmMessage = (platform: "ios" | "android"): string =>
+  platform === "android"
+    ? `${SIGN_OUT_CONFIRM_BASE} If you sign in with Google, the Google account in this phone's browser can sign you back in without a password.`
+    : SIGN_OUT_CONFIRM_BASE;

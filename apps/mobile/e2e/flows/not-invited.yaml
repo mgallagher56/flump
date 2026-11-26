@@ -11,8 +11,9 @@ appId: app.flump.mobile
     env:
       AFTER: "This account has not been invited yet"
 - takeScreenshot: not-invited-${THEME}
-- tapOn: "Sign out"
-- runFlow: ../subflows/browser-sheet.yaml
-- extendedWaitUntil:
-    visible: "Create account"
-    timeout: 60000
+- runFlow: ../subflows/sign-out.yaml
+# The server revoke serves a person who is not on the beta too.
+- runScript:
+    file: ../scripts/assert-session.js
+    env:
+      SIGN_OUTS: "1"

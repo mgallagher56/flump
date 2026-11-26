@@ -1,7 +1,12 @@
 import { useState } from "react";
 import { View } from "react-native";
 import { MissingNativeModulesError, missingNativeModules } from "../../auth/nativeModules";
-import { NotSignedInError, runSignInCheck, type SignInCheckReport } from "../../auth/signInCheck";
+import {
+  NotSignedInError,
+  REUSE_WAIT_MS,
+  runSignInCheck,
+  type SignInCheckReport,
+} from "../../auth/signInCheck";
 import { createTokenStore } from "../../auth/tokenStore";
 import { Button } from "../../components/Button";
 import { Card } from "../../components/Card";
@@ -34,7 +39,10 @@ export function SignInCheck({ run = defaultRun }: { run?: () => Promise<SignInCh
 
   return (
     <Screen edges={["right", "bottom", "left"]}>
-      <Text>Runs the WorkOS questions from plan section 5.1 once. Shows no token values.</Text>
+      <Text>
+        Runs the WorkOS questions from plan section 5.1 once. Shows no token values. It waits{" "}
+        {REUSE_WAIT_MS / 1000} seconds partway, so it takes over a minute.
+      </Text>
       <Button label="Run the sign-in check" pending={pending} onPress={() => void start()} />
       {problem ? <Text color="danger">{problem}</Text> : null}
       {report ? (
@@ -62,8 +70,13 @@ function rows(report: SignInCheckReport): [string, string][] {
       "Refresh token replaced on use",
       report.refreshTokenReplaced === null ? "unknown" : report.refreshTokenReplaced ? "yes" : "no",
     ],
-    ["Old refresh token used again", report.oldRefreshTokenReused],
-    ["Replacement after that reuse", report.replacementAfterReuse],
+    ["Old refresh token used again at once", report.oldRefreshTokenReused],
+    [
+      "Same new token given back",
+      report.reuseGaveSameTokens === null ? "not-tried" : report.reuseGaveSameTokens ? "yes" : "no",
+    ],
+    [`Old refresh token after ${REUSE_WAIT_MS / 1000} seconds`, report.oldRefreshTokenAfterWait],
+    ["Newest refresh token after the reuse", report.replacementAfterReuse],
     ["Backend GET /v1/user-profile", report.backend],
   ];
 }
@@ -97,5 +110,6 @@ async function defaultRun(): Promise<SignInCheckReport> {
     tokens: createTokenStore(SecureStore, SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY),
     workos: createWorkosClient(config.auth),
     checkAccountWith: (token) => checkAccountWithToken(config.api.apiBaseUrl, token),
+    wait: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
   });
 }

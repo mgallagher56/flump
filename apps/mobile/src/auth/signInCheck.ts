@@ -5,7 +5,9 @@
  *
  * Questions: the issuer and the claim names; the access token's lifetime; whether a refresh works
  * with no client secret; whether the refresh token is replaced on use; whether the old one is then
- * refused; whether reusing it also kills its replacement; whether the backend accepts the token.
+ * refused at once; if not, whether it gives back the same new tokens (WorkOS's 30 second grace
+ * period) and is refused after waiting past it; and whether the newest token still works after all
+ * that (no reuse detection ending the session). Also whether the backend accepts the token.
  */
 import type { Tokens, WorkosClient } from "../data/workos";
 import { readClaims } from "./claims";
@@ -14,13 +16,22 @@ import type { TokenStore } from "./tokenStore";
 
 type CallOutcome = "accepted" | "rejected" | "unavailable";
 
+/** Past WorkOS's documented 30 second grace period, with room for a slow clock or network. */
+export const REUSE_WAIT_MS = 65_000;
+
 export interface SignInCheckReport {
   readonly issuer: string | null;
   readonly claimNames: readonly string[];
   readonly accessLifetimeSeconds: number | null;
   readonly refreshWithoutSecret: CallOutcome;
   readonly refreshTokenReplaced: boolean | null;
+  /** The old refresh token sent again straight after the refresh. */
   readonly oldRefreshTokenReused: CallOutcome | "not-tried";
+  /** When that reuse was accepted: did it give back the same new refresh token? */
+  readonly reuseGaveSameTokens: boolean | null;
+  /** The old refresh token sent again after `REUSE_WAIT_MS`, when the first reuse was accepted. */
+  readonly oldRefreshTokenAfterWait: CallOutcome | "not-tried";
+  /** The newest refresh token after all the reuse: still working means no reuse detection. */
   readonly replacementAfterReuse: CallOutcome | "not-tried";
   readonly backend: AccountCheck | "not-tried";
 }
@@ -30,6 +41,8 @@ export interface SignInCheckDeps {
   workos: WorkosClient;
   /** `GET /v1/user-profile` with exactly this token: no refresh, no retry. */
   checkAccountWith(accessToken: string): Promise<AccountCheck>;
+  /** Waits `ms` (a timer on the phone; instant in tests). */
+  wait(ms: number): Promise<void>;
 }
 
 export class NotSignedInError extends Error {
@@ -62,6 +75,8 @@ export async function runSignInCheck(deps: SignInCheckDeps): Promise<SignInCheck
       refreshWithoutSecret: outcome(refreshed),
       refreshTokenReplaced: null,
       oldRefreshTokenReused: "not-tried",
+      reuseGaveSameTokens: null,
+      oldRefreshTokenAfterWait: "not-tried",
       replacementAfterReuse: "not-tried",
       backend: "not-tried",
     };
@@ -72,19 +87,32 @@ export async function runSignInCheck(deps: SignInCheckDeps): Promise<SignInCheck
   const backend = await deps.checkAccountWith(second.accessToken);
 
   let oldRefreshTokenReused: SignInCheckReport["oldRefreshTokenReused"] = "not-tried";
+  let reuseGaveSameTokens: boolean | null = null;
+  let oldRefreshTokenAfterWait: SignInCheckReport["oldRefreshTokenAfterWait"] = "not-tried";
   let replacementAfterReuse: SignInCheckReport["replacementAfterReuse"] = "not-tried";
   if (replaced) {
+    // The newest refresh token so far: always the one kept in the store.
+    let newest = second.refreshToken;
     const reuse = await deps.workos.refresh(first);
     oldRefreshTokenReused = outcome(reuse);
     if (reuse.ok) {
-      await deps.tokens.save(reuse.tokens.refreshToken);
-    } else {
-      // Does a refused reuse also end the replacement (reuse detection on the whole session)?
-      const after = await deps.workos.refresh(second.refreshToken);
-      replacementAfterReuse = outcome(after);
-      if (after.ok) await deps.tokens.save(after.tokens.refreshToken);
-      else if (after.reason === "rejected") await deps.tokens.clear();
+      reuseGaveSameTokens = reuse.tokens.refreshToken === second.refreshToken;
+      newest = reuse.tokens.refreshToken;
+      await deps.tokens.save(newest);
+      // A grace period, or no rotation check at all? Try again once it would be over.
+      await deps.wait(REUSE_WAIT_MS);
+      const late = await deps.workos.refresh(first);
+      oldRefreshTokenAfterWait = outcome(late);
+      if (late.ok) {
+        newest = late.tokens.refreshToken;
+        await deps.tokens.save(newest);
+      }
     }
+    // Does any of that reuse also end the session (reuse detection)?
+    const after = await deps.workos.refresh(newest);
+    replacementAfterReuse = outcome(after);
+    if (after.ok) await deps.tokens.save(after.tokens.refreshToken);
+    else if (after.reason === "rejected") await deps.tokens.clear();
   }
 
   return {
@@ -92,6 +120,8 @@ export async function runSignInCheck(deps: SignInCheckDeps): Promise<SignInCheck
     refreshWithoutSecret: "accepted",
     refreshTokenReplaced: replaced,
     oldRefreshTokenReused,
+    reuseGaveSameTokens,
+    oldRefreshTokenAfterWait,
     replacementAfterReuse,
     backend,
   };

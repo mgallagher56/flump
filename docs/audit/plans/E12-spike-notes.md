@@ -59,9 +59,9 @@ These notes answer the [U] items in plan section 5.1. Evidence is named for each
 - **The issuer the backend expects** is `https://api.workos.com/user_management/<client id>` (`apps/backend/src/auth/workos-jwt.verifier.ts`; the owner decoded a staging token for that code). The verifier also requires `client_id` to equal the configured id. So a native token on web's client id passes only if WorkOS issues it the same way, which the check confirms.
 - **Refresh tokens on web are single-use** (`apps/web/app/utils/auth.server.ts`, the E20-N2 single-flight comment). The app assumes the same: one shared refresh, and the new refresh token saved before the new access token is used.
 
-### Open until the owner's sign-in
+### What S2a assumed before the owner's sign-in
 
-The owner's real sign-in is paused until he installs Android Studio (coordinator, 25 November 2026); the answers come back as a follow-up change. Until then each question is open, and the code makes the assumption below. Each one fails safe: a wrong guess can stop a feature working, but it never signs anyone in wrongly, keeps a token after sign-out or deletes a good one.
+Kept as the record of S2a's assumptions; the answers are in "The owner's real sign-in (S2b)" below. Each question was open, and the code made the assumption below. Each one fails safe: a wrong guess can stop a feature working, but it never signs anyone in wrongly, keeps a token after sign-out or deletes a good one.
 
 | Question | What the code assumes | If the answer differs |
 | --- | --- | --- |
@@ -75,6 +75,59 @@ The owner's real sign-in is paused until he installs Android Studio (coordinator
 
 The owner reads these off the dev-only Sign-in check and the sign-out by hand; the observations list is in the S2a report to the coordinator.
 
+### The owner's real sign-in (S2b)
+
+On 26 November 2026 the owner ran development builds on an Android 17 emulator and an iOS 26.1 simulator and signed in with WorkOS on both, then ran the dev-only Sign-in check. Results were the same on both platforms unless a row says otherwise.
+
+| What | Result |
+| --- | --- |
+| Issuer | `https://api.workos.com/user_management/<client id>`, web's client id: the format the backend expects |
+| Access token claims | `auth_time`, `client_id`, `exp`, `iat`, `iss`, `jti`, `org_id`, `permissions`, `role`, `roles`, `sid`, `sub`. No email or name |
+| Access token lifetime | 300 seconds |
+| Refresh with no client secret | Accepted |
+| Refresh token replaced on use | Yes |
+| Old refresh token used again at once | Accepted |
+| Replacement after that reuse | Not tried (the check tried it only when the reuse was refused) |
+| `GET /v1/user-profile` with the new token | ok: the backend verifier accepts native tokens |
+| Close and reopen the app | Still signed in |
+| Sign-out, Android | Opens the browser, ends on the marketing site and leaves the window open. Chrome is then signed out of the web app too (one WorkOS browser session) |
+| Sign-in after sign-out, Android | The window still shows the marketing page, not the sign-in page. The sign-in completes (closing the window leaves the app signed in), but the window neither shows the right page nor closes |
+| Password after sign-out, Android | Not asked: Google was remembered and one tap signed in |
+| Sign-out, iOS | Returns straight to the app (no browser) |
+| Sign-in, iOS | Email and password every time: the private session keeps nothing |
+| Back button on the Sign-in check, iOS | Read "(app)/index" (fixed in S2b: the first screen has a title) |
+
+### The plan's section 5.1 [U] questions, answered
+
+1. **Refresh without a secret:** works. B-B (a backend refresh route) is not needed.
+2. **Is a refresh token replaced on use, and the old one rejected at once?** Replaced, yes. Rejected at once, no: WorkOS keeps a 30 second grace period in which the old token returns the same new tokens, and refuses it with `invalid_grant` after that (workos.com/docs/authkit/session-resilience, read 26 November 2026). WorkOS documents no reuse detection that ends the session, and no setting for it. The extended Sign-in check measures both halves; see "Refresh token reuse" below.
+3. **How long an access token lasts:** 300 seconds (the dashboard's "Access token duration"). The app does not depend on it: it refreshes on a 401.
+4. **The system browser on each platform, and whether sign-out needs the browser:** iOS's private session keeps no cookie, so sign-in asks every time and sign-out needs no browser. Android's Custom Tab shares Chrome's cookies, so a WorkOS session outlives the app's sign-out unless something ends it. Opening the logout page did end it, but WorkOS sent the window to its default Sign-out URI (the marketing site) because `flump://auth/callback` is not a registered Sign-out URI, so the window never came back. What S2b does about it is under "Sign-out on Android" below.
+
+### Refresh token reuse
+
+**What WorkOS does.** A refresh token is replaced on every use. The old one keeps working for 30 seconds and gives back the same new pair ("The grace period is 30 seconds", workos.com/docs/authkit/session-resilience, read 26 November 2026), so two requests racing to refresh both succeed. After 30 seconds it is refused. WorkOS documents no reuse detection (a late reuse does not end the session) and no setting to change either.
+
+**The security consequence, plainly.** Anyone who copies a refresh token can use it for as long as the session lasts, unless the person refreshes first; and if they refresh first, the person's own copy is refused after 30 seconds and the person is signed out, while the copier stays signed in. WorkOS will not notice that two parties used the same token. This is the ordinary risk of any refresh token without reuse detection.
+
+**What the app does about it.** The refresh token is only in the secure store (Keychain or Keystore, "when unlocked, this device only", left out of backups) and never in a log, an error or the screen. Only one refresh runs at a time, and the new token is saved before the new access token is used. Sign-out now revokes the WorkOS session on the server (below), which ends that token everywhere at once. A reinstall on iOS clears the Keychain first. What it cannot do: end a session for someone who loses a phone and never signs out, or sign out with no network. Both are bounded by WorkOS's session timeouts.
+
+**Owner-only setting that tightens it.** The WorkOS dashboard's Sessions tab has "Maximum session length" and "Inactivity timeout" (they apply to web too). The decider suggests 30 days and 14 days; the current values were not visible to agents. This is a suggestion for the owner, not a requirement for the beta.
+
+**Measured, not assumed.** The dev Sign-in check now sends the old token again at once, records whether it gave back the same new token, waits 65 seconds and sends it again, then tries the newest token. Expected from the docs: accepted, yes, rejected, accepted. The owner re-runs it on one simulator (the report's owner list).
+
+**Decider verdict (Fable, 26 November 2026).** Acceptable for the beta, with no app change beyond the server revoke: it is WorkOS's documented behaviour, a replay needs a token that only the secure store holds, and the single shared refresh already suits a grace period. Condition: record a replay after 60 seconds or more being refused, which the extended check does.
+
+### Sign-out on Android
+
+**Why the window stuck.** S2a's sign-out opened `GET /user_management/sessions/logout` with `return_to=flump://auth/callback` in a Custom Tab. `return_to` must be one of the dashboard's "Sign-out URIs" (workos.com/docs/authkit/sessions), and the app's address is not one, so WorkOS sent the tab to its default (the marketing site). The redirect never reached the app, so nothing closed the tab, and expo-web-browser cannot close a Custom Tab on Android ("Users on Android need to manually press the 'x' button", its source). The next sign-in brought that same tab task forward, still on the marketing page, while the new sign-in finished behind it. Whether WorkOS accepts a custom scheme as a Sign-out URI at all is not documented.
+
+**What S2b does instead (Fable decider, 26 November 2026, option b of three).** Sign-out never opens a browser on either platform. The app clears the device first, shows the sign-in screen, then calls a new backend route, `POST /v1/session/sign-out`, with the access token it held. The backend takes the session id only from the verified token's `sid` and revokes it with WorkOS's session revoke API, which needs the API secret and so cannot be called from the app. If the access token has expired, the app refreshes once in memory, never saving, and tries once more. It is best effort and silent: with no network the device is still clear. No dashboard step is needed. Rejected: (a) keep the browser logout and register a Sign-out URI, which depends on undocumented custom-scheme support and leaves the window problem on any failure; (c) both.
+
+**Fresh sign-in every time.** Every authorize address now carries `max_age=0` ("A value of 0 forces the user to re-authenticate", get-authorization-url reference), so a WorkOS session left in Chrome never signs anyone in without asking. The decider chose always on, with no marker for "signed out on purpose": sign-in only happens on a first launch, after sign-out or after a session ends, so it costs nothing, and iOS already behaves this way.
+
+**What remains true on Android, and the words that say so.** A Google account signed in to the phone's browser can still sign in with one tap after choosing Google: that is Google's session, which neither Flump nor WorkOS can clear. Sign out now asks first (`ConfirmDialog`). On both platforms it says "This removes your sign-in from this phone. Your data stays in your Flump account."; on Android it adds "If you sign in with Google, the Google account in this phone's browser can sign you back in without a password." The decider also suggested saying that phone sign-out does not sign the web app out; that is left out because the owner saw the opposite with the old logout page, and whether revoking the app's `sid` touches Chrome's session is not yet known (owner re-check).
+
 ### Storage rule as built
 
 The refresh token is deleted on sign-out (before any network call), on a rejected refresh (`invalid_grant`), on a fresh token the API refuses, and on sign-out from Not invited or the offline screen. A network failure never deletes it. A read error deletes nothing (changed from the first design on the review's finding that a locked iPhone throws for a good token, approved by the coordinator on 25 November 2026): the app shows the offline screen, and its Sign out clears the value. A sign-out during a refresh drops the late answer unsaved.
@@ -87,10 +140,14 @@ Proved from the prebuild output, not assumed: `scripts/check-android-backup.ts` 
 
 iOS (no Mac with Xcode here; the private browser session is configured but not seen), release builds against real WorkOS, and the WorkOS production environment (OS15).
 
-### Follow-up for S2b or S18
+### The Keychain after a reinstall (built in S2b)
 
-On iOS a Keychain item survives an uninstall, so a reinstalled app finds the old refresh token and signs straight back in. The fix is a marker outside the Keychain (removed with the app) that, when missing on launch, clears the Keychain first. Not built in S2a, by the coordinator's decision.
+On iOS a Keychain item survives an uninstall, so a reinstalled app would find the old refresh token and sign straight back in. S2b keeps a marker in the app's preferences (NSUserDefaults through React Native's `Settings`, removed with the app): when it is missing on launch, the secure store is cleared before it is first read, and the marker is set only once the clear worked (`src/auth/reinstall.ts`). Android needs none: uninstalling removes the app's storage. One side effect: the first launch of the S2b build on a phone that already ran S2a signs out once.
 
 ## Seam cost (S2a)
 
 0 agent-days: the sign-in code follows the existing data door rule (running total 0.5).
+
+## Seam cost (S2b)
+
+0 agent-days: the server sign-out call and the version check sit in `src/data`, behind the existing data door rule (running total 0.5).

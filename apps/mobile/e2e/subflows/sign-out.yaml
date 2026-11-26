@@ -1,0 +1,14 @@
+# From a signed-in screen: Sign out, confirm in the platform dialog, and wait for the sign-in
+# screen. No browser opens (E12 S2b): the app clears the device and revokes on the server.
+appId: app.flump.mobile
+---
+- tapOn: "Sign out"
+- extendedWaitUntil:
+    visible: "Sign out of Flump\\?"
+    timeout: 10000
+# The dialog's positive button (Android's AlertDialog puts the last button there): "Sign out".
+- tapOn:
+    id: "android:id/button1"
+- extendedWaitUntil:
+    visible: "Create account"
+    timeout: 60000

@@ -11,7 +11,9 @@ const report: SignInCheckReport = {
   accessLifetimeSeconds: 300,
   refreshWithoutSecret: "accepted",
   refreshTokenReplaced: true,
-  oldRefreshTokenReused: "rejected",
+  oldRefreshTokenReused: "accepted",
+  reuseGaveSameTokens: true,
+  oldRefreshTokenAfterWait: "rejected",
   replacementAfterReuse: "accepted",
   backend: "ok",
 };
@@ -29,7 +31,10 @@ describe("SignInCheck (dev only)", () => {
     expect(screen.getByText("Issuer: https://issuer.test.invalid/x")).toBeOnTheScreen();
     expect(screen.getByText("Access token lifetime (seconds): 300")).toBeOnTheScreen();
     expect(screen.getByText("Refresh token replaced on use: yes")).toBeOnTheScreen();
-    expect(screen.getByText("Old refresh token used again: rejected")).toBeOnTheScreen();
+    expect(screen.getByText("Old refresh token used again at once: accepted")).toBeOnTheScreen();
+    expect(screen.getByText("Same new token given back: yes")).toBeOnTheScreen();
+    expect(screen.getByText("Old refresh token after 65 seconds: rejected")).toBeOnTheScreen();
+    expect(screen.getByText("Newest refresh token after the reuse: accepted")).toBeOnTheScreen();
   });
 
   it("asks for a sign-in first when nothing is stored", async () => {
