@@ -16,7 +16,7 @@ export default function MorePageRoute() {
       {page ? (
         <ComingSoon label={page.label} webRoute={page.webRoute} />
       ) : (
-        <PageNotFound onGoToMore={() => router.navigate("/more")} />
+        <PageNotFound way="more" onGo={() => router.navigate("/more")} />
       )}
     </>
   );

@@ -2,7 +2,7 @@
 
 # Functionality map: overview
 
-Mapped pages: 47 | Sections: 282 | Excluded routes: 25
+Mapped pages: 48 | Sections: 283 | Excluded routes: 25
 
 ## web
 
@@ -641,6 +641,15 @@ Mapped pages: 47 | Sections: 282 | Excluded routes: 25
 | ------------- | ------------------------------------------------------- | ---------- | ------- |
 | `placeholder` | `apps/mobile/src/screens/ComingSoon/ComingSoon.tsx`     | -          | -       |
 | `not-found`   | `apps/mobile/src/screens/PageNotFound/PageNotFound.tsx` | -          | -       |
+
+### mobile-not-found: Link not found
+
+- Route: `/*` (auth: `required`, file: `apps/mobile/app/(app)/+not-found.tsx`)
+- Purpose: Any flump:// link the app does not know, opened cold or warm (E12 S4). It sits inside the session gate, so sign-in or the terms screen comes first, and replaces Expo Router's own unmatched-route page and its Sitemap link. It says the page was not found and offers one way back, to Home. It shows no figures and reads nothing.
+
+| Section     | Component                                               | Facts read | Figures |
+| ----------- | ------------------------------------------------------- | ---------- | ------- |
+| `not-found` | `apps/mobile/src/screens/PageNotFound/PageNotFound.tsx` | -          | -       |
 
 ### mobile-pay: Pay
 

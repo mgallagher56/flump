@@ -21,5 +21,9 @@ export const comingSoonAction = (page: string) => `Open ${page} on the website`;
 
 /** A link to a page the app does not know (an old or mistyped `flump://` link). */
 export const PAGE_NOT_FOUND_HEADING = "We could not find that page";
+/** A `flump://page/...` link whose page is not in the More list. */
 export const PAGE_NOT_FOUND_BODY = "The link may be old. Go to More to find what you need.";
 export const GO_TO_MORE = "Go to More";
+/** Any other link the app does not know. */
+export const LINK_NOT_FOUND_BODY = "The link may be old or mistyped.";
+export const GO_TO_HOME = "Go to Home";

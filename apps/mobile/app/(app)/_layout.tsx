@@ -24,6 +24,7 @@ export default function SignedInLayout() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false, title: HOME_TITLE }} />
         <Stack.Screen name="check-in" options={{ title: CHECK_IN.title }} />
         <Stack.Screen name="page/[key]" />
+        <Stack.Screen name="+not-found" />
       </Stack>
     </SessionGate>
   );

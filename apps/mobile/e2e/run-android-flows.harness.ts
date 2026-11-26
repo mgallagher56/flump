@@ -31,6 +31,7 @@ export const SHOTS = [
   "tab-pay",
   "tab-more",
   "more-page",
+  "link-not-found",
 ];
 
 export function run(

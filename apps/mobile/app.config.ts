@@ -25,7 +25,12 @@ const config: ExpoConfig = {
   // expo-secure-store's plugin points Android Auto Backup and device transfer at rules that leave
   // out the secure store (the refresh token). scripts/check-android-backup.ts checks the prebuild
   // output in CI. Face ID is not used.
-  plugins: ["expo-router", ["expo-secure-store", { configureAndroidBackup: true }]],
+  // expo-router: no `_sitemap` route, which in a development build lists every route; unknown
+  // links land on app/(app)/+not-found.tsx inside the session gate (E12 S4).
+  plugins: [
+    ["expo-router", { sitemap: false }],
+    ["expo-secure-store", { configureAndroidBackup: true }],
+  ],
   experiments: {
     typedRoutes: true,
   },

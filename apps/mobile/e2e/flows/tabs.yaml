@@ -1,5 +1,6 @@
 # E12 S4: the tab bar and the More list. Signs in, visits each tab (Home, Accounts, Budget, Pay,
-# More), opens More from the header's menu button and one More page, with a screenshot of each.
+# More), opens More from the header's menu button and one More page, then a link the app does not
+# know, with a screenshot of each.
 # The runner runs it in light and in dark, stopping and settling the app first; no retries.
 appId: app.flump.mobile
 ---
@@ -57,6 +58,17 @@ appId: app.flump.mobile
     timeout: 10000
 - tapOn:
     id: "tab-home"
+- extendedWaitUntil:
+    visible: "Start monthly check-in"
+    timeout: 30000
+# A link the app does not know lands on the app's own page, never Expo Router's, with one way back.
+- openLink: flump://nope
+- extendedWaitUntil:
+    visible: "The link may be old or mistyped."
+    timeout: 10000
+- assertNotVisible: "Sitemap"
+- takeScreenshot: link-not-found-${THEME}
+- tapOn: "Go to Home"
 - extendedWaitUntil:
     visible: "Start monthly check-in"
     timeout: 30000

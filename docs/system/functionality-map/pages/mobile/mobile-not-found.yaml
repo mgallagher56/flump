@@ -1,0 +1,11 @@
+id: mobile-not-found
+app: mobile
+route: /*
+title: Link not found
+auth: required
+purpose: Any flump:// link the app does not know, opened cold or warm (E12 S4). It sits inside the session gate, so sign-in or the terms screen comes first, and replaces Expo Router's own unmatched-route page and its Sitemap link. It says the page was not found and offers one way back, to Home. It shows no figures and reads nothing.
+route_file: apps/mobile/app/(app)/+not-found.tsx
+
+sections:
+  - id: not-found
+    component: apps/mobile/src/screens/PageNotFound/PageNotFound.tsx
