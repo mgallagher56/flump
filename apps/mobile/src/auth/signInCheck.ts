@@ -137,10 +137,14 @@ export async function runSignInCheck(deps: SignInCheckDeps): Promise<SignInCheck
       await deps.tokens.save(after.tokens.refreshToken);
       // The decisive test: after a server sign-out, no refresh token of this session may work.
       serverSignOut = await deps.endServerSession(after.tokens.accessToken);
-      oldRefreshTokenAfterSignOut = outcome(await deps.workos.refresh(first));
-      newestRefreshTokenAfterSignOut = outcome(
-        await deps.workos.refresh(after.tokens.refreshToken),
-      );
+      // Only a sign-out the server confirmed tests anything: where the route is not deployed yet
+      // (a 404 is `unavailable`), both rows stay "not-tried" rather than look like a failure.
+      if (serverSignOut === "ended") {
+        oldRefreshTokenAfterSignOut = outcome(await deps.workos.refresh(first));
+        newestRefreshTokenAfterSignOut = outcome(
+          await deps.workos.refresh(after.tokens.refreshToken),
+        );
+      }
       await deps.tokens.clear();
     } else if (after.reason === "rejected") {
       await deps.tokens.clear();

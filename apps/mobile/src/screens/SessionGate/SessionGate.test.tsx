@@ -93,7 +93,6 @@ describe("SessionGate", () => {
     [{ status: "sessionEnded" }, "Sign in"],
     [{ status: "notInvited" }, "Sign out"],
     [{ status: "termsRequired" }, "Try again"],
-    [{ status: "outOfStep" }, "Try again"],
   ])("%j shows a %s button", async (state, button) => {
     await gate(fakeSession(state));
     expect(screen.getByRole("button", { name: button })).toBeOnTheScreen();
@@ -160,15 +159,6 @@ describe("SessionGate", () => {
     await act(async () => answerAlert(alert, "Sign out"));
     expect(app.session.retry).toHaveBeenCalledTimes(1);
     expect(app.session.signOut).toHaveBeenCalledTimes(1);
-  });
-
-  it("out of step says so, not 'could not reach', and Try again reaches the session", async () => {
-    const app = fakeSession({ status: "outOfStep" });
-    await gate(app);
-    expect(screen.getByRole("header")).toHaveTextContent("This app and Flump are out of step");
-    expect(screen.queryByText("We could not reach Flump")).toBeNull();
-    await userEvent.setup().press(screen.getByRole("button", { name: "Try again" }));
-    expect(app.session.retry).toHaveBeenCalledTimes(1);
   });
 
   it("shows a sign-in notice from the session", async () => {

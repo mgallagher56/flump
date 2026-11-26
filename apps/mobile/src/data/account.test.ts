@@ -20,7 +20,8 @@ describe("createAccountCheck", () => {
     ["unavailable", "unavailable"],
     ["server", "unavailable"],
     ["forbidden", "unavailable"],
-    ["bad-response", "out-of-step"],
+    // Nothing is parsed, so this is a body cut off mid-stream: a network failure.
+    ["bad-response", "unavailable"],
   ])("a %s error is %s", async (kind, expected) => {
     const client = clientThat(async () => {
       throw new BackendError(kind, "/user-profile");

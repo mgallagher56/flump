@@ -29,14 +29,6 @@ export const SESSION_ENDED_BODY =
 export const OFFLINE_HEADING = "We could not reach Flump";
 export const OFFLINE_BODY = "You are still signed in. Check your connection and try again.";
 
-/**
- * Flump answered, but not in a way this version of the app understands (version skew, PR #951).
- * Never "check your connection": the connection worked.
- */
-export const OUT_OF_STEP_HEADING = "This app and Flump are out of step";
-export const OUT_OF_STEP_BODY =
-  "You are still signed in and nothing has changed. This version of the app did not understand Flump's answer. Try again later, or update the app if an update is available.";
-
 export const SIGN_IN_UNAVAILABLE_HEADING = "Sign-in is not available in this app";
 /** Developer-facing: only a host app such as Expo Go lacks these; a Flump build always has them. */
 export const signInUnavailableBody = (missing: readonly string[]) =>

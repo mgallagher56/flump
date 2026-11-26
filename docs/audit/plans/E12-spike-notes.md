@@ -120,7 +120,7 @@ On 26 November 2026 the owner ran development builds on an Android 17 emulator a
 
 **Second decider verdict (Fable, 26 November 2026).** An open known risk: it does not block #951 or the closed beta, and it does block a public launch. Tolerable for now because the refresh token is only in the secure store, sign-out revokes the session on the server, an access token lasts 300 seconds and the beta is small. What is lost is theft detection: a copied refresh token may work alongside the real device for as long as the session lasts. Recorded in `docs/security/threat-model.md`. Next, tests only:
 
-- The Sign-in check now ends with the decisive test: a server sign-out, then the old and the newest refresh token, both of which must be refused. If either survives, that blocks the beta.
+- The Sign-in check now ends with the decisive test: a server sign-out, then the old and the newest refresh token, both of which must be refused. If either survives, that blocks the beta. It counts only once `POST /v1/session/sign-out` is deployed: until the server confirms the sign-out, both rows say "not-tried".
 - It also records whether the 65 second replay gave back the newest pair or forked a new one (a fork is worse).
 - Longer waits (5 minutes, 30 minutes, 24 hours) are a by-hand re-check for the coordinator or owner.
 
@@ -174,7 +174,7 @@ An installed app meets backends older than itself (staging before a release) and
 
 - In #951:
   - The sign-in account check no longer parses the profile body at all; it needs only the status.
-  - A `bad-response` is its own outcome, "out of step", with its own words ("This app and Flump are out of step ... did not understand Flump's answer"), never "check your connection". The session gets an `outOfStep` state with Try again and Sign out; the check-in's load error says the same.
+  - A `bad-response` on a read that parses a body is its own problem, "out of step", and the check-in's load error says so ("did not understand Flump's answer"), never "check your connection". The account check no longer parses a body, so there its only `bad-response` is a body cut off mid-stream, a dropped connection, which stays "unavailable" (independent review); the session needs no "out of step" state.
   - The fixture has a `backend` scenario (`older`: no `wellbeingQuestions`; `newer`: an extra field), with tests and the `older-backend` flow.
   - No per-read defaults across the data layer.
 - Proposed follow-up, before the next contract change that adds a response field:

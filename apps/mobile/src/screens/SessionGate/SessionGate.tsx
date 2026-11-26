@@ -9,7 +9,6 @@ import { Loading } from "../Loading";
 import { Misconfigured } from "../Misconfigured";
 import { NotInvited } from "../NotInvited";
 import { Offline } from "../Offline";
-import { OutOfStep } from "../OutOfStep";
 import { SessionEnded } from "../SessionEnded";
 import { SignIn } from "../SignIn";
 import { SignInUnavailable } from "../SignInUnavailable";
@@ -82,8 +81,6 @@ export function SessionGate() {
         return <SessionEnded onSignIn={signIn} />;
       case "notInvited":
         return <NotInvited onSignOut={signOut} />;
-      case "outOfStep":
-        return <OutOfStep onRetry={() => void session.retry()} onSignOut={signOut} />;
       case "termsRequired":
         return (
           <TermsRequired
