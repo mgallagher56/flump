@@ -36,6 +36,11 @@ export const RATE_LIMIT_POLICIES = {
   householdInviteAccept: [{ limit: 5, windowMs: HOUR }],
   /** Making a household invitation link (each replaces the last): ten an hour per user. */
   householdInviteCreate: [{ limit: 10, windowMs: HOUR }],
+  /**
+   * The mobile app's own sign-out (E12 S2b), which calls WorkOS: ten an hour per user. Shared so
+   * replicas cannot multiply it; fails open, so a database fault never stops a person signing out.
+   */
+  sessionSignOut: [{ limit: 10, windowMs: HOUR }],
 } as const satisfies Record<string, readonly RateLimitWindow[]>;
 
 /**
@@ -64,6 +69,7 @@ export const SHARED_RATE_LIMIT_CLASSES: ReadonlySet<RateLimitClass> = new Set<Ra
   "inviteRedeem",
   "householdInviteAccept",
   "householdInviteCreate",
+  "sessionSignOut",
 ]);
 
 /**

@@ -14,6 +14,7 @@ export const AUDIT_ACTIONS = [
   "financial_data.reset",
   "user.deleted",
   "user.exported",
+  "session.signed_out",
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 
