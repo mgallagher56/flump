@@ -34,6 +34,14 @@ const puts = (api: ReturnType<typeof fakeApi>) =>
 beforeEach(() => jest.useFakeTimers());
 afterEach(() => jest.useRealTimers());
 
+// The first render in a file loads and transforms React Native's components, which on a cold CI
+// cache beside the route tests took more than the first test's 5 s (run 45850948864). Rendered once
+// here, with its own time, each test's 5 s covers only its own work.
+beforeAll(async () => {
+  await open(fakeApi(routes(household())));
+  screen.unmount();
+}, 30_000);
+
 describe("CheckIn walk-through", () => {
   it("shows one card per account in web's order and ends with a complete save", async () => {
     const h = household();

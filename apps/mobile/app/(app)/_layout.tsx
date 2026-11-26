@@ -6,9 +6,10 @@ import { SessionGate } from "../../src/screens/SessionGate";
 
 /**
  * The tabs sit under every page, so a page opened cold by a `flump://` link still has Back to them
- * (and the tab bar beneath).
+ * (and the tab bar beneath). `anchor` replaces the deprecated `initialRouteName`, whose dev warning
+ * banner covered the tab bar on Android.
  */
-export const unstable_settings = { initialRouteName: "(tabs)" };
+export const unstable_settings = { anchor: "(tabs)" };
 
 /**
  * Everything signed in (E12 S4, plan 9.7): the gate shows the screen for the session's state, and
