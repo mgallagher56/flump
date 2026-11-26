@@ -72,14 +72,14 @@ With `expo-dev-client` installed, `bunx expo start` offers the development build
 
 ## Checks
 
-| Command (in `apps/mobile`) | What it does                                                                                                                                  |
-| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `bun run lint`             | Biome                                                                                                                                         |
-| `bun run check-types`      | TypeScript 7 over `expo/tsconfig.base`                                                                                                        |
-| `bun run test`             | Jest with `jest-expo`, on Node                                                                                                                |
-| `bun run export`           | Production export for iOS and Android into `dist` (needs the shared packages built)                                                           |
-| `bun run check:bundle`     | Fails if the export contains the device check, the gallery or the tax vectors, or if its source maps show a package bundled from two installs |
-| `bun run doctor`           | `expo-doctor`, tolerating only its same-version duplicate finding from Bun's isolated linker (see `scripts/run-expo-doctor.ts`)               |
+| Command (in `apps/mobile`) | What it does                                                                                                                                                                                                                   |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `bun run lint`             | Biome                                                                                                                                                                                                                          |
+| `bun run check-types`      | TypeScript 7 over `expo/tsconfig.base`                                                                                                                                                                                         |
+| `bun run test`             | Jest with `jest-expo`, on Node                                                                                                                                                                                                 |
+| `bun run export`           | Production export for iOS and Android into `dist` (needs the shared packages built)                                                                                                                                            |
+| `bun run check:bundle`     | Fails if the export contains the device check, the gallery or the tax vectors, or if its source maps show a package bundled from two installs                                                                                  |
+| `bun run doctor`           | `expo-doctor`, tolerating only its same-version duplicate finding from Bun's isolated linker, and for 7 days a newly recommended SDK minor or patch release, as a warning with its due date (see `scripts/run-expo-doctor.ts`) |
 
 CI runs all of these in the `📱 Mobile checks` job on GitHub's Linux runners. It does not build a native app or run an emulator: the separate `🤖 Mobile e2e (Android)` job does, and proves Hermes at runtime on Android. Nothing in CI proves iOS.
 
