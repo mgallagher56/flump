@@ -22,6 +22,62 @@
       "initialRaw": 7710,
       "lazyRaw": 685959,
       "cssGzip": 4903
+    },
+    "p1b": {
+      "initialGzip": 3931,
+      "lazyGzip": 0,
+      "initialRaw": 10931,
+      "lazyRaw": 0,
+      "cssGzip": 5149
+    },
+    "p4": {
+      "initialGzip": 6615,
+      "lazyGzip": 76877,
+      "initialRaw": 19510,
+      "lazyRaw": 192759,
+      "cssGzip": 5640
+    },
+    "p5": {
+      "initialGzip": 8213,
+      "lazyGzip": 74558,
+      "initialRaw": 23217,
+      "lazyRaw": 187181,
+      "cssGzip": 4151
+    },
+    "p6": {
+      "initialGzip": 6786,
+      "lazyGzip": 142490,
+      "initialRaw": 15344,
+      "lazyRaw": 563764,
+      "cssGzip": 2665
+    },
+    "p7": {
+      "initialGzip": 4907,
+      "lazyGzip": 148077,
+      "initialRaw": 12972,
+      "lazyRaw": 584719,
+      "cssGzip": 2256
+    },
+    "p8": {
+      "initialGzip": 14837,
+      "lazyGzip": 76920,
+      "initialRaw": 45315,
+      "lazyRaw": 192800,
+      "cssGzip": 8587
+    },
+    "p9": {
+      "initialGzip": 11429,
+      "lazyGzip": 224245,
+      "initialRaw": 29684,
+      "lazyRaw": 772067,
+      "cssGzip": 3338
+    },
+    "p10": {
+      "initialGzip": 17311,
+      "lazyGzip": 226547,
+      "initialRaw": 49968,
+      "lazyRaw": 777695,
+      "cssGzip": 7343
     }
   }
 }

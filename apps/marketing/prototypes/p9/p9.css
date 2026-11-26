@@ -1,0 +1,523 @@
+/* Prototype 9: the journey. Semantic token variables only; timing from the round-three tokens. */
+
+.p9-journey {
+  position: relative;
+  --p9-screen: calc(100svh - 4.25rem);
+}
+
+/*
+ * The 3D layer: sticky inside the journey, one screen tall, pulled out of the flow so the stops
+ * scroll over it. It shows only within the journey's own bounds.
+ */
+.p9-stage {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  margin-bottom: -100svh;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.p9-stage .proto-canvas,
+.p9-stage .p9-css3d {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.p9-journey__intro,
+.p9-stop,
+.p9-scene-note {
+  position: relative;
+  z-index: 1;
+}
+
+/* ----- Stops: text panel one side, visual the other, swapping each stop ----- */
+
+.p9-stop {
+  min-height: var(--p9-screen);
+  width: 100%;
+  max-width: 76rem;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: minmax(0, 25rem) minmax(0, 1fr);
+  gap: 3rem;
+  align-items: center;
+}
+
+.p9-stop[data-card-side="left"] {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 25rem);
+}
+
+.p9-stop__panel {
+  padding: 1.75rem;
+  border-radius: 20px;
+  border: 1px solid var(--colors-border);
+  background: var(--colors-surface-card);
+  box-shadow: var(--shadows-card);
+  color: var(--colors-text-primary);
+}
+
+.p9-stop__title {
+  margin: 0;
+  font-size: clamp(1.5rem, 1.15rem + 1.2vw, 2.125rem);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  font-weight: 700;
+  text-wrap: balance;
+}
+
+.p9-stop__lead {
+  margin: 0.75rem 0 0;
+  font-size: 1.0625rem;
+  line-height: 1.5;
+}
+
+.p9-stop__fact {
+  margin: 0.75rem 0 1rem;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: var(--colors-text-secondary);
+}
+
+.p9-ctas {
+  margin-top: 1.25rem;
+}
+
+.p9-ctas > div {
+  justify-content: flex-start;
+}
+
+.p9-stop__visual {
+  display: grid;
+  justify-items: center;
+}
+
+.p9-stop[data-card-side="left"] .p9-stop__visual {
+  order: -1;
+}
+
+/* While the scene is live the 3D copy takes the still visual's place, at the same size. */
+.p9-journey[data-scene="live"] .p9-stop__visual {
+  visibility: hidden;
+}
+
+.p9-scene-note {
+  margin: 0;
+  padding: 0 1.5rem 1rem;
+  font-size: 0.75rem;
+  text-align: center;
+  color: var(--colors-text-secondary);
+}
+
+@media (max-width: 47.99rem) {
+  .p9-stop,
+  .p9-stop[data-card-side="left"] {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    align-content: space-between;
+    gap: 1.25rem;
+    padding: 1.25rem 1rem 4.5rem;
+  }
+
+  .p9-stop__visual {
+    order: -1;
+  }
+
+  .p9-stop__panel {
+    padding: 1.25rem;
+  }
+
+  .p9-stop__fact {
+    display: none;
+  }
+}
+
+/* ----- Visuals (still in flow; cloned into the 3D layer) ----- */
+
+.p9-card {
+  box-sizing: border-box;
+  width: 20rem;
+  max-width: 100%;
+  margin: 0;
+  padding: 1.125rem 1.25rem 1rem;
+  border-radius: 18px;
+  border: 1px solid var(--colors-border);
+  background: var(--colors-surface-card);
+  box-shadow: var(--shadows-card);
+  color: var(--colors-text-primary);
+  font-size: 0.875rem;
+  line-height: 1.35;
+  text-align: left;
+}
+
+.p9-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0;
+  padding-bottom: 0.625rem;
+}
+
+.p9-card__title {
+  font-weight: 650;
+}
+
+.p9-card__tag {
+  flex: none;
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--colors-border);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--colors-text-secondary);
+}
+
+.p9-card__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0;
+  padding: 0.5rem 0;
+  border-top: 1px solid var(--colors-border-subtle);
+}
+
+.p9-card__label {
+  color: var(--colors-text-secondary);
+}
+
+.p9-card__note {
+  margin-left: 0.375rem;
+  font-size: 0.75rem;
+}
+
+.p9-card__value {
+  flex: none;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.p9-card__total {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  margin: 0.25rem 0 0;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--colors-border);
+}
+
+.p9-card__big {
+  font-size: 1.75rem;
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Short list (budget) */
+
+.p9-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.125rem;
+}
+
+.p9-list__item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.25rem 1rem;
+  padding: 0.4rem 0 0.5rem;
+  border-top: 1px solid var(--colors-border-subtle);
+}
+
+.p9-list__label {
+  color: var(--colors-text-secondary);
+}
+
+.p9-list__value {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.p9-list__track {
+  grid-column: 1 / -1;
+  display: block;
+  height: 6px;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--colors-chart-series2) 14%, transparent);
+  overflow: hidden;
+}
+
+.p9-list__bar {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--colors-chart-series2);
+  transform-origin: 0 50%;
+}
+
+/* Payslip */
+
+.p9-slip {
+  box-sizing: border-box;
+  width: 21rem;
+  max-width: 100%;
+  margin: 0;
+  display: grid;
+  color: var(--colors-text-primary);
+  filter: drop-shadow(0 14px 22px color-mix(in oklab, var(--colors-text-primary) 12%, transparent));
+}
+
+.p9-slip__panel {
+  position: relative;
+  box-sizing: border-box;
+  height: 7.25rem;
+  display: grid;
+  align-content: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.25rem;
+  background: var(--colors-surface-card);
+  border: 1px solid var(--colors-border);
+  border-block-width: 0;
+  font-size: 0.875rem;
+}
+
+.p9-slip__panel--top {
+  border-top-width: 1px;
+  border-radius: 16px 16px 0 0;
+}
+
+.p9-slip__panel--middle {
+  box-shadow:
+    inset 0 1px 0 var(--colors-border-subtle),
+    inset 0 -1px 0 var(--colors-border-subtle);
+}
+
+.p9-slip__panel--bottom {
+  border-bottom-width: 1px;
+  border-radius: 0 0 16px 16px;
+}
+
+.p9-slip p,
+.p9-slip dl,
+.p9-slip dd {
+  margin: 0;
+}
+
+.p9-slip__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.p9-slip__rows {
+  display: grid;
+  gap: 0.375rem;
+}
+
+.p9-slip__rows > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.p9-slip__rows dt {
+  color: var(--colors-text-secondary);
+}
+
+.p9-slip__rows dd {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.p9-slip__net {
+  display: grid;
+  gap: 0.125rem;
+}
+
+.p9-slip__net span {
+  color: var(--colors-text-secondary);
+  font-weight: 600;
+}
+
+.p9-slip__net strong {
+  font-size: 1.75rem;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.p9-slip__shade {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  background: color-mix(in oklab, var(--colors-text-primary) 35%, transparent);
+}
+
+/* A payslip panel in 3D: the scene shows its face or its plain back by its angle. */
+.p9-fold-back {
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--colors-border);
+  border-radius: 16px 16px 0 0;
+  background: color-mix(in oklab, var(--colors-surface-card) 92%, var(--colors-text-primary));
+  color: var(--colors-text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+/* Chart (savings) */
+
+.p9-chart {
+  margin: 0.25rem 0 0.25rem;
+}
+
+.p9-chart__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.p9-chart__grid {
+  stroke: var(--colors-border-subtle);
+  stroke-width: 1;
+}
+
+.p9-chart__base {
+  stroke: var(--colors-border);
+  stroke-width: 1;
+}
+
+.p9-chart__area {
+  fill: color-mix(in oklab, var(--colors-chart-series6) 16%, transparent);
+}
+
+.p9-chart__line {
+  fill: none;
+  stroke: var(--colors-chart-series6);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.p9-chart__dot {
+  fill: var(--colors-surface-card);
+  stroke: var(--colors-chart-series6);
+  stroke-width: 3;
+}
+
+.p9-chart__axis {
+  display: flex;
+  justify-content: space-between;
+  margin: 0.375rem 0 0;
+  font-size: 0.75rem;
+  color: var(--colors-text-secondary);
+}
+
+/* Counting figure (debt) */
+
+.p9-figure {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0 0 0.5rem;
+  padding: 0.75rem 0 0.875rem;
+  border-top: 1px solid var(--colors-border-subtle);
+}
+
+.p9-figure__value {
+  font-size: 2.5rem;
+  line-height: 1.05;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Dashboard */
+
+.p9-dash {
+  display: grid;
+  gap: 0.625rem;
+}
+
+.p9-dash__tile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0.875rem 1rem;
+  border-radius: 12px;
+  background: var(--colors-surface-subtle);
+}
+
+.p9-dash__figure {
+  font-size: 1.625rem;
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (min-width: 48rem) {
+  .p9-card--wide {
+    width: 34rem;
+  }
+
+  .p9-card--wide .p9-dash {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/*
+ * A part in flight: a tile of card surface, so it reads as a physical piece. It lives in the 3D
+ * layer, outside its card, so it carries the card's type settings itself.
+ */
+.p9-part,
+.p9-fold {
+  color: var(--colors-text-primary);
+  font-size: 0.875rem;
+  line-height: 1.35;
+  text-align: left;
+}
+
+.p9-part {
+  box-sizing: border-box;
+  margin: 0;
+  padding-inline: 8px;
+  border-radius: 8px;
+  background: var(--colors-surface-card);
+}
+
+.p9-part.p9-dash__tile {
+  padding-inline: 1rem;
+  border-radius: 12px;
+  background: var(--colors-surface-subtle);
+}
+
+.p9-part.p9-chart {
+  padding-block: 4px;
+}
+
+.p9-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

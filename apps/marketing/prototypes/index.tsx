@@ -1,10 +1,113 @@
-import type { ReactNode } from "react";
+import type { FC, ReactNode } from "react";
 import { Route } from "react-router-dom";
 import { Header } from "../src/components/Header";
 import { P1 } from "./p1/P1";
+import { P1b } from "./p1b/P1b";
 import { P2 } from "./p2/P2";
 import { P3 } from "./p3/P3";
+import { P4 } from "./p4/P4";
+import { P5 } from "./p5/P5";
+import { P6 } from "./p6/P6";
+import { P7 } from "./p7/P7";
+import { P8 } from "./p8/P8";
+import { P9 } from "./p9/P9";
+import { P10 } from "./p10/P10";
 import "./shared/proto.css";
+
+interface Entry {
+  path: string;
+  Page: FC;
+  title: string;
+  about: string;
+}
+
+const ROUND_ONE: Entry[] = [
+  {
+    path: "1",
+    Page: P1,
+    title: "1. Micro-interactions",
+    about: "CSS only. Hover, focus and press responses, headings that clear as they arrive.",
+  },
+  {
+    path: "2",
+    Page: P2,
+    title: "2. Scroll story",
+    about: "The fog over the sample dashboard thins as you scroll, then sections with depth.",
+  },
+  {
+    path: "3",
+    Page: P3,
+    title: "3. 3D hero",
+    about: "The Flump orb as a lit sphere in soft fog that parts as you scroll.",
+  },
+];
+
+const ROUND_TWO: Entry[] = [
+  {
+    path: "1b",
+    Page: P1b,
+    title: "1b. Micro-interactions, extended",
+    about: "Prototype 1 with pointer light, tilt, counting figures, a theme wipe and page fades.",
+  },
+  {
+    path: "4",
+    Page: P4,
+    title: "4. The picture assembles",
+    about: "Six pieces of a household's money fly together into one sample dashboard.",
+  },
+  {
+    path: "5",
+    Page: P5,
+    title: "5. Five scenes",
+    about: "One short scene per area: cards dealt, a budget bar, a payslip unfolding, two lines.",
+  },
+  {
+    path: "6",
+    Page: P6,
+    title: "6. The orb as a guide",
+    about: "A glass orb travels beside the page and changes shape with each section.",
+  },
+  {
+    path: "7",
+    Page: P7,
+    title: "7. Fly-through",
+    about: "The camera moves forward past sample cards and ends on the finished dashboard.",
+  },
+];
+
+const ROUND_THREE: Entry[] = [
+  {
+    path: "8",
+    Page: P8,
+    title: "8. Assembled",
+    about: "Prototype 4's hero and pages with prototype 5's scenes, calmer.",
+  },
+  {
+    path: "9",
+    Page: P9,
+    title: "9. The journey",
+    about: "Prototype 7's fly-through, alternating sides, with coloured glass from 6.",
+  },
+  {
+    path: "10",
+    Page: P10,
+    title: "10. Both",
+    about: "The assembling hero, a short journey, two scenes, the pay rise and questions.",
+  },
+];
+
+const List: FC<{ entries: Entry[] }> = ({ entries }) => (
+  <ol>
+    {entries.map((entry) => (
+      <li key={entry.path}>
+        <a href={`/prototypes/${entry.path}`}>
+          <strong>{entry.title}</strong>
+          <span>{entry.about}</span>
+        </a>
+      </li>
+    ))}
+  </ol>
+);
 
 const PrototypeIndex = () => (
   <div className="proto">
@@ -12,42 +115,23 @@ const PrototypeIndex = () => (
     <main className="proto-index" id="main">
       <h1>Motion prototypes</h1>
       <p>
-        Three throwaway versions of the home page, for judging the feel. Development only: a
-        production build has none of this. Each page has a panel with a reduce motion switch, the
-        frame rate and the added JavaScript.
+        Throwaway versions of the home page, for judging the feel. Development only: a production
+        build has none of this. Each page has a panel with a reduce motion switch, the frame rate
+        and the added weight. Prototypes 8 to 10 also have Speed and Bubbles controls.
       </p>
-      <ol>
-        <li>
-          <a href="/prototypes/1">
-            <strong>1. Micro-interactions</strong>
-            <span>
-              CSS only. Hover, focus and press responses, headings that clear as they arrive.
-            </span>
-          </a>
-        </li>
-        <li>
-          <a href="/prototypes/2">
-            <strong>2. Scroll story</strong>
-            <span>
-              The fog over the sample dashboard thins as you scroll, then sections with depth.
-            </span>
-          </a>
-        </li>
-        <li>
-          <a href="/prototypes/3">
-            <strong>3. 3D hero</strong>
-            <span>The Flump orb as a lit sphere in soft fog that parts as you scroll.</span>
-          </a>
-        </li>
-      </ol>
+      <h2>Round three: combined</h2>
+      <List entries={ROUND_THREE} />
+      <h2>Round two</h2>
+      <List entries={ROUND_TWO} />
+      <h2>Round one</h2>
+      <List entries={ROUND_ONE} />
     </main>
   </div>
 );
 
 export const prototypeRoutes: ReactNode = [
   <Route element={<PrototypeIndex />} key="index" path="/prototypes" />,
-  <Route element={<P1 />} key="p1" path="/prototypes/1" />,
-  <Route element={<P2 />} key="p2" path="/prototypes/2" />,
-  // Prototype 3 renders on the server like the others; three.js loads after first paint.
-  <Route element={<P3 />} key="p3" path="/prototypes/3" />,
+  ...[...ROUND_ONE, ...ROUND_TWO, ...ROUND_THREE].map(({ path, Page }) => (
+    <Route element={<Page />} key={path} path={`/prototypes/${path}`} />
+  )),
 ];

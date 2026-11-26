@@ -1,0 +1,241 @@
+/*
+ * Round three's shared CSS (prototypes 8 to 10): the pace tokens, the pointer light and tilt from
+ * 1b, the bubble backdrop with two colour sets per theme, and the smooth FAQ. Token variables only.
+ * Durations are the Calm values in pace.tsx times --pace (set on the prototype root).
+ */
+
+.proto[data-pace] {
+  --pace: 1;
+  --t-hover: calc(420ms * var(--pace));
+  --t-press: calc(140ms * var(--pace));
+  --t-release: calc(560ms * var(--pace));
+  --t-entry: calc(1100ms * var(--pace));
+  --t-stagger: calc(140ms * var(--pace));
+  --t-disclosure: calc(700ms * var(--pace));
+  --ease-out: cubic-bezier(0.25, 0.1, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.45, 0, 0.3, 1);
+}
+
+/* ---- Pointer light (buttons) and tilt (cards), from 1b, slowed. ---- */
+
+[data-light] {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+[data-light]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(
+    140px circle at var(--lx, 50%) var(--ly, 50%),
+    color-mix(in oklab, var(--colors-primary-foreground) 20%, transparent),
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity var(--t-hover, 420ms) var(--ease-out, ease);
+}
+
+[data-light]:hover::before {
+  opacity: 1;
+}
+
+[data-tilt] {
+  position: relative;
+}
+
+/* The highlight where the pointer is. */
+[data-tilt]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(
+    280px circle at var(--hx, 50%) var(--hy, 0%),
+    color-mix(in oklab, var(--colors-primary) 11%, transparent),
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity var(--t-hover, 420ms) var(--ease-out, ease);
+}
+
+[data-tilt][data-tilting="on"]::after {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .proto[data-motion="full"] [data-light] {
+    transform: translate(var(--tx, 0px), var(--ty, 0px));
+    transition:
+      transform var(--t-release) var(--ease-out),
+      box-shadow var(--t-hover) var(--ease-out),
+      background-color var(--t-hover) ease;
+  }
+
+  .proto[data-motion="full"] [data-light]:active {
+    transform: translate(var(--tx, 0px), var(--ty, 0px)) scale(0.97);
+    transition-duration: var(--t-press);
+  }
+
+  .proto[data-motion="full"] [data-tilt] {
+    transform: perspective(1000px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg))
+      translateY(var(--lift, 0px));
+    transition:
+      transform var(--t-release) var(--ease-out),
+      box-shadow var(--t-hover) var(--ease-out);
+  }
+
+  .proto[data-motion="full"] [data-tilt][data-tilting="on"] {
+    --lift: -3px;
+    transition-duration: calc(var(--t-hover) * 0.6), var(--t-hover);
+  }
+}
+
+/* ---- Bubble backdrop (from 2 and 3), two colour sets per theme. ---- */
+
+.proto[data-backdrop="a"] {
+  --bubble-1: var(--colors-surface-tint-sky);
+  --bubble-2: var(--colors-surface-tint-teal);
+  --bubble-edge: color-mix(in oklab, var(--colors-chart-series6) 22%, transparent);
+}
+
+.proto[data-backdrop="b"] {
+  --bubble-1: var(--colors-surface-tint-violet);
+  --bubble-2: var(--colors-surface-tint-rose);
+  --bubble-edge: color-mix(in oklab, var(--colors-chart-series4) 22%, transparent);
+}
+
+.proto-bubbles {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: clip;
+  pointer-events: none;
+}
+
+.proto-bubbles__bubble {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 35% 30%,
+    var(--bubble-1, var(--colors-surface-tint-sky)),
+    var(--bubble-2, var(--colors-surface-tint-teal)) 80%
+  );
+  box-shadow: inset 0 0 0 1px var(--bubble-edge, transparent);
+  opacity: 0.85;
+}
+
+/* Content sits above the bubbles. */
+.proto-bubbles ~ * {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes proto-bubble-drift {
+  from {
+    translate: 0 var(--from, 30px);
+  }
+  to {
+    translate: 0 var(--to, -30px);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    /* Slow and small: the far bubble barely moves, the near one a little more. */
+    .proto[data-motion="full"] .proto-bubbles__bubble {
+      animation: proto-bubble-drift linear both;
+      animation-timeline: view();
+      animation-range: cover 0% cover 100%;
+    }
+  }
+}
+
+/* ---- Smooth FAQ: answers stay in the page and open to their height. ---- */
+
+.proto-faq {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.proto-faq__item {
+  border-radius: 0.9rem;
+  border: 1px solid var(--colors-border);
+  background: var(--colors-surface-canvas);
+  box-shadow: var(--shadows-sm);
+}
+
+.proto-faq__question {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.1rem;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  color: var(--colors-text-primary);
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.proto-faq__question:focus-visible {
+  outline: 2px solid var(--colors-border-focus-ring);
+  outline-offset: 2px;
+}
+
+.proto-faq__chevron {
+  flex-shrink: 0;
+  transition: rotate var(--t-disclosure, 700ms) var(--ease-in-out, ease);
+}
+
+.proto-faq__question[aria-expanded="true"] .proto-faq__chevron {
+  rotate: 180deg;
+}
+
+/* grid-template-rows 0fr to 1fr animates to the content's own height in every current browser. */
+.proto-faq__answer {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition:
+    grid-template-rows var(--t-disclosure, 700ms) var(--ease-in-out, ease),
+    opacity var(--t-disclosure, 700ms) var(--ease-out, ease);
+  opacity: 0;
+}
+
+.proto-faq__answer[data-open="true"] {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.proto-faq__answer > div {
+  overflow: hidden;
+}
+
+.proto-faq__answer p {
+  margin: 0;
+  padding: 0 1.1rem 1rem;
+  color: var(--colors-text-secondary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .proto-faq__answer,
+  .proto-faq__chevron {
+    transition: none;
+  }
+}
+
+.proto[data-motion="reduce"] :is(.proto-faq__answer, .proto-faq__chevron) {
+  transition: none;
+}

@@ -1,0 +1,592 @@
+/*
+ * Prototype 4's pieces: small physical objects in DOM and CSS. Sizes in em, so one font size on a
+ * container scales a whole piece. Light comes from --p4-lx and --p4-ly (0 to 1), set from the
+ * pointer, or from the scroll on touch screens. Semantic token variables only.
+ */
+
+/* The floating layer: decorative, shown only once the timeline has taken over. */
+.p4-pieces {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  pointer-events: none;
+  visibility: hidden;
+  font-size: 9.5px;
+}
+
+[data-p4-live="true"] .p4-pieces {
+  visibility: visible;
+}
+
+.p4-pieces > .p4-piece,
+.p4-ghost {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
+  will-change: transform, opacity;
+}
+
+@media (min-width: 640px) {
+  .p4-pieces {
+    font-size: 12px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .p4-pieces {
+    font-size: 13px;
+  }
+}
+
+.p4-piece {
+  transform-style: preserve-3d;
+  font-family: var(--fonts-body);
+  line-height: 1.2;
+}
+
+.p4-piece > * {
+  transform-style: preserve-3d;
+}
+
+.p4-piece--mini {
+  font-size: 5.5px;
+}
+
+.p4-ghost {
+  font-size: 1.5em;
+  font-weight: 700;
+  color: var(--colors-text-primary);
+  white-space: nowrap;
+  opacity: 0;
+}
+
+.p4-ex {
+  display: inline-block;
+  padding: 0.18em 0.6em;
+  border-radius: 999px;
+  font-size: 0.72em;
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+.p4-ex--paper {
+  color: var(--colors-text-secondary);
+  border: 1px solid var(--colors-border);
+  background: var(--colors-surface-subtle);
+}
+
+.p4-ex--dark {
+  color: inherit;
+  border: 1px solid color-mix(in oklab, currentColor 45%, transparent);
+}
+
+/* ---------- Cards: a face, a back plate for the edge, a chip, a moving sheen ---------- */
+
+.p4-card {
+  position: relative;
+  width: 17em;
+  height: 10.72em;
+}
+
+.p4-card__edge,
+.p4-card__face {
+  position: absolute;
+  inset: 0;
+  border-radius: 0.9em;
+}
+
+.p4-card__edge {
+  transform: translateZ(-0.35em);
+  background: color-mix(in oklab, var(--p4-card-bg) 70%, var(--colors-text-primary));
+  box-shadow: 0 1.6em 2.4em -1.2em color-mix(in oklab, var(--colors-text-primary) 55%, transparent);
+}
+
+.p4-card__face {
+  display: grid;
+  grid-template-rows: auto 1fr auto auto;
+  padding: 1.05em 1.2em 1em;
+  overflow: hidden;
+  color: var(--p4-card-ink);
+  background: linear-gradient(
+    150deg,
+    color-mix(in oklab, var(--p4-card-bg) 88%, var(--p4-card-ink)) 0%,
+    var(--p4-card-bg) 46%,
+    color-mix(in oklab, var(--p4-card-bg) 82%, var(--colors-text-primary)) 100%
+  );
+  box-shadow:
+    inset 0 0 0 1px color-mix(in oklab, var(--p4-card-ink) 14%, transparent),
+    inset 0 0.08em 0 color-mix(in oklab, var(--p4-card-ink) 22%, transparent);
+}
+
+.p4-card--savings {
+  --p4-card-bg: var(--colors-surface-contrast);
+  --p4-card-ink: var(--colors-text-on-contrast);
+}
+
+.p4-card--credit {
+  --p4-card-bg: var(--colors-surface-hero);
+  --p4-card-ink: var(--colors-text-on-hero);
+}
+
+/* In Midnight the dark surfaces sit too close to the page: tint both cards towards mint. */
+:is(html.dark, [data-theme="dark"]) .p4-card--savings {
+  --p4-card-bg: color-mix(in oklab, var(--colors-primary) 30%, var(--colors-surface-card));
+  --p4-card-ink: var(--colors-text-primary);
+}
+
+:is(html.dark, [data-theme="dark"]) .p4-card--credit {
+  --p4-card-bg: color-mix(in oklab, var(--colors-primary) 12%, var(--colors-surface-overlay));
+  --p4-card-ink: var(--colors-text-primary);
+}
+
+.p4-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5em;
+}
+
+.p4-card__bank {
+  font-size: 0.95em;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+}
+
+.p4-card__chip {
+  align-self: center;
+  width: 2.3em;
+  height: 1.75em;
+  border-radius: 0.38em;
+  background:
+    linear-gradient(
+      90deg,
+      transparent 32%,
+      color-mix(in oklab, var(--p4-card-bg) 55%, transparent) 33% 35%,
+      transparent 36% 64%,
+      color-mix(in oklab, var(--p4-card-bg) 55%, transparent) 65% 67%,
+      transparent 68%
+    ),
+    linear-gradient(
+      0deg,
+      transparent 46%,
+      color-mix(in oklab, var(--p4-card-bg) 55%, transparent) 47% 53%,
+      transparent 54%
+    ),
+    linear-gradient(
+      140deg,
+      color-mix(in oklab, var(--p4-card-ink) 78%, var(--colors-primary)),
+      color-mix(in oklab, var(--p4-card-ink) 52%, var(--p4-card-bg))
+    );
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--p4-card-bg) 40%, transparent);
+}
+
+.p4-card__wave {
+  align-self: center;
+  width: 4.5em;
+  height: 1.6em;
+  border-radius: 999px;
+  background:
+    radial-gradient(
+      circle at 30% 50%,
+      color-mix(in oklab, var(--p4-card-ink) 30%, transparent) 0 0.75em,
+      transparent 0.78em
+    ),
+    radial-gradient(
+      circle at 62% 50%,
+      color-mix(in oklab, var(--p4-card-ink) 18%, transparent) 0 0.75em,
+      transparent 0.78em
+    );
+}
+
+.p4-card__figure {
+  font-size: 1.9em;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.p4-card__meta {
+  margin-top: 0.15em;
+  font-size: 0.82em;
+  opacity: 0.86;
+}
+
+.p4-card__sheen,
+.p4-paper__sheen {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.p4-card__sheen {
+  background:
+    radial-gradient(
+      circle at calc(var(--p4-lx, 0.3) * 100%) calc(var(--p4-ly, 0.2) * 100%),
+      color-mix(in oklab, var(--p4-card-ink) 26%, transparent) 0%,
+      transparent 55%
+    ),
+    linear-gradient(
+      calc(100deg + var(--p4-lx, 0.3) * 40deg),
+      transparent 30%,
+      color-mix(in oklab, var(--p4-card-ink) 10%, transparent) 46%,
+      transparent 60%
+    );
+}
+
+/* ---------- Paper: payslip, receipt, statement ---------- */
+
+.p4-paper {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: 0.7em;
+  padding: 1.1em 1.15em 1.2em;
+  color: var(--colors-text-primary);
+  background:
+    repeating-linear-gradient(
+      0deg,
+      color-mix(in oklab, var(--colors-text-primary) 2.5%, transparent) 0 1px,
+      transparent 1px 4px
+    ),
+    var(--colors-surface-card);
+  box-shadow:
+    inset 0 0 0 1px var(--colors-border),
+    0 1.4em 2.2em -1.2em color-mix(in oklab, var(--colors-text-primary) 45%, transparent);
+}
+
+.p4-paper__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6em;
+}
+
+.p4-paper__title {
+  font-family: var(--fonts-heading);
+  font-size: 1em;
+  font-weight: 700;
+}
+
+.p4-paper__sheen {
+  background: linear-gradient(
+    calc(120deg + var(--p4-lx, 0.3) * 50deg),
+    color-mix(in oklab, var(--colors-surface-card) 0%, transparent) 20%,
+    color-mix(in oklab, var(--colors-text-primary) 5%, transparent) 70%,
+    color-mix(in oklab, var(--colors-text-primary) 9%, transparent) 100%
+  );
+}
+
+.p4-rows {
+  margin: 0;
+  display: grid;
+  gap: 0.4em;
+  font-size: 0.9em;
+}
+
+.p4-rows > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1em;
+  padding-bottom: 0.4em;
+  border-bottom: 1px dashed var(--colors-border);
+}
+
+.p4-rows dt {
+  color: var(--colors-text-secondary);
+}
+
+.p4-rows dd {
+  margin: 0;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.p4-rows > .p4-rows__total {
+  border-bottom: 0;
+  padding-top: 0.1em;
+}
+
+.p4-rows__total dt {
+  color: var(--colors-text-primary);
+  font-weight: 650;
+}
+
+.p4-rows__total dd {
+  font-size: 1.25em;
+  font-weight: 700;
+}
+
+/* Payslip: perforated top edge and a tear-off strip. */
+.p4-payslip {
+  width: 15em;
+  padding-top: 1.6em;
+  border-radius: 0.2em;
+  -webkit-mask:
+    radial-gradient(circle at 0.6em 0, transparent 0.24em, var(--colors-text-primary) 0.26em) top
+    left / 1.2em 0.7em repeat-x,
+    linear-gradient(var(--colors-text-primary), var(--colors-text-primary)) 0 0.7em / 100%
+    calc(100% - 0.7em) no-repeat;
+  mask:
+    radial-gradient(circle at 0.6em 0, transparent 0.24em, var(--colors-text-primary) 0.26em) top
+    left / 1.2em 0.7em repeat-x,
+    linear-gradient(var(--colors-text-primary), var(--colors-text-primary)) 0 0.7em / 100%
+    calc(100% - 0.7em) no-repeat;
+}
+
+.p4-payslip::before {
+  content: "";
+  position: absolute;
+  left: 0.9em;
+  right: 0.9em;
+  top: 1.05em;
+  border-top: 1px dashed var(--colors-border-strong);
+}
+
+/* Receipt: narrow thermal roll with a torn zigzag foot. */
+.p4-receipt {
+  width: 12.5em;
+  padding-bottom: 1.8em;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      color-mix(in oklab, var(--colors-text-primary) 2%, transparent) 0 1px,
+      transparent 1px 3px
+    ),
+    var(--colors-surface-sunken);
+  -webkit-mask:
+    linear-gradient(var(--colors-text-primary), var(--colors-text-primary)) top / 100%
+    calc(100% - 0.55em) no-repeat,
+    conic-gradient(from 135deg at top, var(--colors-text-primary) 90deg, transparent 0) bottom /
+    1.1em 0.55em repeat-x;
+  mask:
+    linear-gradient(var(--colors-text-primary), var(--colors-text-primary)) top / 100%
+    calc(100% - 0.55em) no-repeat,
+    conic-gradient(from 135deg at top, var(--colors-text-primary) 90deg, transparent 0) bottom /
+    1.1em 0.55em repeat-x;
+}
+
+.p4-receipt .p4-rows > div {
+  border-bottom-style: dotted;
+}
+
+/* Statement: letterhead, a fold across the middle. */
+.p4-statement {
+  width: 15.5em;
+  border-radius: 0.2em;
+}
+
+.p4-statement__letterhead {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  padding-bottom: 0.7em;
+  border-bottom: 2px solid var(--colors-primary);
+}
+
+.p4-statement__mark {
+  flex: none;
+  width: 1.5em;
+  height: 1.5em;
+  border-radius: 999px;
+  background: radial-gradient(
+    circle at 35% 30%,
+    var(--colors-primary-mark-lit),
+    var(--colors-primary-mark) 70%
+  );
+}
+
+.p4-statement__lines {
+  flex: 1;
+  display: grid;
+  gap: 0.3em;
+}
+
+.p4-statement__lines i {
+  display: block;
+  height: 0.3em;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--colors-text-secondary) 30%, transparent);
+}
+
+.p4-statement__lines i + i {
+  width: 60%;
+}
+
+.p4-statement__fold {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 58%;
+  height: 1.4em;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    color-mix(in oklab, var(--colors-text-primary) 6%, transparent) 48%,
+    color-mix(in oklab, var(--colors-surface-card) 60%, transparent) 52%,
+    transparent
+  );
+}
+
+/* ---------- Pension jar: glass, a lid, a fill line and a sticker ---------- */
+
+.p4-jar {
+  position: relative;
+  width: 10.5em;
+  display: grid;
+  justify-items: center;
+}
+
+.p4-jar__lid {
+  width: 7.4em;
+  height: 1.5em;
+  border-radius: 0.5em 0.5em 0.25em 0.25em;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 0.35em,
+      color-mix(in oklab, var(--colors-text-primary) 12%, transparent) 0.35em 0.45em
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--colors-surface-contrast) 80%, var(--colors-text-on-contrast)),
+      var(--colors-surface-contrast)
+    );
+  box-shadow: 0 0.2em 0 color-mix(in oklab, var(--colors-text-primary) 20%, transparent);
+}
+
+.p4-jar__glass {
+  position: relative;
+  width: 10.5em;
+  height: 12.5em;
+  margin-top: -0.1em;
+  border-radius: 1.6em 1.6em 2.4em 2.4em;
+  overflow: hidden;
+  background: color-mix(in oklab, var(--colors-surface-card) 55%, transparent);
+  box-shadow:
+    inset 0 0 0 0.14em color-mix(in oklab, var(--colors-border-strong) 90%, transparent),
+    inset 0.6em 0 1em -0.6em color-mix(in oklab, var(--colors-text-primary) 12%, transparent),
+    0 1.4em 2.2em -1.2em color-mix(in oklab, var(--colors-text-primary) 45%, transparent);
+}
+
+.p4-jar__fill {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: var(--p4-fill, 60%);
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--colors-primary) 42%, var(--colors-surface-card)),
+    color-mix(in oklab, var(--colors-primary) 62%, var(--colors-surface-card))
+  );
+  box-shadow: inset 0 0.18em 0
+    color-mix(in oklab, var(--colors-primary) 30%, var(--colors-surface-card));
+}
+
+.p4-jar__label {
+  position: absolute;
+  left: 0.9em;
+  right: 0.9em;
+  top: 3.2em;
+  display: grid;
+  justify-items: center;
+  gap: 0.25em;
+  padding: 0.7em 0.5em;
+  border-radius: 0.4em;
+  background: var(--colors-surface-card);
+  box-shadow: inset 0 0 0 1px var(--colors-border);
+  color: var(--colors-text-primary);
+}
+
+.p4-jar__name {
+  font-size: 0.85em;
+  font-weight: 650;
+  color: var(--colors-text-secondary);
+}
+
+.p4-jar__figure {
+  font-size: 1.45em;
+  font-weight: 700;
+}
+
+.p4-jar__glint {
+  position: absolute;
+  top: 0.8em;
+  bottom: 1.4em;
+  left: calc(0.7em + var(--p4-lx, 0.3) * 1.4em);
+  width: 0.7em;
+  border-radius: 999px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--colors-surface-card) 75%, transparent),
+    transparent
+  );
+}
+
+/* ---------- Glyphs: the pieces' small forms in the finished "made from" rows ---------- */
+
+.p4-glyph {
+  display: block;
+  justify-self: center;
+  border-radius: 0.2rem;
+}
+
+.p4-glyph--card,
+.p4-glyph--credit {
+  width: 2.4rem;
+  aspect-ratio: 17 / 10.72;
+  border-radius: 0.25rem;
+  background: var(--colors-surface-contrast);
+  box-shadow: inset 0.35rem 0.4rem 0 -0.2rem
+    color-mix(in oklab, var(--colors-text-on-contrast) 55%, transparent);
+}
+
+.p4-glyph--credit {
+  background: var(--colors-surface-hero);
+  box-shadow:
+    inset 0 0 0 1px var(--colors-border-hero),
+    inset 0.35rem 0.4rem 0 -0.2rem color-mix(in oklab, var(--colors-text-on-hero) 40%, transparent);
+}
+
+.p4-glyph--payslip,
+.p4-glyph--receipt,
+.p4-glyph--statement {
+  width: 1.55rem;
+  aspect-ratio: 15 / 13.2;
+  background:
+    linear-gradient(var(--colors-border-strong), var(--colors-border-strong)) 0.25rem 0.35rem / 60%
+    2px no-repeat,
+    linear-gradient(var(--colors-border), var(--colors-border)) 0.25rem 0.65rem / 70% 2px no-repeat,
+    var(--colors-surface-card);
+  box-shadow: inset 0 0 0 1px var(--colors-border-strong);
+}
+
+.p4-glyph--receipt {
+  width: 1.3rem;
+  aspect-ratio: 12.5 / 12.6;
+  background-color: var(--colors-surface-sunken);
+}
+
+.p4-glyph--statement {
+  aspect-ratio: 15.5 / 15;
+  border-top: 2px solid var(--colors-primary);
+}
+
+.p4-glyph--pension {
+  width: 1.3rem;
+  aspect-ratio: 10.5 / 14;
+  border-radius: 0.2rem 0.2rem 0.35rem 0.35rem;
+  background:
+    linear-gradient(var(--colors-surface-contrast), var(--colors-surface-contrast)) top / 75% 0.2rem
+    no-repeat,
+    linear-gradient(
+      color-mix(in oklab, var(--colors-primary) 55%, var(--colors-surface-card)),
+      color-mix(in oklab, var(--colors-primary) 55%, var(--colors-surface-card))
+    )
+    bottom / 100% 55% no-repeat,
+    var(--colors-surface-card);
+  box-shadow: inset 0 0 0 1px var(--colors-border-strong);
+}

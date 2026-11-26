@@ -1,0 +1,430 @@
+/*
+ * Prototype 10's two scenes (pay and debt), copied from prototype 5 and tightened. Semantic token
+ * variables only. Every rule here is the finished, still page; GSAP only adds inline transforms
+ * while a scene scrolls past.
+ */
+
+.p10 {
+  --p10-sc-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --p10-sc-panel-bg: var(--colors-surface-card);
+  --p10-sc-ink-faint: color-mix(in oklab, var(--colors-text-primary) 8%, transparent);
+}
+
+.p10-sc-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Scenes: one short section per area, alternating canvas and card. */
+
+.p10-sc-scene {
+  position: relative;
+  padding: clamp(40px, 7vh, 72px) 16px;
+}
+
+.p10-sc-scene__inner {
+  max-width: 72rem;
+  margin: 0 auto;
+  display: grid;
+  gap: 28px;
+  align-items: center;
+}
+
+.p10-sc-scene__text {
+  display: grid;
+  gap: 12px;
+  justify-items: start;
+  max-width: 34rem;
+}
+
+.p10-sc-scene__title {
+  margin: 0;
+  color: var(--colors-text-primary);
+  font-size: clamp(1.75rem, 1.3rem + 1.6vw, 2.5rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.p10-sc-scene__lead {
+  margin: 0;
+  color: var(--colors-text-primary);
+  font-size: 1.125rem;
+  line-height: 1.5;
+}
+
+.p10-sc-scene__note {
+  margin: 0;
+  color: var(--colors-text-secondary);
+  font-size: 0.9375rem;
+  line-height: 1.55;
+}
+
+.p10-sc-scene__link {
+  margin-top: 4px;
+}
+
+.p10-sc-scene__stage {
+  min-width: 0;
+}
+
+@media (min-width: 56rem) {
+  .p10-sc-scene--left .p10-sc-scene__inner {
+    grid-template-columns: 5fr 7fr;
+    gap: 64px;
+  }
+
+  .p10-sc-scene--right .p10-sc-scene__inner {
+    grid-template-columns: 7fr 5fr;
+    gap: 64px;
+  }
+
+  .p10-sc-scene--right .p10-sc-scene__text {
+    order: 2;
+  }
+}
+
+/* A panel that holds a scene's figures. */
+
+.p10-sc-debt {
+  border-radius: 24px;
+  border: 1px solid var(--colors-border);
+  background: var(--p10-sc-panel-bg);
+  box-shadow: var(--shadows-card);
+}
+
+/* Pay: the folded payslip. */
+
+.p10-sc-pay {
+  display: grid;
+  place-items: center;
+  perspective: 1400px;
+  perspective-origin: 50% 30%;
+  padding: 8px 0;
+}
+
+.p10-sc-slip {
+  width: min(100%, 23rem);
+  display: grid;
+  transform-style: preserve-3d;
+}
+
+.p10-sc-slip__panel {
+  position: relative;
+  height: 9rem;
+  transform-style: preserve-3d;
+}
+
+.p10-sc-slip__panel--top {
+  z-index: 2;
+  transform-origin: 50% 100%;
+}
+
+.p10-sc-slip__panel--bottom {
+  z-index: 1;
+  transform-origin: 50% 0;
+}
+
+.p10-sc-slip__face,
+.p10-sc-slip__back,
+.p10-sc-slip__shade {
+  position: absolute;
+  inset: 0;
+}
+
+.p10-sc-slip__face {
+  display: grid;
+  align-content: center;
+  gap: 10px;
+  padding: 16px 22px;
+  background: var(--p10-sc-panel-bg);
+  border-inline: 1px solid var(--colors-border);
+  backface-visibility: hidden;
+}
+
+.p10-sc-slip__back {
+  background: color-mix(in oklab, var(--p10-sc-panel-bg) 90%, var(--colors-text-primary));
+  border: 1px solid var(--colors-border);
+  transform: rotateX(180deg);
+  backface-visibility: hidden;
+}
+
+.p10-sc-slip__panel--top .p10-sc-slip__face,
+.p10-sc-slip__panel--top .p10-sc-slip__back {
+  border-top: 1px solid var(--colors-border);
+  border-radius: 14px 14px 0 0;
+}
+
+.p10-sc-slip__panel--bottom .p10-sc-slip__face,
+.p10-sc-slip__panel--bottom .p10-sc-slip__back {
+  border-bottom: 1px solid var(--colors-border);
+  border-radius: 0 0 14px 14px;
+}
+
+/* The creases: a faint line where the sheet was folded. */
+.p10-sc-slip__panel--middle .p10-sc-slip__face {
+  box-shadow:
+    0 18px 36px -12px color-mix(in oklab, var(--colors-text-primary) 18%, transparent),
+    inset 0 1px 0 var(--p10-sc-ink-faint),
+    inset 0 -1px 0 var(--p10-sc-ink-faint);
+}
+
+.p10-sc-slip__shade {
+  pointer-events: none;
+  opacity: 0;
+  border-radius: inherit;
+}
+
+.p10-sc-slip__panel--top .p10-sc-slip__shade {
+  background: linear-gradient(
+    0deg,
+    color-mix(in oklab, var(--colors-text-primary) 30%, transparent),
+    transparent
+  );
+}
+
+.p10-sc-slip__panel--bottom .p10-sc-slip__shade {
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--colors-text-primary) 30%, transparent),
+    transparent
+  );
+}
+
+.p10-sc-slip p,
+.p10-sc-slip dl,
+.p10-sc-slip dd {
+  margin: 0;
+}
+
+.p10-sc-slip__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  color: var(--colors-text-primary);
+  font-size: 1.0625rem;
+  font-weight: 700;
+}
+
+.p10-sc-slip__tag {
+  color: var(--colors-text-secondary);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.p10-sc-slip__rows {
+  display: grid;
+  gap: 8px;
+}
+
+.p10-sc-slip__rows > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.9375rem;
+}
+
+.p10-sc-slip__rows dt {
+  color: var(--colors-text-secondary);
+}
+
+.p10-sc-slip__rows dd {
+  color: var(--colors-text-primary);
+  font-weight: 600;
+}
+
+.p10-sc-slip__net {
+  display: grid;
+  gap: 2px;
+}
+
+.p10-sc-slip__net > span {
+  color: var(--colors-text-secondary);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.p10-sc-slip__net strong {
+  color: var(--colors-text-primary);
+  font-size: clamp(2rem, 1.7rem + 1.4vw, 2.5rem);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+
+.p10-sc-slip__rule {
+  display: block;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--colors-primary);
+  transform-origin: left center;
+}
+
+.p10-sc-slip__note {
+  color: var(--colors-text-secondary);
+  font-size: 0.8125rem;
+}
+
+/* The marker that rides the end of a line: only while a scene is enhanced. */
+
+.p10-sc-debt__dot {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  border-radius: 50%;
+  display: none;
+  will-change: transform;
+}
+
+.p10-sc-debt__dot {
+  background: var(--colors-text-primary);
+  box-shadow: 0 0 0 4px var(--p10-sc-ink-faint);
+}
+
+.p10-sc-scene[data-enhanced="true"] .p10-sc-debt__dot {
+  display: block;
+}
+
+.p10-sc-debt__readout {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--colors-border);
+  background: var(--p10-sc-panel-bg);
+  color: var(--colors-text-primary);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* On the debt line the readout sits above and to the right of the marker (clear of the line,
+   which falls from the upper left), then beside it on the left once it nears the panel's edge. */
+.p10-sc-debt__readout {
+  top: auto;
+  bottom: calc(100% + 8px);
+  left: 8px;
+  transform: none;
+}
+
+.p10-sc-debt__dot[data-flip="true"] .p10-sc-debt__readout {
+  left: auto;
+  right: calc(100% + 12px);
+  bottom: auto;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Debt: the balance running down to its end date. */
+
+.p10-sc-debt {
+  margin: 0;
+  display: grid;
+  gap: 16px;
+  padding: 22px 22px 20px;
+}
+
+.p10-sc-debt__caption {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 12px;
+}
+
+.p10-sc-debt__caption span:last-child {
+  color: var(--colors-text-primary);
+  font-weight: 600;
+}
+
+.p10-sc-debt__plot {
+  margin-bottom: 26px;
+}
+
+.p10-sc-debt__line {
+  stroke: var(--colors-text-primary);
+  stroke-width: 2.5;
+}
+
+.p10-sc-debt__area {
+  fill: color-mix(in oklab, var(--colors-text-primary) 6%, transparent);
+}
+
+.p10-sc-debt__base {
+  stroke: var(--colors-border);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.p10-sc-debt__ticks {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.p10-sc-debt__ticks li {
+  position: absolute;
+  transform: translateX(-50%);
+  color: var(--colors-text-secondary);
+  font-size: 0.75rem;
+}
+
+.p10-sc-debt__end {
+  margin: 0;
+  display: grid;
+  gap: 2px;
+  padding-top: 14px;
+  border-top: 1px solid var(--colors-border);
+}
+
+.p10-sc-debt__end span {
+  color: var(--colors-text-secondary);
+  font-size: 0.875rem;
+}
+
+.p10-sc-debt__end strong {
+  color: var(--colors-text-primary);
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.p10-sc-debt__caption {
+  color: var(--colors-text-secondary);
+  font-size: 0.875rem;
+}
+
+.p10-sc-debt__plot {
+  position: relative;
+  height: clamp(160px, 24vh, 230px);
+}
+
+.p10-sc-debt__plot svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.p10-sc-grid {
+  stroke: var(--p10-sc-ink-faint);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}

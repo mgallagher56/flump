@@ -1,0 +1,755 @@
+/*
+ * Prototype 1b: prototype 1 plus a little script. The base rules below are copied from p1.css
+ * (prototype 1 stays as it was); the additions are at the end. Semantic token variables only.
+ *
+ * Two kinds of motion:
+ * - Responses (hover, focus, press): always on, short, transform and shadow only. Under reduced
+ *   motion they keep their colour and shadow changes and lose their movement.
+ * - Arrivals (the headline, band headings, tiles, steps, index lines): scroll-driven CSS
+ *   animations (`animation-timeline: view()`), only where the browser supports them and only when
+ *   motion is allowed. Without support they are simply there.
+ * Arrivals use the individual `translate`/`scale` properties, hover uses `transform`, so a
+ * finished arrival never pins a hover.
+ */
+
+/* Responses: always present, motion only when allowed. */
+
+.p1b :is([data-proto^="cta"], #get-started a, header a[href]:not([aria-label])) {
+  position: relative;
+  isolation: isolate;
+  transition:
+    transform 160ms var(--proto-ease-out),
+    box-shadow 200ms var(--proto-ease-out),
+    background-color 160ms ease;
+}
+
+/* The primary call to action catches a band of light on hover. */
+.p1b [data-proto="cta-primary"],
+.p1b #get-started a {
+  overflow: hidden;
+}
+
+.p1b [data-proto="cta-primary"]::after,
+.p1b #get-started a::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  z-index: -1;
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    color-mix(in oklab, var(--colors-primary-foreground) 28%, transparent) 50%,
+    transparent 70%
+  );
+  translate: -110% 0;
+  pointer-events: none;
+}
+
+.p1b :is([data-proto^="cta"], #get-started a):hover {
+  box-shadow: var(--shadows-card-hover);
+}
+
+/* The real footer and header links: an underline that draws in from the left. */
+.p1b footer a:not([aria-label]) {
+  text-decoration: none;
+  background-image: linear-gradient(currentColor, currentColor);
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 0% 1px;
+  transition: background-size 220ms var(--proto-ease-out);
+}
+
+.p1b footer a:not([aria-label]):is(:hover, :focus-visible) {
+  background-size: 100% 1px;
+}
+
+/* Feature tiles: the whole tile answers, a teal edge draws across the top. */
+.p1b .proto-tiles li {
+  position: relative;
+  transition:
+    transform 220ms var(--proto-ease-out),
+    box-shadow 220ms var(--proto-ease-out),
+    border-color 220ms ease;
+}
+
+.p1b .proto-tiles li::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  border-radius: inherit;
+  background: var(--colors-primary);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 320ms var(--proto-ease-out);
+}
+
+/* The tile's own link covers the tile, so the whole tile is one target with one name. */
+.p1b .proto-tiles li a::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.p1b .proto-tiles li:is(:hover, :focus-within) {
+  box-shadow: var(--shadows-card-hover);
+  border-color: var(--colors-primary-border);
+}
+
+.p1b .proto-tiles li:is(:hover, :focus-within)::before {
+  transform: scaleX(1);
+}
+
+/* The tile link's focus ring goes round the whole tile. */
+.p1b .proto-tiles li a:focus-visible {
+  outline: none;
+}
+
+.p1b .proto-tiles li:has(a:focus-visible) {
+  outline: 2px solid var(--colors-border-focus-ring);
+  outline-offset: 3px;
+}
+
+/* "More detail" lines: a teal bar over the grey rule. */
+.p1b .proto-depth li {
+  position: relative;
+}
+
+.p1b .proto-depth li::before {
+  content: "";
+  position: absolute;
+  left: -2px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--colors-primary);
+  transform-origin: top;
+  transition: transform 220ms var(--proto-ease-out);
+}
+
+.p1b .proto-depth li:is(:hover, :focus-within)::before {
+  transform: scaleX(2);
+}
+
+/* The steps are a real sequence, so they carry their number. */
+.p1b .proto-steps {
+  counter-reset: p1b-step;
+}
+
+.p1b .proto-steps > li {
+  counter-increment: p1b-step;
+  position: relative;
+}
+
+.p1b .proto-steps > li::before {
+  content: counter(p1b-step);
+  display: inline-grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  margin-bottom: 12px;
+  border-radius: 999px;
+  background: var(--colors-primary-subtle);
+  color: var(--colors-primary-emphasis);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The sample dashboard rests at a slight tilt and settles flat when the reader reaches for it. */
+.p1b .p1b-preview {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  perspective: 1200px;
+}
+
+.p1b .p1b-preview > figure {
+  transition:
+    transform 500ms var(--proto-ease-out),
+    box-shadow 500ms var(--proto-ease-out);
+}
+
+.p1b .p1b-preview:is(:hover, :focus-within) > figure {
+  box-shadow: var(--shadows-floating);
+}
+
+/* The logo orb catches the light: a highlight sweeps across it and it gives a small squash. */
+.p1b [data-testid="home-logo"] a {
+  position: relative;
+  border-radius: 999px;
+}
+
+.p1b [data-testid="home-logo"] a svg {
+  transform-origin: 50% 85%;
+}
+
+.p1b [data-testid="home-logo"] a::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  pointer-events: none;
+  background: radial-gradient(
+    circle at var(--p1b-light-x, 20%) var(--p1b-light-y, 15%),
+    color-mix(in oklab, white 70%, transparent) 0,
+    transparent 28%
+  );
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+
+.p1b [data-testid="home-logo"] a:is(:hover, :focus-visible)::after {
+  opacity: 1;
+}
+
+/* The scroll cue: a hairline in the orb's teal. */
+.p1b .p1b-progress {
+  position: fixed;
+  inset: 0 0 auto;
+  height: 3px;
+  z-index: 70;
+  background: var(--colors-primary);
+  transform-origin: left;
+  transform: scaleX(0);
+  pointer-events: none;
+  display: none;
+}
+
+/* Movement: allowed by the system and not switched off in the panel. */
+
+@property --p1b-light-x {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 20%;
+}
+
+@property --p1b-light-y {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 15%;
+}
+
+@keyframes p1b-defog {
+  from {
+    opacity: 0.25;
+    filter: blur(8px);
+    translate: 0 0.15em;
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    translate: 0 0;
+  }
+}
+
+@keyframes p1b-sheen {
+  to {
+    translate: 110% 0;
+  }
+}
+
+@keyframes p1b-squash {
+  0% {
+    transform: scale(1, 1);
+  }
+  30% {
+    transform: scale(1.08, 0.92);
+  }
+  55% {
+    transform: scale(0.96, 1.05);
+  }
+  80% {
+    transform: scale(1.02, 0.99);
+  }
+  100% {
+    transform: scale(1, 1);
+  }
+}
+
+@keyframes p1b-light {
+  from {
+    --p1b-light-x: 15%;
+    --p1b-light-y: 10%;
+  }
+  to {
+    --p1b-light-x: 38%;
+    --p1b-light-y: 32%;
+  }
+}
+
+@keyframes p1b-rise {
+  from {
+    opacity: 0;
+    translate: 0 28px;
+    scale: 0.97;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+    scale: 1;
+  }
+}
+
+@keyframes p1b-step-in {
+  from {
+    opacity: 0;
+    translate: 0 36px;
+    rotate: x 18deg;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+    rotate: x 0deg;
+  }
+}
+
+@keyframes p1b-bar-in {
+  from {
+    scale: 1 0;
+  }
+  to {
+    scale: 1 1;
+  }
+}
+
+@keyframes p1b-line-in {
+  from {
+    opacity: 0.2;
+    translate: -12px 0;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@keyframes p1b-progress {
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes p1b-settle {
+  from {
+    transform: rotateX(14deg) translateY(24px);
+  }
+  to {
+    transform: rotateX(4deg) translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .p1b[data-motion="full"] :is([data-proto^="cta"], #get-started a):hover {
+    transform: translateY(-2px);
+  }
+
+  .p1b[data-motion="full"] :is([data-proto^="cta"], #get-started a, header a[href]):active {
+    transform: translateY(0) scale(0.97);
+    transition-duration: 60ms;
+  }
+
+  .p1b[data-motion="full"] :is([data-proto="cta-primary"], #get-started a):hover::after {
+    animation: p1b-sheen 700ms var(--proto-ease-out) forwards;
+  }
+
+  .p1b[data-motion="full"] .proto-tiles li:is(:hover, :focus-within) {
+    --p1b-lift: -4px;
+  }
+
+  .p1b[data-motion="full"] .proto-depth li > span {
+    transition: transform 220ms var(--proto-ease-out);
+  }
+
+  .p1b[data-motion="full"] .proto-depth li:is(:hover, :focus-within) > span {
+    transform: translateX(4px);
+  }
+
+  .p1b[data-motion="full"] [data-testid="home-logo"] a:is(:hover, :focus-visible) svg {
+    animation: p1b-squash 650ms var(--proto-ease-out);
+  }
+
+  .p1b[data-motion="full"] [data-testid="home-logo"] a:is(:hover, :focus-visible)::after {
+    animation: p1b-light 650ms var(--proto-ease-out) forwards;
+  }
+
+  /* The one load moment: the headline clears word by word, like fog lifting. */
+  .p1b[data-motion="full"] .p1b-word {
+    display: inline-block;
+    animation: p1b-defog 900ms var(--proto-ease-out) both;
+    animation-delay: calc(120ms + var(--proto-i) * 70ms);
+  }
+
+  .p1b[data-motion="full"] .p1b-lead {
+    animation: p1b-defog 900ms var(--proto-ease-out) both;
+    animation-delay: 560ms;
+  }
+
+  .p1b[data-motion="full"] .p1b-preview > figure {
+    transform: rotateX(4deg);
+    animation: p1b-settle 1100ms var(--proto-ease-out) both;
+    animation-delay: 300ms;
+  }
+
+  .p1b[data-motion="full"] .p1b-preview:is(:hover, :focus-within) > figure {
+    transform: rotateX(0deg) translateY(-4px);
+    animation: none;
+  }
+
+  @supports (animation-timeline: view()) {
+    .p1b[data-motion="full"] .p1b-progress {
+      display: block;
+      animation: p1b-progress linear both;
+      animation-timeline: scroll(root);
+    }
+
+    /* Band headings clear from the fog as they arrive. */
+    .p1b[data-motion="full"] .proto-reveal :is(h2, h2 + p) {
+      animation: p1b-defog linear both;
+      animation-timeline: view();
+      animation-range: entry 10% cover 30%;
+    }
+
+    .p1b[data-motion="full"] .proto-tiles li {
+      animation: p1b-rise linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 90%;
+    }
+
+    /* Tiles in one row arrive left to right. */
+    .p1b[data-motion="full"] .proto-tiles li:nth-child(3n + 2) {
+      animation-range: entry 10% entry 100%;
+    }
+
+    .p1b[data-motion="full"] .proto-tiles li:nth-child(3n) {
+      animation-range: entry 20% cover 30%;
+    }
+
+    .p1b[data-motion="full"] .proto-steps > li {
+      transform-origin: 50% 100%;
+      animation: p1b-step-in linear both;
+      animation-timeline: view();
+      animation-range: entry calc(var(--proto-i) * 8%) cover calc(25% + var(--proto-i) * 6%);
+    }
+
+    .p1b[data-motion="full"] .proto-depth li::before {
+      animation: p1b-bar-in linear both;
+      animation-timeline: view();
+      animation-range: entry 20% cover 40%;
+    }
+
+    .p1b[data-motion="full"] .proto-depth li > span {
+      animation: p1b-line-in linear both;
+      animation-timeline: view();
+      animation-range: entry 20% cover 35%;
+    }
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Prototype 1b additions. Script (interactions.ts) only sets custom properties and data
+ * attributes; every movement is here, and inside the motion guard.
+ * --------------------------------------------------------------------------------------------- */
+
+.p1b-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Light that follows the pointer across the primary call to action (replaces the sheen). */
+.p1b [data-proto="cta-primary"]::before,
+.p1b #get-started a::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: radial-gradient(
+    120px circle at var(--p1b-mx, 50%) var(--p1b-my, 50%),
+    color-mix(in oklab, var(--colors-primary-foreground) 22%, transparent),
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity 200ms ease;
+  pointer-events: none;
+}
+
+.p1b [data-proto="cta-primary"]:hover::before,
+.p1b #get-started a:hover::before {
+  opacity: 1;
+}
+
+/* Tilt highlight on tiles and the dashboard. */
+.p1b .proto-tiles li::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(
+    260px circle at var(--p1b-hx, 50%) var(--p1b-hy, 0%),
+    color-mix(in oklab, var(--colors-primary) 10%, transparent),
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity 250ms ease;
+}
+
+.p1b .proto-tiles li[data-tilt="on"]::after {
+  opacity: 1;
+}
+
+/* Links in the bands: the underline is drawn, and redraws from the left on hover. */
+.p1b main :is(.proto-tiles a, .proto-depth a, section > div > p > a, figure a),
+.p1b footer a:not([aria-label]) {
+  text-decoration: none;
+  background-image: linear-gradient(currentColor, currentColor);
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 100% 1px;
+}
+
+/* Focus rings: a ring that closes in onto the element. */
+.p1b :focus-visible {
+  outline: 2px solid var(--colors-border-focus-ring);
+  outline-offset: 2px;
+}
+
+/* The theme switch without View Transitions: colours cross-fade. */
+/* biome-ignore lint/complexity/noImportantStyles: the cross-fade must win over every component transition for 400ms. */
+:root.p1b-theming,
+:root.p1b-theming * {
+  transition:
+    background-color 400ms ease,
+    color 400ms ease,
+    border-color 400ms ease,
+    fill 400ms ease,
+    stroke 400ms ease !important;
+}
+
+@keyframes p1b-redraw {
+  0% {
+    background-size: 100% 1px;
+    background-position: 100% 100%;
+  }
+  45% {
+    background-size: 0% 1px;
+    background-position: 100% 100%;
+  }
+  46% {
+    background-size: 0% 1px;
+    background-position: 0 100%;
+  }
+  100% {
+    background-size: 100% 1px;
+    background-position: 0 100%;
+  }
+}
+
+@keyframes p1b-ring {
+  from {
+    outline-offset: 7px;
+    outline-color: transparent;
+  }
+  to {
+    outline-offset: 2px;
+    outline-color: var(--colors-border-focus-ring);
+  }
+}
+
+@keyframes p1b-settle-word {
+  from {
+    opacity: 0;
+    translate: 0 0.45em;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@keyframes p1b-menu-in {
+  from {
+    opacity: 0;
+    translate: 0 -6px;
+    scale: 0.98;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+    scale: 1;
+  }
+}
+
+@keyframes p1b-drawer-in {
+  from {
+    translate: 100% 0;
+  }
+  to {
+    translate: 0 0;
+  }
+}
+
+@keyframes p1b-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes p1b-wipe {
+  from {
+    clip-path: circle(0 at var(--p1b-wipe-x, 50%) var(--p1b-wipe-y, 0));
+  }
+  to {
+    clip-path: circle(150vmax at var(--p1b-wipe-x, 50%) var(--p1b-wipe-y, 0));
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Press and release: a quick press, a soft spring back. */
+  .p1b[data-motion="full"] :is([data-proto^="cta"], #get-started a, header a[href], header button) {
+    transform: translate(var(--p1b-tx, 0px), var(--p1b-ty, 0px));
+    transition:
+      transform 420ms var(--proto-ease-spring),
+      box-shadow 200ms var(--proto-ease-out),
+      background-color 160ms ease;
+  }
+
+  .p1b[data-motion="full"] :is([data-proto^="cta"], #get-started a):hover {
+    transform: translate(var(--p1b-tx, 0px), calc(var(--p1b-ty, 0px) - 2px));
+  }
+
+  .p1b[data-motion="full"]
+    :is([data-proto^="cta"], #get-started a, header a[href], header button):active {
+    transform: translate(var(--p1b-tx, 0px), var(--p1b-ty, 0px)) scale(0.96);
+    transition-duration: 70ms;
+  }
+
+  /* The pointer light replaces round one's sheen sweep. */
+  .p1b[data-motion="full"] :is([data-proto="cta-primary"], #get-started a):hover::after {
+    animation: none;
+  }
+
+  /* Tilt toward the pointer. */
+  .p1b[data-motion="full"] .proto-tiles li {
+    transform: perspective(900px) rotateX(var(--p1b-rx, 0deg)) rotateY(var(--p1b-ry, 0deg))
+      translateY(var(--p1b-lift, 0px));
+    transition:
+      transform 500ms var(--proto-ease-out),
+      box-shadow 220ms var(--proto-ease-out),
+      border-color 220ms ease;
+  }
+
+  .p1b[data-motion="full"] .proto-tiles li[data-tilt="on"] {
+    transition-duration: 120ms, 220ms, 220ms;
+  }
+
+  .p1b[data-motion="full"] .p1b-preview > figure {
+    transform: rotateX(var(--p1b-rx, 0deg)) rotateY(var(--p1b-ry, 0deg));
+  }
+
+  .p1b[data-motion="full"] .p1b-preview:is(:hover, :focus-within) > figure {
+    transform: rotateX(var(--p1b-rx, 0deg)) rotateY(var(--p1b-ry, 0deg)) translateY(-4px);
+  }
+
+  /* The logo's highlight follows the pointer; fast scrolling gives the orb a small squash. */
+  .p1b[data-motion="full"] [data-testid="home-logo"] a::after {
+    opacity: 0.55;
+    /* Keep the light on the orb's body, not the link box around it. */
+    clip-path: circle(34% at 50% 46%);
+    background: radial-gradient(
+      circle at var(--p1b-lx, 35%) var(--p1b-ly, 25%),
+      color-mix(in oklab, white 70%, transparent) 0,
+      transparent 26%
+    );
+    transition:
+      opacity 200ms ease,
+      background-position 200ms ease;
+  }
+
+  .p1b[data-motion="full"] [data-testid="home-logo"] a svg {
+    scale: calc(1 + var(--p1b-squash, 0) * 1) calc(1 - var(--p1b-squash, 0) * 1);
+  }
+
+  /* Links redraw their underline from the left. */
+  .p1b[data-motion="full"]
+    main
+    :is(.proto-tiles a, .proto-depth a, section > div > p > a, figure a):hover,
+  .p1b[data-motion="full"] footer a:not([aria-label]):hover {
+    animation: p1b-redraw 520ms var(--proto-ease-out);
+  }
+
+  /* Focus rings close in. */
+  .p1b[data-motion="full"] :focus-visible {
+    animation: p1b-ring 220ms var(--proto-ease-out);
+  }
+
+  /* Headings settle word by word once they arrive (split by script; whole without it). */
+  .p1b[data-motion="full"] h2[data-split] .p1b-hword {
+    display: inline-block;
+  }
+
+  .p1b[data-motion="full"] h2[data-split="waiting"] .p1b-hword {
+    opacity: 0;
+    translate: 0 0.45em;
+  }
+
+  .p1b[data-motion="full"] h2[data-split="settled"] .p1b-hword {
+    animation: p1b-settle-word 620ms var(--proto-ease-out) both;
+    animation-delay: calc(var(--proto-i) * 55ms);
+  }
+
+  /* The FAQ answer opens to its height instead of appearing. */
+  .p1b[data-motion="full"] [id^="faq-answer-"] {
+    interpolate-size: allow-keywords;
+    overflow: hidden;
+    transition:
+      height 320ms var(--proto-ease-out),
+      opacity 260ms ease;
+
+    @starting-style {
+      height: 0;
+      opacity: 0;
+    }
+  }
+
+  .p1b[data-motion="full"] [aria-expanded] > [aria-hidden="true"] {
+    transition: rotate 260ms var(--proto-ease-out);
+  }
+
+  /* Menus: the Features flyout drops in; the phone drawer slides in over a fading backdrop. */
+  .p1b[data-motion="full"] header [aria-expanded="true"] ~ div[id] {
+    transform-origin: top left;
+    animation: p1b-menu-in 200ms var(--proto-ease-out);
+  }
+
+  .p1b[data-motion="full"] [data-testid="mobile-nav-drawer"] {
+    animation: p1b-drawer-in 320ms var(--proto-ease-out);
+  }
+
+  .p1b[data-motion="full"] [data-testid="mobile-drawer-backdrop"] {
+    animation: p1b-fade-in 240ms ease;
+  }
+
+  /* The theme wipe (View Transitions): the new theme grows from where the switch was pressed. */
+  ::view-transition-old(root) {
+    animation: none;
+  }
+
+  ::view-transition-new(root) {
+    animation: p1b-wipe 560ms var(--proto-ease-out);
+  }
+
+  /* Page to page: a short cross-fade instead of the wipe. */
+  :root.p1b-page-nav::view-transition-old(root) {
+    animation: p1b-fade-in 220ms ease reverse both;
+  }
+
+  :root.p1b-page-nav::view-transition-new(root) {
+    animation: p1b-fade-in 280ms ease 60ms both;
+  }
+}

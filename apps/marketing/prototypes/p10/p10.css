@@ -1,0 +1,181 @@
+/*
+ * Prototype 10: page-level pieces (bands, tones, the journey stand-in, the pay rise split). Token
+ * variables only. Every rule outside the motion blocks is the finished, still page.
+ */
+
+.p10-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---------- Bands: the wrapper holds the tone and the bubbles; the section inside is clear. ---------- */
+
+.p10-band {
+  position: relative;
+}
+
+.p10-band > section {
+  background: transparent;
+}
+
+.p10-tone--canvas {
+  background: var(--colors-surface-canvas);
+}
+
+.p10-tone--card {
+  background: var(--colors-surface-card);
+  --p10-sc-panel-bg: var(--colors-surface-canvas);
+}
+
+.p10-tone--contrast {
+  background: var(--colors-surface-contrast);
+}
+
+/* ---------- The journey's intro heading (the journey itself is prototype 9's). ---------- */
+
+.p10-journey__head {
+  display: grid;
+  gap: 10px;
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: clamp(40px, 7vh, 72px) 16px 0;
+}
+
+.p10-journey__head > * {
+  max-width: 40rem;
+}
+
+.p10-journey__title {
+  margin: 0;
+  color: var(--colors-text-primary);
+  font-size: clamp(1.75rem, 1.3rem + 1.6vw, 2.5rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.p10-journey__lead {
+  margin: 0;
+  color: var(--colors-text-secondary);
+  font-size: 1.0625rem;
+  line-height: 1.55;
+}
+
+/* ---------- Pay rise: the outcome's split bar and its key. ---------- */
+
+.p10-pay__outcome {
+  border-radius: 1rem;
+}
+
+.p10-pay__split {
+  display: flex;
+  gap: 3px;
+  height: 12px;
+  margin: 2px 0 4px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--colors-surface-subtle);
+}
+
+.p10-pay__part {
+  display: block;
+  min-width: 0;
+  flex-basis: 0;
+}
+
+.p10-pay__part--kept,
+.p10-pay__key--kept {
+  flex-grow: var(--kept, 1);
+  background: var(--colors-primary);
+}
+
+.p10-pay__part--tax,
+.p10-pay__key--tax {
+  flex-grow: var(--tax, 0);
+  background: color-mix(in oklab, var(--colors-text-secondary) 60%, transparent);
+}
+
+.p10-pay__part--ni,
+.p10-pay__key--ni {
+  flex-grow: var(--ni, 0);
+  background: color-mix(in oklab, var(--colors-text-secondary) 30%, transparent);
+}
+
+.p10-pay__legend {
+  list-style: none;
+  margin: 0 0 6px;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  color: var(--colors-text-secondary);
+  font-size: 0.8125rem;
+}
+
+.p10-pay__legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.p10-pay__key {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+.p10-pay__taper {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .proto[data-motion="full"] .p10-pay__part {
+    transition: flex-grow var(--t-entry) var(--ease-out);
+  }
+}
+
+/* ---------- Closing pile: sits on the dark band. ---------- */
+
+.p10-tone--contrast .p10-deck {
+  margin-bottom: 0.5rem;
+}
+
+/*
+ * Bubbles on a phone: the text runs nearly edge to edge, so only each band's large edge bubble
+ * stays, smaller and pushed out to its edge, and never behind the copy. In the hero they sit
+ * around the dashboard, below the copy.
+ */
+@media (max-width: 55.99rem) {
+  .p10 .proto-bubbles__bubble:nth-child(n + 2) {
+    display: none;
+  }
+
+  .p10 .proto-bubbles__bubble:first-child {
+    scale: 0.55;
+  }
+
+  .p10 .proto-bubbles__bubble[style*="right:"] {
+    transform-origin: 100% 50%;
+  }
+
+  .p10 .proto-bubbles__bubble[style*="left:"] {
+    transform-origin: 0% 50%;
+  }
+
+  .p10-hero > .proto-bubbles {
+    inset: 40% 0 0;
+  }
+}
+
+/* The hero's small left bubble would touch the headline; the two on the right stay. */
+.p10-hero > .proto-bubbles .proto-bubbles__bubble:nth-child(3) {
+  display: none;
+}

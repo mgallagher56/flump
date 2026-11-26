@@ -1,0 +1,834 @@
+/*
+ * Prototype 5: five scenes, one per area. Semantic token variables only.
+ *
+ * Every rule outside the motion block is the finished, still page: the server render, no script
+ * and reduced motion all show each scene complete. GSAP only adds inline transforms while a scene
+ * scrolls past, and the hero's gathering chips are a CSS animation inside the motion block.
+ */
+
+.p5 {
+  --p5-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --p5-panel-bg: var(--colors-surface-card);
+  --p5-ink-faint: color-mix(in oklab, var(--colors-text-primary) 8%, transparent);
+}
+
+.p5-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Hero */
+
+.p5-hero {
+  padding: 56px 16px 28px;
+  background: var(--colors-surface-canvas);
+}
+
+.p5-hero__inner {
+  max-width: 46rem;
+  margin: 0 auto;
+  display: grid;
+  justify-items: center;
+  gap: 20px;
+  text-align: center;
+}
+
+.p5-hero__title {
+  text-wrap: balance;
+}
+
+.p5-hero__lead {
+  max-width: 34rem;
+}
+
+.p5-chips {
+  list-style: none;
+  margin: 4px 0 8px;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 6px;
+  max-width: 44rem;
+}
+
+.p5-chip a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 clamp(12px, 2vw, 16px);
+  border-radius: 999px;
+  border: 1px solid var(--colors-border);
+  background: var(--colors-surface-card);
+  color: var(--colors-text-primary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: var(--shadows-card);
+  transition:
+    border-color 160ms ease,
+    transform 200ms var(--p5-ease);
+}
+
+.p5-chip a:hover {
+  border-color: var(--colors-primary);
+}
+
+.p5-chip a:focus-visible {
+  outline: 2px solid var(--colors-border-focus-ring);
+  outline-offset: 2px;
+}
+
+/* Scenes: one short section per area, alternating canvas and card. */
+
+.p5-scene {
+  padding: clamp(48px, 9vh, 88px) 16px;
+  background: var(--colors-surface-canvas);
+}
+
+.p5-scene:nth-of-type(even) {
+  background: var(--colors-surface-card);
+  --p5-panel-bg: var(--colors-surface-canvas);
+}
+
+.p5-scene__inner {
+  max-width: 72rem;
+  margin: 0 auto;
+  display: grid;
+  gap: 28px;
+  align-items: center;
+}
+
+.p5-scene__text {
+  display: grid;
+  gap: 12px;
+  justify-items: start;
+  max-width: 34rem;
+}
+
+.p5-scene__title {
+  margin: 0;
+  color: var(--colors-text-primary);
+  font-size: clamp(1.75rem, 1.3rem + 1.6vw, 2.5rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.p5-scene__lead {
+  margin: 0;
+  color: var(--colors-text-primary);
+  font-size: 1.125rem;
+  line-height: 1.5;
+}
+
+.p5-scene__note {
+  margin: 0;
+  color: var(--colors-text-secondary);
+  font-size: 0.9375rem;
+  line-height: 1.55;
+}
+
+.p5-scene__link {
+  margin-top: 4px;
+}
+
+.p5-scene__stage {
+  min-width: 0;
+}
+
+@media (min-width: 56rem) {
+  .p5-scene--left .p5-scene__inner {
+    grid-template-columns: 5fr 7fr;
+    gap: 64px;
+  }
+
+  .p5-scene--right .p5-scene__inner {
+    grid-template-columns: 7fr 5fr;
+    gap: 64px;
+  }
+
+  .p5-scene--right .p5-scene__text {
+    order: 2;
+  }
+}
+
+/* A panel that holds a scene's figures. */
+
+.p5-budget,
+.p5-savings__frame,
+.p5-debt {
+  border-radius: 24px;
+  border: 1px solid var(--colors-border);
+  background: var(--p5-panel-bg);
+  box-shadow: var(--shadows-card);
+}
+
+/* Accounts: the dealt cards and the total. */
+
+.p5-accounts {
+  display: grid;
+  gap: 24px;
+}
+
+.p5-cards {
+  position: relative;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+@media (min-width: 40rem) {
+  .p5-cards {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+  }
+}
+
+.p5-card {
+  position: relative;
+  z-index: var(--p5-z);
+  display: grid;
+  gap: 2px;
+  padding: 14px 16px 12px;
+  border-radius: 16px;
+  border: 1px solid var(--colors-border);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--colors-text-primary) 3%, transparent),
+      transparent 60%
+    ),
+    var(--p5-panel-bg);
+  box-shadow: var(--shadows-card);
+  will-change: transform;
+}
+
+.p5-card__name {
+  color: var(--colors-text-secondary);
+  font-size: 0.8125rem;
+  line-height: 1.3;
+}
+
+.p5-card__amount {
+  color: var(--colors-text-primary);
+  font-size: clamp(1.125rem, 1rem + 0.6vw, 1.375rem);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.p5-card__kind {
+  color: var(--colors-text-secondary);
+  font-size: 0.75rem;
+}
+
+.p5-total {
+  display: grid;
+  gap: 2px;
+}
+
+.p5-total p {
+  margin: 0;
+}
+
+.p5-total__label {
+  color: var(--colors-text-secondary);
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.p5-total__figure {
+  color: var(--colors-text-primary);
+  font-size: clamp(2.5rem, 1.8rem + 3vw, 3.75rem);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+}
+
+.p5-total__caption {
+  color: var(--colors-text-secondary);
+  font-size: 0.875rem;
+}
+
+/* Budget: the bar, the outgoings and what is left over. */
+
+.p5-budget {
+  display: grid;
+  gap: 18px;
+  padding: 22px;
+}
+
+.p5-budget p {
+  margin: 0;
+}
+
+.p5-budget__in,
+.p5-budget__leftover {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  color: var(--colors-text-secondary);
+  font-size: 0.9375rem;
+}
+
+.p5-budget__in strong,
+.p5-budget__leftover strong {
+  color: var(--colors-text-primary);
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.p5-budget__leftover {
+  padding-top: 14px;
+  border-top: 1px solid var(--colors-border);
+}
+
+.p5-budget__leftover strong {
+  font-size: 2rem;
+}
+
+.p5-budget__bar {
+  position: relative;
+  height: 56px;
+  border-radius: 14px;
+  background: var(--p5-ink-faint);
+  overflow: hidden;
+}
+
+.p5-budget__seg,
+.p5-budget__swatch {
+  background: color-mix(
+    in oklab,
+    var(--colors-primary) calc(100% - var(--p5-i) * 12%),
+    var(--colors-text-primary) calc(var(--p5-i) * 4%)
+  );
+}
+
+.p5-budget__seg {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  transform-origin: left center;
+  box-shadow: inset -2px 0 0 var(--p5-panel-bg);
+  will-change: transform;
+}
+
+.p5-budget__left {
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  right: 6px;
+  margin-left: 4px;
+  border: 1.5px dashed var(--colors-primary);
+  border-radius: 10px;
+  transform-origin: left center;
+}
+
+.p5-budget__rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px 24px;
+}
+
+@media (min-width: 30rem) {
+  .p5-budget__rows {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.p5-budget__row {
+  display: grid;
+  grid-template-columns: 12px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  color: var(--colors-text-primary);
+  font-size: 0.9375rem;
+}
+
+.p5-budget__swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+/* Pay: the folded payslip. */
+
+.p5-pay {
+  display: grid;
+  place-items: center;
+  perspective: 1400px;
+  perspective-origin: 50% 30%;
+  padding: 8px 0;
+}
+
+.p5-slip {
+  width: min(100%, 23rem);
+  display: grid;
+  transform-style: preserve-3d;
+}
+
+.p5-slip__panel {
+  position: relative;
+  height: 9rem;
+  transform-style: preserve-3d;
+}
+
+.p5-slip__panel--top {
+  z-index: 2;
+  transform-origin: 50% 100%;
+}
+
+.p5-slip__panel--bottom {
+  z-index: 1;
+  transform-origin: 50% 0;
+}
+
+.p5-slip__face,
+.p5-slip__back,
+.p5-slip__shade {
+  position: absolute;
+  inset: 0;
+}
+
+.p5-slip__face {
+  display: grid;
+  align-content: center;
+  gap: 10px;
+  padding: 16px 22px;
+  background: var(--p5-panel-bg);
+  border-inline: 1px solid var(--colors-border);
+  backface-visibility: hidden;
+}
+
+.p5-slip__back {
+  background: color-mix(in oklab, var(--p5-panel-bg) 90%, var(--colors-text-primary));
+  border: 1px solid var(--colors-border);
+  transform: rotateX(180deg);
+  backface-visibility: hidden;
+}
+
+.p5-slip__panel--top .p5-slip__face,
+.p5-slip__panel--top .p5-slip__back {
+  border-top: 1px solid var(--colors-border);
+  border-radius: 14px 14px 0 0;
+}
+
+.p5-slip__panel--bottom .p5-slip__face,
+.p5-slip__panel--bottom .p5-slip__back {
+  border-bottom: 1px solid var(--colors-border);
+  border-radius: 0 0 14px 14px;
+}
+
+/* The creases: a faint line where the sheet was folded. */
+.p5-slip__panel--middle .p5-slip__face {
+  box-shadow:
+    0 18px 36px -12px color-mix(in oklab, var(--colors-text-primary) 18%, transparent),
+    inset 0 1px 0 var(--p5-ink-faint),
+    inset 0 -1px 0 var(--p5-ink-faint);
+}
+
+.p5-slip__shade {
+  pointer-events: none;
+  opacity: 0;
+  border-radius: inherit;
+}
+
+.p5-slip__panel--top .p5-slip__shade {
+  background: linear-gradient(
+    0deg,
+    color-mix(in oklab, var(--colors-text-primary) 30%, transparent),
+    transparent
+  );
+}
+
+.p5-slip__panel--bottom .p5-slip__shade {
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--colors-text-primary) 30%, transparent),
+    transparent
+  );
+}
+
+.p5-slip p,
+.p5-slip dl,
+.p5-slip dd {
+  margin: 0;
+}
+
+.p5-slip__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  color: var(--colors-text-primary);
+  font-size: 1.0625rem;
+  font-weight: 700;
+}
+
+.p5-slip__tag {
+  color: var(--colors-text-secondary);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.p5-slip__rows {
+  display: grid;
+  gap: 8px;
+}
+
+.p5-slip__rows > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.9375rem;
+}
+
+.p5-slip__rows dt {
+  color: var(--colors-text-secondary);
+}
+
+.p5-slip__rows dd {
+  color: var(--colors-text-primary);
+  font-weight: 600;
+}
+
+.p5-slip__net {
+  display: grid;
+  gap: 2px;
+}
+
+.p5-slip__net span {
+  color: var(--colors-text-secondary);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.p5-slip__net strong {
+  color: var(--colors-text-primary);
+  font-size: clamp(2rem, 1.7rem + 1.4vw, 2.5rem);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+
+.p5-slip__rule {
+  display: block;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--colors-primary);
+  transform-origin: left center;
+}
+
+.p5-slip__note {
+  color: var(--colors-text-secondary);
+  font-size: 0.8125rem;
+}
+
+/* Savings: the sideways year. */
+
+.p5-scene--wide .p5-scene__text {
+  max-width: 40rem;
+}
+
+.p5-savings {
+  margin: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.p5-savings__caption,
+.p5-debt__caption {
+  color: var(--colors-text-secondary);
+  font-size: 0.875rem;
+}
+
+.p5-savings__frame {
+  position: relative;
+  overflow: hidden;
+  padding: 44px 20px 12px;
+}
+
+.p5-savings__track {
+  position: relative;
+  width: 100%;
+}
+
+.p5-scene[data-enhanced="true"] .p5-savings__track {
+  width: 250%;
+}
+
+@media (min-width: 56rem) {
+  .p5-scene[data-enhanced="true"] .p5-savings__track {
+    width: 170%;
+  }
+}
+
+.p5-savings__plot,
+.p5-debt__plot {
+  position: relative;
+  height: clamp(180px, 28vh, 260px);
+}
+
+.p5-savings__plot svg,
+.p5-debt__plot svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.p5-grid {
+  stroke: var(--p5-ink-faint);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.p5-savings__line,
+.p5-debt__line {
+  fill: none;
+  stroke-width: 3;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.p5-savings__line {
+  stroke: var(--colors-primary);
+}
+
+.p5-savings__area {
+  fill: color-mix(in oklab, var(--colors-primary) 12%, transparent);
+}
+
+.p5-savings__callout {
+  position: absolute;
+  margin: 0;
+  display: grid;
+  transform: translate(-50%, calc(-100% - 12px));
+  padding: 3px 8px;
+  border-radius: 8px;
+  background: var(--p5-panel-bg);
+  color: var(--colors-text-secondary);
+  font-size: 0.75rem;
+  line-height: 1.3;
+  white-space: nowrap;
+  text-align: center;
+  transition: opacity 300ms ease;
+}
+
+.p5-savings__callout[data-edge="start"] {
+  transform: translate(-8px, calc(-100% - 12px));
+  text-align: left;
+}
+
+.p5-savings__callout[data-edge="end"] {
+  transform: translate(calc(-100% + 8px), calc(-100% - 12px));
+  text-align: right;
+}
+
+.p5-savings__callout span:first-child {
+  color: var(--colors-text-primary);
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.p5-savings__months {
+  position: relative;
+  list-style: none;
+  height: 22px;
+  margin: 10px 0 0;
+  padding: 0;
+}
+
+.p5-savings__months li {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  color: var(--colors-text-secondary);
+  font-size: 0.75rem;
+}
+
+.p5-savings__months li:first-child {
+  transform: none;
+}
+
+.p5-savings__months li:last-child {
+  transform: translateX(-100%);
+}
+
+/* The marker that rides the end of a line: only while a scene is enhanced. */
+
+.p5-savings__dot,
+.p5-debt__dot {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  border-radius: 50%;
+  display: none;
+  will-change: transform;
+}
+
+.p5-savings__dot {
+  background: var(--colors-primary);
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--colors-primary) 22%, transparent);
+}
+
+.p5-debt__dot {
+  background: var(--colors-text-primary);
+  box-shadow: 0 0 0 4px var(--p5-ink-faint);
+}
+
+.p5-scene[data-enhanced="true"] :is(.p5-savings__dot, .p5-debt__dot) {
+  display: block;
+}
+
+.p5-savings__readout,
+.p5-debt__readout {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--colors-border);
+  background: var(--p5-panel-bg);
+  color: var(--colors-text-primary);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.p5-savings__readout {
+  transition: opacity 200ms ease;
+}
+
+/* On the debt line the readout sits above and to the right of the marker (clear of the line,
+   which falls from the upper left), then beside it on the left once it nears the panel's edge. */
+.p5-debt__readout {
+  top: auto;
+  bottom: calc(100% + 8px);
+  left: 8px;
+  transform: none;
+}
+
+.p5-debt__dot[data-flip="true"] .p5-debt__readout {
+  left: auto;
+  right: calc(100% + 12px);
+  bottom: auto;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Debt: the balance running down to its end date. */
+
+.p5-debt {
+  margin: 0;
+  display: grid;
+  gap: 16px;
+  padding: 22px 22px 20px;
+}
+
+.p5-debt__caption {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 12px;
+}
+
+.p5-debt__caption span:last-child {
+  color: var(--colors-text-primary);
+  font-weight: 600;
+}
+
+.p5-debt__plot {
+  margin-bottom: 26px;
+}
+
+.p5-debt__line {
+  stroke: var(--colors-text-primary);
+  stroke-width: 2.5;
+}
+
+.p5-debt__area {
+  fill: color-mix(in oklab, var(--colors-text-primary) 6%, transparent);
+}
+
+.p5-debt__base {
+  stroke: var(--colors-border);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.p5-debt__ticks {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.p5-debt__ticks li {
+  position: absolute;
+  transform: translateX(-50%);
+  color: var(--colors-text-secondary);
+  font-size: 0.75rem;
+}
+
+.p5-debt__end {
+  margin: 0;
+  display: grid;
+  gap: 2px;
+  padding-top: 14px;
+  border-top: 1px solid var(--colors-border);
+}
+
+.p5-debt__end span {
+  color: var(--colors-text-secondary);
+  font-size: 0.875rem;
+}
+
+.p5-debt__end strong {
+  color: var(--colors-text-primary);
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+/* Motion: the hero's five areas gather into their row on first paint (CSS, no script). */
+
+@keyframes p5-gather {
+  from {
+    opacity: 0;
+    transform: translate(var(--p5-dx), var(--p5-dy)) rotate(var(--p5-r)) scale(0.96);
+  }
+  35% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .proto[data-motion="full"] .p5-chip {
+    animation: p5-gather 1400ms var(--p5-ease) both;
+    animation-delay: calc(240ms + var(--p5-i) * 60ms);
+  }
+}

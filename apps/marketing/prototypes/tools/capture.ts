@@ -19,7 +19,12 @@ const { chromium } = require("@playwright/test") as typeof import("@playwright/t
 
 const [mode = "shots", base = "http://localhost:3001", only] = process.argv.slice(2);
 /** Optional third argument: one prototype, such as "3". */
-const IDS = ([1, 2, 3] as const).filter((id) => !only || String(id) === only);
+type Id = "1" | "1b" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10";
+const IDS = (["1", "1b", "2", "3", "4", "5", "6", "7", "8", "9", "10"] as const).filter(
+  (id) => !only || id === only,
+);
+/** Prototypes whose page loads a 3D scene after first paint (wait longer, report the scene). */
+const HAS_SCENE = new Set<Id>(["3", "6", "7", "9", "10"]);
 const outDir = path.resolve(import.meta.dir, "../screenshots");
 fs.mkdirSync(outDir, { recursive: true });
 
@@ -34,7 +39,7 @@ const browser = await chromium.launch({
 });
 
 async function open(
-  id: 1 | 2 | 3,
+  id: Id,
   size: keyof typeof SIZES,
   theme: Theme,
   reducedMotion: "reduce" | "no-preference" = "no-preference",
@@ -50,7 +55,7 @@ async function open(
   const page = await context.newPage();
   await page.goto(`${base}/prototypes/${id}`, { waitUntil: "networkidle" });
   // Hide the dev panel in screenshots; the frame-rate run keeps it.
-  await page.waitForTimeout(id === 3 ? 3500 : 1500);
+  await page.waitForTimeout(HAS_SCENE.has(id) ? 3500 : 1500);
   return { context, page };
 }
 
@@ -60,11 +65,31 @@ const scrollTo = async (page: import("@playwright/test").Page, y: number) => {
 };
 
 /** Scroll positions worth a picture, per prototype, as functions of the page. */
-const STOPS: Record<
-  1 | 2 | 3,
-  { name: string; y: (p: import("@playwright/test").Page) => Promise<number> }[]
-> = {
-  1: [
+type Stop = { name: string; y: (p: import("@playwright/test").Page) => Promise<number> };
+
+/**
+ * Prototypes 1b and 4 to 7: one picture at each section stop and one half a screen past it, so
+ * every half-screen step shows. Stops are the `data-proto-section` elements.
+ */
+async function sectionStops(page: import("@playwright/test").Page): Promise<Stop[]> {
+  const tops = await page.evaluate(() => {
+    const header = document.querySelector("header")?.offsetHeight ?? 0;
+    return Array.from(document.querySelectorAll<HTMLElement>("[data-proto-section]")).map(
+      (el, i) => ({
+        name: `${String(i + 1).padStart(2, "0")}-${(el.dataset.protoName ?? "section").toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+        y: Math.max(0, el.getBoundingClientRect().top + window.scrollY - header),
+      }),
+    );
+  });
+  const half = await page.evaluate(() => window.innerHeight / 2);
+  return tops.flatMap((t) => [
+    { name: t.name, y: async () => t.y },
+    { name: `${t.name}-half`, y: async () => t.y + half },
+  ]);
+}
+
+const STOPS: Partial<Record<Id, Stop[]>> = {
+  "1": [
     { name: "top", y: async () => 0 },
     {
       name: "features",
@@ -75,7 +100,7 @@ const STOPS: Record<
       y: (p) => p.evaluate(() => (document.getElementById("rough-figures")?.offsetTop ?? 0) - 200),
     },
   ],
-  2: [
+  "2": [
     { name: "top", y: async () => 0 },
     {
       name: "fog-half",
@@ -106,7 +131,7 @@ const STOPS: Record<
         }),
     },
   ],
-  3: [
+  "3": [
     { name: "top", y: async () => 0 },
     {
       name: "parting",
@@ -129,12 +154,13 @@ async function shots() {
       for (const theme of ["light", "dark"] as const) {
         const { context, page } = await open(id, size, theme);
         await page.addStyleTag({ content: ".proto-panel{display:none!important}" });
-        for (const stop of STOPS[id]) {
+        const stops = STOPS[id] ?? (await sectionStops(page));
+        for (const stop of stops) {
           await scrollTo(page, await stop.y(page));
           const file = path.join(outDir, `p${id}-${size}-${theme}-${stop.name}.png`);
           await page.screenshot({ path: file });
         }
-        if (id === 3) {
+        if (id === "3") {
           const note = await page.locator("[data-testid=p3-scene-note]").textContent();
           console.log(`p3 ${size} ${theme}: ${note}`);
         }
@@ -192,8 +218,12 @@ async function fpsRun(
     };
   });
   const result: FrameStats = { ...stats };
-  if (id === 3) {
-    result.scene = await page.locator("[data-testid=p3-scene-note]").textContent();
+  if (HAS_SCENE.has(id)) {
+    result.scene = await page
+      .locator("[data-testid$=scene-note]")
+      .first()
+      .textContent()
+      .catch(() => null);
     result.gpu = await page.evaluate(() => {
       const gl = document.createElement("canvas").getContext("webgl");
       const info = gl?.getExtension("WEBGL_debug_renderer_info");

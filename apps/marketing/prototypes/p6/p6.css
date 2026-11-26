@@ -1,0 +1,334 @@
+/* Prototype 6: the orb as a guide. Semantic token variables only. */
+
+.p6-page {
+  --p6-header: 4rem;
+  --p6-slot-h: clamp(13.5rem, 36svh, 19rem);
+  --p6-gutter: 1rem;
+  position: relative;
+}
+
+/* The fixed canvas: above the page, below the sticky header (z 20), never catching the pointer. */
+.p6-stage {
+  position: fixed;
+  inset: 0;
+  z-index: 15;
+  pointer-events: none;
+}
+
+.p6-stage .proto-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* ---- Bands that carry the orb ---- */
+
+.p6-band {
+  background: var(--colors-surface-canvas);
+  color: var(--colors-text-primary);
+}
+
+.p6-band__inner {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 0 var(--p6-gutter);
+  display: flex;
+  flex-direction: column;
+}
+
+/* The orb's own lane. Phones: a band at the top of each section, above the copy. */
+.p6-slot {
+  position: relative;
+  z-index: 1;
+  height: var(--p6-slot-h);
+  margin: 0 calc(var(--p6-gutter) * -1);
+  padding: 0.75rem var(--p6-gutter);
+  background: var(--colors-surface-canvas);
+  display: grid;
+  place-items: center;
+}
+
+.p6-band--hero .p6-slot {
+  --p6-slot-h: clamp(12rem, 30svh, 17rem);
+}
+
+.p6-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 0.5rem 0 3.5rem;
+  max-width: 34rem;
+}
+
+.p6-band--hero .p6-copy {
+  padding-bottom: 2rem;
+}
+
+.p6-band--hero .p6-copy > * {
+  text-align: left;
+}
+
+.p6-band--hero .p6-copy > div {
+  justify-content: flex-start;
+}
+
+.p6-cue {
+  margin-left: -14px;
+}
+
+/*
+ * With the scene live, each slot sticks under the header while its copy scrolls up beneath it
+ * (the slot's opaque canvas hides the copy), so text never sits on the orb.
+ */
+.p6-page[data-scene="live"] .p6-slot {
+  position: sticky;
+  top: var(--p6-header);
+}
+
+.p6-page[data-scene="live"] .p6-still {
+  visibility: hidden;
+}
+
+/* The section-button stop sits at the top of its section (moved up on phones, below). */
+.p6-mark {
+  position: relative;
+  height: 0;
+}
+
+.p6-guide {
+  position: relative;
+  background: var(--colors-surface-canvas);
+}
+
+.p6-lane {
+  display: none;
+}
+
+/*
+ * Phones with the scene live: one lane under the header for the whole run of five areas. The copy
+ * scrolls up beneath it (the lane is opaque), so text never sits on the orb; the per-section slots
+ * give their space back. Stops and anchors land a lane's height lower, just under the orb.
+ */
+@media (max-width: 51.99rem) {
+  .p6-page[data-scene="live"] .p6-lane {
+    display: block;
+    position: sticky;
+    top: var(--p6-header);
+    z-index: 2;
+    height: var(--p6-slot-h);
+    background: var(--colors-surface-canvas);
+  }
+
+  .p6-page[data-scene="live"] .p6-guide .p6-slot {
+    display: none;
+  }
+
+  .p6-page[data-scene="live"] .p6-guide .p6-mark {
+    top: calc(var(--p6-slot-h) * -1 - 0.5rem);
+  }
+
+  .p6-page[data-scene="live"] .p6-guide .p6-band {
+    scroll-margin-top: calc(var(--p6-header) + var(--p6-slot-h));
+  }
+
+  .p6-page[data-scene="live"] .p6-guide .p6-copy {
+    padding-top: 1.5rem;
+  }
+}
+
+/* ---- The still (server render, reduced motion, weak devices) ---- */
+
+.p6-still {
+  width: 100%;
+  height: 100%;
+  max-width: 30rem;
+  overflow: visible;
+}
+
+.p6-still__lit {
+  stop-color: color-mix(in oklab, var(--colors-primary-mark-lit) 70%, var(--colors-surface-canvas));
+}
+
+.p6-still__body {
+  stop-color: var(--colors-primary-mark);
+}
+
+.p6-still[data-solid="true"] .p6-still__lit {
+  stop-color: var(--colors-primary-mark-lit);
+}
+
+.p6-still__glint {
+  fill: var(--colors-primary-foreground);
+  opacity: 0.55;
+}
+
+.p6-still__shadow {
+  fill: var(--colors-text-primary);
+  opacity: 0.16;
+}
+
+/* ---- Copy ---- */
+
+.p6-title {
+  margin: 0;
+  font-size: clamp(1.625rem, 1.2rem + 1.6vw, 2.375rem);
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  font-weight: 700;
+  color: var(--colors-text-primary);
+  text-wrap: balance;
+}
+
+.p6-lead {
+  margin: 0;
+  font-size: 1.125rem;
+  line-height: 1.5;
+  color: var(--colors-text-secondary);
+  max-width: 32rem;
+}
+
+.p6-figures {
+  margin: 0.25rem 0 0;
+  width: 100%;
+  max-width: 26rem;
+}
+
+.p6-figures__caption {
+  margin: 0 0 0.625rem;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--colors-text-secondary);
+}
+
+.p6-example {
+  display: inline-block;
+  margin-right: 0.25rem;
+  padding: 0.0625rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--colors-border);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--colors-text-primary);
+  vertical-align: 0.0625rem;
+}
+
+.p6-figures__list {
+  margin: 0;
+  border-top: 1px solid var(--colors-border);
+}
+
+.p6-figures__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--colors-border);
+  font-size: 0.9375rem;
+}
+
+.p6-figures__row dt {
+  color: var(--colors-text-secondary);
+}
+
+.p6-figures__row dd {
+  margin: 0;
+  color: var(--colors-text-primary);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.p6-link {
+  font-weight: 600;
+  color: var(--colors-text-primary);
+  text-decoration: underline;
+  text-decoration-color: var(--colors-primary);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+
+.p6-link:hover {
+  text-decoration-color: var(--colors-text-primary);
+}
+
+/* ---- The plain sections, kept compact ---- */
+
+.p6-rest {
+  position: relative;
+}
+
+.p6-rest > div > section {
+  padding-block: 3.5rem;
+}
+
+.p6-band--closing .p6-copy {
+  padding-bottom: 4rem;
+}
+
+/* ---- Wide screens: copy on the left, the orb's lane on the right ---- */
+
+@media (min-width: 52rem) {
+  .p6-page {
+    --p6-slot-h: min(64svh, 34rem);
+    --p6-gutter: 1.5rem;
+  }
+
+  .p6-band--hero .p6-slot {
+    --p6-slot-h: min(64svh, 34rem);
+  }
+
+  .p6-band__inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: 3rem;
+    align-items: start;
+    /* Room for the slot to rest while its copy is read, then hand over to the next. */
+    min-height: calc(var(--p6-slot-h) + 16svh);
+  }
+
+  .p6-band--hero .p6-band__inner {
+    min-height: calc(100svh - var(--p6-header));
+  }
+
+  .p6-slot {
+    grid-column: 2;
+    grid-row: 1;
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    align-self: start;
+  }
+
+  .p6-page[data-scene="live"] .p6-slot {
+    top: calc(var(--p6-header) + (100svh - var(--p6-header) - var(--p6-slot-h)) / 2);
+  }
+
+  .p6-copy {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: center;
+    padding: 4rem 0;
+  }
+
+  .p6-band--hero .p6-copy {
+    padding: 0;
+  }
+
+  .p6-band--hero .p6-copy,
+  .p6-band--hero .p6-slot {
+    align-self: center;
+  }
+}
+
+.p6-scene-note {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

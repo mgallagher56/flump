@@ -1,0 +1,159 @@
+/*
+ * Prototype 8's own pieces: the five areas band, the scene pieces, the pay rise card and the
+ * pointer light on outline buttons. Semantic token variables only; durations from the pace tokens.
+ */
+
+.p8-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* The outline buttons get a primary-tinted light (the shared one is for filled buttons). */
+.p8 :is([data-proto="cta-secondary"], .p8-tag a, #pay-rise [data-light])::before {
+  background: radial-gradient(
+    140px circle at var(--lx, 50%) var(--ly, 50%),
+    color-mix(in oklab, var(--colors-primary) 16%, transparent),
+    transparent 70%
+  );
+}
+
+/* ---- The five areas, named ---- */
+
+.p8-areas__band {
+  position: relative;
+  overflow-x: clip;
+  padding: clamp(40px, 7vh, 64px) 16px;
+  background: var(--colors-surface-canvas);
+}
+
+.p8-areas__inner {
+  max-width: 52rem;
+  margin: 0 auto;
+  display: grid;
+  justify-items: center;
+  gap: 20px;
+  text-align: center;
+}
+
+.p8-areas__head {
+  display: grid;
+  gap: 8px;
+}
+
+.p8-areas__title {
+  margin: 0;
+  color: var(--colors-text-primary);
+  font-size: clamp(1.75rem, 1.3rem + 1.6vw, 2.5rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.p8-areas__lead {
+  margin: 0;
+  color: var(--colors-text-secondary);
+  font-size: 1.0625rem;
+}
+
+.p8-tags {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 6px;
+}
+
+.p8-tag a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid var(--colors-border);
+  background: var(--colors-surface-card);
+  color: var(--colors-text-primary);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: var(--shadows-card);
+  transition: border-color var(--t-hover) var(--ease-out);
+}
+
+.p8-tag a:hover {
+  border-color: var(--colors-primary);
+}
+
+.p8-tag a:focus-visible {
+  outline: 2px solid var(--colors-border-focus-ring);
+  outline-offset: 2px;
+}
+
+.p8-areas__more {
+  margin: 0;
+}
+
+/* ---- Scenes: the hero piece each area keeps ---- */
+
+.p8-s-scene__piece {
+  height: 4.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-bottom: 2px;
+}
+
+/*
+ * The bubbles gather round each scene's picture, never behind its words: they sit in the stage,
+ * reaching a little past it, behind the solid panels.
+ */
+.p8-s-scene__stage {
+  position: relative;
+}
+
+.p8-s-scene__stage > .proto-bubbles {
+  inset: -8% -6%;
+  overflow: visible;
+}
+
+/* ---- Pay rise ---- */
+
+/* The taper note opens and closes to its own height, never jumping. */
+/* Closed, it also gives back the column's gap above it, so no empty space is left. */
+.p8-taper {
+  display: grid;
+  grid-template-rows: 0fr;
+  margin-top: -1rem;
+  opacity: 0;
+  transition:
+    grid-template-rows var(--t-disclosure) var(--ease-in-out),
+    margin-top var(--t-disclosure) var(--ease-in-out),
+    opacity var(--t-disclosure) var(--ease-out);
+}
+
+.p8-taper[data-open="true"] {
+  grid-template-rows: 1fr;
+  margin-top: 0;
+  opacity: 1;
+}
+
+.p8-taper > div {
+  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .p8-taper {
+    transition: none;
+  }
+}
+
+.proto[data-motion="reduce"] .p8-taper {
+  transition: none;
+}

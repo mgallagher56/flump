@@ -1,0 +1,128 @@
+/* Shared chrome for prototypes 4 to 7: section buttons and the scroll cue. Token variables only. */
+
+[data-proto-section] {
+  scroll-margin-top: 4rem;
+}
+
+.proto-sectionnav {
+  position: fixed;
+  left: 12px;
+  bottom: 12px;
+  z-index: 55;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  border: 1px solid var(--colors-border);
+  background: color-mix(in oklab, var(--colors-surface-card) 94%, transparent);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadows-floating);
+  color: var(--colors-text-primary);
+}
+
+.proto-sectionnav__button {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border: 0;
+  background: transparent;
+  color: var(--colors-text-primary);
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    transform 160ms var(--proto-ease-out);
+}
+
+.proto-sectionnav__button--next {
+  background: var(--colors-primary);
+  color: var(--colors-primary-foreground);
+}
+
+.proto-sectionnav__button:hover:not(:disabled) {
+  background: var(--colors-surface-subtle);
+}
+
+.proto-sectionnav__button--next:hover:not(:disabled) {
+  background: var(--colors-primary-emphasis);
+}
+
+.proto-sectionnav__button:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+.proto-sectionnav__button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.proto-sectionnav__button:focus-visible {
+  outline: 2px solid var(--colors-border-focus-ring);
+  outline-offset: 2px;
+}
+
+.proto-sectionnav__label {
+  margin: 0;
+  padding: 0 8px;
+  font-size: 0.8125rem;
+  line-height: 1.2;
+  color: var(--colors-text-primary);
+  white-space: nowrap;
+}
+
+.proto-sectionnav__count {
+  color: var(--colors-text-secondary);
+}
+
+@media (max-width: 30rem) {
+  .proto-sectionnav__name {
+    display: none;
+  }
+}
+
+.proto-scrollcue {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  color: var(--colors-text-secondary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: opacity 300ms ease;
+}
+
+.proto-scrollcue:hover {
+  color: var(--colors-text-primary);
+}
+
+.proto-scrollcue[data-scrolled="true"] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.proto-scrollcue:focus-visible {
+  opacity: 1;
+  outline: 2px solid var(--colors-border-focus-ring);
+  outline-offset: 2px;
+}
+
+@keyframes proto-bob {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 4px;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .proto[data-motion="full"] .proto-scrollcue__icon {
+    animation: proto-bob 1.6s ease-in-out infinite;
+  }
+}

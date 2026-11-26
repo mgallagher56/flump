@@ -18,6 +18,14 @@ const ENTRIES = {
   p1: "p1/P1.tsx",
   p2: "p2/P2.tsx",
   p3: "p3/P3.tsx",
+  p1b: "p1b/P1b.tsx",
+  p4: "p4/P4.tsx",
+  p5: "p5/P5.tsx",
+  p6: "p6/P6.tsx",
+  p7: "p7/P7.tsx",
+  p8: "p8/P8.tsx",
+  p9: "p9/P9.tsx",
+  p10: "p10/P10.tsx",
 } as const;
 
 /**
@@ -31,7 +39,27 @@ const isShared = (specifier: string, resolved?: string) =>
   /shared\/(PrototypeShell|sections)$/.test(specifier) ||
   (resolved?.startsWith(src) ?? false);
 
-const CSS = { p1: ["p1/p1.css"], p2: ["p2/p2.css"], p3: ["p2/p2.css", "p3/p3.css"] } as const;
+/** Round one lists its CSS; for 4 to 7, every CSS file in the folder plus the shared kit. */
+const folderCss = (id: string) => [
+  "shared/kit.css",
+  ...fs
+    .readdirSync(path.join(root, id))
+    .filter((f) => f.endsWith(".css"))
+    .map((f) => `${id}/${f}`),
+];
+const CSS: Record<string, readonly string[]> = {
+  p1: ["p1/p1.css"],
+  p2: ["p2/p2.css"],
+  p3: ["p2/p2.css", "p3/p3.css"],
+  p1b: folderCss("p1b"),
+  p4: folderCss("p4"),
+  p5: folderCss("p5"),
+  p6: folderCss("p6"),
+  p7: folderCss("p7"),
+  p8: folderCss("p8"),
+  p9: folderCss("p9"),
+  p10: folderCss("p10"),
+};
 const cssGzip = (files: readonly string[]) =>
   gzipSync(files.map((f) => fs.readFileSync(path.join(root, f), "utf8")).join("\n")).length;
 
@@ -79,7 +107,7 @@ for (const [id, entry] of Object.entries(ENTRIES)) {
     lazyGzip: 0,
     initialRaw: 0,
     lazyRaw: 0,
-    cssGzip: cssGzip(CSS[id as keyof typeof CSS]),
+    cssGzip: cssGzip(CSS[id] ?? []),
   };
   // The entry and anything it imports statically load with the page; the other chunks are
   // dynamic imports that load after first paint.

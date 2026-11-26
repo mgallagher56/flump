@@ -1,0 +1,58 @@
+/* Prototype 9's page around the journey: the hero and the rest of the home page. Tokens only. */
+
+.p9-hero {
+  min-height: var(--p9-screen);
+  display: grid;
+  align-content: center;
+  width: 100%;
+  max-width: 76rem;
+  margin: 0 auto;
+  padding: 3rem 1.5rem;
+  box-sizing: border-box;
+}
+
+.p9-hero__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  max-width: 34rem;
+}
+
+.p9-hero .p9-ctas {
+  margin-top: 0;
+}
+
+.p9-hero__cue {
+  margin-top: 0.5rem;
+  margin-left: -14px;
+}
+
+@media (max-width: 47.99rem) {
+  .p9-hero {
+    align-content: start;
+    padding: 2rem 1rem;
+  }
+}
+
+/* The rest covers the journey's layer and keeps to the page's canvas. */
+.p9-rest {
+  position: relative;
+  z-index: 1;
+  background: var(--colors-surface-canvas);
+}
+
+/* A band with bubbles: they sit behind its content, clipped to the band. */
+.p9-bubbly {
+  position: relative;
+  overflow: clip;
+}
+
+.p9-bubbly > div > :not(.proto-bubbles) {
+  position: relative;
+  z-index: 1;
+}
+
+/* Bubbles start below the band's heading, so none sits behind its text. */
+.p9-bubbly .proto-bubbles {
+  top: 9rem;
+}

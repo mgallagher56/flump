@@ -141,3 +141,24 @@
 .proto-index li a span {
   color: var(--colors-text-secondary);
 }
+
+.proto-panel__controls {
+  display: grid;
+  gap: 6px;
+}
+
+.proto-panel__controls label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.proto-panel__controls select {
+  font: inherit;
+  color: var(--colors-text-primary);
+  background: var(--colors-surface-card);
+  border: 1px solid var(--colors-border);
+  border-radius: 8px;
+  padding: 2px 6px;
+}
