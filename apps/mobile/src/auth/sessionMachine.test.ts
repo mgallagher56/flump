@@ -14,6 +14,7 @@ const S = {
   sessionEnded: { status: "sessionEnded" },
   notInvited: { status: "notInvited" },
   termsRequired: { status: "termsRequired" },
+  outOfStep: { status: "outOfStep" },
   signingOut: { status: "signingOut" },
 } satisfies Record<SessionState["status"], SessionState>;
 
@@ -68,6 +69,11 @@ describe("sessionReducer", () => {
     [S.notInvited, { type: "SIGN_OUT_STARTED" }, S.signingOut],
     [S.sessionEnded, { type: "SIGN_OUT_STARTED" }, S.signingOut],
     [S.signingOut, { type: "SIGNED_OUT" }, S.signedOut],
+    [S.loading, { type: "OUT_OF_STEP" }, S.outOfStep],
+    [S.signingIn, { type: "OUT_OF_STEP" }, S.outOfStep],
+    [S.outOfStep, { type: "RETRY_STARTED" }, S.loading],
+    [S.outOfStep, { type: "SIGN_OUT_STARTED" }, S.signingOut],
+    [S.outOfStep, { type: "SESSION_ENDED" }, S.sessionEnded],
   ])("%j + %j -> %j", (from, event, to) => {
     expect(sessionReducer(from, event)).toEqual(to);
   });
@@ -101,6 +107,11 @@ describe("sessionReducer", () => {
       "notInvited:SIGN_OUT_STARTED",
       "sessionEnded:SIGN_OUT_STARTED",
       "signingOut:SIGNED_OUT",
+      "loading:OUT_OF_STEP",
+      "signingIn:OUT_OF_STEP",
+      "outOfStep:RETRY_STARTED",
+      "outOfStep:SIGN_OUT_STARTED",
+      "outOfStep:SESSION_ENDED",
     ]);
     const events: SessionEvent[] = [
       { type: "NO_SESSION" },
@@ -112,6 +123,7 @@ describe("sessionReducer", () => {
       { type: "RETRY_STARTED" },
       { type: "NOT_INVITED" },
       { type: "TERMS_REQUIRED" },
+      { type: "OUT_OF_STEP" },
       { type: "SESSION_ENDED" },
       { type: "SIGN_OUT_STARTED" },
       { type: "SIGNED_OUT" },

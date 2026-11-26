@@ -44,17 +44,18 @@ Source: section 2 of `docs/audit/plans/E20-plan-draft.md`. This is a living summ
 
 ## Principal risks and mitigation tasks
 
-| Component           | Main risk                                                                                 | Task                           |
-| ------------------- | ----------------------------------------------------------------------------------------- | ------------------------------ |
-| Web SSR and session | CSRF from same-site origins, `GET /logout`, token readable by any script                  | Q1, Q2, Q7, Q15, Phase 1 and 2 |
-| Backend REST        | Bearer replay until `exp`, mass assignment, error text echoed                             | Q4 to Q6, Phases 3 and 4       |
-| Authorisation       | Cross-user reads and writes unproven by integration tests                                 | Phase 6                        |
-| MCP                 | PAT theft, unlimited pre-auth guessing, leaked error text, unenforced scopes              | Q10 (this PR), Q11, Phase 7    |
-| Receipts and avatar | Polyglot or oversize upload, `href={dataURL}` sink                                        | Q9, Phase 5                    |
-| Auth (WorkOS)       | Issuer not pinned, no audience or client binding                                          | Q5, Q12                        |
-| Bank connections    | Forgeable OAuth `state` (flow currently dead), raw provider errors                        | L2, E16                        |
-| Marketing           | `e.stack` in 500 bodies, `script-src https:` negating the nonce, per-request env mutation | Q8 (this PR)                   |
-| Supply chain        | Compromised action or dependency, secret in git history                                   | E18, T2 to T4                  |
+| Component            | Main risk                                                                                        | Task                                          |
+| -------------------- | ------------------------------------------------------------------------------------------------ | --------------------------------------------- |
+| Web SSR and session  | CSRF from same-site origins, `GET /logout`, token readable by any script                         | Q1, Q2, Q7, Q15, Phase 1 and 2                |
+| Backend REST         | Bearer replay until `exp`, mass assignment, error text echoed                                    | Q4 to Q6, Phases 3 and 4                      |
+| Authorisation        | Cross-user reads and writes unproven by integration tests                                        | Phase 6                                       |
+| MCP                  | PAT theft, unlimited pre-auth guessing, leaked error text, unenforced scopes                     | Q10 (this PR), Q11, Phase 7                   |
+| Receipts and avatar  | Polyglot or oversize upload, `href={dataURL}` sink                                               | Q9, Phase 5                                   |
+| Auth (WorkOS)        | Issuer not pinned, no audience or client binding                                                 | Q5, Q12                                       |
+| Bank connections     | Forgeable OAuth `state` (flow currently dead), raw provider errors                               | L2, E16                                       |
+| Marketing            | `e.stack` in 500 bodies, `script-src https:` negating the nonce, per-request env mutation        | Q8 (this PR)                                  |
+| Supply chain         | Compromised action or dependency, secret in git history                                          | E18, T2 to T4                                 |
+| Mobile auth (WorkOS) | Old refresh tokens not retired: a replay 65 s after rotation was accepted (staging, 26 Nov 2026) | Open, blocks public launch (E12 S2b, PR #951) |
 
 ## Worst current chain (AC1)
 

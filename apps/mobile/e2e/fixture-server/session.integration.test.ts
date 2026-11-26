@@ -110,6 +110,17 @@ describe("sign-in against the WorkOS stand-in", () => {
     expect(phone.secure.items.size).toBe(0);
   });
 
+  it.each(["older", "newer"] as const)(
+    "a %s backend's profile still signs in (version skew, PR #951)",
+    async (backend) => {
+      server.setScenario({ backend });
+      const phone = app();
+      await phone.session.restore();
+      await phone.session.signIn();
+      expect(phone.session.getState()).toEqual({ status: "signedIn" });
+    },
+  );
+
   it("a person not on the beta lands on Not invited", async () => {
     server.setScenario({ account: "not-invited" });
     const phone = app();
@@ -194,6 +205,7 @@ describe("the dev sign-in check against the WorkOS stand-in", () => {
       workos: createWorkosClient(config),
       checkAccountWith: (token) => checkAccountWithToken(server.origin, token),
       wait: async () => {},
+      endServerSession: createServerSignOut(server.origin),
     });
     expect(report).toEqual({
       issuer: `${server.origin}/user_management/${CLIENT_ID}`,
@@ -207,9 +219,14 @@ describe("the dev sign-in check against the WorkOS stand-in", () => {
       reuseGaveSameTokens: true,
       oldRefreshTokenAfterWait: "accepted",
       replacementAfterReuse: "accepted",
+      lateReuseGaveSameTokens: true,
+      serverSignOut: "ended",
+      oldRefreshTokenAfterSignOut: "rejected",
+      newestRefreshTokenAfterSignOut: "rejected",
       backend: "ok",
     });
-    expect(phone.secure.items.size).toBe(1);
+    // The check ends with a server sign-out and an empty store.
+    expect(phone.secure.items.size).toBe(0);
   });
 });
 

@@ -1,0 +1,17 @@
+# PR #951: an installed app meets backends older than itself (staging before a release). A profile
+# without a field added since (E35's `wellbeingQuestions`) must still sign in, and never show the
+# offline or out-of-step screens.
+appId: app.flump.mobile
+---
+- runScript:
+    file: ../scripts/fixture.js
+    env:
+      SCENARIO: '{"backend": "older"}'
+- runFlow: ../subflows/launch-signed-out.yaml
+- runFlow:
+    file: ../subflows/sign-in.yaml
+    env:
+      AFTER: "You are signed in"
+- assertNotVisible: "We could not reach Flump"
+- assertNotVisible: "This app and Flump are out of step"
+- takeScreenshot: older-backend-${THEME}

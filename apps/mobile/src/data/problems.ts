@@ -14,6 +14,11 @@ export type ApiProblem =
   | "notInvited"
   | "unauthorised"
   | "unavailable"
+  /**
+   * The server answered, but not in a shape this version of the app understands (`bad-response`):
+   * the app and the backend are out of step (version skew), not offline.
+   */
+  | "outOfStep"
   | "other";
 
 export const TERMS_NOT_ACCEPTED_CODE = "terms_not_accepted";
@@ -26,5 +31,6 @@ export function classifyApiError(error: unknown): ApiProblem {
   if (error.kind === "not-invited") return "notInvited";
   if (error.kind === "unauthorised") return "unauthorised";
   if (error.kind === "unavailable" || error.kind === "server") return "unavailable";
+  if (error.kind === "bad-response") return "outOfStep";
   return "other";
 }

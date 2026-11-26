@@ -19,6 +19,8 @@ describe("classifyApiError", () => {
     ["unauthorised", "unauthorised"],
     ["unavailable", "unavailable"],
     ["server", "unavailable"],
+    // Flump answered in a shape this version does not understand: out of step, not offline.
+    ["bad-response", "outOfStep"],
     ["client", "other"],
   ] as const)("%s is %s", (kind, problem) => {
     expect(classifyApiError(err(kind))).toBe(problem);

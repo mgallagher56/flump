@@ -871,3 +871,17 @@ describe("fixture stats: waiting for a sign-out", () => {
     expect((await stats("?signOutsAtLeast=1")).signOuts).toBe(1);
   });
 });
+
+describe("canned /v1: version skew (PR #951)", () => {
+  it.each([
+    ["current", true, false],
+    ["older", false, false],
+    ["newer", true, true],
+  ] as const)("the %s backend's profile", async (backend, hasWellbeing, hasExtra) => {
+    server.setScenario({ backend });
+    const { access_token } = await signIn();
+    const body = (await (await getProfile(access_token)).json()) as Record<string, unknown>;
+    expect("wellbeingQuestions" in body).toBe(hasWellbeing);
+    expect("fieldFromALaterBackend" in body).toBe(hasExtra);
+  });
+});

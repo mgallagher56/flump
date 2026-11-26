@@ -15,6 +15,10 @@ const report: SignInCheckReport = {
   reuseGaveSameTokens: true,
   oldRefreshTokenAfterWait: "rejected",
   replacementAfterReuse: "accepted",
+  lateReuseGaveSameTokens: null,
+  serverSignOut: "ended",
+  oldRefreshTokenAfterSignOut: "rejected",
+  newestRefreshTokenAfterSignOut: "rejected",
   backend: "ok",
 };
 
@@ -35,6 +39,9 @@ describe("SignInCheck (dev only)", () => {
     expect(screen.getByText("Same new token given back: yes")).toBeOnTheScreen();
     expect(screen.getByText("Old refresh token after 65 seconds: rejected")).toBeOnTheScreen();
     expect(screen.getByText("Newest refresh token after the reuse: accepted")).toBeOnTheScreen();
+    expect(screen.getByText("Server sign-out: ended")).toBeOnTheScreen();
+    expect(screen.getByText("Old refresh token after sign-out: rejected")).toBeOnTheScreen();
+    expect(screen.getByText("Newest refresh token after sign-out: rejected")).toBeOnTheScreen();
   });
 
   it("asks for a sign-in first when nothing is stored", async () => {

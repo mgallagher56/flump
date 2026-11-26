@@ -89,7 +89,9 @@ export function CheckIn({ offline = false, marketingOrigin, onClose, now }: Chec
       <Screen edges={EDGES} testID="check-in-load-error">
         <ErrorState
           heading={CHECK_IN.loadErrorHeading}
-          body={CHECK_IN.loadErrorBody}
+          body={
+            data.problem === "outOfStep" ? CHECK_IN.loadErrorOutOfStepBody : CHECK_IN.loadErrorBody
+          }
           retryLabel={CHECK_IN.tryAgain}
           retryTestID="check-in-retry"
           onRetry={data.retry}

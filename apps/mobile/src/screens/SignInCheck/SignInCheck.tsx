@@ -14,6 +14,7 @@ import { Screen } from "../../components/Screen";
 import { Text } from "../../components/Text";
 import { loadSignInConfig, MobileConfigError } from "../../config";
 import { checkAccountWithToken } from "../../data/account";
+import { createServerSignOut } from "../../data/serverSignOut";
 import { createWorkosClient } from "../../data/workos";
 
 /**
@@ -43,7 +44,8 @@ export function SignInCheck({ run = defaultRun }: { run?: () => Promise<SignInCh
     <Screen edges={["right", "bottom", "left"]}>
       <Text>
         Runs the WorkOS questions from plan section 5.1 once. Shows no token values. It waits{" "}
-        {REUSE_WAIT_MS / 1000} seconds partway, so it takes over a minute.
+        {REUSE_WAIT_MS / 1000} seconds partway, so it takes over a minute. It ends by signing you
+        out on the server, so sign in again afterwards.
       </Text>
       <Button label="Run the sign-in check" pending={pending} onPress={() => void start()} />
       {problem ? <Text color="danger">{problem}</Text> : null}
@@ -79,6 +81,17 @@ function rows(report: SignInCheckReport): [string, string][] {
     ],
     [`Old refresh token after ${REUSE_WAIT_MS / 1000} seconds`, report.oldRefreshTokenAfterWait],
     ["Newest refresh token after the reuse", report.replacementAfterReuse],
+    [
+      "Late reuse gave the newest token back",
+      report.lateReuseGaveSameTokens === null
+        ? "not-tried"
+        : report.lateReuseGaveSameTokens
+          ? "yes"
+          : "no",
+    ],
+    ["Server sign-out", report.serverSignOut],
+    ["Old refresh token after sign-out", report.oldRefreshTokenAfterSignOut],
+    ["Newest refresh token after sign-out", report.newestRefreshTokenAfterSignOut],
     ["Backend GET /v1/user-profile", report.backend],
   ];
 }
@@ -113,5 +126,6 @@ async function defaultRun(): Promise<SignInCheckReport> {
     workos: createWorkosClient(config.auth),
     checkAccountWith: (token) => checkAccountWithToken(config.api.apiBaseUrl, token),
     wait: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+    endServerSession: createServerSignOut(config.api.apiBaseUrl),
   });
 }

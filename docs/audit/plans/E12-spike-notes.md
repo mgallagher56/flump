@@ -114,9 +114,17 @@ On 26 November 2026 the owner ran development builds on an Android 17 emulator a
 
 **Owner-only setting that tightens it.** The WorkOS dashboard's Sessions tab has "Maximum session length" and "Inactivity timeout" (they apply to web too). The decider suggests 30 days and 14 days; the current values were not visible to agents. This is a suggestion for the owner, not a requirement for the beta.
 
-**Measured, not assumed.** The dev Sign-in check now sends the old token again at once, records whether it gave back the same new token, waits 65 seconds and sends it again, then tries the newest token. Expected from the docs: accepted, yes, rejected, accepted. The owner re-runs it on one simulator (the report's owner list).
+**Measured, not assumed.** The dev Sign-in check sends the old token again at once, records whether it gave back the same new token, waits 65 seconds and sends it again, then tries the newest token. The coordinator ran it on an Android 17 emulator against staging WorkOS on 26 November 2026: accepted at once with the same new token; **still accepted after 65 seconds**; the newest token still accepted after that. So WorkOS did not retire the old token within 65 seconds, which the 30 second grace period in its docs would have done. Either the window is longer than documented, or old tokens are not retired at all.
 
-**Decider verdict (Fable, 26 November 2026).** Acceptable for the beta, with no app change beyond the server revoke: it is WorkOS's documented behaviour, a replay needs a token that only the secure store holds, and the single shared refresh already suits a grace period. Condition: record a replay after 60 seconds or more being refused, which the extended check does.
+**First decider verdict (Fable, 26 November 2026), now withdrawn.** Acceptable for the beta on condition that a replay after 60 seconds or more is refused. The coordinator's run failed that condition.
+
+**Second decider verdict (Fable, 26 November 2026).** An open known risk: it does not block #951 or the closed beta, and it does block a public launch. Tolerable for now because the refresh token is only in the secure store, sign-out revokes the session on the server, an access token lasts 300 seconds and the beta is small. What is lost is theft detection: a copied refresh token may work alongside the real device for as long as the session lasts. Recorded in `docs/security/threat-model.md`. Next, tests only:
+
+- The Sign-in check now ends with the decisive test: a server sign-out, then the old and the newest refresh token, both of which must be refused. If either survives, that blocks the beta.
+- It also records whether the 65 second replay gave back the newest pair or forked a new one (a fork is worse).
+- Longer waits (5 minutes, 30 minutes, 24 hours) are a by-hand re-check for the coordinator or owner.
+
+Owner steps: read the WorkOS dashboard's Sessions tab and report the maximum session length and inactivity timeout, setting values if they are unset (one-off); ask WorkOS support whether old refresh tokens are retired and what the real window is.
 
 ### Sign-out on Android
 
@@ -152,6 +160,30 @@ On iOS a Keychain item survives an uninstall, so a reinstalled app would find th
 
 - The "Open debugger to view warnings" banner the owner saw after sign-out and sign-in is the development client's own "Cannot connect to Expo CLI ... 10.0.2.2:8081" warning: the dev tooling lost its link to Metro around the browser sheet. Not app code; it cannot appear in a release build. The flows do not assert on it.
 - Android 17 asks a development build for the local network permission (`android.permission.ACCESS_LOCAL_NETWORK`) to reach Metro; denied, the app shows a red "loadJSBundleFromAssets" screen, and `adb shell pm grant app.flump.mobile android.permission.ACCESS_LOCAL_NETWORK` fixes it (README). The e2e runner needs nothing: Maestro's `launchApp` already tries to grant every permission (CI's maestro.log shows it trying `ACCESS_LOCAL_NETWORK`, refused as unknown on the API 34 image), so a newer image gets it granted the same way.
+
+### Coordinator's device check of #951 (Android 17 emulator, staging, 26 November 2026)
+
+- **Passed.** Sign out showed the confirmation's words; after "Sign out" no browser opened (the app stayed the top activity) and it landed on the first screen with no notice. Staging answered 404 to `POST /v1/session/sign-out` (the route is not deployed yet), and the app stayed silent and cleared the device, as intended. Signing in again, WorkOS asked "Confirm it's you" with the email filled in, so `max_age=0` works, and the browser sheet closed by itself. The refresh results are under "Refresh token reuse".
+- **Problem, fixed here.** After sign-in and on every relaunch the app said "We could not reach Flump", while staging answered `GET /v1/user-profile` with 200. This branch's contract includes E35 W5, which made `wellbeingQuestions` a required profile field; staging runs the release before it, so the parse failed (`bad-response`), and the app read every such error as no connection.
+
+### Version skew between the app and the backend
+
+An installed app meets backends older than itself (staging before a release) and newer ones (every release after it shipped). A newer backend's extra fields were already fine: `@flump/api-client` drops unknown keys before parsing. A field the contract added since, which an older backend does not send, was not.
+
+**Decider verdict (Fable, 26 November 2026).**
+
+- In #951:
+  - The sign-in account check no longer parses the profile body at all; it needs only the status.
+  - A `bad-response` is its own outcome, "out of step", with its own words ("This app and Flump are out of step ... did not understand Flump's answer"), never "check your connection". The session gets an `outOfStep` state with Try again and Sign out; the check-in's load error says the same.
+  - The fixture has a `backend` scenario (`older`: no `wellbeingQuestions`; `newer`: an extra field), with tests and the `older-backend` flow.
+  - No per-read defaults across the data layer.
+- Proposed follow-up, before the next contract change that adds a response field:
+  - A rule in `docs/api/versioning.md`: a new response field is `.optional()` or has a `.default()` on the client's read path until every backend the app can meet sends it, enforced in `check:laws` (a new required response field against the merge base fails unless allow-listed).
+  - The server's own tests still assert the field is present.
+  - `wellbeingQuestions` is the first to convert. Use `.optional()` where "unknown" differs from "off".
+- Not chosen:
+  - A minimum backend version in the app: it only turns a parse failure into a block screen, and staging lagging a release is normal.
+- Web's strict checks stay: web deploys with the backend.
 
 ### Follow-up: POST from the app needs a UUID source
 
