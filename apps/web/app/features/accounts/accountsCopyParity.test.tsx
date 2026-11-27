@@ -263,6 +263,12 @@ describe("the mobile net worth history says what web's says", () => {
     expect(HISTORY.carriedForward).toBe(historySourceNote({ recorded: null }));
   });
 
+  it("the months sit behind web's chart drawer words", async () => {
+    // Web's ChartFigure titles its data drawer "Show data" (it reads "Hide data" while open).
+    const { SHOW_DATA } = await mobile();
+    expect(SHOW_DATA).toEqual({ show: "Show data", hide: "Hide data" });
+  });
+
   it("the prompts, the months compared and the leave-out sentence", async () => {
     const m = await mobile();
     for (const n of [0, 1, 2]) expect(m.fewMonthsPrompt(n)).toBe(fewMonthsPrompt(n));

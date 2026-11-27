@@ -1,5 +1,5 @@
 # E12 S6: net worth history. From Home's link under the trend bars, the home owner's change since
-# last month, the chart's summary and every month. Then a household with two recorded months
+# last month, the chart's summary and the months behind "Show data". Then a household with two recorded months
 # (`twoMonths`), from the Accounts list: the change, and web's sentence in place of the chart.
 # The runner runs it in light and in dark, stopping and settling the app first; no retries.
 appId: app.flump.mobile
