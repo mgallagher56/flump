@@ -2337,6 +2337,45 @@ figures:
       account (fable-decider, 27 November 2026). The debt summary keeps its own no-debt-account
       rule. A savings, investment, pension or property balance below zero is not counted here; the
       accounts list flags it (belowZeroToCheck).
+  - id: budget-page
+    name: The Budget page's overview facts, ranked categories, breathing room basis and illustration
+    area: budget
+    computed_by: { function: selectBudgetPage, path: packages/finance-engine/src/budget-page.ts }
+    other_paths:
+      - {
+          function: selectBudgetPageFromRows,
+          status: wrapper,
+          path: packages/finance-engine/src/budget-page.ts,
+          note: "the same page from the API rows, through the figures buildFinancialPicture uses (selectBudgetFigures, selectSafeToSpend, selectMonthsOfCover); the mobile app's one call",
+        }
+    inputs:
+      [
+        budget-entries,
+        budget-entry-link-kind,
+        budget-entry-link-account,
+        custom-budget-categories,
+        salary,
+        typed-take-home,
+        tax-region,
+        student-loan-plan,
+        housing-cost,
+        account-balance,
+        account-monthly-amount,
+        ownership-share,
+      ]
+    shown_on:
+      - {
+          surface: budget,
+          path: apps/web/app/containers/budget/BudgetContainer.tsx,
+          note: "BudgetOverview, BudgetCategoryList, BreathingRoomBasis and RunwayCalculator call the same module's functions (E12 S10)",
+        }
+    links: []
+    verdict: holds
+    note: >-
+      The sums and rules web's Budget page held outside the engine (going out each month, which
+      prompt stands in for a figure, the ranked category totals, the page's rows with linked lines
+      in place, the breathing room basis count and the what-if illustration) moved into the engine
+      in E12 S10 with no figure change.
   - id: account-shown-balance
     name: An account's balance as shown, and its change since last month
     area: accounts
@@ -2662,10 +2701,10 @@ figures:
       }
     other_paths:
       - {
-          function: "runway what-if sums",
-          status: duplicate,
-          path: apps/web/app/features/budget/components/RunwayCalculator/RunwayCalculator.tsx,
-          note: "applies a joint share twice",
+          function: runwayIllustration,
+          status: wrapper,
+          path: packages/finance-engine/src/budget-page.ts,
+          note: "the what-if illustration (E12 S10, moved from RunwayCalculator.tsx with no figure change): starts from the saved figure's money to draw on and essentials and applies only the inputs changed, then monthsOfCoverFor",
         }
     inputs: [budget-entries, account-balance, account-monthly-amount, ownership-share]
     shown_on:

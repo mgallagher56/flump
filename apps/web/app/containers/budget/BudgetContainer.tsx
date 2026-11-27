@@ -9,10 +9,13 @@ import {
   BUDGET_HOUSING_CATEGORY,
   type BudgetAccountLinkOffer,
   type BudgetLinkOffer,
-  budgetRowMonthly,
+  budgetCategoryEntries,
+  budgetPageCategories,
   getUkTaxYearContext,
   HOUSING_ROW_NAME,
+  INCOME_CATEGORY,
   PortfolioSnapshot,
+  STANDARD_BUDGET_CATEGORIES,
   takeHomeLeavesOut,
 } from "@flump/finance-engine";
 import {
@@ -40,7 +43,6 @@ import { BudgetLinkNotice } from "~/features/budget/components/BudgetLinkNotice"
 import { BudgetOverview } from "~/features/budget/components/BudgetOverview";
 import { BudgetSetupWizard } from "~/features/budget/components/BudgetSetupWizard";
 import { RunwayCalculator } from "~/features/budget/components/RunwayCalculator";
-import { INCOME_CATEGORY } from "~/features/budget/income";
 import {
   type LinkableAccount,
   linkedSourceText,
@@ -73,8 +75,6 @@ type BudgetView = "budget" | "editing" | "wizard";
  */
 const SETUP_PARAM = "setup";
 const SETUP_COMMON = "common";
-
-const STANDARD_CATEGORIES: string[] = ["housing", "bills", "expenses", "savings", "income"];
 
 /**
  * Leaves out the keys the backend accepts and ignores on budget-entry writes (`isPrimaryIncome`
@@ -125,7 +125,7 @@ const BudgetContainer: FC = () => {
     const fromProfile = userProfile?.customBudgetCategories || [];
     const fromEntries = budgetEntries
       .map((e) => e.category)
-      .filter((c) => !STANDARD_CATEGORIES.includes(c));
+      .filter((c) => !STANDARD_BUDGET_CATEGORIES.includes(c));
     return Array.from(new Set([...fromProfile, ...fromEntries]));
   });
 
@@ -143,12 +143,10 @@ const BudgetContainer: FC = () => {
 
   // A category an entry moves into (a line linked to a debt moves to "debt") shows too, without
   // being saved as a custom category of its own.
-  const allCategories = useMemo(() => {
-    const fromEntries = entries
-      .map((e) => e.category)
-      .filter((c) => !STANDARD_CATEGORIES.includes(c));
-    return Array.from(new Set([...STANDARD_CATEGORIES, ...customCategories, ...fromEntries]));
-  }, [customCategories, entries]);
+  const allCategories = useMemo(
+    () => budgetPageCategories(customCategories, entries),
+    [customCategories, entries],
+  );
 
   // Months-of-cover scenario inputs (accounts counted, severance, cuts, dropped lines) are
   // session-only: held here, cleared on reload, never saved and never read by the hero or strip.
@@ -518,32 +516,30 @@ const BudgetContainer: FC = () => {
       )}
       {/* Read only: entries are edited in place with "Edit budget" (E16 round 3). */}
       <DataList
-        items={pageEntries
-          .filter((e) => e.category === category && !e.isIncome)
-          .map((e, _i, rows) =>
-            // A linked line whose saved fact is not set shows "Not set", never £0, and says why;
-            // the housing details above, the mortgage page or the account's page is where it is
-            // added.
-            e.notSet
+        items={budgetCategoryEntries(category, pageEntries).map(({ entry: e, figure }) =>
+          // A linked line whose saved fact is not set shows "Not set", never £0, and says why;
+          // the housing details above, the mortgage page or the account's page is where it is
+          // added.
+          figure.kind === "notSet"
+            ? {
+                id: e.id,
+                label: e.name,
+                secondary: linkedSourceText(e, linkableAccounts),
+                value: null,
+                valueProps: { size: "sm" as const },
+              }
+            : // One line per entry. A single entry is the row's own total, so it shows its name
+              // only: its figure would repeat the row's (P6).
+              figure.kind === "amount"
               ? {
                   id: e.id,
                   label: e.name,
                   secondary: linkedSourceText(e, linkableAccounts),
-                  value: null,
-                  valueProps: { size: "sm" as const },
+                  value: figure.monthly,
+                  valueProps: { fractionDigits: 0, size: "sm" as const },
                 }
-              : // One line per entry. A single entry is the row's own total, so it shows its name
-                // only: its figure would repeat the row's (P6).
-                rows.length > 1
-                ? {
-                    id: e.id,
-                    label: e.name,
-                    secondary: linkedSourceText(e, linkableAccounts),
-                    value: Math.abs(budgetRowMonthly(e)),
-                    valueProps: { fractionDigits: 0, size: "sm" as const },
-                  }
-                : { id: e.id, label: e.name, secondary: linkedSourceText(e, linkableAccounts) },
-          )}
+              : { id: e.id, label: e.name, secondary: linkedSourceText(e, linkableAccounts) },
+        )}
         label={`${getCategoryLabel(category)} entries`}
         noun={{ one: "entry", other: "entries" }}
       />

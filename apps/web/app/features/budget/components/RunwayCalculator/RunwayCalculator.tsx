@@ -1,11 +1,10 @@
 import {
-  budgetRowMonthly,
-  DEBT_CATEGORY,
+  clampRunwayCut,
+  clampRunwayLump,
   type Figure,
-  isFigureKnown,
   type MonthsOfCover,
-  monthsOfCoverFor,
-  PortfolioSnapshot,
+  runwayIllustration,
+  runwaySetup,
 } from "@flump/finance-engine";
 import {
   CollapsibleDrawer,
@@ -129,65 +128,16 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
       buildWorkspacePicture({ accounts, accountDetails, budgetEntries: entries }).monthsOfCover,
     [baselineProp, accounts, accountDetails, entries],
   );
-  const saved = isFigureKnown(baseline) ? baseline.value : null;
-  // Debt minimums the saved figure counts that are not budget rows, so an untouched illustration
-  // starts from the saved commitments.
-  const debtNotInBudget = saved
-    ? Math.max(0, saved.commitments.debtCommitment - saved.commitments.budgetDebtPayments)
-    : 0;
-
-  // Balances and account categories come from the engine's snapshot, exactly as in the saved
-  // figure. Current and savings start switched on; investments start off and can be switched on.
-  const snapshot = useMemo(
-    () => new PortfolioSnapshot(accounts as never, accountDetails as never),
-    [accounts, accountDetails],
+  // The engine's setup: the saved figure, the accounts to draw on (current and savings on,
+  // investments off), other income (off: income stopping is the question) and the spending the
+  // saved figure counts (essential rows and debt payments), with balances from its snapshot.
+  const setup = useMemo(
+    () => runwaySetup(baseline, entries, accounts, accountDetails),
+    [baseline, entries, accounts, accountDetails],
   );
-  const categoryOf = (id: string) => snapshot.getAccount(id)?.category;
-  const getLatestBalance = (accountId: string): number => snapshot.getLatestBalance(accountId);
-
-  const poolAccounts = useMemo(
-    () =>
-      accounts.filter((a) => {
-        const category = snapshot.getAccount(a.id)?.category;
-        return category === "cash" || category === "savings" || category === "investments";
-      }),
-    [accounts, snapshot],
-  );
-
-  // Take-home pay is the income that stops in this question, so it is never "kept". It is the
-  // engine's linked take-home line (owner item 7); every linked line is left out, as its figure
-  // belongs to a saved detail. The stored primary-income flag is no longer read (system audit
-  // leftovers, item 5), so an old flagged row is offered like any other income line.
-  const nonPrimaryIncome = useMemo(() => entries.filter((e) => e.isIncome && !e.linked), [entries]);
-
-  // Spending and savings rows: an essential savings row counts in the saved figure (item 28).
-  const expenseEntries = useMemo(() => entries.filter((e) => !e.isIncome), [entries]);
-
+  const { saved, poolAccounts, otherIncome, defaultAccounts, defaultIncome, defaultExpenses } =
+    setup;
   const initialScenario = scenario ?? null;
-
-  const defaultAccounts = useMemo(
-    () =>
-      Object.fromEntries(
-        poolAccounts.map((a) => {
-          const category = categoryOf(a.id);
-          return [a.id, category === "cash" || category === "savings"];
-        }),
-      ),
-    [poolAccounts, snapshot],
-  );
-  // Income stopping is the question, so other income starts excluded; switch it on to keep it.
-  const defaultIncome = useMemo(
-    () => Object.fromEntries(nonPrimaryIncome.map((e) => [e.id, false])),
-    [nonPrimaryIncome],
-  );
-  const defaultExpenses = useMemo(
-    // Debt-payment rows always count in the saved figure, whatever their essential flag.
-    () =>
-      Object.fromEntries(
-        expenseEntries.map((e) => [e.id, e.isEssential || e.category === DEBT_CATEGORY]),
-      ),
-    [expenseEntries],
-  );
 
   const [includedAccounts, setIncludedAccounts] = useState<Record<string, boolean>>(() => ({
     ...defaultAccounts,
@@ -240,24 +190,16 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
   };
 
   const handleSeveranceChange = (val: number) => {
-    const clamped = Math.max(0, Math.min(100000, val));
+    const clamped = clampRunwayLump(val);
     setSeveranceLump(clamped);
     emit({ severanceLump: clamped });
   };
 
   const handleExtraCutChange = (val: number) => {
-    const clamped = Math.max(0, val);
+    const clamped = clampRunwayCut(val);
     setExtraMonthlyCut(clamped);
     emit({ extraMonthlyCut: clamped });
   };
-
-  const sameFlags = (current: Record<string, boolean>, defaults: Record<string, boolean>) =>
-    Object.keys(defaults).every((id) => (current[id] ?? defaults[id]) === defaults[id]);
-  const isScenarioModified =
-    severanceLump !== 0 ||
-    extraMonthlyCut !== 0 ||
-    !sameFlags(includedAccounts, defaultAccounts) ||
-    !sameFlags(keptIncome, defaultIncome);
 
   const handleResetScenario = () => {
     setIncludedAccounts(defaultAccounts);
@@ -273,59 +215,19 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
     });
   };
 
-  const totalPool = useMemo(
-    () =>
-      poolAccounts
-        .filter((a) => includedAccounts[a.id])
-        // An overdrawn account is debt, not negative cash (as in the saved figure).
-        .reduce((s, a) => s + Math.max(0, getLatestBalance(a.id)), 0),
-    [poolAccounts, includedAccounts, snapshot],
-  );
-
-  const totalKeptIncome = useMemo(
-    () =>
-      nonPrimaryIncome.filter((e) => keptIncome[e.id]).reduce((s, e) => s + budgetRowMonthly(e), 0),
-    [nonPrimaryIncome, keptIncome],
-  );
-
-  const totalSelectedExpenses = useMemo(
-    () =>
-      expenseEntries.filter((e) => keptExpenses[e.id]).reduce((s, e) => s + budgetRowMonthly(e), 0),
-    [expenseEntries, keptExpenses],
-  );
-
-  // ── Illustration ─────────────────────────────────────────────────────────
   // The illustration starts from the saved figure's own two numbers and applies only what the
-  // person changed, so an untouched zone shows exactly the saved figure and no second sum of the
-  // rows exists in web to drift from it.
-  const defaultPool = useMemo(
-    () =>
-      poolAccounts
-        .filter((a) => defaultAccounts[a.id])
-        .reduce((s, a) => s + Math.max(0, getLatestBalance(a.id)), 0),
-    [poolAccounts, defaultAccounts, snapshot],
-  );
-  const defaultSelectedExpenses = useMemo(
-    () =>
-      expenseEntries
-        .filter((e) => defaultExpenses[e.id])
-        .reduce((s, e) => s + budgetRowMonthly(e), 0),
-    [expenseEntries, defaultExpenses],
-  );
-  const pool = saved
-    ? Math.max(0, saved.liquidCash + (totalPool - defaultPool) + severanceLump)
-    : totalPool + severanceLump;
-  const monthlyBurn = Math.max(
-    0,
-    saved
-      ? saved.monthlyEssentials +
-          (totalSelectedExpenses - defaultSelectedExpenses) -
-          totalKeptIncome -
-          extraMonthlyCut
-      : totalSelectedExpenses + debtNotInBudget - totalKeptIncome - extraMonthlyCut,
-  );
-  // The ratio and its rounding are the engine's, the same call the saved figure makes.
-  const months = monthsOfCoverFor(pool, monthlyBurn);
+  // person changed (the engine's `runwayIllustration`), so an untouched zone shows exactly the
+  // saved figure.
+  const {
+    pool,
+    months,
+    isModified: isScenarioModified,
+  } = runwayIllustration(setup, {
+    includedAccounts,
+    keptIncome,
+    severanceLump,
+    extraMonthlyCut,
+  });
   // Nothing to pay each month: with a saved figure the money has no end date in this illustration;
   // with none there is nothing to show yet. Never infinity.
   const wording = months === null ? null : describeBreathingRoom(months);
@@ -376,10 +278,10 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
     <CollapsibleDrawer title="Accounts and income in this illustration" variant="quiet">
       <div className={optionsStack()}>
         <OptionGroup
-          items={poolAccounts.map((acc) => ({
+          items={poolAccounts.map(({ account: acc, balance }) => ({
             id: acc.id,
             name: acc.name,
-            amount: getLatestBalance(acc.id),
+            amount: balance,
             perMonth: false,
             checked: !!includedAccounts[acc.id],
             onToggle: () => toggleAccount(acc.id),
@@ -387,10 +289,10 @@ export const RunwayCalculator: FC<RunwayCalculatorProps> = ({
           label="Accounts to draw on"
         />
         <OptionGroup
-          items={nonPrimaryIncome.map((e) => ({
+          items={otherIncome.map(({ entry: e, monthly }) => ({
             id: e.id,
             name: e.name,
-            amount: budgetRowMonthly(e),
+            amount: monthly,
             perMonth: true,
             checked: !!keptIncome[e.id],
             onToggle: () => toggleIncome(e.id),

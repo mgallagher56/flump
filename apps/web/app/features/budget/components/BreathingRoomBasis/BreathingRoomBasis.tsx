@@ -1,16 +1,14 @@
 import {
-  budgetRowMonthly,
-  DEBT_CATEGORY,
-  PortfolioSnapshot,
+  type BreathingRoomFixedReason,
   type RawAccount,
   type RawAccountDetail,
+  selectBreathingRoomBasis,
 } from "@flump/finance-engine";
 import { CollapsibleDrawer, IconTile, Money, Switch } from "@repo/ui";
 import { Landmark, ListChecks } from "lucide-react";
 import { type FC, useMemo, useState } from "react";
 import { SampleAwareLink } from "~/components/navigation/SampleAwareLink";
 import { type BudgetEntry, getCategoryLabel } from "~/types/budget";
-import { isIncomeEntry } from "../../income";
 import { breathingRoomBasis } from "./BreathingRoomBasis.styles";
 
 export interface BreathingRoomBasisProps {
@@ -25,11 +23,10 @@ export interface BreathingRoomBasisProps {
   onSetEssential: (id: string, isEssential: boolean) => Promise<void>;
 }
 
-/** Why a row is always counted, or null when its switch can change. */
-const fixedReason = (entry: BudgetEntry): string | null => {
-  if (entry.linked === "housing") return "From your housing details, always counted";
-  if (entry.category === DEBT_CATEGORY) return "Debt payments are always counted";
-  return null;
+/** Why a row is always counted, in words. */
+const FIXED_REASON: Record<BreathingRoomFixedReason, string> = {
+  housing: "From your housing details, always counted",
+  debt: "Debt payments are always counted",
 };
 
 /**
@@ -47,21 +44,11 @@ export const BreathingRoomBasis: FC<BreathingRoomBasisProps> = ({
 }) => {
   const slots = breathingRoomBasis();
   const [pendingIds, setPendingIds] = useState<ReadonlySet<string>>(() => new Set());
-  const snapshot = useMemo(
-    () => new PortfolioSnapshot([...accounts], [...accountDetails]),
-    [accounts, accountDetails],
+  // The engine's rules: current and savings accounts to draw on, spending above £0 a month.
+  const { drawOn, spending, counted } = useMemo(
+    () => selectBreathingRoomBasis(entries, accounts, accountDetails),
+    [entries, accounts, accountDetails],
   );
-  // The engine's own rule for money to draw on: current and savings accounts.
-  const drawOn = useMemo(
-    () =>
-      accounts.filter((a) => {
-        const category = a.id ? snapshot.getAccount(a.id)?.category : undefined;
-        return category === "cash" || category === "savings";
-      }),
-    [accounts, snapshot],
-  );
-  const spending = entries.filter((e) => !isIncomeEntry(e) && budgetRowMonthly(e) > 0);
-  const counted = spending.filter((e) => e.isEssential || fixedReason(e) !== null).length;
 
   const toggle = async (entry: BudgetEntry, next: boolean) => {
     if (pendingIds.has(entry.id)) return;
@@ -101,13 +88,10 @@ export const BreathingRoomBasis: FC<BreathingRoomBasisProps> = ({
           </div>
           {drawOn.length > 0 ? (
             <ul className={slots.list}>
-              {drawOn.map((account) => (
+              {drawOn.map(({ account, balance }) => (
                 <li className={slots.item} key={account.id}>
                   <span>{account.name}</span>
-                  <Money
-                    size="sm"
-                    value={Math.max(0, snapshot.getLatestBalance(account.id ?? ""))}
-                  />
+                  <Money size="sm" value={balance} />
                 </li>
               ))}
             </ul>
@@ -135,8 +119,8 @@ export const BreathingRoomBasis: FC<BreathingRoomBasisProps> = ({
           </div>
           {spending.length > 0 ? (
             <ul className={slots.list}>
-              {spending.map((entry) => {
-                const reason = fixedReason(entry);
+              {spending.map(({ entry, monthly, fixedReason }) => {
+                const reason = fixedReason ? FIXED_REASON[fixedReason] : null;
                 return (
                   <li className={slots.switchItem} key={entry.id}>
                     <Switch
@@ -147,7 +131,7 @@ export const BreathingRoomBasis: FC<BreathingRoomBasisProps> = ({
                       hint={
                         <span className={slots.hint}>
                           {getCategoryLabel(entry.category)},{" "}
-                          <Money size="sm" tone="muted" value={budgetRowMonthly(entry)} /> a month
+                          <Money size="sm" tone="muted" value={monthly} /> a month
                           {reason ? `. ${reason}` : null}
                         </span>
                       }

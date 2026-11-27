@@ -518,6 +518,22 @@ flowchart LR
   f_ownership_share ==> g_home_strip
   g_home_strip -.-> s_dashboard
   g_home_strip -.-> s_mobile_home
+  g_budget_page{{"The Budget page's overview facts, ranked categories, breathing room basis and illustration"}}
+  f_budget_entries ==> g_budget_page
+  f_budget_entry_link_kind ==> g_budget_page
+  f_budget_entry_link_account ==> g_budget_page
+  f_custom_budget_categories ==> g_budget_page
+  f_salary ==> g_budget_page
+  f_typed_take_home ==> g_budget_page
+  f_tax_region ==> g_budget_page
+  f_student_loan_plan ==> g_budget_page
+  f_housing_cost(["Monthly housing cost (rent or mortgage payment)"])
+  f_housing_cost ==> g_budget_page
+  f_account_balance ==> g_budget_page
+  f_account_monthly_amount(["Monthly amount on an account (saving, pot payment, debt payment, mortgage payment)"])
+  f_account_monthly_amount ==> g_budget_page
+  f_ownership_share ==> g_budget_page
+  g_budget_page -.-> s_budget
   g_left_over{{"Left over each month and budget totals"}}
   f_budget_entries ==> g_left_over
   g_left_over -.-> s_dashboard
@@ -529,7 +545,6 @@ flowchart LR
   f_salary ==> g_safe_to_spend
   f_pension_rates ==> g_safe_to_spend
   f_budget_entries ==> g_safe_to_spend
-  f_account_monthly_amount(["Monthly amount on an account (saving, pot payment, debt payment, mortgage payment)"])
   f_account_monthly_amount ==> g_safe_to_spend
   g_safe_to_spend -.-> s_budget
   g_safe_to_spend -.-> s_dashboard

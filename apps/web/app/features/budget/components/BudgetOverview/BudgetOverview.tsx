@@ -1,4 +1,4 @@
-import { type FinancialPicture, isFigureKnown } from "@flump/finance-engine";
+import { type FinancialPicture, selectBudgetOverview } from "@flump/finance-engine";
 import { HeroFigure, KpiCard, KpiStrip, VisuallyHidden } from "@repo/ui";
 import { type FC, useMemo } from "react";
 import { SampleAwareLink } from "~/components/navigation/SampleAwareLink";
@@ -41,71 +41,45 @@ export const BudgetOverview: FC<BudgetOverviewProps> = ({ entries, picture: pict
     () => pictureProp ?? buildWorkspacePicture({ budgetEntries: entries }),
     [pictureProp, entries],
   );
-  const budget = isFigureKnown(picture.budget) ? picture.budget.value : null;
-  const budgetLeavesOut =
-    isFigureKnown(picture.budget) && picture.budget.assumptions?.length
-      ? picture.budget.assumptions.join(" ")
-      : null;
-  // Bills, spending and savings: money in minus going out is the hero, so the strip explains it.
-  const goingOut = budget ? budget.essentials + budget.discretionary + budget.savings : null;
-  const safeToSpend = isFigureKnown(picture.safeToSpend) ? picture.safeToSpend.value : null;
-  const salaryMissing =
-    !isFigureKnown(picture.safeToSpend) &&
-    picture.safeToSpend.missing.some((key) => !key.startsWith("budget"));
-
-  // Without an income row, income and what is left over are unknown (as on the dashboard and MCP).
-  const hasIncome = budget?.hasIncome === true;
-  const surplus = budget?.surplus ?? 0;
-  const isShort = hasIncome && surplus < 0;
-
-  // A linked line whose saved fact is not set leaves the totals unknown (never counted as £0), so
-  // the headline says which figure is missing and where to add it.
-  const notSetLinks = new Set(
-    (picture.budgetRows ?? []).filter((row) => row.notSet).map((row) => row.linked),
-  );
-  // Take-home refused because the year's rates are not published: the engine's one line, never
-  // "not set" (the salary is saved) and never £0.
-  const takeHomeRefusal =
-    picture.takeHome &&
-    !isFigureKnown(picture.takeHome) &&
-    picture.takeHome.reason === "rates-not-published"
-      ? (picture.takeHome.notice ?? null)
-      : null;
+  // The engine's facts: the figures, which prompt applies and which line goes under the headline.
+  const facts = selectBudgetOverview(picture);
+  const { hasIncome, isShort, goingOut, leavesOut: budgetLeavesOut } = facts;
   const notSetPrompt =
-    notSetLinks.has("take_home") && takeHomeRefusal ? (
-      takeHomeRefusal
-    ) : notSetLinks.has("take_home") ? (
+    facts.prompt?.kind === "refused" ? (
+      facts.prompt.notice
+    ) : facts.prompt?.kind === "takeHomeNotSet" ? (
       <>
         Your take-home pay is not set, so what is left over is unknown.{" "}
         <SampleAwareLink className={inlineLink()} to="/app/profile#settings-age-and-pay">
           Add your salary
         </SampleAwareLink>
       </>
-    ) : notSetLinks.has("housing") ? (
+    ) : facts.prompt?.kind === "housingNotSet" ? (
       "Your housing payment is not set, so what is left over is unknown. Add it in your housing details below."
     ) : null;
 
-  const baseSubline = notSetPrompt ? undefined : safeToSpend ? (
-    <>
-      {/* Monthly, to match "left over" above; a different measure, so it says what it leaves out
+  const baseSubline =
+    facts.subline === null ? undefined : facts.subline === "safeToSpend" ? (
+      <>
+        {/* Monthly, to match "left over" above; a different measure, so it says what it leaves out
           (owner ruling 2026-11-15). Named first, so it never reads as a second "left over" figure
           (phone audit P23). */}
-      Safe to spend before flexible spending:{" "}
-      <span className={figure()} data-figure="safeToSpend.monthly">
-        {formatCurrency(safeToSpend.monthly, { maximumFractionDigits: 0 })}
-      </span>{" "}
-      a month, after essential spending, debt payments and savings.
-    </>
-  ) : salaryMissing ? (
-    <>
-      <SampleAwareLink className={inlineLink()} to="/app/profile#settings-age-and-pay">
-        Add your salary
-      </SampleAwareLink>{" "}
-      to see what you have each month after essential spending.
-    </>
-  ) : (
-    "Add your essential spending to see what you have after it each month."
-  );
+        Safe to spend before flexible spending:{" "}
+        <span className={figure()} data-figure="safeToSpend.monthly">
+          {formatCurrency(facts.safeToSpendMonthly ?? 0, { maximumFractionDigits: 0 })}
+        </span>{" "}
+        a month, after essential spending, debt payments and savings.
+      </>
+    ) : facts.subline === "addSalary" ? (
+      <>
+        <SampleAwareLink className={inlineLink()} to="/app/profile#settings-age-and-pay">
+          Add your salary
+        </SampleAwareLink>{" "}
+        to see what you have each month after essential spending.
+      </>
+    ) : (
+      "Add your essential spending to see what you have after it each month."
+    );
   // What the left over leaves out (a refused student loan plan in the linked take-home pay),
   // said once, beside the figure it changes.
   const subline =
@@ -131,7 +105,7 @@ export const BudgetOverview: FC<BudgetOverviewProps> = ({ entries, picture: pict
               data-figure="budget.surplus"
               data-figure-sign={isShort ? "-1" : "1"}
             >
-              {formatCurrency(Math.abs(surplus), { maximumFractionDigits: 0 })}
+              {formatCurrency(facts.heroFigure ?? 0, { maximumFractionDigits: 0 })}
             </span>
           ) : null
         }
@@ -139,7 +113,7 @@ export const BudgetOverview: FC<BudgetOverviewProps> = ({ entries, picture: pict
       <KpiStrip
         // One prompt only when both figures are unknown; a known figure is never hidden.
         emptyPrompt={
-          !hasIncome && goingOut === null && !notSetPrompt
+          facts.supportingUnknown
             ? { title: "Add your income and spending to see money in and going out" }
             : undefined
         }
@@ -148,7 +122,7 @@ export const BudgetOverview: FC<BudgetOverviewProps> = ({ entries, picture: pict
             key="income"
             label="Money in each month"
             subtext="After tax"
-            value={hasIncome ? (budget?.income ?? 0) : null}
+            value={facts.income}
             valueFormat={{ fractionDigits: 0 }}
           />,
           <KpiCard
@@ -160,7 +134,7 @@ export const BudgetOverview: FC<BudgetOverviewProps> = ({ entries, picture: pict
           />,
         ]}
       />
-      {hasIncome || goingOut !== null ? (
+      {facts.showsEquation ? (
         <p className={equationBar()} data-testid="budget-equation" id="budget-equation">
           <span className={equationTerm()}>Money in</span>
           <span aria-hidden="true" className={equationOp()}>
