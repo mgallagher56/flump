@@ -96,9 +96,14 @@ describe("Screen", () => {
       return { remove: jest.fn() } as never;
     });
     // The 0% date's year box, 1,500 points down the form and 56 high.
+    // Measured against the scroll view's content, so y is the field's place in the whole form.
+    const inner = { name: "content" };
+    const measuredAgainst: unknown[] = [];
     jest.spyOn(TextInput.State, "currentlyFocusedInput").mockReturnValue({
-      measureLayout: (_to: unknown, done: (x: number, y: number, w: number, h: number) => void) =>
-        done(0, 1500, 300, 56),
+      measureLayout: (to: unknown, done: (x: number, y: number, w: number, h: number) => void) => {
+        measuredAgainst.push(to);
+        done(0, 1500, 300, 56);
+      },
     } as never);
     const scrollTo = jest.fn();
     const ref = { current: null as unknown };
@@ -111,15 +116,27 @@ describe("Screen", () => {
     );
     const scroller = ref.current as Record<string, unknown>;
     scroller.scrollTo = scrollTo;
-    scroller.getInnerViewRef = () => ({});
+    scroller.getInnerViewRef = () => inner;
     const [view] = (screen.toJSON() as unknown as Tree).children;
     if (!view) throw new Error("expected the scroll view");
     const onLayout = view.props.onLayout as (e: unknown) => void;
     await act(async () => onLayout({ nativeEvent: { layout: { height: 700 } } }));
+    // Already scrolled 1,000 down: the field's bottom (1,572) is past 1,000 + 370 = 1,370.
+    const onScroll = view.props.onScroll as (e: unknown) => void;
+    await act(async () => onScroll({ nativeEvent: { contentOffset: { y: 1000 } } }));
     const show = listeners.get("keyboardWillShow") ?? listeners.get("keyboardDidShow");
     await act(async () => show?.({ endCoordinates: { height: 330, screenY: 500 } }));
-    // 700 high, 330 of keyboard, 16 of room (density.gap): 1,500 + 56 + 16 - 370 = 1,202.
+    // 700 high, 330 of keyboard, 16 of room (density.gap): 1,500 + 56 + 16 - 370 = 1,202, the same
+    // target from any scroll position below the field.
     expect(scrollTo).toHaveBeenCalledWith({ y: 1202, animated: false });
+    expect(measuredAgainst).toEqual([inner]);
+    // Scrolled to 1,300, the field (1,500 to 1,572) sits inside 1,300 to 1,670: no scroll.
+    scrollTo.mockClear();
+    await act(async () => onScroll({ nativeEvent: { contentOffset: { y: 1300 } } }));
+    const hide = listeners.get("keyboardWillHide") ?? listeners.get("keyboardDidHide");
+    await act(async () => hide?.({}));
+    await act(async () => show?.({ endCoordinates: { height: 330, screenY: 500 } }));
+    expect(scrollTo).not.toHaveBeenCalled();
     jest.restoreAllMocks();
   });
 

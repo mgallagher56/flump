@@ -87,7 +87,8 @@ export function AccountFormScreen({ open, onBackToAccounts, ...props }: AccountF
   if (open.kind === "edit") {
     const found = list.find((a) => a.id === open.id);
     if (found) opened.current = found;
-    const account = found ?? opened.current;
+    // Only the account this form opened with, never one from an earlier id.
+    const account = found ?? (opened.current?.id === open.id ? opened.current : null);
     if (!account) {
       return (
         <>
