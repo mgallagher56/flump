@@ -84,22 +84,22 @@ export const ORB_COLOUR_ALLOW_LIST: ReadonlyArray<{ path: string; reason: string
   {
     path: "apps/marketing/src/components/HomeRoughFigures/HomeRoughFigures.styles.ts",
     reason:
-      "the rough figures steps' second and third circles wear a soft violet or rose halo, prototype 11's orb colours on round objects only (coordinator, 27 Nov 2026: build prototype 11's version; owner to confirm)",
+      "the rough figures steps' second and third circles wear a soft violet or rose halo, prototype 11's orb colours on round objects only (owner approved prototype 11's version, PR 980, 27 Nov 2026; STYLE-GUIDE MC1)",
   },
   {
     path: "apps/marketing/src/components/DrawnLineChart/DrawnLineChart.styles.ts",
     reason:
-      "the journey's sample line chart in prototype 11's two tones: savings sky, debt violet (chart.series4), never rose (coordinator, 27 Nov 2026: build prototype 11's version; MK6 and MC2 conflict listed for the owner)",
+      "the journey's sample line chart in prototype 11's two tones: savings sky, debt violet (chart.series4), never rose (owner approved prototype 11's version, PR 980, 27 Nov 2026; UX-GUIDELINES MK6, STYLE-GUIDE MC2)",
   },
   {
     path: "apps/marketing/src/components/JourneySample/JourneySample.styles.ts",
     reason:
-      "the picture sample's net worth tile wears prototype 11's faint violet wash (chart.series4 at 18%) beside the sky one (coordinator, 27 Nov 2026: build prototype 11's version; MC1 conflict listed for the owner)",
+      "the picture sample's net worth tile wears prototype 11's faint violet wash (chart.series4 at 18%) beside the sky one (owner approved prototype 11's version, PR 980, 27 Nov 2026; STYLE-GUIDE MC1)",
   },
   {
     path: "packages/ui/src/primitives/Illustration/Illustration.styles.ts",
     reason:
-      "the document pictures' opt-in orb look (palette=\"orb\", marketing home page only): prototype 11's violet and rose on the pension mark and rule, the ticket's top band, the check-in tab's edge and one not-found tab (coordinator, 27 Nov 2026: build prototype 11's pictures; owner to confirm). The default look never reads these classes (Illustration.test.tsx)",
+      "the document pictures' opt-in orb look (palette=\"orb\", marketing home page only): prototype 11's violet and rose on the pension mark and rule, the ticket's top band, the check-in tab's edge and one not-found tab (owner approved prototype 11's version, PR 980, 27 Nov 2026; STYLE-GUIDE MC1 and 8.3). The default look never reads these classes (Illustration.test.tsx)",
   },
   {
     path: "packages/ui/src/primitives/FlumpLogo/",
