@@ -466,15 +466,180 @@ function buildPersonaStore(
 }
 
 /** The stores the data scenarios read: several Home scenarios share the renter's accounts. */
-export type CheckInStoreKind = "ok" | "empty" | "owner" | "renter" | "pension-only";
+export type CheckInStoreKind =
+  | "ok"
+  | "empty"
+  | "owner"
+  | "renter"
+  | "pension-only"
+  | "joint"
+  | "twoMonths";
+
+/* ------------------------------------------------------------------------------------------ */
+/* The accounts screens' households (E12 S6, plan section 9.9)                                  */
+/* ------------------------------------------------------------------------------------------ */
+
+/** An account with its balance, the month before and the month before that, as stored. */
+interface TwoMonthSeed {
+  name: string;
+  type: AccountWithDetailsDto["type"];
+  subtype: AccountWithDetailsDto["accountSubtype"];
+  balance: number;
+  previous: number;
+  older: number;
+  ownership: "sole" | "joint";
+  sharePercent: number | null;
+}
+
+/**
+ * `joint`: a joint 50% mortgage and home, an overdrawn current account and savings (acceptance 6
+ * and 7). Today: own 4,000 + half of 310,000 = 159,000; owe 350 overdrawn + half of 186,000 =
+ * 93,350; net worth 65,650. `home-data.test.ts` pins every figure.
+ */
+export const JOINT_ACCOUNTS: readonly TwoMonthSeed[] = [
+  {
+    name: "Residential mortgage",
+    type: "Mortgage",
+    subtype: "residential_mortgage",
+    balance: -186000,
+    previous: -186550,
+    older: -187100,
+    ownership: "joint",
+    sharePercent: 50,
+  },
+  {
+    name: "Home",
+    type: "Property",
+    subtype: "home",
+    balance: 310000,
+    previous: 309500,
+    older: 309000,
+    ownership: "joint",
+    sharePercent: 50,
+  },
+  {
+    name: "Current account",
+    type: "Current",
+    subtype: null,
+    balance: -350,
+    previous: -200,
+    older: 120,
+    ownership: "sole",
+    sharePercent: null,
+  },
+  {
+    name: "Easy access savings",
+    type: "Saving",
+    subtype: "easy_access",
+    balance: 4000,
+    previous: 3900,
+    older: 3800,
+    ownership: "sole",
+    sharePercent: null,
+  },
+];
+
+/** `twoMonths`: two recorded months only, so history shows its sentence, not a chart. */
+export const TWO_MONTH_ACCOUNTS: readonly TwoMonthSeed[] = [
+  {
+    name: "Current account",
+    type: "Current",
+    subtype: null,
+    balance: 1300,
+    previous: 1200,
+    older: 1000,
+    ownership: "sole",
+    sharePercent: null,
+  },
+  {
+    name: "Easy access savings",
+    type: "Saving",
+    subtype: "easy_access",
+    balance: 2150,
+    previous: 2100,
+    older: 2000,
+    ownership: "sole",
+    sharePercent: null,
+  },
+];
+
+/** A store with today's balances and the two months before this one recorded, the last completed. */
+function buildTwoMonthStore(
+  userId: string,
+  now: Date,
+  seeds: readonly TwoMonthSeed[],
+): CheckInStore {
+  const iso = now.toISOString();
+  const previous = addCheckInMonths(londonMonth(now), -1);
+  const older = addCheckInMonths(londonMonth(now), -2);
+  const accounts = AccountListResponse.parse(
+    seeds.map((seed) => ({
+      id: randomUUID(),
+      name: seed.name,
+      type: seed.type,
+      accountSubtype: seed.subtype,
+      balance: seed.balance,
+      interestRate: null,
+      monthlyContribution: null,
+      creditLimit: null,
+      promoZeroPercentUntil: null,
+      termMonths: null,
+      fixedRateEndDate: null,
+      isCurrent: true,
+      currency: "GBP",
+      studentLoanPlan: null,
+      ownership: seed.ownership,
+      sharePercent: seed.sharePercent,
+      linkedAccountId: null,
+      repaymentType: seed.type === "Mortgage" ? "repayment" : null,
+      connectionId: null,
+      createdAt: iso,
+      updatedAt: iso,
+      details: [],
+    })),
+  );
+  let nextDetailId = 1;
+  const details: AccountDetailDto[] = [];
+  accounts.forEach((account, i) => {
+    const seed = seeds[i] as TwoMonthSeed;
+    for (const [month, value] of [
+      [older, seed.older],
+      [previous, seed.previous],
+    ] as const) {
+      const [year, m] = month.split("-").map(Number) as [number, number];
+      details.push({
+        id: nextDetailId++,
+        accountId: account.id,
+        userId,
+        year,
+        month: m,
+        value,
+        asOfDate: lastDayOfMonth(month),
+        source: "manual",
+        importBatchId: null,
+        updatedAt: iso,
+      });
+    }
+  });
+  return {
+    accounts,
+    details: AccountDetailListResponse.parse(details),
+    latestStartedMonth: previous,
+    latestCompletedMonth: previous,
+    nextDetailId,
+  };
+}
 
 /**
  * A fresh check-in store, every body parsed with its contract schema. `empty` has no accounts,
  * no rows and no check-in months; `owner` and `renter` are the home-owning and renting households
  * of `apps/e2e/support/personas.ts` with six recorded months; `pension-only` is the renter without
- * the credit card and the student loan. Ids are made at runtime, so each reset has new ones.
+ * the credit card and the student loan; `joint` and `twoMonths` are the accounts screens'
+ * households (S6). Ids are made at runtime, so each reset has new ones.
  */
 export function buildCheckInStore(userId: string, now: Date, kind: CheckInStoreKind): CheckInStore {
+  if (kind === "joint") return buildTwoMonthStore(userId, now, JOINT_ACCOUNTS);
+  if (kind === "twoMonths") return buildTwoMonthStore(userId, now, TWO_MONTH_ACCOUNTS);
   if (kind === "owner") return buildPersonaStore(userId, now, HOMEOWNER_ACCOUNTS);
   if (kind === "renter") return buildPersonaStore(userId, now, RENTER_ACCOUNTS);
   if (kind === "pension-only") return buildPersonaStore(userId, now, PENSION_ONLY_ACCOUNTS);

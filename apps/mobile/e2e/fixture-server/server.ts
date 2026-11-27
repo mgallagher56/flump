@@ -28,6 +28,8 @@
  *   accessTokenSeconds, minVersion          token lifetime; the client policy's minimum version
  *   data     ok | unavailable | empty       the check-in routes: canned data, 503
  *            | owner | renter | malformed   service_unavailable, or no accounts and no months;
+ *            | joint | twoMonths             joint: a joint 50% mortgage and home and an overdrawn
+ *                                           current account; twoMonths: two recorded months (S6);
  *                                           owner and renter: personas.ts's home-owning and
  *                                           renting households with six recorded months (S5);
  *                                           malformed: the ok data with one account's balance
@@ -111,6 +113,8 @@ const DATA_SCENARIOS = [
   "scottish-refused",
   "no-budget",
   "pension-only",
+  "joint",
+  "twoMonths",
 ] as const;
 type DataScenario = (typeof DATA_SCENARIOS)[number];
 
@@ -146,6 +150,8 @@ const HOUSEHOLDS: Record<
   },
   "no-budget": { store: "renter", budget: [], facts: RENTER_FACTS },
   "pension-only": { store: "pension-only", budget: RENTER_BUDGET, facts: RENTER_FACTS },
+  joint: { store: "joint", budget: [] },
+  twoMonths: { store: "twoMonths", budget: [] },
 };
 
 interface Scenario {
@@ -303,6 +309,8 @@ export async function startFixtureServer(options: FixtureServerOptions): Promise
     owner: buildCheckInStore(userId, new Date(now()), "owner"),
     renter: buildCheckInStore(userId, new Date(now()), "renter"),
     "pension-only": buildCheckInStore(userId, new Date(now()), "pension-only"),
+    joint: buildCheckInStore(userId, new Date(now()), "joint"),
+    twoMonths: buildCheckInStore(userId, new Date(now()), "twoMonths"),
   });
 
   /** The data scenario's household, or the canned data's while the data is unavailable. */

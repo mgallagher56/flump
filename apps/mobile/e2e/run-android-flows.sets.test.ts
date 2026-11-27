@@ -15,7 +15,7 @@ describe("run-android-flows.sh themes and flow sets", () => {
     const { result, calls } = run({ themes: "light" });
     expect(result.status).toBe(0);
     const flows = calls.filter((c) => c.startsWith("maestro "));
-    expect(flows).toHaveLength(17);
+    expect(flows).toHaveLength(20);
     expect(flows.every((c) => c.endsWith(" light"))).toBe(true);
     expect(calls).toContain("shell cmd uimode night no");
     expect(calls).not.toContain("shell cmd uimode night yes");
