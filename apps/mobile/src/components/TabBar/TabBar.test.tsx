@@ -25,6 +25,18 @@ async function renderBar(activeKey = "home", scheme: "light" | "dark" = "light",
 const phone = (fontScale = 1, width = 320) =>
   jest.spyOn(Dimensions, "get").mockReturnValue({ width, height: 640, scale: 2, fontScale });
 
+async function measureLabels(widthsByKey: Readonly<Record<string, number>>) {
+  for (const item of TABS) {
+    const w = widthsByKey[item.key];
+    if (w === undefined) continue;
+    await fireEvent(
+      screen.getByTestId(`tab-measure-${item.key}`, { includeHiddenElements: true }),
+      "layout",
+      { nativeEvent: { layout: { width: w, height: 24 } } },
+    );
+  }
+}
+
 const rows = () =>
   screen.getAllByTestId("tab-row").map((row) => ({
     style: flat<ViewStyle>(row.props.style),
@@ -233,6 +245,81 @@ describe("TabBar", () => {
     for (const item of TABS) {
       expect(screen.getByText(item.label).props.allowFontScaling).not.toBe(false);
     }
+  });
+
+  it("switches from proportional to scroll when measured Home width pushes the sum over the bar width", async () => {
+    // At 2x on a 480pt phone (tablist 472pt): estimate sum * 1.1 = 469.48 <= 472 (proportional),
+    // then measured cell widths [116, 132, 100, 56, 72] sum to 476 > 472 -> scroll.
+    phone(2, 480);
+    await renderBar("home", "light", 2);
+    expect(screen.queryByTestId("tab-scroll")).toBeNull();
+
+    await measureLabels({ home: 108, accounts: 124, budget: 92, taxAndPay: 48, more: 64 });
+    expect(screen.getByTestId("tab-scroll").props.horizontal).toBe(true);
+    for (const cellView of screen.getAllByTestId(/^tab-cell-/)) {
+      const cell = flat<ViewStyle>(cellView.props.style);
+      expect(cell.flex).toBeUndefined();
+      expect(cell.flexGrow).toBeUndefined();
+      expect(cell.flexShrink).toBe(0);
+    }
+  });
+
+  it("starts in scroll near the proportional limit before measurement, then switches to proportional when measured widths fit", async () => {
+    // At 2x on a 440pt phone (tablist 432pt): estimate sum 426.8 <= 432 < 469.48 -> scroll first.
+    phone(2, 440);
+    await renderBar("home", "light", 2);
+    expect(screen.getByTestId("tab-scroll").props.horizontal).toBe(true);
+
+    // Measured cell widths [70, 122, 92, 50, 70] sum to 404 <= 432 -> proportional.
+    await measureLabels({ home: 62, accounts: 114, budget: 84, taxAndPay: 42, more: 62 });
+    expect(screen.queryByTestId("tab-scroll")).toBeNull();
+    const expectedCells = [70, 122, 92, 50, 70] as const;
+    screen.getAllByTestId(/^tab-cell-/).forEach((cellView, index) => {
+      const cell = flat<ViewStyle>(cellView.props.style);
+      const expected = expectedCells[index] as number;
+      expect(cell.flexGrow).toBe(expected);
+      expect((432 * expected) / 404).toBeGreaterThanOrEqual(expected);
+    });
+  });
+
+  it("discards stale measurements and re-measures when font scale changes", async () => {
+    phone(1, 440);
+    const view = await render(
+      <ThemeProvider scheme="light" textScale={1}>
+        <TabBar items={TABS} activeKey="home" onSelect={jest.fn()} />
+      </ThemeProvider>,
+    );
+    const measureRow = screen.getByTestId("tab-measure-row", { includeHiddenElements: true });
+    expect(measureRow.props.pointerEvents).toBe("none");
+    expect(measureRow.props.accessibilityElementsHidden).toBe(true);
+    expect(measureRow.props.importantForAccessibility).toBe("no-hide-descendants");
+    expect(flat<ViewStyle>(measureRow.props.style)).toMatchObject({
+      position: "absolute",
+      opacity: 0,
+    });
+
+    // At 1x: cells [48, 70, 54, 48, 48], 70 * 5 = 350 <= 432 -> equal.
+    await measureLabels({ home: 36, accounts: 62, budget: 46, taxAndPay: 26, more: 36 });
+    for (const cellView of screen.getAllByTestId(/^tab-cell-/)) {
+      expect(flat<ViewStyle>(cellView.props.style)).toMatchObject({ flex: 1, flexBasis: 0 });
+    }
+
+    // Switching to 2x discards 1x widths so pre-measurement chooses scroll (469.48 > 432).
+    phone(2, 440);
+    await view.rerender(
+      <ThemeProvider scheme="light" textScale={2}>
+        <TabBar items={TABS} activeKey="home" onSelect={jest.fn()} />
+      </ThemeProvider>,
+    );
+    expect(screen.getByTestId("tab-scroll").props.horizontal).toBe(true);
+
+    // Once new 2x measurements arrive ([70, 122, 92, 50, 70], sum 404 <= 432), switches to proportional.
+    await measureLabels({ home: 62, accounts: 114, budget: 84, taxAndPay: 42, more: 62 });
+    expect(screen.queryByTestId("tab-scroll")).toBeNull();
+    const expectedCells = [70, 122, 92, 50, 70] as const;
+    screen.getAllByTestId(/^tab-cell-/).forEach((cellView, index) => {
+      expect(flat<ViewStyle>(cellView.props.style).flexGrow).toBe(expectedCells[index]);
+    });
   });
 
   it("at 200% text on a 411 point phone (cold start), scrolls horizontally with single-line labels", async () => {
@@ -446,10 +533,12 @@ describe("tabLayout", () => {
   const labels = TABS.map((item) => item.label);
   const at = (width: number, textScale: number) =>
     tabLayout({ labels, width, fontSize: 12 * textScale, textScale });
+  const atMeasured = (width: number, textScale: number, measuredLabelWidths: readonly number[]) =>
+    tabLayout({ labels, width, fontSize: 12 * textScale, textScale, measuredLabelWidths });
 
-  it("uses equal cells when the longest label times five fits the width, with icons", () => {
+  it("before measurement, uses equal when longest fits and scroll when anywhere near the proportional limit", () => {
     // 1x (fontSize 12): max(48, (len * 12 * 0.58 + 8) * 1.1) -> [48, 70.048, 54.736, 48, 48].
-    // Longest * 5 = 350.24, sum = 268.784.
+    // Longest * 5 = 350.24, sum = 268.784, scrollThreshold = 268.784 * 1.1 = 295.6624.
     const res = at(351, 1);
     expect(res.mode).toBe("equal");
     expect(res.showIcons).toBe(true);
@@ -460,18 +549,13 @@ describe("tabLayout", () => {
     expect(at(351, 1)).toMatchObject({ mode: "equal", showIcons: true });
     expect(at(350, 1)).toMatchObject({ mode: "proportional", showIcons: true });
     expect(at(312, 1)).toMatchObject({ mode: "proportional", showIcons: true });
-    expect(at(269, 1)).toMatchObject({ mode: "proportional", showIcons: true });
-    expect(at(268, 1)).toMatchObject({ mode: "scroll", showIcons: true });
+    expect(at(296, 1)).toMatchObject({ mode: "proportional", showIcons: true });
+    expect(at(295, 1)).toMatchObject({ mode: "scroll", showIcons: true });
   });
 
-  it("at 200% text, picks equal, proportional or scroll across the width boundaries", () => {
-    // 2x (fontSize 24):
-    // Home:     (4 * 24 * 0.58 + 8) * 1.1 =  70.048
-    // Accounts: (8 * 24 * 0.58 + 8) * 1.1 = 131.296
-    // Budget:   (6 * 24 * 0.58 + 8) * 1.1 = 100.672
-    // Pay:      (3 * 24 * 0.58 + 8) * 1.1 =  54.736
-    // More:     (4 * 24 * 0.58 + 8) * 1.1 =  70.048
-    // Longest * 5 = 656.48; Sum = 426.8.
+  it("before measurement at 200% text, picks scroll near the proportional limit and equal above longest * 5", () => {
+    // 2x (fontSize 24): [70.048, 131.296, 100.672, 54.736, 70.048].
+    // Longest * 5 = 656.48; Sum = 426.8; scrollThreshold = 426.8 * 1.1 = 469.48.
     const res = at(657, 2);
     expect(res.mode).toBe("equal");
     expect(res.showIcons).toBe(false);
@@ -480,32 +564,37 @@ describe("tabLayout", () => {
     }
     expect(at(656, 2)).toMatchObject({ mode: "proportional", showIcons: false });
     expect(at(480, 2)).toMatchObject({ mode: "proportional", showIcons: false });
-    expect(at(427, 2)).toMatchObject({ mode: "proportional", showIcons: false });
-    expect(at(426, 2)).toMatchObject({ mode: "scroll", showIcons: false });
+    expect(at(470, 2)).toMatchObject({ mode: "proportional", showIcons: false });
+    expect(at(469, 2)).toMatchObject({ mode: "scroll", showIcons: false });
+    expect(at(427, 2)).toMatchObject({ mode: "scroll", showIcons: false });
     expect(at(412, 2)).toMatchObject({ mode: "scroll", showIcons: false });
     expect(at(312, 2)).toMatchObject({ mode: "scroll", showIcons: false });
+
+    // Identical labels at 2x: longest * 5 = sum = 350.24, scrollThreshold = 385.264 -> near limit chooses scroll.
+    const same = tabLayout({
+      labels: ["Home", "Home", "Home", "Home", "Home"],
+      width: 351,
+      fontSize: 24,
+      textScale: 2,
+    });
+    expect(same.mode).toBe("scroll");
   });
 
   it("hides icons from 1.5x and switches across equal, proportional and scroll", () => {
-    // 1.5x (fontSize 18): [54.736, 100.672, 77.704, 48, 54.736]; longest * 5 = 503.36, sum = 335.848.
+    // 1.5x (fontSize 18): [54.736, 100.672, 77.704, 48, 54.736]; longest * 5 = 503.36,
+    // sum = 335.848, scrollThreshold = 369.4328.
     expect(at(504, 1.5)).toMatchObject({ mode: "equal", showIcons: false });
-    expect(at(352, 1.5)).toMatchObject({ mode: "proportional", showIcons: false });
-    expect(at(335, 1.5)).toMatchObject({ mode: "scroll", showIcons: false });
+    expect(at(370, 1.5)).toMatchObject({ mode: "proportional", showIcons: false });
+    expect(at(369, 1.5)).toMatchObject({ mode: "scroll", showIcons: false });
     // Just under 1.5x (1.49x, fontSize 17.88):
-    // longest = (8 * 17.88 * 0.58 + 8) * 1.1 = 100.05952 -> * 5 = 500.2976; sum = 334.16368.
-    expect(at(334, 1.49)).toMatchObject({ mode: "scroll", showIcons: true });
-    expect(at(335, 1.49)).toMatchObject({ mode: "proportional", showIcons: true });
+    // longest = (8 * 17.88 * 0.58 + 8) * 1.1 = 100.05952 -> * 5 = 500.2976;
+    // sum = 334.16368, scrollThreshold = 367.580048.
+    expect(at(367, 1.49)).toMatchObject({ mode: "scroll", showIcons: true });
+    expect(at(368, 1.49)).toMatchObject({ mode: "proportional", showIcons: true });
     expect(at(501, 1.49)).toMatchObject({ mode: "equal", showIcons: true });
   });
 
-  it("at 411 points and 200% text, picks scroll using the conservative selected-weight estimate and 10% margin", () => {
-    // Selected weight 0.58, pill horizontal padding 4 * 2 = 8, min tab width 48, 10% safety margin (* 1.1):
-    // Home (4):     (4 * 24 * 0.58 + 8) * 1.1 = (55.68 + 8) * 1.1 =  70.048
-    // Accounts (8): (8 * 24 * 0.58 + 8) * 1.1 = (111.36 + 8) * 1.1 = 131.296
-    // Budget (6):   (6 * 24 * 0.58 + 8) * 1.1 = (83.52 + 8) * 1.1 = 100.672
-    // Pay (3):      (3 * 24 * 0.58 + 8) * 1.1 = (41.76 + 8) * 1.1 =  54.736
-    // More (4):     (4 * 24 * 0.58 + 8) * 1.1 = (55.68 + 8) * 1.1 =  70.048
-    // Longest * 5 = 131.296 * 5 = 656.48; Sum = 426.8 > 411 -> scroll.
+  it("at 411 points and 200% text, picks scroll using the conservative selected-weight estimate", () => {
     const res = at(411, 2);
     expect(res.mode).toBe("scroll");
     expect(res.showIcons).toBe(false);
@@ -514,28 +603,34 @@ describe("tabLayout", () => {
     }
   });
 
-  it("in equal and proportional layouts, no tab share is smaller than its conservative label width", () => {
-    const cases = [
-      [312, 1],
-      [352, 1],
-      [360, 1],
-      [411, 1],
-      [352, 1.5],
-      [504, 1.5],
-      [427, 2],
-      [480, 2],
-      [657, 2],
-    ] as const;
-    for (const [width, scale] of cases) {
-      const res = at(width, scale);
+  it("from measured label widths, picks scroll when wider than estimate, exact equal/proportional boundaries, and keeps every share >= measured cell width", () => {
+    // Measured widths [66, 126, 94, 48, 66] + 8pt horizontal pill padding = [74, 134, 102, 56, 74].
+    // Longest * 5 = 134 * 5 = 670; sum = 440.
+    const measured = [66, 126, 94, 48, 66] as const;
+    const eq = atMeasured(670, 2, measured);
+    expect(eq.mode).toBe("equal");
+    expect(eq.labelWidths).toEqual([74, 134, 102, 56, 74]);
+    expect(atMeasured(669, 2, measured).mode).toBe("proportional");
+    expect(atMeasured(440, 2, measured).mode).toBe("proportional");
+    expect(atMeasured(439, 2, measured).mode).toBe("scroll");
+
+    // Measured "Home" wider than estimate at width 472 (where estimate says proportional) -> scroll.
+    expect(at(472, 2).mode).toBe("proportional");
+    expect(atMeasured(472, 2, [108, 124, 92, 48, 64]).mode).toBe("scroll");
+
+    // Short measured labels still clamp to the 48pt minimum tab width.
+    expect(atMeasured(400, 1, [36, 62, 46, 26, 36]).labelWidths).toEqual([48, 70, 54, 48, 48]);
+
+    // Every equal and proportional share is at least the measured cell width.
+    for (const width of [440, 480, 669, 670, 720]) {
+      const res = atMeasured(width, 2, measured);
       expect(res.mode).not.toBe("scroll");
       const total = res.labelWidths.reduce((sum, w) => sum + w, 0);
-      for (const labelWidth of res.labelWidths) {
-        const share = res.mode === "equal" ? width / labels.length : (width * labelWidth) / total;
-        expect(share + 1e-6).toBeGreaterThanOrEqual(labelWidth);
+      for (const cellWidth of res.labelWidths) {
+        const share = res.mode === "equal" ? width / labels.length : (width * cellWidth) / total;
+        expect(share + 1e-6).toBeGreaterThanOrEqual(cellWidth);
       }
     }
-    expect(at(426, 2).mode).toBe("scroll");
   });
 });
 

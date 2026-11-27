@@ -19,8 +19,10 @@ const CHARACTER_WIDTH = 0.58;
 const LABEL_PADDING = 4;
 /** Minimum tab target width (`sizes["control.lg"]`). */
 const MIN_TAB_WIDTH = 48;
-/** Safety margin (10%) so wide glyphs like "Home" do not wrap mid-word at large text. */
+/** Safety margin (10%) on estimated widths until onLayout measurements arrive. */
 const SAFETY_MARGIN = 1.1;
+/** Extra pre-measurement headroom so an unmeasured bar near the proportional limit chooses scroll. */
+const PRE_MEASURE_SCROLL_HEADROOM = 1.1;
 
 export interface TabLayoutInput {
   readonly labels: readonly string[];
@@ -29,6 +31,8 @@ export interface TabLayoutInput {
   /** The label's font size at the current text scale. */
   readonly fontSize: number;
   readonly textScale: number;
+  /** Measured single-line label widths from the hidden measuring row, if all labels have reported. */
+  readonly measuredLabelWidths?: readonly number[];
 }
 
 const FLOAT_EPSILON = 1e-6;
@@ -42,23 +46,37 @@ export interface TabLayout {
 /**
  * Picks between three single-row layouts: equal cells when the longest label fits every tab,
  * proportional cells when the summed label widths fit without wrapping or clipping, and a
- * scrolling row otherwise.
+ * scrolling row otherwise. Uses measured single-line widths once available; before measurement,
+ * adds headroom to the scroll threshold so a bar near the limit scrolls safely.
  */
-export function tabLayout({ labels, width, fontSize, textScale }: TabLayoutInput): TabLayout {
-  const labelWidths = labels.map((label) =>
-    Math.max(
-      MIN_TAB_WIDTH,
-      (label.length * fontSize * CHARACTER_WIDTH + LABEL_PADDING * 2) * SAFETY_MARGIN,
-    ),
-  );
+export function tabLayout({
+  labels,
+  width,
+  fontSize,
+  textScale,
+  measuredLabelWidths,
+}: TabLayoutInput): TabLayout {
+  const hasMeasurements =
+    measuredLabelWidths !== undefined &&
+    measuredLabelWidths.length === labels.length &&
+    measuredLabelWidths.every((w) => Number.isFinite(w) && w > 0);
+  const labelWidths = hasMeasurements
+    ? measuredLabelWidths.map((w) => Math.max(MIN_TAB_WIDTH, w + LABEL_PADDING * 2))
+    : labels.map((label) =>
+        Math.max(
+          MIN_TAB_WIDTH,
+          (label.length * fontSize * CHARACTER_WIDTH + LABEL_PADDING * 2) * SAFETY_MARGIN,
+        ),
+      );
   const longest = labelWidths.reduce((max, w) => Math.max(max, w), 0);
   const totalWidth = labelWidths.reduce((sum, w) => sum + w, 0);
+  const scrollThreshold = hasMeasurements ? totalWidth : totalWidth * PRE_MEASURE_SCROLL_HEADROOM;
   const mode =
-    longest * labels.length - width <= FLOAT_EPSILON
-      ? "equal"
-      : totalWidth - width <= FLOAT_EPSILON
-        ? "proportional"
-        : "scroll";
+    scrollThreshold - width > FLOAT_EPSILON
+      ? "scroll"
+      : longest * labels.length - width <= FLOAT_EPSILON
+        ? "equal"
+        : "proportional";
   return { mode, showIcons: textScale < LABEL_ONLY_FROM, labelWidths };
 }
 
@@ -148,4 +166,13 @@ export const createStyles = (theme: Theme) =>
     selected: { backgroundColor: theme.colors["primary.subtle"] },
     label: { color: theme.colors["text.secondary"], fontWeight: "600", textAlign: "center" },
     labelSelected: { color: theme.colors.primary },
+    // Hidden measuring column: absolutely placed with no width/height constraints so each label
+    // reports its natural single-line width via onLayout without affecting layout or a11y.
+    measureRow: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      opacity: 0,
+      alignItems: "flex-start",
+    },
   });
