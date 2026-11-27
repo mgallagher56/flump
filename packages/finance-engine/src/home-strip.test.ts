@@ -229,6 +229,8 @@ describe("the budget rules", () => {
     expect(
       budgetHasSpending({ outgoings: 0, savings: 0 }, [
         { amount: 2085, isIncome: true },
+        // Any truthy flag marks income, as web's loader read it.
+        { amount: 500, isIncome: 1 },
         { amount: 0 },
         { amount: "not a number" },
         null,
