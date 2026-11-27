@@ -319,7 +319,7 @@ describe("Architecture & Design System Laws", () => {
 
     it("enforces colocated structure for new marketing pages", () => {
       verifyColocatedStructure(MARKETING_PAGES_DIR, "AiConnectionPage");
-      verifyColocatedStructure(MARKETING_PAGES_DIR, "FeaturePage");
+      verifyColocatedStructure(MARKETING_PAGES_DIR, "AreaPage");
       verifyColocatedStructure(MARKETING_PAGES_DIR, "FeaturesIndexPage");
       verifyColocatedStructure(MARKETING_PAGES_DIR, "PreviewPage");
     });
