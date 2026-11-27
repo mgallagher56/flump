@@ -25,6 +25,8 @@ export const mainContent = cva({
     flex: "1",
     _focus: { outline: "none" },
     "& > :not(:first-child)": { contentVisibility: "auto" },
+    // Printing lays the whole page out at once: paint every band.
+    "@media print": { "& > :not(:first-child)": { contentVisibility: "visible" } },
     "& > :nth-child(2)": { containIntrinsicSize: { base: "auto 730px", lg: "auto 1090px" } },
     "& > :nth-child(3)": {
       containIntrinsicSize: { base: "auto 4920px", md: "auto 4480px", xl: "auto 3060px" },
