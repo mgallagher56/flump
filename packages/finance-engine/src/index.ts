@@ -15,6 +15,7 @@ export * from "./disclaimers.js";
 export * from "./forecast.js";
 export * from "./health-score.js";
 export * from "./home-equity.js";
+export * from "./home-strip.js";
 export * from "./household-joint-summary.js";
 export * from "./invoicing/index.js";
 export * from "./joint-share.js";

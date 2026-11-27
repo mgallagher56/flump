@@ -1,3 +1,4 @@
+export * from "./budget-figures.js";
 export * from "./build.js";
 export * from "./figure.js";
 export * from "./household.js";
