@@ -494,10 +494,10 @@ describe("Home's two-figure strip (S5b)", () => {
       screen.getByLabelText("What you owe, £1,800, Cards, loans and overdrafts"),
     ).toBeOnTheScreen();
     expect(screen.queryByText("Pension pots")).toBeNull();
-    expect(screen.queryByTestId("rates-notice")).toBeNull();
+    expect(screen.queryByTestId("tax-rates-status-banner")).toBeNull();
     // Under the hero and above the check-in row, in that order.
-    const order = testIdOrder(["home-hero", "figure-strip", "check-in-row"]);
-    expect(order).toEqual(["home-hero", "figure-strip", "check-in-row"]);
+    const order = testIdOrder(["home-hero", "kpi-strip", "check-in-row"]);
+    expect(order).toEqual(["home-hero", "kpi-strip", "check-in-row"]);
   });
 
   it("short: the label says so and the figure keeps the ordinary text colour", async () => {
@@ -546,7 +546,7 @@ describe("Home's two-figure strip (S5b)", () => {
 
   it("spending and no income row: the prompt, never minus the spending as left over", async () => {
     await home(fakeApi(routes(household(RENTER, undefined, SPENDING))));
-    expect(await screen.findByTestId("figure-strip-prompt")).toBeOnTheScreen();
+    expect(await screen.findByTestId("kpi-strip-prompt")).toBeOnTheScreen();
     expect(screen.queryByText("Left over each month")).toBeNull();
     expect(screen.queryByText("-£1,960")).toBeNull();
   });
@@ -561,7 +561,7 @@ describe("Home's two-figure strip (S5b)", () => {
   it("neither debt nor pension: the one figure", async () => {
     await home(fakeApi(routes(household(RENTER.slice(0, 2), undefined, RENTER_BUDGET))));
     expect(await screen.findByLabelText(LEFT_OVER_EXPLAINED)).toBeOnTheScreen();
-    expect(screen.queryByTestId("figure-strip-second")).toBeNull();
+    expect(screen.queryByTestId("kpi-strip-second")).toBeNull();
     expect(screen.queryByText("Not set")).toBeNull();
   });
 
@@ -575,7 +575,7 @@ describe("Home's two-figure strip (S5b)", () => {
     expect(
       await screen.findByLabelText("Left over each month, £127, From your budget"),
     ).toBeOnTheScreen();
-    expect(screen.queryByTestId("rates-notice")).toBeNull();
+    expect(screen.queryByTestId("tax-rates-status-banner")).toBeNull();
   });
 
   it("provisional rates: the notice above the strip when the budget counts a worked-out take-home", async () => {
@@ -586,8 +586,9 @@ describe("Home's two-figure strip (S5b)", () => {
         "2027/28 rates are provisional: announced but not yet confirmed. Figures may change.",
       ),
     ).toBeOnTheScreen();
-    const order = testIdOrder(["rates-notice", "figure-strip"]);
-    expect(order).toEqual(["rates-notice", "figure-strip"]);
+    // Above the hero, where web's dashboard puts TaxRatesStatusBanner.
+    const order = testIdOrder(["tax-rates-status-banner", "home-hero", "kpi-strip"]);
+    expect(order).toEqual(["tax-rates-status-banner", "home-hero", "kpi-strip"]);
   });
 
   it("after the latest year in Flump: the year whose rates are used", async () => {
@@ -607,7 +608,7 @@ describe("Home's two-figure strip (S5b)", () => {
       MAY_2027,
     );
     expect(await screen.findByLabelText(LEFT_OVER_EXPLAINED)).toBeOnTheScreen();
-    expect(screen.queryByTestId("rates-notice")).toBeNull();
+    expect(screen.queryByTestId("tax-rates-status-banner")).toBeNull();
   });
 
   it("refused: no Scottish rates for the year, so the notice in place of the figure", async () => {
@@ -618,8 +619,8 @@ describe("Home's two-figure strip (S5b)", () => {
     expect(await screen.findByText(notice)).toBeOnTheScreen();
     expect(screen.getByLabelText(`Left over each month, ${notice}`)).toBeOnTheScreen();
     expect(screen.queryByText("£0")).toBeNull();
-    expect(screen.queryByTestId("figure-strip-prompt")).toBeNull();
-    expect(screen.queryByTestId("rates-notice")).toBeNull();
+    expect(screen.queryByTestId("kpi-strip-prompt")).toBeNull();
+    expect(screen.queryByTestId("tax-rates-status-banner")).toBeNull();
     expect(screen.getByText("What you owe")).toBeOnTheScreen();
   });
 
@@ -653,7 +654,7 @@ describe("Home's two-figure strip (S5b)", () => {
     await act(async () => jest.advanceTimersByTimeAsync(10_000));
     expect(screen.getByTestId("home-error")).toBeOnTheScreen();
     expect(screen.getByText("Check your connection and try again.")).toBeOnTheScreen();
-    expect(screen.queryByTestId("figure-strip-prompt")).toBeNull();
+    expect(screen.queryByTestId("kpi-strip-prompt")).toBeNull();
     expect(screen.queryByTestId("home-hero")).toBeNull();
     expect(screen.queryByText("£0")).toBeNull();
     // The check-in row keeps working under the failure (S5).
@@ -675,7 +676,7 @@ describe("Home's two-figure strip (S5b)", () => {
       ),
     ).toBeOnTheScreen();
     expect(screen.queryByText(/connection/)).toBeNull();
-    expect(screen.queryByTestId("figure-strip-prompt")).toBeNull();
+    expect(screen.queryByTestId("kpi-strip-prompt")).toBeNull();
   });
 
   it("terms not agreed on the budget read: the terms screen", async () => {
@@ -722,31 +723,21 @@ describe("Home's two-figure strip (S5b)", () => {
     // Every other read has answered; Home still waits for the budget.
     await act(async () => jest.advanceTimersByTimeAsync(199));
     expect(screen.queryByTestId("home-hero")).toBeNull();
-    expect(
-      screen.queryByTestId("figure-strip-loading", { includeHiddenElements: true }),
-    ).toBeNull();
+    expect(screen.queryByTestId("kpi-strip-loading", { includeHiddenElements: true })).toBeNull();
     await act(async () => jest.advanceTimersByTimeAsync(1));
     expect(screen.getByLabelText("Loading your net worth")).toBeOnTheScreen();
-    expect(
-      screen.getByTestId("figure-strip-loading", { includeHiddenElements: true }),
-    ).toBeTruthy();
+    expect(screen.getByTestId("kpi-strip-loading", { includeHiddenElements: true })).toBeTruthy();
     await act(async () => {
       answer(h.budgetEntries);
       await jest.advanceTimersByTimeAsync(50);
     });
     // The blocks stay 400 ms from when they showed, both together.
     expect(screen.getByTestId("home-hero-loading")).toBeOnTheScreen();
-    expect(
-      screen.getByTestId("figure-strip-loading", { includeHiddenElements: true }),
-    ).toBeTruthy();
+    expect(screen.getByTestId("kpi-strip-loading", { includeHiddenElements: true })).toBeTruthy();
     await act(async () => jest.advanceTimersByTimeAsync(349));
-    expect(
-      screen.getByTestId("figure-strip-loading", { includeHiddenElements: true }),
-    ).toBeTruthy();
+    expect(screen.getByTestId("kpi-strip-loading", { includeHiddenElements: true })).toBeTruthy();
     await act(async () => jest.advanceTimersByTimeAsync(1));
-    expect(
-      screen.queryByTestId("figure-strip-loading", { includeHiddenElements: true }),
-    ).toBeNull();
+    expect(screen.queryByTestId("kpi-strip-loading", { includeHiddenElements: true })).toBeNull();
     expect(screen.queryByTestId("home-hero-loading")).toBeNull();
     expect(screen.getByLabelText(LEFT_OVER_EXPLAINED)).toBeOnTheScreen();
     expect(screen.getByTestId("home-hero")).toBeOnTheScreen();
@@ -763,5 +754,70 @@ describe("Home's two-figure strip (S5b)", () => {
       .setup()
       .press(await screen.findByRole("link", { name: "Open the Flump website" }));
     expect(Linking.openURL).toHaveBeenCalledWith("https://m.test.invalid");
+  });
+
+  it("a budget row with no frequency is out of step, never read as monthly", async () => {
+    const h = household(RENTER, undefined, RENTER_BUDGET);
+    const [first, ...rest] = h.budgetEntries;
+    const { frequency: _f, ...noFrequency } = first as (typeof h.budgetEntries)[number];
+    await home(fakeApi(routes(h, { "GET /budget-entries": () => [noFrequency, ...rest] })));
+    expect(await screen.findByTestId("home-error")).toBeOnTheScreen();
+    expect(screen.getByText(/did not understand Flump's answer/)).toBeOnTheScreen();
+    expect(screen.queryByLabelText(LEFT_OVER_EXPLAINED)).toBeNull();
+  });
+
+  it("a profile answer the app does not know (a newer backend) puts only the strip out of step", async () => {
+    const h = household(RENTER, undefined, LINKED_BUDGET);
+    const api = fakeApi(withFacts(h, { ...RENTER_FACTS, taxRegion: "ATLANTIS" }));
+    await home(api);
+    // The hero and the check-in row stay: neither reads the region.
+    expect(await screen.findByTestId("home-hero")).toBeOnTheScreen();
+    expect(screen.getByTestId("check-in-row")).toBeOnTheScreen();
+    expect(screen.queryByTestId("home-error")).toBeNull();
+    expect(screen.getByTestId("kpi-strip-error")).toBeOnTheScreen();
+    expect(screen.getByText(/did not understand Flump's answer/)).toBeOnTheScreen();
+    expect(screen.queryByTestId("kpi-strip")).toBeNull();
+    expect(screen.queryByTestId("kpi-strip-prompt")).toBeNull();
+    const profileReads = () => api.calls.filter((c) => c.path === "/user-profile").length;
+    const before = profileReads();
+    await userEvent.setup().press(screen.getByTestId("kpi-strip-retry"));
+    await settle();
+    expect(profileReads()).toBe(before + 1);
+  });
+
+  it("when the check-in reads and the budget both fail, one Try again reads both again", async () => {
+    let down = true;
+    const h = household(RENTER, undefined, RENTER_BUDGET);
+    const api = fakeApi(
+      routes(h, {
+        "GET /accounts": () => (down ? fail("unavailable", 503) : h.accounts),
+        "GET /budget-entries": () => (down ? fail("unavailable", 503) : h.budgetEntries),
+      }),
+    );
+    await home(api);
+    await act(async () => jest.advanceTimersByTimeAsync(10_000));
+    expect(screen.getByTestId("home-error")).toBeOnTheScreen();
+    down = false;
+    await userEvent.setup().press(screen.getByTestId("home-retry"));
+    await settle();
+    expect(screen.getByTestId("home-hero")).toBeOnTheScreen();
+    expect(screen.getByLabelText(LEFT_OVER_EXPLAINED)).toBeOnTheScreen();
+  });
+
+  it("not set up wins over a failed budget read: the set-up screen, not an error", async () => {
+    const h = household(RENTER);
+    await home(
+      fakeApi(
+        routes(h, {
+          "GET /user-profile": () => ({ ...h.profile, onboardingCompleted: false }),
+          "GET /budget-entries": () => fail("unavailable", 503),
+        }),
+      ),
+    );
+    await act(async () => jest.advanceTimersByTimeAsync(10_000));
+    expect(
+      screen.getByRole("header", { name: "Finish setting up Flump on the website" }),
+    ).toBeOnTheScreen();
+    expect(screen.queryByTestId("home-error")).toBeNull();
   });
 });

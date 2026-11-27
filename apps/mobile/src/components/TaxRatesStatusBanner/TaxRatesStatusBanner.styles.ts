@@ -2,7 +2,7 @@ import { StyleSheet } from "react-native";
 import type { Theme } from "../../theme/ThemeProvider";
 
 /** Web's two banner looks: rates carried over from another year, or announced and not confirmed. */
-export type RatesNoticeKind = "fallback" | "provisional";
+export type TaxRatesStatusBannerKind = "fallback" | "provisional";
 
 /** The status colours web's `TaxRatesStatusBanner` uses; each text and fill pair is in the matrix. */
 export const KIND_COLOURS = {
@@ -17,7 +17,7 @@ export const KIND_COLOURS = {
     text: "info",
   },
 } as const satisfies Record<
-  RatesNoticeKind,
+  TaxRatesStatusBannerKind,
   { fill: string; edge: string; text: "warning" | "info" }
 >;
 

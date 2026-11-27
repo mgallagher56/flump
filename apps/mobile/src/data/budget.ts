@@ -6,14 +6,16 @@
  * present (`budgetEntryFromRow`).
  */
 import type { ApiClient } from "@flump/api-client";
-import { BudgetEntryDto } from "@flump/api-contract";
+import { BudgetEntryDto, UserProfileResponse } from "@flump/api-contract";
 import { useQuery } from "@tanstack/react-query";
 import { useApi } from "./ApiProvider";
 import { queryKeys } from "./queryKeys";
 
 /**
- * A budget row: its category, amount and whether it is income are needed; the share, the link and
- * the rest may be absent (rows from before those columns), and unknown fields are ignored.
+ * A budget row: its category, amount, frequency and whether it is income are needed, since the
+ * engine would read a missing one as a different figure (no frequency as monthly). The share and
+ * the link may be absent: the contract reads rows from before those columns as sole and unlinked,
+ * as the engine does. Unknown fields are ignored.
  */
 const AppBudgetEntry = BudgetEntryDto.pick({
   id: true,
@@ -29,7 +31,7 @@ const AppBudgetEntry = BudgetEntryDto.pick({
   linkAccountId: true,
 })
   .partial()
-  .required({ category: true, amount: true, isIncome: true })
+  .required({ category: true, amount: true, frequency: true, isIncome: true })
   .loose();
 const AppBudgetEntryList = AppBudgetEntry.array();
 
@@ -55,4 +57,32 @@ export function useBudgetEntriesQuery(): BudgetEntriesQuery {
     queryFn: ({ signal }) =>
       need(api).request("/budget-entries", { schema: AppBudgetEntryList, signal }),
   });
+}
+
+/**
+ * The profile facts the strip's take-home line is worked out from (`profileFactsFromProfile`),
+ * each optional, other fields ignored. Parsed from the check-in's cached profile answer, so there
+ * is still one request; kept apart from the check-in's own pick, so a value only these facts hold
+ * (a region a newer backend adds) puts only the strip out of step.
+ */
+const StripProfile = UserProfileResponse.pick({
+  annualSalary: true,
+  employmentType: true,
+  taxRegion: true,
+  studentLoanPlans: true,
+  pensionPercent: true,
+  isSalarySacrifice: true,
+  monthlyTakeHome: true,
+  housingStatus: true,
+  monthlyHousingCost: true,
+  propertyOwnershipShare: true,
+})
+  .partial()
+  .loose();
+export type StripProfile = ReturnType<typeof StripProfile.parse>;
+
+/** The strip's profile facts from the cached profile answer, or null when they do not parse. */
+export function parseStripProfile(profile: unknown): StripProfile | null {
+  const parsed = StripProfile.safeParse(profile ?? {});
+  return parsed.success ? parsed.data : null;
 }

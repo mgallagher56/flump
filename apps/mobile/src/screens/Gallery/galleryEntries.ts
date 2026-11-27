@@ -12,8 +12,6 @@ import { CurrencyInput } from "../../components/CurrencyInput";
 import { currencyInputStates } from "../../components/CurrencyInput/CurrencyInput.states";
 import { ErrorState } from "../../components/ErrorState";
 import { errorStateStates } from "../../components/ErrorState/ErrorState.states";
-import { FigureStrip } from "../../components/FigureStrip";
-import { figureStripStates } from "../../components/FigureStrip/FigureStrip.states";
 import { FlumpLogo } from "../../components/FlumpLogo";
 import { flumpLogoStates } from "../../components/FlumpLogo/FlumpLogo.states";
 import { FormField } from "../../components/FormField";
@@ -24,6 +22,8 @@ import { Icon } from "../../components/Icon";
 import { iconStates } from "../../components/Icon/Icon.states";
 import { InlineAlert } from "../../components/InlineAlert";
 import { inlineAlertStates } from "../../components/InlineAlert/InlineAlert.states";
+import { KpiStrip } from "../../components/KpiStrip";
+import { kpiStripStates } from "../../components/KpiStrip/KpiStrip.states";
 import { ListRow } from "../../components/ListRow";
 import { listRowStates } from "../../components/ListRow/ListRow.states";
 import { Money } from "../../components/Money";
@@ -34,8 +34,6 @@ import { NetWorthTrendBars } from "../../components/NetWorthTrendBars";
 import { netWorthTrendBarsStates } from "../../components/NetWorthTrendBars/NetWorthTrendBars.states";
 import { Pressable } from "../../components/Pressable";
 import { pressableStates } from "../../components/Pressable/Pressable.states";
-import { RatesNotice } from "../../components/RatesNotice";
-import { ratesNoticeStates } from "../../components/RatesNotice/RatesNotice.states";
 import { Screen } from "../../components/Screen";
 import { screenStates } from "../../components/Screen/Screen.states";
 import { Skeleton } from "../../components/Skeleton";
@@ -44,6 +42,8 @@ import { StatusBadge } from "../../components/StatusBadge";
 import { statusBadgeStates } from "../../components/StatusBadge/StatusBadge.states";
 import { TabBar } from "../../components/TabBar";
 import { tabBarStates } from "../../components/TabBar/TabBar.states";
+import { TaxRatesStatusBanner } from "../../components/TaxRatesStatusBanner";
+import { taxRatesStatusBannerStates } from "../../components/TaxRatesStatusBanner/TaxRatesStatusBanner.states";
 import { Text } from "../../components/Text";
 import { textStates } from "../../components/Text/Text.states";
 import { Toast } from "../../components/Toast";
@@ -113,8 +113,8 @@ export const GALLERY: readonly GalleryEntry[] = [
   entry("HeroFigure", HeroFigure, heroFigureStates),
   entry("NetWorthTrendBars", NetWorthTrendBars, netWorthTrendBarsStates),
   entry("NetWorthBasisLine", NetWorthBasisLine, netWorthBasisLineStates),
-  entry("FigureStrip", FigureStrip, figureStripStates),
-  entry("RatesNotice", RatesNotice, ratesNoticeStates),
+  entry("KpiStrip", KpiStrip, kpiStripStates),
+  entry("TaxRatesStatusBanner", TaxRatesStatusBanner, taxRatesStatusBannerStates),
   entry("CurrencyInput", CurrencyInput, currencyInputStates),
   entry("FormField", FormField, formFieldStates),
   entry("Toast", Toast, toastStates),

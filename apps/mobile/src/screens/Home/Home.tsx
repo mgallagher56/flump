@@ -2,15 +2,15 @@ import { Linking } from "react-native";
 import { Button } from "../../components/Button";
 import { Card } from "../../components/Card";
 import { ErrorState } from "../../components/ErrorState";
-import { FigureStrip } from "../../components/FigureStrip";
 import { HeroFigure } from "../../components/HeroFigure";
+import { KpiStrip } from "../../components/KpiStrip";
 import { NetWorthBasisLine } from "../../components/NetWorthBasisLine";
 import { NetWorthTrendBars, TREND_PLOT_HEIGHT } from "../../components/NetWorthTrendBars";
-import { RatesNotice } from "../../components/RatesNotice";
 import { Screen } from "../../components/Screen";
+import { TaxRatesStatusBanner } from "../../components/TaxRatesStatusBanner";
 import { Text } from "../../components/Text";
 import { CHECK_IN } from "../../copy/checkIn";
-import { changeLine, HOME } from "../../copy/home";
+import { changeLine, HOME, STRIP } from "../../copy/home";
 import { OPEN_FLUMP_WEBSITE } from "../../copy/navigation";
 import { useDelayedLoading } from "../../data/useDelayedLoading";
 import { checkInRow } from "../../features/check-in/checkInFlow";
@@ -101,6 +101,10 @@ function HomeBody({
   if (home.status === "notSetUp") return <NotSetUp setUp={links.setUp} edges={TAB_EDGES} />;
   return (
     <Screen edges={TAB_EDGES} testID="home">
+      {/* Above the hero, where web's dashboard puts TaxRatesStatusBanner (HomeDashboard). */}
+      {home.status === "ready" && home.strip.status === "ready" ? (
+        <TaxRatesStatusBanner rates={home.strip.value.ratesNotice} />
+      ) : null}
       <NetWorth home={home} links={links} skeleton={skeleton} />
       <Strip home={home} links={links} skeleton={skeleton} />
       <CheckInRow data={checkIn} onOpen={onOpenCheckIn} now={now} />
@@ -109,7 +113,7 @@ function HomeBody({
 }
 
 /**
- * The rates notice and the two-figure strip under the hero, or their blocks while loading. Nothing
+ * The two-figure strip under the hero, or its blocks while loading. Nothing
  * after a failed read: the hero's place says what went wrong, never the budget prompt.
  */
 function Strip({
@@ -124,24 +128,34 @@ function Strip({
   if (home.status === "error") return null;
   if (home.status === "loading" || skeleton) {
     return skeleton ? (
-      <FigureStrip
+      <KpiStrip
         loading
         onAddBudget={open(links.addBudget)}
         onAddSpending={open(links.addSpending)}
       />
     ) : null;
   }
+  if (home.strip.status === "outOfStep") {
+    // Only the strip's own facts could not be read: the hero and the check-in row stay.
+    return (
+      <ErrorState
+        heading={STRIP.loadErrorHeading}
+        body={CHECK_IN.loadErrorOutOfStepBody}
+        retryLabel={CHECK_IN.tryAgain}
+        testID="kpi-strip-error"
+        retryTestID="kpi-strip-retry"
+        onRetry={home.strip.retry}
+      />
+    );
+  }
   const exact = links.addBudget.exact && links.addSpending.exact;
   return (
-    <>
-      <RatesNotice rates={home.strip.ratesNotice} />
-      <FigureStrip
-        strip={home.strip}
-        onAddBudget={open(links.addBudget)}
-        onAddSpending={open(links.addSpending)}
-        websiteLabel={exact ? undefined : OPEN_FLUMP_WEBSITE}
-      />
-    </>
+    <KpiStrip
+      strip={home.strip.value}
+      onAddBudget={open(links.addBudget)}
+      onAddSpending={open(links.addSpending)}
+      websiteLabel={exact ? undefined : OPEN_FLUMP_WEBSITE}
+    />
   );
 }
 

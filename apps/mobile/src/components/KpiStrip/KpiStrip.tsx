@@ -11,9 +11,9 @@ import { Button } from "../Button";
 import { Card } from "../Card";
 import { Money } from "../Money";
 import { Text } from "../Text";
-import { createStyles, skeletonHeights, stacks } from "./FigureStrip.styles";
+import { createStyles, skeletonHeights, stacks } from "./KpiStrip.styles";
 
-export interface FigureStripProps {
+export interface KpiStripProps {
   /** The engine's `selectHomeStrip` answer. Absent while loading. */
   strip?: HomeStrip | null;
   /** Waiting for the figures: two cells of still blocks, the size of the cells that replace them. */
@@ -27,13 +27,13 @@ export interface FigureStripProps {
    * website's home page). Defaults to the page's own words.
    */
   websiteLabel?: string;
-  /** Defaults to "figure-strip". */
+  /** Defaults to "kpi-strip". */
   testID?: string;
 }
 
 type Styles = ReturnType<typeof createStyles>;
 
-interface CellProps {
+interface KpiCardProps {
   label: string;
   /** Pounds; absent for a refused figure, which shows its notice instead. */
   value?: number;
@@ -42,6 +42,8 @@ interface CellProps {
   /** Its own control under the group (the income-only link). */
   action?: ReactNode;
   testID: string;
+  /** The group's test id, naming what the card shows ("kpi-strip-pension"). */
+  groupTestID: string;
   stacked: boolean;
   styles: Styles;
 }
@@ -50,13 +52,22 @@ interface CellProps {
  * One card: the label, the figure and its caption read out as one item ("Left over each month,
  * £125, From your budget"). A link stays its own control under the group.
  */
-function Cell({ label, value, caption, action, testID, stacked, styles }: CellProps) {
+function KpiCard({
+  label,
+  value,
+  caption,
+  action,
+  testID,
+  groupTestID,
+  stacked,
+  styles,
+}: KpiCardProps) {
   const spoken = [label, value === undefined ? null : spokenPounds(value), caption]
     .filter(Boolean)
     .join(", ");
   return (
     <Card testID={testID} style={stacked ? styles.cellStacked : styles.cellInRow}>
-      <View accessible accessibilityLabel={spoken} style={styles.group}>
+      <View accessible accessibilityLabel={spoken} style={styles.group} testID={groupTestID}>
         <Text textStyle="label.md" color="secondary">
           {label}
         </Text>
@@ -93,10 +104,11 @@ function FirstCell({
   if (cell.kind === "refused") {
     // The refusal's notice in place of the figure: never £0, never the budget prompt.
     return (
-      <Cell
+      <KpiCard
         label={STRIP.leftOver}
         caption={cell.notice}
         testID={id}
+        groupTestID={`${testID}-refused`}
         stacked={stacked}
         styles={styles}
       />
@@ -104,7 +116,7 @@ function FirstCell({
   }
   if (cell.kind === "incomeOnly") {
     return (
-      <Cell
+      <KpiCard
         label={STRIP.incomeOnly}
         value={cell.figure}
         // Web says what the income leaves out after its link; here it is the caption.
@@ -120,6 +132,7 @@ function FirstCell({
           />
         }
         testID={id}
+        groupTestID={`${testID}-income-only`}
         stacked={stacked}
         styles={styles}
       />
@@ -127,11 +140,12 @@ function FirstCell({
   }
   // A shortfall changes the label only: the figure keeps the ordinary text colour, with no icon.
   return (
-    <Cell
+    <KpiCard
       label={cell.kind === "short" ? STRIP.short : STRIP.leftOver}
       value={cell.figure}
       caption={cell.leavesOut ?? STRIP.leftOverCaption}
       testID={id}
+      groupTestID={`${testID}-${cell.kind === "short" ? "short" : "left-over"}`}
       stacked={stacked}
       styles={styles}
     />
@@ -152,11 +166,12 @@ function SecondCell({
   if (cell.kind === "none") return null;
   const owed = cell.kind === "owed";
   return (
-    <Cell
+    <KpiCard
       label={owed ? STRIP.owed : STRIP.pension}
       value={cell.figure}
       caption={owed ? STRIP.owedCaption : STRIP.pensionCaption}
       testID={`${testID}-second`}
+      groupTestID={`${testID}-${cell.kind}`}
       stacked={stacked}
       styles={styles}
     />
@@ -170,18 +185,18 @@ function SecondCell({
  * this draws it. With no budget the strip is one prompt, which hides the second figure too (web's
  * `KpiStrip` rule). The cells stack at large text and on narrow screens.
  */
-export function FigureStrip({
+export function KpiStrip({
   strip,
   loading = false,
   onAddBudget,
   onAddSpending,
   websiteLabel,
-  testID = "figure-strip",
-}: FigureStripProps) {
+  testID = "kpi-strip",
+}: KpiStripProps) {
   const theme = useTheme();
-  const { fontScale, width } = useWindowDimensions();
+  const { fontScale } = useWindowDimensions();
   const styles = useMemo(() => createStyles(theme), [theme]);
-  const stacked = stacks(theme, fontScale, width);
+  const stacked = stacks(theme, fontScale);
   const layout = stacked ? styles.column : styles.row;
 
   if (loading || !strip) {
