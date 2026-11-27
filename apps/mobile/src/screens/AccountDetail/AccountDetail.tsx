@@ -7,7 +7,7 @@ import {
   describeJointShareOfWhole,
   describeJointWholeHistory,
 } from "@flump/finance-engine/accounts";
-import type { ReactNode } from "react";
+import { type ReactNode, useContext } from "react";
 import { Linking } from "react-native";
 import { Button } from "../../components/Button";
 import { ChartFigure, SAID_BY_CHART } from "../../components/ChartFigure";
@@ -39,7 +39,7 @@ import { useAccountWrites } from "../../data/accountWrites";
 import { useDelayedLoading } from "../../data/useDelayedLoading";
 import type { AccountDetail as Detail } from "../../features/accounts/accountsModel";
 import { type AccountDetailState, useAccountDetail } from "../../features/accounts/useAccountsData";
-import type { WebLink } from "../../navigation/shell";
+import { ShellContext, type WebLink } from "../../navigation/shell";
 import { NotSetUp } from "../NotSetUp";
 import { TermsRequired } from "../TermsRequired";
 
@@ -181,6 +181,9 @@ function Loaded({
 }) {
   const { account, hero, owed } = detail;
   const writes = useAccountWrites();
+  // Saved figures shown offline (E12 S7): no quick update and no Edit, since both write; the
+  // notice above already says changes need a connection. Read softly: tests render no shell.
+  const offline = useContext(ShellContext)?.offline ?? false;
   // The saved figure as the edit form's field shows it: a debt as the positive amount owed.
   const savedShown = accountBalanceShown(account.type, account.balance);
   const wholeOf = owed ? "amount owed" : "balance";
@@ -214,21 +217,30 @@ function Loaded({
         caption={subline}
         testID="account-detail-hero"
       />
-      <QuickBalanceUpdate
-        accountName={detail.name}
-        owed={owed}
-        current={savedShown === "" ? null : Number(savedShown)}
-        hint={describeJointWholeValue(share, wholeOf)}
-        onSave={async (shown) => {
-          // Stored as minus the amount owed for a debt, as the edit form sends it.
-          const balance = Number(accountBalanceStored(account.type, String(shown)));
-          const result = await writes.update(account.id, { balance }, account.updatedAt);
-          if (result.status === "saved") return null;
-          if (result.status === "conflict") return ACCOUNT_FORM.conflict;
-          return saveFailedMessage(result.status === "failed" ? result.kind : "client");
-        }}
-      />
-      <Button label={ACCOUNT_FORM.edit} variant="outline" testID="account-edit" onPress={onEdit} />
+      {offline ? null : (
+        <QuickBalanceUpdate
+          accountName={detail.name}
+          owed={owed}
+          current={savedShown === "" ? null : Number(savedShown)}
+          hint={describeJointWholeValue(share, wholeOf)}
+          onSave={async (shown) => {
+            // Stored as minus the amount owed for a debt, as the edit form sends it.
+            const balance = Number(accountBalanceStored(account.type, String(shown)));
+            const result = await writes.update(account.id, { balance }, account.updatedAt);
+            if (result.status === "saved") return null;
+            if (result.status === "conflict") return ACCOUNT_FORM.conflict;
+            return saveFailedMessage(result.status === "failed" ? result.kind : "client");
+          }}
+        />
+      )}
+      {offline ? null : (
+        <Button
+          label={ACCOUNT_FORM.edit}
+          variant="outline"
+          testID="account-edit"
+          onPress={onEdit}
+        />
+      )}
       <Text accessibilityRole="header" textStyle="heading.sm">
         {ACCOUNT.historyTitle}
       </Text>
