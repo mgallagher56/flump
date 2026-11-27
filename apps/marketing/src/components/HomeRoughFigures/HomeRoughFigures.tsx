@@ -36,10 +36,11 @@ export const ROUGH_FIGURE_STEPS = [
 ] as const;
 
 /**
- * Prototype 11 scales its scroll distances by its pace (1.4) twice: a band's moment runs over
- * 0.55 x 1.4 x 1.4 screens of scroll, the calendar page's over 1.6 times that share.
+ * Prototype 11's band moment (`SCROLL.moment`, 0.55 screens) scaled once by its pace of 1.4
+ * (`pace.px` multiplies by the pace factor, which already holds the page's 1.4 scale). The steps
+ * run over 1.4 times that, the calendar page over 1.6 times it.
  */
-const MOMENT_SCREENS = 0.55 * 1.4 * 1.4;
+const MOMENT_SCREENS = 0.55 * 1.4;
 /** How closely a scroll-linked moment follows the scroll, in seconds of soft lag (prototype 11). */
 export const SCROLL_LAG = 0.8;
 
@@ -124,7 +125,7 @@ export const HomeRoughFigures: FC = () => {
           data-steps-picture=""
           data-testid="rough-figures-illustration"
         >
-          <Illustration scene="check-in" size="sm" palette="orb" variant="document" />
+          <Illustration scene="check-in" size="xl" palette="orb" variant="document" />
         </div>
       </div>
     </MarketingBand>

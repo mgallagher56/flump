@@ -101,6 +101,24 @@ export type FrameVerdict =
 /** The first measuring window, in milliseconds, and the frame rate under which it downgrades. */
 export const FRAME_WINDOW_MS = 2000;
 export const DOWNGRADE_FPS = 40;
+/**
+ * After the page was hidden, or after a stall, frames for this long are not counted: a browser
+ * coming back from a background tab, or a throttled pane, runs a few uneven frames first.
+ */
+export const SETTLE_MS = 1000;
+/**
+ * A gap between two frames longer than this is a stall (a throttled or occluded pane, the tab
+ * going to the background before the visibility event, a long task), not a slow frame: the
+ * window starts again after a settle. The slowest steady rate the check still counts is 4 fps.
+ */
+export const MAX_FRAME_GAP_MS = 250;
+
+export interface FrameRateCheckOptions {
+  /** Whether the page is hidden now. Defaults to `document.hidden` (false without a document). */
+  readonly isHidden?: () => boolean;
+}
+
+const documentHidden = () => typeof document !== "undefined" && document.hidden;
 
 /**
  * The scene's frame rate check, pure (from `threeKit.ts`). Call `tick(now)` once per rendered frame
@@ -108,14 +126,48 @@ export const DOWNGRADE_FPS = 40;
  * and a second window; at or over 40 settles. In the second window, under 28 fps is too slow.
  * Call `reset()` whenever the loop pauses (hidden tab, scene off screen), so a pause is never
  * counted as slow frames.
+ *
+ * Only frames a visitor could see count: a frame ticked while the page is hidden is ignored, and
+ * after the page was hidden (seen by `tick` or `reset`) or after a stall longer than
+ * `MAX_FRAME_GAP_MS`, the next `SETTLE_MS` of frames are ignored too before a window starts. So
+ * background throttling never reads as a slow device (MK11).
  */
-export function createFrameRateCheck() {
+export function createFrameRateCheck({ isHidden = documentHidden }: FrameRateCheckOptions = {}) {
   let frames = 0;
   let windowStart: number | null = null;
+  let last: number | null = null;
+  /** Waiting out a settle; `settleFrom` is its first frame, null until that frame comes. */
+  let settling = false;
+  let settleFrom: number | null = null;
   let stage: "watch" | "downgraded" | "done" = "watch";
+  const restart = () => {
+    frames = 0;
+    windowStart = null;
+    last = null;
+  };
+  const settle = (from: number | null) => {
+    settling = true;
+    settleFrom = from;
+  };
   return {
     tick(now: number): FrameVerdict | null {
       if (stage === "done") return null;
+      if (isHidden()) {
+        restart();
+        settle(null);
+        return null;
+      }
+      if (last !== null && now - last > MAX_FRAME_GAP_MS) {
+        restart();
+        settle(now);
+      }
+      last = now;
+      if (settling) {
+        if (settleFrom === null) settleFrom = now;
+        if (now - settleFrom < SETTLE_MS) return null;
+        settling = false;
+        settleFrom = null;
+      }
       if (windowStart === null) {
         windowStart = now;
         return null;
@@ -135,8 +187,8 @@ export function createFrameRateCheck() {
       return wasDowngraded && fps < MIN_FPS ? { kind: "too-slow", fps } : { kind: "settled", fps };
     },
     reset() {
-      frames = 0;
-      windowStart = null;
+      restart();
+      if (isHidden()) settle(null);
     },
   };
 }
@@ -150,7 +202,10 @@ export interface ScenePower extends SceneDecision {
  * The power policy as a hook. The server render and the first client render are `still` with
  * reason `pending`, so the page first paints with the still image (MK1). After mount it reads
  * reduced motion, the device hints and a WebGL probe once. Once frames were too slow it stays still
- * for the rest of the visit; turning reduced motion on makes it still at once.
+ * for the rest of the page view, so the scene never flickers between live and still; turning
+ * reduced motion on makes it still at once. The frame check settles within the scene's first
+ * seconds of visible running and then stops measuring, and it never counts frames from a hidden
+ * or throttled page (`createFrameRateCheck`), so only a device that is slow while seen drops.
  */
 export function useScenePower(): ScenePower {
   const reducedMotion = usePrefersReducedMotion();

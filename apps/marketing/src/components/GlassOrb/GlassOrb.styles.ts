@@ -19,20 +19,20 @@ export const glassOrb = cva({
     aspectRatio: "1",
     borderRadius: "full",
     pointerEvents: "none",
-    background: [
+    // Written as joined string literals, never `[...].join()`: Panda extracts styles at build time
+    // and cannot run a call, so a joined array left the orb with no body or shadow at all.
+    background:
       // The specular highlight, top left.
-      "radial-gradient(circle at 31% 24%, color-mix(in oklab, var(--orb-light) 92%, transparent) 0 4%, color-mix(in oklab, var(--orb-light) 30%, transparent) 9%, transparent 20%)",
+      "radial-gradient(circle at 31% 24%, color-mix(in oklab, var(--orb-light) 92%, transparent) 0 4%, color-mix(in oklab, var(--orb-light) 30%, transparent) 9%, transparent 20%), " +
       // The caustic: light gathered on the far side, lower right.
-      "radial-gradient(circle at 66% 78%, color-mix(in oklab, currentColor 46%, transparent) 0, transparent 42%)",
+      "radial-gradient(circle at 66% 78%, color-mix(in oklab, currentColor 46%, transparent) 0, transparent 42%), " +
       // The body: clear in the middle, coloured towards the rim.
       "radial-gradient(circle at 50% 50%, color-mix(in oklab, currentColor 6%, transparent) 0 46%, color-mix(in oklab, currentColor 26%, transparent) 78%, color-mix(in oklab, currentColor 58%, transparent) 100%)",
-    ].join(", "),
-    boxShadow: [
-      "inset 0 0 0 1px color-mix(in oklab, currentColor 55%, transparent)",
-      "inset 0 calc(var(--orb-size, 4.5rem) * 0.08) calc(var(--orb-size, 4.5rem) * 0.1) color-mix(in oklab, var(--orb-light) 28%, transparent)",
-      "inset 0 calc(var(--orb-size, 4.5rem) * -0.1) calc(var(--orb-size, 4.5rem) * 0.18) color-mix(in oklab, currentColor 34%, transparent)",
+    boxShadow:
+      "inset 0 0 0 1px color-mix(in oklab, currentColor 55%, transparent), " +
+      "inset 0 calc(var(--orb-size, 4.5rem) * 0.08) calc(var(--orb-size, 4.5rem) * 0.1) color-mix(in oklab, var(--orb-light) 28%, transparent), " +
+      "inset 0 calc(var(--orb-size, 4.5rem) * -0.1) calc(var(--orb-size, 4.5rem) * 0.18) color-mix(in oklab, currentColor 34%, transparent), " +
       "0 calc(var(--orb-size, 4.5rem) * 0.22) calc(var(--orb-size, 4.5rem) * 0.3) calc(var(--orb-size, 4.5rem) * -0.16) color-mix(in oklab, currentColor 55%, transparent)",
-    ].join(", "),
     // A thin bright rim on the lit side, like a glass edge catching the light.
     _after: {
       content: '""',

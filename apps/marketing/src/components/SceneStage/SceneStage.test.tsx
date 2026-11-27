@@ -135,6 +135,30 @@ describe("SceneStage", () => {
     expect(scene.handle.dispose).toHaveBeenCalledTimes(1);
   });
 
+  it("hands the scene a frame check that never counts frames from a hidden page", async () => {
+    power.current = live();
+    render(tree());
+    await act(async () => {});
+    const { frameCheck } = startContext();
+    let hidden = true;
+    vi.spyOn(document, "hidden", "get").mockImplementation(() => hidden);
+    // A background page at 5 fps for ten seconds: no verdict, so the scene never drops to still.
+    const verdicts: string[] = [];
+    for (let now = 0; now <= 10_000; now += 200) {
+      const v = frameCheck.tick(now);
+      if (v) verdicts.push(v.kind);
+    }
+    expect(verdicts).toEqual([]);
+    // Shown again at 60 fps: after the one-second settle, the first window settles.
+    hidden = false;
+    for (let now = 10_000; now <= 13_500; now += 1000 / 60) {
+      const v = frameCheck.tick(now);
+      if (v) verdicts.push(v.kind);
+    }
+    expect(verdicts).toEqual(["settled"]);
+    vi.restoreAllMocks();
+  });
+
   it("keeps the still when the scene cannot be downloaded", async () => {
     power.current = live();
     scene.start.mockRejectedValueOnce(new Error("offline"));

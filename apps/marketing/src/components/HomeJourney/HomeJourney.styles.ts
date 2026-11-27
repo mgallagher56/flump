@@ -24,10 +24,13 @@ export const journey = css({
  * The still orbs at the stage's edges (prototype 11's `p11-still-orb--1..4`): the first and the
  * fourth run past the screen's edge as the prototype places them, and the stage clips them
  * (`overflow: hidden` in `SceneStage.styles.ts`), so nothing scrolls sideways. Smaller on a
- * phone, where the second is left out.
+ * phone, where the second is left out. Each orb sits in its own placed wrapper, which sets the
+ * size the orb reads (`--orb-size`): on the orb itself, its own `position: relative` would win
+ * over the placement and stack all four at the stage's top left. The stage is sticky, so the four
+ * stay in place behind every stop.
  */
 export const stillOrb = cva({
-  base: { position: "absolute" },
+  base: { position: "absolute", display: "block", lineHeight: "0" },
   variants: {
     place: {
       1: { "--orb-size": { base: "4.5rem", md: "9rem" }, left: "-3rem", top: "18%" },

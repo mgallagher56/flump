@@ -215,6 +215,50 @@ test.describe("marketing home: controls", () => {
     ).toEqual(["1", "1", "1"]);
   });
 
+  test("on a 390px phone the dock's controls are whole 44px targets, the pause control an icon button named Pause animation", async ({
+    browser,
+  }) => {
+    const page = await openPage(browser, { viewport: { width: 390, height: 844 } });
+    const dock = page.locator("[data-stop-control]");
+    const next = dock.getByRole("button", { name: /^Next section/ });
+    const label = dock.getByTestId("stop-control-label");
+    // Step well into the page, past a two-digit count's width ("9 of 14").
+    for (let i = 0; i < 8; i++) {
+      await next.click();
+      await expect(label).toContainText(`${i + 2} of`);
+    }
+    const pause = dock.getByRole("button", { name: "Pause animation" });
+    await expect(pause).toBeVisible();
+    const boxes = await dock.locator("button").evaluateAll((els) =>
+      els.map((el) => {
+        const r = el.getBoundingClientRect();
+        return { w: Math.round(r.width), h: Math.round(r.height) };
+      }),
+    );
+    expect(boxes).toEqual([
+      { w: 44, h: 44 },
+      { w: 44, h: 44 },
+      { w: 44, h: 44 },
+    ]);
+    // The count is never clipped, and the two pills sit side by side without touching.
+    const fit = await page.evaluate(() => {
+      const count = document.querySelector<HTMLElement>("[data-testid=stop-control-label]");
+      const nav = document.querySelector("[data-stop-control] nav")?.getBoundingClientRect();
+      const motion = document
+        .querySelector("[data-stop-control] [data-motion-control]")
+        ?.getBoundingClientRect();
+      return {
+        clipped: count ? count.scrollWidth > count.clientWidth : true,
+        apart: nav && motion ? motion.left >= nav.right || motion.top >= nav.bottom : false,
+        inside: motion ? motion.right <= window.innerWidth : false,
+      };
+    });
+    expect(fit).toEqual({ clipped: false, apart: true, inside: true });
+    // The words are gone from sight but are still the button's name and text.
+    await expect(pause).toHaveText("Pause animation");
+    await page.context().close();
+  });
+
   test("the stop control steps next and previous and moves focus to each section's heading", async ({
     page,
   }) => {
@@ -446,6 +490,102 @@ test.describe("marketing home: controls", () => {
       );
       expect(shown).toEqual({ opacity: 1, hidden: false });
     }
+  });
+});
+
+test.describe("marketing home: page length (MK11)", () => {
+  /** The page's length after a full scroll, back at the top, with every pin and band laid out. */
+  async function lengthAfterScroll(page: Page): Promise<number> {
+    await scrollThrough(page);
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.waitForTimeout(500);
+    return page.evaluate(() => document.documentElement.scrollHeight);
+  }
+
+  for (const width of [390, 1440] as const) {
+    test(`at ${width}px the page is as long on arrival as after a full scroll`, async ({
+      browser,
+    }) => {
+      const page = await openPage(browser, { viewport: { width, height: 900 } });
+      // Once the hero has its pin (from 1024px) and the journey is live, nothing below should
+      // change the length while the visitor reads.
+      if (width >= 1024) {
+        await expect(page.getByTestId("home-hero")).toHaveAttribute("data-hero-live", "true", {
+          timeout: 15_000,
+        });
+      }
+      await expect(page.locator("#journey")).toHaveAttribute("data-live", "on", {
+        timeout: 15_000,
+      });
+      await page.waitForTimeout(500);
+      const onArrival = await page.evaluate(() => document.documentElement.scrollHeight);
+      const after = await lengthAfterScroll(page);
+      expect(Math.abs(after - onArrival)).toBeLessThanOrEqual(4);
+      await page.context().close();
+    });
+  }
+
+  test("a device too slow for the scene drops to the still without changing the page's length", async ({
+    browser,
+  }) => {
+    const live = await openPage(browser, { viewport: { width: 1440, height: 900 } });
+    const liveLength = await lengthAfterScroll(live);
+    await expect(live.getByTestId("journey-stage")).toHaveAttribute("data-scene", "live");
+    await live.context().close();
+
+    // Every frame about 45 ms late: a steady 20 fps, under the 28 fps floor.
+    const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+    await context.addInitScript(() => {
+      const raf = window.requestAnimationFrame.bind(window);
+      const cancelled = new Set<number>();
+      let next = 0;
+      window.requestAnimationFrame = (callback) => {
+        next += 1;
+        const id = next;
+        window.setTimeout(() => raf((now) => cancelled.has(id) || callback(now)), 45);
+        return id;
+      };
+      window.cancelAnimationFrame = (id) => {
+        cancelled.add(id);
+      };
+    });
+    const slow = await context.newPage();
+    await slow.goto(HOME);
+    await slow.locator("#journey").scrollIntoViewIfNeeded();
+    const stage = slow.getByTestId("journey-stage");
+    await expect(stage).toHaveAttribute("data-still-reason", "slow-frames", { timeout: 20_000 });
+    await expect(stage.locator("canvas")).toHaveCount(0);
+    // The still orbs are in the sticky stage, at its edges as prototype 11 places them, so they
+    // are behind a later stop too: sky at the left, violet top right, teal at the foot, rose
+    // bottom right.
+    const lastStop = slow.locator("[data-journey-stop]").last();
+    await lastStop.scrollIntoViewIfNeeded();
+    const orbs = await stage.locator("[data-scene-still] [data-orb-tone]").evaluateAll((els) =>
+      els.map((el) => {
+        const r = el.getBoundingClientRect();
+        return {
+          tone: el.getAttribute("data-orb-tone"),
+          // Drawn as glass: its gradient body reached the built CSS.
+          painted: getComputedStyle(el).backgroundImage.startsWith("radial-gradient"),
+          x: (r.left + r.width / 2) / innerWidth,
+          y: (r.top + r.height / 2) / innerHeight,
+        };
+      }),
+    );
+    const place = Object.fromEntries(
+      orbs.map(({ tone, painted, x, y }) => [
+        tone,
+        { painted, left: x < 0.1, right: x > 0.85, top: y < 0.3, foot: y > 0.75 },
+      ]),
+    );
+    expect(place).toEqual({
+      sky: { painted: true, left: true, right: false, top: true, foot: false },
+      violet: { painted: true, left: false, right: true, top: true, foot: false },
+      teal: { painted: true, left: false, right: false, top: false, foot: true },
+      rose: { painted: true, left: false, right: true, top: false, foot: true },
+    });
+    expect(Math.abs((await lengthAfterScroll(slow)) - liveLength)).toBeLessThanOrEqual(4);
+    await context.close();
   });
 });
 

@@ -9,7 +9,8 @@ import { control } from "./MotionControl.styles";
  * (UX-GUIDELINES MK14, WCAG 2.2.2 "Pause, stop, hide"). Pausing also shows every entrance still to
  * play at its finished state, for good (`useGsapMoment`), so the label says "animation". A real button, reachable by keyboard and
  * visible wherever ambient motion plays. Hidden, and out of the tab order, before hydration and with
- * reduced motion, when nothing ambient moves.
+ * reduced motion, when nothing ambient moves. Its words sit in `data-motion-label`, so a narrow
+ * dock can hide them visually while they stay the button's accessible name (HomeStopControl).
  */
 export const MotionControl: FC = () => {
   const { available, paused, toggle } = useAmbientMotion();
@@ -25,7 +26,7 @@ export const MotionControl: FC = () => {
         variant="ghost"
       >
         {paused ? <Play aria-hidden="true" size={16} /> : <Pause aria-hidden="true" size={16} />}
-        {paused ? "Play animation" : "Pause animation"}
+        <span data-motion-label="">{paused ? "Play animation" : "Pause animation"}</span>
       </Button>
     </span>
   );

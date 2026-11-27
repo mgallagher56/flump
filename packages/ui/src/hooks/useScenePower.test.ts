@@ -155,6 +155,64 @@ describe("createFrameRateCheck", () => {
     // Ten seconds hidden, then steady frames again: still fast.
     expect(run(check, 60, 2500, 11000).verdicts).toEqual(["settled"]);
   });
+
+  /** A check whose page visibility the test sets. */
+  function withVisibility() {
+    const page = { hidden: false };
+    return { page, check: createFrameRateCheck({ isHidden: () => page.hidden }) };
+  }
+
+  it("ignores frames ticked while the page is hidden, however slow", () => {
+    const { page, check } = withVisibility();
+    page.hidden = true;
+    // A throttled background page: 5 fps for ten seconds would be downgrade then too slow if counted.
+    expect(run(check, 5, 10_000).verdicts).toEqual([]);
+    page.hidden = false;
+    // Visible again at 60 fps: 1 s settle, then one 2 s window settles.
+    expect(run(check, 60, 3500, 10_100).verdicts).toEqual(["settled"]);
+  });
+
+  it("does not count the first second after the page shows again", () => {
+    const { page, check } = withVisibility();
+    run(check, 60, 1000);
+    page.hidden = true;
+    check.reset();
+    page.hidden = false;
+    // Back from the background: 10 fps for 950 ms, then 60 fps. Counted, the first window would be
+    // (9 + 63) frames over 2 s, 36 fps, a downgrade; settled out, it is 60 fps.
+    const slow = run(check, 10, 950, 5000);
+    expect(slow.verdicts).toEqual([]);
+    const rest = run(check, 60, 2500, slow.end);
+    expect(rest.verdicts).toEqual(["settled"]);
+  });
+
+  it("starts the settle on the first frame after a hidden tick, and counts from exactly 1 s", () => {
+    const { page, check } = withVisibility();
+    page.hidden = true;
+    expect(check.tick(0)).toBeNull();
+    page.hidden = false;
+    // The settle runs from the first visible frame (at 100) to 1100; frames 4 apart then count.
+    for (let now = 100; now < 1100; now += 4) expect(check.tick(now)).toBeNull();
+    // At 1100 the window starts; 2 s of 4 ms frames is 250 fps: settled, never a downgrade.
+    let verdict = null;
+    for (let now = 1100; now <= 3100 && !verdict; now += 4) verdict = check.tick(now);
+    expect(verdict).toEqual({ kind: "settled", fps: 250 });
+  });
+
+  it("treats a gap over 250 ms as a stall, not a slow frame, but counts a gap of exactly 250 ms", () => {
+    // A visible but throttled pane: one frame every 300 ms never gives a verdict.
+    expect(
+      run(createFrameRateCheck({ isHidden: () => false }), 1000 / 300, 20_000).verdicts,
+    ).toEqual([]);
+    // One frame every 250 ms is 4 fps and counted: downgrade, then too slow.
+    const steady = createFrameRateCheck({ isHidden: () => false });
+    expect(run(steady, 4, 4500).verdicts).toEqual(["downgrade", "too-slow"]);
+  });
+
+  it("is still too slow at a steady 20 fps on a visible page", () => {
+    const { check } = withVisibility();
+    expect(run(check, 20, 4500).verdicts).toEqual(["downgrade", "too-slow"]);
+  });
 });
 
 function Probe() {

@@ -5,9 +5,11 @@ import { cva } from "@repo/ui/styled-system/css";
  * (`content-visibility: auto`), so the first paint lays out the hero alone: the whole page's first
  * layout was the longest main-thread task on a throttled phone (ROLLOUT-PLAN M1 notes). Each band
  * reserves its own height at each width, measured on the production build with reduced motion at
- * 390, 768, 1000 and 1440px (27 Nov 2026, prototype 11 rebuild), in non-overlapping ranges cut at
- * the bands' own layout changes (48, 60, 64, 75 and 90rem), and `auto` keeps the real size once
- * seen, so nothing shifts. The journey reserves its still height (the plain list: reduced motion,
+ * 390, 768, 1000, 1100, 1280 and 1440px (27 Nov 2026, prototype 11 rebuild), in non-overlapping
+ * ranges cut at the bands' own layout changes (48, 60, 64, 75 and 90rem), and `auto` keeps the real
+ * size once seen, so nothing shifts. The reserve is the band's content box: its padding adds to it,
+ * so each value is the band's height less its own vertical padding (a border-box value made every
+ * padded band arrive 96 to 128px shorter than reserved, and the page shrank as it was read). The journey reserves its still height (the plain list: reduced motion,
  * no JavaScript, paused); live, it pins each stop for a screen and a half and runs about 8,500px,
  * so its real size replaces the reserve as it nears the screen, below the viewport. The order
  * follows `HomePage.tsx`: features, journey, rough figures, pay rise, security, the pair, the close. `useGsapMoment` refreshes ScrollTrigger when
@@ -21,9 +23,10 @@ export const mainContent = cva({
     // Printing lays the whole page out at once: paint every band.
     "@media print": { "& > :not(:first-child)": { contentVisibility: "visible" } },
     "& > :nth-child(2)": {
-      "@media (max-width: 47.99rem)": { containIntrinsicSize: "auto 740px" },
-      "@media (min-width: 48rem) and (max-width: 63.99rem)": { containIntrinsicSize: "auto 750px" },
-      "@media (min-width: 64rem)": { containIntrinsicSize: "auto 1093px" },
+      "@media (max-width: 47.99rem)": { containIntrinsicSize: "auto 644px" },
+      "@media (min-width: 48rem) and (max-width: 63.99rem)": { containIntrinsicSize: "auto 622px" },
+      "@media (min-width: 64rem) and (max-width: 89.99rem)": { containIntrinsicSize: "auto 905px" },
+      "@media (min-width: 90rem)": { containIntrinsicSize: "auto 965px" },
     },
     "& > :nth-child(3)": {
       "@media (max-width: 47.99rem)": { containIntrinsicSize: "auto 4744px" },
@@ -36,19 +39,19 @@ export const mainContent = cva({
       "@media (min-width: 90rem)": { containIntrinsicSize: "auto 3486px" },
     },
     "& > :nth-child(4)": {
-      "@media (max-width: 47.99rem)": { containIntrinsicSize: "auto 843px" },
-      "@media (min-width: 48rem) and (max-width: 59.99rem)": { containIntrinsicSize: "auto 814px" },
-      "@media (min-width: 60rem) and (max-width: 89.99rem)": { containIntrinsicSize: "auto 520px" },
-      "@media (min-width: 90rem)": { containIntrinsicSize: "auto 538px" },
+      "@media (max-width: 47.99rem)": { containIntrinsicSize: "auto 747px" },
+      "@media (min-width: 48rem) and (max-width: 59.99rem)": { containIntrinsicSize: "auto 686px" },
+      "@media (min-width: 60rem) and (max-width: 74.99rem)": { containIntrinsicSize: "auto 425px" },
+      "@media (min-width: 75rem)": { containIntrinsicSize: "auto 432px" },
     },
     "& > :nth-child(5)": {
-      "@media (max-width: 47.99rem)": { containIntrinsicSize: "auto 995px" },
-      "@media (min-width: 48rem)": { containIntrinsicSize: "auto 700px" },
+      "@media (max-width: 47.99rem)": { containIntrinsicSize: "auto 899px" },
+      "@media (min-width: 48rem)": { containIntrinsicSize: "auto 572px" },
     },
     "& > :nth-child(6)": {
-      "@media (max-width: 47.99rem)": { containIntrinsicSize: "auto 542px" },
-      "@media (min-width: 48rem) and (max-width: 89.99rem)": { containIntrinsicSize: "auto 345px" },
-      "@media (min-width: 90rem)": { containIntrinsicSize: "auto 380px" },
+      "@media (max-width: 47.99rem)": { containIntrinsicSize: "auto 462px" },
+      "@media (min-width: 48rem) and (max-width: 89.99rem)": { containIntrinsicSize: "auto 260px" },
+      "@media (min-width: 90rem)": { containIntrinsicSize: "auto 284px" },
     },
     "& > :nth-child(7)": {
       "@media (max-width: 47.99rem)": { containIntrinsicSize: "auto 1412px" },
@@ -65,11 +68,11 @@ export const mainContent = cva({
       "@media (min-width: 90rem)": { containIntrinsicSize: "auto 821px" },
     },
     "& > :nth-child(8)": {
-      "@media (max-width: 47.99rem)": { containIntrinsicSize: "auto 573px" },
-      "@media (min-width: 48rem) and (max-width: 59.99rem)": { containIntrinsicSize: "auto 650px" },
-      "@media (min-width: 60rem) and (max-width: 63.99rem)": { containIntrinsicSize: "auto 662px" },
-      "@media (min-width: 64rem) and (max-width: 89.99rem)": { containIntrinsicSize: "auto 667px" },
-      "@media (min-width: 90rem)": { containIntrinsicSize: "auto 764px" },
+      "@media (max-width: 47.99rem)": { containIntrinsicSize: "auto 474px" },
+      "@media (min-width: 48rem) and (max-width: 59.99rem)": { containIntrinsicSize: "auto 527px" },
+      "@media (min-width: 60rem) and (max-width: 63.99rem)": { containIntrinsicSize: "auto 539px" },
+      "@media (min-width: 64rem) and (max-width: 89.99rem)": { containIntrinsicSize: "auto 559px" },
+      "@media (min-width: 90rem)": { containIntrinsicSize: "auto 576px" },
     },
   },
 });
