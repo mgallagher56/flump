@@ -173,6 +173,23 @@ describe("McpController", () => {
     });
   });
 
+  it.each(["handleMcpPost", "handleMcpGet"] as const)(
+    "%s sends Cache-Control: no-store before the transport answers (E12 S7)",
+    async (method) => {
+      const order: string[] = [];
+      const res = {
+        setHeader: vi.fn((name: string, value: string) => order.push(`${name}: ${value}`)),
+      };
+      const handled = vi.fn(async () => {
+        order.push("transport");
+      });
+      const service = { getHttpHandler: () => ({ handleExpressRequest: handled }) };
+      const ctrl = new McpController(service as never, {} as never, {} as never);
+      await ctrl[method]({} as never, res as never);
+      expect(order).toEqual(["Cache-Control: no-store", "transport"]);
+    },
+  );
+
   it("the revoke route validates its id as a UUID", () => {
     const params = Reflect.getMetadata(
       "__routeArguments__",

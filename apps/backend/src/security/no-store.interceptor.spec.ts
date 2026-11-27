@@ -26,8 +26,23 @@ class SignedIn implements CanActivate {
   }
 }
 
+/** A personal access token's owner, as McpPatGuard sets it. */
+@Injectable()
+class PatSignedIn implements CanActivate {
+  canActivate(context: ExecutionContext): boolean {
+    context.switchToHttp().getRequest<{ mcpToken?: unknown }>().mcpToken = { id: "tok_probe" };
+    return true;
+  }
+}
+
 @Controller()
 class ProbeController {
+  @UseGuards(PatSignedIn)
+  @Get("pat-route")
+  pat() {
+    return { balance: 1 };
+  }
+
   /** A route added tomorrow, with no caching decision of its own. */
   @UseGuards(SignedIn)
   @Get("new-authenticated-route")
@@ -81,6 +96,11 @@ describe("NoStoreInterceptor", () => {
       .get("/new-authenticated-route")
       .set("If-None-Match", etag);
     expect(again.status).toBe(304);
+  });
+
+  it("a route signed in with a personal access token gets it too", async () => {
+    const res = await request(app.getHttpServer()).get("/pat-route");
+    expect(res.headers["cache-control"]).toBe("no-store");
   });
 
   it("leaves a public route alone", async () => {
