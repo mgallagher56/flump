@@ -62,7 +62,7 @@ describe("FormField", () => {
 });
 
 describe("FormField's error on its control (S8 device check)", () => {
-  it("the control inside says the error with its own name, then its own hint", async () => {
+  it("the control inside carries the error in its accessible name; its hint stays its own", async () => {
     await render(
       <ThemeProvider scheme="light">
         <FormField label="Balance" error="Enter the balance. Use 0 if it is empty.">
@@ -76,12 +76,13 @@ describe("FormField's error on its control (S8 device check)", () => {
         </FormField>
       </ThemeProvider>,
     );
-    expect(screen.getByTestId("b").props.accessibilityHint).toBe(
-      "Enter the balance. Use 0 if it is empty. Your latest statement balance",
+    expect(screen.getByTestId("b").props.accessibilityLabel).toBe(
+      "Balance. Enter the balance. Use 0 if it is empty.",
     );
+    expect(screen.getByTestId("b").props.accessibilityHint).toBe("Your latest statement balance");
   });
 
-  it("with no error the control keeps its own hint", async () => {
+  it("with no error the control keeps its own name and hint", async () => {
     await render(
       <ThemeProvider scheme="light">
         <FormField label="Balance">
@@ -96,5 +97,6 @@ describe("FormField's error on its control (S8 device check)", () => {
       </ThemeProvider>,
     );
     expect(screen.getByTestId("b").props.accessibilityHint).toBe("Your latest statement balance");
+    expect(screen.getByTestId("b").props.accessibilityLabel).toBe("Balance");
   });
 });

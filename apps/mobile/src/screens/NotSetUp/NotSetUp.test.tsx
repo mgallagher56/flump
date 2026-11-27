@@ -15,7 +15,12 @@ describe("NotSetUp", () => {
       { url: "https://app.test.invalid/app/onboarding", exact: true },
       "Finish setup on the website",
     ],
-    [{ url: "https://site.test.invalid", exact: false }, "Open the Flump website"],
+    // Without the web app's address the words say where it really goes, and its name adds what
+    // it was for, since Android exposes no hint (device re-check).
+    [
+      { url: "https://site.test.invalid", exact: false },
+      "Open the Flump website. Finish setup on the website.",
+    ],
   ])(
     "sends the person to the website to set up, saying where the button goes",
     async (setUp, label) => {

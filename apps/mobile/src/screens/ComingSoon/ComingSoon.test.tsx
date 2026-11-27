@@ -45,7 +45,9 @@ describe("ComingSoon", () => {
   it("without the web app's address, says the button opens the Flump website, and goes there", async () => {
     await show(shellWith(null));
     expect(screen.queryByRole("link", { name: "Open Pension on the website" })).toBeNull();
-    await userEvent.setup().press(screen.getByRole("link", { name: "Open the Flump website" }));
+    await userEvent
+      .setup()
+      .press(screen.getByRole("link", { name: /^Open the Flump website\. ./ }));
     expect(Linking.openURL).toHaveBeenCalledWith("https://site.test.invalid");
   });
 });

@@ -4,7 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "../../theme/ThemeProvider";
 import { Button } from "../Button";
 import { pressedStyle } from "../Button/Button.styles";
-import { useFieldHint } from "../FormField/FormField";
+import { useFieldName } from "../FormField/FormField";
 import { Icon } from "../Icon";
 import { OptionList } from "../OptionList";
 import { Pressable } from "../Pressable";
@@ -73,12 +73,12 @@ export function SelectField<T extends string>({
   testID,
 }: SelectFieldProps<T>) {
   const theme = useTheme();
-  const spokenHint = useFieldHint(OPENS_LIST_HINT);
   const styles = useMemo(() => createStyles(theme), [theme]);
   const reduceMotion = useReduceMotion();
   const [open, setOpen] = useState(false);
   const titleRef = useRef<ComponentRef<typeof View>>(null);
   const chosen = options.find((option) => option.value === value)?.label ?? "";
+  const spokenName = useFieldName(`${label}, ${chosen}`);
   const ios = Platform.OS === "ios";
 
   const close = () => setOpen(false);
@@ -136,8 +136,8 @@ export function SelectField<T extends string>({
     <>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`${label}, ${chosen}`}
-        accessibilityHint={spokenHint}
+        accessibilityLabel={spokenName}
+        accessibilityHint={OPENS_LIST_HINT}
         disabled={!editable}
         testID={testID}
         // Press feedback as the Button's: iOS dims, Android draws a ripple.

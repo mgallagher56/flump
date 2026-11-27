@@ -20,15 +20,14 @@ export interface FormFieldProps {
 const FieldError = createContext<string | null>(null);
 
 /**
- * A control's spoken hint with its field's error first, so a screen reader on the control hears
- * what to change there, not only in a separate line below it.
+ * A control's accessible name with its field's error after it ("Name. Enter a name for this
+ * account."). The name is the one channel every screen reader reads on a text field: Android
+ * exposes no hint on one (device re-check, 27 Nov 2026), so an error in the hint went unheard.
  */
-export function useFieldHint(own?: string): string | undefined {
+export function useFieldName(name: string): string {
   const error = useContext(FieldError);
-  if (!error) return own || undefined;
-  if (!own) return error;
-  // The error a sentence of its own before the hint: a full stop if it has none.
-  return `${error.endsWith(".") ? error : `${error}.`} ${own}`;
+  if (!error) return name;
+  return `${name}. ${error.endsWith(".") ? error : `${error}.`}`;
 }
 
 /** A label, a control, an optional hint and an error read out when it appears. */

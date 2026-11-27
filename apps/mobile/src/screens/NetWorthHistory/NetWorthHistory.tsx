@@ -29,7 +29,7 @@ import {
   spokenChange,
 } from "../../copy/accounts";
 import { CHECK_IN } from "../../copy/checkIn";
-import { OPEN_FLUMP_WEBSITE } from "../../copy/navigation";
+import { OPEN_FLUMP_WEBSITE, websiteButtonName } from "../../copy/navigation";
 import { useDelayedLoading } from "../../data/useDelayedLoading";
 import {
   type NetWorthHistory as History,
@@ -151,6 +151,10 @@ function Body({
                   },
                   {
                     label: website(links.addEarlierMonths, HISTORY.addEarlierMonths),
+                    accessibilityLabel: websiteButtonName(
+                      links.addEarlierMonths,
+                      HISTORY.addEarlierMonths,
+                    ),
                     onPress: open(links.addEarlierMonths),
                     variant: "link",
                     testID: "history-add-earlier",
@@ -267,6 +271,7 @@ function Loaded({
       <OnWebsite />
       <Button
         label={website(links.addEarlierMonths, HISTORY.addEarlierMonths)}
+        accessibilityLabel={websiteButtonName(links.addEarlierMonths, HISTORY.addEarlierMonths)}
         variant="link"
         accessibilityRole="link"
         testID="history-add-earlier"

@@ -92,7 +92,7 @@ describe("SettingsProfile", () => {
     expect(screen.queryByRole("link", { name: "Open Settings on the website" })).toBeNull();
     await userEvent
       .setup({ advanceTimers: jest.advanceTimersByTime })
-      .press(screen.getByRole("link", { name: "Open the Flump website" }));
+      .press(screen.getByRole("link", { name: /^Open the Flump website\. ./ }));
     expect(Linking.openURL).toHaveBeenCalledWith("https://m.test.invalid");
   });
 

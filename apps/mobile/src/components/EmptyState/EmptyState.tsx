@@ -8,6 +8,8 @@ import { createStyles } from "./EmptyState.styles";
 /** One way on from an empty state. */
 interface EmptyStateAction {
   label: string;
+  /** The spoken name when it differs from the words (a website button says what it was for). */
+  accessibilityLabel?: string;
   onPress(): void;
   /** `primary` for the one main action (the default); `link` for one that opens the website. */
   variant?: "primary" | "link";
@@ -40,6 +42,7 @@ export function EmptyState({ title, description, actions = [], testID }: EmptySt
         <Button
           key={action.label}
           label={action.label}
+          accessibilityLabel={action.accessibilityLabel}
           variant={action.variant ?? "primary"}
           accessibilityRole={action.variant === "link" ? "link" : "button"}
           testID={action.testID}

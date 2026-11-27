@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { TextInput, View } from "react-native";
 import { useScrollFieldIntoView } from "../../device/keyboardInset";
 import { useTheme } from "../../theme/ThemeProvider";
-import { useFieldHint } from "../FormField/FormField";
+import { useFieldName } from "../FormField/FormField";
 import { Text } from "../Text";
 import { createStyles } from "./PercentInput.styles";
 
@@ -55,7 +55,7 @@ export function PercentInput({
   onSubmitEditing,
 }: PercentInputProps) {
   const theme = useTheme();
-  const spokenHint = useFieldHint(accessibilityHint);
+  const spokenName = useFieldName(accessibilityLabel);
   // In a form, the field scrolls above the keyboard when it gains focus.
   const showField = useScrollFieldIntoView();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -100,8 +100,8 @@ export function PercentInput({
         onSubmitEditing={onSubmitEditing}
         keyboardType={whole ? "number-pad" : "decimal-pad"}
         inputMode={whole ? "numeric" : "decimal"}
-        accessibilityLabel={accessibilityLabel}
-        accessibilityHint={spokenHint}
+        accessibilityLabel={spokenName}
+        accessibilityHint={accessibilityHint}
         accessibilityState={{ disabled: !editable }}
         editable={editable}
         {...(preview ? { allowFontScaling: false } : {})}
