@@ -138,9 +138,9 @@ describe("Accounts", () => {
     expect(await screen.findByTestId("accounts-owe")).toBeOnTheScreen();
     expect(rowsIn("accounts-owe")).toEqual([
       "Current account, £350",
-      "Residential mortgage, Mortgage · Joint, 50%, £93,000",
+      "Residential mortgage, Mortgage, Joint, 50%, £93,000",
     ]);
-    expect(rowsIn("accounts-own")).toEqual(["Home, Property · Joint, 50%, £155,000"]);
+    expect(rowsIn("accounts-own")).toEqual(["Home, Property, Joint, 50%, £155,000"]);
     // One row: a total would repeat it.
     expect(screen.queryByTestId("accounts-own-total")).toBeNull();
     // Owe 93,000 + 350 = 93,350; own 155,000; the total 155,000 - 93,350 = 61,650.

@@ -17,7 +17,7 @@ describe("AccountRow", () => {
     const onPress = jest.fn();
     await render(ui({ ...accountRowStates.jointDebt, onPress }));
     const row = screen.getByRole("link", {
-      name: "Residential mortgage, Mortgage · Joint, 50%, £93,000",
+      name: "Residential mortgage, Mortgage, Joint, 50%, £93,000",
     });
     await userEvent.setup().press(row);
     expect(onPress).toHaveBeenCalledTimes(1);

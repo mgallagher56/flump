@@ -96,7 +96,7 @@ function monthLabel(month: string): string {
 
 /** Whole pounds, already whole from the engine: "£52,100", "-£6,400". */
 function pounds(value: number): string {
-  return formatCurrency(Math.round(value));
+  return formatCurrency(value);
 }
 
 /** "minus £6,400" for a negative figure, as web's `formatMoney` speaks it; otherwise the text. */

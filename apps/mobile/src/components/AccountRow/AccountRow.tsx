@@ -27,7 +27,12 @@ export function AccountRow({ name, typeLine, balance, onPress, testID }: Account
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const figure = balance === undefined ? null : balance;
-  const spoken = [name, typeLine, formatWholePounds(figure).replace(/^-/, "minus ")]
+  // The type line's "·" is sight only; a screen reader hears commas.
+  const spoken = [
+    name,
+    typeLine?.replaceAll(" · ", ", "),
+    formatWholePounds(figure).replace(/^-/, "minus "),
+  ]
     .filter(Boolean)
     .join(", ");
   return (
