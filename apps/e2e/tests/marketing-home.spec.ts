@@ -70,24 +70,43 @@ const MOMENT_PARTS =
   "main :is(h1, h2, h3, p, li, figure, [data-count], [data-hero-value], [data-step], [data-stop-side], [data-stop-pair])";
 
 /**
- * Scrolls to the page's foot a screen at a time, re-reading its length as pins lay out (the hero's pin
- * lengthens the page from 1024px), so every band's moment is triggered; then waits for any code
- * they load and for every moment to finish.
+ * Scrolls to the page's foot most of a screen at a time, re-reading its length as pins lay out (the
+ * hero's pin lengthens the page from 1024px), so every band's moment is triggered; then waits for
+ * any code they load and for every moment to finish. With motion on it starts once the hero and the
+ * journey are live, and holds each step until every journey stop in view is set up, so the
+ * changeovers see the scroll go by rather than being set up after it has passed.
  */
 async function scrollThrough(page: Page): Promise<void> {
-  await page.evaluate(async () => {
+  const motion = !(await page.evaluate(
+    () => matchMedia("(prefers-reduced-motion: reduce)").matches,
+  ));
+  if (motion) await liveBeforeScroll(page);
+  const notReady = await page.evaluate(async (motion) => {
     const atFoot = () =>
       window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 2;
     const frame = () => new Promise((resolve) => requestAnimationFrame(resolve));
+    const waitingStops = () =>
+      Array.from(document.querySelectorAll<HTMLElement>("#journey [data-journey-stop]")).filter(
+        (stop) => {
+          const r = stop.getBoundingClientRect();
+          return r.bottom > 0 && r.top < window.innerHeight && stop.dataset.enhanced !== "true";
+        },
+      );
+    const missed = new Set<string>();
     // Bounded: 300 steps is far past the longest page.
     for (let step = 0; step < 300 && !atFoot(); step++) {
-      // Most of a screen at a time, so every band is in view at some step.
       window.scrollBy({ top: Math.round(window.innerHeight * 0.85), behavior: "instant" });
       // Two frames: the page has drawn this place, so its triggers and observers have seen it.
       await frame();
       await frame();
+      // A stop sets itself up as it nears (useGsapMoment); allow it 3 s, then count it missed.
+      const since = Date.now();
+      while (motion && waitingStops().length > 0 && Date.now() - since < 3000) await frame();
+      for (const stop of motion ? waitingStops() : []) missed.add(stop.dataset.stop ?? "?");
     }
-  });
+    return [...missed];
+  }, motion);
+  expect(notReady).toEqual([]);
   expect(
     await page.evaluate(
       () => window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 2,
@@ -95,6 +114,14 @@ async function scrollThrough(page: Page): Promise<void> {
   ).toBe(true);
   await page.waitForLoadState("networkidle");
   await untilStill(page, MOMENT_PARTS);
+}
+
+/** Waits for the hero and the journey to be live (GSAP and the scene load after first paint). */
+async function liveBeforeScroll(page: Page): Promise<void> {
+  await expect(page.getByTestId("home-hero")).toHaveAttribute("data-hero-live", "true", {
+    timeout: 15_000,
+  });
+  await expect(page.locator("#journey")).toHaveAttribute("data-live", "on", { timeout: 15_000 });
 }
 
 /** A page in its own context (axe needs one), at the home page. Close it with `page.context().close()`. */
@@ -419,7 +446,9 @@ test.describe("marketing home: controls", () => {
     await page.goto(HOME);
     const faq = page.locator("#faq");
     await faq.scrollIntoViewIfNeeded();
-    // The band's entrance has finished, so only an opening answer moves the items.
+    // The band's entrance is set up (GSAP loads after first paint) and has finished, so only an
+    // opening answer moves the items.
+    await expect(faq.locator("[data-enhanced=true]").first()).toBeAttached({ timeout: 15_000 });
     await untilStill(page, "#faq li");
     const items = faq.locator("li");
     const count = await items.count();
@@ -449,6 +478,14 @@ test.describe("marketing home: controls", () => {
   }) => {
     await page.goto(HOME);
     const journey = page.locator("#journey");
+    await journey.scrollIntoViewIfNeeded();
+    // The flick must run through set-up changeovers, and measure the journey with its pins.
+    await liveBeforeScroll(page);
+    await expect(journey.locator("[data-journey-stop]").first()).toHaveAttribute(
+      "data-enhanced",
+      "true",
+      { timeout: 15_000 },
+    );
     await journey.scrollIntoViewIfNeeded();
     const box = await journey.boundingBox();
     const span = Math.round(box?.height ?? 3000);
