@@ -124,6 +124,15 @@ async function liveBeforeScroll(page: Page): Promise<void> {
   await expect(page.locator("#journey")).toHaveAttribute("data-live", "on", { timeout: 15_000 });
 }
 
+/**
+ * The time limit for a test that scrolls through the pinned scene: the whole page, or the journey
+ * flicked both ways. Its time is mostly the scene drawing each frame in software (about 0.15 s a
+ * frame on a busy runner) and the moments finishing by time, so it varies with the runner: 22 s at
+ * the slowest CI run measured (PR 985), against 30 s for every other test. 60 s keeps more than
+ * twice that in hand; a test that hangs still fails.
+ */
+const SCENE_SCROLL_BUDGET = 60_000;
+
 /** A page in its own context (axe needs one), at the home page. Close it with `page.context().close()`. */
 async function openPage(
   browser: Browser,
@@ -476,6 +485,7 @@ test.describe("marketing home: controls", () => {
   test("journey changeovers are never left part-way, scrolling fast both ways (MK2)", async ({
     page,
   }) => {
+    test.setTimeout(SCENE_SCROLL_BUDGET);
     await page.goto(HOME);
     const journey = page.locator("#journey");
     await journey.scrollIntoViewIfNeeded();
@@ -613,6 +623,7 @@ test.describe("marketing home: page length (MK11)", () => {
     test(`at ${width}px the page is as long on arrival as after a full scroll`, async ({
       browser,
     }) => {
+      test.setTimeout(SCENE_SCROLL_BUDGET);
       const page = await openPage(browser, { viewport: { width, height: 900 } });
       // Once the hero has its pin (from 1024px) and the journey is live, nothing below should
       // change the length while the visitor reads.
@@ -635,6 +646,7 @@ test.describe("marketing home: page length (MK11)", () => {
   test("a device too slow for the scene drops to the still without changing the page's length", async ({
     browser,
   }) => {
+    test.setTimeout(SCENE_SCROLL_BUDGET);
     // Every frame about 45 ms late: a steady 20 fps, under the 28 fps floor.
     const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
     await context.addInitScript(() => {
@@ -707,6 +719,7 @@ test.describe("marketing home: no errors", () => {
   // scene's shader compile threw before its frame code existed).
   for (const width of [390, 1000, 1440] as const) {
     test(`a full scroll at ${width}px throws nothing and logs no error`, async ({ browser }) => {
+      test.setTimeout(SCENE_SCROLL_BUDGET);
       const page = await openPage(browser, { viewport: { width, height: 900 } });
       const problems: string[] = [];
       page.on("pageerror", (error) => problems.push(`pageerror: ${error.message}`));
@@ -727,6 +740,7 @@ test.describe("marketing home: no errors", () => {
 test.describe("marketing home: accessibility", () => {
   for (const theme of THEMES) {
     test(`axe finds no violation once every band has arrived, ${theme}`, async ({ browser }) => {
+      test.setTimeout(SCENE_SCROLL_BUDGET);
       const page = await openPage(browser, {
         viewport: { width: 1280, height: 900 },
         colorScheme: theme,
