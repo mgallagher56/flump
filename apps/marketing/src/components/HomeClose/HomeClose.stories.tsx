@@ -1,10 +1,19 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, within } from "storybook/test";
+import { StillMotionProvider } from "../../context/StillMotionContext";
 import { HomeClose } from "./HomeClose";
 
 const meta: Meta<typeof HomeClose> = {
   title: "3. Patterns/Marketing/HomeClose",
   component: HomeClose,
+  // The rest state, as with reduced motion: axe checks what a reader sees once a moment ends.
+  decorators: [
+    (Story) => (
+      <StillMotionProvider>
+        <Story />
+      </StillMotionProvider>
+    ),
+  ],
   parameters: { layout: "fullscreen" },
 };
 

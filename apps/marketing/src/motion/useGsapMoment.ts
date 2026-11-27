@@ -1,5 +1,6 @@
 import { usePrefersReducedMotion } from "@repo/ui";
 import { type RefObject, useEffect, useRef } from "react";
+import { useStillMotion } from "../context/StillMotionContext";
 import { type GsapKit, loadGsapKit } from "./loadGsapKit";
 
 type Job = () => void;
@@ -68,7 +69,10 @@ export function useGsapMoment(
   setup: (kit: GsapKit, root: HTMLElement) => (() => void) | undefined,
   deps: readonly unknown[] = [],
 ): void {
-  const reduced = usePrefersReducedMotion();
+  // A still page (reduced motion, or a story showing the rest state) never sets up a moment.
+  const prefersReduced = usePrefersReducedMotion();
+  const still = useStillMotion();
+  const reduced = prefersReduced || still;
   // The latest `setup`, read when the band is set up; `key` re-runs it when `deps` change.
   const setupRef = useRef(setup);
   setupRef.current = setup;
