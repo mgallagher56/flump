@@ -1,19 +1,5 @@
 import { css, cva } from "@repo/ui/styled-system/css";
 
-/** The band: positioned, and its own stacking context, so the bubble layer sits under the content. */
-export const faqBand = css({ position: "relative", isolation: "isolate" });
-
-/**
- * Under everything in the band. Only while the band is full width: side by side with More detail
- * from `lg`, a half has no gutter to hold a bubble clear of the text, so the field is not shown (MK8).
- */
-export const bubbleLayer = css({
-  position: "absolute",
-  inset: 0,
-  zIndex: -1,
-  display: { base: "block", lg: "none" },
-});
-
 export const faqList = css({
   listStyle: "none",
   margin: 0,
@@ -21,14 +7,17 @@ export const faqList = css({
   display: "flex",
   flexDirection: "column",
   gap: "3",
+  "@media (min-width: 90rem)": { gap: "3.5" },
 });
 
+/** As prototype 11: canvas with a soft shadow, a rounder corner. */
 export const faqItem = css({
-  backgroundColor: "surface.card",
+  backgroundColor: "surface.canvas",
   borderWidth: "1px",
   borderStyle: "solid",
   borderColor: "border",
-  borderRadius: "lg",
+  borderRadius: "xl",
+  boxShadow: "xs",
   overflow: "hidden",
 });
 
@@ -46,6 +35,12 @@ export const faqQuestion = css({
   textStyle: "heading.sm",
   color: "text.primary",
   cursor: "pointer",
+  // From 90rem, side by side with More detail, the questions grow with the page (prototype 11).
+  "@media (min-width: 90rem)": {
+    fontSize: "lg",
+    py: "clamp(1.1rem, 0.6rem + 0.5vw, 1.4rem)",
+    px: "clamp(1.2rem, 0.7rem + 0.5vw, 1.6rem)",
+  },
   _focusVisible: {
     outlineWidth: "2px",
     outlineStyle: "solid",
@@ -105,6 +100,12 @@ export const faqAnswerText = css({
   pb: "4",
   textStyle: "body.md",
   color: "text.secondary",
+  "@media (min-width: 90rem)": {
+    fontSize: "lg",
+    lineHeight: "1.55",
+    px: "clamp(1.2rem, 0.7rem + 0.5vw, 1.6rem)",
+    pb: "5",
+  },
 });
 
 // Links are teal in light and mint in dark (Midnight and Mint).

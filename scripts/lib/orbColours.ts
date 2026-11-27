@@ -77,9 +77,29 @@ export const ORB_COLOUR_ALLOW_LIST: ReadonlyArray<{ path: string; reason: string
       "the home page's bubble fields (M1): soft spheres in the two orb sets behind a band's content, the orb-like element MC1 names",
   },
   {
-    path: "apps/marketing/src/components/JourneyOrb/",
+    path: "apps/marketing/src/components/GlassOrb/",
     reason:
-      "the home journey's orb and bead track (M1): the still orb and track, and the hidden swatches the three.js orb reads its per-stop orb colours from; the scene module in src/motion/journey writes no colour of its own",
+      "the still glass orb in the four orb colours (the journey's still layer, MK11) and the small orb dot beside each journey stop's \"N of 6\" (prototype 11, coordinator 27 Nov 2026); the three.js scene reads the orb colours back from these orbs and writes no colour of its own",
+  },
+  {
+    path: "apps/marketing/src/components/HomeRoughFigures/HomeRoughFigures.styles.ts",
+    reason:
+      "the rough figures steps' second and third circles wear a soft violet or rose halo, prototype 11's orb colours on round objects only (coordinator, 27 Nov 2026: build prototype 11's version; owner to confirm)",
+  },
+  {
+    path: "apps/marketing/src/components/DrawnLineChart/DrawnLineChart.styles.ts",
+    reason:
+      "the journey's sample line chart in prototype 11's two tones: savings sky, debt violet (chart.series4), never rose (coordinator, 27 Nov 2026: build prototype 11's version; MK6 and MC2 conflict listed for the owner)",
+  },
+  {
+    path: "apps/marketing/src/components/JourneySample/JourneySample.styles.ts",
+    reason:
+      "the picture sample's net worth tile wears prototype 11's faint violet wash (chart.series4 at 18%) beside the sky one (coordinator, 27 Nov 2026: build prototype 11's version; MC1 conflict listed for the owner)",
+  },
+  {
+    path: "packages/ui/src/primitives/Illustration/Illustration.styles.ts",
+    reason:
+      "the document pictures' opt-in orb look (palette=\"orb\", marketing home page only): prototype 11's violet and rose on the pension mark and rule, the ticket's top band, the check-in tab's edge and one not-found tab (coordinator, 27 Nov 2026: build prototype 11's pictures; owner to confirm). The default look never reads these classes (Illustration.test.tsx)",
   },
   {
     path: "packages/ui/src/primitives/FlumpLogo/",

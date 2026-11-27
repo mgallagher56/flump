@@ -1,23 +1,16 @@
 import { cva } from "@repo/ui/styled-system/css";
 
-export const pageShell = cva({
-  base: {
-    minHeight: "100vh",
-    display: "flex",
-    flexDirection: "column",
-    backgroundColor: "surface.canvas",
-    // Bubbles and the orb never cause a sideways scroll; each sits fully inside its band (MK8).
-    overflowX: "clip",
-  },
-});
-
 /**
  * Below the hero, each band skips style and layout until it nears the viewport
  * (`content-visibility: auto`), so the first paint lays out the hero alone: the whole page's first
  * layout was the longest main-thread task on a throttled phone (ROLLOUT-PLAN M1 notes). Each band
- * reserves about its own height at each width (measured 27 Nov 2026), and `auto` keeps the real
- * size once seen, so nothing shifts. The order follows `HomePage.tsx`: features, journey, rough
- * figures, pay rise, security, the pair, the close. `useGsapMoment` refreshes ScrollTrigger when
+ * reserves its own height at each width, measured on the production build with reduced motion at
+ * 390, 768, 1000 and 1440px (27 Nov 2026, prototype 11 rebuild), in non-overlapping ranges cut at
+ * the bands' own layout changes (48, 60, 64, 75 and 90rem), and `auto` keeps the real size once
+ * seen, so nothing shifts. The journey reserves its still height (the plain list: reduced motion,
+ * no JavaScript, paused); live, it pins each stop for a screen and a half and runs about 8,500px,
+ * so its real size replaces the reserve as it nears the screen, below the viewport. The order
+ * follows `HomePage.tsx`: features, journey, rough figures, pay rise, security, the pair, the close. `useGsapMoment` refreshes ScrollTrigger when
  * a band's real size arrives.
  */
 export const mainContent = cva({
@@ -27,36 +20,81 @@ export const mainContent = cva({
     "& > :not(:first-child)": { contentVisibility: "auto" },
     // Printing lays the whole page out at once: paint every band.
     "@media print": { "& > :not(:first-child)": { contentVisibility: "visible" } },
-    "& > :nth-child(2)": { containIntrinsicSize: { base: "auto 730px", lg: "auto 1090px" } },
+    "& > :nth-child(2)": {
+      "@media (max-width: 47.99rem)": { containIntrinsicSize: "auto 740px" },
+      "@media (min-width: 48rem) and (max-width: 63.99rem)": { containIntrinsicSize: "auto 750px" },
+      "@media (min-width: 64rem)": { containIntrinsicSize: "auto 1093px" },
+    },
     "& > :nth-child(3)": {
-      containIntrinsicSize: { base: "auto 4920px", md: "auto 4480px", xl: "auto 3060px" },
+      "@media (max-width: 47.99rem)": { containIntrinsicSize: "auto 4744px" },
+      "@media (min-width: 48rem) and (max-width: 59.99rem)": {
+        containIntrinsicSize: "auto 4596px",
+      },
+      "@media (min-width: 60rem) and (max-width: 89.99rem)": {
+        containIntrinsicSize: "auto 3345px",
+      },
+      "@media (min-width: 90rem)": { containIntrinsicSize: "auto 3486px" },
     },
-    "& > :nth-child(4)": { containIntrinsicSize: { base: "auto 560px", md: "auto 500px" } },
-    "& > :nth-child(5)": { containIntrinsicSize: { base: "auto 980px", md: "auto 630px" } },
-    "& > :nth-child(6)": { containIntrinsicSize: { base: "auto 560px", md: "auto 380px" } },
+    "& > :nth-child(4)": {
+      "@media (max-width: 47.99rem)": { containIntrinsicSize: "auto 843px" },
+      "@media (min-width: 48rem) and (max-width: 59.99rem)": { containIntrinsicSize: "auto 814px" },
+      "@media (min-width: 60rem) and (max-width: 89.99rem)": { containIntrinsicSize: "auto 520px" },
+      "@media (min-width: 90rem)": { containIntrinsicSize: "auto 538px" },
+    },
+    "& > :nth-child(5)": {
+      "@media (max-width: 47.99rem)": { containIntrinsicSize: "auto 995px" },
+      "@media (min-width: 48rem)": { containIntrinsicSize: "auto 700px" },
+    },
+    "& > :nth-child(6)": {
+      "@media (max-width: 47.99rem)": { containIntrinsicSize: "auto 542px" },
+      "@media (min-width: 48rem) and (max-width: 89.99rem)": { containIntrinsicSize: "auto 345px" },
+      "@media (min-width: 90rem)": { containIntrinsicSize: "auto 380px" },
+    },
     "& > :nth-child(7)": {
-      containIntrinsicSize: { base: "auto 1440px", md: "auto 1130px", lg: "auto 770px" },
+      "@media (max-width: 47.99rem)": { containIntrinsicSize: "auto 1412px" },
+      "@media (min-width: 48rem) and (max-width: 59.99rem)": {
+        containIntrinsicSize: "auto 1191px",
+      },
+      "@media (min-width: 60rem) and (max-width: 63.99rem)": {
+        containIntrinsicSize: "auto 1134px",
+      },
+      "@media (min-width: 64rem) and (max-width: 74.99rem)": {
+        containIntrinsicSize: "auto 1114px",
+      },
+      "@media (min-width: 75rem) and (max-width: 89.99rem)": { containIntrinsicSize: "auto 764px" },
+      "@media (min-width: 90rem)": { containIntrinsicSize: "auto 821px" },
     },
-    "& > :nth-child(8)": { containIntrinsicSize: "auto 590px" },
+    "& > :nth-child(8)": {
+      "@media (max-width: 47.99rem)": { containIntrinsicSize: "auto 573px" },
+      "@media (min-width: 48rem) and (max-width: 59.99rem)": { containIntrinsicSize: "auto 650px" },
+      "@media (min-width: 60rem) and (max-width: 63.99rem)": { containIntrinsicSize: "auto 662px" },
+      "@media (min-width: 64rem) and (max-width: 89.99rem)": { containIntrinsicSize: "auto 667px" },
+      "@media (min-width: 90rem)": { containIntrinsicSize: "auto 764px" },
+    },
   },
 });
 
 /**
- * More detail and the questions: stacked, then side by side on wide screens on one canvas band.
- * Owned by the bands (HomeMoreDetail, HomeFAQ); adjust here only for the pair's layout.
+ * More detail and the questions (prototype 11): stacked, each on its own tone, then from 75rem
+ * side by side on one card band. The pair sits in one centred column, wider than a single band and
+ * never edge to edge, with a clear gutter between the two lists; the outer gutters belong to the
+ * bands, so each band's bubbles reach the page's edge. From 90rem the headings step up with the
+ * page. Each half keeps its own heading and stop.
  */
 export const pairBands = cva({
   base: {
-    backgroundColor: "surface.canvas",
-    // One centred column, wider than a single band's and never edge to edge, with a clear gutter
-    // between the two lists (prototype 11). Each half hides its bubble field here (MK8).
-    lg: {
+    "@media (min-width: 75rem)": {
+      "--pair-max": "clamp(72rem, 64rem + 14vw, 100rem)",
+      "--pair-gutter": "max(token(spacing.6), calc((100vw - var(--pair-max)) / 2))",
       display: "grid",
       gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)",
-      columnGap: "8",
-      alignItems: "start",
-      maxWidth: "7xl",
-      mx: "auto",
+      columnGap: "clamp(40px, 4vw, 96px)",
+      backgroundColor: "surface.card",
+      "& > section": { backgroundColor: "transparent", px: "0" },
+      "& > section:first-child": { pl: "var(--pair-gutter)" },
+      "& > section:last-child": { pr: "var(--pair-gutter)" },
+      "& > section > div": { maxWidth: "none", px: "0" },
     },
+    "@media (min-width: 90rem)": { "& > section h2": { fontSize: "4xl" } },
   },
 });

@@ -1,7 +1,7 @@
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import type { GsapKit } from "../../motion/loadGsapKit";
-import { HomeRoughFigures, roughFiguresMoment } from "./HomeRoughFigures";
+import { HomeRoughFigures, roughFiguresMoment, SCROLL_LAG } from "./HomeRoughFigures";
 
 vi.mock("../../motion/useGsapMoment", () => ({ useGsapMoment: vi.fn() }));
 
@@ -39,25 +39,40 @@ describe("HomeRoughFigures", () => {
     expect(document.querySelector("[data-steps-line]")?.getAttribute("style")).toBeNull();
   });
 
-  it("draws the line once by time, never scrubbed, and brings each step in as it arrives", () => {
+  it("is the band's stop, named Rough figures", () => {
+    render(<HomeRoughFigures />);
+    const band = screen.getByRole("region", { name: "Start with rough figures" });
+    expect(band.getAttribute("data-home-section-name")).toBe("Rough figures");
+    expect(band.id).toBe("rough-figures");
+  });
+
+  it("ties the line, the circles and the calendar page to scroll, as prototype 11", () => {
     const { container } = render(<HomeRoughFigures />);
     const root = container.querySelector("[data-steps-picture]")?.parentElement as HTMLElement;
     const { kit, create, calls } = fakeKit();
+    vi.stubGlobal("innerHeight", 1000);
     roughFiguresMoment(kit, root);
 
-    const trigger = create.mock.calls[0]?.[0].scrollTrigger as Record<string, unknown>;
-    expect(trigger.once).toBe(true);
-    expect(trigger.scrub).toBeUndefined();
+    // Two scroll-linked timelines: the steps, then the picture.
+    expect(create).toHaveBeenCalledTimes(2);
+    const steps = create.mock.calls[0]?.[0].scrollTrigger as Record<string, unknown>;
+    expect(steps.scrub).toBe(SCROLL_LAG);
+    expect(steps.once).toBeUndefined();
+    // 0.55 x 1.4 x 1.4 x 1.4 screens of 1000px = 1509.2, rounded to 1509.
+    expect((steps.end as () => string)()).toBe("+=1509");
+    const picture = create.mock.calls[1]?.[0].scrollTrigger as Record<string, unknown>;
+    // 0.55 x 1.4 x 1.4 x 1.6 screens of 1000px = 1724.8, rounded to 1725.
+    expect((picture.end as () => string)()).toBe("+=1725");
 
     const [line, ...rest] = calls;
-    expect(line?.method).toBe("fromTo");
-    // durations.marketing.chart is 2,660 ms.
-    expect(line?.vars).toMatchObject({ scaleY: 1, duration: 2.66, ease: "calmInOut" });
-    // Three steps one stagger apart (196 ms: 0, 0.196, 0.392 s), never waiting for the line, then
-    // the picture after two staggers (2 × 196 ms = 0.392 s). The last step is fully in at
-    // 0.392 + 1.54 = 1.932 s.
-    const at = rest.map((c) => Number(c.at).toFixed(3));
-    expect(at).toEqual(["0.000", "0.196", "0.392", "0.392"]);
-    expect(rest.every((c) => c.vars.duration === 1.54)).toBe(true);
+    expect(line?.vars).toMatchObject({ scaleY: 1, duration: 3 });
+    // Each step: its circle fills, then the step settles, 1.1 units apart.
+    const lit = rest.filter((c) => (c.vars as Record<string, unknown>)["--lit"] === 1);
+    expect(lit.map((c) => c.at)).toEqual([0, 1.1, 2.2]);
+    const settle = rest.filter((c) => c.vars.x === 0);
+    expect(settle).toHaveLength(3);
+    const rise = rest.at(-1);
+    expect(rise?.vars).toMatchObject({ y: 0, opacity: 1 });
+    vi.unstubAllGlobals();
   });
 });

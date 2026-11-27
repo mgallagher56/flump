@@ -62,23 +62,52 @@ describe("Marketing HomePage (ROLLOUT-PLAN M1, prototype 11)", () => {
       "DIV",
       "get-started",
     ]);
-    // More detail beside the questions, both on the pair's canvas.
+    // More detail beside the questions: card and canvas stacked, one card band side by side.
     const pair = Array.from(bands[6]?.children ?? []);
     expect(pair.map((s) => [s.id, s.getAttribute("data-tone-band")])).toEqual([
-      ["more-detail", "canvas"],
+      ["more-detail", "card"],
       ["faq", "canvas"],
     ]);
   });
 
-  it("alternates card and canvas bands with no solid band anywhere (UX-GUIDELINES 12.2)", () => {
+  it("uses prototype 11's card and canvas tones with no solid band anywhere", () => {
     renderHome();
+    // The journey's own tone is the journey's (HomeJourney); these are the bands around it.
     const tones = Array.from(main().children)
       .slice(1)
+      .filter((el) => el.id !== "journey")
       .map((el) => el.getAttribute("data-tone-band") ?? "pair");
-    expect(tones).toEqual(["card", "canvas", "card", "canvas", "card", "pair", "card"]);
+    // Prototype 11: security, More detail and the close follow its tones, not strict alternation.
+    expect(tones).toEqual(["card", "card", "canvas", "card", "pair", "canvas"]);
     // The owner's rulings: no solid mint band, no dark closing band, no tinted band.
     expect(main().querySelector('[data-tone-band="hero"], [data-tone-band="contrast"]')).toBeNull();
     expect(main().querySelector('[data-tone-band="teal"]')).toBeNull();
+  });
+
+  it("marks every band as a stop for the section control, each labelled by its heading", () => {
+    renderHome();
+    const stops = Array.from(main().querySelectorAll<HTMLElement>("[data-home-section]"));
+    const outsideJourney = stops.filter((stop) => !stop.closest("#journey"));
+    expect(outsideJourney.map((stop) => stop.getAttribute("data-home-section-name"))).toEqual([
+      "One picture",
+      "Five areas",
+      "Rough figures",
+      "Pay rise",
+      "Security",
+      "More detail",
+      "Questions",
+      "Get started",
+    ]);
+    for (const stop of stops) {
+      expect(stop.id, stop.getAttribute("data-home-section-name") ?? "").not.toBe("");
+      const heading = document.getElementById(stop.getAttribute("aria-labelledby") ?? "");
+      expect(heading?.tagName).toMatch(/^H[1-3]$/);
+    }
+    // The section control is mounted after hydration, with the pause control beside it.
+    const control = screen.getByRole("navigation", { name: "Sections" });
+    expect(
+      control.closest("[data-stop-control]")?.querySelector("[data-motion-control]"),
+    ).not.toBeNull();
   });
 
   it("states the tagline in the title, never in the h1", async () => {
@@ -87,12 +116,16 @@ describe("Marketing HomePage (ROLLOUT-PLAN M1, prototype 11)", () => {
     expect(screen.getByRole("heading", { level: 1 }).textContent).not.toMatch(/fog/i);
   });
 
-  it("shows 'Request an invite' exactly twice in the page body: hero and close", () => {
+  // Three, following prototype 11: the hero, the journey's last stop and the close. The owner's
+  // ruling on repeated calls to action is pending.
+  it("shows 'Request an invite' exactly three times in the page body: hero, last stop and close", () => {
     renderHome();
-    expect(within(main()).getAllByRole("link", { name: "Request an invite" })).toHaveLength(2);
+    expect(within(main()).getAllByRole("link", { name: "Request an invite" })).toHaveLength(3);
     expect(
       within(screen.getByTestId("home-hero")).getByRole("link", { name: "Request an invite" }),
     ).toBeDefined();
+    const lastStop = screen.getByRole("region", { name: "Where you stand, on one page" });
+    expect(within(lastStop).getByRole("link", { name: "Request an invite" })).toBeDefined();
     const close = within(screen.getByTestId("home-final-cta"));
     expect(
       close.getByRole("link", { name: "Request an invite" }).getAttribute("data-variant"),
@@ -119,16 +152,27 @@ describe("Marketing HomePage (ROLLOUT-PLAN M1, prototype 11)", () => {
     ).toBe("/features");
   });
 
-  it("lists the six journey stops in reading order, the last linking to the preview", () => {
+  it("lists the six journey stops in reading order as sections, the last linking to the preview", () => {
     renderHome();
-    const journey = within(main().querySelector("#journey") as HTMLElement);
-    expect(
-      journey.getByRole("heading", { level: 2, name: "From rough figures to one picture" }),
-    ).toBeDefined();
-    expect(journey.getAllByRole("heading", { level: 3 }).map((h) => h.textContent)).toEqual(
-      JOURNEY_STOPS,
+    const journeyEl = main().querySelector("#journey") as HTMLElement;
+    const journey = within(journeyEl);
+    // Prototype 11: the journey's heading, then each stop as its own section headed at level 2.
+    expect(journey.getAllByRole("heading", { level: 2 }).map((h) => h.textContent)).toEqual([
+      "From rough figures to one picture",
+      ...JOURNEY_STOPS,
+    ]);
+    expect(journey.getAllByRole("region").map((r) => r.getAttribute("aria-labelledby"))).toEqual(
+      journey
+        .getAllByRole("heading", { level: 2 })
+        .slice(1)
+        .map((h) => h.id),
     );
-    expect(journey.queryByRole("link", { name: "Request an invite" })).toBeNull();
+    // The first five link to their area pages; the last ends on the two calls to action.
+    const lastStop = within(journey.getByRole("region", { name: "Where you stand, on one page" }));
+    expect(lastStop.getByRole("link", { name: "Interactive preview" }).getAttribute("href")).toBe(
+      "/preview",
+    );
+    expect(journey.getAllByRole("link", { name: "Request an invite" })).toHaveLength(1);
   });
 
   it("starts with rough figures, then offers more detail, each linked to its area", () => {

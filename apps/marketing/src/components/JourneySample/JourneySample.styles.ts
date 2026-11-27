@@ -1,397 +1,268 @@
 import { css, cva } from "@repo/ui/styled-system/css";
 
 /*
- * The journey's samples: document cards (STYLE-GUIDE 8.3) built from tokens, each showing the
- * sample household's figures a different way. Mint and neutrals only, debt in apricot (MK5, MK6):
- * no violet or rose on any card, chart or label. Figures are tabular.
+ * The journey's samples at prototype 11's size and styling (`p11-v-*` in `stops/stops.css`): glass
+ * panels holding the sample household's figures, each tagged "Example". Mint and neutrals only,
+ * debt in the debt colour (MK5, MK6): no violet or rose on any panel, chart or label. Figures are
+ * tabular. The panel is its own container, so its inner grids follow its width.
  */
 
-/** The paper card around a sample. Its own container, so the inner grids follow its width. */
-export const sample = css({
+/** The glass panel (`p11-v-panel`): a 24px card with a faint sheen. */
+export const panel = css({
+  position: "relative",
   containerType: "inline-size",
-  display: "grid",
-  gap: "4",
   minWidth: "0",
   margin: "0",
-});
-
-export const head = css({
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "space-between",
-  gap: "3",
-  flexWrap: "wrap",
-  margin: "0",
-  textStyle: "label.md",
-  color: "text.secondary",
-});
-
-export const headFigure = css({
-  display: "grid",
-  gap: "1",
-});
-
-export const bigFigure = css({
-  textStyle: "numeric.lg",
-  fontVariantNumeric: "tabular-nums",
-  color: "text.primary",
-  margin: "0",
-});
-
-export const caption = css({
-  textStyle: "body.sm",
-  color: "text.secondary",
-  margin: "0",
-});
-
-/* ----- Accounts: six cards dealt into a grid ----- */
-
-export const deck = css({
-  display: "grid",
-  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-  gap: "2",
-  listStyle: "none",
-  margin: "0",
-  padding: "0",
-  "@container (min-width: 32rem)": { gridTemplateColumns: "repeat(3, minmax(0, 1fr))" },
-});
-
-export const accountCard = css({
-  display: "grid",
-  gap: "1",
-  padding: "3",
-  borderRadius: "md",
+  padding: { base: "16px", md: "22px", xl: "28px" },
+  borderRadius: { base: "20px", md: "24px" },
   borderWidth: "1px",
   borderStyle: "solid",
-  borderColor: "border.subtle",
-  backgroundColor: "surface.card",
-  boxShadow: "xs",
-  minWidth: "0",
-});
-
-export const accountName = css({
-  textStyle: "label.sm",
-  color: "text.secondary",
-  overflowWrap: "anywhere",
-});
-
-export const accountAmount = css({
-  textStyle: "numeric.md",
-  fontVariantNumeric: "tabular-nums",
+  borderColor: "material.glass.border",
+  backgroundColor: "material.glass.fill",
+  backgroundImage: "linear-gradient(155deg, token(colors.material.glass.sheen), transparent 45%)",
+  boxShadow: "card",
   color: "text.primary",
+  "& p, & dl, & dd, & figure": { margin: "0" },
 });
 
-export const accountKind = css({
-  textStyle: "label.sm",
-  fontWeight: "normal",
-  color: "text.muted",
-});
-
-export const total = css({
-  display: "grid",
-  gap: "1",
-  paddingTop: "3",
-  borderTopWidth: "1px",
-  borderTopStyle: "solid",
-  borderTopColor: "border.subtle",
-});
-
-export const totalLabel = css({
-  display: "flex",
+/** A label with its "Example" tag beside it. */
+export const tagged = css({
+  display: "inline-flex",
   alignItems: "center",
+  flexWrap: "wrap",
   gap: "2",
-  textStyle: "label.md",
-  color: "text.secondary",
-  margin: "0",
 });
 
-/* ----- Budget: what comes in is the bar; each outgoing takes its share ----- */
+/* ----- Budget: the bar, the outgoings, left over and breathing room ----- */
 
-export const amountRow = css({
+export const budget = css({
+  display: "grid",
+  gap: { base: "10px", md: "4" },
+});
+
+export const budgetIn = css({
   display: "flex",
-  alignItems: "baseline",
   justifyContent: "space-between",
-  gap: "3",
-  margin: "0",
-  textStyle: "body.sm",
+  alignItems: "baseline",
+  flexWrap: "wrap",
+  gap: "4px 12px",
   color: "text.secondary",
+  fontSize: "md",
   "& strong": {
-    textStyle: "numeric.md",
-    fontVariantNumeric: "tabular-nums",
     color: "text.primary",
+    fontSize: "2xl",
+    fontWeight: "bold",
+    fontVariantNumeric: "tabular-nums",
   },
 });
 
 export const bar = css({
   display: "block",
   width: "100%",
-  height: "12px",
-  borderRadius: "full",
+  height: { base: "40px", md: "48px", lg: "56px" },
+  borderRadius: "14px",
+  backgroundColor: "color-mix(in oklab, {colors.text.primary} 7%, transparent)",
   overflow: "hidden",
-  backgroundColor: "surface.sunken",
 });
 
+/** Each outgoing's shade: mint, a little deeper with each one (prototype 11's mix). */
+const SHADES = {
+  0: "color-mix(in oklab, {colors.primary} 100%, {colors.text.primary} 0%)",
+  1: "color-mix(in oklab, {colors.primary} 88%, {colors.text.primary} 4%)",
+  2: "color-mix(in oklab, {colors.primary} 76%, {colors.text.primary} 8%)",
+  3: "color-mix(in oklab, {colors.primary} 64%, {colors.text.primary} 12%)",
+  4: "color-mix(in oklab, {colors.primary} 52%, {colors.text.primary} 16%)",
+  5: "color-mix(in oklab, {colors.primary} 40%, {colors.text.primary} 20%)",
+} as const;
+
+export type BudgetShade = keyof typeof SHADES;
+
 export const barSegment = cva({
-  base: {
-    stroke: "surface.card",
-    strokeWidth: "0.6",
-    transformBox: "fill-box",
-    transformOrigin: "left center",
-  },
+  base: { transformBox: "fill-box", transformOrigin: "left center" },
   variants: {
     shade: {
-      strong: { fill: "chart.primary" },
-      soft: { fill: "chart.primary", fillOpacity: 0.62 },
+      0: { fill: SHADES[0] },
+      1: { fill: SHADES[1] },
+      2: { fill: SHADES[2] },
+      3: { fill: SHADES[3] },
+      4: { fill: SHADES[4] },
+      5: { fill: SHADES[5] },
     },
   },
 });
 
+/** What is left over: the space that remains, outlined in mint. */
 export const barLeftOver = css({
-  fill: "chart.band",
+  fill: "none",
+  stroke: "primary",
+  strokeWidth: "1.5",
+  strokeDasharray: "5 4",
+  transformBox: "fill-box",
+  transformOrigin: "left center",
 });
 
 export const rows = css({
-  display: "grid",
-  gap: "1",
   listStyle: "none",
   margin: "0",
   padding: "0",
+  display: "grid",
+  gap: { base: "3px 16px", md: "6px 24px" },
+  "@container (min-width: 26rem)": { gridTemplateColumns: "repeat(2, minmax(0, 1fr))" },
 });
 
 export const row = css({
-  display: "flex",
-  justifyContent: "space-between",
-  gap: "3",
-  textStyle: "body.sm",
-  color: "text.secondary",
-  "& > span:last-child": { fontVariantNumeric: "tabular-nums", color: "text.primary" },
+  display: "grid",
+  gridTemplateColumns: "12px 1fr auto",
+  alignItems: "center",
+  gap: "10px",
+  fontSize: { base: "sm", md: "md" },
+  "& > :last-child": { fontVariantNumeric: "tabular-nums" },
 });
 
-export const stats = css({
+export const swatch = cva({
+  base: { width: "12px", height: "12px", borderRadius: "3px" },
+  variants: {
+    shade: {
+      0: { backgroundColor: SHADES[0] },
+      1: { backgroundColor: SHADES[1] },
+      2: { backgroundColor: SHADES[2] },
+      3: { backgroundColor: SHADES[3] },
+      4: { backgroundColor: SHADES[4] },
+      5: { backgroundColor: SHADES[5] },
+    },
+  },
+});
+
+export const foot = css({
   display: "grid",
-  gap: "2",
-  paddingTop: "3",
+  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+  gap: "3",
+  paddingTop: "14px",
   borderTopWidth: "1px",
   borderTopStyle: "solid",
-  borderTopColor: "border.subtle",
-  "@container (min-width: 28rem)": { gridTemplateColumns: "1fr 1fr" },
+  borderTopColor: "border",
 });
 
 export const stat = css({
   display: "grid",
-  gap: "1",
-  margin: "0",
-  textStyle: "label.sm",
-  fontWeight: "normal",
+  gap: "2px",
   color: "text.secondary",
+  fontSize: "sm",
   "& strong": {
-    textStyle: "numeric.md",
-    fontVariantNumeric: "tabular-nums",
     color: "text.primary",
+    fontSize: { base: "2xl", lg: "3xl" },
+    fontWeight: "bold",
+    letterSpacing: "-0.02em",
+    fontVariantNumeric: "tabular-nums",
   },
 });
 
-/* ----- Pay: the payslip, folded in three, opens out ----- */
+/* ----- Charts: savings and debt ----- */
 
-export const slip = css({
+export const graph = css({
   display: "grid",
-  margin: "0",
-  perspective: "900px",
+  gap: "14px",
 });
 
-export const slipPanel = cva({
-  base: {
-    display: "grid",
-    gap: "2",
-    padding: "4",
-    backgroundColor: "material.paper.fill",
-    borderColor: "material.paper.edge",
-    borderStyle: "solid",
-    borderLeftWidth: "1px",
-    borderRightWidth: "1px",
-    backfaceVisibility: "hidden",
-  },
-  variants: {
-    fold: {
-      top: {
-        borderTopWidth: "1px",
-        borderTopRadius: "card",
-        transformOrigin: "center bottom",
-      },
-      middle: {
-        borderTopWidth: "1px",
-        borderTopStyle: "dashed",
-      },
-      bottom: {
-        borderTopWidth: "1px",
-        borderTopStyle: "dashed",
-        borderBottomWidth: "1px",
-        borderBottomRadius: "card",
-        transformOrigin: "center top",
-      },
-    },
-  },
-});
-
-export const slipRows = css({
-  display: "grid",
-  gap: "1",
-  margin: "0",
-  "& > div": {
-    display: "flex",
-    justifyContent: "space-between",
-    gap: "3",
-    textStyle: "body.sm",
-    color: "text.secondary",
-  },
-  "& dt, & dd": { margin: "0" },
-  "& dd": { fontVariantNumeric: "tabular-nums", color: "text.primary" },
-});
-
-export const slipTitle = css({
+export const graphHead = css({
   display: "flex",
-  alignItems: "center",
   justifyContent: "space-between",
-  gap: "2",
-  flexWrap: "wrap",
-  margin: "0",
-  textStyle: "label.md",
-  color: "text.primary",
-});
-
-export const slipNet = css({
-  display: "flex",
   alignItems: "baseline",
-  justifyContent: "space-between",
-  gap: "3",
-  margin: "0",
-  textStyle: "label.md",
+  flexWrap: "wrap",
+  gap: "4px 16px",
+});
+
+export const graphTitle = css({
+  color: "text.secondary",
+  fontSize: "md",
+});
+
+export const graphFigure = css({
   color: "text.primary",
-  "& strong": { textStyle: "numeric.lg", fontVariantNumeric: "tabular-nums" },
+  fontSize: { base: "3xl", lg: "4xl" },
+  fontWeight: "bold",
+  letterSpacing: "-0.02em",
 });
 
-/* ----- Savings and debt: a line chart that draws itself ----- */
+export const graphNote = css({
+  color: "text.secondary",
+  fontSize: "sm",
+  lineHeight: "1.5",
+});
 
-export const chart = css({
+export const graphFacts = css({
   display: "grid",
-  gap: "2",
-});
-
-export const chartSvg = css({
-  display: "block",
-  width: "100%",
-  height: "auto",
-  overflow: "visible",
-});
-
-export const chartGrid = css({
-  stroke: "chart.grid",
-  strokeWidth: "1",
-});
-
-export const chartBase = css({
-  stroke: "chart.baseline",
-  strokeWidth: "1",
-});
-
-export const chartLine = cva({
-  base: { fill: "none", strokeWidth: "2.5", strokeLinejoin: "round", strokeLinecap: "round" },
-  variants: {
-    tone: {
-      wealth: { stroke: "chart.wealth" },
-      debt: { stroke: "chart.debt" },
-    },
-  },
-});
-
-export const chartArea = cva({
-  base: { stroke: "none", fillOpacity: 0.12 },
-  variants: {
-    tone: {
-      wealth: { fill: "chart.wealth" },
-      debt: { fill: "chart.debt" },
-    },
-  },
-});
-
-export const chartMarker = cva({
-  base: { stroke: "surface.card", strokeWidth: "3" },
-  variants: {
-    tone: {
-      wealth: { fill: "chart.wealth" },
-      debt: { fill: "chart.debt" },
-    },
-  },
-});
-
-export const ticks = css({
-  display: "flex",
-  justifyContent: "space-between",
-  gap: "2",
-  listStyle: "none",
-  margin: "0",
-  padding: "0",
-  textStyle: "label.sm",
-  fontWeight: "normal",
-  fontVariantNumeric: "tabular-nums",
-  color: "text.muted",
-});
-
-export const facts = css({
-  display: "grid",
-  gap: "2",
-  margin: "0",
-  "@container (min-width: 28rem)": { gridTemplateColumns: "1fr 1fr" },
-  "& > div": { display: "grid", gap: "1" },
-  "& dt": { textStyle: "label.sm", fontWeight: "normal", color: "text.secondary" },
-  "& dd": {
-    margin: "0",
-    textStyle: "label.md",
-    fontVariantNumeric: "tabular-nums",
-    color: "text.primary",
-  },
+  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+  gap: "3",
+  paddingTop: "3",
+  borderTopWidth: "1px",
+  borderTopStyle: "solid",
+  borderTopColor: "border",
+  "& dt": { color: "text.secondary", fontSize: "xs" },
+  "& dd": { fontSize: "lg", fontWeight: "bold", fontVariantNumeric: "tabular-nums" },
 });
 
 /* ----- The picture: the Home page's three figures ----- */
 
-export const tiles = css({
+export const dash = css({
   display: "grid",
-  gap: "2",
-  "@container (min-width: 30rem)": { gridTemplateColumns: "repeat(2, minmax(0, 1fr))" },
+  gap: "14px",
 });
 
-export const tile = cva({
+export const dashHead = css({
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  fontSize: "lg",
+  fontWeight: "bold",
+});
+
+export const dashTiles = css({
+  display: "grid",
+  gap: "3",
+  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+});
+
+export const dashTile = cva({
   base: {
     display: "grid",
     gap: "1",
-    padding: "4",
-    margin: "0",
-    borderRadius: "md",
+    padding: "14px 16px",
+    borderRadius: "16px",
     borderWidth: "1px",
     borderStyle: "solid",
-    borderColor: "border.subtle",
-    backgroundColor: "surface.card",
+    borderColor: "border",
+    backgroundColor: "surface.subtle",
   },
   variants: {
     lead: {
+      // The headline figure: the hero block, with prototype 11's two washes (`p11-v-dash__tile--hero`):
+      // sky at the top right and violet at the foot.
       true: {
-        backgroundColor: "surface.sunken",
-        "@container (min-width: 30rem)": { gridColumn: "1 / -1" },
+        gridColumn: "1 / -1",
+        backgroundColor: "surface.hero",
+        borderColor: "border.hero",
+        backgroundImage:
+          "radial-gradient(circle at 88% 20%, color-mix(in oklab, {colors.chart.series6} 22%, transparent), transparent 50%), radial-gradient(circle at 70% 110%, color-mix(in oklab, {colors.chart.series4} 18%, transparent), transparent 50%)",
       },
       false: {},
     },
   },
 });
 
-export const tileLabel = css({
-  textStyle: "label.sm",
-  fontWeight: "normal",
-  color: "text.secondary",
+export const dashLabel = cva({
+  base: { fontSize: "sm" },
+  variants: {
+    lead: { true: { color: "text.onHero" }, false: { color: "text.secondary" } },
+  },
 });
 
-export const tileFigure = cva({
-  base: { fontVariantNumeric: "tabular-nums", color: "text.primary" },
+export const dashFigure = cva({
+  base: { fontWeight: "bold", letterSpacing: "-0.02em", fontVariantNumeric: "tabular-nums" },
   variants: {
-    lead: { true: { textStyle: "numeric.kpi" }, false: { textStyle: "numeric.md" } },
+    lead: {
+      true: { color: "text.heroFigure", fontSize: { base: "4xl", lg: "5xl" } },
+      false: { color: "text.primary", fontSize: { base: "2xl", lg: "3xl" } },
+    },
   },
 });

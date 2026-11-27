@@ -92,6 +92,7 @@ describe("HomeFAQ: the band and the answers opening in place (MK9)", () => {
     const band = screen.getByRole("region", { name: "Frequently asked questions" });
     expect(band.id).toBe("faq");
     expect(band.getAttribute("data-tone-band")).toBe("canvas");
+    expect(band.getAttribute("data-home-section-name")).toBe("Questions");
   });
 
   it("keeps every answer in the page, in order; only the open one is reachable", () => {

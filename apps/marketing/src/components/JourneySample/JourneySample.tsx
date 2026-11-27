@@ -1,17 +1,14 @@
-import { Card, ExampleTag, VisuallyHidden } from "@repo/ui";
+import { ExampleTag, VisuallyHidden } from "@repo/ui";
 import type { FC } from "react";
-import { JourneyFigure } from "../JourneyFigure";
+import { AccountTiles } from "../AccountTiles";
+import { CountUpFigure } from "../CountUpFigure";
+import { DrawnLineChart, type DrawnLineChartProps } from "../DrawnLineChart";
 import type { JourneyStopKey } from "../JourneyStop/journeyStops";
+import { Payslip } from "../Payslip";
 import * as s from "./JourneySample.styles";
 import {
-  CHART_BOX,
   type ChartPoint,
-  chartY,
   formatGbp,
-  formatGbpHundreds,
-  formatGbpPence,
-  formatMonths,
-  linePath,
   SAMPLE_ACCOUNT_CARDS,
   SAMPLE_BUDGET,
   SAMPLE_DEBT,
@@ -22,53 +19,21 @@ import {
 
 /*
  * The journey's samples, one per stop, each a different way of showing the sample household's
- * figures: account cards dealt into place, the budget bar, the payslip, a year of savings, the
- * debt running down and the finished Home page. Ported from prototype 11's `stops/visuals.tsx`.
+ * figures (prototype 11's `stops/visuals.tsx`): the accounts dealt as tiles, the budget bar, the
+ * payslip, a year of savings drawing itself, the debt running down and the finished Home page.
  *
  * Each renders as its finished, still self: the server render, no JavaScript and reduced motion
- * show exactly this (MK1). The stop's arrive moment (`motion/journey/sampleMoments.ts`) plays over
- * the `data-*` hooks below and is over before the stop rests (MK3). Only the figure beside each
- * card's "Example" tag may count up, once (MK13).
+ * show exactly this (MK1). Its moment (`motion/journey/sampleMoments.ts`) plays inside the stop's
+ * arrive and is over before the stop rests (MK3). Only figures beside an "Example" tag count, once
+ * (MK13). Each root carries `data-sample` with its moment's name.
  */
 
-const Head: FC<{ label: string }> = ({ label }) => (
-  <p className={s.head}>
-    <span>{label}</span>
-    <ExampleTag variant="paper" />
-  </p>
-);
-
-const AccountsSample: FC = () => (
-  <Card className={s.sample} data-sample="accounts" material="paper" padding="lg">
-    <Head label="Your accounts" />
-    <ul aria-label="Example accounts" className={s.deck} data-deck="">
-      {SAMPLE_ACCOUNT_CARDS.map((card) => (
-        <li className={s.accountCard} data-deal="" key={card.id}>
-          <span className={s.accountName}>{card.name}</span>
-          <span className={s.accountAmount}>{formatGbp(card.amount)}</span>
-          <span className={s.accountKind}>{card.owed ? "You owe" : "You have"}</span>
-        </li>
-      ))}
-    </ul>
-    <div className={s.total}>
-      <p className={s.totalLabel}>Net worth</p>
-      <p className={s.bigFigure}>
-        <JourneyFigure
-          data-testid="journey-figure-net-worth"
-          format={formatGbpHundreds}
-          value={SAMPLE_HOME.netWorth}
-        />
-      </p>
-      <p className={s.caption}>What you have minus what you owe.</p>
-    </div>
-  </Card>
-);
-
 const BudgetSample: FC = () => (
-  <Card className={s.sample} data-sample="budget" material="paper" padding="lg">
-    <Head label="Your budget" />
-    <p className={s.amountRow}>
-      <span>Comes in each month</span>
+  <div className={`${s.panel} ${s.budget}`} data-sample="budget">
+    <p className={s.budgetIn}>
+      <span className={s.tagged}>
+        Comes in each month <ExampleTag variant="paper" />
+      </span>
       <strong>{formatGbp(SAMPLE_BUDGET.comesIn)}</strong>
     </p>
     <svg
@@ -80,11 +45,11 @@ const BudgetSample: FC = () => (
     >
       {SAMPLE_BUDGET.segments.map((seg, i) => (
         <rect
-          className={s.barSegment({ shade: i % 2 === 0 ? "strong" : "soft" })}
+          className={s.barSegment({ shade: Math.min(5, i) as s.BudgetShade })}
           data-bar-segment=""
           height="12"
           key={seg.id}
-          width={seg.share * 100}
+          width={Math.max(0, seg.share * 100 - 0.3)}
           x={seg.start * 100}
           y="0"
         />
@@ -92,175 +57,78 @@ const BudgetSample: FC = () => (
       <rect
         className={s.barLeftOver}
         data-bar-left=""
-        height="12"
-        width={Math.max(0, 100 - SAMPLE_BUDGET.leftOverStart * 100)}
-        x={SAMPLE_BUDGET.leftOverStart * 100}
-        y="0"
+        height="9"
+        rx="1.6"
+        vectorEffect="non-scaling-stroke"
+        width={Math.max(0, 100 - SAMPLE_BUDGET.leftOverStart * 100 - 2.2)}
+        x={SAMPLE_BUDGET.leftOverStart * 100 + 0.9}
+        y="1.5"
       />
     </svg>
     <ol aria-label="Example outgoings" className={s.rows}>
-      {SAMPLE_BUDGET.segments.map((seg) => (
+      {SAMPLE_BUDGET.segments.map((seg, i) => (
         <li className={s.row} data-budget-row="" key={seg.id}>
+          <span
+            aria-hidden="true"
+            className={s.swatch({ shade: Math.min(5, i) as s.BudgetShade })}
+          />
           <span>{seg.label}</span>
           <span>{formatGbp(seg.amount)}</span>
         </li>
       ))}
     </ol>
-    <div className={s.stats}>
-      <p className={s.stat}>
+    <div className={s.foot}>
+      <p className={s.stat} data-budget-stat="">
         <span>Left over each month</span>
         <strong>{formatGbp(SAMPLE_BUDGET.leftOver)}</strong>
       </p>
       {SAMPLE_HOME.monthsOfCover !== null && (
-        <p className={s.stat}>
+        <p className={s.stat} data-budget-stat="">
           <span>Breathing room</span>
-          <strong>{formatMonths(SAMPLE_HOME.monthsOfCover)}</strong>
+          <strong>
+            <CountUpFigure format="months" value={SAMPLE_HOME.monthsOfCover} />
+          </strong>
         </p>
       )}
     </div>
-  </Card>
+  </div>
 );
 
-const PaySample: FC = () => (
-  <article aria-label="Example payslip" className={s.slip} data-sample="pay">
-    <div className={s.slipPanel({ fold: "top" })} data-fold="top">
-      <p className={s.slipTitle}>
-        <span>Payslip, one month</span>
-        <ExampleTag variant="paper" />
-      </p>
-      <dl className={s.slipRows}>
-        <div>
-          <dt>Salary</dt>
-          <dd>{formatGbp(SAMPLE_PAYSLIP.salary)} a year</dd>
-        </div>
-        <div>
-          <dt>Pay this month</dt>
-          <dd>{formatGbpPence(SAMPLE_PAYSLIP.gross)}</dd>
-        </div>
-      </dl>
-    </div>
-    <div className={s.slipPanel({ fold: "middle" })}>
-      <dl className={s.slipRows}>
-        {SAMPLE_PAYSLIP.rows.map((row) => (
-          <div key={row.id}>
-            <dt>{row.label}</dt>
-            <dd>{formatGbpPence(row.amount)}</dd>
-          </div>
-        ))}
-      </dl>
-    </div>
-    <div className={s.slipPanel({ fold: "bottom" })} data-fold="bottom">
-      <p className={s.slipNet}>
-        <span>Take-home pay</span>
-        <strong>{formatGbpPence(SAMPLE_PAYSLIP.net)}</strong>
-      </p>
-    </div>
-  </article>
-);
-
-interface ChartSpec {
-  readonly points: readonly ChartPoint[];
-  readonly min: number;
-  readonly max: number;
-  readonly tone: "wealth" | "debt";
-  readonly ticks: readonly string[];
-}
-
-/** A line chart on the sample box; the marker sits on the last point. Hidden from assistive technology: the caption and the list beside it carry the figures. */
-const LineChart: FC<{ spec: ChartSpec; id: string }> = ({ spec, id }) => {
-  const values = spec.points.map((p) => p.value);
-  const line = linePath(values, spec.max, spec.min);
-  const area = `${line} L${CHART_BOX.width},${CHART_BOX.height} L0,${CHART_BOX.height} Z`;
-  const lastY = chartY(values.at(-1) ?? 0, spec.max, spec.min);
-  const clipId = `journey-chart-${id}`;
-  return (
-    <div className={s.chart}>
-      <svg
-        aria-hidden="true"
-        className={s.chartSvg}
-        focusable="false"
-        viewBox={`0 -10 ${CHART_BOX.width} ${CHART_BOX.height + 20}`}
-      >
-        <defs>
-          <clipPath id={clipId}>
-            <rect
-              data-chart-clip=""
-              height={CHART_BOX.height + 40}
-              width={CHART_BOX.width + 20}
-              x="-10"
-              y="-20"
-            />
-          </clipPath>
-        </defs>
-        {[0.25, 0.5, 0.75].map((g) => (
-          <line
-            className={s.chartGrid}
-            key={g}
-            x1="0"
-            x2={CHART_BOX.width}
-            y1={CHART_BOX.height * g}
-            y2={CHART_BOX.height * g}
-          />
-        ))}
-        <line
-          className={s.chartBase}
-          x1="0"
-          x2={CHART_BOX.width}
-          y1={CHART_BOX.height}
-          y2={CHART_BOX.height}
-        />
-        <g clipPath={`url(#${clipId})`}>
-          <path className={s.chartArea({ tone: spec.tone })} d={area} />
-          <path
-            className={s.chartLine({ tone: spec.tone })}
-            d={line}
-            vectorEffect="non-scaling-stroke"
-          />
-        </g>
-        <circle
-          className={s.chartMarker({ tone: spec.tone })}
-          cx={CHART_BOX.width}
-          cy={lastY}
-          data-chart-marker=""
-          r="8"
-        />
-      </svg>
-      <ol aria-hidden="true" className={s.ticks}>
-        {spec.ticks.map((tick) => (
-          <li key={tick}>{tick}</li>
-        ))}
-      </ol>
-    </div>
-  );
-};
-
-const evenTicks = (points: readonly { tick: string }[]) => {
-  const picks = [0, Math.floor((points.length - 1) / 2), points.length - 1];
-  return [...new Set(picks.map((i) => points[i]?.tick ?? ""))];
-};
+/** A chart's readouts: "£21,000, Nov" at each point. */
+const readouts = (points: readonly ChartPoint[]) =>
+  points.map((p) => `${formatGbp(p.value)}, ${p.when}`);
 
 const savingsValues = SAMPLE_SAVINGS.points.map((p) => p.value);
-const SAVINGS_SPEC: ChartSpec = {
-  points: SAMPLE_SAVINGS.points,
+const SAVINGS_CHART: Omit<DrawnLineChartProps, "id"> = {
+  values: savingsValues,
+  readouts: readouts(SAMPLE_SAVINGS.points),
   min: Math.floor((Math.min(...savingsValues) - 600) / 500) * 500,
   max: Math.ceil((Math.max(...savingsValues) + 600) / 500) * 500,
-  tone: "wealth",
-  ticks: evenTicks(SAMPLE_SAVINGS.points),
+  // Four months across the year: the first, two between and now.
+  ticks: [0, 4, 8, savingsValues.length - 1].map((index) => ({
+    label: SAMPLE_SAVINGS.points[index]?.tick ?? "",
+    index,
+  })),
+  tone: "sky",
 };
 
 const SavingsSample: FC = () => (
-  <Card as="article" className={s.sample} data-sample="savings" material="paper" padding="lg">
-    <Head label="Cash savings, past year" />
-    <p className={s.bigFigure}>
-      <JourneyFigure
-        data-testid="journey-figure-savings"
-        format={formatGbp}
-        from={savingsValues[0]}
-        value={SAMPLE_SAVINGS.end}
-      />
-    </p>
-    <LineChart id="savings" spec={SAVINGS_SPEC} />
-    <p className={s.caption}>
+  <figure className={`${s.panel} ${s.graph}`} data-sample="savings">
+    <figcaption className={s.graphHead}>
+      <span className={`${s.graphTitle} ${s.tagged}`}>
+        Cash savings, past year <ExampleTag variant="paper" />
+      </span>
+      <span className={s.graphFigure}>
+        <CountUpFigure
+          data-testid="journey-figure-savings"
+          format="gbp"
+          from={savingsValues[0]}
+          value={SAMPLE_SAVINGS.end}
+        />
+      </span>
+    </figcaption>
+    <DrawnLineChart id="savings" {...SAVINGS_CHART} />
+    <p className={s.graphNote}>
       Each month adds {formatGbp(SAMPLE_SAVINGS.saving)} of saving and a little interest. In August{" "}
       {formatGbp(SAMPLE_SAVINGS.withdrawal)} was taken out.
     </p>
@@ -271,29 +139,42 @@ const SavingsSample: FC = () => (
         ))}
       </ol>
     </VisuallyHidden>
-  </Card>
+  </figure>
 );
 
-const DEBT_SPEC: ChartSpec = {
-  points: SAMPLE_DEBT.points,
+/** Each new year's first point, under the debt chart. */
+const yearTicks = (points: readonly ChartPoint[]) =>
+  points.flatMap((p, index) =>
+    index > 0 && p.tick !== points[index - 1]?.tick ? [{ label: p.tick, index }] : [],
+  );
+
+const DEBT_CHART: Omit<DrawnLineChartProps, "id"> = {
+  values: SAMPLE_DEBT.points.map((p) => p.value),
+  readouts: readouts(SAMPLE_DEBT.points),
   min: 0,
   max: SAMPLE_DEBT.start || 1,
-  tone: "debt",
-  ticks: [...new Set(SAMPLE_DEBT.points.map((p) => p.tick))],
+  ticks: yearTicks(SAMPLE_DEBT.points),
+  tone: "violet",
 };
 
 const DebtSample: FC = () => (
-  <Card as="article" className={s.sample} data-sample="debt" material="paper" padding="lg">
-    <Head label={`Card and loan, ${formatGbp(SAMPLE_DEBT.monthly)} a month`} />
-    <p className={s.bigFigure}>{formatGbp(SAMPLE_DEBT.start)}</p>
-    <LineChart id="debt" spec={DEBT_SPEC} />
-    <dl className={s.facts}>
-      <div>
+  <figure className={`${s.panel} ${s.graph}`} data-sample="debt">
+    <figcaption className={s.graphHead}>
+      <span className={`${s.graphTitle} ${s.tagged}`}>
+        Card and loan, {formatGbp(SAMPLE_DEBT.monthly)} a month <ExampleTag variant="paper" />
+      </span>
+      <span className={s.graphFigure}>
+        <CountUpFigure data-testid="journey-figure-debt" format="gbp" value={SAMPLE_DEBT.start} />
+      </span>
+    </figcaption>
+    <DrawnLineChart id="debt" {...DEBT_CHART} />
+    <dl className={s.graphFacts}>
+      <div data-graph-fact="">
         <dt>Estimated paid off</dt>
         <dd>{SAMPLE_DEBT.endLabel}</dd>
       </div>
       {SAMPLE_DEBT.fixedEndLabel && (
-        <div>
+        <div data-graph-fact="">
           <dt>Mortgage fixed rate ends</dt>
           <dd>{SAMPLE_DEBT.fixedEndLabel}</dd>
         </div>
@@ -303,40 +184,64 @@ const DebtSample: FC = () => (
       The balance falls from {formatGbp(SAMPLE_DEBT.start)} in {SAMPLE_DEBT.startLabel} to nothing
       in {SAMPLE_DEBT.endLabel}.
     </VisuallyHidden>
-  </Card>
+  </figure>
 );
 
 const PictureSample: FC = () => (
-  <Card as="article" className={s.sample} data-sample="picture" material="paper" padding="lg">
-    <Head label="Your Home page" />
-    <div className={s.tiles}>
-      <p className={s.tile({ lead: true })} data-tile="">
-        <span className={s.tileLabel}>Net worth</span>
-        <JourneyFigure
-          className={s.tileFigure({ lead: true })}
+  <figure className={`${s.panel} ${s.dash}`} data-sample="picture">
+    <figcaption className={s.dashHead}>
+      <span>Your Home page</span>
+      <ExampleTag variant="paper" />
+    </figcaption>
+    <div className={s.dashTiles}>
+      <p className={s.dashTile({ lead: true })} data-tile="">
+        <span className={s.dashLabel({ lead: true })}>Net worth</span>
+        <CountUpFigure
+          className={s.dashFigure({ lead: true })}
           data-testid="journey-figure-picture-net-worth"
-          format={formatGbpHundreds}
+          format="gbp100"
           value={SAMPLE_HOME.netWorth}
         />
       </p>
       {SAMPLE_HOME.leftOverMonthly !== null && (
-        <p className={s.tile({ lead: false })} data-tile="">
-          <span className={s.tileLabel}>Left over each month</span>
-          <span className={s.tileFigure({ lead: false })}>
-            {formatGbp(SAMPLE_HOME.leftOverMonthly)}
-          </span>
+        <p className={s.dashTile({ lead: false })} data-tile="">
+          <span className={s.dashLabel({ lead: false })}>Left over each month</span>
+          <CountUpFigure
+            className={s.dashFigure({ lead: false })}
+            format="gbp"
+            value={SAMPLE_HOME.leftOverMonthly}
+          />
         </p>
       )}
       {SAMPLE_HOME.monthsOfCover !== null && (
-        <p className={s.tile({ lead: false })} data-tile="">
-          <span className={s.tileLabel}>Breathing room</span>
-          <span className={s.tileFigure({ lead: false })}>
-            {formatMonths(SAMPLE_HOME.monthsOfCover)}
-          </span>
+        <p className={s.dashTile({ lead: false })} data-tile="">
+          <span className={s.dashLabel({ lead: false })}>Breathing room</span>
+          <CountUpFigure
+            className={s.dashFigure({ lead: false })}
+            format="months"
+            value={SAMPLE_HOME.monthsOfCover}
+          />
         </p>
       )}
     </div>
-  </Card>
+  </figure>
+);
+
+const AccountsSample: FC = () => (
+  <div data-sample="accounts">
+    <AccountTiles netWorth={SAMPLE_HOME.netWorth} tiles={SAMPLE_ACCOUNT_CARDS} />
+  </div>
+);
+
+const PaySample: FC = () => (
+  <div data-sample="pay">
+    <Payslip
+      gross={SAMPLE_PAYSLIP.gross}
+      net={SAMPLE_PAYSLIP.net}
+      rows={SAMPLE_PAYSLIP.rows}
+      salary={SAMPLE_PAYSLIP.salary}
+    />
+  </div>
 );
 
 const SAMPLES: Record<JourneyStopKey, FC> = {

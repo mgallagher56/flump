@@ -1,17 +1,15 @@
 import { css } from "@repo/ui/styled-system/css";
 
-/** The band: positioned, and its own stacking context, so the bubble layer sits under the content. */
-export const roughBand = css({ position: "relative", isolation: "isolate" });
-
-/** Under everything in the band, above the band's own fill (MK8: never over text). */
-export const bubbleLayer = css({ position: "absolute", inset: 0, zIndex: -1 });
-
-/** The steps and, from `lg`, the calendar page beside them in the spare space. */
+/** The steps, then the calendar page; from 60rem the page sits beside them (prototype 11). */
 export const roughLayout = css({
   display: "grid",
-  gridTemplateColumns: { base: "1fr", lg: "minmax(0, 1fr) auto" },
+  gridTemplateColumns: "1fr",
   alignItems: "center",
-  gap: { base: "8", lg: "16" },
+  gap: "8",
+  "@media (min-width: 60rem)": {
+    gridTemplateColumns: "minmax(0, 1fr) auto",
+    gap: "clamp(40px, 5vw, 96px)",
+  },
 });
 
 export const steps = css({ position: "relative" });
@@ -52,8 +50,14 @@ export const step = css({
   rowGap: "1",
 });
 
-/** The step's number on a filled circle: words on `primary.solid` take `primary.foreground`. */
+/**
+ * The step's number on a circle that fills as the line reaches it (`--lit` from 0 to 1, tied to
+ * scroll); at rest and in the server HTML it is filled: words on `primary.solid` take
+ * `primary.foreground`. The second and third circles wear a soft violet or rose halo, the orb
+ * colours on round objects only (prototype 11; MC1 allow-list).
+ */
 export const stepNode = css({
+  "--lit": "1",
   gridRow: "span 2",
   display: "grid",
   placeItems: "center",
@@ -63,15 +67,26 @@ export const stepNode = css({
   borderWidth: "2px",
   borderStyle: "solid",
   borderColor: "primary",
-  backgroundColor: "primary.solid",
-  color: "primary.foreground",
-  textStyle: "label.md",
+  backgroundColor:
+    "color-mix(in oklab, token(colors.primary.solid) calc(var(--lit) * 100%), token(colors.surface.canvas))",
+  color:
+    "color-mix(in oklab, token(colors.primary.foreground) calc(var(--lit) * 100%), token(colors.primary))",
+  fontSize: "lg",
   fontWeight: "bold",
   fontVariantNumeric: "tabular-nums",
+  "li:nth-child(2) > &": {
+    boxShadow: "0 0 0 5px color-mix(in oklab, token(colors.orb.violetRose.core) 18%, transparent)",
+  },
+  "li:nth-child(3) > &": {
+    boxShadow: "0 0 0 5px color-mix(in oklab, token(colors.orb.violetRose.shade) 16%, transparent)",
+  },
 });
 
+/** Step titles and bodies grow a little with the screen, as prototype 11's. */
 export const stepTitle = css({
   textStyle: "heading.md",
+  fontSize: { base: "lg", md: "xl", xl: "2xl" },
+  fontWeight: "bold",
   color: "text.primary",
   margin: 0,
   mt: "2",
@@ -79,15 +94,21 @@ export const stepTitle = css({
 
 export const stepBody = css({
   textStyle: "body.md",
+  fontSize: { base: "md", "2xl": "lg" },
+  lineHeight: "prose",
   color: "text.secondary",
   margin: 0,
   maxWidth: "2xl",
 });
 
-/** The calendar page: from `lg` only, beside the steps (B10: never pushes a figure down a phone). */
+/**
+ * The calendar page, under the steps and from 60rem beside them, at every width as prototype 11
+ * (it shows a date, no figure). The wrapper keeps room under the page, which is drawn a little
+ * taller than its box and rises as it arrives, so it never reaches the next band.
+ */
 export const roughPicture = css({
-  display: { base: "none", lg: "block" },
   width: "full",
   maxWidth: "xs",
   justifySelf: "center",
+  pb: "clamp(56px, 3rem + 1.5vw, 88px)",
 });

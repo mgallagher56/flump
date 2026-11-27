@@ -3,16 +3,8 @@ import { type FC, useRef } from "react";
 import type { GsapKit } from "../../motion/loadGsapKit";
 import { useGsapMoment } from "../../motion/useGsapMoment";
 import { signupCta } from "../../utils/site";
-import { BubbleField } from "../BubbleField";
-import { MarketingSection } from "../MarketingSection";
-import {
-  bubbleLayer,
-  closeBand,
-  closeCard,
-  closePicture,
-  closeText,
-  closeTitle,
-} from "./HomeClose.styles";
+import { MarketingBand } from "../MarketingBand";
+import { closeCard, closeGlass, closePicture, closeText, closeTitle } from "./HomeClose.styles";
 
 const TITLE_ID = "home-cta-title";
 
@@ -32,8 +24,8 @@ export function closeMoment({ gsap }: GsapKit, root: HTMLElement): undefined {
 }
 
 /**
- * The home page's close (ROLLOUT-PLAN M1, from prototype 11): calm, on the card band like its
- * neighbours, with no dark band. The getting started ticket, the question, one line and the page's
+ * The home page's close (ROLLOUT-PLAN M1, from prototype 11): calm, on the canvas band as the
+ * prototype's, with no dark band. The getting started ticket, the question, one line and the page's
  * second and last "Request an invite". The shared `ClosingCta` stays as it is for the other pages.
  */
 export const HomeClose: FC = () => {
@@ -42,25 +34,24 @@ export const HomeClose: FC = () => {
   useGsapMoment(cardRef, closeMoment);
 
   return (
-    <MarketingSection
-      className={closeBand}
+    <MarketingBand
+      bubbleFit="beside"
+      bubbles="b"
       id="get-started"
       labelledBy={TITLE_ID}
-      tone="card"
+      stop="Get started"
+      tone="canvas"
       width="narrow"
     >
-      <div className={bubbleLayer}>
-        <BubbleField layout="b" />
-      </div>
       <div ref={cardRef}>
-        <Card material="glass" padding="lg">
+        <Card className={closeGlass} material="glass" padding="none">
           <div className={closeCard} data-testid="home-final-cta">
             <div
               className={closePicture}
               data-close-picture=""
               data-testid="home-final-cta-illustration"
             >
-              <Illustration scene="onboarding" size="md" variant="document" />
+              <Illustration scene="onboarding" size="xl" palette="orb" variant="document" />
             </div>
             <h2 className={closeTitle} id={TITLE_ID}>
               Ready to see where you stand?
@@ -72,6 +63,6 @@ export const HomeClose: FC = () => {
           </div>
         </Card>
       </div>
-    </MarketingSection>
+    </MarketingBand>
   );
 };

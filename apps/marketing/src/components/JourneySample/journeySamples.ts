@@ -4,6 +4,7 @@ import {
   type DebtItem,
   SAMPLE_HOUSEHOLDS,
 } from "@flump/finance-engine";
+import { formatGbp, formatGbpHundreds, formatMonths } from "../CountUpFigure/figureFormats";
 
 /*
  * Every figure the journey's samples show, from one sample household: the engine's "homeowner",
@@ -31,18 +32,6 @@ const ACCOUNTS = {
   loan: account("Loan"),
 } as const;
 
-const gbp = new Intl.NumberFormat("en-GB", {
-  style: "currency",
-  currency: "GBP",
-  maximumFractionDigits: 0,
-});
-const gbpPence = new Intl.NumberFormat("en-GB", {
-  style: "currency",
-  currency: "GBP",
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
-const oneDecimal = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 1 });
 const shortMonth = new Intl.DateTimeFormat("en-GB", { month: "short", timeZone: "UTC" });
 const longMonthYear = new Intl.DateTimeFormat("en-GB", {
   month: "long",
@@ -50,15 +39,7 @@ const longMonthYear = new Intl.DateTimeFormat("en-GB", {
   timeZone: "UTC",
 });
 
-/** £12,345 */
-export const formatGbp = (value: number) => gbp.format(Math.round(value));
-/** £12,300: to the nearest hundred, as the Home page shows net worth. */
-export const formatGbpHundreds = (value: number) => gbp.format(Math.round(value / 100) * 100);
-/** £1,234.56 */
-export const formatGbpPence = (value: number) => gbpPence.format(value);
-/** 4.5 months */
-export const formatMonths = (value: number) =>
-  `${oneDecimal.format(Math.round(value * 10) / 10)} months`;
+export { formatGbp, formatGbpHundreds, formatMonths };
 
 const monthDate = (year: number, monthIndex: number) => new Date(Date.UTC(year, monthIndex, 15));
 /** The month the sample's figures are "now". Fixed, so the server and browser agree. */
@@ -124,6 +105,10 @@ export const SAMPLE_PAYSLIP = (() => {
 export interface ChartPoint {
   readonly value: number;
   readonly label: string;
+  /** The short tick under the chart. */
+  readonly tick: string;
+  /** When, as the marker's readout names it ("Nov", "March 2029"). */
+  readonly when: string;
 }
 
 /**
@@ -150,6 +135,7 @@ export const SAMPLE_SAVINGS = (() => {
       value: Math.round(value),
       label: `${longMonthYear.format(date)}: ${formatGbp(value)}`,
       tick: shortMonth.format(date),
+      when: shortMonth.format(date),
     };
   });
   return { points, end, saving, withdrawal };
@@ -187,6 +173,7 @@ export const SAMPLE_DEBT = (() => {
     value: p.value,
     label: `${longMonthYear.format(p.date)}: ${formatGbp(p.value)}`,
     tick: String(p.date.getUTCFullYear()),
+    when: longMonthYear.format(p.date),
   }));
   const startLabel = longMonthYear.format(monthDate(NOW.year, NOW.month));
   const last = result.schedule.at(-1);
@@ -196,23 +183,3 @@ export const SAMPLE_DEBT = (() => {
   const fixedEndLabel = fixedEnd ? longMonthYear.format(ym(fixedEnd)) : null;
   return { start, monthly, points, startLabel, endLabel, fixedEndLabel };
 })();
-
-/** The chart box the sample lines are drawn on (SVG user units). */
-export const CHART_BOX = { width: 600, height: 200 } as const;
-
-/** An SVG polyline path for values on the chart box, from `min` at the bottom to `max` at the top. */
-export function linePath(values: readonly number[], max: number, min = 0): string {
-  const { width, height } = CHART_BOX;
-  const step = width / Math.max(1, values.length - 1);
-  const span = max - min || 1;
-  return values
-    .map(
-      (v, i) =>
-        `${i === 0 ? "M" : "L"}${(i * step).toFixed(2)},${(height - ((v - min) / span) * height).toFixed(2)}`,
-    )
-    .join(" ");
-}
-
-/** The y of a value on the chart box. */
-export const chartY = (value: number, max: number, min = 0) =>
-  CHART_BOX.height - ((value - min) / (max - min || 1)) * CHART_BOX.height;

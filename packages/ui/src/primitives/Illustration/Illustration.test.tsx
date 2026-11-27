@@ -1,4 +1,5 @@
-import { PASSING_PAIRS } from "@flump/tokens/contrast";
+import { colors, semanticTokens } from "@flump/tokens";
+import { contrast, PASSING_PAIRS, type Theme } from "@flump/tokens/contrast";
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { EmptyState } from "../../patterns/EmptyState/EmptyState";
@@ -7,11 +8,13 @@ import {
   DOCUMENT_GRID_WIDTH,
   DOCUMENT_MIN_TEXT,
   DOCUMENT_MIN_WIDTH,
+  type DocumentOrbAccent,
   type DocumentPiece,
   type DocumentShape,
   documentDefinitions,
   documentEffects,
   documentInksBySurface,
+  documentOrbInksByAccent,
   documentRoleTokens,
   documentSceneIds,
   documentScenes,
@@ -19,7 +22,7 @@ import {
   walkDocument,
 } from "./Illustration.documents";
 import { illustrationScenes } from "./Illustration.scenes";
-import { documentClasses } from "./Illustration.styles";
+import { documentClasses, documentOrbClasses, documentOrbRoleTokens } from "./Illustration.styles";
 
 describe("Illustration primitive", () => {
   it("offers all nine scenes from the shared shape definitions", () => {
@@ -267,6 +270,8 @@ describe("Illustration document pictures (STYLE-GUIDE 8.3)", () => {
       const { container } = render(<Illustration scene={scene} variant="document" />);
       expect(container.innerHTML).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
       expect(container.innerHTML).not.toMatch(/fill="(?!none)/);
+      // The default look never reaches the opt-in orb colours.
+      expect(container.innerHTML).not.toMatch(/orb\.|data-doc-orb|data-palette/);
     }
   });
 
@@ -304,5 +309,169 @@ describe("document picture effects are one set of numbers for web and mobile", (
     expect(shadow?.getAttribute("width")).toBe(
       String((piece?.width ?? 0) - 2 * documentEffects.shadow.inset),
     );
+  });
+});
+
+/* -------------------------------------------------------------------------------------------------
+ * The opt-in orb look (`palette="orb"`, marketing home page only; STYLE-GUIDE 8.3, MK5).
+ * ----------------------------------------------------------------------------------------------- */
+
+const REF = /^\{(.+)\}$/;
+const lookup = (root: unknown, path: readonly string[]): unknown =>
+  path.reduce<unknown>(
+    (node, key) =>
+      node !== null && typeof node === "object" && key in node
+        ? (node as Record<string, unknown>)[key]
+        : undefined,
+    root,
+  );
+function resolveRaw(value: unknown, theme: Theme): string {
+  if (typeof value === "string") {
+    const ref = REF.exec(value)?.[1];
+    if (!ref) return value;
+    const path = ref.split(".");
+    return resolveRaw(
+      lookup({ colors }, path) ?? lookup({ colors: semanticTokens.colors }, path),
+      theme,
+    );
+  }
+  if (value && typeof value === "object" && "value" in value) return resolveRaw(value.value, theme);
+  if (value && typeof value === "object" && "base" in value) {
+    const cond = value as { base: unknown; _dark?: unknown };
+    return resolveRaw(theme === "dark" && cond._dark !== undefined ? cond._dark : cond.base, theme);
+  }
+  throw new Error(`Cannot resolve ${JSON.stringify(value)}`);
+}
+/** A semantic path ("primary" is primary.DEFAULT) to its colour in a theme. */
+function resolveColor(path: string, theme: Theme): string {
+  let node = lookup(semanticTokens.colors, path.split("."));
+  if (node && typeof node === "object" && !("value" in node)) {
+    node = (node as { DEFAULT?: unknown }).DEFAULT;
+  }
+  if (node === undefined) throw new Error(`Unresolved token ${path}`);
+  return resolveRaw(node, theme);
+}
+const ratio = (fg: string, bg: string, theme: Theme) =>
+  contrast(
+    resolveColor(fg, theme),
+    resolveColor(bg, theme),
+    resolveColor("material.paper.fill", theme),
+  );
+
+/** Every marked shape in a picture, with what it marks and the text inside a marked piece. */
+const marked = (scene: (typeof documentScenes)[number]) =>
+  walkDocument(documentDefinitions[scene])
+    .map(({ shape }) => shape)
+    .concat(documentDefinitions[scene].pieces)
+    .filter(
+      (shape): shape is Exclude<DocumentShape, { kind: "text" | "tag" }> =>
+        "orb" in shape && shape.orb !== undefined,
+    );
+
+describe('the opt-in orb look (palette="orb")', () => {
+  it("marks only prototype 11's recoloured shapes", () => {
+    const accents = Object.fromEntries(
+      documentScenes
+        .map((scene) => [scene, marked(scene).map((shape) => shape.orb)] as const)
+        .filter(([, list]) => list.length > 0),
+    );
+    expect(accents).toEqual({
+      "empty-pension": ["violet", "violet"],
+      "check-in": ["teal", "teal", "rose"],
+      onboarding: ["violet"],
+      "not-found": ["violetTint", "tealTint"],
+      "feature-ai-connection": ["teal"],
+    });
+  });
+
+  it.each(documentScenes)("draws %s with the same shapes and words as the default", (scene) => {
+    const plain = render(<Illustration scene={scene} variant="document" />).container;
+    const orb = render(<Illustration palette="orb" scene={scene} variant="document" />).container;
+    const svg = orb.querySelector("svg");
+    expect(svg?.getAttribute("data-palette")).toBe("orb");
+    expect(svg?.querySelectorAll("*").length).toBe(
+      plain.querySelector("svg")?.querySelectorAll("*").length,
+    );
+    expect(svg?.textContent).toBe(plain.textContent);
+    expect(orb.innerHTML).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
+    expect(svg?.querySelectorAll("[data-doc-orb]").length).toBe(marked(scene).length);
+  });
+
+  it("gives each marked shape its orb colour class, and only marked shapes", () => {
+    const orbClasses = [
+      ...Object.values(documentOrbClasses.fill),
+      ...Object.values(documentOrbClasses.stroke),
+    ];
+    for (const scene of documentScenes) {
+      const { container } = render(<Illustration palette="orb" scene={scene} variant="document" />);
+      for (const el of container.querySelectorAll("rect, circle, path")) {
+        const own = el.closest("[data-doc-orb]");
+        const accent = (el.getAttribute("data-doc-orb") ??
+          (el.hasAttribute("data-doc-body")
+            ? own?.getAttribute("data-doc-orb")
+            : null)) as DocumentOrbAccent | null;
+        const cls = el.getAttribute("class") ?? "";
+        if (accent) {
+          expect(cls, `${scene}: ${accent}`).toMatch(documentOrbRoleTokens[accent]);
+        } else {
+          for (const orbClass of orbClasses) expect(cls.split(" "), scene).not.toContain(orbClass);
+        }
+      }
+    }
+  });
+
+  it("is the only path to violet and rose in the document pictures (MK5)", () => {
+    const violetRose = /violetRose|violet-rose|violet|rose|purple|pink|series4|series5/;
+    // The default roles and the data never name them; only the opt-in token map does.
+    expect(JSON.stringify(documentRoleTokens)).not.toMatch(violetRose);
+    expect(JSON.stringify(documentDefinitions)).not.toMatch(/violetRose|purple|pink|series[45]/);
+    expect(Object.values(documentOrbRoleTokens).filter((t) => violetRose.test(t))).toEqual([
+      "orb.violetRose.core",
+      "orb.violetRose.shade",
+      "orb.violetRose.bubble",
+    ]);
+    for (const scene of documentScenes) {
+      const plain = render(<Illustration scene={scene} variant="document" />).container.innerHTML;
+      expect(plain, scene).not.toMatch(violetRose);
+      const app = render(<Illustration palette="app" scene={scene} variant="document" />).container
+        .innerHTML;
+      expect(app, scene).toBe(plain);
+    }
+  });
+
+  it("keeps every ink at 4.5:1 on its orb fill, and every orb mark at 3:1 on paper, in both themes", () => {
+    for (const scene of documentScenes) {
+      for (const shape of marked(scene)) {
+        const accent = shape.orb as DocumentOrbAccent;
+        const words =
+          shape.kind === "piece"
+            ? shape.shapes.filter(
+                (s): s is Extract<DocumentShape, { kind: "text" }> => s.kind === "text",
+              )
+            : [];
+        for (const word of words) {
+          expect(documentOrbInksByAccent[accent], `${scene}: ${word.lines[0]}`).toContain(word.ink);
+        }
+      }
+    }
+    for (const theme of ["light", "dark"] as const) {
+      for (const [accent, inks] of Object.entries(documentOrbInksByAccent)) {
+        const bg = documentOrbRoleTokens[accent as DocumentOrbAccent];
+        for (const ink of inks) {
+          const fg = documentRoleTokens.ink[ink];
+          expect(ratio(fg, bg, theme), `${fg} on ${bg} (${theme})`).toBeGreaterThanOrEqual(4.5);
+        }
+      }
+      // The not-found tabs' arrows (primary lines) on the tints are graphics: 3:1.
+      for (const tint of ["violetTint", "tealTint"] as const) {
+        expect(ratio("primary", documentOrbRoleTokens[tint], theme)).toBeGreaterThanOrEqual(3);
+      }
+      // The violet and rose marks sit on paper: graphics, 3:1.
+      for (const mark of ["violet", "rose"] as const) {
+        expect(
+          ratio(documentOrbRoleTokens[mark], "material.paper.fill", theme),
+        ).toBeGreaterThanOrEqual(3);
+      }
+    }
   });
 });

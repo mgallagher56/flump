@@ -6,7 +6,6 @@ import {
   Illustration,
   marketingMs,
   usePrefersReducedMotion,
-  useTiltLight,
 } from "@repo/ui";
 import { type FC, type RefObject, useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
@@ -19,12 +18,11 @@ import {
   FEATURES_INDEX,
   type Feature,
 } from "../../utils/featureAreas";
-import { BubbleField } from "../BubbleField";
-import { MarketingSection } from "../MarketingSection";
+import { MarketingBand } from "../MarketingBand";
+import { TiltLight } from "../TiltLight";
 import {
   bandFooter,
   bandLink,
-  bubbleLayer,
   controls,
   featureCard,
   featureItem,
@@ -33,7 +31,6 @@ import {
   featureName,
   featureNote,
   featurePicture,
-  featuresBand,
   featureText,
   strip,
 } from "./HomeFeatures.styles";
@@ -162,13 +159,17 @@ export function featuresMoment({ gsap }: GsapKit, root: HTMLElement): undefined 
 }
 
 const FeatureTile: FC<{ feature: Feature }> = ({ feature }) => {
-  const tilt = useTiltLight<HTMLLIElement>();
   const isAi = feature.key === AI_CONNECTION.key;
   return (
-    <li className={featureItem} data-feature={feature.key} ref={tilt}>
-      <Card className={featureCard} material="glass" padding="lg">
+    <TiltLight as="li" className={featureItem} data-feature={feature.key}>
+      <Card className={featureCard} material="glass" padding="none">
         <div className={featurePicture}>
-          <Illustration scene={FEATURE_PICTURES[feature.key]} size="sm" variant="document" />
+          <Illustration
+            scene={FEATURE_PICTURES[feature.key]}
+            size="sm"
+            palette="orb"
+            variant="document"
+          />
         </div>
         <h3 className={featureName}>
           <Link className={featureLink} to={feature.path}>
@@ -178,7 +179,7 @@ const FeatureTile: FC<{ feature: Feature }> = ({ feature }) => {
         <p className={featureText}>{isAi ? feature.menuDescription : feature.lead}</p>
         {isAi && <p className={featureNote}>{AI_CONNECTION_ACCESS}</p>}
       </Card>
-    </li>
+    </TiltLight>
   );
 };
 
@@ -195,16 +196,14 @@ export const HomeFeatures: FC = () => {
   useGsapMoment(rootRef, featuresMoment);
 
   return (
-    <MarketingSection
-      className={featuresBand}
+    <MarketingBand
+      bubbles="b"
       id="features"
+      stop="Five areas"
       subtitle="The app's five areas, and the AI connection. Use one area or all five."
       title={FEATURES_INDEX.title}
       tone="card"
     >
-      <div className={bubbleLayer}>
-        <BubbleField layout="b" />
-      </div>
       <div className={strip} ref={rootRef}>
         <ul aria-label={LIST_LABEL} className={featureList} id={FEATURES_LIST_ID} ref={listRef}>
           {FEATURES.map((feature) => (
@@ -245,6 +244,6 @@ export const HomeFeatures: FC = () => {
           All Flump features on one page
         </Link>
       </p>
-    </MarketingSection>
+    </MarketingBand>
   );
 };

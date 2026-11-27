@@ -38,6 +38,14 @@ describe("HomeFeatures: the markup without script (MK1)", () => {
     ).toBe("/features");
   });
 
+  it("is the 'Five areas' stop, and each tile carries the tilt-and-light hover", () => {
+    const { container } = renderFeatures();
+    const band = container.querySelector("#features");
+    expect(band?.getAttribute("data-home-section-name")).toBe("Five areas");
+    expect(band?.querySelector("[data-bubble-field]")?.getAttribute("data-bubble-field")).toBe("b");
+    expect(container.querySelectorAll("li[data-feature]")).toHaveLength(6);
+  });
+
   it("gives each tile its own document picture, hidden from assistive technology", () => {
     const { container } = renderFeatures();
     const scenes = [...container.querySelectorAll("svg[data-variant=document]")];

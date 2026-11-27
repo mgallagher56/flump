@@ -1,10 +1,4 @@
-import { css } from "@repo/ui/styled-system/css";
-
-/** The band: positioned, and its own stacking context, so the bubble layer sits under the content. */
-export const payBand = css({ position: "relative", isolation: "isolate" });
-
-/** Under everything in the band, above the band's own fill (MK8: never over text). */
-export const bubbleLayer = css({ position: "absolute", inset: 0, zIndex: -1 });
+import { css, cva } from "@repo/ui/styled-system/css";
 
 export const payCard = css({
   display: "grid",
@@ -66,3 +60,54 @@ export const payActions = css({ display: "flex", flexWrap: "wrap", gap: "3" });
 
 /** A gliding figure: the exact value for assistive technology, the moving digits hidden (MK10). */
 export const glideFigure = css({ fontVariantNumeric: "tabular-nums" });
+
+/** The split bar: one rounded track, its parts in the three keys' colours (prototype 11). */
+export const split = css({
+  display: "block",
+  width: "full",
+  height: "12px",
+  mt: "0.5",
+  mb: "1",
+  borderRadius: "full",
+  overflow: "hidden",
+  backgroundColor: "surface.subtle",
+});
+
+/* The three parts: what you keep in the primary colour, tax and National Insurance in greys. */
+export const splitPart = cva({
+  variants: {
+    part: {
+      kept: { fill: "chart.primary" },
+      tax: { fill: "color-mix(in oklab, token(colors.text.secondary) 60%, transparent)" },
+      ni: { fill: "color-mix(in oklab, token(colors.text.secondary) 30%, transparent)" },
+    },
+  },
+});
+
+export const legend = css({
+  listStyle: "none",
+  margin: 0,
+  mb: "1.5",
+  padding: 0,
+  display: "flex",
+  flexWrap: "wrap",
+  rowGap: "1",
+  columnGap: "3.5",
+  textStyle: "label.sm",
+  color: "text.secondary",
+});
+
+export const legendRow = css({ display: "inline-flex", alignItems: "center", gap: "1.5" });
+
+export const legendKey = cva({
+  base: { width: "10px", height: "10px", borderRadius: "xs" },
+  variants: {
+    part: {
+      kept: { backgroundColor: "chart.primary" },
+      tax: {
+        backgroundColor: "color-mix(in oklab, token(colors.text.secondary) 60%, transparent)",
+      },
+      ni: { backgroundColor: "color-mix(in oklab, token(colors.text.secondary) 30%, transparent)" },
+    },
+  },
+});

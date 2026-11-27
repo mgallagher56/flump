@@ -1,17 +1,26 @@
-import { render, screen, within } from "@testing-library/react";
+import { act, render, screen, within } from "@testing-library/react";
 import { renderToString } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { AmbientMotionProvider } from "../../context/AmbientMotionContext";
 import type { GsapKit } from "../../motion/loadGsapKit";
 import { signupCta } from "../../utils/site";
-import { HomeHero } from "./HomeHero";
+import { HomeHero as Hero, heroModeFrom } from "./HomeHero";
 import { ASSEMBLY_UNITS, armHeroAssembly, FLIGHTS_START } from "./heroAssembly";
 import { HERO_FIGURES, HERO_SOURCES } from "./heroData";
+import {
+  ASSEMBLE_S,
+  armHeroScroll,
+  FOLLOW_S,
+  INTRO_DELAY_S,
+  PART_S,
+  PIN_SCREENS,
+  TOTAL,
+} from "./heroScroll";
 
 const renderHero = () =>
   render(
     <AmbientMotionProvider>
-      <HomeHero />
+      <Hero />
     </AmbientMotionProvider>,
   );
 
@@ -41,7 +50,29 @@ describe("HomeHero", () => {
     expect(screen.getByRole("link", { name: "See the five areas" }).getAttribute("href")).toBe(
       "#features",
     );
-    expect(document.querySelector("[data-motion-control] button")).not.toBeNull();
+    // Every call to action in the hero carries prototype 11's pointer light.
+    for (const name of ["Request an invite", "Interactive preview"]) {
+      expect(screen.getByRole("link", { name }).hasAttribute("data-light")).toBe(true);
+    }
+    // The pause control moved beside the section control (HomeStopControl on the home page).
+    expect(section.getAttribute("data-home-section-name")).toBe("One picture");
+    expect(section.id).toBe("home-hero");
+  });
+
+  it("fades the scroll cue once the page has scrolled past 60px, and back at the top", () => {
+    renderHero();
+    const cue = screen.getByTestId("hero-scroll-cue");
+    expect(cue.getAttribute("data-scrolled")).toBe("false");
+    act(() => {
+      vi.spyOn(window, "scrollY", "get").mockReturnValue(61);
+      window.dispatchEvent(new Event("scroll"));
+    });
+    expect(cue.getAttribute("data-scrolled")).toBe("true");
+    act(() => {
+      vi.spyOn(window, "scrollY", "get").mockReturnValue(60);
+      window.dispatchEvent(new Event("scroll"));
+    });
+    expect(cue.getAttribute("data-scrolled")).toBe("false");
   });
 
   it("names the dashboard 'Monthly picture Example' and shows every figure at its final value", () => {
@@ -87,7 +118,7 @@ describe("HomeHero", () => {
   it("server-renders the finished, still picture: no inline styles and no live flag", () => {
     const html = renderToString(
       <AmbientMotionProvider>
-        <HomeHero />
+        <Hero />
       </AmbientMotionProvider>,
     );
     expect(html).not.toContain("style=");
@@ -108,11 +139,18 @@ function fakeKit() {
     progress: vi.fn().mockReturnValue(0),
   };
   const revert = vi.fn();
+  /** Whether the timeline was made inside a `gsap.context`, so reverting it reverts the timeline. */
+  const made = { inContext: false, insideNow: false };
   const gsap = {
-    timeline: vi.fn(() => timeline),
+    timeline: vi.fn(() => {
+      made.inContext = made.insideNow;
+      return timeline;
+    }),
     set: vi.fn(),
     context: vi.fn((fn: () => void) => {
+      made.insideNow = true;
       fn();
+      made.insideNow = false;
       return { revert };
     }),
     utils: { clamp: (min: number, max: number, v: number) => Math.min(max, Math.max(min, v)) },
@@ -217,5 +255,184 @@ describe("heroAssembly", () => {
     window.dispatchEvent(new Event("resize"));
     expect(revert).toHaveBeenCalledTimes(1);
     expect(root.dataset.heroLive).toBeUndefined();
+  });
+});
+
+describe("hero mode", () => {
+  it("is prototype 11's scroll version unless the address asks for the timed one", () => {
+    expect(heroModeFrom("")).toBe("scroll");
+    expect(heroModeFrom("?hero=scroll")).toBe("scroll");
+    expect(heroModeFrom("?hero=timed")).toBe("timed");
+    expect(heroModeFrom("?utm=x&hero=timed")).toBe("timed");
+    expect(heroModeFrom("?hero=TIMED")).toBe("scroll");
+  });
+});
+
+/** A stand-in for GSAP with ScrollTrigger, recording what the scroll version asks of it. */
+function fakeScrollKit() {
+  const timeline = {
+    to: vi.fn().mockReturnThis(),
+    progress: vi.fn().mockReturnValue(1),
+  };
+  const revert = vi.fn();
+  const triggers: Record<string, unknown>[] = [];
+  const created = {
+    isActive: false,
+    progress: 0,
+    start: 400,
+  };
+  /** Whether the timeline was made inside a `gsap.context`, so reverting it reverts the timeline. */
+  const made = { inContext: false, insideNow: false };
+  const gsap = {
+    timeline: vi.fn(() => {
+      made.inContext = made.insideNow;
+      return timeline;
+    }),
+    set: vi.fn(),
+    to: vi.fn(() => ({ kill: vi.fn() })),
+    quickTo: vi.fn(() => vi.fn()),
+    context: vi.fn((fn: () => void) => {
+      made.insideNow = true;
+      fn();
+      made.insideNow = false;
+      return { revert };
+    }),
+    utils: { clamp: (min: number, max: number, v: number) => Math.min(max, Math.max(min, v)) },
+  };
+  const ScrollTrigger = {
+    create: vi.fn((vars: Record<string, unknown>) => {
+      triggers.push(vars);
+      return created;
+    }),
+    sort: vi.fn(),
+    refresh: vi.fn(),
+  };
+  // Flip.fit's landing for the lifted "left over" figure.
+  const Flip = { fit: vi.fn(() => ({ x: 40, y: -30, scaleX: 1.2, scaleY: 1.5 })) };
+  return {
+    kit: { gsap, ScrollTrigger, Flip } as unknown as GsapKit,
+    gsap,
+    timeline,
+    triggers,
+    revert,
+    Flip,
+    made,
+  };
+}
+
+const stubWidth = (wide: boolean) =>
+  vi.stubGlobal("matchMedia", (query: string) => ({
+    matches: query.includes("min-width: 1024px") ? wide : false,
+    media: query,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  }));
+
+describe("heroScroll (prototype 11's version)", () => {
+  it("lifts the receipt's left over figure onto the tile's figure, then sweeps one light across", () => {
+    stubWidth(true);
+    const { kit, gsap, timeline, Flip } = fakeScrollKit();
+    const root = renderHero().getByTestId("home-hero");
+    armHeroScroll(kit, root);
+    const ghost = root.querySelector("[data-hero-ghost]");
+    const glint = root.querySelector("[data-hero-glint]");
+    expect(ghost?.textContent).toBe(HERO_FIGURES.leftOver);
+    expect(Flip.fit).toHaveBeenCalledWith(
+      ghost,
+      root.querySelector('[data-hero-value="left"]'),
+      expect.objectContaining({ getVars: true, scale: true }),
+    );
+    const ghostSet = gsap.set.mock.calls.find((c) => c[0] === ghost);
+    expect(ghostSet?.[1]).toMatchObject({ opacity: 0, scale: 1 });
+    const on = (el: Element | null) =>
+      timeline.to.mock.calls.filter((c) => c[0] === el) as [
+        unknown,
+        Record<string, unknown>,
+        number,
+      ][];
+    const lift = on(ghost);
+    // Shown as the receipt leaves at 3.0, flown to Flip's fit over 2.0 at its height's scale
+    // (scaleY 1.5 for both axes), gone at 3.0 + 1.95 = 4.95.
+    expect(lift.map((c) => c[2])).toEqual([3, 3, 4.95]);
+    expect(lift[1]?.[1]).toMatchObject({ x: 40, y: -30, scaleX: 1.5, scaleY: 1.5, duration: 2 });
+    expect(lift[2]?.[1]).toMatchObject({ opacity: 0 });
+    // The glint starts off the left edge, crosses at 7.7 and fades by 9.0.
+    expect(gsap.set.mock.calls.find((c) => c[0] === glint)?.[1]).toEqual({
+      xPercent: -120,
+      opacity: 0,
+    });
+    const sweep = on(glint);
+    expect(sweep.map((c) => c[2])).toEqual([7.7, 7.7, 9]);
+    expect(sweep[1]?.[1]).toMatchObject({ xPercent: 120 });
+  });
+
+  it("takes its timings from the hero token: prototype 11's values times its pace of 1.4", () => {
+    // durations.marketing.hero is 4,760 ms = 3,400 x 1.4, so 500 ms calm is 0.7 s and so on.
+    expect(INTRO_DELAY_S).toBeCloseTo(0.7);
+    expect(FOLLOW_S).toBeCloseTo(1.4);
+    expect(ASSEMBLE_S).toBeCloseTo(3.36);
+    expect(PART_S).toBeCloseTo(2.24);
+    // 1.4 screens x 0.4 x 1.4 x 1.4 = 1.0976 screens of pinned scroll.
+    expect(PIN_SCREENS).toBeCloseTo(1.0976);
+    expect(TOTAL).toBe(10);
+  });
+
+  it("from 1024px pins the two columns and has the picture follow the scroll", () => {
+    stubWidth(true);
+    const { kit, gsap, triggers, revert } = fakeScrollKit();
+    const root = renderHero().getByTestId("home-hero");
+    const finish = armHeroScroll(kit, root);
+    expect(root.dataset.heroLive).toBe("true");
+    expect(triggers).toHaveLength(1);
+    const pin = triggers[0] as Record<string, unknown>;
+    expect(pin.pin).toBe(root.querySelector("[data-hero-inner]"));
+    expect(pin.refreshPriority).toBe(1);
+    // Scrolling moves the timeline with a soft lag, never as a jump.
+    (pin.onUpdate as (self: { progress: number }) => void)({ progress: 0.5 });
+    expect(gsap.to).toHaveBeenLastCalledWith(
+      expect.anything(),
+      expect.objectContaining({ progress: 0.5, duration: FOLLOW_S, ease: "calm" }),
+    );
+    // The six pieces float apart in depth, centred on their own middles.
+    const pieces = gsap.set.mock.calls.filter((c) =>
+      (c[0] as Element)?.hasAttribute?.("data-hero-piece"),
+    );
+    expect(pieces).toHaveLength(6);
+    expect(pieces[0]?.[1]).toMatchObject({ xPercent: -50, yPercent: -50, z: 60, opacity: 1 });
+    finish();
+    expect(revert).toHaveBeenCalled();
+    expect(root.dataset.heroLive).toBeUndefined();
+    expect(root.dataset.heroReady).toBeUndefined();
+  });
+
+  it("makes its run's timeline inside its gsap context, so teardown and a width change revert it", () => {
+    stubWidth(true);
+    const { kit, gsap, made } = fakeScrollKit();
+    const root = renderHero().getByTestId("home-hero");
+    armHeroScroll(kit, root);
+    expect(gsap.timeline).toHaveBeenCalledTimes(1);
+    expect(made.inContext).toBe(true);
+  });
+
+  it("under 1024px is never pinned or scrubbed: scroll triggers it and time completes it", () => {
+    stubWidth(false);
+    const { kit, gsap, triggers } = fakeScrollKit();
+    const root = renderHero().getByTestId("home-hero");
+    armHeroScroll(kit, root);
+    expect(triggers).toHaveLength(1);
+    const trigger = triggers[0] as Record<string, unknown>;
+    expect(trigger.pin).toBeUndefined();
+    expect(trigger.scrub).toBeUndefined();
+    expect(trigger.start).toBe("top 60%");
+    (trigger.onEnter as () => void)();
+    expect(gsap.to).toHaveBeenLastCalledWith(
+      expect.anything(),
+      expect.objectContaining({ progress: 1, duration: ASSEMBLE_S }),
+    );
+    (trigger.onLeaveBack as () => void)();
+    expect(gsap.to).toHaveBeenLastCalledWith(
+      expect.anything(),
+      expect.objectContaining({ progress: 0, duration: PART_S }),
+    );
   });
 });

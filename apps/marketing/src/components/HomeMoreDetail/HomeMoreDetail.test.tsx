@@ -14,10 +14,11 @@ const renderDetail = () =>
   );
 
 describe("HomeMoreDetail", () => {
-  it("lists the four deeper tools, each linked to its area, on the canvas band", () => {
+  it("lists the four deeper tools, each linked to its area, on the card band (prototype 11)", () => {
     renderDetail();
     const band = screen.getByRole("region", { name: "More detail when you want it" });
-    expect(band.getAttribute("data-tone-band")).toBe("canvas");
+    expect(band.getAttribute("data-tone-band")).toBe("card");
+    expect(band.getAttribute("data-home-section-name")).toBe("More detail");
     expect(
       within(band)
         .getAllByRole("link")

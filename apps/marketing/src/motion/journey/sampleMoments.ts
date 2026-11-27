@@ -1,152 +1,104 @@
-import { marketingMs } from "@repo/ui";
-import type { GsapKit } from "../loadGsapKit";
+import { dealInMoment } from "../../components/AccountTiles/dealInMoment";
+import { countUpMoment } from "../../components/CountUpFigure/countUpMoment";
+import { drawChartMoment } from "../../components/DrawnLineChart/drawChartMoment";
+import { unfoldMoment } from "../../components/Payslip/unfoldMoment";
+import { MOMENT_START, type SampleMoment } from "../moments/arrive";
 
 /*
- * Each journey sample's own moment, added to its stop's arrive timeline (`JourneyStop`): cards
- * dealt into place, the budget bar filling, the payslip opening, a line drawing itself, the Home
- * page's tiles arriving. Ported from prototype 11's `stops/visuals.tsx` builders.
- *
- * Time completes every moment (MK2): the timeline plays on time once scroll has triggered it and
- * is never scrubbed. Every moment is over before the stop rests, and `JourneyStop` clears the
- * transforms it leaves, so nothing holds a transform at rest (MK3). Moves are by distance and
- * opacity, on the calm eases from the tokens (MK4). Figures are not driven here: the one count-up
- * per sample is `useCountUp` (MK13).
+ * Each journey sample's own moment, added to its stop's arrive timeline (`pairArrive`), in arrive
+ * units from `MOMENT_START` to before `MOMENT_END` (prototype 11's `stops/visuals.tsx` builders):
+ * cards dealt into place, the budget bar filling, the payslip opening, a line drawing itself, the
+ * Home page's tiles arriving. Time completes every moment (MK2); each is over before the stop
+ * rests, and moves by distance and opacity on the calm eases (MK4), except the payslip's approved
+ * unfold. Only figures beside an "Example" tag count, once (MK13).
  */
 
-type Timeline = ReturnType<GsapKit["gsap"]["timeline"]>;
-
-/** A marketing duration in seconds, for GSAP. */
-export const seconds = (key: Parameters<typeof marketingMs>[0]) => marketingMs(key) / 1000;
-
-/** Adds `root`'s moment to `tl` from `at` seconds. Returns the elements it moves, for clearing. */
-export type SampleMoment = (kit: GsapKit, tl: Timeline, root: HTMLElement, at: number) => Element[];
-
-const all = (root: HTMLElement, selector: string) => Array.from(root.querySelectorAll(selector));
-
-/** Accounts: the six cards dealt from one pile at the deck's centre to their places. */
-const deal: SampleMoment = (_kit, tl, root, at) => {
-  const deck = root.querySelector<HTMLElement>("[data-deck]");
-  if (!deck) return [];
-  const cards = all(deck, "[data-deal]") as HTMLElement[];
-  const step = seconds("stagger");
-  cards.forEach((card, i) => {
-    tl.fromTo(
-      card,
-      {
-        x: () => deck.clientWidth / 2 - (card.offsetLeft + card.offsetWidth / 2),
-        y: () => deck.clientHeight / 2 - (card.offsetTop + card.offsetHeight / 2),
-        opacity: 0,
-      },
-      { x: 0, y: 0, opacity: 1, duration: seconds("disclosure"), ease: "calmInOut" },
-      at + i * step,
-    );
-  });
-  return cards;
-};
+const all = (root: ParentNode, selector: string) => Array.from(root.querySelectorAll(selector));
+const count = (root: ParentNode) => root.querySelector<HTMLElement>("[data-count]");
 
 /** Budget: each outgoing fills its share of the bar in turn, its line coming up beside it. */
-const fillBar: SampleMoment = (_kit, tl, root, at) => {
+const fillBar: SampleMoment = (_kit, tl, root) => {
   const segments = all(root, "[data-bar-segment]");
   const rows = all(root, "[data-budget-row]");
   const left = all(root, "[data-bar-left]");
-  const step = seconds("stagger");
+  const stats = all(root, "[data-budget-stat]");
+  const step = 1.4 / Math.max(1, segments.length);
   segments.forEach((segment, i) => {
     tl.fromTo(
       segment,
       { scaleX: 0, transformOrigin: "0% 50%" },
-      { scaleX: 1, duration: seconds("hover"), ease: "calmInOut" },
-      at + i * step,
+      { scaleX: 1, duration: 0.45, ease: "calmInOut" },
+      MOMENT_START + i * step,
     );
     const row = rows[i];
     if (row) {
       tl.fromTo(
         row,
-        { opacity: 0, y: 6 },
-        { opacity: 1, y: 0, duration: seconds("hover"), ease: "calm" },
-        at + i * step,
+        { opacity: 0.3, y: 6 },
+        { opacity: 1, y: 0, duration: 0.4, ease: "calm" },
+        MOMENT_START + 0.08 + i * step,
       );
     }
   });
+  const at = MOMENT_START + segments.length * step;
   tl.fromTo(
     left,
-    { opacity: 0 },
-    { opacity: 1, duration: seconds("hover"), ease: "calm" },
-    at + segments.length * step,
+    { scaleX: 0, opacity: 0, transformOrigin: "0% 50%" },
+    { scaleX: 1, opacity: 1, duration: 0.4, ease: "calm" },
+    at - 0.1,
   );
-  return [...segments, ...rows, ...left];
-};
-
-/** Pay: the payslip, folded in three, opens out: the lower third turns down, then the top up. */
-const unfold: SampleMoment = (_kit, tl, root, at) => {
-  const bottom = root.querySelector("[data-fold=bottom]");
-  const top = root.querySelector("[data-fold=top]");
-  const turn = seconds("disclosure");
-  if (bottom) {
-    tl.fromTo(
-      bottom,
-      { rotationX: -90, opacity: 0 },
-      { rotationX: 0, opacity: 1, duration: turn, ease: "calmInOut" },
-      at,
-    );
-  }
-  if (top) {
-    tl.fromTo(
-      top,
-      { rotationX: 90, opacity: 0 },
-      { rotationX: 0, opacity: 1, duration: turn, ease: "calmInOut" },
-      at + turn * 0.7,
-    );
-  }
-  return [bottom, top].filter((el): el is Element => el !== null);
-};
-
-/** Savings and debt: the line draws (its clip widens), then the marker settles on the last point. */
-const drawLine: SampleMoment = (_kit, tl, root, at) => {
-  const clip = root.querySelector("[data-chart-clip]");
-  const marker = root.querySelector("[data-chart-marker]");
-  if (!clip) return [];
-  const full = Number(clip.getAttribute("width"));
   tl.fromTo(
-    clip,
-    { attr: { width: 0 } },
-    { attr: { width: full }, duration: seconds("chart"), ease: "calmInOut" },
+    stats,
+    { opacity: 0, y: 10 },
+    { opacity: 1, y: 0, duration: 0.4, ease: "calm", stagger: 0.12 },
     at,
   );
-  if (marker) {
-    tl.fromTo(
-      marker,
-      { opacity: 0 },
-      { opacity: 1, duration: seconds("hover"), ease: "calm" },
-      at + seconds("chart"),
-    );
-  }
-  return marker ? [marker] : [];
+  countUpMoment(tl, count(root), at + 0.1, 0.5);
+  return [...segments, ...rows, ...left, ...stats];
 };
 
-/** The picture: the Home page's tiles arrive in turn. */
-const tiles: SampleMoment = (_kit, tl, root, at) => {
-  const items = all(root, "[data-tile]");
+/** Savings: the year draws itself while the balance counts from the first month's. */
+const savings: SampleMoment = (_kit, tl, root) => {
+  drawChartMoment(tl, root, MOMENT_START, 1.8);
+  countUpMoment(tl, count(root), MOMENT_START, 1.8);
+  return [];
+};
+
+/** Debt: the balance counts, the line runs down to the end date, then the two facts come up. */
+const debt: SampleMoment = (_kit, tl, root) => {
+  drawChartMoment(tl, root, MOMENT_START, 1.8);
+  countUpMoment(tl, count(root), MOMENT_START, 0.9);
+  const facts = all(root, "[data-graph-fact]");
   tl.fromTo(
-    items,
-    { opacity: 0, y: 16 },
-    {
-      opacity: 1,
-      y: 0,
-      duration: seconds("entry"),
-      ease: "calm",
-      stagger: seconds("stagger"),
-    },
-    at,
+    facts,
+    { opacity: 0, y: 8 },
+    { opacity: 1, y: 0, duration: 0.4, ease: "calm", stagger: 0.12 },
+    MOMENT_START + 1.5,
   );
+  return facts;
+};
+
+/** The picture: the Home page's tiles arrive in turn, each figure counting as it comes. */
+const tiles: SampleMoment = (_kit, tl, root) => {
+  const items = all(root, "[data-tile]") as HTMLElement[];
+  items.forEach((tile, i) => {
+    tl.fromTo(
+      tile,
+      { opacity: 0, y: 16 },
+      { opacity: 1, y: 0, duration: 0.6, ease: "calm" },
+      MOMENT_START + i * 0.25,
+    );
+    countUpMoment(tl, count(tile), MOMENT_START + 0.1 + i * 0.25, 1.3);
+  });
   return items;
 };
 
 /** Each sample's moment, by the sample's `data-sample` name. */
 export const SAMPLE_MOMENTS: Record<string, SampleMoment> = {
-  accounts: deal,
+  accounts: dealInMoment,
   budget: fillBar,
-  pay: unfold,
-  savings: drawLine,
-  debt: drawLine,
+  pay: unfoldMoment,
+  savings,
+  debt,
   picture: tiles,
 };

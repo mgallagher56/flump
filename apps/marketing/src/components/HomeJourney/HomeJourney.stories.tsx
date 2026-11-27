@@ -10,7 +10,7 @@ const meta: Meta<typeof HomeJourney> = {
   component: HomeJourney,
   parameters: { layout: "fullscreen" },
   decorators: [
-    // The rest state, as with reduced motion: axe checks what a reader sees once a moment ends.
+    // The rest state, as with reduced motion: the plain list a reader sees without motion.
     (Story) => (
       <StillMotionProvider>
         <Story />
@@ -34,8 +34,10 @@ const assertJourney: Story["play"] = async ({ canvasElement }) => {
   await expect(
     canvas.getByRole("heading", { level: 2, name: "From rough figures to one picture" }),
   ).toBeVisible();
-  await expect(canvas.getAllByRole("heading", { level: 3 })).toHaveLength(6);
-  await expect(canvas.getByRole("link", { name: "Open the interactive preview" })).toBeVisible();
+  await expect(canvas.getAllByRole("heading", { level: 2 })).toHaveLength(7);
+  await expect(canvas.getByText("6 of 6")).toBeVisible();
+  await expect(canvas.getByRole("link", { name: "Interactive preview" })).toBeVisible();
+  await expect(canvas.getByTestId("home-journey").getAttribute("data-live")).toBe("off");
 };
 
 export const Light: Story = { globals: { theme: "light" }, play: assertJourney };

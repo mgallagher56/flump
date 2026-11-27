@@ -1,15 +1,20 @@
 import type { FC, ReactNode } from "react";
 import { cx } from "../../../styled-system/css";
 import {
+  type DocumentPalette,
   type DocumentPiece,
   type DocumentShape,
   documentEffects,
   EXAMPLE_TAG,
   tornEdgePath,
 } from "./Illustration.documents";
-import { documentClasses as c } from "./Illustration.styles";
+import { documentClasses as c, documentOrbClasses as orb } from "./Illustration.styles";
 
 const dash = (dashed?: boolean) => (dashed ? c.dashed : undefined);
+
+/** The orb accent a shape takes, only under the opt-in orb palette. */
+const accentOf = (shape: { orb?: DocumentPiece["orb"] }, palette: DocumentPalette) =>
+  palette === "orb" ? shape.orb : undefined;
 
 function renderText(shape: Extract<DocumentShape, { kind: "text" }>, key: string): ReactNode {
   const lineHeight = shape.lineHeight ?? Math.round(shape.size * 1.25);
@@ -68,11 +73,14 @@ function renderTag(shape: Extract<DocumentShape, { kind: "tag" }>, key: string):
   );
 }
 
-function renderPiece(piece: DocumentPiece, key: string): ReactNode {
+function renderPiece(piece: DocumentPiece, key: string, palette: DocumentPalette): ReactNode {
   const { width, height, rx = 6 } = piece;
+  const accent = accentOf(piece, palette);
+  const body = accent ? orb.fill[accent] : c.surface[piece.surface];
   return (
     <g
       key={key}
+      data-doc-orb={accent}
       data-doc-piece={piece.surface}
       transform={`translate(${piece.x} ${piece.y}) rotate(${piece.rotate} ${width / 2} ${height / 2})`}
     >
@@ -90,7 +98,7 @@ function renderPiece(piece: DocumentPiece, key: string): ReactNode {
       {piece.bare ? null : (
         <>
           <rect
-            className={cx(c.surface[piece.surface], piece.edge ? c.edge : undefined)}
+            className={cx(body, piece.edge ? c.edge : undefined)}
             data-doc-body=""
             height={height}
             rx={rx}
@@ -98,35 +106,37 @@ function renderPiece(piece: DocumentPiece, key: string): ReactNode {
           />
           {piece.torn ? (
             <path
-              className={cx(c.surface[piece.surface], c.tornEdge)}
+              className={cx(body, c.tornEdge)}
               data-doc-body=""
               d={tornEdgePath(width, height)}
             />
           ) : null}
         </>
       )}
-      <DocumentShapeList shapes={piece.shapes} />
+      <DocumentShapeList palette={palette} shapes={piece.shapes} />
     </g>
   );
 }
 
-function renderShape(shape: DocumentShape, key: string): ReactNode {
+function renderShape(shape: DocumentShape, key: string, palette: DocumentPalette): ReactNode {
   switch (shape.kind) {
     case "piece":
-      return renderPiece(shape, key);
+      return renderPiece(shape, key, palette);
     case "text":
       return renderText(shape, key);
     case "tag":
       return renderTag(shape, key);
-    case "rect":
+    case "rect": {
+      const accent = accentOf(shape, palette);
       return (
         <rect
           key={key}
           className={cx(
-            shape.fill ? c.fill[shape.fill] : c.noFill,
-            shape.stroke ? c.stroke[shape.stroke] : undefined,
+            shape.fill ? (accent ? orb.fill[accent] : c.fill[shape.fill]) : c.noFill,
+            shape.stroke ? (accent ? orb.stroke[accent] : c.stroke[shape.stroke]) : undefined,
             dash(shape.dashed),
           )}
+          data-doc-orb={accent}
           height={shape.height}
           opacity={shape.opacity}
           rx={shape.rx}
@@ -135,35 +145,48 @@ function renderShape(shape: DocumentShape, key: string): ReactNode {
           y={shape.y}
         />
       );
-    case "circle":
+    }
+    case "circle": {
+      const accent = accentOf(shape, palette);
       return (
         <circle
           key={key}
-          className={c.fill[shape.fill]}
+          className={accent ? orb.fill[accent] : c.fill[shape.fill]}
           cx={shape.cx}
           cy={shape.cy}
+          data-doc-orb={accent}
           opacity={shape.opacity}
           r={shape.r}
         />
       );
-    case "path":
+    }
+    case "path": {
+      const accent = accentOf(shape, palette);
       return (
         <path
           key={key}
           className={cx(
-            shape.fill ? c.fill[shape.fill] : c.noFill,
-            shape.stroke ? c.stroke[shape.stroke] : undefined,
+            shape.fill ? (accent ? orb.fill[accent] : c.fill[shape.fill]) : c.noFill,
+            shape.stroke ? (accent ? orb.stroke[accent] : c.stroke[shape.stroke]) : undefined,
             dash(shape.dashed),
           )}
           d={shape.d}
+          data-doc-orb={accent}
           opacity={shape.opacity}
           strokeWidth={shape.strokeWidth}
         />
       );
+    }
   }
 }
 
-/** Draws a document picture's shape list as SVG, in order: later shapes sit on top. */
-export const DocumentShapeList: FC<{ shapes: readonly DocumentShape[] }> = ({ shapes }) => (
-  <>{shapes.map((shape, i) => renderShape(shape, String(i)))}</>
+/**
+ * Draws a document picture's shape list as SVG, in order: later shapes sit on top. `palette="orb"`
+ * is the marketing home page's opt-in look (STYLE-GUIDE 8.3); the default draws the apps' look.
+ */
+export const DocumentShapeList: FC<{
+  shapes: readonly DocumentShape[];
+  palette?: DocumentPalette;
+}> = ({ shapes, palette = "app" }) => (
+  <>{shapes.map((shape, i) => renderShape(shape, String(i), palette))}</>
 );

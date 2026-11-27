@@ -10,10 +10,12 @@ import { HomeMoreDetail } from "../../components/HomeMoreDetail";
 import { HomePayRise } from "../../components/HomePayRise";
 import { HomeRoughFigures } from "../../components/HomeRoughFigures";
 import { HomeSecurity } from "../../components/HomeSecurity";
+import { HomeStopControl } from "../../components/HomeStopControl";
+import { MarketingPageShell } from "../../components/MarketingPageShell";
+import { MotionControl } from "../../components/MotionControl";
 import { PageMeta } from "../../components/PageMeta";
-import { AmbientMotionProvider } from "../../context/AmbientMotionContext";
 import { SITE_TAGLINE } from "../../utils/site";
-import { mainContent, pageShell, pairBands } from "./HomePage.styles";
+import { mainContent, pairBands } from "./HomePage.styles";
 
 /**
  * Marketing home, the new design language (ROLLOUT-PLAN slice M1, from prototype 11): the
@@ -23,33 +25,36 @@ import { mainContent, pageShell, pairBands } from "./HomePage.styles";
  * solid band (UX-GUIDELINES 12.2). The server render is the finished, still page (MK1): every
  * motion is an enhancement loaded after first paint, and none plays with reduced motion.
  * "Request an invite" appears twice in the page body (hero and close).
+ *
+ * Fourteen bands and stops are marked `data-home-section` (the hero, the features, the journey's six
+ * stops, then each band below), and the section control at the bottom left steps through them, with
+ * the pause control beside it (MK14).
  */
 export const HomePage: FC = () => (
-  <AmbientMotionProvider>
-    <div className={pageShell()}>
-      <PageMeta
-        title={SITE_TAGLINE}
-        description={`${SITE_TAGLINE}. Accounts, budget, pay, savings, pension and debts in one place, under UK rules, from figures you type in.`}
-      />
+  <MarketingPageShell>
+    <PageMeta
+      title={SITE_TAGLINE}
+      description={`${SITE_TAGLINE}. Accounts, budget, pay, savings, pension and debts in one place, under UK rules, from figures you type in.`}
+    />
 
-      <Header />
+    <Header />
 
-      <main className={mainContent()} id="main" tabIndex={-1}>
-        <HomeHero />
-        <HomeFeatures />
-        <HomeJourney />
-        <HomeRoughFigures />
-        <HomePayRise />
-        <HomeSecurity />
-        {/* Side by side on wide screens: two short lists that deal in, in order. */}
-        <div className={pairBands()}>
-          <HomeMoreDetail />
-          <HomeFAQ />
-        </div>
-        <HomeClose />
-      </main>
+    <main className={mainContent()} id="main" tabIndex={-1}>
+      <HomeHero />
+      <HomeFeatures />
+      <HomeJourney />
+      <HomeRoughFigures />
+      <HomePayRise />
+      <HomeSecurity />
+      {/* Side by side on wide screens: two short lists that deal in, in order. */}
+      <div className={pairBands()}>
+        <HomeMoreDetail />
+        <HomeFAQ />
+      </div>
+      <HomeClose />
+    </main>
 
-      <Footer />
-    </div>
-  </AmbientMotionProvider>
+    <HomeStopControl aside={<MotionControl />} />
+    <Footer />
+  </MarketingPageShell>
 );

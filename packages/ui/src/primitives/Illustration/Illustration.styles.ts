@@ -193,3 +193,36 @@ export const documentClasses = {
   body: css({ fontFamily: "sans" }),
   numeric: css({ fontVariantNumeric: "tabular-nums" }),
 };
+
+/**
+ * The opt-in orb look (`palette="orb"`, marketing home page only): prototype 11's colours on the
+ * shapes marked with a `DocumentOrbAccent`. This file is the one place in `Illustration` allowed
+ * the violet and rose orb tokens (`scripts/lib/orbColours.ts`); the default look never reads it.
+ * The teal is `orb.skyTeal.shade`, the prototype's teal band: the sky `core` fails 4.5:1 under
+ * `primary.foreground` in light (4.35:1), so the band takes the shade (6.2:1 light, 9.7:1 dark).
+ */
+export const documentOrbRoleTokens = {
+  violet: "orb.violetRose.core",
+  rose: "orb.violetRose.shade",
+  teal: "orb.skyTeal.shade",
+  violetTint: "orb.violetRose.bubble",
+  tealTint: "orb.skyTeal.bubbleShade",
+} as const;
+
+/** Classes for `documentOrbRoleTokens`: a fill (also a piece's body) and a line in each colour. */
+export const documentOrbClasses = {
+  fill: {
+    violet: css({ fill: "orb.violetRose.core" }),
+    rose: css({ fill: "orb.violetRose.shade" }),
+    teal: css({ fill: "orb.skyTeal.shade" }),
+    violetTint: css({ fill: "orb.violetRose.bubble" }),
+    tealTint: css({ fill: "orb.skyTeal.bubbleShade" }),
+  },
+  stroke: {
+    violet: css({ stroke: "orb.violetRose.core" }),
+    rose: css({ stroke: "orb.violetRose.shade" }),
+    teal: css({ stroke: "orb.skyTeal.shade" }),
+    violetTint: css({ stroke: "orb.violetRose.bubble" }),
+    tealTint: css({ stroke: "orb.skyTeal.bubbleShade" }),
+  },
+};

@@ -5,6 +5,8 @@ export {
   DOCUMENT_MIN_TEXT,
   DOCUMENT_MIN_WIDTH,
   type DocumentInk,
+  type DocumentOrbAccent,
+  type DocumentPalette,
   type DocumentPicture,
   type DocumentPiece,
   type DocumentShape,
@@ -12,6 +14,7 @@ export {
   documentDefinitions,
   documentExtraIds,
   documentInksBySurface,
+  documentOrbInksByAccent,
   documentRoleTokens,
   documentSceneIds,
   documentScenes,
@@ -30,6 +33,8 @@ export {
 } from "./Illustration.scenes";
 export {
   documentClasses,
+  documentOrbClasses,
+  documentOrbRoleTokens,
   documentRecipe,
   illustrationRecipe,
   sceneClasses,
