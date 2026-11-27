@@ -40,6 +40,7 @@ export function Switch({
 }: SwitchProps) {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme, Platform.OS), [theme]);
+  const inactive = disabled || busy;
   return (
     <Pressable
       accessibilityRole="switch"
@@ -55,7 +56,7 @@ export function Switch({
       onPress={() => onValueChange(!value)}
     >
       <View style={styles.words}>
-        <Text>{label}</Text>
+        <Text color={inactive ? "muted" : "primary"}>{label}</Text>
         {hint ? (
           <Text textStyle="body.sm" color="secondary">
             {hint}
@@ -69,11 +70,22 @@ export function Switch({
         importantForAccessibility="no-hide-descendants"
         style={[
           styles.track,
-          value ? styles.trackOn : styles.trackOff,
-          disabled || busy ? styles.faded : null,
+          inactive
+            ? value
+              ? styles.trackDisabledOn
+              : styles.trackDisabledOff
+            : value
+              ? styles.trackOn
+              : styles.trackOff,
         ]}
       >
-        <View testID="switch-thumb" style={styles.thumb} />
+        <View
+          testID="switch-thumb"
+          style={[
+            styles.thumb,
+            inactive ? (value ? styles.thumbDisabledOn : styles.thumbDisabledOff) : null,
+          ]}
+        />
       </View>
     </Pressable>
   );
