@@ -15,7 +15,7 @@ export interface SwitchProps {
   onValueChange(next: boolean): void;
   /** Help under the label, also read as the switch's hint. */
   hint?: string;
-  /** Saving: announced as busy, and presses are ignored until it clears (web's aria-disabled). */
+  /** Saving: announced as busy (not disabled), and presses are ignored until it clears. */
   busy?: boolean;
   disabled?: boolean;
   testID?: string;
@@ -48,14 +48,13 @@ export function Switch({
       accessibilityRole="switch"
       accessibilityLabel={label}
       accessibilityHint={hint}
-      accessibilityState={{ checked: value }}
-      busy={busy}
+      accessibilityState={{ checked: value, busy }}
       disabled={disabled}
       testID={testID}
       // Press feedback as the Button's: iOS dims, Android draws a ripple.
-      android_ripple={{ color: theme.colors["surface.subtle"] }}
-      style={({ pressed }) => [styles.row, pressedStyle(pressed, Platform.OS)]}
-      onPress={() => onValueChange(!value)}
+      android_ripple={busy || disabled ? undefined : { color: theme.colors["surface.subtle"] }}
+      style={({ pressed }) => [styles.row, pressedStyle(pressed && !busy, Platform.OS)]}
+      onPress={busy ? undefined : () => onValueChange(!value)}
     >
       <View style={styles.words}>
         <Text color={disabled ? "muted" : "primary"}>{label}</Text>

@@ -53,7 +53,7 @@ describe("AppLockSetting", () => {
   it("while the phone is asking, or still checking, the switch waits in enabled colours", async () => {
     const onChange = await show({ busy: true });
     expect(toggle()).toBeBusy();
-    expect(toggle()).toBeDisabled();
+    expect(toggle()).not.toBeDisabled();
     expect(StyleSheet.flatten(screen.getByText(APP_LOCK.label).props.style).color).toBe(
       light.colors["text.primary"],
     );

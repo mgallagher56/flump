@@ -115,8 +115,13 @@ export function Pressable({
       accessibilityRole={accessibilityRole}
       accessibilityLabel={accessibilityLabel}
       // Busy is also disabled, as the web Button's pending state sets aria-disabled: no press
-      // feedback, no press events, and it is announced.
-      accessibilityState={{ ...accessibilityState, disabled: Boolean(disabled || busy), busy }}
+      // feedback, no press events, and it is announced. Callers that want busy without disabled
+      // (such as Switch) pass `accessibilityState={{ busy: true }}` without `busy`.
+      accessibilityState={{
+        ...accessibilityState,
+        disabled: Boolean(disabled || busy),
+        busy: busy || Boolean(accessibilityState?.busy),
+      }}
       disabled={Boolean(disabled || busy)}
       onPress={busy || disabled ? undefined : onPress}
       onLongPress={busy || disabled ? undefined : onLongPress}

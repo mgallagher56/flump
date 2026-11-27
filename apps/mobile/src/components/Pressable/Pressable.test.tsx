@@ -171,6 +171,20 @@ describe("Pressable", () => {
     expect(screen.getByRole("button", { name: "Off" })).toBeDisabled();
   });
 
+  it("preserves accessibilityState.busy when disabled is not set", async () => {
+    await render(
+      inTheme(
+        <Pressable accessibilityState={{ busy: true }}>
+          <Text>Saving</Text>
+        </Pressable>,
+      ),
+    );
+    expect(screen.getByRole("button", { name: "Saving" }).props.accessibilityState).toMatchObject({
+      busy: true,
+      disabled: false,
+    });
+  });
+
   describe("hasTextChild", () => {
     it.each([
       ["a string", "Go", true],
