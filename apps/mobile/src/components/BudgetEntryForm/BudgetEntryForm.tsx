@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { View } from "react-native";
 import { addToLabel, categoryLabel, EDITOR, FREQUENCY_OPTIONS } from "../../copy/budget";
+import { SAVE_NEEDS_CONNECTION } from "../../copy/offline";
 import { useTheme } from "../../theme/ThemeProvider";
 import { Button } from "../Button";
 import { CurrencyInput } from "../CurrencyInput";
@@ -35,6 +36,11 @@ export interface BudgetEntryFormProps {
   saving?: boolean;
   /** What went wrong with the last save or delete, in web's words. */
   error?: string | null;
+  /**
+   * The connection dropped while the form was open (E12 S7 follow-up): what was typed stays and can
+   * still be changed, Save and Delete are off, and one line says saving needs a connection.
+   */
+  offline?: boolean;
   onSave(values: ValidEntryValues): void;
   /** Every press of Save, before the checks: the screen clears the last save's error. */
   onTry?: () => void;
@@ -68,6 +74,7 @@ export function BudgetEntryForm({
   categories,
   saving = false,
   error = null,
+  offline = false,
   onSave,
   onTry,
   checkAmount,
@@ -100,6 +107,7 @@ export function BudgetEntryForm({
   const options = categories.map((c) => ({ value: c, label: categoryLabel(c) }));
 
   const submit = () => {
+    if (offline) return;
     onTry?.();
     setTried(true);
     const name = values.name.trim();
@@ -115,6 +123,9 @@ export function BudgetEntryForm({
       <Text accessibilityRole="header" textStyle="heading.md">
         {mode === "add" ? addToLabel(initial.category) : EDITOR.editTitle}
       </Text>
+      {offline ? (
+        <InlineAlert tone="info" message={SAVE_NEEDS_CONNECTION} testID={`${testID}-offline`} />
+      ) : null}
       {error ? <InlineAlert message={error} testID={`${testID}-error`} /> : null}
       {invalid ? <InlineAlert message={EDITOR.fixFields} testID={`${testID}-fix`} /> : null}
       <FormField label={EDITOR.name} error={nameError}>
@@ -159,7 +170,13 @@ export function BudgetEntryForm({
         />
       )}
       <View style={styles.actions}>
-        <Button label={EDITOR.save} pending={saving} testID={`${testID}-save`} onPress={submit} />
+        <Button
+          label={EDITOR.save}
+          pending={saving}
+          disabled={offline}
+          testID={`${testID}-save`}
+          onPress={submit}
+        />
         <Button
           label={EDITOR.cancel}
           variant="ghost"
@@ -171,7 +188,7 @@ export function BudgetEntryForm({
           <Button
             label={EDITOR.deleteEntry}
             variant="dangerSubtle"
-            disabled={saving}
+            disabled={saving || offline}
             testID={`${testID}-delete`}
             onPress={onDelete}
           />

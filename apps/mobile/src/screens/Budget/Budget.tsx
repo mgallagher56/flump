@@ -246,7 +246,8 @@ function Ready({
   const writes = useBudgetWrites();
   // Saved figures shown offline (E12 S7): no Edit budget, no editor and no Breathing room
   // switches, since each writes; the notice above already says changes need a connection. Read
-  // softly: tests render no shell. The what-if zone stays, as it sends nothing.
+  // softly: tests render no shell. The what-if zone stays, as it sends nothing. A sheet already
+  // open when the connection drops stays open with what was typed (E12 S7 follow-up).
   const offline = useContext(ShellContext)?.offline ?? false;
   const [chosenView, setView] = useState<"budget" | "editing">("budget");
   const view = offline ? "budget" : chosenView;
@@ -354,8 +355,10 @@ function Ready({
       )}
       {/* The same line for everyone, never triggered by their figures (ruling 1, R3, R4). */}
       <DebtHelpLink />
+      {/* Kept open when the connection drops, so what was typed is not lost; Save waits for it. */}
       <EntrySheet
-        sheet={offline ? null : sheet}
+        sheet={sheet}
+        offline={offline}
         categories={categoryChoices(page.rows, customCategories)}
         onClose={() => setSheet(null)}
         onDone={(message) => {
@@ -541,11 +544,14 @@ function useReduceMotion(): boolean {
 /** The add and edit form in a native sheet, with the delete confirmation. */
 function EntrySheet({
   sheet,
+  offline,
   categories,
   onClose,
   onDone,
 }: {
   sheet: Sheet;
+  /** The connection dropped: the form stays with what was typed, and nothing is sent. */
+  offline: boolean;
   categories: readonly string[];
   onClose(): void;
   onDone(message: string): void;
@@ -571,7 +577,7 @@ function EntrySheet({
   const sheetScroll = useRef<ScrollViewInstance>(null);
   const lastAdd = useRef<{ sheet: string; body: string; key: string } | null>(null);
   const save = async (values: ValidEntryValues) => {
-    if (!sheet) return;
+    if (!sheet || offline) return;
     setSaving(true);
     setError(null);
     const isIncome = values.category === "income";
@@ -618,7 +624,7 @@ function EntrySheet({
   };
 
   const remove = async () => {
-    if (sheet?.mode !== "edit") return;
+    if (sheet?.mode !== "edit" || offline) return;
     setConfirming(false);
     setSaving(true);
     setError(null);
@@ -660,6 +666,7 @@ function EntrySheet({
             categories={categories}
             saving={saving}
             error={error}
+            offline={offline}
             onSave={(values) => void save(values)}
             onTry={() => setError(null)}
             checkAmount={budgetAmountProblem}

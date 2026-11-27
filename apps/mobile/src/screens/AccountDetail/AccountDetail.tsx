@@ -218,27 +218,27 @@ function Loaded({
         caption={subline}
         testID="account-detail-hero"
       />
-      {offline ? null : (
-        <QuickBalanceUpdate
-          accountName={detail.name}
-          owed={owed}
-          current={savedShown === "" ? null : Number(savedShown)}
-          hint={describeJointWholeValue(share, wholeOf)}
-          // The edit form's own check of a typed amount, so both say the same.
-          check={(value, text) => {
-            const problem = amountProblem(value, text);
-            return problem ? amountProblemMessage(problem, owed) : null;
-          }}
-          onSave={async (shown) => {
-            // Stored as minus the amount owed for a debt, as the edit form sends it.
-            const balance = Number(accountBalanceStored(account.type, String(shown)));
-            const result = await writes.update(account.id, { balance }, account.updatedAt);
-            if (result.status === "saved") return null;
-            if (result.status === "conflict") return ACCOUNT_FORM.conflict;
-            return saveFailedMessage(result.status === "failed" ? result.kind : "client");
-          }}
-        />
-      )}
+      {/* Offline it offers no way in; left open when the connection drops, it keeps what was typed. */}
+      <QuickBalanceUpdate
+        offline={offline}
+        accountName={detail.name}
+        owed={owed}
+        current={savedShown === "" ? null : Number(savedShown)}
+        hint={describeJointWholeValue(share, wholeOf)}
+        // The edit form's own check of a typed amount, so both say the same.
+        check={(value, text) => {
+          const problem = amountProblem(value, text);
+          return problem ? amountProblemMessage(problem, owed) : null;
+        }}
+        onSave={async (shown) => {
+          // Stored as minus the amount owed for a debt, as the edit form sends it.
+          const balance = Number(accountBalanceStored(account.type, String(shown)));
+          const result = await writes.update(account.id, { balance }, account.updatedAt);
+          if (result.status === "saved") return null;
+          if (result.status === "conflict") return ACCOUNT_FORM.conflict;
+          return saveFailedMessage(result.status === "failed" ? result.kind : "client");
+        }}
+      />
       {offline ? null : (
         <Button
           label={ACCOUNT_FORM.edit}

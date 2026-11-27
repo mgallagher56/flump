@@ -1,4 +1,5 @@
 import { router, Stack, useLocalSearchParams } from "expo-router";
+import { useShownOnline } from "../../../../src/features/offline/useShownOnline";
 import { useShell } from "../../../../src/navigation/shell";
 import { AccountFormScreen } from "../../../../src/screens/AccountForm";
 import { Offline } from "../../../../src/screens/Offline";
@@ -10,9 +11,15 @@ import { Offline } from "../../../../src/screens/Offline";
 export default function EditAccountRoute() {
   const shell = useShell();
   const { id = "" } = useLocalSearchParams<{ id: string }>();
-  if (shell.offline) return <Offline onRetry={shell.retry} onSignOut={shell.signOut} />;
+  // Opened offline it says so; already open when the connection drops, the form stays with what
+  // was typed and its Save waits for the connection (E12 S7 follow-up).
+  const shownOnline = useShownOnline(shell.offline);
+  if (shell.offline && !shownOnline) {
+    return <Offline onRetry={shell.retry} onSignOut={shell.signOut} />;
+  }
   return (
     <AccountFormScreen
+      offline={shell.offline}
       open={{ kind: "edit", id }}
       onSaved={() => router.back()}
       onDeleted={() => router.navigate("/accounts")}

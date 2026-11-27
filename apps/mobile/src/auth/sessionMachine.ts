@@ -12,7 +12,10 @@ export type SessionState =
   | { status: "signedOut"; notice: SignInNotice | null }
   | { status: "signingIn" }
   | { status: "signedIn" }
-  /** A refresh token is kept but Flump could not be reached: nothing is cleared. */
+  /**
+   * A refresh token is kept but Flump cannot be reached: nothing is cleared. Entered at launch (the
+   * refresh found no network) or mid-session (the phone's connection dropped); the one offline state.
+   */
   | { status: "restoredOffline" }
   /** WorkOS rejected the refresh token, or the API refused a fresh token; the device is cleared. */
   | { status: "sessionEnded" }
@@ -35,6 +38,8 @@ export type SessionEvent =
   | { type: "SIGN_IN_FAILED"; notice: SignInNotice }
   | { type: "SIGNED_IN" }
   | { type: "OFFLINE" }
+  /** The phone's connection dropped while signed in (E12 S7 follow-up). */
+  | { type: "CONNECTION_LOST" }
   | { type: "RETRY_STARTED" }
   | { type: "NOT_INVITED" }
   | { type: "TERMS_REQUIRED" }
@@ -59,6 +64,7 @@ const FROM: { [E in SessionEvent["type"]]: readonly SessionState["status"][] } =
   // From restoredOffline too: a quiet reconnect (E12 S7) checks the account as sign-in does.
   SIGNED_IN: ["loading", "signingIn", "restoredOffline"],
   OFFLINE: ["loading", "signingIn"],
+  CONNECTION_LOST: ["signedIn"],
   // From the terms screen too: once agreed on the website, Try again checks the account again.
   RETRY_STARTED: ["restoredOffline", "termsRequired"],
   NOT_INVITED: ["loading", "signingIn", "restoredOffline"],
@@ -122,6 +128,7 @@ export function sessionReducer(state: SessionState, event: SessionEvent): Sessio
     case "SIGNED_IN":
       return { status: "signedIn" };
     case "OFFLINE":
+    case "CONNECTION_LOST":
       return { status: "restoredOffline" };
     case "RETRY_STARTED":
       return { status: "loading" };

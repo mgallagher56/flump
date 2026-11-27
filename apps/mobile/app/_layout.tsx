@@ -31,7 +31,7 @@ function startApp(): { app: AppSession | null; problem?: StartProblem } {
   try {
     const config = loadSignInConfig();
     const { createAppSession }: typeof AuthDeps = require("../src/auth/authDeps");
-    const { session, api, checkForUpdate, accountData, appLock, offlineCache } =
+    const { session, api, checkForUpdate, accountData, appLock, offlineCache, connectivity } =
       createAppSession(config);
     return {
       app: {
@@ -41,6 +41,7 @@ function startApp(): { app: AppSession | null; problem?: StartProblem } {
         accountData,
         appLock,
         offlineCache,
+        connectivity,
         marketingOrigin: config.site.marketingOrigin,
         webAppOrigin: config.site.webAppOrigin,
       },

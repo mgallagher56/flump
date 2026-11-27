@@ -343,3 +343,81 @@ describe("the cache owner", () => {
     expect(await createSession(h.deps).cacheOwner()).toBeNull();
   });
 });
+
+/** A launch that reached Flump: signed in, with an access token in memory. */
+async function onlineSession(h: ReturnType<typeof harness>) {
+  const session = createSession(h.deps);
+  await session.restore();
+  expect(session.getState()).toEqual({ status: "signedIn" });
+  expect(session.getAccessToken()).not.toBeNull();
+  return session;
+}
+
+describe("the connection drops while signed in (E12 S7 follow-up)", () => {
+  it("moves to the same offline state a launch with no network gives", async () => {
+    const h = harness("r_stored");
+    const session = await onlineSession(h);
+    session.connectionLost();
+    expect(session.getState()).toEqual({ status: "restoredOffline" });
+    expect(session.isRestoredOffline()).toBe(true);
+  });
+
+  it("drops the access token from memory, so every read waits for a reconnect", async () => {
+    const h = harness("r_stored");
+    const session = await onlineSession(h);
+    session.connectionLost();
+    expect(session.getAccessToken()).toBeNull();
+  });
+
+  it("keeps the refresh token and the saved figures: the cache rules are unchanged", async () => {
+    const h = harness("r_stored");
+    const session = await onlineSession(h);
+    const saved = (h.tokens.save as jest.Mock).mock.calls.at(-1)?.[0];
+    session.connectionLost();
+    await Promise.resolve();
+    expect(h.tokens.clear).not.toHaveBeenCalled();
+    expect(h.clearCache).not.toHaveBeenCalled();
+    expect(h.wipeDevice).not.toHaveBeenCalled();
+    expect(await h.tokens.read()).toBe(saved);
+  });
+
+  it("comes back with one quiet reconnect once Flump answers", async () => {
+    const h = harness("r_stored");
+    const session = await onlineSession(h);
+    session.connectionLost();
+    await session.reconnect();
+    expect(session.getState()).toEqual({ status: "signedIn" });
+    expect(session.getAccessToken()).not.toBeNull();
+  });
+
+  it("stays offline, nothing cleared, when the reconnect cannot reach Flump", async () => {
+    const h = harness("r_stored");
+    const session = await onlineSession(h);
+    session.connectionLost();
+    h.refresh.mockResolvedValueOnce(UNREACHABLE);
+    await session.reconnect();
+    expect(session.getState()).toEqual({ status: "restoredOffline" });
+    expect(h.tokens.clear).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    [
+      "signedOut",
+      async (h: ReturnType<typeof harness>) => {
+        const s = createSession(h.deps);
+        await s.restore();
+        return s;
+      },
+    ],
+    ["restoredOffline", (h: ReturnType<typeof harness>) => offlineSession(h)],
+  ])("changes nothing from %s", async (status, start) => {
+    const h = harness(status === "signedOut" ? null : "r_stored");
+    const session = await start(h);
+    const before = session.getState();
+    const listener = jest.fn();
+    session.subscribe(listener);
+    session.connectionLost();
+    expect(session.getState()).toBe(before);
+    expect(listener).not.toHaveBeenCalled();
+  });
+});

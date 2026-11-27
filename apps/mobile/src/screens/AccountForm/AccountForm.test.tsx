@@ -2,13 +2,14 @@ import { ACCOUNT_FORM_TYPES, accountFieldSet } from "@flump/finance-engine/accou
 import { act, fireEvent, render, screen } from "@testing-library/react-native";
 import { AccessibilityInfo, Alert } from "react-native";
 import { Text } from "../../components/Text";
+import { SAVE_NEEDS_CONNECTION } from "../../copy/offline";
 import { fail, fakeApi, withApi } from "../../data/fakeApi";
 import { household, NOW, routes } from "../../features/check-in/checkInTestData";
 import { AccountFormScreen, type AccountFormScreenProps } from "./AccountForm";
 
 type Open = AccountFormScreenProps["open"];
 
-async function form(api: ReturnType<typeof fakeApi>, open: Open) {
+async function form(api: ReturnType<typeof fakeApi>, open: Open, offline = false) {
   const props = {
     onSaved: jest.fn(),
     onDeleted: jest.fn(),
@@ -19,6 +20,7 @@ async function form(api: ReturnType<typeof fakeApi>, open: Open) {
     <AccountFormScreen
       {...props}
       open={open}
+      offline={offline}
       header={(title) => <Text testID="header-title">{title}</Text>}
     />,
     api.client,
@@ -467,5 +469,36 @@ describe("AccountForm: edit and delete", () => {
     expect(screen.getByTestId("account-form-type-flips-sign")).toHaveTextContent(
       /rises by twice its balance/,
     );
+  });
+});
+
+describe("AccountForm left open when the connection drops (E12 S7 follow-up)", () => {
+  beforeEach(() => jest.useFakeTimers());
+  afterEach(() => {
+    jest.useRealTimers();
+    jest.restoreAllMocks();
+  });
+
+  it("keeps what was typed, turns Save off and says saving needs a connection", async () => {
+    const api = fakeApi(routes(household(), { "POST /accounts": created }));
+    await form(api, { kind: "add" }, true);
+    expect(screen.getByTestId("account-form-offline")).toHaveTextContent(SAVE_NEEDS_CONNECTION);
+    await type("account-form-name", "Holiday fund");
+    expect(screen.getByTestId("account-form-name").props.value).toBe("Holiday fund");
+    const button = screen.getByTestId("account-form-save");
+    expect(button.props.accessibilityState).toMatchObject({ disabled: true });
+    await save();
+    expect(posts(api)).toEqual([]);
+  });
+
+  it("edit: Delete is off too, and Cancel still closes", async () => {
+    const h = household();
+    const id = h.accounts[0]?.id ?? "";
+    const props = await form(fakeApi(routes(h)), { kind: "edit", id }, true);
+    expect(screen.getByTestId("account-form-delete").props.accessibilityState).toMatchObject({
+      disabled: true,
+    });
+    await press("account-form-cancel");
+    expect(props.onCancel).toHaveBeenCalledTimes(1);
   });
 });

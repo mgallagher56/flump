@@ -33,6 +33,13 @@ beforeAll(async () => {
 }, 30_000);
 
 describe("SavedFiguresFrame", () => {
+  it("with no saved time (online), shows the screen alone: no notice and no Try again", async () => {
+    await frame({ savedAt: null });
+    expect(screen.getByText("£1,234")).toBeOnTheScreen();
+    expect(screen.queryByTestId("saved-figures-notice")).toBeNull();
+    expect(screen.queryByRole("button", { name: SAVED_FIGURES.tryAgain })).toBeNull();
+  });
+
   it.each([
     // 20 seconds ago is under a minute.
     [FRAME_NOW - 20_000, "just now"],

@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { AccessibilityInfo, View } from "react-native";
 import { QUICK_BALANCE } from "../../copy/accountForms";
+import { SAVE_NEEDS_CONNECTION } from "../../copy/offline";
 import { useTheme } from "../../theme/ThemeProvider";
 import { Button } from "../Button";
 import { CurrencyInput } from "../CurrencyInput";
@@ -27,6 +28,11 @@ export interface QuickBalanceUpdateProps {
    * wrong under the field, or null. Runs on Save before anything is sent.
    */
   check?(value: number | null, text: string): string | null;
+  /**
+   * The connection is down (E12 S7 follow-up): closed, there is no way in; left open when it
+   * dropped, the field keeps what was typed, Save is off and one line says saving needs a connection.
+   */
+  offline?: boolean;
   testID?: string;
 }
 
@@ -43,6 +49,7 @@ export function QuickBalanceUpdate({
   hint,
   onSave,
   check = () => null,
+  offline = false,
   testID = "quick-balance",
 }: QuickBalanceUpdateProps) {
   const theme = useTheme();
@@ -56,6 +63,7 @@ export function QuickBalanceUpdate({
   const [pending, setPending] = useState(false);
 
   if (!open) {
+    if (offline) return null;
     return (
       <Button
         label={owed ? QUICK_BALANCE.openOwed : QUICK_BALANCE.openBalance}
@@ -75,7 +83,7 @@ export function QuickBalanceUpdate({
 
   const label = owed ? QUICK_BALANCE.fieldOwed : QUICK_BALANCE.fieldBalance;
   const save = async () => {
-    if (pending) return;
+    if (pending || offline) return;
     const problem = check(value, text);
     if (problem) {
       setFieldError(problem);
@@ -115,13 +123,16 @@ export function QuickBalanceUpdate({
           onSubmitEditing={() => void save()}
         />
       </FormField>
+      {offline ? (
+        <InlineAlert tone="info" message={SAVE_NEEDS_CONNECTION} testID={`${testID}-offline`} />
+      ) : null}
       {error ? <InlineAlert message={error} testID={`${testID}-error`} /> : null}
       <View style={styles.actions}>
         <Button
           label={pending ? QUICK_BALANCE.saving : QUICK_BALANCE.save}
           size="sm"
           pending={pending}
-          disabled={text.trim() === ""}
+          disabled={offline || text.trim() === ""}
           testID={`${testID}-save`}
           onPress={() => void save()}
         />

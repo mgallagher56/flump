@@ -1,5 +1,6 @@
 import { type ReactNode, useEffect, useState } from "react";
 import { SavedFiguresFrame } from "../../components/SavedFiguresFrame";
+import { useShownOnline } from "../../features/offline/useShownOnline";
 import { useShell } from "../../navigation/shell";
 import { Loading } from "../Loading";
 import { Offline } from "../Offline";
@@ -9,6 +10,11 @@ import { Offline } from "../Offline";
  * is the screen alone. Restored offline it is the screen over the saved figures, under a notice of
  * their age, when the sealed cache held them; otherwise `Offline`, as before S7. A spinner shows for
  * the moment the cache takes to read, so the offline screen never flashes first.
+ *
+ * When the connection drops mid-session (E12 S7 follow-up) the screen is already showing, so it
+ * stays through the cache read with no spinner, and the notice joins above it. The screen keeps one
+ * place in the tree online and offline, so it is never rebuilt and an open form keeps what was
+ * typed.
  */
 const AGE_REFRESH_MS = 60_000;
 
@@ -24,24 +30,26 @@ export function OfflineReading({
   // Drawn again each minute, so "2 hours ago" does not go stale while the app stays open.
   const [, setTick] = useState(0);
   const showing = Boolean(shell.offline && shell.saved);
+  // Shown online at least once: its figures are in memory, so nothing replaces it while the cache
+  // is read.
+  const shownOnline = useShownOnline(shell.offline);
   useEffect(() => {
     if (!showing) return;
     const timer = setInterval(() => setTick((n) => n + 1), AGE_REFRESH_MS);
     return () => clearInterval(timer);
   }, [showing]);
-  if (!shell.offline) return children;
-  if (shell.saved) {
-    return (
-      <SavedFiguresFrame
-        savedAt={shell.saved.savedAt}
-        now={now()}
-        checking={shell.checking ?? false}
-        onTryAgain={shell.tryAgainQuietly ?? shell.retry}
-      >
-        {children}
-      </SavedFiguresFrame>
-    );
+  if (shell.offline && !shell.saved) {
+    if (!shell.restoringSaved) return <Offline onRetry={shell.retry} onSignOut={shell.signOut} />;
+    if (!shownOnline) return <Loading />;
   }
-  if (shell.restoringSaved) return <Loading />;
-  return <Offline onRetry={shell.retry} onSignOut={shell.signOut} />;
+  return (
+    <SavedFiguresFrame
+      savedAt={shell.offline && shell.saved ? shell.saved.savedAt : null}
+      now={now()}
+      checking={shell.checking ?? false}
+      onTryAgain={shell.tryAgainQuietly ?? shell.retry}
+    >
+      {children}
+    </SavedFiguresFrame>
+  );
 }

@@ -167,3 +167,26 @@ describe("sessionHoldsData", () => {
     expect(holding.sort()).toEqual(["restoredOffline", "signedIn"]);
   });
 });
+
+describe("CONNECTION_LOST (the connection drops mid-session)", () => {
+  it("moves signedIn to restoredOffline", () => {
+    expect(sessionReducer({ status: "signedIn" }, { type: "CONNECTION_LOST" })).toEqual({
+      status: "restoredOffline",
+    });
+  });
+
+  it.each([
+    "loading",
+    "signingIn",
+    "restoredOffline",
+    "notInvited",
+    "termsRequired",
+    "signingOut",
+    "sessionEnded",
+    "deletionPending",
+    "accountDeleted",
+  ] as const)("leaves %s unchanged", (status) => {
+    const state = { status } as SessionState;
+    expect(sessionReducer(state, { type: "CONNECTION_LOST" })).toBe(state);
+  });
+});

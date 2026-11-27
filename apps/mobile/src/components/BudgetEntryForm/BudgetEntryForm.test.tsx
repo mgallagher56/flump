@@ -1,4 +1,5 @@
 import { render, screen, userEvent } from "@testing-library/react-native";
+import { SAVE_NEEDS_CONNECTION } from "../../copy/offline";
 import { amountProblem, amountProblemMessage } from "../../features/accounts/accountFormModel";
 import { expectHoldsAtDoubleText } from "../../testing/textScale";
 import { ThemeProvider } from "../../theme/ThemeProvider";
@@ -19,6 +20,39 @@ const accountsCheck = (value: number | null, text: string) => {
 };
 
 describe("BudgetEntryForm", () => {
+  it("offline: what was typed stays editable, Save and Delete are off, and one line says why", async () => {
+    const onSave = jest.fn();
+    const onDelete = jest.fn();
+    await draw({ ...budgetEntryFormStates.offline, onSave, onDelete });
+    expect(screen.getByTestId("budget-entry-form-offline")).toHaveTextContent(
+      SAVE_NEEDS_CONNECTION,
+    );
+    expect(screen.getByLabelText(/^Name/).props.value).toBe("Energy");
+    const user = userEvent.setup();
+    await user.type(screen.getByLabelText(/^Name/), " bill");
+    expect(screen.getByLabelText(/^Name/).props.value).toBe("Energy bill");
+    const save = screen.getByRole("button", { name: "Save" });
+    expect(save.props.accessibilityState).toMatchObject({ disabled: true });
+    await user.press(save);
+    expect(onSave).not.toHaveBeenCalled();
+    const remove = screen.getByRole("button", { name: "Delete entry" });
+    expect(remove.props.accessibilityState).toMatchObject({ disabled: true });
+    await user.press(remove);
+    expect(onDelete).not.toHaveBeenCalled();
+    // Cancel still closes the sheet.
+    expect(
+      screen.getByRole("button", { name: "Cancel" }).props.accessibilityState,
+    ).not.toMatchObject({ disabled: true });
+  });
+
+  it("online: no offline line, and Save is on", async () => {
+    await draw(budgetEntryFormStates.edit);
+    expect(screen.queryByTestId("budget-entry-form-offline")).toBeNull();
+    expect(screen.getByRole("button", { name: "Save" }).props.accessibilityState).not.toMatchObject(
+      { disabled: true },
+    );
+  });
+
   it("adds with web's labels, sending the typed values", async () => {
     const onSave = jest.fn();
     await draw({ ...budgetEntryFormStates.add, onSave });

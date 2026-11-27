@@ -1,6 +1,7 @@
 import { dark, light } from "@flump/tokens/native";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react-native";
 import { AccessibilityInfo } from "react-native";
+import { SAVE_NEEDS_CONNECTION } from "../../copy/offline";
 import { ThemeProvider } from "../../theme/ThemeProvider";
 import { QuickBalanceUpdate } from "./QuickBalanceUpdate";
 import { quickBalanceUpdateStates } from "./QuickBalanceUpdate.states";
@@ -17,6 +18,32 @@ const openIt = async () => fireEvent.press(screen.getByTestId("quick-balance-ope
 const field = () => screen.getByTestId("quick-balance-value");
 
 describe("QuickBalanceUpdate", () => {
+  it("offline and closed: no way in, since saving writes", async () => {
+    await render(ui({ offline: true }));
+    expect(screen.queryByTestId("quick-balance-open")).toBeNull();
+    expect(screen.queryByTestId("quick-balance-form")).toBeNull();
+  });
+
+  it("open when the connection drops: keeps what was typed, Save off, says why", async () => {
+    const onSave = jest.fn(async () => null);
+    const { rerender } = await render(ui({ onSave }));
+    await openIt();
+    await fireEvent.changeText(field(), "1300");
+    await rerender(ui({ onSave, offline: true }));
+    expect(field().props.value).toBe("1300");
+    expect(screen.getByTestId("quick-balance-offline")).toHaveTextContent(SAVE_NEEDS_CONNECTION);
+    const save = screen.getByTestId("quick-balance-save");
+    expect(save.props.accessibilityState).toMatchObject({ disabled: true });
+    await fireEvent.press(save);
+    await fireEvent(field(), "submitEditing");
+    expect(onSave).not.toHaveBeenCalled();
+    // Back online: the same field, and Save sends it.
+    await rerender(ui({ onSave }));
+    expect(screen.queryByTestId("quick-balance-offline")).toBeNull();
+    await fireEvent.press(screen.getByTestId("quick-balance-save"));
+    await waitFor(() => expect(onSave).toHaveBeenCalledWith(1300));
+  });
+
   it("is a quiet button that says which figure it updates", async () => {
     await render(ui());
     expect(screen.getByRole("button", { name: "Update balance" })).toBeOnTheScreen();
