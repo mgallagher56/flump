@@ -650,12 +650,20 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
     ran("POST /user-profile/send-password-reset");
   });
 
-  it("GET /user-profile/email: resolves only the caller's own address, query ignored", async () => {
-    const res = await h.call("get", `/user-profile/email?userId=${USER_A}`, h.tokens.b);
+  it("GET /user-profile/email: resolves only the caller's own address, query and path ids ignored", async () => {
+    const res = await h.call(
+      "get",
+      `/user-profile/email?userId=${USER_A}&id=${profileAId}&email=${encodeURIComponent(emails[USER_A] ?? "")}`,
+      h.tokens.b,
+    );
     expect(res.status).toBe(200);
     expect(lookedUp).toEqual([USER_B]);
     expect(res.body).toEqual({ email: emails[USER_B] });
     expect(res.body?.email).not.toBe(emails[USER_A]);
+
+    const withPathId = await h.call("get", `/user-profile/email/${USER_A}`, h.tokens.b);
+    expect(withPathId.status).toBe(404);
+    expect(lookedUp).toEqual([USER_B]);
     ran("GET /user-profile/email");
   });
 

@@ -55,6 +55,10 @@ describe("rate limit classes on real controllers", () => {
     expect(classOf(TaxController.prototype, "getReceipt")).toBe("receiptRead");
   });
 
+  it("puts account email lookups in the tighter accountEmail class", () => {
+    expect(classOf(UserProfileController.prototype, "getUserEmail")).toBe("accountEmail");
+  });
+
   it("exempts the health controller", () => {
     expect(Reflect.getMetadata(RATE_LIMIT_SKIP, HealthController)).toBe(true);
   });

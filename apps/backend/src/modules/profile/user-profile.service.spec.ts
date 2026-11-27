@@ -970,10 +970,14 @@ describe("UserProfileService (Deep Module)", () => {
       const storedEmail = ["person", "example.com"].join("@");
       identityAdapter.emails.set("user-123", `  ${storedEmail}  `);
       const getUserEmail = vi.spyOn(identityAdapter, "getUserEmail");
+      const setTimeoutSpy = vi.spyOn(globalThis, "setTimeout");
       const clearTimeoutSpy = vi.spyOn(globalThis, "clearTimeout");
 
       await expect(service.getEmail("user-123")).resolves.toBe(storedEmail);
-      expect(clearTimeoutSpy).toHaveBeenCalled();
+      expect(setTimeoutSpy).toHaveBeenCalledTimes(1);
+      const timerId = setTimeoutSpy.mock.results[0]?.value;
+      expect(timerId).toBeDefined();
+      expect(clearTimeoutSpy).toHaveBeenCalledWith(timerId);
 
       await expect(service.getEmail("user-123", "   ")).resolves.toBe(storedEmail);
       expect(getUserEmail).toHaveBeenCalledTimes(2);

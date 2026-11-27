@@ -24,6 +24,8 @@ export const RATE_LIMIT_POLICIES = {
   dataExport: [{ limit: 10, windowMs: HOUR }],
   /** Receipt downloads move up to 5 MB each, so they get a tighter read class. */
   receiptRead: [{ limit: 30, windowMs: MINUTE }],
+  /** Account email lookups may reach WorkOS, so they get a tighter per-user read class. */
+  accountEmail: [{ limit: 30, windowMs: MINUTE }],
   /**
    * Redeeming a beta invite link: five tries an hour, counted per user and also per client
    * address (ADDRESS_KEYED_RATE_LIMIT_CLASSES), so guessing links from many accounts is slow too.
