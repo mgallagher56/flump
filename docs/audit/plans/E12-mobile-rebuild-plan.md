@@ -375,6 +375,7 @@ Each slice is one PR. Sizes are rough agent-days. "Depends on" names slices, bac
 | **S3** | Monthly check-in | S2b, S2c, P5 | 6 |
 | S4 | App shell: tab bar, More list, header menu and theme toggle, deep links (the update-required screen was built in S2b) | S3 | 4 |
 | S5 | Home: net worth hero under the user's choices, key figures, check-in row when due, setup row | S4, P4 | 4 |
+| S5b | Home's two-figure strip ("Left over each month", "What you owe" or "Pension pots") through a narrow engine entry (9.8b) | S5 | 2 |
 | S6 | Accounts list, account detail with joint share line, net worth history | S5 | 6 |
 | S7 | Offline reading: SQLCipher cache, age labels, `restoredOffline`, backup exclusion (O5 seam 4) | S6 | 5 |
 | S8 | Add, edit and delete an account, including kind, credit limit and joint marker | S6 | 4 |
@@ -637,6 +638,62 @@ Figures, all from a new narrow entry `@flump/finance-engine/net-worth` (the root
 **The two-figure strip need not wait for S10.** "Left over each month" and "What you owe" come from `picture.budget` and `picture.debtSummary`, and the whole picture reaches the tax vector catalogue through the take-home figure that a linked budget row reads (`uk-take-home.ts` to `tax-year-verification.ts`) and through `debt-payoff.ts`. A narrow engine entry for those two figures, as S3 and S5 did for theirs, would bring the strip to Home earlier. Cost: about 2 agent-days. Most of it is cutting the vector check out of the take-home import path without changing a figure (characterisation tests first, as here); the rest is two more reads (`/budget-entries`, `/tax-records`), the stale-rates and unpublished-year refusals the strip carries on web, and their states.
 
 **Built (S5, 26 November 2026).** As above, built to the recommendations in the open questions, with these details. `useHomeData` (`src/features/home`) wraps `useCheckInData`, so Home and the check-in row share one state and four requests; the hero is `selectNetWorth`, `selectSavedNetWorthSeries`, `selectNetWorthChange` and `selectNetWorthTrend` from `@flump/finance-engine/net-worth`, and `homeCounted` is web's rule over the engine's `homeEstimate` and `leftOut`. Older and newer backends: the accounts, account details and check-in reads now parse loose picks of the contract (unknown fields ignored, everything but `id`, `type` and `balance` on an account, and `accountId`, `year`, `month` and `value` on a row, allowed to be absent), so the check-in gains the same tolerance; `fakeApi` now turns a schema failure into `bad-response`, as the real client does. Words are in `src/copy/home.ts`, pinned to web's by `apps/web/app/features/dashboard/homeCopyParity.test.tsx` (labels, the empty prompt, the basis line, the change line through `netWorthDelta`, the bars' spoken list, the website routes and the three arrow icons). The website links say so: "Add an account on the website", "Change what counts on the website", "Add an estimate on the website", and "Open the Flump website" when the build has no web app address. The hero's loading state is `HeroFigure` with `loading`: one block each for the label, figure and change line, each one line of that text high, and one block the height of the trend bars, so the hero takes the same frame (a hero with no change line is one line shorter, and one under three recorded months has no bars, so it is that much shorter). The trend bars are one accessible element whose label is web's hidden list, with the drawing inside hidden. A failed read shows `ErrorState` above the check-in row, which keeps offering the check-in. The dev links sit at the foot of More; the sign-in check keeps its own route for deep links. Fixture server: `data` gains `owner`, `renter` (copied from `personas.ts`, which imports Playwright; `home-data.test.ts` pins every figure) and `malformed`. Flows that waited for "You are signed in" use `subflows/sign-in-to-home.yaml` (the `home` test id). Acceptance 1, by hand from `personas.ts`: the renter £11,700, up £465 since October; the home owner £231,400 under "Net worth, including your home estimate", up £2,575 since October; bars as `home-data.test.ts` pins. Acceptance 13: the root is not set up twice (one `expo-router/entry`, no `NavigationContainer` or linking config of ours). The warning comes from Expo Router 58's own copy of the linking hook (`expo-router/build/fork/useLinking.native.js`), which logs at once whenever a second linking handler mounts before the first has unmounted. React Navigation's own hook waits one second for that case, and names Android recreating the screen as the cause. Android recreates the screen on a density, font scale or smallest-width change, since Expo's default `configChanges` leaves those out, and the new root mounts before the old one's clean-up runs; a development build's first launch does the same once. Harmless: the check is off in production, and the old root's handler is removed when it unmounts. Not changed, so S4's large-text handling is untouched; a device check that a link opened after a font size change opens once is asked for in the PR. Left for the device run: 200% text and 320 points wide.
+
+### 9.8b S5b. The two-figure strip on Home
+
+Specified 27 November 2026 by a fable planner; the choices marked "Decided" were made by the lane under the coordinator's rules and are called out in the PR.
+
+**Goal.** Under the hero, Home shows web's strip (`apps/web/app/features/dashboard/components/DashboardKpiStrip/DashboardKpiStrip.tsx`, wired at `HomeDashboard.tsx:419-427`) with the same figures, words and refusals.
+
+**Seam check.** No backend service works out either figure: web builds both in `buildFinancialPicture` (`packages/finance-engine/src/picture/build.ts:133`, `:150`). Three rules sit in web, outside the engine, and move into it first with no figure change: `hasSpending` (`routes/_index.tsx:247-254`), `monthlySurplus: hasIncome ? surplus : null` (`:259`) and `incomeOnly` (`HomeDashboard.tsx:194-197`). Neither figure reads tax records (only `selectEstimatedTaxDue` does, `build.ts:145`), so mobile does not read `/tax-records`.
+
+**What web shows.**
+
+- **First cell.** With income and spending in the budget: "Left over each month", or "Short each month" when the surplus is below zero, with `budget.surplus` in whole pounds and the caption "From your budget" (or the take-home leaves-out notice in its place). With income and no spending: "Income in your budget" with `budget.income` and the link "Add your spending to see what is left over each month". No budget, no income row, or a linked line not set: unset.
+- **Second cell.** "What you owe" with "Cards, loans and overdrafts" when consumer debt is above zero; otherwise "Pension pots" with "From your accounts" when the person has a pension account; otherwise none.
+- **One prompt.** When half or more cells are unset, the strip is replaced by "Add your budget to see what is left over each month" with "Add your budget" (`packages/ui/src/patterns/KpiStrip/KpiStrip.tsx:89-100`). So an unset first cell always gives the prompt and hides "What you owe" too. Decided: mobile copies this, for parity.
+- **Colour.** A shortfall keeps the ordinary text colour; only the label changes.
+- **Employee and self-employed.** The same strip; employment matters only when an income row is linked to take-home (`picture/selectors/take-home.ts:157-169`).
+- **Words.** Constants in `DashboardKpiStrip.tsx`; mobile's go in `src/copy/home.ts`, pinned by new cases in `homeCopyParity.test.tsx`.
+
+**Refusals and states.**
+
+- **Scottish rates not published** (`take-home.ts:143-144`): a linked take-home row reads not set and the budget is unknown. Web's strip shows the budget prompt and explains on the Budget card, which mobile does not have yet. Decided: mobile shows the refusal's notice in the first cell in place of the figure, never £0 and never "Add your budget", so the refusal is carried over rather than dropped. Recorded in the parity log as a difference until S10 brings the Budget card.
+- **Student loan threshold not published** (`take-home.ts:152-153`): the figure stands and the notice replaces the caption, as web.
+- **Unsupported year** (`take-home.ts:133`): the budget is unknown, shown as web shows it.
+- **Stale or provisional rates:** no refusal; `resolveUkTaxYear` falls back to the latest supported year. Web says so with `TaxRatesStatusBanner`. Mobile shows the same sentence above the strip, from `getUkTaxYearContext`, whenever the budget counts a worked-out take-home line (S5's "no banner until a rates-based figure is shown").
+- **Loading, out of step, offline, unavailable, terms, not set up:** Home's one state, as S5. A failed `/budget-entries` read is Home's error, never the budget prompt.
+
+**The engine cut.** The vector check is a label on this path, not a gate: `computeUkTakeHome` writes `getTaxFeatureVerification`'s result to the breakdown's `verification` field (`uk-take-home.ts:434-438`), `calculateUkTax` never reads it (its one reader is `uk-what-if.ts:239`), and every refusal above comes from `uk-tax-year.ts` and `uk-tax-year-calendar.ts`, which import no vectors. So:
+
+1. New `src/uk-take-home-core.ts` holds `uk-take-home.ts` less the `tax-year-verification.js` import, its cache and `featureVerification`; `computeUkTakeHomeCore` returns the breakdown without `verification`.
+2. `uk-take-home.ts` re-exports the core's names; its `computeUkTakeHome` calls the core and adds `verification` exactly as now. Every existing import path (`index.ts`, `uk-what-if.ts`, `uk-tax-thresholds.ts`, `marginal-rate.ts`) is unchanged, so web and the backend keep the same check from the same vectors.
+3. `uk-tax.ts` imports the core.
+4. `selectConsumerDebtTotal(snapshot)` in `picture/selectors/portfolio-totals.ts` holds the rule at `debt-summary.ts:37-39`; `selectDebtSummary` calls it, so the entry carries no `debt-payoff.ts`.
+5. `selectHomeStrip` in `src/home-strip.ts` returns the first cell (left over, short, income only, unset or refused, with figure, leaves-out and notice) and the second (owed, pension or none). Web's loader and `HomeDashboard` call it.
+6. `src/home-strip-entry.ts`, exported as `@flump/finance-engine/home-strip`, with what mobile needs to build the budget from rows (`budgetEntryFromRow` and `profileFactsFromProfile` move out of `build.ts` if they live there, re-exported from it).
+
+Characterisation tests come first and pass against today's code: `home-strip.characterisation.test.ts` pins `picture.budget`, `picture.takeHome` and `debtSummary.totalDebt` from `buildFinancialPicture` (employee with a linked take-home row, self-employed, typed take-home, no budget, income only, short, no debts, overdraft only, pension and no debt, Scotland with no Scottish rates, Plan 1 in 2027/28, unsupported year, a date after the latest supported year); `uk-take-home.characterisation.test.ts` pins whole `computeUkTakeHome` breakdowns, `verification` included, and `calculateUkTax` results. The reach test `home-strip-entry.test.ts` keeps out `test-vectors`, `tax-year-verification.ts` and `debt-payoff.ts`, and asserts `uk-take-home.ts` still reaches the check.
+
+**How it reads data.** One new read, `GET /budget-entries`, parsed with a loose pick of `BudgetEntryListResponse` (`packages/api-contract/src/domains/budget.ts:148`). The profile pick gains the optional fields `profileFactsFromProfile` reads. Accounts, details and profile are S3's queries; `useHomeData` gains `strip` on its ready state. No tax-year endpoint: the rates are in the engine.
+
+**Files.** Engine: `uk-take-home-core.ts`, `home-strip.ts`, `home-strip-entry.ts`, their tests, the export, the value map. Web: `_index.tsx`, `HomeDashboard.tsx`, the parity test. Mobile: `src/data/budget.ts`, `useHomeData.ts`, `copy/home.ts`, components `FigureStrip` and `RatesNotice`, `screens/Home/`. Fixture server: `/budget-entries` for `owner` and `renter`, new `data` values `renter-linked`, `scottish-refused`, `no-budget`, `pension-only`. Flow `e2e/flows/home-strip.yaml`. Gallery: `FigureStrip` (two figures, short, income only, prompt, refused, pension) and `RatesNotice`.
+
+**Acceptance**
+
+1. Renter, by hand (`apps/e2e/support/personas.ts:152-165`, rows not linked): income £2,085; essentials 950 + 115 + 80 + 40 + 250 + 120 + 60 = £1,615; other spending 90 + 25 + 80 = £195; savings £150; left over 2,085 - 1,615 - 195 - 150 = £125, "From your budget"; what you owe £1,800 (the credit card; the student loan is left out, and the pension is not shown because there is debt). Both equal web's, recorded in the PR.
+2. `renter-linked` shows the left over web shows, with the rates notice only when web's banner would show.
+3. The characterisation tests pass before and after the split with no expected value edited.
+4. The entry reaches no `test-vectors` module, `tax-year-verification.ts` or `debt-payoff.ts`; `uk-take-home.ts` still reaches the check; the bundle search passes.
+5. Seam: no sum, subtraction or comparison of money in `apps/mobile/src`; web and mobile both call `selectHomeStrip`. The PR states "Seam cost".
+6. One Jest test per case: left over, short, income only, no budget, no income row, pension with no debt, neither, refused, leaves-out caption, fallback year.
+7. A refused figure shows its notice: never £0, never "Add your budget", never dropped.
+8. "Short each month" uses the ordinary text colour, with no warning icon.
+9. A failed or malformed `/budget-entries` shows Home's error or out of step; older and newer backends still show the strip.
+10. Each cell is one spoken group; whole pounds, tabular numerals; at 200% text and 320 points wide the cells stack.
+11. Copy parity test, contrast matrix, gallery in light, dark and 200% text.
+12. `home-strip.yaml` asserts by test id, with no retries, in light and dark.
+13. Lint, types, `check:laws` and the engine, web and mobile tests pass; the parity log is updated; the PR states the CROSS-PLATFORM section 7 result.
 
 ### 9.9 Later slices
 
