@@ -9,11 +9,12 @@ import { AppState, type AppStateStatus } from "react-native";
 import { type AppLock, createAppLock } from "../../auth/deviceLock";
 import { SessionProvider } from "../../auth/SessionProvider";
 import { OFFLINE_HEADING } from "../../copy/auth";
-import { SAVED_FIGURES } from "../../copy/offline";
+import { SAVE_NEEDS_CONNECTION, SAVED_FIGURES } from "../../copy/offline";
 import { ApiProvider } from "../../data/ApiProvider";
 import type { CacheStore } from "../../data/cacheStore";
 import { fail, fakeApi, testQueryClient } from "../../data/fakeApi";
 import { CACHE_FORMAT, createOfflineCache, type OfflineCache } from "../../data/offlineCache";
+import type { Connectivity } from "../../device/connectivity";
 import { DEVICE_LOCK_KEY } from "../../device/storageKeys";
 import { HOMEOWNER, personaHousehold } from "../../features/accounts/accountsTestData";
 import { renterHousehold } from "../../features/budget/budgetTestData";
@@ -598,5 +599,164 @@ describe("the Budget from saved figures (E12 S10)", () => {
     expect(
       screen.getByRole("switch", { name: "Eating out" }).props.accessibilityState,
     ).toMatchObject({ disabled: false });
+  });
+});
+
+describe("the connection drops mid-session (E12 S7 follow-up)", () => {
+  /** The phone's connection signal, pushed by the test. */
+  function phoneNetwork() {
+    let listener: ((online: boolean) => void) | null = null;
+    const connectivity: Connectivity = {
+      subscribe: (next) => {
+        listener = next;
+        return () => {
+          listener = null;
+        };
+      },
+    };
+    return { connectivity, push: (online: boolean) => act(async () => listener?.(online)) };
+  }
+
+  /** Signed in and online, on the Budget, with figures sealed an hour ago as reads do. */
+  async function onlineBudget() {
+    // The live reads happen now, so their own time is NOW_MS.
+    jest.setSystemTime(NOW_MS);
+    const h = renterHousehold();
+    const savedAt = NOW_MS - HOUR;
+    const text = JSON.stringify({
+      format: CACHE_FORMAT,
+      seenAt: savedAt,
+      reads: {
+        accounts: { savedAt, data: h.accounts },
+        accountDetails: { savedAt, data: h.details },
+        userProfile: { savedAt, data: h.profile },
+        checkIns: { savedAt, data: h.checkIns },
+        budgetEntries: { savedAt, data: h.budgetEntries },
+      },
+    });
+    const store: CacheStore = {
+      read: jest.fn(async () => text),
+      write: jest.fn(async () => {}),
+      wipe: jest.fn(async () => true),
+    };
+    const cache = createOfflineCache({ store, now: () => NOW_MS, owner: OWNER });
+    const net = phoneNetwork();
+    const app = fakeApp(
+      { status: "signedIn" },
+      { offlineCache: cache, connectivity: net.connectivity },
+    );
+    const post = jest.fn((body: unknown) => ({
+      ...(h.budgetEntries[2] as object),
+      ...(body as object),
+      id: "6f1c2a8e-0000-4000-8000-000000000001",
+    }));
+    const api = fakeApi(routes(h, { "POST /budget-entries": post }));
+    await render(
+      <ThemeProvider scheme="light">
+        <SessionProvider app={app.app}>
+          <ApiProvider client={api.client} queryClient={testQueryClient()}>
+            <SessionGate>
+              <OfflineReading now={() => NOW_MS}>
+                <Budget
+                  onSignOut={jest.fn()}
+                  marketingOrigin="https://m.test.invalid"
+                  links={{
+                    setUp: LINKS.setUp,
+                    budget: LINKS.setUp,
+                    mortgage: LINKS.setUp,
+                    salary: LINKS.setUp,
+                  }}
+                  onOpenAccounts={jest.fn()}
+                  now={NOW}
+                />
+              </OfflineReading>
+            </SessionGate>
+          </ApiProvider>
+        </SessionProvider>
+      </ThemeProvider>,
+    );
+    expect(await screen.findByLabelText(/^Left over each month, £125, /)).toBeOnTheScreen();
+    return { app, net, store, post };
+  }
+
+  /** Edit budget, Add to bills, and a name and amount typed but not saved. */
+  async function typeUnsavedEntry() {
+    await fireEvent.press(screen.getByRole("button", { name: "Edit budget" }));
+    await fireEvent.press(screen.getByRole("button", { name: "Add to bills" }));
+    await fireEvent.changeText(screen.getByLabelText(/^Name/), "Water");
+    await fireEvent.changeText(screen.getByLabelText(/^Amount/), "25");
+    await settle();
+  }
+
+  it("at once shows the start-up offline state: the notice with the age, no editing", async () => {
+    const { app, net } = await onlineBudget();
+    expect(screen.getByTestId("budget-categories-edit")).toBeOnTheScreen();
+    await net.push(false);
+    await settle();
+    expect(app.session.connectionLost).toHaveBeenCalledTimes(1);
+    // The figures in memory were fetched just now, newer than the file's: their own time is shown
+    // (the cache keeps a fresher answer and its time, as it does at start-up).
+    expect(screen.getByTestId("saved-figures-notice")).toHaveTextContent(
+      `${SAVED_FIGURES.lastUpdated("just now")} ${SAVED_FIGURES.changes}`,
+    );
+    // The figures stay on screen; the ways in to editing go.
+    expect(screen.getByLabelText(/^Left over each month, £125, /)).toBeOnTheScreen();
+    expect(screen.queryByTestId("budget-categories-edit")).toBeNull();
+  });
+
+  it("back online, tries the reconnect at once and, signed in again, brings editing back", async () => {
+    const { app, net } = await onlineBudget();
+    await net.push(false);
+    await settle();
+    const before = app.session.reconnect.mock.calls.length;
+    await net.push(true);
+    expect(app.session.reconnect.mock.calls.length).toBe(before + 1);
+    await act(async () => app.set({ status: "signedIn" }));
+    await settle();
+    expect(screen.queryByTestId("saved-figures-notice")).toBeNull();
+    expect(screen.getByTestId("budget-categories-edit")).toBeOnTheScreen();
+  });
+
+  it("an open sheet keeps what was typed, says saving needs a connection, and saves once back", async () => {
+    const { app, net, post } = await onlineBudget();
+    await typeUnsavedEntry();
+    await net.push(false);
+    await settle();
+    expect(screen.getByTestId("budget-entry-sheet")).toBeOnTheScreen();
+    expect(screen.getByLabelText(/^Name/).props.value).toBe("Water");
+    expect(screen.getByTestId("budget-entry-form-offline")).toHaveTextContent(
+      SAVE_NEEDS_CONNECTION,
+    );
+    const save = screen.getByRole("button", { name: "Save" });
+    expect(save.props.accessibilityState).toMatchObject({ disabled: true });
+    await fireEvent.press(save);
+    await settle();
+    expect(post).not.toHaveBeenCalled();
+
+    await act(async () => app.set({ status: "signedIn" }));
+    await settle();
+    expect(screen.queryByTestId("budget-entry-form-offline")).toBeNull();
+    expect(screen.getByLabelText(/^Name/).props.value).toBe("Water");
+    await fireEvent.press(screen.getByRole("button", { name: "Save" }));
+    await settle();
+    expect(post).toHaveBeenCalledTimes(1);
+    expect(post).toHaveBeenCalledWith(expect.objectContaining({ name: "Water", amount: 25 }));
+  });
+
+  it("leaves the sealed file as it was: a drop neither wipes nor rewrites what is cached", async () => {
+    const { store, net } = await onlineBudget();
+    const writes = (store.write as jest.Mock).mock.calls.length;
+    await net.push(false);
+    await settle();
+    expect(store.wipe).not.toHaveBeenCalled();
+    // The restore puts back only the latest time seen, with the same reads and saved times.
+    const after = (store.write as jest.Mock).mock.calls
+      .slice(writes)
+      .map(([text]) => JSON.parse(text));
+    for (const envelope of after) {
+      expect(Object.values(envelope.reads).map((r) => (r as { savedAt: number }).savedAt)).toEqual(
+        Array(5).fill(NOW_MS - HOUR),
+      );
+    }
   });
 });

@@ -11,6 +11,7 @@ import type { SessionState } from "../auth/sessionMachine";
 import type { DeleteOutcome } from "../data/deleteAccount";
 import type { ExportOutcome } from "../data/exportData";
 import type { OfflineCache } from "../data/offlineCache";
+import type { Connectivity } from "../device/connectivity";
 import { ThemeProvider } from "../theme/ThemeProvider";
 
 function fakeSession(initial: SessionState = { status: "signedIn" }) {
@@ -29,6 +30,10 @@ function fakeSession(initial: SessionState = { status: "signedIn" }) {
     restore: jest.fn(async () => {}),
     retry: jest.fn(async () => {}),
     reconnect: jest.fn(async () => {}),
+    // As the real one: from signedIn only, to the one offline state.
+    connectionLost: jest.fn(() => {
+      if (state.status === "signedIn") set({ status: "restoredOffline" });
+    }),
     isRestoredOffline: () => state.status === "restoredOffline",
     signIn: jest.fn(async () => {}),
     signOut: jest.fn(async () => {}),
@@ -56,7 +61,12 @@ export type FakeApp = ReturnType<typeof fakeSession> & {
 
 export function fakeApp(
   initial?: SessionState,
-  over: { appLock?: AppLock; accountData?: boolean; offlineCache?: OfflineCache } = {},
+  over: {
+    appLock?: AppLock;
+    accountData?: boolean;
+    offlineCache?: OfflineCache;
+    connectivity?: Connectivity;
+  } = {},
 ): FakeApp {
   const fake = fakeSession(initial);
   const accountData = fakeAccountData();
@@ -70,6 +80,7 @@ export function fakeApp(
       accountData: over.accountData === false ? undefined : accountData,
       appLock: over.appLock,
       offlineCache: over.offlineCache,
+      connectivity: over.connectivity,
     },
   };
 }

@@ -7,6 +7,7 @@ import { requireOptionalNativeModule } from "expo";
 import Constants from "expo-constants";
 import * as Crypto from "expo-crypto";
 import type * as LocalAuthentication from "expo-local-authentication";
+import type * as Network from "expo-network";
 import type * as ScreenCapture from "expo-screen-capture";
 import * as SecureStore from "expo-secure-store";
 import * as WebBrowser from "expo-web-browser";
@@ -24,6 +25,7 @@ import { sweepHttpCache } from "../data/httpCacheSweep";
 import { createOfflineCache, type OfflineCache } from "../data/offlineCache";
 import { createServerSignOut } from "../data/serverSignOut";
 import { createWorkosClient } from "../data/workos";
+import { type Connectivity, createConnectivity } from "../device/connectivity";
 import type { AccountDataActions } from "../features/account-data/useAccountData";
 import { createBrowserActivity, createDeviceHousekeeping } from "./deviceHousekeeping";
 import { deviceKeys } from "./deviceKeys";
@@ -74,6 +76,16 @@ function createScreenCaptureGuard(): ScreenCaptureGuard | undefined {
 }
 
 /**
+ * The phone's connection signal (E12 S7 follow-up), when this app binary carries expo-network (a
+ * development build from before it does not): required only once it is known to be there.
+ */
+function deviceConnectivity(): Connectivity | undefined {
+  if (!requireOptionalNativeModule("ExpoNetwork")) return undefined;
+  const network: typeof Network = require("expo-network");
+  return createConnectivity(network);
+}
+
+/**
  * The app lock, when this app binary carries expo-local-authentication (a development build from
  * before S9 does not): the module is required only once it is known to be there.
  */
@@ -102,6 +114,7 @@ export function createAppSession(config: { api: MobileConfig; auth: AuthConfig }
   accountData: AccountDataActions;
   appLock: AppLock | undefined;
   offlineCache: OfflineCache | undefined;
+  connectivity: Connectivity | undefined;
 } {
   const version = Constants.expoConfig?.version ?? "0.0.0";
   let session: Session | undefined;
@@ -184,5 +197,6 @@ export function createAppSession(config: { api: MobileConfig; auth: AuthConfig }
     accountData,
     appLock,
     offlineCache,
+    connectivity: deviceConnectivity(),
   };
 }

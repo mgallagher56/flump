@@ -104,6 +104,13 @@ export interface Session {
    * any refresh ends a session. Calls made while one runs share it. Never rejects.
    */
   reconnect(): Promise<void>;
+  /**
+   * The phone's connection dropped (E12 S7 follow-up): from signedIn only, the same offline state a
+   * launch with no network gives. The access token leaves memory, so reads wait for a reconnect as
+   * they do after an offline launch; the refresh token and the offline cache stay exactly as they
+   * were. Anything else is left unchanged.
+   */
+  connectionLost(): void;
   /** Whether the state is restoredOffline right now (E12 S7: the cache's last check). */
   isRestoredOffline(): boolean;
   /**
@@ -358,6 +365,12 @@ export function createSession(deps: SessionDeps): Session {
     return reconnecting;
   }
 
+  function connectionLost() {
+    if (state.status !== "signedIn") return;
+    accessToken = null;
+    dispatch({ type: "CONNECTION_LOST" });
+  }
+
   async function retry() {
     if (state.status !== "restoredOffline" && state.status !== "termsRequired") return;
     dispatch({ type: "RETRY_STARTED" });
@@ -528,6 +541,7 @@ export function createSession(deps: SessionDeps): Session {
     restore,
     retry,
     reconnect,
+    connectionLost,
     isRestoredOffline: () => state.status === "restoredOffline",
     async cacheOwner() {
       try {

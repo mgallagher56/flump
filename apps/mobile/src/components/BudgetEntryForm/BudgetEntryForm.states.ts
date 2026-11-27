@@ -69,4 +69,20 @@ export const budgetEntryFormStates = {
     onCancel: noop,
     onDelete: noop,
   },
+  /** Left open when the connection dropped: typed values stay, saving waits for a connection. */
+  offline: {
+    mode: "edit",
+    initial: {
+      name: "Energy",
+      amount: 80,
+      frequency: "monthly",
+      category: "bills",
+      isEssential: true,
+    },
+    categories: CATEGORIES,
+    offline: true,
+    onSave: noop,
+    onCancel: noop,
+    onDelete: noop,
+  },
 } satisfies Record<string, BudgetEntryFormProps>;

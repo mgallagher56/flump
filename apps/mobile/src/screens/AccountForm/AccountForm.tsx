@@ -23,6 +23,7 @@ import { WholeNumberInput } from "../../components/WholeNumberInput";
 import { ACCOUNT_FORM, DELETE_ACCOUNT } from "../../copy/accountForms";
 import { ACCOUNT, ACCOUNTS, TYPE_LABEL } from "../../copy/accounts";
 import { CHECK_IN } from "../../copy/checkIn";
+import { SAVE_NEEDS_CONNECTION } from "../../copy/offline";
 import { useAccounts } from "../../data/checkIn";
 import { useProfile } from "../../data/profile";
 import { useDelayedLoading } from "../../data/useDelayedLoading";
@@ -154,6 +155,11 @@ interface AccountFormProps {
   onSaved(notice?: string): void;
   onDeleted(): void;
   onCancel(): void;
+  /**
+   * The connection dropped while the form was open (E12 S7 follow-up): what was typed stays, Save
+   * and Delete are off, and one line says saving needs a connection.
+   */
+  offline?: boolean;
   /** The stack header with the form's title (the route's `Stack.Screen`). */
   header?(title: string): ReactNode;
 }
@@ -170,6 +176,7 @@ function AccountForm({
   onSaved,
   onDeleted,
   onCancel,
+  offline = false,
   header = () => null,
 }: AccountFormProps) {
   const form = useAccountForm({ mode, accounts, partnerMode, onSaved, onDeleted });
@@ -184,13 +191,19 @@ function AccountForm({
     <>
       {header(form.editing ? ACCOUNT_FORM.editTitle : ACCOUNT_FORM.addTitle)}
       <Screen edges={EDGES} keyboardAware scrollRef={scrollRef} testID="account-form">
+        {offline ? (
+          <InlineAlert tone="info" message={SAVE_NEEDS_CONNECTION} testID="account-form-offline" />
+        ) : null}
         {form.alert ? <InlineAlert message={form.alert} testID="account-form-alert" /> : null}
         <Fields form={form} />
         <Button
           label={form.editing ? ACCOUNT_FORM.save : ACCOUNT_FORM.addTitle}
           pending={form.busy === "saving"}
+          disabled={offline}
           testID="account-form-save"
-          onPress={() => void form.save()}
+          onPress={() => {
+            if (!offline) void form.save();
+          }}
         />
         <Button
           label={ACCOUNT_FORM.cancel}
@@ -203,6 +216,7 @@ function AccountForm({
             label={ACCOUNT_FORM.delete}
             variant="dangerSubtle"
             pending={form.busy === "deleting"}
+            disabled={offline}
             testID="account-form-delete"
             onPress={() => setConfirming(true)}
           />

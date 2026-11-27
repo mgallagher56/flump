@@ -2,10 +2,12 @@ import { createContext, type ReactNode, useContext, useEffect, useSyncExternalSt
 import type { ApiClient } from "../data/apiClient";
 import type { UpdateCheck } from "../data/clientPolicy";
 import type { OfflineCache } from "../data/offlineCache";
+import type { Connectivity } from "../device/connectivity";
 import type { AccountDataActions } from "../features/account-data/useAccountData";
 import type { AppLock } from "./deviceLock";
 import type { Session } from "./session";
 import { INITIAL_STATE, type SessionState } from "./sessionMachine";
+import { watchConnection } from "./watchConnection";
 
 export interface AppSession {
   session: Session;
@@ -23,6 +25,12 @@ export interface AppSession {
   appLock?: AppLock;
   /** The sealed offline cache (E12 S7); absent where the platform gives no cache folder. */
   offlineCache?: OfflineCache;
+  /**
+   * The phone's connection signal (E12 S7 follow-up): a drop moves a signed-in session offline at
+   * once and a return reconnects at once. Absent where the build has no expo-network module, which
+   * leaves the timed reconnects and a failed save as before.
+   */
+  connectivity?: Connectivity;
 }
 
 /** Why there is no session: a bad config value, or native modules this app binary lacks. */
@@ -49,6 +57,10 @@ export function SessionProvider({
 }) {
   useEffect(() => {
     void app?.session.restore();
+  }, [app]);
+  useEffect(() => {
+    if (!app?.connectivity) return;
+    return watchConnection(app.session, app.connectivity);
   }, [app]);
   return (
     <StartProblemContext.Provider value={problem}>
