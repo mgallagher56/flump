@@ -408,13 +408,13 @@ Mapped pages: 58 | Sections: 312 | Excluded routes: 25
 | Section        | Component                                                        | Facts read | Figures |
 | -------------- | ---------------------------------------------------------------- | ---------- | ------- |
 | `site-header`  | `apps/marketing/src/components/Header/Header.tsx`                | -          | -       |
-| `hero`         | `apps/marketing/src/pages/FeaturePage/FeaturePage.tsx`           | -          | -       |
-| `what-you-see` | `apps/marketing/src/pages/FeaturePage/FeaturePage.tsx`           | -          | -       |
+| `hero`         | `apps/marketing/src/components/PageHero/PageHero.tsx`            | -          | -       |
+| `what-you-see` | `apps/marketing/src/pages/AiConnectionPage/AiConnectionPage.tsx` | -          | -       |
 | `questions`    | `apps/marketing/src/pages/AiConnectionPage/AiConnectionPage.tsx` | -          | -       |
 | `setup`        | `apps/marketing/src/pages/AiConnectionPage/AiConnectionPage.tsx` | -          | -       |
 | `more-detail`  | `apps/marketing/src/pages/AiConnectionPage/AiConnectionPage.tsx` | -          | -       |
-| `one-picture`  | `apps/marketing/src/components/AreaStrip/AreaStrip.tsx`          | -          | -       |
-| `final-cta`    | `apps/marketing/src/pages/FeaturePage/FeaturePage.tsx`           | -          | -       |
+| `one-picture`  | `apps/marketing/src/components/AreaPills/AreaPills.tsx`          | -          | -       |
+| `final-cta`    | `apps/marketing/src/components/TicketClose/TicketClose.tsx`      | -          | -       |
 | `site-footer`  | `apps/marketing/src/components/Footer/Footer.tsx`                | -          | -       |
 
 ### contact: Contact | Flump
@@ -449,20 +449,20 @@ Mapped pages: 58 | Sections: 312 | Excluded routes: 25
 
 ### feature-detail: Feature area detail | Flump
 
-- Route: `/features/:slug` (auth: `public`, file: `apps/marketing/src/pages/FeaturePage/FeaturePage.tsx`)
+- Route: `/features/:slug` (auth: `public`, file: `apps/marketing/src/pages/AreaPage/AreaPage.tsx`)
 - Purpose: Explain one of the five money areas (accounts, budget, pay, savings-and-pension, debt-and-borrowing) with sample figures, deeper tools, and optional embedded calculators.
 
 | Section        | Component                                                     | Facts read | Figures |
 | -------------- | ------------------------------------------------------------- | ---------- | ------- |
 | `site-header`  | `apps/marketing/src/components/Header/Header.tsx`             | -          | -       |
-| `hero`         | `apps/marketing/src/pages/FeaturePage/FeaturePage.tsx`        | -          | -       |
-| `what-you-see` | `apps/marketing/src/pages/FeaturePage/FeaturePage.tsx`        | -          | -       |
-| `see-it`       | `apps/marketing/src/pages/FeaturePage/FeaturePage.tsx`        | -          | -       |
-| `retirement`   | `apps/marketing/src/pages/FeaturePage/FeaturePage.tsx`        | -          | -       |
-| `more-detail`  | `apps/marketing/src/pages/FeaturePage/FeaturePage.tsx`        | -          | -       |
-| `one-picture`  | `apps/marketing/src/components/AreaStrip/AreaStrip.tsx`       | -          | -       |
+| `hero`         | `apps/marketing/src/components/PageHero/PageHero.tsx`         | -          | -       |
+| `what-you-see` | `apps/marketing/src/pages/AreaPage/AreaPage.tsx`              | -          | -       |
+| `see-it`       | `apps/marketing/src/pages/AreaPage/AreaPage.tsx`              | -          | -       |
+| `retirement`   | `apps/marketing/src/pages/AreaPage/AreaPage.tsx`              | -          | -       |
+| `more-detail`  | `apps/marketing/src/pages/AreaPage/AreaPage.tsx`              | -          | -       |
+| `one-picture`  | `apps/marketing/src/components/AreaPills/AreaPills.tsx`       | -          | -       |
 | `try-it`       | `apps/marketing/src/components/TryItSection/TryItSection.tsx` | -          | -       |
-| `final-cta`    | `apps/marketing/src/pages/FeaturePage/FeaturePage.tsx`        | -          | -       |
+| `final-cta`    | `apps/marketing/src/components/TicketClose/TicketClose.tsx`   | -          | -       |
 | `site-footer`  | `apps/marketing/src/components/Footer/Footer.tsx`             | -          | -       |
 
 ### features: Flump features | Flump

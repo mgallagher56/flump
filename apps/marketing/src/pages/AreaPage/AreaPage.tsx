@@ -1,20 +1,18 @@
 import {
   BreathingRoomPreview,
-  Button,
   DashboardPreview,
   DebtBorrowingPreview,
   DebtHelpLink,
-  Illustration,
   MoneyHelperGuidance,
   PreviewFrame,
   type SampleHouseholdKey,
   SavingsPensionPreview,
 } from "@repo/ui";
 import { type FC, useRef, useState } from "react";
+import { AreaPills } from "../../components/AreaPills";
 import { Footer } from "../../components/Footer";
 import { GlassOrb } from "../../components/GlassOrb";
 import { Header } from "../../components/Header";
-import { closeMoment } from "../../components/HomeClose";
 import { JourneySample } from "../../components/JourneySample";
 import { MarketingBand } from "../../components/MarketingBand";
 import { MarketingPageShell } from "../../components/MarketingPageShell";
@@ -22,6 +20,7 @@ import type { MarketingSectionTone } from "../../components/MarketingSection";
 import { PageHero } from "../../components/PageHero";
 import { PageMeta } from "../../components/PageMeta";
 import { SoftCard } from "../../components/SoftCard";
+import { TicketClose } from "../../components/TicketClose";
 import { TiltLight } from "../../components/TiltLight";
 import { TryItSection } from "../../components/TryItSection";
 import { SAMPLE_MOMENTS } from "../../motion/journey/sampleMoments";
@@ -32,14 +31,9 @@ import {
   setPieceMoment,
 } from "../../motion/moments/bandMoments";
 import { useGsapMoment } from "../../motion/useGsapMoment";
-import { AREA_HERO_TONES, GROUP_TONES } from "../../utils/areaOrbTones";
-import { MONEY_AREAS, type MoneyArea, RETIREMENT_SECTION } from "../../utils/featureAreas";
-import { signupCta } from "../../utils/site";
+import { AREA_HERO_TONES } from "../../utils/areaOrbTones";
+import { type MoneyArea, RETIREMENT_SECTION } from "../../utils/featureAreas";
 import {
-  closeCard,
-  closePicture,
-  closeText,
-  closeTitle,
   depthCard,
   depthList,
   depthOrb,
@@ -48,10 +42,6 @@ import {
   facts,
   factText,
   mainContent,
-  pillHere,
-  pillLink,
-  pillOrb,
-  pills,
   retirementBody,
   retirementText,
   setPiece,
@@ -165,75 +155,6 @@ const MoreDetail: FC<{ feature: MoneyArea; tone: MarketingSectionTone }> = ({ fe
   );
 };
 
-const pillsArrive = arriveMoment("[data-arrive-item]", 12);
-
-/** "Part of one picture": the five areas as pills, each with its area's orb (production's words). */
-const OnePicture: FC<{ current: MoneyArea["key"]; tone: MarketingSectionTone }> = ({
-  current,
-  tone,
-}) => {
-  const ref = useRef<HTMLUListElement>(null);
-  useGsapMoment(ref, pillsArrive);
-  return (
-    <MarketingBand
-      id="one-picture"
-      subtitle="Use one area or all five. Together they make one picture of your money, on your Home page."
-      title="Part of one picture"
-      tone={tone}
-    >
-      <ul className={pills} data-testid="area-strip" ref={ref}>
-        {MONEY_AREAS.map((area) => {
-          const here = area.key === current;
-          return (
-            <li data-arrive-item="" key={area.key}>
-              <a aria-current={here ? "page" : undefined} className={pillLink} href={area.path}>
-                <GlassOrb className={pillOrb} tone={GROUP_TONES[area.key]} />
-                <span>{area.name}</span>
-                {here && <span className={pillHere}>You are here</span>}
-              </a>
-            </li>
-          );
-        })}
-      </ul>
-    </MarketingBand>
-  );
-};
-
-/** The close: the getting started ticket in a card (production's words, FeaturePage's close). */
-const Close: FC<{ tone: MarketingSectionTone }> = ({ tone }) => {
-  const cta = signupCta();
-  const ref = useRef<HTMLDivElement>(null);
-  useGsapMoment(ref, closeMoment);
-  return (
-    <MarketingBand
-      bubbles="b"
-      id="get-started"
-      labelledBy="feature-cta-title"
-      tone={tone}
-      width="narrow"
-    >
-      <div ref={ref}>
-        <SoftCard
-          band={tone === "canvas" ? "canvas" : "card"}
-          className={closeCard}
-          data-testid="feature-final-cta"
-        >
-          <div className={closePicture} data-close-picture="">
-            <Illustration scene="onboarding" size="xl" variant="document" />
-          </div>
-          <h2 className={closeTitle} id="feature-cta-title">
-            Ready to see your own figures?
-          </h2>
-          <p className={closeText}>Start with a few rough figures.</p>
-          <Button asChild size="lg" variant="primary">
-            <a href={cta.href}>{cta.label}</a>
-          </Button>
-        </SoftCard>
-      </div>
-    </MarketingBand>
-  );
-};
-
 /**
  * One template for the five area pages (OTHER-PAGES-PLAN slice P1, from the approved Pay and Debt
  * and borrowing prototypes at `prototypes/others`), rendered from `utils/featureAreas.ts` so the
@@ -293,9 +214,9 @@ export const AreaPage: FC<AreaPageProps> = ({ feature }) => {
           </MarketingBand>
         )}
         <MoreDetail feature={feature} tone={moreTone} />
-        <OnePicture current={feature.key} tone={pictureTone} />
+        <AreaPills current={feature.key} tone={pictureTone} />
         {hasTryIt && <TryItSection area={feature.key as "pay" | "debt-and-borrowing"} />}
-        <Close tone={closeTone} />
+        <TicketClose tone={closeTone} />
       </main>
 
       <Footer />

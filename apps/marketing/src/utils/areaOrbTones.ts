@@ -31,6 +31,9 @@ export const AREA_HERO_TONES: Record<
   "debt-and-borrowing": ["violet", "teal", "sky", "teal"],
 };
 
+/** The AI connection page's hero (its approved prototype); its question cards' orbs take them in turn. */
+export const AI_HERO_TONES: HeroTones = ["rose", "sky", "violet", "teal"];
+
 /** Each index group's small orb: its area's journey colour; the groups that are not areas take the other set. */
 export const GROUP_TONES: Record<FeatureGroup["key"], OrbTone> = {
   home: "sky",

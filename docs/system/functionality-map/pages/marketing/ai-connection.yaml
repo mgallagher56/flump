@@ -11,10 +11,10 @@ sections:
     component: apps/marketing/src/components/Header/Header.tsx
 
   - id: hero
-    component: apps/marketing/src/pages/FeaturePage/FeaturePage.tsx
+    component: apps/marketing/src/components/PageHero/PageHero.tsx
 
   - id: what-you-see
-    component: apps/marketing/src/pages/FeaturePage/FeaturePage.tsx
+    component: apps/marketing/src/pages/AiConnectionPage/AiConnectionPage.tsx
 
   - id: questions
     component: apps/marketing/src/pages/AiConnectionPage/AiConnectionPage.tsx
@@ -26,10 +26,10 @@ sections:
     component: apps/marketing/src/pages/AiConnectionPage/AiConnectionPage.tsx
 
   - id: one-picture
-    component: apps/marketing/src/components/AreaStrip/AreaStrip.tsx
+    component: apps/marketing/src/components/AreaPills/AreaPills.tsx
 
   - id: final-cta
-    component: apps/marketing/src/pages/FeaturePage/FeaturePage.tsx
+    component: apps/marketing/src/components/TicketClose/TicketClose.tsx
 
   - id: site-footer
     component: apps/marketing/src/components/Footer/Footer.tsx

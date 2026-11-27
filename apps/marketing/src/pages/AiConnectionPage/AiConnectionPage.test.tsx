@@ -68,8 +68,14 @@ describe("Marketing AI connection page (E42 S2b)", () => {
     expect(screen.getByText(AI_STAGING_SENTENCE)).toBeDefined();
     for (const q of EXAMPLE_QUESTIONS) expect(screen.getByText(q)).toBeDefined();
     expect(EXAMPLE_QUESTIONS).toHaveLength(3);
-    // Plain question cards: no repeated decorative icon.
+    // Question cards with a small orb each (the approved prototype), and no icon tile.
     expect(screen.getByRole("main").querySelectorAll("li [data-tile-tone]")).toHaveLength(0);
+    const questions = screen.getByRole("region", { name: "Questions you could ask" });
+    expect(
+      [...questions.querySelectorAll("[data-glass-orb]")].map((orb) =>
+        orb.getAttribute("data-orb-tone"),
+      ),
+    ).toEqual(["rose", "sky", "violet"]);
   });
 
   it("does not read as if every invited account can turn it on", () => {
@@ -90,10 +96,10 @@ describe("Marketing AI connection page (E42 S2b)", () => {
     expect(within(strip).queryByRole("link", { current: "page" })).toBeNull();
   });
 
-  it("alternates the band tones after the canvas hero (Midnight and Mint)", () => {
+  it("alternates the band tones after the canvas hero, as its approved prototype", () => {
     renderPage();
-    // By hand: what-you-see card, questions canvas, setup card, more-detail canvas, one-picture
-    // card, then the dark closing band.
+    // By hand from the approved prototype: what-you-see card, questions canvas, setup card,
+    // more-detail canvas, one-picture card, then the close on canvas.
     const bands = [...screen.getByRole("main").querySelectorAll(":scope > [data-tone-band]")];
     expect(bands.map((band) => [band.id, band.getAttribute("data-tone-band")])).toEqual([
       ["what-you-see", "card"],
@@ -101,7 +107,7 @@ describe("Marketing AI connection page (E42 S2b)", () => {
       ["setup", "card"],
       ["more-detail", "canvas"],
       ["one-picture", "card"],
-      ["get-started", "contrast"],
+      ["get-started", "canvas"],
     ]);
   });
 
@@ -168,5 +174,15 @@ describe("Marketing AI connection page (E42 S2b)", () => {
       if (el.className && /mono/.test(String(el.className))) expect(el.tagName).toBe("CODE");
     }
     expect(main.innerHTML).not.toMatch(/uppercase/);
+  });
+});
+
+describe("Marketing AI connection page: setup and code stay still (MK15)", () => {
+  it("puts no orb or bubble field in the setup or technical details bands", () => {
+    renderPage();
+    for (const id of ["setup", "more-detail"]) {
+      const band = document.getElementById(id) as HTMLElement;
+      expect(band.querySelectorAll("[data-glass-orb], [data-bubble-field]"), id).toHaveLength(0);
+    }
   });
 });

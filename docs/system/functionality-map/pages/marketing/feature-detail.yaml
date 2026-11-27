@@ -4,35 +4,35 @@ route: /features/:slug
 title: Feature area detail | Flump
 auth: public
 purpose: Explain one of the five money areas (accounts, budget, pay, savings-and-pension, debt-and-borrowing) with sample figures, deeper tools, and optional embedded calculators.
-route_file: apps/marketing/src/pages/FeaturePage/FeaturePage.tsx
+route_file: apps/marketing/src/pages/AreaPage/AreaPage.tsx
 
 sections:
   - id: site-header
     component: apps/marketing/src/components/Header/Header.tsx
 
   - id: hero
-    component: apps/marketing/src/pages/FeaturePage/FeaturePage.tsx
+    component: apps/marketing/src/components/PageHero/PageHero.tsx
 
   - id: what-you-see
-    component: apps/marketing/src/pages/FeaturePage/FeaturePage.tsx
+    component: apps/marketing/src/pages/AreaPage/AreaPage.tsx
 
   - id: see-it
-    component: apps/marketing/src/pages/FeaturePage/FeaturePage.tsx
+    component: apps/marketing/src/pages/AreaPage/AreaPage.tsx
 
   - id: retirement
-    component: apps/marketing/src/pages/FeaturePage/FeaturePage.tsx
+    component: apps/marketing/src/pages/AreaPage/AreaPage.tsx
 
   - id: more-detail
-    component: apps/marketing/src/pages/FeaturePage/FeaturePage.tsx
+    component: apps/marketing/src/pages/AreaPage/AreaPage.tsx
 
   - id: one-picture
-    component: apps/marketing/src/components/AreaStrip/AreaStrip.tsx
+    component: apps/marketing/src/components/AreaPills/AreaPills.tsx
 
   - id: try-it
     component: apps/marketing/src/components/TryItSection/TryItSection.tsx
 
   - id: final-cta
-    component: apps/marketing/src/pages/FeaturePage/FeaturePage.tsx
+    component: apps/marketing/src/components/TicketClose/TicketClose.tsx
 
   - id: site-footer
     component: apps/marketing/src/components/Footer/Footer.tsx

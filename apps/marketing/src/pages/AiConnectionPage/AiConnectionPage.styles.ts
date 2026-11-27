@@ -1,4 +1,4 @@
-import { cva } from "@repo/ui/styled-system/css";
+import { css, cva } from "@repo/ui/styled-system/css";
 
 export const section = cva({
   base: { display: "flex", flexDirection: "column", gap: "4" },
@@ -6,27 +6,6 @@ export const section = cva({
 
 export const body = cva({
   base: { textStyle: "body.md", color: "text.secondary", margin: 0 },
-});
-
-export const questionList = cva({
-  base: {
-    listStyle: "none",
-    margin: 0,
-    padding: 0,
-    display: "grid",
-    gridTemplateColumns: { base: "1fr", md: "repeat(3, 1fr)" },
-    gap: "4",
-  },
-});
-
-export const questionCard = cva({
-  base: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "3",
-    textStyle: "body.md",
-    color: "text.primary",
-  },
 });
 
 export const techBody = cva({
@@ -107,3 +86,54 @@ export const inlineLink = cva({
     _focusVisible: { outline: "2px solid", outlineColor: "border.focusRing", outlineOffset: "2px" },
   },
 });
+
+/*
+ * The approved AI connection prototype (`others2.css`): "What you see" as cards beside one picture,
+ * the questions as cards with a small orb, "How to get it" as plain text.
+ */
+
+export const mainContent = css({ flex: "1", _focus: { outline: "none" } });
+
+/** Layout a's small left bubble would drift up behind the heading here, so this band leaves it out. */
+export const noLeftBubble = css({ "& [data-bubble-field] > :nth-child(3)": { display: "none" } });
+
+export const split = css({
+  display: "grid",
+  gap: "6",
+  alignItems: "center",
+  "@media (min-width: 60rem)": {
+    gridTemplateColumns: "minmax(0, 1.1fr) minmax(0, 0.9fr)",
+    gap: "10",
+  },
+});
+
+export const splitPicture = css({ justifySelf: "center", width: "min(100%, 22rem)" });
+
+/** Cards in a grid (the questions), or stacked one above the other (the facts). */
+export const cards = cva({
+  base: { listStyle: "none", margin: 0, padding: 0, display: "grid", gap: "3" },
+  variants: {
+    stack: {
+      true: { gridTemplateColumns: "minmax(0, 1fr)" },
+      false: { gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 16rem), 1fr))" },
+    },
+  },
+  defaultVariants: { stack: false },
+});
+
+export const card = css({
+  display: "flex",
+  gap: "3",
+  alignItems: "flex-start",
+  py: "4",
+  px: "5",
+  borderRadius: "20px",
+  color: "text.primary",
+  "& p": { margin: 0 },
+});
+
+export const cardOrb = css({ "--orb-size": "20px", mt: "2px" });
+
+export const prose = css({ maxWidth: "46rem", color: "text.primary", "& p": { margin: 0 } });
+
+export const heroBadge = css({ justifySelf: "start" });
