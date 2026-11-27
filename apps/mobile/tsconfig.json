@@ -1,7 +1,9 @@
 {
   "extends": ["expo/tsconfig.base", "@repo/typescript-config/expo.json"],
   "compilerOptions": {
-    "types": ["jest", "node"],
+    // expo/types is listed here, not left to the gitignored expo-env.d.ts that `expo start` writes,
+    // so CI type-checks against the same declarations as a developer's machine.
+    "types": ["jest", "node", "expo/types"],
     // The document pictures' shape lists (STYLE-GUIDE IL4): one pure-data file from packages/ui,
     // mapped by path rather than a dependency on @repo/ui, whose react-dom peer expo-doctor rejects.
     // Expo's Metro reads these paths too (CROSS-PLATFORM X2).
@@ -11,6 +13,9 @@
       ]
     }
   },
+  // .expo/types holds the typed-route declarations. The `typegen` script (`expo customize`, no
+  // Metro) writes them, and turbo runs it before this app's check-types and test (turbo.json here).
+  // typeDeclarations.test.ts fails if either declaration source goes missing.
   "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"],
   "exclude": ["node_modules", "dist"]
 }
