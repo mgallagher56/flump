@@ -2948,6 +2948,7 @@ Files with every listed fault killed (`BreathingRoomPreview.wording.ts`, `HeroFi
 | Line | Fault                                      | Class             | Reason                                                                               |
 | ---- | ------------------------------------------ | ----------------- | ------------------------------------------------------------------------------------ |
 | L42  | ObjectLiteral `{}` (recipe variant `kind`) | Not worth killing | Panda recipe variant only: the banner's colour; role, text and test id are unchanged |
+
 #### `src/patterns/ChartFigure/ChartFigure.tsx`
 
 | Line | Fault                                                     | Class             | Reason                                                                                                                                                                           |
@@ -2957,6 +2958,7 @@ Files with every listed fault killed (`BreathingRoomPreview.wording.ts`, `HeroFi
 | L132 | EqualityOperator `<`                                      | Equivalent        | With exactly `limit` values the picking loop uses a step of 1 and returns every value in order, the same as the copy                                                             |
 | L219 | ConditionalExpression `true` (`pointCount !== undefined`) | Equivalent        | `undefined < minPoints` is false, so an absent `pointCount` never counts as too few either way                                                                                   |
 | L223 | ObjectLiteral `{}`                                        | Equivalent        | `focusable: false` is the recipe's default variant, so `{}` gives the same class                                                                                                 |
+
 #### `src/patterns/ChartLegend/ChartLegend.tsx`
 
 | Line | Fault                                                         | Class             | Reason                                                                                                                                   |
@@ -3026,6 +3028,7 @@ As above, the preview renders only the two fixed sample households.
 | Line | Fault                                     | Class             | Reason                                                                          |
 | ---- | ----------------------------------------- | ----------------- | ------------------------------------------------------------------------------- |
 | L47  | LogicalOperator `description \|\| <span>` | Not worth killing | Drops the description's styled wrapper (same text) or adds an empty one; visual |
+
 #### `src/patterns/CheckInPreview/CheckInPreview.tsx`
 
 | Line             | Fault                                                                | Class             | Reason                                                                                                                                                         |
@@ -3041,6 +3044,7 @@ As above, the preview renders only the two fixed sample households.
 | L180             | MethodExpression (drop `.trim()`); LogicalOperator `className && ""` | Not worth killing | Root class string only (a trailing space, or a caller class dropped); visual, covered by visual regression                                                     |
 | L212             | ConditionalExpression `true` (`currentDraft === null`)               | Equivalent        | `showEmptyError` is set only when the draft is empty and is cleared whenever a figure is typed or the step changes, so it is never true with a non-empty draft |
 | L293             | OptionalChaining `rec.kind`                                          | Equivalent        | The summary shows only once every account is recorded, so `rec` always exists there                                                                            |
+
 #### `src/patterns/ConfirmDialog/ConfirmDialog.tsx`
 
 | Line                   | Fault                                                                              | Class             | Reason                                                                                                                                                                                                                                                                                                                                                                                                                       |
@@ -3056,6 +3060,7 @@ As above, the preview renders only the two fixed sample households.
 | L181                   | ConditionalExpression `true`                                                       | Equivalent        | `event.currentTarget` is always the content element in `onOpenAutoFocus`                                                                                                                                                                                                                                                                                                                                                     |
 | L198                   | ConditionalExpression `true` (first operand, `inputRef.current !== null`)          | Equivalent        | With no field, `target === null` is never true for a key event, so `onField` stays false                                                                                                                                                                                                                                                                                                                                     |
 | L225; L226             | ArrowFunction `() => undefined` (outside press and outside interaction handlers)   | Not worth killing | They only call `preventDefault` on Radix's own outside-press events. In the test DOM (happy-dom) Radix's deferred outside-press detection does not fire: a test pressing an outside button after Radix's listener tick passed with and without these handlers, so it was dropped rather than kept as a test that proves nothing. The behaviour (outside clicks never close the dialog) can only be checked in a real browser |
+
 #### `src/patterns/KpiStrip/KpiStrip.tsx`
 
 | Line | Fault                                                                  | Class             | Reason                                                                                                                                       |
@@ -3063,6 +3068,7 @@ As above, the preview renders only the two fixed sample households.
 | L56  | ConditionalExpression `false`; BooleanLiteral `true` (NoCo)            | Equivalent        | `isUnsetChild` is only called on the output of `flattenCards`, which keeps elements only, so the non-element guard is never reached          |
 | L93  | ConditionalExpression `true` (`process.env.NODE_ENV !== "production"`) | Not worth killing | Gates a developer warning to non-production builds; tests always run outside production, and the warning is console text, not user behaviour |
 | L98  | ArrayDeclaration `[]`                                                  | Not worth killing | Only whether the development warning repeats after a re-render; console text, no user-visible behaviour                                      |
+
 #### `src/patterns/MarginalRateChart/MarginalRateChart.tsx`
 
 Most of what is left is drawing geometry: where the direct labels sit so they dodge the dashed lines and "Your pay", where the tooltip box sits, and the SVG coordinates and text anchors. Those faults move pixels, not information: every figure, label and threshold is still drawn and named, and the data table, the hover and focus targets and the tooltip text are tested. They are grouped below as Not worth killing (visual regression covers the drawing).
@@ -3088,6 +3094,7 @@ Most of what is left is drawing geometry: where the direct labels sit so they do
 | L494                                                                                                 | ObjectLiteral `{}`                                                                                                                                                                          | Equivalent        | Every pay tick is a whole multiple of £10,000, which shows no decimals with or without `maxFractionDigits: 0`                                                                                                                                                      |
 | L501                                                                                                 | ObjectLiteral `{}`; ConditionalExpression `true`, `false`; EqualityOperator `!==`                                                                                                           | Not worth killing | Only which threshold line is drawn highlighted while its tooltip is open; the tooltip itself is tested                                                                                                                                                             |
 | L535                                                                                                 | ConditionalExpression `true`; LogicalOperator `\|\|`                                                                                                                                        | Not worth killing | Draws the line label even where the search found no clear spot on a narrow phone; the title already names the line. Visual                                                                                                                                         |
+
 #### `src/patterns/NavDrawer/NavDrawer.tsx`
 
 | Line      | Fault                                                                                                              | Class             | Reason                                                                                                                                                                                                                                                                                             |
@@ -3098,6 +3105,7 @@ Most of what is left is drawing geometry: where the direct labels sit so they do
 | L78       | ConditionalExpression `true`; OptionalChaining                                                                     | Equivalent        | While closed the component renders null, so `closeRef.current` is null and `?.` makes the call a no-op; while open the close button is always rendered, so the ref is set                                                                                                                          |
 | L92       | ConditionalExpression `false`; LogicalOperator `&&`                                                                | Equivalent        | The close button is always in the drawer, so `first` and `last` always exist                                                                                                                                                                                                                       |
 | L146      | LogicalOperator `footer \|\| <div>`                                                                                | Not worth killing | With a footer it renders the footer without its styled wrapper (same content); without one it adds an empty wrapper div. Visual only                                                                                                                                                               |
+
 #### `src/patterns/ScenarioZone/ScenarioZone.tsx`
 
 | Line | Fault                             | Class      | Reason                                                                                                                                      |
@@ -3105,6 +3113,7 @@ Most of what is left is drawing geometry: where the direct labels sit so they do
 | L139 | ConditionalExpression `true`      | Equivalent | When `open` is given, `isOpen` reads `open ?? uncontrolledOpen`, so the extra uncontrolled state is never read while the zone is controlled |
 | L148 | OptionalChaining `onReset()`      | Equivalent | Reset renders only when `showReset` is true, which requires `onReset`                                                                       |
 | L149 | OptionalChaining (heading lookup) | Equivalent | The heading with `headingId` is always rendered in the zone, so the lookup never returns null                                               |
+
 #### `src/patterns/SimulatorSplitLayout/SimulatorSplitLayout.tsx`
 
 | Line          | Fault                                                                 | Class             | Reason                                                                                                                                                                                                                    |
@@ -3115,11 +3124,13 @@ Most of what is left is drawing geometry: where the direct labels sit so they do
 | L54; L55; L58 | ConditionalExpression `true`; OptionalChaining (ResizeObserver guard) | Not worth killing | Differs only in a browser without `ResizeObserver`; every supported browser has it, and the window resize listener still re-measures                                                                                      |
 | L57           | CallExpression (drop `removeEventListener`)                           | Not worth killing | A resize listener left after unmount only calls `setFits` on an unmounted component; no visible behaviour                                                                                                                 |
 | L157          | OptionalChaining `renderControlsContainer(...)`                       | Equivalent        | The branch runs only when `custom` is true, which requires `renderControlsContainer !== undefined`                                                                                                                        |
+
 #### `src/patterns/SiteFooter/SiteFooter.tsx`
 
 | Line | Fault                                                   | Class             | Reason                                                                                                                     |
 | ---- | ------------------------------------------------------- | ----------------- | -------------------------------------------------------------------------------------------------------------------------- |
 | L99  | ObjectLiteral `{}` (recipe variant on the compact root) | Not worth killing | Panda recipe variant only: the compact footer's spacing; content and landmarks are unchanged, covered by visual regression |
+
 #### `src/patterns/TakeHomeDeltaPanel/copy.ts`
 
 | Line | Fault                                                        | Class             | Reason                                                                                                                                                           |
@@ -3128,6 +3139,7 @@ Most of what is left is drawing geometry: where the direct labels sit so they do
 | L194 | ArrayDeclaration `["Stryker was here"]`                      | Not worth killing | Adds one harmless extra string to the copy guard's input; the guard still checks every real string                                                               |
 | L197 | ConditionalExpression `false` (array branch)                 | Equivalent        | An array then falls to the object branch, and `Object.values` of an array walks the same items in the same order                                                 |
 | L198 | ConditionalExpression `true` (twice); LogicalOperator `\|\|` | Equivalent        | The walked copy objects hold only strings, arrays and plain objects (no null, number or boolean), so the guard never sees a value it would change the result for |
+
 #### `src/patterns/TopBar/TopBar.tsx`
 
 | Line            | Fault                                                  | Class             | Reason                                                                                                                                      |
@@ -4080,3 +4092,27 @@ Measured by forced runs of `src/auth/workos-jwt.verifier.ts:68-101` (the `verify
 | L290 | ConditionalExpression `!first \|\| !last` → false        | Equivalent | `points.length < 2` in the same condition returns null for every array where the first or last point is missing; the two checks are there to narrow the types.                                        |
 | L307 | LogicalOperator `!first \|\| !last` → `!first && !last`  | Equivalent | As above: an array missing its first or last point has fewer than two points, so the length check decides it.                                                                                         |
 | L251 | ConditionalExpression `rawUnscaled !== undefined` → true | Equivalent | With no balance known, `toShownBalance(type, undefined)` returns `undefined`, the same as the other branch, so the hero's whole falls back to 0 either way.                                           |
+
+## Account form (E12 S8, 27 November 2026)
+
+`packages/finance-engine/src/account-form.ts`, `--mutate` on the whole file with `--force`: 613 faults, 586 killed, 1 runtime error, 22 survived, 4 not covered (95.8%). First run before the field set, null and prefill tests: 527 killed, 81 survived. Every remaining fault is listed.
+
+| Line | Fault                                                                                           | Class      | Reason                                                                                                                                                                                                                              |
+| ---- | ----------------------------------------------------------------------------------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L198 | StringLiteral `account.type ?? ""` → `"Stryker was here!"`                                      | Equivalent | Neither string is a key of the field sets, so both fall back to `base()`.                                                                                                                                                           |
+| L202 | StringLiteral `account.name ?? ""` → `"Stryker was here!"`                                      | Equivalent | A missing name stands in only for the joint rule's name check; neither string names an ISA or a pension, so the answer is the same.                                                                                                 |
+| L214 | LogicalOperator `isFinite(x) && isFinite(y)` → `\|\|`                                           | Equivalent | Followed by `x === y`: two equal numbers are both finite or both not, so one finite side already means both.                                                                                                                        |
+| L228 | StringLiteral `current[key] ?? ""` (not covered)                                                | Equivalent | The keys come from `Object.keys(current)`, and every value in the form's values is a string, so the fallback never runs.                                                                                                            |
+| L253 | ConditionalExpression `owed === 0 ? "0"` → false                                                | Equivalent | `String(-0)` is `"0"`, so 0 owed is sent as `"0"` either way; the branch says the rule outright.                                                                                                                                    |
+| L322 | ConditionalExpression `value === undefined` → false                                             | Equivalent | `Number(undefined)` is NaN, so the `isFinite` check in the same condition returns `""`.                                                                                                                                             |
+| L325 | ConditionalExpression `months === undefined` → false                                            | Equivalent | As above for the term: NaN fails `isFinite`, so `["", ""]` either way.                                                                                                                                                              |
+| L377 | ConditionalExpression and both StringLiterals in `years === "" && months === ""`                | Equivalent | With both empty the total is `0 * 12 + 0 = 0`, which the `total > 0` check turns into `""` anyway.                                                                                                                                  |
+| L474 | StringLiteral `a.id ?? ""` (not covered)                                                        | Equivalent | The filter above keeps only accounts with a truthy id.                                                                                                                                                                              |
+| L483 | OptionalChaining `linkable[0]?.id` and StringLiteral `?? ""` (not covered)                      | Equivalent | The branch runs only when `linkable.length === 1`, so the first entry and its id exist.                                                                                                                                             |
+| L516 | ConditionalExpression and StringLiteral on `key === "ownership"`                                | Equivalent | `accountFormValues` always gives `"sole"` or `"joint"`, never empty, so `value !== ""` keeps it anyway.                                                                                                                             |
+| L524 | Seven faults on `editing && "ownership" in toSend && current.sharePercent !== ""` and its block | Equivalent | Web's rule, kept as it was. Whenever the ownership value changes, one side is sole (share `""`) and the other joint (share 1 to 99), so `changedFields` has already put the current share in; an empty one is deleted two lines on. |
+| L527 | ConditionalExpression `"balance" in toSend` → true                                              | Equivalent | With no balance, `accountBalanceStored(type, "")` is `""` and the key is deleted, leaving the body as it was.                                                                                                                       |
+| L528 | StringLiteral `toSend.balance ?? ""` (not covered)                                              | Equivalent | Reached only when the key is present, and every value is a string.                                                                                                                                                                  |
+| L576 | ConditionalExpression `raw === null` → false (term)                                             | Equivalent | `Math.round(Number(null))` is 0, below 1, so `undefined` either way.                                                                                                                                                                |
+| L585 | ConditionalExpression `raw === null` → false (repayment type)                                   | Equivalent | null is neither `""` nor one of the two types, so `undefined` either way.                                                                                                                                                           |
+| L670 | ConditionalExpression `homeValue !== null` → true                                               | Equivalent | `Number.isFinite(null)` is false in the same condition.                                                                                                                                                                             |

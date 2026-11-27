@@ -809,3 +809,148 @@ describe("propertyPrefillFor", () => {
     ).toBeNull();
   });
 });
+
+describe("the field set of every type (each label as web shows it)", () => {
+  const debtRate = { label: "Interest rate (APR) (optional)" };
+  const debtMonthly = { label: "Minimum payment each month (optional)" };
+  const none = {
+    kind: null,
+    interestRate: null,
+    monthlyContribution: null,
+    creditFields: false,
+    mortgageFields: false,
+    studentLoanPlan: false,
+  };
+  const kindOf = (label: string) => expect.objectContaining({ label });
+  const cases: [string, Record<string, unknown>][] = [
+    ["Current", none],
+    [
+      "Saving",
+      {
+        ...none,
+        kind: kindOf("Kind of account (optional)"),
+        interestRate: { label: "Interest rate (AER)" },
+        monthlyContribution: { label: "Saved each month" },
+      },
+    ],
+    [
+      "Investment",
+      {
+        ...none,
+        kind: kindOf("Kind of account (optional)"),
+        interestRate: { label: "Estimated annual return (%)" },
+        monthlyContribution: { label: "Saved each month" },
+      },
+    ],
+    [
+      "Pension",
+      {
+        ...none,
+        interestRate: { label: "Assumed growth a year (optional)" },
+        monthlyContribution: { label: "Extra paid in each month (optional)" },
+      },
+    ],
+    ["Property", { ...none, kind: kindOf("Home or rental") }],
+    [
+      "Credit Card",
+      { ...none, interestRate: debtRate, monthlyContribution: debtMonthly, creditFields: true },
+    ],
+    [
+      "Overdraft",
+      { ...none, interestRate: debtRate, monthlyContribution: debtMonthly, creditFields: true },
+    ],
+    [
+      "Loan",
+      {
+        ...none,
+        kind: kindOf("Kind of loan (optional)"),
+        interestRate: debtRate,
+        monthlyContribution: debtMonthly,
+      },
+    ],
+    [
+      "Mortgage",
+      {
+        ...none,
+        kind: kindOf("Kind of mortgage (optional)"),
+        interestRate: { label: "Interest rate (optional)" },
+        monthlyContribution: { label: "Monthly payment (optional)" },
+        mortgageFields: true,
+      },
+    ],
+    ["Student Loan", { ...none, studentLoanPlan: true }],
+    ["Owed", none],
+  ];
+
+  it.each(cases)("%s", (type, expected) => {
+    const { joint: _joint, ...set } = accountFieldSet({ type, name: "X" });
+    expect(set).toEqual(expected);
+  });
+
+  it("each kind select lists its own options", () => {
+    const values = (type: string) =>
+      accountFieldSet({ type }).kind?.options.map((o) => o.value) ?? [];
+    expect(values("Saving")).toHaveLength(7);
+    expect(values("Investment")).toEqual(["stocks_and_shares_isa", "general_investment"]);
+    expect(values("Property")).toEqual(["home", "rental"]);
+    expect(values("Loan")).toEqual(["car_finance", "buy_now_pay_later", "other_loan"]);
+    expect(values("Mortgage")).toEqual(["residential_mortgage", "btl_mortgage"]);
+  });
+});
+
+describe("the edges the move keeps", () => {
+  it("a saved null figure or term opens empty, not as 0", () => {
+    const state = accountFormFromSaved({ interestRate: null, termMonths: null });
+    expect(state.interestRate).toBe("");
+    expect([state.termYears, state.termExtraMonths]).toEqual(["", ""]);
+  });
+
+  it("an add sends an empty name and type as they are", () => {
+    expect(
+      accountFormToSend({
+        editing: false,
+        opened: form(),
+        current: form({ name: "", type: "" }),
+        linkedAccountId: "",
+      }),
+    ).toEqual({ name: "", type: "", ownership: "sole" });
+  });
+
+  it("a joint account's rename sends no share", () => {
+    const opened = form({ name: "A", ownership: "joint", sharePercent: 40 });
+    expect(
+      accountFormToSend({
+        editing: true,
+        opened,
+        current: { ...opened, name: "B" },
+        linkedAccountId: "",
+      }),
+    ).toEqual({ name: "B" });
+  });
+
+  it("rounds a half-penny up despite binary fractions", () => {
+    // 1.005 is held as 1.00499999999999989..., so times 100 is just under 100.5; adding
+    // Number.EPSILON first lifts it over, and it rounds to 101: 1.01.
+    expect(accountFieldsFromValues(getter({ balance: "1.005" }))).toEqual({ balance: 1.01 });
+  });
+
+  it("the prefill ignores other types and mortgages with no id when counting", () => {
+    // One mortgage with an id, plus a loan and a mortgage with no id: still the one.
+    expect(
+      propertyPrefillFor([
+        { id: "m1", type: "Mortgage" },
+        { id: "l1", type: "Loan" },
+        { type: "Mortgage" },
+      ]).linkMortgage,
+    ).toEqual({ id: "m1" });
+  });
+
+  it("the prefill prefers the one residential mortgage over a buy-to-let one", () => {
+    expect(
+      propertyPrefillFor([
+        { id: "b1", type: "Mortgage", accountSubtype: "btl_mortgage" },
+        { id: "m1", type: "Mortgage", accountSubtype: "residential_mortgage" },
+      ]),
+    ).toMatchObject({ subtype: "home", linkMortgage: { id: "m1" } });
+  });
+});
