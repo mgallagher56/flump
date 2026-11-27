@@ -22,6 +22,8 @@ import { CurrencyInput } from "../../components/CurrencyInput";
 import { currencyInputStates } from "../../components/CurrencyInput/CurrencyInput.states";
 import { DataList } from "../../components/DataList";
 import { dataListStates } from "../../components/DataList/DataList.states";
+import { DateField } from "../../components/DateField";
+import { dateFieldStates } from "../../components/DateField/DateField.states";
 import { EmptyState } from "../../components/EmptyState";
 import { emptyStateStates } from "../../components/EmptyState/EmptyState.states";
 import { ErrorState } from "../../components/ErrorState";
@@ -51,12 +53,19 @@ import { netWorthTrendBarsStates } from "../../components/NetWorthTrendBars/NetW
 import { OptionList } from "../../components/OptionList";
 import type { OptionListProps } from "../../components/OptionList/OptionList";
 import { optionListStates } from "../../components/OptionList/OptionList.states";
+import { PercentInput } from "../../components/PercentInput";
+import { percentInputStates } from "../../components/PercentInput/PercentInput.states";
 import { PhraseConfirm } from "../../components/PhraseConfirm";
 import { phraseConfirmStates } from "../../components/PhraseConfirm/PhraseConfirm.states";
 import { Pressable } from "../../components/Pressable";
 import { pressableStates } from "../../components/Pressable/Pressable.states";
+import { QuickBalanceUpdate } from "../../components/QuickBalanceUpdate";
+import { quickBalanceUpdateStates } from "../../components/QuickBalanceUpdate/QuickBalanceUpdate.states";
 import { Screen } from "../../components/Screen";
 import { screenStates } from "../../components/Screen/Screen.states";
+import { SelectField } from "../../components/SelectField";
+import type { SelectFieldProps } from "../../components/SelectField/SelectField";
+import { selectFieldStates } from "../../components/SelectField/SelectField.states";
 import { Skeleton } from "../../components/Skeleton";
 import { skeletonStates } from "../../components/Skeleton/Skeleton.states";
 import { StatusBadge } from "../../components/StatusBadge";
@@ -75,6 +84,8 @@ import { ThemeCycleButton } from "../../components/ThemeCycleButton";
 import { themeCycleButtonStates } from "../../components/ThemeCycleButton/ThemeCycleButton.states";
 import { Toast } from "../../components/Toast";
 import { toastStates } from "../../components/Toast/Toast.states";
+import { WholeNumberInput } from "../../components/WholeNumberInput";
+import { wholeNumberInputStates } from "../../components/WholeNumberInput/WholeNumberInput.states";
 
 interface GalleryState {
   readonly name: string;
@@ -162,4 +173,9 @@ export const GALLERY: readonly GalleryEntry[] = [
   entry("ExportDataSection", ExportDataSection, exportDataSectionStates),
   entry("PhraseConfirm", PhraseConfirm, phraseConfirmStates),
   entry("AppLockSetting", AppLockSetting, appLockSettingStates),
+  entry("PercentInput", PercentInput, percentInputStates),
+  entry("WholeNumberInput", WholeNumberInput, wholeNumberInputStates),
+  entry("DateField", DateField, dateFieldStates),
+  entry("SelectField", SelectField as ComponentType<SelectFieldProps<string>>, selectFieldStates),
+  entry("QuickBalanceUpdate", QuickBalanceUpdate, quickBalanceUpdateStates),
 ];
