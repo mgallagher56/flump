@@ -322,7 +322,7 @@ describe("TabBar", () => {
     });
   });
 
-  it("at 200% text on a 411 point phone (cold start), scrolls horizontally with single-line labels", async () => {
+  it("at 200% text on a 411 point phone (cold start), scrolls horizontally without clamping labels", async () => {
     phone(2, 411);
     await renderBar("home", "light", 2);
     expect(rows().map((row) => row.tabs)).toEqual([
@@ -340,7 +340,7 @@ describe("TabBar", () => {
       expect(cell.flexShrink).toBe(0);
     }
     for (const item of TABS) {
-      expect(screen.getByText(item.label).props.numberOfLines).toBe(1);
+      expect(screen.getByText(item.label).props.numberOfLines).toBeUndefined();
     }
   });
 
@@ -524,7 +524,7 @@ describe("TabBar", () => {
   });
 
   it.each(Object.entries(tabBarStates))("%s holds at 200%% text", async (_name, props) => {
-    await expectHoldsAtDoubleText(<TabBar {...props} />, { truncates: true });
+    await expectHoldsAtDoubleText(<TabBar {...props} />);
   });
 });
 
