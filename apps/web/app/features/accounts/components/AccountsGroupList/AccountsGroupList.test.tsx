@@ -278,6 +278,25 @@ describe("<AccountsGroupList />", () => {
     expect(own.textContent).not.toContain("Everyday");
   });
 
+  test("an overdrawn savings account says its balance is below zero; an overdrawn current account does not (ruled 27 November 2026)", () => {
+    const { getByRole, queryByTestId, getByTestId } = customRender(
+      <AccountsGroupList
+        {...props}
+        rows={[
+          row({ id: "c1", name: "Everyday", type: "Current", balance: -200 }),
+          row({ id: "s1", name: "Rainy day", type: "Saving", balance: -150 }),
+        ]}
+      />,
+    );
+    const owe = getByRole("list", { name: "What you owe" });
+    expect(owe.textContent).toContain("Rainy day");
+    expect(owe.textContent).toContain("£150");
+    expect(getByTestId("below-zero-s1").textContent).toBe(
+      "This balance is below zero. Check the amount or the account type.",
+    );
+    expect(queryByTestId("below-zero-c1")).toBeNull();
+  });
+
   test("makes the entire account row clickable via stretched link while keeping ISA link above it", () => {
     const { getByRole } = customRender(
       <AccountsGroupList {...props} rows={[row({ id: "i1", name: "Cash ISA", type: "Saving" })]} />,

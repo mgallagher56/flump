@@ -660,3 +660,14 @@ Relayed by the coordinator on 27 November 2026. Asked "Let the pay rise tool's r
 - **Decision.** On the marketing site only, the result of an interactive calculator (the pay rise tool) may glide briefly from its old value to its new one when the visitor changes its inputs. It uses the short end of the marketing calm scale (`durations.marketing.glide`, `easings.marketing.calm`), settles on the exact value, never glides on load or on first view, gives assistive technology the final value at once with no intermediate value announced, and does not move at all under reduced motion.
 - **Unchanged.** In the web and mobile apps a real figure still never counts, rolls or glides (UX-GUIDELINES M3, tier C). Count-up stays for fixed sample figures tagged "Example". Prices never move.
 - **Where it is written.** UX-GUIDELINES M3, M4, MK10 and MK13; STYLE-GUIDE 11 and 11.2; ROLLOUT-PLAN sections 1 and 4. Supersedes: F1's limit of moving figures on the marketing site to "Example" sample figures.
+
+## D8 (2026-11-27): overdrawn accounts on Home's "What you owe" and the accounts list
+
+Signed by `fable-decider` (an independent Fable decider subagent, not the owner) for the coordinator on 27 November 2026, after the E12 S8 device check found an overdrawn savings account under "What you owe" on the list but not on Home. Read at `origin/main` `cac6aab93`.
+
+- **Decision.** Home's "What you owe" counts cards, loans, Overdraft accounts and overdrawn Current accounts only; `getTotalConsumerDebt()` is unchanged. Only a Current account can be overdrawn (`OVERDRAWABLE_ACCOUNT_TYPES`): a savings, investment, pension or property balance below zero is a balance to check, not borrowing.
+- **Null rule.** `selectConsumerDebtTotal` is null only when the total is 0 or less: an overdrawn current account with no debt account is owed. `selectDebtSummary` keeps its own rule that no debt account means no summary.
+- **Web and mobile.** Web Home's strip reads the picture's `consumerDebtTotal`; mobile reads the same through `selectHomeStripFromRows`.
+- **The list.** `selectAccountGroups` keeps its grouping (list totals still equal `getTotalLiabilities`) and flags an overdrawn row that is not a Current account. Both apps say on it: "This balance is below zero. Check the amount or the account type."
+- **Unchanged.** Net worth, total assets and liabilities, `picture.debt.consumerDebt`, the Debt page total, DebtWidget, the debt-free date, the health score, the AI pack and MCP's `totalConsumerDebtGbp`.
+- **Pinned by.** `packages/finance-engine/src/home-strip.overdrawn.test.ts` and the flipped case in `portfolio-totals.consumer-debt.test.ts`.

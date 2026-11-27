@@ -125,6 +125,7 @@ async function homeStrip({
           budgetData={data.budgetData}
           checklistProps={{ hasAccounts: true, completedSteps: [] } as never}
           debtData={data.debtData}
+          consumerDebtTotal={data.consumerDebtTotal}
           mortgageData={data.mortgageData}
           pensionData={data.pensionData}
           savingsData={data.savingsData}

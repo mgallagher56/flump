@@ -65,6 +65,12 @@ export const ACCOUNTS_LIST_COPY = {
   oweTotal: "Total you owe",
   notCountedTitle: "Not counted in net worth",
   notCountedDescription: "Accounts your net worth choices leave out.",
+  /**
+   * On a row under what you owe that cannot be overdrawn (a savings, investment, pension, property
+   * or other balance below zero): a balance to check, not borrowing (`fable-decider`, 27 November
+   * 2026). It stays out of Home's "What you owe".
+   */
+  belowZeroToCheck: "This balance is below zero. Check the amount or the account type.",
 } as const;
 
 /** The net worth history page, linked from the net worth figure. */
@@ -183,7 +189,7 @@ export const typeLine = (row: AccountRow): string | null => {
   return baseType ?? jointLabel;
 };
 
-const toItem = (row: AccountRow): DataListItem => {
+const toItem = (row: AccountRow & { belowZeroToCheck?: true }): DataListItem => {
   const type = typeLine(row);
   return {
     id: row.id,
@@ -198,6 +204,15 @@ const toItem = (row: AccountRow): DataListItem => {
             {row.name}
           </Link>
           {type ? <span className={accountType()}>{type}</span> : null}
+          {row.belowZeroToCheck ? (
+            <span
+              className={accountType()}
+              data-testid={`below-zero-${row.id}`}
+              id={`below-zero-${row.id}`}
+            >
+              {ACCOUNTS_LIST_COPY.belowZeroToCheck}
+            </span>
+          ) : null}
           {isIsa(row) ? (
             <Link className={isaLink()} to="/app/savings">
               See your ISA allowance

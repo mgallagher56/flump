@@ -106,6 +106,7 @@ export const WithDebt: Story = {
       debtFreeDate: "March 2029",
       debts: [],
     },
+    consumerDebtTotal: 8000,
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);

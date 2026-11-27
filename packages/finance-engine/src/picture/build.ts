@@ -39,6 +39,7 @@ import { selectPensionContributionMonthly } from "./selectors/pension-contributi
 import {
   type DebtTotals,
   type NetWorthTotals,
+  selectConsumerDebtTotal,
   selectDebtTotals,
   selectNetWorth,
 } from "./selectors/portfolio-totals.js";
@@ -93,6 +94,11 @@ export interface FinancialPicture {
   savings: SavingsTotals;
   /** Consumer debt on minimum payments only, or null when there is none. */
   debtSummary: DebtSummary | null;
+  /**
+   * Home's "What you owe": cards, loans, overdrafts and overdrawn current accounts, or null at £0
+   * or less (`selectConsumerDebtTotal`). Shown with or without a debt account (27 November 2026).
+   */
+  consumerDebtTotal: number | null;
   /** ISA allowance used this tax year (an estimate from monthly saving), or null. */
   isaAllowanceUsed: number | null;
   /** Estimated employee pension contribution a month from salary and percentage, or null. */
@@ -142,6 +148,7 @@ export function buildFinancialPicture(
     }),
     savings: selectSavingsTotals(snapshot),
     debtSummary: selectDebtSummary(snapshot, asOf),
+    consumerDebtTotal: selectConsumerDebtTotal(snapshot),
     isaAllowanceUsed: selectIsaAllowanceUsed(input.accounts, asOf),
     pensionContributionMonthly: selectPensionContributionMonthly(input.profile),
   };

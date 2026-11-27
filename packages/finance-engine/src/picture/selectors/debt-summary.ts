@@ -35,9 +35,12 @@ export function selectDebtSummary(
   snapshot: PortfolioSnapshot,
   asOf: Date = new Date(),
 ): DebtSummary | null {
+  const debts = snapshot.toDebtItems();
+  // No debt account, no summary: an overdrawn current account alone has no debt to plan (the
+  // Debt page, DebtWidget and the debt-free date read this). Home's owed card does not need one.
+  if (debts.length === 0) return null;
   const totalDebt = selectConsumerDebtTotal(snapshot);
   if (totalDebt === null) return null;
-  const debts = snapshot.toDebtItems();
 
   const aprUnknown = debts.some((d) => d.aprKnown === false);
   const minimumOnly = calculateDebtSchedule(

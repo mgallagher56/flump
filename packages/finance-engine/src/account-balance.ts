@@ -1,4 +1,5 @@
 import { categorizeAccountType } from "./account-category.js";
+import { OVERDRAWABLE_ACCOUNT_TYPES } from "./account-type-change.js";
 import { type AccountOwnership, type AccountShareInput, applyAccountShare } from "./joint-share.js";
 import type { NetWorthLeftOut } from "./net-worth-basis.js";
 
@@ -343,14 +344,27 @@ export function isLeftOutOfNetWorth(
   return false;
 }
 
+/**
+ * A row under what you owe that is not borrowing: a savings, investment, pension, property or other
+ * balance below zero (only a Current account can be overdrawn). Both apps say "This balance is
+ * below zero. Check the amount or the account type." on it (`fable-decider`, 27 November 2026).
+ */
+export type BelowZeroToCheck = { belowZeroToCheck?: true };
+
 export interface AccountGroups<T> {
   /** What you own, counted in net worth. */
   own: T[];
-  /** What you owe, counted in net worth, with an overdrawn account as the positive amount owed. */
-  owe: T[];
+  /**
+   * What you owe, counted in net worth, with an overdrawn account as the positive amount owed.
+   * One that cannot be overdrawn (not a Current account) carries `belowZeroToCheck`.
+   */
+  owe: (T & BelowZeroToCheck)[];
   /** What the user's net worth choices leave out. */
   notCounted: T[];
 }
+
+/** The only accounts that can be overdrawn (`account-type-change.ts`). */
+const OVERDRAWABLE: ReadonlySet<string> = new Set(OVERDRAWABLE_ACCOUNT_TYPES);
 
 const typeRank = (type: string | null | undefined): number => {
   const index = ACCOUNT_TYPE_ORDER.indexOf(type ?? "");
@@ -374,7 +388,15 @@ export function selectAccountGroups<T extends { type?: string | null; balance?: 
     own: counted.filter((row) => !isOwedAccountType(row.type) && !overdrawn(row)).sort(byType),
     owe: counted
       .filter((row) => isOwedAccountType(row.type) || overdrawn(row))
-      .map((row) => (overdrawn(row) ? { ...row, balance: Math.abs(row.balance ?? 0) } : row))
+      .map((row) =>
+        overdrawn(row)
+          ? {
+              ...row,
+              balance: Math.abs(row.balance ?? 0),
+              ...(OVERDRAWABLE.has(row.type ?? "") ? {} : { belowZeroToCheck: true as const }),
+            }
+          : row,
+      )
       .sort(byType),
     notCounted: rows.filter((row) => isLeftOutOfNetWorth(row.type, leftOut)).sort(byType),
   };

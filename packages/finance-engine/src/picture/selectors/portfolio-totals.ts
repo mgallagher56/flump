@@ -89,14 +89,16 @@ export function selectNetWorth(snapshot: PortfolioSnapshot, basis: NetWorthBasis
 }
 
 /**
- * What the person owes on cards, loans and overdrafts, or null when there is nothing to show: no
- * debt account, or a total of £0 or less. The Debt page's summary and Home's strip both read it.
- * An overdrawn current account is inside the total but makes no debt account of its own, so
- * alone it gives null.
+ * What the person owes on cards, loans, Overdraft accounts and overdrawn Current accounts, or null
+ * when that is £0 or less. Home's "What you owe" reads it, with or without a debt account (ruled
+ * by `fable-decider`, 27 November 2026: an overdrawn current account alone is owed). A savings,
+ * investment, pension or property balance below zero is not counted: it is a balance to check,
+ * not borrowing (`getTotalConsumerDebt`). The Debt page's summary keeps its own rule that no debt
+ * account means no summary (`selectDebtSummary`).
  */
 export function selectConsumerDebtTotal(snapshot: PortfolioSnapshot): number | null {
   const totalDebt = snapshot.getTotalConsumerDebt();
-  return snapshot.toDebtItems().length === 0 || totalDebt <= 0 ? null : totalDebt;
+  return totalDebt <= 0 ? null : totalDebt;
 }
 
 /** Debt totals. Consumer debt is the one "total debt" figure every page shows. */

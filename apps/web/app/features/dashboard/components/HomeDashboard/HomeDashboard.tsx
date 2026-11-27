@@ -89,6 +89,12 @@ export interface HomeDashboardProps {
   taxData: any;
   debtData?: DebtSummary | null;
   /**
+   * Home's "What you owe": the picture's `consumerDebtTotal` (cards, loans, overdrafts and
+   * overdrawn current accounts, with or without a debt account; `fable-decider`, 27 November
+   * 2026). The Debt section card still reads `debtData`.
+   */
+  consumerDebtTotal?: number | null;
+  /**
    * Whether "Choose what shows here" choices (which sections show and their order) are saved to
    * the user's profile. `false` keeps them in this session only and never calls the backend (the
    * signed-out sandbox).
@@ -151,6 +157,7 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
   mortgageData,
   taxData,
   debtData,
+  consumerDebtTotal = null,
   persistVisibility = true,
   isSample = false,
   banner,
@@ -370,7 +377,7 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
   const homeEstimate = hasAccounts ? finiteOrNull(accountsData?.homeEstimate) : null;
   const strip = selectHomeStrip({
     budget: stripBudget,
-    consumerDebt: finiteOrNull(debtData?.totalDebt),
+    consumerDebt: finiteOrNull(consumerDebtTotal),
     pensionPot:
       (pensionData?.potsCount ?? 0) > 0 ? finiteOrNull(pensionData?.totalPensionBalance) : null,
   });

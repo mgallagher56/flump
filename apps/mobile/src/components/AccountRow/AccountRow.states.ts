@@ -13,6 +13,13 @@ export const accountRowStates = {
     onPress: noop,
   },
   overdrawn: { name: "Current account", typeLine: null, balance: 350, onPress: noop },
+  belowZeroToCheck: {
+    name: "Rainy day",
+    typeLine: "Savings",
+    balance: 150,
+    note: "This balance is below zero. Check the amount or the account type.",
+    onPress: noop,
+  },
   noBalance: { name: "Pension", typeLine: null, balance: undefined, onPress: noop },
   longName: {
     name: "Stocks and shares ISA with a much longer name than most",

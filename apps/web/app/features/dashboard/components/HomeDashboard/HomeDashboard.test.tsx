@@ -108,6 +108,8 @@ const withDebt: HomeDashboardProps = {
   ...noDebt,
   accountsData: { netWorth: -2000, homeEstimate: 0, accountsCount: 4 },
   debtData: debtSummary,
+  // The loader passes the picture's figure for the strip beside the summary (27 November 2026).
+  consumerDebtTotal: debtSummary.totalDebt,
 };
 
 /** Straight after onboarding: nothing added yet. */

@@ -339,3 +339,22 @@ describe("Accounts", () => {
     expect(screen.queryByTestId("accounts-error")).toBeNull();
   });
 });
+
+describe("Accounts: a balance below zero to check (ruled 27 November 2026)", () => {
+  it("an overdrawn savings account is owed with web's note; an overdrawn current account has none", async () => {
+    jest.useFakeTimers();
+    const h = household([
+      { name: "Everyday", type: "Current", balance: -200, nov: -200 },
+      { name: "Rainy day", type: "Saving", balance: -150, nov: -150 },
+    ]);
+    await accounts(fakeApi(routes(h)));
+    await act(async () => jest.advanceTimersByTimeAsync(0));
+    const note = "This balance is below zero. Check the amount or the account type.";
+    expect(screen.getByTestId(`account-row-${h.idOf("Rainy day")}-note`)).toHaveTextContent(note);
+    expect(screen.getByTestId(`account-row-${h.idOf("Rainy day")}`).props.accessibilityLabel).toBe(
+      `Rainy day, Savings, £150, ${note}`,
+    );
+    expect(screen.queryByTestId(`account-row-${h.idOf("Everyday")}-note`)).toBeNull();
+    jest.useRealTimers();
+  });
+});
