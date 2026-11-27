@@ -193,4 +193,23 @@ describe("HeroFigure", () => {
       await expectHoldsAtDoubleText(<HeroFigure {...props} />);
     },
   );
+
+  it("the loaded hero after loading is not busy: the state is cleared, not left out", async () => {
+    const view = await render(
+      <ThemeProvider scheme="light">
+        <HeroFigure {...heroFigureStates.loading} />
+      </ThemeProvider>,
+    );
+    expect(screen.getByLabelText("Loading your net worth").props.accessibilityState).toEqual({
+      busy: true,
+    });
+    await view.rerender(
+      <ThemeProvider scheme="light">
+        <HeroFigure {...heroFigureStates.changeUp} />
+      </ThemeProvider>,
+    );
+    expect(
+      screen.getByLabelText("Net worth, £52,100, up £320 since October").props.accessibilityState,
+    ).toEqual({ busy: false });
+  });
 });

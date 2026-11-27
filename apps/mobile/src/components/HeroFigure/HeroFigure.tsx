@@ -75,8 +75,10 @@ export function HeroFigure({
 
   if (loading) {
     const heights = skeletonHeights(theme, fontScale);
+    // Keyed apart from the loaded hero, so the loaded one is a new view: Android kept the busy
+    // state on the reused view and read the loaded figure out as "busy" (device check, S6).
     return (
-      <View style={styles.base} testID={testID}>
+      <View key="loading" style={styles.base} testID={testID}>
         <View
           accessible
           accessibilityLabel={loadingLabel ?? label}
@@ -130,8 +132,14 @@ export function HeroFigure({
   const line = change ? change.spoken : caption;
   const spoken = [label, spokenFigure(value), line].filter(Boolean).join(", ");
   return (
-    <View style={styles.base} testID={testID}>
-      <View accessible accessibilityLabel={spoken} style={styles.group}>
+    <View key="loaded" style={styles.base} testID={testID}>
+      {/* Busy is cleared outright as well: a screen reader never hears a loaded figure as busy. */}
+      <View
+        accessible
+        accessibilityLabel={spoken}
+        accessibilityState={{ busy: false }}
+        style={styles.group}
+      >
         <Text textStyle="label.md" color="secondary">
           {label}
         </Text>
