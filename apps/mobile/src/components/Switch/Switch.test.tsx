@@ -341,13 +341,11 @@ describe("Switch", () => {
         offTrackOpacity * (typeof offThumb.opacity === "number" ? offThumb.opacity : 1);
       const offLabel = StyleSheet.flatten(screen.getByText(label).props.style);
 
-      // Disabled-on uses neutral border track with card thumb (disabled controls are exempt from WCAG 1.4.11 3:1).
+      // Disabled-on uses neutral border track with card thumb and a strong-border edge on both platforms.
       expect(onTrack.backgroundColor).toBe(set.colors["status.neutral.border"]);
       expect(onThumb.backgroundColor).toBe(set.colors["surface.card"]);
-      if (os === "android") {
-        expect(onThumb.borderWidth).toBe(1.5);
-        expect(onThumb.borderColor).toBe(set.colors["status.neutral.border"]);
-      }
+      expect(onThumb.borderWidth).toBe(1.5);
+      expect(onThumb.borderColor).toBe(set.colors["border.strong"]);
 
       const surfaces = [set.colors["surface.canvas"], set.colors["surface.card"]] as const;
       const onTrackFill = withOpacity(String(onTrack.backgroundColor), onTrackOpacity);
@@ -580,10 +578,8 @@ describe("Switch", () => {
 
       expect(disabledOn.track.backgroundColor).toBe(set.colors["status.neutral.border"]);
       expect(disabledOn.thumb.backgroundColor).toBe(set.colors["surface.card"]);
-      if (os === "android") {
-        expect(disabledOn.thumb.borderColor).toBe(set.colors["status.neutral.border"]);
-        expect(disabledOn.thumb.borderWidth).toBe(1.5);
-      }
+      expect(disabledOn.thumb.borderColor).toBe(set.colors["border.strong"]);
+      expect(disabledOn.thumb.borderWidth).toBe(1.5);
 
       expect(disabledOff.track.backgroundColor).toBe(set.colors["surface.sunken"]);
       expect(disabledOff.track.borderColor).toBe(set.colors["border.strong"]);
@@ -613,6 +609,38 @@ describe("Switch", () => {
         expect(disabledOnContrast).toBeLessThan(enabledOffContrast);
         expect(enabledOffContrast).toBeLessThan(enabledOnContrast);
         expect(disabledOffFillContrast).toBeLessThan(enabledOffContrast);
+      }
+    },
+  );
+
+  it.each([
+    ["light", "ios", light],
+    ["light", "android", light],
+    ["dark", "ios", dark],
+    ["dark", "android", dark],
+  ] as const)(
+    "%s %s: disabled-on thumb has a visible edge distinct from its track and fill",
+    async (scheme, os, set) => {
+      jest.replaceProperty(Platform, "OS", os);
+      await render(
+        <ThemeProvider scheme={scheme}>
+          <Switch label="Count" value={true} disabled onValueChange={jest.fn()} />
+        </ThemeProvider>,
+      );
+
+      const onTrack = StyleSheet.flatten(track().props.style) as ViewStyle;
+      const onThumb = StyleSheet.flatten(thumb().props.style) as ViewStyle;
+
+      expect(typeof onThumb.borderWidth).toBe("number");
+      expect(onThumb.borderWidth).toBeGreaterThanOrEqual(1);
+      expect(onThumb.borderColor).toBe(set.colors["border.strong"]);
+      expect(onThumb.borderColor).not.toBe(onTrack.backgroundColor);
+      expect(onThumb.borderColor).not.toBe(onThumb.backgroundColor);
+
+      for (const surface of [set.colors["surface.canvas"], set.colors["surface.card"]] as const) {
+        expect(
+          edgeContrast(onThumb, 1, String(onThumb.backgroundColor), surface, 1),
+        ).toBeGreaterThanOrEqual(3);
       }
     },
   );
