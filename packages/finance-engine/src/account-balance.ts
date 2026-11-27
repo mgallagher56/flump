@@ -1,5 +1,5 @@
 import { categorizeAccountType } from "./account-category.js";
-import { type AccountOwnership, applyAccountShare } from "./joint-share.js";
+import { type AccountOwnership, type AccountShareInput, applyAccountShare } from "./joint-share.js";
 import type { NetWorthLeftOut } from "./net-worth-basis.js";
 
 /**
@@ -127,6 +127,7 @@ const parseMonth = (currentMonth: string): { cy: number; cm: number } => ({
  */
 function heroFigure(
   type: string | null | undefined,
+  shareInput: AccountShareInput,
   details: readonly AccountMonthRow[],
   shownBalance: number | undefined,
   cy: number,
@@ -153,7 +154,7 @@ function heroFigure(
       : null;
   const balance =
     hasFuture && latest?.value !== undefined
-      ? toShownBalance(type, latest.value)
+      ? toShownBalance(type, applyAccountShare(latest.value, shareInput))
       : (shownBalance ?? 0);
   return {
     balance,
@@ -234,7 +235,7 @@ export function selectAccountBalance(
     favourable,
     latestMonth: keyOf(latest),
     previousMonth: keyOf(previous),
-    hero: heroFigure(type, details, balance, cy, cm),
+    hero: heroFigure(type, shareInput, details, balance, cy, cm),
   };
 }
 
