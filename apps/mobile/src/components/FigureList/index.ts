@@ -1,1 +1,1 @@
-export { FigureList, type FigureListRow } from "./FigureList";
+export { FigureList } from "./FigureList";

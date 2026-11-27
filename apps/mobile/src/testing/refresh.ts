@@ -1,8 +1,8 @@
 /**
  * Tests only: the pull-to-refresh control of the screen on show, as its scroll view holds it (the
- * Jest mock of the control draws no props of its own), and a pull on it inside act.
+ * Jest mock of the control draws no props of its own).
  */
-import { act, screen } from "@testing-library/react-native";
+import { screen } from "@testing-library/react-native";
 import type { ReactElement } from "react";
 
 interface Node {
@@ -38,13 +38,4 @@ export function refreshControl(): RefreshControlProps | undefined {
     }
   }
   return undefined;
-}
-
-/** Pulls to refresh and lets the refresh settle. */
-export async function pullToRefresh(): Promise<void> {
-  const control = refreshControl();
-  if (!control) throw new Error("This screen has no pull to refresh.");
-  await act(async () => {
-    await control.onRefresh();
-  });
 }

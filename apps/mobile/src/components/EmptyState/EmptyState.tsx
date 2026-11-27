@@ -6,7 +6,7 @@ import { Text } from "../Text";
 import { createStyles } from "./EmptyState.styles";
 
 /** One way on from an empty state. */
-export interface EmptyStateAction {
+interface EmptyStateAction {
   label: string;
   onPress(): void;
   /** `primary` for the one main action (the default); `link` for one that opens the website. */

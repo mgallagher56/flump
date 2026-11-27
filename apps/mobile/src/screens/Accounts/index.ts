@@ -1,1 +1,1 @@
-export { Accounts, type AccountsWebLinks } from "./Accounts";
+export { Accounts } from "./Accounts";

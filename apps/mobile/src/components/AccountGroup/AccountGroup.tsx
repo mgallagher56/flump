@@ -7,7 +7,7 @@ import { Text } from "../Text";
 import { createStyles } from "./AccountGroup.styles";
 
 /** A group's total: its words and the engine's figure. */
-export interface AccountGroupTotal {
+interface AccountGroupTotal {
   label: string;
   value: number;
 }

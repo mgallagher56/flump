@@ -1,1 +1,1 @@
-export { MonthLineChart, type MonthLinePoint } from "./MonthLineChart";
+export { MonthLineChart } from "./MonthLineChart";
