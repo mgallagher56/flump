@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { View } from "react-native";
+import { AccessibilityInfo, View } from "react-native";
 import { QUICK_BALANCE } from "../../copy/accountForms";
 import { useTheme } from "../../theme/ThemeProvider";
 import { Button } from "../Button";
@@ -69,8 +69,11 @@ export function QuickBalanceUpdate({
     setError(null);
     const failed = await onSave(value);
     setPending(false);
-    if (failed) setError(failed);
-    else setOpen(false);
+    if (failed) {
+      setError(failed);
+      // Read out on both platforms: the alert's live region reaches Android only.
+      AccessibilityInfo.announceForAccessibility(failed);
+    } else setOpen(false);
   };
 
   return (

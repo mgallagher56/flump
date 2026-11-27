@@ -4,7 +4,8 @@ import {
   OWNERSHIP_OPTIONS,
   STUDENT_LOAN_PLAN_OPTIONS,
 } from "@flump/finance-engine/account-form";
-import { type ReactNode, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import type { ScrollViewInstance } from "react-native";
 import { Button } from "../../components/Button";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
 import { CurrencyInput } from "../../components/CurrencyInput";
@@ -15,14 +16,16 @@ import { InlineAlert } from "../../components/InlineAlert";
 import { PercentInput } from "../../components/PercentInput";
 import { Screen } from "../../components/Screen";
 import { SelectField } from "../../components/SelectField";
+import { Skeleton } from "../../components/Skeleton";
 import { Text } from "../../components/Text";
 import { TextField } from "../../components/TextField";
 import { WholeNumberInput } from "../../components/WholeNumberInput";
 import { ACCOUNT_FORM, DELETE_ACCOUNT } from "../../copy/accountForms";
-import { ACCOUNT, TYPE_LABEL } from "../../copy/accounts";
+import { ACCOUNT, ACCOUNTS, TYPE_LABEL } from "../../copy/accounts";
 import { CHECK_IN } from "../../copy/checkIn";
 import { useAccounts } from "../../data/checkIn";
 import { useProfile } from "../../data/profile";
+import { useDelayedLoading } from "../../data/useDelayedLoading";
 import type { AccountFormMode, FormAccount } from "../../features/accounts/useAccountForm";
 import { type AccountForm as Form, useAccountForm } from "../../features/accounts/useAccountForm";
 
@@ -67,7 +70,12 @@ export function AccountFormScreen({ open, onBackToAccounts, ...props }: AccountF
   }
   // The profile only decides whether ownership shows on a sole account; a failed read leaves it off.
   if (!accounts.data || (profile.isPending && !profile.isError)) {
-    return <>{header(title)}</>;
+    return (
+      <>
+        {header(title)}
+        <AccountFormLoading />
+      </>
+    );
   }
   // Read loosely, as S6 reads the home estimate: the profile pick keeps fields it does not name,
   // and an older backend without partner mode leaves it off, web's default.
@@ -107,6 +115,16 @@ export function AccountFormScreen({ open, onBackToAccounts, ...props }: AccountF
       accounts={list}
       partnerMode={partnerMode}
     />
+  );
+}
+
+/** S5's loading rule: nothing for 200 ms, then a busy placeholder that stays at least 400 ms. */
+function AccountFormLoading() {
+  const skeleton = useDelayedLoading(true);
+  return (
+    <Screen edges={EDGES} testID="account-form-loading">
+      {skeleton ? <Skeleton label={ACCOUNTS.loading} testID="account-form-skeleton" /> : null}
+    </Screen>
   );
 }
 
@@ -150,11 +168,16 @@ function AccountForm({
 }: AccountFormProps) {
   const form = useAccountForm({ mode, accounts, partnerMode, onSaved, onDeleted });
   const [confirming, setConfirming] = useState(false);
+  const scrollRef = useRef<ScrollViewInstance>(null);
+  // A new alert sits at the top while Save is at the bottom: bring it into view.
+  useEffect(() => {
+    if (form.alertCount > 0) scrollRef.current?.scrollTo({ y: 0, animated: false });
+  }, [form.alertCount]);
   const deleteName = (mode.kind === "edit" && mode.account.name) || DELETE_ACCOUNT.fallbackName;
   return (
     <>
       {header(form.editing ? ACCOUNT_FORM.editTitle : ACCOUNT_FORM.addTitle)}
-      <Screen edges={EDGES} keyboardAware testID="account-form">
+      <Screen edges={EDGES} keyboardAware scrollRef={scrollRef} testID="account-form">
         {form.alert ? <InlineAlert message={form.alert} testID="account-form-alert" /> : null}
         <Fields form={form} />
         <Button

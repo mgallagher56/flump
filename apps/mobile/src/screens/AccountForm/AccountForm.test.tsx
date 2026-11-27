@@ -1,6 +1,6 @@
 import { ACCOUNT_FORM_TYPES, accountFieldSet } from "@flump/finance-engine/account-form";
 import { act, fireEvent, render, screen } from "@testing-library/react-native";
-import { Alert } from "react-native";
+import { AccessibilityInfo, Alert } from "react-native";
 import { Text } from "../../components/Text";
 import { fail, fakeApi, withApi } from "../../data/fakeApi";
 import { household, NOW, routes } from "../../features/check-in/checkInTestData";
@@ -162,6 +162,7 @@ describe("AccountForm: add", () => {
   });
 
   it("says what to change and sends nothing: no name, no balance, a student loan with no plan", async () => {
+    const announce = jest.spyOn(AccessibilityInfo, "announceForAccessibility");
     const api = fakeApi(routes(household()));
     await form(api, { kind: "add" });
     await choose("account-form-type", "Student Loan");
@@ -173,6 +174,10 @@ describe("AccountForm: add", () => {
       "Some details need changing. Each one says what to change.",
     );
     expect(posts(api)).toEqual([]);
+    // Read out on both platforms, since the alert is at the top and Save at the bottom.
+    expect(announce).toHaveBeenCalledWith(
+      "Some details need changing. Each one says what to change.",
+    );
   });
 
   it("a rate above 100 and an amount it cannot read say so under the field", async () => {
@@ -250,6 +255,29 @@ describe("AccountForm: add", () => {
     await form(fakeApi(routes(household())), { kind: "add" });
     await choose("account-form-type", "Saving");
     expect(screen.queryByTestId("account-form-ownership")).toBeNull();
+  });
+});
+
+describe("AccountForm: loading", () => {
+  afterEach(() => jest.useRealTimers());
+
+  it("nothing for 200 ms while the accounts load, then a busy placeholder", async () => {
+    jest.useFakeTimers();
+    const { ui } = withApi(
+      <AccountFormScreen
+        open={{ kind: "add" }}
+        onSaved={jest.fn()}
+        onDeleted={jest.fn()}
+        onCancel={jest.fn()}
+        onBackToAccounts={jest.fn()}
+      />,
+      fakeApi(routes(household(), { "GET /accounts": () => new Promise(() => {}) })).client,
+    );
+    await render(ui);
+    expect(screen.queryByTestId("account-form-skeleton")).toBeNull();
+    await act(async () => jest.advanceTimersByTimeAsync(250));
+    expect(screen.getByTestId("account-form-skeleton")).toBeOnTheScreen();
+    expect(screen.queryByTestId("account-form")).toBeNull();
   });
 });
 

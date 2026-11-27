@@ -24,6 +24,7 @@ import {
 } from "@flump/finance-engine/account-form";
 import * as Crypto from "expo-crypto";
 import { useCallback, useMemo, useState } from "react";
+import { AccessibilityInfo } from "react-native";
 import { ACCOUNT_FORM, FIX_FIELDS, saveFailedMessage } from "../../copy/accountForms";
 import { type AccountWriteResult, useAccountWrites } from "../../data/accountWrites";
 import {
@@ -88,7 +89,19 @@ export function useAccountForm({
   const [unread, setUnread] = useState<ReadonlySet<AccountFormField>>(new Set());
   const [errors, setErrors] = useState<AccountFormErrors>({});
   const [busy, setBusy] = useState<"saving" | "deleting" | null>(null);
-  const [alert, setAlert] = useState<string | null>(null);
+  const [alert, setAlertState] = useState<string | null>(null);
+  // Counts each alert shown, so the screen scrolls to it even when the words repeat.
+  const [alertCount, setAlertCount] = useState(0);
+  /**
+   * Shows what went wrong at the top of the form and reads it out on both platforms: a live region
+   * reaches Android only, and the Save button that caused it is at the bottom of a long form.
+   */
+  const setAlert = useCallback((message: string | null) => {
+    setAlertState(message);
+    if (message === null) return;
+    setAlertCount((n) => n + 1);
+    AccessibilityInfo.announceForAccessibility(message);
+  }, []);
 
   const saved = mode.kind === "edit" ? mode.account : null;
   const fieldSet = accountFieldSet(form);
@@ -279,6 +292,7 @@ export function useAccountForm({
     homeValue,
     errors,
     alert,
+    alertCount,
     busy,
     /** Web's note under ownership for a joint debt. */
     jointLiabilityNotice: describeJointLiabilityNotice({
