@@ -1,11 +1,68 @@
 import { dark, light } from "@flump/tokens/native";
 import { render, screen, userEvent } from "@testing-library/react-native";
-import { Platform, StyleSheet } from "react-native";
+import { Platform, StyleSheet, type ViewStyle } from "react-native";
 import { expectHoldsAtDoubleText } from "../../testing/textScale";
 import { ThemeProvider } from "../../theme/ThemeProvider";
 import { Switch } from "./Switch";
 import { switchStates } from "./Switch.states";
-import { DISABLED_OPACITY } from "./Switch.styles";
+
+// Local WCAG 2 contrast helper until @flump/tokens/contrast is exported for mobile.
+type Rgb = readonly [number, number, number];
+
+function parseHex(hex: string): Rgb {
+  const match = /^#([0-9a-f]{6})$/i.exec(hex);
+  if (!match?.[1]) throw new Error(`Expected 6-digit hex colour, got ${hex}`);
+  const digits = match[1];
+  return [
+    Number.parseInt(digits.slice(0, 2), 16),
+    Number.parseInt(digits.slice(2, 4), 16),
+    Number.parseInt(digits.slice(4, 6), 16),
+  ];
+}
+
+function blendOver(fg: Rgb, bg: Rgb, alpha: number): Rgb {
+  return [
+    fg[0] * alpha + bg[0] * (1 - alpha),
+    fg[1] * alpha + bg[1] * (1 - alpha),
+    fg[2] * alpha + bg[2] * (1 - alpha),
+  ];
+}
+
+function relativeLuminance(rgb: Rgb): number {
+  const [r, g, b] = rgb.map((v) => {
+    const c = v / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  }) as [number, number, number];
+  return r * 0.2126 + g * 0.7152 + b * 0.0722;
+}
+
+function contrastRatio(a: Rgb, b: Rgb): number {
+  const l1 = relativeLuminance(a);
+  const l2 = relativeLuminance(b);
+  return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+}
+
+function visibleEdgeColor(style: ViewStyle): string | null {
+  if (typeof style.borderWidth !== "number" || style.borderWidth < 1) return null;
+  return typeof style.borderColor === "string" ? style.borderColor : null;
+}
+
+function maxContrastAgainst(
+  style: ViewStyle,
+  opacity: number,
+  targetRgb: Rgb,
+  surfaceRgb: Rgb,
+): number {
+  if (typeof style.backgroundColor !== "string") {
+    throw new Error("Expected string backgroundColor on switch view");
+  }
+  const fillRgb = blendOver(parseHex(style.backgroundColor), surfaceRgb, opacity);
+  const fillRatio = contrastRatio(fillRgb, targetRgb);
+  const edge = visibleEdgeColor(style);
+  if (!edge) return fillRatio;
+  const edgeRgb = blendOver(parseHex(edge), surfaceRgb, opacity);
+  return Math.max(fillRatio, contrastRatio(edgeRgb, targetRgb));
+}
 
 /** The drawn switch inside the row: hidden from screen readers, since the row is the control. */
 /** The rendered host tree, as `toJSON` gives it. */
@@ -98,19 +155,6 @@ describe("Switch", () => {
   );
 
   it.each([
-    ["on", switchStates.on, 1],
-    ["saving", switchStates.saving, DISABLED_OPACITY],
-    ["disabled", switchStates.disabled, DISABLED_OPACITY],
-  ] as const)("%s: the drawn switch is greyed out only when the row is", async (_n, props, o) => {
-    await render(
-      <ThemeProvider scheme="light">
-        <Switch {...props} />
-      </ThemeProvider>,
-    );
-    expect(StyleSheet.flatten(track().props.style).opacity ?? 1).toBe(o);
-  });
-
-  it.each([
     // iOS: the 51 by 31 track, a 27 thumb inset by 2.
     ["ios", { width: 51, height: 31, padding: 2, marginVertical: 0 }, 27],
     // Android: the 36 by 14 track, a 20 thumb standing 3 above and below it.
@@ -169,4 +213,165 @@ describe("Switch", () => {
   it.each(Object.entries(switchStates))("%s holds at 200%% text", async (_name, props) => {
     await expectHoldsAtDoubleText(<Switch {...props} />);
   });
+
+  it.each([
+    ["light", "ios", "disabled", light],
+    ["light", "ios", "busy", light],
+    ["light", "android", "disabled", light],
+    ["light", "android", "busy", light],
+    ["dark", "ios", "disabled", dark],
+    ["dark", "ios", "busy", dark],
+    ["dark", "android", "disabled", dark],
+    ["dark", "android", "busy", dark],
+  ] as const)(
+    "%s %s %s: meets contrast targets for on and off, separates states, and differs from enabled",
+    async (scheme, os, inactiveProp, set) => {
+      jest.replaceProperty(Platform, "OS", os);
+      const inactiveFlags = inactiveProp === "disabled" ? { disabled: true } : { busy: true };
+      const label = "Self Assessment";
+      const view = await render(
+        <ThemeProvider scheme={scheme}>
+          <Switch label={label} value={true} onValueChange={jest.fn()} {...inactiveFlags} />
+        </ThemeProvider>,
+      );
+
+      const onTrack = StyleSheet.flatten(track().props.style) as ViewStyle;
+      const onThumb = StyleSheet.flatten(thumb().props.style) as ViewStyle;
+      const onTrackOpacity = typeof onTrack.opacity === "number" ? onTrack.opacity : 1;
+      const onThumbOpacity =
+        onTrackOpacity * (typeof onThumb.opacity === "number" ? onThumb.opacity : 1);
+      const onLabel = StyleSheet.flatten(screen.getByText(label).props.style);
+
+      await view.rerender(
+        <ThemeProvider scheme={scheme}>
+          <Switch label={label} value={false} onValueChange={jest.fn()} {...inactiveFlags} />
+        </ThemeProvider>,
+      );
+
+      const offTrack = StyleSheet.flatten(track().props.style) as ViewStyle;
+      const offThumb = StyleSheet.flatten(thumb().props.style) as ViewStyle;
+      const offTrackOpacity = typeof offTrack.opacity === "number" ? offTrack.opacity : 1;
+      const offThumbOpacity =
+        offTrackOpacity * (typeof offThumb.opacity === "number" ? offThumb.opacity : 1);
+      const offLabel = StyleSheet.flatten(screen.getByText(label).props.style);
+
+      const surfaces = [
+        parseHex(set.colors["surface.canvas"]),
+        parseHex(set.colors["surface.card"]),
+      ] as const;
+
+      for (const surfaceRgb of surfaces) {
+        expect(
+          maxContrastAgainst(onTrack, onTrackOpacity, surfaceRgb, surfaceRgb),
+        ).toBeGreaterThanOrEqual(3);
+        expect(
+          maxContrastAgainst(offTrack, offTrackOpacity, surfaceRgb, surfaceRgb),
+        ).toBeGreaterThanOrEqual(3);
+
+        const onTrackFillRgb = blendOver(
+          parseHex(String(onTrack.backgroundColor)),
+          surfaceRgb,
+          onTrackOpacity,
+        );
+        const offTrackFillRgb = blendOver(
+          parseHex(String(offTrack.backgroundColor)),
+          surfaceRgb,
+          offTrackOpacity,
+        );
+
+        expect(
+          maxContrastAgainst(onThumb, onThumbOpacity, onTrackFillRgb, surfaceRgb),
+        ).toBeGreaterThanOrEqual(3);
+        expect(
+          maxContrastAgainst(offThumb, offThumbOpacity, offTrackFillRgb, surfaceRgb),
+        ).toBeGreaterThanOrEqual(3);
+
+        if (os === "android") {
+          expect(
+            maxContrastAgainst(onThumb, onThumbOpacity, surfaceRgb, surfaceRgb),
+          ).toBeGreaterThanOrEqual(3);
+          expect(
+            maxContrastAgainst(offThumb, offThumbOpacity, surfaceRgb, surfaceRgb),
+          ).toBeGreaterThanOrEqual(3);
+        }
+
+        expect(contrastRatio(onTrackFillRgb, offTrackFillRgb)).toBeGreaterThanOrEqual(1.5);
+      }
+
+      expect(onTrackOpacity).toBe(1);
+      expect(onThumbOpacity).toBe(1);
+      expect(offTrackOpacity).toBe(1);
+      expect(offThumbOpacity).toBe(1);
+      expect(onTrack.justifyContent).toBe("flex-end");
+      expect(offTrack.justifyContent).toBe("flex-start");
+      expect(onTrack.backgroundColor).not.toBe(set.colors["primary.solid"]);
+      expect(offTrack.backgroundColor).not.toBe(set.colors["border.strong"]);
+      expect(onLabel.color).toBe(set.colors["text.muted"]);
+      expect(offLabel.color).toBe(set.colors["text.muted"]);
+    },
+  );
+
+  it.each([
+    ["light", "ios", light, { width: 51, height: 31, padding: 2, marginVertical: 0 }, 27],
+    ["light", "android", light, { width: 36, height: 14, padding: 0, marginVertical: 3 }, 20],
+    ["dark", "ios", dark, { width: 51, height: 31, padding: 2, marginVertical: 0 }, 27],
+    ["dark", "android", dark, { width: 36, height: 14, padding: 0, marginVertical: 3 }, 20],
+  ] as const)(
+    "%s %s: enabled styles are unchanged",
+    async (scheme, os, set, trackSize, thumbSize) => {
+      jest.replaceProperty(Platform, "OS", os);
+      const label = "Count";
+      const view = await render(
+        <ThemeProvider scheme={scheme}>
+          <Switch label={label} value={true} onValueChange={jest.fn()} />
+        </ThemeProvider>,
+      );
+
+      expect(StyleSheet.flatten(track().props.style)).toMatchObject({
+        ...trackSize,
+        borderRadius: trackSize.height / 2,
+        backgroundColor: set.colors["primary.solid"],
+        justifyContent: "flex-end",
+      });
+      expect(StyleSheet.flatten(track().props.style).opacity ?? 1).toBe(1);
+      expect(StyleSheet.flatten(track().props.style).borderWidth).toBeUndefined();
+      expect(StyleSheet.flatten(thumb().props.style)).toMatchObject({
+        width: thumbSize,
+        height: thumbSize,
+        borderRadius: thumbSize / 2,
+        borderWidth: StyleSheet.hairlineWidth,
+        backgroundColor: set.colors["surface.card"],
+        borderColor: set.colors["border.strong"],
+      });
+      expect(StyleSheet.flatten(screen.getByText(label).props.style).color).toBe(
+        set.colors["text.primary"],
+      );
+
+      await view.rerender(
+        <ThemeProvider scheme={scheme}>
+          <Switch label={label} value={false} onValueChange={jest.fn()} />
+        </ThemeProvider>,
+      );
+
+      expect(StyleSheet.flatten(track().props.style)).toMatchObject({
+        ...trackSize,
+        borderRadius: trackSize.height / 2,
+        backgroundColor: set.colors["border.strong"],
+        justifyContent: "flex-start",
+      });
+      expect(StyleSheet.flatten(track().props.style).opacity ?? 1).toBe(1);
+      expect(StyleSheet.flatten(track().props.style).borderWidth).toBeUndefined();
+      expect(StyleSheet.flatten(thumb().props.style)).toMatchObject({
+        width: thumbSize,
+        height: thumbSize,
+        borderRadius: thumbSize / 2,
+        borderWidth: StyleSheet.hairlineWidth,
+        backgroundColor: set.colors["surface.card"],
+        borderColor: set.colors["border.strong"],
+      });
+      expect(StyleSheet.flatten(screen.getByText(label).props.style).color).toBe(
+        set.colors["text.primary"],
+      );
+    },
+  );
 });
