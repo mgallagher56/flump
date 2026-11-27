@@ -295,6 +295,11 @@ describe("<AccountsGroupList />", () => {
       "This balance is below zero. Check the amount or the account type.",
     );
     expect(queryByTestId("below-zero-c1")).toBeNull();
+    // Read with the row's link, as mobile reads it in the row's label.
+    expect(getByRole("link", { name: "Rainy day" }).getAttribute("aria-describedby")).toBe(
+      "below-zero-s1",
+    );
+    expect(getByRole("link", { name: "Everyday" }).getAttribute("aria-describedby")).toBeNull();
   });
 
   test("makes the entire account row clickable via stretched link while keeping ISA link above it", () => {

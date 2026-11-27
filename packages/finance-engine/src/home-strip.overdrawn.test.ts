@@ -97,8 +97,12 @@ describe("Home's What you owe (ruled 27 November 2026)", () => {
     ]);
   });
 
-  it("an overdrawn current account is owed on the list with no flag", () => {
+  it("an overdrawn current account is owed on the list with no flag, however its type is written", () => {
     expect(selectAccountGroups([current(-300)], []).owe).toEqual([current(300)]);
+    // Home counts "checking" and any capitalisation as a current account, so the list does too.
+    const checking = current(-40, { type: "checking" });
+    expect(selectConsumerDebtTotal(snap([checking]))).toBe(40);
+    expect(selectAccountGroups([checking], []).owe).toEqual([{ ...checking, balance: 40 }]);
   });
 
   it("a current account at exactly 0 and a card at 0 give nothing owed", () => {

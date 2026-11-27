@@ -4119,8 +4119,4 @@ Measured by forced runs of `src/auth/workos-jwt.verifier.ts:68-101` (the `verify
 
 ## Overdrawn accounts on Home and the list (D8, 27 November 2026)
 
-`--mutate` with `--force` on the changed lines: `portfolio-totals.ts` `selectConsumerDebtTotal` (5 of 5 killed), `debt-summary.ts` `selectDebtSummary` (12 of 12 killed) and `account-balance.ts` `selectAccountGroups`, where one fault survives.
-
-| Line                    | Fault                                                  | Class      | Reason                                                                            |
-| ----------------------- | ------------------------------------------------------ | ---------- | --------------------------------------------------------------------------------- |
-| account-balance.ts L370 | StringLiteral `row.type ?? ""` → `"Stryker was here!"` | Equivalent | Neither string is a Current account, so a row with no type is flagged either way. |
+`--mutate` with `--force` on the changed lines: `portfolio-totals.ts` `selectConsumerDebtTotal` (5 of 5 killed), `debt-summary.ts` `selectDebtSummary` (12 of 12 killed) and `account-balance.ts` `selectAccountGroups`'s flag (L391 to L398, every fault killed once the flag reads the "cash" category, tested with a "checking" account). No survivor to list.
