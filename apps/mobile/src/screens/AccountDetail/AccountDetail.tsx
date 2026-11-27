@@ -16,6 +16,7 @@ import { Text } from "../../components/Text";
 import {
   ACCOUNT,
   accountChartSummary,
+  accountChartTitle,
   accountMonthNote,
   accountTypeSubtitle,
   balanceDateLine,
@@ -175,6 +176,9 @@ function Loaded({ detail, links }: { detail: Detail; links: AccountDetailProps["
     detail.notCounted ? ACCOUNT.notCounted : null,
   );
   const typeSubtitle = accountTypeSubtitle({ ...account, name: detail.name });
+  const jointHistory = describeJointWholeHistory(share, wholeOf);
+  const chartSummary = accountChartSummary(detail.firstMonth, detail.change, detail.endCarried);
+  const lastPoint = detail.series.at(-1);
   const owner = ownerLink(account.type, links);
   return (
     <>
@@ -195,14 +199,19 @@ function Loaded({ detail, links }: { detail: Detail; links: AccountDetailProps["
       {detail.hasMonths ? (
         <>
           <Text textStyle="body.sm" color="secondary" testID="account-history-description">
-            {describeJointWholeHistory(share, wholeOf) ?? ACCOUNT.historyDescription}
+            {jointHistory ?? ACCOUNT.historyDescription}
           </Text>
           {detail.series.length >= MIN_ACCOUNT_POINTS ? (
             <>
-              <ChartFigure points={detail.chart} testID="account-chart" />
-              <Text testID="account-chart-summary">
-                {accountChartSummary(detail.firstMonth, detail.change, detail.endCarried)}
-              </Text>
+              <ChartFigure
+                points={detail.chart}
+                title={accountChartTitle(detail.name)}
+                // Web's figure description, with a joint account's "the whole" sentence first.
+                summary={[jointHistory, chartSummary].filter(Boolean).join(" ")}
+                endLabel={lastPoint ? pounds(lastPoint.value) : undefined}
+                testID="account-chart"
+              />
+              <Text testID="account-chart-summary">{chartSummary}</Text>
             </>
           ) : (
             <Text color="secondary">{ACCOUNT.chartNotEnough}</Text>

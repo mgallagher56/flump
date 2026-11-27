@@ -98,6 +98,7 @@ interface MobileAccounts {
   >;
   accountMonthNote: Fn<[{ source?: string | null; carried?: true }], string>;
   accountChartSummary: Fn<[string | null, number | null, boolean], string>;
+  accountChartTitle: Fn<[string], string>;
   fewMonthsPrompt: Fn<[number], string>;
   comparedMonthsText: Fn<[RecordedMonthComparison], string>;
   notRecordedPrompt: Fn<[string], string>;
@@ -275,6 +276,15 @@ describe("the mobile account page says what web's says", () => {
       expect(m.accountMonthNote({ source })).toBe(accountSourceLabel(row({ source })));
     }
     expect(m.accountMonthNote({ source: "manual" })).toBe("Recorded");
+  });
+
+  it("the chart's hidden title, as web's AccountDetails passes it", async () => {
+    const m = await mobile();
+    // Web builds it inline: `${account?.name ?? "Account"} balance history`.
+    expect(m.accountChartTitle("Residential mortgage")).toBe(
+      "Residential mortgage balance history",
+    );
+    expect(m.accountChartTitle("")).toBe("Account balance history");
   });
 
   it.each([

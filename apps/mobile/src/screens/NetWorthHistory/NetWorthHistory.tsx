@@ -185,6 +185,7 @@ function Loaded({
   const basisText = basisSentence(history.leftOut);
   const { comparison, latestRecorded, previousRecorded } = history;
   const enoughForChart = history.recordedMonths >= MIN_CHART_MONTHS;
+  const lastPoint = history.series.at(-1);
   const summary = enoughForChart
     ? historyChartSummary(
         history.firstMonth,
@@ -229,7 +230,15 @@ function Loaded({
       <Text textStyle="body.sm" color="secondary">
         {HISTORY.chartDescription}
       </Text>
-      {enoughForChart ? <ChartFigure points={history.chart} testID="history-chart" /> : null}
+      {enoughForChart ? (
+        <ChartFigure
+          points={history.chart}
+          title={HISTORY.chartTitle}
+          summary={summary}
+          endLabel={lastPoint ? pounds(lastPoint.netWorth) : undefined}
+          testID="history-chart"
+        />
+      ) : null}
       {summary ? <Text testID="history-chart-summary">{summary}</Text> : null}
       {enoughForChart ? null : (
         <Text color="secondary" testID="history-few-months">
