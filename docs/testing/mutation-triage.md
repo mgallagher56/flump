@@ -4116,3 +4116,11 @@ Measured by forced runs of `src/auth/workos-jwt.verifier.ts:68-101` (the `verify
 | L576 | ConditionalExpression `raw === null` → false (term)                                             | Equivalent | `Math.round(Number(null))` is 0, below 1, so `undefined` either way.                                                                                                                                                                |
 | L585 | ConditionalExpression `raw === null` → false (repayment type)                                   | Equivalent | null is neither `""` nor one of the two types, so `undefined` either way.                                                                                                                                                           |
 | L670 | ConditionalExpression `homeValue !== null` → true                                               | Equivalent | `Number.isFinite(null)` is false in the same condition.                                                                                                                                                                             |
+
+## Overdrawn accounts on Home and the list (D8, 27 November 2026)
+
+`--mutate` with `--force` on the changed lines: `portfolio-totals.ts` `selectConsumerDebtTotal` (5 of 5 killed), `debt-summary.ts` `selectDebtSummary` (12 of 12 killed) and `account-balance.ts` `selectAccountGroups`, where one fault survives.
+
+| Line                    | Fault                                                  | Class      | Reason                                                                            |
+| ----------------------- | ------------------------------------------------------ | ---------- | --------------------------------------------------------------------------------- |
+| account-balance.ts L370 | StringLiteral `row.type ?? ""` → `"Stryker was here!"` | Equivalent | Neither string is a Current account, so a row with no type is flagged either way. |
