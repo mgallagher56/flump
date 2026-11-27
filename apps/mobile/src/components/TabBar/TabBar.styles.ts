@@ -20,11 +20,9 @@ const CHARACTER_WIDTH = 0.55;
 const LABEL_PADDING = 4;
 
 export interface TabLayoutInput {
-  readonly count: number;
+  readonly labels: readonly string[];
   /** The bar's width in points. */
   readonly width: number;
-  /** Characters in the longest label. */
-  readonly longestLabel: number;
   /** The label's font size at the current text scale. */
   readonly fontSize: number;
   readonly textScale: number;
@@ -37,18 +35,67 @@ export interface TabLayout {
 
 /**
  * Whether all tabs fit on one fixed row, or need horizontal scrolling so they stay on one row
- * without shrinking or clipping labels.
+ * without shrinking or clipping labels. Sums each label's own estimated width rather than
+ * multiplying the longest label by the count.
  */
-export function tabLayout({
-  count,
-  width,
-  longestLabel,
-  fontSize,
-  textScale,
-}: TabLayoutInput): TabLayout {
-  const labelWidth = longestLabel * fontSize * CHARACTER_WIDTH + LABEL_PADDING * 2;
-  const fits = Math.floor(width / labelWidth);
-  return { scroll: fits < count, showIcons: textScale < LABEL_ONLY_FROM };
+export function tabLayout({ labels, width, fontSize, textScale }: TabLayoutInput): TabLayout {
+  const totalWidth = labels.reduce(
+    (sum, label) => sum + label.length * fontSize * CHARACTER_WIDTH + LABEL_PADDING * 2,
+    0,
+  );
+  return { scroll: totalWidth - width > 1e-6, showIcons: textScale < LABEL_ONLY_FROM };
+}
+
+export interface OverflowCueInput {
+  readonly scroll: boolean;
+  readonly scrollX: number;
+  readonly viewportWidth: number;
+  readonly contentWidth: number;
+}
+
+/** Which edges of a scrolling tab row have hidden tabs past them. */
+export function overflowCues({ scroll, scrollX, viewportWidth, contentWidth }: OverflowCueInput): {
+  readonly left: boolean;
+  readonly right: boolean;
+} {
+  if (!scroll) return { left: false, right: false };
+  return {
+    left: scrollX > 1,
+    right: contentWidth > 0 ? scrollX + viewportWidth < contentWidth - 1 : true,
+  };
+}
+
+export interface ScrollTargetInput {
+  readonly cellX: number;
+  readonly cellWidth: number;
+  readonly scrollX: number;
+  readonly viewportWidth: number;
+  readonly contentWidth: number;
+  readonly edgePadding: number;
+}
+
+/**
+ * Scroll offset that brings the active tab clear of the bar's edges and edge fades, or `null`
+ * when it is already fully visible.
+ */
+export function scrollTargetForTab({
+  cellX,
+  cellWidth,
+  scrollX,
+  viewportWidth,
+  contentWidth,
+  edgePadding,
+}: ScrollTargetInput): number | null {
+  if (viewportWidth <= 0) return null;
+  const leftInset = scrollX > 1 ? edgePadding : 0;
+  const hasRightOverflow = contentWidth > 0 ? scrollX + viewportWidth < contentWidth - 1 : true;
+  const rightInset = hasRightOverflow ? edgePadding : 0;
+  const cellEnd = cellX + cellWidth;
+  if (cellX >= scrollX + leftInset && cellEnd <= scrollX + viewportWidth - rightInset) return null;
+  const effectiveContent = contentWidth > 0 ? contentWidth : cellEnd;
+  const maxScroll = Math.max(0, effectiveContent - viewportWidth);
+  const centred = cellX + cellWidth / 2 - viewportWidth / 2;
+  return Math.max(0, Math.min(centred, maxScroll));
 }
 
 export const createStyles = (theme: Theme) =>
@@ -61,13 +108,17 @@ export const createStyles = (theme: Theme) =>
       paddingBottom: theme.spacing["1"],
       paddingHorizontal: theme.spacing["1"],
     },
+    tablist: { position: "relative" },
     // One View per row and equal flex cells, never a wrapping row of percentage widths: Android
     // rounds each 20% cell to whole pixels, and five rounded up overran the bar and pushed the fifth
     // tab onto a second row at the normal size (device check, 26 November 2026).
     row: { flexDirection: "row" },
-    scrollRow: { flexDirection: "row", flexGrow: 1 },
+    scrollRow: { flexDirection: "row" },
     cell: { flex: 1, flexBasis: 0, alignItems: "stretch" },
-    scrollCell: { flexGrow: 1, alignItems: "stretch" },
+    scrollCell: { flexShrink: 0, alignItems: "stretch" },
+    fade: { position: "absolute", top: 0, bottom: 0, width: theme.spacing["6"] },
+    fadeLeft: { left: 0 },
+    fadeRight: { right: 0 },
     tab: {
       alignItems: "center",
       justifyContent: "center",

@@ -1,12 +1,12 @@
 import { dark, light } from "@flump/tokens/native";
-import { render, screen, userEvent, within } from "@testing-library/react-native";
-import { Dimensions, StyleSheet, type TextStyle, type ViewStyle } from "react-native";
+import { fireEvent, render, screen, userEvent, within } from "@testing-library/react-native";
+import { Dimensions, ScrollView, StyleSheet, type TextStyle, type ViewStyle } from "react-native";
 import { TABS } from "../../navigation/navItems";
 import { expectHoldsAtDoubleText } from "../../testing/textScale";
 import { ThemeProvider } from "../../theme/ThemeProvider";
 import { TabBar } from "./TabBar";
 import { tabBarStates } from "./TabBar.states";
-import { tabLayout } from "./TabBar.styles";
+import { overflowCues, scrollTargetForTab, tabLayout } from "./TabBar.styles";
 
 const flat = <T,>(style: unknown) => (StyleSheet.flatten(style as ViewStyle) ?? {}) as T;
 
@@ -32,11 +32,23 @@ const rows = () =>
       .map((tab) => tab.props.testID as string),
   }));
 
+// The first render of both icon and scroll variants loads React Native's Svg and ScrollView
+// modules, which on a cold Jest cache took several seconds inside the test body. Warming both
+// once here keeps every test under its 5 s budget.
+beforeAll(async () => {
+  phone(1, 320);
+  await renderBar("home", "light", 1);
+  await renderBar("home", "light", 2);
+  screen.unmount();
+  jest.restoreAllMocks();
+}, 30_000);
+
 describe("TabBar", () => {
   beforeEach(() => {
     phone();
   });
   afterEach(() => {
+    jest.useRealTimers();
     jest.restoreAllMocks();
   });
 
@@ -69,8 +81,8 @@ describe("TabBar", () => {
   });
 
   it("selecting another tab calls onSelect with its key; the current tab does nothing", async () => {
-    jest.useRealTimers();
-    const user = userEvent.setup();
+    jest.useFakeTimers();
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
     const onSelect = await renderBar("home");
     await user.press(screen.getByRole("tab", { name: "Accounts" }));
     await user.press(screen.getByRole("tab", { name: "Home" }));
@@ -135,26 +147,111 @@ describe("TabBar", () => {
     },
   );
 
-  it.each([320, 412])(
-    "at 200%% text on %i points, keeps all five tabs on one horizontally scrollable row without disabling font scaling",
-    async (width) => {
-      phone(2, width);
-      await renderBar();
-      expect(rows().map((row) => row.tabs)).toEqual([
-        ["tab-home", "tab-accounts", "tab-budget", "tab-taxAndPay", "tab-more"],
-      ]);
-      expect(
-        screen.queryAllByTestId(/^tab-.+-icon$/, { includeHiddenElements: true }),
-      ).toHaveLength(0);
-      expect(screen.getByTestId("tab-scroll").props.horizontal).toBe(true);
-      for (const tab of screen.getAllByRole("tab")) {
-        expect(flat<ViewStyle>(tab.props.style)).toMatchObject({ minHeight: 48, minWidth: 48 });
-      }
-      for (const item of TABS) {
-        expect(screen.getByText(item.label).props.allowFontScaling).not.toBe(false);
-      }
-    },
-  );
+  it("at 200% text on a narrow phone (320 points), scrolls horizontally with content-sized cells, an overflow cue and 48 point targets", async () => {
+    // At 2x (fontSize 24): Home 60.8 + Accounts 113.6 + Budget 87.2 + Pay 47.6 + More 60.8 = 370 > 320.
+    phone(2, 320);
+    await renderBar();
+    expect(rows().map((row) => row.tabs)).toEqual([
+      ["tab-home", "tab-accounts", "tab-budget", "tab-taxAndPay", "tab-more"],
+    ]);
+    expect(screen.queryAllByTestId(/^tab-.+-icon$/, { includeHiddenElements: true })).toHaveLength(
+      0,
+    );
+    const scroller = screen.getByTestId("tab-scroll");
+    expect(scroller.props.horizontal).toBe(true);
+    for (const cellView of screen.getAllByTestId(/^tab-cell-/)) {
+      const cell = flat<ViewStyle>(cellView.props.style);
+      expect(cell.flex).toBeUndefined();
+      expect(cell.flexGrow).toBeUndefined();
+      expect(cell.flexShrink).toBe(0);
+    }
+    for (const tab of screen.getAllByRole("tab")) {
+      expect(flat<ViewStyle>(tab.props.style)).toMatchObject({ minHeight: 48, minWidth: 48 });
+    }
+    for (const item of TABS) {
+      expect(screen.getByText(item.label).props.allowFontScaling).not.toBe(false);
+    }
+    // Right overflow fade shown initially; no left fade at scroll x = 0.
+    const rightFade = screen.getByTestId("tab-fade-right", { includeHiddenElements: true });
+    expect(rightFade.props.pointerEvents).toBe("none");
+    expect(screen.queryByTestId("tab-fade-left", { includeHiddenElements: true })).toBeNull();
+
+    await fireEvent(screen.getByTestId("tab-bar"), "layout", {
+      nativeEvent: { layout: { width: 312 } },
+    });
+    await fireEvent(scroller, "contentSizeChange", 370, 48);
+    await fireEvent(scroller, "scroll", { nativeEvent: { contentOffset: { x: 20 } } });
+    expect(
+      screen.getByTestId("tab-fade-left", { includeHiddenElements: true }).props.pointerEvents,
+    ).toBe("none");
+    expect(
+      screen.getByTestId("tab-fade-right", { includeHiddenElements: true }).props.pointerEvents,
+    ).toBe("none");
+
+    await fireEvent(scroller, "scroll", { nativeEvent: { contentOffset: { x: 58 } } });
+    expect(screen.getByTestId("tab-fade-left", { includeHiddenElements: true })).toBeTruthy();
+    expect(screen.queryByTestId("tab-fade-right", { includeHiddenElements: true })).toBeNull();
+  });
+
+  it("at 200% text on a wider phone (412 points), keeps one fixed row without scrolling", async () => {
+    // At 2x (fontSize 24): Home 60.8 + Accounts 113.6 + Budget 87.2 + Pay 47.6 + More 60.8 = 370 <= 412.
+    phone(2, 412);
+    await renderBar();
+    const [only, ...more] = rows();
+    expect(more).toEqual([]);
+    expect(only?.tabs).toHaveLength(5);
+    expect(screen.queryByTestId("tab-scroll")).toBeNull();
+    expect(screen.queryByTestId("tab-fade-left", { includeHiddenElements: true })).toBeNull();
+    expect(screen.queryByTestId("tab-fade-right", { includeHiddenElements: true })).toBeNull();
+    expect(screen.queryAllByTestId(/^tab-.+-icon$/, { includeHiddenElements: true })).toHaveLength(
+      0,
+    );
+    for (const cellView of screen.getAllByTestId(/^tab-cell-/)) {
+      expect(flat<ViewStyle>(cellView.props.style)).toMatchObject({ flex: 1, flexBasis: 0 });
+    }
+    for (const tab of screen.getAllByRole("tab")) {
+      expect(flat<ViewStyle>(tab.props.style)).toMatchObject({ minHeight: 48, minWidth: 48 });
+    }
+    for (const item of TABS) {
+      expect(screen.getByText(item.label).props.allowFontScaling).not.toBe(false);
+    }
+  });
+
+  it("when scrolling, scrolls the active tab into view on mount and when activeKey changes", async () => {
+    phone(2, 320);
+    const scrollTo = jest.spyOn(ScrollView.prototype, "scrollTo").mockImplementation(() => {});
+    scrollTo.mockClear();
+    const onSelect = jest.fn();
+    const view = await render(
+      <ThemeProvider scheme="light" textScale={2}>
+        <TabBar items={TABS} activeKey="more" onSelect={onSelect} />
+      </ThemeProvider>,
+    );
+    await fireEvent(screen.getByTestId("tab-bar"), "layout", {
+      nativeEvent: { layout: { width: 312 } },
+    });
+    await fireEvent(screen.getByTestId("tab-scroll"), "contentSizeChange", 370, 48);
+    await fireEvent(screen.getByTestId("tab-cell-more"), "layout", {
+      nativeEvent: { layout: { x: 310, width: 60 } },
+    });
+    // maxScroll = 370 - 312 = 58; "more" is past the right edge so it scrolls to 58.
+    expect(scrollTo).toHaveBeenCalledWith({ x: 58, animated: false });
+
+    scrollTo.mockClear();
+    await fireEvent(screen.getByTestId("tab-scroll"), "scroll", {
+      nativeEvent: { contentOffset: { x: 58 } },
+    });
+    await fireEvent(screen.getByTestId("tab-cell-home"), "layout", {
+      nativeEvent: { layout: { x: 0, width: 60 } },
+    });
+    await view.rerender(
+      <ThemeProvider scheme="light" textScale={2}>
+        <TabBar items={TABS} activeKey="home" onSelect={onSelect} />
+      </ThemeProvider>,
+    );
+    // "home" at x = 0 is off the left edge while scrolled to 58; switching to it scrolls back to 0.
+    expect(scrollTo).toHaveBeenCalledWith({ x: 0, animated: false });
+  });
 
   it.each(Object.entries(tabBarStates))("%s holds at 200%% text", async (_name, props) => {
     await expectHoldsAtDoubleText(<TabBar {...props} />);
@@ -162,30 +259,101 @@ describe("TabBar", () => {
 });
 
 describe("tabLayout", () => {
-  // label.sm is 12 points; the longest label, "Accounts", has 8 characters.
+  // label.sm is 12 points; the five labels are Home (4), Accounts (8), Budget (6), Pay (3), More (4).
+  const labels = TABS.map((item) => item.label);
   const at = (width: number, textScale: number) =>
-    tabLayout({ count: 5, width, longestLabel: 8, fontSize: 12 * textScale, textScale });
+    tabLayout({ labels, width, fontSize: 12 * textScale, textScale });
 
   it("keeps the five tabs on one fixed row at 320 points and the normal size, with icons", () => {
-    // 8 x 12 x 0.55 + 8 = 60.8 points a label; 312 points of bar (320 less 4 each side) fit 5.
+    // 1x (fontSize 12): (4+8+6+3+4) * 12 * 0.55 + 5 * 8 = 165 + 40 = 205 <= 312.
     expect(at(312, 1)).toEqual({ scroll: false, showIcons: true });
   });
 
-  it("at 200% text on 320 and 412 points, scrolls horizontally on one row, labels only", () => {
-    // 8 x 24 x 0.55 + 8 = 113.6 points a label; 5 labels need ~568 > 312 and 404.
+  it("at 200% text, scrolls on a narrow width and keeps one fixed row on a wider width", () => {
+    // 2x (fontSize 24):
+    // Home:     4 * 24 * 0.55 + 8 =  60.8
+    // Accounts: 8 * 24 * 0.55 + 8 = 113.6
+    // Budget:   6 * 24 * 0.55 + 8 =  87.2
+    // Pay:      3 * 24 * 0.55 + 8 =  47.6
+    // More:     4 * 24 * 0.55 + 8 =  60.8
+    // Sum = 370 points. 312 and 369 < 370 (scroll); 370 and 412 >= 370 (fixed row).
     expect(at(312, 2)).toEqual({ scroll: true, showIcons: false });
-    expect(at(412, 2)).toEqual({ scroll: true, showIcons: false });
+    expect(at(369, 2)).toEqual({ scroll: true, showIcons: false });
+    expect(at(370, 2)).toEqual({ scroll: false, showIcons: false });
+    expect(at(412, 2)).toEqual({ scroll: false, showIcons: false });
   });
 
-  it("switches to horizontal scrolling once five labels no longer fit one row", () => {
-    // 8 x 18 x 0.55 + 8 = 87.2 points a label; 312 / 87.2 fits 3 < 5; icons hide from 1.5x.
-    expect(at(312, 1.5)).toEqual({ scroll: true, showIcons: false });
-    // Just under 1.5: 8 x 17.4 x 0.55 + 8 = 84.56; 312 / 84.56 fits 3 < 5; icons stay.
-    expect(at(312, 1.45)).toEqual({ scroll: true, showIcons: true });
+  it("hides icons from 1.5x and switches to scrolling only when the sum exceeds width", () => {
+    // 1.5x (fontSize 18): 25 * 18 * 0.55 + 40 = 247.5 + 40 = 287.5 points.
+    expect(at(312, 1.5)).toEqual({ scroll: false, showIcons: false });
+    expect(at(287, 1.5)).toEqual({ scroll: true, showIcons: false });
+    // Just under 1.5x (1.49x, fontSize 17.88): 25 * 17.88 * 0.55 + 40 = 285.85 points.
+    expect(at(280, 1.49)).toEqual({ scroll: true, showIcons: true });
+    expect(at(286, 1.49)).toEqual({ scroll: false, showIcons: true });
+  });
+});
+
+describe("overflowCues and scrollTargetForTab", () => {
+  it("reports edge fades only when the row scrolls and content extends past that edge", () => {
+    expect(
+      overflowCues({ scroll: false, scrollX: 20, viewportWidth: 312, contentWidth: 370 }),
+    ).toEqual({
+      left: false,
+      right: false,
+    });
+    expect(
+      overflowCues({ scroll: true, scrollX: 0, viewportWidth: 312, contentWidth: 370 }),
+    ).toEqual({
+      left: false,
+      right: true,
+    });
+    expect(
+      overflowCues({ scroll: true, scrollX: 20, viewportWidth: 312, contentWidth: 370 }),
+    ).toEqual({
+      left: true,
+      right: true,
+    });
+    expect(
+      overflowCues({ scroll: true, scrollX: 58, viewportWidth: 312, contentWidth: 370 }),
+    ).toEqual({
+      left: true,
+      right: false,
+    });
   });
 
-  it("a wide phone at 1.25 times text keeps one fixed row without scrolling", () => {
-    // 8 x 15 x 0.55 + 8 = 74 points a label; 422 / 74 fits 5.
-    expect(at(422, 1.25)).toEqual({ scroll: false, showIcons: true });
+  it("returns null when the active tab is clear of edge fades, and centres clamped otherwise", () => {
+    // Viewport 312, content 370, scrollX 0: leftInset 0, rightInset 24 -> visible [0, 288].
+    expect(
+      scrollTargetForTab({
+        cellX: 61,
+        cellWidth: 114,
+        scrollX: 0,
+        viewportWidth: 312,
+        contentWidth: 370,
+        edgePadding: 24,
+      }),
+    ).toBeNull();
+    // Cell under the right fade [270, 330] -> centres at 270 + 30 - 156 = 144, clamped to 58.
+    expect(
+      scrollTargetForTab({
+        cellX: 270,
+        cellWidth: 60,
+        scrollX: 0,
+        viewportWidth: 312,
+        contentWidth: 370,
+        edgePadding: 24,
+      }),
+    ).toBe(58);
+    // Scrolled to 58 (leftInset 24, rightInset 0 -> visible [82, 370]); cell [60, 120] is under left fade.
+    expect(
+      scrollTargetForTab({
+        cellX: 60,
+        cellWidth: 60,
+        scrollX: 58,
+        viewportWidth: 312,
+        contentWidth: 370,
+        edgePadding: 24,
+      }),
+    ).toBe(0);
   });
 });
