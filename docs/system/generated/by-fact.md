@@ -63,6 +63,7 @@ Where each value is stored, entered and used. One entry per stored fact, then on
 | [Net worth over time](#net-worth-over-time)                                                                                              | figure | accounts    | Broken                                    |
 | [Net worth change since last month](#net-worth-change)                                                                                   | figure | accounts    | Holds                                     |
 | [Home's two-figure strip (left over each month, what you owe or pension pots)](#home-strip)                                              | figure | budget      | Holds                                     |
+| [The Budget page's overview facts, ranked categories, breathing room basis and illustration](#budget-page)                               | figure | budget      | Holds                                     |
 | [An account's balance as shown, and its change since last month](#account-shown-balance)                                                 | figure | accounts    | Holds                                     |
 | [An account's balance each month](#account-balance-series)                                                                               | figure | accounts    | Holds                                     |
 | [Change since the first month on a chart](#series-change)                                                                                | figure | accounts    | Holds                                     |
@@ -1582,6 +1583,24 @@ Shown on:
 - Dashboard: `apps/web/app/features/dashboard/components/HomeDashboard/HomeDashboard.tsx` (the strip under the hero; the loader's budget flags come from the same module's rules (E12 S5b))
 - Mobile app Home: `apps/mobile/src/features/home/useHomeData.ts` (the mobile Home strip (E12 S5b), from selectHomeStripFromRows over the same rows)
 
+### The Budget page's overview facts, ranked categories, breathing room basis and illustration
+
+<a id="budget-page"></a>
+
+- Id: `budget-page` (derived figure)
+- Verdict: Holds. Findings: none. Links: none.
+- Computed by: `selectBudgetPage` in `packages/finance-engine/src/budget-page.ts`
+- Built from: `budget-entries`, `budget-entry-link-kind`, `budget-entry-link-account`, `custom-budget-categories`, `salary`, `typed-take-home`, `tax-region`, `student-loan-plan`, `housing-cost`, `account-balance`, `account-monthly-amount`, `ownership-share`
+- Note: The sums and rules web's Budget page held outside the engine (going out each month, which prompt stands in for a figure, the ranked category totals, the page's rows with linked lines in place, the breathing room basis count and the what-if illustration) moved into the engine in E12 S10 with no figure change.
+
+Other code paths that compute it:
+
+- `selectBudgetPageFromRows` [wrapper] in `packages/finance-engine/src/budget-page.ts` (the same page from the API rows, through the figures buildFinancialPicture uses (selectBudgetFigures, selectSafeToSpend, selectMonthsOfCover); the mobile app's one call)
+
+Shown on:
+
+- Budget: `apps/web/app/containers/budget/BudgetContainer.tsx` (BudgetOverview, BudgetCategoryList, BreathingRoomBasis and RunwayCalculator call the same module's functions (E12 S10))
+
 ### Left over each month and budget totals
 
 <a id="left-over"></a>
@@ -1637,7 +1656,7 @@ Shown on:
 
 Other code paths that compute it:
 
-- `runway what-if sums` [duplicate] in `apps/web/app/features/budget/components/RunwayCalculator/RunwayCalculator.tsx` (applies a joint share twice)
+- `runwayIllustration` [wrapper] in `packages/finance-engine/src/budget-page.ts` (the what-if illustration (E12 S10, moved from RunwayCalculator.tsx with no figure change): starts from the saved figure's money to draw on and essentials and applies only the inputs changed, then monthsOfCoverFor)
 
 Shown on:
 

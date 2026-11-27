@@ -4,7 +4,9 @@ import {
   type BudgetAccountLinkOffer,
   type BudgetLinkOffer,
   defaultIsEssential,
+  INCOME_CATEGORY as INCOME,
   isBudgetAccountLink,
+  isIncomeEntry,
 } from "@flump/finance-engine";
 import {
   Button,
@@ -24,7 +26,6 @@ import { Link } from "react-router";
 import type { HousingTenure } from "~/features/housing/components/HousingDetails";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { type BudgetEntry, getCategoryLabel } from "~/types/budget";
-import { INCOME_CATEGORY as INCOME, isIncomeEntry } from "../../income";
 import {
   isNotSetEntry,
   type LinkableAccount,

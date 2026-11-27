@@ -1,5 +1,4 @@
-import { BUDGET_SYNONYM_GROUPS, normaliseEntryName } from "@flump/finance-engine";
-import { INCOME_CATEGORY } from "./income";
+import { BUDGET_SYNONYM_GROUPS, INCOME_CATEGORY, normaliseEntryName } from "@flump/finance-engine";
 
 /** The fields two entries are matched on. `isIncome` puts an entry under income, whatever its category. */
 export interface CommonEntryKey {

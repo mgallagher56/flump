@@ -1,3 +1,4 @@
+import { isIncomeEntry } from "@flump/finance-engine";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { BudgetEntry } from "~/types/budget";
@@ -6,7 +7,6 @@ import { BreathingRoomBasis } from "./components/BreathingRoomBasis";
 import { rankCategories } from "./components/BudgetCategoryList";
 import { BudgetOverview } from "./components/BudgetOverview";
 import { RunwayCalculator } from "./components/RunwayCalculator";
-import { isIncomeEntry } from "./income";
 import { linkedAccountFor, linkedSourceText, pageBudgetEntries } from "./linkedEntries";
 
 /**

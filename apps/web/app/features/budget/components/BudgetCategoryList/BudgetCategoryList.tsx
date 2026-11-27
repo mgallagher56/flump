@@ -1,4 +1,4 @@
-import { budgetRowMonthly } from "@flump/finance-engine";
+import { type BudgetCategoryRank, rankBudgetCategories } from "@flump/finance-engine";
 import { Button, Card, Icon, Money, PageSection, VisuallyHidden } from "@repo/ui";
 import { cx } from "@repo/ui/styled-system/css";
 import { ArrowRight, ChartPie, ChevronDown, Pencil, Plus } from "lucide-react";
@@ -7,7 +7,6 @@ import { SampleAwareLink } from "~/components/navigation/SampleAwareLink";
 import type { BudgetEntry } from "~/types/budget";
 import { CATEGORY_LABELS } from "~/types/budget";
 import { categoryIcon } from "../../categoryIcons";
-import { INCOME_CATEGORY, isIncomeEntry } from "../../income";
 import {
   categoryList,
   chevron,
@@ -61,63 +60,25 @@ export interface BudgetCategoryListProps {
   onEditBudget?: () => void;
 }
 
-export interface CategoryRow {
-  category: string;
+export interface CategoryRow extends BudgetCategoryRank {
   label: string;
-  /** The known lines' monthly total. Not shown when `notSet`. */
-  total: number;
-  count: number;
-  /** True when a linked line in it is not set: its total is unknown, shown as "Not set". */
-  notSet: boolean;
 }
 
-export { INCOME_CATEGORY };
-
-/** True when a category holds nothing but income, so a stray spending row never hides. */
-const isIncomeCategory = (category: string, entries: BudgetEntry[]): boolean => {
-  const inCategory = entries.filter((e) => e.category === category);
-  if (inCategory.some((e) => !isIncomeEntry(e))) return false;
-  return category === INCOME_CATEGORY || inCategory.length > 0;
-};
+export { INCOME_CATEGORY } from "@flump/finance-engine";
 
 /**
- * Where the money goes: categories ranked by their monthly amount, largest first. Income
- * categories are left out (E16 R2-6). A category with no amount (no entries, or only £0 ones such
- * as an old "ISA / Investments" suggestion) is left out too, owner item 33a; the editor keeps
- * them (`keepEmpty`), at the foot in their order, so they can be filled in.
+ * Where the money goes, ranked by the engine (`rankBudgetCategories`), each row with its label.
+ * The editor keeps empty categories (`keepEmpty`), at the foot in their order.
  */
 export function rankCategories(
   categories: string[],
   entries: BudgetEntry[],
   options: { keepEmpty?: boolean } = {},
 ): CategoryRow[] {
-  const all = Array.from(new Set([...categories, ...entries.map((e) => e.category)])).filter(
-    (category) => !isIncomeCategory(category, entries),
-  );
-  const ranked = all
-    .map((category, index) => {
-      const inCategory = entries.filter((e) => e.category === category && !isIncomeEntry(e));
-      const notSet = inCategory.some((e) => e.notSet === true);
-      // A linked line that is not set has no figure: never added as £0.
-      const total = inCategory
-        .filter((e) => e.notSet !== true)
-        .reduce((s, e) => s + Math.abs(budgetRowMonthly(e)), 0);
-      return {
-        index,
-        row: {
-          category,
-          label: CATEGORY_LABELS[category] || category,
-          total: Number.isFinite(total) ? total : 0,
-          count: inCategory.length,
-          notSet,
-        },
-      };
-    })
-    .sort((a, b) => b.row.total - a.row.total || a.index - b.index)
-    .map(({ row }) => row);
-  return options.keepEmpty
-    ? ranked
-    : ranked.filter((row) => row.notSet || Math.round(row.total) > 0);
+  return rankBudgetCategories(categories, entries, options).map((row) => ({
+    ...row,
+    label: CATEGORY_LABELS[row.category] || row.category,
+  }));
 }
 
 /**

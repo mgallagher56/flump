@@ -82,7 +82,7 @@ What each page, tool and service writes, reads and shows.
 - Code: `apps/web/app/containers/budget/BudgetContainer.tsx`
 - Writes: [Housing status, has a mortgage, and mortgage type](by-fact.md#housing-status), [Monthly housing cost (rent or mortgage payment)](by-fact.md#housing-cost), [Budget categories the user added](by-fact.md#custom-budget-categories), [Budget lines](by-fact.md#budget-entries), [Which saved fact a budget line is linked to](by-fact.md#budget-entry-link-kind), [Which account a savings or debt budget line reads](by-fact.md#budget-entry-link-account), [Setup checklist progress](by-fact.md#setup-checklist)
 - Reads: [Housing status, has a mortgage, and mortgage type](by-fact.md#housing-status), [Monthly housing cost (rent or mortgage payment)](by-fact.md#housing-cost), [Budget categories the user added](by-fact.md#custom-budget-categories), [Budget lines](by-fact.md#budget-entries), [Which saved fact a budget line is linked to](by-fact.md#budget-entry-link-kind), [Which account a savings or debt budget line reads](by-fact.md#budget-entry-link-account), [Partner mode toggle](by-fact.md#partner-mode)
-- Shows figures: [Take-home pay](by-fact.md#take-home), [Left over each month and budget totals](by-fact.md#left-over), [Safe to spend](by-fact.md#safe-to-spend), [Breathing room (months of cover)](by-fact.md#months-of-cover)
+- Shows figures: [The Budget page's overview facts, ranked categories, breathing room basis and illustration](by-fact.md#budget-page), [Take-home pay](by-fact.md#take-home), [Left over each month and budget totals](by-fact.md#left-over), [Safe to spend](by-fact.md#safe-to-spend), [Breathing room (months of cover)](by-fact.md#months-of-cover)
 
 ## Savings
 
