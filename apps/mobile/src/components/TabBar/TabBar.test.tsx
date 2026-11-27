@@ -193,8 +193,16 @@ describe("TabBar", () => {
     expect(screen.queryByTestId("tab-fade-right", { includeHiddenElements: true })).toBeNull();
   });
 
-  it("at 200% text on a wider phone (412 points), keeps one fixed row without scrolling", async () => {
-    // At 2x (fontSize 24): Home 60.8 + Accounts 113.6 + Budget 87.2 + Pay 47.6 + More 60.8 = 370 <= 412.
+  it("at 200% text on a wider phone (412 points), keeps one fixed row with proportional cells so no label wraps", async () => {
+    // At 2x (fontSize 24, character width 0.55, horizontal label padding 4 + 4 = 8):
+    // Home (4):     4 * 24 * 0.55 + 8 =  60.8 -> share of 412 = 412 *  60.8 / 370 =  67.70 >=  60.8
+    // Accounts (8): 8 * 24 * 0.55 + 8 = 113.6 -> share of 412 = 412 * 113.6 / 370 = 126.50 >= 113.6
+    // Budget (6):   6 * 24 * 0.55 + 8 =  87.2 -> share of 412 = 412 *  87.2 / 370 =  97.10 >=  87.2
+    // Pay (3):      3 * 24 * 0.55 + 8 =  47.6 -> share of 412 = 412 *  47.6 / 370 =  53.00 >=  47.6
+    // More (4):     4 * 24 * 0.55 + 8 =  60.8 -> share of 412 = 412 *  60.8 / 370 =  67.70 >=  60.8
+    // Longest * 5 = 113.6 * 5 = 568 > 412 (equal cells would give 82.4pt < 113.6pt for Accounts);
+    // Sum = 370 <= 412, so the row stays fixed with cells sized in proportion to each label.
+    const expectedWidths = [60.8, 113.6, 87.2, 47.6, 60.8] as const;
     phone(2, 412);
     await renderBar();
     const [only, ...more] = rows();
@@ -206,9 +214,19 @@ describe("TabBar", () => {
     expect(screen.queryAllByTestId(/^tab-.+-icon$/, { includeHiddenElements: true })).toHaveLength(
       0,
     );
-    for (const cellView of screen.getAllByTestId(/^tab-cell-/)) {
-      expect(flat<ViewStyle>(cellView.props.style)).toMatchObject({ flex: 1, flexBasis: 0 });
-    }
+    const cells = screen.getAllByTestId(/^tab-cell-/);
+    const grows = cells.map((cellView) => flat<ViewStyle>(cellView.props.style).flexGrow ?? 0);
+    const totalGrow = grows.reduce((sum, g) => sum + g, 0);
+    cells.forEach((cellView, index) => {
+      const cell = flat<ViewStyle>(cellView.props.style);
+      const expected = expectedWidths[index] as number;
+      expect(cell.flex).toBeUndefined();
+      expect(cell.width).toBeUndefined();
+      expect(cell.flexBasis).toBe(0);
+      expect(cell.flexGrow).toBeCloseTo(expected, 5);
+      const share = (412 * (cell.flexGrow as number)) / totalGrow;
+      expect(share).toBeGreaterThanOrEqual(expected);
+    });
     for (const tab of screen.getAllByRole("tab")) {
       expect(flat<ViewStyle>(tab.props.style)).toMatchObject({ minHeight: 48, minWidth: 48 });
     }
@@ -264,32 +282,51 @@ describe("tabLayout", () => {
   const at = (width: number, textScale: number) =>
     tabLayout({ labels, width, fontSize: 12 * textScale, textScale });
 
-  it("keeps the five tabs on one fixed row at 320 points and the normal size, with icons", () => {
-    // 1x (fontSize 12): (4+8+6+3+4) * 12 * 0.55 + 5 * 8 = 165 + 40 = 205 <= 312.
-    expect(at(312, 1)).toEqual({ scroll: false, showIcons: true });
+  it("uses equal cells when the longest label times five fits the width, with icons", () => {
+    // 1x (fontSize 12): [34.4, 60.8, 47.6, 27.8, 34.4]. Longest * 5 = 304, sum = 205.
+    const res = at(312, 1);
+    expect(res.mode).toBe("equal");
+    expect(res.showIcons).toBe(true);
+    for (const [i, w] of [34.4, 60.8, 47.6, 27.8, 34.4].entries()) {
+      expect(res.labelWidths[i]).toBeCloseTo(w, 5);
+    }
+    expect(at(304, 1)).toMatchObject({ mode: "equal", showIcons: true });
+    expect(at(303, 1)).toMatchObject({ mode: "proportional", showIcons: true });
+    expect(at(205, 1)).toMatchObject({ mode: "proportional", showIcons: true });
+    expect(at(204, 1)).toMatchObject({ mode: "scroll", showIcons: true });
   });
 
-  it("at 200% text, scrolls on a narrow width and keeps one fixed row on a wider width", () => {
+  it("at 200% text, picks equal, proportional or scroll across the width boundaries", () => {
     // 2x (fontSize 24):
     // Home:     4 * 24 * 0.55 + 8 =  60.8
     // Accounts: 8 * 24 * 0.55 + 8 = 113.6
     // Budget:   6 * 24 * 0.55 + 8 =  87.2
     // Pay:      3 * 24 * 0.55 + 8 =  47.6
     // More:     4 * 24 * 0.55 + 8 =  60.8
-    // Sum = 370 points. 312 and 369 < 370 (scroll); 370 and 412 >= 370 (fixed row).
-    expect(at(312, 2)).toEqual({ scroll: true, showIcons: false });
-    expect(at(369, 2)).toEqual({ scroll: true, showIcons: false });
-    expect(at(370, 2)).toEqual({ scroll: false, showIcons: false });
-    expect(at(412, 2)).toEqual({ scroll: false, showIcons: false });
+    // Longest * 5 = 568; Sum = 370.
+    const res = at(568, 2);
+    expect(res.mode).toBe("equal");
+    expect(res.showIcons).toBe(false);
+    for (const [i, w] of [60.8, 113.6, 87.2, 47.6, 60.8].entries()) {
+      expect(res.labelWidths[i]).toBeCloseTo(w, 5);
+    }
+    expect(at(567, 2)).toMatchObject({ mode: "proportional", showIcons: false });
+    expect(at(412, 2)).toMatchObject({ mode: "proportional", showIcons: false });
+    expect(at(370, 2)).toMatchObject({ mode: "proportional", showIcons: false });
+    expect(at(369, 2)).toMatchObject({ mode: "scroll", showIcons: false });
+    expect(at(312, 2)).toMatchObject({ mode: "scroll", showIcons: false });
   });
 
-  it("hides icons from 1.5x and switches to scrolling only when the sum exceeds width", () => {
-    // 1.5x (fontSize 18): 25 * 18 * 0.55 + 40 = 247.5 + 40 = 287.5 points.
-    expect(at(312, 1.5)).toEqual({ scroll: false, showIcons: false });
-    expect(at(287, 1.5)).toEqual({ scroll: true, showIcons: false });
-    // Just under 1.5x (1.49x, fontSize 17.88): 25 * 17.88 * 0.55 + 40 = 285.85 points.
-    expect(at(280, 1.49)).toEqual({ scroll: true, showIcons: true });
-    expect(at(286, 1.49)).toEqual({ scroll: false, showIcons: true });
+  it("hides icons from 1.5x and switches across equal, proportional and scroll", () => {
+    // 1.5x (fontSize 18): [47.6, 87.2, 67.4, 37.7, 47.6]; longest * 5 = 436, sum = 287.5.
+    expect(at(436, 1.5)).toMatchObject({ mode: "equal", showIcons: false });
+    expect(at(312, 1.5)).toMatchObject({ mode: "proportional", showIcons: false });
+    expect(at(287, 1.5)).toMatchObject({ mode: "scroll", showIcons: false });
+    // Just under 1.5x (1.49x, fontSize 17.88):
+    // longest = 8 * 17.88 * 0.55 + 8 = 86.672 -> * 5 = 433.36; sum = 285.85.
+    expect(at(280, 1.49)).toMatchObject({ mode: "scroll", showIcons: true });
+    expect(at(286, 1.49)).toMatchObject({ mode: "proportional", showIcons: true });
+    expect(at(434, 1.49)).toMatchObject({ mode: "equal", showIcons: true });
   });
 });
 

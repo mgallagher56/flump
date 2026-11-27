@@ -28,22 +28,32 @@ export interface TabLayoutInput {
   readonly textScale: number;
 }
 
+const FLOAT_EPSILON = 1e-6;
+
 export interface TabLayout {
-  readonly scroll: boolean;
+  readonly mode: "equal" | "proportional" | "scroll";
   readonly showIcons: boolean;
+  readonly labelWidths: readonly number[];
 }
 
 /**
- * Whether all tabs fit on one fixed row, or need horizontal scrolling so they stay on one row
- * without shrinking or clipping labels. Sums each label's own estimated width rather than
- * multiplying the longest label by the count.
+ * Picks between three single-row layouts: equal cells when the longest label fits every tab,
+ * proportional cells when the summed label widths fit without wrapping or clipping, and a
+ * scrolling row otherwise.
  */
 export function tabLayout({ labels, width, fontSize, textScale }: TabLayoutInput): TabLayout {
-  const totalWidth = labels.reduce(
-    (sum, label) => sum + label.length * fontSize * CHARACTER_WIDTH + LABEL_PADDING * 2,
-    0,
+  const labelWidths = labels.map(
+    (label) => label.length * fontSize * CHARACTER_WIDTH + LABEL_PADDING * 2,
   );
-  return { scroll: totalWidth - width > 1e-6, showIcons: textScale < LABEL_ONLY_FROM };
+  const longest = labelWidths.reduce((max, w) => Math.max(max, w), 0);
+  const totalWidth = labelWidths.reduce((sum, w) => sum + w, 0);
+  const mode =
+    longest * labels.length - width <= FLOAT_EPSILON
+      ? "equal"
+      : totalWidth - width <= FLOAT_EPSILON
+        ? "proportional"
+        : "scroll";
+  return { mode, showIcons: textScale < LABEL_ONLY_FROM, labelWidths };
 }
 
 export interface OverflowCueInput {
@@ -115,6 +125,7 @@ export const createStyles = (theme: Theme) =>
     row: { flexDirection: "row" },
     scrollRow: { flexDirection: "row" },
     cell: { flex: 1, flexBasis: 0, alignItems: "stretch" },
+    proportionalCell: { flexBasis: 0, alignItems: "stretch" },
     scrollCell: { flexShrink: 0, alignItems: "stretch" },
     fade: { position: "absolute", top: 0, bottom: 0, width: theme.spacing["6"] },
     fadeLeft: { left: 0 },
