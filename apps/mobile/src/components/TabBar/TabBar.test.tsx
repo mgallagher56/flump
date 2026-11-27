@@ -227,17 +227,21 @@ describe("TabBar", () => {
       0,
     );
     const cells = screen.getAllByTestId(/^tab-cell-/);
-    const grows = cells.map((cellView) => flat<ViewStyle>(cellView.props.style).flexGrow ?? 0);
-    const totalGrow = grows.reduce((sum, g) => sum + g, 0);
+    const totalBasis = cells.reduce(
+      (sum, cellView) => sum + ((flat<ViewStyle>(cellView.props.style).flexBasis as number) ?? 0),
+      0,
+    );
+    const slackPerCell = (472 - totalBasis) / cells.length;
     cells.forEach((cellView, index) => {
       const cell = flat<ViewStyle>(cellView.props.style);
       const expected = expectedWidths[index] as number;
       expect(cell.flex).toBeUndefined();
       expect(cell.width).toBeUndefined();
-      expect(cell.flexBasis).toBe(0);
-      expect(cell.flexGrow).toBeCloseTo(expected, 5);
-      const share = (472 * (cell.flexGrow as number)) / totalGrow;
-      expect(share).toBeGreaterThanOrEqual(expected);
+      expect(cell.flexBasis).toBeCloseTo(expected + 1, 5);
+      expect(cell.flexGrow).toBe(1);
+      expect(cell.flexShrink).toBe(0);
+      const share = (cell.flexBasis as number) + slackPerCell;
+      expect(share).toBeGreaterThanOrEqual(expected + 1);
     });
     for (const tab of screen.getAllByRole("tab")) {
       expect(flat<ViewStyle>(tab.props.style)).toMatchObject({ minHeight: 48, minWidth: 48 });
@@ -270,15 +274,16 @@ describe("TabBar", () => {
     await renderBar("home", "light", 2);
     expect(screen.getByTestId("tab-scroll").props.horizontal).toBe(true);
 
-    // Measured cell widths [70, 122, 92, 50, 70] sum to 404 <= 432 -> proportional.
+    // Measured cell widths [70, 122, 92, 50, 70] (+ 1pt epsilon each = 409 <= 432) -> proportional.
     await measureLabels({ home: 62, accounts: 114, budget: 84, taxAndPay: 42, more: 62 });
     expect(screen.queryByTestId("tab-scroll")).toBeNull();
     const expectedCells = [70, 122, 92, 50, 70] as const;
     screen.getAllByTestId(/^tab-cell-/).forEach((cellView, index) => {
       const cell = flat<ViewStyle>(cellView.props.style);
       const expected = expectedCells[index] as number;
-      expect(cell.flexGrow).toBe(expected);
-      expect((432 * expected) / 404).toBeGreaterThanOrEqual(expected);
+      expect(cell.flexBasis).toBe(expected + 1);
+      expect(cell.flexGrow).toBe(1);
+      expect(cell.flexShrink).toBe(0);
     });
   });
 
@@ -313,12 +318,34 @@ describe("TabBar", () => {
     );
     expect(screen.getByTestId("tab-scroll").props.horizontal).toBe(true);
 
-    // Once new 2x measurements arrive ([70, 122, 92, 50, 70], sum 404 <= 432), switches to proportional.
+    // Once new 2x measurements arrive ([70, 122, 92, 50, 70], + 1pt each = 409 <= 432), switches to proportional.
     await measureLabels({ home: 62, accounts: 114, budget: 84, taxAndPay: 42, more: 62 });
     expect(screen.queryByTestId("tab-scroll")).toBeNull();
     const expectedCells = [70, 122, 92, 50, 70] as const;
     screen.getAllByTestId(/^tab-cell-/).forEach((cellView, index) => {
-      expect(flat<ViewStyle>(cellView.props.style).flexGrow).toBe(expectedCells[index]);
+      const cell = flat<ViewStyle>(cellView.props.style);
+      expect(cell.flexBasis).toBe((expectedCells[index] as number) + 1);
+      expect(cell.flexGrow).toBe(1);
+      expect(cell.flexShrink).toBe(0);
+    });
+  });
+
+  it("at the proportional boundary width, gives each proportional cell flexBasis = label width + padding + 1 and flexGrow 1", async () => {
+    // Measured widths [66, 126, 94, 48, 66] + 8pt horizontal pill padding = [74, 134, 102, 56, 74].
+    // Exact proportional boundary width = 440 + 5 * 1 = 445 (phone width 453 minus 8pt bar padding).
+    phone(2, 453);
+    await renderBar("home", "light", 2);
+    await measureLabels({ home: 66, accounts: 126, budget: 94, taxAndPay: 48, more: 66 });
+    expect(screen.queryByTestId("tab-scroll")).toBeNull();
+
+    const expectedFlexBasis = [75, 135, 103, 57, 75] as const;
+    screen.getAllByTestId(/^tab-cell-/).forEach((cellView, index) => {
+      const cell = flat<ViewStyle>(cellView.props.style);
+      expect(cell.flex).toBeUndefined();
+      expect(cell.width).toBeUndefined();
+      expect(cell.flexBasis).toBe(expectedFlexBasis[index]);
+      expect(cell.flexGrow).toBe(1);
+      expect(cell.flexShrink).toBe(0);
     });
   });
 

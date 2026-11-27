@@ -11,6 +11,7 @@ import { Pressable } from "../Pressable";
 import { Text } from "../Text";
 import {
   createStyles,
+  LABEL_FIT_EPSILON,
   LABEL_STYLE,
   overflowCues,
   scrollTargetForTab,
@@ -185,7 +186,10 @@ export function TabBar({ items, activeKey, onSelect }: TabBarProps) {
         const cellStyle = isScroll
           ? styles.scrollCell
           : layout.mode === "proportional"
-            ? [styles.proportionalCell, { flexGrow: layout.labelWidths[index] }]
+            ? [
+                styles.proportionalCell,
+                { flexBasis: (layout.labelWidths[index] ?? 0) + LABEL_FIT_EPSILON },
+              ]
             : styles.cell;
         return (
           <View
