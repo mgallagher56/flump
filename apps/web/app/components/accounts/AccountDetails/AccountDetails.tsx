@@ -1,4 +1,8 @@
-import { selectAccountBalanceSeries } from "@flump/finance-engine";
+import {
+  describeJointWholeHistory,
+  isOwedAccountType,
+  selectAccountBalanceSeries,
+} from "@flump/finance-engine";
 import { Card, EmptyState, Illustration, PageSection } from "@repo/ui";
 import { History } from "lucide-react";
 import type { FC, ReactNode } from "react";
@@ -14,10 +18,20 @@ import { detailsRoot } from "./AccountDetails.styles";
 export const sourceLabel = (source: unknown): string | null =>
   source === "calculated" ? "Calculated" : source === "confirmed" ? "Confirmed" : null;
 
-/** The section around the history (E17 5A): a header with an icon tile, a title and one line. */
-const HistorySection: FC<{ children: ReactNode }> = ({ children }) => (
+/** The section's line for an account held alone. */
+export const HISTORY_DESCRIPTION = "This account's balance each month, as recorded.";
+
+/**
+ * The section around the history (E17 5A): a header with an icon tile, a title and one line. A
+ * joint account's chart is the whole account (owner decision 9 A), so its line says so with the
+ * share, and the chart cannot be read against the hero, which is the share.
+ */
+const HistorySection: FC<{ children: ReactNode; description?: string | null }> = ({
+  children,
+  description,
+}) => (
   <PageSection
-    description="This account's balance each month, as recorded."
+    description={description ?? HISTORY_DESCRIPTION}
     domain="accounts"
     icon={History}
     id="account-balance-history"
@@ -52,6 +66,17 @@ const AccountDetails: FC = () => {
     [accountDetails, isInvestment],
   );
 
+  const jointLine = describeJointWholeHistory(
+    {
+      name: account?.name,
+      type: account?.type,
+      accountSubtype: account?.accountSubtype,
+      ownership: account?.ownership,
+      sharePercent: account?.sharePercent,
+    },
+    isOwedAccountType(account?.type) ? "amount owed" : "balance",
+  );
+
   if (!accountDetails || accountDetails.length === 0) {
     return (
       <HistorySection>
@@ -68,7 +93,7 @@ const AccountDetails: FC = () => {
   }
 
   return (
-    <HistorySection>
+    <HistorySection description={jointLine}>
       <div className={detailsRoot()}>
         <AccountDetailChart
           accountDetails={rows}
