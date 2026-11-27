@@ -217,6 +217,28 @@ describe("KpiStrip", () => {
     expect(screen.queryByTestId("kpi-strip", { includeHiddenElements: true })).toBeNull();
   });
 
+  it("figures drawn as given (the Budget tab): each card one item, unknown as Not set", async () => {
+    await strip(kpiStripStates.budgetIncomeUnknown);
+    expect(screen.getByLabelText("Money in each month, Not set, After tax").props.accessible).toBe(
+      true,
+    );
+    expect(
+      screen.getByLabelText("Going out each month, £1,960, Bills, spending and savings"),
+    ).toBeOnTheScreen();
+    expect(screen.queryByText("£0")).toBeNull();
+    // Home's strip words never appear here.
+    expect(screen.queryByText("Left over each month")).toBeNull();
+  });
+
+  it("with no items, the one prompt stands in for both figures", async () => {
+    await strip(kpiStripStates.budgetPrompt);
+    expect(
+      screen.getByText("Add your income and spending to see money in and going out"),
+    ).toBeOnTheScreen();
+    expect(screen.queryByText("Money in each month")).toBeNull();
+    expect(screen.queryByRole("link")).toBeNull();
+  });
+
   describe("layout", () => {
     const direction = () =>
       (StyleSheet.flatten(screen.getByTestId("kpi-strip").props.style) as ViewStyle).flexDirection;

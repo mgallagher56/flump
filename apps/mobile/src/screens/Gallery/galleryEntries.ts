@@ -7,6 +7,14 @@ import { AppHeader } from "../../components/AppHeader";
 import { appHeaderStates } from "../../components/AppHeader/AppHeader.states";
 import { AppLockSetting } from "../../components/AppLockSetting";
 import { appLockSettingStates } from "../../components/AppLockSetting/AppLockSetting.states";
+import { BreathingRoom } from "../../components/BreathingRoom";
+import { breathingRoomStates } from "../../components/BreathingRoom/BreathingRoom.states";
+import { BudgetCategoryList } from "../../components/BudgetCategoryList";
+import { budgetCategoryListStates } from "../../components/BudgetCategoryList/BudgetCategoryList.states";
+import { BudgetEditor } from "../../components/BudgetEditor";
+import { budgetEditorStates } from "../../components/BudgetEditor/BudgetEditor.states";
+import { BudgetEntryForm } from "../../components/BudgetEntryForm";
+import { budgetEntryFormStates } from "../../components/BudgetEntryForm/BudgetEntryForm.states";
 import { Button } from "../../components/Button";
 import { buttonStates } from "../../components/Button/Button.states";
 import { Card } from "../../components/Card";
@@ -24,6 +32,8 @@ import { DataList } from "../../components/DataList";
 import { dataListStates } from "../../components/DataList/DataList.states";
 import { DateField } from "../../components/DateField";
 import { dateFieldStates } from "../../components/DateField/DateField.states";
+import { DebtHelpLink } from "../../components/DebtHelpLink";
+import { debtHelpLinkStates } from "../../components/DebtHelpLink/DebtHelpLink.states";
 import { EmptyState } from "../../components/EmptyState";
 import { emptyStateStates } from "../../components/EmptyState/EmptyState.states";
 import { ErrorState } from "../../components/ErrorState";
@@ -59,10 +69,14 @@ import { PhraseConfirm } from "../../components/PhraseConfirm";
 import { phraseConfirmStates } from "../../components/PhraseConfirm/PhraseConfirm.states";
 import { Pressable } from "../../components/Pressable";
 import { pressableStates } from "../../components/Pressable/Pressable.states";
+import { ProjectionNotice } from "../../components/ProjectionNotice";
+import { projectionNoticeStates } from "../../components/ProjectionNotice/ProjectionNotice.states";
 import { QuickBalanceUpdate } from "../../components/QuickBalanceUpdate";
 import { quickBalanceUpdateStates } from "../../components/QuickBalanceUpdate/QuickBalanceUpdate.states";
 import { SavedFiguresFrame } from "../../components/SavedFiguresFrame";
 import { savedFiguresFrameStates } from "../../components/SavedFiguresFrame/SavedFiguresFrame.states";
+import { ScenarioZone } from "../../components/ScenarioZone";
+import { scenarioZoneStates } from "../../components/ScenarioZone/ScenarioZone.states";
 import { Screen } from "../../components/Screen";
 import { screenStates } from "../../components/Screen/Screen.states";
 import { SelectField } from "../../components/SelectField";
@@ -181,4 +195,11 @@ export const GALLERY: readonly GalleryEntry[] = [
   entry("DateField", DateField, dateFieldStates),
   entry("SelectField", SelectField as ComponentType<SelectFieldProps<string>>, selectFieldStates),
   entry("QuickBalanceUpdate", QuickBalanceUpdate, quickBalanceUpdateStates),
+  entry("ProjectionNotice", ProjectionNotice, projectionNoticeStates),
+  entry("ScenarioZone", ScenarioZone, scenarioZoneStates),
+  entry("DebtHelpLink", DebtHelpLink, debtHelpLinkStates),
+  entry("BudgetCategoryList", BudgetCategoryList, budgetCategoryListStates),
+  entry("BreathingRoom", BreathingRoom, breathingRoomStates),
+  entry("BudgetEntryForm", BudgetEntryForm, budgetEntryFormStates),
+  entry("BudgetEditor", BudgetEditor, budgetEditorStates),
 ];

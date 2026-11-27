@@ -79,4 +79,32 @@ export const kpiStripStates = {
     },
   },
   loading: { ...links, loading: true },
+  /** The Budget tab's two figures for the renter (S10): £2,085 in, £1,960 out. */
+  budgetFigures: {
+    items: [
+      { key: "money-in", label: "Money in each month", value: 2085, caption: "After tax" },
+      {
+        key: "going-out",
+        label: "Going out each month",
+        value: 1960,
+        caption: "Bills, spending and savings",
+      },
+    ],
+  },
+  /** Spending with no income row: money in is not set, never £0. */
+  budgetIncomeUnknown: {
+    items: [
+      { key: "money-in", label: "Money in each month", value: null, caption: "After tax" },
+      {
+        key: "going-out",
+        label: "Going out each month",
+        value: 1960,
+        caption: "Bills, spending and savings",
+      },
+    ],
+  },
+  budgetPrompt: {
+    items: [],
+    emptyPrompt: "Add your income and spending to see money in and going out",
+  },
 } satisfies Record<string, KpiStripProps>;
