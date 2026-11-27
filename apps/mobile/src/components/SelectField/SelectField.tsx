@@ -117,7 +117,7 @@ export function SelectField<T extends string>({
           onPress={close}
         />
       </View>
-      <ScrollView contentContainerStyle={styles.list}>
+      <ScrollView contentContainerStyle={styles.list} keyboardShouldPersistTaps="handled">
         <OptionList
           label={CHOOSE_ONE}
           options={options}
