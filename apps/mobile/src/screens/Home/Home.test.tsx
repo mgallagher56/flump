@@ -608,7 +608,9 @@ describe("Home's two-figure strip (S5b)", () => {
       ),
     );
     // 1,000 - 1,200 = -200.
-    expect(await screen.findByText("Short each month")).toBeOnTheScreen();
+    expect(
+      await screen.findByText("Short each month", { includeHiddenElements: true }),
+    ).toBeOnTheScreen();
     expect(screen.getByText("-£200")).toBeOnTheScreen();
     expect(textColour("-£200")).toBe(light.colors["text.primary"]);
     expect(screen.queryByText("Left over each month")).toBeNull();

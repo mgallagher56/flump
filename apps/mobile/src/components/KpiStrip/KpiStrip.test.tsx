@@ -17,7 +17,9 @@ const windowSize = (width: number, fontScale: number) =>
   jest.spyOn(Dimensions, "get").mockReturnValue({ width, height: 844, scale: 3, fontScale });
 
 const textOf = (words: string) =>
-  StyleSheet.flatten(screen.getByText(words).props.style) as TextStyle;
+  StyleSheet.flatten(
+    screen.getByText(words, { includeHiddenElements: true }).props.style,
+  ) as TextStyle;
 
 async function strip(
   props: Partial<KpiStripProps>,
@@ -44,7 +46,9 @@ describe("KpiStrip", () => {
 
   it("two figures: left over from the budget and what is owed, each read out as one item", async () => {
     await strip(kpiStripStates.twoFigures);
-    expect(screen.getByText("Left over each month")).toBeOnTheScreen();
+    expect(
+      screen.getByText("Left over each month", { includeHiddenElements: true }),
+    ).toBeOnTheScreen();
     expect(screen.getByText("£125")).toBeOnTheScreen();
     expect(screen.getByText("From your budget")).toBeOnTheScreen();
     expect(screen.getByText("What you owe")).toBeOnTheScreen();
@@ -69,7 +73,9 @@ describe("KpiStrip", () => {
     "short: the label says so, the figure keeps the ordinary colour, no icon (%s)",
     async (scheme, tokens) => {
       await strip(kpiStripStates.short, { scheme });
-      expect(screen.getByText("Short each month")).toBeOnTheScreen();
+      expect(
+        screen.getByText("Short each month", { includeHiddenElements: true }),
+      ).toBeOnTheScreen();
       expect(screen.queryByText("Left over each month")).toBeNull();
       expect(screen.getByText("-£240")).toBeOnTheScreen();
       expect(textOf("-£240").color).toBe(tokens.colors["text.primary"]);
@@ -342,7 +348,7 @@ describe("KpiStrip", () => {
 
         const row = screen.getByTestId("kpi-strip-first-explain-row");
         expect((StyleSheet.flatten(row.props.style) as ViewStyle).flexDirection).toBe("row");
-        expect(within(row).getByText(label)).toBeOnTheScreen();
+        expect(within(row).getByText(label, { includeHiddenElements: true })).toBeOnTheScreen();
         expect(within(row).getByRole("button", { name: `About ${label}` })).toBeOnTheScreen();
 
         await userEvent.setup().press(within(row).getByRole("button", { name: `About ${label}` }));
@@ -350,6 +356,44 @@ describe("KpiStrip", () => {
         expect(
           explain.children.map((child) => (child as { props: { testID?: string } }).props.testID),
         ).toEqual(["kpi-strip-first-explain-row", "kpi-strip-first-explain-body"]);
+      },
+    );
+
+    it.each([
+      [
+        "twoFigures",
+        "Left over each month",
+        "Left over each month, £125, From your budget",
+        kpiStripStates.twoFigures,
+      ],
+      [
+        "short",
+        "Short each month",
+        "Short each month, minus £240, From your budget",
+        kpiStripStates.short,
+      ],
+    ] as const)(
+      "%s hides the visible label from screen readers so %s is announced once plus its info button",
+      async (_name, label, spoken, props) => {
+        await strip(props);
+        const card = screen.getByTestId("kpi-strip-first");
+        expect(within(card).queryByText(label)).toBeNull();
+        const visibleLabel = within(card).getByText(label, { includeHiddenElements: true });
+        expect(visibleLabel).toBeOnTheScreen();
+        expect(visibleLabel.props.accessibilityElementsHidden).toBe(true);
+        expect(visibleLabel.props.importantForAccessibility).toBe("no-hide-descendants");
+        expect(within(card).getByRole("button", { name: `About ${label}` })).toBeOnTheScreen();
+        expect(within(card).getByLabelText(spoken).props.accessible).toBe(true);
+        expect(
+          within(card)
+            .getAllByLabelText(new RegExp(label))
+            .map((el) => el.props.accessibilityLabel),
+        ).toEqual([`About ${label}`, spoken]);
+
+        const second = screen.getByTestId("kpi-strip-second");
+        expect(
+          within(second).getByText("What you owe").props.accessibilityElementsHidden,
+        ).toBeUndefined();
       },
     );
 
