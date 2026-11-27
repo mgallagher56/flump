@@ -11,6 +11,11 @@
       "import": "./dist/index.js",
       "default": "./src/index.ts"
     },
+    "./accounts": {
+      "types": "./dist/accounts-entry.d.ts",
+      "import": "./dist/accounts-entry.js",
+      "default": "./src/accounts-entry.ts"
+    },
     "./check-in": {
       "types": "./dist/check-in-entry.d.ts",
       "import": "./dist/check-in-entry.js",

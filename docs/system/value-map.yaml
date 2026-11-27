@@ -2305,6 +2305,82 @@ figures:
       without an income row, income only, owed before pension, one prompt when half or more
       cards are not set) moved into the engine in E12 S5b with no figure change. What you owe is
       selectConsumerDebtTotal, the debt summary's total.
+  - id: account-shown-balance
+    name: An account's balance as shown, and its change since last month
+    area: accounts
+    computed_by:
+      { function: selectAccountBalance, path: packages/finance-engine/src/account-balance.ts }
+    other_paths: []
+    inputs: [account-balance, balance-history, ownership-share, account-type]
+    shown_on:
+      - {
+          surface: accounts,
+          path: apps/web/app/features/accounts/accountRows.ts,
+          note: "each list row's balance; the row keeps only the words (E12 S6)",
+        }
+      - {
+          surface: account-detail,
+          path: apps/web/app/containers/accounts/accountDetailContainer/AccountDetailContainer.tsx,
+          note: "the hero, its date line's month and the goal section's earliest month (E12 S6)",
+        }
+    links: []
+    verdict: holds
+
+  - id: account-balance-series
+    name: An account's balance each month
+    area: accounts
+    computed_by:
+      {
+        function: selectAccountBalanceSeries,
+        path: packages/finance-engine/src/account-balance.ts,
+      }
+    other_paths: []
+    inputs: [account-balance, balance-history, account-type]
+    shown_on:
+      - {
+          surface: account-detail,
+          path: apps/web/app/components/accounts/AccountDetails/AccountDetails.tsx,
+          note: "the balance history chart; whole balances, no joint share (E12 S6)",
+        }
+    links: []
+    verdict: holds
+
+  - id: series-change
+    name: Change since the first month on a chart
+    area: accounts
+    computed_by:
+      { function: selectSeriesChange, path: packages/finance-engine/src/account-balance.ts }
+    other_paths: []
+    inputs: [balance-history, account-balance]
+    shown_on:
+      - {
+          surface: history,
+          path: apps/web/app/features/snapshot/snapshotModel.ts,
+          note: "changeSinceSentence keeps only the words (E12 S6)",
+        }
+      - {
+          surface: account-detail,
+          path: apps/web/app/components/charts/AccountDetailChart/AccountDetailChart.tsx,
+          note: "the chart summary, through changeSinceSentence",
+        }
+    links: []
+    verdict: holds
+
+  - id: account-groups
+    name: What you own, what you owe and what is not counted, by account
+    area: accounts
+    computed_by:
+      { function: selectAccountGroups, path: packages/finance-engine/src/account-balance.ts }
+    other_paths: []
+    inputs: [account-balance, account-type, net-worth-choices]
+    shown_on:
+      - {
+          surface: accounts,
+          path: apps/web/app/features/accounts/components/AccountsGroupList/AccountsGroupList.tsx,
+          note: "an overdrawn account sits under what you owe as the amount owed (E12 S6)",
+        }
+    links: []
+    verdict: holds
 
   - id: total-debts
     name: Total debts

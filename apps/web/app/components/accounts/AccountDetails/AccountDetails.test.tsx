@@ -208,41 +208,6 @@ describe("estimated return from recorded balances", () => {
   });
 });
 
-describe("accountChartRows", () => {
-  test("ends on this month's saved balance, carried, when this month is not recorded", async () => {
-    const { accountChartRows } = await import("./AccountDetails");
-    const rows = accountChartRows(
-      [
-        { month: 10, year: 2026, value: -180500, source: "calculated" },
-        { month: 9, year: 2026, value: -181000 },
-      ],
-      "Mortgage",
-      -180000,
-      "2026-11",
-    );
-    expect(rows.map((r) => [r.month, r.value, r.carried ?? false])).toEqual([
-      [9, 181000, false],
-      [10, 180500, false],
-      [11, 180000, true],
-    ]);
-  });
-
-  test("adds no saved point when this month is recorded", async () => {
-    const { accountChartRows } = await import("./AccountDetails");
-    const rows = accountChartRows(
-      [
-        { month: 10, year: 2026, value: 100 },
-        { month: 11, year: 2026, value: 120 },
-      ],
-      "Saving",
-      150,
-      "2026-11",
-    );
-    expect(rows).toHaveLength(2);
-    expect(rows.some((r) => r.carried)).toBe(false);
-  });
-});
-
 describe("sourceLabel (check-in sources, R2-5)", () => {
   test("names calculated and confirmed months, and leaves typed figures unlabelled", async () => {
     const { sourceLabel } = await import("./AccountDetails");

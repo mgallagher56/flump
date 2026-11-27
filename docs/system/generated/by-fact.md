@@ -61,6 +61,10 @@ Where each value is stored, entered and used. One entry per stored fact, then on
 | [Net worth over time](#net-worth-over-time)                                                                                              | figure | accounts    | Broken                                    |
 | [Net worth change since last month](#net-worth-change)                                                                                   | figure | accounts    | Holds                                     |
 | [Home's two-figure strip (left over each month, what you owe or pension pots)](#home-strip)                                              | figure | budget      | Holds                                     |
+| [An account's balance as shown, and its change since last month](#account-shown-balance)                                                 | figure | accounts    | Holds                                     |
+| [An account's balance each month](#account-balance-series)                                                                               | figure | accounts    | Holds                                     |
+| [Change since the first month on a chart](#series-change)                                                                                | figure | accounts    | Holds                                     |
+| [What you own, what you owe and what is not counted, by account](#account-groups)                                                        | figure | accounts    | Holds                                     |
 | [Total debts](#total-debts)                                                                                                              | figure | accounts    | Duplicated (two stores that can disagree) |
 | [Debt-free date and interest](#debt-free-date)                                                                                           | figure | accounts    | Duplicated (two stores that can disagree) |
 | [Home equity](#home-equity)                                                                                                              | figure | home        | Holds                                     |
@@ -731,6 +735,76 @@ Shown on:
 
 - Dashboard: `apps/web/app/routes/_index.tsx` (the Home hero's change line; netWorthDelta.ts keeps only the words (E12 S5))
 - Mobile app Home: `apps/mobile/src/features/home/useHomeData.ts` (the mobile Home hero (E12 S5), from the same selector over the same series)
+
+### An account's balance as shown, and its change since last month
+
+<a id="account-shown-balance"></a>
+
+- Id: `account-shown-balance` (derived figure)
+- Verdict: Holds. Findings: none. Links: none.
+- Computed by: `selectAccountBalance` in `packages/finance-engine/src/account-balance.ts`
+- Built from: `account-balance`, `balance-history`, `ownership-share`, `account-type`
+
+Other code paths that compute it:
+
+- none
+
+Shown on:
+
+- Accounts: `apps/web/app/features/accounts/accountRows.ts` (each list row's balance; the row keeps only the words (E12 S6))
+- Account page: `apps/web/app/containers/accounts/accountDetailContainer/AccountDetailContainer.tsx` (the hero, its date line's month and the goal section's earliest month (E12 S6))
+
+### An account's balance each month
+
+<a id="account-balance-series"></a>
+
+- Id: `account-balance-series` (derived figure)
+- Verdict: Holds. Findings: none. Links: none.
+- Computed by: `selectAccountBalanceSeries` in `packages/finance-engine/src/account-balance.ts`
+- Built from: `account-balance`, `balance-history`, `account-type`
+
+Other code paths that compute it:
+
+- none
+
+Shown on:
+
+- Account page: `apps/web/app/components/accounts/AccountDetails/AccountDetails.tsx` (the balance history chart; whole balances, no joint share (E12 S6))
+
+### Change since the first month on a chart
+
+<a id="series-change"></a>
+
+- Id: `series-change` (derived figure)
+- Verdict: Holds. Findings: none. Links: none.
+- Computed by: `selectSeriesChange` in `packages/finance-engine/src/account-balance.ts`
+- Built from: `balance-history`, `account-balance`
+
+Other code paths that compute it:
+
+- none
+
+Shown on:
+
+- History: `apps/web/app/features/snapshot/snapshotModel.ts` (changeSinceSentence keeps only the words (E12 S6))
+- Account page: `apps/web/app/components/charts/AccountDetailChart/AccountDetailChart.tsx` (the chart summary, through changeSinceSentence)
+
+### What you own, what you owe and what is not counted, by account
+
+<a id="account-groups"></a>
+
+- Id: `account-groups` (derived figure)
+- Verdict: Holds. Findings: none. Links: none.
+- Computed by: `selectAccountGroups` in `packages/finance-engine/src/account-balance.ts`
+- Built from: `account-balance`, `account-type`, `net-worth-choices`
+
+Other code paths that compute it:
+
+- none
+
+Shown on:
+
+- Accounts: `apps/web/app/features/accounts/components/AccountsGroupList/AccountsGroupList.tsx` (an overdrawn account sits under what you owe as the amount owed (E12 S6))
 
 ### Total debts
 

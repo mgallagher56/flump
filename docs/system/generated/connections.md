@@ -244,6 +244,28 @@ flowchart LR
   f_net_worth_choices ==> g_net_worth_change
   g_net_worth_change -.-> s_dashboard
   g_net_worth_change -.-> s_mobile_home
+  g_account_shown_balance{{"An account's balance as shown, and its change since last month"}}
+  f_account_balance ==> g_account_shown_balance
+  f_balance_history ==> g_account_shown_balance
+  f_ownership_share ==> g_account_shown_balance
+  f_account_type ==> g_account_shown_balance
+  g_account_shown_balance -.-> s_accounts
+  g_account_shown_balance -.-> s_account_detail
+  g_account_balance_series{{"An account's balance each month"}}
+  f_account_balance ==> g_account_balance_series
+  f_balance_history ==> g_account_balance_series
+  f_account_type ==> g_account_balance_series
+  g_account_balance_series -.-> s_account_detail
+  g_series_change{{"Change since the first month on a chart"}}
+  f_balance_history ==> g_series_change
+  f_account_balance ==> g_series_change
+  g_series_change -.-> s_history
+  g_series_change -.-> s_account_detail
+  g_account_groups{{"What you own, what you owe and what is not counted, by account"}}
+  f_account_balance ==> g_account_groups
+  f_account_type ==> g_account_groups
+  f_net_worth_choices ==> g_account_groups
+  g_account_groups -.-> s_accounts
   g_total_debts{{"Total debts"}}
   f_account_balance ==> g_total_debts
   f_ownership_share ==> g_total_debts

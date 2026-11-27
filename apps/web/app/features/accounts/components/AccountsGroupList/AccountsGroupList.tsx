@@ -2,6 +2,7 @@ import {
   categorizeAccountType,
   type NetWorthLeftOut,
   netWorthChoicesAvailable,
+  selectAccountGroups,
 } from "@flump/finance-engine";
 import {
   Card,
@@ -29,7 +30,7 @@ import {
 } from "lucide-react";
 import type { FC, ReactNode } from "react";
 import { Link } from "react-router";
-import { AccountTypeEnum, isLiabilityType } from "~/containers/accounts/utils";
+import { AccountTypeEnum } from "~/containers/accounts/utils";
 import { ACCOUNT_SUBTYPE_LABEL } from "~/features/accounts/accountSubtypes";
 import type { AccountRow } from "../../accountRows";
 import { basisLink, NetWorthBasisLine } from "../NetWorthBasisLine";
@@ -93,18 +94,6 @@ export const studentLoanFootnote = (counted: boolean): string =>
     ? `Student loans are in this total and your net worth. ${STUDENT_LOAN_FACTS}`
     : `Student loans are not in your net worth. ${STUDENT_LOAN_FACTS}`;
 
-/**
- * True when the user's net worth choices leave this row out, so it sits in its own group below
- * the totals and the rows in each total add up to it.
- */
-export const isLeftOut = (row: AccountRow, leftOut: readonly NetWorthLeftOut[]): boolean => {
-  const category = categorizeAccountType(row.type);
-  if (category === "property") return leftOut.includes("property");
-  if (category === "mortgages") return leftOut.includes("mortgage");
-  if (category === "studentLoans") return leftOut.includes("studentLoan");
-  return false;
-};
-
 const {
   CURRENT,
   SAVING,
@@ -118,21 +107,6 @@ const {
   OVERDRAFT,
   STUDENT_LOAN,
 } = AccountTypeEnum;
-
-/** Row order inside each group: by type, then as saved. Unknown types sort last. */
-export const TYPE_ORDER: string[] = [
-  CURRENT,
-  SAVING,
-  INVESTMENT,
-  PENSION,
-  PROPERTY,
-  OWED,
-  MORTGAGE,
-  CREDIT_CARD,
-  LOAN,
-  OVERDRAFT,
-  STUDENT_LOAN,
-];
 
 /** Plain names for the stored types (copy guide 6.1: sentence case, no jargon). */
 export const TYPE_LABEL: Record<string, string> = {
@@ -183,14 +157,6 @@ export const VISIBLE_ROWS = 8;
 
 /** An ISA is named as one by the user; its allowance lives on the savings page. */
 const isIsa = (row: AccountRow) => /\bisas?\b/i.test(row.name);
-
-const byType = (a: AccountRow, b: AccountRow) => {
-  const rank = (row: AccountRow) => {
-    const index = TYPE_ORDER.indexOf(row.type);
-    return index === -1 ? TYPE_ORDER.length : index;
-  };
-  return rank(a) - rank(b);
-};
 
 /** The type under the name, unless the name already says it ("Current account"), plus joint share when joint. */
 const typeLine = (row: AccountRow): string | null => {
@@ -287,17 +253,10 @@ export const AccountsGroupList: FC<AccountsGroupListProps> = ({
   afterNetWorth,
   profileHomeValue,
 }) => {
-  const counted = rows.filter((row) => !isLeftOut(row, leftOut));
-  // The engine counts an overdrawn account (a current account below zero) as money owed, not as
-  // a negative asset, so it sits under "What you owe" as the amount owed and each total adds up.
-  const overdrawn = (row: AccountRow) =>
-    !isLiabilityType(row.type) && row.balance !== undefined && row.balance < 0;
-  const own = counted.filter((row) => !isLiabilityType(row.type) && !overdrawn(row)).sort(byType);
-  const owe = counted
-    .filter((row) => isLiabilityType(row.type) || overdrawn(row))
-    .map((row) => (overdrawn(row) ? { ...row, balance: Math.abs(row.balance ?? 0) } : row))
-    .sort(byType);
-  const notCounted = rows.filter((row) => isLeftOut(row, leftOut)).sort(byType);
+  // Own, owe and not counted, each by type (E12 S6). The engine counts an overdrawn account (a
+  // current account below zero) as money owed, not as a negative asset, so it sits under "What you
+  // owe" as the amount owed and each total adds up.
+  const { own, owe, notCounted } = selectAccountGroups(rows, leftOut);
   const countedStudentLoan = owe.some((row) => row.type === STUDENT_LOAN);
   const leftOutStudentLoan = notCounted.some((row) => row.type === STUDENT_LOAN);
   // "Change what counts" follows Settings: offered only when a choice applies to these accounts.

@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { buildAccountRows, lastUpdatedLabel, summariseAccountBalance } from "./accountRows";
+import { buildAccountRows, lastUpdatedLabel } from "./accountRows";
 
 describe("buildAccountRows", () => {
   afterEach(() => {
@@ -63,21 +63,8 @@ describe("buildAccountRows", () => {
   });
 });
 
-describe("summariseAccountBalance", () => {
+describe("buildAccountRows joint shares", () => {
   const now = new Date(2026, 10, 14);
-  const noId = { month: 10, year: 2026, value: 900 };
-
-  test("a recorded month with no account id matches no account in a mixed list", () => {
-    const summary = summariseAccountBalance({ id: "a1", type: "Current" }, [noId], now);
-    expect(summary.balance).toBeUndefined();
-    expect(summary.againstLabel).toBeNull();
-  });
-
-  test("a recorded month with no account id belongs to the account when the caller says so", () => {
-    const summary = summariseAccountBalance({ id: "a1", type: "Current" }, [noId], now, true);
-    expect(summary.balance).toBe(900);
-    expect(summary.againstLabel).toBe("October 2026");
-  });
 
   test("scales joint account balance and previous month by sharePercent while keeping ISAs at 100%", () => {
     const details = [{ account_id: "m1", month: 10, year: 2026, value: -200_000 }];
@@ -118,12 +105,6 @@ describe("summariseAccountBalance", () => {
       balance: 20_000,
     });
   });
-
-  test("a recorded month for another account never matches", () => {
-    const other = { account_id: "a2", month: 10, year: 2026, value: 500 };
-    const summary = summariseAccountBalance({ id: "a1", type: "Current" }, [other], now, true);
-    expect(summary.balance).toBeUndefined();
-  });
 });
 
 describe("lastUpdatedLabel", () => {
@@ -151,8 +132,8 @@ describe("the current month is the London month, not the device's (CH-8)", () =>
 
   test("a device behind London still counts July's recorded month as the current month", () => {
     process.env.TZ = "Pacific/Honolulu";
-    const summary = summariseAccountBalance(
-      { id: "a1", type: "Current" },
+    const [row] = buildAccountRows(
+      [{ id: "a1", type: "Current" }],
       [
         { account_id: "a1", month: 6, year: 2026, value: 1000 },
         { account_id: "a1", month: 7, year: 2026, value: 1100 },
@@ -160,9 +141,10 @@ describe("the current month is the London month, not the device's (CH-8)", () =>
       londonFirstOfJuly,
     );
     // July is London's current month, so it is the latest figure (1100), compared with June
-    // (1000): (1100 - 1000) / 1000 = 10%.
-    expect(summary.balance).toBe(1100);
-    expect(summary.againstLabel).toBe("June 2026");
+    // (1000): (1100 - 1000) / 1000 = 10%. Read on Hawaii's 30 June, July would be future and
+    // June's 1000 the figure, with no change.
+    expect(row.balance).toBe(1100);
+    expect(row.changePercent).toBe(10);
   });
 
   test("lastUpdatedLabel reads July as recorded, not future, on that device", async () => {
