@@ -1,0 +1,15 @@
+{
+  "$schema": "https://turborepo.com/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "typegen": {
+      "outputs": [".expo/types/**", "expo-env.d.ts"]
+    },
+    "check-types": {
+      "dependsOn": ["$TURBO_EXTENDS$", "typegen"]
+    },
+    "test": {
+      "dependsOn": ["$TURBO_EXTENDS$", "typegen"]
+    }
+  }
+}

@@ -57,6 +57,12 @@ jobs:
           ghToken: ${{ secrets.GITHUB_TOKEN }}
           turboToken: ${{ env.TURBO_TOKEN }}
 
+      # check-types runs the mobile typegen task (Expo CLI, which needs Node 22.13 or later).
+      - name: ⚙️ Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+
       - name: 🔬 Lint
         run: bun run lint
 

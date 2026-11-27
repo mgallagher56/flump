@@ -8,6 +8,7 @@
     "ios": "expo run:ios",
     "android": "expo run:android",
     "lint": "biome check .",
+    "typegen": "expo customize tsconfig.json",
     "check-types": "tsc --noEmit",
     "test": "jest",
     "export": "expo export --platform ios --platform android --output-dir dist --source-maps --clear",

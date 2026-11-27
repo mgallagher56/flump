@@ -52,7 +52,7 @@ export function hasTextChild(children: ReactNode): boolean {
   });
 }
 
-const RESTING: PressableStateCallbackType = { pressed: false };
+const RESTING: PressableStateCallbackType = { pressed: false, hovered: false };
 
 /**
  * Every tappable thing in the app. It is at least 48 by 48 points (`sizes["control.lg"]`) whatever
