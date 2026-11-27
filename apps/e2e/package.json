@@ -12,6 +12,7 @@
     "e2e:sweep": "playwright test -c playwright.sweep.config.ts",
     "e2e:interaction": "playwright test -c playwright.interaction.config.ts",
     "e2e:phone": "playwright test -c playwright.phone.config.ts",
+    "generate:app-icons": "bun scripts/generate-app-icons.ts",
     "lint": "biome check .",
     "format": "biome check --write .",
     "check-types": "tsc --noEmit"
