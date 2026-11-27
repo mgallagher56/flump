@@ -72,6 +72,13 @@ describe("NetWorthHistory", () => {
     expect(screen.queryByTestId("history-few-months")).toBeNull();
   });
 
+  it("not checked in this month: the button starts the check-in", async () => {
+    await history(fakeApi(routes(personaHousehold(HOMEOWNER))));
+    expect(await screen.findByTestId("history-check-in")).toHaveTextContent(
+      "Start monthly check-in",
+    );
+  });
+
   it("the renter: +£465, the student loan left out, changes by account behind the control", async () => {
     const props = await history(fakeApi(routes(personaHousehold(RENTER))));
     // October 11,235 less September 10,770.
@@ -159,6 +166,8 @@ describe("NetWorthHistory", () => {
     expect(screen.queryByText(/check-in not done yet/)).toBeNull();
     // No check-in day chosen: the 1st of next month.
     expect(screen.getByText("Next check-in: 1 December 2026")).toBeOnTheScreen();
+    // Done this month, the button opens what was saved, as web's (main, 27 November 2026).
+    expect(screen.getByTestId("history-check-in")).toHaveTextContent("See this month's check-in");
   });
 
   it("no recorded month: No monthly balances yet, the check-in and earlier months on the website", async () => {

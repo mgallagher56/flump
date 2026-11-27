@@ -219,6 +219,8 @@ export const pointMonth = (point: { month: number; year: number }) =>
 
 export const HISTORY = {
   title: "Net worth history",
+  /** The check-in button once this month's check-in is done (web's `currentMonthRecorded`). */
+  seeCheckIn: "See this month's check-in",
   description: "Your net worth, recorded once a month.",
   heroLabel: "Net worth change",
   noChangeLabel: "Monthly change",

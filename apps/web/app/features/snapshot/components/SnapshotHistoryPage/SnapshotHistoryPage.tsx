@@ -89,6 +89,7 @@ export const HISTORY_COPY = {
   addEarlierMonths: "Add earlier months",
   showChanges: "Show changes by account",
   startCheckIn: "Start monthly check-in",
+  seeCheckIn: "See this month's check-in",
 } as const;
 
 /** The summary below three recorded months: "Net worth recorded for October 2026: £800." */
@@ -249,7 +250,7 @@ export const SnapshotHistoryPage: FC<SnapshotHistoryPageProps> = ({
       onClick={() => setSheet("checkIn")}
       type="button"
     >
-      {currentMonthRecorded ? "See this month's check-in" : "Start monthly check-in"}
+      {currentMonthRecorded ? HISTORY_COPY.seeCheckIn : HISTORY_COPY.startCheckIn}
     </Button>
   );
 

@@ -259,6 +259,7 @@ describe("the mobile net worth history says what web's says", () => {
       "noEarlierMonth",
       "chartTitle",
       "chartDescription",
+      "seeCheckIn",
       "emptyTitle",
       "emptyWithAccounts",
       "emptyNoAccounts",
