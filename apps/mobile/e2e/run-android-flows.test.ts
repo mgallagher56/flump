@@ -24,12 +24,13 @@ describe("run-android-flows.sh", () => {
     const { result, calls } = run();
     expect(result.status).toBe(0);
     const flows = calls.filter((c) => c.startsWith("maestro "));
-    // Twenty-four flows in each theme (account-detail, accounts-list, check-in-backend-down,
+    // Twenty-seven flows in each theme (account-add, account-delete, account-detail,
+    // account-edit, accounts-list, check-in-backend-down,
     // check-in-walkthrough, delete-account, engine-check, home-empty, home-strip, home-with-data,
     // net-worth-history, not-invited, not-set-up, older-backend, session-ended, settings-export,
     // settings-net-worth, settings-theme, sign-in, sign-in-after-sign-out, sign-in-denied,
     // sign-out, tabs, terms-required, update-required).
-    expect(flows).toHaveLength(48);
+    expect(flows).toHaveLength(54);
     for (const flow of flows) {
       const at = calls.indexOf(flow);
       const before = calls.slice(0, at);
@@ -44,7 +45,7 @@ describe("run-android-flows.sh", () => {
     const { result, calls } = run({ failFlow: "not-invited" });
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("Flow not-invited failed in light");
-    expect(calls.filter((c) => c.startsWith("maestro "))).toHaveLength(48);
+    expect(calls.filter((c) => c.startsWith("maestro "))).toHaveLength(54);
   });
 
   it("fails, without retrying, when the screens are still alive after the force-stop", () => {

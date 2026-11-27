@@ -1,0 +1,82 @@
+# E12 S8: changing an account. The current account's page updates its balance in place with the
+# quick update, then Edit renames it; the page, the list and the header follow with no pull to
+# refresh. Checked by test id. The runner runs it in light and in dark, stopping and settling the
+# app first; no retries.
+appId: app.flump.mobile
+---
+- runScript:
+    file: ../scripts/fixture.js
+    env:
+      SCENARIO: '{"data": "ok"}'
+- runFlow: ../subflows/launch-signed-out.yaml
+- runFlow: ../subflows/sign-in-to-home.yaml
+- tapOn:
+    id: "tab-accounts"
+- extendedWaitUntil:
+    visible:
+      id: "accounts-hero"
+    timeout: 30000
+# Account ids are made at runtime, so the row is found by its name.
+- scrollUntilVisible:
+    element:
+      text: "Current account.*"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    text: "Current account.*"
+- extendedWaitUntil:
+    visible:
+      id: "account-detail-hero"
+    timeout: 30000
+- tapOn:
+    id: "quick-balance-open"
+- tapOn:
+    id: "quick-balance-value"
+- eraseText: 20
+- inputText: "2650"
+- hideKeyboard
+- takeScreenshot: account-quick-update-${THEME}
+- tapOn:
+    id: "quick-balance-save"
+- extendedWaitUntil:
+    visible:
+      id: "quick-balance-open"
+    timeout: 30000
+- assertVisible:
+    text: "£2,650"
+- tapOn:
+    id: "account-edit"
+- extendedWaitUntil:
+    visible:
+      id: "account-form"
+    timeout: 10000
+- tapOn:
+    id: "account-form-name"
+- eraseText: 30
+- inputText: "Everyday account"
+- hideKeyboard
+- takeScreenshot: account-edit-${THEME}
+- scrollUntilVisible:
+    element:
+      id: "account-form-save"
+    direction: DOWN
+    timeout: 10000
+- tapOn:
+    id: "account-form-save"
+- extendedWaitUntil:
+    visible:
+      id: "account-detail-hero"
+    timeout: 30000
+- assertVisible:
+    text: "Everyday account"
+- tapOn:
+    id: "header-back"
+- extendedWaitUntil:
+    visible:
+      id: "accounts"
+    timeout: 10000
+- scrollUntilVisible:
+    element:
+      text: "Everyday account.*"
+    direction: DOWN
+    timeout: 15000

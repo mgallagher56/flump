@@ -106,6 +106,9 @@ const LIABILITY_TYPES: ReadonlySet<string> = new Set([
   "Student Loan",
 ]);
 
+/** Whether the backend stores this type as minus the amount owed. */
+export const isLiabilityType = (type: string): boolean => LIABILITY_TYPES.has(type);
+
 /** The check-in's data: accounts (saved order), their monthly rows and the two check-in months. */
 export interface CheckInStore {
   accounts: AccountWithDetailsDto[];
