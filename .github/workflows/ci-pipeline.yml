@@ -273,6 +273,12 @@ jobs:
       - name: 🏗️ Build all packages
         run: bun run build
 
+      # The marketing weight ratchet (ROLLOUT-PLAN section 2, UX-GUIDELINES MK12): the home page's
+      # first-load script, CSS and lazy script, gzipped, against scripts/marketing-weight-baseline.json.
+      # Deterministic and under a second, so it blocks as part of this required job (F4).
+      - name: ⚖️ Marketing page weight
+        run: bun scripts/check-marketing-weight.ts apps/marketing/dist/client
+
       - name: 📜 Generate workspace CycloneDX SBOM
         run: bun scripts/generate-sbom.ts --app workspace --root . --out sboms/sbom-workspace.cdx.json
 
