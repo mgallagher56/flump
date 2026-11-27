@@ -172,14 +172,13 @@ describe("TabBar", () => {
     for (const item of TABS) {
       expect(screen.getByText(item.label).props.allowFontScaling).not.toBe(false);
     }
-    // Right overflow fade shown initially; no left fade at scroll x = 0.
+    // Right overflow fade shown once tab-bar has a measured height; no left fade at scroll x = 0.
+    await fireEvent(screen.getByTestId("tab-bar"), "layout", {
+      nativeEvent: { layout: { width: 312, height: 48 } },
+    });
     const rightFade = screen.getByTestId("tab-fade-right", { includeHiddenElements: true });
     expect(rightFade.props.pointerEvents).toBe("none");
     expect(screen.queryByTestId("tab-fade-left", { includeHiddenElements: true })).toBeNull();
-
-    await fireEvent(screen.getByTestId("tab-bar"), "layout", {
-      nativeEvent: { layout: { width: 312 } },
-    });
     await fireEvent(scroller, "contentSizeChange", 370, 48);
     await fireEvent(scroller, "scroll", { nativeEvent: { contentOffset: { x: 20 } } });
     expect(
@@ -306,7 +305,7 @@ describe("TabBar", () => {
     );
     const scroller = screen.getByTestId("tab-scroll");
     await fireEvent(screen.getByTestId("tab-bar"), "layout", {
-      nativeEvent: { layout: { width: 312 } },
+      nativeEvent: { layout: { width: 312, height: 48 } },
     });
     await fireEvent(scroller, "contentSizeChange", 370, 48);
     await fireEvent(scroller, "scroll", { nativeEvent: { contentOffset: { x: 20 } } });
@@ -366,6 +365,9 @@ describe("TabBar", () => {
       .mockReturnValue(":r0:");
     phone(2, 320);
     await renderBar();
+    await fireEvent(screen.getByTestId("tab-bar"), "layout", {
+      nativeEvent: { layout: { width: 312, height: 48 } },
+    });
     const mocked = fadeNodes("tab-fade-right");
     expect(mocked.gradientId).toMatch(SAFE_ID);
     expect(mocked.gradientId).not.toContain(":");
@@ -374,7 +376,7 @@ describe("TabBar", () => {
     useIdSpy.mockRestore();
     await renderBar();
     await fireEvent(screen.getByTestId("tab-bar"), "layout", {
-      nativeEvent: { layout: { width: 312 } },
+      nativeEvent: { layout: { width: 312, height: 48 } },
     });
     await fireEvent(screen.getByTestId("tab-scroll"), "contentSizeChange", 370, 48);
     await fireEvent(screen.getByTestId("tab-scroll"), "scroll", {
@@ -387,6 +389,51 @@ describe("TabBar", () => {
     expect(left.brushRef).toBe(left.gradientId);
     expect(right.brushRef).toBe(right.gradientId);
     expect(left.gradientId).not.toBe(right.gradientId);
+  });
+
+  it("sizes EdgeFade numerically from tablist height, renders nothing at height 0, and stretches the bar", async () => {
+    interface JsonNode {
+      type: string;
+      props: Record<string, unknown>;
+      children: (JsonNode | string)[] | null;
+    }
+    const findNodes = (root: unknown, predicate: (node: JsonNode) => boolean): JsonNode[] => {
+      const found: JsonNode[] = [];
+      const walk = (node: unknown) => {
+        if (!node || typeof node !== "object") return;
+        if (Array.isArray(node)) {
+          for (const item of node) walk(item);
+          return;
+        }
+        const candidate = node as JsonNode;
+        if (predicate(candidate)) found.push(candidate);
+        for (const child of candidate.children ?? []) walk(child);
+      };
+      walk(root);
+      return found;
+    };
+
+    phone(2, 320);
+    await renderBar("home", "light", 2);
+    const root = screen.toJSON() as JsonNode;
+    expect(flat<ViewStyle>(root.props.style).alignSelf).toBe("stretch");
+    expect(flat<ViewStyle>(screen.getByTestId("tab-bar").props.style).alignSelf).toBe("stretch");
+
+    // Before layout reports a non-zero height, EdgeFade renders nothing.
+    expect(screen.queryByTestId("tab-fade-right", { includeHiddenElements: true })).toBeNull();
+
+    await fireEvent(screen.getByTestId("tab-bar"), "layout", {
+      nativeEvent: { layout: { width: 200, height: 56 } },
+    });
+
+    const [fade] = findNodes(screen.toJSON(), (n) => n.props.testID === "tab-fade-right");
+    const [svg] = findNodes(fade, (n) => n.type === "RNSVGSvgView");
+    const [rect] = findNodes(fade, (n) => n.type === "RNSVGRect");
+    expect(svg?.props.bbWidth).toBe(24);
+    expect(svg?.props.bbHeight).toBe(56);
+    expect(flat<ViewStyle>(svg?.props.style)).toMatchObject({ width: 24, height: 56 });
+    expect(rect?.props.width).toBe(24);
+    expect(rect?.props.height).toBe(56);
   });
 
   it.each(Object.entries(tabBarStates))("%s holds at 200%% text", async (_name, props) => {

@@ -33,13 +33,18 @@ export interface TabBarProps {
 function EdgeFade({
   side,
   color,
+  width,
+  height,
   style,
 }: {
   side: "left" | "right";
   color: string;
+  width: number;
+  height: number;
   style: object;
 }) {
   const id = `tab-fade-${side}-${useId().replace(/[^A-Za-z0-9_-]/g, "")}`;
+  if (width <= 0 || height <= 0) return null;
   return (
     <View
       pointerEvents="none"
@@ -48,14 +53,14 @@ function EdgeFade({
       style={style}
       testID={`tab-fade-${side}`}
     >
-      <Svg width="100%" height="100%">
+      <Svg width={width} height={height}>
         <Defs>
           <LinearGradient id={id} x1="0" y1="0" x2="1" y2="0">
             <Stop offset="0" stopColor={color} stopOpacity={side === "left" ? "1" : "0"} />
             <Stop offset="1" stopColor={color} stopOpacity={side === "left" ? "0" : "1"} />
           </LinearGradient>
         </Defs>
-        <Rect x="0" y="0" width="100%" height="100%" fill={`url(#${id})`} />
+        <Rect x="0" y="0" width={width} height={height} fill={`url(#${id})`} />
       </Svg>
     </View>
   );
@@ -73,6 +78,7 @@ export function TabBar({ items, activeKey, onSelect }: TabBarProps) {
   const styles = useMemo(() => createStyles(theme), [theme]);
   const window = useWindowDimensions();
   const [width, setWidth] = useState(() => Math.max(0, window.width - theme.spacing["1"] * 2));
+  const [height, setHeight] = useState(0);
   const textScale = useTextScale();
   const labels = useMemo(() => items.map((item) => item.label), [items]);
   const layout = tabLayout({
@@ -200,7 +206,11 @@ export function TabBar({ items, activeKey, onSelect }: TabBarProps) {
         accessibilityLabel={TAB_BAR_LABEL}
         style={styles.tablist}
         testID="tab-bar"
-        onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
+        onLayout={(event) => {
+          const { width: nextWidth, height: nextHeight } = event.nativeEvent.layout;
+          if (typeof nextWidth === "number" && nextWidth > 0) setWidth(nextWidth);
+          if (typeof nextHeight === "number" && nextHeight >= 0) setHeight(nextHeight);
+        }}
       >
         {isScroll ? (
           <>
@@ -225,6 +235,8 @@ export function TabBar({ items, activeKey, onSelect }: TabBarProps) {
               <EdgeFade
                 side="left"
                 color={theme.colors["surface.card"]}
+                width={edgePadding}
+                height={height}
                 style={[styles.fade, styles.fadeLeft]}
               />
             ) : null}
@@ -232,6 +244,8 @@ export function TabBar({ items, activeKey, onSelect }: TabBarProps) {
               <EdgeFade
                 side="right"
                 color={theme.colors["surface.card"]}
+                width={edgePadding}
+                height={height}
                 style={[styles.fade, styles.fadeRight]}
               />
             ) : null}
