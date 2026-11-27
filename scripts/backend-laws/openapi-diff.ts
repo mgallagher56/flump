@@ -4,8 +4,10 @@
  *
  * Breaking:
  * - a removed path, operation or success response code;
- * - in a response: a removed or retyped property, a removed enum value, or a property that was
- *   required and became optional;
+ * - in a response: a removed or retyped property, a removed enum value, a property that was
+ *   required and became optional, or a new required property without a `default` (a client
+ *   built before it would not get it from an older backend, and a client built after it would
+ *   refuse an older backend's answer: give it `.default(...)` in the contract);
  * - in a request (body or parameter): a property or parameter that became required, a new
  *   required one, a removed one (request objects are strict), or a narrowed type (fewer types,
  *   fewer enum values, tighter bounds, a new or changed pattern or format, closed objects).
@@ -21,6 +23,7 @@ export type BreakingKind =
   | "retyped-response-property"
   | "removed-response-enum-value"
   | "response-became-optional"
+  | "new-required-response-field"
   | "request-became-required"
   | "new-required-request-field"
   | "removed-request-field"
@@ -149,6 +152,19 @@ function compareResponse(before: Json, after: Json, where: string, out: Breaking
     const newProps = newObject.properties as Json;
     const oldRequired = new Set((oldObject.required as string[] | undefined) ?? []);
     const newRequired = new Set((newObject.required as string[] | undefined) ?? []);
+    // A field added to an object that already existed: a reader built now must still accept an
+    // older backend's answer without it, so the contract gives it a default (zod `.default()`,
+    // which the document keeps as required with a `default` keyword).
+    for (const name of newRequired) {
+      const added = newProps[name];
+      if (!(name in oldProps) && isObject(added) && !("default" in added)) {
+        out.push({
+          kind: "new-required-response-field",
+          where: `${where}.${name}`,
+          detail: "new and required with no default",
+        });
+      }
+    }
     for (const [name, schema] of Object.entries(oldProps)) {
       const next = newProps[name];
       if (!isObject(next)) {

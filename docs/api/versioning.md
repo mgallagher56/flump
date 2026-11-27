@@ -13,10 +13,10 @@ This is the policy for the Flump backend's HTTP API. The contract lives in `pack
 Only additive changes:
 
 - a new route, or a new optional request field;
-- a new response field (clients must ignore fields they do not know);
+- a new response field that carries a default in `packages/api-contract` (for example `z.boolean().default(false)`). Clients ignore fields they do not know (the api-client transport strips them), so an app installed last month reads a newer backend; the default lets a newer app read an older backend that does not send the field yet. The server still sends every field: the default lives only on the reading side, and the generated document keeps the field required;
 - a new error `code` (clients treat an unknown code like the generic one for its HTTP status).
 
-Anything else is a breaking change: removing or renaming a route, a response field or an enum value; changing a field's type; making a request field required or adding a required one; narrowing what a request field accepts. Breaking changes go to `/v2`, and `/v1` keeps being served for at least 3 months after `/v2` ships.
+Anything else is a breaking change: a new response field with no default, removing or renaming a route, a response field or an enum value; changing a field's type; making a request field required or adding a required one; narrowing what a request field accepts. Breaking changes go to `/v2`, and `/v1` keeps being served for at least 3 months after `/v2` ships.
 
 `scripts/backend-laws/check-openapi-breaking.ts` (part of `bun run check:laws`) regenerates the document and compares it twice. Against the working-tree `openapi.json` any difference fails, so the committed file stays up to date: run `bun run --cwd packages/api-contract openapi:write` and commit it. Against `openapi.json` at the merge base with `main` every breaking change fails unless it is listed in `packages/api-contract/openapi-breaking-allowlist.json` as `{ "kind", "where", "reason" }` (matched exactly on `kind` and `where`). An entry that matches nothing only warns, so the list can be emptied in a later PR. The base comparison needs git history: CI checks out the lint job with `fetch-depth: 0`, and a checkout with no merge base fails rather than skipping. Say in the PR why any allow-listed change is acceptable.
 
@@ -88,3 +88,4 @@ These oddly named routes have no replacement yet and are listed so the next vers
 
 - BE-09: `userId` and `externalAccountId` removed from account responses (audit L3). A breaking change made within v1 on purpose: removed before any external client; internal clients updated. Account responses gained `updatedAt` (the ETag).
 - BE-16: the two deprecated aliases `PUT /accounts/:id` and `POST /bank-connections/:id/sync` removed (audit L11). `GET /mcp-tokens/:id/activity` now pages like every other list: the body is a JSON array and the next cursor is the `X-Next-Cursor` header, with `cursor` in place of `before` (audit N10). Both are breaking changes made within v1 on purpose, listed in `openapi-breaking-allowlist.json`: no client called either. `PUT /snapshots/:month` accepts an `If-Match` list and answers with an `ETag` (additive).
+- 27 November 2026: a new response field needs a default (`new-required-response-field` in the law above). `wellbeingQuestions` on the profile (E35) gained `.default(true)`, the backend's own default, so the mobile check-in loads against a backend older than E35.

@@ -181,3 +181,8 @@ Each rule and what enforces it. "None" means only the reader enforces it: when a
 | Test databases labelled, removed before ready and on archive (18)                      | `scripts/ops/clean-test-dbs.sh` and `scripts/ops/clean-test-dbs.test.ts` (run by the coordinator when archiving); labelling and removal before ready: None |
 | Test database clean-up acts only on local OrbStack, never in CI (18)                   | `scripts/ops/clean-test-dbs.sh` refusals and `clean-test-dbs.test.ts`; `scripts/ci-config.test.ts` (no workflow, action or package script calls it)        |
 | Maestro flows take passed values from the runner                                       | None (one instance so far)                                                                                                                                 |
+| New API response fields carry a default; no field removed or retyped in v1 (20)        | `check:laws`: `check-openapi-breaking`                                                                                                                     |
+
+## 20. API CONTRACT COMPATIBILITY LAW
+
+An app installed last month must work against a newer backend, and a newer app against an older one. So within `/v1` a response only gains fields, and each new field carries a default in `packages/api-contract` (`.default(...)`, not `.optional()`, so the server must still send it). Readers ignore unknown fields. Removing, renaming or retyping a response field needs `/v2` or a signed allow-list entry (section 15). Detail: [`docs/api/versioning.md`](./docs/api/versioning.md).
