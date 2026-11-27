@@ -487,10 +487,11 @@ test.describe("marketing home: controls", () => {
   }) => {
     test.setTimeout(SCENE_SCROLL_BUDGET);
     await page.goto(HOME);
+    // The flick must run through set-up changeovers, and measure the journey with its pins. The
+    // hero sets itself up only near the top, so wait for it before leaving.
+    await liveBeforeScroll(page);
     const journey = page.locator("#journey");
     await journey.scrollIntoViewIfNeeded();
-    // The flick must run through set-up changeovers, and measure the journey with its pins.
-    await liveBeforeScroll(page);
     await expect(journey.locator("[data-journey-stop]").first()).toHaveAttribute(
       "data-enhanced",
       "true",
