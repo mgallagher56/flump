@@ -151,3 +151,26 @@ export const Phone: Story = {
     await expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(window.innerWidth);
   },
 };
+
+/**
+ * Three close months, the figures from the phone check of 27 November 2026: on the honest scale
+ * the bars are nearly the same height, and the latest is still drawn solid.
+ */
+export const ThreeCloseMonths: Story = {
+  args: {
+    trend: trendOf([rec("2026-09", 230281), rec("2026-10", 231140), rec("2026-11", 232000)]),
+  },
+  parameters: { viewport: { defaultViewport: "mobile2" } },
+  play: async ({ canvasElement }) => {
+    const rects = [...canvasElement.querySelectorAll("svg[aria-hidden='true'] rect")];
+    await expect(rects).toHaveLength(3);
+    const latest = rects.at(-1) as SVGRectElement;
+    await expect(latest.getAttribute("data-latest")).toBe("true");
+    await expect(getComputedStyle(latest).fill).not.toBe("none");
+    for (const earlier of rects.slice(0, -1)) {
+      await expect(getComputedStyle(earlier).fill).toBe("none");
+    }
+  },
+};
+
+export const ThreeCloseMonthsDark: Story = { ...ThreeCloseMonths, globals: { theme: "dark" } };

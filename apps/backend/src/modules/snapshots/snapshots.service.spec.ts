@@ -42,6 +42,30 @@ describe("SnapshotsService.upsertMonth input checks (E30)", () => {
     expect(dataSource.transaction).not.toHaveBeenCalled();
   });
 
+  it("refuses a month after the current London month and accepts the current month (back-fill route)", async () => {
+    // Today in London is 20 November 2026: December is in the future, November is this month
+    // (the monthly check-in writes it through this route), October is earlier.
+    const month = async (key: string) => {
+      const { service, dataSource } = build();
+      const values = [{ accountId: ACCOUNT, value: 1 }];
+      const error = await service
+        .upsertMonth("user-1", key, { values } as never, NOW)
+        .then(() => null)
+        .catch((e: unknown) => e);
+      return { error, started: dataSource.transaction.mock.calls.length > 0 };
+    };
+    const december = await month("2026-12");
+    expect(december.error).toBeInstanceOf(BadRequestException);
+    expect((december.error as Error).message).toBe("month must not be in the future");
+    expect(december.started).toBe(false);
+    // November and October pass the month check: the write starts (and here finds no account).
+    for (const key of ["2026-11", "2026-10"]) {
+      const result = await month(key);
+      expect(result.started).toBe(true);
+      expect((result.error as Error | null)?.message ?? "").not.toMatch(/future/);
+    }
+  });
+
   it("refuses more than 200 values in one request", async () => {
     // 201 values, one over the limit of 200.
     const values = Array.from({ length: 201 }, (_, i) => ({
