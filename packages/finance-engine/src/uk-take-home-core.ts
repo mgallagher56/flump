@@ -1,0 +1,488 @@
+/**
+ * One take-home core (E25-T5): employee pay, a pension method, several student loan plans and the
+ * High Income Child Benefit Charge, built only from the per-component calculators in uk-tax-year.ts
+ * and uk-hicbc.ts. Every rate and threshold is read from `getUkTaxYearRules(year)`, so it comes from
+ * the sourced rules registry (E25-T1).
+ *
+ * Pure: no formatting, no clock read unless `opts.now` is passed (the year falls back to the context
+ * year when `taxYear` is omitted). Annual method, not pay-period.
+ *
+ * Rounding: each component is pence-rounded by its calculator (as a payslip is), and take-home is the
+ * pence-rounded difference. What-if deltas are differences of pence values, so they are exact to the
+ * penny and do not drift.
+ *
+ * This is the only take-home calculation (E25-T5): `calculateUkTax` in uk-tax.ts is an adapter that
+ * maps its inputs onto a scenario here, so `selectTakeHome` and every calculator show the same figures.
+ *
+ * The core carries no vector sign-off (E12 S5b): `uk-take-home.ts` adds the `verification` label
+ * from the signed vectors, and every existing caller imports from there. Code that needs only the
+ * figures (the take-home selector, `calculateUkTax`, the mobile app's strip) reads this module, so
+ * the vector catalogue is not bundled with it. Refusals come from the year rules, not the vectors.
+ */
+
+import type { UkTaxRegion, UkTaxYear } from "./types.js";
+import { calculateChildBenefitAnnual, calculateHicbc } from "./uk-hicbc.js";
+import { UK_RULE_SOURCES, type UkRuleKey } from "./uk-rule-sources.js";
+import {
+  salarySacrificeAboveCap,
+  UK_SCHEDULED_RULES,
+  type UkScheduledRuleId,
+} from "./uk-scheduled-rules.js";
+import {
+  calculateClass4Ni,
+  calculateEmployeeNi,
+  calculateEmployerNiSaving,
+  calculateIncomeTaxOnTaxable,
+  calculatePersonalAllowanceForYear,
+  calculateStudentLoanRepayment,
+  getUkTaxYearContext,
+  getUkTaxYearRules,
+  isStudentLoanRepayable,
+  resolveUkTaxYear,
+  roundPence,
+  scottishRatesRefusal,
+  studentLoanThresholdNotPublishedNotice,
+  studentLoanThresholdRefusal,
+  type UkRefusal,
+  type UkStudentLoanPlanKey,
+  type UkTaxYearRules,
+} from "./uk-tax-year.js";
+
+export type UkPensionMethod = "salary-sacrifice" | "net-pay" | "relief-at-source";
+
+/**
+ * Employee pension contribution. Give `amount` (pounds a year) or `pct` (per cent of salary, bonus
+ * excluded); `amount` wins when both are set.
+ * - salary-sacrifice: salary given up. Lowers taxable pay, NI pay and student loan pay.
+ * - net-pay: gross contribution taken before tax. Lowers taxable pay only.
+ * - relief-at-source: the gross figure extends the tax bands and lowers adjusted net income, and the
+ *   net part is paid from take-home. The two inputs are read differently (owner decisions,
+ *   19 November 2026):
+ *   - `pct` is the total going in, including basic-rate relief: 5% of 30,000 is 1,500 in the
+ *     pension, of which 1,200 is paid from take-home and 300 is relief.
+ *   - `amount` is what is paid from take-home; relief is added on top (x 1.25): 1,200 paid is
+ *     1,500 in the pension.
+ */
+export interface UkPensionInput {
+  method: UkPensionMethod;
+  amount?: number;
+  pct?: number;
+}
+
+export interface UkChildBenefitInput {
+  children: number;
+  /**
+   * Individual basis only: the charge falls on the higher earner. Defaults to true. When false the
+   * charge would fall on a partner whose income is not known, so none is applied here.
+   */
+  claimantIsHigherEarner?: boolean;
+}
+
+export interface UkIncomeScenario {
+  taxYear?: string;
+  /** Assumed England, Wales and Northern Ireland when omitted (labelled). */
+  region?: UkTaxRegion;
+  salary: number;
+  bonus?: number;
+  /**
+   * True when `salary` is self-employed profit, not pay from an employer: Class 4 National
+   * Insurance is charged on it in place of Class 1. Salary sacrifice does not apply.
+   */
+  selfEmployed?: boolean;
+  /**
+   * Other income taxed with the pay but not through payroll, such as rental profit (pounds a
+   * year). It is taxed as non-savings income and carries no National Insurance or student loan
+   * repayment here.
+   */
+  otherIncome?: number;
+  pension?: UkPensionInput;
+  studentLoans?: readonly UkStudentLoanPlanKey[];
+  /** Opt-in. Omitted means no Child Benefit is claimed. */
+  childBenefit?: UkChildBenefitInput;
+  /** Net Gift Aid donations a year (grossed up x 1.25). */
+  giftAidNet?: number;
+  /** Future-dated rules to apply as an illustration. Never applied implicitly. */
+  scheduledRules?: readonly UkScheduledRuleId[];
+}
+
+export type UkTakeHomeAssumptionCode =
+  | "annualMethod"
+  | "regionAssumed"
+  | "childBenefitExcluded"
+  | "hicbcIndividualBasis"
+  | "hicbcPartnerNotModelled"
+  | "childBenefitWeeks"
+  | "pensionPctOfSalary"
+  | "pensionCappedAtEarnings"
+  | "pensionMethodAssumed"
+  | "reliefAtSourceBandExtension"
+  | "reliefAtSourceScotland"
+  | "multipleUndergraduatePlans"
+  | "scheduledRuleIllustration"
+  | "studentLoanUnderScheduledCap";
+
+export interface UkTakeHomeAssumption {
+  code: UkTakeHomeAssumptionCode;
+  /** True when the assumption rests on a figure or ruling not yet confirmed. */
+  unverified: boolean;
+}
+
+/** The sign-off features a result rests on (the vector catalogue's `UkTaxFeature`). */
+export type UkTakeHomeFeature = "core" | "hicbc" | "whatIf" | "scheduled";
+
+/** The take-home breakdown without the vector sign-off label (see `UkTakeHomeBreakdown`). */
+export interface UkTakeHomeCoreBreakdown {
+  /** Tax year asked for, or the calendar year when none was given (may be unsupported). */
+  taxYear: string;
+  /** Supported year whose rates were used. */
+  ratesYear: UkTaxYear;
+  /** True when the clock is past the latest supported year and its rates stand in. */
+  isFallback: boolean;
+  region: UkTaxRegion;
+  /** Salary plus bonus. */
+  grossPay: number;
+  /** Other income taxed with the pay (0 when none was given). */
+  otherIncome: number;
+  /** Income before the personal allowance: pay and other income, less a sacrifice or net-pay pension. */
+  incomeBeforeAllowance: number;
+  /** Which National Insurance class `nationalInsurance` is. */
+  niClass: "class1" | "class4";
+  /** What leaves pay for the pension: the sacrifice, the net-pay contribution or the net RAS payment. */
+  pensionEmployee: number;
+  /** What reaches the pension from the employee, after basic-rate relief at source. */
+  pensionGross: number;
+  pensionMethod: UkPensionMethod | null;
+  adjustedNetIncome: number;
+  personalAllowance: number;
+  taxableIncome: number;
+  /** Pay liable to Class 1 NI. */
+  niPay: number;
+  /** Pay student loan repayments are worked out on. */
+  studentLoanPay: number;
+  incomeTax: number;
+  nationalInsurance: number;
+  studentLoan: number;
+  studentLoanByPlan: Partial<Record<UkStudentLoanPlanKey, number>>;
+  /** Child Benefit received over the year (not part of take-home). */
+  childBenefit: number;
+  hicbcPercent: number;
+  hicbc: number;
+  /** grossPay + otherIncome - pensionEmployee - incomeTax - nationalInsurance - studentLoan - hicbc. */
+  takeHome: number;
+  assumptions: UkTakeHomeAssumption[];
+  /** Grossed-up relief at source plus grossed-up Gift Aid: how far band edges above the basic rate move. */
+  bandExtension: number;
+  /** Rule groups this result rests on whose registry status is "unverified". */
+  unverifiedRuleKeys: UkRuleKey[];
+  /**
+   * True when any rule group is unverified or any assumption is. `computeUkTakeHome` also counts
+   * an unsigned feature.
+   */
+  isUnverifiedEstimate: boolean;
+  /** The sign-off features this result uses, in the order `verification` lists them. */
+  features: UkTakeHomeFeature[];
+}
+
+const UNDERGRADUATE_PLANS: readonly UkStudentLoanPlanKey[] = ["plan1", "plan2", "plan4", "plan5"];
+
+const nonNeg = (x: number | undefined): number =>
+  x !== undefined && Number.isFinite(x) ? Math.max(0, x) : 0;
+
+/** Student loan plans the year's tables list. Selectors offer only these. */
+export function availableStudentLoanPlans(rules: UkTaxYearRules): UkStudentLoanPlanKey[] {
+  const plans = rules.studentLoans.plans;
+  return (["plan1", "plan2", "plan4", "plan5", "postgrad"] as const).filter(
+    (k) => plans[k] !== undefined,
+  );
+}
+
+/** Employee pension contribution in pounds, before any gross-up. */
+export function pensionContribution(salary: number, pension?: UkPensionInput): number {
+  if (!pension) return 0;
+  if (pension.amount !== undefined) return nonNeg(pension.amount);
+  return (nonNeg(salary) * nonNeg(pension.pct)) / 100;
+}
+
+/**
+ * Student loan repayment for several plans. One undergraduate plan charges its rate over its threshold.
+ * With several undergraduate plans the rate is charged once over the lowest of their thresholds
+ * (UNVERIFIED until the accountant ruling). With Plan 1 and Plan 2 that repayment is split as
+ * GOV.UK sets out; other pairs put it all on the lowest-threshold plan. Postgraduate is charged
+ * separately on top.
+ */
+function studentLoanRepayments(
+  pay: number,
+  plans: readonly UkStudentLoanPlanKey[],
+  rules: UkTaxYearRules,
+): { total: number; byPlan: Partial<Record<UkStudentLoanPlanKey, number>>; multiUg: boolean } {
+  const unique = [...new Set(plans)];
+  const ug = unique.filter((p) => UNDERGRADUATE_PLANS.includes(p));
+  const byPlan: Partial<Record<UkStudentLoanPlanKey, number>> = {};
+  if (ug.length > 0) {
+    // Throws UnsupportedUkTaxYearError for a plan the year does not list (no substitution).
+    for (const p of ug) calculateStudentLoanRepayment(0, p, rules);
+    // A plan the year collects nothing on (Plan 5 before 2026/27) never sets the threshold.
+    const threshold = (p: UkStudentLoanPlanKey) =>
+      isStudentLoanRepayable(rules, p)
+        ? (rules.studentLoans.plans[p]?.threshold ?? Number.POSITIVE_INFINITY)
+        : Number.POSITIVE_INFINITY;
+    const lowest = ug.reduce((a, b) => (threshold(b) < threshold(a) ? b : a));
+    const repayment = calculateStudentLoanRepayment(pay, lowest, rules);
+    byPlan[lowest] = repayment;
+    for (const other of ug) if (other !== lowest) byPlan[other] = 0;
+    // GOV.UK "Repaying your student loan: what you pay": with Plan 1 and Plan 2 the Plan 1 loan
+    // takes at most 9% of the gap between the two thresholds, and the rest goes to Plan 2. The
+    // total is unchanged. GOV.UK gives no such rule for other pairs, so they keep the split above.
+    if (ug.length === 2 && ug.includes("plan1") && ug.includes("plan2")) {
+      const plan1 = rules.studentLoans.plans.plan1;
+      const plan2 = rules.studentLoans.plans.plan2;
+      if (plan1 && plan2 && plan2.threshold > plan1.threshold) {
+        const plan1Cap = plan1.rate * (plan2.threshold - plan1.threshold);
+        byPlan.plan1 = roundPence(Math.min(repayment, plan1Cap));
+        byPlan.plan2 = roundPence(repayment - byPlan.plan1);
+      }
+    }
+  }
+  if (unique.includes("postgrad")) {
+    byPlan.postgrad = calculateStudentLoanRepayment(pay, "postgrad", rules);
+  }
+  const total = roundPence(Object.values(byPlan).reduce((s, v) => s + (v ?? 0), 0));
+  return { total, byPlan, multiUg: ug.length > 1 };
+}
+
+function resolveYear(
+  taxYear: string | undefined,
+  now: Date | undefined,
+): { taxYear: string; ratesYear: UkTaxYear; isFallback: boolean } {
+  if (taxYear === undefined) {
+    const ctx = getUkTaxYearContext(now);
+    return { taxYear: ctx.calendarYear, ratesYear: ctx.ratesYear, isFallback: ctx.isFallback };
+  }
+  const ratesYear = resolveUkTaxYear(taxYear);
+  return { taxYear: ratesYear, ratesYear, isFallback: false };
+}
+
+export interface UkTakeHomeOptions {
+  now?: Date;
+}
+
+/** A scenario checked against the rates published for its year (see scenarioWithPublishedRates). */
+export type UkScenarioRatesCheck =
+  | { status: "refused"; refusal: UkRefusal }
+  | { status: "ok"; scenario: UkIncomeScenario; notes: string[] };
+
+/**
+ * The scenario for its rates year (the year computeUkTakeHome would use) with refusals applied,
+ * never carried forward (owner decision): a Scottish taxpayer in a year with no Scottish rates is
+ * refused; a student loan plan with no published threshold is left out, and `notes` says so.
+ * Never throws for a refusal; an explicitly unsupported year is left for the core to report.
+ */
+export function scenarioWithPublishedRates(
+  s: UkIncomeScenario,
+  opts: UkTakeHomeOptions = {},
+): UkScenarioRatesCheck {
+  let ratesYear: UkTaxYear;
+  try {
+    ratesYear = resolveYear(s.taxYear, opts.now).ratesYear;
+  } catch {
+    return { status: "ok", scenario: s, notes: [] };
+  }
+  const rules = getUkTaxYearRules(ratesYear);
+  const scottish = scottishRatesRefusal(rules, s.region);
+  if (scottish) return { status: "refused", refusal: scottish };
+  const loans = s.studentLoans ?? [];
+  const kept = loans.filter((plan) => !studentLoanThresholdRefusal(rules, plan));
+  if (kept.length === loans.length) return { status: "ok", scenario: s, notes: [] };
+  const { studentLoans: _dropped, ...rest } = s;
+  return {
+    status: "ok",
+    scenario: kept.length > 0 ? { ...rest, studentLoans: kept } : rest,
+    notes: [studentLoanThresholdNotPublishedNotice(ratesYear)],
+  };
+}
+
+/** The take-home breakdown for a scenario, without the vector sign-off label. */
+export function computeUkTakeHomeCore(
+  s: UkIncomeScenario,
+  opts: UkTakeHomeOptions = {},
+): UkTakeHomeCoreBreakdown {
+  const year = resolveYear(s.taxYear, opts.now);
+  const rules = getUkTaxYearRules(year.ratesYear);
+  const region = s.region ?? "ENGLAND_NI_WALES";
+  const assumptions: UkTakeHomeAssumption[] = [{ code: "annualMethod", unverified: false }];
+  const assume = (code: UkTakeHomeAssumptionCode, unverified = false) => {
+    if (!assumptions.some((a) => a.code === code)) assumptions.push({ code, unverified });
+  };
+  if (s.region === undefined) assume("regionAssumed");
+
+  const salary = nonNeg(s.salary);
+  const bonus = nonNeg(s.bonus);
+  const grossPay = salary + bonus;
+  const otherIncome = nonNeg(s.otherIncome);
+  const selfEmployed = s.selfEmployed === true;
+
+  // Salary sacrifice needs an employer, so a self-employed contribution is never treated as one
+  // (it would lower Class 4). It is taken as a net pay style deduction, the treatment take-home
+  // has always used for self-employed people. UNVERIFIED: a personal pension is usually relief at source.
+  const askedMethod = s.pension ? s.pension.method : null;
+  const method = selfEmployed && askedMethod === "salary-sacrifice" ? "net-pay" : askedMethod;
+  if (
+    selfEmployed &&
+    method === "net-pay" &&
+    pensionContribution(nonNeg(s.salary), s.pension) > 0
+  ) {
+    assume("pensionMethodAssumed", true);
+  }
+  if (s.pension && s.pension.amount === undefined && nonNeg(s.pension.pct) > 0) {
+    assume("pensionPctOfSalary");
+  }
+  // Basic-rate relief added at source: net x 1 / (1 - basic rate), i.e. x 1.25 at 20%.
+  const rasGrossUp = 1 / (1 - rules.ewni.basicRate);
+  // A contribution cannot exceed the pay it comes out of. For relief at source, tax relief is limited to
+  // relevant earnings, so the grossed-up figure is capped at gross pay. The GBP3,600 minimum for people
+  // with low earnings is not in the sourced registry and is not modelled.
+  // A relief-at-source percentage is the total going in, including relief (owner decision,
+  // 19 November 2026), so the member pays the net part: gross / 1.25. A £ amount is already the net
+  // amount paid (owner decision, same date). Other methods use the contribution as given.
+  const rasPctIsGross =
+    method === "relief-at-source" && s.pension !== undefined && s.pension.amount === undefined;
+  const rawContribution = rasPctIsGross
+    ? pensionContribution(salary, s.pension) / rasGrossUp
+    : pensionContribution(salary, s.pension);
+  const cap =
+    method === "relief-at-source" ? grossPay / rasGrossUp : method === null ? 0 : grossPay;
+  const contribution = Math.min(rawContribution, cap);
+  if (rawContribution > cap + 1e-9) assume("pensionCappedAtEarnings");
+  const sacrifice = method === "salary-sacrifice" ? contribution : 0;
+  const netPay = method === "net-pay" ? contribution : 0;
+  const rasNet = method === "relief-at-source" ? contribution : 0;
+  const rasGross = rasNet * rasGrossUp;
+  if (rasNet > 0) {
+    assume("reliefAtSourceBandExtension", true);
+    if (region === "SCOTLAND") assume("reliefAtSourceScotland", true);
+  }
+  const giftAidGross = nonNeg(s.giftAidNet) * rules.giftAidGrossUp;
+
+  const employmentIncome = grossPay - sacrifice;
+  const incomeBeforeAllowance = Math.max(0, employmentIncome + otherIncome - netPay);
+  const adjustedNetIncome = Math.max(0, incomeBeforeAllowance - rasGross - giftAidGross);
+  const personalAllowance = calculatePersonalAllowanceForYear(adjustedNetIncome, rules);
+  const taxableIncome = Math.max(0, incomeBeforeAllowance - personalAllowance);
+  const incomeTax = calculateIncomeTaxOnTaxable(taxableIncome, rules, region, {
+    bandExtension: rasGross + giftAidGross,
+  }).total;
+
+  let niPay = employmentIncome;
+  const scheduled = [...new Set(s.scheduledRules ?? [])];
+  if (scheduled.length > 0) assume("scheduledRuleIllustration", true);
+  if (scheduled.includes("ni.salarySacrificePensionCap2029")) {
+    niPay += salarySacrificeAboveCap(
+      sacrifice,
+      UK_SCHEDULED_RULES["ni.salarySacrificePensionCap2029"],
+    );
+    if ((s.studentLoans ?? []).length > 0 && sacrifice > 0) {
+      assume("studentLoanUnderScheduledCap", true);
+    }
+  }
+  const nationalInsurance = selfEmployed
+    ? calculateClass4Ni(niPay, rules)
+    : calculateEmployeeNi(niPay, rules);
+
+  const studentLoanPay = employmentIncome;
+  const loans = studentLoanRepayments(studentLoanPay, s.studentLoans ?? [], rules);
+  if (loans.multiUg) assume("multipleUndergraduatePlans", true);
+
+  let childBenefit = 0;
+  let hicbcPercent = 0;
+  let hicbc = 0;
+  const children = s.childBenefit ? Math.max(0, Math.floor(nonNeg(s.childBenefit.children))) : 0;
+  if (children > 0) {
+    assume("childBenefitExcluded");
+    assume("childBenefitWeeks", true);
+    childBenefit = calculateChildBenefitAnnual(children, rules);
+    if (s.childBenefit?.claimantIsHigherEarner === false) {
+      assume("hicbcPartnerNotModelled");
+    } else {
+      assume("hicbcIndividualBasis");
+      const r = calculateHicbc(adjustedNetIncome, childBenefit, rules);
+      hicbcPercent = r.chargePercent;
+      hicbc = r.charge;
+    }
+  }
+
+  const pensionEmployee = roundPence(contribution);
+  const takeHome = roundPence(
+    grossPay + otherIncome - pensionEmployee - incomeTax - nationalInsurance - loans.total - hicbc,
+  );
+
+  const touched: UkRuleKey[] = [
+    "personalAllowance",
+    region === "SCOTLAND" ? "incomeTaxScotland" : "incomeTaxEwni",
+    selfEmployed ? "niClass4" : "niClass1",
+  ];
+  if (adjustedNetIncome > rules.ewni.personalAllowanceTaperStart)
+    touched.push("personalAllowanceTaper");
+  if ((s.studentLoans ?? []).length > 0) touched.push("studentLoan");
+  if (children > 0) touched.push("childBenefit", "hicbc");
+  if (giftAidGross > 0 || rasGross > 0) touched.push("giftAid");
+  const sources = UK_RULE_SOURCES[year.ratesYear];
+  const unverifiedRuleKeys = touched.filter((k) => sources[k].status === "unverified");
+
+  const features: UkTakeHomeFeature[] = ["core", "whatIf"];
+  if (children > 0) features.push("hicbc");
+  if (scheduled.length > 0) features.push("scheduled");
+
+  return {
+    ...year,
+    region,
+    grossPay: roundPence(grossPay),
+    otherIncome: roundPence(otherIncome),
+    incomeBeforeAllowance: roundPence(incomeBeforeAllowance),
+    niClass: selfEmployed ? "class4" : "class1",
+    pensionEmployee,
+    pensionGross: roundPence(method === "relief-at-source" ? rasGross : contribution),
+    pensionMethod: method,
+    bandExtension: roundPence(rasGross + giftAidGross),
+    adjustedNetIncome: roundPence(adjustedNetIncome),
+    personalAllowance,
+    taxableIncome: roundPence(taxableIncome),
+    niPay: roundPence(niPay),
+    studentLoanPay: roundPence(studentLoanPay),
+    incomeTax,
+    nationalInsurance,
+    studentLoan: loans.total,
+    studentLoanByPlan: loans.byPlan,
+    childBenefit,
+    hicbcPercent,
+    hicbc,
+    takeHome,
+    assumptions,
+    unverifiedRuleKeys,
+    isUnverifiedEstimate: unverifiedRuleKeys.length > 0 || assumptions.some((a) => a.unverified),
+    features,
+  };
+}
+
+/**
+ * Extra NI the announced April 2029 cap would add for a salary sacrifice (E25-T7). An illustration at
+ * the given year's rates: never applied unless asked for, and always labelled as not yet law.
+ */
+export function salarySacrificeCapExtraNi(
+  salary: number,
+  sacrifice: number,
+  rules: UkTaxYearRules,
+): { employee: number; employer: number } {
+  const pay = nonNeg(salary);
+  const sac = Math.min(nonNeg(sacrifice), pay);
+  const excess = salarySacrificeAboveCap(
+    sac,
+    UK_SCHEDULED_RULES["ni.salarySacrificePensionCap2029"],
+  );
+  const post = pay - sac;
+  return {
+    employee: roundPence(
+      calculateEmployeeNi(post + excess, rules) - calculateEmployeeNi(post, rules),
+    ),
+    employer: calculateEmployerNiSaving(post + excess, excess, rules),
+  };
+}

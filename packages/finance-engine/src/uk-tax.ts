@@ -12,7 +12,7 @@ import type {
   UkTaxRegion,
   UkTaxYear,
 } from "./types.js";
-import { computeUkTakeHome, type UkPensionMethod } from "./uk-take-home.js";
+import { computeUkTakeHomeCore, type UkPensionMethod } from "./uk-take-home-core.js";
 import {
   calculateEmployeeNi,
   calculateEmployerNiSaving,
@@ -385,7 +385,7 @@ export function getTaxYearRemainingDays(
 
 /**
  * The take-home calculator with the allowances summary (E25-T5). An adapter: it maps its inputs onto
- * one `computeUkTakeHome` scenario and reshapes the result. It holds no tax arithmetic of its own.
+ * one `computeUkTakeHomeCore` scenario and reshapes the result. It holds no tax arithmetic of its own.
  *
  * Savings interest and rental profit are passed as other income, taxed with the pay as non-savings
  * income (the savings and dividend bands are worked out by the Self Assessment ledger, not here).
@@ -402,7 +402,7 @@ export function calculateUkTax(input: UkTaxCalculationInput): UkTaxCalculationRe
   const planKey = toStudentLoanPlanKey(input.studentLoanPlan ?? "NONE");
   const netGiftAid = Math.max(0, input.giftAidContributionsGbp ?? 0);
 
-  const core = computeUkTakeHome({
+  const core = computeUkTakeHomeCore({
     taxYear,
     region,
     salary: grossSalary,
