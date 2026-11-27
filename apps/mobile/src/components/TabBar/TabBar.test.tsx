@@ -554,13 +554,23 @@ describe("TabBar", () => {
     await expectHoldsAtDoubleText(<TabBar {...props} />);
   });
 
-  it("at 411 points and 1.5x text, gives every cell its label width plus padding and safety margin, or scrolls", async () => {
-    // Device numbers at 1.5x (420 dpi = 2.625 px/dp): Home measured 47.6 dp (125 px);
-    // Gallery tablist width = (1080 - 2 * 98) / 2.625 = 336.8 dp (337).
-    const measuredAt15 = { home: 47.6, accounts: 74.25, budget: 55.8, taxAndPay: 29.4, more: 40.8 };
-    const orderedMeasured = [47.6, 74.25, 55.8, 29.4, 40.8] as const;
+  it.each([337, 403])(
+    "at 411 points, 1.5x text and bar width %i dp, uses proportional cells with label width + 8 dp padding + 4 dp margin",
+    async (barWidth) => {
+      // Device numbers at 1.5x (420 dpi = 2.625 px/dp): Home measured 47.6 dp (125 px);
+      // Gallery tablist width = (1080 - 2 * 98) / 2.625 = 336.8 dp (337).
+      // Measured + 8 dp pill padding (clamped to 48 dp min): [55.6, 82.25, 63.8, 48, 48.8].
+      // Sum = 298.45; scroll limit = 298.45 + 5 * 4 = 318.45; equal limit = (82.25 + 4) * 5 = 431.25.
+      // Both 337 and 403 lie in [318.45, 431.25), so both are proportional (never scroll).
+      const measuredAt15 = {
+        home: 47.6,
+        accounts: 74.25,
+        budget: 55.8,
+        taxAndPay: 29.4,
+        more: 40.8,
+      };
+      const orderedMeasured = [47.6, 74.25, 55.8, 29.4, 40.8] as const;
 
-    for (const barWidth of [337, 403]) {
       phone(1.5, 411);
       await renderBar("home", "light", 1.5);
       await fireEvent(screen.getByTestId("tab-bar"), "layout", {
@@ -568,10 +578,7 @@ describe("TabBar", () => {
       });
       await measureLabels(measuredAt15);
 
-      if (screen.queryByTestId("tab-scroll") !== null) {
-        expect(screen.getByTestId("tab-scroll").props.horizontal).toBe(true);
-        continue;
-      }
+      expect(screen.queryByTestId("tab-scroll")).toBeNull();
 
       const cells = screen.getAllByTestId(/^tab-cell-/);
       const bases = cells.map(
@@ -580,12 +587,15 @@ describe("TabBar", () => {
       const totalBasis = bases.reduce((sum, b) => sum + b, 0);
       const slackPerCell = Math.max(0, (barWidth - totalBasis) / cells.length);
       orderedMeasured.forEach((labelWidth, index) => {
+        const cellStyle = flat<ViewStyle>(cells[index]?.props.style);
+        expect(cellStyle.flexGrow).toBe(1);
+        expect(cellStyle.flexShrink).toBe(0);
         const cellWidth = (bases[index] as number) + slackPerCell;
         // 8 dp horizontal pill padding + 4 dp Android rounding/hinting margin.
         expect(cellWidth + 1e-6).toBeGreaterThanOrEqual(labelWidth + 8 + 4);
       });
-    }
-  });
+    },
+  );
 
   it("backstop: switches to scroll when a visible label wraps to two lines and latches for the same key", async () => {
     phone(1.5, 411);
@@ -812,23 +822,39 @@ describe("tabLayout", () => {
   // Hand-worked 1.0x base label widths derived from device numbers:
   // Home measured 47.6 dp (125 px at 420 dpi) at 1.5x -> 47.6 / 1.5 = 31.73 dp at 1.0x.
   // Scaled proportionally for the five labels: [31.73, 49.5, 37.2, 19.6, 27.2].
-  // At 1.8x on a 360 dp bar: [57.11, 89.1, 66.96, 35.28, 48.96] + 8 dp padding = [65.11, 97.1, 74.96, 48, 56.96], sum = 342.13.
-  // With only 1 dp margin, sum + 5 = 347.13 <= 360 chooses proportional with only 3.57 dp per cell (< 4 dp Android margin).
-  it.each(
-    [1.0, 1.15, 1.3, 1.5, 1.8, 2.0].flatMap((scale) => [
-      ...[360, 411].map((barWidth) => ({ barWidth, scale })),
-      ...(scale === 1.5 ? [{ barWidth: 337, scale }] : []),
-    ]),
-  )(
-    "at bar width $barWidth dp and $scale x scale, either every cell fits label + 8 dp padding + 4 dp margin or mode is scroll",
-    ({ barWidth, scale }) => {
+  // For each scale, labelWidths = max(48, measured + 8), scroll limit = sum(labelWidths) + 20 (5 * LABEL_FIT_EPSILON),
+  // and equal limit = (max(labelWidths) + 4) * 5:
+  // - 1.0x:  [48, 57.5, 48, 48, 48]          -> scroll <= 269.5, equal >= 307.5  (360 equal, 411 equal)
+  // - 1.15x: [48, 64.92, 50.78, 48, 48]      -> scroll <= 279.7, equal >= 344.6  (360 equal, 411 equal)
+  // - 1.3x:  [49.25, 72.35, 56.36, 48, 48]   -> scroll <= 293.96, equal >= 381.75 (360 proportional, 411 equal)
+  // - 1.5x:  [55.6, 82.25, 63.8, 48, 48.8]   -> scroll <= 318.45, equal >= 431.25 (360, 411, 337 proportional)
+  // - 1.8x:  [65.11, 97.1, 74.96, 48, 56.96] -> scroll <= 362.13, equal >= 505.5  (360 scroll, 411 proportional)
+  // - 2.0x:  [71.46, 107, 82.4, 48, 62.4]    -> scroll <= 391.26, equal >= 555    (360 scroll, 411 proportional)
+  it.each([
+    { barWidth: 360, scale: 1.0, expectedMode: "equal" },
+    { barWidth: 411, scale: 1.0, expectedMode: "equal" },
+    { barWidth: 360, scale: 1.15, expectedMode: "equal" },
+    { barWidth: 411, scale: 1.15, expectedMode: "equal" },
+    { barWidth: 360, scale: 1.3, expectedMode: "proportional" },
+    { barWidth: 411, scale: 1.3, expectedMode: "equal" },
+    { barWidth: 360, scale: 1.5, expectedMode: "proportional" },
+    { barWidth: 411, scale: 1.5, expectedMode: "proportional" },
+    { barWidth: 337, scale: 1.5, expectedMode: "proportional" },
+    { barWidth: 360, scale: 1.8, expectedMode: "scroll" },
+    { barWidth: 411, scale: 1.8, expectedMode: "proportional" },
+    { barWidth: 360, scale: 2.0, expectedMode: "scroll" },
+    { barWidth: 411, scale: 2.0, expectedMode: "proportional" },
+  ] as const)(
+    "at bar width $barWidth dp and $scale x scale, picks $expectedMode and fits label + 8 dp padding + 4 dp margin",
+    ({ barWidth, scale, expectedMode }) => {
       const baseWidths = [31.73, 49.5, 37.2, 19.6, 27.2] as const;
       const measured = baseWidths.map((w) => Number((w * scale).toFixed(2)));
       const res = atMeasured(barWidth, scale, measured);
-      if (res.mode === "scroll") return;
+      expect(res.mode).toBe(expectedMode);
+      if (expectedMode === "scroll") return;
 
       const cellWidths =
-        res.mode === "equal"
+        expectedMode === "equal"
           ? measured.map(() => barWidth / labels.length)
           : (() => {
               const bases = res.labelWidths.map((w) => w + LABEL_FIT_EPSILON);
