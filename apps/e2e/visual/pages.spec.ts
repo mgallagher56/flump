@@ -50,6 +50,10 @@ async function shoot(page: Page, testInfo: TestInfo, route: VisualRoute, snapsho
     expect(overflow.scrollWidth).toBeLessThanOrEqual(overflow.viewport);
   }
 
+  // A full-page shot is one capture of the whole page, but `content-visibility: auto` (the home
+  // page's bands below the hero, ROLLOUT-PLAN M1 notes) paints only what is near the viewport.
+  // Paint everything, as a reader scrolling down sees it.
+  await page.addStyleTag({ content: "* { content-visibility: visible !important; }" });
   await expect(page).toHaveScreenshot(`${snapshot}.png`, {
     fullPage: true,
     mask: [page.locator(MASK_SELECTOR)],
