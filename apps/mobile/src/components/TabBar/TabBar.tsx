@@ -87,22 +87,23 @@ export function TabBar({ items, activeKey, onSelect }: TabBarProps) {
     [items],
   );
   const measureKey = `${textScale}\0${labelsKey}`;
+  const measureKeyRef = useRef(measureKey);
+  measureKeyRef.current = measureKey;
   const [measured, setMeasured] = useState<{
     readonly key: string;
     readonly widths: Readonly<Record<string, number>>;
   }>(() => ({ key: measureKey, widths: {} }));
 
-  const onMeasureLabel = useCallback(
-    (itemKey: string, nextWidth: number) => {
-      if (!Number.isFinite(nextWidth) || nextWidth <= 0) return;
-      setMeasured((prev) => {
-        const current = prev.key === measureKey ? prev.widths : {};
-        if (current[itemKey] === nextWidth && prev.key === measureKey) return prev;
-        return { key: measureKey, widths: { ...current, [itemKey]: nextWidth } };
-      });
-    },
-    [measureKey],
-  );
+  const onMeasureLabel = useCallback((eventKey: string, itemKey: string, nextWidth: number) => {
+    if (eventKey !== measureKeyRef.current) return;
+    if (!Number.isFinite(nextWidth) || nextWidth <= 0) return;
+    setMeasured((prev) => {
+      const current = prev.key === eventKey ? prev.widths : {};
+      const merged = Math.max(current[itemKey] ?? 0, nextWidth);
+      if (current[itemKey] === merged && prev.key === eventKey) return prev;
+      return { key: eventKey, widths: { ...current, [itemKey]: merged } };
+    });
+  }, []);
 
   const measuredLabelWidths = useMemo(() => {
     if (measured.key !== measureKey) return undefined;
@@ -118,7 +119,9 @@ export function TabBar({ items, activeKey, onSelect }: TabBarProps) {
     textScale,
     measuredLabelWidths,
   });
-  const isScroll = layout.mode === "scroll";
+  const backstopKey = `${width}\0${measureKey}`;
+  const [forcedScrollKey, setForcedScrollKey] = useState<string | null>(null);
+  const isScroll = layout.mode === "scroll" || forcedScrollKey === backstopKey;
 
   const scrollRef = useRef<ScrollViewInstance | null>(null);
   const cellsRef = useRef<Record<string, { x: number; width: number }>>({});
@@ -222,6 +225,15 @@ export function TabBar({ items, activeKey, onSelect }: TabBarProps) {
               <Text
                 textStyle={LABEL_STYLE}
                 style={[styles.label, selected ? styles.labelSelected : null]}
+                onTextLayout={
+                  isScroll
+                    ? undefined
+                    : (event) => {
+                        if (event.nativeEvent.lines.length > 1) {
+                          setForcedScrollKey(backstopKey);
+                        }
+                      }
+                }
               >
                 {item.label}
               </Text>
@@ -301,7 +313,14 @@ export function TabBar({ items, activeKey, onSelect }: TabBarProps) {
               textStyle={LABEL_STYLE}
               style={styles.label}
               onLayout={(event) => {
-                onMeasureLabel(item.key, event.nativeEvent.layout.width);
+                onMeasureLabel(measureKey, item.key, event.nativeEvent.layout.width);
+              }}
+              onTextLayout={(event) => {
+                const lineWidth = event.nativeEvent.lines.reduce(
+                  (sum, line) => sum + line.width,
+                  0,
+                );
+                if (lineWidth > 0) onMeasureLabel(measureKey, item.key, lineWidth);
               }}
             >
               {item.label}

@@ -23,8 +23,14 @@ const MIN_TAB_WIDTH = 48;
 const SAFETY_MARGIN = 1.1;
 /** Extra pre-measurement headroom so an unmeasured bar near the proportional limit chooses scroll. */
 const PRE_MEASURE_SCROLL_HEADROOM = 1.1;
-/** Per-label rounding headroom (1 pt) so Android pixel rounding does not wrap a label at exact fit. */
-export const LABEL_FIT_EPSILON = 1;
+/**
+ * Per-label Android rounding and font-hinting margin (4 pt): covers Yoga's pixel snapping on
+ * horizontal padding (10.5 px per side at 420 dpi) and cell edges, rounded-down onLayout widths,
+ * and Android TextLayoutManager's floor(width) line-fit check.
+ */
+export const LABEL_FIT_EPSILON = 4;
+/** Unconstrained width for the hidden measuring row so labels never wrap against tablist width. */
+const MEASURE_CANVAS_WIDTH = 10_000;
 
 export interface TabLayoutInput {
   readonly labels: readonly string[];
@@ -75,7 +81,10 @@ export function tabLayout({
   const fitEpsilon = hasMeasurements ? LABEL_FIT_EPSILON : 0;
   const scrollThreshold = hasMeasurements
     ? totalWidth + labels.length * fitEpsilon
-    : totalWidth * PRE_MEASURE_SCROLL_HEADROOM;
+    : Math.max(
+        totalWidth * PRE_MEASURE_SCROLL_HEADROOM,
+        totalWidth + labels.length * LABEL_FIT_EPSILON,
+      );
   const mode =
     scrollThreshold - width > FLOAT_EPSILON
       ? "scroll"
@@ -171,12 +180,13 @@ export const createStyles = (theme: Theme) =>
     selected: { backgroundColor: theme.colors["primary.subtle"] },
     label: { color: theme.colors["text.secondary"], fontWeight: "600", textAlign: "center" },
     labelSelected: { color: theme.colors.primary },
-    // Hidden measuring column: absolutely placed with no width/height constraints so each label
-    // reports its natural single-line width via onLayout without affecting layout or a11y.
+    // Hidden measuring column: absolutely placed with an unconstrained width so each label
+    // reports its natural single-line width via onLayout and onTextLayout without wrapping.
     measureRow: {
       position: "absolute",
       top: 0,
       left: 0,
+      width: MEASURE_CANVAS_WIDTH,
       opacity: 0,
       alignItems: "flex-start",
     },
