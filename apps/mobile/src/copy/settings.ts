@@ -75,8 +75,9 @@ export const checkInDayLabel = (day: number): string => ordinalDay(day);
 export const SECURITY = {
   /** Web's "How you sign in" section. */
   title: "How you sign in",
-  /** Web's account email label, and what it shows when the sign-in token carries no email. */
+  /** Web's account email label, and what it shows while loading or when unavailable. */
   email: "Account email",
+  emailLoading: "Loading your email…",
   emailNotSet: "Your email cannot be shown here right now.",
   /** Web's button. In the app it opens the website, which emails the link. */
   changePassword: "Change password",

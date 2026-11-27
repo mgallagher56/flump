@@ -2,7 +2,15 @@ import { act, render, screen, waitFor } from "@testing-library/react-native";
 import { useEffect } from "react";
 import { Text } from "../components/Text";
 import { fail, fakeApi, withApi } from "./fakeApi";
-import { AppProfile, patchProfile, type SaveProfile, useProfile, useSaveProfile } from "./profile";
+import {
+  AppProfile,
+  fetchUserEmail,
+  patchProfile,
+  type SaveProfile,
+  useProfile,
+  useSaveProfile,
+  useUserEmail,
+} from "./profile";
 import { queryKeys } from "./queryKeys";
 
 const UPDATED_AT = "2026-11-20T09:15:00.000Z";
@@ -179,10 +187,38 @@ describe("useSaveProfile", () => {
   });
 });
 
+/** The email query switched off, as restored offline. */
+function OffEmail() {
+  const email = useUserEmail({ enabled: false });
+  return <Text>{email.status}</Text>;
+}
+
 describe("useProfile", () => {
   it("sends no request while switched off (restored offline)", async () => {
     const api = fakeApi({ "GET /user-profile": () => ({}) });
     const { ui } = withApi(<Off />, api.client);
+    await render(ui);
+    expect(screen.getByText("pending")).toBeOnTheScreen();
+    expect(api.request).not.toHaveBeenCalled();
+  });
+});
+
+describe("fetchUserEmail and useUserEmail", () => {
+  it("returns the email or null, and defaults a body lacking email to null (older backend)", async () => {
+    const sampleEmail = ["person", "example.com"].join("@");
+    const api = fakeApi({ "GET /user-profile/email": () => ({ email: sampleEmail }) });
+    await expect(fetchUserEmail(api.client)).resolves.toBe(sampleEmail);
+
+    const nullApi = fakeApi({ "GET /user-profile/email": () => ({ email: null }) });
+    await expect(fetchUserEmail(nullApi.client)).resolves.toBeNull();
+
+    const olderApi = fakeApi({ "GET /user-profile/email": () => ({}) });
+    await expect(fetchUserEmail(olderApi.client)).resolves.toBeNull();
+  });
+
+  it("sends no request while switched off (restored offline)", async () => {
+    const api = fakeApi({ "GET /user-profile/email": () => ({ email: null }) });
+    const { ui } = withApi(<OffEmail />, api.client);
     await render(ui);
     expect(screen.getByText("pending")).toBeOnTheScreen();
     expect(api.request).not.toHaveBeenCalled();

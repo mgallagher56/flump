@@ -6,7 +6,12 @@
  * web's `useUserProfile` sends it, so a profile changed somewhere else is not overwritten (412).
  */
 import { type ApiClient, BackendError } from "@flump/api-client";
-import { etagFor, UpdateProfileRequest, UserProfileResponse } from "@flump/api-contract";
+import {
+  etagFor,
+  UpdateProfileRequest,
+  UserEmailResponse,
+  UserProfileResponse,
+} from "@flump/api-contract";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useRef } from "react";
 import { useApi } from "./ApiProvider";
@@ -82,6 +87,31 @@ export function useProfile({ enabled = true }: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: queryKeys.userProfile(),
     queryFn: ({ signal }) => fetchProfile(api, signal),
+    enabled,
+  });
+}
+
+/**
+ * `GET /user-profile/email`: resolves the sign-in email on demand for Settings > Security.
+ * Never cached offline (`CACHED_READS`).
+ */
+export async function fetchUserEmail(
+  api: ApiClient | null,
+  signal?: AbortSignal,
+): Promise<string | null> {
+  const result = await need(api).request("/user-profile/email", {
+    schema: UserEmailResponse,
+    signal,
+  });
+  return result.email;
+}
+
+/** Account email query for `SettingsSecurity` only. `enabled: false` (offline) sends nothing. */
+export function useUserEmail({ enabled = true }: { enabled?: boolean } = {}) {
+  const api = useApi();
+  return useQuery({
+    queryKey: queryKeys.userEmail(),
+    queryFn: ({ signal }) => fetchUserEmail(api, signal),
     enabled,
   });
 }

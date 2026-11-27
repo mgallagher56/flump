@@ -5,7 +5,7 @@ import { Screen } from "../../components/Screen";
 import { Text } from "../../components/Text";
 import { OPEN_FLUMP_WEBSITE } from "../../copy/navigation";
 import { SECURITY } from "../../copy/settings";
-import { useProfile } from "../../data/profile";
+import { useProfile, useUserEmail } from "../../data/profile";
 import type { WebLink } from "../../navigation/shell";
 
 export interface SettingsSecurityProps {
@@ -22,20 +22,25 @@ export interface SettingsSecurityProps {
  */
 export function SettingsSecurity({ offline, changePassword }: SettingsSecurityProps) {
   const profile = useProfile({ enabled: !offline });
-  const email = profile.data?.email;
+  const userEmail = useUserEmail({ enabled: !offline });
+  const email = userEmail.data || profile.data?.email || null;
+  const emailLoading = !offline && !email && (userEmail.isPending || profile.isPending);
+  const showEmailRow = !offline || profile.data !== undefined;
   return (
     <Screen edges={["right", "bottom", "left"]} testID="settings-security">
       <Card>
         <Text accessibilityRole="header" textStyle="heading.sm">
           {SECURITY.title}
         </Text>
-        {/* Shown once read; offline there is nothing to show. */}
-        {profile.data !== undefined ? (
+        {/* Online: quiet loading text until resolved, never flashing the fallback; offline: shown only if profile was cached. */}
+        {showEmailRow ? (
           <>
             <Text textStyle="label.md" color="secondary">
               {SECURITY.email}
             </Text>
-            <Text testID="settings-email">{email || SECURITY.emailNotSet}</Text>
+            <Text color={emailLoading ? "secondary" : "primary"} testID="settings-email">
+              {emailLoading ? SECURITY.emailLoading : email || SECURITY.emailNotSet}
+            </Text>
           </>
         ) : null}
         <Text textStyle="body.sm" color="secondary">
