@@ -15,6 +15,8 @@
 | `account-balance`                 | `mobile.mobile-account-edit.edit-account-form`       | mobile/mobile-account-edit      | `/accounts/:id/edit`           |
 | `account-balance`                 | `mobile.mobile-accounts.accounts-lists`              | mobile/mobile-accounts          | `/accounts`                    |
 | `account-balance`                 | `mobile.mobile-accounts.net-worth-summary`           | mobile/mobile-accounts          | `/accounts`                    |
+| `account-balance`                 | `mobile.mobile-budget.breathing-room`                | mobile/mobile-budget            | `/budget`                      |
+| `account-balance`                 | `mobile.mobile-budget.runway-scenario`               | mobile/mobile-budget            | `/budget`                      |
 | `account-balance`                 | `mobile.mobile-net-worth-history.hero`               | mobile/mobile-net-worth-history | `/accounts/history`            |
 | `account-balance`                 | `web.account-detail.balance-history`                 | web/account-detail              | `/app/accounts/:account`       |
 | `account-balance`                 | `web.account-detail.edit-account-dialog`             | web/account-detail              | `/app/accounts/:account`       |
@@ -61,6 +63,7 @@
 | `account-goal`                    | `web.account-detail.goal-section`                    | web/account-detail              | `/app/accounts/:account`       |
 | `account-monthly-amount`          | `mobile.mobile-account-add.add-account-form`         | mobile/mobile-account-add       | `/accounts/new`                |
 | `account-monthly-amount`          | `mobile.mobile-account-edit.edit-account-form`       | mobile/mobile-account-edit      | `/accounts/:id/edit`           |
+| `account-monthly-amount`          | `mobile.mobile-budget.overview`                      | mobile/mobile-budget            | `/budget`                      |
 | `account-monthly-amount`          | `web.account-detail.balance-history`                 | web/account-detail              | `/app/accounts/:account`       |
 | `account-monthly-amount`          | `web.account-detail.edit-account-dialog`             | web/account-detail              | `/app/accounts/:account`       |
 | `account-monthly-amount`          | `web.budget.editor`                                  | web/budget                      | `/app/budget`                  |
@@ -152,6 +155,12 @@
 | `birth-year`                      | `web.onboarding.step-review`                         | web/onboarding                  | `/app/onboarding`              |
 | `birth-year`                      | `web.retirement.hero`                                | web/retirement                  | `/app/retirement`              |
 | `birth-year`                      | `web.settings.age-and-pay`                           | web/settings                    | `/app/profile`                 |
+| `budget-entries`                  | `mobile.mobile-budget.breathing-room`                | mobile/mobile-budget            | `/budget`                      |
+| `budget-entries`                  | `mobile.mobile-budget.category-list`                 | mobile/mobile-budget            | `/budget`                      |
+| `budget-entries`                  | `mobile.mobile-budget.editor`                        | mobile/mobile-budget            | `/budget`                      |
+| `budget-entries`                  | `mobile.mobile-budget.entry-form`                    | mobile/mobile-budget            | `/budget`                      |
+| `budget-entries`                  | `mobile.mobile-budget.overview`                      | mobile/mobile-budget            | `/budget`                      |
+| `budget-entries`                  | `mobile.mobile-budget.runway-scenario`               | mobile/mobile-budget            | `/budget`                      |
 | `budget-entries`                  | `web.budget.breathing-room`                          | web/budget                      | `/app/budget`                  |
 | `budget-entries`                  | `web.budget.category-list`                           | web/budget                      | `/app/budget`                  |
 | `budget-entries`                  | `web.budget.editor`                                  | web/budget                      | `/app/budget`                  |
@@ -166,8 +175,12 @@
 | `budget-entries`                  | `web.mortgage-estimates.housing-room-details`        | web/mortgage-estimates          | `/app/mortgage-estimates`      |
 | `budget-entries`                  | `web.retirement.hero`                                | web/retirement                  | `/app/retirement`              |
 | `budget-entries`                  | `web.retirement.plan-details`                        | web/retirement                  | `/app/retirement`              |
+| `budget-entry-link-account`       | `mobile.mobile-budget.category-list`                 | mobile/mobile-budget            | `/budget`                      |
+| `budget-entry-link-account`       | `mobile.mobile-budget.overview`                      | mobile/mobile-budget            | `/budget`                      |
 | `budget-entry-link-account`       | `web.budget.category-list`                           | web/budget                      | `/app/budget`                  |
 | `budget-entry-link-account`       | `web.budget.overview`                                | web/budget                      | `/app/budget`                  |
+| `budget-entry-link-kind`          | `mobile.mobile-budget.category-list`                 | mobile/mobile-budget            | `/budget`                      |
+| `budget-entry-link-kind`          | `mobile.mobile-budget.overview`                      | mobile/mobile-budget            | `/budget`                      |
 | `budget-entry-link-kind`          | `web.budget.category-list`                           | web/budget                      | `/app/budget`                  |
 | `budget-entry-link-kind`          | `web.budget.overview`                                | web/budget                      | `/app/budget`                  |
 | `buy-to-let-mortgage`             | `web.mortgage.btl-overview`                          | web/mortgage                    | `/app/mortgage`                |
@@ -190,6 +203,9 @@
 | `check-in-done`                   | `web.dashboard.housekeeping`                         | web/dashboard                   | `/`                            |
 | `check-in-done`                   | `web.history.check-in-sheet`                         | web/history                     | `/app/accounts/history`        |
 | `check-in-done`                   | `web.history.hero`                                   | web/history                     | `/app/accounts/history`        |
+| `custom-budget-categories`        | `mobile.mobile-budget.category-list`                 | mobile/mobile-budget            | `/budget`                      |
+| `custom-budget-categories`        | `mobile.mobile-budget.editor`                        | mobile/mobile-budget            | `/budget`                      |
+| `custom-budget-categories`        | `mobile.mobile-budget.entry-form`                    | mobile/mobile-budget            | `/budget`                      |
 | `custom-budget-categories`        | `web.budget.category-list`                           | web/budget                      | `/app/budget`                  |
 | `custom-budget-categories`        | `web.budget.editor`                                  | web/budget                      | `/app/budget`                  |
 | `employment-type`                 | `web.invoicing.mtd-notice`                           | web/invoicing                   | `/app/invoicing`               |
@@ -212,6 +228,8 @@
 | `home-value`                      | `web.mortgage.edit-dialog`                           | web/mortgage                    | `/app/mortgage`                |
 | `home-value`                      | `web.mortgage.hero-and-kpis`                         | web/mortgage                    | `/app/mortgage`                |
 | `home-value`                      | `web.onboarding.step-review`                         | web/onboarding                  | `/app/onboarding`              |
+| `housing-cost`                    | `mobile.mobile-budget.category-list`                 | mobile/mobile-budget            | `/budget`                      |
+| `housing-cost`                    | `mobile.mobile-budget.overview`                      | mobile/mobile-budget            | `/budget`                      |
 | `housing-cost`                    | `web.budget.category-list`                           | web/budget                      | `/app/budget`                  |
 | `housing-cost`                    | `web.budget.editor`                                  | web/budget                      | `/app/budget`                  |
 | `housing-cost`                    | `web.budget.link-notice`                             | web/budget                      | `/app/budget`                  |
@@ -221,6 +239,7 @@
 | `housing-cost`                    | `web.mortgage-estimates.housing-room-details`        | web/mortgage-estimates          | `/app/mortgage-estimates`      |
 | `housing-cost`                    | `web.onboarding.step-review`                         | web/onboarding                  | `/app/onboarding`              |
 | `housing-cost`                    | `web.retirement.hero`                                | web/retirement                  | `/app/retirement`              |
+| `housing-status`                  | `mobile.mobile-budget.category-list`                 | mobile/mobile-budget            | `/budget`                      |
 | `housing-status`                  | `web.budget.category-list`                           | web/budget                      | `/app/budget`                  |
 | `housing-status`                  | `web.budget.editor`                                  | web/budget                      | `/app/budget`                  |
 | `housing-status`                  | `web.mortgage.empty-or-partial-state`                | web/mortgage                    | `/app/mortgage`                |
@@ -318,6 +337,7 @@
 | `retirement-plan`                 | `web.retirement.kpis`                                | web/retirement                  | `/app/retirement`              |
 | `retirement-plan`                 | `web.retirement.plan-details`                        | web/retirement                  | `/app/retirement`              |
 | `retirement-plan`                 | `web.retirement.what-if-zone`                        | web/retirement                  | `/app/retirement`              |
+| `salary`                          | `mobile.mobile-budget.overview`                      | mobile/mobile-budget            | `/budget`                      |
 | `salary`                          | `web.budget.link-notice`                             | web/budget                      | `/app/budget`                  |
 | `salary`                          | `web.budget.overview`                                | web/budget                      | `/app/budget`                  |
 | `salary`                          | `web.budget.setup-wizard`                            | web/budget                      | `/app/budget`                  |
@@ -373,6 +393,7 @@
 | `tax-region`                      | `web.take-home.breakdown`                            | web/take-home                   | `/app/take-home`               |
 | `tax-region`                      | `web.take-home.hero-and-kpis`                        | web/take-home                   | `/app/take-home`               |
 | `tax-region`                      | `web.take-home.scenario-zone`                        | web/take-home                   | `/app/take-home`               |
+| `typed-take-home`                 | `mobile.mobile-budget.overview`                      | mobile/mobile-budget            | `/budget`                      |
 | `typed-take-home`                 | `web.budget.link-notice`                             | web/budget                      | `/app/budget`                  |
 | `typed-take-home`                 | `web.budget.overview`                                | web/budget                      | `/app/budget`                  |
 | `typed-take-home`                 | `web.budget.setup-wizard`                            | web/budget                      | `/app/budget`                  |
@@ -409,11 +430,14 @@
 | `invoice-totals`                    | `web.invoicing.kpi-strip`                         | web/invoicing                   | `/app/invoicing`               |
 | `invoicing-kpis`                    | `web.invoicing.kpi-strip`                         | web/invoicing                   | `/app/invoicing`               |
 | `isa-allowance-used`                | `web.savings.hero-and-kpis`                       | web/savings                     | `/app/savings`                 |
+| `left-over`                         | `mobile.mobile-budget.overview`                   | mobile/mobile-budget            | `/budget`                      |
 | `left-over`                         | `web.budget.overview`                             | web/budget                      | `/app/budget`                  |
 | `left-over`                         | `web.dashboard.kpis`                              | web/dashboard                   | `/`                            |
 | `left-over`                         | `web.dashboard.sections-grid`                     | web/dashboard                   | `/`                            |
 | `left-over`                         | `web.debt.scenario-zone`                          | web/debt                        | `/app/debt`                    |
 | `loan-to-value`                     | `web.mortgage.hero-and-kpis`                      | web/mortgage                    | `/app/mortgage`                |
+| `months-of-cover`                   | `mobile.mobile-budget.breathing-room`             | mobile/mobile-budget            | `/budget`                      |
+| `months-of-cover`                   | `mobile.mobile-budget.runway-scenario`            | mobile/mobile-budget            | `/budget`                      |
 | `months-of-cover`                   | `web.budget.breathing-room`                       | web/budget                      | `/app/budget`                  |
 | `months-of-cover`                   | `web.budget.runway-calculator`                    | web/budget                      | `/app/budget`                  |
 | `months-of-cover`                   | `web.dashboard.sections-grid`                     | web/dashboard                   | `/`                            |
@@ -453,6 +477,7 @@
 | `retirement-income`                 | `web.retirement.hero`                             | web/retirement                  | `/app/retirement`              |
 | `retirement-income`                 | `web.retirement.kpis`                             | web/retirement                  | `/app/retirement`              |
 | `retirement-income`                 | `web.retirement.what-if-zone`                     | web/retirement                  | `/app/retirement`              |
+| `safe-to-spend`                     | `mobile.mobile-budget.overview`                   | mobile/mobile-budget            | `/budget`                      |
 | `safe-to-spend`                     | `web.budget.overview`                             | web/budget                      | `/app/budget`                  |
 | `safe-to-spend`                     | `web.dashboard.sections-grid`                     | web/dashboard                   | `/`                            |
 | `savings-interest`                  | `web.dashboard.sections-grid`                     | web/dashboard                   | `/`                            |
@@ -460,6 +485,7 @@
 | `savings-total`                     | `web.dashboard.sections-grid`                     | web/dashboard                   | `/`                            |
 | `savings-total`                     | `web.savings.hero-and-kpis`                       | web/savings                     | `/app/savings`                 |
 | `savings-total`                     | `web.savings.scenario-zone`                       | web/savings                     | `/app/savings`                 |
+| `take-home`                         | `mobile.mobile-budget.overview`                   | mobile/mobile-budget            | `/budget`                      |
 | `take-home`                         | `web.budget.link-notice`                          | web/budget                      | `/app/budget`                  |
 | `take-home`                         | `web.budget.overview`                             | web/budget                      | `/app/budget`                  |
 | `take-home`                         | `web.budget.setup-wizard`                         | web/budget                      | `/app/budget`                  |

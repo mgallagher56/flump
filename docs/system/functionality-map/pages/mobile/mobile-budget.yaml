@@ -3,9 +3,65 @@ app: mobile
 route: /budget
 title: Budget
 auth: required
-purpose: The Budget tab (E12 S4). Until its own slice it is a plain placeholder that says Budget is on the Flump website for now and opens the same web page (/app/budget) in the system browser. It shows no figures and reads nothing.
+purpose: The Budget tab (E12 S10), as web's Budget page for the same rows. The rates sentence, what is left over each month with safe to spend, money in and going out, where the money goes, Breathing room with the switches that set which entries are essential, the what-if zone (nothing in it is saved or sent) and the debt help line. Edit budget adds, changes and deletes the person's own sole, unlinked entries; linked and joint entries, categories, housing details and the setup wizard open the website until S11, S12 and S15.
 route_file: apps/mobile/app/(app)/(tabs)/budget.tsx
 
 sections:
-  - id: placeholder
-    component: apps/mobile/src/screens/ComingSoon/ComingSoon.tsx
+  - id: header
+    component: apps/mobile/src/screens/Budget/Budget.tsx
+
+  - id: overview
+    component: apps/mobile/src/screens/Budget/Budget.tsx
+    facts_read:
+      - budget-entries
+      - budget-entry-link-kind
+      - budget-entry-link-account
+      - salary
+      - typed-take-home
+      - housing-cost
+      - account-monthly-amount
+    figures_shown:
+      - left-over
+      - safe-to-spend
+      - take-home
+
+  - id: category-list
+    component: apps/mobile/src/components/BudgetCategoryList/BudgetCategoryList.tsx
+    facts_read:
+      - budget-entries
+      - custom-budget-categories
+      - housing-status
+      - housing-cost
+      - budget-entry-link-kind
+      - budget-entry-link-account
+
+  - id: editor
+    component: apps/mobile/src/components/BudgetEditor/BudgetEditor.tsx
+    facts_read:
+      - budget-entries
+      - custom-budget-categories
+
+  - id: entry-form
+    component: apps/mobile/src/components/BudgetEntryForm/BudgetEntryForm.tsx
+    facts_read:
+      - budget-entries
+      - custom-budget-categories
+
+  - id: breathing-room
+    component: apps/mobile/src/components/BreathingRoom/BreathingRoom.tsx
+    facts_read:
+      - account-balance
+      - budget-entries
+    figures_shown:
+      - months-of-cover
+
+  - id: runway-scenario
+    component: apps/mobile/src/components/ScenarioZone/ScenarioZone.tsx
+    facts_read:
+      - account-balance
+      - budget-entries
+    figures_shown:
+      - months-of-cover
+
+  - id: debt-help
+    component: apps/mobile/src/components/DebtHelpLink/DebtHelpLink.tsx

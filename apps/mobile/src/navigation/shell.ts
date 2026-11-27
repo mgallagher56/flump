@@ -60,6 +60,8 @@ export const SET_UP_WEB_ROUTE = "/app/onboarding";
 export const NET_WORTH_SETTINGS_ROUTE = "/settings/profile?focus=net-worth";
 /** Web's Profile settings, where the rest of the profile is changed (E12 S9). */
 export const PROFILE_SETTINGS_WEB_ROUTE = "/app/profile?tab=profile";
+/** Web's salary settings, where the salary behind take-home pay is added (web's "Add your salary"). */
+export const SALARY_WEB_ROUTE = "/app/profile#settings-age-and-pay";
 /** Web's Security settings, where the password is changed: the app never takes one (E12 S9). */
 export const SECURITY_SETTINGS_WEB_ROUTE = "/app/profile?tab=security";
 /** Web's budget page, where a budget and its spending are added until the app has it (S10). */
