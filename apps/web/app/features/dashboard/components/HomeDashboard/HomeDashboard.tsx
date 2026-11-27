@@ -1,7 +1,9 @@
 import {
   getUkTaxYearContext,
+  type HomeStripBudget,
   type NetWorthLeftOut,
   type NetWorthTrend,
+  selectHomeStrip,
 } from "@flump/finance-engine";
 import {
   Button,
@@ -181,20 +183,28 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
       ? budgetData.budgetKnown
       : (budgetData?.monthlyIncome ?? 0) > 0 || (budgetData?.monthlyExpenses ?? 0) > 0;
 
-  // Straight after onboarding the budget can hold take-home pay as income and no spending yet. The
-  // strip then shows that income and asks for spending; "left over" would be income minus nothing.
-  // Sample data (no flags) falls back to its totals.
+  // The strip's cards come from the engine's one rule (E12 S5b), which the mobile app shares: left
+  // over, short or income only, then what is owed or the pension pots. Data without the loader's
+  // flags (stories and tests) falls back to its totals.
   const budgetIncome = finiteOrNull(budgetData?.monthlyIncome);
-  const budgetHasIncome =
-    typeof budgetData?.hasIncome === "boolean" ? budgetData.hasIncome : (budgetIncome ?? 0) > 0;
-  const budgetHasSpending =
-    typeof budgetData?.hasSpending === "boolean"
-      ? budgetData.hasSpending
-      : (budgetData?.monthlyExpenses ?? 0) > 0 || (budgetData?.budgetedSavings ?? 0) > 0;
-  const incomeOnly =
-    budgetKnown && budgetHasIncome && !budgetHasSpending && budgetIncome !== null
-      ? budgetIncome
-      : null;
+  const stripBudget: HomeStripBudget = budgetKnown
+    ? {
+        status: "known",
+        income: budgetIncome,
+        surplus: finiteOrNull(budgetData?.monthlySurplus),
+        hasIncome:
+          typeof budgetData?.hasIncome === "boolean"
+            ? budgetData.hasIncome
+            : (budgetIncome ?? 0) > 0,
+        hasSpending:
+          typeof budgetData?.hasSpending === "boolean"
+            ? budgetData.hasSpending
+            : (budgetData?.monthlyExpenses ?? 0) > 0 || (budgetData?.budgetedSavings ?? 0) > 0,
+        leavesOut: budgetData?.budgetLeavesOut ?? null,
+      }
+    : typeof budgetData?.budgetNotice === "string"
+      ? { status: "refused", notice: budgetData.budgetNotice }
+      : { status: "unknown" };
 
   // Enabled pages according to UserProfile, in the fixed canonical order.
   const enabledPages = useMemo<AppPageKey[]>(
@@ -358,9 +368,13 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
   // Figures: unknown stays null (rendered "Not set"); only a real zero is £0.
   const netWorth = hasAccounts ? finiteOrNull(accountsData?.netWorth) : null;
   const homeEstimate = hasAccounts ? finiteOrNull(accountsData?.homeEstimate) : null;
-  const totalOwed = finiteOrNull(debtData?.totalDebt);
-  const pensionPot =
-    (pensionData?.potsCount ?? 0) > 0 ? finiteOrNull(pensionData?.totalPensionBalance) : null;
+  const strip = selectHomeStrip({
+    budget: stripBudget,
+    consumerDebt: finiteOrNull(debtData?.totalDebt),
+    pensionPot:
+      (pensionData?.potsCount ?? 0) > 0 ? finiteOrNull(pensionData?.totalPensionBalance) : null,
+  });
+  const totalOwed = strip.second.kind === "owed" ? strip.second.figure : null;
   const currentMonth = checkIn?.currentMonth ?? londonMonth();
   const delta = netWorthDelta(netWorth, netWorthPrior, currentMonth);
   // D3: when net worth counts the user's own home estimate, the hero label says so in every case,
@@ -416,13 +430,16 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
       {/* One quiet line, only when the figure leaves something out (the sandbox has no choices). */}
       {isSample ? null : <NetWorthBasisLine id="dashboard-net-worth-basis" leftOut={leftOut} />}
 
+      {/* A refused budget is not set here: web's strip shows its prompt and the Budget card says why. */}
       <DashboardKpiStrip
-        incomeOnly={incomeOnly}
-        leavesOut={budgetKnown ? (budgetData?.budgetLeavesOut ?? null) : null}
+        incomeOnly={strip.first.kind === "incomeOnly" ? strip.first.figure : null}
+        leavesOut={"leavesOut" in strip.first ? strip.first.leavesOut : null}
         monthlySurplus={
-          budgetKnown && incomeOnly === null ? finiteOrNull(budgetData?.monthlySurplus) : null
+          strip.first.kind === "leftOver" || strip.first.kind === "short"
+            ? strip.first.figure
+            : null
         }
-        pensionPot={pensionPot}
+        pensionPot={strip.second.kind === "pension" ? strip.second.figure : null}
         totalOwed={totalOwed}
       />
 
