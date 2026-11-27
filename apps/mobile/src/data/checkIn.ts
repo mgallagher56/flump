@@ -30,14 +30,14 @@ const AppAccount = AccountWithDetailsDto.omit({ details: true })
   .partial()
   .required({ id: true, type: true, balance: true })
   .loose();
-const AppAccountList = AppAccount.array();
+export const AppAccountList = AppAccount.array();
 /** A monthly row: which account, which month and its value are needed; the rest may be absent. */
 const AppAccountDetail = AccountDetailDto.partial()
   .required({ accountId: true, year: true, month: true, value: true })
   .loose();
-const AppAccountDetailList = AppAccountDetail.array();
+export const AppAccountDetailList = AppAccountDetail.array();
 /** The check-in months, unknown fields ignored. */
-const AppCheckIns = SnapshotCheckInsResponse.loose();
+export const AppCheckIns = SnapshotCheckInsResponse.loose();
 
 type Accounts = ReturnType<typeof AppAccountList.parse>;
 type AccountDetails = ReturnType<typeof AppAccountDetailList.parse>;

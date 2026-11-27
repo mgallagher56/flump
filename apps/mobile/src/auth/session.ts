@@ -83,6 +83,12 @@ export interface SessionDeps {
    * Runs after the tokens are cleared on sign-out, session end and deletion. Never the theme.
    */
   wipeDevice?(): Promise<void>;
+  /**
+   * Forgets the offline cache (E12 S7). Runs with every wipe above, and also before every new
+   * sign-in, on a launch with no stored session and when a re-sign-in brings back someone else, so
+   * no cache ever outlives the session that saved it. Must not throw.
+   */
+  clearCache?(): Promise<void>;
 }
 
 export interface Session {
@@ -90,8 +96,14 @@ export interface Session {
   subscribe(listener: (state: SessionState) => void): () => void;
   /** On launch: use a stored refresh token if there is one. */
   restore(): Promise<void>;
-  /** From `restoredOffline`: try again. */
+  /** From `restoredOffline`: try again, showing the loading screen. */
   retry(): Promise<void>;
+  /**
+   * From `restoredOffline`, quietly (E12 S7): one refresh and account check while the saved figures
+   * stay on screen. Signed in again on success; still offline on a network failure; ended only as
+   * any refresh ends a session. Calls made while one runs share it. Never rejects.
+   */
+  reconnect(): Promise<void>;
   signIn(screen?: AuthorizeScreen): Promise<void>;
   signOut(): Promise<void>;
   /** For the API client: the access token in memory. */
@@ -138,10 +150,20 @@ export function createSession(deps: SessionDeps): Session {
 
   /** Then the rest of what the device keeps for this person. Its failure stops nothing. */
   async function wipeRest() {
+    await clearCache();
     try {
       await deps.wipeDevice?.();
     } catch {
       // The tokens are gone already; a flag or file left behind is swept on the next launch.
+    }
+  }
+
+  /** The offline cache alone. Its failure stops nothing: its key is gone or it is never read. */
+  async function clearCache() {
+    try {
+      await deps.clearCache?.();
+    } catch {
+      // `OfflineCache.wipe` never throws; a stand-in might.
     }
   }
 
@@ -236,7 +258,11 @@ export function createSession(deps: SessionDeps): Session {
       // The store could not be read now (an iPhone still locked): keep the token, try again later.
       return dispatch({ type: "OFFLINE" });
     }
-    if (!stored) return dispatch({ type: "NO_SESSION" });
+    if (!stored) {
+      // Nobody is signed in: a cache left by a wipe that failed, or a restored backup, goes now.
+      await clearCache();
+      return dispatch({ type: "NO_SESSION" });
+    }
     const outcome = await refresh();
     if (outcome === "refreshed") await settle();
     else if (outcome === "retryable") dispatch({ type: "OFFLINE" });
@@ -246,6 +272,8 @@ export function createSession(deps: SessionDeps): Session {
   async function signIn(screen: AuthorizeScreen = "sign-in") {
     if (state.status !== "signedOut" && state.status !== "sessionEnded") return;
     dispatch({ type: "SIGN_IN_STARTED" });
+    // Every sign-in starts with no saved figures, whoever signed in last.
+    await clearCache();
     const startedAt = epoch;
     try {
       const { verifier, challenge } = await createPkce(deps.crypto);
@@ -270,6 +298,28 @@ export function createSession(deps: SessionDeps): Session {
       await clearDevice();
       dispatch({ type: "SIGN_IN_FAILED", notice: "failed" });
     }
+  }
+
+  let reconnecting: Promise<void> | null = null;
+
+  function reconnect(): Promise<void> {
+    if (state.status !== "restoredOffline") return Promise.resolve();
+    if (!reconnecting) {
+      reconnecting = (async () => {
+        // A refresh may already have worked (the account check then failed): check again only.
+        if (!accessToken) {
+          const outcome = await refresh();
+          if (outcome !== "refreshed") return;
+        }
+        if (state.status !== "restoredOffline") return;
+        await settle();
+      })()
+        .catch(() => undefined)
+        .finally(() => {
+          reconnecting = null;
+        });
+    }
+    return reconnecting;
   }
 
   async function retry() {
@@ -356,6 +406,9 @@ export function createSession(deps: SessionDeps): Session {
       if (!currentSub || subjectOf(exchanged.tokens.accessToken) !== currentSub) {
         // Someone else's fresh session is ended too, so it does not linger; the current one stays.
         await revokeQuietly(exchanged.tokens.accessToken);
+        // Belt and braces: no saved figure survives a second person signing in on this phone. The
+        // current person's figures are saved again on their next read.
+        await clearCache();
         return "differentAccount";
       }
 
@@ -438,6 +491,7 @@ export function createSession(deps: SessionDeps): Session {
     },
     restore,
     retry,
+    reconnect,
     signIn,
     signOut,
     getAccessToken: () => accessToken,

@@ -7,29 +7,30 @@ import {
   webLink,
 } from "../../../src/navigation/shell";
 import { AccountDetail } from "../../../src/screens/AccountDetail";
-import { Offline } from "../../../src/screens/Offline";
+import { OfflineReading } from "../../../src/screens/OfflineReading";
 
 /**
  * One account's page (S6), also opened by `flump://accounts/<id>`. The header carries the
- * account's name. Restored without reaching Flump, it says so with Try again.
+ * account's name. Restored without reaching Flump, it shows the saved figures with their age (S7), or says so with Try again.
  */
 export default function AccountDetailRoute() {
   const shell = useShell();
   const { id = "" } = useLocalSearchParams<{ id: string }>();
-  if (shell.offline) return <Offline onRetry={shell.retry} onSignOut={shell.signOut} />;
   return (
-    <AccountDetail
-      id={id}
-      onSignOut={shell.signOut}
-      marketingOrigin={shell.marketingOrigin}
-      links={{
-        setUp: webLink(shell, SET_UP_WEB_ROUTE),
-        mortgage: webLink(shell, MORTGAGE_WEB_ROUTE),
-        debts: webLink(shell, DEBTS_WEB_ROUTE),
-      }}
-      onBackToAccounts={() => router.navigate("/accounts")}
-      onEdit={() => router.push({ pathname: "/accounts/[id]/edit", params: { id } })}
-      header={(title) => <Stack.Screen options={{ title }} />}
-    />
+    <OfflineReading>
+      <AccountDetail
+        id={id}
+        onSignOut={shell.signOut}
+        marketingOrigin={shell.marketingOrigin}
+        links={{
+          setUp: webLink(shell, SET_UP_WEB_ROUTE),
+          mortgage: webLink(shell, MORTGAGE_WEB_ROUTE),
+          debts: webLink(shell, DEBTS_WEB_ROUTE),
+        }}
+        onBackToAccounts={() => router.navigate("/accounts")}
+        onEdit={() => router.push({ pathname: "/accounts/[id]/edit", params: { id } })}
+        header={(title) => <Stack.Screen options={{ title }} />}
+      />
+    </OfflineReading>
   );
 }

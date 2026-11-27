@@ -1,6 +1,6 @@
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import type * as AuthDeps from "../src/auth/authDeps";
 import { missingNativeModules } from "../src/auth/nativeModules";
 import {
@@ -31,7 +31,8 @@ function startApp(): { app: AppSession | null; problem?: StartProblem } {
   try {
     const config = loadSignInConfig();
     const { createAppSession }: typeof AuthDeps = require("../src/auth/authDeps");
-    const { session, api, checkForUpdate, accountData, appLock } = createAppSession(config);
+    const { session, api, checkForUpdate, accountData, appLock, offlineCache } =
+      createAppSession(config);
     return {
       app: {
         session,
@@ -39,6 +40,7 @@ function startApp(): { app: AppSession | null; problem?: StartProblem } {
         checkForUpdate,
         accountData,
         appLock,
+        offlineCache,
         marketingOrigin: config.site.marketingOrigin,
         webAppOrigin: config.site.webAppOrigin,
       },
@@ -82,7 +84,10 @@ function UpdateGate({ children }: { children: ReactNode }) {
   return required ? <UpdateRequired onCheckAgain={recheck} /> : children;
 }
 
-/** The API client and the query cache, which is dropped whenever nobody is signed in. */
+/**
+ * The API client and the query cache, which is dropped whenever nobody is signed in. While someone
+ * is signed in and online, each successful read is saved to the sealed offline cache (E12 S7).
+ */
 function DataLayer({
   queryClient,
   children,
@@ -92,6 +97,11 @@ function DataLayer({
 }) {
   const app = useSession();
   const signedIn = app ? sessionHoldsData(app.state.status) : false;
+  useEffect(() => {
+    const cache = app?.offlineCache;
+    if (!app || !cache) return;
+    return cache.watch(queryClient, () => app.session.getState().status === "signedIn");
+  }, [app, queryClient]);
   return (
     <ApiProvider client={app?.api ?? null} queryClient={queryClient} signedIn={signedIn}>
       {children}

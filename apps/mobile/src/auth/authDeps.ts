@@ -17,14 +17,17 @@ import { createAccountCheck } from "../data/account";
 import { type ApiClient, createAppApiClient } from "../data/apiClient";
 import { createUpdateCheck, type UpdateCheck } from "../data/clientPolicy";
 import { createDeleteAccount, DELETE_TIMEOUT_MS } from "../data/deleteAccount";
+import { createDeviceCacheStore } from "../data/deviceCache";
 import { createDeviceFiles, createShareSheet } from "../data/deviceFiles";
 import { createExportData, sweepExports } from "../data/exportData";
+import { createOfflineCache, type OfflineCache } from "../data/offlineCache";
 import { createServerSignOut } from "../data/serverSignOut";
 import { createWorkosClient } from "../data/workos";
 import type { AccountDataActions } from "../features/account-data/useAccountData";
 import { createBrowserActivity, createDeviceHousekeeping } from "./deviceHousekeeping";
 import { deviceKeys } from "./deviceKeys";
 import { type AppLock, createAppLock, type ScreenCaptureGuard } from "./deviceLock";
+import { offlineAwareAccessToken } from "./offlineAccess";
 import { wipeAfterReinstall } from "./reinstall";
 import { type BrowserResult, createSession, type Session } from "./session";
 import { createTokenStore } from "./tokenStore";
@@ -97,13 +100,16 @@ export function createAppSession(config: { api: MobileConfig; auth: AuthConfig }
   checkForUpdate: UpdateCheck;
   accountData: AccountDataActions;
   appLock: AppLock | undefined;
+  offlineCache: OfflineCache | undefined;
 } {
   const version = Constants.expoConfig?.version ?? "0.0.0";
   let session: Session | undefined;
   const platform = Platform.OS === "ios" ? "ios" : "android";
   // The clients are built before the session they ask; their calls happen only after sign-in starts.
+  // Restored offline, a read first tries one quiet reconnect (E12 S7): pull to refresh, a screen
+  // opening or the app coming back to the front then brings fresh figures once Flump answers.
   const sessionForApi = {
-    getAccessToken: () => session?.getAccessToken() ?? null,
+    getAccessToken: () => (session ? offlineAwareAccessToken(session)() : null),
     refresh: () => session?.refresh() ?? Promise.resolve("ended" as const),
   };
   const api = createAppApiClient({
@@ -122,6 +128,11 @@ export function createAppSession(config: { api: MobileConfig; auth: AuthConfig }
   const tokens = createTokenStore(SecureStore, accessible);
   const files = createDeviceFiles();
   const appLock = createDeviceAppLock();
+  // The offline cache (E12 S7): sealed with AES-256-GCM, its key beside the refresh token.
+  const cacheStore = createDeviceCacheStore(SecureStore, accessible);
+  const offlineCache = cacheStore
+    ? createOfflineCache({ store: cacheStore, now: () => Date.now() })
+    : undefined;
   const housekeeping = createDeviceHousekeeping({
     sweepExports: () => sweepExports(files),
     clearLock: async () => {
@@ -143,6 +154,9 @@ export function createAppSession(config: { api: MobileConfig; auth: AuthConfig }
     endServerSession: createServerSignOut(config.api.apiBaseUrl),
     beforeFirstRestore: housekeeping.onLaunch,
     wipeDevice: housekeeping.wipe,
+    clearCache: async () => {
+      await offlineCache?.wipe();
+    },
   });
   const accountData: AccountDataActions = {
     exportData: createExportData({
@@ -154,5 +168,12 @@ export function createAppSession(config: { api: MobileConfig; auth: AuthConfig }
     }),
     deleteAccount: createDeleteAccount(deletionApi),
   };
-  return { session, api, checkForUpdate: createUpdateCheck(api, version), accountData, appLock };
+  return {
+    session,
+    api,
+    checkForUpdate: createUpdateCheck(api, version),
+    accountData,
+    appLock,
+    offlineCache,
+  };
 }

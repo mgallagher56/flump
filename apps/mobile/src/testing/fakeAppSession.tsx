@@ -10,6 +10,7 @@ import type { ReauthResult, Session } from "../auth/session";
 import type { SessionState } from "../auth/sessionMachine";
 import type { DeleteOutcome } from "../data/deleteAccount";
 import type { ExportOutcome } from "../data/exportData";
+import type { OfflineCache } from "../data/offlineCache";
 import { ThemeProvider } from "../theme/ThemeProvider";
 
 function fakeSession(initial: SessionState = { status: "signedIn" }) {
@@ -27,6 +28,7 @@ function fakeSession(initial: SessionState = { status: "signedIn" }) {
     },
     restore: jest.fn(async () => {}),
     retry: jest.fn(async () => {}),
+    reconnect: jest.fn(async () => {}),
     signIn: jest.fn(async () => {}),
     signOut: jest.fn(async () => {}),
     getAccessToken: () => null,
@@ -53,7 +55,7 @@ export type FakeApp = ReturnType<typeof fakeSession> & {
 
 export function fakeApp(
   initial?: SessionState,
-  over: { appLock?: AppLock; accountData?: boolean } = {},
+  over: { appLock?: AppLock; accountData?: boolean; offlineCache?: OfflineCache } = {},
 ): FakeApp {
   const fake = fakeSession(initial);
   const accountData = fakeAccountData();
@@ -66,6 +68,7 @@ export function fakeApp(
       webAppOrigin: "https://app.test.invalid",
       accountData: over.accountData === false ? undefined : accountData,
       appLock: over.appLock,
+      offlineCache: over.offlineCache,
     },
   };
 }

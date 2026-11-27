@@ -1,4 +1,5 @@
 import { createContext, useContext } from "react";
+import type { SavedFigures } from "../data/offlineCache";
 
 /**
  * What the signed-in shell gives every tab and page (E12 S4): whether the session was restored
@@ -7,6 +8,17 @@ import { createContext, useContext } from "react";
  */
 export interface Shell {
   readonly offline: boolean;
+  /**
+   * Offline, the saved figures' oldest time (E12 S7), or null when there are none to show: the
+   * screens that read data then show `Offline`.
+   */
+  readonly saved?: SavedFigures | null;
+  /** Offline, the saved figures are still being read. */
+  readonly restoringSaved?: boolean;
+  /** A quiet reconnect from the saved figures' Try again is running. */
+  readonly checking?: boolean;
+  /** Offline with saved figures: a quiet reconnect, the figures staying on screen. */
+  tryAgainQuietly?(): void;
   signOut(): void;
   retry(): void;
   readonly marketingOrigin: string;

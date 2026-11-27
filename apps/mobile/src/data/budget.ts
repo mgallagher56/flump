@@ -33,7 +33,7 @@ const AppBudgetEntry = BudgetEntryDto.pick({
   .partial()
   .required({ category: true, amount: true, frequency: true, isIncome: true })
   .loose();
-const AppBudgetEntryList = AppBudgetEntry.array();
+export const AppBudgetEntryList = AppBudgetEntry.array();
 
 type BudgetEntries = ReturnType<typeof AppBudgetEntryList.parse>;
 

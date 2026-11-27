@@ -1,6 +1,7 @@
 import { createContext, type ReactNode, useContext, useEffect, useSyncExternalStore } from "react";
 import type { ApiClient } from "../data/apiClient";
 import type { UpdateCheck } from "../data/clientPolicy";
+import type { OfflineCache } from "../data/offlineCache";
 import type { AccountDataActions } from "../features/account-data/useAccountData";
 import type { AppLock } from "./deviceLock";
 import type { Session } from "./session";
@@ -20,6 +21,8 @@ export interface AppSession {
   accountData?: AccountDataActions;
   /** The optional app lock on this phone (E12 S9); absent where the build has no lock module. */
   appLock?: AppLock;
+  /** The sealed offline cache (E12 S7); absent where the platform gives no cache folder. */
+  offlineCache?: OfflineCache;
 }
 
 /** Why there is no session: a bad config value, or native modules this app binary lacks. */

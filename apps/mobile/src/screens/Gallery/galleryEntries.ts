@@ -61,6 +61,8 @@ import { Pressable } from "../../components/Pressable";
 import { pressableStates } from "../../components/Pressable/Pressable.states";
 import { QuickBalanceUpdate } from "../../components/QuickBalanceUpdate";
 import { quickBalanceUpdateStates } from "../../components/QuickBalanceUpdate/QuickBalanceUpdate.states";
+import { SavedFiguresFrame } from "../../components/SavedFiguresFrame";
+import { savedFiguresFrameStates } from "../../components/SavedFiguresFrame/SavedFiguresFrame.states";
 import { Screen } from "../../components/Screen";
 import { screenStates } from "../../components/Screen/Screen.states";
 import { SelectField } from "../../components/SelectField";
@@ -143,6 +145,7 @@ export const GALLERY: readonly GalleryEntry[] = [
   entry("Screen", Screen, screenStates),
   entry("FlumpLogo", FlumpLogo, flumpLogoStates),
   entry("InlineAlert", InlineAlert, inlineAlertStates),
+  entry("SavedFiguresFrame", SavedFiguresFrame, savedFiguresFrameStates),
   entry("ErrorState", ErrorState, errorStateStates),
   entry("ConfirmDialog", ConfirmDialogPreview, confirmDialogStates),
   entry("Money", Money, moneyStates),
