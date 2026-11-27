@@ -43,6 +43,7 @@ function start(): () => void {
   if (!viewport) return () => {};
   const root = document.documentElement;
   let frame = 0;
+  let scrollFrame = 0;
   let last = "";
   const write = () => {
     frame = 0;
@@ -56,11 +57,16 @@ function start(): () => void {
     const opening = inset > 0 && !root.hasAttribute(KEYBOARD_OPEN_ATTR);
     if (inset > 0) root.setAttribute(KEYBOARD_OPEN_ATTR, "");
     else root.removeAttribute(KEYBOARD_OPEN_ATTR);
-    // The sheet has just moved up and shrunk to sit on the keyboard: bring the field being typed in
-    // back into view inside it, or it can end up under the keyboard or the sheet's own edge.
+    // The sheet is moving up and shrinking to sit on the keyboard: bring the field being typed in
+    // back into view inside it, or it can end up under the keyboard or the sheet's own edge. On
+    // the next frame, once the sheet has its new height: measured straight away, Chrome still saw
+    // the full-height sheet and left the field where it was.
     const active = document.activeElement;
     if (opening && active instanceof HTMLElement && active.closest('[role="dialog"]')) {
-      active.scrollIntoView({ block: "nearest" });
+      scrollFrame = window.requestAnimationFrame(() => {
+        scrollFrame = 0;
+        if (document.activeElement === active) active.scrollIntoView({ block: "nearest" });
+      });
     }
   };
   const schedule = () => {
@@ -71,6 +77,7 @@ function start(): () => void {
   viewport.addEventListener("scroll", schedule);
   return () => {
     window.cancelAnimationFrame(frame);
+    window.cancelAnimationFrame(scrollFrame);
     viewport.removeEventListener("resize", schedule);
     viewport.removeEventListener("scroll", schedule);
     root.style.removeProperty(VISUAL_VIEWPORT_HEIGHT_VAR);

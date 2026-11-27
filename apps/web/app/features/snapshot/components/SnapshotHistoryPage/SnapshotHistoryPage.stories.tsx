@@ -66,3 +66,18 @@ export const Trend: Story = {
     await expect(canvas.getByRole("columnheader", { name: "Effect on net worth" })).toBeDefined();
   },
 };
+
+/** This month's check-in is done: the button offers to see it, not to start one. */
+export const CheckedIn: Story = {
+  args: {
+    accountDetails: exampleDetails([...TREND_MONTHS, "2026-11"]),
+    lastCheckInMonth: "2026-11",
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByRole("button", { name: "See this month's check-in" })).toBeDefined();
+    await expect(canvas.queryByRole("button", { name: "Start monthly check-in" })).toBeNull();
+  },
+};
+
+export const CheckedInDark: Story = { ...CheckedIn, globals: { theme: "dark" } };
