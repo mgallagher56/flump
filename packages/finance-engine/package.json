@@ -16,6 +16,11 @@
       "import": "./dist/accounts-entry.js",
       "default": "./src/accounts-entry.ts"
     },
+    "./account-form": {
+      "types": "./dist/account-form-entry.d.ts",
+      "import": "./dist/account-form-entry.js",
+      "default": "./src/account-form-entry.ts"
+    },
     "./check-in": {
       "types": "./dist/check-in-entry.d.ts",
       "import": "./dist/check-in-entry.js",

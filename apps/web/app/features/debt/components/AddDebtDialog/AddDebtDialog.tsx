@@ -1,8 +1,10 @@
 import {
   type AccountOwnership,
+  accountFieldSet,
   DEFAULT_JOINT_SHARE_PERCENT,
   type DebtItem,
   describeJointWholeValue,
+  resolveSharePercent,
 } from "@flump/finance-engine";
 import {
   Button,
@@ -19,11 +21,7 @@ import {
 } from "@repo/ui";
 import { cx } from "@repo/ui/styled-system/css";
 import { type FC, type FormEvent, useState } from "react";
-import { accountFieldSet } from "~/features/accounts/accountFieldSet";
-import {
-  JointOwnershipFields,
-  resolveSharePercent,
-} from "~/features/accounts/components/JointOwnershipFields";
+import { JointOwnershipFields } from "~/features/accounts/components/JointOwnershipFields";
 import { debtTypeToAccountType } from "~/features/debt/utils/debtAccountMapping";
 import { debtForm, deleteAction, fieldRow, footerButton } from "./AddDebtDialog.styles";
 

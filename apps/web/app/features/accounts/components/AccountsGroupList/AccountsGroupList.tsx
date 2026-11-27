@@ -1,4 +1,5 @@
 import {
+  ACCOUNT_SUBTYPE_LABEL,
   categorizeAccountType,
   jointShareLabel,
   type NetWorthLeftOut,
@@ -32,7 +33,6 @@ import {
 import type { FC, ReactNode } from "react";
 import { Link } from "react-router";
 import { AccountTypeEnum } from "~/containers/accounts/utils";
-import { ACCOUNT_SUBTYPE_LABEL } from "~/features/accounts/accountSubtypes";
 import type { AccountRow } from "../../accountRows";
 import { basisLink, NetWorthBasisLine } from "../NetWorthBasisLine";
 import {

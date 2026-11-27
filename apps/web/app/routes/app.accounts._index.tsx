@@ -9,11 +9,11 @@ import {
   SyncBankConnectionResponse,
   UpdateAccountResponse,
 } from "@flump/api-contract";
+import { accountRequestFrom } from "@flump/finance-engine";
 import type { ReactElement } from "react";
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 import { data } from "react-router";
 import AccountsContainer from "~/containers/accounts/accountsContainer/AccountsContainer";
-import { accountFieldsFromForm } from "~/features/accounts/accountFormBody";
 import {
   backendFetch,
   backendFetchAll,
@@ -24,7 +24,6 @@ import { BackendError } from "~/services/backend-error";
 import { ifMatchFromForm, revalidateOnConflict } from "~/services/conflict";
 import { actionErrorResponse } from "~/services/route-error.server";
 import { getAuthSession, requireAccessToken } from "~/utils/auth.server";
-import { roundTo2dp } from "~/utils/roundTo2dp";
 
 /**
  * The form field carrying the mortgage's version when a property is added for it, so linking the
@@ -43,9 +42,12 @@ export const action = async (args: ActionFunctionArgs) => {
   const intent = formData.get("intent");
   const accountId = formData.get("accountId");
   const connectionId = formData.get("connectionId");
-  const name = formData.get("name");
   const type = formData.get("type");
-  const fields = accountFieldsFromForm(formData);
+  // The posted values as text, read the same way by every account route (the engine's rule).
+  const get = (key: string): string | null => {
+    const value = formData.get(key);
+    return value === null ? null : String(value);
+  };
 
   // Literal methods, so the conditional-writes law can see every write this action makes.
   const post = <T,>(endpoint: string, schema: ContractSchema<T>, body?: unknown) =>
@@ -63,28 +65,22 @@ export const action = async (args: ActionFunctionArgs) => {
       // A mortgage added with its property's value and no property to link to: the backend adds
       // both in one transaction, linked, the property at the mortgage's ownership and share
       // (decision 14 B) and of its kind (a rental for buy to let, else the home).
-      const homeValue = Number(formData.get("homeValue"));
-      if (
-        type === "Mortgage" &&
-        Number.isFinite(homeValue) &&
-        homeValue > 0 &&
-        !fields.linkedAccountId
-      ) {
-        const { linkedAccountId: _notLinked, ...mortgageFields } = fields;
-        const pairBody = {
-          mortgage: { name, ...mortgageFields },
-          property: { balance: roundTo2dp(homeValue) },
-        };
+      const request = accountRequestFrom({
+        editing: false,
+        get,
+        homeValue: Number(formData.get("homeValue")),
+      });
+      if (request.kind === "createWithProperty") {
         await backendFetch("/accounts/mortgage-with-property", {
           accessToken: token,
           method: "POST",
           schema: CreateMortgageWithPropertyResponse,
-          body: pairBody,
+          body: request.body,
           idempotencyKey: keyFor("mortgage"),
         });
         return data({ success: true });
       }
-      const createBody = { name, type, ...fields };
+      const createBody = request.kind === "create" ? request.body : {};
       const created = await backendFetch("/accounts", {
         accessToken: token,
         method: "POST",
@@ -115,16 +111,13 @@ export const action = async (args: ActionFunctionArgs) => {
       }
     } else if (intent === "update") {
       // An edit sends only the fields the user changed: a name or type left out stays as saved.
+      const request = accountRequestFrom({ editing: true, get, homeValue: null });
       await backendFetch(`/accounts/${encodeURIComponent(String(accountId ?? ""))}`, {
         accessToken: token,
         method: "PATCH",
         schema: UpdateAccountResponse,
         ifMatch: ifMatchFromForm(formData),
-        body: {
-          ...(name !== null ? { name } : {}),
-          ...(type !== null ? { type } : {}),
-          ...fields,
-        },
+        body: request.kind === "update" ? request.body : {},
       });
     } else if (intent === "delete") {
       await remove(

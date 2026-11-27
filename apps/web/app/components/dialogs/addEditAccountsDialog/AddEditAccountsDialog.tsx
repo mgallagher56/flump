@@ -1,9 +1,21 @@
 import {
+  ACCOUNT_FORM_TYPES,
+  type AccountFormPrefill,
+  type AccountFormState,
   type AccountOwnership,
+  accountFieldSet,
+  accountFormFromSaved,
+  accountFormNeedsPlan,
+  accountFormToSend,
+  accountFormValues,
   DEFAULT_JOINT_SHARE_PERCENT,
   describeJointLiabilityNotice,
   describeJointWholeValue,
-  isBuyToLetAccount,
+  MORTGAGE_REPAYMENT_OPTIONS,
+  mortgageLinkChoices,
+  newAccountForm,
+  type SavedAccountForForm,
+  STUDENT_LOAN_PLAN_OPTIONS,
   typeChangeFlipsSign,
 } from "@flump/finance-engine";
 import {
@@ -25,19 +37,9 @@ import { Pencil } from "lucide-react";
 import { type FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useFetcher, useLoaderData } from "react-router";
-import {
-  type AccountType,
-  AccountTypeEnum,
-  isLiabilityType,
-  STUDENT_LOAN_PLAN_OPTIONS,
-} from "~/containers/accounts/utils";
-import { accountFieldSet, changedFields } from "~/features/accounts/accountFieldSet";
-import { MORTGAGE_REPAYMENT_OPTIONS } from "~/features/accounts/accountSubtypes";
+import { type AccountType, AccountTypeEnum, isLiabilityType } from "~/containers/accounts/utils";
 import { TYPE_LABEL } from "~/features/accounts/components/AccountsGroupList";
-import {
-  JointOwnershipFields,
-  resolveSharePercent,
-} from "~/features/accounts/components/JointOwnershipFields";
+import { JointOwnershipFields } from "~/features/accounts/components/JointOwnershipFields";
 import { useFetcherOutcome } from "~/features/feedback/hooks/useFetcherOutcome";
 import { HomeEquityLine } from "~/features/mortgage/components/HomeEquityLine";
 import type { loader } from "~/routes/app.accounts._index";
@@ -51,35 +53,8 @@ import {
   saveError,
 } from "./AddEditAccountsDialog.styles";
 
-const {
-  CURRENT,
-  SAVING,
-  MORTGAGE,
-  CREDIT_CARD,
-  LOAN,
-  OWED,
-  INVESTMENT,
-  PENSION,
-  PROPERTY,
-  STUDENT_LOAN,
-  OVERDRAFT,
-} = AccountTypeEnum;
-const accountTypeArray = [
-  CURRENT,
-  SAVING,
-  INVESTMENT,
-  PENSION,
-  PROPERTY,
-  CREDIT_CARD,
-  OVERDRAFT,
-  MORTGAGE,
-  LOAN,
-  STUDENT_LOAN,
-  OWED,
-];
-const studentLoanPlans = {
-  items: [{ id: "", name: "Choose a plan" }, ...STUDENT_LOAN_PLAN_OPTIONS.map((p) => ({ ...p }))],
-};
+const { PROPERTY } = AccountTypeEnum;
+const studentLoanPlans = [{ value: "", label: "Choose a plan" }, ...STUDENT_LOAN_PLAN_OPTIONS];
 const PLAN_REQUIRED_MESSAGE = "Choose a repayment plan";
 /** Shown before saving a type change that turns a debt into something you own (CH-4). */
 const TYPE_FLIPS_SIGN_NOTE =
@@ -92,25 +67,6 @@ const NOT_LINKED_LABEL = "Not linked";
 const HOME_VALUE_NOTE_ID = "account-home-value-note";
 
 /**
- * Liabilities are stored as minus the amount owed, but the form shows the positive amount owed,
- * as the rest of the app does. These two helpers convert between the stored and the shown figure.
- */
-const toFormBalance = (type: AccountType | undefined, stored: number | undefined): string => {
-  if (stored === undefined || stored === null) return "";
-  return String(isLiabilityType(type) ? Math.abs(stored) : stored);
-};
-
-/** The figure to send: a liability goes back as minus the amount owed, which is what is stored. */
-const toStoredBalance = (type: AccountType | undefined, shown: string): string => {
-  if (shown === "" || !isLiabilityType(type)) return shown;
-  const owed = Math.abs(Number(shown));
-  return owed === 0 ? "0" : String(-owed);
-};
-
-const numberText = (value: number | null | undefined): string =>
-  value === undefined || value === null || !Number.isFinite(Number(value)) ? "" : String(value);
-
-/**
  * A fresh id for one opening of the dialog (the idempotency key's prefix). Always from the Web
  * Crypto random source: `randomUUID` where the page is a secure context, else 16 bytes from
  * `getRandomValues`, which works in any context.
@@ -121,26 +77,7 @@ const newRequestId = (): string => {
   return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
 };
 
-interface AccountOption {
-  id?: string;
-  name?: string;
-  type?: AccountType;
-  accountSubtype?: string | null;
-  balance?: number;
-  interestRate?: number | null;
-  monthlyContribution?: number | null;
-  creditLimit?: number | null;
-  promoZeroPercentUntil?: string | null;
-  studentLoanPlan?: string | null;
-  termMonths?: number | null;
-  fixedRateEndDate?: string | null;
-  repaymentType?: string | null;
-  linkedAccountId?: string | null;
-  ownership?: AccountOwnership | string | null;
-  sharePercent?: number | null;
-  /** The saved account's version, sent with an edit so a change made elsewhere is not overwritten. */
-  updatedAt?: string;
-}
+type AccountOption = SavedAccountForForm;
 
 /** A mortgage the new property is for: after the property saves, the action links them. */
 interface LinkMortgageTarget {
@@ -186,119 +123,8 @@ interface AddEditAccountsDialogBtnProp {
   partnerMode?: boolean;
 }
 
-/** Every field the form holds, as typed. The balance is the shown figure (owed, for a debt). */
-interface FormState {
-  name: string;
-  type: AccountType;
-  accountSubtype: string;
-  balance: string;
-  interestRate: string;
-  monthlyContribution: string;
-  studentLoanPlan: string;
-  creditLimit: string;
-  promoZeroPercentUntil: string;
-  termYears: string;
-  termExtraMonths: string;
-  fixedRateEndDate: string;
-  repaymentType: string;
-  linkedAccountId: string;
-  ownership: AccountOwnership;
-  sharePercent: number | null;
-}
-
-interface Prefill {
-  initialName?: string;
-  initialType?: AccountType;
-  initialSubtype?: string;
-  initialOwnership?: AccountOwnership;
-  initialSharePercent?: number | null;
-}
-
-const termParts = (months: number | null | undefined): [string, string] => {
-  if (months === undefined || months === null || !Number.isFinite(Number(months))) return ["", ""];
-  const whole = Math.round(Number(months));
-  return [String(Math.floor(whole / 12)), String(whole % 12)];
-};
-
-const savedState = (account: AccountOption): FormState => {
-  const [termYears, termExtraMonths] = termParts(account.termMonths);
-  return {
-    name: account.name || "",
-    type: account.type || accountTypeArray[0],
-    accountSubtype: account.accountSubtype || "",
-    balance: toFormBalance(account.type, account.balance),
-    interestRate: numberText(account.interestRate),
-    monthlyContribution: numberText(account.monthlyContribution),
-    studentLoanPlan: account.studentLoanPlan || "",
-    creditLimit: numberText(account.creditLimit),
-    promoZeroPercentUntil: account.promoZeroPercentUntil || "",
-    termYears,
-    termExtraMonths,
-    fixedRateEndDate: account.fixedRateEndDate || "",
-    repaymentType: account.repaymentType || "",
-    linkedAccountId: account.linkedAccountId || "",
-    ownership: account.ownership === "joint" ? "joint" : "sole",
-    sharePercent: account.sharePercent ?? DEFAULT_JOINT_SHARE_PERCENT,
-  };
-};
-
-const newState = (prefill: Prefill): FormState => ({
-  name: prefill.initialName ?? "",
-  type: prefill.initialType ?? accountTypeArray[0],
-  accountSubtype: prefill.initialSubtype ?? "",
-  balance: "",
-  interestRate: "",
-  monthlyContribution: "",
-  studentLoanPlan: "",
-  creditLimit: "",
-  promoZeroPercentUntil: "",
-  termYears: "",
-  termExtraMonths: "",
-  fixedRateEndDate: "",
-  repaymentType: "",
-  linkedAccountId: "",
-  ownership: prefill.initialOwnership === "joint" ? "joint" : "sole",
-  sharePercent: prefill.initialSharePercent ?? DEFAULT_JOINT_SHARE_PERCENT,
-});
-
-/** Whole months from the typed years and months, or "" when neither is typed or it is 0. */
-const termMonthsText = (years: string, months: string): string => {
-  if (years === "" && months === "") return "";
-  const total = Number(years || 0) * 12 + Number(months || 0);
-  return Number.isFinite(total) && total > 0 ? String(Math.round(total)) : "";
-};
-
-/**
- * The values the form would post, by field. A field the account's type does not show is empty, so
- * an edit that changes the type clears what the new type does not take. The balance is the shown
- * figure here; it is converted to the stored one only when it is sent.
- */
-const formValues = (state: FormState): Record<string, string> => {
-  const set = accountFieldSet({
-    type: state.type,
-    name: state.name,
-    accountSubtype: state.accountSubtype,
-  });
-  const ownership: AccountOwnership = set.joint && state.ownership === "joint" ? "joint" : "sole";
-  const share = resolveSharePercent(ownership, state.sharePercent);
-  return {
-    name: state.name,
-    type: state.type,
-    accountSubtype: set.kind ? state.accountSubtype : "",
-    balance: state.balance,
-    interestRate: set.interestRate ? state.interestRate : "",
-    monthlyContribution: set.monthlyContribution ? state.monthlyContribution : "",
-    studentLoanPlan: set.studentLoanPlan ? state.studentLoanPlan : "",
-    creditLimit: set.creditFields ? state.creditLimit : "",
-    promoZeroPercentUntil: set.creditFields ? state.promoZeroPercentUntil : "",
-    termMonths: set.mortgageFields ? termMonthsText(state.termYears, state.termExtraMonths) : "",
-    fixedRateEndDate: set.mortgageFields ? state.fixedRateEndDate : "",
-    repaymentType: set.mortgageFields ? state.repaymentType : "",
-    linkedAccountId: set.mortgageFields ? state.linkedAccountId : "",
-    ownership,
-    sharePercent: share === null ? "" : String(share),
-  };
-};
+type FormState = AccountFormState;
+type Prefill = AccountFormPrefill;
 
 /**
  * Add or edit an account by hand. Bank connection is deferred (owner ruling), so the dialog is a
@@ -387,7 +213,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
   const selectedAccount: AccountOption = useMemo(
     () => account ?? accounts?.find((option) => option.id === accountId),
     [account, accounts, accountId],
-  ) ?? { name: "", type: accountTypeArray[0], balance: undefined, studentLoanPlan: null };
+  ) ?? { name: "", type: ACCOUNT_FORM_TYPES[0], balance: undefined, studentLoanPlan: null };
 
   const prefill: Prefill = {
     initialName,
@@ -397,7 +223,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
     initialSharePercent,
   };
   const [formInput, setFormInput] = useState<FormState>(() =>
-    isEditAccount ? savedState(selectedAccount) : newState(prefill),
+    isEditAccount ? accountFormFromSaved(selectedAccount) : newAccountForm(prefill),
   );
   // What the form opened with, so an edit sends only what the user changed (CH-3, slice 4): a
   // re-posted balance writes a current-month history row, which counts as a recorded month.
@@ -425,13 +251,13 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
   useEffect(() => {
     const latest = reopenWith.current;
     if (openRequestKey > 0 && !latest.isEditAccount) {
-      latest.resetForOpen(newState(latest.prefill));
+      latest.resetForOpen(newAccountForm(latest.prefill));
     }
   }, [openRequestKey]);
 
   const handleOpenModal = (e: { stopPropagation: () => void }) => {
     e.stopPropagation();
-    resetForOpen(isEditAccount ? savedState(selectedAccount) : newState(prefill));
+    resetForOpen(isEditAccount ? accountFormFromSaved(selectedAccount) : newAccountForm(prefill));
   };
 
   const update = useCallback(<K extends keyof FormState>(key: K, value: FormState[K]) => {
@@ -445,77 +271,42 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
     name: formInput.name,
     accountSubtype: formInput.accountSubtype,
   });
-  const values = formValues(formInput);
+  const values = accountFormValues(formInput);
   const effectiveOwnership = values.ownership as AccountOwnership;
   const resolvedShare = values.sharePercent === "" ? null : Number(values.sharePercent);
 
-  // A mortgage is on a home or, for buy to let, a rental: the saved kind decides, else the name.
-  const mortgageIsBtl = isBuyToLetAccount({
-    name: formInput.name,
-    accountSubtype: formInput.accountSubtype || null,
+  // The properties a mortgage can be on, the one preselected, and whether the home value is asked
+  // instead (adding a mortgage with no property to link adds both together, linked).
+  const {
+    linkable: linkableProperties,
+    showHomeValue,
+    showLinkSelect,
+    linkedAccountId,
+    propertyIsRental,
+  } = mortgageLinkChoices({
+    state: formInput,
+    accounts,
+    savedLinkedAccountId: selectedAccount.linkedAccountId,
+    editing: Boolean(isEditAccount),
+    linkTouched,
   });
-  const wantedKind = mortgageIsBtl ? "rental" : "home";
-  // The properties this mortgage can be on: those of the matching kind, and those with no kind
-  // saved. The one it is linked to now is always listed, so the select shows it.
-  const linkableProperties = fieldSet.mortgageFields
-    ? accounts.filter(
-        (a) =>
-          a.type === PROPERTY &&
-          a.id &&
-          (!a.accountSubtype ||
-            a.accountSubtype === wantedKind ||
-            a.id === selectedAccount.linkedAccountId),
-      )
-    : [];
-  const addingMortgage = !isEditAccount && fieldSet.mortgageFields;
-  // Adding a mortgage with no property to link to asks for the property's value instead, and the
-  // action adds the property and the mortgage together, linked.
-  const showHomeValue = addingMortgage && linkableProperties.length === 0;
-  const showLinkSelect = fieldSet.mortgageFields && linkableProperties.length > 0;
-  // One property to link to is preselected when adding, until the user chooses.
-  const linkedAccountId =
-    addingMortgage && !linkTouched && linkableProperties.length === 1
-      ? (linkableProperties[0]?.id ?? "")
-      : values.linkedAccountId;
   // The typed balance for the equity line; empty, not a number or below 0 counts as none.
   const typedOwed = formInput.balance === "" ? null : Number(formInput.balance);
   const equityOwed =
     typedOwed !== null && Number.isFinite(typedOwed) && typedOwed >= 0 ? typedOwed : null;
 
   const onSave = () => {
-    if (fieldSet.studentLoanPlan && !formInput.studentLoanPlan) {
+    if (accountFormNeedsPlan(formInput)) {
       setPlanError(PLAN_REQUIRED_MESSAGE);
       return;
     }
-    const current: Record<string, string> = { ...values, linkedAccountId };
-    // An edit sends what changed; an add sends the fields its type shows.
-    const toSend: Record<string, string> = isEditAccount
-      ? changedFields(formValues(opened), current)
-      : Object.fromEntries(
-          Object.entries(current).filter(
-            ([key, value]) =>
-              key === "name" ||
-              key === "type" ||
-              key === "ownership" ||
-              (key === "accountSubtype" && fieldSet.kind !== null) ||
-              (key === "creditLimit" && fieldSet.creditFields) ||
-              (key === "promoZeroPercentUntil" && fieldSet.creditFields) ||
-              (key === "studentLoanPlan" && fieldSet.studentLoanPlan) ||
-              value !== "",
-          ),
-        );
-    // An edit sends the share with the ownership, so a share is never left behind on a sole one.
-    if (isEditAccount && "ownership" in toSend && current.sharePercent !== "") {
-      toSend.sharePercent = current.sharePercent;
-    }
-    // The balance is compared as shown and sent as stored (minus the amount owed for a debt).
-    if ("balance" in toSend) {
-      const stored = toStoredBalance(accountType, toSend.balance ?? "");
-      if (stored === "") delete toSend.balance;
-      else toSend.balance = stored;
-    }
-    // A sole account sends no share: the action clears it with the ownership.
-    if (toSend.sharePercent === "") delete toSend.sharePercent;
+    // An edit sends what changed; an add sends the fields its type shows (the engine's rule).
+    const toSend = accountFormToSend({
+      editing: Boolean(isEditAccount),
+      opened,
+      current: formInput,
+      linkedAccountId,
+    });
     saveOutcome.begin();
     fetcher.submit(
       {
@@ -576,7 +367,6 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
   // A saved joint account edited into an ISA or pension is saved as sole: say so (E34).
   const startedJoint = isEditAccount && selectedAccount.ownership === "joint";
   const becomesSole = startedJoint && !fieldSet.joint;
-  const propertyIsRental = wantedKind === "rental";
 
   return (
     <>
@@ -704,7 +494,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
                 <Select
                   {...controlProps(field)}
                   name="type"
-                  options={accountTypeArray.map((type) => ({
+                  options={ACCOUNT_FORM_TYPES.map((type) => ({
                     value: type,
                     label: TYPE_LABEL[type] ?? type,
                   }))}
@@ -749,10 +539,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
                   <Select
                     {...controlProps(field)}
                     name="studentLoanPlan"
-                    options={studentLoanPlans.items.map((plan) => ({
-                      value: plan.id,
-                      label: plan.name,
-                    }))}
+                    options={studentLoanPlans}
                     value={formInput.studentLoanPlan}
                     onChange={(e) => {
                       setPlanError(null);
@@ -895,7 +682,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
                         options={[
                           { value: "", label: NOT_LINKED_LABEL },
                           ...linkableProperties.map((p) => ({
-                            value: p.id ?? "",
+                            value: p.id,
                             label: p.name || "Property",
                           })),
                         ]}

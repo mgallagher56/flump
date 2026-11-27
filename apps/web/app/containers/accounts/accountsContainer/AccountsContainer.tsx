@@ -1,11 +1,11 @@
 import type { RawAccountDetail } from "@flump/finance-engine";
+import { type MortgageLike, propertyPrefillFor } from "@flump/finance-engine";
 import { Button, EmptyState, PageBody, PageHeader } from "@repo/ui";
 import { type FC, type MouseEvent, useEffect, useMemo, useState } from "react";
 import { useLoaderData, useSearchParams } from "react-router";
 import AddEditAccountsDialogBtn from "~/components/dialogs/addEditAccountsDialog/AddEditAccountsDialog";
 import { buildAccountRows } from "~/features/accounts/accountRows";
 import { AccountsGroupList } from "~/features/accounts/components/AccountsGroupList";
-import { type MortgageLike, propertyPrefillFor } from "~/features/accounts/propertyPrefill";
 import { CheckInSheet, firstShownElement } from "~/features/snapshot/components/CheckInSheet";
 import { londonMonth } from "~/features/snapshot/snapshotModel";
 import { useSaveSnapshot } from "~/features/snapshot/useSaveSnapshot";

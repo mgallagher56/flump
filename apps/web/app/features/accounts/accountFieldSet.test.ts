@@ -1,6 +1,7 @@
 // @vitest-environment node
+
+import { accountFieldSet, changedFields } from "@flump/finance-engine";
 import { describe, expect, it } from "vitest";
-import { accountFieldSet, changedFields } from "./accountFieldSet";
 
 describe("accountFieldSet", () => {
   it("gives a credit card a rate, a minimum payment, the credit fields and joint ownership", () => {

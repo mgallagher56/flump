@@ -1,6 +1,7 @@
 // @vitest-environment node
+
+import { propertyPrefillFor } from "@flump/finance-engine";
 import { describe, expect, it } from "vitest";
-import { propertyPrefillFor } from "./propertyPrefill";
 
 const mortgage = (fields: Record<string, unknown>) => ({
   id: "m1",

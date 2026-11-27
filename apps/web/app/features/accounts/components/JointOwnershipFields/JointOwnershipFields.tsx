@@ -1,12 +1,7 @@
-import { type AccountOwnership, DEFAULT_JOINT_SHARE_PERCENT } from "@flump/finance-engine";
+import { type AccountOwnership, OWNERSHIP_OPTIONS } from "@flump/finance-engine";
 import { controlProps, FormField, PercentInput, Select } from "@repo/ui";
 import type { FC } from "react";
 import { jointFields } from "./JointOwnershipFields.styles";
-
-export const OWNERSHIP_OPTIONS = [
-  { value: "sole", label: "Sole (yours only)" },
-  { value: "joint", label: "Joint" },
-] as const;
 
 export interface JointOwnershipFieldsProps {
   ownership: AccountOwnership;
@@ -56,14 +51,5 @@ export const JointOwnershipFields: FC<JointOwnershipFieldsProps> = ({
     ) : null}
   </div>
 );
-
-/** The share to save: 1 to 99, whole, for a joint account; null for a sole one. */
-export const resolveSharePercent = (
-  ownership: AccountOwnership,
-  sharePercent: number | null,
-): number | null =>
-  ownership === "joint"
-    ? Math.min(99, Math.max(1, Math.round(sharePercent ?? DEFAULT_JOINT_SHARE_PERCENT)))
-    : null;
 
 export default JointOwnershipFields;

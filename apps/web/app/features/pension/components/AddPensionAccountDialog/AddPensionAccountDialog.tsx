@@ -1,3 +1,4 @@
+import { accountFieldSet } from "@flump/finance-engine";
 import {
   Button,
   CurrencyInput,
@@ -13,7 +14,6 @@ import { Trash2 } from "lucide-react";
 import { type FC, type FormEvent, type ReactNode, useState } from "react";
 import { useFetcher } from "react-router";
 import type { Account } from "~/containers/accounts/types";
-import { accountFieldSet } from "~/features/accounts/accountFieldSet";
 import { useFetcherOutcome } from "~/features/feedback/hooks/useFetcherOutcome";
 import { versionField } from "~/services/conflict";
 import {

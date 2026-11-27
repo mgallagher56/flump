@@ -1,9 +1,11 @@
 import {
   type AccountOwnership,
+  accountFieldSet,
   DEFAULT_JOINT_SHARE_PERCENT,
   describeJointWholeValue,
   INVESTMENT_RISK_NOTICE,
   isIsaAccount,
+  resolveSharePercent,
 } from "@flump/finance-engine";
 import {
   Button,
@@ -22,11 +24,7 @@ import { Trash2 } from "lucide-react";
 import { type FC, type FormEvent, useState } from "react";
 import { useFetcher } from "react-router";
 import type { Account } from "~/containers/accounts/types";
-import { accountFieldSet } from "~/features/accounts/accountFieldSet";
-import {
-  JointOwnershipFields,
-  resolveSharePercent,
-} from "~/features/accounts/components/JointOwnershipFields";
+import { JointOwnershipFields } from "~/features/accounts/components/JointOwnershipFields";
 import {
   SAVINGS_KIND_GROUPS,
   savingsKindFromValue,

@@ -5,7 +5,7 @@
  * the stored `type` ("Saving" or "Investment") and `accountSubtype` pair, so saved accounts keep
  * their values. The two "Other" kinds keep an account with no subtype valid without guessing one.
  */
-import { INVESTMENT_SUBTYPE_OPTIONS, SAVINGS_SUBTYPE_OPTIONS } from "./accountSubtypes";
+import { INVESTMENT_SUBTYPE_OPTIONS, SAVINGS_SUBTYPE_OPTIONS } from "@flump/finance-engine";
 
 type SavingsAccountType = "Saving" | "Investment";
 

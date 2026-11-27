@@ -2,6 +2,7 @@
 
 import { fileURLToPath } from "node:url";
 import {
+  ACCOUNT_SUBTYPE_LABEL,
   type NetWorthLeftOut,
   type RecordedMonthComparison,
   selectRecordedMonthComparison,
@@ -27,7 +28,6 @@ import {
   typeSubtitle,
 } from "~/containers/accounts/accountDetailContainer/AccountDetailContainer";
 import { ACCOUNTS_EMPTY } from "~/containers/accounts/accountsContainer/AccountsContainer";
-import { ACCOUNT_SUBTYPE_LABEL } from "~/features/accounts/accountSubtypes";
 import {
   ACCOUNTS_LIST_COPY,
   HISTORY_HREF,

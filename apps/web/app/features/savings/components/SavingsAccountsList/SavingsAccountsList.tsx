@@ -1,3 +1,4 @@
+import { ACCOUNT_SUBTYPE_LABEL } from "@flump/finance-engine";
 import {
   Button,
   Card,
@@ -11,7 +12,6 @@ import { Pencil, PiggyBank } from "lucide-react";
 import { type FC, useState } from "react";
 import { Link, useFetcher } from "react-router";
 import type { Account } from "~/containers/accounts/types";
-import { ACCOUNT_SUBTYPE_LABEL } from "~/features/accounts/accountSubtypes";
 import { ConfirmDialog } from "~/features/feedback/components/ConfirmDialog";
 import { useFetcherOutcome } from "~/features/feedback/hooks/useFetcherOutcome";
 import { AddSavingsAccountDialog } from "../AddSavingsAccountDialog";

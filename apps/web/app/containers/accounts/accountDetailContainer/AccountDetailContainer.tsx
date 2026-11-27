@@ -1,4 +1,5 @@
 import {
+  ACCOUNT_SUBTYPE_LABEL,
   categorizeAccountType,
   countsTowardNetWorth,
   DEFAULT_NET_WORTH_BASIS,
@@ -14,7 +15,6 @@ import { Link, useFetcher, useLoaderData } from "react-router";
 import AccountDetails from "~/components/accounts/AccountDetails";
 import AddEditAccountsDialogBtn from "~/components/dialogs/addEditAccountsDialog/AddEditAccountsDialog";
 import { type AccountType, isLiabilityType } from "~/containers/accounts/utils";
-import { ACCOUNT_SUBTYPE_LABEL } from "~/features/accounts/accountSubtypes";
 import { AccountGoalSection } from "~/features/accounts/components/AccountGoalSection";
 import { TYPE_LABEL } from "~/features/accounts/components/AccountsGroupList";
 import { QuickBalanceUpdate } from "~/features/accounts/components/QuickBalanceUpdate";
