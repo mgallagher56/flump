@@ -131,38 +131,50 @@ function Body({
   const { history } = state;
   if (history.recordedMonths === 0) {
     return (
-      <EmptyState
-        title={HISTORY.emptyTitle}
-        description={history.hasAccounts ? HISTORY.emptyWithAccounts : HISTORY.emptyNoAccounts}
-        actions={
-          history.hasAccounts
-            ? [
-                {
-                  label: ACCOUNTS.startCheckIn,
-                  onPress: onOpenCheckIn,
-                  testID: "history-check-in",
-                },
-                {
-                  label: website(links.addEarlierMonths, HISTORY.addEarlierMonths),
-                  onPress: open(links.addEarlierMonths),
-                  variant: "link",
-                  testID: "history-add-earlier",
-                },
-              ]
-            : [
-                {
-                  label: website(links.addAccount, ACCOUNTS.addAccount),
-                  onPress: open(links.addAccount),
-                  variant: "link",
-                  testID: "history-add-account",
-                },
-              ]
-        }
-        testID="history-empty"
-      />
+      <>
+        <EmptyState
+          title={HISTORY.emptyTitle}
+          description={history.hasAccounts ? HISTORY.emptyWithAccounts : HISTORY.emptyNoAccounts}
+          actions={
+            history.hasAccounts
+              ? [
+                  {
+                    label: ACCOUNTS.startCheckIn,
+                    onPress: onOpenCheckIn,
+                    testID: "history-check-in",
+                  },
+                  {
+                    label: website(links.addEarlierMonths, HISTORY.addEarlierMonths),
+                    onPress: open(links.addEarlierMonths),
+                    variant: "link",
+                    testID: "history-add-earlier",
+                  },
+                ]
+              : [
+                  {
+                    label: website(links.addAccount, ACCOUNTS.addAccount),
+                    onPress: open(links.addAccount),
+                    variant: "link",
+                    testID: "history-add-account",
+                  },
+                ]
+          }
+          testID="history-empty"
+        />
+        {history.hasAccounts ? <OnWebsite /> : null}
+      </>
     );
   }
   return <Loaded history={history} links={links} onOpenCheckIn={onOpenCheckIn} />;
+}
+
+/** What history leaves to the website for now, said whatever the build's configuration. */
+function OnWebsite() {
+  return (
+    <Text textStyle="body.sm" color="secondary" testID="history-on-website">
+      {HISTORY.onWebsite}
+    </Text>
+  );
 }
 
 function Loaded({
@@ -230,6 +242,7 @@ function Loaded({
         testID="history-check-in"
         onPress={onOpenCheckIn}
       />
+      <OnWebsite />
       <Button
         label={website(links.addEarlierMonths, HISTORY.addEarlierMonths)}
         variant="link"

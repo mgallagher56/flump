@@ -12,10 +12,20 @@ const LINKS: NetWorthHistoryWebLinks = {
   addEarlierMonths: { url: "https://app.test.invalid/app/accounts/history", exact: true },
 };
 
-async function history(api: ReturnType<typeof fakeApi>) {
+/** A build with no web app address: every website link opens the marketing home page. */
+const MARKETING = { url: "https://m.test.invalid", exact: false };
+const NO_WEB_APP: NetWorthHistoryWebLinks = {
+  setUp: MARKETING,
+  addAccount: MARKETING,
+  addEarlierMonths: MARKETING,
+};
+
+const ON_WEBSITE = "Adding earlier months is on the Flump website for now.";
+
+async function history(api: ReturnType<typeof fakeApi>, links = LINKS) {
   const props = { onSignOut: jest.fn(), onOpenCheckIn: jest.fn() };
   const { ui } = withApi(
-    <NetWorthHistory {...props} marketingOrigin="https://m.test.invalid" links={LINKS} now={NOW} />,
+    <NetWorthHistory {...props} marketingOrigin="https://m.test.invalid" links={links} now={NOW} />,
     api.client,
   );
   await render(ui);
@@ -182,6 +192,31 @@ describe("NetWorthHistory", () => {
     expect(props.onOpenCheckIn).toHaveBeenCalledTimes(1);
     await user.press(screen.getByRole("link", { name: "Add earlier months on the website" }));
     expect(Linking.openURL).toHaveBeenCalledWith(LINKS.addEarlierMonths.url);
+  });
+
+  it("says adding earlier months is on the website for now, and the link names it", async () => {
+    await history(fakeApi(routes(personaHousehold(HOMEOWNER))));
+    expect(await screen.findByText(ON_WEBSITE)).toBeOnTheScreen();
+    expect(
+      screen.getByRole("link", { name: "Add earlier months on the website" }),
+    ).toBeOnTheScreen();
+  });
+
+  it("without a web app address, the same line, and the link says where it really goes", async () => {
+    await history(fakeApi(routes(personaHousehold(HOMEOWNER))), NO_WEB_APP);
+    expect(await screen.findByText(ON_WEBSITE)).toBeOnTheScreen();
+    expect(screen.queryByText("Add earlier months on the website")).toBeNull();
+    await userEvent.setup().press(screen.getByRole("link", { name: "Open the Flump website" }));
+    expect(Linking.openURL).toHaveBeenCalledWith(MARKETING.url);
+  });
+
+  it("no recorded month without a web app address: the line still says what is on the website", async () => {
+    await history(
+      fakeApi(routes(household([{ name: "Current account", type: "Current", balance: 900 }]))),
+      NO_WEB_APP,
+    );
+    expect(await screen.findByText(ON_WEBSITE)).toBeOnTheScreen();
+    expect(screen.getByRole("link", { name: "Open the Flump website" })).toBeOnTheScreen();
   });
 
   it("no accounts: web's sentence and Add an account on the website", async () => {

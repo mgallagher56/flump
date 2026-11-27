@@ -10,7 +10,21 @@ import { AccountDetail, type AccountDetailProps } from "./AccountDetail";
 const LINKS: AccountDetailProps["links"] = {
   setUp: { url: "https://app.test.invalid/app/onboarding", exact: true },
   edit: { url: "https://app.test.invalid/app/accounts/the-id", exact: true },
+  mortgage: { url: "https://app.test.invalid/app/mortgage", exact: true },
+  debts: { url: "https://app.test.invalid/app/debt", exact: true },
 };
+
+/** A build with no web app address: every website link opens the marketing home page. */
+const MARKETING = { url: "https://m.test.invalid", exact: false };
+const NO_WEB_APP: AccountDetailProps["links"] = {
+  setUp: MARKETING,
+  edit: MARKETING,
+  mortgage: MARKETING,
+  debts: MARKETING,
+};
+
+const ON_WEBSITE =
+  "Editing this account, updating its balance, goals and the estimated return are on the Flump website for now.";
 
 async function detail(api: ReturnType<typeof fakeApi>, id: string, links = LINKS) {
   const props = { onSignOut: jest.fn(), onBackToAccounts: jest.fn() };
@@ -178,6 +192,59 @@ describe("AccountDetail", () => {
       .setup()
       .press(await screen.findByRole("link", { name: "Edit this account on the website" }));
     expect(Linking.openURL).toHaveBeenCalledWith(LINKS.edit.url);
+  });
+
+  it("says what is on the website for now, and Edit names the action, with a web app address", async () => {
+    const h = household();
+    await detail(fakeApi(routes(h)), h.idOf("Mortgage"));
+    expect(await screen.findByText(ON_WEBSITE)).toBeOnTheScreen();
+    expect(
+      screen.getByRole("link", { name: "Edit this account on the website" }),
+    ).toBeOnTheScreen();
+    expect(screen.queryByText("Open the Flump website")).toBeNull();
+  });
+
+  it("without a web app address, the same line, and the link says where it really goes", async () => {
+    const h = household();
+    await detail(fakeApi(routes(h)), h.idOf("Mortgage"), NO_WEB_APP);
+    expect(await screen.findByText(ON_WEBSITE)).toBeOnTheScreen();
+    expect(screen.queryByText("Edit this account on the website")).toBeNull();
+    expect(screen.queryByText("See your mortgage on the website")).toBeNull();
+    const links = screen.getAllByRole("link", { name: "Open the Flump website" });
+    // Edit, and the mortgage's own page.
+    expect(links).toHaveLength(2);
+    await userEvent.setup().press(links[0] as never);
+    expect(Linking.openURL).toHaveBeenCalledWith(MARKETING.url);
+  });
+
+  it("a mortgage links to See your mortgage on the website, as web's owner page link", async () => {
+    const h = household();
+    await detail(fakeApi(routes(h)), h.idOf("Mortgage"));
+    await userEvent
+      .setup()
+      .press(await screen.findByRole("link", { name: "See your mortgage on the website" }));
+    expect(Linking.openURL).toHaveBeenCalledWith(LINKS.mortgage.url);
+    expect(screen.queryByText("See your debts on the website")).toBeNull();
+  });
+
+  it.each([
+    ["Barclaycard", "Credit Card", -1200],
+    ["Car loan", "Loan", -8400],
+    ["Student loan", "Student Loan", -38500],
+  ] as const)("%s (%s) links to See your debts on the website", async (name, type, balance) => {
+    const h = household([{ name, type, balance, nov: balance }]);
+    await detail(fakeApi(routes(h)), h.idOf(name));
+    await userEvent
+      .setup()
+      .press(await screen.findByRole("link", { name: "See your debts on the website" }));
+    expect(Linking.openURL).toHaveBeenCalledWith(LINKS.debts.url);
+  });
+
+  it("a saving has no owner page link", async () => {
+    const h = personaHousehold(HOMEOWNER);
+    await detail(fakeApi(routes(h)), h.idOf("Cash ISA"));
+    expect(await screen.findByTestId("account-detail-hero")).toBeOnTheScreen();
+    expect(screen.queryByTestId("account-owner-page")).toBeNull();
   });
 
   it("an unknown id: We cannot find that account, with Back to accounts", async () => {

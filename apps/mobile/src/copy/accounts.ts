@@ -10,6 +10,7 @@
  * (advice policy R1). Every figure comes from the engine; these functions only format it.
  */
 import {
+  categorizeAccountType,
   jointShareLabel,
   type NetWorthLeftOut,
   type RecordedMonthComparison,
@@ -144,6 +145,16 @@ export const ACCOUNT = {
   carriedEnd: "The dashed end is this month's saved balance, not yet recorded.",
   /** Web's Edit button opens a dialog; here it opens the account on the website until S8. */
   edit: "Edit this account on the website",
+  /**
+   * Mobile-only words, with no web equivalent (web does all of these on the page): what the app
+   * leaves to the website for now, shown whatever the build's configuration, so the page says it
+   * even when the link can only say "Open the Flump website".
+   */
+  onWebsite:
+    "Editing this account, updating its balance, goals and the estimated return are on the Flump website for now.",
+  /** Web's `ownerPageFor` link words, on the website until the app has the page (S11, S12). */
+  seeMortgage: "See your mortgage on the website",
+  seeDebts: "See your debts on the website",
   notFound: "We cannot find that account.",
   backToAccounts: "Back to accounts",
   /** The header while the account's name is not known. */
@@ -155,6 +166,17 @@ export const ACCOUNT = {
   /** A month typed by hand, as web's "Show data" table and history's month list say. */
   recorded: "Recorded",
 } as const;
+
+/**
+ * Web's `ownerPageFor`: the page that owns this account's detail. A mortgage's is the mortgage
+ * page, a debt's or student loan's the debts page; null for anything else.
+ */
+export function ownerPageFor(type: string): "mortgage" | "debts" | null {
+  const category = categorizeAccountType(type);
+  if (category === "mortgages") return "mortgage";
+  if (category === "debt" || category === "studentLoans") return "debts";
+  return null;
+}
 
 /** "October 2026" for "2026-10". */
 function monthLabel(month: string): string {
@@ -261,6 +283,11 @@ export const HISTORY = {
     "Add your accounts first. Their balances then become your first month of history.",
   /** Web's "Add earlier months" opens a form; here it opens the website until S8. */
   addEarlierMonths: "Add earlier months on the website",
+  /**
+   * Mobile-only words, with no web equivalent (web adds earlier months on the page): shown
+   * whatever the build's configuration, so the page says it even beside "Open the Flump website".
+   */
+  onWebsite: "Adding earlier months is on the Flump website for now.",
   showChanges: "Show changes by account",
   hideChanges: "Hide changes by account",
   effectOnNetWorth: "Effect on net worth",
