@@ -198,11 +198,20 @@ export function createSession(deps: SessionDeps): Session {
   async function settle() {
     const account = await deps.checkAccount();
     if (account === "ok") dispatch({ type: "SIGNED_IN" });
-    else if (account === "not-invited") dispatch({ type: "NOT_INVITED" });
-    else if (account === "terms-not-accepted") dispatch({ type: "TERMS_REQUIRED" });
+    else if (account === "not-invited") await leaveData({ type: "NOT_INVITED" });
+    else if (account === "terms-not-accepted") await leaveData({ type: "TERMS_REQUIRED" });
     else if (account === "unavailable") dispatch({ type: "OFFLINE" });
-    else if (account === "account-deleted") dispatch({ type: "DELETION_PENDING" });
+    else if (account === "account-deleted") await leaveData({ type: "DELETION_PENDING" });
     else await endSession();
+  }
+
+  /**
+   * A state where screens hold no figures (not invited, terms, an erased account): saved figures
+   * from before must not come back on a later offline start, so the cache goes too (E12 S7).
+   */
+  async function leaveData(event: SessionEvent) {
+    dispatch(event);
+    await clearCache();
   }
 
   function refresh(): Promise<RefreshOutcome> {
@@ -306,13 +315,13 @@ export function createSession(deps: SessionDeps): Session {
     if (state.status !== "restoredOffline") return Promise.resolve();
     if (!reconnecting) {
       reconnecting = (async () => {
-        // A refresh may already have worked (the account check then failed): check again only.
-        if (!accessToken) {
-          const outcome = await refresh();
-          if (outcome !== "refreshed") return;
-        }
+        const outcome = await refresh();
+        if (outcome !== "refreshed") return;
         if (state.status !== "restoredOffline") return;
         await settle();
+        // Still offline (the account check did not answer): drop the new access token, so no read
+        // goes to Flump before the check passes. The saved refresh token is kept for the next try.
+        if (state.status === "restoredOffline") accessToken = null;
       })()
         .catch(() => undefined)
         .finally(() => {
@@ -497,7 +506,7 @@ export function createSession(deps: SessionDeps): Session {
     getAccessToken: () => accessToken,
     refresh,
     reauthenticate,
-    deletionPending: () => dispatch({ type: "DELETION_PENDING" }),
+    deletionPending: () => void leaveData({ type: "DELETION_PENDING" }),
     accountDeleted,
     acknowledgeDeletion: () => dispatch({ type: "DELETION_ACKNOWLEDGED" }),
   };

@@ -16,6 +16,7 @@ import {
   deleteAsync,
   EncodingType,
   makeDirectoryAsync,
+  moveAsync,
   readAsStringAsync,
   writeAsStringAsync,
 } from "expo-file-system/legacy";
@@ -66,8 +67,13 @@ function createAesBox(): SealingBox {
   };
 }
 
+/**
+ * Written whole to a temporary name, then moved over the file: a kill mid-write leaves at most a
+ * complete sealed temporary file (never plaintext, never read), not a half file under the real name.
+ */
 function createCacheFile(uri: string): CacheFile {
   const folder = uri.slice(0, uri.lastIndexOf("/") + 1);
+  const temporary = `${uri}.writing`;
   return {
     async read() {
       try {
@@ -78,9 +84,15 @@ function createCacheFile(uri: string): CacheFile {
     },
     async write(text) {
       await makeDirectoryAsync(folder, { intermediates: true });
-      await writeAsStringAsync(uri, text, { encoding: EncodingType.UTF8 });
+      await writeAsStringAsync(temporary, text, { encoding: EncodingType.UTF8 });
+      // iOS's move refuses to replace an existing file, so the old one goes first.
+      await deleteAsync(uri, { idempotent: true });
+      await moveAsync({ from: temporary, to: uri });
     },
-    remove: () => deleteAsync(uri, { idempotent: true }),
+    async remove() {
+      await deleteAsync(temporary, { idempotent: true });
+      await deleteAsync(uri, { idempotent: true });
+    },
   };
 }
 
