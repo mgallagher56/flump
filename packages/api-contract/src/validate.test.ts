@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { checkAgainst, issuesFromZodError, parseAgainst, unknownKeys } from "./validate.js";
+import {
+  checkAgainst,
+  checkServerResponse,
+  issuesFromZodError,
+  parseAgainst,
+  unknownKeys,
+} from "./validate.js";
 
 describe("issuesFromZodError", () => {
   it('names an issue on the value itself "(root)", the path the backend contract check strips', () => {
@@ -36,5 +42,35 @@ describe("parseAgainst", () => {
     expect(result.issues.map((issue) => [issue.path, issue.code])).toEqual([
       ["extra", "unrecognized_keys"],
     ]);
+  });
+});
+
+describe("checkServerResponse", () => {
+  const schema = z.strictObject({
+    id: z.string(),
+    asking: z.boolean().default(true),
+    rows: z.array(z.strictObject({ id: z.string(), shared: z.boolean().default(false) })),
+  });
+
+  it("passes a response that sends every field, defaulted ones included", () => {
+    const body = { id: "a", asking: false, rows: [{ id: "r", shared: true }] };
+    expect(checkServerResponse(schema, body)).toEqual({ ok: true });
+  });
+
+  it("names each defaulted field the server left out, inside arrays too, once each", () => {
+    const body = { id: "a", rows: [{ id: "r" }, { id: "s" }] };
+    // A reader accepts this (it fills in the defaults); the server is held to the full shape.
+    expect(parseAgainst(schema, body).ok).toBe(true);
+    const result = checkServerResponse(schema, body);
+    expect(result.ok).toBe(false);
+    expect(result.ok ? [] : result.issues.map((i) => [i.path, i.code])).toEqual([
+      ["asking", "missing_field"],
+      ["rows.shared", "missing_field"],
+    ]);
+  });
+
+  it("still reports an ordinary shape failure as parseAgainst does", () => {
+    const result = checkServerResponse(schema, { asking: true, rows: [] });
+    expect(result.ok ? [] : result.issues.map((i) => i.path)).toEqual(["id"]);
   });
 });

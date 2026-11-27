@@ -126,8 +126,8 @@ const NullableAmount = ResponseMoney.nullable();
  * The profile as `UserProfileService.formatProfile` puts it on the wire, plus `email` (the
  * caller's own address from the auth token, or null). The server always sends every key: nullable
  * columns are null, never absent. Keys added after the v1 baseline carry a `.default()`, so a
- * reader also accepts an older backend's answer without them. Decimal columns arrive as numbers (B-05). `userId` is the
- * caller's own id, so it is harmless.
+ * reader also accepts an older backend's answer without them. Decimal columns arrive as numbers
+ * (B-05). `userId` is the caller's own id, so it is harmless.
  */
 export const UserProfileDto = z.strictObject({
   id: Uuid,
@@ -355,11 +355,7 @@ export const AccountExportProfile = z.strictObject({
   taxRegion: NullableText,
   birthYear: z.number().int().nullable(),
   checkInDay: z.number().int().nullable(),
-  /**
-   * Added in E35 (26 November 2026), after the v1 baseline: an older backend does not send it, so
-   * readers fill in the backend's own default (asking is on). Fields added to a response from now
-   * on carry a default the same way (docs/api/versioning.md).
-   */
+  /** A reader default, as on UserProfileDto: an export from before E35 has no such key. */
   wellbeingQuestions: z.boolean().default(true),
   studentLoanPlans: TextList,
   housingStatus: NullableText,

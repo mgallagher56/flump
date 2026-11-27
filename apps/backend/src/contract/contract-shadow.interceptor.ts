@@ -1,5 +1,6 @@
 import {
   CONTRACT_GROUPS,
+  checkServerResponse,
   findRoute,
   parseAgainst,
   type RouteDefinition,
@@ -233,8 +234,10 @@ export class ContractShadowInterceptor implements NestInterceptor {
     schema: NonNullable<RouteDefinition["params"]>,
     value: unknown,
   ): { ok: true; data: unknown } | { ok: false; issues: ValidationIssue[] } {
-    const result = parseAgainst(schema, value);
-    if (result.ok) return result;
+    // A response is also held to sending the fields the contract gives readers a default for.
+    const result =
+      part === "response" ? checkServerResponse(schema, value) : parseAgainst(schema, value);
+    if (result.ok) return { ok: true, data: "data" in result ? result.data : value };
     const issues = result.issues.map((issue) => ({
       path: `${part}${issue.path === "(root)" ? "" : `.${issue.path}`}`.slice(0, MAX_PATH_CHARS),
       code: issue.code,
