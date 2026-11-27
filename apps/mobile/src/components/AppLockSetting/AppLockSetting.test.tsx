@@ -1,5 +1,6 @@
+import { light } from "@flump/tokens/native";
 import { render, screen, userEvent } from "@testing-library/react-native";
-import { Platform } from "react-native";
+import { Platform, StyleSheet } from "react-native";
 import { APP_LOCK } from "../../copy/accountData";
 import { expectHoldsAtDoubleText } from "../../testing/textScale";
 import { ThemeProvider } from "../../theme/ThemeProvider";
@@ -41,14 +42,26 @@ describe("AppLockSetting", () => {
   it("with no screen lock on the phone: disabled, and says why", async () => {
     const onChange = await show({ availability: "noScreenLock" });
     expect(toggle()).toBeDisabled();
+    expect(StyleSheet.flatten(screen.getByText(APP_LOCK.label).props.style).color).toBe(
+      light.colors["text.muted"],
+    );
     expect(screen.getByText(APP_LOCK.noScreenLock)).toBeOnTheScreen();
     await userEvent.setup().press(toggle());
     expect(onChange).not.toHaveBeenCalled();
   });
 
-  it("while the phone is asking, or still checking, the switch waits", async () => {
+  it("while the phone is asking, or still checking, the switch waits in enabled colours", async () => {
     const onChange = await show({ busy: true });
+    expect(toggle()).toBeBusy();
     expect(toggle()).toBeDisabled();
+    expect(StyleSheet.flatten(screen.getByText(APP_LOCK.label).props.style).color).toBe(
+      light.colors["text.primary"],
+    );
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId("switch-track", { includeHiddenElements: true }).props.style,
+      ).backgroundColor,
+    ).toBe(light.colors["border.strong"]);
     await userEvent.setup().press(toggle());
     expect(onChange).not.toHaveBeenCalled();
     expect(screen.queryByText(APP_LOCK.noScreenLock)).toBeNull();

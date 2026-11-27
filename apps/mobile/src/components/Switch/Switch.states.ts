@@ -16,6 +16,8 @@ export const switchStates = {
     value: false,
     onValueChange: noop,
   },
-  saving: { label: "Self Assessment", value: true, busy: true, onValueChange: noop },
-  disabled: { label: "Self Assessment", value: false, disabled: true, onValueChange: noop },
+  busyOn: { label: "Self Assessment", value: true, busy: true, onValueChange: noop },
+  busyOff: { label: "Self Assessment", value: false, busy: true, onValueChange: noop },
+  disabledOn: { label: "Self Assessment", value: true, disabled: true, onValueChange: noop },
+  disabledOff: { label: "Self Assessment", value: false, disabled: true, onValueChange: noop },
 } satisfies Record<string, SwitchProps>;

@@ -1,70 +1,69 @@
-import { dark, light } from "@flump/tokens/native";
-import { render, screen, userEvent } from "@testing-library/react-native";
+import { contrast, parseColor } from "@flump/tokens/contrast";
+import { dark, durations, light } from "@flump/tokens/native";
+import { act, render, screen, userEvent } from "@testing-library/react-native";
 import { Platform, StyleSheet, type ViewStyle } from "react-native";
 import { expectHoldsAtDoubleText } from "../../testing/textScale";
 import { ThemeProvider } from "../../theme/ThemeProvider";
 import { Switch } from "./Switch";
 import { switchStates } from "./Switch.states";
 
-// Local WCAG 2 contrast helper until @flump/tokens/contrast is exported for mobile.
-type Rgb = readonly [number, number, number];
-
-function parseHex(hex: string): Rgb {
-  const match = /^#([0-9a-f]{6})$/i.exec(hex);
-  if (!match?.[1]) throw new Error(`Expected 6-digit hex colour, got ${hex}`);
-  const digits = match[1];
-  return [
-    Number.parseInt(digits.slice(0, 2), 16),
-    Number.parseInt(digits.slice(2, 4), 16),
-    Number.parseInt(digits.slice(4, 6), 16),
-  ];
+function withOpacity(color: string, opacity: number): string {
+  if (opacity >= 1) return color;
+  const { rgb, alpha } = parseColor(color);
+  return `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${alpha * opacity})`;
 }
 
-function blendOver(fg: Rgb, bg: Rgb, alpha: number): Rgb {
-  return [
-    fg[0] * alpha + bg[0] * (1 - alpha),
-    fg[1] * alpha + bg[1] * (1 - alpha),
-    fg[2] * alpha + bg[2] * (1 - alpha),
-  ];
-}
-
-function relativeLuminance(rgb: Rgb): number {
-  const [r, g, b] = rgb.map((v) => {
-    const c = v / 255;
-    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
-  }) as [number, number, number];
-  return r * 0.2126 + g * 0.7152 + b * 0.0722;
-}
-
-function contrastRatio(a: Rgb, b: Rgb): number {
-  const l1 = relativeLuminance(a);
-  const l2 = relativeLuminance(b);
-  return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
-}
-
-function visibleEdgeColor(style: ViewStyle): string | null {
-  if (typeof style.borderWidth !== "number" || style.borderWidth < 1) return null;
-  return typeof style.borderColor === "string" ? style.borderColor : null;
-}
-
-function maxContrastAgainst(
+function fillContrast(
   style: ViewStyle,
   opacity: number,
-  targetRgb: Rgb,
-  surfaceRgb: Rgb,
+  targetBg: string,
+  underSurface: string,
 ): number {
   if (typeof style.backgroundColor !== "string") {
     throw new Error("Expected string backgroundColor on switch view");
   }
-  const fillRgb = blendOver(parseHex(style.backgroundColor), surfaceRgb, opacity);
-  const fillRatio = contrastRatio(fillRgb, targetRgb);
-  const edge = visibleEdgeColor(style);
-  if (!edge) return fillRatio;
-  const edgeRgb = blendOver(parseHex(edge), surfaceRgb, opacity);
-  return Math.max(fillRatio, contrastRatio(edgeRgb, targetRgb));
+  return contrast(withOpacity(style.backgroundColor, opacity), targetBg, underSurface);
 }
 
-/** The drawn switch inside the row: hidden from screen readers, since the row is the control. */
+function edgeContrast(
+  style: ViewStyle,
+  opacity: number,
+  targetBg: string,
+  underSurface: string,
+  minBorderWidth = 1,
+): number {
+  expect(typeof style.borderWidth).toBe("number");
+  expect(style.borderWidth).toBeGreaterThanOrEqual(minBorderWidth);
+  expect(typeof style.borderColor).toBe("string");
+  return contrast(withOpacity(String(style.borderColor), opacity), targetBg, underSurface);
+}
+
+function switchGeometry(trackStyle: ViewStyle, thumbStyle: ViewStyle) {
+  const width = trackStyle.width as number;
+  const height = trackStyle.height as number;
+  const padding = typeof trackStyle.padding === "number" ? trackStyle.padding : 0;
+  const border = typeof trackStyle.borderWidth === "number" ? trackStyle.borderWidth : 0;
+  const thumbWidth = thumbStyle.width as number;
+  const thumbHeight = thumbStyle.height as number;
+  const thumbMarginH =
+    typeof thumbStyle.marginHorizontal === "number" ? thumbStyle.marginHorizontal : 0;
+  const innerHeight = height - 2 * (border + padding);
+  const thumbX =
+    trackStyle.justifyContent === "flex-end"
+      ? width - border - padding - thumbMarginH - thumbWidth
+      : border + padding + thumbMarginH;
+  const thumbY = border + padding + (innerHeight - thumbHeight) / 2;
+  return {
+    outerWidth: width,
+    outerHeight: height,
+    marginVertical: trackStyle.marginVertical,
+    thumbWidth,
+    thumbHeight,
+    thumbX,
+    thumbY,
+  };
+}
+
 /** The rendered host tree, as `toJSON` gives it. */
 interface HostNode {
   type: string;
@@ -73,6 +72,7 @@ interface HostNode {
 
 const track = () => screen.getByTestId("switch-track", { includeHiddenElements: true });
 const thumb = () => screen.getByTestId("switch-thumb", { includeHiddenElements: true });
+const busySpinner = () => screen.queryByTestId("switch-busy", { includeHiddenElements: true });
 
 describe("Switch", () => {
   beforeEach(() => jest.useRealTimers());
@@ -108,8 +108,10 @@ describe("Switch", () => {
   });
 
   it.each([
-    ["saving", switchStates.saving, { busy: true, disabled: true }],
-    ["disabled", switchStates.disabled, { busy: false, disabled: true }],
+    ["busyOn", switchStates.busyOn, { busy: true, disabled: true }],
+    ["busyOff", switchStates.busyOff, { busy: true, disabled: true }],
+    ["disabledOn", switchStates.disabledOn, { busy: false, disabled: true }],
+    ["disabledOff", switchStates.disabledOff, { busy: false, disabled: true }],
   ])("%s ignores presses and says so", async (_name, props, state) => {
     const onValueChange = jest.fn();
     await render(
@@ -124,54 +126,71 @@ describe("Switch", () => {
   });
 
   it.each([
-    ["light", light],
-    ["dark", dark],
+    // iOS: the 51 by 31 track, a 27 thumb inset by 2.
+    ["light", "ios", light, { width: 51, height: 31, padding: 2, marginVertical: 0 }, 27],
+    ["dark", "ios", dark, { width: 51, height: 31, padding: 2, marginVertical: 0 }, 27],
+    // Android: the 36 by 14 track, a 20 thumb standing 3 above and below it.
+    ["light", "android", light, { width: 36, height: 14, padding: 0, marginVertical: 3 }, 20],
+    ["dark", "android", dark, { width: 36, height: 14, padding: 0, marginVertical: 3 }, 20],
   ] as const)(
-    "%s: the drawn switch shows the value in our colours, primary when on and the strong border when off",
-    async (scheme, set) => {
+    "%s %s: drawn to the platform switch's size and token colours for on and off",
+    async (scheme, os, set, trackSize, thumbSize) => {
+      jest.replaceProperty(Platform, "OS", os);
+      const label = "Count";
       const view = await render(
         <ThemeProvider scheme={scheme}>
-          <Switch {...switchStates.on} />
+          <Switch label={label} value={true} onValueChange={jest.fn()} />
         </ThemeProvider>,
       );
+
       expect(StyleSheet.flatten(track().props.style)).toMatchObject({
+        ...trackSize,
+        borderRadius: trackSize.height / 2,
         backgroundColor: set.colors["primary.solid"],
         justifyContent: "flex-end",
       });
+      expect(StyleSheet.flatten(track().props.style).opacity ?? 1).toBe(1);
+      expect(StyleSheet.flatten(track().props.style).borderWidth).toBeUndefined();
       expect(StyleSheet.flatten(thumb().props.style)).toMatchObject({
+        width: thumbSize,
+        height: thumbSize,
+        borderRadius: thumbSize / 2,
+        borderWidth: StyleSheet.hairlineWidth,
         backgroundColor: set.colors["surface.card"],
+        borderColor: set.colors["border.strong"],
       });
+      expect(StyleSheet.flatten(screen.getByText(label).props.style).color).toBe(
+        set.colors["text.primary"],
+      );
+
       await view.rerender(
         <ThemeProvider scheme={scheme}>
-          <Switch {...switchStates.off} />
+          <Switch label={label} value={false} onValueChange={jest.fn()} />
         </ThemeProvider>,
       );
+
       // Off: the strong border's colour, and the thumb at the start.
       expect(StyleSheet.flatten(track().props.style)).toMatchObject({
+        ...trackSize,
+        borderRadius: trackSize.height / 2,
         backgroundColor: set.colors["border.strong"],
         justifyContent: "flex-start",
       });
+      expect(StyleSheet.flatten(track().props.style).opacity ?? 1).toBe(1);
+      expect(StyleSheet.flatten(track().props.style).borderWidth).toBeUndefined();
+      expect(StyleSheet.flatten(thumb().props.style)).toMatchObject({
+        width: thumbSize,
+        height: thumbSize,
+        borderRadius: thumbSize / 2,
+        borderWidth: StyleSheet.hairlineWidth,
+        backgroundColor: set.colors["surface.card"],
+        borderColor: set.colors["border.strong"],
+      });
+      expect(StyleSheet.flatten(screen.getByText(label).props.style).color).toBe(
+        set.colors["text.primary"],
+      );
     },
   );
-
-  it.each([
-    // iOS: the 51 by 31 track, a 27 thumb inset by 2.
-    ["ios", { width: 51, height: 31, padding: 2, marginVertical: 0 }, 27],
-    // Android: the 36 by 14 track, a 20 thumb standing 3 above and below it.
-    ["android", { width: 36, height: 14, padding: 0, marginVertical: 3 }, 20],
-  ] as const)("%s: drawn to the platform switch's size", async (os, size, thumbSize) => {
-    jest.replaceProperty(Platform, "OS", os);
-    await render(
-      <ThemeProvider scheme="light">
-        <Switch {...switchStates.off} />
-      </ThemeProvider>,
-    );
-    expect(StyleSheet.flatten(track().props.style)).toMatchObject(size);
-    expect(StyleSheet.flatten(thumb().props.style)).toMatchObject({
-      width: thumbSize,
-      height: thumbSize,
-    });
-  });
 
   it("the row is the only control: no platform switch inside it, one switch for a screen reader", async () => {
     const view = await render(
@@ -215,23 +234,50 @@ describe("Switch", () => {
   });
 
   it.each([
-    ["light", "ios", "disabled", light],
-    ["light", "ios", "busy", light],
-    ["light", "android", "disabled", light],
-    ["light", "android", "busy", light],
-    ["dark", "ios", "disabled", dark],
-    ["dark", "ios", "busy", dark],
-    ["dark", "android", "disabled", dark],
-    ["dark", "android", "busy", dark],
+    ["ios", true],
+    ["ios", false],
+    ["android", true],
+    ["android", false],
   ] as const)(
-    "%s %s %s: meets contrast targets for on and off, separates states, and differs from enabled",
-    async (scheme, os, inactiveProp, set) => {
+    "%s value=%s: disabled track outer size and thumb position match enabled exactly",
+    async (os, value) => {
       jest.replaceProperty(Platform, "OS", os);
-      const inactiveFlags = inactiveProp === "disabled" ? { disabled: true } : { busy: true };
+      const view = await render(
+        <ThemeProvider scheme="light">
+          <Switch label="Count" value={value} onValueChange={jest.fn()} />
+        </ThemeProvider>,
+      );
+      const enabledGeo = switchGeometry(
+        StyleSheet.flatten(track().props.style) as ViewStyle,
+        StyleSheet.flatten(thumb().props.style) as ViewStyle,
+      );
+
+      await view.rerender(
+        <ThemeProvider scheme="light">
+          <Switch label="Count" value={value} disabled onValueChange={jest.fn()} />
+        </ThemeProvider>,
+      );
+      const disabledGeo = switchGeometry(
+        StyleSheet.flatten(track().props.style) as ViewStyle,
+        StyleSheet.flatten(thumb().props.style) as ViewStyle,
+      );
+      expect(disabledGeo).toEqual(enabledGeo);
+    },
+  );
+
+  it.each([
+    ["light", "ios", light],
+    ["light", "android", light],
+    ["dark", "ios", dark],
+    ["dark", "android", dark],
+  ] as const)(
+    "%s %s disabled: meets fill and edge contrast targets separately for on and off",
+    async (scheme, os, set) => {
+      jest.replaceProperty(Platform, "OS", os);
       const label = "Self Assessment";
       const view = await render(
         <ThemeProvider scheme={scheme}>
-          <Switch label={label} value={true} onValueChange={jest.fn()} {...inactiveFlags} />
+          <Switch label={label} value={true} disabled onValueChange={jest.fn()} />
         </ThemeProvider>,
       );
 
@@ -244,7 +290,7 @@ describe("Switch", () => {
 
       await view.rerender(
         <ThemeProvider scheme={scheme}>
-          <Switch label={label} value={false} onValueChange={jest.fn()} {...inactiveFlags} />
+          <Switch label={label} value={false} disabled onValueChange={jest.fn()} />
         </ThemeProvider>,
       );
 
@@ -255,47 +301,38 @@ describe("Switch", () => {
         offTrackOpacity * (typeof offThumb.opacity === "number" ? offThumb.opacity : 1);
       const offLabel = StyleSheet.flatten(screen.getByText(label).props.style);
 
-      const surfaces = [
-        parseHex(set.colors["surface.canvas"]),
-        parseHex(set.colors["surface.card"]),
-      ] as const;
+      const surfaces = [set.colors["surface.canvas"], set.colors["surface.card"]] as const;
 
-      for (const surfaceRgb of surfaces) {
-        expect(
-          maxContrastAgainst(onTrack, onTrackOpacity, surfaceRgb, surfaceRgb),
-        ).toBeGreaterThanOrEqual(3);
-        expect(
-          maxContrastAgainst(offTrack, offTrackOpacity, surfaceRgb, surfaceRgb),
-        ).toBeGreaterThanOrEqual(3);
-
-        const onTrackFillRgb = blendOver(
-          parseHex(String(onTrack.backgroundColor)),
-          surfaceRgb,
-          onTrackOpacity,
+      for (const surface of surfaces) {
+        // Disabled on: solid muted track against the page; sunken thumb fill against the track.
+        expect(fillContrast(onTrack, onTrackOpacity, surface, surface)).toBeGreaterThanOrEqual(3);
+        const onTrackFill = withOpacity(String(onTrack.backgroundColor), onTrackOpacity);
+        expect(fillContrast(onThumb, onThumbOpacity, onTrackFill, surface)).toBeGreaterThanOrEqual(
+          3,
         );
-        const offTrackFillRgb = blendOver(
-          parseHex(String(offTrack.backgroundColor)),
-          surfaceRgb,
-          offTrackOpacity,
-        );
-
-        expect(
-          maxContrastAgainst(onThumb, onThumbOpacity, onTrackFillRgb, surfaceRgb),
-        ).toBeGreaterThanOrEqual(3);
-        expect(
-          maxContrastAgainst(offThumb, offThumbOpacity, offTrackFillRgb, surfaceRgb),
-        ).toBeGreaterThanOrEqual(3);
-
+        // On Android the thumb overhangs the 14pt track and relies on its 1.5pt ring against the page.
         if (os === "android") {
           expect(
-            maxContrastAgainst(onThumb, onThumbOpacity, surfaceRgb, surfaceRgb),
-          ).toBeGreaterThanOrEqual(3);
-          expect(
-            maxContrastAgainst(offThumb, offThumbOpacity, surfaceRgb, surfaceRgb),
+            edgeContrast(onThumb, onThumbOpacity, surface, surface, 1.5),
           ).toBeGreaterThanOrEqual(3);
         }
 
-        expect(contrastRatio(onTrackFillRgb, offTrackFillRgb)).toBeGreaterThanOrEqual(1.5);
+        // Disabled off: sunken track relies on its 1.5pt outline against the page; strong-border
+        // thumb fill reads against the sunken track (and against the page on Android).
+        expect(
+          edgeContrast(offTrack, offTrackOpacity, surface, surface, 1.5),
+        ).toBeGreaterThanOrEqual(3);
+        const offTrackFill = withOpacity(String(offTrack.backgroundColor), offTrackOpacity);
+        expect(
+          fillContrast(offThumb, offThumbOpacity, offTrackFill, surface),
+        ).toBeGreaterThanOrEqual(3);
+        if (os === "android") {
+          expect(fillContrast(offThumb, offThumbOpacity, surface, surface)).toBeGreaterThanOrEqual(
+            3,
+          );
+        }
+
+        expect(contrast(onTrackFill, offTrackFill, surface)).toBeGreaterThanOrEqual(1.5);
       }
 
       expect(onTrackOpacity).toBe(1);
@@ -312,66 +349,106 @@ describe("Switch", () => {
   );
 
   it.each([
-    ["light", "ios", light, { width: 51, height: 31, padding: 2, marginVertical: 0 }, 27],
-    ["light", "android", light, { width: 36, height: 14, padding: 0, marginVertical: 3 }, 20],
-    ["dark", "ios", dark, { width: 51, height: 31, padding: 2, marginVertical: 0 }, 27],
-    ["dark", "android", dark, { width: 36, height: 14, padding: 0, marginVertical: 3 }, 20],
+    ["light", "ios", true, light],
+    ["light", "ios", false, light],
+    ["light", "android", true, light],
+    ["light", "android", false, light],
+    ["dark", "ios", true, dark],
+    ["dark", "ios", false, dark],
+    ["dark", "android", true, dark],
+    ["dark", "android", false, dark],
   ] as const)(
-    "%s %s: enabled styles are unchanged",
-    async (scheme, os, set, trackSize, thumbSize) => {
+    "%s %s value=%s: busy keeps enabled colours and label primary while ignoring presses",
+    async (scheme, os, value, set) => {
       jest.replaceProperty(Platform, "OS", os);
-      const label = "Count";
+      const label = "Self Assessment";
+      const onValueChange = jest.fn();
       const view = await render(
         <ThemeProvider scheme={scheme}>
-          <Switch label={label} value={true} onValueChange={jest.fn()} />
+          <Switch label={label} value={value} onValueChange={onValueChange} />
         </ThemeProvider>,
       );
-
-      expect(StyleSheet.flatten(track().props.style)).toMatchObject({
-        ...trackSize,
-        borderRadius: trackSize.height / 2,
-        backgroundColor: set.colors["primary.solid"],
-        justifyContent: "flex-end",
-      });
-      expect(StyleSheet.flatten(track().props.style).opacity ?? 1).toBe(1);
-      expect(StyleSheet.flatten(track().props.style).borderWidth).toBeUndefined();
-      expect(StyleSheet.flatten(thumb().props.style)).toMatchObject({
-        width: thumbSize,
-        height: thumbSize,
-        borderRadius: thumbSize / 2,
-        borderWidth: StyleSheet.hairlineWidth,
-        backgroundColor: set.colors["surface.card"],
-        borderColor: set.colors["border.strong"],
-      });
-      expect(StyleSheet.flatten(screen.getByText(label).props.style).color).toBe(
-        set.colors["text.primary"],
-      );
+      const enabledTrack = StyleSheet.flatten(track().props.style) as ViewStyle;
+      const enabledThumb = StyleSheet.flatten(thumb().props.style) as ViewStyle;
 
       await view.rerender(
         <ThemeProvider scheme={scheme}>
-          <Switch label={label} value={false} onValueChange={jest.fn()} />
+          <Switch label={label} value={value} busy onValueChange={onValueChange} />
         </ThemeProvider>,
       );
 
-      expect(StyleSheet.flatten(track().props.style)).toMatchObject({
-        ...trackSize,
-        borderRadius: trackSize.height / 2,
-        backgroundColor: set.colors["border.strong"],
-        justifyContent: "flex-start",
-      });
-      expect(StyleSheet.flatten(track().props.style).opacity ?? 1).toBe(1);
-      expect(StyleSheet.flatten(track().props.style).borderWidth).toBeUndefined();
-      expect(StyleSheet.flatten(thumb().props.style)).toMatchObject({
-        width: thumbSize,
-        height: thumbSize,
-        borderRadius: thumbSize / 2,
-        borderWidth: StyleSheet.hairlineWidth,
-        backgroundColor: set.colors["surface.card"],
-        borderColor: set.colors["border.strong"],
-      });
       expect(StyleSheet.flatten(screen.getByText(label).props.style).color).toBe(
         set.colors["text.primary"],
       );
+      expect(StyleSheet.flatten(track().props.style)).toEqual(enabledTrack);
+      expect(StyleSheet.flatten(thumb().props.style)).toEqual(enabledThumb);
+      const control = screen.getByRole("switch");
+      expect(control.props.accessibilityState).toMatchObject({
+        checked: value,
+        busy: true,
+        disabled: true,
+      });
+      await userEvent.setup().press(control);
+      expect(onValueChange).not.toHaveBeenCalled();
     },
   );
+
+  it("busy shows no spinner on a fast save (< 200 ms), then keeps a shown spinner for at least 400 ms", async () => {
+    jest.useFakeTimers();
+    const view = await render(
+      <ThemeProvider scheme="light">
+        <Switch label="Self Assessment" value={true} busy onValueChange={jest.fn()} />
+      </ThemeProvider>,
+    );
+    expect(busySpinner()).toBeNull();
+
+    // Fast save finishes before pendingDelay (200 ms): never shows a spinner.
+    await act(async () => jest.advanceTimersByTime(durations.pendingDelay - 1));
+    expect(busySpinner()).toBeNull();
+    await view.rerender(
+      <ThemeProvider scheme="light">
+        <Switch label="Self Assessment" value={true} busy={false} onValueChange={jest.fn()} />
+      </ThemeProvider>,
+    );
+    await act(async () => jest.advanceTimersByTime(durations.pendingMinimum));
+    expect(busySpinner()).toBeNull();
+
+    // Slow save: spinner appears at 200 ms, hidden from screen readers (the row already says busy).
+    await view.rerender(
+      <ThemeProvider scheme="light">
+        <Switch label="Self Assessment" value={true} busy onValueChange={jest.fn()} />
+      </ThemeProvider>,
+    );
+    await act(async () => jest.advanceTimersByTime(durations.pendingDelay));
+    const spinner = busySpinner();
+    expect(spinner).not.toBeNull();
+    expect(spinner?.props.accessibilityElementsHidden).toBe(true);
+    expect(spinner?.props.importantForAccessibility).toBe("no-hide-descendants");
+
+    // Save ends 50 ms after the spinner appeared: it stays for the remaining 350 ms.
+    await act(async () => jest.advanceTimersByTime(50));
+    await view.rerender(
+      <ThemeProvider scheme="light">
+        <Switch label="Self Assessment" value={true} busy={false} onValueChange={jest.fn()} />
+      </ThemeProvider>,
+    );
+    await act(async () => jest.advanceTimersByTime(durations.pendingMinimum - 51));
+    expect(busySpinner()).not.toBeNull();
+    await act(async () => jest.advanceTimersByTime(1));
+    expect(busySpinner()).toBeNull();
+  });
+
+  it("when both disabled and busy, disabled styles apply and no busy spinner appears", async () => {
+    jest.useFakeTimers();
+    await render(
+      <ThemeProvider scheme="light">
+        <Switch label="Self Assessment" value={false} disabled busy onValueChange={jest.fn()} />
+      </ThemeProvider>,
+    );
+    await act(async () => jest.advanceTimersByTime(durations.pendingDelay + 100));
+    expect(busySpinner()).toBeNull();
+    expect(StyleSheet.flatten(screen.getByText("Self Assessment").props.style).color).toBe(
+      light.colors["text.muted"],
+    );
+  });
 });
