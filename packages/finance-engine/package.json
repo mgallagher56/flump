@@ -31,6 +31,11 @@
       "import": "./dist/net-worth-entry.js",
       "default": "./src/net-worth-entry.ts"
     },
+    "./budget": {
+      "types": "./dist/budget-entry.d.ts",
+      "import": "./dist/budget-entry.js",
+      "default": "./src/budget-entry.ts"
+    },
     "./home-strip": {
       "types": "./dist/home-strip-entry.d.ts",
       "import": "./dist/home-strip-entry.js",

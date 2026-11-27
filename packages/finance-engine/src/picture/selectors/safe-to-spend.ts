@@ -1,6 +1,6 @@
 import type { BudgetEntryItem } from "../../ai-context-pack.js";
-import { calculateSafeToSpend } from "../../health-score.js";
 import type { PortfolioSnapshot } from "../../portfolio.js";
+import { calculateSafeToSpend } from "../../safe-to-spend-allowance.js";
 import { type Figure, figureKnown, figureUnknown, isFigureKnown } from "../figure.js";
 import type { MissingKey } from "../input.js";
 import { selectBudgetTotals } from "./budget-totals.js";
