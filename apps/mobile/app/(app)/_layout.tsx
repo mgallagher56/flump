@@ -1,4 +1,5 @@
 import { Stack } from "expo-router";
+import { ACCOUNT, HISTORY } from "../../src/copy/accounts";
 import { HOME_TITLE } from "../../src/copy/brand";
 import { CHECK_IN } from "../../src/copy/checkIn";
 import { useSignedInStackOptions } from "../../src/navigation/stackOptions";
@@ -23,6 +24,9 @@ export default function SignedInLayout() {
         {/* The title is what iOS's back button on the next screen reads. */}
         <Stack.Screen name="(tabs)" options={{ headerShown: false, title: HOME_TITLE }} />
         <Stack.Screen name="check-in" options={{ title: CHECK_IN.title }} />
+        <Stack.Screen name="accounts/history" options={{ title: HISTORY.title }} />
+        {/* The page sets the account's name once it is known. */}
+        <Stack.Screen name="accounts/[id]" options={{ title: ACCOUNT.titleFallback }} />
         <Stack.Screen name="page/[key]" />
         <Stack.Screen name="+not-found" />
       </Stack>

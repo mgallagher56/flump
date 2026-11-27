@@ -45,10 +45,12 @@ async function home(
 ) {
   const onSignOut = jest.fn();
   const onOpenCheckIn = jest.fn();
+  const onOpenHistory = jest.fn();
   const { ui } = withApi(
     <Home
       onSignOut={onSignOut}
       onOpenCheckIn={onOpenCheckIn}
+      onOpenHistory={onOpenHistory}
       marketingOrigin="https://m.test.invalid"
       links={links}
       now={now}
@@ -56,7 +58,7 @@ async function home(
     api.client,
   );
   await render(ui);
-  return { onSignOut, onOpenCheckIn };
+  return { onSignOut, onOpenCheckIn, onOpenHistory };
 }
 
 /** Lets every read answer and the screen hear of it, inside act. */
@@ -395,6 +397,29 @@ describe("Home", () => {
     expect(await screen.findByText("Record your November balances")).toBeOnTheScreen();
     expect(screen.getByTestId("home-error")).toBeOnTheScreen();
     expect(screen.queryByText("£0")).toBeNull();
+  });
+
+  it("the bars and the link under them open net worth history; the link is what is read", async () => {
+    const { onOpenHistory } = await home(fakeApi(routes(household(RISING))));
+    const link = await screen.findByRole("link", { name: "See how it has changed" });
+    const user = userEvent.setup();
+    await user.press(link);
+    expect(onOpenHistory).toHaveBeenCalledTimes(1);
+    // The bars' touch is not a stop of its own: no second control with that name.
+    expect(screen.getAllByRole("link", { name: "See how it has changed" })).toHaveLength(1);
+    expect(screen.queryByRole("button", { name: "See how it has changed" })).toBeNull();
+    const bars = screen.getByTestId("home-trend-open-history");
+    expect(bars.props.accessible).toBe(false);
+    await user.press(bars);
+    expect(onOpenHistory).toHaveBeenCalledTimes(2);
+  });
+
+  it("no bars below three months, and no history link beside nothing", async () => {
+    await home(
+      fakeApi(routes(household([{ name: "Current account", type: "Current", balance: 900 }]))),
+    );
+    expect(await screen.findByText("£900")).toBeOnTheScreen();
+    expect(screen.queryByRole("link", { name: "See how it has changed" })).toBeNull();
   });
 
   describe("pull to refresh", () => {

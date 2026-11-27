@@ -52,3 +52,7 @@ export const NET_WORTH_SETTINGS_WEB_ROUTE = "/app/profile?tab=profile#net-worth"
 export const ADD_HOME_VALUE_WEB_ROUTE = "/app/accounts?add=property";
 /** Web's budget page, where a budget and its spending are added until the app has it (S10). */
 export const BUDGET_WEB_ROUTE = "/app/budget";
+/** Web's net worth history, where earlier months are added until the app can (S8). */
+export const NET_WORTH_HISTORY_WEB_ROUTE = "/app/accounts/history";
+/** Web's page for one account, where it is edited until the app can (S8). */
+export const accountWebRoute = (id: string) => `/app/accounts/${encodeURIComponent(id)}`;

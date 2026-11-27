@@ -22,6 +22,7 @@ export default function HomeTab() {
     <Home
       onSignOut={shell.signOut}
       onOpenCheckIn={() => router.push("/check-in")}
+      onOpenHistory={() => router.push("/accounts/history")}
       marketingOrigin={shell.marketingOrigin}
       links={{
         setUp: webLink(shell, SET_UP_WEB_ROUTE),
