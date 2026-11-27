@@ -154,9 +154,8 @@ describe("account page figures", () => {
       expect(heroAmount(getByTestId)).toBe("£2,400");
     });
 
-    test("after a future-month row a joint account shows the whole balance (condition 2a)", () => {
-      // The latest month up to now is October's 1,000. The share: 1,000 x 50% = 500. Pinned at
-      // today's whole £1,000, fixed in a later commit.
+    test("after a future-month row a joint account shows its share (condition 2a)", () => {
+      // The latest month up to now is October's 1,000. The share: 1,000 x 50% = 500.
       const { getByTestId } = renderAccount(
         {
           name: "Joint saver",
@@ -170,7 +169,7 @@ describe("account page figures", () => {
           { month: 12, year: 2026, value: 1200 },
         ],
       );
-      expect(heroAmount(getByTestId)).toBe("£1,000");
+      expect(heroAmount(getByTestId)).toBe("£500");
     });
   });
 

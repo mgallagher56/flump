@@ -471,8 +471,8 @@ describe("selectAccountBalance: the account page's hero", () => {
     });
   });
 
-  it("after a future-month row a joint account shows the whole latest month (pinned as today)", () => {
-    // The share would be 1,000 x 50% = 500; today's figure is the whole 1,000.
+  it("after a future-month row a joint account shows its share of the latest month", () => {
+    // October's whole 1,000 x 50% = 500, the same share the hero shows without a future row.
     expect(
       hero(
         {
@@ -487,7 +487,7 @@ describe("selectAccountBalance: the account page's hero", () => {
           { month: 12, year: 2026, value: 1200 },
         ],
       ).balance,
-    ).toBe(1000);
+    ).toBe(500);
   });
 
   it("gives the earliest month up to now as shown, when it is not the latest", () => {
