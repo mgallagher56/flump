@@ -40,6 +40,10 @@ describe("the accounts entry", () => {
       "resolveAccountOwnership",
       "resolveAccountSharePercent",
       "netWorthChoicesAvailable",
+      "resolveNetWorthScope",
+      "selectChartFractions",
+      "selectRecordedMonthComparison",
+      "selectAccountDeltas",
     ]) {
       expect(typeof (entry as Record<string, unknown>)[name]).toBe("function");
     }

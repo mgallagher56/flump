@@ -24,6 +24,7 @@ export {
   toShownBalance,
 } from "./account-balance.js";
 export { categorizeAccountType } from "./account-category.js";
+export { selectChartFractions } from "./chart-fractions.js";
 export {
   type AccountOwnership,
   describeJointShareOfWhole,
@@ -32,4 +33,13 @@ export {
   resolveAccountOwnership,
   resolveAccountSharePercent,
 } from "./joint-share.js";
-export { type NetWorthLeftOut, netWorthChoicesAvailable } from "./net-worth-basis.js";
+export {
+  type NetWorthLeftOut,
+  netWorthChoicesAvailable,
+  resolveNetWorthScope,
+} from "./net-worth-basis.js";
+export {
+  type RecordedMonthComparison,
+  selectRecordedMonthComparison,
+} from "./recorded-month-comparison.js";
+export { type AccountDelta, type NetWorthPoint, selectAccountDeltas } from "./snapshots.js";
