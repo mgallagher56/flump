@@ -35,7 +35,7 @@ import {
   SHOW_DATA,
 } from "../../copy/accounts";
 import { CHECK_IN } from "../../copy/checkIn";
-import { OPEN_FLUMP_WEBSITE } from "../../copy/navigation";
+import { OPEN_FLUMP_WEBSITE, websiteFallbackHint } from "../../copy/navigation";
 import { useAccountWrites } from "../../data/accountWrites";
 import { useDelayedLoading } from "../../data/useDelayedLoading";
 import type { AccountDetail as Detail } from "../../features/accounts/accountsModel";
@@ -302,6 +302,7 @@ function Loaded({
       {owner ? (
         <Button
           label={owner.link.exact ? owner.label : OPEN_FLUMP_WEBSITE}
+          accessibilityHint={websiteFallbackHint(owner.link, owner.label)}
           variant="link"
           accessibilityRole="link"
           testID="account-owner-page"

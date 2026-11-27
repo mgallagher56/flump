@@ -28,6 +28,17 @@ export const comingSoonAction = (page: string) => `Open ${page} on the website`;
 /** Any website button when this build has no web app address: where it really goes. */
 export const OPEN_FLUMP_WEBSITE = "Open the Flump website";
 
+/**
+ * What such a button was for, said after its words by a screen reader, so "Open the Flump website"
+ * names its destination (S8 device check): "Opens the website's home page. From there: See your
+ * mortgage on the website." Nothing when the button opens the page itself.
+ */
+export const websiteFallbackHint = (
+  link: { exact: boolean },
+  intended: string,
+): string | undefined =>
+  link.exact ? undefined : `Opens the Flump website's home page. From there: ${intended}.`;
+
 /** More's last group: Settings, Connect AI, Calculators and Sign out (web's drawer has no heading). */
 export const MORE_SETTINGS_HEADING = "Settings and tools";
 

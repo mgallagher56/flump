@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react-native";
 import { StyleSheet, type TextStyle } from "react-native";
 import { expectHoldsAtDoubleText } from "../../testing/textScale";
 import { ThemeProvider } from "../../theme/ThemeProvider";
+import { CurrencyInput } from "../CurrencyInput";
 import { Text } from "../Text";
 import { FormField } from "./FormField";
 import { formFieldStates } from "./FormField.states";
@@ -57,5 +58,43 @@ describe("FormField", () => {
 
   it.each(Object.entries(formFieldStates))("%s holds at 200%% text", async (_name, props) => {
     await expectHoldsAtDoubleText(<FormField {...props} />);
+  });
+});
+
+describe("FormField's error on its control (S8 device check)", () => {
+  it("the control inside says the error with its own name, then its own hint", async () => {
+    await render(
+      <ThemeProvider scheme="light">
+        <FormField label="Balance" error="Enter the balance. Use 0 if it is empty.">
+          <CurrencyInput
+            value={null}
+            onValueChange={jest.fn()}
+            accessibilityLabel="Balance"
+            accessibilityHint="Your latest statement balance"
+            testID="b"
+          />
+        </FormField>
+      </ThemeProvider>,
+    );
+    expect(screen.getByTestId("b").props.accessibilityHint).toBe(
+      "Enter the balance. Use 0 if it is empty. Your latest statement balance",
+    );
+  });
+
+  it("with no error the control keeps its own hint", async () => {
+    await render(
+      <ThemeProvider scheme="light">
+        <FormField label="Balance">
+          <CurrencyInput
+            value={null}
+            onValueChange={jest.fn()}
+            accessibilityLabel="Balance"
+            accessibilityHint="Your latest statement balance"
+            testID="b"
+          />
+        </FormField>
+      </ThemeProvider>,
+    );
+    expect(screen.getByTestId("b").props.accessibilityHint).toBe("Your latest statement balance");
   });
 });

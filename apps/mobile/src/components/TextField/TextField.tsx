@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { TextInput, type TextInputProps, View } from "react-native";
 import { useScrollFieldIntoView } from "../../device/keyboardInset";
 import { useTheme } from "../../theme/ThemeProvider";
+import { useFieldHint } from "../FormField/FormField";
 import { createStyles } from "./TextField.styles";
 
 export interface TextFieldProps {
@@ -35,6 +36,7 @@ export function TextField({
   testID,
 }: TextFieldProps) {
   const theme = useTheme();
+  const spokenHint = useFieldHint();
   // In a form, the field scrolls above the keyboard when it gains focus.
   const showField = useScrollFieldIntoView();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -61,6 +63,7 @@ export function TextField({
         autoComplete={autoComplete}
         autoCorrect={false}
         accessibilityLabel={accessibilityLabel}
+        accessibilityHint={spokenHint}
         accessibilityState={{ disabled: !editable }}
         editable={editable}
         {...(preview ? { allowFontScaling: false } : {})}
