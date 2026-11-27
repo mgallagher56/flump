@@ -4,6 +4,7 @@ import {
   type DocumentPicture,
   type DocumentShape,
   documentDefinitions,
+  documentEffects,
   documentRoleTokens,
   documentSceneIds,
   documentScenes,
@@ -20,13 +21,41 @@ import {
  * is one react-native-svg draws.
  */
 
-// A type-only check: a role token that is not a native colour fails `check-types`.
+// A type-only check: a role or effect token that is not a native colour fails `check-types`.
 const roleTokens: readonly ColorKey[] = [
   ...Object.values(documentRoleTokens.surface),
   ...Object.values(documentRoleTokens.ink),
   ...Object.values(documentRoleTokens.fill),
   ...Object.values(documentRoleTokens.stroke),
+  documentEffects.shadow.token,
+  documentEffects.tag.fill,
+  documentEffects.tag.edge,
+  documentEffects.tag.ink,
+  documentEffects.tag.onCharcoalInk,
 ];
+
+/** The native colour a drawer uses for each shape's role, as S9b will look it up. */
+function coloursOf(shape: DocumentShape): string[] {
+  const t = documentRoleTokens;
+  switch (shape.kind) {
+    case "piece":
+      return [t.surface[shape.surface]];
+    case "text":
+      return [t.ink[shape.ink]];
+    case "tag":
+      return shape.tone === "paper"
+        ? [documentEffects.tag.fill, documentEffects.tag.edge, documentEffects.tag.ink]
+        : [documentEffects.tag.onCharcoalInk];
+    case "rect":
+    case "path":
+      return [
+        ...(shape.fill ? [t.fill[shape.fill]] : []),
+        ...(shape.stroke ? [t.stroke[shape.stroke]] : []),
+      ];
+    case "circle":
+      return [t.fill[shape.fill]];
+  }
+}
 
 /** The react-native-svg element each shape kind becomes in S9b. */
 const SVG_ELEMENT: Record<DocumentShape["kind"], string> = {
@@ -66,11 +95,34 @@ describe("document pictures for the mobile app", () => {
     const picture: DocumentPicture = documentDefinitions[scene];
     const shapes = walkDocument(picture);
     expect(shapes.length).toBeGreaterThan(0);
-    for (const { shape } of shapes) {
-      expect(SVG_ELEMENT[shape.kind]).toBeDefined();
-      if (shape.kind === "path") expect(shape.d).toMatch(/^M/);
-      if (shape.kind === "text") expect(shape.lines.length).toBeGreaterThan(0);
+    const colours = [
+      ...picture.pieces.flatMap(coloursOf),
+      ...shapes.flatMap(({ shape }) => coloursOf(shape)),
+    ];
+    // Every role a shape uses resolves, through the shared map alone, to a colour in both themes.
+    for (const token of colours) {
+      expect(light.colors[token as ColorKey]).toMatch(/^(#|rgba?\()/);
+      expect(dark.colors[token as ColorKey]).toMatch(/^(#|rgba?\()/);
     }
+    for (const { shape } of shapes) {
+      if (shape.kind === "path") expect(shape.d).toMatch(/^M/);
+      if (shape.kind === "text") {
+        expect(shape.lines.length).toBeGreaterThan(0);
+        // 13 grid units at the narrowest drawing (280 of 300) is 12.1 points.
+        expect(shape.size).toBeGreaterThanOrEqual(13);
+      }
+    }
+  });
+
+  it("uses every shape kind the S9b drawer maps, and no other", () => {
+    const used = new Set(
+      documentScenes.flatMap((scene) =>
+        walkDocument(documentDefinitions[scene]).map(({ shape }) => shape.kind),
+      ),
+    );
+    // Pieces are the top level, so add them; every other kind appears inside one.
+    used.add("piece");
+    expect([...used].sort()).toEqual(Object.keys(SVG_ELEMENT).sort());
   });
 
   it("builds a receipt's torn edge the same way the web does", () => {

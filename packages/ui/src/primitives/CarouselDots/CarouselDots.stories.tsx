@@ -2,7 +2,8 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { expect, userEvent, waitFor, within } from "@storybook/test";
 import { useState } from "react";
 import { css } from "../../../styled-system/css";
-import { CarouselDots, CarouselStepButton, getCarouselStep } from "./CarouselDots";
+import { CarouselStepButton, getCarouselStep } from "../CarouselStepButton";
+import { CarouselDots } from "./CarouselDots";
 
 const SLIDES = [
   { name: "Accounts", text: "Every account in one place, grouped the way you think about them." },
@@ -96,6 +97,14 @@ const composedPlay: Story["play"] = async ({ canvasElement }) => {
   const dots = within(canvas.getByRole("group", { name: "Features" })).getAllByRole("button");
   await expect(dots.map((d) => d.textContent)).toEqual(NAMES);
   await expect(prev).toHaveAttribute("aria-disabled", "true");
+  // Previous, every dot and next sit on one row, at 375 as at 1280.
+  const tops = [prev, ...dots, next].map((el) => Math.round(el.getBoundingClientRect().top));
+  const centres = [prev, ...dots, next].map((el) => {
+    const box = el.getBoundingClientRect();
+    return Math.round(box.top + box.height / 2);
+  });
+  await expect(new Set(centres).size).toBe(1);
+  await expect(tops.length).toBe(NAMES.length + 2);
 
   (document.activeElement as HTMLElement | null)?.blur();
   for (const el of [prev, ...dots, next]) {

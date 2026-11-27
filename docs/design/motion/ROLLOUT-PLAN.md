@@ -103,7 +103,7 @@ Built in slice F4 (27 November 2026). `scripts/check-marketing-weight.ts` reads 
 | F3    | Document card pictures, "Example" tag, glass card, carousel dots in `packages/ui`. Done 27 November 2026                                                                | 4          |
 | F4    | Hooks, the import ban, the weight check in CI. Done 27 November 2026                                                                                                    | 3          |
 
-Built in slice F3 (27 November 2026): the `document` style of `Illustration` (`variant="document"`) with the nine picked scenes, the six features tiles and the security card as shape lists in `Illustration.documents.ts`, read by mobile as `@repo/ui/illustration-data` (STYLE-GUIDE 8.3 and IL4; CROSS-PLATFORM X2 has the one exception); the `ExampleTag` primitive; `Card`'s `material` variant (`glass` with a still hover light, `paper`); and `CarouselDots` with previous and next buttons. Nothing on any page changed. Differences from the prototype are listed in STYLE-GUIDE 8.3.
+Built in slice F3 (27 November 2026): the `document` style of `Illustration` (`variant="document"`) with the nine picked scenes, the six features tiles and the security card as shape lists in `Illustration.documents.ts`, read by mobile as `@repo/ui/illustration-data` (STYLE-GUIDE 8.3 and IL4; CROSS-PLATFORM X2 has the one exception); the `ExampleTag` primitive; `Card`'s `material` variant (`glass` with a still hover light, `paper`); and `CarouselDots` with `CarouselStepButton` (previous and next). Nothing on any page changed. Differences from the prototype are listed in STYLE-GUIDE 8.3.
 
 ## 3. Marketing rollout
 

@@ -119,6 +119,23 @@ const materialsPlay: Story["play"] = async ({ canvasElement }) => {
   await expect(canvas.getByRole("heading", { name: "Glass" })).toBeInTheDocument();
 };
 
+const phone375 = {
+  viewports: {
+    phone375: { name: "Phone 375", styles: { width: "375px", height: "812px" }, type: "mobile" },
+  },
+  defaultViewport: "phone375",
+};
+const desktop1280 = {
+  viewports: {
+    desktop1280: {
+      name: "Desktop 1280",
+      styles: { width: "1280px", height: "800px" },
+      type: "desktop",
+    },
+  },
+  defaultViewport: "desktop1280",
+};
+
 /** The three materials at rest. Glass is for cards holding no figure in the apps (AT3). */
 export const MaterialsLight: Story = {
   globals: { theme: "light" },
@@ -132,30 +149,51 @@ export const MaterialsDark: Story = {
   play: materialsPlay,
 };
 
+export const MaterialsLight375: Story = { ...MaterialsLight, parameters: { viewport: phone375 } };
+export const MaterialsDark375: Story = { ...MaterialsDark, parameters: { viewport: phone375 } };
+export const MaterialsLight1280: Story = {
+  ...MaterialsLight,
+  parameters: { viewport: desktop1280 },
+};
+export const MaterialsDark1280: Story = { ...MaterialsDark, parameters: { viewport: desktop1280 } };
+
 const GlassInteractive = () => (
   <Card
     as="article"
     className={materialBody}
     data-testid="glass-card"
     elevation="interactive"
+    id="glass-card"
     material="glass"
   >
     <Heading as="h2" size="sm">
-      Connect your bank
+      Your next steps
     </Heading>
-    <p className={materialText}>Hover for the still light. The border and the card stay put.</p>
+    <p className={materialText}>
+      On hover the whole border darkens and the shadow deepens. In dark theme a soft light also
+      rises behind the content; in light theme that light is barely visible. Nothing moves.
+    </p>
   </Card>
 );
 
-/** Hovering brightens a soft light behind the content. No top border, no tilt, no movement. */
+/**
+ * Hovering darkens the whole border evenly and brightens a soft light behind the content. No
+ * top-only border, no tilt, no movement.
+ */
 const glassHoverPlay: Story["play"] = async ({ canvasElement }) => {
   const card = within(canvasElement).getByTestId("glass-card");
-  const borderTopBefore = getComputedStyle(card).borderTopColor;
+  const borderBefore = getComputedStyle(card).borderTopColor;
   await userEvent.hover(card);
   // Synthetic pointer events do not set :hover, so mark the hovered state the recipe also reads.
   card.setAttribute("data-hover", "");
   await waitFor(() => expect(getComputedStyle(card, "::before").opacity).toBe("1"));
-  await expect(getComputedStyle(card).borderTopColor).toBe(borderTopBefore);
+  await waitFor(() => {
+    const style = getComputedStyle(card);
+    expect(style.borderTopColor).not.toBe(borderBefore);
+    expect(style.borderBottomColor).toBe(style.borderTopColor);
+    expect(style.borderLeftColor).toBe(style.borderTopColor);
+    expect(style.borderRightColor).toBe(style.borderTopColor);
+  });
   await expect(getComputedStyle(card).transform).toBe("none");
 };
 

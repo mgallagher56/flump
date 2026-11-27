@@ -52,6 +52,7 @@ export * from "./patterns/TopBar";
 export * from "./primitives/Button";
 export * from "./primitives/Card";
 export * from "./primitives/CarouselDots";
+export * from "./primitives/CarouselStepButton";
 export * from "./primitives/Checkbox";
 export * from "./primitives/CollapsibleDrawer";
 export * from "./primitives/CurrencyInput";

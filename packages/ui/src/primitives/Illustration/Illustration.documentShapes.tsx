@@ -3,6 +3,7 @@ import { cx } from "../../../styled-system/css";
 import {
   type DocumentPiece,
   type DocumentShape,
+  documentEffects,
   EXAMPLE_TAG,
   tornEdgePath,
 } from "./Illustration.documents";
@@ -81,9 +82,9 @@ function renderPiece(piece: DocumentPiece, key: string): ReactNode {
           data-doc-shadow=""
           height={height}
           rx={rx}
-          width={width - 12}
-          x={6}
-          y={10}
+          width={width - documentEffects.shadow.inset * 2}
+          x={documentEffects.shadow.inset}
+          y={documentEffects.shadow.offsetY}
         />
       ) : null}
       {piece.bare ? null : (

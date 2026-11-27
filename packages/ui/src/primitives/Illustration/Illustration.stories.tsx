@@ -157,10 +157,16 @@ const assertSheet: Story["play"] = async ({ canvasElement }) => {
     await expect(svg.getAttribute("aria-hidden")).toBe("true");
     const scene = svg.getAttribute("data-scene") as (typeof documentSceneIds)[number];
     const hasFigure = walkDocument(documentDefinitions[scene]).some(
-      ({ shape }) => shape.kind === "text" && shape.lines.some((line) => /£|%/.test(line)),
+      ({ shape }) =>
+        shape.kind === "text" && shape.lines.some((line) => /£|%|\d+(\.\d+)? months?/.test(line)),
     );
     const tags = [...svg.querySelectorAll("[data-doc-tag] text")].map((t) => t.textContent);
     if (hasFigure) await expect(tags).toContain("Example");
+    // The picture fits inside its cell: no sideways overflow at this page width.
+    const cell = svg.closest("[data-sheet-cell]")?.getBoundingClientRect();
+    const box = svg.getBoundingClientRect();
+    await expect(box.left).toBeGreaterThanOrEqual((cell?.left ?? 0) - 0.5);
+    await expect(box.right).toBeLessThanOrEqual((cell?.right ?? 0) + 0.5);
     // No text under 12px at the width it is drawn: grid units times the drawn scale.
     const scale = svg.getBoundingClientRect().width / DOCUMENT_GRID_WIDTH;
     await expect(DOCUMENT_MIN_TEXT * scale).toBeGreaterThanOrEqual(12);

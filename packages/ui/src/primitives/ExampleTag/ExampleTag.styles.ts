@@ -20,8 +20,8 @@ export const exampleTagRecipe = cva({
     userSelect: "none",
   },
   variants: {
-    tone: {
-      /** On paper or a card: a sunken fill, secondary text and the default border. */
+    variant: {
+      /** On paper or a card: a sunken fill, secondary text and the strong border. */
       paper: {
         backgroundColor: "surface.sunken",
         color: "text.secondary",
@@ -36,6 +36,6 @@ export const exampleTagRecipe = cva({
     },
   },
   defaultVariants: {
-    tone: "paper",
+    variant: "paper",
   },
 });

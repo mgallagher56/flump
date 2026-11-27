@@ -1,10 +1,11 @@
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { CarouselDots, CarouselStepButton, getCarouselStep } from "./CarouselDots";
+import { CarouselStepButton } from "../CarouselStepButton";
+import { CarouselDots } from "./CarouselDots";
 import {
   carouselDotButtonRecipe,
   carouselDotRecipe,
-  carouselStepButtonRecipe,
+  carouselDotsGroupRecipe,
 } from "./CarouselDots.styles";
 
 const ITEMS = ["Accounts", "Budget", "Net worth", "Check-in", "Goals", "Self Assessment"];
@@ -93,6 +94,31 @@ describe("CarouselDots", () => {
     }
   });
 
+  it("pairs id and data-testid on the root, and leaves both off without an id", () => {
+    const { container, unmount } = render(
+      <CarouselDots
+        id="features-dots"
+        current={0}
+        itemLabels={ITEMS}
+        label="Features"
+        onSelect={vi.fn()}
+      />,
+    );
+    const root = container.firstElementChild;
+    expect(root?.getAttribute("id")).toBe("features-dots");
+    expect(root?.getAttribute("data-testid")).toBe("features-dots");
+    unmount();
+    const again = renderDots(0).container.firstElementChild;
+    expect(again?.hasAttribute("id")).toBe(false);
+    expect(again?.hasAttribute("data-testid")).toBe(false);
+  });
+
+  it("keeps the dots on one row with 24px targets that do not grow on touch", () => {
+    expect(carouselDotsGroupRecipe.raw().flexWrap).toBe("nowrap");
+    const button = carouselDotButtonRecipe.raw() as Record<string, unknown>;
+    expect(button["@media (pointer: coarse)"]).toBeUndefined();
+  });
+
   it("gives every dot at least a 24px target and the current dot a different shape", () => {
     const button = carouselDotButtonRecipe.raw() as Record<string, unknown>;
     expect(button.minWidth).toBe("24px");
@@ -124,59 +150,5 @@ describe("Carousel keyboard order", () => {
       el.focus();
       expect(document.activeElement).toBe(el);
     }
-  });
-});
-
-describe("CarouselStepButton", () => {
-  it("says the direction and the item it shows", () => {
-    render(<CarouselStepButton direction="previous" targetLabel="Budget" />);
-    expect(screen.getByRole("button", { name: "Previous: Budget" })).toBeDefined();
-  });
-
-  it("says only the direction without a target", () => {
-    render(<CarouselStepButton direction="next" />);
-    expect(screen.getByRole("button", { name: "Next" })).toBeDefined();
-  });
-
-  it("calls onClick when enabled", () => {
-    const onClick = vi.fn();
-    render(<CarouselStepButton direction="next" onClick={onClick} targetLabel="Goals" />);
-    const button = screen.getByRole("button", { name: "Next: Goals" });
-    expect(button.hasAttribute("aria-disabled")).toBe(false);
-    fireEvent.click(button);
-    expect(onClick).toHaveBeenCalledTimes(1);
-  });
-
-  it("stays focusable but does nothing at an end", () => {
-    const onClick = vi.fn();
-    render(<CarouselStepButton direction="next" disabled onClick={onClick} targetLabel="Goals" />);
-    const button = screen.getByRole("button", { name: "Next" });
-    expect(button.getAttribute("aria-disabled")).toBe("true");
-    expect(button.hasAttribute("disabled")).toBe(false);
-    fireEvent.click(button);
-    expect(onClick).not.toHaveBeenCalled();
-  });
-
-  it("has at least a 24px target", () => {
-    const style = carouselStepButtonRecipe.raw() as Record<string, unknown>;
-    expect(style.minWidth).toBe("24px");
-    expect(style.minHeight).toBe("24px");
-  });
-});
-
-describe("getCarouselStep", () => {
-  it.each([
-    [2, 6, "next", false, 3],
-    [2, 6, "previous", false, 1],
-    [4, 6, "next", false, 5],
-    [5, 6, "next", false, null],
-    [5, 6, "next", true, 0],
-    [1, 6, "previous", false, 0],
-    [0, 6, "previous", false, null],
-    [0, 6, "previous", true, 5],
-    [0, 1, "next", true, null],
-    [0, 0, "next", true, null],
-  ] as const)("from %i of %i going %s (loop %s) lands on %s", (current, count, dir, loop, want) => {
-    expect(getCarouselStep(current, count, dir, loop)).toBe(want);
   });
 });

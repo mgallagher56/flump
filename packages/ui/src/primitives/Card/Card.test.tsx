@@ -99,12 +99,12 @@ describe("Card material", () => {
     expect(style.boxShadow).toBe(shadow);
   });
 
-  it("gives interactive glass a still hover light and keeps its border on hover", () => {
+  it("gives interactive glass a still hover light and the whole-border hover cue", () => {
     const style = cardRecipe.raw({ material: "glass", elevation: "interactive" }) as Record<
       string,
       any
     >;
-    expect(style._hover).toEqual({ borderColor: "material.glass.border", boxShadow: "glass" });
+    expect(style._hover).toEqual({ borderColor: "border.strong", boxShadow: "cardHover" });
     expect(style._before.opacity).toBe("0");
     expect(style._before.backgroundImage).toContain("token(colors.material.glass.light)");
     expect(style["@media (hover: hover)"]._hover._before).toEqual({ opacity: "1" });
@@ -120,15 +120,19 @@ describe("Card material", () => {
   it.each([
     ["glass", cardRecipe.raw({ material: "glass", elevation: "interactive" })],
     ["paper", cardRecipe.raw({ material: "paper", elevation: "interactive" })],
-  ] as const)(
-    "never adds a top border, a transform or a new border colour on %s hover",
-    (_m, raw) => {
-      const style = raw as Record<string, any>;
-      const hoverRules = JSON.stringify([style._hover, style["@media (hover: hover)"] ?? {}]);
-      expect(hoverRules).not.toMatch(/borderTop|borderBlockStart|transform|rotate|translate/);
-      expect(style._hover.borderColor).toBe(style.borderColor);
-    },
-  );
+  ] as const)("never adds a top-only border or a transform on %s hover", (_m, raw) => {
+    const style = raw as Record<string, any>;
+    const hoverRules = JSON.stringify([style._hover, style["@media (hover: hover)"] ?? {}]);
+    expect(hoverRules).not.toMatch(/borderTop|borderBlockStart|transform|rotate|translate/);
+  });
+
+  it("keeps paper's border on hover", () => {
+    const style = cardRecipe.raw({ material: "paper", elevation: "interactive" }) as Record<
+      string,
+      any
+    >;
+    expect(style._hover.borderColor).toBe(style.borderColor);
+  });
 
   it("gives paper no hover light", () => {
     const style = cardRecipe.raw({ material: "paper", elevation: "interactive" }) as Record<
