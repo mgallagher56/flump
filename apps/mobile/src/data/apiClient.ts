@@ -11,7 +11,10 @@ import type { Session } from "../auth/session";
 
 export interface AppApiClientOptions {
   apiBaseUrl: string;
-  session: Pick<Session, "getAccessToken" | "refresh">;
+  session: Pick<Session, "refresh"> & {
+    /** May wait: restored offline, it first tries one quiet reconnect (E12 S7, `offlineAccess.ts`). */
+    getAccessToken(): string | null | Promise<string | null>;
+  };
   client: { version: string; platform: ClientPlatform };
   fetch?: typeof fetch;
   /** Defaults to the client's 15 seconds; the account deletion waits 30 (E12 S9). */

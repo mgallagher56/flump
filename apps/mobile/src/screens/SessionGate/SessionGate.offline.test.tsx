@@ -1,0 +1,301 @@
+/**
+ * Offline reading through the gate (E12 S7): a cold start with no connection shows the last saved
+ * figures with their age, the cache is never read while the app lock covers the app, Try again and
+ * the timer reconnect quietly, and back online every read is fetched again. The real offline cache
+ * and the real Accounts screen, over an in-memory sealed store and the fake `/v1`.
+ */
+import { act, fireEvent, render, screen } from "@testing-library/react-native";
+import { AppState, type AppStateStatus } from "react-native";
+import { type AppLock, createAppLock } from "../../auth/deviceLock";
+import { SessionProvider } from "../../auth/SessionProvider";
+import { OFFLINE_HEADING } from "../../copy/auth";
+import { SAVED_FIGURES } from "../../copy/offline";
+import { ApiProvider } from "../../data/ApiProvider";
+import type { CacheStore } from "../../data/cacheStore";
+import { fail, fakeApi, testQueryClient } from "../../data/fakeApi";
+import { CACHE_FORMAT, createOfflineCache, type OfflineCache } from "../../data/offlineCache";
+import { DEVICE_LOCK_KEY } from "../../device/storageKeys";
+import { HOMEOWNER, personaHousehold } from "../../features/accounts/accountsTestData";
+import { NOW, routes } from "../../features/check-in/checkInTestData";
+import { RECONNECT_EVERY_MS } from "../../features/offline/useSavedFigures";
+import { type FakeApp, fakeApp } from "../../testing/fakeAppSession";
+import { ThemeProvider } from "../../theme/ThemeProvider";
+import { Accounts } from "../Accounts";
+import { OfflineReading } from "../OfflineReading";
+import { SessionGate } from "./SessionGate";
+
+const NOW_MS = NOW().getTime();
+const HOUR = 3_600_000;
+const LINKS = {
+  setUp: { url: "https://app.test.invalid/app/onboarding", exact: true },
+  addAccount: { url: "https://app.test.invalid/app/accounts", exact: true },
+  addEstimate: { url: "https://app.test.invalid/app/accounts?add=property", exact: true },
+};
+// Own 427,000 less owe 195,600 (accountsTestData's home owner).
+const TOTAL = "Total of the accounts listed, £231,400";
+
+/** The sealed store as the cache sees it, already holding the home owner's figures. */
+function savedStore(savedAt: number | null) {
+  const h = personaHousehold(HOMEOWNER);
+  const data = {
+    accounts: h.accounts,
+    accountDetails: h.details,
+    userProfile: h.profile,
+    checkIns: h.checkIns,
+    budgetEntries: h.budgetEntries,
+  };
+  const text =
+    savedAt === null
+      ? null
+      : JSON.stringify({
+          format: CACHE_FORMAT,
+          reads: Object.fromEntries(
+            Object.entries(data).map(([name, value]) => [name, { savedAt, data: value }]),
+          ),
+        });
+  const store: CacheStore = {
+    read: jest.fn(async () => text),
+    write: jest.fn(async () => {}),
+    wipe: jest.fn(async () => true),
+  };
+  return { store, h };
+}
+
+/** Every read fails as it does offline with no token: nothing reaches Flump. */
+const offlineApi = () =>
+  fakeApi(
+    Object.fromEntries(
+      [
+        "GET /accounts",
+        "GET /account-details",
+        "GET /user-profile",
+        "GET /snapshots/check-ins",
+      ].map((route) => [route, () => fail("unauthorised")]),
+    ),
+  );
+
+async function start(app: FakeApp, api = offlineApi()) {
+  const queryClient = testQueryClient();
+  await render(
+    <ThemeProvider scheme="light">
+      <SessionProvider app={app.app}>
+        <ApiProvider client={api.client} queryClient={queryClient}>
+          <SessionGate>
+            <OfflineReading now={() => NOW_MS}>
+              <Accounts
+                onSignOut={jest.fn()}
+                onOpenAccount={jest.fn()}
+                onOpenHistory={jest.fn()}
+                onOpenCheckIn={jest.fn()}
+                onChangeWhatCounts={jest.fn()}
+                marketingOrigin="https://m.test.invalid"
+                links={LINKS}
+                now={NOW}
+              />
+            </OfflineReading>
+          </SessionGate>
+        </ApiProvider>
+      </SessionProvider>
+    </ThemeProvider>,
+  );
+  return { queryClient, api };
+}
+
+const settle = () => act(async () => jest.advanceTimersByTimeAsync(0));
+
+let appStateListeners: ((next: AppStateStatus) => void)[] = [];
+
+// The first render in a file loads React Native's components and the engine (as Accounts.test).
+beforeAll(async () => {
+  const { store } = savedStore(NOW_MS - HOUR);
+  const cache = createOfflineCache({ store, now: () => NOW_MS });
+  await start(fakeApp({ status: "restoredOffline" }, { offlineCache: cache }));
+  await screen.findByLabelText(TOTAL);
+  screen.unmount();
+}, 30_000);
+
+beforeEach(() => {
+  jest.useFakeTimers();
+  appStateListeners = [];
+  jest.spyOn(AppState, "addEventListener").mockImplementation((_type, handler) => {
+    appStateListeners.push(handler as (next: AppStateStatus) => void);
+    return { remove: () => undefined } as ReturnType<typeof AppState.addEventListener>;
+  });
+});
+afterEach(() => {
+  jest.useRealTimers();
+  jest.restoreAllMocks();
+});
+
+describe("a cold start with no connection", () => {
+  it("shows the last saved figures, marked with how long ago they were updated", async () => {
+    const { store } = savedStore(NOW_MS - 2 * HOUR);
+    const cache = createOfflineCache({ store, now: () => NOW_MS });
+    await start(fakeApp({ status: "restoredOffline" }, { offlineCache: cache }));
+    expect(await screen.findByLabelText(TOTAL)).toBeOnTheScreen();
+    expect(screen.getByTestId("saved-figures-notice")).toHaveTextContent(
+      `${SAVED_FIGURES.lastUpdated("2 hours ago")}${SAVED_FIGURES.changes}`,
+    );
+    expect(screen.queryByText(OFFLINE_HEADING)).toBeNull();
+  });
+
+  it("with nothing saved, says it is offline, as before S7, and shows no figure", async () => {
+    const { store } = savedStore(null);
+    const cache = createOfflineCache({ store, now: () => NOW_MS });
+    await start(fakeApp({ status: "restoredOffline" }, { offlineCache: cache }));
+    expect(await screen.findByText(OFFLINE_HEADING)).toBeOnTheScreen();
+    expect(screen.queryByText(/£/)).toBeNull();
+    expect(screen.queryByTestId("saved-figures-notice")).toBeNull();
+  });
+
+  it("with figures older than 7 days, says it is offline and shows none", async () => {
+    const { store } = savedStore(NOW_MS - 8 * 24 * HOUR);
+    const cache = createOfflineCache({ store, now: () => NOW_MS });
+    await start(fakeApp({ status: "restoredOffline" }, { offlineCache: cache }));
+    expect(await screen.findByText(OFFLINE_HEADING)).toBeOnTheScreen();
+    expect(screen.queryByText(/£/)).toBeNull();
+  });
+
+  it("online, never reads the cache and shows no notice", async () => {
+    const { store, h } = savedStore(NOW_MS - HOUR);
+    const cache = createOfflineCache({ store, now: () => NOW_MS });
+    await start(fakeApp({ status: "signedIn" }, { offlineCache: cache }), fakeApi(routes(h)));
+    expect(await screen.findByLabelText(TOTAL)).toBeOnTheScreen();
+    expect(store.read).not.toHaveBeenCalled();
+    expect(screen.queryByTestId("saved-figures-notice")).toBeNull();
+  });
+});
+
+describe("the app lock and the cache", () => {
+  function lockWith(over: { pending?: boolean }) {
+    const values = new Map<string, string>([[DEVICE_LOCK_KEY, "on"]]);
+    const lock: AppLock = createAppLock({
+      auth: {
+        getEnrolledLevelAsync: async () => 3,
+        authenticateAsync: async () => ({ success: true }),
+      },
+      store: {
+        getItemAsync: (key: string) =>
+          over.pending
+            ? new Promise<string | null>(() => {})
+            : Promise.resolve(values.get(key) ?? null),
+        setItemAsync: async (key: string, value: string) => void values.set(key, value),
+        deleteItemAsync: async (key: string) => void values.delete(key),
+      },
+      accessible: 0,
+      now: () => 0,
+      isExempt: () => false,
+      prompts: { unlock: "u", turnOn: "on", turnOff: "off" },
+    });
+    return lock;
+  }
+
+  it.each([
+    ["checking", true],
+    ["locked", false],
+  ] as const)(
+    "while %s, the cache is never read and no figure is rendered",
+    async (phase, pending) => {
+      const { store } = savedStore(NOW_MS - HOUR);
+      const cache = createOfflineCache({ store, now: () => NOW_MS });
+      const lock = lockWith({ pending });
+      await start(fakeApp({ status: "restoredOffline" }, { appLock: lock, offlineCache: cache }));
+      await settle();
+      expect(lock.getPhase()).toBe(phase);
+      expect(store.read).not.toHaveBeenCalled();
+      expect(screen.queryByText(/£/, { includeHiddenElements: true })).toBeNull();
+    },
+  );
+
+  it("is read only once Unlock uncovers the shell", async () => {
+    const { store } = savedStore(NOW_MS - HOUR);
+    const cache = createOfflineCache({ store, now: () => NOW_MS });
+    const lock = lockWith({});
+    await start(fakeApp({ status: "restoredOffline" }, { appLock: lock, offlineCache: cache }));
+    await settle();
+    expect(store.read).not.toHaveBeenCalled();
+    await act(async () => {
+      await lock.unlock();
+    });
+    expect(await screen.findByLabelText(TOTAL)).toBeOnTheScreen();
+    expect(store.read).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("coming back online", () => {
+  async function offlineWithFigures() {
+    const { store, h } = savedStore(NOW_MS - HOUR);
+    const cache: OfflineCache = createOfflineCache({ store, now: () => NOW_MS });
+    const app = fakeApp({ status: "restoredOffline" }, { offlineCache: cache });
+    // Offline first: every read fails; the same routes answer once the session is back.
+    let online = false;
+    const live = fakeApi(
+      Object.fromEntries(
+        Object.entries(routes(h)).map(([route, answer]) => [
+          route,
+          (body: unknown) => (online ? answer(body) : fail("unauthorised")),
+        ]),
+      ),
+    );
+    const rendered = await start(app, live);
+    expect(await screen.findByLabelText(TOTAL)).toBeOnTheScreen();
+    return {
+      app,
+      live,
+      ...rendered,
+      goOnline: () => {
+        online = true;
+      },
+    };
+  }
+
+  it("Try again reconnects quietly: the figures stay while it runs", async () => {
+    const { app } = await offlineWithFigures();
+    let finish: () => void = () => {};
+    app.session.reconnect.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          finish = resolve;
+        }),
+    );
+    await fireEvent.press(screen.getByRole("button", { name: SAVED_FIGURES.tryAgain }));
+    expect(app.session.reconnect).toHaveBeenCalledTimes(1);
+    expect(app.session.retry).not.toHaveBeenCalled();
+    expect(screen.getByLabelText(TOTAL)).toBeOnTheScreen();
+    expect(screen.getByRole("button", { name: SAVED_FIGURES.tryAgain })).toBeBusy();
+    await act(async () => finish());
+  });
+
+  it("tries a quiet reconnect every 30 seconds and when the app returns to the front", async () => {
+    const { app } = await offlineWithFigures();
+    const before = app.session.reconnect.mock.calls.length;
+    await act(async () => jest.advanceTimersByTimeAsync(RECONNECT_EVERY_MS));
+    expect(app.session.reconnect.mock.calls.length).toBe(before + 1);
+    await act(async () => {
+      for (const listener of appStateListeners) listener("active");
+    });
+    expect(app.session.reconnect.mock.calls.length).toBe(before + 2);
+  });
+
+  it("once signed in again, the notice goes and every read is fetched again at once", async () => {
+    const { app, live, goOnline } = await offlineWithFigures();
+    goOnline();
+    const calls = live.calls.length;
+    await act(async () => app.set({ status: "signedIn" }));
+    await settle();
+    expect(screen.queryByTestId("saved-figures-notice")).toBeNull();
+    const fetched = live.calls.slice(calls).map((c) => c.path);
+    expect(fetched).toEqual(
+      expect.arrayContaining(["/accounts", "/account-details", "/user-profile"]),
+    );
+    expect(screen.getByLabelText(TOTAL)).toBeOnTheScreen();
+  });
+
+  it("stops the timer once signed in again", async () => {
+    const { app } = await offlineWithFigures();
+    await act(async () => app.set({ status: "signedIn" }));
+    const calls = app.session.reconnect.mock.calls.length;
+    await act(async () => jest.advanceTimersByTimeAsync(RECONNECT_EVERY_MS * 2));
+    expect(app.session.reconnect.mock.calls.length).toBe(calls);
+  });
+});

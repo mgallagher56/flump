@@ -122,6 +122,11 @@ describe("sessionReducer", () => {
       "signedIn:DELETION_PENDING",
       "notInvited:DELETION_PENDING",
       "termsRequired:DELETION_PENDING",
+      // A quiet reconnect from restoredOffline checks the account as sign-in does (E12 S7).
+      "restoredOffline:SIGNED_IN",
+      "restoredOffline:NOT_INVITED",
+      "restoredOffline:TERMS_REQUIRED",
+      "restoredOffline:DELETION_PENDING",
       "signedIn:ACCOUNT_DELETED",
       "notInvited:ACCOUNT_DELETED",
       "termsRequired:ACCOUNT_DELETED",

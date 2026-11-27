@@ -227,7 +227,7 @@ The four seams, and where each lands:
 
 **Seam budget.** The decision drops the seams if they cost more than about 5 agent-days in all. Each slice that does seam work states its share in its PR description under "Seam cost", and the plan keeps a running total here. Estimate today: seam 1 is a review rule (0), seam 2 is a lint rule in S1b (0.5), seam 3 is D1 (1), seam 4 is the part of S7 beyond a plain cache (1.5): about 3 in all. If the running total passes 5, the coordinator stops the seam work and records the app as plain option (a) in `DECISIONS.md`.
 
-Running total: 0.5 agent-days (S1a 0; S1b 0.5, the data door rule in `biome.json`; S2c 0; S2a 0; S3 0; S2b 0; S9 0).
+Running total: 1 agent-day (S1a 0; S1b 0.5, the data door rule in `biome.json`; S2c 0; S2a 0; S3 0; S2b 0; S9 0; S7 0.5, the sealing, the key and the wipes beyond a plain cache).
 
 **The cache (S7).** The last successful responses for the screens in the first release, kept 7 days, labelled with their age, read-only; writes need a connection (round 2, E12 D4-A). Platform facts, CONFIRMED on 25 November 2026:
 
@@ -237,6 +237,8 @@ Running total: 0.5 agent-days (S1a 0; S1b 0.5, the data door rule in `biome.json
 - `expo-sqlite` can be built with SQLCipher (`useSQLCipher` in its config plugin), opened with `PRAGMA key`. Without SQLCipher in the build the key does nothing silently, so a test checks `PRAGMA cipher_version` (docs.expo.dev/versions/latest/sdk/sqlite).
 
 So S7 uses SQLCipher with a random key kept in the secure store as "when unlocked, this device only", puts the database file in an excluded location on iOS, and adds an Android backup rule that leaves it out. A backup restored to a new phone carries no usable cache, which is the intent: the new phone signs in and fetches.
+
+**Built (S7, 27 November 2026).** Not SQLCipher: the cache is one file sealed with AES-256-GCM through expo-crypto's AES API, which every build already carries, so S7 adds no native module and no rebuild (options and recommendation sent to the coordinator for the owner the same day; SQLCipher can replace the store behind `CacheStore` later). The file is `offline/reads.sealed` in the cache folder (iOS `Library/Caches`, Android `cacheDir`), outside both platforms' backups; its random key is `flump.offline-cache-key` in the secure store, "when unlocked, this device only". A file without its key, changed, or sealed under another key is deleted unread. Detail in `apps/mobile/src/data/cacheStore.ts` and `offlineCache.ts`.
 
 **Lost or replaced phone.** Sign in on the new phone; everything is on the server. Nothing to restore.
 
@@ -930,6 +932,7 @@ Each is specified in full when the slice before it merges, from the web page as 
 - **S5:** specified in 9.8. `GET /v1/portfolio-snapshot` does not exist; the hero is built by engine selectors over the reads S3 already makes, and the one figure web worked out outside the engine (the change since the last recorded month) moves into the engine first (O5 seam 1).
 - **S6:** specified in 9.9.
 - **S7:** SQLCipher with the key check; the database out of iCloud and Android backups; a test that a cold start with no network keeps saved data; a test that a restored backup without the key shows no cached data and asks to sign in.
+- **Built (S7, 27 November 2026).** The store is an AES-256-GCM sealed file rather than SQLCipher (4.6). It holds the last good answers of the five reads Home, Accounts, an account and the history are built from (`/accounts`, `/account-details`, `/user-profile`, `/snapshots/check-ins`, `/budget-entries`), saved after each successful read while signed in and online, each with the time Flump sent it. Restored offline, and only while the signed-in shell shows (never behind the app lock or the iOS switcher cover), they are parsed with the live reads' own schemas through `parseResponse`, all or nothing and at most 7 days old, and shown under `SavedFiguresFrame` ("You are offline. These figures were last updated 2 hours ago.", "Changes need a connection.", Try again); with none, `Offline` as before. `restoredOffline` gained a quiet reconnect (`Session.reconnect`): a read with no token, Try again, every 30 seconds and a return to the front each try one refresh and account check with the figures kept on screen, and back online every read is fetched again. The cache is wiped with its key on sign-out, session end, deletion, before every sign-in, when a re-sign-in brings back someone else, on a launch with no stored session and by the iOS reinstall wipe. Writes keep their existing offline messages; none is queued. Tests: `cacheStore.test.ts`, `offlineCache.test.ts`, `sessionOffline.test.ts`, `offlineWipe.test.ts`, `SessionGate.offline.test.tsx`.
 - **S9:** specified in 9.10. Web has no privacy mode and offers the JSON export only: hide amounts moved to S18, CSV is a question for later. Re-authentication keeps the session and checks the same person signed in.
 - **S10 to S13, S21, S22:** saved versus scenario: changing a scenario input changes no saved figure and sends no request.
 - **S16:** a new token is shown once and never cached.

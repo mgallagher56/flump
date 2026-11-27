@@ -56,12 +56,13 @@ const FROM: { [E in SessionEvent["type"]]: readonly SessionState["status"][] } =
   SIGN_IN_STARTED: ["signedOut", "sessionEnded"],
   SIGN_IN_CANCELLED: ["signingIn"],
   SIGN_IN_FAILED: ["signingIn"],
-  SIGNED_IN: ["loading", "signingIn"],
+  // From restoredOffline too: a quiet reconnect (E12 S7) checks the account as sign-in does.
+  SIGNED_IN: ["loading", "signingIn", "restoredOffline"],
   OFFLINE: ["loading", "signingIn"],
   // From the terms screen too: once agreed on the website, Try again checks the account again.
   RETRY_STARTED: ["restoredOffline", "termsRequired"],
-  NOT_INVITED: ["loading", "signingIn"],
-  TERMS_REQUIRED: ["loading", "signingIn"],
+  NOT_INVITED: ["loading", "signingIn", "restoredOffline"],
+  TERMS_REQUIRED: ["loading", "signingIn", "restoredOffline"],
   // A rejected refresh can arrive in any signed-in state, including mid sign-in.
   SESSION_ENDED: [
     "loading",
@@ -81,9 +82,16 @@ const FROM: { [E in SessionEvent["type"]]: readonly SessionState["status"][] } =
     "deletionPending",
   ],
   SIGNED_OUT: ["signingOut"],
-  // Found on launch or at sign-in (the account check answers 410), or after a delete; never while
-  // offline, where no answer came.
-  DELETION_PENDING: ["loading", "signingIn", "signedIn", "notInvited", "termsRequired"],
+  // Found on launch, at sign-in or on a quiet reconnect (the account check answers 410), or after a
+  // delete; never from a read while offline, where no answer came.
+  DELETION_PENDING: [
+    "loading",
+    "signingIn",
+    "signedIn",
+    "restoredOffline",
+    "notInvited",
+    "termsRequired",
+  ],
   // The backend lets an uninvited person and one who has not agreed to the terms delete too.
   ACCOUNT_DELETED: ["signedIn", "notInvited", "termsRequired", "deletionPending"],
   DELETION_ACKNOWLEDGED: ["accountDeleted"],

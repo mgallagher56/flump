@@ -1,4 +1,4 @@
-import { DEVICE_LOCK_KEY, THEME_KEY } from "../device/storageKeys";
+import { DEVICE_LOCK_KEY, OFFLINE_CACHE_KEY, THEME_KEY } from "../device/storageKeys";
 import { deviceKeys } from "./deviceKeys";
 import { INSTALL_MARKER_KEY, type PreferencesLike, wipeAfterReinstall } from "./reinstall";
 
@@ -67,7 +67,7 @@ describe("wipeAfterReinstall", () => {
 });
 
 describe("the device keys after a reinstall (E12 S9)", () => {
-  it("the first launch clears the theme and the app lock flag too, then sets the marker", async () => {
+  it("the first launch clears the theme, the app lock flag and the cache key too, then sets the marker", async () => {
     const prefs = preferences();
     const tokens = { clear: jest.fn(async () => true) };
     const store = {
@@ -79,6 +79,7 @@ describe("the device keys after a reinstall (E12 S9)", () => {
     expect(store.deleteItemAsync.mock.calls).toEqual([
       [THEME_KEY, { keychainAccessible: 7 }],
       [DEVICE_LOCK_KEY, { keychainAccessible: 7 }],
+      [OFFLINE_CACHE_KEY, { keychainAccessible: 7 }],
     ]);
     expect(prefs.values[INSTALL_MARKER_KEY]).toBe(true);
   });

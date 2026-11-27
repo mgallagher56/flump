@@ -5,6 +5,7 @@ import { useSession, useStartProblem } from "../../auth/SessionProvider";
 import { useAppLock } from "../../auth/useAppLock";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
 import { SIGN_OUT, SIGN_OUT_CONFIRM_TITLE, signOutConfirmMessage } from "../../copy/auth";
+import { useSavedFigures } from "../../features/offline/useSavedFigures";
 import { type Shell, ShellContext } from "../../navigation/shell";
 import { AccountDeleted } from "../AccountDeleted";
 import { DeleteAccount } from "../DeleteAccount";
@@ -31,6 +32,8 @@ import { TermsRequired } from "../TermsRequired";
  * lock, so a system sheet (the export's share sheet, a prompt) leaves the person where they were;
  * on iOS an opaque cover goes over it while the app is away (Android has FLAG_SECURE instead).
  */
+const noReconnect = () => Promise.resolve();
+
 export function SessionGate({ children }: { children?: ReactNode }) {
   const app = useSession();
   const problem = useStartProblem();
@@ -39,18 +42,37 @@ export function SessionGate({ children }: { children?: ReactNode }) {
   const lock = useAppLock(app?.appLock);
   const status = app?.state.status;
   useReturnAfterUnlock(status === "signedIn" || status === "restoredOffline", lock.locked);
+  // The sealed cache is read only while the shell itself shows: never behind the lock or the iOS
+  // app switcher cover (E12 S7).
+  const savedFigures = useSavedFigures({
+    cache: app?.offlineCache,
+    offline: status === "restoredOffline",
+    canRead: !lock.locked && !lock.switcherCover,
+    reconnect: app ? app.session.reconnect : noReconnect,
+  });
   const shell = useMemo<Shell | null>(
     () =>
       app
         ? {
             offline: status === "restoredOffline",
+            saved: savedFigures.saved,
+            restoringSaved: savedFigures.restoring,
+            checking: savedFigures.checking,
+            tryAgainQuietly: savedFigures.tryAgain,
             signOut: () => setConfirmingSignOut(true),
             retry: () => void app.session.retry(),
             marketingOrigin: app.marketingOrigin,
             webAppOrigin: app.webAppOrigin ?? null,
           }
         : null,
-    [app, status],
+    [
+      app,
+      status,
+      savedFigures.saved,
+      savedFigures.restoring,
+      savedFigures.checking,
+      savedFigures.tryAgain,
+    ],
   );
   if (!app) {
     return problem.kind === "unavailable" ? (

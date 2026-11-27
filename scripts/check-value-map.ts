@@ -62,8 +62,8 @@ const baselinePath = resolve(import.meta.dir, "value-map-baseline.json");
 
 /**
  * Where browser storage keys are written: the web app, the shared UI, the marketing site, the
- * engine's storage driver, and the mobile app's sign-in (its one secure store key, E12 S2a). The
- * rest of apps/mobile joins with the offline cache (S7).
+ * engine's storage driver, and the mobile app's sign-in (its one secure store key, E12 S2a), its
+ * other secure store keys (S9) and its offline cache (S7).
  */
 const STORAGE_ROOTS = [
   "apps/web/app",
@@ -73,6 +73,8 @@ const STORAGE_ROOTS = [
   "apps/mobile/src/auth",
   // The other secure store keys (E12 S9): their names live here, and src/auth reads them.
   "apps/mobile/src/device",
+  // The offline cache's sealed store (E12 S7) writes its key from src/data.
+  "apps/mobile/src/data",
 ];
 /** Where a second formula would be: web pages, backend services and the AI tools. */
 const FORMULA_ROOTS = ["apps/web/app", "apps/backend/src", "packages/mcp/src", ...MOBILE_SCAN_DIRS];

@@ -3,8 +3,8 @@ import { OFFLINE_BODY, OFFLINE_HEADING, SIGN_OUT, TRY_AGAIN } from "../../copy/a
 import { StatusMessage } from "../StatusMessage";
 
 /**
- * Signed in, but Flump could not be reached. Nothing is cleared. The cache comes with S7. Shown in
- * the Home tab (S4), so the header and tab bar pad the top and bottom.
+ * Signed in, but Flump could not be reached and no saved figures are on this phone (S7). Nothing
+ * is cleared. Shown in a tab, so the header and tab bar pad the top and bottom.
  */
 export function Offline({ onRetry, onSignOut }: { onRetry(): void; onSignOut(): void }) {
   return (
