@@ -33,6 +33,7 @@ import { TermsRequired } from "../TermsRequired";
  * on iOS an opaque cover goes over it while the app is away (Android has FLAG_SECURE instead).
  */
 const noReconnect = () => Promise.resolve();
+const notOffline = () => false;
 
 export function SessionGate({ children }: { children?: ReactNode }) {
   const app = useSession();
@@ -49,6 +50,7 @@ export function SessionGate({ children }: { children?: ReactNode }) {
     offline: status === "restoredOffline",
     canRead: !lock.locked && !lock.switcherCover,
     reconnect: app ? app.session.reconnect : noReconnect,
+    isStillOffline: app ? app.session.isRestoredOffline : notOffline,
   });
   const shell = useMemo<Shell | null>(
     () =>

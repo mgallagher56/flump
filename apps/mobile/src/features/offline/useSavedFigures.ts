@@ -31,9 +31,12 @@ export function useSavedFigures({
   offline,
   canRead,
   reconnect,
+  isStillOffline,
 }: {
   cache: OfflineCache | undefined;
   offline: boolean;
+  /** The session's state read now, not at the last render: still restoredOffline? */
+  isStillOffline: () => boolean;
   canRead: boolean;
   reconnect: () => Promise<void>;
 }): SavedFiguresState {
@@ -64,14 +67,14 @@ export function useSavedFigures({
     if (!cache || !queryClient || !canRead || phase !== "idle") return;
     setPhase("restoring");
     cache
-      .restore(queryClient)
+      .restore(queryClient, isStillOffline)
       .catch(() => null)
       .then((figures) => {
         if (!mounted.current) return;
         setSaved(figures);
         setPhase("done");
       });
-  }, [offline, canRead, cache, queryClient, phase]);
+  }, [offline, canRead, cache, queryClient, phase, isStillOffline]);
 
   useEffect(() => {
     if (!offline || !canRead) return;

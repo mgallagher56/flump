@@ -104,6 +104,8 @@ export interface Session {
    * any refresh ends a session. Calls made while one runs share it. Never rejects.
    */
   reconnect(): Promise<void>;
+  /** Whether the state is restoredOffline right now (E12 S7: the cache's last check). */
+  isRestoredOffline(): boolean;
   signIn(screen?: AuthorizeScreen): Promise<void>;
   signOut(): Promise<void>;
   /** For the API client: the access token in memory. */
@@ -501,6 +503,7 @@ export function createSession(deps: SessionDeps): Session {
     restore,
     retry,
     reconnect,
+    isRestoredOffline: () => state.status === "restoredOffline",
     signIn,
     signOut,
     getAccessToken: () => accessToken,
