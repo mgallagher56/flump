@@ -1,5 +1,6 @@
 import { dark, light } from "@flump/tokens/native";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react-native";
+import { AccessibilityInfo } from "react-native";
 import { ThemeProvider } from "../../theme/ThemeProvider";
 import { QuickBalanceUpdate } from "./QuickBalanceUpdate";
 import { quickBalanceUpdateStates } from "./QuickBalanceUpdate.states";
@@ -55,6 +56,7 @@ describe("QuickBalanceUpdate", () => {
   });
 
   it("a failed save keeps the field and what was typed, and says what went wrong", async () => {
+    const announce = jest.spyOn(AccessibilityInfo, "announceForAccessibility");
     const onSave = jest.fn(
       async () => "We could not reach Flump. Check your connection and try again.",
     );
@@ -66,6 +68,9 @@ describe("QuickBalanceUpdate", () => {
       "We could not reach Flump. Check your connection and try again.",
     );
     expect(field().props.value).toBe("99");
+    expect(announce).toHaveBeenCalledWith(
+      "We could not reach Flump. Check your connection and try again.",
+    );
   });
 
   it("sends nothing while the field is blank or cannot be read", async () => {

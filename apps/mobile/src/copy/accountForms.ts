@@ -17,7 +17,6 @@ export const ACCOUNT_FORM = {
   /** Web's `t("edit")`: the account page's way into the form. */
   edit: "Edit",
   save: "Save",
-  saving: "Saving",
   cancel: "Cancel",
   delete: "Delete",
   name: "Name",
