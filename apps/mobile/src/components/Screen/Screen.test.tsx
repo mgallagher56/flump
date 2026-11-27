@@ -561,7 +561,7 @@ describe("Screen", () => {
     expect(blurSpy).toHaveBeenCalledWith(focused);
 
     blurSpy.mockClear();
-    currentSpy.mockReturnValue(null);
+    currentSpy.mockReturnValue(null as never);
     await act(async () => handleRef.current?.scrollToTop());
     expect(blurSpy).not.toHaveBeenCalled();
     jest.restoreAllMocks();
