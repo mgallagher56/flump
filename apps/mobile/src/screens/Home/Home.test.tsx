@@ -432,7 +432,7 @@ describe("Home", () => {
   });
 
   describe("pull to refresh", () => {
-    it("reads all four again and keeps the figures on screen, with no blocks", async () => {
+    it("reads all five again and keeps the figures on screen, with no blocks", async () => {
       let answer: (value: unknown) => void = () => {};
       let slow = false;
       const h = household(RISING);
@@ -449,12 +449,15 @@ describe("Home", () => {
       await home(api);
       expect(await screen.findByText("£52,100")).toBeOnTheScreen();
       await settle();
-      expect(api.request).toHaveBeenCalledTimes(4);
+      // The check-in's four reads and the budget (S5b).
+      expect(api.request).toHaveBeenCalledTimes(5);
       slow = true;
       await act(async () => {
         void refreshControl()?.onRefresh();
       });
-      expect(api.request).toHaveBeenCalledTimes(8);
+      expect(api.request).toHaveBeenCalledTimes(10);
+      const paths = (api.request as jest.Mock).mock.calls.slice(5).map((call) => call[0]);
+      expect(paths).toContain("/budget-entries");
       expect(refreshControl()?.refreshing).toBe(true);
       // Long after the skeleton's 200 ms the figures are still there, and no blocks.
       await act(async () => jest.advanceTimersByTimeAsync(1000));
