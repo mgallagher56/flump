@@ -1,10 +1,10 @@
 import { MAX_BUDGET_CATEGORY_NAME_LENGTH, MAX_CUSTOM_BUDGET_CATEGORIES } from "@flump/api-contract";
 import { BadRequestException, Logger, ServiceUnavailableException } from "@nestjs/common";
-import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from "vitest";
 import { InMemoryIdentityAdapter } from "../../identity/identity.adapter";
 import { at } from "../../testing/must";
 import { DATA_LOCK_STATEMENT } from "../privacy/user-data-lock";
-import { UserProfileService } from "./user-profile.service";
+import { EMAIL_LOOKUP_TIMEOUT_MS, UserProfileService } from "./user-profile.service";
 
 type DeleteRepo = { delete: Mock };
 
@@ -948,6 +948,146 @@ describe("UserProfileService (Deep Module)", () => {
         completed: false,
       });
       expect(result.setupChecklistCompletedSteps).toEqual(["profile", "accounts"]);
+    });
+  });
+
+  describe("getEmail", () => {
+    afterEach(() => {
+      vi.useRealTimers();
+      vi.restoreAllMocks();
+    });
+
+    it("returns the trimmed token email claim when present without calling WorkOS", async () => {
+      const claimEmail = ["claim", "example.com"].join("@");
+      const getUserEmail = vi.spyOn(identityAdapter, "getUserEmail");
+
+      await expect(service.getEmail("user-123", claimEmail)).resolves.toBe(claimEmail);
+      await expect(service.getEmail("user-123", `  ${claimEmail}  `)).resolves.toBe(claimEmail);
+      expect(getUserEmail).not.toHaveBeenCalled();
+    });
+
+    it("resolves and trims via the identity adapter when the token claim is absent or blank, clearing the timer", async () => {
+      const storedEmail = ["person", "example.com"].join("@");
+      identityAdapter.emails.set("user-123", `  ${storedEmail}  `);
+      const getUserEmail = vi.spyOn(identityAdapter, "getUserEmail");
+      const clearTimeoutSpy = vi.spyOn(globalThis, "clearTimeout");
+
+      await expect(service.getEmail("user-123")).resolves.toBe(storedEmail);
+      expect(clearTimeoutSpy).toHaveBeenCalled();
+
+      await expect(service.getEmail("user-123", "   ")).resolves.toBe(storedEmail);
+      expect(getUserEmail).toHaveBeenCalledTimes(2);
+      expect(getUserEmail).toHaveBeenCalledWith("user-123");
+
+      identityAdapter.emails.set("user-123", "   ");
+      await expect(service.getEmail("user-123")).resolves.toBeNull();
+    });
+
+    it("returns null without warning or calling WorkOS when userId is empty or no email exists", async () => {
+      const warn = vi.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
+      const getUserEmail = vi.spyOn(identityAdapter, "getUserEmail");
+
+      await expect(service.getEmail("")).resolves.toBeNull();
+      expect(getUserEmail).not.toHaveBeenCalled();
+
+      await expect(service.getEmail("user-missing")).resolves.toBeNull();
+      expect(warn).not.toHaveBeenCalled();
+    });
+
+    it("returns null and logs only error class/code/status (never email or userId) when WorkOS throws", async () => {
+      const sampleEmail = ["secret.person", "example.com"].join("@");
+      const userId = "user_01SECRETID";
+      const err = Object.assign(new Error(`WorkOS failed for ${userId} (${sampleEmail})`), {
+        name: "HttpClientError",
+        code: "ECONNRESET",
+        status: 502,
+      });
+      vi.spyOn(identityAdapter, "getUserEmail").mockRejectedValueOnce(err);
+      const warn = vi.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
+      const log = vi.spyOn(Logger.prototype, "log").mockImplementation(() => undefined);
+      const errorLog = vi.spyOn(Logger.prototype, "error").mockImplementation(() => undefined);
+
+      await expect(service.getEmail(userId)).resolves.toBeNull();
+
+      expect(warn).toHaveBeenCalledTimes(1);
+      expect(warn).toHaveBeenCalledWith(
+        "Account email lookup failed: HttpClientError code=ECONNRESET status=502",
+      );
+      expect(log).not.toHaveBeenCalled();
+      expect(errorLog).not.toHaveBeenCalled();
+      const logged = warn.mock.calls.map((c) => JSON.stringify(c)).join("\n");
+      expect(logged).not.toContain(sampleEmail);
+      expect(logged).not.toContain(userId);
+    });
+
+    it("omits empty code strings and non-numeric status values from error logs", async () => {
+      const err = Object.assign(new Error("boom"), { code: "", status: "502" });
+      vi.spyOn(identityAdapter, "getUserEmail").mockRejectedValueOnce(err);
+      const warn = vi.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
+
+      await expect(service.getEmail("user-123")).resolves.toBeNull();
+
+      expect(warn).toHaveBeenCalledWith("Account email lookup failed: Error");
+    });
+
+    it("never leaks a non-Error thrown string containing the sample address", async () => {
+      const sampleEmail = ["secret.person", "example.com"].join("@");
+      vi.spyOn(identityAdapter, "getUserEmail").mockRejectedValueOnce(
+        `raw failure for ${sampleEmail}`,
+      );
+      const warn = vi.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
+
+      await expect(service.getEmail("user_01SECRETID")).resolves.toBeNull();
+
+      expect(warn).toHaveBeenCalledWith("Account email lookup failed: string");
+      const logged = warn.mock.calls.map((c) => JSON.stringify(c)).join("\n");
+      expect(logged).not.toContain(sampleEmail);
+      expect(logged).not.toContain("user_01SECRETID");
+    });
+
+    it("returns null on timeout using fake timers and logs TimeoutError without leaking PII", async () => {
+      vi.useFakeTimers();
+      const sampleEmail = ["slow.person", "example.com"].join("@");
+      const userId = "user_01TIMEOUTID";
+      let rejectLate!: (reason: unknown) => void;
+      vi.spyOn(identityAdapter, "getUserEmail").mockImplementationOnce(
+        () =>
+          new Promise<string | null>((_resolve, reject) => {
+            rejectLate = reject;
+          }),
+      );
+      const warn = vi.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
+
+      let settled = false;
+      const promise = service.getEmail(userId).then((res) => {
+        settled = true;
+        return res;
+      });
+
+      await vi.advanceTimersByTimeAsync(EMAIL_LOOKUP_TIMEOUT_MS - 1);
+      expect(settled).toBe(false);
+
+      await vi.advanceTimersByTimeAsync(1);
+      expect(settled).toBe(true);
+      await expect(promise).resolves.toBeNull();
+
+      vi.useRealTimers();
+      const onUnhandled = vi.fn();
+      process.on("unhandledRejection", onUnhandled);
+      try {
+        // Late rejection after timeout must be caught cleanly.
+        rejectLate(new Error(`late failure ${sampleEmail}`));
+        await new Promise((resolve) => setImmediate(resolve));
+        expect(onUnhandled).not.toHaveBeenCalled();
+      } finally {
+        process.off("unhandledRejection", onUnhandled);
+      }
+
+      expect(warn).toHaveBeenCalledTimes(1);
+      expect(warn).toHaveBeenCalledWith("Account email lookup failed: TimeoutError");
+      const logged = warn.mock.calls.map((c) => JSON.stringify(c)).join("\n");
+      expect(logged).not.toContain(sampleEmail);
+      expect(logged).not.toContain(userId);
     });
   });
 });

@@ -66,8 +66,13 @@ export class WorkOSIdentityAdapter implements UserIdentityAdapter {
 
   async getUserEmail(userId: string): Promise<string | null> {
     if (!this.client) return null;
-    const user = await this.client.userManagement.getUser(userId);
-    return user?.email ?? null;
+    try {
+      const user = await this.client.userManagement.getUser(userId);
+      return user?.email ?? null;
+    } catch (err: unknown) {
+      if (isIdentityNotFound(err)) return null;
+      throw err;
+    }
   }
 
   /**

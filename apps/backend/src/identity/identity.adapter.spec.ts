@@ -64,3 +64,57 @@ describe("InMemoryIdentityAdapter.revokeSession", () => {
     expect(fake.revokedSessions).toEqual([sampleSession]);
   });
 });
+
+describe("WorkOSIdentityAdapter.getUserEmail", () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  const withGetUser = () => {
+    const adapter = new WorkOSIdentityAdapter(
+      new ConfigService({ WORKOS_API_KEY: placeholderKey }),
+    );
+    const client = (adapter as unknown as { client: { userManagement: { getUser: unknown } } })
+      .client;
+    const getUser = vi.fn<(userId: string) => Promise<{ email?: string | null } | null>>();
+    client.userManagement.getUser = getUser;
+    return { adapter, getUser };
+  };
+
+  it("returns the user email from WorkOS", async () => {
+    const { adapter, getUser } = withGetUser();
+    const sampleEmail = ["person", "example.com"].join("@");
+    getUser.mockResolvedValue({ email: sampleEmail });
+    await expect(adapter.getUserEmail("user_1")).resolves.toBe(sampleEmail);
+    expect(getUser).toHaveBeenCalledTimes(1);
+    expect(getUser).toHaveBeenCalledWith("user_1");
+  });
+
+  it("returns null when the user has no email or WorkOS returns null", async () => {
+    const { adapter, getUser } = withGetUser();
+    getUser.mockResolvedValueOnce({ email: null });
+    await expect(adapter.getUserEmail("user_1")).resolves.toBeNull();
+    getUser.mockResolvedValueOnce(null);
+    await expect(adapter.getUserEmail("user_1")).resolves.toBeNull();
+  });
+
+  it("returns null when WorkOS answers 404 or NotFoundException", async () => {
+    const { adapter, getUser } = withGetUser();
+    getUser.mockRejectedValueOnce(Object.assign(new Error("Not Found"), { status: 404 }));
+    await expect(adapter.getUserEmail("user_missing")).resolves.toBeNull();
+    const notFound = new Error("User not found");
+    notFound.name = "NotFoundException";
+    getUser.mockRejectedValueOnce(notFound);
+    await expect(adapter.getUserEmail("user_missing")).resolves.toBeNull();
+  });
+
+  it("returns null when no WorkOS client is configured", async () => {
+    const adapter = new WorkOSIdentityAdapter(new ConfigService({}));
+    await expect(adapter.getUserEmail("user_1")).resolves.toBeNull();
+  });
+
+  it("rethrows non-404 errors", async () => {
+    const { adapter, getUser } = withGetUser();
+    const outage = Object.assign(new Error("Server Error"), { status: 500 });
+    getUser.mockRejectedValueOnce(outage);
+    await expect(adapter.getUserEmail("user_1")).rejects.toBe(outage);
+  });
+});
