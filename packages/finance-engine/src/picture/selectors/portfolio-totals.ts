@@ -88,6 +88,17 @@ export function selectNetWorth(snapshot: PortfolioSnapshot, basis: NetWorthBasis
   };
 }
 
+/**
+ * What the person owes on cards, loans and overdrafts, or null when there is nothing to show: no
+ * debt account, or a total of £0 or less. The Debt page's summary and Home's strip both read it.
+ * An overdrawn current account is inside the total but makes no debt account of its own, so
+ * alone it gives null.
+ */
+export function selectConsumerDebtTotal(snapshot: PortfolioSnapshot): number | null {
+  const totalDebt = snapshot.getTotalConsumerDebt();
+  return snapshot.toDebtItems().length === 0 || totalDebt <= 0 ? null : totalDebt;
+}
+
 /** Debt totals. Consumer debt is the one "total debt" figure every page shows. */
 export function selectDebtTotals(snapshot: PortfolioSnapshot): DebtTotals {
   const debts = snapshot.toDebtItems();
