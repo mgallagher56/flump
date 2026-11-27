@@ -10,6 +10,8 @@ import BudgetTab from "../../app/(app)/(tabs)/budget";
 import HomeTab from "../../app/(app)/(tabs)/index";
 import MoreTab from "../../app/(app)/(tabs)/more";
 import PayTab from "../../app/(app)/(tabs)/pay";
+import AccountDetailRoute from "../../app/(app)/accounts/[id]";
+import NetWorthHistoryRoute from "../../app/(app)/accounts/history";
 import MorePageRoute from "../../app/(app)/page/[key]";
 import { type AppSession, SessionProvider } from "../auth/SessionProvider";
 import type { Session } from "../auth/session";
@@ -69,9 +71,12 @@ function Root() {
   );
 }
 
+/** The household every route test reads: the check-in fixture's six accounts. */
+let data = household();
+
 async function openApp(initialUrl: string, initial: SessionState = { status: "signedIn" }) {
   const app = fakeSession(initial);
-  const api = fakeApi(routes(household()));
+  const api = fakeApi(routes(data));
   current = {
     app: {
       session: app.session,
@@ -92,6 +97,8 @@ async function openApp(initialUrl: string, initial: SessionState = { status: "si
       "(app)/(tabs)/budget": BudgetTab,
       "(app)/(tabs)/pay": PayTab,
       "(app)/(tabs)/more": MoreTab,
+      "(app)/accounts/[id]": AccountDetailRoute,
+      "(app)/accounts/history": NetWorthHistoryRoute,
       "(app)/page/[key]": MorePageRoute,
       "(app)/+not-found": NotFoundRoute,
       "(app)/check-in": () => <Text>Check-in stand-in</Text>,
@@ -105,6 +112,7 @@ const tab = (name: string) => screen.getByRole("tab", { name });
 
 describe("the signed-in routes", () => {
   beforeEach(() => {
+    data = household();
     jest.useRealTimers();
     jest.spyOn(Linking, "openURL").mockResolvedValue(undefined);
   });
@@ -125,7 +133,6 @@ describe("the signed-in routes", () => {
   });
 
   it.each([
-    ["Accounts", "/accounts", "https://app.test.invalid/app/accounts"],
     ["Budget", "/budget", "https://app.test.invalid/app/budget"],
     ["Pay", "/pay", "https://app.test.invalid/app/take-home"],
   ])("the %s tab is a plain placeholder linking to the same web page", async (name, path, url) => {
@@ -310,5 +317,72 @@ describe("the signed-in routes", () => {
     const action = await screen.findByTestId("check-in-row-action", {}, { timeout: 3000 });
     await userEvent.setup().press(action);
     expect(router.getPathname()).toBe("/check-in");
+  });
+
+  describe("accounts (S6)", () => {
+    it("the Accounts tab lists the accounts; a row opens its page, with Back to the list", async () => {
+      const { router } = await openApp("/");
+      const user = userEvent.setup();
+      await user.press(tab("Accounts"));
+      expect(router.getPathname()).toBe("/accounts");
+      const row = await screen.findByRole("link", { name: /^Mortgage, £185,000/ });
+      await user.press(row);
+      expect(router.getPathname()).toBe(`/accounts/${data.idOf("Mortgage")}`);
+      expect(await screen.findByTestId("account-detail-hero")).toBeOnTheScreen();
+      expect(screen.getByRole("header", { name: "Mortgage" })).toBeOnTheScreen();
+      await act(async () => appRouter.back());
+      expect(router.getPathname()).toBe("/accounts");
+    });
+
+    it("the list's link opens net worth history", async () => {
+      const { router } = await openApp("/accounts");
+      const user = userEvent.setup();
+      await user.press(await screen.findByRole("link", { name: "See how it has changed" }));
+      expect(router.getPathname()).toBe("/accounts/history");
+      expect(screen.getByRole("header", { name: "Net worth history" })).toBeOnTheScreen();
+    });
+
+    it("flump://accounts/<id> opens that account cold, with Back to the tabs", async () => {
+      const { router } = await openApp(`/accounts/${data.idOf("Current account")}`);
+      expect(router.getPathname()).toBe(`/accounts/${data.idOf("Current account")}`);
+      expect(await screen.findByTestId("account-detail-hero")).toBeOnTheScreen();
+      expect(testRouter.canGoBack()).toBe(true);
+    });
+
+    it("flump://accounts/history opens history cold", async () => {
+      const { router } = await openApp("/accounts/history");
+      expect(router.getPathname()).toBe("/accounts/history");
+      expect(await screen.findByTestId("history-hero")).toBeOnTheScreen();
+      expect(testRouter.canGoBack()).toBe(true);
+    });
+
+    it("an unknown id says so, and Back to accounts opens the list", async () => {
+      const { router } = await openApp("/accounts/not-an-account");
+      expect(await screen.findByText("We cannot find that account.")).toBeOnTheScreen();
+      await userEvent.setup().press(screen.getByRole("button", { name: "Back to accounts" }));
+      expect(router.getPathname()).toBe("/accounts");
+    });
+
+    it("signed out, an account link shows sign-in, then the account once signed in", async () => {
+      const id = data.idOf("Current account");
+      const { app, router } = await openApp(`/accounts/${id}`, {
+        status: "signedOut",
+        notice: null,
+      });
+      expect(screen.getByRole("button", { name: "Sign in" })).toBeOnTheScreen();
+      await act(async () => app.set({ status: "signedIn" }));
+      expect(router.getPathname()).toBe(`/accounts/${id}`);
+      expect(await screen.findByTestId("account-detail-hero")).toBeOnTheScreen();
+    });
+
+    it.each(["/accounts", "/accounts/history", "/accounts/some-id"])(
+      "restored offline, %s says so with Try again",
+      async (url) => {
+        const { app } = await openApp(url, { status: "restoredOffline" });
+        expect(screen.getByRole("header", { name: "We could not reach Flump" })).toBeOnTheScreen();
+        await userEvent.setup().press(screen.getByRole("button", { name: "Try again" }));
+        expect(app.session.retry).toHaveBeenCalledTimes(1);
+      },
+    );
   });
 });

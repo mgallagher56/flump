@@ -294,6 +294,10 @@ export function nextCheckInLine(date: string): string {
   return `Next check-in: ${day} ${monthLabel(date.slice(0, 7))}`;
 }
 
+/** Web's caption over the changes by account: "Change by account, September 2026 to October 2026". */
+export const changeByAccountCaption = (previousMonth: string, month: string): string =>
+  `Change by account, ${monthLabel(previousMonth)} to ${monthLabel(month)}`;
+
 /** Web's `formatSignedChange`: "+£1,200", "−£300" (a true minus sign) or "£0". */
 export function formatSignedChange(change: number): string {
   const text = pounds(change);

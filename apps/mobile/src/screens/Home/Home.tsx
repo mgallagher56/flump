@@ -6,9 +6,11 @@ import { HeroFigure } from "../../components/HeroFigure";
 import { KpiStrip } from "../../components/KpiStrip";
 import { NetWorthBasisLine } from "../../components/NetWorthBasisLine";
 import { NetWorthTrendBars, TREND_PLOT_HEIGHT } from "../../components/NetWorthTrendBars";
+import { Pressable } from "../../components/Pressable";
 import { Screen } from "../../components/Screen";
 import { TaxRatesStatusBanner } from "../../components/TaxRatesStatusBanner";
 import { Text } from "../../components/Text";
+import { ACCOUNTS } from "../../copy/accounts";
 import { CHECK_IN } from "../../copy/checkIn";
 import { changeLine, HOME, STRIP } from "../../copy/home";
 import { OPEN_FLUMP_WEBSITE } from "../../copy/navigation";
@@ -48,6 +50,8 @@ export interface HomeProps {
   marketingOrigin: string;
   links: HomeWebLinks;
   onOpenCheckIn(): void;
+  /** Net worth history (S6), opened from the trend bars and the link under them. */
+  onOpenHistory(): void;
   /** Injected clock for tests. */
   now?: () => Date;
 }
@@ -63,6 +67,7 @@ const open = (link: WebLink) => () => void Linking.openURL(link.url);
 export function Home({
   onSignOut,
   onOpenCheckIn,
+  onOpenHistory,
   marketingOrigin,
   links,
   now = () => new Date(),
@@ -89,6 +94,7 @@ export function Home({
       checkIn={checkIn}
       links={links}
       onOpenCheckIn={onOpenCheckIn}
+      onOpenHistory={onOpenHistory}
       onRefresh={onRefresh}
       now={now}
     />
@@ -100,6 +106,7 @@ function HomeBody({
   checkIn,
   links,
   onOpenCheckIn,
+  onOpenHistory,
   onRefresh,
   now,
 }: {
@@ -107,6 +114,7 @@ function HomeBody({
   checkIn: CheckInDataState;
   links: HomeWebLinks;
   onOpenCheckIn(): void;
+  onOpenHistory(): void;
   onRefresh(): Promise<void>;
   now: () => Date;
 }) {
@@ -120,7 +128,7 @@ function HomeBody({
       {home.status === "ready" && home.strip.status === "ready" ? (
         <TaxRatesStatusBanner rates={home.strip.value.ratesNotice} />
       ) : null}
-      <NetWorth home={home} links={links} skeleton={skeleton} />
+      <NetWorth home={home} links={links} skeleton={skeleton} onOpenHistory={onOpenHistory} />
       <Strip home={home} links={links} skeleton={skeleton} />
       <CheckInRow data={checkIn} onOpen={onOpenCheckIn} now={now} />
     </Screen>
@@ -179,10 +187,12 @@ function NetWorth({
   home,
   links,
   skeleton,
+  onOpenHistory,
 }: {
   home: Exclude<HomeDataState, { status: "notSetUp" }>;
   links: HomeWebLinks;
   skeleton: boolean;
+  onOpenHistory(): void;
 }) {
   if (home.status === "error") {
     // Never "Add an account" or £0 for a failed read; out of step never blames the connection.
@@ -238,8 +248,28 @@ function NetWorth({
         change={hero.change ? changeLine(hero.change, hero.currentMonth) : null}
         testID="home-hero"
       >
-        {hero.trend ? <NetWorthTrendBars trend={hero.trend} /> : null}
+        {hero.trend ? (
+          // A touch on the bars opens history. The touch is not a stop of its own for a screen
+          // reader, which reads the bars' list and then meets the link below (plan 9.9).
+          <Pressable
+            accessible={false}
+            accessibilityLabel={ACCOUNTS.seeHowItHasChanged}
+            testID="home-trend-open-history"
+            onPress={onOpenHistory}
+          >
+            <NetWorthTrendBars trend={hero.trend} />
+          </Pressable>
+        ) : null}
       </HeroFigure>
+      {hero.trend ? (
+        <Button
+          label={ACCOUNTS.seeHowItHasChanged}
+          variant="link"
+          accessibilityRole="link"
+          testID="home-view-history"
+          onPress={onOpenHistory}
+        />
+      ) : null}
       <NetWorthBasisLine
         leftOut={hero.leftOut}
         onChangeWhatCounts={open(links.changeWhatCounts)}

@@ -178,6 +178,8 @@ export interface AccountDetail {
   change: number | null;
   firstMonth: string | null;
   endCarried: boolean;
+  /** The Europe/London month, as numbers: the date line names a month of another year in full. */
+  current: { month: number; year: number };
 }
 
 const monthKey = (point: { month: number; year: number }) =>
@@ -212,6 +214,7 @@ export function buildAccountDetail(
     change: selectSeriesChange(series),
     firstMonth: first ? monthKey(first) : null,
     endCarried: series.at(-1)?.carried === true,
+    current: { month: Number(currentMonth.slice(5, 7)), year: Number(currentMonth.slice(0, 4)) },
   };
 }
 
