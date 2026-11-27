@@ -671,3 +671,12 @@ Signed by `fable-decider` (an independent Fable decider subagent, not the owner)
 - **The list.** `selectAccountGroups` keeps its grouping (list totals still equal `getTotalLiabilities`) and flags an overdrawn row that is not a Current account. Both apps say on it: "This balance is below zero. Check the amount or the account type."
 - **Unchanged.** Net worth, total assets and liabilities, `picture.debt.consumerDebt`, the Debt page total, DebtWidget, the debt-free date, the health score, the AI pack and MCP's `totalConsumerDebtGbp`.
 - **Pinned by.** `packages/finance-engine/src/home-strip.overdrawn.test.ts` and the flipped case in `portfolio-totals.consumer-debt.test.ts`.
+
+## D9 (2026-11-27): Breathing room's year form rounds down
+
+Raised by the E12 S10 device check (21,000 / 1,275 = 16.47 read "About 1 year 5 months": the figure is stored at one decimal place, 16.5, and the year form rounded half up again to 17 months). Signed by a fable decider (`fable-decider`), 27 November 2026, and approved by the owner the same day. Asked "Breathing room wording: round down to whole months, or keep your nearest-month rule?", the owner answered: "Round down".
+
+- **Decision.** `describeBreathingRoom` (`packages/finance-engine/src/breathing-room-wording.ts`) takes the figure to one decimal place, half up, once. Under 12 it reads as that, unchanged ("About 9.3 months"). From 12 the whole months are the one-decimal figure rounded down: 12.5 is "About 1 year", 16.47 is "About 1 year 4 months", 23.6 is "About 1 year 11 months", 23.99 is "About 2 years". Never "0 months" or "12 months"; the cap above 120 months is unchanged.
+- **Storage unchanged.** `monthsOfCoverFor` keeps one decimal place; the MCP `emergencyRunwayMonths` number, every under-a-year text, the fixtures and the runway scoring do not change.
+- **Stage threshold.** `evaluateFinancialStage` (`health-score.ts`) compares the unrounded ratio with 3 months, so 2.95 no longer counts as 3; the returned `emergencyRunwayMonths` stays rounded.
+- **Supersedes:** the half-up whole months of the 18 November 2026 ruling (the years-and-months form itself stands).
