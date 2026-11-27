@@ -1,6 +1,10 @@
 import { describe, expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import {
+  DIRECTORY_EXCLUDES,
   DUPLICATE_CHECK,
+  directoryExcludeProblems,
   duplicateVersions,
   failedChecks,
   failedCount,
@@ -290,5 +294,51 @@ expo             ~58.1.0   58.1.0-canary
         "expo 58.1.0 (installed 58.0.26) was published on 2026-11-26; the bump is due on or after 2026-12-03",
       ],
     });
+  });
+});
+
+describe("the React Native Directory check's one skipped package", () => {
+  const MASKED = "@react-native-masked-view/masked-view";
+  const pkg = (router: string, exclude: unknown, extra: Record<string, unknown> = {}) => ({
+    dependencies: { "expo-router": router },
+    expo: { doctor: { reactNativeDirectoryCheck: { exclude, ...extra } } },
+  });
+
+  test("allows masked-view alone while expo-router still depends on it", () => {
+    expect(DIRECTORY_EXCLUDES).toEqual([MASKED]);
+    expect(directoryExcludeProblems(pkg("58.0.32", [MASKED]))).toEqual([]);
+    expect(directoryExcludeProblems(pkg("~58.0.32", [MASKED]))).toEqual([]);
+  });
+
+  test("allows no exclusion at all, at any expo-router", () => {
+    expect(directoryExcludeProblems({ dependencies: { "expo-router": "58.0.40" } })).toEqual([]);
+    expect(directoryExcludeProblems(pkg("58.0.40", []))).toEqual([]);
+  });
+
+  test("fails once expo-router is 58.0.33 or later and the exclusion is still there", () => {
+    // 58.0.33 is the first release without masked-view (npm, 26 November 2026): the edge itself.
+    expect(directoryExcludeProblems(pkg("58.0.33", [MASKED]))).toEqual([
+      "expo-router 58.0.33 no longer depends on masked-view: remove it from expo.doctor.reactNativeDirectoryCheck.exclude",
+    ]);
+    expect(directoryExcludeProblems(pkg("^58.1.0", [MASKED]))).toHaveLength(1);
+  });
+
+  test("fails on any other package, a regular expression, or switching the check off", () => {
+    expect(directoryExcludeProblems(pkg("58.0.32", [MASKED, "expo-modules-core"]))).toEqual([
+      "the directory check skips packages with no sign-off: expo-modules-core",
+    ]);
+    expect(directoryExcludeProblems(pkg("58.0.32", ["/.*/"]))).toEqual([
+      "the directory check skips packages with no sign-off: /.*/",
+    ]);
+    expect(directoryExcludeProblems(pkg("58.0.32", [], { enabled: false }))).toEqual([
+      "expo.doctor.reactNativeDirectoryCheck.enabled must not be set",
+    ]);
+  });
+
+  test("apps/mobile/package.json passes as it stands", () => {
+    const real = JSON.parse(
+      readFileSync(resolve(import.meta.dir, "../apps/mobile/package.json"), "utf8"),
+    ) as unknown;
+    expect(directoryExcludeProblems(real)).toEqual([]);
   });
 });
