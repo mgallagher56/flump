@@ -17,9 +17,14 @@ import { CACHE_FORMAT, createOfflineCache, type OfflineCache } from "../../data/
 import { DEVICE_LOCK_KEY } from "../../device/storageKeys";
 import { HOMEOWNER, personaHousehold } from "../../features/accounts/accountsTestData";
 import { NOW, routes } from "../../features/check-in/checkInTestData";
-import { AGE_CHECK_EVERY_MS, RECONNECT_EVERY_MS } from "../../features/offline/useSavedFigures";
+import {
+  AGE_CHECK_EVERY_MS,
+  RECONNECT_EVERY_MS,
+  RECONNECT_STEPS_MS,
+} from "../../features/offline/useSavedFigures";
 import { type FakeApp, fakeApp } from "../../testing/fakeAppSession";
 import { ThemeProvider } from "../../theme/ThemeProvider";
+import { AccountDetail } from "../AccountDetail";
 import { Accounts } from "../Accounts";
 import { OfflineReading } from "../OfflineReading";
 import { SessionGate } from "./SessionGate";
@@ -29,8 +34,6 @@ const OWNER = async () => "owner_hash_a";
 const HOUR = 3_600_000;
 const LINKS = {
   setUp: { url: "https://app.test.invalid/app/onboarding", exact: true },
-  addAccount: { url: "https://app.test.invalid/app/accounts", exact: true },
-  addEstimate: { url: "https://app.test.invalid/app/accounts?add=property", exact: true },
 };
 // Own 427,000 less owe 195,600 (accountsTestData's home owner).
 const TOTAL = "Total of the accounts listed, £231,400";
@@ -87,6 +90,8 @@ async function start(app: FakeApp, api = offlineApi()) {
               <Accounts
                 onSignOut={jest.fn()}
                 onOpenAccount={jest.fn()}
+                onAddAccount={jest.fn()}
+                onAddEstimate={jest.fn()}
                 onOpenHistory={jest.fn()}
                 onOpenCheckIn={jest.fn()}
                 onChangeWhatCounts={jest.fn()}
@@ -287,6 +292,26 @@ describe("the app lock and the cache", () => {
 });
 
 describe("the age limit while on screen", () => {
+  it("once figures are forgotten for their age, reconnects start again from 5 seconds", async () => {
+    let clock = NOW_MS;
+    const savedAt = NOW_MS - 7 * 24 * HOUR + 60_000;
+    const { store } = savedStore(savedAt);
+    const cache = createOfflineCache({ store, now: () => clock, owner: OWNER });
+    const app = fakeApp({ status: "restoredOffline" }, { offlineCache: cache });
+    await start(app);
+    expect(await screen.findByLabelText(TOTAL)).toBeOnTheScreen();
+    // Long enough on screen that the steps reached 30 seconds.
+    await act(async () => jest.advanceTimersByTimeAsync(5_000 + 10_000 + 20_000));
+    clock = NOW_MS + 2 * 60_000;
+    await act(async () => {
+      for (const listener of appStateListeners) listener("active");
+    });
+    expect(screen.getByText(OFFLINE_HEADING)).toBeOnTheScreen();
+    const after = app.session.reconnect.mock.calls.length;
+    await act(async () => jest.advanceTimersByTimeAsync(5_000));
+    expect(app.session.reconnect.mock.calls.length).toBe(after + 1);
+  });
+
   it("past 7 days, the figures are forgotten and the offline screen takes their place", async () => {
     let clock = NOW_MS;
     // Saved 6 days 23 hours 59 minutes ago.
@@ -389,11 +414,24 @@ describe("coming back online", () => {
     await act(async () => finish());
   });
 
-  it("tries a quiet reconnect every 30 seconds and when the app returns to the front", async () => {
+  it("tries a quiet reconnect after 5, 10, 20, then every 30 seconds, and on returning to the front", async () => {
+    expect(RECONNECT_STEPS_MS).toEqual([5_000, 10_000, 20_000, 30_000]);
     const { app } = await offlineWithFigures();
-    const before = app.session.reconnect.mock.calls.length;
+    const calls = () => app.session.reconnect.mock.calls.length;
+    const start = calls();
+    await act(async () => jest.advanceTimersByTimeAsync(4_999));
+    expect(calls()).toBe(start);
+    await act(async () => jest.advanceTimersByTimeAsync(1));
+    expect(calls()).toBe(start + 1);
+    await act(async () => jest.advanceTimersByTimeAsync(10_000));
+    expect(calls()).toBe(start + 2);
+    await act(async () => jest.advanceTimersByTimeAsync(20_000));
+    expect(calls()).toBe(start + 3);
     await act(async () => jest.advanceTimersByTimeAsync(RECONNECT_EVERY_MS));
-    expect(app.session.reconnect.mock.calls.length).toBe(before + 1);
+    expect(calls()).toBe(start + 4);
+    await act(async () => jest.advanceTimersByTimeAsync(RECONNECT_EVERY_MS));
+    expect(calls()).toBe(start + 5);
+    const before = calls();
     await act(async () => {
       for (const listener of appStateListeners) listener("active");
     });
@@ -420,5 +458,52 @@ describe("coming back online", () => {
     const calls = app.session.reconnect.mock.calls.length;
     await act(async () => jest.advanceTimersByTimeAsync(RECONNECT_EVERY_MS * 2));
     expect(app.session.reconnect.mock.calls.length).toBe(calls);
+  });
+});
+
+describe("an account's page from saved figures", () => {
+  async function accountPage(status: "restoredOffline" | "signedIn") {
+    const { store, h } = savedStore(NOW_MS - HOUR);
+    const cache = createOfflineCache({ store, now: () => NOW_MS, owner: OWNER });
+    const app = fakeApp({ status }, { offlineCache: cache });
+    const id = h.accounts[0]?.id ?? "";
+    await render(
+      <ThemeProvider scheme="light">
+        <SessionProvider app={app.app}>
+          <ApiProvider
+            client={(status === "signedIn" ? fakeApi(routes(h)) : offlineApi()).client}
+            queryClient={testQueryClient()}
+          >
+            <SessionGate>
+              <OfflineReading now={() => NOW_MS}>
+                <AccountDetail
+                  id={id}
+                  onSignOut={jest.fn()}
+                  marketingOrigin="https://m.test.invalid"
+                  links={{ setUp: LINKS.setUp, mortgage: LINKS.setUp, debts: LINKS.setUp }}
+                  onBackToAccounts={jest.fn()}
+                  onEdit={jest.fn()}
+                  now={NOW}
+                />
+              </OfflineReading>
+            </SessionGate>
+          </ApiProvider>
+        </SessionProvider>
+      </ThemeProvider>,
+    );
+    expect(await screen.findByTestId("account-detail-hero")).toBeOnTheScreen();
+  }
+
+  it("offline: no quick balance update and no Edit, since both write", async () => {
+    await accountPage("restoredOffline");
+    expect(screen.getByTestId("saved-figures-notice")).toBeOnTheScreen();
+    expect(screen.queryByTestId("quick-balance-open")).toBeNull();
+    expect(screen.queryByTestId("account-edit")).toBeNull();
+  });
+
+  it("online: both are there", async () => {
+    await accountPage("signedIn");
+    expect(screen.getByTestId("quick-balance-open")).toBeOnTheScreen();
+    expect(screen.getByTestId("account-edit")).toBeOnTheScreen();
   });
 });

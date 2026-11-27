@@ -13,7 +13,13 @@ import { AppState } from "react-native";
 import type { OfflineCache, SavedFigures } from "../../data/offlineCache";
 import { queryKeys } from "../../data/queryKeys";
 
-/** How often a quiet reconnect is tried while the app is open and offline. */
+/**
+ * When quiet reconnects are tried while the app is open and offline: soon at first, then less
+ * often, at most every 30 seconds. The steps start again whenever the saved figures change (shown,
+ * or forgotten for their age), since then no screen reads data and nothing else would try.
+ */
+export const RECONNECT_STEPS_MS = [5_000, 10_000, 20_000, 30_000] as const;
+/** The longest wait between two quiet reconnects. */
 export const RECONNECT_EVERY_MS = 30_000;
 /** How often the saved figures' age is checked while they show. */
 export const AGE_CHECK_EVERY_MS = 60_000;
@@ -108,19 +114,26 @@ export function useSavedFigures({
 
   useEffect(() => {
     if (!offline || !canRead) return;
-    const tryQuietly = () => {
-      // Not from the background, where timers may still fire on Android.
-      if (AppState.currentState !== "background") void reconnect();
+    let step = 0;
+    let timer: ReturnType<typeof setTimeout>;
+    const schedule = () => {
+      const wait = RECONNECT_STEPS_MS[Math.min(step, RECONNECT_STEPS_MS.length - 1)];
+      step += 1;
+      timer = setTimeout(() => {
+        // Not from the background, where timers may still fire on Android.
+        if (AppState.currentState !== "background") void reconnect();
+        schedule();
+      }, wait);
     };
-    const timer = setInterval(tryQuietly, RECONNECT_EVERY_MS);
+    schedule();
     const subscription = AppState.addEventListener("change", (next) => {
       if (next === "active") void reconnect();
     });
     return () => {
-      clearInterval(timer);
+      clearTimeout(timer);
       subscription.remove();
     };
-  }, [offline, canRead, reconnect]);
+  }, [offline, canRead, reconnect, saved]);
 
   const tryAgain = useCallback(() => {
     setChecking(true);
