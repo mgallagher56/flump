@@ -2,6 +2,7 @@ import { calculateDebtSchedule, normalizeDebtItem } from "../../debt-payoff.js";
 import { isHighInterestDebt } from "../../health-score.js";
 import type { PortfolioSnapshot } from "../../portfolio.js";
 import type { DebtItem, PromoRevertAssumption } from "../../types.js";
+import { selectConsumerDebtTotal } from "./portfolio-totals.js";
 
 export interface DebtSummary {
   totalDebt: number;
@@ -34,9 +35,9 @@ export function selectDebtSummary(
   snapshot: PortfolioSnapshot,
   asOf: Date = new Date(),
 ): DebtSummary | null {
+  const totalDebt = selectConsumerDebtTotal(snapshot);
+  if (totalDebt === null) return null;
   const debts = snapshot.toDebtItems();
-  const totalDebt = snapshot.getTotalConsumerDebt();
-  if (debts.length === 0 || totalDebt <= 0) return null;
 
   const aprUnknown = debts.some((d) => d.aprKnown === false);
   const minimumOnly = calculateDebtSchedule(

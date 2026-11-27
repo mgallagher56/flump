@@ -4,13 +4,18 @@ import { PortfolioSnapshot, type RawAccount, type RawAccountDetail } from "../po
 import type { UserProfileData } from "../profile.js";
 import type { TaxRecord } from "../tax-calculator.js";
 import type { UkTaxYear } from "../types.js";
+import { selectBudgetFigures } from "./budget-figures.js";
+import { type BudgetRowLike, budgetEntryFromRow } from "./budget-rows.js";
 import type { Figure } from "./figure.js";
 import { type FinancialPictureInput, profileFactsFromProfile } from "./input.js";
+
+export { type BudgetRowLike, budgetEntryFromRow };
+
 import {
   type BudgetAccountLinkOffer,
   findBudgetAccountLinkOffers,
 } from "./selectors/account-link-offers.js";
-import { type BudgetTotals, selectBudgetTotals } from "./selectors/budget-totals.js";
+import type { BudgetTotals } from "./selectors/budget-totals.js";
 import { type DebtSummary, selectDebtSummary } from "./selectors/debt-summary.js";
 import { type EstimatedTaxDue, selectEstimatedTaxDue } from "./selectors/estimated-tax-due.js";
 import {
@@ -25,7 +30,6 @@ import { type HousingRoom, selectHousingRoom } from "./selectors/housing-room.js
 import { selectIsaAllowanceUsed } from "./selectors/isa-allowance-used.js";
 import {
   type BudgetLinkOffer,
-  budgetRowLinkOf,
   type LinkedBudgetRows,
   withLinkedBudgetRows,
 } from "./selectors/linked-budget-rows.js";
@@ -40,7 +44,7 @@ import {
 } from "./selectors/portfolio-totals.js";
 import { type SafeToSpend, selectSafeToSpend } from "./selectors/safe-to-spend.js";
 import { type SavingsTotals, selectSavingsTotals } from "./selectors/savings-totals.js";
-import { selectTakeHome, type TakeHome, takeHomeLeavesOut } from "./selectors/take-home.js";
+import { selectTakeHome, type TakeHome } from "./selectors/take-home.js";
 
 /**
  * The derived figures every page, loader and MCP resource shows. Built once per request from
@@ -108,18 +112,8 @@ export function buildFinancialPicture(
   opts: BuildFinancialPictureOptions = {},
 ): FinancialPicture {
   const snapshot = opts.snapshot ?? new PortfolioSnapshot(input.accounts, input.details);
-  const takeHome = selectTakeHome(input.profile, { taxYear: opts.taxYear });
-  const housingPayment = selectHousingPayment(
-    input.profile,
-    snapshot,
-    input.accounts,
-    input.budget,
-  );
-  const linked = withLinkedBudgetRows(input.budget, {
-    takeHome,
-    housing: housingPayment,
-    accounts: snapshot,
-  });
+  const figures = selectBudgetFigures(input, snapshot, { taxYear: opts.taxYear });
+  const { takeHome, housingPayment, linked } = figures;
   const budget = linked.rows;
   const safeToSpend = selectSafeToSpend(takeHome, budget, snapshot);
   const asOf = opts.asOf ?? new Date();
@@ -130,7 +124,7 @@ export function buildFinancialPicture(
     budgetLinkOffers: linked.offers,
     budgetAccountLinkOffers: findBudgetAccountLinkOffers(input.budget, snapshot),
     housingPayment,
-    budget: selectBudgetTotals(budget, takeHomeLeavesOut(takeHome)),
+    budget: figures.budget,
     safeToSpend,
     monthsOfCover: selectMonthsOfCover(budget, snapshot),
     netWorth: selectNetWorth(snapshot, input.netWorthBasis),
@@ -171,56 +165,12 @@ export function linkedBudgetRowsFor(
   });
 }
 
-/** A budget row as any caller holds it: API JSON, a TypeORM entity or a fixture. */
-export interface BudgetRowLike {
-  id?: unknown;
-  category?: unknown;
-  name?: unknown;
-  amount?: unknown;
-  frequency?: unknown;
-  isIncome?: unknown;
-  isEssential?: unknown;
-  ownership?: unknown;
-  sharePercent?: unknown;
-  linkKind?: unknown;
-  linkAccountId?: unknown;
-}
-
 export interface FinancialPictureRows {
   profile?: Partial<UserProfileData> | null;
   accounts?: readonly RawAccount[] | null;
   accountDetails?: readonly RawAccountDetail[] | null;
   budgetEntries?: readonly BudgetRowLike[] | null;
   taxRecords?: readonly TaxRecord[] | null;
-}
-
-/** A stored share (1-100), or null when missing or unreadable. */
-function shareFromRow(value: unknown): number | null {
-  const n = typeof value === "string" && value !== "" ? Number(value) : value;
-  return typeof n === "number" && Number.isFinite(n) ? n : null;
-}
-
-/** Maps one budget row. Unreadable amounts become 0; a missing frequency means monthly. */
-export function budgetEntryFromRow(row: BudgetRowLike, index = 0): BudgetEntryItem {
-  const amount = Number(row.amount);
-  return {
-    id: typeof row.id === "string" && row.id !== "" ? row.id : `budget-${index}`,
-    category: typeof row.category === "string" ? row.category : "",
-    name: typeof row.name === "string" ? row.name : "",
-    amount: Number.isFinite(amount) ? amount : 0,
-    frequency:
-      typeof row.frequency === "string" && row.frequency !== "" ? row.frequency : "monthly",
-    isIncome: row.isIncome === true,
-    isEssential: row.isEssential === true,
-    ownership: row.ownership === "joint" ? "joint" : "sole",
-    sharePercent: shareFromRow(row.sharePercent),
-    // A linked row's stored amount is never read: the linked-rows selector resolves it.
-    ...(budgetRowLinkOf(row.linkKind) ? { linkKind: budgetRowLinkOf(row.linkKind) } : {}),
-    // The account a savings or debt line reads; null once that account is deleted.
-    ...(typeof row.linkAccountId === "string" && row.linkAccountId !== ""
-      ? { linkAccountId: row.linkAccountId }
-      : {}),
-  };
 }
 
 /**
