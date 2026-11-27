@@ -14,16 +14,20 @@ appId: app.flump.mobile
 - runFlow: ../subflows/sign-in-to-home.yaml
 - extendedWaitUntil:
     visible:
-      id: "figure-strip"
+      id: "kpi-strip"
     timeout: 30000
 - assertVisible:
     id: "home-hero"
 - assertVisible:
-    id: "figure-strip-first"
+    id: "kpi-strip-first"
 - assertVisible:
-    id: "figure-strip-second"
+    id: "kpi-strip-second"
+- assertVisible:
+    id: "kpi-strip-left-over"
+- assertVisible:
+    id: "kpi-strip-owed"
 - assertNotVisible:
-    id: "figure-strip-prompt"
+    id: "kpi-strip-prompt"
 - takeScreenshot: home-strip-renter-${THEME}
 # No debts: a relaunch reads the new household (the cache lives only while the app runs).
 - runScript:
@@ -34,10 +38,12 @@ appId: app.flump.mobile
 - launchApp
 - extendedWaitUntil:
     visible:
-      id: "figure-strip"
+      id: "kpi-strip"
     timeout: 60000
 - assertVisible:
-    id: "figure-strip-second"
+    id: "kpi-strip-pension"
+- assertNotVisible:
+    id: "kpi-strip-owed"
 - takeScreenshot: home-strip-pension-${THEME}
 # No budget: the prompt stands in for the whole strip, never £0.
 - runScript:
@@ -48,11 +54,11 @@ appId: app.flump.mobile
 - launchApp
 - extendedWaitUntil:
     visible:
-      id: "figure-strip-prompt"
+      id: "kpi-strip-prompt"
     timeout: 60000
 - assertVisible:
-    id: "figure-strip-add-budget"
+    id: "kpi-strip-add-budget"
 - assertNotVisible:
-    id: "figure-strip"
+    id: "kpi-strip"
 - assertNotVisible: "£0"
 - takeScreenshot: home-strip-prompt-${THEME}
