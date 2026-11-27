@@ -1,6 +1,6 @@
 import { light } from "@flump/tokens/native";
 import { act, render, screen, userEvent } from "@testing-library/react-native";
-import { Linking, StyleSheet, type TextStyle } from "react-native";
+import { AccessibilityInfo, Linking, StyleSheet, type TextStyle } from "react-native";
 import { fail, fakeApi, withApi } from "../../data/fakeApi";
 import {
   type BudgetSeed,
@@ -915,6 +915,21 @@ describe("Home's two-figure strip (S5b)", () => {
       screen.getByRole("header", { name: "Finish setting up Flump on the website" }),
     ).toBeOnTheScreen();
     expect(screen.queryByTestId("home-error")).toBeNull();
+  });
+
+  it("offers an accessible info tip for Left over each month with web's exact wording", async () => {
+    const announce = jest
+      .spyOn(AccessibilityInfo, "announceForAccessibility")
+      .mockImplementation(() => {});
+    const explain =
+      "The income in your budget, minus your bills, living costs and what you put aside for savings each month.";
+    await home(fakeApi(routes(household(RENTER, undefined, RENTER_BUDGET))));
+    const trigger = await screen.findByRole("button", { name: "About Left over each month" });
+    expect(screen.queryByText(explain)).toBeNull();
+
+    await userEvent.setup({ advanceTimers: jest.advanceTimersByTime }).press(trigger);
+    expect(screen.getByText(explain)).toBeOnTheScreen();
+    expect(announce).toHaveBeenCalledWith(explain);
   });
 });
 

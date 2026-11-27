@@ -41,6 +41,9 @@ export const HOME = {
 export const STRIP = {
   leftOver: "Left over each month",
   short: "Short each month",
+  /** Web's `LEFT_OVER_EXPLAIN`. */
+  leftOverExplain:
+    "The income in your budget, minus your bills, living costs and what you put aside for savings each month.",
   /** Web's `LEFT_OVER_CAPTION`. */
   leftOverCaption: "From your budget",
   /** Web's `INCOME_ONLY_LABEL`. */

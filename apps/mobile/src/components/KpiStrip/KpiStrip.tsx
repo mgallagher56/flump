@@ -9,6 +9,7 @@ import { STRIP, spokenPounds } from "../../copy/home";
 import { useTheme } from "../../theme/ThemeProvider";
 import { Button } from "../Button";
 import { Card } from "../Card";
+import { InfoTip } from "../InfoTip";
 import { Money } from "../Money";
 import { formatWholePounds } from "../Money/Money";
 import { Text } from "../Text";
@@ -59,6 +60,8 @@ interface KpiCardProps {
   caption?: string | null;
   /** Its own control under the group (the income-only link). */
   action?: ReactNode;
+  /** Plain-English explanation shown via an `InfoTip` toggle under the group. */
+  explain?: string;
   testID: string;
   /** The group's test id, naming what the card shows ("kpi-strip-pension"). */
   groupTestID: string;
@@ -75,6 +78,7 @@ function KpiCard({
   value,
   caption,
   action,
+  explain,
   testID,
   groupTestID,
   stacked,
@@ -98,6 +102,7 @@ function KpiCard({
           </Text>
         ) : null}
       </View>
+      {explain ? <InfoTip term={label} body={explain} testID={`${testID}-explain`} /> : null}
       {action}
     </Card>
   );
@@ -162,6 +167,7 @@ function FirstCell({
       label={cell.kind === "short" ? STRIP.short : STRIP.leftOver}
       value={cell.figure}
       caption={cell.leavesOut ?? STRIP.leftOverCaption}
+      explain={STRIP.leftOverExplain}
       testID={id}
       groupTestID={`${testID}-${cell.kind === "short" ? "short" : "left-over"}`}
       stacked={stacked}

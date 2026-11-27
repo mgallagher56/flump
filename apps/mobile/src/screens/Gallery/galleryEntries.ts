@@ -48,6 +48,8 @@ import { HeroFigure } from "../../components/HeroFigure";
 import { heroFigureStates } from "../../components/HeroFigure/HeroFigure.states";
 import { Icon } from "../../components/Icon";
 import { iconStates } from "../../components/Icon/Icon.states";
+import { InfoTip } from "../../components/InfoTip";
+import { infoTipStates } from "../../components/InfoTip/InfoTip.states";
 import { InlineAlert } from "../../components/InlineAlert";
 import { inlineAlertStates } from "../../components/InlineAlert/InlineAlert.states";
 import { KpiStrip } from "../../components/KpiStrip";
@@ -174,6 +176,7 @@ export const GALLERY: readonly GalleryEntry[] = [
   entry("FormField", FormField, formFieldStates),
   entry("Toast", Toast, toastStates),
   entry("Icon", Icon, iconStates),
+  entry("InfoTip", InfoTip, infoTipStates),
   entry("TabBar", TabBar, tabBarStates),
   entry("AppHeader", AppHeader, appHeaderStates),
   entry("ListRow", ListRow, listRowStates),
