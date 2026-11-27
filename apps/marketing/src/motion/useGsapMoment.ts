@@ -6,20 +6,38 @@ import { type GsapKit, loadGsapKit } from "./loadGsapKit";
 
 type Job = () => void;
 const queue: Job[] = [];
-let draining = false;
+let pending: ReturnType<typeof setTimeout> | undefined;
 let refreshAfter: GsapKit | null = null;
 
-/** Runs queued set-ups one task apart, so no single task sets up the whole page, then refreshes ScrollTrigger once. */
+/** Puts the queue back to empty and idle, with no timer left behind. */
+function stopQueue(): void {
+  if (pending !== undefined) clearTimeout(pending);
+  pending = undefined;
+  queue.length = 0;
+  refreshAfter = null;
+}
+
+/**
+ * Runs queued set-ups one task apart, so no single task sets up the whole page, then refreshes
+ * ScrollTrigger once. Stops without touching the page once the window has gone (a test
+ * environment torn down while a set-up was still queued).
+ */
 function drain(): void {
-  const job = queue.shift();
-  if (!job) {
-    draining = false;
-    refreshAfter?.ScrollTrigger.refresh();
-    refreshAfter = null;
+  pending = undefined;
+  if (typeof window === "undefined") {
+    stopQueue();
     return;
   }
+  const job = queue.shift();
+  if (!job) {
+    const kit = refreshAfter;
+    refreshAfter = null;
+    kit?.ScrollTrigger.refresh();
+    return;
+  }
+  // The next turn is booked first, so a set-up that throws cannot stall the bands after it.
+  pending = setTimeout(drain, 0);
   job();
-  window.setTimeout(drain, 0);
 }
 
 let watched: { main: HTMLElement; observer: ResizeObserver } | undefined;
@@ -44,12 +62,16 @@ function watchPageHeight(kit: GsapKit): void {
   watched = { main, observer };
 }
 
-function enqueue(job: Job): void {
+/** Queues a set-up. Returns a function that takes it off the queue again if it has not run. */
+function enqueue(job: Job): () => void {
   queue.push(job);
-  if (!draining) {
-    draining = true;
-    window.setTimeout(drain, 0);
-  }
+  pending ??= setTimeout(drain, 0);
+  return () => {
+    const at = queue.indexOf(job);
+    if (at >= 0) queue.splice(at, 1);
+    // Nothing left to set up or refresh: no timer stays behind.
+    if (queue.length === 0 && refreshAfter === null) stopQueue();
+  };
 }
 
 /**
@@ -92,11 +114,12 @@ export function useGsapMoment(
     if (!element || reduced || typeof IntersectionObserver === "undefined") return;
     let cancelled = false;
     let revert: (() => void) | undefined;
+    let dequeue: (() => void) | undefined;
 
     const start = () => {
       loadGsapKit().then((kit) => {
         if (cancelled) return;
-        enqueue(() => {
+        dequeue = enqueue(() => {
           if (cancelled) return;
           let extra: (() => void) | undefined;
           const ctx = kit.gsap.context(() => {
@@ -128,6 +151,7 @@ export function useGsapMoment(
     return () => {
       cancelled = true;
       observer.disconnect();
+      dequeue?.();
       revert?.();
     };
   }, [reduced, key, root]);

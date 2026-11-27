@@ -240,6 +240,72 @@ describe("useGsapMoment", () => {
     expect(context).not.toHaveBeenCalled();
   });
 
+  it("leaves no timer behind when its band unmounts while queued", async () => {
+    const { kit } = makeKit();
+    gsapKit.load.mockResolvedValue(kit);
+    const { unmount } = renderBand(vi.fn<Setup>(() => undefined));
+    (FakeIntersectionObserver.instances[0] as FakeIntersectionObserver).report(true);
+    await act(() => Promise.resolve());
+    expect(vi.getTimerCount()).toBe(1);
+    unmount();
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it("keeps the other bands queued when one unmounts", async () => {
+    const { kit, refresh } = makeKit();
+    gsapKit.load.mockResolvedValue(kit);
+    const first = vi.fn<Setup>(() => undefined);
+    const second = vi.fn<Setup>(() => undefined);
+    const holder = (): HTMLElement => main.appendChild(document.createElement("div"));
+    const firstBand = render(<Band label="First" setup={first} />, { container: holder() });
+    render(<Band label="Second" setup={second} />, { container: holder() });
+    for (const observer of FakeIntersectionObserver.instances) observer.report(true);
+    await act(() => Promise.resolve());
+    firstBand.unmount();
+    await flush();
+    expect(first).not.toHaveBeenCalled();
+    expect(second).toHaveBeenCalledTimes(1);
+    expect(refresh).toHaveBeenCalledTimes(1);
+  });
+
+  it("goes on to the next band when a set-up throws", async () => {
+    const { kit } = makeKit();
+    gsapKit.load.mockResolvedValue(kit);
+    const second = vi.fn<Setup>(() => undefined);
+    render(
+      <>
+        <Band
+          label="First"
+          setup={() => {
+            throw new Error("broken band");
+          }}
+        />
+        <Band label="Second" setup={second} />
+      </>,
+      { container: main },
+    );
+    for (const observer of FakeIntersectionObserver.instances) observer.report(true);
+    await act(() => Promise.resolve());
+    await expect(act(() => vi.advanceTimersToNextTimerAsync())).rejects.toThrow("broken band");
+    await flush();
+    expect(second).toHaveBeenCalledTimes(1);
+  });
+
+  it("stops without setting up once the window has gone", async () => {
+    const { kit, context, refresh } = makeKit();
+    gsapKit.load.mockResolvedValue(kit);
+    renderBand(vi.fn<Setup>(() => undefined));
+    (FakeIntersectionObserver.instances[0] as FakeIntersectionObserver).report(true);
+    await act(() => Promise.resolve());
+    // As when the test environment is torn down with a set-up still queued.
+    vi.stubGlobal("window", undefined);
+    await vi.runAllTimersAsync();
+    vi.unstubAllGlobals();
+    expect(context).not.toHaveBeenCalled();
+    expect(refresh).not.toHaveBeenCalled();
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
   it("re-runs the set-up when its deps change", async () => {
     const { kit, revert } = makeKit();
     gsapKit.load.mockResolvedValue(kit);

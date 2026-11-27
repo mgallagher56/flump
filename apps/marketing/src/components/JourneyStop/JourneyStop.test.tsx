@@ -70,7 +70,12 @@ const fakeKit = () => {
   return { kit, triggers, timelines, leave };
 };
 
-const runSetup = (index: number, live: boolean, neighbours = false) => {
+const runSetup = (
+  index: number,
+  live: boolean,
+  neighbours = false,
+  beforeSetup?: (parts: { root: HTMLElement; prev: HTMLElement; next: HTMLElement }) => void,
+) => {
   const { container } = render(tree(index, live));
   const root = container.querySelector("section") as HTMLElement;
   // Stand-ins for the stops either side, as the journey renders them.
@@ -82,6 +87,7 @@ const runSetup = (index: number, live: boolean, neighbours = false) => {
     root.before(prev);
     root.after(next);
   }
+  beforeSetup?.({ root, prev, next });
   const fake = fakeKit();
   const cleanup = (moment.setup as Setup)(fake.kit, root);
   return { ...fake, root, cleanup, prev, next };
@@ -230,6 +236,36 @@ describe("JourneyStop", () => {
     // scrollY 0 and no header: its section top.
     expect(scrollTo).toHaveBeenCalledWith({ top: 700, behavior: "auto" });
     vi.unstubAllGlobals();
+  });
+
+  it("starts finished when it already holds focus as its motion is set up", () => {
+    const { timelines, leave } = runSetup(2, true, true, ({ root }) => {
+      root.querySelector("a")?.focus();
+    });
+    expect(timelines[1]?.progress).toHaveBeenCalledWith(1);
+    // Its own pair is not sent away.
+    expect(leave.progress).not.toHaveBeenCalledWith(1);
+    (document.activeElement as HTMLElement | null)?.blur();
+  });
+
+  it("starts hidden, waiting for its turn, when focus is elsewhere as its motion is set up", () => {
+    const { timelines, leave } = runSetup(2, true, true, ({ prev }) => {
+      prev.tabIndex = -1;
+      prev.focus();
+    });
+    expect(timelines[1]?.progress).not.toHaveBeenCalled();
+    expect(leave.progress).not.toHaveBeenCalled();
+    (document.activeElement as HTMLElement | null)?.blur();
+  });
+
+  it("has gone at once when the next stop already holds focus as its motion is set up", () => {
+    const { timelines, leave } = runSetup(2, true, true, ({ next }) => {
+      next.tabIndex = -1;
+      next.focus();
+    });
+    expect(leave.progress).toHaveBeenCalledWith(1);
+    expect(timelines[1]?.progress).not.toHaveBeenCalled();
+    (document.activeElement as HTMLElement | null)?.blur();
   });
 
   it("leaves focus alone in a stop already shown, and stops listening once torn down", () => {

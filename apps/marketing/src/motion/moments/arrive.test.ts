@@ -58,6 +58,23 @@ describe("pairArrive", () => {
       clearProps: "transform",
     });
   });
+
+  it.each([
+    ["no sample", undefined],
+    ["a sample with no moment of its own", { root: {} as HTMLElement }],
+  ])("plays only the pair with %s, and clears only the pair's transforms", (_name, sample) => {
+    const { kit, tl, gsap } = fakeKit();
+    pairArrive(kit, {
+      sides: ["text"] as unknown as Element[],
+      lines: ["title"] as unknown as Element[],
+      ...(sample ? { sample } : {}),
+    });
+    // The sides and the lines only: no moment's calls.
+    expect(tl.fromTo).toHaveBeenCalledTimes(2);
+    const onComplete = tl.eventCallback.mock.calls[0]?.[1] as () => void;
+    onComplete();
+    expect(gsap.set).toHaveBeenCalledWith(["text", "title"], { clearProps: "transform" });
+  });
 });
 
 describe("pairLeave", () => {

@@ -50,7 +50,8 @@ const StopCtas: FC = () => (
  * the previous pair goes and the next one hides, so its heading can take focus and nothing covers
  * it. A waiting or departed pair is hidden by opacity, not visibility, so its links stay in the Tab
  * order: when one takes focus the stop does the same and scrolls to where it rests (its section top
- * under the header), so every stop's link is reached by Tab in order and shown finished (MK2).
+ * under the header), so every stop's link is reached by Tab in order and shown finished (MK2). A
+ * stop that already holds focus when its motion is set up starts finished.
  */
 export const JourneyStop: FC<JourneyStopProps> = ({ stop, index, total, live }) => {
   const ref = useRef<HTMLElement>(null);
@@ -134,6 +135,10 @@ export const JourneyStop: FC<JourneyStopProps> = ({ stop, index, total, live }) 
       const removeListeners = () => {
         for (const off of offs) off();
       };
+      // Focus came first (the stop control or Tab reached the stop before its motion was set up,
+      // as on a slow device): show it finished now, so the arrive never hides what holds focus.
+      const holdsFocus = (el: Element) => el.contains(document.activeElement);
+      if (holdsFocus(root)) arrive.timeScale(1).progress(1);
 
       if (last) {
         // The last frame is a full screen but its pair is often shorter: pull what follows up
@@ -163,6 +168,8 @@ export const JourneyStop: FC<JourneyStopProps> = ({ stop, index, total, live }) 
           back?.kill();
           pairLeaves.progress(1);
         });
+        // Already shown, holding focus, before this stop was set up: gone at once.
+        if (holdsFocus(next)) pairLeaves.progress(1);
       }
       ScrollTrigger.create({
         trigger: root,

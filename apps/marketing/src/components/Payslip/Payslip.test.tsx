@@ -52,4 +52,28 @@ describe("unfoldMoment", () => {
     expect(calls[4]?.[0]).toBe(container.querySelector("[data-payslip-rule]"));
     expect(moved).toHaveLength(3);
   });
+
+  it("moves only the parts a payslip has", () => {
+    const root = document.createElement("div");
+    root.innerHTML = '<div data-fold="top"><span data-fold-shade></span></div>';
+    const fromTo = vi.fn();
+    const moved = unfoldMoment({} as GsapKit, { fromTo } as unknown as MomentTimeline, root);
+    const top = root.querySelector("[data-fold=top]");
+    // No lower third and no rule: the top's turn and its shade only, starting at 0.3 + 0.7.
+    expect(fromTo).toHaveBeenCalledTimes(2);
+    expect(fromTo.mock.calls[0]?.[0]).toBe(top);
+    expect(fromTo.mock.calls[0]?.[3]).toBeCloseTo(1.0, 10);
+    expect(moved).toEqual([top]);
+  });
+
+  it("moves nothing in an empty root", () => {
+    const fromTo = vi.fn();
+    const moved = unfoldMoment(
+      {} as GsapKit,
+      { fromTo } as unknown as MomentTimeline,
+      document.createElement("div"),
+    );
+    expect(fromTo).not.toHaveBeenCalled();
+    expect(moved).toEqual([]);
+  });
 });
