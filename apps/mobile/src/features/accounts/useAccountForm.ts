@@ -23,8 +23,9 @@ import {
   typeChangeFlipsSign,
 } from "@flump/finance-engine/account-form";
 import * as Crypto from "expo-crypto";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { AccessibilityInfo } from "react-native";
+import { parseMoneyInput } from "../../components/CurrencyInput/CurrencyInput";
 import { ACCOUNT_FORM, FIX_FIELDS, saveFailedMessage } from "../../copy/accountForms";
 import { type AccountWriteResult, useAccountWrites } from "../../data/accountWrites";
 import {
@@ -84,6 +85,7 @@ export function useAccountForm({
   );
   const [opened] = useState<AccountFormState>(() => startFor(mode, prefill));
   const [form, setForm] = useState<AccountFormState>(opened);
+  const balanceTextRef = useRef(opened.balance);
   const [requestKey] = useState(() => Crypto.randomUUID());
   const [linkTouched, setLinkTouched] = useState(false);
   const [homeValue, setHomeValue] = useState<number | null>(null);
@@ -98,7 +100,7 @@ export function useAccountForm({
       return next;
     });
   }, []);
-  const [errors, setErrors] = useState<AccountFormErrors>({});
+  const [tried, setTried] = useState(false);
   const [busy, setBusy] = useState<"saving" | "deleting" | null>(null);
   const [alert, setAlertState] = useState<string | null>(null);
   // Counts each alert shown, so the screen scrolls to it even when the words repeat.
@@ -135,6 +137,22 @@ export function useAccountForm({
     [form, accounts, saved?.linkedAccountId, editing, linkTouched],
   );
 
+  // Recompute field errors as the user edits values or switches account type, only after a refused save.
+  const errors = useMemo<AccountFormErrors>(
+    () =>
+      tried
+        ? validateAccountForm({
+            state: form,
+            editing,
+            showsJoint,
+            unread,
+            belowZero,
+            homeValue: links.showHomeValue ? homeValue : null,
+          })
+        : {},
+    [tried, form, editing, showsJoint, unread, belowZero, links.showHomeValue, homeValue],
+  );
+
   /** Sets one field that holds text or a choice. */
   const set = useCallback(
     <K extends keyof AccountFormState>(key: K, value: AccountFormState[K]) => {
@@ -146,6 +164,7 @@ export function useAccountForm({
   /** A typed figure: its value as text, and whether the control could read what was typed. */
   const setFigure = useCallback(
     (key: AccountFormField & keyof AccountFormState, value: number | null, text: string) => {
+      if (key === "balance") balanceTextRef.current = text;
       setForm((prev) => ({ ...prev, [key]: asText(value) }));
       noteMinus(key, value, text);
       setUnread((prev) => {
@@ -199,9 +218,32 @@ export function useAccountForm({
     [noteMinus],
   );
 
-  /** A new type clears the kind, as web's select does. */
+  /** A new type clears the kind, as web's select does, and re-evaluates a typed negative balance. */
   const setType = useCallback((type: string) => {
-    setForm((prev) => ({ ...prev, type, accountSubtype: "" }));
+    const allowsNegative = !isOwedAccountType(type);
+    const reparsed = allowsNegative ? parseMoneyInput(balanceTextRef.current, true) : null;
+    setForm((prev) => ({
+      ...prev,
+      type,
+      accountSubtype: "",
+      ...(allowsNegative && prev.balance === "" && reparsed !== null
+        ? { balance: asText(reparsed) }
+        : {}),
+    }));
+    if (allowsNegative && reparsed !== null) {
+      setBelowZero((prev) => {
+        if (!prev.has("balance")) return prev;
+        const next = new Set(prev);
+        next.delete("balance");
+        return next;
+      });
+      setUnread((prev) => {
+        if (!prev.has("balance")) return prev;
+        const next = new Set(prev);
+        next.delete("balance");
+        return next;
+      });
+    }
   }, []);
 
   const setOwnership = useCallback((ownership: AccountOwnership) => {
@@ -233,8 +275,8 @@ export function useAccountForm({
       belowZero,
       homeValue: links.showHomeValue ? homeValue : null,
     });
-    setErrors(found);
     if (Object.keys(found).length > 0) {
+      setTried(true);
       setAlert(FIX_FIELDS);
       return;
     }
@@ -305,6 +347,7 @@ export function useAccountForm({
   }, [busy, saved, writes, onDeleted]);
 
   const resolvedShare = resolveSharePercent(effectiveOwnership, form.sharePercent);
+  const shownAlert = alert === FIX_FIELDS && Object.keys(errors).length === 0 ? null : alert;
 
   return {
     editing,
@@ -315,7 +358,7 @@ export function useAccountForm({
     links,
     homeValue,
     errors,
-    alert,
+    alert: shownAlert,
     alertCount,
     busy,
     /** Web's note under ownership for a joint debt. */

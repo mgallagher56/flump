@@ -299,6 +299,81 @@ describe("AccountForm: add", () => {
     await choose("account-form-type", "Saving");
     expect(screen.queryByTestId("account-form-ownership")).toBeNull();
   });
+
+  it("clears field errors as fields become valid and recomputes errors when the account type changes", async () => {
+    const api = fakeApi(routes(household()));
+    await form(api, { kind: "add" });
+    // Errors never show before the first refused save, even after switching type or clearing Name.
+    await choose("account-form-type", "Credit Card");
+    await type("account-form-name", "Card");
+    await type("account-form-name", "");
+    expect(screen.queryByText("Enter a name for this account.")).toBeNull();
+    expect(screen.queryByText("Enter the amount owed. Use 0 if nothing is owed.")).toBeNull();
+    expect(screen.queryByTestId("account-form-alert")).toBeNull();
+
+    await save();
+    expect(screen.getByText("Enter a name for this account.")).toBeOnTheScreen();
+    expect(screen.getByText("Enter the amount owed. Use 0 if nothing is owed.")).toBeOnTheScreen();
+    expect(screen.getByTestId("account-form-alert")).toHaveTextContent(
+      "Some details need changing. Each one says what to change.",
+    );
+
+    // Typing a name clears only the name error; the balance error remains.
+    await type("account-form-name", "Holiday fund");
+    expect(screen.queryByText("Enter a name for this account.")).toBeNull();
+    expect(screen.getByText("Enter the amount owed. Use 0 if nothing is owed.")).toBeOnTheScreen();
+
+    // Switching to Savings recomputes the balance error into non-owed wording.
+    await choose("account-form-type", "Saving");
+    expect(screen.queryByText("Enter the amount owed. Use 0 if nothing is owed.")).toBeNull();
+    expect(screen.getByText("Enter the balance. Use 0 if it is empty.")).toBeOnTheScreen();
+
+    // Typing a valid balance clears both the balance error and the top alert.
+    await type("account-form-balance", "500");
+    expect(screen.queryByText("Enter the balance. Use 0 if it is empty.")).toBeNull();
+    expect(screen.queryByTestId("account-form-alert")).toBeNull();
+  });
+
+  it("recomputes negative balance errors in both directions when switching account types", async () => {
+    const api = fakeApi(routes(household(), { "POST /accounts": created }));
+    await form(api, { kind: "add" });
+    await choose("account-form-type", "Credit Card");
+    await type("account-form-name", "Card");
+    await type("account-form-balance", "-500");
+    await save();
+    expect(
+      screen.getByText("An amount owed cannot be below £0. Enter it without a minus sign."),
+    ).toBeOnTheScreen();
+    expect(screen.getByTestId("account-form-alert")).toBeOnTheScreen();
+
+    // Switching to Saving makes -500 valid, clears the error and alert, and saves -500.
+    await choose("account-form-type", "Saving");
+    expect(
+      screen.queryByText("An amount owed cannot be below £0. Enter it without a minus sign."),
+    ).toBeNull();
+    expect(screen.queryByTestId("account-form-alert")).toBeNull();
+    await save();
+    expect(posts(api)[0]?.body).toMatchObject({ type: "Saving", balance: -500 });
+
+    // Switching from Current with a negative balance to Credit Card surfaces the owed error; switching back clears it.
+    await form(fakeApi(routes(household())), { kind: "add" });
+    await type("account-form-balance", "-120");
+    await save();
+    expect(screen.getByText("Enter a name for this account.")).toBeOnTheScreen();
+    expect(
+      screen.queryByText("An amount owed cannot be below £0. Enter it without a minus sign."),
+    ).toBeNull();
+
+    await choose("account-form-type", "Credit Card");
+    expect(
+      screen.getByText("An amount owed cannot be below £0. Enter it without a minus sign."),
+    ).toBeOnTheScreen();
+
+    await choose("account-form-type", "Current");
+    expect(
+      screen.queryByText("An amount owed cannot be below £0. Enter it without a minus sign."),
+    ).toBeNull();
+  });
 });
 
 describe("AccountForm: loading", () => {
