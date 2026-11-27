@@ -2,6 +2,7 @@ import { createFrameRateCheck, useScenePower } from "@repo/ui";
 import { cx } from "@repo/ui/styled-system/css";
 import { type FC, type ReactNode, type RefObject, useEffect, useRef, useState } from "react";
 import { useAmbientMotion } from "../../context/AmbientMotionContext";
+import { useStillMotion } from "../../context/StillMotionContext";
 import { stage, still } from "./SceneStage.styles";
 
 /** The frame rate check's verdict (`createFrameRateCheck` in `@repo/ui`). */
@@ -82,7 +83,9 @@ export const SceneStage: FC<SceneStageProps> = ({
   const reportFps = power.reportFps;
   const [failed, setFailed] = useState(false);
   const [drawn, setDrawn] = useState(false);
-  const live = power.mode === "live" && !failed;
+  // A still page (a story showing the rest state) never loads the scene, as with reduced motion.
+  const stillPage = useStillMotion();
+  const live = power.mode === "live" && !failed && !stillPage;
 
   useEffect(() => {
     const watched = watchRef.current;
@@ -171,7 +174,13 @@ export const SceneStage: FC<SceneStageProps> = ({
       className={cx(stage({ fit }), className)}
       data-scene={scene}
       data-still-reason={
-        scene === "still" ? (failed ? "failed" : (power.reason ?? "loading")) : undefined
+        scene === "still"
+          ? failed
+            ? "failed"
+            : stillPage
+              ? "still-page"
+              : (power.reason ?? "loading")
+          : undefined
       }
       data-testid={testId}
       ref={stageRef}

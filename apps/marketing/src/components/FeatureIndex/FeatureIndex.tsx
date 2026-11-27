@@ -1,6 +1,7 @@
 import { Icon, marketingMs, StatusBadge, usePrefersReducedMotion } from "@repo/ui";
 import { ArrowRight, ChevronDown } from "lucide-react";
 import { type FC, useEffect, useRef } from "react";
+import { useStillMotion } from "../../context/StillMotionContext";
 import { GROUP_TONES } from "../../utils/areaOrbTones";
 import {
   FEATURE_GROUPS,
@@ -103,7 +104,10 @@ export function toggleLine(details: HTMLDetailsElement): boolean {
 
 const Line: FC<{ line: FeatureLine }> = ({ line }) => {
   const ref = useRef<HTMLDetailsElement>(null);
-  const reduced = usePrefersReducedMotion();
+  // Reduced motion, or a still page (a story showing the rest state): the line opens at once.
+  const prefersReduced = usePrefersReducedMotion();
+  const still = useStillMotion();
+  const reduced = prefersReduced || still;
   // The summary is the details element's own button (its click also fires from the keyboard):
   // with motion welcome, the click animates the panel instead of jumping it open or shut.
   useEffect(() => {

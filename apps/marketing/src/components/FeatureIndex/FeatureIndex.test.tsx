@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
+import { StillMotionProvider } from "../../context/StillMotionContext";
 import { ALL_FEATURE_LINES, FEATURE_GROUPS } from "../../utils/featureIndex";
 import { FeatureIndex, toggleLine } from "./FeatureIndex";
 
@@ -76,6 +77,27 @@ describe("FeatureIndex", () => {
     runs[1]?.finish();
     expect(details.open).toBe(false);
     expect(details.dataset.state).toBeUndefined();
+  });
+
+  it("opens and closes a line at once on a still page (a story's rest state), never animating", () => {
+    render(
+      <StillMotionProvider>
+        <FeatureIndex />
+      </StillMotionProvider>,
+    );
+    const details = detailsOf("net-worth");
+    const panel = details.querySelector<HTMLElement>("[data-line-panel]") as HTMLElement;
+    let animated = 0;
+    panel.animate = (() => {
+      animated += 1;
+      return { onfinish: null } as unknown as Animation;
+    }) as typeof panel.animate;
+    const summary = details.querySelector("summary") as HTMLElement;
+    fireEvent.click(summary);
+    expect(details.open).toBe(true);
+    fireEvent.click(summary);
+    expect(details.open).toBe(false);
+    expect(animated).toBe(0);
   });
 
   it("opens a line again when it is clicked while closing", () => {

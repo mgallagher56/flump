@@ -2,6 +2,7 @@ import type { ScenePower, StillReason } from "@repo/ui";
 import { act, render, screen } from "@testing-library/react";
 import { createRef } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { StillMotionProvider } from "../../context/StillMotionContext";
 import { SceneStage, type SceneStartContext } from "./SceneStage";
 import { stage } from "./SceneStage.styles";
 
@@ -68,6 +69,16 @@ afterEach(() => {
 });
 
 describe("SceneStage", () => {
+  it("never starts the scene on a still page (a story's rest state), even when live is allowed", async () => {
+    power.current = live();
+    render(<StillMotionProvider>{tree()}</StillMotionProvider>);
+    await act(async () => {});
+    const stage = screen.getByTestId("scene-stage");
+    expect(stage.getAttribute("data-scene")).toBe("still");
+    expect(stage.getAttribute("data-still-reason")).toBe("still-page");
+    expect(scene.start).not.toHaveBeenCalled();
+  });
+
   it("is the journey's full-screen layer by default and fills its band with fit band", () => {
     power.current = still("pending");
     const { rerender } = render(tree());

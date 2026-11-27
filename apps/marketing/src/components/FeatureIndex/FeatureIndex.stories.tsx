@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, userEvent, within } from "storybook/test";
+import { StillMotionProvider } from "../../context/StillMotionContext";
 import { FEATURE_GROUPS } from "../../utils/featureIndex";
 import { FeatureIndex } from "./FeatureIndex";
 
@@ -7,6 +8,15 @@ const meta: Meta<typeof FeatureIndex> = {
   title: "3. Patterns/Marketing/FeatureIndex",
   component: FeatureIndex,
   args: { groupHrefs: { budget: "/features/budget", pay: "/features/pay" } },
+  decorators: [
+    // The rest state: a line opens and closes at once, as with reduced motion (the animated
+    // opening is covered by FeatureIndex.test.tsx).
+    (Story) => (
+      <StillMotionProvider>
+        <Story />
+      </StillMotionProvider>
+    ),
+  ],
 };
 
 export default meta;
