@@ -610,10 +610,10 @@ Mapped pages: 50 | Sections: 290 | Excluded routes: 25
 - Route: `/accounts/:id` (auth: `required`, file: `apps/mobile/app/(app)/accounts/[id].tsx`)
 - Purpose: One account's page (E12 S6), also opened by flump://accounts/<id>, as web's. The balance or amount owed with the line that dates it, a joint account's whole beside the share, then its balance history with the chart, its summary and every month. Read only; editing opens the website until S8. An unknown id says so with Back to accounts.
 
-| Section           | Component                                                      | Facts read                                                                                                   | Figures |
-| ----------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ------- |
-| `hero`            | `apps/mobile/src/screens/AccountDetail/AccountDetail.tsx`      | `account-name`, `account-type`, `account-balance`, `ownership-share`, `balance-history`, `net-worth-choices` | -       |
-| `balance-history` | `apps/mobile/src/components/MonthLineChart/MonthLineChart.tsx` | `account-balance`, `balance-history`                                                                         | -       |
+| Section           | Component                                                 | Facts read                                                                                                   | Figures |
+| ----------------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ------- |
+| `hero`            | `apps/mobile/src/screens/AccountDetail/AccountDetail.tsx` | `account-name`, `account-type`, `account-balance`, `ownership-share`, `balance-history`, `net-worth-choices` | -       |
+| `balance-history` | `apps/mobile/src/components/ChartFigure/ChartFigure.tsx`  | `account-balance`, `balance-history`                                                                         | -       |
 
 ### mobile-accounts: Accounts
 
@@ -659,11 +659,11 @@ Mapped pages: 50 | Sections: 290 | Excluded routes: 25
 - Route: `/accounts/history` (auth: `required`, file: `apps/mobile/app/(app)/accounts/history.tsx`)
 - Purpose: Net worth history (E12 S6), also opened by flump://accounts/history, from the Accounts list and Home's trend bars, as web's. The change between the last two recorded months, the chart from three recorded months with its summary, every month, each account's change behind one control and the next check-in date. Read only; earlier months are added on the website until S8.
 
-| Section              | Component                                                      | Facts read                                                                 | Figures               |
-| -------------------- | -------------------------------------------------------------- | -------------------------------------------------------------------------- | --------------------- |
-| `hero`               | `apps/mobile/src/screens/NetWorthHistory/NetWorthHistory.tsx`  | `balance-history`, `account-balance`, `net-worth-choices`, `check-in-done` | `net-worth-over-time` |
-| `history-chart`      | `apps/mobile/src/components/MonthLineChart/MonthLineChart.tsx` | `balance-history`                                                          | `net-worth-over-time` |
-| `changes-by-account` | `apps/mobile/src/components/FigureList/FigureList.tsx`         | `balance-history`                                                          | -                     |
+| Section              | Component                                                     | Facts read                                                                 | Figures               |
+| -------------------- | ------------------------------------------------------------- | -------------------------------------------------------------------------- | --------------------- |
+| `hero`               | `apps/mobile/src/screens/NetWorthHistory/NetWorthHistory.tsx` | `balance-history`, `account-balance`, `net-worth-choices`, `check-in-done` | `net-worth-over-time` |
+| `history-chart`      | `apps/mobile/src/components/ChartFigure/ChartFigure.tsx`      | `balance-history`                                                          | `net-worth-over-time` |
+| `changes-by-account` | `apps/mobile/src/components/DataList/DataList.tsx`            | `balance-history`                                                          | -                     |
 
 ### mobile-not-found: Link not found
 

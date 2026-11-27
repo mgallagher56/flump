@@ -1,11 +1,11 @@
 import { createElement } from "react";
 import { Text } from "../Text";
-import type { DisclosureProps } from "./Disclosure";
+import type { CollapsibleDrawerProps } from "./CollapsibleDrawer";
 
 const body = (words: string) => createElement(Text, null, words);
 
 /** Named prop sets for the dev gallery and the tests (in place of Storybook stories). */
-export const disclosureStates = {
+export const collapsibleDrawerStates = {
   closed: {
     label: "Show changes by account",
     openLabel: "Hide changes by account",
@@ -17,4 +17,4 @@ export const disclosureStates = {
     children: body("Each account's change between the last two months."),
     initiallyOpen: true,
   },
-} satisfies Record<string, DisclosureProps>;
+} satisfies Record<string, CollapsibleDrawerProps>;

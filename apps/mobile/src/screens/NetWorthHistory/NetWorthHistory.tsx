@@ -1,11 +1,11 @@
 import { Linking } from "react-native";
 import { Button } from "../../components/Button";
-import { Disclosure } from "../../components/Disclosure";
+import { ChartFigure } from "../../components/ChartFigure";
+import { CollapsibleDrawer } from "../../components/CollapsibleDrawer";
+import { DataList } from "../../components/DataList";
 import { EmptyState } from "../../components/EmptyState";
 import { ErrorState } from "../../components/ErrorState";
-import { FigureList } from "../../components/FigureList";
 import { HeroFigure } from "../../components/HeroFigure";
-import { MonthLineChart } from "../../components/MonthLineChart";
 import { Screen } from "../../components/Screen";
 import { Text } from "../../components/Text";
 import {
@@ -216,7 +216,7 @@ function Loaded({
       <Text textStyle="body.sm" color="secondary">
         {HISTORY.chartDescription}
       </Text>
-      {enoughForChart ? <MonthLineChart points={history.chart} testID="history-chart" /> : null}
+      {enoughForChart ? <ChartFigure points={history.chart} testID="history-chart" /> : null}
       {summary ? <Text testID="history-chart-summary">{summary}</Text> : null}
       {enoughForChart ? null : (
         <Text color="secondary" testID="history-few-months">
@@ -241,7 +241,7 @@ function Loaded({
           {nextCheckInLine(history.nextCheckIn)}
         </Text>
       ) : null}
-      <FigureList
+      <DataList
         rows={history.series.map((p) => ({
           id: p.month,
           label: formatMonth(p.month),
@@ -251,12 +251,12 @@ function Loaded({
         testID="history-months"
       />
       {latestRecorded && previousRecorded && history.accountChanges.length > 0 ? (
-        <Disclosure
+        <CollapsibleDrawer
           label={HISTORY.showChanges}
           openLabel={HISTORY.hideChanges}
           testID="history-changes"
         >
-          <FigureList
+          <DataList
             caption={changeByAccountCaption(previousRecorded.month, latestRecorded.month)}
             rows={history.accountChanges.map((c) => ({
               id: c.accountId,
@@ -267,7 +267,7 @@ function Loaded({
             }))}
             testID="history-change-rows"
           />
-        </Disclosure>
+        </CollapsibleDrawer>
       ) : null}
     </>
   );

@@ -9,7 +9,7 @@ import {
   DASH,
   POINT_RADIUS,
   STROKE,
-} from "./MonthLineChart.styles";
+} from "./ChartFigure.styles";
 
 /** One month on the line: the engine's height fraction, and whether its figure is carried. */
 interface MonthLinePoint {
@@ -19,7 +19,7 @@ interface MonthLinePoint {
   carried: boolean;
 }
 
-export interface MonthLineChartProps {
+export interface ChartFigureProps {
   /** Oldest first, evenly spaced. Two or more to draw a line. */
   points: readonly MonthLinePoint[];
   testID?: string;
@@ -40,7 +40,7 @@ function place(index: number, count: number, fraction: number, width: number) {
  * latest month marked. In the text colour, so a fall has no colour of its own. Hidden from screen
  * readers, which read the summary and the month list beside it instead, as web's chart.
  */
-export function MonthLineChart({ points, testID = "month-line-chart" }: MonthLineChartProps) {
+export function ChartFigure({ points, testID = "month-line-chart" }: ChartFigureProps) {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [width, setWidth] = useState(0);

@@ -1,1 +1,0 @@
-export { FigureList } from "./FigureList";

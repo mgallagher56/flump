@@ -9,19 +9,21 @@ import { Button } from "../../components/Button";
 import { buttonStates } from "../../components/Button/Button.states";
 import { Card } from "../../components/Card";
 import { cardStates } from "../../components/Card/Card.states";
+import { ChartFigure } from "../../components/ChartFigure";
+import { chartFigureStates } from "../../components/ChartFigure/ChartFigure.states";
+import { CollapsibleDrawer } from "../../components/CollapsibleDrawer";
+import { collapsibleDrawerStates } from "../../components/CollapsibleDrawer/CollapsibleDrawer.states";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
 import type { ConfirmDialogProps } from "../../components/ConfirmDialog/ConfirmDialog";
 import { confirmDialogStates } from "../../components/ConfirmDialog/ConfirmDialog.states";
 import { CurrencyInput } from "../../components/CurrencyInput";
 import { currencyInputStates } from "../../components/CurrencyInput/CurrencyInput.states";
-import { Disclosure } from "../../components/Disclosure";
-import { disclosureStates } from "../../components/Disclosure/Disclosure.states";
+import { DataList } from "../../components/DataList";
+import { dataListStates } from "../../components/DataList/DataList.states";
 import { EmptyState } from "../../components/EmptyState";
 import { emptyStateStates } from "../../components/EmptyState/EmptyState.states";
 import { ErrorState } from "../../components/ErrorState";
 import { errorStateStates } from "../../components/ErrorState/ErrorState.states";
-import { FigureList } from "../../components/FigureList";
-import { figureListStates } from "../../components/FigureList/FigureList.states";
 import { FlumpLogo } from "../../components/FlumpLogo";
 import { flumpLogoStates } from "../../components/FlumpLogo/FlumpLogo.states";
 import { FormField } from "../../components/FormField";
@@ -38,8 +40,6 @@ import { ListRow } from "../../components/ListRow";
 import { listRowStates } from "../../components/ListRow/ListRow.states";
 import { Money } from "../../components/Money";
 import { moneyStates } from "../../components/Money/Money.states";
-import { MonthLineChart } from "../../components/MonthLineChart";
-import { monthLineChartStates } from "../../components/MonthLineChart/MonthLineChart.states";
 import { NetWorthBasisLine } from "../../components/NetWorthBasisLine";
 import { netWorthBasisLineStates } from "../../components/NetWorthBasisLine/NetWorthBasisLine.states";
 import { NetWorthTrendBars } from "../../components/NetWorthTrendBars";
@@ -137,7 +137,7 @@ export const GALLERY: readonly GalleryEntry[] = [
   entry("EmptyState", EmptyState, emptyStateStates),
   entry("AccountRow", AccountRow, accountRowStates),
   entry("AccountGroup", AccountGroup, accountGroupStates),
-  entry("FigureList", FigureList, figureListStates),
-  entry("MonthLineChart", MonthLineChart, monthLineChartStates),
-  entry("Disclosure", Disclosure, disclosureStates),
+  entry("DataList", DataList, dataListStates),
+  entry("ChartFigure", ChartFigure, chartFigureStates),
+  entry("CollapsibleDrawer", CollapsibleDrawer, collapsibleDrawerStates),
 ];
