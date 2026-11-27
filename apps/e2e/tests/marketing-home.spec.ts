@@ -61,6 +61,18 @@ test.describe("marketing home: layout", () => {
           if (target)
             expect(Math.abs(target.x + target.width / 2 - viewportCentre)).toBeLessThan(2);
         }
+        // Each hero figure sits on one line ("About 10.2 months" never wraps; PR 975 review).
+        const lines = await page
+          .locator("[data-hero-value]")
+          .evaluateAll((els) =>
+            els.map((el) =>
+              Math.round(
+                el.getBoundingClientRect().height /
+                  Number.parseFloat(getComputedStyle(el).lineHeight),
+              ),
+            ),
+          );
+        expect(lines).toEqual([1, 1, 1]);
         // No band, bubble or orb makes the page scroll sideways.
         expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
         await page.context().close();
@@ -125,7 +137,7 @@ test.describe("marketing home: without JavaScript and with reduced motion (MK1)"
     await expect(page.getByTestId("journey-orb")).toHaveAttribute("data-scene", "still");
     await expect(page.locator("[data-enhanced]")).toHaveCount(0);
     // Nothing ambient moves, so there is no control to stop it.
-    await expect(page.getByRole("button", { name: /background animation/ })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: /^(Pause|Play) animation$/ })).toHaveCount(0);
     await page.close();
   });
 });
@@ -135,9 +147,7 @@ test.describe("marketing home: controls", () => {
     page,
   }) => {
     await page.goto(HOME);
-    const pause = page
-      .getByTestId("home-hero")
-      .getByRole("button", { name: "Pause background animation" });
+    const pause = page.getByTestId("home-hero").getByRole("button", { name: "Pause animation" });
     await expect(pause).toBeEnabled();
     await pause.focus();
     await page.keyboard.press("Enter");
@@ -148,9 +158,22 @@ test.describe("marketing home: controls", () => {
     expect(states.length).toBeGreaterThan(0);
     expect(new Set(states)).toEqual(new Set(["paused"]));
     // Every control on the page shows the same state.
-    await expect(page.getByRole("button", { name: "Play background animation" })).toHaveCount(2);
-    await page.keyboard.press("Enter");
+    await expect(page.getByRole("button", { name: "Play animation" })).toHaveCount(2);
+    // An entrance still to play shows at once: the rough figures steps are fully opaque the moment
+    // their band is in view, and stay so after "Play animation".
+    await page.locator("#rough-figures").scrollIntoViewIfNeeded();
+    const opacities = await page
+      .locator("#rough-figures [data-step]")
+      .evaluateAll((els) => els.map((el) => getComputedStyle(el).opacity));
+    expect(opacities).toEqual(["1", "1", "1"]);
+    await page.getByTestId("home-hero").getByRole("button", { name: "Play animation" }).click();
     await expect(page.locator("html")).not.toHaveAttribute("data-ambient", "paused");
+    await page.waitForTimeout(300);
+    expect(
+      await page
+        .locator("#rough-figures [data-step]")
+        .evaluateAll((els) => els.map((el) => getComputedStyle(el).opacity)),
+    ).toEqual(["1", "1", "1"]);
   });
 
   test("the features carousel steps by keyboard, with dots and never a count (MK9)", async ({
@@ -228,6 +251,30 @@ test.describe("marketing home: controls", () => {
       );
     expect(partial).toEqual([]);
   });
+});
+
+test.describe("marketing home: no errors", () => {
+  // The scene, GSAP and the hero's assembly load only after first paint and as the visitor
+  // scrolls, so a load-only check never reaches them. Scroll the whole page at each width, with
+  // motion on, and fail on any uncaught error or console error (PR 975: a resize during the
+  // scene's shader compile threw before its frame code existed).
+  for (const width of [390, 1000, 1440] as const) {
+    test(`a full scroll at ${width}px throws nothing and logs no error`, async ({ browser }) => {
+      const page = await openPage(browser, { viewport: { width, height: 900 } });
+      const problems: string[] = [];
+      page.on("pageerror", (error) => problems.push(`pageerror: ${error.message}`));
+      page.on("console", (message) => {
+        if (message.type() === "error") problems.push(`console: ${message.text()}`);
+      });
+      await scrollThrough(page);
+      // Back up through the journey, so its scene resizes and redraws on the way.
+      await page.locator("#journey").scrollIntoViewIfNeeded();
+      await page.setViewportSize({ width: width - 40, height: 860 });
+      await page.waitForTimeout(1500);
+      expect(problems).toEqual([]);
+      await page.context().close();
+    });
+  }
 });
 
 test.describe("marketing home: accessibility", () => {

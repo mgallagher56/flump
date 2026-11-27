@@ -90,8 +90,20 @@ export const featureCard = css({
   gap: "3",
 });
 
-/** The document picture: centred, never narrower than its 280px floor (STYLE-GUIDE 8.3). */
-export const featurePicture = css({ alignSelf: "center", width: "full", maxWidth: "xs" });
+/**
+ * The document picture: centred, never narrower than its 280px floor (STYLE-GUIDE 8.3), in a box of
+ * one height for every tile, so each tile's name starts on the same line and a taller picture (the
+ * AI connection's chat) never stretches its row.
+ */
+export const featurePicture = css({
+  alignSelf: "center",
+  width: "full",
+  maxWidth: "xs",
+  height: "11.75rem",
+  display: "flex",
+  justifyContent: "center",
+  "& svg": { height: "full", width: "auto", maxWidth: "full" },
+});
 
 export const featureName = css({ textStyle: "heading.md", color: "text.primary", margin: 0 });
 

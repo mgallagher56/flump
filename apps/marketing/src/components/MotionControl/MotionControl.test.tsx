@@ -25,14 +25,14 @@ describe("MotionControl", () => {
         <MotionControl />
       </AmbientMotionProvider>,
     );
-    const pause = screen.getByRole("button", { name: "Pause background animation" });
+    const pause = screen.getByRole("button", { name: "Pause animation" });
     expect(pause.hasAttribute("disabled")).toBe(false);
     act(() => fireEvent.click(pause));
     expect(document.documentElement.dataset.ambient).toBe("paused");
-    const play = screen.getByRole("button", { name: "Play background animation" });
+    const play = screen.getByRole("button", { name: "Play animation" });
     act(() => fireEvent.click(play));
     expect(document.documentElement.dataset.ambient).toBeUndefined();
-    expect(screen.getByRole("button", { name: "Pause background animation" })).toBe(play);
+    expect(screen.getByRole("button", { name: "Pause animation" })).toBe(play);
   });
 
   it("is out of reach with reduced motion, when nothing ambient moves", () => {

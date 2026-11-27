@@ -198,7 +198,7 @@ export const HomeFeatures: FC = () => {
     <MarketingSection
       className={featuresBand}
       id="features"
-      subtitle="The same five areas as the app. Use one or all five."
+      subtitle="The app's five areas, and the AI connection. Use one area or all five."
       title={FEATURES_INDEX.title}
       tone="card"
     >

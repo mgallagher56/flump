@@ -316,12 +316,6 @@ export async function createJourneyScene(
     orbLight.distance = metrics.orbRadius * 10;
   };
   layout();
-  const resizeObserver = new ResizeObserver(() => {
-    layout();
-    schedule();
-  });
-  resizeObserver.observe(stage);
-  resizeObserver.observe(rail);
 
   // Compile the glass off the main thread where the browser can, before the first frame.
   await renderer.compileAsync(scene, camera).catch(() => undefined);
@@ -443,6 +437,15 @@ export async function createJourneyScene(
     last = 0;
     frameCheck.reset();
   };
+
+  // Observed only now that the frame code exists: a resize during the compile above must not call
+  // schedule() before its state is declared (a temporal dead zone error, PR 975 review).
+  const resizeObserver = new ResizeObserver(() => {
+    layout();
+    schedule();
+  });
+  resizeObserver.observe(stage);
+  resizeObserver.observe(rail);
 
   const intersection = new IntersectionObserver(([entry]) => {
     onScreen = entry?.isIntersecting ?? false;

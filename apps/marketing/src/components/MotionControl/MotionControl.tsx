@@ -6,7 +6,8 @@ import { control } from "./MotionControl.styles";
 
 /**
  * Stops and restarts the page's ambient motion: the bubble fields and the orb at rest
- * (UX-GUIDELINES MK14, WCAG 2.2.2 "Pause, stop, hide"). A real button, reachable by keyboard and
+ * (UX-GUIDELINES MK14, WCAG 2.2.2 "Pause, stop, hide"). Pausing also shows every entrance still to
+ * play at its finished state, for good (`useGsapMoment`), so the label says "animation". A real button, reachable by keyboard and
  * visible wherever ambient motion plays. Hidden, and out of the tab order, before hydration and with
  * reduced motion, when nothing ambient moves.
  */
@@ -24,7 +25,7 @@ export const MotionControl: FC = () => {
         variant="ghost"
       >
         {paused ? <Play aria-hidden="true" size={16} /> : <Pause aria-hidden="true" size={16} />}
-        {paused ? "Play background animation" : "Pause background animation"}
+        {paused ? "Play animation" : "Pause animation"}
       </Button>
     </span>
   );

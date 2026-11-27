@@ -21,11 +21,11 @@ type Story = StoryObj<typeof MotionControl>;
 
 const assertToggle: Story["play"] = async ({ canvasElement }) => {
   const canvas = within(canvasElement);
-  const pause = canvas.queryByRole("button", { name: "Pause background animation" });
+  const pause = canvas.queryByRole("button", { name: "Pause animation" });
   // With reduced motion (as in the a11y runner) the control is hidden: nothing ambient moves.
   if (!pause) return;
   await userEvent.click(pause);
-  await expect(canvas.getByRole("button", { name: "Play background animation" })).toBeVisible();
+  await expect(canvas.getByRole("button", { name: "Play animation" })).toBeVisible();
 };
 
 export const Light: Story = { globals: { theme: "light" }, play: assertToggle };
