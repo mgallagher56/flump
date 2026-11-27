@@ -98,7 +98,7 @@ const WhatYouSee: FC<{ feature: MoneyArea }> = ({ feature }) => {
           )}
         </div>
         <div className={setPiece} data-testid="area-set-piece" ref={pieceRef}>
-          <JourneySample stop={feature.key} />
+          <JourneySample setPiece stop={feature.key} />
         </div>
       </div>
     </MarketingBand>

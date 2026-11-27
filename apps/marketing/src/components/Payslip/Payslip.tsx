@@ -4,6 +4,8 @@ import { formatGbp, formatGbpPence } from "../CountUpFigure/figureFormats";
 import * as s from "./Payslip.styles";
 
 export interface PayslipProps {
+  /** `setPiece`: an area page's set piece, sized as the approved area prototypes. */
+  size?: "journey" | "setPiece";
   /** Salary a year, in pounds. */
   salary: number;
   /** Pay this month, before deductions. */
@@ -20,10 +22,10 @@ export interface PayslipProps {
  * (MK1); `unfoldMoment` opens it once: the lower third turns down from behind, then the top third
  * up off the front, each shading as it turns. Figures in tabular en-GB pounds.
  */
-export const Payslip: FC<PayslipProps> = ({ salary, gross, rows, net }) => (
+export const Payslip: FC<PayslipProps> = ({ salary, gross, rows, net, size = "journey" }) => (
   <div className={s.wrap}>
     <article aria-label="Example payslip" className={s.slip} data-payslip="">
-      <div className={s.panel({ fold: "top" })} data-fold="top">
+      <div className={s.panel({ fold: "top", size })} data-fold="top">
         <div className={s.face({ fold: "top" })}>
           <p className={s.head}>
             <span>Payslip, one month</span>
@@ -43,7 +45,7 @@ export const Payslip: FC<PayslipProps> = ({ salary, gross, rows, net }) => (
         <span aria-hidden="true" className={s.back({ fold: "top" })} />
         <span aria-hidden="true" className={s.shade({ fold: "top" })} data-fold-shade="" />
       </div>
-      <div className={s.panel({ fold: "middle" })}>
+      <div className={s.panel({ fold: "middle", size })}>
         <div className={s.face({ fold: "middle" })}>
           <dl className={s.rows}>
             {rows.map((row) => (
@@ -55,7 +57,7 @@ export const Payslip: FC<PayslipProps> = ({ salary, gross, rows, net }) => (
           </dl>
         </div>
       </div>
-      <div className={s.panel({ fold: "bottom" })} data-fold="bottom">
+      <div className={s.panel({ fold: "bottom", size })} data-fold="bottom">
         <div className={s.face({ fold: "bottom" })}>
           <p className={s.net}>
             <span>Take-home pay</span>

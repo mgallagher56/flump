@@ -10,8 +10,8 @@ export const closeCard = css({
   borderRadius: "28px",
 });
 
-/** The ticket at about the prototype's height, smaller than the home page's close. */
-export const closePicture = css({ width: "min(21rem, 84%)", "& > svg": { mx: "auto" } });
+/** The ticket fills the card's width up to its own (`GettingStartedTicket`). */
+export const closePicture = css({ width: "full" });
 
 export const closeTitle = css({
   margin: 0,

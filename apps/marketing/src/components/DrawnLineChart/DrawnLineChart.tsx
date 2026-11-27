@@ -14,6 +14,8 @@ export interface DrawnLineChartProps {
   ticks: readonly { label: string; index: number }[];
   /** The line's colour, as prototype 11: sky for savings, violet for debt (never rose). */
   tone: "sky" | "violet";
+  /** `setPiece`: an area page's set piece, taller at mid widths (the approved area prototypes). */
+  size?: "journey" | "setPiece";
 }
 
 /** Readout box height and its lift above the marker, in CSS pixels. */
@@ -37,6 +39,7 @@ export const DrawnLineChart: FC<DrawnLineChartProps> = ({
   max,
   ticks,
   tone,
+  size = "journey",
 }) => {
   const line = plotPath(values, max, min);
   const area = `${line} L${PLOT.width},${PLOT.height} L0,${PLOT.height} Z`;
@@ -49,7 +52,7 @@ export const DrawnLineChart: FC<DrawnLineChartProps> = ({
     index <= 0 ? "start" : index >= lastIndex ? "end" : ("middle" as const);
   return (
     <div
-      className={s.chart({ tone })}
+      className={s.chart({ size, tone })}
       data-drawn-chart={id}
       data-max={max}
       data-min={min}

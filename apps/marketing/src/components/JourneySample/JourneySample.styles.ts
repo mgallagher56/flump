@@ -177,11 +177,19 @@ export const graphTitle = css({
   fontSize: "md",
 });
 
-export const graphFigure = css({
-  color: "text.primary",
-  fontSize: { base: "3xl", lg: "4xl" },
-  fontWeight: "bold",
-  letterSpacing: "-0.02em",
+export const graphFigure = cva({
+  base: { color: "text.primary", fontWeight: "bold", letterSpacing: "-0.02em" },
+  variants: {
+    /**
+     * An area page's set piece: the larger figure from 48rem, as the approved area prototypes
+     * (prototype 11's clamp, about 37px at 1000px), so a narrow panel stacks the title above it.
+     */
+    setPiece: {
+      false: { fontSize: { base: "3xl", lg: "4xl" } },
+      true: { fontSize: { base: "3xl", md: "4xl" } },
+    },
+  },
+  defaultVariants: { setPiece: false },
 });
 
 export const graphNote = css({
