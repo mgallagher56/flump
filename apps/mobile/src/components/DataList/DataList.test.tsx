@@ -36,6 +36,21 @@ describe("DataList", () => {
     expect(style.color).toBe(light.colors["text.primary"]);
   });
 
+  it("a second figure under the label, named, in tabular figures, read after the first", async () => {
+    await render(
+      <ThemeProvider scheme="light">
+        <DataList {...dataListStates.changes} testID="l" />
+      </ThemeProvider>,
+    );
+    expect(screen.getByTestId("l-row-b").props.accessibilityLabel).toBe(
+      "Credit card (owed), up £35, October 2026 £1,765, Confirmed",
+    );
+    const style = StyleSheet.flatten(
+      screen.getByText("October 2026: £1,765").props.style,
+    ) as TextStyle;
+    expect(style.fontVariant).toEqual(["tabular-nums"]);
+  });
+
   it.each(Object.entries(dataListStates))("%s holds at 200%% text", async (_name, props) => {
     await expectHoldsAtDoubleText(<DataList {...props} />);
   });

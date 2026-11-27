@@ -14,6 +14,11 @@ interface DataListRow {
   figure: string;
   /** What a screen reader hears for the figure when it differs ("up £150"). */
   spoken?: string;
+  /**
+   * A second figure, named, shown under the label and read after the first: an account's balance
+   * in the latest month beside its change ("October 2026", "£1,765"), as web's table column.
+   */
+  detail?: { label: string; figure: string };
   /** How the figure was given ("Calculated", "Carried forward"); nothing for a typed one. */
   note?: string | null;
 }
@@ -45,7 +50,12 @@ export function DataList({ rows, caption, testID }: DataListProps) {
           <View
             key={row.id}
             accessible
-            accessibilityLabel={[row.label, row.spoken ?? row.figure, row.note]
+            accessibilityLabel={[
+              row.label,
+              row.spoken ?? row.figure,
+              row.detail ? `${row.detail.label} ${row.detail.figure}` : null,
+              row.note,
+            ]
               .filter(Boolean)
               .join(", ")}
             style={[styles.row, i > 0 ? styles.divided : null]}
@@ -53,6 +63,11 @@ export function DataList({ rows, caption, testID }: DataListProps) {
           >
             <View style={styles.label}>
               <Text>{row.label}</Text>
+              {row.detail ? (
+                <Text textStyle="body.sm" color="secondary" tabular>
+                  {`${row.detail.label}: ${row.detail.figure}`}
+                </Text>
+              ) : null}
               {row.note ? (
                 <Text textStyle="body.sm" color="secondary">
                   {row.note}

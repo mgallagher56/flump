@@ -118,10 +118,43 @@ describe("NetWorthHistory", () => {
       .press(await screen.findByRole("button", { name: "Show changes by account" }));
     const row = (name: string) =>
       screen.getByTestId(`history-change-rows-row-${h.idOf(name)}`).props.accessibilityLabel;
-    // The card fell 35 owed, which raised net worth 35.
-    expect(row("Credit card")).toBe("Credit card (owed), up £35");
-    expect(row("Workplace pension")).toBe("Workplace pension, up £260");
+    // The card fell 35 owed, which raised net worth 35. Each row also carries October's balance,
+    // as web's table does: the card 1,800 + 35 owed, the pension 9,000 - 260.
+    expect(row("Credit card")).toBe("Credit card (owed), up £35, October 2026 £1,835");
+    expect(row("Workplace pension")).toBe("Workplace pension, up £260, October 2026 £8,740");
     expect(screen.getByText("+£35")).toBeOnTheScreen();
+    expect(screen.getByText("October 2026: £1,835")).toBeOnTheScreen();
+  });
+
+  it("a changed account's balance carries its source beside it, as web's table", async () => {
+    const h = household([
+      {
+        name: "Credit card",
+        type: "Credit Card",
+        balance: -1800,
+        sep: -1835,
+        oct: -1800,
+        sources: { 10: "calculated" },
+      },
+      {
+        name: "Workplace pension",
+        type: "Pension",
+        balance: 9000,
+        sep: 8740,
+        oct: 9000,
+        sources: { 10: "confirmed" },
+      },
+    ]);
+    await history(fakeApi(routes(h)));
+    await userEvent
+      .setup()
+      .press(await screen.findByRole("button", { name: "Show changes by account" }));
+    const row = (name: string) =>
+      screen.getByTestId(`history-change-rows-row-${h.idOf(name)}`).props.accessibilityLabel;
+    expect(row("Workplace pension")).toBe(
+      "Workplace pension, up £260, October 2026 £9,000, Confirmed",
+    );
+    expect(row("Credit card")).toBe("Credit card (owed), up £35, October 2026 £1,800, Calculated");
   });
 
   it("two recorded months: the change, but no chart and web's sentence (acceptance 8)", async () => {

@@ -13,7 +13,14 @@ export const dataListStates = {
   changes: {
     rows: [
       { id: "a", label: "Current account", figure: "+£20", spoken: "up £20" },
-      { id: "b", label: "Credit card (owed)", figure: "+£35", spoken: "up £35", note: "Confirmed" },
+      {
+        id: "b",
+        label: "Credit card (owed)",
+        figure: "+£35",
+        spoken: "up £35",
+        detail: { label: "October 2026", figure: "£1,765" },
+        note: "Confirmed",
+      },
       { id: "c", label: "Workplace pension", figure: "−£260", spoken: "down £260" },
     ],
   },
