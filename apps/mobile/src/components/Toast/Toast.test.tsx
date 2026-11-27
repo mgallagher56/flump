@@ -66,4 +66,31 @@ describe("Toast", () => {
   it("saved holds at 200% text", async () => {
     await expectHoldsAtDoubleText(<Toast {...toastStates.saved} />);
   });
+
+  it.each([
+    ["light", light],
+    ["dark", dark],
+  ] as const)(
+    "overlay placement adds the overlay shadow in %s while inline stays flat",
+    async (scheme, tokens) => {
+      await render(
+        <ThemeProvider scheme={scheme}>
+          <Toast message="Saved" testID="inline-toast" />
+          <Toast message="Saved" placement="overlay" testID="overlay-toast" />
+        </ThemeProvider>,
+      );
+      const inlineBox = StyleSheet.flatten(
+        screen.getByTestId("inline-toast").props.style,
+      ) as ViewStyle;
+      const overlayBox = StyleSheet.flatten(
+        screen.getByTestId("overlay-toast").props.style,
+      ) as ViewStyle;
+      expect(inlineBox.boxShadow).toBeUndefined();
+      expect(overlayBox.boxShadow).toBe(tokens.shadows.overlay);
+    },
+  );
+
+  it("overlay holds at 200% text", async () => {
+    await expectHoldsAtDoubleText(<Toast {...toastStates.overlay} />);
+  });
 });

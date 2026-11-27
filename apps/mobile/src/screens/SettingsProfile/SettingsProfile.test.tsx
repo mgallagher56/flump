@@ -693,4 +693,50 @@ describe("SettingsProfile", () => {
     await settle();
     expect(screen.getByLabelText("First name").props.value).toBe("Sam");
   });
+
+  it("saving shows Saved in an absolute overlay outside the scroll view without shifting or scrolling content", async () => {
+    const h = household(OWNER);
+    const api = fakeApi(
+      routes(h, {
+        "PATCH /user-profile": (body) => ({
+          ...h.profile,
+          ...(body as object),
+          updatedAt: "2026-11-20T12:05:00.000Z",
+        }),
+      }),
+    );
+    const scrollTo = jest.spyOn(ScrollView.prototype, "scrollTo").mockImplementation(() => {});
+    scrollTo.mockClear();
+    await profilePage(api);
+    await settle();
+
+    const root = screen.getByTestId("settings-profile");
+    const scrollView = root.children[0] as {
+      type: string;
+      children: Array<{ children: unknown[] }>;
+    };
+    expect(scrollView.type).toBe("RCTScrollView");
+    const contentChildCountBefore = (scrollView.children[0]?.children ?? []).length;
+    expect(screen.queryByTestId("settings-profile-overlay")).toBeNull();
+
+    await userEvent
+      .setup({ advanceTimers: jest.advanceTimersByTime })
+      .press(
+        screen.getByRole("switch", { name: "Count property you own, less the mortgage on it" }),
+      );
+    await settle();
+
+    const scrollViewAfter = screen.getByTestId("settings-profile").children[0] as {
+      type: string;
+      children: Array<{ children: unknown[] }>;
+    };
+    const contentChildCountAfter = (scrollViewAfter.children[0]?.children ?? []).length;
+    expect(contentChildCountAfter).toBe(contentChildCountBefore);
+    expect(within(scrollViewAfter as never).queryByTestId("settings-saved")).toBeNull();
+
+    const overlay = screen.getByTestId("settings-profile-overlay");
+    expect(StyleSheet.flatten(overlay.props.style)).toMatchObject({ position: "absolute" });
+    expect(within(overlay).getByTestId("settings-saved")).toHaveTextContent("Saved");
+    expect(scrollTo).not.toHaveBeenCalled();
+  });
 });

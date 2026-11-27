@@ -151,16 +151,27 @@ function ProfileForm({
   const scroll = useRef<ScrollViewInstance>(null);
   const scrolled = useRef(false);
   return (
-    <Screen edges={EDGES} scrollRef={scroll} testID="settings-profile">
+    <Screen
+      edges={EDGES}
+      scrollRef={scroll}
+      testID="settings-profile"
+      overlay={
+        saves.toast ? (
+          <Toast
+            key={saves.toast.count}
+            message={saves.toast.message}
+            placement="overlay"
+            testID="settings-saved"
+          />
+        ) : null
+      }
+    >
       {offline ? (
         <InlineAlert
           tone="info"
           message={SAVE_NEEDS_CONNECTION}
           testID="settings-profile-offline"
         />
-      ) : null}
-      {saves.toast ? (
-        <Toast key={saves.toast.count} message={saves.toast.message} testID="settings-saved" />
       ) : null}
       <Details profile={profile} saves={saves} />
       <NetWorthChoices

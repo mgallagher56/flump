@@ -54,6 +54,8 @@ export interface ScreenProps {
   keyboardAware?: boolean;
   /** The scroll view, for a screen that opens at one of its groups (Settings' net worth choices). */
   scrollRef?: Ref<ScrollViewInstance>;
+  /** Rendered over the page outside the scroll view so status notices never shift scroll content. */
+  overlay?: ReactNode;
   testID?: string;
 }
 
@@ -71,10 +73,12 @@ export function Screen({
   onRefresh,
   keyboardAware = false,
   scrollRef,
+  overlay,
   testID,
 }: ScreenProps) {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
+  const overlayEdges = useMemo(() => edges.filter((edge) => edge !== "top"), [edges]);
   const content = [styles.content, centred ? styles.centred : null];
   const [refreshing, setRefreshing] = useState(false);
   const own = useRef<ScrollViewInstance | null>(null);
@@ -223,6 +227,16 @@ export function Screen({
       ) : (
         page
       )}
+      {overlay ? (
+        <SafeAreaView
+          pointerEvents="box-none"
+          edges={overlayEdges}
+          style={styles.overlay}
+          testID={testID ? `${testID}-overlay` : undefined}
+        >
+          {overlay}
+        </SafeAreaView>
+      ) : null}
     </SafeAreaView>
   );
 }

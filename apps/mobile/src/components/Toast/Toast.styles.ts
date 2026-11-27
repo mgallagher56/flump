@@ -12,4 +12,7 @@ export const createStyles = (theme: Theme) =>
       backgroundColor: theme.colors["status.info.bg"],
       borderColor: theme.colors["status.info.border"],
     },
+    overlay: {
+      boxShadow: theme.shadows.overlay,
+    },
   });
