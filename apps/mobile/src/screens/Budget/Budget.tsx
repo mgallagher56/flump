@@ -9,7 +9,7 @@ import {
 } from "@flump/finance-engine/budget";
 import * as Crypto from "expo-crypto";
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
-import { AccessibilityInfo, Linking, Modal, View } from "react-native";
+import { AccessibilityInfo, Keyboard, Linking, Modal, Platform, View } from "react-native";
 import { BreathingRoom } from "../../components/BreathingRoom";
 import { BudgetCategoryList } from "../../components/BudgetCategoryList";
 import { BudgetEditor } from "../../components/BudgetEditor";
@@ -617,7 +617,7 @@ function EntrySheet({
       onRequestClose={saving ? undefined : onClose}
     >
       {sheet && initial ? (
-        <Screen testID="budget-entry-sheet">
+        <Screen testID="budget-entry-sheet" keyboardAware>
           <BudgetEntryForm
             key={sheetKey}
             mode={sheet.mode}
@@ -639,10 +639,35 @@ function EntrySheet({
               onCancel={() => setConfirming(false)}
             />
           ) : null}
+          <KeyboardSpacer />
         </Screen>
       ) : null}
     </Modal>
   );
+}
+
+/**
+ * Room below the sheet's buttons as tall as the keyboard, so Save scrolls above it at any text size
+ * (device check: edge to edge on Android the window does not resize, and the page's keyboard
+ * padding alone left Save under the keyboard). Drop it once PR 973's keyboard-aware Screen, which
+ * pads by the keyboard's height itself, is on main.
+ */
+function KeyboardSpacer() {
+  const [height, setHeight] = useState(0);
+  useEffect(() => {
+    const ios = Platform.OS === "ios";
+    const shown = Keyboard.addListener(ios ? "keyboardWillShow" : "keyboardDidShow", (event) =>
+      setHeight(event.endCoordinates.height),
+    );
+    const hidden = Keyboard.addListener(ios ? "keyboardWillHide" : "keyboardDidHide", () =>
+      setHeight(0),
+    );
+    return () => {
+      shown.remove();
+      hidden.remove();
+    };
+  }, []);
+  return <View style={{ height }} testID="budget-entry-sheet-keyboard-room" />;
 }
 
 /** Web's `RunwayCalculator`: the what-if zone under the saved figure. Nothing in it is sent. */
