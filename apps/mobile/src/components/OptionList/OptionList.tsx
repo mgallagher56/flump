@@ -23,6 +23,8 @@ export interface OptionListProps<T extends string> {
   onChange(value: T): void;
   /** Saving: every option is announced as busy and ignores presses until it clears. */
   busy?: boolean;
+  /** Nothing can be saved now (offline): every option is off, the choice shown as it was. */
+  disabled?: boolean;
   /** Each option's test id is `<testID>-<value>`. */
   testID?: string;
 }
@@ -39,6 +41,7 @@ export function OptionList<T extends string>({
   value,
   onChange,
   busy = false,
+  disabled = false,
   testID,
 }: OptionListProps<T>) {
   const theme = useTheme();
@@ -66,12 +69,13 @@ export function OptionList<T extends string>({
             accessibilityHint={tabPosition(index + 1, options.length)}
             accessibilityState={{ checked: chosen }}
             busy={busy}
+            disabled={disabled}
             testID={testID ? `${testID}-${option.value}` : undefined}
             // Press feedback as the Button's: iOS dims, Android draws a ripple.
             android_ripple={{ color: theme.colors["surface.subtle"] }}
             style={({ pressed }) => [styles.option, pressedStyle(pressed, Platform.OS)]}
             onPress={() => {
-              if (!chosen) onChange(option.value);
+              if (!chosen && !disabled) onChange(option.value);
             }}
           >
             <View
@@ -81,7 +85,9 @@ export function OptionList<T extends string>({
             >
               {chosen ? <View testID={`option-dot-${option.value}`} style={styles.dot} /> : null}
             </View>
-            <Text style={styles.label}>{option.label}</Text>
+            <Text style={styles.label} color={disabled ? "muted" : "primary"}>
+              {option.label}
+            </Text>
           </Pressable>
         );
       })}

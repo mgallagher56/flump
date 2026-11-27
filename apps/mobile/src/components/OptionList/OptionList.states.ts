@@ -35,4 +35,15 @@ export const optionListStates = {
     busy: true,
     onChange: noop,
   },
+  /** Nothing can be saved (offline): every option off, the choice shown as it was. */
+  disabled: {
+    label: "Check-in day",
+    options: [
+      { value: "1", label: "1st" },
+      { value: "2", label: "2nd" },
+    ],
+    value: "2",
+    disabled: true,
+    onChange: noop,
+  },
 } satisfies Record<string, OptionListProps<string>>;
