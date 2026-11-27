@@ -1,5 +1,5 @@
 import { expectPageRules } from "@repo/ui/testing";
-import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { renderToString } from "react-dom/server";
 import { createMemoryRouter, MemoryRouter, RouterProvider, useNavigate } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -88,6 +88,58 @@ describe("<SettingsPage />", () => {
     expect(screen.queryAllByText("j@example.com")).toHaveLength(0);
     pressTab("Security");
     expect(screen.getAllByText("j@example.com")).toHaveLength(1);
+  });
+
+  it("prefers accountEmail, then user.email, then profile.email, then the fallback", () => {
+    const accountEmail = ["account", "example.com"].join("@");
+    const sessionEmail = ["session", "example.com"].join("@");
+    const profileEmail = ["profile", "example.com"].join("@");
+    const withProfileEmail = { ...profile, email: profileEmail };
+
+    const { unmount } = render(
+      <SettingsPage
+        accountEmail={accountEmail}
+        initialProfile={withProfileEmail}
+        initialTab="security"
+        user={{ email: sessionEmail }}
+      />,
+    );
+    expect(screen.getByTestId("user-email-display").textContent).toBe(accountEmail);
+    unmount();
+
+    const { unmount: unmountSession } = render(
+      <SettingsPage
+        accountEmail={null}
+        initialProfile={withProfileEmail}
+        initialTab="security"
+        user={{ email: sessionEmail }}
+      />,
+    );
+    expect(screen.getByTestId("user-email-display").textContent).toBe(sessionEmail);
+    unmountSession();
+
+    const { unmount: unmountProfile } = render(
+      <SettingsPage
+        accountEmail={null}
+        initialProfile={withProfileEmail}
+        initialTab="security"
+        user={{}}
+      />,
+    );
+    expect(screen.getByTestId("user-email-display").textContent).toBe(profileEmail);
+    unmountProfile();
+
+    render(
+      <SettingsPage
+        accountEmail={null}
+        initialProfile={{ ...profile, email: null }}
+        initialTab="security"
+        user={{}}
+      />,
+    );
+    expect(screen.getByTestId("user-email-display").textContent).toBe(
+      "Your email cannot be shown here right now.",
+    );
   });
 
   it("renders no bare native <select>: every select is the @repo/ui Select", () => {

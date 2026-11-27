@@ -1,6 +1,7 @@
 import {
   AccountListResponse,
   BetaAdminStatusResponse,
+  UserEmailResponse,
   UserProfileResponse,
 } from "@flump/api-contract";
 import { type NetWorthChoicesAvailable, netWorthChoicesAvailable } from "@flump/finance-engine";
@@ -34,12 +35,22 @@ export const loader = async (args: LoaderFunctionArgs) => {
   try {
     // The accounts only decide which net worth choices are offered. If they cannot be read the
     // page still loads and offers both (null: unknown is not "no").
-    const [userProfile, netWorthChoices, isBetaAdmin, household] = await Promise.all([
+    const [userProfile, accountEmail, netWorthChoices, isBetaAdmin, household] = await Promise.all([
       backendFetch("/user-profile", {
         accessToken,
         signal: args.request.signal,
         schema: UserProfileResponse,
       }) as Promise<UserProfile>,
+      // Resolves the sign-in email server-side from WorkOS when the token has no email claim.
+      // Any failure (including 404 from an older backend) gives null so Settings still renders.
+      backendFetch("/user-profile/email", {
+        accessToken,
+        signal: args.request.signal,
+        schema: UserEmailResponse,
+      }).then(
+        (res) => res.email ?? null,
+        () => null,
+      ),
       backendFetchAll("/accounts", {
         accessToken,
         signal: args.request.signal,
@@ -69,6 +80,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
       }) ?? "profile";
     return data({
       userProfile,
+      accountEmail,
       initialTab,
       netWorthChoices,
       isBetaAdmin,
@@ -104,6 +116,7 @@ export const shouldRevalidate: ShouldRevalidateFunction = ({
 const ProfileRoute = (): ReactElement => {
   const {
     userProfile,
+    accountEmail,
     user,
     aiGuideUrl,
     mcpServerUrl,
@@ -115,6 +128,7 @@ const ProfileRoute = (): ReactElement => {
 
   return (
     <SettingsPage
+      accountEmail={accountEmail}
       aiGuideUrl={aiGuideUrl}
       initialProfile={userProfile}
       mcpServerUrl={mcpServerUrl}
