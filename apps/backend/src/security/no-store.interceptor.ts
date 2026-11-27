@@ -23,7 +23,9 @@ export class NoStoreInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     if (context.getType() === "http") {
       const http = context.switchToHttp();
-      const user = http.getRequest<{ user?: unknown }>()?.user;
+      // `user` from AuthGuard; `mcpToken` from McpPatGuard (a personal access token's owner).
+      const request = http.getRequest<{ user?: unknown; mcpToken?: unknown }>();
+      const user = request?.user ?? request?.mcpToken;
       const response = http.getResponse<{
         headersSent?: boolean;
         getHeader?: (name: string) => unknown;

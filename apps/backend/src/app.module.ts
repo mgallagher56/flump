@@ -71,10 +71,10 @@ import { SecurityModule } from "./security/security.module";
   controllers: [AppController, HealthController],
   providers: [
     AppService,
-    // First, so every interceptor after it (the idempotency claim) and the handler run inside it:
-    // their transactions take the user-data write fence (privacy finding F1).
     // Cache-Control: no-store on every authenticated response, unless a route chooses (E12 S7).
     { provide: APP_INTERCEPTOR, useClass: NoStoreInterceptor },
+    // First of the rest, so every interceptor after it (the idempotency claim) and the handler run
+    // inside it: their transactions take the user-data write fence (privacy finding F1).
     { provide: APP_INTERCEPTOR, useClass: UserDataWriteFenceInterceptor },
     { provide: APP_INTERCEPTOR, useClass: DeprecationInterceptor },
     { provide: APP_INTERCEPTOR, useClass: ContractShadowInterceptor },

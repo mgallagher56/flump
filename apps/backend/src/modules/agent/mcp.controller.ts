@@ -46,6 +46,9 @@ export class McpController {
   @HttpCode(200)
   @UseGuards(McpKillSwitchGuard)
   async handleMcpPost(@Req() req: Request, @Res() res: Response) {
+    // The transport authenticates inside, so the global NoStoreInterceptor never sees a user, and
+    // tool results carry balances: never stored by a cache (E12 S7).
+    res.setHeader("Cache-Control", "no-store");
     return this.mcpService.getHttpHandler().handleExpressRequest(req, res);
   }
 
@@ -53,6 +56,7 @@ export class McpController {
   @HttpCode(200)
   @UseGuards(McpKillSwitchGuard)
   async handleMcpGet(@Req() req: Request, @Res() res: Response) {
+    res.setHeader("Cache-Control", "no-store");
     return this.mcpService.getHttpHandler().handleExpressRequest(req, res);
   }
 
