@@ -60,7 +60,7 @@ A component or page task is NOT complete until:
 
 Three documents in `docs/ux/` are the standing rules for how Flump behaves and looks on every platform (marketing site, web app, future mobile app). Sections 1 to 4 above are the enforced subset of them.
 
-- [`docs/ux/UX-GUIDELINES.md`](../ux/UX-GUIDELINES.md): behaviour. Hierarchy and the number budget, navigation, saved details versus scenarios, forms and money input, states, destructive actions, charts, onboarding, accessibility, trust, motion, responsive and touch.
+- [`docs/ux/UX-GUIDELINES.md`](../ux/UX-GUIDELINES.md): behaviour. Hierarchy and the number budget, navigation, saved details versus scenarios, forms and money input, states, destructive actions, charts, onboarding, accessibility, trust, motion (12.1 the apps' tiers A to C, 12.2 the marketing site), responsive and touch.
 - [`docs/ux/STYLE-GUIDE.md`](../ux/STYLE-GUIDE.md): the visual language. Colour, type, spacing, radius, elevation, icons, illustration, logo, chart palette, component anatomy and states.
 - [`docs/ux/CROSS-PLATFORM.md`](../ux/CROSS-PLATFORM.md): what is shared between marketing, web and mobile, the component parity matrix, and the parity checklist.
 

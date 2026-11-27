@@ -631,3 +631,24 @@ Relayed by the coordinator on 25 November 2026. Only the words in quotation mark
 - **What would change it.** A transaction-mode pooler in front of Postgres (it breaks session locks), or a pool with no spare connection.
 - **Kill switch.** `RETENTION_SCHEDULE_ENABLED=false` on the backend service stops the in-process schedule without new code. The cron trigger is unaffected.
 - Supersedes: D5 for the retention purge only.
+
+# Owner decisions (2026-11-27): the marketing design language and its rollout
+
+Relayed by the coordinator on 27 November 2026. Only the words in quotation marks are the owner's. The plan is [`docs/design/motion/ROLLOUT-PLAN.md`](../../design/motion/ROLLOUT-PLAN.md); the reference design is prototype 11 on branch `claude/marketing-motion-prototypes-66c08d`, which is never merged as it stands. The owner accepted all six recommendations: "Everything looks good with the recommendations".
+
+| # | Decision |
+| --- | --- |
+| D1 | GSAP 3.15.1 and three.js 0.187.0 may ship to production on the marketing site only. Neither may be imported anywhere else, and the marketing site keeps a page-weight budget (plan section 2) whose baselines rise only under the Guard Changes law. GSAP's licence is recorded in [`docs/legal/third-party-licences.md`](../../legal/third-party-licences.md). |
+| D2 | The same content and layout on every device. Where a device cannot hold the frame rate (under 28 fps, or the other still-path conditions in plan section 2), the orb is a still image. Revisit after real-device numbers. |
+| D3 | The apps follow three tiers. A, always fine: changes no layout, timing or reading order. B, named moments only, once. C, never: scroll scenes, WebGL, parallax, bubble fields behind data, tilt on cards holding figures, count-up on real money. |
+| D4 | The web app's empty-state and check-in pictures switch to the card and document style after the new home page ships. Error states stay still. |
+| D5 | Real-device testing on a mid-range Android and an older iPhone before the new home page ships. The 730 ms main-thread stall is explained first. |
+| D6 | The motion and band rules are rewritten to fit. The owner said: "happy to rewrite these rules to fit the new approvals". |
+
+**The design rulings behind them** (the owner's choices across the prototype rounds, 26 and 27 November 2026, as summarised in plan section 1):
+
+- **Approved:** the page is complete and still before any script runs; scroll triggers and time completes, so a changeover plays to its end and nothing rests half-finished; content holds still while it is read; one calm, slower speed scale with no overshoot, bounce, warp or skew; mint leads; images are tilted cards and paper documents with sample content tagged "Example"; sideways content shows dots and has real buttons; figures stay tabular and a screen reader gets the final value at once. The building blocks: the orb, bubble fields (sky and teal, violet and rose), the bead track, glass cards, document cards, tilt-and-light hover, entrances, count-up on sample figures, self-drawing charts, the unfolding payslip and accounts tiles, triggered changeovers, the receding scene and the carousel with dots.
+- **Rejected:** fog over content; warped or distorting entries; fast motion; solid colour bands (the solid mint band and the charcoal closing band); top borders on hover; half-finished states; large empty gaps; orbs clipped by an edge or over a heading; FAQ items out of order or overlapping; glass objects in illustrations; bubble icons on feature tiles; violet or rose as a tint, gradient or background; counts such as "4 to 5 of 6" on carousels.
+- **Standing rules kept:** colour never signals judgement (debt is never rose), no finance shaming, AA accessibility and the reduced-motion setting on every surface.
+
+**Where it is written.** UX-GUIDELINES section 12 (12.1 the apps, 12.2 the marketing site); STYLE-GUIDE sections 2.4, 2.7, 8, 11 and 14. Supersedes: the 24 November 2026 marketing band order (solid mint band and charcoal closing band), STYLE-GUIDE 11.1 as the only list of decorative motion, and the "never count" rule outside the apps.

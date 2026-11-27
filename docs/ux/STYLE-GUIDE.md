@@ -1,6 +1,6 @@
 # Flump style guide
 
-Status: adopted 2026-11-14. Owner: design system (`packages/ui`). Applies to the marketing site, the web app and the future mobile app.
+Status: adopted 2026-11-14; amended 2026-11-27 for the marketing design language (sections 2.4, 2.7, 8, 11 and 14). Owner: design system (`packages/ui`). Applies to the marketing site, the web app and the future mobile app.
 
 This is the one description of how Flump looks. It states the visual language in platform-neutral terms so that the same decisions reach every platform. How things behave is in [UX-GUIDELINES.md](./UX-GUIDELINES.md). How the values reach React Native is in [CROSS-PLATFORM.md](./CROSS-PLATFORM.md). Words are in the copy guide (`docs/copy/COPY-GUIDE.md` when the copy programme lands it; until then [`docs/copy-style-guide.md`](../copy-style-guide.md)).
 
@@ -13,7 +13,7 @@ This is the one description of how Flump looks. It states the visual language in
 
 ## 1. Character
 
-Flump is a calm guide for a household's money. The look is "Midnight and Mint" (owner, 24 Nov 2026; section 14): a pale mint light theme with deep-green ink and charcoal buttons, a cool charcoal dark theme ("Midnight") with mint figures, teal links, apricot for what you owe, rounded shapes, plain type and a lot of room around a small number of figures. It is not a trading terminal, a bank statement or a dashboard for analysts.
+Flump is a calm guide for a household's money. The look is "Midnight and Mint" (owner, 24 Nov 2026; section 14): a pale mint light theme with deep-green ink and charcoal buttons, a cool charcoal dark theme ("Midnight") with mint figures, teal links, apricot for what you owe, rounded shapes, plain type and a lot of room around a small number of figures. It is not a trading terminal, a bank statement or a dashboard for analysts. The marketing site speaks the same language with more room to move: a lit orb, soft bubbles, glass and paper cards, and calm motion (section 2.7 and 11.2; owner, 27 Nov 2026). The apps stay quiet.
 
 Three tests for any screen:
 
@@ -46,7 +46,7 @@ The semantic namespaces are fixed: `surface`, `text`, `border`, `primary`, `acce
 | `surface.subtle`                                    | `#e7f2ee`                                     | `#262b33`                                     | Hover fills, the scenario zone **[PR 2]**                                                       |
 | `surface.sunken`                                    | `#dfeee9`                                     | `#0f1216`                                     | Wells, input tracks                                                                             |
 | `surface.overlay`                                   | `#f6f7f7`                                     | `#2a3039`                                     | Dialogs, sheets, menus, popovers                                                                |
-| `surface.contrast`                                  | `#14171c`                                     | `#0f1216`                                     | Charcoal: the footer, the closing band, small numbered markers                                  |
+| `surface.contrast`                                  | `#14171c`                                     | `#0f1216`                                     | Charcoal: the footer and small numbered markers; never a marketing band                         |
 | `surface.hero`                                      | `#6fd0ba`                                     | `#1d2128`                                     | The one headline block on a page: solid mint in light, a card with a `border.hero` edge in dark |
 | `surface.tint.teal` / `apricot` / `sage` **[PR 1]** | `#c6e6dc` / `#fae5cc` / `#e1edd6`             | `#1d3934` / `#42311c` / `#2b3822`             | Icon tiles; at most one tinted section per page                                                 |
 | `surface.tint.sky` / `rose` / `violet`              | `#d8e8f2` / `#f3e3ea` / `#e3e0f4`             | `#1d3846` / `#4d2939` / `#353050`             | Home section card icon tiles only (see "Home section cards" below)                              |
@@ -93,7 +93,7 @@ Each status has `text`, `bg`, `border` and `solid`. Values are in `tokens.md`.
 Light mode ("Mint") adds colour without tinting data:
 
 - About 60% mint canvas, 30% off-white cards and bands, 10% accent: the solid mint hero, teal links and outline buttons, apricot for debt, and the tint family on icon tiles.
-- Dark (charcoal) appears in light mode only on primary buttons, small markers and the footer. Light mode uses no pink.
+- Dark (charcoal) appears in light mode only on primary buttons, small markers and the footer. Light mode uses no pink, apart from the rose exception in section 14 and the marketing orb colours (section 2.7).
 - App section titles sit on a dark rule (`border.section`) so sections are clearly separated.
 - Cards separate from the canvas by a visible 1px `border` edge (the `border.DEFAULT` token; write `"border"` in code) and a soft deep-green shadow **[PR 1]**, not by tint.
 - Each area of the app has one colour, on its home section card, its page headers and its icon tiles (owner request, 19 Nov 2026, which replaced the E16 P9.3 map of teal, sage, apricot and neutral). The one home for the map is `ICON_TILE_DOMAIN_TONE` in `packages/ui` (`IconTile.tsx`); the home cards read it through `sectionColours.ts`, so a card and its page cannot differ:
@@ -110,13 +110,14 @@ Light mode ("Mint") adds colour without tinting data:
 
 - A colour names an area. It is never the only carrier of meaning (the title and icon always name the area) and never says good or bad: no area uses `series7` (the warning colour) or a status colour (rule C8). The `chart.seriesN` tokens are the glyph colours on the tiles only; charts keep their own palette, and only tiles, headers and card edges follow this map. Contrast and separation **Enforced by** `tokens.a11y.test.ts` ("E16 surface tints"); the map by `IconTile.test.tsx`, and its match with the home cards by `sectionColours.test.ts` and `WidgetCard.test.tsx`.
 
-- At most one tinted section per page, never around a `KpiStrip`, a `ScenarioZone` or a chart. KPI cards are never tinted. The marketing site is the exception: since Midnight and Mint (owner, 24 Nov 2026) its bands alternate off-white `surface.card` with mint `surface.canvas`, with one solid mint `surface.hero` band on the home page only (dark ink, `text.onHero`) and a charcoal `surface.contrast` closing band above the footer; it uses no other tint, and a band with figures (a sample or calculator) stays on a card or canvas band, never the hero or closing band (the band order is in `docs/design/midnight-mint/PageMarketing.dc.html`). This replaced the canvas and `surface.tint.teal` bands of owner choice "A", 2026-11-20, which had replaced the sage and apricot bands of D16. **Enforced by** the `SectionBand` tone type and the `HomePage`, `FeaturePage` and `AiConnectionPage` tests.
+- At most one tinted section per page, never around a `KpiStrip`, a `ScenarioZone` or a chart. KPI cards are never tinted.
+- Marketing bands alternate off-white `surface.card` with mint `surface.canvas`, and nothing else: no solid colour band, so no `surface.hero` band, no charcoal `surface.contrast` closing band and no tinted band (owner, 27 Nov 2026). The page ends calmly on a card or canvas band above the shared footer, which is chrome (rule L1), not a band. Bubble fields may sit at the edges of a band (section 2.7); they are not a band colour. This replaced the solid mint and charcoal bands of Midnight and Mint (24 Nov 2026), which had replaced the canvas and `surface.tint.teal` bands of owner choice "A" (2026-11-20) and the sage and apricot bands of D16. **Enforced by** the `HomePage`, `FeaturePage`, `AiConnectionPage`, `ClosingCta` and `SecurityPrivacySection` tests once slices M1 and M3 change them; until then those tests still pin the older band order (ROLLOUT-PLAN, "Guards to change, and in which slice").
 - Dark mode is "Midnight": cool charcoal surfaces that step lighter as they rise (sunken `#0f1216`, canvas `#14171c`, card `#1d2128`), borders `#303740` and `#3a424e`, text `#f1eee8` and muted `#a9afb9`. Mint `#6fd0ba` is the headline figure and the primary button fill, with dark ink `#0e1a17` on it. Soft pink `#e3b5d1` is the accent, for small accents only. Apricot is a quiet `#2e261c` in dark, not a heavy brown **[R2-2]**.
 - Dark mode works with JavaScript off (D30): every semantic token's dark value also applies under `prefers-color-scheme: dark` unless the page has been set to light (`systemDark` condition, `withSystemDark` in `@flump/tokens`). A component style that uses `_dark` must also set `_systemDark`. **Enforced by** `colorScheme.test.ts` **[R2-2]**.
 
 **Rule C5.** `surface.hero` appears at most once per page, on the page's headline figure. **Enforced by** `expectPageRules` **[PR 2]**.
 
-**Rule C6.** Marketing uses the same tokens as the app. No off-system colour, glow or gradient other than the logo. **Enforced by** `scripts/check-design-tokens.ts` (baseline may only shrink).
+**Rule C6.** Marketing uses the same tokens as the app, plus its own material tokens (section 2.7), and no off-system colour. In the apps the logo is the only gradient or glow. On the marketing site the only others are the orb's own shading and the light of the glass card and the tilt-and-light hover (section 2.7). None is drawn over text or a figure, and none is violet or rose except on the orb itself. **Enforced by** `scripts/check-design-tokens.ts` (baseline may only shrink).
 
 ### 2.5 Contrast
 
@@ -146,6 +147,23 @@ Since Midnight and Mint (24 Nov 2026) the accent is a deep blue-teal in light an
 **Rule C8. Where the accent never goes.** A figure, KPI card, table cell or amount. A button, link or focus ring (teal only). A notice or status message. Around a `KpiStrip`, a `ScenarioZone` or a chart frame. And it never says that anything about a person's money is good or bad: it is not a status colour, and it is never paired with a gain, a loss, a debt or a target. **Review only**; `tokens.a11y.test.ts` keeps it at least 25 deltaE from every status colour and from `chart.debt`, `chart.warning` and `chart.wealth` in normal vision. Under colour-vision simulation the gap narrows, which is one more reason the accent never stands in for a status.
 
 **Bolder tints (E17).** The existing teal, sage and apricot tints are used more often, not changed: the one tinted section a page is allowed is the norm on pages that have a natural candidate (for example a prompt card), and icon tiles take their domain tint. No tint value changed, and the limits in section 2.4 stand.
+
+### 2.7 Marketing colour and material (27 Nov 2026)
+
+The marketing site adds an orb, bubble fields and two card materials to the palette above. They are tokens like any other **[F2]**: `orb.skyTeal.*` and `orb.violetRose.*` in `packages/tokens/src/index.ts`, plus the glass and paper material. Only `apps/marketing` and the shared marketing pieces use them. Behaviour is in UX-GUIDELINES 12.2.
+
+| Element              | Colour and material                                                                                                                               | Never                                                                        |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| Orb                  | A lit sphere in one orb colour set (sky and teal, or violet and rose), shaded by its own light. Still image where the device cannot run it (MK11) | Over a heading or text; cut by an edge                                       |
+| Bubble field         | Soft circles in the two orb colour sets, at the edges of a band                                                                                   | Behind long text, a figure or a chart; as icons on feature tiles             |
+| Glass card           | A card with a soft border and a faint inner light                                                                                                 | A top border on hover; glass objects inside pictures                         |
+| Document card        | Paper on `surface.card`, ink from text tokens, an "Example" tag (section 8.3)                                                                     | Real names, real account numbers or real-looking personal details            |
+| Tilt-and-light hover | A pointer light and a moving mint or neutral gradient, with up to six degrees of tilt                                                             | On a card that holds a real figure; in the apps (UX-GUIDELINES 12.1, tier C) |
+| Receding scene       | A tinted overlay and a soft blur behind the content at a journey stop                                                                             | Over content; as fog                                                         |
+
+- **MC1. Mint leads; violet and rose are for orb-like elements only** (the orb and bubble fields), never a tint, gradient or background of anything else. The existing `surface.tint.violet` and `surface.tint.rose` stay home section card icon tiles only. **Proposed check**: the orb-only colour check **[F2]**.
+- **MC2. Colour never judges.** Debt is never rose, and no orb colour is paired with a gain, a loss, a debt or a target. Rules C2 and C8 apply. **Enforced by** `check-judgement-tokens.ts`.
+- **MC3. Contrast is unchanged.** Text on glass, paper or a receding scene meets section 2.5 on its actual background, in both themes and in forced colours. **Enforced by** `tokens.a11y.test.ts` once the material tokens join its matrix **[F2]**; **Review only** for a backdrop that moves.
 
 ## 3. Typography
 
@@ -262,17 +280,26 @@ Detail and the migration table: [`docs/design/e15/iconography.md`](../design/e15
 
 ## 8. Illustration
 
-- Illustrations are for empty states, onboarding, check-in, and "not found" (Rule B10: beyond whole-page empty states and check-in, illustrations are allowed on large screens with spare space or all-number cards; at most one scene in view at a time, never pushing a figure down). Never beside real figures on compact viewports.
-- Style: flat shapes in the palette's own tokens (mint, teal, sage, apricot), soft rounded forms that echo the logo, no outlines, no people's faces, no piles of coins or cash, no upward-arrow "growth" clichés.
+Flump has two picture styles, drawn by the one `Illustration` primitive:
+
+- **Document cards** (section 8.3, owner, 27 Nov 2026): tilted cards and paper documents (a bank card, a payslip, a budget slip, a statement, a calendar page, a ticket) with sample content and an "Example" tag. The marketing site uses them now. The web and mobile apps switch their empty states, onboarding and check-in to them once the new marketing home page has shipped (owner, D4).
+- **Flat scenes** (section 8.1, E17): flat shapes on a ground line. The apps keep them until that switch.
+
+Rules for both styles:
+
+- Pictures go where section 8.2 says. In the apps, beyond whole-page empty states and check-in, a picture is allowed on large screens with spare space or beside all-number cards, at most one in view at a time and never pushing a figure down (rule B10); never beside real figures on compact viewports. On the marketing site, at most one picture per band.
+- Colours come from semantic tokens and follow the theme. No people's faces, no piles of coins or cash, no upward-arrow "growth" clichés, no red, no finish flag, and nothing that grades a situation.
 - They are decorative: hidden from assistive technology, and the text beside them carries the meaning.
-- The four scenes today are `empty-accounts`, `empty-goals`, `onboarding` and `not-found` (`Illustration` primitive). A new scene is added to the primitive and drawn with token colours so it follows the theme.
-- The hero block may carry one sun shape in `accent.onHero` **[E17]**, with no bars or arrows beside the figure. Nothing else is decorated.
+- A picture never moves in an error state. Where a picture may move, it follows UX-GUIDELINES 12.1 (apps) or 12.2 (marketing).
+- The hero block may carry one sun shape in `accent.onHero` **[E17]**, with no bars or arrows beside the figure. Nothing else in the app hero is decorated.
 
-**IL1.** Illustrations use semantic tokens and follow the theme. **Enforced by** `scripts/check-design-tokens.ts`. **IL2.** Placement. **Review only**.
+**IL1.** Pictures use semantic tokens and follow the theme. **Enforced by** `scripts/check-design-tokens.ts`. **IL2.** Placement. **Review only**. **IL4.** Every picture, in either style, is stored as a list of shapes (kind, position, colour role, and for a document card its lines of sample text) in one shared file. The web draws the list as SVG and the mobile app draws the same list with its own SVG library. No image files. **Review only** until the shared file exists.
 
-### 8.1 The scene family (E17)
+### 8.1 Flat scenes (E17)
 
-Every scene is built to one sheet, so a new one sits beside the Budget scene without a second look. Samples are in [`docs/design/e17-options/options.html`](../design/e17-options/options.html), section 3.
+Every flat scene is built to one sheet, so a new one sits beside the Budget scene without a second look. Samples are in [`docs/design/e17-options/options.html`](../design/e17-options/options.html), section 3.
+
+Style: flat shapes in the palette's own tokens (mint, teal, sage, apricot), soft rounded forms that echo the logo, no outlines. A new scene is added to the primitive and drawn with token colours so it follows the theme.
 
 | Part   | Rule                                                                                                   |
 | ------ | ------------------------------------------------------------------------------------------------------ |
@@ -295,30 +322,49 @@ Colour roles, all from tokens so dark mode follows:
 | Paper     | `surface.card`                                    | Small details on the main object                                                 |
 | Accent    | `accent`                                          | One small shape per scene (a day on the calendar, a coin). Never the main object |
 
-**IL3.** A scene follows the sheet above. **Review only**. **IL4.** Scenes are stored as lists of shapes (kind, position, colour role) in one shared file. The web draws the list as SVG and the mobile app draws the same list with its own SVG library. No image files. **Review only** until the shared file exists.
+**IL3.** A flat scene follows the sheet above. **Review only**. Storage is rule IL4 (section 8).
 
-### 8.2 Where scenes go (E17)
+### 8.2 Where pictures go
 
-| Place                                                                                | Scene                                                           | When                                   |
-| ------------------------------------------------------------------------------------ | --------------------------------------------------------------- | -------------------------------------- |
-| Dashboard first visit, Budget empty state                                            | Budget bars                                                     | Exists                                 |
-| Accounts empty state                                                                 | Stacked cards                                                   | Exists; stop reusing it on other pages |
-| Goals empty state, not-found page, error page                                        | Target, signpost                                                | Exists                                 |
-| Savings empty state                                                                  | Jar                                                             | Now                                    |
-| Debts empty state                                                                    | Three balances and a dotted path                                | Now                                    |
-| Pension empty state                                                                  | Pot and plant                                                   | Now                                    |
-| Monthly check-in, start and summary                                                  | Calendar; the tick is the only change                           | Now                                    |
-| "Finish setting up" finish state                                                     | Sprout from the Budget scene                                    | Now                                    |
-| Marketing not-found page                                                             | Signpost                                                        | Now                                    |
-| Mortgage, Self Assessment, forecast and take-home pay empty states; onboarding steps | To draw                                                         | Later                                  |
-| Marketing home hero and sections                                                     | A wider scene made from the same parts, one per section at most | Later                                  |
-| Marketing pricing; any page with figures on it; any notice; any error about money    | None                                                            | Never                                  |
+The flat scenes below are the apps' pictures until the switch to document cards (D4); each place then takes its document card counterpart, and the "When" column keeps its meaning.
+
+| Place                                                                                                            | Scene                                                                                                                       | When                                         |
+| ---------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| Dashboard first visit, Budget empty state                                                                        | Budget bars                                                                                                                 | Exists                                       |
+| Accounts empty state                                                                                             | Stacked cards                                                                                                               | Exists; stop reusing it on other pages       |
+| Goals empty state, not-found page, error page                                                                    | Target, signpost                                                                                                            | Exists                                       |
+| Savings empty state                                                                                              | Jar                                                                                                                         | Now                                          |
+| Debts empty state                                                                                                | Three balances and a dotted path                                                                                            | Now                                          |
+| Pension empty state                                                                                              | Pot and plant                                                                                                               | Now                                          |
+| Monthly check-in, start and summary                                                                              | Calendar; the tick is the only change                                                                                       | Now                                          |
+| "Finish setting up" finish state                                                                                 | Sprout from the Budget scene                                                                                                | Now                                          |
+| Mortgage, Self Assessment, forecast and take-home pay empty states; onboarding steps                             | To draw                                                                                                                     | Later                                        |
+| Web app empty states, onboarding and check-in                                                                    | Document card counterparts of the scenes above (section 8.3); error pages take the same pictures and never move             | After the new marketing home page ships (D4) |
+| Marketing home hero and bands                                                                                    | Document cards (the assembled hero, the calendar page, the security card, the getting started ticket), one per band at most | Rollout slice M1                             |
+| Marketing features, area pages, AI connection, preview, security, contact                                        | One document card per band at most                                                                                          | Rollout slices M3 and M4                     |
+| Marketing not-found page                                                                                         | Signpost today; then a ticket document card and one small still orb                                                         | Signpost exists; the ticket in slice M5      |
+| Beside a price on marketing pricing; beside a real figure on a compact screen; any notice; any error about money | None                                                                                                                        | Never                                        |
 
 The mortgage scene is shown only to people who use the mortgage page, so renting is never set against owning.
 
+### 8.3 Document cards (27 Nov 2026)
+
+The approved sheet is prototype 11's picture set (`apps/marketing/prototypes/p11/art/Pictures.tsx` on branch `claude/marketing-motion-prototypes-66c08d`); the chosen sheet is copied into `docs/design` when slice F3 builds the primitive.
+
+| Part    | Rule                                                                                                                                                               |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Objects | A bank card, a payslip, a budget slip, a statement, a calendar page or a ticket, slightly tilted, on paper (`surface.card`) with a soft shadow                     |
+| Content | Sample content only: made-up round figures in tabular numbers, no real names, account numbers or addresses. Figures follow the house rules (B8 dates, B9 rounding) |
+| Tag     | An "Example" tag on every card that shows figures, as real text (not drawn as shapes), so it scales with text size and survives forced colours                     |
+| Lines   | Hairline edges and ruled lines from border and text tokens. Flat-scene shapes may sit on a card                                                                    |
+| Colour  | Semantic tokens only. Debt in apricot, never rose; violet and rose never on a card (rule MC1)                                                                      |
+| Never   | Glass objects, bubble icons, people or faces, coins with symbols, arrows that grade, anything that implies the reader's own finances                               |
+
+**IL5.** A document card follows the sheet above and carries its "Example" tag. **Review only**; the tag's presence **Proposed check** in the primitive's tests **[F3]**.
+
 ## 9. Logo
 
-- The logo is the Flump blob: a soft teal form with a radial gradient and a small ground shadow, drawn inline so it follows the theme. It is the only gradient in the product.
+- The logo is the Flump blob: a soft teal form with a radial gradient and a small ground shadow, drawn inline so it follows the theme. It is the only gradient in the apps; on the marketing site the orb and the material light in section 2.7 are the others (rule C6).
 - One component (`FlumpLogo`, wrapped by `HomeLogo` in the header) on marketing and web. The mobile app icon and in-app logo are drawn from the same artwork.
 - Sizes `sm`, `md`, `lg`. Clear space around it is at least half its width. Do not recolour it, rotate it, add a wordmark in another typeface, or place it on `surface.hero` or a photograph.
 - In a header it links to home and takes its accessible name from the link.
@@ -360,27 +406,52 @@ Chart behaviour rules are in UX-GUIDELINES section 8 and [`docs/design/data-viz.
 | `durations.scene` **[E17]**           | 900ms                                                         | An illustration settling on first view; the wash behind a figure that was just saved |
 | `easings.settle` **[E17]**            | `cubic-bezier(0.16,1,0.3,1)`                                  | A soft landing with no overshoot, for `durations.scene` motion                       |
 
-### 11.1 Approved animations (E17)
+These are the app scale. The marketing site has its own calm scale **[F2]**, named apart so the app's `fast`, `base` and `slow` never change for it. The starting values (ROLLOUT-PLAN section 2; the token file wins once it exists): hover about 590ms, entry 1,540ms, stagger 196ms, disclosure 980ms, count 2,240ms, chart 2,660ms, hero 4,760ms; easings "calm" `cubic-bezier(0.25,0.1,0.2,1)` and "calmInOut" `cubic-bezier(0.45,0,0.3,1)`, with no overshoot. The apps never use the calm scale (UX-GUIDELINES M2).
 
-Five small animations are approved for a first pass. Each plays once, in answer to something the user did or the first time a thing is seen. None plays on every page load and none loops. Working demos are in the options page, section 4.
+### 11.1 Approved animations in the apps (E17; tiers in UX-GUIDELINES 12.1)
 
-| Animation                              | Tokens                                                                                   | Plays                                                                                                                                | With reduced motion                               |
-| -------------------------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------- |
-| A saved figure changes                 | Cross-fade over `fast`, `standard`; a pale teal wash fades over `scene`                  | Once, when a balance is saved                                                                                                        | The figure swaps at once, no wash                 |
-| The check-in moves to the next account | Arrives over `base`, `enter`; 24px travel; no leave phase (it delayed input)             | On each "Next" in the check-in; Back runs it the other way                                                                           | A short fade, no travel                           |
-| Setup progress fills                   | `slow`, `standard`                                                                       | Once, the first time the dashboard is seen after a step is done, on a client navigation; a server-rendered first load is drawn still | The ring is drawn at its new length               |
-| Save confirmation                      | Label swaps over `fast`; the tick draws over `base`, `standard`; returns after 2 seconds | On every successful save, in the button that was pressed                                                                             | The label changes to "Saved" with a finished tick |
-| A scene settles on first view          | `scene`, `settle`: the sprout grows from its base, the sun rises 10px                    | Once, the first time an empty state is shown in a visit, on a client navigation; a server-rendered first load is drawn still         | The scene is still from the start                 |
+These are the only animations in the web and mobile apps beyond tier A. Each plays once, in answer to something the user did or the first time a thing is seen. None plays on every page load and none loops. Working demos are in the options page, section 4. The first four mark a change of state; the rest are tier B moments.
+
+| Animation                               | Tokens                                                                                   | Plays                                                                                                                                                 | With reduced motion                               |
+| --------------------------------------- | ---------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| A saved figure changes                  | Cross-fade over `fast`, `standard`; a pale teal wash fades over `scene`                  | Once, when a balance is saved                                                                                                                         | The figure swaps at once, no wash                 |
+| The check-in moves to the next account  | Arrives over `base`, `enter`; 24px travel; no leave phase (it delayed input)             | On each "Next" in the check-in; Back runs it the other way                                                                                            | A short fade, no travel                           |
+| Setup progress fills                    | `slow`, `standard`                                                                       | Once, the first time the dashboard is seen after a step is done, on a client navigation; a server-rendered first load is drawn still                  | The ring is drawn at its new length               |
+| Save confirmation                       | Label swaps over `fast`; the tick draws over `base`, `standard`; returns after 2 seconds | On every successful save, in the button that was pressed                                                                                              | The label changes to "Saved" with a finished tick |
+| A scene settles on first view           | `scene`, `settle`: the sprout grows from its base, the sun rises 10px                    | Once, the first time an empty state is shown in a visit, on a client navigation; a server-rendered first load is drawn still. Never in an error state | The scene is still from the start                 |
+| A chart draws in                        | `draw`, through `useChartAnimation`                                                      | Once per visit; off while a slider is dragged                                                                                                         | Drawn complete                                    |
+| The check-in completion picture settles | `scene`, `settle`                                                                        | Once, when the check-in summary is first shown                                                                                                        | The picture is still from the start               |
+| An onboarding step arrives              | Within `slow`, `enter`; opacity and a short travel                                       | Once per step                                                                                                                                         | A short fade, no travel                           |
 
 Left out, and why:
 
-| Animation                        | Decision    | Reason                                                                               |
-| -------------------------------- | ----------- | ------------------------------------------------------------------------------------ |
-| A figure counts to its new value | Never       | UX-GUIDELINES M3: figures never count or roll. It shows amounts that were never true |
-| A chart line draws in            | No change   | `useChartAnimation` already governs it                                               |
-| Button hover and press scale     | Second pass | Small gain; touches every button story and snapshot                                  |
-| The tab marker slides            | Second pass | Best done once, inside the single tabs component                                     |
-| A toast arrives                  | Second pass | The save confirmation covers most saves                                              |
+| Animation                              | Decision          | Reason                                                                                                                                                            |
+| -------------------------------------- | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A figure counts to its new value       | Never in the apps | UX-GUIDELINES M3: a real figure never counts or rolls. It shows amounts that were never true, and a person glancing mid-count could read a wrong balance (tier C) |
+| Tilt, parallax, bubble fields, the orb | Never in the apps | Tier C (UX-GUIDELINES 12.1): they delay reading or move what holds a figure                                                                                       |
+| Button hover and press scale           | Second pass       | Small gain; touches every button story and snapshot                                                                                                               |
+| The tab marker slides                  | Second pass       | Best done once, inside the single tabs component                                                                                                                  |
+| A toast arrives                        | Second pass       | The save confirmation covers most saves                                                                                                                           |
+
+### 11.2 Marketing building blocks (27 Nov 2026)
+
+The approved motion on the marketing site (owner, 27 Nov 2026). Rules are in UX-GUIDELINES 12.2; which pages get which block is rule MK15. Every block uses the calm scale, and with reduced motion every block shows its finished state and GSAP and three.js are not loaded (UX-GUIDELINES M4).
+
+| Block                             | What it is                                                        | Plays                                                                                                         | Still version (reduced motion, no JavaScript, low power) |
+| --------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| Orb                               | A lit 3D sphere (three.js) rolling along the bead track           | Through the home page journey; at a stop only the orb moves                                                   | A still image of the orb in place (MK11)                 |
+| Bubble field                      | Soft drifting circles, CSS only, in the two orb colour sets       | Slowly, pausing off screen and in a hidden tab, with a stop control or coming to rest within 5 seconds (MK14) | The circles stand still                                  |
+| Bead track                        | The winding dotted path the orb rolls along                       | Draws with the journey                                                                                        | Drawn complete                                           |
+| Glass card                        | Card material (section 2.7)                                       | No motion of its own                                                                                          | Unchanged                                                |
+| Document card                     | A tilted paper picture tagged "Example" (section 8.3)             | May arrive with an entrance                                                                                   | At rest in place                                         |
+| Tilt-and-light hover              | Pointer light, a moving gradient and up to six degrees of tilt    | On hover with a pointer only, never on a card holding a real figure                                           | No tilt, no moving light                                 |
+| Entrance                          | A card or tag arriving once, staggered, by distance and opacity   | Once, when first scrolled into view                                                                           | In place from the start                                  |
+| Count-up                          | A fixed sample figure tagged "Example" counting to its value      | Once, when first seen; the final value is in the HTML (MK10, MK13)                                            | The final value                                          |
+| Self-drawing chart                | The breathing room, savings line or debt payoff drawing itself    | Once, when first seen                                                                                         | Drawn complete                                           |
+| Unfolding payslip, accounts tiles | The two approved set pieces                                       | Once, when first seen                                                                                         | Unfolded, laid out                                       |
+| Triggered changeover              | Leave, beat, arrive, started by scroll and finished by time (MK2) | At each journey stop                                                                                          | Every stop shown in order                                |
+| Receding scene                    | A tinted overlay and a soft blur behind the content at a stop     | While the stop is at rest                                                                                     | No overlay or blur                                       |
+| Carousel with dots                | Sideways features, with dots and previous and next buttons (MK9)  | When the visitor moves it                                                                                     | A native sideways scroll, every item in the page         |
 
 **M1.** Durations and easings come from tokens. **Enforced by** `scripts/check-style-literals.ts` **[PR 1]**. Behaviour rules are in UX-GUIDELINES section 12.
 
@@ -420,7 +491,7 @@ Storybook is the living specification: every component has stories in light and 
 | `ProjectionNotice`                                                      | Small info icon, fixed sentence                                                                                 | Quiet note: `text.secondary` on the parent surface, top hairline, no fill **[PR 2]**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | `ScenarioZone`                                                          | Title, "Illustration, not saved" badge, basis line, tools, footer (reset, update details, the notice)           | `surface.subtle` with a 1px dashed edge **[PR 2]**. Visibly lighter than the saved details above it                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `ChartFigure`                                                           | Title in `heading.sm`, one-sentence summary, chart with direct labels, optional annotation, "Show data"         | Summary is required **[PR 2]**. Title keeps normal letter and word spacing **[R2-2]**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| `SectionBand`                                                           | Full-width band, optional h2 and one-line subtitle; or variant `app`, a plain section heading                   | Marketing tones `card` and `canvas` alternating, one `hero` band on the home page and a `contrast` closing band (owner, 24 Nov 2026); `teal` remains a tone but no page uses it. Marketing's `MarketingSection` is this band **[R2-2]**                                                                                                                                                                                                                                                                                                                                                                                    |
+| `SectionBand`                                                           | Full-width band, optional h2 and one-line subtitle; or variant `app`, a plain section heading                   | Marketing tones `card` and `canvas` alternating, and no solid colour band (owner, 27 Nov 2026; section 2.4). The `hero`, `contrast` and `teal` tones remain in code until the rollout slices remove their last use; no new band uses them. Marketing's `MarketingSection` is this band **[R2-2]**                                                                                                                                                                                                                                                                                                                          |
 | `Table`, `DataList`                                                     | Header row, rows, optional total row                                                                            | Figures right-aligned and tabular. More than 8 rows collapses                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | `CollapsibleDrawer`                                                     | Trigger with chevron, content                                                                                   | The chevron rotates; the content is reachable by keyboard                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | `Dialog`, `Sheet`                                                       | Title, body, actions                                                                                            | `surface.overlay`, 24px radius, level 3, over `surface.scrim`. A dialog on desktop becomes a bottom sheet on a phone                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
@@ -496,6 +567,17 @@ The detail goes behind the info tip, not in the description: "savings" means the
 | `docs/design/e16-polish/PLAN.md`      | The work plan that gets the product to this guide. When PR 13 closes it, this guide and UX-GUIDELINES remain as the standing rules |
 
 ## 14. Decisions
+
+### 27 November 2026: the marketing design language
+
+Decider: the owner, who accepted the six recommendations of [`docs/design/motion/ROLLOUT-PLAN.md`](../design/motion/ROLLOUT-PLAN.md) (DECISIONS, D1 to D6) after choosing prototype 11 on branch `claude/marketing-motion-prototypes-66c08d`. On the rules: "happy to rewrite these rules to fit the new approvals".
+
+- The marketing site gains the orb, bubble fields, glass and document cards and a calm, slower motion scale (sections 2.7, 8.3, 11 and 11.2; UX-GUIDELINES 12.2). GSAP and three.js may be used there and nowhere else.
+- Marketing bands alternate card and canvas only. The solid mint band and the charcoal closing band of 24 November 2026 are withdrawn (section 2.4).
+- Violet and rose appear only on orb-like elements, never as a tint, gradient or background. Debt is never rose.
+- Pictures become tilted cards and paper documents tagged "Example" (section 8.3): on the marketing site now, in the apps' empty states and check-in once the new home page ships. Error states stay still. Pictures stay shape lists (IL4).
+- The apps follow tiers A, B and C (UX-GUIDELINES 12.1). Count-up on real money, scroll scenes, WebGL, parallax, bubble fields behind data and tilt on cards holding figures never reach the apps.
+- Accessibility, reduced motion, tabular figures and the no-judgement colour rules are unchanged or stricter.
 
 ### 25 November 2026: the light logo is teal
 

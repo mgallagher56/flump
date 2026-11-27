@@ -77,7 +77,7 @@ A dependency declared in more than one workspace `package.json` uses the same ve
 
 ## 10. UX GUIDELINES AND STYLE GUIDE
 
-The documents in `docs/ux/` (UX-GUIDELINES, STYLE-GUIDE, CROSS-PLATFORM) are the standing rules for how Flump behaves and looks. A law or test outranks them, and owner decisions in `docs/audit/plans/DECISIONS.md` outrank all. A PR that changes a flow the mobile app shares adds a dated row to `docs/audit/plans/E12-mobile-parity-log.md`. A PR that touches UI says which review-only rules it checked. Full text: [`docs/agents/ui-laws.md`](./docs/agents/ui-laws.md).
+The documents in `docs/ux/` (UX-GUIDELINES, STYLE-GUIDE, CROSS-PLATFORM) are the standing rules for how Flump behaves and looks. A law or test outranks them, and owner decisions in `docs/audit/plans/DECISIONS.md` outrank all. A PR that changes a flow the mobile app shares adds a dated row to `docs/audit/plans/E12-mobile-parity-log.md`. A PR that touches UI says which review-only rules it checked. Motion has two settings: the apps follow tiers A to C (UX-GUIDELINES 12.1: no count-up on real money, no three.js or GSAP outside `apps/marketing`), the marketing site follows 12.2. Full text: [`docs/agents/ui-laws.md`](./docs/agents/ui-laws.md).
 
 ## 11. COPY LAW
 
