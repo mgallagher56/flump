@@ -62,6 +62,11 @@ describe("AccountDetail", () => {
     expect(screen.getByTestId("account-chart-summary")).toHaveTextContent(
       "Down £3,300 since May 2026. The dashed end is this month's saved balance, not yet recorded.",
     );
+    // The months sit behind "Show data", closed until pressed.
+    expect(screen.queryByTestId("account-months-row-2026-5")).toBeNull();
+    expect(screen.getByText("Show data")).toBeOnTheScreen();
+    await userEvent.setup().press(screen.getByTestId("account-data-toggle"));
+    expect(screen.getByText("Hide data")).toBeOnTheScreen();
     expect(screen.getByTestId("account-months-row-2026-5").props.accessibilityLabel).toBe(
       "May 2026, £189,300",
     );
@@ -126,6 +131,7 @@ describe("AccountDetail", () => {
         "Amount owed, £38,500, Calculated for October. Not counted in your net worth.",
       ),
     ).toBeOnTheScreen();
+    await userEvent.setup().press(screen.getByTestId("account-data-toggle"));
     expect(screen.getByTestId("account-months-row-2026-10").props.accessibilityLabel).toBe(
       "October 2026, £38,620, Calculated",
     );

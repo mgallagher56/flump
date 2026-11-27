@@ -23,6 +23,7 @@ import {
   notRecordedPrompt,
   pounds,
   recordedForSentence,
+  SHOW_DATA,
   sentences,
   spokenChange,
 } from "../../copy/accounts";
@@ -241,15 +242,17 @@ function Loaded({
           {nextCheckInLine(history.nextCheckIn)}
         </Text>
       ) : null}
-      <DataList
-        rows={history.series.map((p) => ({
-          id: p.month,
-          label: formatMonth(p.month),
-          figure: pounds(p.netWorth),
-          note: p.allCarried ? HISTORY.carriedForward : HISTORY.recorded,
-        }))}
-        testID="history-months"
-      />
+      <CollapsibleDrawer label={SHOW_DATA.show} openLabel={SHOW_DATA.hide} testID="history-data">
+        <DataList
+          rows={history.series.map((p) => ({
+            id: p.month,
+            label: formatMonth(p.month),
+            figure: pounds(p.netWorth),
+            note: p.allCarried ? HISTORY.carriedForward : HISTORY.recorded,
+          }))}
+          testID="history-months"
+        />
+      </CollapsibleDrawer>
       {latestRecorded && previousRecorded && history.accountChanges.length > 0 ? (
         <CollapsibleDrawer
           label={HISTORY.showChanges}

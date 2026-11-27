@@ -103,6 +103,9 @@ export function typeLine(row: TypeLineInput): string | null {
   return baseType || jointLabel;
 }
 
+/** Web's "Show data" drawer under a chart, which reads "Hide data" while open. */
+export const SHOW_DATA = { show: "Show data", hide: "Hide data" } as const;
+
 /* The account page (web's `AccountDetailContainer`, `AccountDetails`, `AccountDetailChart`) */
 
 export const ACCOUNT = {

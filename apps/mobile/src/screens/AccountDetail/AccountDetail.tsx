@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 import { Linking } from "react-native";
 import { Button } from "../../components/Button";
 import { ChartFigure } from "../../components/ChartFigure";
+import { CollapsibleDrawer } from "../../components/CollapsibleDrawer";
 import { DataList } from "../../components/DataList";
 import { EmptyState } from "../../components/EmptyState";
 import { ErrorState } from "../../components/ErrorState";
@@ -20,6 +21,7 @@ import {
   heroSentences,
   pointMonth,
   pounds,
+  SHOW_DATA,
 } from "../../copy/accounts";
 import { CHECK_IN } from "../../copy/checkIn";
 import { OPEN_FLUMP_WEBSITE } from "../../copy/navigation";
@@ -192,15 +194,21 @@ function Loaded({ detail, links }: { detail: Detail; links: AccountDetailProps["
           ) : (
             <Text color="secondary">{ACCOUNT.chartNotEnough}</Text>
           )}
-          <DataList
-            rows={detail.series.map((p) => ({
-              id: `${p.year}-${p.month}`,
-              label: pointMonth(p),
-              figure: pounds(p.value),
-              note: accountMonthNote(p),
-            }))}
-            testID="account-months"
-          />
+          <CollapsibleDrawer
+            label={SHOW_DATA.show}
+            openLabel={SHOW_DATA.hide}
+            testID="account-data"
+          >
+            <DataList
+              rows={detail.series.map((p) => ({
+                id: `${p.year}-${p.month}`,
+                label: pointMonth(p),
+                figure: pounds(p.value),
+                note: accountMonthNote(p),
+              }))}
+              testID="account-months"
+            />
+          </CollapsibleDrawer>
         </>
       ) : (
         <EmptyState

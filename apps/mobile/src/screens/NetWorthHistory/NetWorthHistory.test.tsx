@@ -58,6 +58,11 @@ describe("NetWorthHistory", () => {
       screen.getByTestId("history-chart", { includeHiddenElements: true }).props
         .importantForAccessibility,
     ).toBe("no-hide-descendants");
+    // The months sit behind "Show data", closed until pressed.
+    expect(screen.queryByTestId("history-months-row-2026-10")).toBeNull();
+    expect(screen.getByText("Show data")).toBeOnTheScreen();
+    await userEvent.setup().press(screen.getByTestId("history-data-toggle"));
+    expect(screen.getByText("Hide data")).toBeOnTheScreen();
     expect(screen.getByTestId("history-months-row-2026-10").props.accessibilityLabel).toBe(
       "October 2026, £228,825, Recorded",
     );
