@@ -32,6 +32,7 @@ export const meta: MetaFunction = () => [{ title: "Settings | Flump" }];
 export const loader = async (args: LoaderFunctionArgs) => {
   const { user, accessToken } = await getAuthSession(args, { ensureSignedIn: true });
   if (!accessToken) throwRouteError(new BackendError("unauthorised", "/user-profile"));
+  const hasSessionEmail = typeof user?.email === "string" && user.email.trim().length > 0;
   try {
     // The accounts only decide which net worth choices are offered. If they cannot be read the
     // page still loads and offers both (null: unknown is not "no").
@@ -41,16 +42,18 @@ export const loader = async (args: LoaderFunctionArgs) => {
         signal: args.request.signal,
         schema: UserProfileResponse,
       }) as Promise<UserProfile>,
-      // Resolves the sign-in email server-side from WorkOS when the token has no email claim.
+      // Resolves the sign-in email server-side from WorkOS only when the AuthKit session lacks one.
       // Any failure (including 404 from an older backend) gives null so Settings still renders.
-      backendFetch("/user-profile/email", {
-        accessToken,
-        signal: args.request.signal,
-        schema: UserEmailResponse,
-      }).then(
-        (res) => res.email ?? null,
-        () => null,
-      ),
+      hasSessionEmail
+        ? Promise.resolve(null)
+        : backendFetch("/user-profile/email", {
+            accessToken,
+            signal: args.request.signal,
+            schema: UserEmailResponse,
+          }).then(
+            (res) => res.email ?? null,
+            () => null,
+          ),
       backendFetchAll("/accounts", {
         accessToken,
         signal: args.request.signal,

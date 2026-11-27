@@ -25,8 +25,6 @@ import {
 export interface SecurityTabProps {
   /** The sign-in email shown to the person. */
   email?: string | null;
-  /** True while the sign-in email is still being read. */
-  emailLoading?: boolean;
   /** The public AI connections page, linked from the card's "How to connect" steps. */
   guideUrl?: string;
   /** The MCP server address shown in the card's steps. */
@@ -38,7 +36,6 @@ export interface SecurityTabProps {
 /** Sign-in security and AI access: password reset by email and the MCP connection card. */
 export const SecurityTab: FC<SecurityTabProps> = ({
   email,
-  emailLoading = false,
   guideUrl,
   serverUrl,
   isBetaAdmin = false,
@@ -95,11 +92,7 @@ export const SecurityTab: FC<SecurityTabProps> = ({
                   id="user-email-display"
                 >
                   {/* No "Verified" badge: nothing here reads the provider's verified flag (ruling 4). */}
-                  <span>
-                    {emailLoading
-                      ? "Loading your email…"
-                      : email || "Your email cannot be shown here right now."}
-                  </span>
+                  <span>{email || "Your email cannot be shown here right now."}</span>
                 </div>
               </div>
             </div>
