@@ -33,7 +33,8 @@ export type IconName =
   | "file-text"
   | "monitor"
   | "sun"
-  | "moon";
+  | "moon"
+  | "info";
 
 export interface TabItem {
   /** Web's key. */

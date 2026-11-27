@@ -1,6 +1,12 @@
 import { dark, light, textStyles } from "@flump/tokens/native";
 import { render, screen, userEvent } from "@testing-library/react-native";
-import { Dimensions, StyleSheet, type TextStyle, type ViewStyle } from "react-native";
+import {
+  AccessibilityInfo,
+  Dimensions,
+  StyleSheet,
+  type TextStyle,
+  type ViewStyle,
+} from "react-native";
 import { expectHoldsAtDoubleText } from "../../testing/textScale";
 import { ThemeProvider } from "../../theme/ThemeProvider";
 import { KpiStrip, type KpiStripProps } from "./KpiStrip";
@@ -279,4 +285,55 @@ describe("KpiStrip", () => {
       await expectHoldsAtDoubleText(<KpiStrip {...props} />);
     },
   );
+
+  describe("info tip", () => {
+    const EXPLAIN =
+      "The income in your budget, minus your bills, living costs and what you put aside for savings each month.";
+
+    it("twoFigures offers About Left over each month, toggles its text and announces on open", async () => {
+      const announce = jest
+        .spyOn(AccessibilityInfo, "announceForAccessibility")
+        .mockImplementation(() => {});
+      await strip(kpiStripStates.twoFigures);
+
+      const trigger = screen.getByRole("button", { name: "About Left over each month" });
+      expect(trigger.props.accessibilityState).toMatchObject({ expanded: false });
+      expect(screen.queryByText(EXPLAIN)).toBeNull();
+
+      await userEvent.setup().press(trigger);
+      expect(
+        screen.getByRole("button", { name: "About Left over each month" }).props.accessibilityState,
+      ).toMatchObject({
+        expanded: true,
+      });
+      expect(screen.getByText(EXPLAIN)).toBeOnTheScreen();
+      expect(announce).toHaveBeenCalledTimes(1);
+      expect(announce).toHaveBeenCalledWith(EXPLAIN);
+
+      await userEvent
+        .setup()
+        .press(screen.getByRole("button", { name: "About Left over each month" }));
+      expect(screen.queryByText(EXPLAIN)).toBeNull();
+      expect(
+        screen.getByRole("button", { name: "About Left over each month" }).props.accessibilityState,
+      ).toMatchObject({ expanded: false });
+      expect(announce).toHaveBeenCalledTimes(1);
+    });
+
+    it("short offers About Short each month with the same explanation", async () => {
+      await strip(kpiStripStates.short);
+      const trigger = screen.getByRole("button", { name: "About Short each month" });
+      await userEvent.setup().press(trigger);
+      expect(screen.getByText(EXPLAIN)).toBeOnTheScreen();
+    });
+
+    it.each([
+      ["incomeOnly", kpiStripStates.incomeOnly],
+      ["refused", kpiStripStates.refused],
+      ["budgetFigures", kpiStripStates.budgetFigures],
+    ] as const)("%s shows no info tip trigger", async (_name, props) => {
+      await strip(props);
+      expect(screen.queryByRole("button", { name: /^About / })).toBeNull();
+    });
+  });
 });
