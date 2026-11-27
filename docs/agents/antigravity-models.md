@@ -6,7 +6,7 @@ Decisions: AM1 to AM6 (section 9) were accepted as recommended by the owner on 2
 
 ## 1. What this covers
 
-The owner approved using `agy` for coding work on 27 November 2026, under the normal review process. Agents working inside Antigravity read [`AGENTS.md`](../../AGENTS.md) and [`.agents/rules/working_rules.md`](../../.agents/rules/working_rules.md) as well as this page; the session that manages an Antigravity run follows sections 6 and 7 here.
+The owner approved using `agy` for coding work on 27 November 2026, under the normal review process. Agents working inside Antigravity read [`AGENTS.md`](../../AGENTS.md) and [`.agents/rules/working_rules.md`](../../.agents/rules/working_rules.md) as well as this page; the session that manages an Antigravity run follows sections 6 and 8 here.
 
 ## 2. What is known, and how
 
@@ -15,22 +15,20 @@ The owner approved using `agy` for coding work on 27 November 2026, under the no
 - The models on offer (section 3) come from `agy`'s own output, not from memory.
 - Two real tasks have run through it (PR 972, a review-fix round on mobile switch contrast; PR 976, the sign-in email in Settings, Security). What they taught is in section 7.
 - The quality claims in section 3 are still from Google's documentation and third-party write-ups, with second-hand benchmark figures. Our own results replace them as more tasks run (section 10).
-- How Google uses prompts and code on this plan is set in the owner's own Antigravity privacy and training settings (AM5). The repository is public, so the code itself is not sensitive.
+- How Google uses prompts and code on this plan is not stated in the documentation read so far. It depends on the owner's own Antigravity privacy and training settings, which he checks (AM5). The repository is public, so the code itself is not sensitive.
 
 ## 3. The models on offer
 
-| Model                                | Effort levels                    | What Google says it is for                            | Status                       |
-| ------------------------------------ | -------------------------------- | ----------------------------------------------------- | ---------------------------- |
-| Gemini 4 Neon                        | Low, Medium, High, XHigh         | Complex coding; the default model and default planner | Current                      |
-| Gemini 4 Carbon                      | Low, Medium, High                | The hardest, longest tasks                            | Current                      |
-| Gemini 4 Hydrogen                    | Low, Medium, High, XHigh         | Fast everyday work; the default executor              | Current                      |
-| Orchestrator (Neon or Carbon)        | Fixed, not adjustable in the CLI | Planner plans and reviews, Hydrogen edits and tests   | Current                      |
-| Gemini 4 Argon, Orchestrator (Argon) | Low, Medium, High                | Sustained reasoning                                   | **Removed 30 November 2026** |
-| Gemini 3.8 Flash                     | Low, Medium, High                | Not stated                                            | **Removed 30 November 2026** |
-| GPT-OSS 120B                         | Medium                           | Not stated                                            | **Removed 30 November 2026** |
-| Claude Opus 5.5, Claude Sonnet 5.5   | Low, Medium, High                | Not stated                                            | Current, separate quota      |
-
-Three entries above (Argon with its Orchestrator, 3.8 Flash and GPT-OSS 120B) are removed on 30 November 2026.
+| Model                                | Effort levels                    | What Google says it is for                            | Status                            |
+| ------------------------------------ | -------------------------------- | ----------------------------------------------------- | --------------------------------- |
+| Gemini 4 Neon                        | Low, Medium, High, XHigh         | Complex coding; the default model and default planner | Current                           |
+| Gemini 4 Carbon                      | Low, Medium, High                | The hardest, longest tasks                            | Current                           |
+| Gemini 4 Hydrogen                    | Low, Medium, High, XHigh         | Fast everyday work; the default executor              | Current                           |
+| Orchestrator (Neon or Carbon)        | Fixed, not adjustable in the CLI | Planner plans and reviews, Hydrogen edits and tests   | Current                           |
+| Gemini 4 Argon, Orchestrator (Argon) | Low, Medium, High                | Sustained reasoning                                   | **Removed from 30 November 2026** |
+| Gemini 3.8 Flash                     | Low, Medium, High                | Not stated                                            | **Removed from 30 November 2026** |
+| GPT-OSS 120B                         | Medium                           | Not stated                                            | **Removed from 30 November 2026** |
+| Claude Opus 5.5, Claude Sonnet 5.5   | Low, Medium, High                | Not stated                                            | Current, separate quota           |
 
 Google's own guidance: Orchestrator is the recommended default for feature work, bug fixes, refactoring and multi-file debugging. Hydrogen alone is for small maintenance with no planning step. A single large model is for work where every step needs full depth. Google also says to start with Hydrogen or Neon and move to Carbon only when a task gets stuck.
 
@@ -38,21 +36,21 @@ One third-party index puts Neon ahead of Carbon and Hydrogen for coding agents (
 
 ## 4. Which model for which work
 
-| Work                                                                                                  | Model                                                            | Why                                                                                    |
-| ----------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| Default for coding tasks                                                                              | `Orchestrator (Neon)`                                            | Google's recommended default; the planner checks the executor's work before it reports |
-| Small mechanical tasks: renames, boilerplate, tests for well-defined functions, docs, a narrow CI fix | `Gemini 4 Hydrogen (Medium)`                                     | Cheapest on quota; no planning step needed                                             |
-| A task that failed once on the default, or needs depth at every step                                  | `Gemini 4 Neon (High)`                                           | One strong model throughout                                                            |
-| A task still stuck after that                                                                         | `Gemini 4 Carbon (High)`, once, then it returns to a Claude lane | Google's stated escalation; no third attempt                                           |
-| Never                                                                                                 | Argon, 3.8 Flash, GPT-OSS 120B                                   | Removed on 30 November 2026                                                            |
-| Never                                                                                                 | Claude models inside `agy`                                       | See below                                                                              |
-| Never by default                                                                                      | Any `XHigh` level                                                | Quota cost with no evidence yet that it pays                                           |
+| Work                                                                                 | Model                                                            | Why                                                                                    |
+| ------------------------------------------------------------------------------------ | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Default for coding tasks                                                             | `Orchestrator (Neon)`                                            | Google's recommended default; the planner checks the executor's work before it reports |
+| Small mechanical tasks: renames, boilerplate, tests for well-defined functions, docs | `Gemini 4 Hydrogen (Medium)`                                     | Cheapest on quota; no planning step needed                                             |
+| A task that failed once on the default, or needs depth at every step                 | `Gemini 4 Neon (High)`                                           | One strong model throughout                                                            |
+| A task still stuck after that                                                        | `Gemini 4 Carbon (High)`, once, then it returns to a Claude lane | Google's stated escalation; no third attempt                                           |
+| Never                                                                                | Argon, 3.8 Flash, GPT-OSS 120B                                   | Removed from 30 November 2026                                                          |
+| Never                                                                                | Claude models inside `agy`                                       | See below                                                                              |
+| Never by default                                                                     | Any `XHigh` level                                                | Quota cost with no evidence yet that it pays                                           |
 
 **Why not the Claude models inside Antigravity.** The point of adding Antigravity is a second model family. Our reviewers are Claude models. Code written by Gemini and reviewed by Claude gets a genuinely independent second look; code written by Claude inside `agy` does not, and Claude already runs here under our own guardrails.
 
 **Effort.** The owner's standing cap for Claude roles is medium. AM2 allows High for the two escalation rows above and for the Orchestrator, whose effort Google fixes (its release notes say it defaults to high).
 
-**Quota.** Runs are expensive on the Gemini pool. On PR 976, two full Orchestrator runs used about 55 points of the five-hour pool (69% left before, 15% after) and a short Hydrogen run used about 1. Plan for no more than two Orchestrator runs per five-hour window, and use Hydrogen for follow-up fixes. When the pool runs out, wait for the refresh (AM4).
+**Quota.** Runs can be expensive on the Gemini pool, and cost varies by task. On PR 976, two full Orchestrator runs used about 55 points of the five-hour pool (69% left before, 15% after) and a short Hydrogen run used about 1; on PR 972, a smaller review-fix task, two Orchestrator runs used about 18. Check the meters before a run, budget for the larger figure on feature work, and use Hydrogen for follow-up fixes. When the pool runs out, wait for the refresh (AM4).
 
 ## 5. What Antigravity gets, and what it never gets
 
@@ -124,7 +122,7 @@ agy --model "<model>" --sandbox \
 - **The setup in section 6 works.** Antigravity committed and pushed its own work on both tasks with the single anchored push rule.
 - **It will leave the sandbox.** On PR 972 it ran knip outside the sandbox after a permission error, with nothing approving that explicitly. On PR 976 the out-of-sandbox commands were ordinary project work (installs, tests on loopback, `check:laws`, knip, type checks, git commit and push), all inside the brief. It also read its own task output under its data folder, which is now allowed for the current run only. Hence the after-run log check, every time.
 - **Quality.** The independent reviews found careful root-causing (PR 976 traced an empty email to a missing claim in the access token) and good log hygiene (logs carry only error class, code and status). They also found what it missed: the cost angle of a new endpoint that calls an outside service (the security reviewer caught that the general rate limit allowed too many calls, and a tighter class was added), and the scanner rule against literal ids in tests (CI's Semgrep flagged two hardcoded sample ids, fixed by building them at runtime with no suppression). Briefs for similar work name both.
-- **Quota.** See section 4: about 55 points of the five-hour pool for two full Orchestrator runs.
+- **Quota.** See section 4: about 55 points of the five-hour pool for two full Orchestrator runs on feature work, about 18 on a review-fix round.
 
 ## 8. How its work reaches main
 
@@ -142,14 +140,14 @@ agy --model "<model>" --sandbox \
 
 Accepted by the owner on 27 November 2026.
 
-|     | Decision                                                                                                       | Ruling                                                                                                                    |
-| --- | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| AM1 | The model table in section 4                                                                                   | Accepted                                                                                                                  |
-| AM2 | Effort: allow High for the two escalation rows and the Orchestrator's fixed setting, or hold to the medium cap | Allow High there. Holding to medium would rule out the Orchestrator, since its effort cannot be set from the command line |
-| AM3 | Never use Claude models inside Antigravity                                                                     | Accepted                                                                                                                  |
-| AM4 | When Gemini quota runs out: wait for the refresh, or spend paid credits                                        | Wait. Credits are money, so this is the owner's setting ("AI Credit Overages: Never"); no agent changes it                |
-| AM5 | Data use: the owner checks his Antigravity privacy and training settings                                       | An owner action; the repository is public, so the code is not sensitive                                                   |
-| AM6 | Start with one trial task before regular use                                                                   | Accepted. The trial ran on `Orchestrator (Neon)` and was reviewed as normal (section 7)                                   |
+|     | Decision                                                                                                                                     | Ruling                                                                                                                    |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| AM1 | The model table in section 4                                                                                                                 | Accepted                                                                                                                  |
+| AM2 | Effort: allow High for the two escalation rows and the Orchestrator's fixed setting, or hold to the medium cap                               | Allow High there. Holding to medium would rule out the Orchestrator, since its effort cannot be set from the command line |
+| AM3 | Never use Claude models inside Antigravity                                                                                                   | Accepted                                                                                                                  |
+| AM4 | When Gemini quota runs out: wait for the refresh, or spend paid credits                                                                      | Wait. Credits are money, so this is the owner's setting ("AI Credit Overages: Never"); no agent changes it                |
+| AM5 | Data use: the owner checks his Antigravity privacy and training settings, since the documentation does not say how prompts and code are used | Accepted as an owner action; the repository is public, so the code is not sensitive                                       |
+| AM6 | Start with one trial task before regular use                                                                                                 | Accepted. The first task, PR 972, ran on `Orchestrator (Neon)` and was reviewed as normal (section 7)                     |
 
 ## 10. To revisit
 
