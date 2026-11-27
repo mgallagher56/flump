@@ -2,6 +2,7 @@ import {
   categorizeAccountType,
   countsTowardNetWorth,
   DEFAULT_NET_WORTH_BASIS,
+  describeJointShareOfWhole,
   describeJointWholeValue,
   type NetWorthBasis,
   selectAccountBalance,
@@ -19,6 +20,7 @@ import { TYPE_LABEL } from "~/features/accounts/components/AccountsGroupList";
 import { QuickBalanceUpdate } from "~/features/accounts/components/QuickBalanceUpdate";
 import { useFetcherOutcome } from "~/features/feedback/hooks/useFetcherOutcome";
 import { londonMonth } from "~/features/snapshot/snapshotModel";
+import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { useSavedProfile } from "~/hooks/useUserProfile";
 import type { loader } from "~/routes/app.accounts.$account";
 import { versionField } from "~/services/conflict";
@@ -114,6 +116,7 @@ const AccountDetailContainer: FC = () => {
   // The quick balance update posts to this route's own action, as the Edit dialog does.
   const balanceFetcher = useFetcher();
   const balanceOutcome = useFetcherOutcome(balanceFetcher);
+  const { formatCurrency } = useFormatCurrency();
   const goalFetcher = useFetcher();
   const goalOutcome = useFetcherOutcome(goalFetcher);
 
@@ -164,6 +167,19 @@ const AccountDetailContainer: FC = () => {
   // Said quietly in the hero's subline, so no extra line sits between the hero and the chart.
   // Left out when the net worth choices could not be read (basis null): unknown is not "no".
   const notCounted = accountCounts(account.type, basis) === false ? NOT_COUNTED_TEXT : null;
+  // A joint account's hero is the user's share; its own page says the whole beside it (owner
+  // decision 9 A), in whole pounds as the hero shows its figure. Null for an account held alone.
+  const jointLine = describeJointShareOfWhole(
+    {
+      name: account.name,
+      type: account.type,
+      accountSubtype: account.accountSubtype,
+      ownership: account.ownership,
+      sharePercent: account.sharePercent,
+    },
+    isLiability ? "amount owed" : "balance",
+    formatCurrency(hero.whole),
+  );
 
   return (
     <PageBody>
@@ -207,7 +223,7 @@ const AccountDetailContainer: FC = () => {
 
       <HeroFigure
         label={isLiability ? "Amount owed" : "Current balance"}
-        subline={sentences(dateLine, notCounted)}
+        subline={sentences(jointLine, dateLine, notCounted)}
         value={current}
       />
 

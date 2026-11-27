@@ -243,3 +243,33 @@ export function describeJointWholeValue(
   const share = SHARE_PERCENT_FORMAT.format(resolveAccountSharePercent(input));
   return `This is the whole ${wholeOf}. Your share is ${share}% of it.`;
 }
+
+/**
+ * The line under a joint account's hero on its own page (owner decision 9 A, ruled by the fable
+ * decider in E12 S6): the hero is the user's share, so the whole is said beside it. `wholeOf`
+ * names the figure ("balance", "amount owed"); `wholeText` is the whole already formatted
+ * ("£1,000"). Returns `null` for a sole account.
+ */
+export function describeJointShareOfWhole(
+  input: AccountShareInput | null | undefined,
+  wholeOf: string,
+  wholeText: string,
+): string | null {
+  if (resolveAccountOwnership(input) !== "joint") return null;
+  const share = SHARE_PERCENT_FORMAT.format(resolveAccountSharePercent(input));
+  return `Your ${share}% share. The whole ${wholeOf} is ${wholeText}.`;
+}
+
+/**
+ * What a joint account's balance history shows, said with it (owner decision 9 A): the chart is the
+ * whole account, month by month, while the hero is the user's share. Returns `null` for a sole
+ * account, whose history needs no such line.
+ */
+export function describeJointWholeHistory(
+  input: AccountShareInput | null | undefined,
+  wholeOf: string,
+): string | null {
+  if (resolveAccountOwnership(input) !== "joint") return null;
+  const share = SHARE_PERCENT_FORMAT.format(resolveAccountSharePercent(input));
+  return `The whole ${wholeOf} each month, as recorded. Your share is ${share}% of it.`;
+}

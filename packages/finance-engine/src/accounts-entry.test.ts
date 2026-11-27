@@ -35,6 +35,8 @@ describe("the accounts entry", () => {
       "selectSeriesChange",
       "toShownBalance",
       "describeJointWholeValue",
+      "describeJointShareOfWhole",
+      "describeJointWholeHistory",
       "resolveAccountOwnership",
       "resolveAccountSharePercent",
       "netWorthChoicesAvailable",

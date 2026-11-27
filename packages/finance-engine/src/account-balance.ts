@@ -62,6 +62,11 @@ export interface AccountMonthRow {
 export interface AccountHeroFigure {
   /** The figure shown: the shown balance, or the latest month up to now after a future-month row. */
   balance: number;
+  /**
+   * The same figure for the whole account, before any joint share (owner decision 9 A: the account's
+   * own page says the whole beside the share). Equal to `balance` for an account held alone.
+   */
+  whole: number;
   /** The latest recorded month up to now, which dates the figure; null with no history. */
   month: { month: number; year: number; source?: string | null } | null;
   /** The earliest recorded month up to now, as shown, when it is not also the latest; else null. */
@@ -130,6 +135,7 @@ function heroFigure(
   shareInput: AccountShareInput,
   details: readonly AccountMonthRow[],
   shownBalance: number | undefined,
+  shownWhole: number | undefined,
   cy: number,
   cm: number,
 ): AccountHeroFigure {
@@ -152,12 +158,14 @@ function heroFigure(
     (first.year !== latest.year || first.month !== latest.month)
       ? { value: toShownBalance(type, first.value), month: first.month, year: first.year }
       : null;
-  const balance =
-    hasFuture && latest?.value !== undefined
-      ? toShownBalance(type, applyAccountShare(latest.value, shareInput))
-      : (shownBalance ?? 0);
+  const fromLatest = hasFuture && latest?.value !== undefined;
+  const balance = fromLatest
+    ? toShownBalance(type, applyAccountShare(latest.value as number, shareInput))
+    : (shownBalance ?? 0);
+  const whole = fromLatest ? toShownBalance(type, latest.value as number) : (shownWhole ?? 0);
   return {
     balance,
+    whole,
     month: latest ? { month: latest.month, year: latest.year, source: latest.source } : null,
     earliest,
   };
@@ -235,7 +243,15 @@ export function selectAccountBalance(
     favourable,
     latestMonth: keyOf(latest),
     previousMonth: keyOf(previous),
-    hero: heroFigure(type, shareInput, details, balance, cy, cm),
+    hero: heroFigure(
+      type,
+      shareInput,
+      details,
+      balance,
+      rawUnscaled !== undefined ? toShownBalance(type, rawUnscaled) : undefined,
+      cy,
+      cm,
+    ),
   };
 }
 

@@ -26,6 +26,8 @@ export {
 export { categorizeAccountType } from "./account-category.js";
 export {
   type AccountOwnership,
+  describeJointShareOfWhole,
+  describeJointWholeHistory,
   describeJointWholeValue,
   resolveAccountOwnership,
   resolveAccountSharePercent,

@@ -388,13 +388,19 @@ describe("selectAccountBalance: the account page's hero", () => {
       ]),
     ).toEqual({
       balance: 1500,
+      whole: 1500,
       month: { month: 10, year: 2026, source: "calculated" },
       earliest: null,
     });
   });
 
   it("with no history and no saved balance shows 0, with no month", () => {
-    expect(hero({ type: "Saving" }, [])).toEqual({ balance: 0, month: null, earliest: null });
+    expect(hero({ type: "Saving" }, [])).toEqual({
+      balance: 0,
+      whole: 0,
+      month: null,
+      earliest: null,
+    });
   });
 
   it("after a future-month row shows the latest month up to now, a debt as owed", () => {
@@ -466,6 +472,7 @@ describe("selectAccountBalance: the account page's hero", () => {
       hero({ type: "Saving", balance: 2000 }, [{ month: 12, year: 2026, value: 2000 }]),
     ).toEqual({
       balance: 2000,
+      whole: 2000,
       month: null,
       earliest: null,
     });
@@ -488,6 +495,54 @@ describe("selectAccountBalance: the account page's hero", () => {
         ],
       ).balance,
     ).toBe(500);
+  });
+
+  it("gives the whole of a joint account beside its share (owner decision 9 A)", () => {
+    // Saved 1,000, joint at 50%: the share 1,000 x 50% = 500, the whole stays 1,000.
+    const result = hero(
+      { type: "Saving", name: "Joint saver", balance: 1000, ownership: "joint", sharePercent: 50 },
+      [],
+    );
+    expect(result.balance).toBe(500);
+    expect(result.whole).toBe(1000);
+  });
+
+  it("gives the whole amount owed of a joint debt as positive", () => {
+    // Saved -200,000, joint at 40%: the share 200,000 x 40% = 80,000 owed, the whole 200,000 owed.
+    const result = hero(
+      {
+        type: "Mortgage",
+        name: "Home loan",
+        balance: -200000,
+        ownership: "joint",
+        sharePercent: 40,
+      },
+      [],
+    );
+    expect(result.balance).toBe(80000);
+    expect(result.whole).toBe(200000);
+  });
+
+  it("after a future-month row gives the whole of the latest month up to now", () => {
+    // October's whole 1,000 is the whole; its 50% share 500 is the balance. The saved 1,200 is not used.
+    const result = hero(
+      { type: "Saving", name: "Joint saver", balance: 1200, ownership: "joint", sharePercent: 50 },
+      [
+        { month: 10, year: 2026, value: 1000 },
+        { month: 12, year: 2026, value: 1200 },
+      ],
+    );
+    expect(result.whole).toBe(1000);
+  });
+
+  it("with no saved balance, the whole comes from the latest month up to now", () => {
+    // No saved balance: October's 800 whole, at 50% the balance is 400.
+    const result = hero(
+      { type: "Saving", name: "Joint saver", ownership: "joint", sharePercent: 50 },
+      [{ month: 10, year: 2026, value: 800 }],
+    );
+    expect(result.balance).toBe(400);
+    expect(result.whole).toBe(800);
   });
 
   it("gives the earliest month up to now as shown, when it is not the latest", () => {
