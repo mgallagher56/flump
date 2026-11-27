@@ -1,5 +1,5 @@
 import { dark } from "@flump/tokens/native";
-import { act, render, screen } from "@testing-library/react-native";
+import { act, fireEvent, render, screen } from "@testing-library/react-native";
 import { Keyboard, StyleSheet, TextInput, type ViewStyle } from "react-native";
 import { refreshControl } from "../../testing/refresh";
 import { expectHoldsAtDoubleText } from "../../testing/textScale";
@@ -411,5 +411,73 @@ describe("Screen", () => {
     });
     expect(overlay.props.pointerEvents).toBe("box-none");
     expect(screen.getByTestId("floating")).toBeOnTheScreen();
+  });
+
+  it("pads scroll content bottom by the measured overlay height while shown and restores it when gone", async () => {
+    const view = await render(
+      <ThemeProvider scheme="light">
+        <Screen testID="s" overlay={<Text testID="floating">Saved</Text>}>
+          <Text>Body</Text>
+        </Screen>
+      </ThemeProvider>,
+    );
+    const scroller = () => (screen.toJSON() as unknown as Tree).children[0];
+    expect(flat(scroller()?.props.contentContainerStyle).paddingBottom).toBeUndefined();
+
+    // page.top.sm (20) + measured overlay height (64) = 84.
+    await fireEvent(screen.getByTestId("s-overlay"), "layout", {
+      nativeEvent: { layout: { x: 0, y: 600, width: 390, height: 64 } },
+    });
+    expect(flat(scroller()?.props.contentContainerStyle).paddingBottom).toBe(84);
+
+    // Overlay grows (e.g. 200% text): 20 + 88 = 108.
+    await fireEvent(screen.getByTestId("s-overlay"), "layout", {
+      nativeEvent: { layout: { x: 0, y: 576, width: 390, height: 88 } },
+    });
+    expect(flat(scroller()?.props.contentContainerStyle).paddingBottom).toBe(108);
+
+    await view.rerender(
+      <ThemeProvider scheme="light">
+        <Screen testID="s" overlay={null}>
+          <Text>Body</Text>
+        </Screen>
+      </ThemeProvider>,
+    );
+    expect(screen.queryByTestId("s-overlay")).toBeNull();
+    expect(flat(scroller()?.props.contentContainerStyle).paddingBottom).toBeUndefined();
+  });
+
+  it("adds overlay height on top of keyboard room when keyboardAware is also set", async () => {
+    const listeners = new Map<string, (e: unknown) => void>();
+    jest.spyOn(Keyboard, "addListener").mockImplementation((name, fn) => {
+      listeners.set(name, fn as (e: unknown) => void);
+      return { remove: jest.fn() } as never;
+    });
+    const view = await render(
+      <ThemeProvider scheme="light">
+        <Screen testID="s" keyboardAware overlay={<Text testID="floating">Saved</Text>}>
+          <Text>Form</Text>
+        </Screen>
+      </ThemeProvider>,
+    );
+    const scroller = () => (screen.toJSON() as unknown as Tree).children[0];
+    const show = listeners.get("keyboardWillShow") ?? listeners.get("keyboardDidShow");
+    await act(async () => show?.({ endCoordinates: { height: 336, screenY: 500 } }));
+    await fireEvent(screen.getByTestId("s-overlay"), "layout", {
+      nativeEvent: { layout: { x: 0, y: 600, width: 390, height: 64 } },
+    });
+    // 20 + 336 + 64 = 420.
+    expect(flat(scroller()?.props.contentContainerStyle).paddingBottom).toBe(420);
+
+    await view.rerender(
+      <ThemeProvider scheme="light">
+        <Screen testID="s" keyboardAware overlay={null}>
+          <Text>Form</Text>
+        </Screen>
+      </ThemeProvider>,
+    );
+    // Overlay gone while keyboard remains open: 20 + 336 = 356.
+    expect(flat(scroller()?.props.contentContainerStyle).paddingBottom).toBe(356);
+    jest.restoreAllMocks();
   });
 });

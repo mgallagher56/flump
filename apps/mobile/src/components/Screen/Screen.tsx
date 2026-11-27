@@ -92,6 +92,11 @@ export function Screen({
   );
   const inset = useKeyboardInset();
   const room = keyboardAware ? inset : 0;
+  const [overlayHeight, setOverlayHeight] = useState(0);
+  useEffect(() => {
+    if (!overlay) setOverlayHeight(0);
+  }, [overlay]);
+  const overlayRoom = overlay ? overlayHeight : 0;
   const scrollY = useRef(0);
   const viewport = useRef(0);
   const margin = theme.spacing["density.gap"];
@@ -198,8 +203,10 @@ export function Screen({
       keyboardShouldPersistTaps="handled"
       contentContainerStyle={[
         content,
-        // Below a form's content: the page's own space, and the keyboard's height while it is open.
-        keyboardAware ? { paddingBottom: theme.spacing["page.top.sm"] + room } : null,
+        // Below the content: the page's own space, plus keyboard height and any bottom overlay height.
+        keyboardAware || overlayRoom > 0
+          ? { paddingBottom: theme.spacing["page.top.sm"] + room + overlayRoom }
+          : null,
       ]}
       {...keyboardProps}
       refreshControl={
@@ -233,6 +240,10 @@ export function Screen({
           edges={overlayEdges}
           style={styles.overlay}
           testID={testID ? `${testID}-overlay` : undefined}
+          onLayout={(event) => {
+            const next = event.nativeEvent.layout.height;
+            setOverlayHeight((prev) => (prev === next ? prev : next));
+          }}
         >
           {overlay}
         </SafeAreaView>
