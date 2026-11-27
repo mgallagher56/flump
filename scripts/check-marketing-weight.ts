@@ -114,6 +114,35 @@ export function measureClientBuild(dir: string, page = "HomePage"): Weights {
   };
 }
 
+/** The script files a page loads at once: index.html's, and the page's own chunks from the manifest. */
+export function firstLoadScripts(dir: string, page: string): string[] {
+  const { scripts } = firstLoadAssets(readFileSync(join(dir, "index.html"), "utf8"));
+  const manifest = JSON.parse(readFileSync(join(dir, MANIFEST), "utf8")) as BuildManifest;
+  const key = pageKey(page);
+  if (!manifest[key]) throw new Error(`${dir}/${MANIFEST} has no ${key}`);
+  const own = pageFiles(manifest, key).filter((rel) => /\.m?js$/.test(rel));
+  return [...new Set([...scripts, ...own])];
+}
+
+/**
+ * Text only the home journey's samples contain (`JourneySample.tsx`): the area pages' set piece.
+ * Its chunk must be one home also loads, so after a home visit the area pages' extra weight is
+ * already cached (coordinator's condition on the AreaPage budget, 27 Nov 2026).
+ */
+export const SET_PIECE_MARKER = "Estimated paid off";
+
+/**
+ * Whether `page`'s first-load chunks holding `marker` are all chunks `shared` also loads at once.
+ * False when no first-load chunk of `page` holds it, so a renamed sample cannot pass unseen.
+ */
+export function chunksShared(dir: string, page: string, shared: string, marker: string) {
+  const holding = firstLoadScripts(dir, page).filter((rel) =>
+    readFileSync(join(dir, rel), "utf8").includes(marker),
+  );
+  const theirs = new Set(firstLoadScripts(dir, shared));
+  return { holding, ok: holding.length > 0 && holding.every((rel) => theirs.has(rel)) };
+}
+
 export interface WeightRow {
   readonly measure: Measure;
   readonly measured: number;
@@ -162,6 +191,11 @@ if (import.meta.main) {
     }
     lowered[page] = { ...entry, baseline: loweredBaseline(measured, entry.baseline) };
   }
+  const setPiece = chunksShared(resolve(dir), "AreaPage", "HomePage", SET_PIECE_MARKER);
+  console.log(
+    `${setPiece.ok ? "ok  " : "FAIL"} AreaPage's set piece is in chunks home also loads: ${setPiece.holding.join(", ") || "none found"}`,
+  );
+  if (!setPiece.ok) over.push("AreaPage set piece not shared with home");
   if (process.argv.includes("--write-baseline")) {
     writeFileSync(BASELINE_FILE, `${JSON.stringify({ ...file, pages: lowered }, null, 2)}\n`);
     console.log(

@@ -6,6 +6,7 @@ import { gzipSync } from "node:zlib";
 import { PAGE_NAMES } from "../apps/marketing/src/pageSet";
 import {
   BASELINE_FILE,
+  chunksShared,
   compareWeights,
   firstLoadAssets,
   loweredBaseline,
@@ -122,6 +123,44 @@ describe("measureClientBuild", () => {
     );
   });
 
+  it("tells whether a page's chunks holding a text are all ones another page also loads", () => {
+    const manifest = {
+      "index.html": {
+        file: "assets/index.js",
+        isEntry: true,
+        dynamicImports: ["src/pages/HomePage/index.ts", "src/pages/AreaPage/index.ts"],
+      },
+      "src/pages/HomePage/index.ts": { file: "assets/HomePage.js", imports: ["_Sample.js"] },
+      "src/pages/AreaPage/index.ts": { file: "assets/AreaPage.js", imports: ["_Sample.js"] },
+      "_Sample.js": { file: "assets/Sample.js" },
+    };
+    const files = {
+      "index.html": `<script type="module" src="/assets/index.js"></script>`,
+      ".vite/manifest.json": JSON.stringify(manifest),
+      "assets/index.js": "entry",
+      "assets/HomePage.js": "home",
+      "assets/AreaPage.js": "area",
+      "assets/Sample.js": "Estimated paid off",
+    };
+    expect(chunksShared(build(files), "AreaPage", "HomePage", "Estimated paid off")).toEqual({
+      holding: ["assets/Sample.js"],
+      ok: true,
+    });
+    rmSync(dir, { recursive: true, force: true });
+    // The sample moved into the area page's own chunk: home never loads it.
+    const own = build({
+      ...files,
+      "assets/AreaPage.js": "area Estimated paid off",
+      "assets/Sample.js": "shared",
+    });
+    expect(chunksShared(own, "AreaPage", "HomePage", "Estimated paid off")).toEqual({
+      holding: ["assets/AreaPage.js"],
+      ok: false,
+    });
+    // No chunk holds it at all: not passed unseen.
+    expect(chunksShared(own, "AreaPage", "HomePage", "not there").ok).toBe(false);
+  });
+
   it("refuses a build whose index.html loads no script, or loads a missing file", () => {
     expect(() => measureClientBuild(build({ "index.html": "<p>empty</p>" }))).toThrow(
       "loads no script",
@@ -186,8 +225,11 @@ describe("the committed baseline file", () => {
       cssGzip: 25_000,
       lazyJsGzip: lazy,
     });
-    for (const page of ["FeaturesIndexPage", "AreaPage", "AiConnectionPage"])
+    for (const page of ["FeaturesIndexPage", "AiConnectionPage"])
       expect(budget(page), page).toEqual(family(15_000, 230_000));
+    // AreaPage only, signed by the coordinator on 27 Nov 2026: its set piece, the home journey's
+    // sample, is server-rendered (MK1) and measured +27.3 KB over main.
+    expect(budget("AreaPage")).toEqual(family(30_000, 230_000));
     for (const page of [
       "PreviewPage",
       "PricingPage",
