@@ -72,14 +72,17 @@ for (const row of PAGES) {
     test("with reduced motion loads no motion library and is still, with no pause control (MK12, MK14)", async ({
       browser,
     }) => {
-      const page = await openPage(browser, row.path, {
+      const context = await browser.newContext({
         reducedMotion: "reduce",
         viewport: { width: 1280, height: 900 },
       });
+      // Listening before the page loads, so no request made on the way is missed.
       const scripts: string[] = [];
-      page.on("request", (request) => {
+      context.on("request", (request) => {
         if (request.resourceType() === "script") scripts.push(request.url());
       });
+      const page = await context.newPage();
+      await page.goto(`${MARKETING_URL}${row.path}`);
       const preloaded = await page
         .locator('script[src], link[rel="modulepreload"]')
         .evaluateAll((els) =>
