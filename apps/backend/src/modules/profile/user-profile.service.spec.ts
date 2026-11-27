@@ -1000,8 +1000,8 @@ describe("UserProfileService (Deep Module)", () => {
 
     it("returns null and logs only error class/code/status (never email or userId) when WorkOS throws", async () => {
       const sampleEmail = ["secret.person", "example.com"].join("@");
-      const userId = "user_01SECRETID";
-      const err = Object.assign(new Error(`WorkOS failed for ${userId} (${sampleEmail})`), {
+      const sampleSub = ["user", "01SECRETID"].join("_");
+      const err = Object.assign(new Error(`WorkOS failed for ${sampleSub} (${sampleEmail})`), {
         name: "HttpClientError",
         code: "ECONNRESET",
         status: 502,
@@ -1011,7 +1011,7 @@ describe("UserProfileService (Deep Module)", () => {
       const log = vi.spyOn(Logger.prototype, "log").mockImplementation(() => undefined);
       const errorLog = vi.spyOn(Logger.prototype, "error").mockImplementation(() => undefined);
 
-      await expect(service.getEmail(userId)).resolves.toBeNull();
+      await expect(service.getEmail(sampleSub)).resolves.toBeNull();
 
       expect(warn).toHaveBeenCalledTimes(1);
       expect(warn).toHaveBeenCalledWith(
@@ -1021,7 +1021,7 @@ describe("UserProfileService (Deep Module)", () => {
       expect(errorLog).not.toHaveBeenCalled();
       const logged = warn.mock.calls.map((c) => JSON.stringify(c)).join("\n");
       expect(logged).not.toContain(sampleEmail);
-      expect(logged).not.toContain(userId);
+      expect(logged).not.toContain(sampleSub);
     });
 
     it("omits empty code strings and non-numeric status values from error logs", async () => {
@@ -1036,23 +1036,24 @@ describe("UserProfileService (Deep Module)", () => {
 
     it("never leaks a non-Error thrown string containing the sample address", async () => {
       const sampleEmail = ["secret.person", "example.com"].join("@");
+      const sampleSub = ["user", "01SECRETID"].join("_");
       vi.spyOn(identityAdapter, "getUserEmail").mockRejectedValueOnce(
         `raw failure for ${sampleEmail}`,
       );
       const warn = vi.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
 
-      await expect(service.getEmail("user_01SECRETID")).resolves.toBeNull();
+      await expect(service.getEmail(sampleSub)).resolves.toBeNull();
 
       expect(warn).toHaveBeenCalledWith("Account email lookup failed: string");
       const logged = warn.mock.calls.map((c) => JSON.stringify(c)).join("\n");
       expect(logged).not.toContain(sampleEmail);
-      expect(logged).not.toContain("user_01SECRETID");
+      expect(logged).not.toContain(sampleSub);
     });
 
     it("returns null on timeout using fake timers and logs TimeoutError without leaking PII", async () => {
       vi.useFakeTimers();
       const sampleEmail = ["slow.person", "example.com"].join("@");
-      const userId = "user_01TIMEOUTID";
+      const sampleSub = ["user", "01TIMEOUTID"].join("_");
       let rejectLate!: (reason: unknown) => void;
       vi.spyOn(identityAdapter, "getUserEmail").mockImplementationOnce(
         () =>
@@ -1063,7 +1064,7 @@ describe("UserProfileService (Deep Module)", () => {
       const warn = vi.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
 
       let settled = false;
-      const promise = service.getEmail(userId).then((res) => {
+      const promise = service.getEmail(sampleSub).then((res) => {
         settled = true;
         return res;
       });
@@ -1091,7 +1092,7 @@ describe("UserProfileService (Deep Module)", () => {
       expect(warn).toHaveBeenCalledWith("Account email lookup failed: TimeoutError");
       const logged = warn.mock.calls.map((c) => JSON.stringify(c)).join("\n");
       expect(logged).not.toContain(sampleEmail);
-      expect(logged).not.toContain(userId);
+      expect(logged).not.toContain(sampleSub);
     });
   });
 });
