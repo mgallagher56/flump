@@ -9,6 +9,7 @@ import {
   AccountDetailListResponse,
   AccountListResponse,
   type AccountWithDetailsDto,
+  BudgetEntryListResponse,
   ClientPolicyResponse,
   SnapshotCheckInsResponse,
   type UpsertSnapshotRequest,
@@ -31,7 +32,15 @@ export const FIXTURE_PERSON = {
   email: "sam.taylor@example.com",
 } as const;
 
-export function cannedProfile(userId: string, now: Date): UserProfileResponse {
+/**
+ * The canned profile. `facts` are a household's own answers (salary, region, student loan and so
+ * on, from `apps/e2e/support/personas.ts`), laid over the defaults.
+ */
+export function cannedProfile(
+  userId: string,
+  now: Date,
+  facts: Partial<UserProfileResponse> = {},
+): UserProfileResponse {
   return UserProfileSchema.parse({
     id: randomUUID(),
     userId,
@@ -75,6 +84,7 @@ export function cannedProfile(userId: string, now: Date): UserProfileResponse {
     partnerMode: false,
     createdAt: now.toISOString(),
     updatedAt: now.toISOString(),
+    ...facts,
   });
 }
 
@@ -268,6 +278,119 @@ export const HOMEOWNER_ACCOUNTS: readonly PersonaAccount[] = [
   },
 ];
 
+/** The renter's accounts with no debt: the pension pots take the strip's second card (S5b). */
+export const PENSION_ONLY_ACCOUNTS: readonly PersonaAccount[] = RENTER_ACCOUNTS.filter(
+  (a) => a.type !== "Credit Card" && a.type !== "Student Loan",
+);
+
+/** A budget row of a persona (personas.ts `SeedBudgetEntry`), copied as the accounts are. */
+export interface PersonaBudgetRow {
+  name: string;
+  category: string;
+  amount: number;
+  isIncome?: boolean;
+  isEssential?: boolean;
+}
+
+/** personas.ts `RENTER.budget`. None of it is linked: the income is typed. */
+export const RENTER_BUDGET: readonly PersonaBudgetRow[] = [
+  { name: "Salary after tax", category: "income", amount: 2085, isIncome: true },
+  { name: "Rent", category: "housing", amount: 950, isEssential: true },
+  { name: "Council tax", category: "bills", amount: 115, isEssential: true },
+  { name: "Energy", category: "bills", amount: 80, isEssential: true },
+  { name: "Phone and broadband", category: "bills", amount: 40, isEssential: true },
+  { name: "Groceries", category: "expenses", amount: 250, isEssential: true },
+  { name: "Travel", category: "expenses", amount: 120, isEssential: true },
+  { name: "Eating out", category: "expenses", amount: 90 },
+  { name: "Subscriptions", category: "expenses", amount: 25 },
+  { name: "Everything else", category: "expenses", amount: 80 },
+  { name: "Credit card payment", category: "bills", amount: 60, isEssential: true },
+  { name: "Easy access savings", category: "savings", amount: 150 },
+];
+
+/** personas.ts `HOMEOWNER.budget`. */
+export const HOMEOWNER_BUDGET: readonly PersonaBudgetRow[] = [
+  { name: "Salary after tax", category: "income", amount: 3450, isIncome: true },
+  { name: "Mortgage payment", category: "housing", amount: 1250, isEssential: true },
+  { name: "Council tax", category: "bills", amount: 190, isEssential: true },
+  { name: "Energy", category: "bills", amount: 140, isEssential: true },
+  { name: "Water", category: "bills", amount: 45, isEssential: true },
+  { name: "Phone and broadband", category: "bills", amount: 55, isEssential: true },
+  { name: "Home insurance", category: "bills", amount: 30, isEssential: true },
+  { name: "Car loan payment", category: "bills", amount: 265, isEssential: true },
+  { name: "Groceries", category: "expenses", amount: 520, isEssential: true },
+  { name: "Travel", category: "expenses", amount: 180, isEssential: true },
+  { name: "Eating out", category: "expenses", amount: 120 },
+  { name: "Subscriptions", category: "expenses", amount: 40 },
+  { name: "Everything else", category: "expenses", amount: 180 },
+  { name: "Cash ISA", category: "savings", amount: 100 },
+  { name: "Easy access savings", category: "savings", amount: 200 },
+];
+
+/** personas.ts `RENTER.profile`'s answers the budget's take-home line is worked out from. */
+export const RENTER_FACTS = {
+  employmentType: "employed",
+  annualSalary: 32000,
+  monthlyTakeHome: 2085,
+  taxRegion: "ENGLAND",
+  studentLoanPlans: ["PLAN_2"],
+  housingStatus: "renting",
+  monthlyHousingCost: 950,
+  pensionPercent: 5,
+  isSalarySacrifice: false,
+} as const satisfies Partial<UserProfileResponse>;
+
+/** personas.ts `HOMEOWNER.profile`'s answers, as `RENTER_FACTS`. */
+export const HOMEOWNER_FACTS = {
+  employmentType: "employed",
+  annualSalary: 58000,
+  monthlyTakeHome: 3450,
+  taxRegion: "ENGLAND",
+  studentLoanPlans: [],
+  housingStatus: "mortgage",
+  monthlyHousingCost: 1250,
+  pensionPercent: 8,
+  isSalarySacrifice: false,
+} as const satisfies Partial<UserProfileResponse>;
+
+/**
+ * The saved budget as `GET /budget-entries` answers it, parsed with the contract's schema. With
+ * `linkTakeHome` the income row is linked to take-home pay: its stored amount is 0 and never read,
+ * as the backend stores it, and the engine works the line out from the profile.
+ */
+export function cannedBudgetEntries(
+  userId: string,
+  now: Date,
+  rows: readonly PersonaBudgetRow[],
+  { linkTakeHome = false }: { linkTakeHome?: boolean } = {},
+): BudgetEntryListResponse {
+  const iso = now.toISOString();
+  return BudgetEntryListResponse.parse(
+    rows.map((row) => {
+      const linked = linkTakeHome && row.isIncome === true;
+      return {
+        id: randomUUID(),
+        userId,
+        category: row.category,
+        name: row.name,
+        amount: linked ? 0 : row.amount,
+        frequency: "monthly",
+        isIncome: row.isIncome ?? false,
+        isPrimaryIncome: row.isIncome ?? false,
+        isEssential: row.isEssential ?? false,
+        notes: null,
+        isDefault: false,
+        ownership: "sole",
+        sharePercent: null,
+        linkKind: linked ? "take_home" : null,
+        linkAccountId: null,
+        createdAt: iso,
+        updatedAt: iso,
+      };
+    }),
+  );
+}
+
 const round2 = (n: number) => Math.round(n * 100) / 100;
 /** As the backend stores it: a liability negative whatever sign was sent (BE-05). */
 const stored = (type: string, value: number) =>
@@ -342,19 +465,19 @@ function buildPersonaStore(
   };
 }
 
+/** The stores the data scenarios read: several Home scenarios share the renter's accounts. */
+export type CheckInStoreKind = "ok" | "empty" | "owner" | "renter" | "pension-only";
+
 /**
  * A fresh check-in store, every body parsed with its contract schema. `empty` has no accounts,
  * no rows and no check-in months; `owner` and `renter` are the home-owning and renting households
- * of `apps/e2e/support/personas.ts` with six recorded months. Ids are made at runtime, so each
- * reset has new ones.
+ * of `apps/e2e/support/personas.ts` with six recorded months; `pension-only` is the renter without
+ * the credit card and the student loan. Ids are made at runtime, so each reset has new ones.
  */
-export function buildCheckInStore(
-  userId: string,
-  now: Date,
-  kind: "ok" | "empty" | "owner" | "renter",
-): CheckInStore {
+export function buildCheckInStore(userId: string, now: Date, kind: CheckInStoreKind): CheckInStore {
   if (kind === "owner") return buildPersonaStore(userId, now, HOMEOWNER_ACCOUNTS);
   if (kind === "renter") return buildPersonaStore(userId, now, RENTER_ACCOUNTS);
+  if (kind === "pension-only") return buildPersonaStore(userId, now, PENSION_ONLY_ACCOUNTS);
   if (kind === "empty") {
     return {
       accounts: [],

@@ -37,6 +37,9 @@ export const SHOTS = [
   "home-renter",
   "home-out-of-step",
   "home-empty",
+  "home-strip-renter",
+  "home-strip-pension",
+  "home-strip-prompt",
 ];
 
 export function run(

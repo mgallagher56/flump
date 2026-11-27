@@ -15,9 +15,11 @@
  *   GET  /v1/accounts                        bearer; six manual accounts, `details: []` (S3)
  *   GET  /v1/account-details                 bearer; their monthly rows, nothing this month
  *   GET  /v1/snapshots/check-ins             bearer; last month started and completed
+ *   GET  /v1/budget-entries                  bearer; the household's saved budget (S5b), none for
+ *                                           the canned data
  *   PUT  /v1/snapshots/:month                bearer; applied as the backend does (fixtures.ts)
  *   anything else under /v1                  404 not_found, so a missing fixture is loud
- *   The four check-in routes ignore query strings (`?details=none`, `?limit=`) and answer 401,
+ *   The check-in routes and the budget ignore query strings (`?details=none`, `?limit=`) and answer 401,
  *   403 not_invited and 403 terms_not_accepted as the profile does.
  * Scenarios (POST /__fixture/scenario with a JSON patch; every reset restores the defaults):
  *   account  invited | not-invited          not-invited: /v1 answers 403 not_invited
@@ -30,6 +32,11 @@
  *                                           renting households with six recorded months (S5);
  *                                           malformed: the ok data with one account's balance
  *                                           missing from GET /accounts (out of step)
+ *            | renter-linked | scottish-refused  Home's strip (S5b), all on the renter's accounts:
+ *            | no-budget | pension-only     the income line linked to take-home pay; the same in
+ *                                           Scotland (refused once the device's date is in
+ *                                           2027/28, which has no Scottish rates); no budget; and
+ *                                           no debts (the credit card and student loan left out)
  *   backend  current | older | newer        the profile as a backend from before E35 sends it (no
  *                                           `wellbeingQuestions`), or with a field from a later one
  *   terms    agreed | required              required: authenticated /v1 answers 403
@@ -50,19 +57,30 @@
 import { createHash, randomUUID } from "node:crypto";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import type { AddressInfo } from "node:net";
-import { SnapshotMonth, UpsertSnapshotRequest } from "@flump/api-contract";
+import {
+  SnapshotMonth,
+  UpsertSnapshotRequest,
+  type UserProfileResponse,
+} from "@flump/api-contract";
 import {
   applySnapshot,
   buildCheckInStore,
   type CheckInStore,
+  type CheckInStoreKind,
   cannedAccountDetails,
   cannedAccounts,
+  cannedBudgetEntries,
   cannedCheckIns,
   cannedClientPolicy,
   cannedProfile,
   FIXTURE_PERSON,
+  HOMEOWNER_BUDGET,
+  HOMEOWNER_FACTS,
   londonMonth,
   malformedAccounts,
+  type PersonaBudgetRow,
+  RENTER_BUDGET,
+  RENTER_FACTS,
 } from "./fixtures";
 import { newSigningKey, opaque, publicJwk, type SigningKey, signJwt, verifyJwt } from "./tokens";
 
@@ -81,6 +99,55 @@ const REFRESH_GRACE_MS = 30 * 1000;
 /** How long a stats request waits for an expected sign-out (real time: the app's call is real). */
 const SIGN_OUT_WAIT_MS = 10 * 1000;
 
+/** The `data` scenarios. */
+const DATA_SCENARIOS = [
+  "ok",
+  "unavailable",
+  "empty",
+  "owner",
+  "renter",
+  "malformed",
+  "renter-linked",
+  "scottish-refused",
+  "no-budget",
+  "pension-only",
+] as const;
+type DataScenario = (typeof DATA_SCENARIOS)[number];
+
+/**
+ * What a data scenario's household holds beyond its accounts: which store, its budget (with the
+ * income line linked to take-home pay or not) and the profile answers laid over the canned ones.
+ */
+const HOUSEHOLDS: Record<
+  Exclude<DataScenario, "unavailable">,
+  {
+    store: CheckInStoreKind;
+    budget: readonly PersonaBudgetRow[];
+    linkTakeHome?: boolean;
+    facts?: Partial<UserProfileResponse>;
+  }
+> = {
+  ok: { store: "ok", budget: [] },
+  malformed: { store: "ok", budget: [] },
+  empty: { store: "empty", budget: [] },
+  owner: { store: "owner", budget: HOMEOWNER_BUDGET, facts: HOMEOWNER_FACTS },
+  renter: { store: "renter", budget: RENTER_BUDGET, facts: RENTER_FACTS },
+  "renter-linked": {
+    store: "renter",
+    budget: RENTER_BUDGET,
+    linkTakeHome: true,
+    facts: RENTER_FACTS,
+  },
+  "scottish-refused": {
+    store: "renter",
+    budget: RENTER_BUDGET,
+    linkTakeHome: true,
+    facts: { ...RENTER_FACTS, taxRegion: "SCOTLAND" },
+  },
+  "no-budget": { store: "renter", budget: [], facts: RENTER_FACTS },
+  "pension-only": { store: "pension-only", budget: RENTER_BUDGET, facts: RENTER_FACTS },
+};
+
 interface Scenario {
   /** `not-invited`: `/v1` answers 403 not_invited, as the closed beta does. */
   account: "invited" | "not-invited";
@@ -96,7 +163,7 @@ interface Scenario {
    * The check-in routes: canned data, 503 service_unavailable, no accounts at all, a persona's
    * household (Home, S5), or the canned data with an account missing its balance.
    */
-  data: "ok" | "unavailable" | "empty" | "owner" | "renter" | "malformed";
+  data: DataScenario;
   /** `required`: authenticated `/v1` answers 403 terms_not_accepted until the terms are agreed. */
   terms: "agreed" | "required";
   /**
@@ -126,13 +193,7 @@ const ALLOWED: { [K in keyof Scenario]: (v: unknown) => boolean } = {
   refresh: (v) => v === "ok" || v === "rejected" || v === "unavailable",
   accessTokenSeconds: (v) => typeof v === "number" && Number.isInteger(v) && v >= 0,
   minVersion: (v) => typeof v === "string" && /^\d{1,5}(\.\d{1,5}){0,2}$/.test(v),
-  data: (v) =>
-    v === "ok" ||
-    v === "unavailable" ||
-    v === "empty" ||
-    v === "owner" ||
-    v === "renter" ||
-    v === "malformed",
+  data: (v) => (DATA_SCENARIOS as readonly unknown[]).includes(v),
   terms: (v) => v === "agreed" || v === "required",
   backend: (v) => v === "current" || v === "older" || v === "newer",
   profile: (v) => v === "set-up" || v === "not-set-up" || v === "none",
@@ -179,7 +240,12 @@ const ZERO_COUNTS: FixtureCounts = {
   signOuts: 0,
 };
 
-const CHECK_IN_ROUTES = new Set(["/accounts", "/account-details", "/snapshots/check-ins"]);
+const CHECK_IN_ROUTES = new Set([
+  "/accounts",
+  "/account-details",
+  "/snapshots/check-ins",
+  "/budget-entries",
+]);
 
 export interface FixtureServerOptions {
   /** 0 picks a free port (tests). */
@@ -236,10 +302,16 @@ export async function startFixtureServer(options: FixtureServerOptions): Promise
     empty: buildCheckInStore(userId, new Date(now()), "empty"),
     owner: buildCheckInStore(userId, new Date(now()), "owner"),
     renter: buildCheckInStore(userId, new Date(now()), "renter"),
+    "pension-only": buildCheckInStore(userId, new Date(now()), "pension-only"),
   });
 
+  /** The data scenario's household, or the canned data's while the data is unavailable. */
+  const household = () => HOUSEHOLDS[scenario.data === "unavailable" ? "ok" : scenario.data];
   // Parse every canned body once now, so a contract change fails the start, not a flow.
-  cannedProfile(userId, new Date(now()));
+  for (const h of Object.values(HOUSEHOLDS)) {
+    cannedProfile(userId, new Date(now()), h.facts);
+    cannedBudgetEntries(userId, new Date(now()), h.budget, { linkTakeHome: h.linkTakeHome });
+  }
   cannedClientPolicy(DEFAULT_SCENARIO.minVersion);
   let stores = buildStores();
 
@@ -263,11 +335,7 @@ export async function startFixtureServer(options: FixtureServerOptions): Promise
       });
     }
   }
-  const store = (): CheckInStore => {
-    const { data } = scenario;
-    if (data === "empty" || data === "owner" || data === "renter") return stores[data];
-    return stores.ok;
-  };
+  const store = (): CheckInStore => stores[household().store];
   const stats = (): FixtureStats => ({
     ...counts,
     latestStartedMonth: store().latestStartedMonth,
@@ -443,7 +511,7 @@ export async function startFixtureServer(options: FixtureServerOptions): Promise
       const session = invitedSession(req, res);
       if (!session) return;
       const profile: Record<string, unknown> = {
-        ...cannedProfile(session.userId, new Date(now())),
+        ...cannedProfile(session.userId, new Date(now()), household().facts),
       };
       if (scenario.backend === "older") delete profile.wellbeingQuestions;
       if (scenario.backend === "newer") profile.fieldFromALaterBackend = "something new";
@@ -465,6 +533,16 @@ export async function startFixtureServer(options: FixtureServerOptions): Promise
         return json(res, 200, cannedAccounts(store()));
       }
       if (path === "/account-details") return json(res, 200, cannedAccountDetails(store()));
+      if (path === "/budget-entries") {
+        const h = household();
+        return json(
+          res,
+          200,
+          cannedBudgetEntries(session.userId, new Date(now()), h.budget, {
+            linkTakeHome: h.linkTakeHome,
+          }),
+        );
+      }
       return json(res, 200, cannedCheckIns(store()));
     }
     return apiError(res, 404, "not_found", "No canned response for this route.");
