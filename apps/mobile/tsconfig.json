@@ -4,6 +4,7 @@
     "types": ["jest", "node"],
     // The document pictures' shape lists (STYLE-GUIDE IL4): one pure-data file from packages/ui,
     // mapped by path rather than a dependency on @repo/ui, whose react-dom peer expo-doctor rejects.
+    // Expo's Metro reads these paths too (CROSS-PLATFORM X2).
     "paths": {
       "@repo/ui/illustration-data": [
         "../../packages/ui/src/primitives/Illustration/Illustration.documents.ts"
