@@ -117,6 +117,7 @@ export function scrollTargetForTab({
 export const createStyles = (theme: Theme) =>
   StyleSheet.create({
     bar: {
+      alignSelf: "stretch",
       backgroundColor: theme.colors["surface.card"],
       borderTopWidth: 1,
       borderTopColor: theme.colors.border,
@@ -124,7 +125,7 @@ export const createStyles = (theme: Theme) =>
       paddingBottom: theme.spacing["1"],
       paddingHorizontal: theme.spacing["1"],
     },
-    tablist: { position: "relative" },
+    tablist: { position: "relative", alignSelf: "stretch" },
     // One View per row and equal flex cells, never a wrapping row of percentage widths: Android
     // rounds each 20% cell to whole pixels, and five rounded up overran the bar and pushed the fifth
     // tab onto a second row at the normal size (device check, 26 November 2026).
