@@ -194,17 +194,17 @@ describe("TabBar", () => {
     expect(screen.queryByTestId("tab-fade-right", { includeHiddenElements: true })).toBeNull();
   });
 
-  it("at 200% text on a wider phone (412 points), keeps one fixed row with proportional cells so no label wraps", async () => {
-    // At 2x (fontSize 24, character width 0.55, horizontal label padding 4 + 4 = 8):
-    // Home (4):     4 * 24 * 0.55 + 8 =  60.8 -> share of 412 = 412 *  60.8 / 370 =  67.70 >=  60.8
-    // Accounts (8): 8 * 24 * 0.55 + 8 = 113.6 -> share of 412 = 412 * 113.6 / 370 = 126.50 >= 113.6
-    // Budget (6):   6 * 24 * 0.55 + 8 =  87.2 -> share of 412 = 412 *  87.2 / 370 =  97.10 >=  87.2
-    // Pay (3):      3 * 24 * 0.55 + 8 =  47.6 -> share of 412 = 412 *  47.6 / 370 =  53.00 >=  47.6
-    // More (4):     4 * 24 * 0.55 + 8 =  60.8 -> share of 412 = 412 *  60.8 / 370 =  67.70 >=  60.8
-    // Longest * 5 = 113.6 * 5 = 568 > 412 (equal cells would give 82.4pt < 113.6pt for Accounts);
-    // Sum = 370 <= 412, so the row stays fixed with cells sized in proportion to each label.
-    const expectedWidths = [60.8, 113.6, 87.2, 47.6, 60.8] as const;
-    phone(2, 412);
+  it("at 200% text on a wider phone (480 points), keeps one fixed row with proportional cells so no label wraps", async () => {
+    // At 2x (fontSize 24, selected weight 0.58, horizontal pill padding 4 + 4 = 8, 10% margin, tablist width 472):
+    // Home (4):     (4 * 24 * 0.58 + 8) * 1.1 =  70.048 -> share of 472 = 472 *  70.048 / 426.8 =  77.466 >=  70.048
+    // Accounts (8): (8 * 24 * 0.58 + 8) * 1.1 = 131.296 -> share of 472 = 472 * 131.296 / 426.8 = 145.201 >= 131.296
+    // Budget (6):   (6 * 24 * 0.58 + 8) * 1.1 = 100.672 -> share of 472 = 472 * 100.672 / 426.8 = 111.334 >= 100.672
+    // Pay (3):      (3 * 24 * 0.58 + 8) * 1.1 =  54.736 -> share of 472 = 472 *  54.736 / 426.8 =  60.533 >=  54.736
+    // More (4):     (4 * 24 * 0.58 + 8) * 1.1 =  70.048 -> share of 472 = 472 *  70.048 / 426.8 =  77.466 >=  70.048
+    // Longest * 5 = 131.296 * 5 = 656.48 > 472 (equal cells would give 94.4pt < 131.296pt for Accounts);
+    // Sum = 426.8 <= 472, so the row stays fixed with cells sized in proportion to each label.
+    const expectedWidths = [70.048, 131.296, 100.672, 54.736, 70.048] as const;
+    phone(2, 480);
     await renderBar();
     const [only, ...more] = rows();
     expect(more).toEqual([]);
@@ -225,7 +225,7 @@ describe("TabBar", () => {
       expect(cell.width).toBeUndefined();
       expect(cell.flexBasis).toBe(0);
       expect(cell.flexGrow).toBeCloseTo(expected, 5);
-      const share = (412 * (cell.flexGrow as number)) / totalGrow;
+      const share = (472 * (cell.flexGrow as number)) / totalGrow;
       expect(share).toBeGreaterThanOrEqual(expected);
     });
     for (const tab of screen.getAllByRole("tab")) {
@@ -233,6 +233,28 @@ describe("TabBar", () => {
     }
     for (const item of TABS) {
       expect(screen.getByText(item.label).props.allowFontScaling).not.toBe(false);
+    }
+  });
+
+  it("at 200% text on a 411 point phone (cold start), scrolls horizontally with single-line labels", async () => {
+    phone(2, 411);
+    await renderBar("home", "light", 2);
+    expect(rows().map((row) => row.tabs)).toEqual([
+      ["tab-home", "tab-accounts", "tab-budget", "tab-taxAndPay", "tab-more"],
+    ]);
+    expect(screen.queryAllByTestId(/^tab-.+-icon$/, { includeHiddenElements: true })).toHaveLength(
+      0,
+    );
+    const scroller = screen.getByTestId("tab-scroll");
+    expect(scroller.props.horizontal).toBe(true);
+    for (const cellView of screen.getAllByTestId(/^tab-cell-/)) {
+      const cell = flat<ViewStyle>(cellView.props.style);
+      expect(cell.flex).toBeUndefined();
+      expect(cell.flexGrow).toBeUndefined();
+      expect(cell.flexShrink).toBe(0);
+    }
+    for (const item of TABS) {
+      expect(screen.getByText(item.label).props.numberOfLines).toBe(1);
     }
   });
 
@@ -368,7 +390,7 @@ describe("TabBar", () => {
   });
 
   it.each(Object.entries(tabBarStates))("%s holds at 200%% text", async (_name, props) => {
-    await expectHoldsAtDoubleText(<TabBar {...props} />);
+    await expectHoldsAtDoubleText(<TabBar {...props} />, { truncates: true });
   });
 });
 
@@ -379,50 +401,94 @@ describe("tabLayout", () => {
     tabLayout({ labels, width, fontSize: 12 * textScale, textScale });
 
   it("uses equal cells when the longest label times five fits the width, with icons", () => {
-    // 1x (fontSize 12): [34.4, 60.8, 47.6, 27.8, 34.4]. Longest * 5 = 304, sum = 205.
-    const res = at(312, 1);
+    // 1x (fontSize 12): max(48, (len * 12 * 0.58 + 8) * 1.1) -> [48, 70.048, 54.736, 48, 48].
+    // Longest * 5 = 350.24, sum = 268.784.
+    const res = at(351, 1);
     expect(res.mode).toBe("equal");
     expect(res.showIcons).toBe(true);
-    for (const [i, w] of [34.4, 60.8, 47.6, 27.8, 34.4].entries()) {
+    for (const [i, w] of [48, 70.048, 54.736, 48, 48].entries()) {
       expect(res.labelWidths[i]).toBeCloseTo(w, 5);
     }
-    expect(at(304, 1)).toMatchObject({ mode: "equal", showIcons: true });
-    expect(at(303, 1)).toMatchObject({ mode: "proportional", showIcons: true });
-    expect(at(205, 1)).toMatchObject({ mode: "proportional", showIcons: true });
-    expect(at(204, 1)).toMatchObject({ mode: "scroll", showIcons: true });
+    expect(at(360, 1)).toMatchObject({ mode: "equal", showIcons: true });
+    expect(at(351, 1)).toMatchObject({ mode: "equal", showIcons: true });
+    expect(at(350, 1)).toMatchObject({ mode: "proportional", showIcons: true });
+    expect(at(312, 1)).toMatchObject({ mode: "proportional", showIcons: true });
+    expect(at(269, 1)).toMatchObject({ mode: "proportional", showIcons: true });
+    expect(at(268, 1)).toMatchObject({ mode: "scroll", showIcons: true });
   });
 
   it("at 200% text, picks equal, proportional or scroll across the width boundaries", () => {
     // 2x (fontSize 24):
-    // Home:     4 * 24 * 0.55 + 8 =  60.8
-    // Accounts: 8 * 24 * 0.55 + 8 = 113.6
-    // Budget:   6 * 24 * 0.55 + 8 =  87.2
-    // Pay:      3 * 24 * 0.55 + 8 =  47.6
-    // More:     4 * 24 * 0.55 + 8 =  60.8
-    // Longest * 5 = 568; Sum = 370.
-    const res = at(568, 2);
+    // Home:     (4 * 24 * 0.58 + 8) * 1.1 =  70.048
+    // Accounts: (8 * 24 * 0.58 + 8) * 1.1 = 131.296
+    // Budget:   (6 * 24 * 0.58 + 8) * 1.1 = 100.672
+    // Pay:      (3 * 24 * 0.58 + 8) * 1.1 =  54.736
+    // More:     (4 * 24 * 0.58 + 8) * 1.1 =  70.048
+    // Longest * 5 = 656.48; Sum = 426.8.
+    const res = at(657, 2);
     expect(res.mode).toBe("equal");
     expect(res.showIcons).toBe(false);
-    for (const [i, w] of [60.8, 113.6, 87.2, 47.6, 60.8].entries()) {
+    for (const [i, w] of [70.048, 131.296, 100.672, 54.736, 70.048].entries()) {
       expect(res.labelWidths[i]).toBeCloseTo(w, 5);
     }
-    expect(at(567, 2)).toMatchObject({ mode: "proportional", showIcons: false });
-    expect(at(412, 2)).toMatchObject({ mode: "proportional", showIcons: false });
-    expect(at(370, 2)).toMatchObject({ mode: "proportional", showIcons: false });
-    expect(at(369, 2)).toMatchObject({ mode: "scroll", showIcons: false });
+    expect(at(656, 2)).toMatchObject({ mode: "proportional", showIcons: false });
+    expect(at(480, 2)).toMatchObject({ mode: "proportional", showIcons: false });
+    expect(at(427, 2)).toMatchObject({ mode: "proportional", showIcons: false });
+    expect(at(426, 2)).toMatchObject({ mode: "scroll", showIcons: false });
+    expect(at(412, 2)).toMatchObject({ mode: "scroll", showIcons: false });
     expect(at(312, 2)).toMatchObject({ mode: "scroll", showIcons: false });
   });
 
   it("hides icons from 1.5x and switches across equal, proportional and scroll", () => {
-    // 1.5x (fontSize 18): [47.6, 87.2, 67.4, 37.7, 47.6]; longest * 5 = 436, sum = 287.5.
-    expect(at(436, 1.5)).toMatchObject({ mode: "equal", showIcons: false });
-    expect(at(312, 1.5)).toMatchObject({ mode: "proportional", showIcons: false });
-    expect(at(287, 1.5)).toMatchObject({ mode: "scroll", showIcons: false });
+    // 1.5x (fontSize 18): [54.736, 100.672, 77.704, 48, 54.736]; longest * 5 = 503.36, sum = 335.848.
+    expect(at(504, 1.5)).toMatchObject({ mode: "equal", showIcons: false });
+    expect(at(352, 1.5)).toMatchObject({ mode: "proportional", showIcons: false });
+    expect(at(335, 1.5)).toMatchObject({ mode: "scroll", showIcons: false });
     // Just under 1.5x (1.49x, fontSize 17.88):
-    // longest = 8 * 17.88 * 0.55 + 8 = 86.672 -> * 5 = 433.36; sum = 285.85.
-    expect(at(280, 1.49)).toMatchObject({ mode: "scroll", showIcons: true });
-    expect(at(286, 1.49)).toMatchObject({ mode: "proportional", showIcons: true });
-    expect(at(434, 1.49)).toMatchObject({ mode: "equal", showIcons: true });
+    // longest = (8 * 17.88 * 0.58 + 8) * 1.1 = 100.05952 -> * 5 = 500.2976; sum = 334.16368.
+    expect(at(334, 1.49)).toMatchObject({ mode: "scroll", showIcons: true });
+    expect(at(335, 1.49)).toMatchObject({ mode: "proportional", showIcons: true });
+    expect(at(501, 1.49)).toMatchObject({ mode: "equal", showIcons: true });
+  });
+
+  it("at 411 points and 200% text, picks scroll using the conservative selected-weight estimate and 10% margin", () => {
+    // Selected weight 0.58, pill horizontal padding 4 * 2 = 8, min tab width 48, 10% safety margin (* 1.1):
+    // Home (4):     (4 * 24 * 0.58 + 8) * 1.1 = (55.68 + 8) * 1.1 =  70.048
+    // Accounts (8): (8 * 24 * 0.58 + 8) * 1.1 = (111.36 + 8) * 1.1 = 131.296
+    // Budget (6):   (6 * 24 * 0.58 + 8) * 1.1 = (83.52 + 8) * 1.1 = 100.672
+    // Pay (3):      (3 * 24 * 0.58 + 8) * 1.1 = (41.76 + 8) * 1.1 =  54.736
+    // More (4):     (4 * 24 * 0.58 + 8) * 1.1 = (55.68 + 8) * 1.1 =  70.048
+    // Longest * 5 = 131.296 * 5 = 656.48; Sum = 426.8 > 411 -> scroll.
+    const res = at(411, 2);
+    expect(res.mode).toBe("scroll");
+    expect(res.showIcons).toBe(false);
+    for (const [i, w] of [70.048, 131.296, 100.672, 54.736, 70.048].entries()) {
+      expect(res.labelWidths[i]).toBeCloseTo(w, 5);
+    }
+  });
+
+  it("in equal and proportional layouts, no tab share is smaller than its conservative label width", () => {
+    const cases = [
+      [312, 1],
+      [352, 1],
+      [360, 1],
+      [411, 1],
+      [352, 1.5],
+      [504, 1.5],
+      [427, 2],
+      [480, 2],
+      [657, 2],
+    ] as const;
+    for (const [width, scale] of cases) {
+      const res = at(width, scale);
+      expect(res.mode).not.toBe("scroll");
+      const total = res.labelWidths.reduce((sum, w) => sum + w, 0);
+      for (const labelWidth of res.labelWidths) {
+        const share = res.mode === "equal" ? width / labels.length : (width * labelWidth) / total;
+        expect(share + 1e-6).toBeGreaterThanOrEqual(labelWidth);
+      }
+    }
+    expect(at(426, 2).mode).toBe("scroll");
   });
 });
 
