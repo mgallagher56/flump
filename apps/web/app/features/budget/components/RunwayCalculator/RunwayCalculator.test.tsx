@@ -175,8 +175,9 @@ describe("RunwayCalculator", () => {
     expect(isa.checked).toBe(false);
     fireEvent.click(isa);
     expect(isa.checked).toBe(true);
-    // £25,000 over £1,500 = 16.7 months.
-    expect(outcomeFigure()).toBe("1 year 5 months");
+    // £25,000 over £1,500 = 16.67, 16.7 months to one decimal place; from a year the whole months
+    // round down (D8, 27 November 2026): 16 months = 1 year 4 months (was 1 year 5 months, half up).
+    expect(outcomeFigure()).toBe("1 year 4 months");
     expect(supporting("Money to draw on")).toBe("£25,000");
     expect(onScenarioChange).toHaveBeenCalledWith(
       expect.objectContaining({ includedAccounts: expect.objectContaining({ "acc-3": true }) }),
