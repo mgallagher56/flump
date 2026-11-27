@@ -225,7 +225,7 @@ function Loaded({
         </Text>
       )}
       <Button
-        label={ACCOUNTS.startCheckIn}
+        label={history.checkedIn ? HISTORY.seeCheckIn : ACCOUNTS.startCheckIn}
         variant={enoughForChart ? "outline" : "primary"}
         testID="history-check-in"
         onPress={onOpenCheckIn}
