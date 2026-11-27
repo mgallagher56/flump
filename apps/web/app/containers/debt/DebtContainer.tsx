@@ -53,7 +53,7 @@ const SAVED_SCENARIO = { extraPayment: 0, strategy: "avalanche" as "avalanche" |
  * Under "No debts added" when a current account is below zero: Home counts it in "What you owe"
  * (DECISIONS.md D8), so the page says where that figure comes from. Words only, no figure here.
  */
-export const overdrawnCurrentSentence = (count: number, amount: string): string =>
+const overdrawnCurrentSentence = (count: number, amount: string): string =>
   count === 1
     ? `Your current account is ${amount} below zero. That is counted in "What you owe" on Home.`
     : `Your current accounts are ${amount} below zero in total. That is counted in "What you owe" on Home.`;
