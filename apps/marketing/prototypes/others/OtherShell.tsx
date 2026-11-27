@@ -16,7 +16,18 @@ import "./others.css";
  * slower) and both bubble colour sets.
  */
 
-export type OtherPageId = "features" | "pay" | "debt" | "pricing" | "privacy";
+export type OtherPageId =
+  | "features"
+  | "pay"
+  | "debt"
+  | "pricing"
+  | "privacy"
+  | "ai"
+  | "preview"
+  | "security"
+  | "contact"
+  | "terms"
+  | "not-found";
 
 export const OTHER_NAMES: Record<OtherPageId, string> = {
   features: "Features index",
@@ -24,6 +35,30 @@ export const OTHER_NAMES: Record<OtherPageId, string> = {
   debt: "Area page: Debt and borrowing",
   pricing: "Pricing",
   privacy: "Legal page: Privacy",
+  ai: "AI connection",
+  preview: "Interactive preview",
+  security: "Security and privacy",
+  contact: "Contact",
+  terms: "Legal page: Terms",
+  "not-found": "Not found",
+};
+
+/**
+ * Which round a page belongs to. Each page's dev panel lists only its own round, so round one's
+ * pages (frozen at 64e1b45aa for the production build) show exactly the panel they had.
+ */
+const ROUND: Record<OtherPageId, 1 | 2> = {
+  features: 1,
+  pay: 1,
+  debt: 1,
+  pricing: 1,
+  privacy: 1,
+  ai: 2,
+  preview: 2,
+  security: 2,
+  contact: 2,
+  terms: 2,
+  "not-found": 2,
 };
 
 export const OTHER_PATHS: Record<OtherPageId, string> = {
@@ -32,6 +67,12 @@ export const OTHER_PATHS: Record<OtherPageId, string> = {
   debt: "/prototypes/others/debt",
   pricing: "/prototypes/others/pricing",
   privacy: "/prototypes/others/privacy",
+  ai: "/prototypes/others/ai",
+  preview: "/prototypes/others/preview",
+  security: "/prototypes/others/security",
+  contact: "/prototypes/others/contact",
+  terms: "/prototypes/others/terms",
+  "not-found": "/prototypes/others/not-found",
 };
 
 interface Sample {
@@ -113,15 +154,17 @@ const DevPanel: FC<{
         <>
           <nav aria-label="Other pages" className="proto-panel__row">
             <Link to="/prototypes">All</Link>
-            {(Object.keys(OTHER_NAMES) as OtherPageId[]).map((key) => (
-              <Link
-                aria-current={key === id ? "page" : undefined}
-                key={key}
-                to={`${OTHER_PATHS[key]}?scene=${level === "none" ? "s0" : level}`}
-              >
-                {key}
-              </Link>
-            ))}
+            {(Object.keys(OTHER_NAMES) as OtherPageId[])
+              .filter((key) => ROUND[key] === ROUND[id])
+              .map((key) => (
+                <Link
+                  aria-current={key === id ? "page" : undefined}
+                  key={key}
+                  to={`${OTHER_PATHS[key]}?scene=${level === "none" ? "s0" : level}`}
+                >
+                  {key}
+                </Link>
+              ))}
           </nav>
           <div className="proto-panel__controls">
             <label>

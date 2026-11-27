@@ -23,6 +23,12 @@ const ENTRIES = {
   area: "others/pages/AreaPage.tsx",
   pricing: "others/pages/Pricing.tsx",
   privacy: "others/pages/Privacy.tsx",
+  ai: "others/pages/AiConnection.tsx",
+  preview: "others/pages/Preview.tsx",
+  security: "others/pages/Security.tsx",
+  contact: "others/pages/Contact.tsx",
+  terms: "others/pages/Terms.tsx",
+  "not-found": "others/pages/NotFound.tsx",
 } as const;
 const PAGE_ENTRY = {
   features: "features",
@@ -30,6 +36,12 @@ const PAGE_ENTRY = {
   debt: "area",
   pricing: "pricing",
   privacy: "privacy",
+  ai: "ai",
+  preview: "preview",
+  security: "security",
+  contact: "contact",
+  terms: "terms",
+  "not-found": "not-found",
 } as const;
 const LEVELS = {
   features: ["s0", "s1", "s2"],
@@ -37,6 +49,12 @@ const LEVELS = {
   debt: ["s0", "s1", "s2"],
   pricing: ["s0", "s1", "s2"],
   privacy: ["none", "s0", "s1", "s2"],
+  ai: ["s0", "s1", "s2"],
+  preview: ["s0", "s1", "s2"],
+  security: ["s0", "s1", "s2"],
+  contact: ["s0", "s1", "s2"],
+  terms: ["none", "s0"],
+  "not-found": ["none", "s0"],
 } as const;
 
 /** The dev shell (panel, switch) never ships; production code and packages are already shipped. */
@@ -74,6 +92,7 @@ function cssOf(entry: string): string[] {
   // The shell's own page CSS (others.css, kit3.css) ships with every page; its panel CSS does not.
   css.add(path.join(root, "others/others.css"));
   css.add(path.join(root, "shared/kit3.css"));
+  // Round two's own CSS ships with its pages (blocks2 imports it).
   return [...css];
 }
 

@@ -27,9 +27,19 @@ const require = createRequire(path.resolve(import.meta.dir, "../../../e2e/packag
 const { chromium } = require("@playwright/test") as typeof import("@playwright/test");
 
 const [base = "http://localhost:3001", onlyPage, onlyLevel] = process.argv.slice(2);
-const PAGES = ["features", "pay", "debt", "pricing", "privacy"].filter(
-  (p) => !onlyPage || onlyPage === "all" || p === onlyPage,
-);
+const PAGES = [
+  "features",
+  "pay",
+  "debt",
+  "pricing",
+  "privacy",
+  "ai",
+  "preview",
+  "security",
+  "contact",
+  "terms",
+  "not-found",
+].filter((p) => !onlyPage || onlyPage === "all" || p === onlyPage);
 const WIDTHS = [390, 1000, 1440] as const;
 const THEMES = ["light", "dark"] as const;
 const outDir = path.resolve(import.meta.dir, "../screenshots/others");

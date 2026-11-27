@@ -1,0 +1,215 @@
+/*
+ * Round two's CSS, beside others.css (which round one's frozen pages read). Scoped under `.o1` and
+ * round two's own class names only. Semantic token variables only.
+ */
+
+/* ---------- Hero extras: a badge and a note under the lead ---------- */
+
+.o1 .o2-hero__badge {
+  justify-self: start;
+}
+
+.o1 .o2-hero__note {
+  margin: 0;
+  max-width: 44ch;
+  color: var(--colors-text-secondary);
+}
+
+/* Layout a's small left bubble drifts up behind a band's heading; these bands leave it out. */
+.o1 .o2-no-left-bubble .proto-bubbles__bubble:nth-child(3) {
+  display: none;
+}
+
+/* ---------- A band with text and one picture ---------- */
+
+.o1 .o2-split {
+  display: grid;
+  gap: var(--spacing-6);
+  align-items: center;
+}
+
+@media (min-width: 60rem) {
+  .o1 .o2-split {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    gap: var(--spacing-10);
+  }
+}
+
+.o1 .o2-split__picture {
+  justify-self: center;
+  width: min(100%, 22rem);
+}
+
+/* ---------- Cards in a grid (questions, facts) ---------- */
+
+.o1 .o2-cards {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--spacing-3);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+}
+
+.o1 .o2-cards--stack {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.o1 .o2-card {
+  display: flex;
+  gap: var(--spacing-3);
+  align-items: flex-start;
+  padding: var(--spacing-4) var(--spacing-5);
+  border-radius: 20px;
+  color: var(--colors-text-primary);
+}
+
+.o1 .o2-card p {
+  margin: 0;
+}
+
+.o1 .o2-card__orb {
+  margin-top: 2px;
+}
+
+.o1 .o2-card a {
+  color: var(--colors-primary);
+  font-weight: 600;
+  text-underline-offset: 3px;
+}
+
+/* ---------- Plain text in a band: setup steps, the technical drawer, contact notes ---------- */
+
+.o1 .o2-prose {
+  max-width: 46rem;
+  color: var(--colors-text-primary);
+}
+
+.o1 .o2-prose p {
+  margin: 0;
+}
+
+.o1 .o2-prose a {
+  color: var(--colors-primary);
+  font-weight: 600;
+  text-underline-offset: 3px;
+}
+
+/* Production's reporting section inside a card: the card is the boundary, so no rule above it. */
+.o1 .o2-prose > section {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+/* ---------- Preview: each moment's intro, its frame and its link ---------- */
+
+.o1 .o2-moment {
+  display: grid;
+  gap: var(--spacing-5);
+}
+
+.o1 .o2-moment__head {
+  display: grid;
+  gap: var(--spacing-5);
+  align-items: start;
+}
+
+@media (min-width: 64rem) {
+  .o1 .o2-moment__head--picture {
+    grid-template-columns: minmax(0, 1fr) 18rem;
+  }
+}
+
+.o1 .o2-moment__picture {
+  display: none;
+}
+
+/* Wide screens only: on a phone the picture would push the figures below it down. */
+@media (min-width: 64rem) {
+  .o1 .o2-moment__picture {
+    display: block;
+  }
+}
+
+.o1 .o2-moment__intro {
+  display: grid;
+  gap: var(--spacing-2);
+  max-width: 46rem;
+}
+
+.o1 .o2-moment__intro p {
+  margin: 0;
+  color: var(--colors-text-secondary);
+}
+
+.o1 .o2-moment__link {
+  margin: 0;
+}
+
+.o1 .o2-moment__link a {
+  color: var(--colors-primary);
+  font-weight: 600;
+  text-underline-offset: 3px;
+}
+
+/* ---------- Contact: the email card ---------- */
+
+.o1 .o2-contact {
+  display: grid;
+  gap: var(--spacing-3);
+}
+
+.o1 .o2-contact__address {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--spacing-2) var(--spacing-3);
+}
+
+.o1 .o2-contact__address a {
+  color: var(--colors-primary);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+  text-underline-offset: 3px;
+}
+
+.o1 .o2-contact__note {
+  color: var(--colors-text-secondary);
+}
+
+/* ---------- Not found: one card, the ticket, one orb ---------- */
+
+.o1 .o2-nf {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: var(--spacing-4);
+  text-align: center;
+}
+
+.o1 .o2-nf__picture {
+  width: min(100%, 18rem);
+}
+
+.o1 .o2-nf__title {
+  margin: 0;
+  color: var(--colors-text-primary);
+  text-wrap: balance;
+}
+
+.o1 .o2-nf__body {
+  margin: 0;
+  color: var(--colors-text-secondary);
+}
+
+/* ---------- Focus ---------- */
+
+.o1 .o2-card a:focus-visible,
+.o1 .o2-prose a:focus-visible,
+.o1 .o2-moment__link a:focus-visible,
+.o1 .o2-contact__address a:focus-visible {
+  outline: 2px solid var(--colors-border-focus-ring);
+  outline-offset: 2px;
+}

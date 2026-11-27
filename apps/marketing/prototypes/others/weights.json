@@ -1,6 +1,6 @@
 {
   "measuredAt": "2026-11-27",
-  "note": "Minified and gzipped (CSS unminified), excluding what production already ships and the dev shell. Lazy at S0 is GSAP; S1 and S2 add the orb scene and three.js.",
+  "note": "Minified and gzipped (CSS unminified), excluding what production already ships and the dev shell. Lazy at S0 is GSAP; S1 and S2 add the orb scene and three.js. Round one's entries are as measured at 64e1b45aa (frozen).",
   "pages": {
     "features": {
       "s0": {
@@ -90,6 +90,98 @@
         "initialGzip": 3331,
         "cssGzip": 5257,
         "lazyGzip": 140740
+      }
+    },
+    "ai": {
+      "s0": {
+        "initialGzip": 15047,
+        "cssGzip": 16406,
+        "lazyGzip": 74558
+      },
+      "s1": {
+        "initialGzip": 15047,
+        "cssGzip": 16406,
+        "lazyGzip": 215323
+      },
+      "s2": {
+        "initialGzip": 15047,
+        "cssGzip": 16406,
+        "lazyGzip": 215323
+      }
+    },
+    "preview": {
+      "s0": {
+        "initialGzip": 14321,
+        "cssGzip": 16442,
+        "lazyGzip": 74558
+      },
+      "s1": {
+        "initialGzip": 14321,
+        "cssGzip": 16442,
+        "lazyGzip": 215324
+      },
+      "s2": {
+        "initialGzip": 14321,
+        "cssGzip": 16442,
+        "lazyGzip": 215324
+      }
+    },
+    "security": {
+      "s0": {
+        "initialGzip": 13664,
+        "cssGzip": 15694,
+        "lazyGzip": 74558
+      },
+      "s1": {
+        "initialGzip": 13664,
+        "cssGzip": 15694,
+        "lazyGzip": 215298
+      },
+      "s2": {
+        "initialGzip": 13664,
+        "cssGzip": 15694,
+        "lazyGzip": 215298
+      }
+    },
+    "contact": {
+      "s0": {
+        "initialGzip": 9428,
+        "cssGzip": 9221,
+        "lazyGzip": 74558
+      },
+      "s1": {
+        "initialGzip": 9428,
+        "cssGzip": 9221,
+        "lazyGzip": 215298
+      },
+      "s2": {
+        "initialGzip": 9428,
+        "cssGzip": 9221,
+        "lazyGzip": 215298
+      }
+    },
+    "terms": {
+      "none": {
+        "initialGzip": 0,
+        "cssGzip": 0,
+        "lazyGzip": 0
+      },
+      "s0": {
+        "initialGzip": 3098,
+        "cssGzip": 5316,
+        "lazyGzip": 0
+      }
+    },
+    "not-found": {
+      "none": {
+        "initialGzip": 0,
+        "cssGzip": 0,
+        "lazyGzip": 0
+      },
+      "s0": {
+        "initialGzip": 12420,
+        "cssGzip": 15709,
+        "lazyGzip": 74558
       }
     }
   }

@@ -1,10 +1,16 @@
 import type { FC, ReactNode } from "react";
 import { Route } from "react-router-dom";
 import { Header } from "../src/components/Header";
+import { AiConnectionProto } from "./others/pages/AiConnection";
 import { DebtProto, PayProto } from "./others/pages/AreaPage";
+import { ContactProto } from "./others/pages/Contact";
 import { FeaturesIndexProto } from "./others/pages/FeaturesIndex";
+import { NotFoundProto } from "./others/pages/NotFound";
+import { PreviewProto } from "./others/pages/Preview";
 import { PricingProto } from "./others/pages/Pricing";
 import { PrivacyProto } from "./others/pages/Privacy";
+import { SecurityProto } from "./others/pages/Security";
+import { TermsProto } from "./others/pages/Terms";
 import { P1 } from "./p1/P1";
 import { P1b } from "./p1b/P1b";
 import { P2 } from "./p2/P2";
@@ -159,6 +165,46 @@ const OTHER_PAGES: Entry[] = [
   },
 ];
 
+/** Other pages, round two (OTHER-PAGES-PLAN R2): the special pages, same blocks as round one. */
+const OTHER_PAGES_TWO: Entry[] = [
+  {
+    path: "others/ai",
+    Page: AiConnectionProto,
+    title: "AI connection",
+    about: "The feature template with the question card, example questions and technical details.",
+  },
+  {
+    path: "others/preview",
+    Page: PreviewProto,
+    title: "Interactive preview",
+    about: "The three previews in still, solid bands; document cards replace the flat scenes.",
+  },
+  {
+    path: "others/security",
+    Page: SecurityProto,
+    title: "Security and privacy",
+    about: "The six facts as glass cards beside the security card, then the reporting route.",
+  },
+  {
+    path: "others/contact",
+    Page: ContactProto,
+    title: "Contact",
+    about: "One glass card with the address and its note; still orbs in the header only.",
+  },
+  {
+    path: "others/terms",
+    Page: TermsProto,
+    title: "Legal page: Terms",
+    about: "Production's terms with still orbs in the header band only, or nothing. No script.",
+  },
+  {
+    path: "others/not-found",
+    Page: NotFoundProto,
+    title: "Not found",
+    about: "One glass card with the Where next card and one still orb.",
+  },
+];
+
 const List: FC<{ entries: Entry[] }> = ({ entries }) => (
   <ol>
     {entries.map((entry) => (
@@ -182,6 +228,9 @@ const PrototypeIndex = () => (
         production build has none of this. Each page has a panel with a reduce motion switch, the
         frame rate and the added weight. Prototypes 8 to 11b also have Speed and Bubbles controls.
       </p>
+      <h2>Other pages, round two</h2>
+      <p>The special pages, from the same blocks as round one.</p>
+      <List entries={OTHER_PAGES_TWO} />
       <h2>Other pages, round one</h2>
       <p>
         Pages other than home, from prototype 11's blocks. Each has a Scene switch in its panel: S0
@@ -202,7 +251,12 @@ const PrototypeIndex = () => (
 
 export const prototypeRoutes: ReactNode = [
   <Route element={<PrototypeIndex />} key="index" path="/prototypes" />,
-  ...[...ROUND_ONE, ...ROUND_TWO, ...ROUND_THREE, ...ROUND_FOUR, ...OTHER_PAGES].map(
-    ({ path, Page }) => <Route element={<Page />} key={path} path={`/prototypes/${path}`} />,
-  ),
+  ...[
+    ...ROUND_ONE,
+    ...ROUND_TWO,
+    ...ROUND_THREE,
+    ...ROUND_FOUR,
+    ...OTHER_PAGES,
+    ...OTHER_PAGES_TWO,
+  ].map(({ path, Page }) => <Route element={<Page />} key={path} path={`/prototypes/${path}`} />),
 ];
