@@ -9,15 +9,7 @@ import {
 } from "@flump/finance-engine/budget";
 import * as Crypto from "expo-crypto";
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import {
-  AccessibilityInfo,
-  Keyboard,
-  Linking,
-  Modal,
-  Platform,
-  type ScrollViewInstance,
-  View,
-} from "react-native";
+import { AccessibilityInfo, Linking, Modal, type ScrollViewInstance, View } from "react-native";
 import { BreathingRoom } from "../../components/BreathingRoom";
 import { BudgetCategoryList } from "../../components/BudgetCategoryList";
 import { BudgetEditor } from "../../components/BudgetEditor";
@@ -74,6 +66,7 @@ import {
 } from "../../data/budget";
 import { useCheckInQueries } from "../../data/checkIn";
 import { useDelayedLoading } from "../../data/useDelayedLoading";
+import { amountProblem, amountProblemMessage } from "../../features/accounts/accountFormModel";
 import {
   categoryChoices,
   defaultEssential,
@@ -575,6 +568,7 @@ function EntrySheet({
     else setError(result === "conflict" ? EDITOR.conflict : failed);
   };
 
+  const sheetScroll = useRef<ScrollViewInstance>(null);
   const lastAdd = useRef<{ sheet: string; body: string; key: string } | null>(null);
   const save = async (values: ValidEntryValues) => {
     if (!sheet) return;
@@ -658,7 +652,7 @@ function EntrySheet({
       onRequestClose={saving ? undefined : onClose}
     >
       {sheet && initial ? (
-        <Screen testID="budget-entry-sheet" keyboardAware>
+        <Screen testID="budget-entry-sheet" keyboardAware scrollRef={sheetScroll}>
           <BudgetEntryForm
             key={sheetKey}
             mode={sheet.mode}
@@ -668,6 +662,8 @@ function EntrySheet({
             error={error}
             onSave={(values) => void save(values)}
             onTry={() => setError(null)}
+            checkAmount={budgetAmountProblem}
+            onInvalid={() => sheetScroll.current?.scrollTo({ y: 0, animated: false })}
             onCancel={onClose}
             onDelete={() => setConfirming(true)}
           />
@@ -681,7 +677,6 @@ function EntrySheet({
               onCancel={() => setConfirming(false)}
             />
           ) : null}
-          <KeyboardSpacer />
         </Screen>
       ) : null}
     </Modal>
@@ -689,27 +684,12 @@ function EntrySheet({
 }
 
 /**
- * Room below the sheet's buttons as tall as the keyboard, so Save scrolls above it at any text size
- * (device check: edge to edge on Android the window does not resize, and the page's keyboard
- * padding alone left Save under the keyboard). Drop it once PR 973's keyboard-aware Screen, which
- * pads by the keyboard's height itself, is on main.
+ * The account forms' one check of a typed amount (a minus, text it cannot read, over the contract's
+ * limit) in their words, for the budget entry form: the same rule and wording, not a copy.
  */
-function KeyboardSpacer() {
-  const [height, setHeight] = useState(0);
-  useEffect(() => {
-    const ios = Platform.OS === "ios";
-    const shown = Keyboard.addListener(ios ? "keyboardWillShow" : "keyboardDidShow", (event) =>
-      setHeight(event.endCoordinates.height),
-    );
-    const hidden = Keyboard.addListener(ios ? "keyboardWillHide" : "keyboardDidHide", () =>
-      setHeight(0),
-    );
-    return () => {
-      shown.remove();
-      hidden.remove();
-    };
-  }, []);
-  return <View style={{ height }} testID="budget-entry-sheet-keyboard-room" />;
+function budgetAmountProblem(value: number | null, text: string): string | null {
+  const problem = amountProblem(value, text);
+  return problem ? amountProblemMessage(problem, false) : null;
 }
 
 /** Web's `RunwayCalculator`: the what-if zone under the saved figure. Nothing in it is sent. */
