@@ -32,7 +32,9 @@ sections:
       - pension-rates
       - tax-region
       - student-loan-plan
+      - ownership-share
     figures_shown:
+      - home-strip
       - left-over
       - total-debts
 

@@ -442,6 +442,7 @@ flowchart LR
 flowchart LR
   s_onboarding["Onboarding"]
   s_dashboard["Dashboard"]
+  s_mobile_home["Mobile app Home"]
   s_budget["Budget"]
   s_debt["Debt"]
   s_picture["Engine picture (headline figures)"]
@@ -475,6 +476,24 @@ flowchart LR
   f_budget_entry_link_account -.-> s_export
   f_other_outgoings(["Other monthly outgoings as typed in onboarding"])
   s_onboarding --> f_other_outgoings
+  g_home_strip{{"Home's two-figure strip (left over each month, what you owe or pension pots)"}}
+  f_budget_entries ==> g_home_strip
+  f_salary(["Salary (yearly pay before tax)"])
+  f_salary ==> g_home_strip
+  f_typed_take_home(["Monthly take-home pay as typed in onboarding"])
+  f_typed_take_home ==> g_home_strip
+  f_pension_rates(["Workplace pension rates and how the pension is paid"])
+  f_pension_rates ==> g_home_strip
+  f_tax_region(["Tax region"])
+  f_tax_region ==> g_home_strip
+  f_student_loan_plan(["Student loan plan"])
+  f_student_loan_plan ==> g_home_strip
+  f_account_balance(["Account balance today"])
+  f_account_balance ==> g_home_strip
+  f_ownership_share(["Joint ownership and the user's share of an account"])
+  f_ownership_share ==> g_home_strip
+  g_home_strip -.-> s_dashboard
+  g_home_strip -.-> s_mobile_home
   g_left_over{{"Left over each month and budget totals"}}
   f_budget_entries ==> g_left_over
   g_left_over -.-> s_dashboard
@@ -483,9 +502,7 @@ flowchart LR
   g_left_over -.-> s_mcp_read
   g_left_over -.-> s_context_pack
   g_safe_to_spend{{"Safe to spend"}}
-  f_salary(["Salary (yearly pay before tax)"])
   f_salary ==> g_safe_to_spend
-  f_pension_rates(["Workplace pension rates and how the pension is paid"])
   f_pension_rates ==> g_safe_to_spend
   f_budget_entries ==> g_safe_to_spend
   f_account_monthly_amount(["Monthly amount on an account (saving, pot payment, debt payment, mortgage payment)"])
@@ -495,10 +512,8 @@ flowchart LR
   g_safe_to_spend -.-> s_context_pack
   g_months_of_cover{{"Breathing room (months of cover)"}}
   f_budget_entries ==> g_months_of_cover
-  f_account_balance(["Account balance today"])
   f_account_balance ==> g_months_of_cover
   f_account_monthly_amount ==> g_months_of_cover
-  f_ownership_share(["Joint ownership and the user's share of an account"])
   f_ownership_share ==> g_months_of_cover
   g_months_of_cover -.-> s_dashboard
   g_months_of_cover -.-> s_budget

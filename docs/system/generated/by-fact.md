@@ -60,6 +60,7 @@ Where each value is stored, entered and used. One entry per stored fact, then on
 | [Net worth today](#net-worth)                                                                                                            | figure | accounts    | Holds                                     |
 | [Net worth over time](#net-worth-over-time)                                                                                              | figure | accounts    | Broken                                    |
 | [Net worth change since last month](#net-worth-change)                                                                                   | figure | accounts    | Holds                                     |
+| [Home's two-figure strip (left over each month, what you owe or pension pots)](#home-strip)                                              | figure | budget      | Holds                                     |
 | [Total debts](#total-debts)                                                                                                              | figure | accounts    | Duplicated (two stores that can disagree) |
 | [Debt-free date and interest](#debt-free-date)                                                                                           | figure | accounts    | Duplicated (two stores that can disagree) |
 | [Home equity](#home-equity)                                                                                                              | figure | home        | Holds                                     |
@@ -1443,6 +1444,25 @@ Entered or changed by:
 Read by:
 
 - none
+
+### Home's two-figure strip (left over each month, what you owe or pension pots)
+
+<a id="home-strip"></a>
+
+- Id: `home-strip` (derived figure)
+- Verdict: Holds. Findings: none. Links: none.
+- Computed by: `selectHomeStrip` in `packages/finance-engine/src/home-strip.ts`
+- Built from: `budget-entries`, `salary`, `typed-take-home`, `pension-rates`, `tax-region`, `student-loan-plan`, `account-balance`, `ownership-share`
+- Note: The rules web held outside the engine (spending only from a real amount, no left over without an income row, income only, owed before pension, one prompt when half or more cards are not set) moved into the engine in E12 S5b with no figure change. What you owe is selectConsumerDebtTotal, the debt summary's total.
+
+Other code paths that compute it:
+
+- `selectHomeStripFromRows` [wrapper] in `packages/finance-engine/src/home-strip.ts` (the same rule from the API rows, through the budget figures buildFinancialPicture uses (selectBudgetFigures); the mobile app's one call)
+
+Shown on:
+
+- Dashboard: `apps/web/app/features/dashboard/components/HomeDashboard/HomeDashboard.tsx` (the strip under the hero; the loader's budget flags come from the same module's rules (E12 S5b))
+- Mobile app Home: `apps/mobile/src/features/home/useHomeData.ts` (the mobile Home strip (E12 S5b), from selectHomeStripFromRows over the same rows)
 
 ### Left over each month and budget totals
 
