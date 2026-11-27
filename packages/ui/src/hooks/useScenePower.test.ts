@@ -199,14 +199,16 @@ describe("createFrameRateCheck", () => {
     expect(verdict).toEqual({ kind: "settled", fps: 250 });
   });
 
-  it("treats a gap over 250 ms as a stall, not a slow frame, but counts a gap of exactly 250 ms", () => {
-    // A visible but throttled pane: one frame every 300 ms never gives a verdict.
-    expect(
-      run(createFrameRateCheck({ isHidden: () => false }), 1000 / 300, 20_000).verdicts,
-    ).toEqual([]);
-    // One frame every 250 ms is 4 fps and counted: downgrade, then too slow.
-    const steady = createFrameRateCheck({ isHidden: () => false });
-    expect(run(steady, 4, 4500).verdicts).toEqual(["downgrade", "too-slow"]);
+  it("drops a visible page whose frames come 300 ms apart: slow frames are never a pause", () => {
+    // 3.3 fps, as a software renderer on a busy machine: a downgrade after the first two
+    // seconds, too slow after the next two, so the still shows within the first seconds.
+    const check = createFrameRateCheck({ isHidden: () => false });
+    expect(run(check, 1000 / 300, 4500).verdicts).toEqual(["downgrade", "too-slow"]);
+  });
+
+  it("drops a visible page with one frame every 2 s", () => {
+    const check = createFrameRateCheck({ isHidden: () => false });
+    expect(run(check, 0.5, 6000).verdicts).toEqual(["downgrade", "too-slow"]);
   });
 
   it("is still too slow at a steady 20 fps on a visible page", () => {
