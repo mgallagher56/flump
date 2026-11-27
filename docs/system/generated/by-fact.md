@@ -58,6 +58,7 @@ Where each value is stored, entered and used. One entry per stored fact, then on
 | [Account transactions](#transactions)                                                                                                    | fact   | accounts    | Not checked                               |
 | [Currency and country](#currency-and-country)                                                                                            | fact   | preferences | Not checked                               |
 | [Who is signed in](#sign-in-identity)                                                                                                    | fact   | preferences | Not checked                               |
+| [Sign-in email address](#sign-in-email)                                                                                                  | fact   | preferences | Not checked                               |
 | [Net worth today](#net-worth)                                                                                                            | figure | accounts    | Holds                                     |
 | [Net worth over time](#net-worth-over-time)                                                                                              | figure | accounts    | Broken                                    |
 | [Net worth change since last month](#net-worth-change)                                                                                   | figure | accounts    | Holds                                     |
@@ -1405,6 +1406,27 @@ Read by:
 Other stores:
 
 - `mobile secure store flump.auth.cache-owner` [duplicate] in `apps/mobile/src/auth/tokenStore.ts` (E12 S7: a SHA-256 of the sub, pseudonymous personal data, so the offline cache opens only for the person who saved it)
+
+Entered or changed by:
+
+- none
+
+Read by:
+
+- none
+
+### Sign-in email address
+
+<a id="sign-in-email"></a>
+
+- Id: `sign-in-email` (stored fact)
+- Verdict: Not checked. Findings: none. Links: none.
+- Source of truth: `the WorkOS user's email, read by WorkOSIdentityAdapter.getUserEmail` in `apps/backend/src/identity/identity.adapter.ts`
+- Note: Held only by WorkOS; Flump stores no copy. Read for the password reset and, since PR 976, by GET /v1/user-profile/email for Settings > Security (the token claim when present, else WorkOS, 2 s timeout, 30 a minute per user). Passed to the web page (no-store) and the mobile app's in-memory query; not stored, not logged, not in the mobile offline cache.
+
+Other stores:
+
+- none
 
 Entered or changed by:
 

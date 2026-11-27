@@ -457,6 +457,7 @@ flowchart LR
   f_setup_checklist -.-> s_dashboard
   f_currency_and_country(["Currency and country"])
   f_sign_in_identity(["Who is signed in"])
+  f_sign_in_email(["Sign-in email address"])
 ```
 
 ## budget
