@@ -1,5 +1,5 @@
-import { type ReactNode, useMemo } from "react";
-import { ScrollView, View } from "react-native";
+import { type ReactNode, useCallback, useMemo, useState } from "react";
+import { RefreshControl, ScrollView, View } from "react-native";
 import { type Edge, SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "../../theme/ThemeProvider";
 import { createStyles } from "./Screen.styles";
@@ -18,6 +18,11 @@ export interface ScreenProps {
    * `top`, because the header already clears it.
    */
   edges?: readonly Edge[];
+  /**
+   * Pull to refresh: the platform's own control, which spins until the promise settles. The figures
+   * stay on screen while it runs. Only on a screen that scrolls.
+   */
+  onRefresh?: () => Promise<unknown>;
   testID?: string;
 }
 
@@ -29,16 +34,44 @@ export function Screen({
   scroll = true,
   centred = false,
   edges = ALL_EDGES,
+  onRefresh,
   testID,
 }: ScreenProps) {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const content = [styles.content, centred ? styles.centred : null];
+  const [refreshing, setRefreshing] = useState(false);
+  const refresh = useCallback(async () => {
+    if (!onRefresh) return;
+    setRefreshing(true);
+    try {
+      await onRefresh();
+    } catch {
+      // A failed refresh keeps what is on screen; the screen's own state says what failed.
+    } finally {
+      setRefreshing(false);
+    }
+  }, [onRefresh]);
 
   return (
     <SafeAreaView style={styles.screen} edges={edges} testID={testID}>
       {scroll ? (
-        <ScrollView contentContainerStyle={content}>{children}</ScrollView>
+        <ScrollView
+          contentContainerStyle={content}
+          refreshControl={
+            onRefresh ? (
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={refresh}
+                tintColor={theme.colors["text.secondary"]}
+                colors={[theme.colors.primary]}
+                progressBackgroundColor={theme.colors["surface.card"]}
+              />
+            ) : undefined
+          }
+        >
+          {children}
+        </ScrollView>
       ) : (
         <View style={content}>{children}</View>
       )}
