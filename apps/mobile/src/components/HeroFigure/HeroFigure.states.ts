@@ -40,6 +40,18 @@ export const heroFigureStates = {
     emptyPrompt: "Add an account to see your net worth.",
     emptyAction: { label: "Add an account on the website", onPress: () => {} },
   },
+  signedChange: {
+    label: "Net worth change",
+    value: 2575,
+    signed: true,
+    caption: "September to October 2026.",
+  },
+  noEarlierMonth: {
+    label: "Monthly change",
+    value: null,
+    notSetLabel: "No earlier month",
+    emptyPrompt: "The change shows once you have two months recorded.",
+  },
   loading: {
     label: "Net worth",
     value: null,

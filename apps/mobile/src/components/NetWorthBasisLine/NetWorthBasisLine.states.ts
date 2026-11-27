@@ -26,4 +26,10 @@ export const netWorthBasisLineStates = {
     onAddEstimate: noop,
     websiteLabel: "Open the Flump website",
   },
+  linkOnly: {
+    leftOut: [],
+    onChangeWhatCounts: noop,
+    onAddEstimate: noop,
+    alwaysShowLink: true,
+  },
 } satisfies Record<string, NetWorthBasisLineProps>;

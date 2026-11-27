@@ -3,7 +3,7 @@ import { useWindowDimensions, View } from "react-native";
 import { useTheme } from "../../theme/ThemeProvider";
 import { Button } from "../Button";
 import { Icon } from "../Icon";
-import { formatWholePounds, Money } from "../Money/Money";
+import { Money, spokenPounds } from "../Money/Money";
 import { Text } from "../Text";
 import { CHANGE_ICON, createStyles, skeletonHeights } from "./HeroFigure.styles";
 
@@ -42,13 +42,14 @@ export interface HeroFigureProps {
   loadingLabel?: string;
   /** While loading: the height of what `children` will draw (the trend bars), kept as one block. */
   loadingSlotHeight?: number;
+  /** The figure is a change: "+£2,575", read "plus £2,575" (web's `signDisplay: "always"`). */
+  signed?: boolean;
+  /** With no figure, the words in its place; defaults to "Not set" (web's `notSetLabel`). */
+  notSetLabel?: string;
   /** Drawn under the figure and its change (the trend bars), with its own text alternative. */
   children?: ReactNode;
   testID?: string;
 }
-
-/** "minus £6,400" for a negative figure, as web speaks it. */
-const spokenFigure = (value: number | null) => formatWholePounds(value).replace(/^-/, "minus ");
 
 /**
  * The one headline figure on a screen, as web's `HeroFigure`: a label, the figure in whole pounds,
@@ -66,6 +67,8 @@ export function HeroFigure({
   loading = false,
   loadingLabel,
   loadingSlotHeight,
+  signed = false,
+  notSetLabel,
   children,
   testID,
 }: HeroFigureProps) {
@@ -114,7 +117,13 @@ export function HeroFigure({
         <Text textStyle="label.md" color="secondary">
           {label}
         </Text>
-        <Money value={null} size="lg" color="secondary" />
+        {notSetLabel ? (
+          <Text textStyle="heading.lg" color="secondary">
+            {notSetLabel}
+          </Text>
+        ) : (
+          <Money value={null} size="lg" color="secondary" />
+        )}
         {emptyPrompt ? <Text color="secondary">{emptyPrompt}</Text> : null}
         {emptyAction ? (
           <Button
@@ -130,7 +139,7 @@ export function HeroFigure({
   }
 
   const line = change ? change.spoken : caption;
-  const spoken = [label, spokenFigure(value), line].filter(Boolean).join(", ");
+  const spoken = [label, spokenPounds(value, signed), line].filter(Boolean).join(", ");
   return (
     <View key="loaded" style={styles.base} testID={testID}>
       {/* Busy is cleared outright as well: a screen reader never hears a loaded figure as busy. */}
@@ -143,7 +152,7 @@ export function HeroFigure({
         <Text textStyle="label.md" color="secondary">
           {label}
         </Text>
-        <Money value={value} size="lg" />
+        <Money value={value} size="lg" signed={signed} />
         {change ? (
           <View style={styles.change} testID={testID ? `${testID}-change` : undefined}>
             <Icon name={CHANGE_ICON[change.direction]} size="sm" color="primary" />

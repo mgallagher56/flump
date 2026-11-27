@@ -19,6 +19,13 @@ export interface NetWorthBasisLineProps {
    * website's home page). Defaults to the page's own words.
    */
   websiteLabel?: string;
+  /**
+   * Show the "Change what counts" link on its own when nothing is left out, so the choice can be
+   * found from the figure (web: the accounts list only). Needs `choicesAvailable`.
+   */
+  alwaysShowLink?: boolean;
+  /** False when no net worth choice applies to these accounts: the lone link is not shown. */
+  choicesAvailable?: boolean;
   /** Defaults to "net-worth-basis-line". */
   testID?: string;
 }
@@ -33,18 +40,22 @@ export function NetWorthBasisLine({
   onChangeWhatCounts,
   onAddEstimate,
   websiteLabel,
+  alwaysShowLink = false,
+  choicesAvailable = true,
   testID = "net-worth-basis-line",
 }: NetWorthBasisLineProps) {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const missingHome = leftOut.includes("homeValueMissing");
   const sentence = missingHome ? HOME.homeValueMissing : leftOutSentence(leftOut);
-  if (!sentence) return null;
+  if (!sentence && !(alwaysShowLink && choicesAvailable)) return null;
   return (
     <View style={styles.base} testID={testID}>
-      <Text textStyle="body.sm" color="secondary">
-        {sentence}
-      </Text>
+      {sentence ? (
+        <Text textStyle="body.sm" color="secondary">
+          {sentence}
+        </Text>
+      ) : null}
       <Button
         label={websiteLabel ?? (missingHome ? HOME.addEstimate : HOME.changeWhatCounts)}
         variant="link"
