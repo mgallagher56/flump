@@ -31,14 +31,13 @@ export interface TabLayoutInput {
 }
 
 export interface TabLayout {
-  readonly columns: number;
-  readonly rows: number;
+  readonly scroll: boolean;
   readonly showIcons: boolean;
 }
 
 /**
- * How many tabs share a row: as many as the longest label fits whole, then spread evenly over the
- * fewest rows (five tabs at three a row are three and two, never four and one).
+ * Whether all tabs fit on one fixed row, or need horizontal scrolling so they stay on one row
+ * without shrinking or clipping labels.
  */
 export function tabLayout({
   count,
@@ -48,10 +47,8 @@ export function tabLayout({
   textScale,
 }: TabLayoutInput): TabLayout {
   const labelWidth = longestLabel * fontSize * CHARACTER_WIDTH + LABEL_PADDING * 2;
-  const fits = Math.max(1, Math.min(count, Math.floor(width / labelWidth)));
-  const rows = Math.ceil(count / fits);
-  const columns = Math.ceil(count / rows);
-  return { columns, rows, showIcons: textScale < LABEL_ONLY_FROM };
+  const fits = Math.floor(width / labelWidth);
+  return { scroll: fits < count, showIcons: textScale < LABEL_ONLY_FROM };
 }
 
 export const createStyles = (theme: Theme) =>
@@ -68,7 +65,9 @@ export const createStyles = (theme: Theme) =>
     // rounds each 20% cell to whole pixels, and five rounded up overran the bar and pushed the fifth
     // tab onto a second row at the normal size (device check, 26 November 2026).
     row: { flexDirection: "row" },
+    scrollRow: { flexDirection: "row", flexGrow: 1 },
     cell: { flex: 1, flexBasis: 0, alignItems: "stretch" },
+    scrollCell: { flexGrow: 1, alignItems: "stretch" },
     tab: {
       alignItems: "center",
       justifyContent: "center",
