@@ -251,10 +251,10 @@ export function evaluateFinancialStage(params: {
     .filter((d) => isHighInterestDebt(d))
     .reduce((sum, d) => sum + d.balanceGbp, 0);
 
-  const emergencyRunwayMonths =
-    monthlyEssentialExpenses > 0
-      ? Math.round((liquidSavings / monthlyEssentialExpenses) * 10) / 10
-      : 0;
+  // The stage reads the unrounded ratio, so 2.95 months is under 3 (D8, 27 November 2026); the
+  // figure returned stays at one decimal place.
+  const runwayRatio = monthlyEssentialExpenses > 0 ? liquidSavings / monthlyEssentialExpenses : 0;
+  const emergencyRunwayMonths = Math.round(runwayRatio * 10) / 10;
 
   const starterBufferMet = liquidSavings >= 1000;
 
@@ -276,7 +276,7 @@ export function evaluateFinancialStage(params: {
   }
 
   // Stage 2: Buffer & Protect
-  if (emergencyRunwayMonths < 3) {
+  if (runwayRatio < 3) {
     return {
       stage: "buffer",
       canonicalStage: "STAGE_2_BUFFER_BUILD",
