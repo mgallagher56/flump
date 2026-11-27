@@ -189,7 +189,7 @@ function Loaded({
           label={HISTORY.heroLabel}
           value={comparison.netWorthChange}
           signed
-          caption={sentences(comparedMonthsText(comparison), basisText)}
+          caption={sentences(`${comparedMonthsText(comparison)}.`, basisText)}
           testID="history-hero"
         />
       ) : (
