@@ -23,6 +23,8 @@ const MIN_TAB_WIDTH = 48;
 const SAFETY_MARGIN = 1.1;
 /** Extra pre-measurement headroom so an unmeasured bar near the proportional limit chooses scroll. */
 const PRE_MEASURE_SCROLL_HEADROOM = 1.1;
+/** Per-label rounding headroom (1 pt) so Android pixel rounding does not wrap a label at exact fit. */
+const LABEL_FIT_EPSILON = 1;
 
 export interface TabLayoutInput {
   readonly labels: readonly string[];
@@ -70,11 +72,14 @@ export function tabLayout({
       );
   const longest = labelWidths.reduce((max, w) => Math.max(max, w), 0);
   const totalWidth = labelWidths.reduce((sum, w) => sum + w, 0);
-  const scrollThreshold = hasMeasurements ? totalWidth : totalWidth * PRE_MEASURE_SCROLL_HEADROOM;
+  const fitEpsilon = hasMeasurements ? LABEL_FIT_EPSILON : 0;
+  const scrollThreshold = hasMeasurements
+    ? totalWidth + labels.length * fitEpsilon
+    : totalWidth * PRE_MEASURE_SCROLL_HEADROOM;
   const mode =
     scrollThreshold - width > FLOAT_EPSILON
       ? "scroll"
-      : longest * labels.length - width <= FLOAT_EPSILON
+      : (longest + fitEpsilon) * labels.length - width <= FLOAT_EPSILON
         ? "equal"
         : "proportional";
   return { mode, showIcons: textScale < LABEL_ONLY_FROM, labelWidths };
