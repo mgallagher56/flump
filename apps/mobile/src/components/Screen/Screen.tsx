@@ -59,6 +59,9 @@ export interface ScreenProps {
 
 const ALL_EDGES: readonly Edge[] = ["top", "right", "bottom", "left"];
 
+/** How many frames a scroll to a field is followed up for: about a third of a second. */
+const FOLLOW_FRAMES = 20;
+
 /** The page around every screen: the canvas colour, safe areas, the phone gutter and spacing. */
 export function Screen({
   children,
@@ -88,6 +91,41 @@ export function Screen({
   const scrollY = useRef(0);
   const viewport = useRef(0);
   const margin = theme.spacing["density.gap"];
+  // A scroll to a field, followed up on the next frames until the scroll view gets there. The
+  // content-size event reaches JS from layout before the phone's scroll view holds the taller
+  // content, so a scroll sent then stops at the old end, and nothing says when the phone catches
+  // up (device trace, 27 November 2026: 6 tries in 12 stopped at 115.8 for 212.6).
+  const wanted = useRef<number | null>(null);
+  const frame = useRef<number | null>(null);
+  const stopFollowing = useCallback(() => {
+    wanted.current = null;
+    if (frame.current !== null) cancelAnimationFrame(frame.current);
+    frame.current = null;
+  }, []);
+  const scrollUntilThere = useCallback(
+    (to: number) => {
+      stopFollowing();
+      wanted.current = to;
+      own.current?.scrollTo({ y: to, animated: false });
+      let frames = 0;
+      const check = () => {
+        frame.current = null;
+        const target = wanted.current;
+        if (target === null) return;
+        // There (to the pixel), or given up after about a third of a second: stop.
+        if (scrollY.current >= target - 1 || frames >= FOLLOW_FRAMES) {
+          wanted.current = null;
+          return;
+        }
+        frames += 1;
+        own.current?.scrollTo({ y: target, animated: false });
+        frame.current = requestAnimationFrame(check);
+      };
+      frame.current = requestAnimationFrame(check);
+    },
+    [stopFollowing],
+  );
+  useEffect(() => stopFollowing, [stopFollowing]);
   const showFocusedField = useCallback(() => {
     if (!keyboardAware || room === 0) return;
     const field = TextInput.State.currentlyFocusedInput();
@@ -105,11 +143,11 @@ export function Screen({
           inset: room,
           margin,
         });
-        if (to !== null) scroller.scrollTo({ y: to, animated: false });
+        if (to !== null) scrollUntilThere(to);
       },
       () => {},
     );
-  }, [keyboardAware, room, margin]);
+  }, [keyboardAware, room, margin, scrollUntilThere]);
   // When the keyboard opens, the field that opened it comes into view: now, and again on every
   // content-size change while it is open. Until the keyboard's room below the content is laid out, a
   // field near the end cannot be scrolled far enough: the scroll view stops at its old end (device
@@ -118,9 +156,12 @@ export function Screen({
   // keyboard 2 times in 4 (device check after PR 973). Each try scrolls only when the field is
   // hidden, so trying on every size change is safe.
   useEffect(() => {
-    if (room === 0) return;
+    if (room === 0) {
+      stopFollowing();
+      return;
+    }
     showFocusedField();
-  }, [room, showFocusedField]);
+  }, [room, showFocusedField, stopFollowing]);
   const refresh = useCallback(async () => {
     if (!onRefresh) return;
     setRefreshing(true);

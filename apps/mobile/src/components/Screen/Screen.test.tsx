@@ -183,6 +183,68 @@ describe("Screen", () => {
     jest.restoreAllMocks();
   });
 
+  it("a scroll the phone cut short at the old end is sent again until the field is in view (device trace)", async () => {
+    // Device trace on the 0% date's year box (E12 S10, 27 November 2026), 6 tries in 12: the
+    // content-size event reached JS before the room effect, both scrolls went out within 10 ms, and
+    // the scroll view, not yet holding the taller content (898.7 of 1,211), stopped both at its old
+    // end (115.8 for 212.6). No later event came, so the box stayed behind the keyboard.
+    jest.useFakeTimers();
+    const listeners = new Map<string, (e: unknown) => void>();
+    jest.spyOn(Keyboard, "addListener").mockImplementation((name, fn) => {
+      listeners.set(name, fn as (e: unknown) => void);
+      return { remove: jest.fn() } as never;
+    });
+    jest.spyOn(TextInput.State, "currentlyFocusedInput").mockReturnValue({
+      measureLayout: (_to: unknown, done: (x: number, y: number, w: number, h: number) => void) =>
+        done(0, 600, 300, 56),
+    } as never);
+    // The phone's scroll view: it stops at the end of the content it holds now, and reports where
+    // it got to, as Android does after a scroll that moves.
+    let native = 800;
+    let at = 0;
+    const ref = { current: null as unknown };
+    await render(
+      <ThemeProvider scheme="light">
+        <Screen testID="s" keyboardAware scrollRef={ref as never}>
+          <Text>Form</Text>
+        </Screen>
+      </ThemeProvider>,
+    );
+    const view = () => {
+      const [v] = (screen.toJSON() as unknown as Tree).children;
+      if (!v) throw new Error("expected the scroll view");
+      return v;
+    };
+    const scroller = ref.current as Record<string, unknown>;
+    scroller.getInnerViewRef = () => ({});
+    scroller.scrollTo = ({ y }: { y: number }) => {
+      const next = Math.max(0, Math.min(y, native - 700));
+      if (next === at) return;
+      at = next;
+      (view().props.onScroll as (e: unknown) => void)({
+        nativeEvent: { contentOffset: { y: at }, contentSize: { height: native } },
+      });
+    };
+    await act(async () =>
+      (view().props.onLayout as (e: unknown) => void)({ nativeEvent: { layout: { height: 700 } } }),
+    );
+    const show = listeners.get("keyboardWillShow") ?? listeners.get("keyboardDidShow");
+    await act(async () => show?.({ endCoordinates: { height: 330, screenY: 500 } }));
+    // The size event reaches JS while the scroll view still holds the old content: cut short at
+    // 800 - 700 = 100.
+    await act(async () =>
+      (view().props.onContentSizeChange as (w: number, h: number) => void)(400, 1130),
+    );
+    expect(at).toBe(100);
+    // A frame later the phone holds the taller content, and no event says so.
+    native = 1130;
+    await act(async () => jest.advanceTimersByTime(100));
+    // 600 + 56 + 16 - (700 - 330) = 302.
+    expect(at).toBe(302);
+    jest.useRealTimers();
+    jest.restoreAllMocks();
+  });
+
   it("when the keyboard opens, the field being typed in scrolls above it", async () => {
     const listeners = new Map<string, (e: unknown) => void>();
     jest.spyOn(Keyboard, "addListener").mockImplementation((name, fn) => {
