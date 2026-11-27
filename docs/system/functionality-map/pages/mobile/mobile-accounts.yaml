@@ -3,9 +3,31 @@ app: mobile
 route: /accounts
 title: Accounts
 auth: required
-purpose: The Accounts tab (E12 S4). Until its own slice it is a plain placeholder that says Accounts is on the Flump website for now and opens the same web page (/app/accounts) in the system browser. It shows no figures and reads nothing.
+purpose: The Accounts tab (E12 S6), as web's accounts list. The total of the accounts listed with what it leaves out, the way to net worth history and the monthly check-in, then what you own, what you owe and what is not counted, each row one account opening its page. Read only; adding an account opens the website until S8.
 route_file: apps/mobile/app/(app)/(tabs)/accounts.tsx
 
 sections:
-  - id: placeholder
-    component: apps/mobile/src/screens/ComingSoon/ComingSoon.tsx
+  - id: net-worth-summary
+    component: apps/mobile/src/screens/Accounts/Accounts.tsx
+    facts_read:
+      - account-balance
+      - ownership-share
+      - net-worth-choices
+      - home-value
+    figures_shown:
+      - net-worth
+
+  - id: accounts-lists
+    component: apps/mobile/src/components/AccountGroup/AccountGroup.tsx
+    facts_read:
+      - account-name
+      - account-type
+      - account-balance
+      - ownership-share
+      - net-worth-choices
+    figures_shown:
+      - net-worth
+      - total-debts
+
+  - id: empty-state
+    component: apps/mobile/src/components/EmptyState/EmptyState.tsx

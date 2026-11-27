@@ -2,7 +2,7 @@
 
 # Functionality map: overview
 
-Mapped pages: 48 | Sections: 283 | Excluded routes: 25
+Mapped pages: 50 | Sections: 290 | Excluded routes: 25
 
 ## web
 
@@ -605,14 +605,26 @@ Mapped pages: 48 | Sections: 283 | Excluded routes: 25
 | `cards`   | `apps/mobile/src/screens/CheckIn/CheckIn.tsx`         | `account-balance`, `balance-history`, `check-in-done`, `net-worth-choices` | `check-in-calculated-balance` |
 | `summary` | `apps/mobile/src/screens/CheckInDone/CheckInDone.tsx` | `account-balance`, `balance-history`, `net-worth-choices`                  | `net-worth`                   |
 
+### mobile-account-detail: Account detail
+
+- Route: `/accounts/:id` (auth: `required`, file: `apps/mobile/app/(app)/accounts/[id].tsx`)
+- Purpose: One account's page (E12 S6), also opened by flump://accounts/<id>, as web's. The balance or amount owed with the line that dates it, a joint account's whole beside the share, then its balance history with the chart, its summary and every month. Read only; editing opens the website until S8. An unknown id says so with Back to accounts.
+
+| Section           | Component                                                      | Facts read                                                                                                   | Figures |
+| ----------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ------- |
+| `hero`            | `apps/mobile/src/screens/AccountDetail/AccountDetail.tsx`      | `account-name`, `account-type`, `account-balance`, `ownership-share`, `balance-history`, `net-worth-choices` | -       |
+| `balance-history` | `apps/mobile/src/components/MonthLineChart/MonthLineChart.tsx` | `account-balance`, `balance-history`                                                                         | -       |
+
 ### mobile-accounts: Accounts
 
 - Route: `/accounts` (auth: `required`, file: `apps/mobile/app/(app)/(tabs)/accounts.tsx`)
-- Purpose: The Accounts tab (E12 S4). Until its own slice it is a plain placeholder that says Accounts is on the Flump website for now and opens the same web page (/app/accounts) in the system browser. It shows no figures and reads nothing.
+- Purpose: The Accounts tab (E12 S6), as web's accounts list. The total of the accounts listed with what it leaves out, the way to net worth history and the monthly check-in, then what you own, what you owe and what is not counted, each row one account opening its page. Read only; adding an account opens the website until S8.
 
-| Section       | Component                                           | Facts read | Figures |
-| ------------- | --------------------------------------------------- | ---------- | ------- |
-| `placeholder` | `apps/mobile/src/screens/ComingSoon/ComingSoon.tsx` | -          | -       |
+| Section             | Component                                                  | Facts read                                                                                | Figures                    |
+| ------------------- | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------- | -------------------------- |
+| `net-worth-summary` | `apps/mobile/src/screens/Accounts/Accounts.tsx`            | `account-balance`, `ownership-share`, `net-worth-choices`, `home-value`                   | `net-worth`                |
+| `accounts-lists`    | `apps/mobile/src/components/AccountGroup/AccountGroup.tsx` | `account-name`, `account-type`, `account-balance`, `ownership-share`, `net-worth-choices` | `net-worth`, `total-debts` |
+| `empty-state`       | `apps/mobile/src/components/EmptyState/EmptyState.tsx`     | -                                                                                         | -                          |
 
 ### mobile-budget: Budget
 
@@ -641,6 +653,17 @@ Mapped pages: 48 | Sections: 283 | Excluded routes: 25
 | ------------- | ------------------------------------------------------- | ---------- | ------- |
 | `placeholder` | `apps/mobile/src/screens/ComingSoon/ComingSoon.tsx`     | -          | -       |
 | `not-found`   | `apps/mobile/src/screens/PageNotFound/PageNotFound.tsx` | -          | -       |
+
+### mobile-net-worth-history: Net worth history
+
+- Route: `/accounts/history` (auth: `required`, file: `apps/mobile/app/(app)/accounts/history.tsx`)
+- Purpose: Net worth history (E12 S6), also opened by flump://accounts/history, from the Accounts list and Home's trend bars, as web's. The change between the last two recorded months, the chart from three recorded months with its summary, every month, each account's change behind one control and the next check-in date. Read only; earlier months are added on the website until S8.
+
+| Section              | Component                                                      | Facts read                                                                 | Figures               |
+| -------------------- | -------------------------------------------------------------- | -------------------------------------------------------------------------- | --------------------- |
+| `hero`               | `apps/mobile/src/screens/NetWorthHistory/NetWorthHistory.tsx`  | `balance-history`, `account-balance`, `net-worth-choices`, `check-in-done` | `net-worth-over-time` |
+| `history-chart`      | `apps/mobile/src/components/MonthLineChart/MonthLineChart.tsx` | `balance-history`                                                          | `net-worth-over-time` |
+| `changes-by-account` | `apps/mobile/src/components/FigureList/FigureList.tsx`         | `balance-history`                                                          | -                     |
 
 ### mobile-not-found: Link not found
 

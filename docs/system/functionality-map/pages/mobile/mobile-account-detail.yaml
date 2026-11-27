@@ -1,0 +1,24 @@
+id: mobile-account-detail
+app: mobile
+route: /accounts/:id
+title: Account detail
+auth: required
+purpose: One account's page (E12 S6), also opened by flump://accounts/<id>, as web's. The balance or amount owed with the line that dates it, a joint account's whole beside the share, then its balance history with the chart, its summary and every month. Read only; editing opens the website until S8. An unknown id says so with Back to accounts.
+route_file: apps/mobile/app/(app)/accounts/[id].tsx
+
+sections:
+  - id: hero
+    component: apps/mobile/src/screens/AccountDetail/AccountDetail.tsx
+    facts_read:
+      - account-name
+      - account-type
+      - account-balance
+      - ownership-share
+      - balance-history
+      - net-worth-choices
+
+  - id: balance-history
+    component: apps/mobile/src/components/MonthLineChart/MonthLineChart.tsx
+    facts_read:
+      - account-balance
+      - balance-history
