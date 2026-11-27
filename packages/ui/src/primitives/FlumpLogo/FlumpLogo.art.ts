@@ -9,7 +9,7 @@
  */
 export const LOGO_VIEWBOX = "0 0 200 200";
 
-export type LogoTone = "teal" | "sky" | "violet" | "rose";
+type LogoTone = "teal" | "sky" | "violet" | "rose";
 
 export interface LogoOrb {
   readonly cx: number;
