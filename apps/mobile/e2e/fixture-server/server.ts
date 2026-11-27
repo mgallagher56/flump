@@ -25,6 +25,9 @@
  *   GET  /v1/user-profile/export             bearer; the export as an attachment with the backend's
  *                                           file name (S9); open to people not invited or who
  *                                           have not agreed to the terms, as the backend
+ *   POST /v1/accounts, POST /v1/accounts/mortgage-with-property, PATCH and DELETE /v1/accounts/:id
+ *                                            bearer; the strict request bodies, If-Match on PATCH,
+ *                                            applied as the backend does (account-writes.ts, S8)
  *   DELETE /v1/user-profile                  bearer; `{ confirmation: "DELETE" }`, a sign-in in the
  *                                           last 15 minutes (`auth_time`), then deletes: every
  *                                           later read answers 410 account_deleted and the login
@@ -78,12 +81,21 @@ import { createHash, randomUUID } from "node:crypto";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import type { AddressInfo } from "node:net";
 import {
+  CreateAccountRequest,
+  CreateMortgageWithPropertyRequest,
   etagFor,
   SnapshotMonth,
+  UpdateAccountRequest,
   UpdateProfileRequest,
   UpsertSnapshotRequest,
   type UserProfileResponse,
 } from "@flump/api-contract";
+import {
+  createAccount,
+  createMortgageWithProperty,
+  deleteAccount,
+  updateAccount,
+} from "./account-writes";
 import {
   applySnapshot,
   buildCheckInStore,
@@ -267,6 +279,8 @@ interface FixtureCounts {
   exports: number;
   /** Deletions that removed the login (S9). */
   deletions: number;
+  /** Account adds, changes and deletes that were applied (S8). */
+  accountWrites: number;
 }
 
 interface FixtureStats extends FixtureCounts {
@@ -289,6 +303,7 @@ const ZERO_COUNTS: FixtureCounts = {
   signOuts: 0,
   exports: 0,
   deletions: 0,
+  accountWrites: 0,
 };
 
 /** The backend's recent sign-in window for a deletion (`auth/recent-login.ts`). */
@@ -608,6 +623,21 @@ export async function startFixtureServer(options: FixtureServerOptions): Promise
       if (!session) return;
       return handleProfilePatch(session, req, res);
     }
+    const accountId = /^\/accounts\/([^/]+)$/.exec(path)?.[1];
+    const isAccountWrite =
+      (req.method === "POST" &&
+        (path === "/accounts" || path === "/accounts/mortgage-with-property")) ||
+      ((req.method === "PATCH" || req.method === "DELETE") &&
+        accountId !== undefined &&
+        accountId !== "mortgage-with-property");
+    if (isAccountWrite) {
+      const session = invitedSession(req, res);
+      if (!session) return;
+      if (scenario.data === "unavailable") {
+        return apiError(res, 503, "service_unavailable", "The service is not available.");
+      }
+      return handleAccountWrite(path, accountId, session, req, res);
+    }
     const snapshotMonth = /^\/snapshots\/([^/]+)$/.exec(path)?.[1];
     const isSnapshotPut = req.method === "PUT" && snapshotMonth !== undefined;
     if ((req.method === "GET" && CHECK_IN_ROUTES.has(path)) || isSnapshotPut) {
@@ -665,6 +695,71 @@ export async function startFixtureServer(options: FixtureServerOptions): Promise
     const result = applySnapshot(store(), session.userId, month.data, body.data, new Date(now()));
     if ("status" in result) return apiError(res, result.status, result.code, result.message);
     return json(res, 200, result);
+  }
+
+  /** The account writes, each body parsed with the contract's strict request schema first (S8). */
+  async function handleAccountWrite(
+    path: string,
+    accountId: string | undefined,
+    session: Session,
+    req: IncomingMessage,
+    res: ServerResponse,
+  ) {
+    const at = new Date(now());
+    if (req.method === "DELETE") {
+      counts.accountWrites += 1;
+      return deleteAccount(store(), accountId ?? "")
+        ? json(res, 200, { success: true })
+        : apiError(res, 404, "not_found", "Account not found");
+    }
+    const raw = await readJson(req);
+    if (raw === undefined) return apiError(res, 400, "invalid_json", "The body is not JSON.");
+    const schema =
+      req.method === "PATCH"
+        ? UpdateAccountRequest
+        : path === "/accounts"
+          ? CreateAccountRequest
+          : CreateMortgageWithPropertyRequest;
+    const body = schema.safeParse(raw);
+    if (!body.success) {
+      const issues = body.error.issues.map((i) => ({
+        path: ["body", ...i.path.map(String)].join("."),
+        code: i.code,
+        message: i.message,
+      }));
+      return apiError(res, 400, "validation_failed", "The request is not valid.", issues);
+    }
+    counts.accountWrites += 1;
+    if (req.method === "PATCH") {
+      const ifMatch = req.headers["if-match"];
+      const result = updateAccount(
+        store(),
+        session.userId,
+        accountId ?? "",
+        body.data as UpdateAccountRequest,
+        typeof ifMatch === "string" ? ifMatch : undefined,
+        at,
+      );
+      if ("status" in result) return apiError(res, result.status, result.code, result.message);
+      return json(res, 200, result);
+    }
+    if (path === "/accounts") {
+      return json(
+        res,
+        201,
+        createAccount(store(), session.userId, body.data as CreateAccountRequest, at),
+      );
+    }
+    return json(
+      res,
+      201,
+      createMortgageWithProperty(
+        store(),
+        session.userId,
+        body.data as CreateMortgageWithPropertyRequest,
+        at,
+      ),
+    );
   }
 
   /** As the backend: the strict body first, then the version in If-Match when one is sent. */

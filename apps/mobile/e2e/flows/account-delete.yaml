@@ -1,0 +1,63 @@
+# E12 S8: deleting an account. Delete sits inside Edit, as web's. The platform's alert asks first
+# and says what is removed; Cancel keeps the account, then "Delete Credit card" deletes it and the
+# app returns to the list, where it is gone. Checked by test id. The runner runs it in light and
+# in dark, stopping and settling the app first; no retries.
+appId: app.flump.mobile
+---
+- runScript:
+    file: ../scripts/fixture.js
+    env:
+      SCENARIO: '{"data": "ok"}'
+- runFlow: ../subflows/launch-signed-out.yaml
+- runFlow: ../subflows/sign-in-to-home.yaml
+- tapOn:
+    id: "tab-accounts"
+- extendedWaitUntil:
+    visible:
+      id: "accounts-hero"
+    timeout: 30000
+- scrollUntilVisible:
+    element:
+      text: "Credit card.*"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    text: "Credit card.*"
+- extendedWaitUntil:
+    visible:
+      id: "account-detail-hero"
+    timeout: 30000
+- scrollUntilVisible:
+    element:
+      id: "account-edit"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: "account-edit"
+- scrollUntilVisible:
+    element:
+      id: "account-form-delete"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: "account-form-delete"
+- extendedWaitUntil:
+    visible: "Its balance history will be deleted too. This cannot be undone."
+    timeout: 10000
+- takeScreenshot: account-delete-confirm-${THEME}
+- tapOn: "(?i)cancel"
+- assertVisible:
+    id: "account-form"
+- tapOn:
+    id: "account-form-delete"
+- extendedWaitUntil:
+    visible: "(?i)delete credit card"
+    timeout: 10000
+- tapOn: "(?i)delete credit card"
+- extendedWaitUntil:
+    visible:
+      id: "accounts-hero"
+    timeout: 30000
+- assertNotVisible:
+    text: "Credit card.*"
+- takeScreenshot: account-delete-done-${THEME}

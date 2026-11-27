@@ -1,0 +1,111 @@
+# E12 S8: adding an account. With no accounts yet, "Add account" opens the form; a name, the type
+# Savings and a balance are entered and saved, and the list and Home's hero show the new account
+# with no pull to refresh. Then a student loan with no plan is refused in web's words and nothing
+# is sent. Checked by test id. The runner runs it in light and in dark, stopping and settling the
+# app first; no retries.
+appId: app.flump.mobile
+---
+- runScript:
+    file: ../scripts/fixture.js
+    env:
+      SCENARIO: '{"data": "empty"}'
+- runFlow: ../subflows/launch-signed-out.yaml
+- runFlow: ../subflows/sign-in-to-home.yaml
+- tapOn:
+    id: "tab-accounts"
+- extendedWaitUntil:
+    visible:
+      id: "accounts-empty"
+    timeout: 30000
+- tapOn:
+    id: "accounts-add-account"
+- extendedWaitUntil:
+    visible:
+      id: "account-form"
+    timeout: 10000
+- takeScreenshot: account-add-empty-${THEME}
+- tapOn:
+    id: "account-form-name"
+- inputText: "Holiday fund"
+- hideKeyboard
+- tapOn:
+    id: "account-form-type"
+- extendedWaitUntil:
+    visible:
+      id: "account-form-type-sheet"
+    timeout: 10000
+- tapOn:
+    id: "account-form-type-option-Saving"
+- extendedWaitUntil:
+    visible:
+      id: "account-form-kind"
+    timeout: 10000
+- tapOn:
+    id: "account-form-balance"
+- inputText: "1250"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "account-form-save"
+    direction: DOWN
+    timeout: 10000
+- takeScreenshot: account-add-filled-${THEME}
+- tapOn:
+    id: "account-form-save"
+- extendedWaitUntil:
+    visible:
+      id: "accounts-hero"
+    timeout: 30000
+- assertVisible:
+    text: "Holiday fund.*"
+- takeScreenshot: account-add-saved-${THEME}
+- tapOn:
+    id: "tab-home"
+- extendedWaitUntil:
+    visible:
+      id: "home-hero"
+    timeout: 30000
+# A student loan needs its repayment plan: web's words, and the form stays.
+- tapOn:
+    id: "tab-accounts"
+- scrollUntilVisible:
+    element:
+      id: "accounts-add-account"
+    direction: DOWN
+    timeout: 10000
+- tapOn:
+    id: "accounts-add-account"
+- tapOn:
+    id: "account-form-name"
+- inputText: "Student loan"
+- hideKeyboard
+- tapOn:
+    id: "account-form-type"
+- scrollUntilVisible:
+    element:
+      id: "account-form-type-option-Student Loan"
+    direction: DOWN
+    timeout: 10000
+- tapOn:
+    id: "account-form-type-option-Student Loan"
+- tapOn:
+    id: "account-form-balance"
+- inputText: "38500"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "account-form-save"
+    direction: DOWN
+    timeout: 10000
+- tapOn:
+    id: "account-form-save"
+- extendedWaitUntil:
+    visible:
+      id: "account-form-alert"
+    timeout: 10000
+- scrollUntilVisible:
+    element:
+      text: "Choose a repayment plan"
+    direction: UP
+    timeout: 10000
+- takeScreenshot: account-add-needs-plan-${THEME}
