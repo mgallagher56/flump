@@ -532,6 +532,25 @@ describe("Budget", () => {
       scrollTo.mockRestore();
     });
 
+    it("the add and edit forms list the categories in one fixed order, whatever the amounts", async () => {
+      // Device check: the add form listed Bills before Expenses and the edit form the reverse, as
+      // the list followed the editor's order, which ranks categories by amount.
+      await budget(fakeApi(routes(renterHousehold())));
+      await screen.findByLabelText(HERO);
+      const u = user();
+      const choices = () =>
+        screen.getAllByRole("radio").map((r) => r.props.accessibilityLabel as string);
+      await u.press(screen.getByRole("button", { name: "Edit budget" }));
+      await u.press(screen.getByRole("button", { name: "Add to bills" }));
+      const adding = choices().filter((c) => !/Monthly|Weekly|Yearly/.test(c));
+      await u.press(screen.getByRole("button", { name: "Cancel" }));
+      await u.press(screen.getByRole("button", { name: /^Rent, £950 a month/ }));
+      const editing = choices().filter((c) => !/Monthly|Weekly|Yearly/.test(c));
+      // The page's own order (the engine's budgetPageCategories): the standard ones, then income.
+      expect(adding).toEqual(["Housing", "Bills", "Expenses", "Savings", "Income"]);
+      expect(editing).toEqual(adding);
+    });
+
     it("a 412 keeps the sheet and what was typed, says so in web's words, and reads the list again", async () => {
       const h = renterHousehold();
       const rent = h.budgetEntries.find((r) => r.name === "Rent");

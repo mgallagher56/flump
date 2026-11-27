@@ -363,7 +363,7 @@ function Ready({
       <DebtHelpLink />
       <EntrySheet
         sheet={offline ? null : sheet}
-        categories={categoryChoices(editorSections(page.rows, customCategories))}
+        categories={categoryChoices(page.rows, customCategories)}
         onClose={() => setSheet(null)}
         onDone={(message) => {
           setSheet(null);
