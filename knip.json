@@ -65,7 +65,7 @@
       "ignoreDependencies": ["@repo/typescript-config"]
     },
     "apps/e2e": {
-      "entry": ["visual/*.setup.ts", "scripts/generate-app-icons.ts"]
+      "entry": ["visual/*.setup.ts"]
     }
   },
   "exclude": ["duplicates"],

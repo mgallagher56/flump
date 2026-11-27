@@ -39,6 +39,7 @@ const SEMANTIC_COLOR_ROOTS = new Set([
   "accent",
   "border",
   "chart",
+  "logo",
   "material",
   "orb",
   "primary",
