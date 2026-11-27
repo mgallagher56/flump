@@ -58,7 +58,7 @@ export const createStyles = (theme: Theme, os: string) => {
     // On: the primary fill, the thumb at the end. Off: the strong border's colour, at the start.
     trackOn: { backgroundColor: colours.track.true, justifyContent: "flex-end" },
     trackOff: { backgroundColor: colours.track.false, justifyContent: "flex-start" },
-    // Disabled on: muted solid track with a sunken thumb.
+    // Disabled on: neutral border track with a card thumb.
     trackDisabledOn: { backgroundColor: colours.disabledTrackOn, justifyContent: "flex-end" },
     // Disabled off: sunken hollow track with an outlined border so on and off stay distinct.
     trackDisabledOff: {
@@ -76,8 +76,8 @@ export const createStyles = (theme: Theme, os: string) => {
       backgroundColor: colours.thumb,
       borderColor: colours.thumbEdge,
     },
-    // On Android the thumb overhangs the track, so draw a 1.5pt ring in the track's muted
-    // colour to keep a 3:1 edge against the page while leaving the sunken disc clear inside.
+    // On Android the thumb overhangs the track, so draw a 1.5pt ring in the disabled track colour
+    // so the card-coloured thumb reads clearly against the page.
     thumbDisabledOn: {
       backgroundColor: colours.disabledThumbOn,
       ...(overhang > 0
@@ -96,17 +96,18 @@ export const createStyles = (theme: Theme, os: string) => {
 
 /**
  * The switch's colours: primary fill when on, strong border when off, card thumb. Disabled-on uses
- * `primary.border` with a sunken thumb: it stays quieter than `border.strong` (enabled-off) in
- * both light and dark themes while keeping 3:1 UI contrast at full opacity.
+ * `status.neutral.border` with a `surface.card` thumb: it stays quieter than `border.strong`
+ * (enabled-off) in both light and dark themes. Disabled controls are exempt from WCAG 1.4.11
+ * non-text contrast, so the 3:1 UI contrast target does not apply to disabled states.
  */
 const switchColours = (theme: Theme) => ({
   track: { false: theme.colors["border.strong"], true: theme.colors["primary.solid"] },
   thumb: theme.colors["surface.card"],
   // The thumb's edge, so it stays visible where it stands over the page (Android) or the track.
   thumbEdge: theme.colors["border.strong"],
-  disabledTrackOn: theme.colors["primary.border"],
+  disabledTrackOn: theme.colors["status.neutral.border"],
   disabledTrackOffFill: theme.colors["surface.sunken"],
   disabledTrackOffEdge: theme.colors["border.strong"],
-  disabledThumbOn: theme.colors["surface.sunken"],
+  disabledThumbOn: theme.colors["surface.card"],
   disabledThumbOff: theme.colors["border.strong"],
 });

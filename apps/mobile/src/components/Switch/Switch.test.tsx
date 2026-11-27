@@ -311,7 +311,7 @@ describe("Switch", () => {
     ["dark", "ios", dark],
     ["dark", "android", dark],
   ] as const)(
-    "%s %s disabled: meets fill and edge contrast targets separately for on and off",
+    "%s %s disabled: uses distinct tokens for on and off and keeps disabled-off at 3:1",
     async (scheme, os, set) => {
       jest.replaceProperty(Platform, "OS", os);
       const label = "Self Assessment";
@@ -341,22 +341,18 @@ describe("Switch", () => {
         offTrackOpacity * (typeof offThumb.opacity === "number" ? offThumb.opacity : 1);
       const offLabel = StyleSheet.flatten(screen.getByText(label).props.style);
 
+      // Disabled-on uses neutral border track with card thumb (disabled controls are exempt from WCAG 1.4.11 3:1).
+      expect(onTrack.backgroundColor).toBe(set.colors["status.neutral.border"]);
+      expect(onThumb.backgroundColor).toBe(set.colors["surface.card"]);
+      if (os === "android") {
+        expect(onThumb.borderWidth).toBe(1.5);
+        expect(onThumb.borderColor).toBe(set.colors["status.neutral.border"]);
+      }
+
       const surfaces = [set.colors["surface.canvas"], set.colors["surface.card"]] as const;
+      const onTrackFill = withOpacity(String(onTrack.backgroundColor), onTrackOpacity);
 
       for (const surface of surfaces) {
-        // Disabled on: solid muted track against the page; sunken thumb fill against the track.
-        expect(fillContrast(onTrack, onTrackOpacity, surface, surface)).toBeGreaterThanOrEqual(3);
-        const onTrackFill = withOpacity(String(onTrack.backgroundColor), onTrackOpacity);
-        expect(fillContrast(onThumb, onThumbOpacity, onTrackFill, surface)).toBeGreaterThanOrEqual(
-          3,
-        );
-        // On Android the thumb overhangs the 14pt track and relies on its 1.5pt ring against the page.
-        if (os === "android") {
-          expect(
-            edgeContrast(onThumb, onThumbOpacity, surface, surface, 1.5),
-          ).toBeGreaterThanOrEqual(3);
-        }
-
         // Disabled off: sunken track relies on its 1.5pt outline against the page; strong-border
         // thumb fill reads against the sunken track (and against the page on Android).
         expect(
@@ -548,7 +544,7 @@ describe("Switch", () => {
     ["dark", "ios", dark],
     ["dark", "android", dark],
   ] as const)(
-    "%s %s: disabled-on uses primary.border and is less prominent than enabled-off while keeping 3:1 UI contrast",
+    "%s %s: disabled-on uses status.neutral.border with surface.card thumb and is quieter than enabled-off",
     async (scheme, os, set) => {
       jest.replaceProperty(Platform, "OS", os);
       const renderState = async (
@@ -582,8 +578,12 @@ describe("Switch", () => {
       expect(enabledOff.thumb.backgroundColor).toBe(set.colors["surface.card"]);
       expect(enabledOff.thumb.borderColor).toBe(set.colors["border.strong"]);
 
-      expect(disabledOn.track.backgroundColor).toBe(set.colors["primary.border"]);
-      expect(disabledOn.thumb.backgroundColor).toBe(set.colors["surface.sunken"]);
+      expect(disabledOn.track.backgroundColor).toBe(set.colors["status.neutral.border"]);
+      expect(disabledOn.thumb.backgroundColor).toBe(set.colors["surface.card"]);
+      if (os === "android") {
+        expect(disabledOn.thumb.borderColor).toBe(set.colors["status.neutral.border"]);
+        expect(disabledOn.thumb.borderWidth).toBe(1.5);
+      }
 
       expect(disabledOff.track.backgroundColor).toBe(set.colors["surface.sunken"]);
       expect(disabledOff.track.borderColor).toBe(set.colors["border.strong"]);
@@ -610,7 +610,6 @@ describe("Switch", () => {
           surface,
           surface,
         );
-        expect(disabledOnContrast).toBeGreaterThanOrEqual(3);
         expect(disabledOnContrast).toBeLessThan(enabledOffContrast);
         expect(enabledOffContrast).toBeLessThan(enabledOnContrast);
         expect(disabledOffFillContrast).toBeLessThan(enabledOffContrast);
