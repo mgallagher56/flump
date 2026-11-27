@@ -31,6 +31,16 @@ async function detail(api: ReturnType<typeof fakeApi>, id: string, links = LINKS
 
 const settle = () => act(async () => jest.advanceTimersByTimeAsync(0));
 
+// The first render in a file loads and transforms React Native's components and the engine, which
+// on a cold CI cache took more than the first test's 5 s (as CheckIn, run 45850948864). Rendered
+// once here, with its own time, each test's 5 s covers only its own work.
+beforeAll(async () => {
+  const h = household();
+  await detail(fakeApi(routes(h)), h.idOf("Mortgage"));
+  await screen.findByTestId("account-detail-hero");
+  screen.unmount();
+}, 30_000);
+
 describe("AccountDetail", () => {
   beforeEach(() => {
     jest.useFakeTimers();
