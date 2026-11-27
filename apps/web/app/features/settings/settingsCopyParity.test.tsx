@@ -114,6 +114,7 @@ describe("the mobile Settings say what web's Settings say", () => {
     const tab = source("./components/SecurityTab/SecurityTab.tsx");
     expect(tab).toContain(`title="${SECURITY.title}"`);
     expect(tab).toContain(`>${SECURITY.email}</p>`);
+    expect(tab).toContain(`"${SECURITY.emailLoading}"`);
     expect(tab).toContain(`email || "${SECURITY.emailNotSet}"`);
     expect(tab).toContain(`${SECURITY.changePassword}\n            </Button>`);
   });

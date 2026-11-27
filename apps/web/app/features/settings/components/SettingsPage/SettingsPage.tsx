@@ -18,6 +18,8 @@ import { headerAndTabs } from "./SettingsPage.styles";
 export interface SettingsPageProps {
   /** The profile from the route loader. */
   initialProfile: UserProfile;
+  /** The sign-in email resolved server-side from GET /user-profile/email. */
+  accountEmail?: string | null;
   /** The public AI connections page (marketing `/features/ai-connection#setup`), for the Security tab's steps. */
   aiGuideUrl?: string;
   /** The address an AI assistant connects to (the backend's `/mcp`). */
@@ -52,6 +54,7 @@ export interface SettingsPageProps {
  */
 export const SettingsPage: FC<SettingsPageProps> = ({
   initialProfile,
+  accountEmail,
   user,
   aiGuideUrl,
   mcpServerUrl,
@@ -63,7 +66,7 @@ export const SettingsPage: FC<SettingsPageProps> = ({
   const householdAvailable = household !== null;
   const { profile } = useUserProfile();
   const effectiveProfile = profile.id ? profile : initialProfile;
-  const email = user?.email || effectiveProfile.email;
+  const email = accountEmail || user?.email || effectiveProfile.email;
 
   const [activeTab, setActiveTab] = useState<SettingsTab>(initialTab);
   // A later change of `?tab=` on the client (the account menu's link to ?tab=security) switches
