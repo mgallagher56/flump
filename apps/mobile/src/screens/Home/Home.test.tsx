@@ -9,6 +9,7 @@ import {
   NOW,
   routes,
 } from "../../features/check-in/checkInTestData";
+import { ShellContext } from "../../navigation/shell";
 import { refreshControl } from "../../testing/refresh";
 import { Home, type HomeWebLinks } from "./Home";
 
@@ -914,5 +915,31 @@ describe("Home's two-figure strip (S5b)", () => {
       screen.getByRole("header", { name: "Finish setting up Flump on the website" }),
     ).toBeOnTheScreen();
     expect(screen.queryByTestId("home-error")).toBeNull();
+  });
+});
+
+describe("Home with saved figures offline (E12 S7 with S8)", () => {
+  it("no accounts: the prompt with no way to add while offline", async () => {
+    jest.useFakeTimers();
+    const { ui } = withApi(
+      <ShellContext.Provider value={{ offline: true } as never}>
+        <Home
+          onSignOut={jest.fn()}
+          onOpenCheckIn={jest.fn()}
+          onOpenHistory={jest.fn()}
+          onChangeWhatCounts={jest.fn()}
+          onAddAccount={jest.fn()}
+          onAddEstimate={jest.fn()}
+          marketingOrigin="https://m.test.invalid"
+          links={LINKS}
+          now={NOW}
+        />
+      </ShellContext.Provider>,
+      fakeApi(routes(household([]))).client,
+    );
+    await render(ui);
+    expect(await screen.findByText("Add an account to see your net worth.")).toBeOnTheScreen();
+    expect(screen.queryByTestId("home-add-account")).toBeNull();
+    jest.useRealTimers();
   });
 });

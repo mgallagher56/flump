@@ -12,8 +12,11 @@ export interface NetWorthBasisLineProps {
   leftOut: readonly NetWorthLeftOut[];
   /** Opens the app's net worth choices (Settings, Profile, E12 S9). */
   onChangeWhatCounts(): void;
-  /** Opens the app's add form as a home estimate (E12 S8). */
-  onAddEstimate(): void;
+  /**
+   * Opens the app's add form as a home estimate (E12 S8). Left out while saved figures show
+   * offline (E12 S7): adding writes, so the line keeps its sentence and offers no link.
+   */
+  onAddEstimate?: () => void;
   /**
    * Show the "Change what counts" link on its own when nothing is left out, so the choice can be
    * found from the figure (web: the accounts list only). Needs `choicesAvailable`.
@@ -50,14 +53,16 @@ export function NetWorthBasisLine({
           {sentence}
         </Text>
       ) : null}
-      <Button
-        label={missingHome ? HOME.addEstimate : HOME.changeWhatCounts}
-        variant="link"
-        size="sm"
-        accessibilityRole="link"
-        testID={`${testID}-action`}
-        onPress={missingHome ? onAddEstimate : onChangeWhatCounts}
-      />
+      {missingHome && !onAddEstimate ? null : (
+        <Button
+          label={missingHome ? HOME.addEstimate : HOME.changeWhatCounts}
+          variant="link"
+          size="sm"
+          accessibilityRole="link"
+          testID={`${testID}-action`}
+          onPress={missingHome ? (onAddEstimate ?? (() => {})) : onChangeWhatCounts}
+        />
+      )}
     </View>
   );
 }

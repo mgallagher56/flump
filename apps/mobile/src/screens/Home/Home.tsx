@@ -1,3 +1,4 @@
+import { useContext } from "react";
 import { Linking } from "react-native";
 import { Button } from "../../components/Button";
 import { Card } from "../../components/Card";
@@ -20,7 +21,7 @@ import { useDelayedLoading } from "../../data/useDelayedLoading";
 import { checkInRow } from "../../features/check-in/checkInFlow";
 import { type CheckInDataState, londonToday } from "../../features/check-in/useCheckInData";
 import { type HomeDataState, useHomeData } from "../../features/home/useHomeData";
-import type { WebLink } from "../../navigation/shell";
+import { ShellContext, type WebLink } from "../../navigation/shell";
 import { NotSetUp } from "../NotSetUp";
 import { TermsRequired } from "../TermsRequired";
 
@@ -224,6 +225,8 @@ function NetWorth({
   /** Opens the add form as web's "Add an estimate" does. */
   onAddEstimate(): void;
 }) {
+  // Saved figures shown offline (E12 S7): adding writes, so no way in is offered.
+  const offline = useContext(ShellContext)?.offline ?? false;
   if (home.status === "error") {
     // Never "Add an account" or £0 for a failed read; out of step never blames the connection.
     return (
@@ -260,11 +263,11 @@ function NetWorth({
         label={HOME.heroLabel}
         value={null}
         emptyPrompt={HOME.emptyPrompt}
-        emptyAction={{
-          label: HOME.addAccount,
-          onPress: onAddAccount,
-          testID: "home-add-account",
-        }}
+        emptyAction={
+          offline
+            ? undefined
+            : { label: HOME.addAccount, onPress: onAddAccount, testID: "home-add-account" }
+        }
         testID="home-empty"
       />
     );
@@ -302,7 +305,7 @@ function NetWorth({
       <NetWorthBasisLine
         leftOut={hero.leftOut}
         onChangeWhatCounts={onChangeWhatCounts}
-        onAddEstimate={onAddEstimate}
+        onAddEstimate={offline ? undefined : onAddEstimate}
       />
     </>
   );
