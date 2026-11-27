@@ -26,6 +26,33 @@ test.describe("AI connections and imports through the /api proxy", () => {
     await expect(page.getByTestId("mcp-token-error")).toHaveCount(0);
   });
 
+  test("the card still loads when the browser reports no idle time", async ({ page }) => {
+    // The CI flake of 26 November 2026: a busy runner gave the page no idle moment for 30 s, the
+    // app waited for one to hydrate, so the card never asked for its tokens. Here the browser
+    // never goes idle and only honours an idle callback's timeout, as a starved queue would.
+    await page.addInitScript(() => {
+      window.requestIdleCallback = ((
+        callback: IdleRequestCallback,
+        options?: IdleRequestOptions,
+      ) =>
+        options?.timeout === undefined
+          ? 0
+          : window.setTimeout(
+              () => callback({ didTimeout: true, timeRemaining: () => 0 }),
+              options.timeout,
+            )) as typeof window.requestIdleCallback;
+    });
+    const tokensResponse = page.waitForResponse(
+      (response) =>
+        new URL(response.url()).pathname === "/api/mcp-tokens" &&
+        response.request().method() === "GET",
+      { timeout: 10_000 },
+    );
+    await page.goto("/app/profile?tab=security");
+    expect((await tokensResponse).status()).toBe(200);
+    await expect(page.getByTestId("generate-token-trigger")).toBeVisible();
+  });
+
   test("lists imports for an allowed user", async ({ page }) => {
     await page.goto("/app/imports");
     await expect(page.getByTestId("imports-list")).toBeVisible();
