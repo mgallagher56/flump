@@ -691,6 +691,32 @@ describe("Budget", () => {
       ).toBeNull();
     });
 
+    it("an add tried again unchanged keeps its key; changed, it is a new add with a new key", async () => {
+      const h = renterHousehold();
+      const api = fakeApi(routes(h, { "POST /budget-entries": () => fail("server", 500) }));
+      await budget(api);
+      await screen.findByLabelText(HERO);
+      const u = user();
+      await u.press(screen.getByRole("button", { name: "Edit budget" }));
+      await u.press(screen.getByRole("button", { name: "Add income" }));
+      await u.type(screen.getByLabelText("Name"), "Child Benefit");
+      await u.type(screen.getByLabelText("Amount"), "100");
+      const save = async () => {
+        await u.press(screen.getByRole("button", { name: "Save" }));
+        await settle();
+      };
+      await save();
+      await save();
+      await u.clear(screen.getByLabelText("Amount"));
+      await u.type(screen.getByLabelText("Amount"), "110");
+      await save();
+      const keys = api.calls.filter((c) => c.method === "POST").map((c) => c.idempotencyKey);
+      expect(keys).toHaveLength(3);
+      // A timed-out add that landed is not made twice; a changed one is never refused as reused.
+      expect(keys[1]).toBe(keys[0]);
+      expect(keys[2]).not.toBe(keys[0]);
+    });
+
     it("joint and linked entries are read only, with the website", async () => {
       const base = renterHousehold([
         {

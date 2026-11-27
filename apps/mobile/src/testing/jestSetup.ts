@@ -8,3 +8,9 @@ jest.mock("expo-crypto", () => ({
   ...jest.requireActual("expo-crypto"),
   randomUUID: () => require("node:crypto").randomUUID(),
 }));
+
+// As on Hermes, there is no global `crypto.randomUUID`: code that reaches for it (the shared API
+// client's default Idempotency-Key) fails here as it does on the phone (S10 device check).
+if (typeof globalThis.crypto?.randomUUID === "function") {
+  Object.defineProperty(globalThis.crypto, "randomUUID", { value: undefined, configurable: true });
+}

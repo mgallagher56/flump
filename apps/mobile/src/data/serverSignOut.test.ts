@@ -33,7 +33,8 @@ describe("createServerSignOut", () => {
   });
 
   it("works where crypto.randomUUID does not exist, as on Hermes, and sends no Idempotency-Key", async () => {
-    jest.spyOn(globalThis, "crypto", "get").mockReturnValue({} as Crypto);
+    // Every app test runs as Hermes does, with no global crypto.randomUUID (src/testing/jestSetup.ts).
+    expect(globalThis.crypto?.randomUUID).toBeUndefined();
     const fetchImpl = fetchAnswering(204);
     expect(await createServerSignOut(API, fetchImpl)(token)).toBe("ended");
     expect(fetchImpl).toHaveBeenCalledTimes(1);

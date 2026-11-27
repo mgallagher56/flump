@@ -76,14 +76,6 @@ export function fakeApi(routes: Record<string, FakeRoute>) {
         ...(options.ifMatch ? { ifMatch: options.ifMatch } : {}),
         ...(options.idempotencyKey ? { idempotencyKey: options.idempotencyKey } : {}),
       });
-      // As the real client on the phone: a POST's default Idempotency-Key comes from the global
-      // `crypto.randomUUID`, which Hermes does not have (Node, under Jest, does), so a POST that
-      // names no key of its own (or `false`) never leaves the phone.
-      if (method === "POST" && options.idempotencyKey === undefined) {
-        throw new TypeError(
-          `POST ${path} names no idempotencyKey: on Hermes the client's default crypto.randomUUID is undefined`,
-        );
-      }
       const schema = REQUEST_SCHEMAS.find(([route]) => route.test(`${method} ${path}`))?.[1];
       if (schema && !schema.safeParse(options.body).success)
         fail("client", 400, "validation_failed");

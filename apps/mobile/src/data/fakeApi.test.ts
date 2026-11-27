@@ -1,20 +1,9 @@
 import { CreateBudgetEntryRequest } from "@flump/api-contract";
 import { fakeApi } from "./fakeApi";
 
-/** The fake refuses what the phone's client or the backend would, so tests cannot pass on it. */
+/** The fake refuses what the backend would, so tests cannot pass on a body it rejects. */
 describe("the fake /v1", () => {
   const body = { category: "bills", name: "Water", amount: 25 };
-
-  it("refuses a POST that names no Idempotency-Key, as the client does on Hermes", async () => {
-    const { request } = fakeApi({ "POST /budget-entries": () => ({}) });
-    await expect(request("/budget-entries", { method: "POST", body })).rejects.toThrow(
-      /names no idempotencyKey/,
-    );
-    // `false` (no key at all, as sign-out sends) and a named key both go through.
-    await request("/budget-entries", { method: "POST", body, idempotencyKey: false });
-    await request("/budget-entries", { method: "POST", body, idempotencyKey: "k" });
-    expect(request).toHaveBeenCalledTimes(3);
-  });
 
   it("answers 400 to a write body the contract's strict schema refuses", async () => {
     const route = jest.fn(() => ({}));

@@ -7,7 +7,7 @@
  * the authorize redirect with fetch, and the store is a memory map. PKCE, the exchange, the refresh,
  * the account check and the server sign-out are the code the phone runs.
  */
-import { createHash, randomBytes } from "node:crypto";
+import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { type BrowserResult, createSession, type Session } from "../../src/auth/session";
 import { runSignInCheck } from "../../src/auth/signInCheck";
 import { createTokenStore, type SecureStoreLike } from "../../src/auth/tokenStore";
@@ -65,6 +65,7 @@ function app(items?: ReturnType<typeof memorySecureStore>) {
       refresh: () => session?.refresh() ?? Promise.resolve("ended"),
     },
     client: { version: "0.0.0", platform: "android" },
+    newIdempotencyKey: () => randomUUID(),
   });
   session = createSession({
     config,
