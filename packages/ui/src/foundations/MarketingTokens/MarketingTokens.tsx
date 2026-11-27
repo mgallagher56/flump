@@ -39,7 +39,12 @@ const Swatches: FC<{ fills: Record<string, string>; note: (token: string) => str
 }) => (
   <ul className={css({ display: "grid", gap: "8px" })}>
     {Object.entries(fills).map(([token, fill]) => (
-      <li className={swatchRow()} data-testid={`marketing-token-${token}`} key={token}>
+      <li
+        className={swatchRow()}
+        data-testid={`marketing-token-${token}`}
+        id={`marketing-token-${token}`}
+        key={token}
+      >
         <span aria-hidden="true" className={`${swatchChip()} ${fill}`} />
         <code className={css({ fontFamily: "mono", fontSize: "xs" })}>{token}</code>
         <span className={css({ color: "text.muted" })}>{note(token)}</span>
@@ -75,13 +80,21 @@ export const MarketingTokens: FC = () => (
         note={(token) => MATERIAL_NOTES[token as keyof typeof materialFills]}
       />
       <div className={sampleGrid()}>
-        <section className={glassCard()} data-testid="marketing-sample-glass">
+        <section
+          className={glassCard()}
+          data-testid="marketing-sample-glass"
+          id="marketing-sample-glass"
+        >
           <h3 className={css({ textStyle: "heading.sm" })}>Text on glass</h3>
           <p className={css({ textStyle: "body.md", color: "text.primary" })}>text.primary</p>
           <p className={css({ textStyle: "body.md", color: "text.secondary" })}>text.secondary</p>
           <p className={css({ textStyle: "body.md", color: "text.muted" })}>text.muted</p>
         </section>
-        <section className={paperCard()} data-testid="marketing-sample-paper">
+        <section
+          className={paperCard()}
+          data-testid="marketing-sample-paper"
+          id="marketing-sample-paper"
+        >
           <h3 className={css({ textStyle: "heading.sm" })}>Text on paper</h3>
           <p className={css({ textStyle: "body.md", color: "text.primary" })}>text.primary</p>
           <p className={css({ textStyle: "body.md", color: "text.secondary" })}>text.secondary</p>
@@ -96,7 +109,11 @@ export const MarketingTokens: FC = () => (
         Marketing only, as durations.marketing and easings.marketing. The apps keep fast, base and
         slow.
       </p>
-      <table className={scaleTable} data-testid="marketing-motion-scale">
+      <table
+        className={scaleTable}
+        data-testid="marketing-motion-scale"
+        id="marketing-motion-scale"
+      >
         <thead>
           <tr>
             <th className={scaleCell} scope="col">

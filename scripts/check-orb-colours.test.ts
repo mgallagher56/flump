@@ -28,6 +28,7 @@ describe("findOrbColourUses (STYLE-GUIDE 2.7 MC1)", () => {
     [`fill: var(--colors-chart-series4)`, "--colors-chart-series4"],
     [`chartColor("series5")`, `"series5"`],
     ["chartColor('accentPurple')", "'accentPurple'"],
+    [`{ scale: ${["colors", "purple"].join(".")} }`, ["colors", "purple"].join(".")],
   ])("finds %s", (source, use) => {
     expect(findOrbColourUses(source)).toEqual([use]);
   });
@@ -64,13 +65,14 @@ describe("ORB_COLOUR_ALLOW_LIST", () => {
     }
   });
 
-  it("starts with exactly the five entries main needed on 27 Nov 2026 (a new one needs sign-off)", () => {
+  it("starts with exactly the six entries main needed on 27 Nov 2026 (a new one needs sign-off)", () => {
     expect(ORB_COLOUR_ALLOW_LIST.map((e) => e.path)).toEqual([
       "packages/ui/src/primitives/IconTile/",
       "apps/web/app/features/dashboard/components/WidgetCard/",
       "packages/ui/src/charts/chartColor.ts",
       "apps/web/app/utils/pageConfig.ts",
       "packages/ui/src/foundations/MarketingTokens/",
+      "packages/ui/src/foundations/ColorPalette/",
     ]);
   });
 
