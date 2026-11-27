@@ -325,6 +325,46 @@ describe("clear (sign-out, session end, deletion)", () => {
   });
 });
 
+describe("clear during a cold start", () => {
+  /** A promise whose answer the test gives when it chooses. */
+  function deferred<T>() {
+    let resolve: (value: T) => void = () => undefined;
+    const promise = new Promise<T>((r) => {
+      resolve = r;
+    });
+    return { promise, resolve };
+  }
+
+  it("a flag read still pending when clear runs never locks afterwards", async () => {
+    const h = harness({ flag: "on" });
+    const read = deferred<string | null>();
+    (h.store.getItemAsync as jest.Mock).mockReturnValueOnce(read.promise);
+    const starting = h.lock.start();
+    await h.lock.clear();
+    read.resolve("on");
+    await starting;
+    expect(h.lock.getPhase()).toBe("off");
+    expect(h.screenCapture.prevent).not.toHaveBeenCalled();
+    expect(h.auth.getEnrolledLevelAsync).not.toHaveBeenCalled();
+  });
+
+  it("a screen lock check still pending when clear runs never locks afterwards", async () => {
+    const h = harness({ flag: "on" });
+    const level = deferred<number>();
+    (h.auth.getEnrolledLevelAsync as jest.Mock).mockReturnValueOnce(level.promise);
+    const starting = h.lock.start();
+    // Let the flag read answer, so start is waiting on the screen lock check.
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(h.auth.getEnrolledLevelAsync).toHaveBeenCalledTimes(1);
+    await h.lock.clear();
+    level.resolve(BIOMETRIC_STRONG);
+    await starting;
+    expect(h.lock.getPhase()).toBe("off");
+    expect(h.screenCapture.prevent).not.toHaveBeenCalled();
+  });
+});
+
 describe("screenshots and the recents card (Android's FLAG_SECURE) follow the lock", () => {
   /** Which native calls were made, in order. */
   const calls = (h: ReturnType<typeof harness>) =>
@@ -413,6 +453,30 @@ describe("screenshots and the recents card (Android's FLAG_SECURE) follow the lo
     expect(await h.lock.turnOn()).toBe("on");
     await h.lock.clear();
     expect(h.lock.getPhase()).toBe("off");
+  });
+
+  it("a refused block is tried again on the next return to the foreground while the lock is on", async () => {
+    const h = harness({ flag: "on" });
+    h.screenCapture.prevent.mockRejectedValueOnce(new Error("no window"));
+    await h.lock.start();
+    expect(h.screenCapture.prevent).toHaveBeenCalledTimes(1);
+    // A trip that changes no phase still retries.
+    h.lock.appStateChanged("active");
+    expect(h.screenCapture.prevent).toHaveBeenCalledTimes(2);
+    await Promise.resolve();
+    // Blocked now: no more calls.
+    h.lock.appStateChanged("active");
+    expect(h.screenCapture.prevent).toHaveBeenCalledTimes(2);
+  });
+
+  it("a refused block is not tried again once the lock is off", async () => {
+    const h = harness({ flag: "on" });
+    h.screenCapture.prevent.mockRejectedValueOnce(new Error("no window"));
+    await h.lock.start();
+    await h.lock.clear();
+    h.lock.appStateChanged("active");
+    expect(h.screenCapture.prevent).toHaveBeenCalledTimes(1);
+    expect(h.screenCapture.allow).not.toHaveBeenCalled();
   });
 
   it("without the module (iOS, or an older build), the lock works the same", async () => {
