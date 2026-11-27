@@ -136,6 +136,9 @@ export const loader = async (args: LoaderFunctionArgs) => {
     // From the shared loader's picture: nothing is rebuilt, and the picture itself stays on the
     // server. Null only with nobody signed in (no rows).
     debtInputs: picture ? debtInputsFromPicture(picture) : buildDebtInputs([], [], []),
+    // Home's "What you owe" (`consumerDebtTotal`). With no debt account it is the overdrawn current
+    // accounts' total at the person's share, said under the empty state (27 November 2026).
+    overdrawnCurrentTotal: picture?.consumerDebtTotal ?? null,
     user,
   });
 };

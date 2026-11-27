@@ -698,6 +698,51 @@ describe("DebtContainer saved figures and loader data", () => {
     expect(screen.getByRole("heading", { level: 2, name: "No debts added" })).toBeDefined();
   });
 
+  it("no debts but an overdrawn current account: says it is below zero and counted on Home", () => {
+    // One current account at -300, the figure Home shows (the picture's consumerDebtTotal).
+    withRaw({
+      debtInputs: loaderState.debtInputs,
+      accounts: [{ id: "c1", name: "Everyday", type: "Current", balance: -300 }],
+      overdrawnCurrentTotal: 300,
+    });
+    render(<DebtContainer />);
+    expect(screen.getByRole("heading", { level: 2, name: "No debts added" })).toBeDefined();
+    expect(
+      screen.getByText(
+        'Your current account is £300 below zero. That is counted in "What you owe" on Home.',
+      ),
+    ).toBeDefined();
+  });
+
+  it("two overdrawn current accounts are said in total", () => {
+    // -300 and -125: 425 in total, from the loader's figure.
+    withRaw({
+      debtInputs: loaderState.debtInputs,
+      accounts: [
+        { id: "c1", name: "Everyday", type: "Current", balance: -300 },
+        { id: "c2", name: "Bills", type: "Current", balance: -125 },
+        { id: "s1", name: "Saver", type: "Saving", balance: -50 },
+      ],
+      overdrawnCurrentTotal: 425,
+    });
+    render(<DebtContainer />);
+    expect(
+      screen.getByText(
+        'Your current accounts are £425 below zero in total. That is counted in "What you owe" on Home.',
+      ),
+    ).toBeDefined();
+  });
+
+  it("no overdrawn current account: no such line", () => {
+    withRaw({
+      debtInputs: loaderState.debtInputs,
+      accounts: [{ id: "s1", name: "Saver", type: "Saving", balance: -50 }],
+      overdrawnCurrentTotal: null,
+    });
+    render(<DebtContainer />);
+    expect(screen.queryByText(/below zero/)).toBeNull();
+  });
+
   it("shows the empty state when the loader has no accounts", () => {
     withRaw({ debtInputs: loaderState.debtInputs });
     render(<DebtContainer />);

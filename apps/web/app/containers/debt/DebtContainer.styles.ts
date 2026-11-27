@@ -12,6 +12,14 @@ export const emptyStack = css({ display: "flex", flexDirection: "column", minWid
 /** The empty state spans the page's full content width. */
 export const emptyWrap = css({ width: "100%" });
 
+/** Under the empty state: an overdrawn current account, counted on Home. Plain body text. */
+export const overdrawnNote = css({
+  marginTop: "4",
+  color: "text.secondary",
+  textStyle: "body.sm",
+  fontVariantNumeric: "tabular-nums",
+});
+
 /** A failed save: a real error, so the danger status colours apply (not a judgement). */
 export const errorBanner = css({
   margin: 0,
