@@ -228,6 +228,7 @@
 | `ownership-share`                 | `web.accounts.accounts-lists`                     | web/accounts               | `/app/accounts`                |
 | `ownership-share`                 | `web.accounts.net-worth-summary`                  | web/accounts               | `/app/accounts`                |
 | `ownership-share`                 | `web.dashboard.hero`                              | web/dashboard              | `/`                            |
+| `ownership-share`                 | `web.dashboard.kpis`                              | web/dashboard              | `/`                            |
 | `ownership-share`                 | `web.debt.debt-dialog`                            | web/debt                   | `/app/debt`                    |
 | `ownership-share`                 | `web.debt.hero-and-kpis`                          | web/debt                   | `/app/debt`                    |
 | `ownership-share`                 | `web.mortgage.details-summary`                    | web/mortgage               | `/app/mortgage`                |
@@ -350,6 +351,7 @@
 | `finance-costs-carried-forward`     | `web.self-assessment.headline-or-empty`           | web/self-assessment        | `/app/self-assessment`         |
 | `home-equity`                       | `web.mortgage.details-summary`                    | web/mortgage               | `/app/mortgage`                |
 | `home-equity`                       | `web.onboarding.step-housing`                     | web/onboarding             | `/app/onboarding`              |
+| `home-strip`                        | `web.dashboard.kpis`                              | web/dashboard              | `/`                            |
 | `housing-room`                      | `web.mortgage-estimates.hero-and-kpis`            | web/mortgage-estimates     | `/app/mortgage-estimates`      |
 | `housing-room`                      | `web.mortgage-estimates.housing-room-details`     | web/mortgage-estimates     | `/app/mortgage-estimates`      |
 | `invoice-totals`                    | `web.invoicing.invoices-panel`                    | web/invoicing              | `/app/invoicing`               |

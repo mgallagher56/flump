@@ -2265,6 +2265,47 @@ figures:
     links: []
     verdict: holds
 
+  - id: home-strip
+    name: Home's two-figure strip (left over each month, what you owe or pension pots)
+    area: budget
+    computed_by: { function: selectHomeStrip, path: packages/finance-engine/src/home-strip.ts }
+    other_paths:
+      - {
+          function: selectHomeStripFromRows,
+          status: wrapper,
+          path: packages/finance-engine/src/home-strip.ts,
+          note: "the same rule from the API rows, through the budget figures buildFinancialPicture uses (selectBudgetFigures); the mobile app's one call",
+        }
+    inputs:
+      [
+        budget-entries,
+        salary,
+        typed-take-home,
+        pension-rates,
+        tax-region,
+        student-loan-plan,
+        account-balance,
+        ownership-share,
+      ]
+    shown_on:
+      - {
+          surface: dashboard,
+          path: apps/web/app/features/dashboard/components/HomeDashboard/HomeDashboard.tsx,
+          note: "the strip under the hero; the loader's budget flags come from the same module's rules (E12 S5b)",
+        }
+      - {
+          surface: mobile-home,
+          path: apps/mobile/src/features/home/useHomeData.ts,
+          note: "the mobile Home strip (E12 S5b), from selectHomeStripFromRows over the same rows",
+        }
+    links: []
+    verdict: holds
+    note: >-
+      The rules web held outside the engine (spending only from a real amount, no left over
+      without an income row, income only, owed before pension, one prompt when half or more
+      cards are not set) moved into the engine in E12 S5b with no figure change. What you owe is
+      selectConsumerDebtTotal, the debt summary's total.
+
   - id: total-debts
     name: Total debts
     area: accounts

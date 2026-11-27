@@ -18,7 +18,7 @@ What each page, tool and service writes, reads and shows.
 - Code: `apps/web/app/routes/_index.tsx`
 - Writes: [Enabled pages and dashboard widgets](by-fact.md#enabled-pages-and-widgets), [Setup checklist progress](by-fact.md#setup-checklist)
 - Reads: [Salary (yearly pay before tax)](by-fact.md#salary), [Workplace pension rates and how the pension is paid](by-fact.md#pension-rates), [Account balance today](by-fact.md#account-balance), [Balance for each past month](by-fact.md#balance-history), [Whether a month's check-in was started or finished](by-fact.md#check-in-done), [Value of a property](by-fact.md#home-value), [Buy-to-let mortgage balance, rate and type](by-fact.md#buy-to-let-mortgage), [Budget lines](by-fact.md#budget-entries), [Self Assessment income and expense records](by-fact.md#tax-records), [Check-in day of the month](by-fact.md#check-in-day), [Enabled pages and dashboard widgets](by-fact.md#enabled-pages-and-widgets), [Setup checklist progress](by-fact.md#setup-checklist)
-- Shows figures: [Net worth today](by-fact.md#net-worth), [Net worth over time](by-fact.md#net-worth-over-time), [Net worth change since last month](by-fact.md#net-worth-change), [Total debts](by-fact.md#total-debts), [Debt-free date and interest](by-fact.md#debt-free-date), [Take-home pay](by-fact.md#take-home), [Left over each month and budget totals](by-fact.md#left-over), [Safe to spend](by-fact.md#safe-to-spend), [Breathing room (months of cover)](by-fact.md#months-of-cover), [Savings total and saved each month](by-fact.md#savings-total), [Estimated Self Assessment tax](by-fact.md#estimated-tax), [Paid into pensions each month](by-fact.md#pension-going-in)
+- Shows figures: [Net worth today](by-fact.md#net-worth), [Net worth over time](by-fact.md#net-worth-over-time), [Net worth change since last month](by-fact.md#net-worth-change), [Home's two-figure strip (left over each month, what you owe or pension pots)](by-fact.md#home-strip), [Total debts](by-fact.md#total-debts), [Debt-free date and interest](by-fact.md#debt-free-date), [Take-home pay](by-fact.md#take-home), [Left over each month and budget totals](by-fact.md#left-over), [Safe to spend](by-fact.md#safe-to-spend), [Breathing room (months of cover)](by-fact.md#months-of-cover), [Savings total and saved each month](by-fact.md#savings-total), [Estimated Self Assessment tax](by-fact.md#estimated-tax), [Paid into pensions each month](by-fact.md#pension-going-in)
 
 ## Mobile app Home
 
@@ -26,7 +26,7 @@ What each page, tool and service writes, reads and shows.
 - Code: `apps/mobile/src/features/home/useHomeData.ts`
 - Writes: none
 - Reads: none
-- Shows figures: [Net worth today](by-fact.md#net-worth), [Net worth change since last month](by-fact.md#net-worth-change)
+- Shows figures: [Net worth today](by-fact.md#net-worth), [Net worth change since last month](by-fact.md#net-worth-change), [Home's two-figure strip (left over each month, what you owe or pension pots)](by-fact.md#home-strip)
 
 ## Accounts
 
