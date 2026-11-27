@@ -64,6 +64,39 @@ describe("BudgetEditor", () => {
     expect(onFinish).toHaveBeenCalledTimes(1);
   });
 
+  it("shows pence on fractional amounts and whole pounds on whole amounts", async () => {
+    await draw({
+      ...budgetEditorStates.renter,
+      sections: [
+        {
+          category: "expenses",
+          rows: [
+            // Hand-worked: 12.34 has 34 pence -> £12.34; 12.5 has 50 pence -> £12.50.
+            { id: "coffee", name: "Coffee", amount: 12.34, frequency: "monthly", editable: true },
+            {
+              id: "streaming",
+              name: "Streaming",
+              amount: 12.5,
+              frequency: "monthly",
+              editable: true,
+            },
+            // Whole pounds stay whole: 12 -> £12; 12.999 rounds to 1300 pence -> £13.
+            { id: "club", name: "Club", amount: 12, frequency: "monthly", editable: true },
+            { id: "pass", name: "Pass", amount: 12.999, frequency: "monthly", editable: true },
+          ],
+        },
+      ],
+    });
+    expect(screen.getByRole("button", { name: "Coffee, £12.34 a month" })).toBeOnTheScreen();
+    expect(screen.getByText("£12.34")).toBeOnTheScreen();
+    expect(screen.getByRole("button", { name: "Streaming, £12.50 a month" })).toBeOnTheScreen();
+    expect(screen.getByText("£12.50")).toBeOnTheScreen();
+    expect(screen.getByRole("button", { name: "Club, £12 a month" })).toBeOnTheScreen();
+    expect(screen.getByText("£12")).toBeOnTheScreen();
+    expect(screen.getByRole("button", { name: "Pass, £13 a month" })).toBeOnTheScreen();
+    expect(screen.getByText("£13")).toBeOnTheScreen();
+  });
+
   it.each(Object.entries(budgetEditorStates))("%s holds at 200%% text", async (_n, props) => {
     await expectHoldsAtDoubleText(<BudgetEditor {...props} />);
   });

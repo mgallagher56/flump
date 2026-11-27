@@ -14,9 +14,24 @@ describe("Money", () => {
     await render(
       <ThemeProvider scheme="light">
         <Money value={1204.5} testID="m" />
+        <Money value={12.34} testID="default-frac" />
       </ThemeProvider>,
     );
     expect(screen.getByTestId("m")).toHaveTextContent("£1,205");
+    expect(screen.getByTestId("default-frac")).toHaveTextContent("£12");
+  });
+
+  it("shows pence when fractionDigits is 2", async () => {
+    await render(
+      <ThemeProvider scheme="light">
+        <Money value={12.34} fractionDigits={2} testID="pence" />
+        <Money value={12.5} fractionDigits={2} testID="half" />
+        <Money value={12} fractionDigits={2} testID="whole" />
+      </ThemeProvider>,
+    );
+    expect(screen.getByTestId("pence")).toHaveTextContent("£12.34");
+    expect(screen.getByTestId("half")).toHaveTextContent("£12.50");
+    expect(screen.getByTestId("whole")).toHaveTextContent("£12.00");
   });
 
   it("shows Not set for null, never £0", async () => {

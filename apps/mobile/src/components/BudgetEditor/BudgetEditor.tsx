@@ -5,7 +5,7 @@ import { useTheme } from "../../theme/ThemeProvider";
 import { Button } from "../Button";
 import { Card } from "../Card";
 import { Icon } from "../Icon";
-import { formatWholePounds, Money } from "../Money/Money";
+import { formatPounds, Money } from "../Money/Money";
 import { Pressable } from "../Pressable";
 import { Text } from "../Text";
 import { createStyles } from "./BudgetEditor.styles";
@@ -44,6 +44,8 @@ export interface BudgetEditorProps {
 const sectionLabel = (category: string) =>
   category === "income" ? EDITOR.moneyIn : categoryLabel(category);
 
+const hasPence = (value: number) => Math.round(value * 100) % 100 !== 0;
+
 /**
  * The phone's budget editor, as web's `BudgetEditor` in the order it lists: Money in, then each
  * category with its entries and its "Add to" button, and "Finish editing" at the foot. Each own
@@ -79,10 +81,11 @@ export function BudgetEditor({
             {section.rows.length > 0 ? (
               <Card padding="none">
                 {section.rows.map((row, i) => {
+                  const fractionDigits: 0 | 2 = row.amount !== null && hasPence(row.amount) ? 2 : 0;
                   const figure =
                     row.amount === null
-                      ? formatWholePounds(null)
-                      : `${formatWholePounds(row.amount)} ${perFrequency(row.frequency)}`;
+                      ? formatPounds(null)
+                      : `${formatPounds(row.amount, fractionDigits)} ${perFrequency(row.frequency)}`;
                   const words = [row.name, figure, row.note].filter(Boolean).join(", ");
                   return (
                     <Pressable
@@ -111,6 +114,7 @@ export function BudgetEditor({
                       <View style={styles.figure}>
                         <Money
                           value={row.amount}
+                          fractionDigits={fractionDigits}
                           size="sm"
                           color={row.amount === null ? "secondary" : "primary"}
                         />
