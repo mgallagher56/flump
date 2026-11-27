@@ -67,6 +67,7 @@ interface MobileAccounts {
   ACCOUNTS: Record<string, string>;
   ACCOUNT: Record<string, string>;
   HISTORY: Record<string, string>;
+  SHOW_DATA: { show: string; hide: string };
   STUDENT_LOAN_FACTS: string;
   studentLoanFootnote: Fn<[boolean], string>;
   typeLine: Fn<
