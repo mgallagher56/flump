@@ -309,6 +309,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
       recordsCount: currentYearRecords.length,
     },
     debtData: picture.debtSummary,
+    consumerDebtTotal: picture.consumerDebtTotal,
   };
 };
 
@@ -332,6 +333,7 @@ const Index = (): ReactElement => {
     forecastData,
     taxData,
     debtData,
+    consumerDebtTotal,
     checkIn,
     netWorthPrior,
     netWorthTrend,
@@ -381,6 +383,7 @@ const Index = (): ReactElement => {
           completedSteps,
         }}
         debtData={debtData ?? null}
+        consumerDebtTotal={consumerDebtTotal ?? null}
         forecastData={forecastData}
         mortgageData={mortgageData}
         pensionData={pensionData}

@@ -160,6 +160,7 @@ function Body({
       name={r.name}
       typeLine={typeLine(r)}
       balance={r.balance}
+      note={r.belowZeroToCheck ? ACCOUNTS.belowZeroToCheck : null}
       testID={`account-row-${r.id}`}
       onPress={() => onOpenAccount(r.id)}
     />

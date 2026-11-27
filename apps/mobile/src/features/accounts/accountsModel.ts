@@ -68,6 +68,8 @@ export interface AccountRow {
   sharePercent: number;
   /** The person's share, an amount owed as positive; undefined when no balance is known. */
   balance: number | undefined;
+  /** Under what you owe but not borrowing: its balance is below zero to check (27 Nov 2026). */
+  belowZeroToCheck?: true;
 }
 
 export interface AccountsList {

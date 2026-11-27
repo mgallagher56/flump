@@ -11,12 +11,13 @@ describe("selectConsumerDebtTotal", () => {
     expect(selectConsumerDebtTotal(snap([]))).toBeNull();
   });
 
-  it("an overdrawn current account alone makes no debt account, so null", () => {
+  it("an overdrawn current account alone is owed (ruled by fable-decider, 27 November 2026)", () => {
+    // Was null while a debt account was required. Overdrawn by 300, no debt account: owed 300.
     expect(
       selectConsumerDebtTotal(
         snap([{ id: "cur", name: "Current", type: "Current", balance: -300 }]),
       ),
-    ).toBeNull();
+    ).toBe(300);
   });
 
   it("a card beside an overdrawn current account counts both", () => {

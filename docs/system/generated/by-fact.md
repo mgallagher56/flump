@@ -1549,7 +1549,7 @@ Read by:
 - Verdict: Holds. Findings: none. Links: none.
 - Computed by: `selectHomeStrip` in `packages/finance-engine/src/home-strip.ts`
 - Built from: `budget-entries`, `salary`, `typed-take-home`, `pension-rates`, `tax-region`, `student-loan-plan`, `account-balance`, `ownership-share`
-- Note: The rules web held outside the engine (spending only from a real amount, no left over without an income row, income only, owed before pension, one prompt when half or more cards are not set) moved into the engine in E12 S5b with no figure change. What you owe is selectConsumerDebtTotal, the debt summary's total.
+- Note: The rules web held outside the engine (spending only from a real amount, no left over without an income row, income only, owed before pension, one prompt when half or more cards are not set) moved into the engine in E12 S5b with no figure change. What you owe is selectConsumerDebtTotal (the picture's consumerDebtTotal on web): cards, loans, Overdraft accounts and overdrawn Current accounts, null only at 0 or less, with or without a debt account (fable-decider, 27 November 2026). The debt summary keeps its own no-debt-account rule. A savings, investment, pension or property balance below zero is not counted here; the accounts list flags it (belowZeroToCheck).
 
 Other code paths that compute it:
 

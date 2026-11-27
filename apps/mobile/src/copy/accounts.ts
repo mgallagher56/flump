@@ -33,6 +33,8 @@ export const ACCOUNTS = {
   oweTotal: "Total you owe",
   notCountedTitle: "Not counted in net worth",
   notCountedDescription: "Accounts your net worth choices leave out.",
+  /** Web's note on an overdrawn account that cannot be overdrawn (`fable-decider`, 27 Nov 2026). */
+  belowZeroToCheck: "This balance is below zero. Check the amount or the account type.",
   emptyTitle: "No accounts yet",
   emptyDescription: "Add a current account, savings or pension and your totals will appear here.",
   /** Web's `t("addAccount")`, the page's add button, opening the app's add form (E12 S8). */

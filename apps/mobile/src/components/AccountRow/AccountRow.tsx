@@ -13,6 +13,8 @@ export interface AccountRowProps {
   typeLine: string | null;
   /** The person's share, an amount owed as positive (the engine's). Undefined: not known. */
   balance: number | undefined;
+  /** A line under the type, such as "This balance is below zero. Check the amount or the account type." */
+  note?: string | null;
   /** Opens the account's page. */
   onPress(): void;
   testID?: string;
@@ -23,7 +25,7 @@ export interface AccountRowProps {
  * one balance, opening the account's page. One element for a screen reader ("Residential mortgage,
  * Mortgage, £186,000"), at least 48 high. A debt is the amount owed, in the ordinary text colour.
  */
-export function AccountRow({ name, typeLine, balance, onPress, testID }: AccountRowProps) {
+export function AccountRow({ name, typeLine, balance, note, onPress, testID }: AccountRowProps) {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const figure = balance === undefined ? null : balance;
@@ -32,6 +34,7 @@ export function AccountRow({ name, typeLine, balance, onPress, testID }: Account
     name,
     typeLine?.replaceAll(" · ", ", "),
     formatWholePounds(figure).replace(/^-/, "minus "),
+    note,
   ]
     .filter(Boolean)
     .join(", ");
@@ -48,6 +51,15 @@ export function AccountRow({ name, typeLine, balance, onPress, testID }: Account
         {typeLine ? (
           <Text textStyle="body.sm" color="secondary">
             {typeLine}
+          </Text>
+        ) : null}
+        {note ? (
+          <Text
+            textStyle="body.sm"
+            color="secondary"
+            testID={testID ? `${testID}-note` : undefined}
+          >
+            {note}
           </Text>
         ) : null}
       </View>
