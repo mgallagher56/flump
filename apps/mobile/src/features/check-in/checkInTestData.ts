@@ -29,6 +29,13 @@ interface Seed {
   nov?: number;
   interestRate?: number;
   monthlyContribution?: number;
+  /** Other recorded months of 2026, by month number (May is 5). */
+  months?: Readonly<Partial<Record<number, number>>>;
+  /** How a month's figure was given, by month number; "manual" when not named. */
+  sources?: Readonly<Partial<Record<number, "manual" | "calculated" | "confirmed">>>;
+  accountSubtype?: AccountListResponse[number]["accountSubtype"];
+  ownership?: "sole" | "joint";
+  sharePercent?: number | null;
 }
 
 /** Saved order, which is not the check-in's order, so the engine's sort shows. */
@@ -91,8 +98,9 @@ export function household(
       isCurrent: true,
       currency: "GBP",
       studentLoanPlan: null,
-      ownership: "sole",
-      sharePercent: null,
+      accountSubtype: s.accountSubtype ?? null,
+      ownership: s.ownership ?? "sole",
+      sharePercent: s.sharePercent ?? null,
       connectionId: null,
       createdAt: iso,
       updatedAt: iso,
@@ -104,11 +112,17 @@ export function household(
     accounts.flatMap((a, i) => {
       const s = seeds[i] as Seed;
       const rows = [];
+      const months = new Map<number, number | undefined>(
+        Object.entries(s.months ?? {}).map(([m, v]) => [Number(m), v] as const),
+      );
       for (const [month, value] of [
         [9, s.sep],
         [10, s.oct],
         [11, s.nov],
       ] as const) {
+        if (value !== undefined) months.set(month, value);
+      }
+      for (const [month, value] of [...months].sort((x, y) => x[0] - y[0])) {
         if (value === undefined) continue;
         rows.push({
           id: id++,
@@ -118,7 +132,7 @@ export function household(
           month,
           value,
           asOfDate: `2026-${String(month).padStart(2, "0")}-28`,
-          source: "manual",
+          source: s.sources?.[month] ?? "manual",
           importBatchId: null,
           updatedAt: iso,
         });
