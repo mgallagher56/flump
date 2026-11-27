@@ -7,8 +7,10 @@ import {
   type NetWorthPoint,
   nextCheckInDate as nextCheckInDay,
   type SnapshotAccountInput,
+  selectAccountChangeEffect,
   selectAccountDeltas,
   selectSavedNetWorthSeries,
+  selectSeriesChange,
   toSnapshotRows,
 } from "@flump/finance-engine";
 import { formatMonthTick } from "@repo/ui";
@@ -189,8 +191,8 @@ export function buildSnapshotHistory(
               current: d.current,
               previous: d.previous,
               change: d.change,
-              // `|| 0` so an unchanged debt never reads as -0.
-              effect: (a?.isLiability ? -d.change : d.change) || 0,
+              // Never -0, so an unchanged debt never reads as -0.
+              effect: selectAccountChangeEffect(d.change, a?.isLiability ?? false),
               carried: a?.carried ?? false,
               currentSource: a?.carried ? null : sourceAt(d.accountId, latestRecorded.month),
             };
@@ -265,10 +267,9 @@ export function changeSinceSentence(
   format: (value: number) => string,
 ): string {
   const first = points[0];
-  const last = points.at(-1);
-  if (!first || !last || points.length < 2) return "";
-  // Whole pounds, so a few pence never reads as "Up £0".
-  const diff = Math.round(last.value - first.value);
+  // Whole pounds, so a few pence never reads as "Up £0" (the engine's one change figure, E12 S6).
+  const diff = selectSeriesChange(points);
+  if (!first || diff === null) return "";
   const since = `since ${formatMonth(first.month)}.`;
   if (diff === 0) return `No change ${since}`;
   return `${diff > 0 ? "Up" : "Down"} ${format(Math.abs(diff))} ${since}`;

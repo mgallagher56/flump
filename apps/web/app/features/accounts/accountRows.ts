@@ -1,13 +1,12 @@
 import {
   type AccountOwnership,
-  applyAccountShare,
   resolveAccountOwnership,
   resolveAccountSharePercent,
+  selectAccountBalance,
 } from "@flump/finance-engine";
 import type { AccountDetail } from "~/containers/accounts/types";
-import { isLiabilityType, toDisplayBalance } from "~/containers/accounts/utils";
 import { isFutureMonth, monthYearSort } from "~/utils/accounts";
-import { londonMonthParts } from "~/utils/londonMonth";
+import { londonMonth } from "~/utils/londonMonth";
 
 export interface AccountRowSource {
   id?: string;
@@ -34,26 +33,7 @@ export interface AccountRow {
   favourable: boolean;
 }
 
-const isBeforeMonth = (month: number, year: number, currentM: number, currentY: number) =>
-  year < currentY || (year === currentY && month < currentM);
-
 type DetailWithAccount = AccountDetail & { accountId?: string };
-
-/** The balance figures for one account, read from its saved balance and its recorded months. */
-export interface AccountBalanceSummary {
-  /** Amount held, or amount owed for a liability. Undefined when no balance is known. */
-  balance: number | undefined;
-  /** Whole-number change against `againstLabel`, or null when there is no earlier month. */
-  changePercent: number | null;
-  /** True when the change is good news (assets up, liabilities down). */
-  favourable: boolean;
-  /** "October 2026": the latest recorded month before the current one, or null. */
-  againstLabel: string | null;
-  /** "November 2026": the current calendar month. */
-  currentLabel: string;
-  /** True when the current month has a recorded balance. */
-  currentRecorded: boolean;
-}
 
 const monthLabel = (month: number, year: number): string =>
   new Intl.DateTimeFormat("en-GB", { month: "long", year: "numeric" }).format(
@@ -61,83 +41,10 @@ const monthLabel = (month: number, year: number): string =>
   );
 
 /**
- * The saved balance is the current balance (D22). Recorded months are history: they never replace
- * the saved balance, and the latest one is used only when no balance is saved. The change is
- * against the latest recorded month before the current one.
- *
- * `detailsAreThisAccounts`: the caller passes only this account's recorded months (an account
- * detail loader), so a row without an account id belongs to it. Otherwise a row without an id
- * matches no account, so one stray row never counts for every account.
+ * One display row per account. The figures (the saved balance as the current balance, D22; the
+ * joint share; the change against the latest earlier month) come from the engine's
+ * `selectAccountBalance`, so the mobile app shows the same ones (E12 S6).
  */
-export const summariseAccountBalance = (
-  account: AccountRowSource,
-  accountDetails: DetailWithAccount[],
-  now: Date = new Date(),
-  detailsAreThisAccounts = false,
-): AccountBalanceSummary => {
-  const id = account.id ?? "";
-  const type = account.type ?? "";
-  const { month: currentM, year: currentY } = londonMonthParts(now);
-  const history = accountDetails
-    .filter((detail) => {
-      const detailId = detail.account_id || detail.accountId;
-      if (!detailId) return detailsAreThisAccounts;
-      return !id || detailId === id;
-    })
-    .filter(
-      (detail) => !isFutureMonth(detail.month as number, detail.year as number, currentM, currentY),
-    )
-    .sort(monthYearSort);
-
-  const latest = history[history.length - 1];
-  const previous = history
-    .filter((detail) =>
-      isBeforeMonth(detail.month as number, detail.year as number, currentM, currentY),
-    )
-    .pop();
-  const currentRecorded = history.some(
-    (detail) => detail.month === currentM && detail.year === currentY,
-  );
-
-  const stored =
-    account.balance !== undefined && account.balance !== null && account.balance !== ""
-      ? Number(account.balance)
-      : undefined;
-  const rawUnscaled = stored ?? (latest?.value !== undefined ? Number(latest.value) : undefined);
-  const shareInput = {
-    name: account.name,
-    type: account.type,
-    accountSubtype: account.accountSubtype,
-    ownership: account.ownership,
-    sharePercent: account.sharePercent,
-  };
-  const raw = rawUnscaled !== undefined ? applyAccountShare(rawUnscaled, shareInput) : undefined;
-  const balance = toDisplayBalance(type, raw);
-  const previousBalance =
-    previous?.value !== undefined
-      ? toDisplayBalance(type, applyAccountShare(Number(previous.value), shareInput))
-      : undefined;
-
-  const changePercent =
-    balance !== undefined && previousBalance
-      ? Math.round(((balance - previousBalance) / previousBalance) * 100)
-      : null;
-  const isUp = balance !== undefined && previousBalance !== undefined && balance >= previousBalance;
-  const favourable =
-    changePercent === null || changePercent === 0 ? true : isLiabilityType(type) ? !isUp : isUp;
-
-  return {
-    balance,
-    changePercent,
-    favourable,
-    againstLabel:
-      previous?.month && previous.year ? monthLabel(previous.month, previous.year) : null,
-    currentLabel: monthLabel(currentM, currentY),
-    currentRecorded,
-  };
-};
-
-/** One display row per account, from `summariseAccountBalance`. */
 export const buildAccountRows = (
   accounts: AccountRowSource[],
   accountDetails: DetailWithAccount[],
@@ -146,7 +53,11 @@ export const buildAccountRows = (
   accounts.map((account) => {
     const id = account.id ?? "";
     const own = accountDetails.filter((detail) => (detail.account_id || detail.accountId) === id);
-    const { balance, changePercent, favourable } = summariseAccountBalance(account, own, now);
+    const { balance, changePercent, favourable } = selectAccountBalance(
+      account,
+      own,
+      londonMonth(now),
+    );
     const shareInput = {
       name: account.name,
       type: account.type,

@@ -34,7 +34,7 @@ What each page, tool and service writes, reads and shows.
 - Code: `apps/web/app/routes/app.accounts._index.tsx`
 - Writes: [Student loan plan](by-fact.md#student-loan-plan), [Account balance today](by-fact.md#account-balance), [Joint ownership and the user's share of an account](by-fact.md#ownership-share), [Credit limit and 0% end date](by-fact.md#card-limit-and-zero-percent-end), [Value of a property](by-fact.md#home-value), [Whether a property is the home or a rental](by-fact.md#property-kind), [Which property a mortgage is on](by-fact.md#mortgage-property-link), [How a mortgage is repaid](by-fact.md#repayment-type), [Buy-to-let mortgage balance, rate and type](by-fact.md#buy-to-let-mortgage), [Account type and kind](by-fact.md#account-type), [Share of a rental property, as used for tax](by-fact.md#rental-share-for-tax), [Account name](by-fact.md#account-name)
 - Reads: [Account balance today](by-fact.md#account-balance), [Joint ownership and the user's share of an account](by-fact.md#ownership-share), [Value of a property](by-fact.md#home-value), [Partner mode toggle](by-fact.md#partner-mode), [Account name](by-fact.md#account-name)
-- Shows figures: [Net worth today](by-fact.md#net-worth)
+- Shows figures: [Net worth today](by-fact.md#net-worth), [An account's balance as shown, and its change since last month](by-fact.md#account-shown-balance), [What you own, what you owe and what is not counted, by account](by-fact.md#account-groups)
 
 ## Account page
 
@@ -42,7 +42,7 @@ What each page, tool and service writes, reads and shows.
 - Code: `apps/web/app/routes/app.accounts.$account.tsx`
 - Writes: [Account balance today](by-fact.md#account-balance), [Optional user-set goal on an account](by-fact.md#account-goal)
 - Reads: [Balance for each past month](by-fact.md#balance-history), [Optional user-set goal on an account](by-fact.md#account-goal)
-- Shows figures: none
+- Shows figures: [An account's balance as shown, and its change since last month](by-fact.md#account-shown-balance), [An account's balance each month](by-fact.md#account-balance-series), [Change since the first month on a chart](by-fact.md#series-change)
 
 ## History
 
@@ -50,7 +50,7 @@ What each page, tool and service writes, reads and shows.
 - Code: `apps/web/app/routes/app.accounts.history.tsx`
 - Writes: none
 - Reads: [Account balance today](by-fact.md#account-balance), [Balance for each past month](by-fact.md#balance-history), [Net worth choices (count the home, count the student loan)](by-fact.md#net-worth-choices), [Check-in day of the month](by-fact.md#check-in-day)
-- Shows figures: [Net worth today](by-fact.md#net-worth), [Net worth over time](by-fact.md#net-worth-over-time)
+- Shows figures: [Net worth today](by-fact.md#net-worth), [Net worth over time](by-fact.md#net-worth-over-time), [Change since the first month on a chart](by-fact.md#series-change)
 
 ## Monthly check-in
 

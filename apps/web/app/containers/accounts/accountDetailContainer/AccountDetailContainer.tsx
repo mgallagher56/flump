@@ -4,6 +4,7 @@ import {
   DEFAULT_NET_WORTH_BASIS,
   describeJointWholeValue,
   type NetWorthBasis,
+  selectAccountBalance,
 } from "@flump/finance-engine";
 import { Button, HeroFigure, Icon, PageBody, PageHeader } from "@repo/ui";
 import { ArrowLeft } from "lucide-react";
@@ -11,8 +12,7 @@ import { type FC, useMemo } from "react";
 import { Link, useFetcher, useLoaderData } from "react-router";
 import AccountDetails from "~/components/accounts/AccountDetails";
 import AddEditAccountsDialogBtn from "~/components/dialogs/addEditAccountsDialog/AddEditAccountsDialog";
-import { type AccountType, isLiabilityType, toDisplayBalance } from "~/containers/accounts/utils";
-import { summariseAccountBalance } from "~/features/accounts/accountRows";
+import { type AccountType, isLiabilityType } from "~/containers/accounts/utils";
 import { ACCOUNT_SUBTYPE_LABEL } from "~/features/accounts/accountSubtypes";
 import { AccountGoalSection } from "~/features/accounts/components/AccountGoalSection";
 import { TYPE_LABEL } from "~/features/accounts/components/AccountsGroupList";
@@ -117,58 +117,23 @@ const AccountDetailContainer: FC = () => {
   const goalFetcher = useFetcher();
   const goalOutcome = useFetcherOutcome(goalFetcher);
 
+  // The current month on the Europe/London clock, as the backend keys it (not the device's).
+  const currentMonth = londonMonth();
+  const [cy = 0, cm = 0] = currentMonth.split("-").map(Number);
   // The hero shows the saved balance, the same figure as the accounts list and net worth (D22).
-  const summary = useMemo(
+  // After a future-dated import it shows the latest month up to now instead, so the figure and the
+  // date line come from the same month (defect C(e)). The engine works both out (E12 S6).
+  const { hero } = useMemo(
     // The loader returns this account's recorded months only.
     () =>
-      summariseAccountBalance(account ?? {}, (accountDetails ?? []) as never[], new Date(), true),
-    [account, accountDetails],
+      selectAccountBalance(account ?? {}, (accountDetails ?? []) as never[], currentMonth, {
+        detailsAreThisAccounts: true,
+      }),
+    [account, accountDetails, currentMonth],
   );
-  // The current month on the Europe/London clock, as the backend keys it (not the device's).
-  const [cy = 0, cm = 0] = londonMonth().split("-").map(Number);
-  const detailsList = (
-    accountDetails as {
-      month?: number;
-      year?: number;
-      value?: number | string;
-      source?: string | null;
-    }[]
-  ).map((d) => ({
-    month: Number(d.month),
-    year: Number(d.year),
-    value: d.value !== undefined && d.value !== null ? Number(d.value) : undefined,
-    source: d.source,
-  }));
-
-  const hasFutureDetail = detailsList.some(
-    (d) => d.month >= 1 && d.year > 0 && (d.year > cy || (d.year === cy && d.month > cm)),
-  );
-
-  // The latest recorded month up to now: the month the hero's figure is from.
-  const sortedHistory = detailsList
-    .filter((d) => d.month >= 1 && d.year > 0 && (d.year < cy || (d.year === cy && d.month <= cm)))
-    .sort((a, b) => a.year - b.year || a.month - b.month);
-  const latest = sortedHistory.at(-1) ?? null;
-  const earliest = sortedHistory[0] ?? null;
-  const earliestRecord =
-    earliest &&
-    earliest.value !== undefined &&
-    latest &&
-    (earliest.year !== latest.year || earliest.month !== latest.month)
-      ? {
-          value: toDisplayBalance(account?.type, earliest.value),
-          month: earliest.month,
-          year: earliest.year,
-        }
-      : null;
-
-  // After a future-dated import, account.balance reflects the future import rather than
-  // the latest month up to now. Ensure the hero figure and date line always come from
-  // the same month (defect C(e)).
-  const current =
-    hasFutureDetail && latest && latest.value !== undefined
-      ? toDisplayBalance(account?.type, latest.value)
-      : (summary.balance ?? 0);
+  const latest = hero.month;
+  const earliestRecord = hero.earliest;
+  const current = hero.balance;
 
   const dateLine = balanceDateLine({ current: { month: cm, year: cy }, latest });
 
