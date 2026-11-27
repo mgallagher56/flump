@@ -64,7 +64,12 @@ function expectSameFigures(rows: Rows, today: string) {
     details: rows.details as never,
     customCategories: [],
   });
-  const { ratesContext: _rates, takeHomeRates: _takeHomeRates, ...phonePage } = phone;
+  const {
+    ratesContext: _rates,
+    takeHomeRates: _takeHomeRates,
+    isEmpty: _isEmpty,
+    ...phonePage
+  } = phone;
   expect(phonePage).toEqual(web);
   return phone;
 }

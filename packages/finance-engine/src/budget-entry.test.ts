@@ -45,6 +45,7 @@ describe("the budget entry", () => {
       "budgetPageCategories",
       "budgetEntryShownMonthly",
       "pageBudgetRows",
+      "isBudgetEmpty",
       "isIncomeEntry",
       "isIncomeCategory",
       "linkedAccountFor",
