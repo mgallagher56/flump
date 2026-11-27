@@ -145,10 +145,15 @@ export function createSession(deps: SessionDeps): Session {
     }
   }
 
+  /**
+   * The session leaves signedIn (or restoredOffline) before the wipe, which switches the app lock
+   * off and allows screen capture: done the other way round, the gate would mount the signed-in
+   * shell, unlocked and capturable, until the event came.
+   */
   async function endSession() {
     await clearDevice();
-    await wipeRest();
     dispatch({ type: "SESSION_ENDED" });
+    await wipeRest();
   }
 
   /**
@@ -307,8 +312,9 @@ export function createSession(deps: SessionDeps): Session {
       return;
     }
     await clearDevice();
-    await wipeRest();
+    // Out of signedIn before the wipe switches the lock off, as in `endSession`.
     dispatch({ type: "ACCOUNT_DELETED" });
+    await wipeRest();
   }
 
   let reauthenticating: Promise<ReauthResult> | null = null;

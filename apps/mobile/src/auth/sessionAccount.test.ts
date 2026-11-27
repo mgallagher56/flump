@@ -5,7 +5,9 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import type { ServerSignOutResult } from "../data/serverSignOut";
 import type { TokenResult, WorkosClient } from "../data/workos";
+import { DEVICE_LOCK_KEY } from "../device/storageKeys";
 import { readQuery } from "./authorizeUrl";
+import { type AppLockPhase, createAppLock } from "./deviceLock";
 import type { PkceCrypto } from "./pkce";
 import {
   type AccountCheck,
@@ -133,6 +135,66 @@ describe("the device wipe", () => {
     expect(session.getState()).toEqual({ status: "signedOut", notice: null });
     expect(h.serverSignOut).toHaveBeenCalledTimes(1);
   });
+});
+
+describe("the shell never shows between a lock clear and the session's end", () => {
+  /** A real app lock, on and locked, whose clear is the device wipe (as `authDeps.ts`). */
+  async function lockedLock(h: H) {
+    const values = new Map([[DEVICE_LOCK_KEY, "on"]]);
+    const screenCapture = { prevent: jest.fn(async () => {}), allow: jest.fn(async () => {}) };
+    const lock = createAppLock({
+      auth: {
+        getEnrolledLevelAsync: async () => 3,
+        authenticateAsync: async () => ({ success: true }),
+      },
+      store: {
+        getItemAsync: async (key) => values.get(key) ?? null,
+        setItemAsync: async (key, value) => void values.set(key, value),
+        deleteItemAsync: async (key) => void values.delete(key),
+      },
+      screenCapture,
+      accessible: 0,
+      now: () => 0,
+      isExempt: () => false,
+      prompts: { unlock: "u", turnOn: "on", turnOff: "off" },
+    });
+    h.wipeDevice.mockImplementation(() => lock.clear());
+    await lock.start();
+    expect(lock.getPhase()).toBe("locked");
+    return { lock, values, screenCapture };
+  }
+
+  it.each([
+    [
+      "a rejected refresh",
+      "sessionEnded",
+      async (h: H, session: Session) => {
+        h.workos.refresh.mockResolvedValueOnce({ ok: false, reason: "rejected" });
+        await session.refresh();
+      },
+    ],
+    [
+      "the account's deletion",
+      "accountDeleted",
+      (_h: H, session: Session) => session.accountDeleted(),
+    ],
+  ])(
+    "%s while locked: the lock goes off only once the session has left signedIn",
+    async (_name, end, run) => {
+      const h = harness();
+      const session = await signedIn(h);
+      const { lock, values, screenCapture } = await lockedLock(h);
+      // What the gate would mount at each lock change: the shell needs signedIn and the lock not hiding it.
+      const seen: [AppLockPhase, string][] = [];
+      lock.subscribe((phase) => seen.push([phase, session.getState().status]));
+      await run(h, session);
+      expect(seen).toEqual([["off", end]]);
+      expect(session.getState()).toEqual({ status: end });
+      // The wipe still happened, and capture is allowed again in the end.
+      expect(values.has(DEVICE_LOCK_KEY)).toBe(false);
+      expect(screenCapture.allow).toHaveBeenCalledTimes(1);
+    },
+  );
 });
 
 describe("account deletion", () => {

@@ -91,23 +91,45 @@ export function createAppLock(deps: AppLockDeps): AppLock {
   let phase: AppLockPhase = "checking";
   let leftAt: number | null = null;
   let prompting = 0;
+  /** True only once a block has succeeded; `preventing` while one is in flight. */
   let captureBlocked = false;
+  let preventing = false;
   const listeners = new Set<(phase: AppLockPhase) => void>();
   const options = { keychainAccessible: deps.accessible };
 
   function set(next: AppLockPhase) {
     if (next === phase) return;
     phase = next;
-    guardScreenCapture(next !== "off" && next !== "checking");
+    guardScreenCapture();
     for (const listener of listeners) listener(phase);
   }
 
-  /** Blocks or allows screen capture when that changes. A refused native call is let go. */
-  function guardScreenCapture(block: boolean) {
+  /**
+   * Blocks or allows screen capture to match the phase. A refused block is tried again on the next
+   * return to the foreground while the lock is on; a refused allow is let go.
+   */
+  function guardScreenCapture() {
     const guard = deps.screenCapture;
-    if (!guard || block === captureBlocked) return;
-    captureBlocked = block;
-    void (block ? guard.prevent() : guard.allow()).catch(() => undefined);
+    if (!guard) return;
+    if (phase !== "off" && phase !== "checking") {
+      if (captureBlocked || preventing) return;
+      preventing = true;
+      void guard.prevent().then(
+        () => {
+          preventing = false;
+          captureBlocked = true;
+          // Switched off while the block was in flight: allow again.
+          guardScreenCapture();
+        },
+        () => {
+          preventing = false;
+        },
+      );
+      return;
+    }
+    if (!captureBlocked) return;
+    captureBlocked = false;
+    void guard.allow().catch(() => undefined);
   }
 
   async function hasScreenLock(): Promise<boolean> {
@@ -137,15 +159,20 @@ export function createAppLock(deps: AppLockDeps): AppLock {
     try {
       flag = await deps.store.getItemAsync(DEVICE_LOCK_KEY, options);
     } catch {
-      // Fail closed: Unlock or Sign out will sort it out.
-      return set("locked");
+      // Fail closed: Unlock or Sign out will sort it out (unless cleared meanwhile).
+      if (phase === "checking") set("locked");
+      return;
     }
+    // Cleared (signed out) while the flag was read: the flag is gone, so nothing may lock now.
+    if (phase !== "checking") return;
     if (flag !== FLAG_ON) return set("off");
+    let next: AppLockPhase;
     try {
-      set((await hasScreenLock()) ? "locked" : "noScreenLock");
+      next = (await hasScreenLock()) ? "locked" : "noScreenLock";
     } catch {
-      set("locked");
+      next = "locked";
     }
+    if (phase === "checking") set(next);
   }
 
   function appStateChanged(next: AppStateLike) {
@@ -154,6 +181,7 @@ export function createAppLock(deps: AppLockDeps): AppLock {
       return;
     }
     if (next !== "active") return;
+    guardScreenCapture();
     const awayFrom = leftAt;
     leftAt = null;
     if (phase === "unlocked" && awayFrom !== null && deps.now() - awayFrom >= LOCK_AFTER_MS) {
