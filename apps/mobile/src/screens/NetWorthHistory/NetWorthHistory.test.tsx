@@ -24,6 +24,15 @@ async function history(api: ReturnType<typeof fakeApi>) {
 
 const settle = () => act(async () => jest.advanceTimersByTimeAsync(0));
 
+// The first render in a file loads and transforms React Native's components and the engine, which
+// on a cold CI cache took more than the first test's 5 s (as CheckIn, run 45850948864). Rendered
+// once here, with its own time, each test's 5 s covers only its own work.
+beforeAll(async () => {
+  await history(fakeApi(routes(personaHousehold(RENTER))));
+  await screen.findByTestId("history-hero");
+  screen.unmount();
+}, 30_000);
+
 describe("NetWorthHistory", () => {
   beforeEach(() => {
     jest.useFakeTimers();

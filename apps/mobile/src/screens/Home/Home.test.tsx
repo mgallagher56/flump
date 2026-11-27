@@ -67,6 +67,15 @@ const settle = () => act(async () => jest.advanceTimersByTimeAsync(0));
 const textColour = (words: string) =>
   (StyleSheet.flatten(screen.getByText(words).props.style) as TextStyle).color;
 
+// The first render in a file loads and transforms React Native's components and the engine, which
+// on a cold CI cache took more than the first test's 5 s (as CheckIn, run 45850948864). Rendered
+// once here, with its own time, each test's 5 s covers only its own work.
+beforeAll(async () => {
+  await home(fakeApi(routes(household(RISING))));
+  await screen.findByTestId("home-hero");
+  screen.unmount();
+}, 30_000);
+
 describe("Home", () => {
   // On Jest's clock a press's 130 ms hold costs nothing, and a read that answers after the last
   // assertion is never delivered to Home outside act: its 0 ms notify timer is dropped with the

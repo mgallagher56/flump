@@ -40,6 +40,15 @@ const rowsIn = (group: string) =>
     .getAllByRole("link")
     .map((r) => r.props.accessibilityLabel as string);
 
+// The first render in a file loads and transforms React Native's components and the engine, which
+// on a cold CI cache took more than the first test's 5 s (as CheckIn, run 45850948864). Rendered
+// once here, with its own time, each test's 5 s covers only its own work.
+beforeAll(async () => {
+  await accounts(fakeApi(routes(household())));
+  await screen.findByTestId("accounts-hero");
+  screen.unmount();
+}, 30_000);
+
 describe("Accounts", () => {
   beforeEach(() => {
     jest.useFakeTimers();
