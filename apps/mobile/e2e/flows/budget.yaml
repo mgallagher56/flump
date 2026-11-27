@@ -1,0 +1,138 @@
+# E12 S10: the Budget tab for the renting household of apps/e2e/support/personas.ts: the hero
+# (£125 left over each month), money in and going out, where the money goes, Breathing room, the
+# what-if zone and the debt help line, by test id. The what-if zone opens and takes a lump sum,
+# and the server has saved nothing. Then the editor: one own entry's amount changed in the sheet,
+# "Saved", and exactly one write on the server. Then the household with no budget: web's empty
+# words, never £0. Jest covers the not-set, refused and 412 paths (Budget.test.tsx).
+# The runner runs it in light and in dark, stopping and settling the app first; no retries.
+appId: app.flump.mobile
+---
+- runScript:
+    file: ../scripts/fixture.js
+    env:
+      SCENARIO: '{"data": "renter"}'
+- runFlow: ../subflows/launch-signed-out.yaml
+- runFlow: ../subflows/sign-in-to-home.yaml
+- tapOn:
+    id: "tab-budget"
+- extendedWaitUntil:
+    visible:
+      id: "budget-hero"
+    timeout: 30000
+- assertVisible:
+    id: "budget-figures-money-in"
+- assertVisible:
+    id: "budget-figures-going-out"
+- assertVisible:
+    id: "budget-equation"
+- takeScreenshot: budget-renter-${THEME}
+- scrollUntilVisible:
+    element:
+      id: "budget-categories"
+    direction: DOWN
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      id: "breathing-room-figure"
+    direction: DOWN
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      id: "runway-toggle"
+    direction: DOWN
+    timeout: 15000
+- assertVisible:
+    id: "runway-badge"
+- tapOn:
+    id: "runway-toggle"
+- scrollUntilVisible:
+    element:
+      id: "runway-lump"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: "runway-lump"
+- inputText: "5000"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "runway-reset"
+    direction: DOWN
+    timeout: 15000
+# A what-if input saves and sends nothing.
+- runScript:
+    file: ../scripts/assert-budget.js
+    env:
+      BUDGET_WRITES: "0"
+- scrollUntilVisible:
+    element:
+      id: "debt-help-link"
+    direction: DOWN
+    timeout: 15000
+- takeScreenshot: budget-what-if-${THEME}
+# The editor: "Edit budget" on the list's heading, then one own entry in the sheet.
+- scrollUntilVisible:
+    element:
+      id: "budget-categories-edit"
+    direction: UP
+    timeout: 15000
+- tapOn:
+    id: "budget-categories-edit"
+- extendedWaitUntil:
+    visible:
+      id: "budget-editor"
+    timeout: 10000
+- scrollUntilVisible:
+    element:
+      text: "Eating out"
+    direction: DOWN
+    timeout: 15000
+- tapOn: "Eating out"
+- extendedWaitUntil:
+    visible:
+      id: "budget-entry-form"
+    timeout: 10000
+- tapOn:
+    id: "budget-entry-form-amount"
+- eraseText: 10
+- inputText: "100"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "budget-entry-form-save"
+    direction: DOWN
+    timeout: 10000
+- tapOn:
+    id: "budget-entry-form-save"
+- extendedWaitUntil:
+    visible:
+      id: "budget-toast"
+    timeout: 30000
+- runScript:
+    file: ../scripts/assert-budget.js
+    env:
+      BUDGET_WRITES: "1"
+- takeScreenshot: budget-saved-${THEME}
+# No budget: a relaunch reads the new household (the cache lives only while the app runs).
+- runScript:
+    file: ../scripts/scenario.js
+    env:
+      SCENARIO: '{"data": "no-budget"}'
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: "tab-budget"
+    timeout: 60000
+- tapOn:
+    id: "tab-budget"
+- extendedWaitUntil:
+    visible:
+      id: "budget-empty"
+    timeout: 30000
+- assertVisible:
+    id: "budget-empty-action"
+- assertNotVisible:
+    id: "budget-hero"
+- assertNotVisible: "£0"
+- takeScreenshot: budget-empty-${THEME}

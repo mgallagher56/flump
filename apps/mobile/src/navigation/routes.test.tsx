@@ -146,22 +146,34 @@ describe("the signed-in routes", () => {
     expect(tab("Home").props.accessibilityState).toMatchObject({ selected: true });
   });
 
-  it.each([
-    ["Budget", "/budget", "https://app.test.invalid/app/budget"],
-    ["Pay", "/pay", "https://app.test.invalid/app/take-home"],
-  ])("the %s tab is a plain placeholder linking to the same web page", async (name, path, url) => {
+  it("the Budget tab is the app's own page (S10): the canned household's empty budget", async () => {
     const { router } = await openApp("/");
     const user = userEvent.setup();
-    await user.press(tab(name));
-    expect(router.getPathname()).toBe(path);
-    expect(tab(name).props.accessibilityState).toMatchObject({ selected: true });
-    expect(screen.getByRole("header", { name })).toBeOnTheScreen();
-    expect(
-      screen.getByText("This page is not in the app yet. You can use it on the Flump website."),
-    ).toBeOnTheScreen();
-    await user.press(screen.getByRole("link", { name: `Open ${name} on the website` }));
-    expect(Linking.openURL).toHaveBeenCalledWith(url);
+    await user.press(tab("Budget"));
+    expect(router.getPathname()).toBe("/budget");
+    expect(tab("Budget").props.accessibilityState).toMatchObject({ selected: true });
+    expect(await screen.findByText("No budget yet")).toBeOnTheScreen();
+    expect(screen.queryByText(/This page is not in the app yet/)).toBeNull();
+    await user.press(screen.getByRole("link", { name: "Add common budget items on the website" }));
+    expect(Linking.openURL).toHaveBeenCalledWith("https://app.test.invalid/app/budget");
   });
+
+  it.each([["Pay", "/pay", "https://app.test.invalid/app/take-home"]])(
+    "the %s tab is a plain placeholder linking to the same web page",
+    async (name, path, url) => {
+      const { router } = await openApp("/");
+      const user = userEvent.setup();
+      await user.press(tab(name));
+      expect(router.getPathname()).toBe(path);
+      expect(tab(name).props.accessibilityState).toMatchObject({ selected: true });
+      expect(screen.getByRole("header", { name })).toBeOnTheScreen();
+      expect(
+        screen.getByText("This page is not in the app yet. You can use it on the Flump website."),
+      ).toBeOnTheScreen();
+      await user.press(screen.getByRole("link", { name: `Open ${name} on the website` }));
+      expect(Linking.openURL).toHaveBeenCalledWith(url);
+    },
+  );
 
   it("the header's menu button opens More, which has no menu button of its own", async () => {
     const { router } = await openApp("/budget");

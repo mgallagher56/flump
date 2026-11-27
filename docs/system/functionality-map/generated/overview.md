@@ -2,7 +2,7 @@
 
 # Functionality map: overview
 
-Mapped pages: 58 | Sections: 305 | Excluded routes: 25
+Mapped pages: 58 | Sections: 312 | Excluded routes: 25
 
 ## web
 
@@ -649,11 +649,18 @@ Mapped pages: 58 | Sections: 305 | Excluded routes: 25
 ### mobile-budget: Budget
 
 - Route: `/budget` (auth: `required`, file: `apps/mobile/app/(app)/(tabs)/budget.tsx`)
-- Purpose: The Budget tab (E12 S4). Until its own slice it is a plain placeholder that says Budget is on the Flump website for now and opens the same web page (/app/budget) in the system browser. It shows no figures and reads nothing.
+- Purpose: The Budget tab (E12 S10), as web's Budget page for the same rows. The rates sentence, what is left over each month with safe to spend, money in and going out, where the money goes, Breathing room with the switches that set which entries are essential, the what-if zone (nothing in it is saved or sent) and the debt help line. Edit budget adds, changes and deletes the person's own sole, unlinked entries; linked and joint entries, categories, housing details and the setup wizard open the website until S11, S12 and S15.
 
-| Section       | Component                                           | Facts read | Figures |
-| ------------- | --------------------------------------------------- | ---------- | ------- |
-| `placeholder` | `apps/mobile/src/screens/ComingSoon/ComingSoon.tsx` | -          | -       |
+| Section           | Component                                                              | Facts read                                                                                                                                     | Figures                                   |
+| ----------------- | ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| `header`          | `apps/mobile/src/screens/Budget/Budget.tsx`                            | -                                                                                                                                              | -                                         |
+| `overview`        | `apps/mobile/src/screens/Budget/Budget.tsx`                            | `budget-entries`, `budget-entry-link-kind`, `budget-entry-link-account`, `salary`, `typed-take-home`, `housing-cost`, `account-monthly-amount` | `left-over`, `safe-to-spend`, `take-home` |
+| `category-list`   | `apps/mobile/src/components/BudgetCategoryList/BudgetCategoryList.tsx` | `budget-entries`, `custom-budget-categories`, `housing-status`, `housing-cost`, `budget-entry-link-kind`, `budget-entry-link-account`          | -                                         |
+| `editor`          | `apps/mobile/src/components/BudgetEditor/BudgetEditor.tsx`             | `budget-entries`, `custom-budget-categories`                                                                                                   | -                                         |
+| `entry-form`      | `apps/mobile/src/components/BudgetEntryForm/BudgetEntryForm.tsx`       | `budget-entries`, `custom-budget-categories`                                                                                                   | -                                         |
+| `breathing-room`  | `apps/mobile/src/components/BreathingRoom/BreathingRoom.tsx`           | `account-balance`, `budget-entries`                                                                                                            | `months-of-cover`                         |
+| `runway-scenario` | `apps/mobile/src/components/ScenarioZone/ScenarioZone.tsx`             | `account-balance`, `budget-entries`                                                                                                            | `months-of-cover`                         |
+| `debt-help`       | `apps/mobile/src/components/DebtHelpLink/DebtHelpLink.tsx`             | -                                                                                                                                              | -                                         |
 
 ### mobile-more: More
 
