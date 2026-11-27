@@ -3,7 +3,7 @@ import { render, screen } from "@testing-library/react-native";
 import { StyleSheet, type TextStyle } from "react-native";
 import { expectHoldsAtDoubleText } from "../../testing/textScale";
 import { ThemeProvider } from "../../theme/ThemeProvider";
-import { Money } from "./Money";
+import { formatWholePounds, Money, spokenPounds } from "./Money";
 import { moneyStates } from "./Money.states";
 
 const styleOf = (testID: string) =>
@@ -19,6 +19,27 @@ describe("Money", () => {
     );
     expect(screen.getByTestId("m")).toHaveTextContent("£1,205");
     expect(screen.getByTestId("default-frac")).toHaveTextContent("£12");
+  });
+
+  it("rounds negative halves away from zero to match web's Money and useFormatCurrency", async () => {
+    // Matches packages/ui/src/primitives/Money/Money.tsx (normalise / formatMoney) and
+    // apps/web/app/hooks/useFormatCurrency.ts (Intl.NumberFormat en-GB halfExpand).
+    // Hand-worked:
+    //   |-1204.5| = 1204.5 -> rounds half away from zero to 1205 -> "-£1,205"
+    //   |-0.5|    = 0.5    -> rounds half away from zero to 1    -> "-£1"
+    //   |-0.4|    = 0.4    -> rounds to 0, sign omitted           -> "£0" (never "-£0")
+    await render(
+      <ThemeProvider scheme="light">
+        <Money value={-1204.5} testID="neg-half" />
+        <Money value={-0.5} testID="neg-sub-pound" />
+        <Money value={-0.4} testID="neg-zero" />
+      </ThemeProvider>,
+    );
+    expect(screen.getByTestId("neg-half")).toHaveTextContent("-£1,205");
+    expect(screen.getByTestId("neg-sub-pound")).toHaveTextContent("-£1");
+    expect(screen.getByTestId("neg-zero")).toHaveTextContent("£0");
+    expect(formatWholePounds(-1204.5)).toBe("-£1,205");
+    expect(spokenPounds(-1204.5)).toBe("minus £1,205");
   });
 
   it("shows pence when fractionDigits is 2", async () => {
