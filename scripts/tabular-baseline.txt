@@ -1,3 +1,2 @@
-apps/web/app/containers/debt/DebtContainer.tsx
 apps/web/app/routes/_index.tsx
 packages/ui/src/foundations/ColorPalette/ColorPalette.tsx
