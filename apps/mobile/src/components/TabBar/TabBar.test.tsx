@@ -1,5 +1,6 @@
 import { dark, light } from "@flump/tokens/native";
 import { fireEvent, render, screen, userEvent, within } from "@testing-library/react-native";
+import { Profiler } from "react";
 import { Dimensions, ScrollView, StyleSheet, type TextStyle, type ViewStyle } from "react-native";
 import { TABS } from "../../navigation/navItems";
 import { expectHoldsAtDoubleText } from "../../testing/textScale";
@@ -269,6 +270,41 @@ describe("TabBar", () => {
     );
     // "home" at x = 0 is off the left edge while scrolled to 58; switching to it scrolls back to 0.
     expect(scrollTo).toHaveBeenCalledWith({ x: 0, animated: false });
+  });
+
+  it("does not re-render on scroll frames while overflow cues stay unchanged", async () => {
+    phone(2, 320);
+    const onRender = jest.fn();
+    await render(
+      <ThemeProvider scheme="light" textScale={2}>
+        <Profiler id="tab-bar" onRender={onRender}>
+          <TabBar items={TABS} activeKey="home" onSelect={jest.fn()} />
+        </Profiler>
+      </ThemeProvider>,
+    );
+    const scroller = screen.getByTestId("tab-scroll");
+    await fireEvent(screen.getByTestId("tab-bar"), "layout", {
+      nativeEvent: { layout: { width: 312 } },
+    });
+    await fireEvent(scroller, "contentSizeChange", 370, 48);
+    await fireEvent(scroller, "scroll", { nativeEvent: { contentOffset: { x: 20 } } });
+    expect(screen.getByTestId("tab-fade-left", { includeHiddenElements: true })).toBeTruthy();
+    expect(screen.getByTestId("tab-fade-right", { includeHiddenElements: true })).toBeTruthy();
+
+    onRender.mockClear();
+    await fireEvent(scroller, "scroll", { nativeEvent: { contentOffset: { x: 25 } } });
+    await fireEvent(scroller, "scroll", { nativeEvent: { contentOffset: { x: 30 } } });
+    await fireEvent(scroller, "scroll", { nativeEvent: { contentOffset: { x: 35 } } });
+    expect(onRender).not.toHaveBeenCalled();
+
+    await fireEvent(scroller, "scroll", { nativeEvent: { contentOffset: { x: 58 } } });
+    expect(onRender).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId("tab-fade-left", { includeHiddenElements: true })).toBeTruthy();
+    expect(screen.queryByTestId("tab-fade-right", { includeHiddenElements: true })).toBeNull();
+
+    onRender.mockClear();
+    await fireEvent(scroller, "scroll", { nativeEvent: { contentOffset: { x: 59 } } });
+    expect(onRender).not.toHaveBeenCalled();
   });
 
   it.each(Object.entries(tabBarStates))("%s holds at 200%% text", async (_name, props) => {
