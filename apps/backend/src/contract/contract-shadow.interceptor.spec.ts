@@ -1,4 +1,5 @@
 import "reflect-metadata";
+import { randomUUID } from "node:crypto";
 import { Logger } from "@nestjs/common";
 import { of } from "rxjs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -166,9 +167,8 @@ describe("response shape check", () => {
 
   it("logs a defaulted field the server left out (missing_field), though a reader would accept it", () => {
     const warn = vi.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
-    const userId = "user-1";
     const row = {
-      ...PROFILE_UPDATE_DEFAULTS(userId),
+      ...PROFILE_UPDATE_DEFAULTS(randomUUID()),
       mortgageType: "repayment",
       id: "6f1c2a3b-4d5e-4f60-8a7b-9c0d1e2f3a4b",
       createdAt: new Date("2026-11-01T00:00:00Z"),

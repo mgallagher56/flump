@@ -19403,7 +19403,7 @@
                       "type": "string"
                     },
                     "wellbeingQuestions": {
-                      "default": true,
+                      "default": false,
                       "type": "boolean"
                     }
                   },
@@ -20078,7 +20078,7 @@
                       "type": "string"
                     },
                     "wellbeingQuestions": {
-                      "default": true,
+                      "default": false,
                       "type": "boolean"
                     }
                   },
@@ -20518,7 +20518,7 @@
                       "type": "string"
                     },
                     "wellbeingQuestions": {
-                      "default": true,
+                      "default": false,
                       "type": "boolean"
                     }
                   },
@@ -21072,7 +21072,7 @@
                           "type": "string"
                         },
                         "wellbeingQuestions": {
-                          "default": true,
+                          "default": false,
                           "type": "boolean"
                         }
                       },

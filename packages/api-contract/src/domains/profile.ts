@@ -165,11 +165,11 @@ export const UserProfileDto = z.strictObject({
   birthYear: z.number().int().nullable(),
   checkInDay: z.number().int().nullable(),
   /**
-   * Added in E35 (26 November 2026), after the v1 baseline: an older backend does not send it, so
-   * readers fill in the backend's own default (asking is on). Fields added to a response from now
-   * on carry a default the same way (docs/api/versioning.md).
+   * Added in E35 (26 November 2026), after the v1 baseline. An older backend does not send it and
+   * asks no wellbeing questions, so a reader fills in false: what that backend really does, never
+   * a promise it cannot keep (docs/api/versioning.md). The server always sends it.
    */
-  wellbeingQuestions: z.boolean().default(true),
+  wellbeingQuestions: z.boolean().default(false),
   studentLoanPlans: z
     .array(z.enum(["PLAN_1", "PLAN_2", "PLAN_4", "PLAN_5", "POSTGRAD"]))
     .nullable(),
@@ -356,7 +356,7 @@ export const AccountExportProfile = z.strictObject({
   birthYear: z.number().int().nullable(),
   checkInDay: z.number().int().nullable(),
   /** A reader default, as on UserProfileDto: an export from before E35 has no such key. */
-  wellbeingQuestions: z.boolean().default(true),
+  wellbeingQuestions: z.boolean().default(false),
   studentLoanPlans: TextList,
   housingStatus: NullableText,
   monthlyHousingCost: NullableNumber,

@@ -104,17 +104,17 @@ describe("profile response schemas", () => {
     );
   });
 
-  it("reads a pre-E35 backend's profile, which has no wellbeingQuestions, as asking on", () => {
-    // An older backend never sent the key. The backend's own default is true (profile-view.ts),
-    // so a reader fills in true, and the check-in still loads.
+  it("reads a pre-E35 backend's profile, which has no wellbeingQuestions, as not asking", () => {
+    // An older backend never sent the key and asks no wellbeing questions, so a reader fills in
+    // false (what that backend does), and the profile still parses.
     const { wellbeingQuestions: _wellbeingQuestions, ...older } = profile;
     const parsed = UserProfileResponse.safeParse(older);
     expect(parsed.success).toBe(true);
-    expect(parsed.data?.wellbeingQuestions).toBe(true);
+    expect(parsed.data?.wellbeingQuestions).toBe(false);
     // A newer backend's answer is kept as sent.
     expect(
-      UserProfileResponse.parse({ ...profile, wellbeingQuestions: false }).wellbeingQuestions,
-    ).toBe(false);
+      UserProfileResponse.parse({ ...profile, wellbeingQuestions: true }).wellbeingQuestions,
+    ).toBe(true);
   });
 
   it("rejects an absent nullable key and an extra key", () => {
