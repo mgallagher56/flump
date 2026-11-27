@@ -6,11 +6,12 @@
  * as personas.ts `planFor` writes them, and nothing is recorded in November. A liability is given
  * positive here and stored negative, as the backend stores it.
  */
+import type { AccountListResponse } from "@flump/api-contract";
 import { household } from "../check-in/checkInTestData";
 
 interface Persona {
   name: string;
-  type: Parameters<typeof household>[0][number]["type"];
+  type: AccountListResponse[number]["type"];
   balance: number;
   monthlyChange: number;
 }
