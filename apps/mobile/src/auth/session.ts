@@ -358,8 +358,14 @@ export function createSession(deps: SessionDeps): Session {
     if (state.status !== "restoredOffline") return Promise.resolve();
     if (!reconnecting) {
       reconnecting = (async () => {
-        const outcome = await refresh();
-        if (outcome !== "refreshed") return;
+        let outcome = await refresh();
+        // Joined a refresh begun before the connection dropped: it saved the new refresh token but
+        // kept no access token, so the account check would wait on this reconnect. Refresh once more
+        // (now offline, it keeps its token) before the check.
+        if (outcome === "refreshed" && !accessToken && state.status === "restoredOffline") {
+          outcome = await refresh();
+        }
+        if (outcome !== "refreshed" || !accessToken) return;
         if (state.status !== "restoredOffline") return;
         await settle();
         // Still offline (the account check did not answer): drop the new access token, so no read

@@ -6,6 +6,7 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import type { TokenResult, WorkosClient } from "../data/workos";
 import { readQuery } from "./authorizeUrl";
+import { offlineAwareAccessToken } from "./offlineAccess";
 import type { PkceCrypto } from "./pkce";
 import { type AccountCheck, type BrowserResult, createSession, type SessionDeps } from "./session";
 import { OWNER_UNAVAILABLE, type TokenStore } from "./tokenStore";
@@ -422,6 +423,31 @@ describe("the connection drops while signed in (E12 S7 follow-up)", () => {
     expect(session.getAccessToken()).toBeNull();
     // The rotated refresh token is the one kept, for the reconnect.
     expect(await h.tokens.read()).toBe(fresh.refreshToken);
+  });
+
+  it("a reconnect that joins a refresh begun before the drop finishes and signs in again", async () => {
+    const h = harness("r_stored");
+    const session = await onlineSession(h);
+    let answer: (result: TokenResult) => void = () => {};
+    h.refresh.mockImplementationOnce(
+      () =>
+        new Promise<TokenResult>((resolve) => {
+          answer = resolve;
+        }),
+    );
+    void session.refresh();
+    while (h.refresh.mock.calls.length < 2) await Promise.resolve();
+    session.connectionLost();
+    // The account check asks for a token as the real API client does: through the offline door.
+    h.account.mockImplementation(async () => {
+      await offlineAwareAccessToken(session)();
+      return "ok";
+    });
+    const reconnecting = session.reconnect();
+    answer(ok(tokensFor("user_a")));
+    await reconnecting;
+    expect(session.getState()).toEqual({ status: "signedIn" });
+    expect(session.getAccessToken()).not.toBeNull();
   });
 
   it.each([
