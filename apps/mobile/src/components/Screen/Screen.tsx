@@ -4,6 +4,7 @@ import {
   type RefObject,
   useCallback,
   useEffect,
+  useImperativeHandle,
   useMemo,
   useRef,
   useState,
@@ -27,8 +28,13 @@ import {
 import { useTheme } from "../../theme/ThemeProvider";
 import { createStyles } from "./Screen.styles";
 
+export interface ScreenHandle {
+  scrollToTop(): void;
+}
+
 export interface ScreenProps {
   children: ReactNode;
+  ref?: Ref<ScreenHandle>;
   /**
    * Scrolls by default, so content at 200% text or on a 320 point screen is never cut off. Turn it
    * off only for a screen that manages its own scrolling (a list).
@@ -67,6 +73,7 @@ const FOLLOW_FRAMES = 20;
 /** The page around every screen: the canvas colour, safe areas, the phone gutter and spacing. */
 export function Screen({
   children,
+  ref,
   scroll = true,
   centred = false,
   edges = ALL_EDGES,
@@ -111,6 +118,14 @@ export function Screen({
     if (frame.current !== null) cancelAnimationFrame(frame.current);
     frame.current = null;
   }, []);
+  const scrollToTop = useCallback(() => {
+    stopFollowing();
+    const focused = TextInput.State.currentlyFocusedInput();
+    if (focused) TextInput.State.blurTextInput(focused);
+    scrollY.current = 0;
+    own.current?.scrollTo({ y: 0, animated: false });
+  }, [stopFollowing]);
+  useImperativeHandle(ref, () => ({ scrollToTop }), [scrollToTop]);
   const scrollUntilThere = useCallback(
     (to: number) => {
       stopFollowing();

@@ -1,1 +1,1 @@
-export { Screen } from "./Screen";
+export { Screen, type ScreenHandle } from "./Screen";
