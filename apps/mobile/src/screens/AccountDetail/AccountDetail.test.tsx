@@ -79,6 +79,21 @@ describe("AccountDetail", () => {
     ).toBe(true);
   });
 
+  it("the type under the name, as web's subline: a Barclaycard reads Credit card", async () => {
+    const h = household([{ name: "Barclaycard", type: "Credit Card", balance: -1200, nov: -1200 }]);
+    await detail(fakeApi(routes(h)), h.idOf("Barclaycard"));
+    expect(await screen.findByTestId("account-type")).toHaveTextContent("Credit card");
+  });
+
+  it("no type line when the name already says it: a Residential mortgage hides Mortgage", async () => {
+    const h = household([
+      { name: "Residential mortgage", type: "Mortgage", balance: -186000, nov: -186000 },
+    ]);
+    await detail(fakeApi(routes(h)), h.idOf("Residential mortgage"));
+    expect(await screen.findByTestId("account-detail-hero")).toBeOnTheScreen();
+    expect(screen.queryByTestId("account-type")).toBeNull();
+  });
+
   it("the hero agrees with the list row; a saving reads Current balance", async () => {
     const h = personaHousehold(HOMEOWNER);
     await detail(fakeApi(routes(h)), h.idOf("Cash ISA"));

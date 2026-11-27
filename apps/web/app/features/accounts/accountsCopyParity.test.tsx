@@ -23,6 +23,7 @@ import {
   ACCOUNT_DETAIL_COPY,
   balanceDateLine,
   NOT_COUNTED_TEXT,
+  typeSubtitle,
 } from "~/containers/accounts/accountDetailContainer/AccountDetailContainer";
 import { ACCOUNTS_EMPTY } from "~/containers/accounts/accountsContainer/AccountsContainer";
 import { ACCOUNT_SUBTYPE_LABEL } from "~/features/accounts/accountSubtypes";
@@ -90,6 +91,10 @@ interface MobileAccounts {
     string | null
   >;
   heroSentences: Fn<(string | null)[], string | null>;
+  accountTypeSubtitle: Fn<
+    [{ name: string; type: string; accountSubtype?: string | null }],
+    string | null
+  >;
   accountMonthNote: Fn<[{ source?: string | null; carried?: true }], string>;
   accountChartSummary: Fn<[string | null, number | null, boolean], string>;
   fewMonthsPrompt: Fn<[number], string>;
@@ -198,6 +203,23 @@ describe("the mobile account page says what web's says", () => {
     expect(ACCOUNT.noHistoryDescription).toBe(BALANCE_HISTORY_COPY.emptyDescription);
     expect(ACCOUNT.historyDescription).toBe(HISTORY_DESCRIPTION);
     expect(ACCOUNT.chartNotEnough).toBe(ACCOUNT_CHART_NOT_ENOUGH);
+  });
+
+  it.each([
+    { name: "Barclaycard", type: "Credit Card" },
+    { name: "Residential mortgage", type: "Mortgage" },
+    { name: "Our mortgage", type: "Mortgage", accountSubtype: "btl_mortgage" },
+    { name: "Home", type: "Property", accountSubtype: "home" },
+    { name: "Student loan", type: "Student Loan" },
+    { name: "Easy saver", type: "Saving", accountSubtype: "easy_access" },
+    { name: "Bonds", type: "Bonds from a later backend" },
+  ])("the subline under $name ($type)", async (account) => {
+    const m = await mobile();
+    const label =
+      (account.accountSubtype && ACCOUNT_SUBTYPE_LABEL[account.accountSubtype]) ||
+      TYPE_LABEL[account.type] ||
+      account.type;
+    expect(m.accountTypeSubtitle(account)).toBe(typeSubtitle(account.name, label) ?? null);
   });
 
   it.each([
