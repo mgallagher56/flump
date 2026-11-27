@@ -89,6 +89,50 @@ describe("Screen", () => {
     jest.restoreAllMocks();
   });
 
+  it("a field near the end scrolls above the keyboard once the room below it is laid out (device re-check)", async () => {
+    const listeners = new Map<string, (e: unknown) => void>();
+    jest.spyOn(Keyboard, "addListener").mockImplementation((name, fn) => {
+      listeners.set(name, fn as (e: unknown) => void);
+      return { remove: jest.fn() } as never;
+    });
+    // The 0% date's year box near the end of a short form: 600 down, 56 high.
+    jest.spyOn(TextInput.State, "currentlyFocusedInput").mockReturnValue({
+      measureLayout: (_to: unknown, done: (x: number, y: number, w: number, h: number) => void) =>
+        done(0, 600, 300, 56),
+    } as never);
+    // A scroll view as the phone's: it cannot scroll past its content's end.
+    let content = 800;
+    let at = 0;
+    const ref = { current: null as unknown };
+    await render(
+      <ThemeProvider scheme="light">
+        <Screen testID="s" keyboardAware scrollRef={ref as never}>
+          <Text>Form</Text>
+        </Screen>
+      </ThemeProvider>,
+    );
+    const scroller = ref.current as Record<string, unknown>;
+    scroller.getInnerViewRef = () => ({});
+    scroller.scrollTo = ({ y }: { y: number }) => {
+      at = Math.max(0, Math.min(y, content - 700));
+    };
+    const [view] = (screen.toJSON() as unknown as Tree).children;
+    if (!view) throw new Error("expected the scroll view");
+    const onLayout = view.props.onLayout as (e: unknown) => void;
+    await act(async () => onLayout({ nativeEvent: { layout: { height: 700 } } }));
+    const show = listeners.get("keyboardWillShow") ?? listeners.get("keyboardDidShow");
+    await act(async () => show?.({ endCoordinates: { height: 330, screenY: 500 } }));
+    // The keyboard's 330 below the content lays out: 800 + 330 = 1,130.
+    content = 1130;
+    // The scroll view as it renders now, with the keyboard open.
+    const [opened] = (screen.toJSON() as unknown as Tree).children;
+    const onContentSizeChange = opened?.props.onContentSizeChange as (w: number, h: number) => void;
+    await act(async () => onContentSizeChange(400, 1130));
+    // 600 + 56 + 16 - (700 - 330) = 302, reachable now that the content is 1,130 long.
+    expect(at).toBe(302);
+    jest.restoreAllMocks();
+  });
+
   it("when the keyboard opens, the field being typed in scrolls above it", async () => {
     const listeners = new Map<string, (e: unknown) => void>();
     jest.spyOn(Keyboard, "addListener").mockImplementation((name, fn) => {

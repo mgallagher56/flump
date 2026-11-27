@@ -110,9 +110,14 @@ export function Screen({
       () => {},
     );
   }, [keyboardAware, room, margin]);
-  // When the keyboard opens, the field that opened it comes into view.
+  // When the keyboard opens, the field that opened it comes into view: now, and again once the
+  // keyboard's room below the content is laid out. Before that, a field near the end cannot be
+  // scrolled far enough: the scroll view stops at its old end (device re-check, 27 Nov 2026).
+  const roomPending = useRef(false);
   useEffect(() => {
-    if (room > 0) showFocusedField();
+    if (room === 0) return;
+    roomPending.current = true;
+    showFocusedField();
   }, [room, showFocusedField]);
   const refresh = useCallback(async () => {
     if (!onRefresh) return;
@@ -135,6 +140,11 @@ export function Screen({
         },
         onLayout: (e: LayoutChangeEvent) => {
           viewport.current = e.nativeEvent.layout.height;
+        },
+        onContentSizeChange: () => {
+          if (!roomPending.current) return;
+          roomPending.current = false;
+          showFocusedField();
         },
       }
     : {};
