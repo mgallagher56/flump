@@ -1,7 +1,7 @@
 import { StyleSheet } from "react-native";
 import type { Theme } from "../../theme/ThemeProvider";
 
-/** Outlined border width for a disabled off track and the Android disabled on thumb ring. */
+/** Outlined border width for a disabled off track and the disabled on thumb edge. */
 const DISABLED_TRACK_BORDER = 1.5;
 
 /** Small ActivityIndicator box (20x20 on iOS and Android), always reserved so saving never shifts the label. */
@@ -76,13 +76,12 @@ export const createStyles = (theme: Theme, os: string) => {
       backgroundColor: colours.thumb,
       borderColor: colours.thumbEdge,
     },
-    // On Android the thumb overhangs the track, so draw a 1.5pt ring in the disabled track colour
-    // so the card-coloured thumb reads clearly against the page.
+    // Give the card-coloured disabled-on thumb a 1.5pt strong-border edge on both platforms so
+    // the thumb position stays distinct from both the pale neutral track and the page.
     thumbDisabledOn: {
       backgroundColor: colours.disabledThumbOn,
-      ...(overhang > 0
-        ? { borderWidth: DISABLED_TRACK_BORDER, borderColor: colours.disabledTrackOn }
-        : { borderColor: colours.disabledThumbOn }),
+      borderWidth: DISABLED_TRACK_BORDER,
+      borderColor: colours.disabledThumbOnEdge,
     },
     // Pull the thumb horizontally by outlinedThumbOffset on Android so the 1.5pt track border does
     // not shift it inward.
@@ -109,5 +108,6 @@ const switchColours = (theme: Theme) => ({
   disabledTrackOffFill: theme.colors["surface.sunken"],
   disabledTrackOffEdge: theme.colors["border.strong"],
   disabledThumbOn: theme.colors["surface.card"],
+  disabledThumbOnEdge: theme.colors["border.strong"],
   disabledThumbOff: theme.colors["border.strong"],
 });
