@@ -927,6 +927,38 @@ Written by a Fable planner on 26 November 2026 from web's settings as they are n
 
 **Built (S9, 27 November 2026).** To the coordinator's decisions, with these details. Settings is a list of four pushed pages under `app/(app)/settings/`, plus `data` and `delete-account`. The profile is one query (`src/data/profile.ts`); a change is a `PATCH` with `If-Match` from `etagFor(updatedAt)`, written into the cache, so Home follows a net worth switch with no second request. The theme choice is read from the secure store with the synchronous `getItem` before the first frame (`src/device/themePreference.ts`); `ThemeCycleButton` in `AppHeader` and the This phone rows write it. `pageSwitches.ts` mirrors web's filter; turning Self Assessment on with an empty stored list starts from the default set, where web would save `["tax"]` alone (parity log, proposed web fix). Re-authentication (`session.reauthenticate`) takes the refresh slot, adopts only the same `sub`, and revokes the old session only when its `sid` differs. Any read answering 410 `account_deleted` moves the session to `deletionPending`. The export re-checks the session after the download and shares nothing after sign-out; a refresh mid-download fails safe. The deletion answer is read loosely, so a newer backend's extra field still wipes the device. `Switch` is React Native's own inside a whole-row pressable. The check-in day is a 31-row radio list, recorded as a CROSS-PLATFORM section 5 exception (a native picker needs a new dependency); revisit at S18. After the coordinator's device check (27 November 2026, Android 17 emulator): while locked, the Locked screen replaces the signed-in shell instead of covering it, because a native stack's screens ignore a parent's accessibility flags and a screen reader could read Home's figures behind the cover. Each switch row is one accessible control; a busy button keeps its label; with no email on the sign-in token Security says the email cannot be shown here (web too); names stay empty until edited, as web stores them only from Settings. Not verified on a device: biometrics, a real share, signing in again, deletion itself, saving name edits, TalkBack speech. **For S18:** changing the system text size while the app is open recreates the Android activity and returns to Home, losing the route (Expo's default `configChanges`; see S5's Built paragraph). Also for S18, from the security re-check (coordinator, 27 November 2026): while the sign-in or re-authentication browser is open and the app is unlocked, nothing covers the app switcher snapshot (existing design);. **After the second emulator check (27 November 2026):** while app lock is on, the lock calls expo-screen-capture's `preventScreenCaptureAsync` on Android only (FLAG_SECURE: a blank recents card, no screenshots), set from the lock's own phase so from a cold start too, and `allowScreenCaptureAsync` when it is turned off or cleared (sign-out, session end, deletion); This phone says so on Android. While unlocked, a system sheet or prompt no longer unmounts the shell: iOS puts an opaque cover over it while the app is away, Android has FLAG_SECURE, so an export finishes on Data; after a real lock, Unlock replaces back to the last pathname shown (its search parameters are not kept), and each switch row's native switch takes no touches of its own.
 
+### 9.10b S10. Budget
+
+Specified 27 November 2026 by the S10 lane, with the scope decided by a fable decider at the coordinator's delegation (`fable-decider`). One change by the lane: Home's Budget card moves with the other section cards (below), since a card that "Choose what shows here" cannot hide would be a new difference from web.
+
+**Goal.** The Budget tab shows web's Budget page (`apps/web/app/containers/budget/BudgetContainer.tsx`) for the same rows: the same figures, order, words and empty, not-set and refused states, with a narrow editing core.
+
+**In S10**
+
+- **Engine moves first** (the S5 method): the sums and rules web's Budget page works out outside the engine move into `packages/finance-engine` behind `@flump/finance-engine/budget`: "Going out each month" (`BudgetOverview.tsx`), the ranked category totals (`rankCategories`), the page rows (`pageBudgetEntries`), the breathing room basis count, and the runway scenario's pool, kept income, spending and outcome (`RunwayCalculator.tsx`). Characterisation tests pin web's old code first and pass unchanged after the move; web's copies are deleted and web calls the engine. No figure changes; a change would be its own commit signed by a fable decider.
+- **Overview:** the hero ("Left over each month" or "Short each month"), the safe-to-spend subline or its prompts, what the budget leaves out, the not-set and refused prompts (never £0), "Money in each month" and "Going out each month", and the equation line. The rates sentence (`TaxRatesStatusBanner`) as web shows it.
+- **Where your money goes:** the ranked categories, one figure a row, each opening its entries; housing one row naming the tenure; linked rows from the engine with web's source line.
+- **Breathing room:** the saved figure, its source line and the basis drawer, whose switches save each entry's essential flag.
+- **Breathing room scenario zone** in full (accounts counted, other income kept, a one-off sum, a monthly cut), starting closed with its summary; reset shows only when an input differs; no input saves or sends anything (9.11).
+- **Editing core:** add, edit and delete the person's own sole, unlinked entries (name, amount, frequency, an existing category, essential), with toasts, `If-Match` and a confirmed removal. Web's words.
+- The debt help line web shows to everyone.
+
+**Deferred, with web's page linked "on the website"**: editing linked or joint entries and the link offers (with S11 and S12, where those accounts live); ownership and Partner mode controls (after S8); housing details and the mortgage holder's housing row link (S11); adding and removing categories (S11 on); the setup wizard, "Add common budget items" and the empty budget's start (S15).
+
+**Separate slice, after S12:** Home's section cards (Budget with breathing room among them), "Choose what shows here", the section order and the notice at their foot.
+
+**Data.** `GET /budget-entries` (S5b's read), plus `POST`, `PATCH` (with `If-Match`) and `DELETE /budget-entries/:id` through `src/data/`, each answer parsed by a loose pick of the contract; a write updates the one cached list. Accounts, details and profile are the check-in's queries.
+
+**Acceptance**
+
+1. Phone equals web: the same engine function builds every figure for both, and a test feeds the persona rows and the staging-like sample through web's and mobile's paths and compares each figure.
+2. Characterisation tests pass before and after the move with no expected value edited; Stryker on the moved code, survivors killed or triaged.
+3. No sum, subtraction or comparison of money in `apps/mobile/src`; the entry reaches no tax vector, `tax-year-verification.ts` or `debt-payoff.ts`.
+4. Not set and refused never show £0; a failed read is an error, never "No budget yet".
+5. A scenario input sends no request and changes no saved figure.
+6. Linked and joint entries are read-only on the phone, with the website link.
+7. Tabular numerals, semantic tokens, both themes, 200% text, one accessible control per row, targets 48 by 48.
+
 ### 9.11 Later slices
 
 Each is specified in full when the slice before it merges, from the web page as it then is and the parity log. Fixed now:
