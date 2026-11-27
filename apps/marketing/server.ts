@@ -11,6 +11,7 @@ import { analyticsMiddleware } from "./server/analytics";
 import { applyServerHardening } from "./server/hardening";
 import { buildHeadMeta, splitHoistables } from "./server/headMeta";
 import { registerOps } from "./server/ops";
+import { type BuildManifest, pagePreloadLinks } from "./server/pageChunks";
 import { rateLimit } from "./server/rateLimit";
 import { redirectMiddleware } from "./server/redirects";
 import {
@@ -20,6 +21,7 @@ import {
   resolveAppUrl,
   setStaticCacheHeaders,
 } from "./server/security";
+import { pageForPath, pageSource } from "./src/pageSet";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -63,6 +65,14 @@ async function createServer() {
   // each redirect carries them, before vite, analytics and SSR so an old address is never rendered
   // or counted. Development and production alike.
   app.use(redirectMiddleware());
+
+  // Each page is its own chunk (src/lazyPages.tsx). In production the server preloads the requested
+  // page's chunk, read from the client build's manifest, so hydration needs no second round trip.
+  const manifest: BuildManifest = isProd
+    ? JSON.parse(
+        fs.readFileSync(path.resolve(__dirname, "dist/client/.vite/manifest.json"), "utf-8"),
+      )
+    : {};
 
   let vite: ViteDevServer | undefined;
   if (!isProd) {
@@ -122,9 +132,13 @@ async function createServer() {
         status: status ?? 200,
       });
 
+      const preload = isProd ? pagePreloadLinks(manifest, pageSource(pageForPath(req.path))) : "";
+
       // The inline theme script needs the CSP nonce in production.
       const html = injectThemeNonce(
-        template.replace(`<!--app-html-->`, appHtml).replace(`<!--head-meta-->`, helmetMeta),
+        template
+          .replace(`<!--app-html-->`, appHtml)
+          .replace(`<!--head-meta-->`, helmetMeta + preload),
         nonceAttr,
       );
 

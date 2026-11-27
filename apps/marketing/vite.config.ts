@@ -39,6 +39,9 @@ export default defineConfig({
     external: ["react", "react-dom", "react-router-dom", "react-helmet-async"],
   },
   build: {
+    // The server reads it to preload each page's chunk (server/pageChunks.ts), and the weight
+    // check measures the home page from it (scripts/check-marketing-weight.ts).
+    manifest: true,
     commonjsOptions: {
       include: [/node_modules/],
     },
