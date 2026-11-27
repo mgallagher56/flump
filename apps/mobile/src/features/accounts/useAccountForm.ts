@@ -156,6 +156,7 @@ export function useAccountForm({
   /** Sets one field that holds text or a choice. */
   const set = useCallback(
     <K extends keyof AccountFormState>(key: K, value: AccountFormState[K]) => {
+      if (key === "balance") balanceTextRef.current = String(value);
       setForm((prev) => ({ ...prev, [key]: value }));
     },
     [],
