@@ -44,6 +44,9 @@ export interface AccountFormScreenProps
  */
 export function AccountFormScreen({ open, onBackToAccounts, ...props }: AccountFormScreenProps) {
   const accounts = useAccounts();
+  // The account the edit form opened with. Once a delete lands it leaves the cached list at once,
+  // and the form keeps it while the screen closes, so it never reads as not found.
+  const opened = useRef<FormAccount | null>(null);
   const profile = useProfile();
   const list = useMemo(
     () => (accounts.data ?? []) as unknown as readonly FormAccount[],
@@ -82,7 +85,9 @@ export function AccountFormScreen({ open, onBackToAccounts, ...props }: AccountF
   const partnerMode =
     (profile.data as { partnerMode?: unknown } | null | undefined)?.partnerMode === true;
   if (open.kind === "edit") {
-    const account = list.find((a) => a.id === open.id);
+    const found = list.find((a) => a.id === open.id);
+    if (found) opened.current = found;
+    const account = found ?? opened.current;
     if (!account) {
       return (
         <>

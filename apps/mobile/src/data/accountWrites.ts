@@ -112,11 +112,26 @@ function invalidateAccounts(queryClient: QueryClient): Promise<void> {
   ]).then(() => undefined);
 }
 
+/**
+ * Takes a deleted account and its months out of the cached reads as soon as the delete lands, so
+ * the list never shows it while it is read again (S8 device check: the old row stayed for up to a
+ * second). Only after the backend confirms: taken out before, the edit form would lose the account
+ * it is showing, and a failed delete would need putting back.
+ */
+function dropAccount(queryClient: QueryClient, id: string): void {
+  queryClient.setQueryData<readonly { id: string }[]>(queryKeys.accounts(), (rows) =>
+    rows?.filter((row) => row.id !== id),
+  );
+  queryClient.setQueryData<readonly { accountId: string }[]>(queryKeys.accountDetails(), (rows) =>
+    rows?.filter((row) => row.accountId !== id),
+  );
+}
+
 /** Runs a write and says how it ended; never rejects. */
 async function settle(
   write: () => Promise<string | undefined | void>,
   queryClient: QueryClient,
-  { awaitRefresh = true }: { awaitRefresh?: boolean } = {},
+  { awaitRefresh = true, landed }: { awaitRefresh?: boolean; landed?: () => void } = {},
 ): Promise<AccountWriteResult> {
   let id: string | undefined;
   try {
@@ -134,6 +149,7 @@ async function settle(
     if (error instanceof Error && error.name === "ZodError") return { status: "invalid" };
     return { status: "failed", kind: "unknown" };
   }
+  landed?.();
   // A failed refresh keeps what is on screen; the save itself landed. After a delete the screen
   // leaves first: waiting would show the deleted account as not found for a moment.
   const refresh = invalidateAccounts(queryClient).catch(() => undefined);
@@ -164,7 +180,10 @@ export function useAccountWrites(): AccountWrites {
       update: (id, body, updatedAt) =>
         settle(() => patchAccount(api, id, body, updatedAt), queryClient),
       remove: (id) =>
-        settle(() => deleteAccountById(api, id), queryClient, { awaitRefresh: false }),
+        settle(() => deleteAccountById(api, id), queryClient, {
+          awaitRefresh: false,
+          landed: () => dropAccount(queryClient, id),
+        }),
     }),
     [api, queryClient],
   );
