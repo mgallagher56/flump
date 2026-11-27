@@ -10,18 +10,36 @@ import { useTheme } from "../../theme/ThemeProvider";
 import { Button } from "../Button";
 import { Card } from "../Card";
 import { Money } from "../Money";
+import { formatWholePounds } from "../Money/Money";
 import { Text } from "../Text";
 import { createStyles, skeletonHeights, stacks } from "./KpiStrip.styles";
+
+/** One figure for a screen other than Home (the Budget tab's money in and going out, S10). */
+interface KpiItem {
+  /** Names the card's test id: `<testID>-<key>`. */
+  key: string;
+  label: string;
+  /** Pounds, or null when unknown: "Not set", never £0. */
+  value: number | null;
+  caption?: string | null;
+}
 
 export interface KpiStripProps {
   /** The engine's `selectHomeStrip` answer. Absent while loading. */
   strip?: HomeStrip | null;
+  /**
+   * Figures drawn as they are, in place of Home's strip (the Budget tab, S10): two cards with the
+   * same layout rules. With `emptyPrompt` and no items, the one prompt stands in for them.
+   */
+  items?: readonly KpiItem[];
+  /** With `items`: one sentence in place of the cards, when both figures are unknown (web's rule). */
+  emptyPrompt?: string;
   /** Waiting for the figures: two cells of still blocks, the size of the cells that replace them. */
   loading?: boolean;
-  /** Opens where the budget is added (the website until S10). */
-  onAddBudget(): void;
-  /** Opens where spending is added to the budget (the website until S10). */
-  onAddSpending(): void;
+  /** Opens where the budget is added (the website until S10). Home's strip only. */
+  onAddBudget?: () => void;
+  /** Opens where spending is added to the budget (the website until S10). Home's strip only. */
+  onAddSpending?: () => void;
   /**
    * The links' words when they do not open the page itself (no web app address in this build: the
    * website's home page). Defaults to the page's own words.
@@ -35,8 +53,8 @@ type Styles = ReturnType<typeof createStyles>;
 
 interface KpiCardProps {
   label: string;
-  /** Pounds; absent for a refused figure, which shows its notice instead. */
-  value?: number;
+  /** Pounds; null is unknown ("Not set"); absent for a refused figure, which shows its notice. */
+  value?: number | null;
   /** The line under the figure (or the refusal's notice), when there is one. */
   caption?: string | null;
   /** Its own control under the group (the income-only link). */
@@ -62,9 +80,9 @@ function KpiCard({
   stacked,
   styles,
 }: KpiCardProps) {
-  const spoken = [label, value === undefined ? null : spokenPounds(value), caption]
-    .filter(Boolean)
-    .join(", ");
+  const figure =
+    value === undefined ? null : value === null ? formatWholePounds(null) : spokenPounds(value);
+  const spoken = [label, figure, caption].filter(Boolean).join(", ");
   return (
     <Card testID={testID} style={stacked ? styles.cellStacked : styles.cellInRow}>
       <View accessible accessibilityLabel={spoken} style={styles.group} testID={groupTestID}>
@@ -94,7 +112,7 @@ function FirstCell({
   styles,
 }: {
   cell: Exclude<HomeStripFirstCell, { kind: "unset" }>;
-  onAddSpending(): void;
+  onAddSpending?: () => void;
   websiteLabel?: string;
   testID: string;
   stacked: boolean;
@@ -187,6 +205,8 @@ function SecondCell({
  */
 export function KpiStrip({
   strip,
+  items,
+  emptyPrompt,
   loading = false,
   onAddBudget,
   onAddSpending,
@@ -198,6 +218,32 @@ export function KpiStrip({
   const styles = useMemo(() => createStyles(theme), [theme]);
   const stacked = stacks(theme, fontScale);
   const layout = stacked ? styles.column : styles.row;
+
+  if (!loading && items) {
+    if (items.length === 0) {
+      return emptyPrompt ? (
+        <Card testID={`${testID}-prompt`} style={styles.prompt}>
+          <Text>{emptyPrompt}</Text>
+        </Card>
+      ) : null;
+    }
+    return (
+      <View style={layout} testID={testID}>
+        {items.map((item) => (
+          <KpiCard
+            key={item.key}
+            label={item.label}
+            value={item.value}
+            caption={item.caption}
+            testID={`${testID}-${item.key}`}
+            groupTestID={`${testID}-${item.key}-group`}
+            stacked={stacked}
+            styles={styles}
+          />
+        ))}
+      </View>
+    );
+  }
 
   if (loading || !strip) {
     if (!loading) return null;
