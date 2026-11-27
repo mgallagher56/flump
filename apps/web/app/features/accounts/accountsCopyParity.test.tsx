@@ -171,6 +171,13 @@ describe("the mobile accounts list says what web's says", () => {
     expect(m.typeLine(row)).toBe(web);
   });
 
+  it("the ISA subtype reads in sentence case on both", async () => {
+    const m = await mobile();
+    const row = { name: "x", type: "Investment", accountSubtype: "stocks_and_shares_isa" };
+    expect(ACCOUNT_SUBTYPE_LABEL.stocks_and_shares_isa).toBe("Stocks and shares ISA");
+    expect(m.typeLine(row)).toBe("Stocks and shares ISA");
+  });
+
   it("the history route and an account's route are web's", async () => {
     const shell = await load<MobileShell>("navigation/shell.ts");
     expect(shell.NET_WORTH_HISTORY_WEB_ROUTE).toBe(HISTORY_HREF);
