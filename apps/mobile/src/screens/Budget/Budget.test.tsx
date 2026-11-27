@@ -606,6 +606,13 @@ describe("Budget", () => {
         screen.getByText("We could not add that entry. Nothing has changed. Try again."),
       ).toBeOnTheScreen();
       expect(screen.getByLabelText("Name").props.value).toBe("Child Benefit");
+      // The next try clears that banner, so it never sits beside a field's own error.
+      await u.clear(screen.getByLabelText("Name"));
+      await u.press(screen.getByRole("button", { name: "Save" }));
+      expect(screen.getByText("Enter a name")).toBeOnTheScreen();
+      expect(
+        screen.queryByText("We could not add that entry. Nothing has changed. Try again."),
+      ).toBeNull();
     });
 
     it("joint and linked entries are read only, with the website", async () => {

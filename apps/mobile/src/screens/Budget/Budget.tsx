@@ -626,6 +626,7 @@ function EntrySheet({
             saving={saving}
             error={error}
             onSave={(values) => void save(values)}
+            onTry={() => setError(null)}
             onCancel={onClose}
             onDelete={() => setConfirming(true)}
           />

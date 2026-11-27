@@ -1,3 +1,4 @@
+import { Money } from "@flump/api-contract";
 import { useMemo, useState } from "react";
 import { View } from "react-native";
 import { addToLabel, categoryLabel, EDITOR, FREQUENCY_OPTIONS } from "../../copy/budget";
@@ -36,6 +37,8 @@ export interface BudgetEntryFormProps {
   /** What went wrong with the last save or delete, in web's words. */
   error?: string | null;
   onSave(values: ValidEntryValues): void;
+  /** Every press of Save, before the checks: the screen clears the last save's error. */
+  onTry?: () => void;
   onCancel(): void;
   /** Edit only: asks to delete the entry (the screen confirms first). */
   onDelete?: () => void;
@@ -59,6 +62,7 @@ export function BudgetEntryForm({
   saving = false,
   error = null,
   onSave,
+  onTry,
   onCancel,
   onDelete,
   testID = "budget-entry-form",
@@ -70,13 +74,22 @@ export function BudgetEntryForm({
   const set = <K extends keyof EntryValues>(key: K, value: EntryValues[K]) =>
     setValues((v) => ({ ...v, [key]: value }));
   const nameError = tried && values.name.trim() === "" ? EDITOR.nameMissing : null;
-  const amountError = tried && values.amount === null ? EDITOR.amountMissing : null;
+  // The contract's Money (below 10 billion either way), so the phone refuses what the backend would.
+  const amountOk = values.amount !== null && Money.safeParse(values.amount).success;
+  const amountError = !tried
+    ? null
+    : values.amount === null
+      ? EDITOR.amountMissing
+      : amountOk
+        ? null
+        : EDITOR.amountTooLarge;
   const options = categories.map((c) => ({ value: c, label: categoryLabel(c) }));
 
   const submit = () => {
+    onTry?.();
     setTried(true);
     const name = values.name.trim();
-    if (name === "" || values.amount === null) return;
+    if (name === "" || values.amount === null || !amountOk) return;
     onSave({ ...values, name, amount: values.amount });
   };
 
