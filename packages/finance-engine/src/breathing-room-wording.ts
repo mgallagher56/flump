@@ -4,12 +4,15 @@
  * figure out.
  *
  * Owner rulings: "About 1.5 months" style under a year (15 November 2026); from 12 months, whole
- * years and months, "1 year", "1 year 1 month" (18 November 2026).
+ * years and months, "1 year", "1 year 1 month" (18 November 2026); the whole months round down
+ * (fable-decider and owner, 27 November 2026, DECISIONS.md), superseding 18 November's half up.
  *
- * Rounding: under a year the figure keeps one decimal place. When that rounds to 12 or more (so
- * 11.96 never reads "About 12 months") the year form takes over, from whole months rounded half
- * up: 12.4 is "1 year", 12.5 is "1 year 1 month", 23.6 is "2 years". Above 120 months the existing
- * cap reads "More than 10 years". "About" stays in front of the year form: it is still an estimate.
+ * Rounding happens once: the figure is taken to one decimal place (half up, as stored). Under 12 it
+ * reads as that ("About 9.3 months"); from 12 (so 11.96 never reads "About 12 months") the year form
+ * takes the whole months below it: 12.5 is "1 year", 16.47 (16.5) is "1 year 4 months", 23.6 is
+ * "1 year 11 months", 23.99 (24.0) is "2 years". The stored one-decimal value and the raw ratio read
+ * the same. Above 120 months the cap reads "More than 10 years". "About" stays in front of the year
+ * form: it is still an estimate.
  */
 
 /** Months above which the figure reads "More than N years". */
@@ -57,7 +60,9 @@ export function describeBreathingRoom(
     const shown = oneDecimal.format(tenths);
     return { leadIn: "About", figure: `${shown} ${shown === "1" ? "month" : "months"}` };
   }
-  return { leadIn: "About", figure: yearsAndMonths(Math.max(12, Math.round(value))) };
+  // Whole months below the one-decimal figure: never rounded up a second time (16.47 is 16.5, and
+  // half up again would read 17 months).
+  return { leadIn: "About", figure: yearsAndMonths(Math.floor(tenths)) };
 }
 
 /** The figure alone: "1.5 months", "1 year 1 month", "10+ years" above the cap, or "Not set". */
