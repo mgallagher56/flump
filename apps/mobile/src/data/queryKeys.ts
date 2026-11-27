@@ -10,6 +10,8 @@ export const queryKeys = {
   accounts: () => [...all, "accounts"] as const,
   accountDetails: () => [...all, "account-details"] as const,
   userProfile: () => [...all, "user-profile"] as const,
+  /** Not in offline cache: resolved on demand by SettingsSecurity only. */
+  userEmail: () => [...all, "user-email"] as const,
   checkIns: () => [...all, "snapshots", "check-ins"] as const,
   budgetEntries: () => [...all, "budget-entries"] as const,
 };

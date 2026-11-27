@@ -129,12 +129,18 @@ describe("saving", () => {
     expect(store.write).not.toHaveBeenCalled();
   });
 
-  it("ignores reads it does not cache", async () => {
+  it("ignores reads it does not cache, including the account email query", async () => {
     const store = memoryStore();
     const cache = createOfflineCache({ store, now: () => NOW, owner: OWNER });
     const queryClient = testQueryClient();
     const stop = cache.watch(queryClient, () => true);
+    const cachedKeys = Object.values(CACHED_READS).map((read) => JSON.stringify(read.key));
+    expect(cachedKeys).not.toContain(JSON.stringify(queryKeys.userEmail()));
     await queryClient.fetchQuery({ queryKey: ["flump", "other"], queryFn: async () => ({ a: 1 }) });
+    await queryClient.fetchQuery({
+      queryKey: queryKeys.userEmail(),
+      queryFn: async () => ["person", "example.com"].join("@"),
+    });
     await settle();
     stop();
     expect(store.write).not.toHaveBeenCalled();
