@@ -200,7 +200,11 @@ const toItem = (row: AccountRow & { belowZeroToCheck?: true }): DataListItem => 
           icon={TYPE_ICON[row.type] ?? Wallet}
         />
         <span className={accountName()}>
-          <Link className={accountLink()} to={`/app/accounts/${row.id}`}>
+          <Link
+            aria-describedby={row.belowZeroToCheck ? `below-zero-${row.id}` : undefined}
+            className={accountLink()}
+            to={`/app/accounts/${row.id}`}
+          >
             {row.name}
           </Link>
           {type ? <span className={accountType()}>{type}</span> : null}

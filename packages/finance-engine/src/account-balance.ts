@@ -1,5 +1,4 @@
 import { categorizeAccountType } from "./account-category.js";
-import { OVERDRAWABLE_ACCOUNT_TYPES } from "./account-type-change.js";
 import { type AccountOwnership, type AccountShareInput, applyAccountShare } from "./joint-share.js";
 import type { NetWorthLeftOut } from "./net-worth-basis.js";
 
@@ -363,9 +362,6 @@ export interface AccountGroups<T> {
   notCounted: T[];
 }
 
-/** The only accounts that can be overdrawn (`account-type-change.ts`). */
-const OVERDRAWABLE: ReadonlySet<string> = new Set(OVERDRAWABLE_ACCOUNT_TYPES);
-
 const typeRank = (type: string | null | undefined): number => {
   const index = ACCOUNT_TYPE_ORDER.indexOf(type ?? "");
   return index === -1 ? ACCOUNT_TYPE_ORDER.length : index;
@@ -393,7 +389,11 @@ export function selectAccountGroups<T extends { type?: string | null; balance?: 
           ? {
               ...row,
               balance: Math.abs(row.balance ?? 0),
-              ...(OVERDRAWABLE.has(row.type ?? "") ? {} : { belowZeroToCheck: true as const }),
+              // A current account is overdrawn; anything else below zero is a balance to check.
+              // The same test as Home's owed figure (`getTotalConsumerDebt`: category "cash").
+              ...(categorizeAccountType(row.type ?? "") === "cash"
+                ? {}
+                : { belowZeroToCheck: true as const }),
             }
           : row,
       )
