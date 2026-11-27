@@ -3,8 +3,10 @@ import { act, fireEvent, render, screen } from "@testing-library/react-native";
 import { AccessibilityInfo, Alert } from "react-native";
 import { Text } from "../../components/Text";
 import { SAVE_NEEDS_CONNECTION } from "../../copy/offline";
+import { ApiProvider } from "../../data/ApiProvider";
 import { fail, fakeApi, withApi } from "../../data/fakeApi";
 import { household, NOW, routes } from "../../features/check-in/checkInTestData";
+import { ThemeProvider } from "../../theme/ThemeProvider";
 import { AccountFormScreen, type AccountFormScreenProps } from "./AccountForm";
 
 type Open = AccountFormScreenProps["open"];
@@ -488,6 +490,39 @@ describe("AccountForm left open when the connection drops (E12 S7 follow-up)", (
     const button = screen.getByTestId("account-form-save");
     expect(button.props.accessibilityState).toMatchObject({ disabled: true });
     await save();
+    expect(posts(api)).toEqual([]);
+  });
+
+  it("a delete confirmed after the connection drops sends nothing", async () => {
+    const alert = jest.spyOn(Alert, "alert").mockImplementation(() => {});
+    const h = household();
+    const id = h.idOf("Mortgage");
+    const api = fakeApi(routes(h, { [`DELETE /accounts/${id}`]: () => ({ success: true }) }));
+    const screenAt = (offline: boolean) => (
+      <AccountFormScreen
+        open={{ kind: "edit", id }}
+        offline={offline}
+        onSaved={jest.fn()}
+        onDeleted={jest.fn()}
+        onCancel={jest.fn()}
+        onBackToAccounts={jest.fn()}
+      />
+    );
+    const queryClient = withApi(screenAt(false), api.client).queryClient;
+    const wrap = (offline: boolean) => (
+      <ThemeProvider scheme="light">
+        <ApiProvider client={api.client} queryClient={queryClient}>
+          {screenAt(offline)}
+        </ApiProvider>
+      </ThemeProvider>
+    );
+    const { rerender } = await render(wrap(false));
+    await screen.findByTestId("account-form");
+    await press("account-form-delete");
+    const buttons = alert.mock.calls[0]?.[2];
+    await act(async () => rerender(wrap(true)));
+    await act(async () => buttons?.[1]?.onPress?.());
+    await settle();
     expect(posts(api)).toEqual([]);
   });
 

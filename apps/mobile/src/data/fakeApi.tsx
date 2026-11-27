@@ -128,8 +128,11 @@ export function testQueryClient(): QueryClient {
 }
 
 /** Wraps a screen in the theme and the data door, with a fresh cache for each test. */
-export function withApi(ui: ReactElement, client: ApiClient | null) {
-  const queryClient = testQueryClient();
+export function withApi(
+  ui: ReactElement,
+  client: ApiClient | null,
+  queryClient: ReturnType<typeof testQueryClient> = testQueryClient(),
+) {
   return {
     queryClient,
     ui: (

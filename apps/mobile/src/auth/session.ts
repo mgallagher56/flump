@@ -146,6 +146,11 @@ export function createSession(deps: SessionDeps): Session {
    * during a refresh or a code exchange) belongs to a session that is gone and is dropped unsaved.
    */
   let epoch = 0;
+  /**
+   * Bumped when the connection drops mid-session. A refresh that started before a drop and lands
+   * after it must not put an access token back while offline: only a reconnect's account check may.
+   */
+  let drops = 0;
   const listeners = new Set<(state: SessionState) => void>();
 
   function dispatch(event: SessionEvent) {
@@ -262,12 +267,16 @@ export function createSession(deps: SessionDeps): Session {
           return "ended";
         }
         const startedAt = epoch;
+        const dropsAtStart = drops;
         const result = await deps.workos.refresh(stored);
         // Signed out while WorkOS answered: nothing to save, nothing more to end.
         if (epoch !== startedAt) return "ended";
         if (result.ok) {
           try {
             if (!(await adopt(result, startedAt))) return "ended";
+            // Dropped while WorkOS answered: the new refresh token is kept (it is the live one),
+            // but no read goes to Flump until a reconnect's account check passes.
+            if (drops !== dropsAtStart && state.status === "restoredOffline") accessToken = null;
           } catch {
             // The store refused the new token. The old one may be spent; the next refresh will say.
             return "retryable";
@@ -367,6 +376,7 @@ export function createSession(deps: SessionDeps): Session {
 
   function connectionLost() {
     if (state.status !== "signedIn") return;
+    drops += 1;
     accessToken = null;
     dispatch({ type: "CONNECTION_LOST" });
   }

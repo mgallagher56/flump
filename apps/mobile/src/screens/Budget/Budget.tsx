@@ -624,8 +624,8 @@ function EntrySheet({
   };
 
   const remove = async () => {
-    if (sheet?.mode !== "edit" || offline) return;
     setConfirming(false);
+    if (sheet?.mode !== "edit" || offline) return;
     setSaving(true);
     setError(null);
     const result = await writes.remove(sheet.id);
@@ -676,6 +676,7 @@ function EntrySheet({
           />
           {sheet.mode === "edit" ? (
             <ConfirmDialog
+              // Confirmed after the connection drops, it closes and sends nothing.
               visible={confirming}
               title={deleteTitle(sheet.row.name ?? "")}
               message={deleteMessage(sheet.row.name ?? "", sheet.row.amount, sheet.row.frequency)}

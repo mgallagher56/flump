@@ -43,6 +43,26 @@ describe("watchConnection", () => {
     expect(session.connectionLost).not.toHaveBeenCalled();
   });
 
+  it("tries once more after a reconnect already running, which began before the network came back", async () => {
+    const net = fakeConnectivity();
+    const session = fakeSession();
+    let finishTimed: () => void = () => {};
+    // The timed reconnect is running; the online event joins it, then must try afresh.
+    session.reconnect.mockImplementationOnce(
+      () =>
+        new Promise<undefined>((resolve) => {
+          finishTimed = () => resolve(undefined);
+        }),
+    );
+    watchConnection(session, net.connectivity);
+    net.emit(true);
+    expect(session.reconnect).toHaveBeenCalledTimes(1);
+    finishTimed();
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(session.reconnect).toHaveBeenCalledTimes(2);
+  });
+
   it("stops listening when stopped", () => {
     const net = fakeConnectivity();
     const session = fakeSession();

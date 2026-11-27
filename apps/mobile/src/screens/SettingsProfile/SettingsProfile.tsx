@@ -10,6 +10,7 @@ import { Button } from "../../components/Button";
 import { Card } from "../../components/Card";
 import { ErrorState } from "../../components/ErrorState";
 import { FormField } from "../../components/FormField";
+import { InlineAlert } from "../../components/InlineAlert";
 import { OptionList } from "../../components/OptionList";
 import { Screen } from "../../components/Screen";
 import { Skeleton } from "../../components/Skeleton";
@@ -19,11 +20,13 @@ import { TextField } from "../../components/TextField";
 import { Toast } from "../../components/Toast";
 import { CHECK_IN } from "../../copy/checkIn";
 import { OPEN_FLUMP_WEBSITE, websiteButtonName } from "../../copy/navigation";
+import { SAVE_NEEDS_CONNECTION } from "../../copy/offline";
 import { checkInDayLabel, PROFILE, SAVE } from "../../copy/settings";
 import { useAccounts } from "../../data/checkIn";
 import { classifyApiError } from "../../data/problems";
 import { type AppProfile, useProfile } from "../../data/profile";
 import { useDelayedLoading } from "../../data/useDelayedLoading";
+import { useShownOnline } from "../../features/offline/useShownOnline";
 import { type ProfileSaves, useProfileSaves } from "../../features/settings/useProfileSaves";
 import { isPageEnabled, withSelfAssessment } from "../../navigation/pageSwitches";
 import type { WebLink } from "../../navigation/shell";
@@ -73,7 +76,10 @@ export function SettingsProfile({
   // Nothing for 200 ms, then a placeholder for at least 400 ms, as Home (S5).
   const skeleton = useDelayedLoading(loading);
 
-  if (offline) return <Offline onRetry={onRetry} onSignOut={onSignOut} />;
+  // Opened offline it says so; already open when the connection drops, the page stays with what was
+  // typed, and nothing is sent until the connection is back (E12 S7 follow-up).
+  const shownOnline = useShownOnline(offline);
+  if (offline && !shownOnline) return <Offline onRetry={onRetry} onSignOut={onSignOut} />;
   if (profile.isError && profile.data === undefined) {
     const problem = classifyApiError(profile.error);
     const retry = () => void profile.refetch();
@@ -112,7 +118,15 @@ export function SettingsProfile({
   }
   // Unknown is not "no": with the accounts unread, both choices are offered (web's rule).
   const choices = accounts.data ? netWorthChoicesAvailable(accounts.data) : null;
-  return <ProfileForm profile={profile.data} choices={choices} website={website} focus={focus} />;
+  return (
+    <ProfileForm
+      profile={profile.data}
+      choices={choices}
+      website={website}
+      focus={focus}
+      offline={offline}
+    />
+  );
 }
 
 function ProfileForm({
@@ -120,17 +134,31 @@ function ProfileForm({
   choices,
   website,
   focus,
+  offline,
 }: {
   profile: AppProfile;
   choices: NetWorthChoicesAvailable | null;
   website: WebLink;
   focus?: "netWorth";
+  /** The connection dropped while the page was open: nothing is sent, typed names stay. */
+  offline: boolean;
 }) {
-  const saves = useProfileSaves();
+  const online = useProfileSaves();
+  // Offline every save is held back unsent: a name stays as typed, the switches are off.
+  const saves: ProfileSaves = offline
+    ? { ...online, offline: true, save: async () => false }
+    : online;
   const scroll = useRef<ScrollViewInstance>(null);
   const scrolled = useRef(false);
   return (
     <Screen edges={EDGES} scrollRef={scroll} testID="settings-profile">
+      {offline ? (
+        <InlineAlert
+          tone="info"
+          message={SAVE_NEEDS_CONNECTION}
+          testID="settings-profile-offline"
+        />
+      ) : null}
       {saves.toast ? (
         <Toast key={saves.toast.count} message={saves.toast.message} testID="settings-saved" />
       ) : null}
@@ -230,6 +258,8 @@ function NameField({
   // Submitting with the keyboard also leaves the field: one edit saves once, on whichever is first.
   const leave = async () => {
     if (!editing.current) return;
+    // Offline: the typed name stays, still being edited, and is saved when the field is next left.
+    if (saves.offline) return;
     editing.current = false;
     const value = text.trim() || null;
     if (value === saved) {
@@ -313,6 +343,7 @@ function NetWorthChoices({
           label={PROFILE.countProperty}
           value={property}
           busy={busy}
+          disabled={saves.offline}
           testID="settings-counts-property"
           onValueChange={(on) => void saves.save("netWorth", { netWorthCountsProperty: on })}
         />
@@ -322,6 +353,7 @@ function NetWorthChoices({
           label={PROFILE.countStudentLoan}
           value={studentLoan}
           busy={busy}
+          disabled={saves.offline}
           testID="settings-counts-student-loan"
           onValueChange={(on) => void saves.save("netWorth", { netWorthCountsStudentLoan: on })}
         />
@@ -376,6 +408,7 @@ function Sections({ profile, saves }: { profile: AppProfile; saves: ProfileSaves
         hint={PROFILE.selfAssessmentHint}
         value={on}
         busy={saves.busy.has("sections")}
+        disabled={saves.offline}
         testID="settings-self-assessment"
         onValueChange={toggle}
       />

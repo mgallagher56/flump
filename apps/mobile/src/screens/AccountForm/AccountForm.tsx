@@ -222,6 +222,7 @@ function AccountForm({
           />
         ) : null}
       </Screen>
+      {/* Confirmed after the connection drops, it closes and sends nothing. */}
       <ConfirmDialog
         visible={confirming}
         title={DELETE_ACCOUNT.title(deleteName)}
@@ -231,7 +232,7 @@ function AccountForm({
         tone="destructive"
         onConfirm={() => {
           setConfirming(false);
-          void form.remove();
+          if (!offline) void form.remove();
         }}
         onCancel={() => setConfirming(false)}
       />

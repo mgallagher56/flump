@@ -105,7 +105,8 @@ describe("SavedFiguresFrame", () => {
     expect(box.borderColor).toBe(tokens.colors["status.info.border"]);
   });
 
-  it.each(Object.entries(savedFiguresFrameStates))(
+  // Every state with a notice; `online` draws no text of its own.
+  it.each(Object.entries(savedFiguresFrameStates).filter(([, props]) => props.savedAt !== null))(
     "%s holds at 200%% text",
     async (_name, props) => {
       await expectHoldsAtDoubleText(<SavedFiguresFrame {...props} />);

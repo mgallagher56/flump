@@ -20,6 +20,8 @@ export interface ProfileSaves {
   readonly errors: Partial<Record<ProfileGroup, string>>;
   /** "Saved" after the latest save that worked, with a count so a second "Saved" is read again. */
   readonly toast: { readonly message: string; readonly count: number } | null;
+  /** The connection dropped (E12 S7 follow-up): `save` sends nothing and resolves false. */
+  readonly offline?: boolean;
   /**
    * Saves one change for a group. Resolves true when it was saved. `failedMessage` is the group's
    * own words for a failure (web's).

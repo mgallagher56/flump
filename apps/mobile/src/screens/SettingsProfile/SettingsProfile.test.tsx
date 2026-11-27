@@ -1,6 +1,7 @@
 import { durations, light } from "@flump/tokens/native";
 import { act, fireEvent, render, screen, userEvent, within } from "@testing-library/react-native";
 import { AccessibilityInfo, Linking, ScrollView, StyleSheet } from "react-native";
+import { SAVE_NEEDS_CONNECTION } from "../../copy/offline";
 import { fail, fakeApi, withApi } from "../../data/fakeApi";
 import { household, NOW, routes } from "../../features/check-in/checkInTestData";
 import { Home } from "../Home";
@@ -563,6 +564,33 @@ describe("SettingsProfile", () => {
     await settle();
     expect(screen.getByText("Try again")).toBeOnTheScreen();
     expect(api.request).not.toHaveBeenCalled();
+  });
+
+  it("open when the connection drops: a typed name stays, nothing is sent, saved once back", async () => {
+    const h = household(OWNER);
+    const patch = jest.fn((body: unknown) => ({ ...h.profile, ...(body as object) }));
+    const api = fakeApi(routes(h, { "PATCH /user-profile": patch }));
+    const { ui, queryClient } = withApi(<SettingsProfile {...props()} />, api.client);
+    const { rerender } = await render(ui);
+    await settle();
+    const at = (offline: boolean) =>
+      withApi(<SettingsProfile {...props({ offline })} />, api.client, queryClient).ui;
+    await fireEvent.changeText(screen.getByTestId("settings-firstName"), "Robin");
+    await act(async () => rerender(at(true)));
+    expect(screen.getByTestId("settings-profile-offline")).toHaveTextContent(SAVE_NEEDS_CONNECTION);
+    await fireEvent(screen.getByTestId("settings-firstName"), "blur");
+    await settle();
+    expect(screen.getByTestId("settings-firstName").props.value).toBe("Robin");
+    expect(
+      screen.getByRole("switch", { name: "Self Assessment" }).props.accessibilityState,
+    ).toMatchObject({ disabled: true });
+    expect(patch).not.toHaveBeenCalled();
+    // Back online: leaving the field saves what was typed.
+    await act(async () => rerender(at(false)));
+    expect(screen.queryByTestId("settings-profile-offline")).toBeNull();
+    await fireEvent(screen.getByTestId("settings-firstName"), "blur");
+    await settle();
+    expect(patch).toHaveBeenCalledWith(expect.objectContaining({ firstName: "Robin" }));
   });
 
   it("with no profile yet, the website's setup", async () => {

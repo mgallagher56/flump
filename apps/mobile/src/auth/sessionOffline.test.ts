@@ -400,6 +400,30 @@ describe("the connection drops while signed in (E12 S7 follow-up)", () => {
     expect(h.tokens.clear).not.toHaveBeenCalled();
   });
 
+  it("a refresh already in flight when the connection drops puts no access token back", async () => {
+    const h = harness("r_stored");
+    const session = await onlineSession(h);
+    let answer: (result: TokenResult) => void = () => {};
+    h.refresh.mockImplementationOnce(
+      () =>
+        new Promise<TokenResult>((resolve) => {
+          answer = resolve;
+        }),
+    );
+    // A 401 while signed in starts a refresh; the drop comes before WorkOS answers.
+    const refreshing = session.refresh();
+    // The store is read first; wait until WorkOS has been asked.
+    while (h.refresh.mock.calls.length < 2) await Promise.resolve();
+    session.connectionLost();
+    const fresh = tokensFor("user_a");
+    answer(ok(fresh));
+    expect(await refreshing).toBe("refreshed");
+    expect(session.getState()).toEqual({ status: "restoredOffline" });
+    expect(session.getAccessToken()).toBeNull();
+    // The rotated refresh token is the one kept, for the reconnect.
+    expect(await h.tokens.read()).toBe(fresh.refreshToken);
+  });
+
   it.each([
     [
       "signedOut",

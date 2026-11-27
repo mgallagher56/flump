@@ -11,7 +11,7 @@ export const SAVED_FIGURES = {
 
 /**
  * On a form left open when the connection drops (E12 S7 follow-up): what was typed stays, and Save
- * works again once Flump answers. No blame and no alarm.
+ * works again once Flump answers. "Reconnect", as the copy guide says it. No blame and no alarm.
  */
 export const SAVE_NEEDS_CONNECTION =
-  "Saving needs a connection. What you typed stays here, so you can save it once you are back online.";
+  "Saving needs a connection. What you typed stays here, so you can save it once you reconnect.";
