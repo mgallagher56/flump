@@ -1,0 +1,13 @@
+{
+  "$comment": "The marketing home page weight ratchet (scripts/check-marketing-weight.ts; ROLLOUT-PLAN section 2; UX-GUIDELINES MK12). Bytes, gzipped. baseline: main before the new design, measured on 27 Nov 2026 at commit 0b291c6ec (deterministic across rebuilds). budget: the plan's extra weight for the new blocks (1 KB = 1000 bytes), so each ceiling is baseline plus budget, the figure M1 and M2 are measured against. Raising a baseline or a budget is a guard change (AGENTS.md section 15): a hand edit, signed off and listed in the PR. --write-baseline only lowers.",
+  "baseline": {
+    "firstLoadJsGzip": 236083,
+    "cssGzip": 32094,
+    "lazyJsGzip": 0
+  },
+  "budget": {
+    "firstLoadJsGzip": 25000,
+    "cssGzip": 25000,
+    "lazyJsGzip": 230000
+  }
+}
