@@ -171,3 +171,49 @@ describe("useAccountWrites create", () => {
     ).resolves.toEqual({ status: "saved", id });
   });
 });
+
+describe("useAccountWrites remove (S8 device check)", () => {
+  it("a delete that lands takes the account and its months out of the cache at once", async () => {
+    const gone = randomUUID();
+    const kept = randomUUID();
+    const api = fakeApi({
+      [`DELETE /accounts/${gone}`]: () => ({ success: true }),
+      // The list read again never answers: the cache must not wait for it.
+      "GET /accounts": () => new Promise(() => {}),
+      "GET /account-details": () => new Promise(() => {}),
+      "GET /snapshots/check-ins": () => new Promise(() => {}),
+    });
+    const queryClient = testQueryClient();
+    queryClient.setQueryData(queryKeys.accounts(), [{ id: gone }, { id: kept }]);
+    queryClient.setQueryData(queryKeys.accountDetails(), [
+      { accountId: gone, year: 2026, month: 10, value: 1 },
+      { accountId: kept, year: 2026, month: 10, value: 2 },
+    ]);
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <ApiProvider client={api.client} queryClient={queryClient}>
+        {children}
+      </ApiProvider>
+    );
+    const { result } = await renderHook(() => useAccountWrites(), { wrapper });
+    await expect(result.current.remove(gone)).resolves.toEqual({ status: "saved" });
+    expect(queryClient.getQueryData(queryKeys.accounts())).toEqual([{ id: kept }]);
+    expect(queryClient.getQueryData(queryKeys.accountDetails())).toEqual([
+      { accountId: kept, year: 2026, month: 10, value: 2 },
+    ]);
+  });
+
+  it("a delete that fails leaves the cache as it was", async () => {
+    const id = randomUUID();
+    const api = fakeApi({ [`DELETE /accounts/${id}`]: () => fail("server", 500) });
+    const queryClient = testQueryClient();
+    queryClient.setQueryData(queryKeys.accounts(), [{ id }]);
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <ApiProvider client={api.client} queryClient={queryClient}>
+        {children}
+      </ApiProvider>
+    );
+    const { result } = await renderHook(() => useAccountWrites(), { wrapper });
+    await expect(result.current.remove(id)).resolves.toEqual({ status: "failed", kind: "server" });
+    expect(queryClient.getQueryData(queryKeys.accounts())).toEqual([{ id }]);
+  });
+});
