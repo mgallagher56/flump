@@ -305,6 +305,82 @@ describe("Budget", () => {
     });
   });
 
+  describe("states the device check could not reach", () => {
+    /** The renter with the card payment and the savings read from their accounts. */
+    function linkedHousehold(savingsAccount: "kept" | "removed" = "kept") {
+      const seeds = RENTER_BUDGET.map((row) =>
+        row.name === "Credit card payment"
+          ? { ...row, category: "debt", linkKind: "debt" as const }
+          : row.name === "Easy access savings"
+            ? { ...row, linkKind: "savings" as const }
+            : row,
+      );
+      const h = renterHousehold(seeds);
+      const idOf = (name: string) => h.accounts.find((a) => a.name === name)?.id ?? "";
+      const gone = "0b0b0b0b-0000-4000-8000-000000000000";
+      return {
+        ...h,
+        budgetEntries: h.budgetEntries.map((r) =>
+          r.name === "Credit card payment"
+            ? { ...r, linkAccountId: idOf("Credit card") }
+            : r.name === "Easy access savings"
+              ? {
+                  ...r,
+                  linkAccountId: savingsAccount === "kept" ? idOf("Easy access savings") : gone,
+                }
+              : r,
+        ),
+      };
+    }
+
+    it("debt and savings lines linked to accounts read them, say so, and stay read only", async () => {
+      await budget(fakeApi(routes(linkedHousehold())));
+      // The card's monthly payment (60) and the savings' monthly saving (150) stand in for the
+      // stored £0: 2,085 - (1,555 + 60) - 195 - 150 = 125, as with the typed rows.
+      expect(await screen.findByLabelText(HERO)).toBeOnTheScreen();
+      const u = user();
+      await u.press(screen.getByTestId("budget-categories-debt"));
+      expect(screen.getByLabelText(/^Credit card payment, .*From Credit card$/)).toBeOnTheScreen();
+      await u.press(screen.getByTestId("budget-categories-savings"));
+      expect(
+        screen.getByLabelText(/^Easy access savings, .*From Easy access savings$/),
+      ).toBeOnTheScreen();
+      await u.press(screen.getByRole("button", { name: "Edit budget" }));
+      expect(
+        screen.getByRole("link", { name: /^Credit card payment, .*Change it on the website$/ }),
+      ).toBeOnTheScreen();
+      expect(
+        screen.getByRole("link", { name: /^Easy access savings, .*Change it on the website$/ }),
+      ).toBeOnTheScreen();
+    });
+
+    it("a line whose account was removed is Not set with web's reason, and no figure reads £0", async () => {
+      await budget(fakeApi(routes(linkedHousehold("removed"))));
+      expect(await screen.findByTestId("budget-hero")).toBeOnTheScreen();
+      // A linked line that is not set leaves what is left over unknown: never counted as £0.
+      expect(screen.queryByLabelText(/^Left over each month, £/)).toBeNull();
+      expect(screen.queryByLabelText(/£0\b/)).toBeNull();
+      await user().press(screen.getByTestId("budget-categories-savings"));
+      expect(
+        screen.getByLabelText(
+          /^Easy access savings, Not set, The account this line used was removed or changed$/,
+        ),
+      ).toBeOnTheScreen();
+    });
+
+    it("a short budget says Short each month in the ordinary colours, with the equation", async () => {
+      const h = renterHousehold([
+        ...RENTER_BUDGET,
+        { name: "Car", category: "expenses", amount: 200 },
+      ]);
+      await budget(fakeApi(routes(h)));
+      // 2,085 - (1,960 + 200) = -75: short by £75, shown as £75 under "Short each month".
+      expect(await screen.findByLabelText(/^Short each month, £75, /)).toBeOnTheScreen();
+      expect(screen.getByTestId("budget-equation")).toHaveTextContent(/Short/);
+      expect(screen.queryByLabelText(/^Left over each month/)).toBeNull();
+    });
+  });
+
   describe("the what-if zone", () => {
     it("starts closed with its summary; no input sends a request or changes a saved figure", async () => {
       const api = fakeApi(routes(renterHousehold()));
