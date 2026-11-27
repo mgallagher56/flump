@@ -83,6 +83,14 @@ export function roundPence(x: number): number {
   return Math.round((x + Number.EPSILON) * 100) / 100;
 }
 
+/**
+ * Basic-rate relief added at source: a net pension payment grossed up by 1 / (1 - basic rate),
+ * x 1.25 at 20%. The same factor turns a gross relief at source percentage back into the net paid.
+ */
+export function reliefAtSourceGrossUp(rules: Pick<UkTaxYearRules, "ewni">): number {
+  return 1 / (1 - rules.ewni.basicRate);
+}
+
 /** Parses a money value once. null, undefined, blank and non-numeric input give 0. */
 export function toMoney(value: number | string | null | undefined): number {
   if (value === null || value === undefined) return 0;

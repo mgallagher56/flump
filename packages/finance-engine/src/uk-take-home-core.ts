@@ -38,6 +38,7 @@ import {
   getUkTaxYearContext,
   getUkTaxYearRules,
   isStudentLoanRepayable,
+  reliefAtSourceGrossUp,
   resolveUkTaxYear,
   roundPence,
   scottishRatesRefusal,
@@ -337,7 +338,7 @@ export function computeUkTakeHomeCore(
     assume("pensionPctOfSalary");
   }
   // Basic-rate relief added at source: net x 1 / (1 - basic rate), i.e. x 1.25 at 20%.
-  const rasGrossUp = 1 / (1 - rules.ewni.basicRate);
+  const rasGrossUp = reliefAtSourceGrossUp(rules);
   // A contribution cannot exceed the pay it comes out of. For relief at source, tax relief is limited to
   // relevant earnings, so the grossed-up figure is capped at gross pay. The GBP3,600 minimum for people
   // with low earnings is not in the sourced registry and is not modelled.

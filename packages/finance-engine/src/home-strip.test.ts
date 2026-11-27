@@ -625,3 +625,40 @@ describe("the rows and the picture agree", () => {
     },
   );
 });
+
+describe("edges the mutation run found", () => {
+  it("one spending row among income rows is spending", () => {
+    expect(
+      budgetHasSpending({ outgoings: 0, savings: 0 }, [
+        { amount: 2085, isIncome: true },
+        { amount: 60 },
+      ]),
+    ).toBe(true);
+  });
+
+  it("an unknown take-home with a notice but another reason is not a refusal", () => {
+    expect(
+      budgetRefusalNotice({
+        budget: figureUnknown<BudgetTotals>(["annualSalary"], "not-set"),
+        takeHome: figureUnknown<TakeHome>([], "source-failed", "Could not load."),
+        budgetRows: [{ linked: "take_home", notSet: true }],
+      }),
+    ).toBeNull();
+  });
+
+  it("accounts with no pension account give no pension card, not a £0 one", () => {
+    expect(
+      selectHomeStripFromRows({
+        accounts: [{ id: "acc-current", name: "Current", type: "Current", balance: 900 }],
+        budgetEntries: [
+          { id: "r1", name: "Salary", category: "income", amount: 2085, isIncome: true },
+        ],
+        today: new Date("2026-11-27T12:00:00Z"),
+      }).second,
+    ).toEqual({ kind: "none" });
+  });
+
+  it("an unreadable date is an error, never a quiet unknown", () => {
+    expect(() => selectHomeStripFromRows({ today: new Date("not a date") })).toThrow(RangeError);
+  });
+});
