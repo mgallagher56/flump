@@ -1,0 +1,89 @@
+# E12 S6: the Accounts tab. The home owner's list (what you own and owe, each with its total);
+# the joint household (a joint 50% mortgage and home at half, an overdrawn current account under
+# what you owe); no accounts; and an account with no balance (`malformed`): the out-of-step words
+# with Try again, never "No accounts yet".
+# The runner runs it in light and in dark, stopping and settling the app first; no retries.
+appId: app.flump.mobile
+---
+- runScript:
+    file: ../scripts/fixture.js
+    env:
+      SCENARIO: '{"data": "owner"}'
+- runFlow: ../subflows/launch-signed-out.yaml
+- runFlow: ../subflows/sign-in-to-home.yaml
+- tapOn:
+    id: "tab-accounts"
+- extendedWaitUntil:
+    visible:
+      id: "accounts-hero"
+    timeout: 30000
+- assertVisible:
+    id: "accounts-own-total"
+- assertVisible:
+    id: "accounts-view-history"
+- takeScreenshot: accounts-owner-${THEME}
+# The joint household: a relaunch reads it (the cache lives only while the app runs).
+- runScript:
+    file: ../scripts/scenario.js
+    env:
+      SCENARIO: '{"data": "joint"}'
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: "home"
+    timeout: 60000
+- tapOn:
+    id: "tab-accounts"
+- extendedWaitUntil:
+    visible:
+      id: "accounts-hero"
+    timeout: 30000
+- assertVisible:
+    id: "accounts-owe-total"
+- assertVisible: "Mortgage · Joint, 50%"
+- takeScreenshot: accounts-joint-${THEME}
+# No accounts: the empty state, never £0.
+- runScript:
+    file: ../scripts/scenario.js
+    env:
+      SCENARIO: '{"data": "empty"}'
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: "home"
+    timeout: 60000
+- tapOn:
+    id: "tab-accounts"
+- extendedWaitUntil:
+    visible:
+      id: "accounts-empty"
+    timeout: 30000
+- assertVisible:
+    id: "accounts-add-account"
+- assertNotVisible:
+    id: "accounts-hero"
+- takeScreenshot: accounts-empty-${THEME}
+# Out of step: never "No accounts yet", never the connection.
+- runScript:
+    file: ../scripts/scenario.js
+    env:
+      SCENARIO: '{"data": "malformed"}'
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: "home"
+    timeout: 60000
+- tapOn:
+    id: "tab-accounts"
+- extendedWaitUntil:
+    visible:
+      id: "accounts-error"
+    timeout: 60000
+- assertVisible:
+    id: "accounts-retry"
+- assertNotVisible:
+    id: "accounts-empty"
+- takeScreenshot: accounts-out-of-step-${THEME}

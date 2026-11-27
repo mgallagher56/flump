@@ -18,6 +18,11 @@ import {
   SnapshotCheckInsResponse,
   UserProfileResponse,
 } from "@flump/api-contract";
+import {
+  selectAccountBalance,
+  selectAccountGroups,
+  selectRecordedMonthComparison,
+} from "@flump/finance-engine/accounts";
 import { type HomeStrip, selectHomeStripFromRows } from "@flump/finance-engine/home-strip";
 import {
   netWorthBasisFromProfile,
@@ -359,3 +364,63 @@ async function signedInAs(data: HomeData) {
   server.setScenario({ data });
   return signedIn();
 }
+
+/** The accounts screens' figures for a data scenario, from the engine calls the app makes. */
+async function accountsFor(data: "joint" | "twoMonths") {
+  server.setScenario({ data });
+  const api = await signedIn();
+  const accounts = AccountListResponse.parse(await (await api("/v1/accounts")).json());
+  const details = AccountDetailListResponse.parse(await (await api("/v1/account-details")).json());
+  const profile = (await (await api("/v1/user-profile")).json()) as Record<string, unknown>;
+  const basis = netWorthBasisFromProfile(profile);
+  const totals = selectNetWorth(new PortfolioSnapshot(accounts, details), basis);
+  const rows = accounts.map((a) => ({
+    name: a.name,
+    type: a.type,
+    balance: selectAccountBalance(
+      a,
+      details.filter((d) => d.accountId === a.id),
+      "2026-11",
+    ).balance,
+  }));
+  const series = selectSavedNetWorthSeries(accounts, details, "2026-11", basis);
+  return {
+    totals,
+    groups: selectAccountGroups(rows, totals.leftOut),
+    history: selectRecordedMonthComparison(series, "2026-11"),
+  };
+}
+
+const pairs = (rows: readonly { name: string; balance?: number | null }[]) =>
+  rows.map((r) => [r.name, r.balance]);
+
+describe("the accounts screens' households (S6)", () => {
+  it("joint: half the mortgage and home, the overdrawn account owed", async () => {
+    const { totals, groups, history } = await accountsFor("joint");
+    // Own 4,000 + half of 310,000 = 159,000; owe 350 + half of 186,000 = 93,350.
+    expect([totals.totalAssets, totals.totalLiabilities, totals.netWorth]).toEqual([
+      159000, 93350, 65650,
+    ]);
+    expect(pairs(groups.own)).toEqual([
+      ["Easy access savings", 4000],
+      ["Home", 155000],
+    ]);
+    expect(pairs(groups.owe)).toEqual([
+      ["Current account", 350],
+      ["Residential mortgage", 93000],
+    ]);
+    // October 3,900 + 154,750 - 200 - 93,275 = 65,175; September 3,800 + 154,500 + 120
+    // - 93,550 = 64,870; 65,175 - 64,870 = 305.
+    expect(history.comparison?.netWorthChange).toBe(305);
+    expect(history.recordedMonths).toBe(2);
+  });
+
+  it("twoMonths: two recorded months, below the chart's three", async () => {
+    const { totals, history } = await accountsFor("twoMonths");
+    // 1,300 + 2,150.
+    expect(totals.netWorth).toBe(3450);
+    // October 1,200 + 2,100 = 3,300; September 1,000 + 2,000 = 3,000.
+    expect(history.comparison?.netWorthChange).toBe(300);
+    expect(history.recordedMonths).toBe(2);
+  });
+});

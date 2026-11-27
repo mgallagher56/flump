@@ -1,0 +1,50 @@
+# E12 S6: an account's page. The joint mortgage from the list: the amount owed at the share with
+# the whole beside it, its balance history and the website link; Back returns to the list. Then a
+# link to an account that does not exist: "We cannot find that account." with Back to accounts.
+# The runner runs it in light and in dark, stopping and settling the app first; no retries.
+appId: app.flump.mobile
+---
+- runScript:
+    file: ../scripts/fixture.js
+    env:
+      SCENARIO: '{"data": "joint"}'
+- runFlow: ../subflows/launch-signed-out.yaml
+- runFlow: ../subflows/sign-in-to-home.yaml
+- tapOn:
+    id: "tab-accounts"
+- extendedWaitUntil:
+    visible:
+      id: "accounts-owe"
+    timeout: 30000
+# Account ids are made at runtime, so the row is found by its name.
+- tapOn: "Residential mortgage"
+- extendedWaitUntil:
+    visible:
+      id: "account-detail-hero"
+    timeout: 30000
+- assertVisible:
+    id: "account-history-description"
+- assertVisible:
+    id: "account-chart-summary"
+- assertVisible:
+    id: "account-edit-on-website"
+- takeScreenshot: account-joint-mortgage-${THEME}
+- tapOn:
+    id: "header-back"
+- extendedWaitUntil:
+    visible:
+      id: "accounts-hero"
+    timeout: 10000
+# A link to an account that is not in the list.
+- openLink: flump://accounts/not-an-account
+- extendedWaitUntil:
+    visible:
+      id: "account-not-found"
+    timeout: 30000
+- takeScreenshot: account-not-found-${THEME}
+- tapOn:
+    id: "account-back-to-accounts"
+- extendedWaitUntil:
+    visible:
+      id: "accounts-hero"
+    timeout: 10000

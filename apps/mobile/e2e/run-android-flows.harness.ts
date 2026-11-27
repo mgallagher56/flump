@@ -40,6 +40,14 @@ export const SHOTS = [
   "home-strip-renter",
   "home-strip-pension",
   "home-strip-prompt",
+  "accounts-owner",
+  "accounts-joint",
+  "accounts-empty",
+  "accounts-out-of-step",
+  "account-joint-mortgage",
+  "account-not-found",
+  "history-owner",
+  "history-two-months",
 ];
 
 export function run(

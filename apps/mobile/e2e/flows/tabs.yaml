@@ -35,17 +35,15 @@ appId: app.flump.mobile
     below:
       id: "tab-home"
 - takeScreenshot: tab-home-${THEME}
-# Navigation is checked by test id; the placeholder's words once, on Accounts. The button's words
+# Navigation is checked by test id; the placeholder's words once, on Budget. The button's words
 # depend on whether the build has the web app's address, so the flow checks its id, not its label.
 - tapOn:
     id: "tab-accounts"
+# Accounts is the app's own list since S6.
 - extendedWaitUntil:
     visible:
-      id: "coming-soon-accounts"
+      id: "accounts-hero"
     timeout: 10000
-- assertVisible: "This page is not in the app yet. You can use it on the Flump website."
-- assertVisible:
-    id: "coming-soon-open-website"
 - takeScreenshot: tab-accounts-${THEME}
 - tapOn:
     id: "tab-budget"
@@ -53,6 +51,9 @@ appId: app.flump.mobile
     visible:
       id: "coming-soon-budget"
     timeout: 10000
+- assertVisible: "This page is not in the app yet. You can use it on the Flump website."
+- assertVisible:
+    id: "coming-soon-open-website"
 - takeScreenshot: tab-budget-${THEME}
 - tapOn:
     id: "tab-taxAndPay"
