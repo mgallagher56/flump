@@ -64,9 +64,9 @@ function EdgeFade({
 /**
  * The phone navigation (E12 S4, plan 9.7), drawn as web's bottom bar: icon over label, the current
  * tab on a teal pill. A `tablist` of `tab`s with the current one announced as selected; every tab
- * is at least 48 by 48 (Pressable). At large text the icons go and, when the sum of labels no
- * longer fits, the single row scrolls horizontally with content-sized cells, an edge fade cue and
- * the active tab scrolled into view.
+ * is at least 48 by 48 (Pressable). At large text the icons go; cells stay equal while the longest
+ * label fits every cell, share space by label width when the sum fits, and scroll horizontally
+ * with content-sized cells, an edge fade cue and the active tab scrolled into view otherwise.
  */
 export function TabBar({ items, activeKey, onSelect }: TabBarProps) {
   const theme = useTheme();
@@ -81,6 +81,7 @@ export function TabBar({ items, activeKey, onSelect }: TabBarProps) {
     fontSize: theme.textStyles[LABEL_STYLE].fontSize * textScale,
     textScale,
   });
+  const isScroll = layout.mode === "scroll";
 
   const scrollRef = useRef<ScrollViewInstance | null>(null);
   const cellsRef = useRef<Record<string, { x: number; width: number }>>({});
@@ -92,7 +93,7 @@ export function TabBar({ items, activeKey, onSelect }: TabBarProps) {
 
   const edgePadding = theme.spacing["6"];
   const scrollActiveIntoView = useCallback(() => {
-    if (!layout.scroll) return;
+    if (!isScroll) return;
     const cell = cellsRef.current[activeKey];
     if (!cell) return;
     if (scrolledForKey.current === activeKey && contentWidth > 0) return;
@@ -109,38 +110,43 @@ export function TabBar({ items, activeKey, onSelect }: TabBarProps) {
       lastSentX.current = target;
       scrollRef.current?.scrollTo({ x: target, animated: false });
     }
-  }, [activeKey, contentWidth, edgePadding, layout.scroll, width]);
+  }, [activeKey, contentWidth, edgePadding, isScroll, width]);
 
   useEffect(() => {
     scrolledForKey.current = null;
     lastSentX.current = null;
-    if (!layout.scroll) {
+    if (!isScroll) {
       scrollXRef.current = 0;
       setScrollX(0);
       setContentWidth(0);
     }
-  }, [activeKey, layout.scroll]);
+  }, [activeKey, isScroll]);
 
   useEffect(() => {
     scrollActiveIntoView();
   }, [scrollActiveIntoView]);
 
   const cues = overflowCues({
-    scroll: layout.scroll,
+    scroll: isScroll,
     scrollX,
     viewportWidth: width,
     contentWidth,
   });
 
   const row = (
-    <View testID="tab-row" style={layout.scroll ? styles.scrollRow : styles.row}>
+    <View testID="tab-row" style={isScroll ? styles.scrollRow : styles.row}>
       {items.map((item, index) => {
         const selected = item.key === activeKey;
+        const cellStyle = isScroll
+          ? styles.scrollCell
+          : layout.mode === "proportional"
+            ? [styles.proportionalCell, { flexGrow: layout.labelWidths[index] }]
+            : styles.cell;
         return (
           <View
             key={item.key}
             testID={`tab-cell-${item.key}`}
-            style={layout.scroll ? styles.scrollCell : styles.cell}
+            style={cellStyle}
             onLayout={(event) => {
               const { x, width: cellWidth } = event.nativeEvent.layout;
               cellsRef.current[item.key] = { x, width: cellWidth };
@@ -186,7 +192,7 @@ export function TabBar({ items, activeKey, onSelect }: TabBarProps) {
         testID="tab-bar"
         onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
       >
-        {layout.scroll ? (
+        {isScroll ? (
           <>
             <ScrollView
               ref={scrollRef}
