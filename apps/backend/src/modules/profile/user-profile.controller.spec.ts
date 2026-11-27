@@ -1,14 +1,34 @@
+import "reflect-metadata";
 import {
   BadRequestException,
+  type CanActivate,
   ConflictException,
+  type ExecutionContext,
   ForbiddenException,
+  type INestApplication,
+  Injectable,
   Logger,
   ServiceUnavailableException,
 } from "@nestjs/common";
-import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
+import { Test } from "@nestjs/testing";
+import request from "supertest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, type Mock, vi } from "vitest";
+import { AuthGuard } from "../../auth/auth.guard";
 import { InMemoryIdentityAdapter } from "../../identity/identity.adapter";
-import { RATE_LIMIT_CLASS } from "../../security/rate-limit.decorator";
+import {
+  ADDRESS_KEYED_RATE_LIMIT_CLASSES,
+  FAIL_CLOSED_RATE_LIMIT_CLASSES,
+  RATE_LIMIT_CLASS,
+  RATE_LIMIT_POLICIES,
+  SHARED_RATE_LIMIT_CLASSES,
+} from "../../security/rate-limit.decorator";
+import { type SharedRateLimitStore } from "../../security/rate-limit.store";
+import { SecurityModule } from "../../security/security.module";
+import { SHARED_RATE_LIMIT_STORE } from "../../security/shared-rate-limit";
 import { at } from "../../testing/must";
+import { AccountDeletionService } from "../privacy/account-deletion.service";
+import { AccountExportService } from "../privacy/account-export.service";
+import { TermsAcceptanceService } from "./terms-acceptance.service";
 import { UserProfileController } from "./user-profile.controller";
 import { UserProfileService } from "./user-profile.service";
 
@@ -17,6 +37,7 @@ const freshAuthTime = () => Math.floor(Date.now() / 1000) - 30;
 
 describe("UserProfileController", () => {
   let controller: UserProfileController;
+  let identityAdapter: InMemoryIdentityAdapter;
   let mockUserProfileRepo: { findOne: Mock; save: Mock; create: Mock; query: Mock };
   let mockAccountRepo: { find: Mock; delete: Mock };
   let mockTransactionRepo: { delete: Mock };
@@ -77,6 +98,7 @@ describe("UserProfileController", () => {
         }),
       ),
     };
+    identityAdapter = new InMemoryIdentityAdapter();
     controller = new UserProfileController(
       new UserProfileService(
         ...([
@@ -84,7 +106,7 @@ describe("UserProfileController", () => {
           mockAccountRepo,
           mockAccountDetailRepo,
           mockBankConnectionRepo,
-          new InMemoryIdentityAdapter(),
+          identityAdapter,
           dataSource,
           { revokeAll: vi.fn().mockResolvedValue(undefined) },
           { isErased: vi.fn().mockResolvedValue(false) },
@@ -129,9 +151,12 @@ describe("UserProfileController", () => {
   describe("getUserEmail", () => {
     it("returns the token claim email when present without asking the identity adapter", async () => {
       const claimEmail = ["claim", "example.com"].join("@");
+      identityAdapter.emails.set("user-123", claimEmail);
+      const getUserEmail = vi.spyOn(identityAdapter, "getUserEmail");
       await expect(
         controller.getUserEmail({ user: { id: "user-123", email: claimEmail } }),
       ).resolves.toEqual({ email: claimEmail });
+      expect(getUserEmail).not.toHaveBeenCalled();
     });
 
     it("falls back to the identity adapter when the token has no email claim", async () => {
@@ -164,11 +189,15 @@ describe("UserProfileController", () => {
       });
     });
 
-    it("is a 200 GET on user-profile/email using the read rate-limit class", () => {
+    it("is a 200 GET on user-profile/email using the accountEmail rate-limit class", () => {
       const handler = UserProfileController.prototype.getUserEmail;
       expect(Reflect.getMetadata("__httpCode__", handler)).toBe(200);
       expect(Reflect.getMetadata("path", handler)).toBe("user-profile/email");
-      expect(Reflect.getMetadata(RATE_LIMIT_CLASS, handler)).toBe("read");
+      expect(Reflect.getMetadata(RATE_LIMIT_CLASS, handler)).toBe("accountEmail");
+      expect(RATE_LIMIT_POLICIES.accountEmail).toEqual([{ limit: 30, windowMs: 60_000 }]);
+      expect(SHARED_RATE_LIMIT_CLASSES.has("accountEmail")).toBe(false);
+      expect(FAIL_CLOSED_RATE_LIMIT_CLASSES.has("accountEmail")).toBe(false);
+      expect(ADDRESS_KEYED_RATE_LIMIT_CLASSES.has("accountEmail")).toBe(false);
     });
   });
 
@@ -617,5 +646,91 @@ describe("UserProfileController terms acceptance", () => {
     expect(Reflect.getMetadata("path", handler)).toBe("user-profile/terms-acceptance");
     // No class override: the HTTP-method default (write) tier applies.
     expect(Reflect.getMetadata(RATE_LIMIT_CLASS, handler)).toBeUndefined();
+  });
+});
+
+@Injectable()
+class FakeEmailRateLimitAuthGuard implements CanActivate {
+  canActivate(context: ExecutionContext): boolean {
+    const req = context.switchToHttp().getRequest();
+    const id = req.headers["x-test-user"];
+    if (typeof id === "string") req.user = { id };
+    return true;
+  }
+}
+
+describe("GET /user-profile/email rate limiting (HTTP, SecurityModule)", () => {
+  let app: INestApplication;
+  let adapter: InMemoryIdentityAdapter;
+  let sharedHit: ReturnType<typeof vi.spyOn>;
+  const aliceEmail = ["alice", "example.com"].join("@");
+  const bobEmail = ["bob", "example.com"].join("@");
+
+  beforeAll(async () => {
+    vi.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
+    adapter = new InMemoryIdentityAdapter();
+    adapter.emails.set("user-alice", aliceEmail);
+    adapter.emails.set("user-bob", bobEmail);
+    const service = new UserProfileService(
+      ...([
+        { findOne: vi.fn(), save: vi.fn(), create: vi.fn(), query: vi.fn() },
+        { find: vi.fn(), delete: vi.fn() },
+        { delete: vi.fn() },
+        { delete: vi.fn() },
+        adapter,
+        { transaction: vi.fn() },
+        { revokeAll: vi.fn() },
+        { isErased: vi.fn().mockResolvedValue(false) },
+      ] as unknown as ConstructorParameters<typeof UserProfileService>),
+    );
+    const moduleRef = await Test.createTestingModule({
+      imports: [SecurityModule],
+      controllers: [UserProfileController],
+      providers: [
+        { provide: UserProfileService, useValue: service },
+        { provide: AccountDeletionService, useValue: {} },
+        { provide: AccountExportService, useValue: {} },
+        { provide: TermsAcceptanceService, useValue: {} },
+      ],
+    })
+      .overrideGuard(AuthGuard)
+      .useClass(FakeEmailRateLimitAuthGuard)
+      .compile();
+
+    sharedHit = vi.spyOn(moduleRef.get<SharedRateLimitStore>(SHARED_RATE_LIMIT_STORE), "hit");
+    app = moduleRef.createNestApplication();
+    await app.init();
+  });
+
+  afterAll(async () => {
+    await app?.close();
+    vi.restoreAllMocks();
+  });
+
+  it("refuses request 31 with 429 per user without calling the identity adapter", async () => {
+    const getUserEmail = vi.spyOn(adapter, "getUserEmail");
+    const server = app.getHttpServer();
+
+    for (let i = 0; i < 30; i += 1) {
+      const res = await request(server).get("/user-profile/email").set("x-test-user", "user-alice");
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({ email: aliceEmail });
+    }
+    expect(getUserEmail).toHaveBeenCalledTimes(30);
+    expect(sharedHit).not.toHaveBeenCalled();
+
+    const blocked = await request(server)
+      .get("/user-profile/email")
+      .set("x-test-user", "user-alice");
+    expect(blocked.status).toBe(429);
+    expect(Number(blocked.headers["retry-after"])).toBeGreaterThan(0);
+    expect(blocked.body.code).toBe("rate_limited");
+    expect(getUserEmail).toHaveBeenCalledTimes(30);
+
+    const bobRes = await request(server).get("/user-profile/email").set("x-test-user", "user-bob");
+    expect(bobRes.status).toBe(200);
+    expect(bobRes.body).toEqual({ email: bobEmail });
+    expect(getUserEmail).toHaveBeenCalledTimes(31);
+    expect(getUserEmail).toHaveBeenLastCalledWith("user-bob");
   });
 });

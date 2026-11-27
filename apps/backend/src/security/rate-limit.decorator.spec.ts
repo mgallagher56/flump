@@ -62,3 +62,12 @@ describe("household invitation classes (E34 C3)", () => {
     expect(ADDRESS_KEYED_RATE_LIMIT_CLASSES.has("householdInviteCreate")).toBe(false);
   });
 });
+
+describe("accountEmail class", () => {
+  it("allows 30 requests per minute in process memory only", () => {
+    expect(RATE_LIMIT_POLICIES.accountEmail).toEqual([{ limit: 30, windowMs: 60_000 }]);
+    expect(SHARED_RATE_LIMIT_CLASSES.has("accountEmail")).toBe(false);
+    expect(FAIL_CLOSED_RATE_LIMIT_CLASSES.has("accountEmail")).toBe(false);
+    expect(ADDRESS_KEYED_RATE_LIMIT_CLASSES.has("accountEmail")).toBe(false);
+  });
+});

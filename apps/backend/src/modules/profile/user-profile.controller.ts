@@ -81,9 +81,9 @@ export class UserProfileController {
    */
   @Get("user-profile/email")
   @HttpCode(200)
-  @RateLimit("read")
+  @RateLimit("accountEmail")
   async getUserEmail(@Req() req: AuthenticatedRequest): Promise<UserEmailResponse> {
-    const email = await this.userProfileService.getEmail(req.user.id, req.user?.email);
+    const email = await this.userProfileService.getEmail(req.user.id, req.user.email);
     return { email };
   }
 
