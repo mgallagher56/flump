@@ -1,14 +1,14 @@
 import { render, screen, userEvent } from "@testing-library/react-native";
 import { expectHoldsAtDoubleText } from "../../testing/textScale";
 import { ThemeProvider } from "../../theme/ThemeProvider";
-import { Disclosure } from "./Disclosure";
-import { disclosureStates } from "./Disclosure.states";
+import { CollapsibleDrawer } from "./CollapsibleDrawer";
+import { collapsibleDrawerStates } from "./CollapsibleDrawer.states";
 
-describe("Disclosure", () => {
+describe("CollapsibleDrawer", () => {
   it("starts closed, opens and closes, and says which", async () => {
     await render(
       <ThemeProvider scheme="light">
-        <Disclosure {...disclosureStates.closed} />
+        <CollapsibleDrawer {...collapsibleDrawerStates.closed} />
       </ThemeProvider>,
     );
     const user = userEvent.setup();
@@ -23,7 +23,10 @@ describe("Disclosure", () => {
     expect(screen.queryByText(/Each account's change/)).toBeNull();
   });
 
-  it.each(Object.entries(disclosureStates))("%s holds at 200%% text", async (_name, props) => {
-    await expectHoldsAtDoubleText(<Disclosure {...props} />);
-  });
+  it.each(Object.entries(collapsibleDrawerStates))(
+    "%s holds at 200%% text",
+    async (_name, props) => {
+      await expectHoldsAtDoubleText(<CollapsibleDrawer {...props} />);
+    },
+  );
 });

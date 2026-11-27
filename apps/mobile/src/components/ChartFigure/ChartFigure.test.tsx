@@ -2,14 +2,14 @@ import { light } from "@flump/tokens/native";
 import { act, fireEvent, render, screen } from "@testing-library/react-native";
 import { processColor } from "react-native";
 import { ThemeProvider } from "../../theme/ThemeProvider";
-import { MonthLineChart } from "./MonthLineChart";
-import { monthLineChartStates } from "./MonthLineChart.states";
+import { ChartFigure } from "./ChartFigure";
+import { chartFigureStates } from "./ChartFigure.states";
 
 /** Draws the chart 212 points wide: 200 of plot inside the 6 point inset on each side. */
-async function draw(props: Parameters<typeof MonthLineChart>[0]) {
+async function draw(props: Parameters<typeof ChartFigure>[0]) {
   await render(
     <ThemeProvider scheme="light">
-      <MonthLineChart {...props} testID="c" />
+      <ChartFigure {...props} testID="c" />
     </ThemeProvider>,
   );
   await act(async () => {
@@ -22,9 +22,9 @@ async function draw(props: Parameters<typeof MonthLineChart>[0]) {
 const segment = (i: number) =>
   screen.getByTestId(`c-segment-${i}`, { includeHiddenElements: true }).props;
 
-describe("MonthLineChart", () => {
+describe("ChartFigure", () => {
   it("is hidden from screen readers", async () => {
-    await draw(monthLineChartStates.flat);
+    await draw(chartFigureStates.flat);
     const root = screen.getByTestId("c", { includeHiddenElements: true });
     expect(root.props.accessibilityElementsHidden).toBe(true);
     expect(root.props.importantForAccessibility).toBe("no-hide-descendants");
@@ -47,7 +47,7 @@ describe("MonthLineChart", () => {
   });
 
   it("dashes a segment to or from a carried month, and only those", async () => {
-    await draw(monthLineChartStates.withGap);
+    await draw(chartFigureStates.withGap);
     expect([segment(0), segment(1), segment(2)].map((s) => s.strokeDasharray)).toEqual([
       undefined,
       ["4", "4"],

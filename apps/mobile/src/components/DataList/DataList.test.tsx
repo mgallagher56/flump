@@ -3,14 +3,14 @@ import { render, screen } from "@testing-library/react-native";
 import { StyleSheet, type TextStyle } from "react-native";
 import { expectHoldsAtDoubleText } from "../../testing/textScale";
 import { ThemeProvider } from "../../theme/ThemeProvider";
-import { FigureList } from "./FigureList";
-import { figureListStates } from "./FigureList.states";
+import { DataList } from "./DataList";
+import { dataListStates } from "./DataList.states";
 
-describe("FigureList", () => {
+describe("DataList", () => {
   it("reads each line as one item, with its note, in the order given", async () => {
     await render(
       <ThemeProvider scheme="light">
-        <FigureList {...figureListStates.months} testID="l" />
+        <DataList {...dataListStates.months} testID="l" />
       </ThemeProvider>,
     );
     expect(screen.getByText("Balance by month")).toBeOnTheScreen();
@@ -25,7 +25,7 @@ describe("FigureList", () => {
   it("speaks a change in words; figures are tabular in the ordinary colour", async () => {
     await render(
       <ThemeProvider scheme="light">
-        <FigureList {...figureListStates.changes} testID="l" />
+        <DataList {...dataListStates.changes} testID="l" />
       </ThemeProvider>,
     );
     expect(screen.getByTestId("l-row-c").props.accessibilityLabel).toBe(
@@ -36,7 +36,7 @@ describe("FigureList", () => {
     expect(style.color).toBe(light.colors["text.primary"]);
   });
 
-  it.each(Object.entries(figureListStates))("%s holds at 200%% text", async (_name, props) => {
-    await expectHoldsAtDoubleText(<FigureList {...props} />);
+  it.each(Object.entries(dataListStates))("%s holds at 200%% text", async (_name, props) => {
+    await expectHoldsAtDoubleText(<DataList {...props} />);
   });
 });

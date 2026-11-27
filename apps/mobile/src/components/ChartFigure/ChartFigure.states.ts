@@ -1,7 +1,7 @@
-import type { MonthLineChartProps } from "./MonthLineChart";
+import type { ChartFigureProps } from "./ChartFigure";
 
 /** Named prop sets for the dev gallery and the tests (in place of Storybook stories). */
-export const monthLineChartStates = {
+export const chartFigureStates = {
   falling: {
     points: [
       { fraction: 1, carried: false },
@@ -27,4 +27,4 @@ export const monthLineChartStates = {
       { fraction: 0.5, carried: false },
     ],
   },
-} satisfies Record<string, MonthLineChartProps>;
+} satisfies Record<string, ChartFigureProps>;

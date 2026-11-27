@@ -18,13 +18,13 @@ sections:
       - net-worth-over-time
 
   - id: history-chart
-    component: apps/mobile/src/components/MonthLineChart/MonthLineChart.tsx
+    component: apps/mobile/src/components/ChartFigure/ChartFigure.tsx
     facts_read:
       - balance-history
     figures_shown:
       - net-worth-over-time
 
   - id: changes-by-account
-    component: apps/mobile/src/components/FigureList/FigureList.tsx
+    component: apps/mobile/src/components/DataList/DataList.tsx
     facts_read:
       - balance-history

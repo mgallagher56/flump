@@ -4,9 +4,9 @@ import { useTheme } from "../../theme/ThemeProvider";
 import { Icon } from "../Icon";
 import { Pressable } from "../Pressable";
 import { Text } from "../Text";
-import { createStyles } from "./Disclosure.styles";
+import { createStyles } from "./CollapsibleDrawer.styles";
 
-export interface DisclosureProps {
+export interface CollapsibleDrawerProps {
   /** The control's words while closed ("Show changes by account"). */
   label: string;
   /** Its words while open ("Hide changes by account"). */
@@ -21,13 +21,13 @@ export interface DisclosureProps {
  * One quiet show and hide control over a block, as web's quiet `CollapsibleDrawer`: closed by
  * default, its words say what a press does, and a screen reader hears it expanded or collapsed.
  */
-export function Disclosure({
+export function CollapsibleDrawer({
   label,
   openLabel,
   children,
   initiallyOpen = false,
   testID,
-}: DisclosureProps) {
+}: CollapsibleDrawerProps) {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [open, setOpen] = useState(initiallyOpen);

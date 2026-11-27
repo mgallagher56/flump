@@ -5,11 +5,11 @@ import {
 import type { ReactNode } from "react";
 import { Linking } from "react-native";
 import { Button } from "../../components/Button";
+import { ChartFigure } from "../../components/ChartFigure";
+import { DataList } from "../../components/DataList";
 import { EmptyState } from "../../components/EmptyState";
 import { ErrorState } from "../../components/ErrorState";
-import { FigureList } from "../../components/FigureList";
 import { HeroFigure } from "../../components/HeroFigure";
-import { MonthLineChart } from "../../components/MonthLineChart";
 import { Screen } from "../../components/Screen";
 import { Text } from "../../components/Text";
 import {
@@ -184,7 +184,7 @@ function Loaded({ detail, links }: { detail: Detail; links: AccountDetailProps["
           </Text>
           {detail.series.length >= MIN_ACCOUNT_POINTS ? (
             <>
-              <MonthLineChart points={detail.chart} testID="account-chart" />
+              <ChartFigure points={detail.chart} testID="account-chart" />
               <Text testID="account-chart-summary">
                 {accountChartSummary(detail.firstMonth, detail.change, detail.endCarried)}
               </Text>
@@ -192,7 +192,7 @@ function Loaded({ detail, links }: { detail: Detail; links: AccountDetailProps["
           ) : (
             <Text color="secondary">{ACCOUNT.chartNotEnough}</Text>
           )}
-          <FigureList
+          <DataList
             rows={detail.series.map((p) => ({
               id: `${p.year}-${p.month}`,
               label: pointMonth(p),

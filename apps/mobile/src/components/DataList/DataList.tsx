@@ -3,10 +3,10 @@ import { View } from "react-native";
 import { useTheme } from "../../theme/ThemeProvider";
 import { Card } from "../Card";
 import { Text } from "../Text";
-import { createStyles } from "./FigureList.styles";
+import { createStyles } from "./DataList.styles";
 
 /** One line of the list: what it is, its figure already formatted, and a note. */
-interface FigureListRow {
+interface DataListRow {
   id: string;
   /** "October 2026", or an account's name. */
   label: string;
@@ -18,8 +18,8 @@ interface FigureListRow {
   note?: string | null;
 }
 
-export interface FigureListProps {
-  rows: readonly FigureListRow[];
+export interface DataListProps {
+  rows: readonly DataListRow[];
   /** Read before the rows ("Net worth by month"), as web's table caption. */
   caption?: string;
   testID?: string;
@@ -30,7 +30,7 @@ export interface FigureListProps {
  * reader reads in place of a chart. Each line is one element ("October 2026, £186,550,
  * Calculated"). Figures in the ordinary text colour, whatever their sign.
  */
-export function FigureList({ rows, caption, testID }: FigureListProps) {
+export function DataList({ rows, caption, testID }: DataListProps) {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   return (

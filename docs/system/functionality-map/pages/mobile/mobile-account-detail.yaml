@@ -18,7 +18,7 @@ sections:
       - net-worth-choices
 
   - id: balance-history
-    component: apps/mobile/src/components/MonthLineChart/MonthLineChart.tsx
+    component: apps/mobile/src/components/ChartFigure/ChartFigure.tsx
     facts_read:
       - account-balance
       - balance-history

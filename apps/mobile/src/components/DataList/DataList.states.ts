@@ -1,7 +1,7 @@
-import type { FigureListProps } from "./FigureList";
+import type { DataListProps } from "./DataList";
 
 /** Named prop sets for the dev gallery and the tests (in place of Storybook stories). */
-export const figureListStates = {
+export const dataListStates = {
   months: {
     caption: "Balance by month",
     rows: [
@@ -17,4 +17,4 @@ export const figureListStates = {
       { id: "c", label: "Workplace pension", figure: "−£260", spoken: "down £260" },
     ],
   },
-} satisfies Record<string, FigureListProps>;
+} satisfies Record<string, DataListProps>;
