@@ -217,7 +217,6 @@ export function TabBar({ items, activeKey, onSelect }: TabBarProps) {
               ) : null}
               <Text
                 textStyle={LABEL_STYLE}
-                lineClamp={1}
                 style={[styles.label, selected ? styles.labelSelected : null]}
               >
                 {item.label}
