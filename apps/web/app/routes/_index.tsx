@@ -1,4 +1,8 @@
 import {
+  budgetHasSpending,
+  budgetLeavesOut,
+  budgetRefusalNotice,
+  budgetSurplusOrNull,
   type TaxRecord as EngineTaxRecord,
   getCurrentUKTaxYear,
   isFigureKnown,
@@ -93,13 +97,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
   const safeToSpend = knownOrNull(picture.safeToSpend);
   // A budget left unknown only because its linked take-home line is refused (the year's rates
   // for this person are not published): the card says why, rather than asking for a budget.
-  const budgetNotice: string | null =
-    budget === null &&
-    !isFigureKnown(picture.takeHome) &&
-    picture.takeHome.reason === "rates-not-published" &&
-    picture.budgetRows.some((row) => row.linked === "take_home" && row.notSet)
-      ? (picture.takeHome.notice ?? null)
-      : null;
+  const budgetNotice = budgetRefusalNotice(picture);
   const monthsOfCover = knownOrNull(picture.monthsOfCover);
 
   // Savings accounts data
@@ -237,26 +235,18 @@ export const loader = async (args: LoaderFunctionArgs) => {
       budgetKnown: budget !== null,
       budgetNotice,
       // What income and left over leave out (a refused student loan plan in the linked take-home).
-      budgetLeavesOut:
-        picture.budget.status === "known" ? (picture.budget.assumptions?.join(" ") ?? null) : null,
+      budgetLeavesOut: budgetLeavesOut(picture.budget),
       // Whether the budget holds income only (set up straight after onboarding): the dashboard then
       // shows the income and asks for spending, never income minus nothing as "left over".
       hasIncome: budget?.hasIncome ?? false,
-      // Spending counts only from a real amount: the zero-amount suggested rows that "seed defaults"
-      // creates, and null entries, are not spending (so left over is never the whole income).
-      hasSpending:
-        monthlyOutgoings > 0 ||
-        budgetedSavings > 0 ||
-        (Array.isArray(budgetEntries) &&
-          budgetEntries.some(
-            (e: { isIncome?: boolean; amount?: unknown } | null) =>
-              e != null && !e.isIncome && Number(e.amount) > 0,
-          )),
+      // The engine's rule (E12 S5b): spending counts only from a real amount, so the zero-amount
+      // suggested rows and null entries are not spending.
+      hasSpending: budgetHasSpending(budget, Array.isArray(budgetEntries) ? budgetEntries : []),
       monthlyIncome,
       // Essentials plus discretionary; planned savings is its own line.
       monthlyExpenses: monthlyOutgoings,
       // Without an income row a surplus would only be minus the spending: unknown, as in MCP.
-      monthlySurplus: budget?.hasIncome ? budget.surplus : null,
+      monthlySurplus: budgetSurplusOrNull(budget),
       // Essential commitments months of cover divides (essentials plus deduplicated debt).
       monthlyEssentials: monthsOfCover?.monthlyEssentials ?? null,
       budgetedSavings,
