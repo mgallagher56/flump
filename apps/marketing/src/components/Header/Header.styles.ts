@@ -27,6 +27,24 @@ export const shortLabel = cva({
 });
 
 /** Drawer link: label left, helper text right. */
+/** The drawer's Features link set apart from the links before it (`dividerBefore`), as in the flyout. */
+export const drawerDivided = cva({
+  base: {
+    position: "relative",
+    mt: "3",
+    _before: {
+      content: '""',
+      position: "absolute",
+      left: "3",
+      right: "3",
+      top: "-2",
+      borderTopWidth: "1px",
+      borderTopStyle: "solid",
+      borderTopColor: "border",
+    },
+  },
+});
+
 export const drawerLinkRow = cva({ base: { justifyContent: "space-between" } });
 
 export const drawerLinkLabel = cva({

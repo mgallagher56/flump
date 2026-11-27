@@ -38,6 +38,8 @@ export function pointerLightAt(
 export interface LitCtasProps {
   /** Show "Interactive preview" beside the sign-up call to action. Default true. */
   secondary?: boolean;
+  /** Where "Interactive preview" goes: the preview, or one section of it. */
+  previewHref?: string;
   className?: string;
 }
 
@@ -47,7 +49,11 @@ export interface LitCtasProps {
  * towards it, easing back on leave; a press presses it in. Touch, pen and reduced motion get the
  * plain buttons: no listeners and nothing written.
  */
-export const LitCtas: FC<LitCtasProps> = ({ secondary = true, className }) => {
+export const LitCtas: FC<LitCtasProps> = ({
+  secondary = true,
+  previewHref = "/preview",
+  className,
+}) => {
   const cta = signupCta();
   const ref = useRef<HTMLDivElement>(null);
   const reduced = usePrefersReducedMotion();
@@ -104,7 +110,7 @@ export const LitCtas: FC<LitCtasProps> = ({ secondary = true, className }) => {
       </Button>
       {secondary && (
         <Button asChild size="lg" variant="outline">
-          <a className={litButton} data-light="" href="/preview">
+          <a className={litButton} data-light="" href={previewHref}>
             Interactive preview
           </a>
         </Button>

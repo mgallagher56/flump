@@ -1,6 +1,6 @@
 import { type ComponentType, use } from "react";
 import type { PageName, PageSet } from "./pageSet";
-import type { Feature } from "./utils/featureAreas";
+import type { MoneyArea } from "./utils/featureAreas";
 
 interface PageChunk<P> {
   /** The page component once its chunk has loaded. */
@@ -40,8 +40,8 @@ const chunks = {
   FeaturesIndexPage: pageChunk(() =>
     import("./pages/FeaturesIndexPage").then((m) => m.FeaturesIndexPage),
   ),
-  FeaturePage: pageChunk<{ feature: Feature }>(() =>
-    import("./pages/FeaturePage").then((m) => m.FeaturePage),
+  AreaPage: pageChunk<{ feature: MoneyArea }>(() =>
+    import("./pages/AreaPage").then((m) => m.AreaPage),
   ),
   AiConnectionPage: pageChunk(() =>
     import("./pages/AiConnectionPage").then((m) => m.AiConnectionPage),
@@ -63,7 +63,7 @@ const chunks = {
 export const lazyPages: PageSet = {
   HomePage: () => <ChunkPage chunk={chunks.HomePage} props={{}} />,
   FeaturesIndexPage: () => <ChunkPage chunk={chunks.FeaturesIndexPage} props={{}} />,
-  FeaturePage: (props) => <ChunkPage chunk={chunks.FeaturePage} props={props} />,
+  AreaPage: (props) => <ChunkPage chunk={chunks.AreaPage} props={props} />,
   AiConnectionPage: () => <ChunkPage chunk={chunks.AiConnectionPage} props={{}} />,
   PreviewPage: () => <ChunkPage chunk={chunks.PreviewPage} props={{}} />,
   PricingPage: () => <ChunkPage chunk={chunks.PricingPage} props={{}} />,

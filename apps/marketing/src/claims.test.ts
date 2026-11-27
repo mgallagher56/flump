@@ -84,6 +84,7 @@ describe("public calculator copy guard (E16 PR 11)", () => {
   const banned = /ENGINE|Mathematically|guaranteed|\bsyncs\b|\bmonitors\b|tax trap/i;
   const marketingCalculatorFiles = [
     join(__dirname, "pages", "FeaturePage", "FeaturePage.tsx"),
+    join(__dirname, "pages", "AreaPage", "AreaPage.tsx"),
     join(__dirname, "components", "TryItSection", "TryItSection.tsx"),
     join(__dirname, "components", "PayRiseTeaser", "PayRiseTeaser.tsx"),
     join(__dirname, "components", "HomePayRise", "HomePayRise.tsx"),

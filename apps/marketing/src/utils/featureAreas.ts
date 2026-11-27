@@ -214,9 +214,14 @@ export const FEATURES: readonly Feature[] = [...MONEY_AREAS, AI_CONNECTION];
 export const FEATURES_INDEX = {
   path: "/features",
   navLabel: "Features",
+  /** The home page's features band and its link name the page this way. */
   title: "Flump features",
-  lead: "Everything Flump does, one line each.",
-  intro: ["Grouped by area, in the same order as the app. Select a line to read a little more."],
+  /** The Features menu and the footer (the approved features prototype, 27 Nov 2026). */
+  menuLabel: "All features",
+  menuDescription: "The full list, one line each",
+  heading: "Everything Flump does",
+  lead: "You add your figures once. Flump shows your net worth, what is left over each month, your pay, your savings and what you owe.",
+  hint: "Select a line to read a little more.",
   meta: {
     title: "Flump features | Flump",
     description:

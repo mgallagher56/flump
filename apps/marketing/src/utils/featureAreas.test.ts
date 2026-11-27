@@ -27,15 +27,19 @@ describe("featureAreas (E42 S1)", () => {
     expect(FEATURES.at(-1)).toBe(AI_CONNECTION);
     expect(FEATURES_INDEX.path).toBe("/features");
     expect(FEATURES_INDEX.title).toBe("Flump features");
+    expect(FEATURES_INDEX.heading).toBe("Everything Flump does");
+    expect(FEATURES_INDEX.menuLabel).toBe("All features");
   });
 
-  it("keeps each h1 to 2 to 6 words and 40 characters, and each lead to one sentence (guide 3.1, 5.2)", () => {
+  it("keeps each h1 to 2 to 6 words and 40 characters, and each lead to one sentence (guide 3.1, 5.2); the features index's approved lead is two", () => {
     for (const feature of [...FEATURES, FEATURES_INDEX]) {
-      const h1 = "h1" in feature ? feature.h1 : feature.title;
+      const h1 = "h1" in feature ? feature.h1 : feature.heading;
       expect(h1.split(" ").length, h1).toBeGreaterThanOrEqual(2);
       expect(h1.split(" ").length, h1).toBeLessThanOrEqual(6);
       expect(h1.length, h1).toBeLessThanOrEqual(40);
-      expect(feature.lead.match(/\./g)?.length, feature.lead).toBe(1);
+      // The approved features prototype (27 Nov 2026) has a two-sentence lead on the index.
+      const sentences = feature === FEATURES_INDEX ? 2 : 1;
+      expect(feature.lead.match(/\./g)?.length, feature.lead).toBe(sentences);
     }
   });
 

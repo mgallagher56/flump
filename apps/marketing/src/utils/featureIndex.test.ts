@@ -114,9 +114,9 @@ describe("featureIndex: the page's shape", () => {
     }
   });
 
-  it("keeps each line to six words, and each detail to two or three sentences of 25 words or fewer", () => {
+  it("keeps each line to 13 words at most (the approved prototype's longest; it was six), and each detail to two or three sentences of 25 words or fewer", () => {
     for (const line of ALL_FEATURE_LINES) {
-      expect(line.line.split(" ").length, line.line).toBeLessThanOrEqual(6);
+      expect(line.line.split(" ").length, line.line).toBeLessThanOrEqual(13);
       expect(line.line, line.id).not.toMatch(/\.$/);
       const all = line.detail.flatMap(sentences);
       expect(all.length, line.id).toBeGreaterThanOrEqual(2);

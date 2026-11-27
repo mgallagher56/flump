@@ -46,6 +46,8 @@ export interface SceneStageProps {
   /** Told when the live scene shows or the still comes back. */
   onSceneChange?: (scene: "live" | "still") => void;
   className?: string;
+  /** `screen`: the journey's sticky full-screen layer. `band`: fills its positioned band (a hero). */
+  fit?: "screen" | "band";
   "data-testid"?: string;
 }
 
@@ -66,6 +68,7 @@ export const SceneStage: FC<SceneStageProps> = ({
   children,
   onSceneChange,
   className,
+  fit = "screen",
   "data-testid": testId = "scene-stage",
 }) => {
   const power = useScenePower();
@@ -165,7 +168,7 @@ export const SceneStage: FC<SceneStageProps> = ({
   return (
     <div
       aria-hidden="true"
-      className={cx(stage, className)}
+      className={cx(stage({ fit }), className)}
       data-scene={scene}
       data-still-reason={
         scene === "still" ? (failed ? "failed" : (power.reason ?? "loading")) : undefined

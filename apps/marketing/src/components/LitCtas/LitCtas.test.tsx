@@ -49,6 +49,14 @@ describe("LitCtas", () => {
     expect(screen.getAllByRole("link").every((a) => a.hasAttribute("data-light"))).toBe(true);
   });
 
+  it("sends the preview link to the section it is given", () => {
+    stubMotion(false);
+    render(<LitCtas previewHref="/preview#preview-section-pay" />);
+    expect(screen.getByRole("link", { name: "Interactive preview" }).getAttribute("href")).toBe(
+      "/preview#preview-section-pay",
+    );
+  });
+
   it("leaves out the preview link when asked", () => {
     stubMotion(false);
     render(<LitCtas secondary={false} />);

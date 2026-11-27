@@ -17,6 +17,7 @@ import {
   topBarChevron,
   topBarFlyout,
   topBarFlyoutDescription,
+  topBarFlyoutDivided,
   topBarFlyoutLabel,
   topBarFlyoutLink,
   topBarFlyoutText,
@@ -139,7 +140,7 @@ const FlyoutGroup: FC<FlyoutGroupProps> = ({ item, active, activeKey, renderLink
           {(item.children ?? []).map((child: AppNavChild) =>
             renderLink(
               child,
-              topBarFlyoutLink(),
+              cx(topBarFlyoutLink(), child.dividerBefore ? topBarFlyoutDivided() : undefined),
               <>
                 {child.icon}
                 <span className={topBarFlyoutText()}>

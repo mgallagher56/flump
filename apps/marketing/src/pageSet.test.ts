@@ -8,11 +8,11 @@ describe("pageForPath", () => {
     expect(STATIC_PATHS.map((path) => [path, pageForPath(path)])).toEqual([
       ["/", "HomePage"],
       ["/features", "FeaturesIndexPage"],
-      ["/features/accounts", "FeaturePage"],
-      ["/features/budget", "FeaturePage"],
-      ["/features/pay", "FeaturePage"],
-      ["/features/savings-and-pension", "FeaturePage"],
-      ["/features/debt-and-borrowing", "FeaturePage"],
+      ["/features/accounts", "AreaPage"],
+      ["/features/budget", "AreaPage"],
+      ["/features/pay", "AreaPage"],
+      ["/features/savings-and-pension", "AreaPage"],
+      ["/features/debt-and-borrowing", "AreaPage"],
       ["/features/ai-connection", "AiConnectionPage"],
       ["/preview", "PreviewPage"],
       ["/pricing", "PricingPage"],
@@ -27,7 +27,7 @@ describe("pageForPath", () => {
 
   it("matches like the router: any case, a trailing slash, a query or hash", () => {
     expect(pageForPath("/Pricing/")).toBe("PricingPage");
-    expect(pageForPath("/features/PAY?from=home#top")).toBe("FeaturePage");
+    expect(pageForPath("/features/PAY?from=home#top")).toBe("AreaPage");
     expect(pageForPath("")).toBe("HomePage");
     expect(pageForPath("/%70ricing")).toBe("PricingPage");
     expect(pageForPath("/%E0%A4%A")).toBe("NotFoundPage");

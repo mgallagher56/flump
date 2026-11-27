@@ -73,19 +73,20 @@ describe("Footer", () => {
     expect(screen.queryByRole("link", { name: /sample data/i })).toBeNull();
   });
 
-  it("lists Flump features, the five areas and the AI connection under Product (E42 S4)", () => {
+  it("lists the five areas, the AI connection and All features under Product (E42 S4; the approved features prototype)", () => {
     renderFooter();
     const product = screen.getByRole("navigation", { name: "Product" });
     const hrefs = Array.from(product.querySelectorAll("a")).map((a) => a.getAttribute("href"));
     expect(hrefs.slice(0, 7)).toEqual([
-      "/features",
       "/features/accounts",
       "/features/budget",
       "/features/pay",
       "/features/savings-and-pension",
       "/features/debt-and-borrowing",
       "/features/ai-connection",
+      "/features",
     ]);
+    expect(product.querySelector('a[href="/features"]')?.textContent).toBe("All features");
     expect(document.querySelector('a[href^="/mcp"]')).toBeNull();
   });
 

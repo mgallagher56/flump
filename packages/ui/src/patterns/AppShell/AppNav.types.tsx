@@ -8,6 +8,8 @@ export interface AppNavChild {
   /** One-line helper shown under the label in flyouts and side groups. */
   description?: string;
   icon?: ReactNode;
+  /** A thin rule above this link in flyouts, setting it apart from the links before it. */
+  dividerBefore?: boolean;
 }
 
 /** A top-level navigation entry. With `children` it becomes a group (flyout / headed list). */

@@ -1,5 +1,5 @@
 import type { ComponentType } from "react";
-import { AI_CONNECTION, FEATURES_INDEX, type Feature, MONEY_AREAS } from "./utils/featureAreas";
+import { AI_CONNECTION, FEATURES_INDEX, MONEY_AREAS, type MoneyArea } from "./utils/featureAreas";
 
 /**
  * Every page component, by name. The server renders from the eager set (`eagerPages.ts`); the
@@ -10,7 +10,7 @@ export interface PageSet {
   HomePage: ComponentType;
   FeaturesIndexPage: ComponentType;
   // The routes pass only `feature`; the page's other props are for the AI connection page.
-  FeaturePage: ComponentType<{ feature: Feature }>;
+  AreaPage: ComponentType<{ feature: MoneyArea }>;
   AiConnectionPage: ComponentType;
   PreviewPage: ComponentType;
   PricingPage: ComponentType;
@@ -24,6 +24,24 @@ export interface PageSet {
 }
 
 export type PageName = keyof PageSet;
+
+/** Every page name, once (the type checker keeps it complete). */
+const EVERY_PAGE: Record<PageName, true> = {
+  HomePage: true,
+  FeaturesIndexPage: true,
+  AreaPage: true,
+  AiConnectionPage: true,
+  PreviewPage: true,
+  PricingPage: true,
+  SecurityPage: true,
+  ContactPage: true,
+  PrivacyPage: true,
+  TermsPage: true,
+  CookiesPage: true,
+  AccessibilityPage: true,
+  NotFoundPage: true,
+};
+export const PAGE_NAMES = Object.keys(EVERY_PAGE) as PageName[];
 
 /** Each page's module, relative to the app root: the key Vite's build manifest uses. */
 export const pageSource = (name: PageName) => `src/pages/${name}/index.ts`;
@@ -58,6 +76,6 @@ export function pageForPath(pathname: string): PageName {
   const path = lower.length > 1 ? lower.replace(/\/+$/, "") : lower;
   const fixed = FIXED[path];
   if (fixed) return fixed;
-  if (MONEY_AREAS.some((area) => area.path === path)) return "FeaturePage";
+  if (MONEY_AREAS.some((area) => area.path === path)) return "AreaPage";
   return "NotFoundPage";
 }
