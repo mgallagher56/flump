@@ -1,4 +1,4 @@
-import { act, render, screen, userEvent } from "@testing-library/react-native";
+import { act, fireEvent, render, screen, userEvent } from "@testing-library/react-native";
 import { Linking } from "react-native";
 import { fail, fakeApi, withApi } from "../../data/fakeApi";
 import { HOMEOWNER, personaHousehold, RENTER } from "../../features/accounts/accountsTestData";
@@ -8,7 +8,6 @@ import { NetWorthHistory, type NetWorthHistoryWebLinks } from "./NetWorthHistory
 
 const LINKS: NetWorthHistoryWebLinks = {
   setUp: { url: "https://app.test.invalid/app/onboarding", exact: true },
-  addAccount: { url: "https://app.test.invalid/app/accounts", exact: true },
   addEarlierMonths: { url: "https://app.test.invalid/app/accounts/history", exact: true },
 };
 
@@ -16,14 +15,13 @@ const LINKS: NetWorthHistoryWebLinks = {
 const MARKETING = { url: "https://m.test.invalid", exact: false };
 const NO_WEB_APP: NetWorthHistoryWebLinks = {
   setUp: MARKETING,
-  addAccount: MARKETING,
   addEarlierMonths: MARKETING,
 };
 
 const ON_WEBSITE = "Adding earlier months is on the Flump website for now.";
 
 async function history(api: ReturnType<typeof fakeApi>, links = LINKS) {
-  const props = { onSignOut: jest.fn(), onOpenCheckIn: jest.fn() };
+  const props = { onSignOut: jest.fn(), onOpenCheckIn: jest.fn(), onAddAccount: jest.fn() };
   const { ui } = withApi(
     <NetWorthHistory {...props} marketingOrigin="https://m.test.invalid" links={links} now={NOW} />,
     api.client,
@@ -262,14 +260,15 @@ describe("NetWorthHistory", () => {
     expect(screen.getByRole("link", { name: "Open the Flump website" })).toBeOnTheScreen();
   });
 
-  it("no accounts: web's sentence and Add an account on the website", async () => {
-    await history(fakeApi(routes(household([]))));
+  it("no accounts: web's sentence and Add account, opening the app's form (S8)", async () => {
+    const props = await history(fakeApi(routes(household([]))));
     expect(
       await screen.findByText(
         "Add your accounts first. Their balances then become your first month of history.",
       ),
     ).toBeOnTheScreen();
-    expect(screen.getByRole("link", { name: "Add an account on the website" })).toBeOnTheScreen();
+    fireEvent.press(screen.getByRole("button", { name: "Add account" }));
+    expect(props.onAddAccount).toHaveBeenCalledTimes(1);
   });
 
   it("loading: nothing for 200 ms, then blocks", async () => {

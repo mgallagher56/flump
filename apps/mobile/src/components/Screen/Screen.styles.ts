@@ -14,4 +14,5 @@ export const createStyles = (theme: Theme) =>
       gap: theme.spacing["density.gap"],
     },
     centred: { justifyContent: "center" },
+    keyboard: { flex: 1 },
   });

@@ -15,8 +15,6 @@ import { Home, type HomeWebLinks } from "./Home";
 /** The website's pages (placeholder addresses). */
 const LINKS: HomeWebLinks = {
   setUp: { url: "https://app.test.invalid/app/onboarding", exact: true },
-  addAccount: { url: "https://app.test.invalid/app/accounts", exact: true },
-  addEstimate: { url: "https://app.test.invalid/app/accounts?add=property", exact: true },
   addBudget: { url: "https://app.test.invalid/app/budget", exact: true },
   addSpending: { url: "https://app.test.invalid/app/budget", exact: true },
 };
@@ -43,12 +41,16 @@ async function home(
   const onOpenCheckIn = jest.fn();
   const onOpenHistory = jest.fn();
   const onChangeWhatCounts = jest.fn();
+  const onAddAccount = jest.fn();
+  const onAddEstimate = jest.fn();
   const { ui } = withApi(
     <Home
       onSignOut={onSignOut}
       onOpenCheckIn={onOpenCheckIn}
       onOpenHistory={onOpenHistory}
       onChangeWhatCounts={onChangeWhatCounts}
+      onAddAccount={onAddAccount}
+      onAddEstimate={onAddEstimate}
       marketingOrigin="https://m.test.invalid"
       links={links}
       now={now}
@@ -56,7 +58,14 @@ async function home(
     api.client,
   );
   await render(ui);
-  return { onSignOut, onOpenCheckIn, onOpenHistory, onChangeWhatCounts };
+  return {
+    onSignOut,
+    onOpenCheckIn,
+    onOpenHistory,
+    onChangeWhatCounts,
+    onAddAccount,
+    onAddEstimate,
+  };
 }
 
 /** Lets every read answer and the screen hear of it, inside act. */
@@ -220,35 +229,29 @@ describe("Home", () => {
     expect(screen.queryByText("Net worth, including your home estimate")).toBeNull();
   });
 
-  it("no accounts: the prompt and a way to add one on the website, never £0", async () => {
-    await home(fakeApi(routes(household([]))));
+  it("no accounts: the prompt and a way to add one in the app (S8), never £0", async () => {
+    const { onAddAccount } = await home(fakeApi(routes(household([]))));
     expect(await screen.findByText("Add an account to see your net worth.")).toBeOnTheScreen();
     expect(screen.getByText("Not set")).toBeOnTheScreen();
     expect(screen.queryByText("£0")).toBeNull();
-    await userEvent
-      .setup()
-      .press(screen.getByRole("link", { name: "Add an account on the website" }));
-    expect(Linking.openURL).toHaveBeenCalledWith(LINKS.addAccount.url);
+    await userEvent.setup().press(screen.getByRole("link", { name: "Add an account" }));
+    expect(onAddAccount).toHaveBeenCalledTimes(1);
+    expect(Linking.openURL).not.toHaveBeenCalled();
     // The check-in row keeps its S3 state.
     expect(screen.getByTestId("check-in-row")).toBeOnTheScreen();
   });
 
-  it("with no web app address, the links say they open the Flump website", async () => {
+  it("with no web app address, the hero's add link still opens the app's form (S8)", async () => {
     const site = { url: "https://m.test.invalid", exact: false };
-    await home(fakeApi(routes(household([]))), {
+    const { onAddAccount } = await home(fakeApi(routes(household([]))), {
       setUp: site,
-      addAccount: site,
-      addEstimate: site,
       addBudget: site,
       addSpending: site,
     });
-    // The hero's link first; the strip's prompt has the same words (S5b).
-    const both = await screen.findAllByRole("link", { name: "Open the Flump website" });
-    expect(both).toHaveLength(2);
-    const [heroLink] = both;
-    if (!heroLink) throw new Error("expected the hero's link");
-    await userEvent.setup().press(heroLink);
-    expect(Linking.openURL).toHaveBeenCalledWith("https://m.test.invalid");
+    // Only the strip's prompt goes to the website (S5b); the hero's link adds in the app.
+    await userEvent.setup().press(await screen.findByRole("link", { name: "Add an account" }));
+    expect(onAddAccount).toHaveBeenCalledTimes(1);
+    expect(screen.getAllByRole("link", { name: "Open the Flump website" })).toHaveLength(1);
   });
 
   it("loading: nothing for 200 ms, then blocks that stay 400 ms, then the hero", async () => {

@@ -1,0 +1,111 @@
+import { useMemo, useState } from "react";
+import { View } from "react-native";
+import { QUICK_BALANCE } from "../../copy/accountForms";
+import { useTheme } from "../../theme/ThemeProvider";
+import { Button } from "../Button";
+import { CurrencyInput } from "../CurrencyInput";
+import { FormField } from "../FormField";
+import { InlineAlert } from "../InlineAlert";
+import { createStyles } from "./QuickBalanceUpdate.styles";
+
+export interface QuickBalanceUpdateProps {
+  /** The account's name, read after the field's label ("New balance, Holiday fund"). */
+  accountName: string;
+  /** A debt: the field asks for the amount owed, a positive figure. */
+  owed: boolean;
+  /** The saved figure as the page shows it: the balance, or the amount owed as a positive figure. */
+  current: number | null;
+  /** The joint account's note the edit form shows under the same field, when there is one. */
+  hint?: string | null;
+  /**
+   * Saves the figure typed, as shown (the caller stores a debt as minus the amount owed). Resolves
+   * with what went wrong in web's words, or null once it saved.
+   */
+  onSave(value: number): Promise<string | null>;
+  testID?: string;
+}
+
+/**
+ * Updates one account's balance where it is shown, as web's (E38 S2), so a new figure needs no
+ * trip through the edit form. A quiet button opens one field with the saved figure in it; Save
+ * saves and closes, Cancel closes without saving. A failed save keeps the field open with what
+ * was typed and says what went wrong, so it can be tried again.
+ */
+export function QuickBalanceUpdate({
+  accountName,
+  owed,
+  current,
+  hint,
+  onSave,
+  testID = "quick-balance",
+}: QuickBalanceUpdateProps) {
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  const [open, setOpen] = useState(false);
+  const [value, setValue] = useState<number | null>(current);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
+
+  if (!open) {
+    return (
+      <Button
+        label={owed ? QUICK_BALANCE.openOwed : QUICK_BALANCE.openBalance}
+        variant="outline"
+        size="sm"
+        testID={`${testID}-open`}
+        onPress={() => {
+          setValue(current);
+          setError(null);
+          setOpen(true);
+        }}
+      />
+    );
+  }
+
+  const label = owed ? QUICK_BALANCE.fieldOwed : QUICK_BALANCE.fieldBalance;
+  const save = async () => {
+    if (value === null || pending) return;
+    setPending(true);
+    setError(null);
+    const failed = await onSave(value);
+    setPending(false);
+    if (failed) setError(failed);
+    else setOpen(false);
+  };
+
+  return (
+    <View style={styles.group} testID={`${testID}-form`}>
+      <FormField label={label} hint={hint ?? undefined}>
+        <CurrencyInput
+          value={value}
+          // A debt's amount owed is never below zero (web refuses one); a balance can be.
+          allowNegative={!owed}
+          onValueChange={setValue}
+          accessibilityLabel={`${label}, ${accountName}`}
+          editable={!pending}
+          testID={`${testID}-value`}
+          onSubmitEditing={() => void save()}
+        />
+      </FormField>
+      {error ? <InlineAlert message={error} testID={`${testID}-error`} /> : null}
+      <View style={styles.actions}>
+        <Button
+          label={pending ? QUICK_BALANCE.saving : QUICK_BALANCE.save}
+          size="sm"
+          pending={pending}
+          disabled={value === null}
+          testID={`${testID}-save`}
+          onPress={() => void save()}
+        />
+        <Button
+          label={QUICK_BALANCE.cancel}
+          variant="ghost"
+          size="sm"
+          disabled={pending}
+          testID={`${testID}-cancel`}
+          onPress={() => setOpen(false)}
+        />
+      </View>
+    </View>
+  );
+}

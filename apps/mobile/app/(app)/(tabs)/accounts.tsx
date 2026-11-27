@@ -1,7 +1,6 @@
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
+import { ACCOUNT_FORM } from "../../../src/copy/accountForms";
 import {
-  ADD_ACCOUNT_WEB_ROUTE,
-  ADD_HOME_VALUE_WEB_ROUTE,
   NET_WORTH_SETTINGS_ROUTE,
   SET_UP_WEB_ROUTE,
   useShell,
@@ -16,19 +15,22 @@ import { Offline } from "../../../src/screens/Offline";
  */
 export default function AccountsTab() {
   const shell = useShell();
+  // A save that left something out comes back here with what to say (web's toast).
+  const { notice } = useLocalSearchParams<{ notice?: string }>();
   if (shell.offline) return <Offline onRetry={shell.retry} onSignOut={shell.signOut} />;
   return (
     <Accounts
       onSignOut={shell.signOut}
       marketingOrigin={shell.marketingOrigin}
       onOpenAccount={(id) => router.push({ pathname: "/accounts/[id]", params: { id } })}
+      onAddAccount={() => router.push("/accounts/new")}
+      onAddEstimate={() => router.push({ pathname: "/accounts/new", params: { estimate: "1" } })}
+      notice={notice === "mortgage-not-linked" ? ACCOUNT_FORM.mortgageNotLinked : null}
       onOpenHistory={() => router.push("/accounts/history")}
       onOpenCheckIn={() => router.push("/check-in")}
       onChangeWhatCounts={() => router.push(NET_WORTH_SETTINGS_ROUTE)}
       links={{
         setUp: webLink(shell, SET_UP_WEB_ROUTE),
-        addAccount: webLink(shell, ADD_ACCOUNT_WEB_ROUTE),
-        addEstimate: webLink(shell, ADD_HOME_VALUE_WEB_ROUTE),
       }}
     />
   );

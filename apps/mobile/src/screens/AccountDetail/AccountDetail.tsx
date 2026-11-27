@@ -1,4 +1,9 @@
 import {
+  accountBalanceShown,
+  accountBalanceStored,
+  describeJointWholeValue,
+} from "@flump/finance-engine/account-form";
+import {
   describeJointShareOfWhole,
   describeJointWholeHistory,
 } from "@flump/finance-engine/accounts";
@@ -11,8 +16,10 @@ import { DataList } from "../../components/DataList";
 import { EmptyState } from "../../components/EmptyState";
 import { ErrorState } from "../../components/ErrorState";
 import { HeroFigure } from "../../components/HeroFigure";
+import { QuickBalanceUpdate } from "../../components/QuickBalanceUpdate";
 import { Screen } from "../../components/Screen";
 import { Text } from "../../components/Text";
+import { ACCOUNT_FORM, saveFailedMessage } from "../../copy/accountForms";
 import {
   ACCOUNT,
   accountChartSummary,
@@ -28,6 +35,7 @@ import {
 } from "../../copy/accounts";
 import { CHECK_IN } from "../../copy/checkIn";
 import { OPEN_FLUMP_WEBSITE } from "../../copy/navigation";
+import { useAccountWrites } from "../../data/accountWrites";
 import { useDelayedLoading } from "../../data/useDelayedLoading";
 import type { AccountDetail as Detail } from "../../features/accounts/accountsModel";
 import { type AccountDetailState, useAccountDetail } from "../../features/accounts/useAccountsData";
@@ -47,8 +55,6 @@ export interface AccountDetailProps {
   marketingOrigin: string;
   links: {
     setUp: WebLink;
-    /** The account's own page on the website, where it is edited until S8. */
-    edit: WebLink;
     /** Web's mortgage page, which owns a mortgage's detail (web's `ownerPageFor`). */
     mortgage: WebLink;
     /** Web's debts page, which owns a debt's or student loan's detail. */
@@ -56,6 +62,8 @@ export interface AccountDetailProps {
   };
   /** Back to the accounts list, from "We cannot find that account." */
   onBackToAccounts(): void;
+  /** Opens the edit form, where delete sits too (E12 S8). */
+  onEdit(): void;
   /** The header for the account's name (the route's `Stack.Screen`). */
   header?(title: string): ReactNode;
   /** Injected clock for tests. */
@@ -65,7 +73,7 @@ export interface AccountDetailProps {
 /**
  * One account's page (E12 S6, plan 9.9), as web's: the balance or amount owed with the line that
  * dates it, a joint account's whole beside the share, then its balance history with the chart, its
- * summary and every month. Read only: editing is on the website until S8.
+ * summary and every month. "Edit" opens the edit form; the quick update saves a new balance here.
  */
 export function AccountDetail({
   id,
@@ -73,6 +81,7 @@ export function AccountDetail({
   marketingOrigin,
   links,
   onBackToAccounts,
+  onEdit,
   header = () => null,
   now = () => new Date(),
 }: AccountDetailProps) {
@@ -104,7 +113,7 @@ export function AccountDetail({
     <>
       {header(title)}
       <Screen edges={EDGES} testID="account-detail" onRefresh={refresh}>
-        <Body state={state} links={links} onBackToAccounts={onBackToAccounts} />
+        <Body state={state} links={links} onBackToAccounts={onBackToAccounts} onEdit={onEdit} />
       </Screen>
     </>
   );
@@ -114,9 +123,10 @@ function Body({
   state,
   links,
   onBackToAccounts,
+  onEdit,
 }: {
   state: Exclude<AccountDetailState, { status: "notSetUp" }>;
-} & Pick<AccountDetailProps, "links" | "onBackToAccounts">) {
+} & Pick<AccountDetailProps, "links" | "onBackToAccounts" | "onEdit">) {
   const skeleton = useDelayedLoading(state.status === "loading");
   if (state.status === "error") {
     return (
@@ -157,11 +167,22 @@ function Body({
       </>
     );
   }
-  return <Loaded detail={detail} links={links} />;
+  return <Loaded detail={detail} links={links} onEdit={onEdit} />;
 }
 
-function Loaded({ detail, links }: { detail: Detail; links: AccountDetailProps["links"] }) {
+function Loaded({
+  detail,
+  links,
+  onEdit,
+}: {
+  detail: Detail;
+  links: AccountDetailProps["links"];
+  onEdit(): void;
+}) {
   const { account, hero, owed } = detail;
+  const writes = useAccountWrites();
+  // The saved figure as the edit form's field shows it: a debt as the positive amount owed.
+  const savedShown = accountBalanceShown(account.type, account.balance);
   const wholeOf = owed ? "amount owed" : "balance";
   const share = {
     name: account.name,
@@ -193,6 +214,21 @@ function Loaded({ detail, links }: { detail: Detail; links: AccountDetailProps["
         caption={subline}
         testID="account-detail-hero"
       />
+      <QuickBalanceUpdate
+        accountName={detail.name}
+        owed={owed}
+        current={savedShown === "" ? null : Number(savedShown)}
+        hint={describeJointWholeValue(share, wholeOf)}
+        onSave={async (shown) => {
+          // Stored as minus the amount owed for a debt, as the edit form sends it.
+          const balance = Number(accountBalanceStored(account.type, String(shown)));
+          const result = await writes.update(account.id, { balance }, account.updatedAt);
+          if (result.status === "saved") return null;
+          if (result.status === "conflict") return ACCOUNT_FORM.conflict;
+          return saveFailedMessage(result.status === "failed" ? result.kind : "client");
+        }}
+      />
+      <Button label={ACCOUNT_FORM.edit} variant="outline" testID="account-edit" onPress={onEdit} />
       <Text accessibilityRole="header" textStyle="heading.sm">
         {ACCOUNT.historyTitle}
       </Text>
@@ -260,13 +296,6 @@ function Loaded({ detail, links }: { detail: Detail; links: AccountDetailProps["
       <Text textStyle="body.sm" color="secondary" testID="account-on-website">
         {ACCOUNT.onWebsite}
       </Text>
-      <Button
-        label={links.edit.exact ? ACCOUNT.edit : OPEN_FLUMP_WEBSITE}
-        variant="link"
-        accessibilityRole="link"
-        testID="account-edit-on-website"
-        onPress={() => void Linking.openURL(links.edit.url)}
-      />
     </>
   );
 }

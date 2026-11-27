@@ -27,14 +27,10 @@ import { TermsRequired } from "../TermsRequired";
 /** Home sits under the tab header and above the tab bar, which pad the top and bottom. */
 const TAB_EDGES = ["right", "left"] as const;
 
-/** The website pages Home links to until the app has them (S8, S10). */
+/** The website pages Home links to until the app has them (S10). */
 export interface HomeWebLinks {
   /** Web's onboarding, for a person who has not finished setting up. */
   setUp: WebLink;
-  /** Where an account is added (S8). */
-  addAccount: WebLink;
-  /** Where a home estimate is added (S8). */
-  addEstimate: WebLink;
   /** Web's budget page, where a budget is added (S10). */
   addBudget: WebLink;
   /** Web's budget page, where spending is added to a budget that holds income only (S10). */
@@ -52,6 +48,10 @@ export interface HomeProps {
   onOpenHistory(): void;
   /** Opens the app's net worth choices (Settings, Profile, E12 S9). */
   onChangeWhatCounts(): void;
+  /** Opens the add form (E12 S8). */
+  onAddAccount(): void;
+  /** Opens the add form as web's "Add an estimate" does. */
+  onAddEstimate(): void;
   /** Injected clock for tests. */
   now?: () => Date;
 }
@@ -69,6 +69,8 @@ export function Home({
   onOpenCheckIn,
   onOpenHistory,
   onChangeWhatCounts,
+  onAddAccount,
+  onAddEstimate,
   marketingOrigin,
   links,
   now = () => new Date(),
@@ -98,6 +100,8 @@ export function Home({
       onOpenHistory={onOpenHistory}
       onRefresh={onRefresh}
       onChangeWhatCounts={onChangeWhatCounts}
+      onAddAccount={onAddAccount}
+      onAddEstimate={onAddEstimate}
       now={now}
     />
   );
@@ -111,6 +115,8 @@ function HomeBody({
   onOpenHistory,
   onRefresh,
   onChangeWhatCounts,
+  onAddAccount,
+  onAddEstimate,
   now,
 }: {
   home: HomeDataState;
@@ -120,6 +126,10 @@ function HomeBody({
   onOpenHistory(): void;
   onRefresh(): Promise<void>;
   onChangeWhatCounts(): void;
+  /** Opens the add form (E12 S8). */
+  onAddAccount(): void;
+  /** Opens the add form as web's "Add an estimate" does. */
+  onAddEstimate(): void;
   now: () => Date;
 }) {
   // Nothing for 200 ms, then blocks the hero's and the strip's size for at least 400 ms, on one
@@ -138,6 +148,8 @@ function HomeBody({
         skeleton={skeleton}
         onOpenHistory={onOpenHistory}
         onChangeWhatCounts={onChangeWhatCounts}
+        onAddAccount={onAddAccount}
+        onAddEstimate={onAddEstimate}
       />
       <Strip home={home} links={links} skeleton={skeleton} />
       <CheckInRow data={checkIn} onOpen={onOpenCheckIn} now={now} />
@@ -199,12 +211,18 @@ function NetWorth({
   skeleton,
   onOpenHistory,
   onChangeWhatCounts,
+  onAddAccount,
+  onAddEstimate,
 }: {
   home: Exclude<HomeDataState, { status: "notSetUp" }>;
   links: HomeWebLinks;
   skeleton: boolean;
   onOpenHistory(): void;
   onChangeWhatCounts(): void;
+  /** Opens the add form (E12 S8). */
+  onAddAccount(): void;
+  /** Opens the add form as web's "Add an estimate" does. */
+  onAddEstimate(): void;
 }) {
   if (home.status === "error") {
     // Never "Add an account" or £0 for a failed read; out of step never blames the connection.
@@ -243,8 +261,8 @@ function NetWorth({
         value={null}
         emptyPrompt={HOME.emptyPrompt}
         emptyAction={{
-          label: links.addAccount.exact ? HOME.addAccount : OPEN_FLUMP_WEBSITE,
-          onPress: open(links.addAccount),
+          label: HOME.addAccount,
+          onPress: onAddAccount,
           testID: "home-add-account",
         }}
         testID="home-empty"
@@ -284,8 +302,7 @@ function NetWorth({
       <NetWorthBasisLine
         leftOut={hero.leftOut}
         onChangeWhatCounts={onChangeWhatCounts}
-        onAddEstimate={open(links.addEstimate)}
-        estimateWebsiteLabel={links.addEstimate.exact ? undefined : OPEN_FLUMP_WEBSITE}
+        onAddEstimate={onAddEstimate}
       />
     </>
   );

@@ -12,13 +12,8 @@ export interface NetWorthBasisLineProps {
   leftOut: readonly NetWorthLeftOut[];
   /** Opens the app's net worth choices (Settings, Profile, E12 S9). */
   onChangeWhatCounts(): void;
-  /** Opens where a home estimate is added (the website until S8). */
+  /** Opens the app's add form as a home estimate (E12 S8). */
   onAddEstimate(): void;
-  /**
-   * The add-estimate link's words when it does not open the page itself (no web app address in
-   * this build: the website's home page). Defaults to the page's own words.
-   */
-  estimateWebsiteLabel?: string;
   /**
    * Show the "Change what counts" link on its own when nothing is left out, so the choice can be
    * found from the figure (web: the accounts list only). Needs `choicesAvailable`.
@@ -39,7 +34,6 @@ export function NetWorthBasisLine({
   leftOut,
   onChangeWhatCounts,
   onAddEstimate,
-  estimateWebsiteLabel,
   alwaysShowLink = false,
   choicesAvailable = true,
   testID = "net-worth-basis-line",
@@ -57,7 +51,7 @@ export function NetWorthBasisLine({
         </Text>
       ) : null}
       <Button
-        label={missingHome ? (estimateWebsiteLabel ?? HOME.addEstimate) : HOME.changeWhatCounts}
+        label={missingHome ? HOME.addEstimate : HOME.changeWhatCounts}
         variant="link"
         size="sm"
         accessibilityRole="link"

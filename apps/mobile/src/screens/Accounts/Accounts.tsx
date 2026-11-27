@@ -1,4 +1,3 @@
-import { Linking } from "react-native";
 import { AccountGroup } from "../../components/AccountGroup";
 import { AccountRow } from "../../components/AccountRow";
 import { Button } from "../../components/Button";
@@ -7,9 +6,9 @@ import { ErrorState } from "../../components/ErrorState";
 import { HeroFigure } from "../../components/HeroFigure";
 import { NetWorthBasisLine } from "../../components/NetWorthBasisLine";
 import { Screen } from "../../components/Screen";
+import { Toast } from "../../components/Toast";
 import { ACCOUNTS, STUDENT_LOAN_FACTS, studentLoanFootnote, typeLine } from "../../copy/accounts";
 import { CHECK_IN } from "../../copy/checkIn";
-import { OPEN_FLUMP_WEBSITE } from "../../copy/navigation";
 import { useDelayedLoading } from "../../data/useDelayedLoading";
 import type { AccountRow as Row } from "../../features/accounts/accountsModel";
 import { type AccountsListState, useAccountsList } from "../../features/accounts/useAccountsData";
@@ -20,11 +19,9 @@ import { TermsRequired } from "../TermsRequired";
 /** The list sits under the tab header and above the tab bar, which pad the top and bottom. */
 const TAB_EDGES = ["right", "left"] as const;
 
-/** The website pages the list links to until the app has them (S8). */
+/** The website page the list links to: setting up, which the app does not have yet. */
 export interface AccountsWebLinks {
   setUp: WebLink;
-  addAccount: WebLink;
-  addEstimate: WebLink;
 }
 
 export interface AccountsProps {
@@ -32,6 +29,12 @@ export interface AccountsProps {
   marketingOrigin: string;
   links: AccountsWebLinks;
   onOpenAccount(id: string): void;
+  /** Opens the add form (E12 S8). */
+  onAddAccount(): void;
+  /** Opens the add form as web's "Add an estimate" does: a home, your own estimate. */
+  onAddEstimate(): void;
+  /** A save that went through but left something out, said once at the top (web's toast). */
+  notice?: string | null;
   onOpenHistory(): void;
   onOpenCheckIn(): void;
   /** Opens the app's net worth choices (Settings, Profile, E12 S9). */
@@ -39,8 +42,6 @@ export interface AccountsProps {
   /** Injected clock for tests. */
   now?: () => Date;
 }
-
-const open = (link: WebLink) => () => void Linking.openURL(link.url);
 
 /**
  * The Accounts tab (E12 S6, plan 9.9): the total of the accounts listed with what it leaves out,
@@ -52,6 +53,9 @@ export function Accounts({
   marketingOrigin,
   links,
   onOpenAccount,
+  onAddAccount,
+  onAddEstimate,
+  notice = null,
   onOpenHistory,
   onOpenCheckIn,
   onChangeWhatCounts,
@@ -71,10 +75,12 @@ export function Accounts({
   if (state.status === "notSetUp") return <NotSetUp setUp={links.setUp} edges={TAB_EDGES} />;
   return (
     <Screen edges={TAB_EDGES} testID="accounts" onRefresh={refresh}>
+      <Toast message={notice} testID="accounts-notice" />
       <Body
         state={state}
-        links={links}
         onOpenAccount={onOpenAccount}
+        onAddAccount={onAddAccount}
+        onAddEstimate={onAddEstimate}
         onOpenHistory={onOpenHistory}
         onOpenCheckIn={onOpenCheckIn}
         onChangeWhatCounts={onChangeWhatCounts}
@@ -85,8 +91,9 @@ export function Accounts({
 
 function Body({
   state,
-  links,
   onOpenAccount,
+  onAddAccount,
+  onAddEstimate,
   onOpenHistory,
   onOpenCheckIn,
   onChangeWhatCounts,
@@ -94,11 +101,15 @@ function Body({
   state: Exclude<AccountsListState, { status: "notSetUp" }>;
 } & Pick<
   AccountsProps,
-  "links" | "onOpenAccount" | "onOpenHistory" | "onOpenCheckIn" | "onChangeWhatCounts"
+  | "onOpenAccount"
+  | "onAddAccount"
+  | "onAddEstimate"
+  | "onOpenHistory"
+  | "onOpenCheckIn"
+  | "onChangeWhatCounts"
 >) {
   // Nothing for 200 ms, then blocks for at least 400 ms. A refetch keeps the list on screen.
   const skeleton = useDelayedLoading(state.status === "loading");
-  const addAccount = links.addAccount.exact ? ACCOUNTS.addAccount : OPEN_FLUMP_WEBSITE;
   if (state.status === "error") {
     // Never "No accounts yet", an empty list or £0; out of step never blames the connection.
     return (
@@ -133,9 +144,9 @@ function Body({
         description={ACCOUNTS.emptyDescription}
         actions={[
           {
-            label: addAccount,
-            variant: "link",
-            onPress: open(links.addAccount),
+            label: ACCOUNTS.addAccount,
+            variant: "primary",
+            onPress: onAddAccount,
             testID: "accounts-add-account",
           },
         ]}
@@ -161,8 +172,7 @@ function Body({
         alwaysShowLink
         choicesAvailable={list.choicesAvailable}
         onChangeWhatCounts={onChangeWhatCounts}
-        onAddEstimate={open(links.addEstimate)}
-        estimateWebsiteLabel={links.addEstimate.exact ? undefined : OPEN_FLUMP_WEBSITE}
+        onAddEstimate={onAddEstimate}
         testID="accounts-basis-line"
       />
       <Button
@@ -210,11 +220,10 @@ function Body({
         </AccountGroup>
       ) : null}
       <Button
-        label={addAccount}
-        variant="link"
-        accessibilityRole="link"
+        label={ACCOUNTS.addAccount}
+        variant="outline"
         testID="accounts-add-account"
-        onPress={open(links.addAccount)}
+        onPress={onAddAccount}
       />
     </>
   );

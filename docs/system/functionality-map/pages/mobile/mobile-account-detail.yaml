@@ -3,7 +3,7 @@ app: mobile
 route: /accounts/:id
 title: Account detail
 auth: required
-purpose: One account's page (E12 S6), also opened by flump://accounts/<id>, as web's. The balance or amount owed with the line that dates it, a joint account's whole beside the share, then its balance history with the chart, its summary and every month. Read only; editing opens the website until S8. An unknown id says so with Back to accounts.
+purpose: One account's page (E12 S6), also opened by flump://accounts/<id>, as web's. The balance or amount owed with the line that dates it, a joint account's whole beside the share, then its balance history with the chart, its summary and every month. Edit opens the edit form, and the quick update saves a new balance in place (S8); goals stay on the website. An unknown id says so with Back to accounts.
 route_file: apps/mobile/app/(app)/accounts/[id].tsx
 
 sections:
@@ -22,3 +22,9 @@ sections:
     facts_read:
       - account-balance
       - balance-history
+
+  - id: quick-balance-update
+    component: apps/mobile/src/components/QuickBalanceUpdate/QuickBalanceUpdate.tsx
+    facts_read:
+      - account-balance
+      - ownership-share

@@ -47,7 +47,6 @@ const EDGES = ["right", "bottom", "left"] as const;
 
 export interface NetWorthHistoryWebLinks {
   setUp: WebLink;
-  addAccount: WebLink;
   /** Web's history page, where earlier months are added until S8. */
   addEarlierMonths: WebLink;
 }
@@ -57,6 +56,8 @@ export interface NetWorthHistoryProps {
   marketingOrigin: string;
   links: NetWorthHistoryWebLinks;
   onOpenCheckIn(): void;
+  /** Opens the app's add form, with no accounts yet (E12 S8). */
+  onAddAccount(): void;
   /** Injected clock for tests. */
   now?: () => Date;
 }
@@ -74,6 +75,7 @@ export function NetWorthHistory({
   marketingOrigin,
   links,
   onOpenCheckIn,
+  onAddAccount,
   now = () => new Date(),
 }: NetWorthHistoryProps) {
   const { state, refresh } = useNetWorthHistory(now);
@@ -90,7 +92,7 @@ export function NetWorthHistory({
   if (state.status === "notSetUp") return <NotSetUp setUp={links.setUp} edges={EDGES} />;
   return (
     <Screen edges={EDGES} testID="net-worth-history" onRefresh={refresh}>
-      <Body state={state} links={links} onOpenCheckIn={onOpenCheckIn} />
+      <Body state={state} links={links} onOpenCheckIn={onOpenCheckIn} onAddAccount={onAddAccount} />
     </Screen>
   );
 }
@@ -99,9 +101,10 @@ function Body({
   state,
   links,
   onOpenCheckIn,
+  onAddAccount,
 }: {
   state: Exclude<NetWorthHistoryState, { status: "notSetUp" }>;
-} & Pick<NetWorthHistoryProps, "links" | "onOpenCheckIn">) {
+} & Pick<NetWorthHistoryProps, "links" | "onOpenCheckIn" | "onAddAccount">) {
   const skeleton = useDelayedLoading(state.status === "loading");
   if (state.status === "error") {
     return (
@@ -152,9 +155,9 @@ function Body({
                 ]
               : [
                   {
-                    label: website(links.addAccount, ACCOUNTS.addAccount),
-                    onPress: open(links.addAccount),
-                    variant: "link",
+                    label: ACCOUNTS.addAccount,
+                    onPress: onAddAccount,
+                    variant: "primary",
                     testID: "history-add-account",
                   },
                 ]

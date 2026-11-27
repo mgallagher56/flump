@@ -23,14 +23,14 @@ export const HOME = {
   heroLabelWithHome: "Net worth, including your home estimate",
   /** Web's hero `emptyPrompt`, with no accounts yet. Never £0. */
   emptyPrompt: "Add an account to see your net worth.",
-  /** Web's hero action is "Add an account"; here it opens the website until S8, and says so. */
-  addAccount: "Add an account on the website",
+  /** Web's hero action, opening the app's add form (E12 S8). */
+  addAccount: "Add an account",
   /** Web's `CHANGE_WHAT_COUNTS`: it opens the app's own Profile settings (E12 S9). */
   changeWhatCounts: "Change what counts",
   /** Web's `HOME_VALUE_MISSING_TEXT`. */
   homeValueMissing: "Your home's value is not counted until you add an estimate.",
-  /** Web's `ADD_AN_ESTIMATE`, saying it opens the website (estimates arrive in S8). */
-  addEstimate: "Add an estimate on the website",
+  /** Web's `ADD_AN_ESTIMATE`, opening the app's add form as a home estimate (E12 S8). */
+  addEstimate: "Add an estimate",
   loading: "Loading your net worth",
 } as const;
 

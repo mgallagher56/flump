@@ -6,23 +6,33 @@ import { household, NOW, routes } from "../../features/check-in/checkInTestData"
 import { refreshControl } from "../../testing/refresh";
 import { Accounts, type AccountsWebLinks } from "./Accounts";
 
-/** The website's pages (placeholder addresses). */
+/** The website's page (a placeholder address). */
 const LINKS: AccountsWebLinks = {
   setUp: { url: "https://app.test.invalid/app/onboarding", exact: true },
-  addAccount: { url: "https://app.test.invalid/app/accounts", exact: true },
-  addEstimate: { url: "https://app.test.invalid/app/accounts?add=property", exact: true },
 };
 
-async function accounts(api: ReturnType<typeof fakeApi>, links: AccountsWebLinks = LINKS) {
+async function accounts(
+  api: ReturnType<typeof fakeApi>,
+  links: AccountsWebLinks = LINKS,
+  notice: string | null = null,
+) {
   const props = {
     onSignOut: jest.fn(),
     onOpenAccount: jest.fn(),
+    onAddAccount: jest.fn(),
+    onAddEstimate: jest.fn(),
     onOpenHistory: jest.fn(),
     onOpenCheckIn: jest.fn(),
     onChangeWhatCounts: jest.fn(),
   };
   const { ui } = withApi(
-    <Accounts {...props} marketingOrigin="https://m.test.invalid" links={links} now={NOW} />,
+    <Accounts
+      {...props}
+      marketingOrigin="https://m.test.invalid"
+      links={links}
+      notice={notice}
+      now={NOW}
+    />,
     api.client,
   );
   await render(ui);
@@ -103,8 +113,6 @@ describe("Accounts", () => {
     const site = { url: "https://m.test.invalid", exact: false };
     const { onChangeWhatCounts } = await accounts(fakeApi(routes(personaHousehold(HOMEOWNER))), {
       setUp: site,
-      addAccount: site,
-      addEstimate: site,
     });
     await userEvent.setup().press(await screen.findByRole("link", { name: "Change what counts" }));
     expect(onChangeWhatCounts).toHaveBeenCalledTimes(1);
@@ -153,7 +161,7 @@ describe("Accounts", () => {
     expect(screen.queryByText("-£350")).toBeNull();
   });
 
-  it("a row opens its account; the links open history, the check-in and the website", async () => {
+  it("a row opens its account; the links open history, the check-in and the add form (S8)", async () => {
     const h = household();
     const props = await accounts(fakeApi(routes(h)));
     const user = userEvent.setup();
@@ -163,17 +171,27 @@ describe("Accounts", () => {
     expect(props.onOpenHistory).toHaveBeenCalledTimes(1);
     await user.press(screen.getByRole("button", { name: "Start monthly check-in" }));
     expect(props.onOpenCheckIn).toHaveBeenCalledTimes(1);
-    await user.press(screen.getByRole("link", { name: "Add an account on the website" }));
-    expect(Linking.openURL).toHaveBeenCalledWith(LINKS.addAccount.url);
-    // A mortgage with no home listed: the line asks for an estimate.
+    await user.press(screen.getByRole("button", { name: "Add account" }));
+    expect(props.onAddAccount).toHaveBeenCalledTimes(1);
+    // A mortgage with no home listed: the line asks for an estimate, added in the app.
     expect(
       screen.getByText("Your home's value is not counted until you add an estimate."),
     ).toBeOnTheScreen();
-    await user.press(screen.getByRole("link", { name: "Add an estimate on the website" }));
-    expect(Linking.openURL).toHaveBeenCalledWith(LINKS.addEstimate.url);
+    await user.press(screen.getByRole("link", { name: "Add an estimate" }));
+    expect(props.onAddEstimate).toHaveBeenCalledTimes(1);
+    expect(props.onAddAccount).toHaveBeenCalledTimes(1);
+    expect(Linking.openURL).not.toHaveBeenCalled();
   });
 
-  it("no accounts: No accounts yet with web's sentence and the website link, never £0", async () => {
+  it("a save that left something out says so once, at the top", async () => {
+    await accounts(fakeApi(routes(household())), LINKS, "We saved the property.");
+    expect(await screen.findByText("We saved the property.")).toBeOnTheScreen();
+    await accounts(fakeApi(routes(household())));
+    await screen.findByTestId("accounts-hero");
+    expect(screen.queryByText("We saved the property.")).toBeNull();
+  });
+
+  it("no accounts: No accounts yet with web's sentence and the add button, never £0", async () => {
     await accounts(fakeApi(routes(household([]))));
     expect(await screen.findByRole("header", { name: "No accounts yet" })).toBeOnTheScreen();
     expect(
@@ -183,20 +201,10 @@ describe("Accounts", () => {
     ).toBeOnTheScreen();
     expect(screen.queryByText("£0")).toBeNull();
     expect(screen.queryByTestId("accounts-own")).toBeNull();
-    await userEvent
-      .setup()
-      .press(screen.getByRole("link", { name: "Add an account on the website" }));
-    expect(Linking.openURL).toHaveBeenCalledWith(LINKS.addAccount.url);
-  });
-
-  it("with no web app address, the links say they open the Flump website", async () => {
-    const site = { url: "https://m.test.invalid", exact: false };
-    await accounts(fakeApi(routes(household([]))), {
-      setUp: site,
-      addAccount: site,
-      addEstimate: site,
-    });
-    expect(await screen.findByRole("link", { name: "Open the Flump website" })).toBeOnTheScreen();
+    const props = await accounts(fakeApi(routes(household([]))));
+    await userEvent.setup().press(await screen.findByRole("button", { name: "Add account" }));
+    expect(props.onAddAccount).toHaveBeenCalledTimes(1);
+    expect(Linking.openURL).not.toHaveBeenCalled();
   });
 
   it("loading: nothing for 200 ms, then blocks that stay 400 ms, then the list", async () => {
