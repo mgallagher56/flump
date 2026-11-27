@@ -116,6 +116,7 @@ function invalidateAccounts(queryClient: QueryClient): Promise<void> {
 async function settle(
   write: () => Promise<string | undefined | void>,
   queryClient: QueryClient,
+  { awaitRefresh = true }: { awaitRefresh?: boolean } = {},
 ): Promise<AccountWriteResult> {
   let id: string | undefined;
   try {
@@ -133,8 +134,10 @@ async function settle(
     if (error instanceof Error && error.name === "ZodError") return { status: "invalid" };
     return { status: "failed", kind: "unknown" };
   }
-  // A failed refresh keeps what is on screen; the save itself landed.
-  await invalidateAccounts(queryClient).catch(() => undefined);
+  // A failed refresh keeps what is on screen; the save itself landed. After a delete the screen
+  // leaves first: waiting would show the deleted account as not found for a moment.
+  const refresh = invalidateAccounts(queryClient).catch(() => undefined);
+  if (awaitRefresh) await refresh;
   return id ? { status: "saved", id } : { status: "saved" };
 }
 
@@ -160,7 +163,8 @@ export function useAccountWrites(): AccountWrites {
         settle(() => postMortgageWithProperty(api, body, key), queryClient),
       update: (id, body, updatedAt) =>
         settle(() => patchAccount(api, id, body, updatedAt), queryClient),
-      remove: (id) => settle(() => deleteAccountById(api, id), queryClient),
+      remove: (id) =>
+        settle(() => deleteAccountById(api, id), queryClient, { awaitRefresh: false }),
     }),
     [api, queryClient],
   );

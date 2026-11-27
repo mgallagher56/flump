@@ -331,6 +331,65 @@ describe("AccountForm: edit and delete", () => {
     expect(props.onSaved).not.toHaveBeenCalled();
   });
 
+  it("after a 412 the next save sends the version read again", async () => {
+    const h = household();
+    const id = h.idOf("Mortgage");
+    const NEWER = "2026-11-21T08:30:00.000Z";
+    let version = NOW().toISOString();
+    let tries = 0;
+    const api = fakeApi(
+      routes(h, {
+        "GET /accounts": () => h.accounts.map((a) => ({ ...a, updatedAt: version })),
+        [`PATCH /accounts/${id}`]: () => {
+          tries += 1;
+          if (tries === 1) {
+            // Changed somewhere else: the saved version moves on and this save is refused.
+            version = NEWER;
+            fail("client", 412);
+          }
+          return { id };
+        },
+      }),
+    );
+    const props = await form(api, { kind: "edit", id });
+    await type("account-form-name", "Home loan");
+    await save();
+    await settle();
+    await save();
+    const patches = posts(api).map((c) => c.ifMatch);
+    expect(patches).toEqual([`"${NOW().toISOString()}"`, `"${NEWER}"`]);
+    expect(props.onSaved).toHaveBeenCalledTimes(1);
+  });
+
+  it("a delete leaves the form at once, never showing the account as not found", async () => {
+    jest.spyOn(Alert, "alert").mockImplementation((_t, _m, buttons) => {
+      void buttons?.[1]?.onPress?.();
+    });
+    const h = household();
+    const id = h.idOf("Mortgage");
+    const api = fakeApi(
+      routes(h, {
+        [`DELETE /accounts/${id}`]: () => ({ success: true }),
+        // The list read after the delete never answers: the form must not wait for it.
+        "GET /accounts": (() => {
+          let first = true;
+          return () => {
+            if (first) {
+              first = false;
+              return h.accounts;
+            }
+            return new Promise(() => {});
+          };
+        })(),
+      }),
+    );
+    const props = await form(api, { kind: "edit", id });
+    await press("account-form-delete");
+    await settle();
+    expect(props.onDeleted).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText("We cannot find that account.")).toBeNull();
+  });
+
   it("delete asks first, saying what is removed; Cancel sends nothing", async () => {
     const alert = jest.spyOn(Alert, "alert").mockImplementation(() => {});
     const h = household();

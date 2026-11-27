@@ -250,6 +250,39 @@ describe("AccountDetail", () => {
     });
   });
 
+  it("after a refused quick update, the next one sends the version read again", async () => {
+    const h = household();
+    const id = h.idOf("Mortgage");
+    const NEWER = "2026-11-21T08:30:00.000Z";
+    let version = NOW().toISOString();
+    let tries = 0;
+    const api = fakeApi(
+      routes(h, {
+        "GET /accounts": () => h.accounts.map((a) => ({ ...a, updatedAt: version })),
+        [`PATCH /accounts/${id}`]: () => {
+          tries += 1;
+          if (tries === 1) {
+            version = NEWER;
+            fail("client", 412);
+          }
+          return { id };
+        },
+      }),
+    );
+    await detail(api, id);
+    const user = userEvent.setup();
+    await user.press(await screen.findByRole("button", { name: "Update amount owed" }));
+    await user.press(screen.getByRole("button", { name: "Save" }));
+    await settle();
+    await screen.findByTestId("quick-balance-error");
+    await user.press(screen.getByRole("button", { name: "Save" }));
+    await settle();
+    expect(api.calls.filter((c) => c.method === "PATCH").map((c) => c.ifMatch)).toEqual([
+      `"${NOW().toISOString()}"`,
+      `"${NEWER}"`,
+    ]);
+  });
+
   it("a quick update refused with 412 says it changed somewhere else", async () => {
     const h = household();
     const id = h.idOf("Mortgage");
