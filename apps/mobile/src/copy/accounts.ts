@@ -246,6 +246,9 @@ function changeSinceSentence(firstMonth: string | null, change: number | null): 
   return `${change > 0 ? "Up" : "Down"} ${size(change)} ${since}`;
 }
 
+/** Web's account chart title, its figure's hidden name: "Residential mortgage balance history". */
+export const accountChartTitle = (name: string): string => `${name || "Account"} balance history`;
+
 /** Web's `accountChartSummary`: the change since the first month, then the dashed end. */
 export function accountChartSummary(
   firstMonth: string | null,

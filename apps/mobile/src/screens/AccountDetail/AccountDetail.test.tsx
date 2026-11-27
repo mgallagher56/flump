@@ -87,10 +87,14 @@ describe("AccountDetail", () => {
     expect(screen.getByTestId("account-months-row-2026-11").props.accessibilityLabel).toBe(
       "November 2026, £186,000, Saved balance",
     );
+    // The chart is one image named as web's figure: its title, then its summary.
+    expect(screen.getByTestId("account-chart").props.accessibilityLabel).toBe(
+      "Residential mortgage balance history. Down £3,300 since May 2026. The dashed end is this month's saved balance, not yet recorded.",
+    );
+    // Web's end label: the last point's figure.
     expect(
-      screen.getByTestId("account-chart", { includeHiddenElements: true }).props
-        .accessibilityElementsHidden,
-    ).toBe(true);
+      screen.getByTestId("account-chart-end-label", { includeHiddenElements: true }),
+    ).toHaveTextContent("£186,000");
   });
 
   it("the type under the name, as web's subline: a Barclaycard reads Credit card", async () => {
@@ -142,6 +146,13 @@ describe("AccountDetail", () => {
     expect(screen.getByTestId("account-chart-summary")).toHaveTextContent(
       "Down £400 since October 2026.",
     );
+    // The chart's text alternative says it is the whole, as the description does.
+    expect(screen.getByTestId("account-chart").props.accessibilityLabel).toBe(
+      "Residential mortgage balance history. The whole amount owed each month, as recorded. Your share is 50% of it. Down £400 since October 2026.",
+    );
+    expect(
+      screen.getByTestId("account-chart-end-label", { includeHiddenElements: true }),
+    ).toHaveTextContent("£200,000");
   });
 
   it("a calculated month and a student loan left out say so under the hero", async () => {

@@ -64,10 +64,13 @@ describe("NetWorthHistory", () => {
     expect(screen.getByTestId("history-chart-summary")).toHaveTextContent(
       "Up £15,450 since May 2026. The dashed end is this month's saved balances, not yet recorded.",
     );
+    // One image named as web's figure: its title, then its summary; the end labelled as web's.
+    expect(screen.getByTestId("history-chart").props.accessibilityLabel).toBe(
+      "Net worth over time. Up £15,450 since May 2026. The dashed end is this month's saved balances, not yet recorded.",
+    );
     expect(
-      screen.getByTestId("history-chart", { includeHiddenElements: true }).props
-        .importantForAccessibility,
-    ).toBe("no-hide-descendants");
+      screen.getByTestId("history-chart-end-label", { includeHiddenElements: true }),
+    ).toHaveTextContent("£231,400");
     // The months sit behind "Show data", closed until pressed.
     expect(screen.queryByTestId("history-months-row-2026-10")).toBeNull();
     expect(screen.getByText("Show data")).toBeOnTheScreen();

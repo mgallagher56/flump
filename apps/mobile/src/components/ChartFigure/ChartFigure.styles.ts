@@ -13,4 +13,11 @@ export const DASH = "4 4";
 export const createStyles = (_theme: Theme) =>
   StyleSheet.create({
     root: { alignSelf: "stretch", height: CHART_HEIGHT },
+    drawing: { flex: 1 },
+    /**
+     * The end figure sits in the right-hand corner away from the end point (top when the line
+     * ends low, bottom when it ends high), so it never covers the line's end at any text size.
+     */
+    endLabelTop: { position: "absolute", top: 0, right: CHART_INSET },
+    endLabelBottom: { position: "absolute", bottom: 0, right: CHART_INSET },
   });
