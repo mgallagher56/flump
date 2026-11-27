@@ -4,6 +4,15 @@
  * this folder may name `@flump/api-client`. Nothing in the app imports it.
  */
 import { type ApiClient, BackendError } from "@flump/api-client";
+import {
+  CreateAccountRequest,
+  CreateBudgetEntryRequest,
+  CreateMortgageWithPropertyRequest,
+  UpdateAccountRequest,
+  UpdateBudgetEntryRequest,
+  UpdateProfileRequest,
+  UpsertSnapshotRequest,
+} from "@flump/api-contract";
 import type { QueryClient } from "@tanstack/react-query";
 import { cleanup } from "@testing-library/react-native";
 import type { ReactElement } from "react";
@@ -30,6 +39,21 @@ export function fail(kind: BackendError["kind"], status?: number, code?: string)
   throw error;
 }
 
+/**
+ * The backend's strict request schemas for the writes the app sends, by method and path. The fake
+ * refuses a body the backend would refuse (as a 400), so a test cannot pass on a body the real
+ * contract rejects.
+ */
+const REQUEST_SCHEMAS: readonly [RegExp, { safeParse(u: unknown): { success: boolean } }][] = [
+  [/^POST \/budget-entries$/, CreateBudgetEntryRequest],
+  [/^PATCH \/budget-entries\/[^/]+$/, UpdateBudgetEntryRequest],
+  [/^POST \/accounts$/, CreateAccountRequest],
+  [/^POST \/accounts\/mortgage-with-property$/, CreateMortgageWithPropertyRequest],
+  [/^PATCH \/accounts\/[^/]+$/, UpdateAccountRequest],
+  [/^PATCH \/user-profile$/, UpdateProfileRequest],
+  [/^PUT \/snapshots\/[^/]+$/, UpsertSnapshotRequest],
+];
+
 export function fakeApi(routes: Record<string, FakeRoute>) {
   const calls: FakeCall[] = [];
   const request = jest.fn(
@@ -52,6 +76,17 @@ export function fakeApi(routes: Record<string, FakeRoute>) {
         ...(options.ifMatch ? { ifMatch: options.ifMatch } : {}),
         ...(options.idempotencyKey ? { idempotencyKey: options.idempotencyKey } : {}),
       });
+      // As the real client on the phone: a POST's default Idempotency-Key comes from the global
+      // `crypto.randomUUID`, which Hermes does not have (Node, under Jest, does), so a POST that
+      // names no key of its own (or `false`) never leaves the phone.
+      if (method === "POST" && options.idempotencyKey === undefined) {
+        throw new TypeError(
+          `POST ${path} names no idempotencyKey: on Hermes the client's default crypto.randomUUID is undefined`,
+        );
+      }
+      const schema = REQUEST_SCHEMAS.find(([route]) => route.test(`${method} ${path}`))?.[1];
+      if (schema && !schema.safeParse(options.body).success)
+        fail("client", 400, "validation_failed");
       const route = routes[`${method} ${path}`];
       if (!route) fail("not-found", 404);
       const data = await route(options.body);

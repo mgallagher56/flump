@@ -7,6 +7,7 @@ import {
   type RunwayScenarioInputs,
   runwayIllustration,
 } from "@flump/finance-engine/budget";
+import * as Crypto from "expo-crypto";
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { AccessibilityInfo, Linking, Modal, View } from "react-native";
 import { BreathingRoom } from "../../components/BreathingRoom";
@@ -198,7 +199,11 @@ type ReadyData = Extract<BudgetDataState, { status: "ready" }>;
 
 /** The sheet over the page: adding to a category, or editing one saved row. */
 type Sheet =
-  | { mode: "add"; category: string }
+  /**
+   * `requestKey` is the add's Idempotency-Key, made when the sheet opens (expo-crypto: Hermes has no
+   * global `crypto.randomUUID`), so a retry of the same add is one entry and the next add is new.
+   */
+  | { mode: "add"; category: string; requestKey: string }
   | { mode: "edit"; id: string; row: AppBudgetEntry }
   | null;
 
@@ -257,7 +262,9 @@ function Ready({
           <Editor
             data={data}
             onEdit={(id, row) => setSheet({ mode: "edit", id, row })}
-            onAdd={(category) => setSheet({ mode: "add", category })}
+            onAdd={(category) =>
+              setSheet({ mode: "add", category, requestKey: Crypto.randomUUID() })
+            }
             onOpenWebsite={open(links.budget)}
             onFinish={() => setView("budget")}
           />
@@ -526,7 +533,7 @@ function EntrySheet({
   const [error, setError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
   // A new sheet starts with no error.
-  const sheetKey = sheet ? (sheet.mode === "add" ? `add-${sheet.category}` : sheet.id) : "";
+  const sheetKey = sheet ? (sheet.mode === "add" ? `add-${sheet.requestKey}` : sheet.id) : "";
   useEffect(() => {
     setError(null);
     setConfirming(false);
@@ -544,15 +551,18 @@ function EntrySheet({
     setError(null);
     const isIncome = values.category === "income";
     if (sheet.mode === "add") {
-      const result = await writes.add({
-        category: values.category,
-        name: values.name,
-        amount: values.amount,
-        frequency: values.frequency,
-        isIncome,
-        isEssential: isIncome ? true : values.isEssential,
-        ownership: "sole",
-      });
+      const result = await writes.add(
+        {
+          category: values.category,
+          name: values.name,
+          amount: values.amount,
+          frequency: values.frequency,
+          isIncome,
+          isEssential: isIncome ? true : values.isEssential,
+          ownership: "sole",
+        },
+        sheet.requestKey,
+      );
       finish(result, EDITOR.addFailed, EDITOR.saved);
       return;
     }

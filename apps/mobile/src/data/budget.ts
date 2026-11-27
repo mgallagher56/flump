@@ -131,13 +131,23 @@ function ifMatchFor(updatedAt: string | null | undefined): string | undefined {
   return etagFor(updatedAt);
 }
 
-/** `POST /budget-entries`. Throws before sending a body the contract refuses, or a BackendError. */
+/**
+ * `POST /budget-entries`. Throws before sending a body the contract refuses, or a BackendError.
+ * The caller names the Idempotency-Key: the client's default reads the global
+ * `crypto.randomUUID`, which Hermes does not have, so without one the add never left the phone.
+ */
 async function createBudgetEntry(
   api: ApiClient | null,
   entry: NewBudgetEntry,
+  idempotencyKey: string,
 ): Promise<AppBudgetEntry> {
   const body = CreateBudgetEntryRequest.parse(entry);
-  return need(api).request("/budget-entries", { method: "POST", body, schema: AppBudgetEntry });
+  return need(api).request("/budget-entries", {
+    method: "POST",
+    body,
+    schema: AppBudgetEntry,
+    idempotencyKey,
+  });
 }
 
 /** `PATCH /budget-entries/:id` with the version last read as `If-Match`. */
@@ -178,7 +188,8 @@ const key = queryKeys.budgetEntries();
 const isConflict = (error: unknown) => error instanceof BackendError && error.status === 412;
 
 export interface BudgetWrites {
-  add(entry: NewBudgetEntry): Promise<BudgetWriteResult>;
+  /** `idempotencyKey`: one per add the person makes, the same on its retries. */
+  add(entry: NewBudgetEntry, idempotencyKey: string): Promise<BudgetWriteResult>;
   update(id: string, update: BudgetEntryUpdate): Promise<BudgetWriteResult>;
   remove(id: string): Promise<BudgetWriteResult>;
 }
@@ -197,9 +208,9 @@ export function useBudgetWrites(): BudgetWrites {
     [queryClient],
   );
   const add = useCallback(
-    async (entry: NewBudgetEntry): Promise<BudgetWriteResult> => {
+    async (entry: NewBudgetEntry, idempotencyKey: string): Promise<BudgetWriteResult> => {
       try {
-        const created = await createBudgetEntry(api, entry);
+        const created = await createBudgetEntry(api, entry, idempotencyKey);
         setRows((rows) => [...rows, created]);
         return "saved";
       } catch {
