@@ -6,12 +6,14 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import flumpPreset from "../../panda.preset";
+import flumpPreset, { flumpMarketingPreset } from "../../panda.preset";
 import {
   densityRadii,
   densitySizes,
   densitySpacing,
   fontSizes,
+  marketingDurations,
+  marketingEasings,
   motionKeyframes,
   pageSpacing,
   semanticTokens,
@@ -54,6 +56,33 @@ describe("E15 preset wiring", () => {
   const generatedTokens = new URL("../../styled-system/tokens/index.js", import.meta.url);
   it.skipIf(!existsSync(generatedTokens))("panda codegen emits primary.solid", () => {
     expect(readFileSync(generatedTokens, "utf8")).toContain('"colors.primary.solid"');
+  });
+});
+
+describe("F2 marketing calm scale wiring (STYLE-GUIDE 11, UX-GUIDELINES M2)", () => {
+  const root = path.resolve(__dirname, "../../../..");
+  const config = (app: string) => readFileSync(path.join(root, app, "panda.config.ts"), "utf8");
+
+  it("the marketing preset adds the calm scale under durations.marketing and easings.marketing", () => {
+    const tokens = (flumpMarketingPreset as any).theme.extend.tokens;
+    expect(tokens.durations.marketing).toBe(marketingDurations);
+    expect(tokens.easings.marketing).toBe(marketingEasings);
+  });
+
+  it("the shared preset carries no calm scale, so the web app never gets it", () => {
+    expect(extend.tokens.durations).not.toHaveProperty("marketing");
+    expect(extend.tokens.easings).not.toHaveProperty("marketing");
+    expect(config("apps/web")).not.toContain("flumpMarketingPreset");
+  });
+
+  it("apps/marketing uses the marketing preset", () => {
+    expect(config("apps/marketing")).toMatch(/presets:\s*\[[^\]]*flumpMarketingPreset/);
+  });
+
+  it("the orb sets and card materials reach every app through the shared semantic tokens", () => {
+    expect(extend.semanticTokens.colors.orb.violetRose.core).toBeDefined();
+    expect(extend.semanticTokens.colors.material.glass.fill).toBeDefined();
+    expect(extend.semanticTokens.shadows.glass).toBeDefined();
   });
 });
 

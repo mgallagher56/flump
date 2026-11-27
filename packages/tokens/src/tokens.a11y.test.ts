@@ -54,10 +54,21 @@ describe("Tokens & Typography A11y Suite", () => {
     expect(fonts.mono.value).not.toMatch(/jetbrains/i);
   });
 
-  it("enforces the 7 canonical semantic token namespaces and eliminates redundancies", () => {
+  it("enforces the canonical semantic token namespaces and eliminates redundancies", () => {
     const namespaces = Object.keys(semanticTokens.colors);
+    // F2 (owner, 27 Nov 2026; STYLE-GUIDE 2.7) added the marketing orb sets and card materials.
     expect(namespaces.sort()).toEqual(
-      ["accent", "border", "chart", "primary", "status", "surface", "text"].sort(),
+      [
+        "accent",
+        "border",
+        "chart",
+        "material",
+        "orb",
+        "primary",
+        "status",
+        "surface",
+        "text",
+      ].sort(),
     );
 
     const legacyNamespaces = [

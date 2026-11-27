@@ -9,6 +9,8 @@ import {
   fontWeights,
   letterSpacings,
   lineHeights,
+  marketingDurations,
+  marketingEasings,
   motionKeyframes,
   navConditions,
   radii,
@@ -59,4 +61,20 @@ export const flumpPreset = definePreset({
     },
   },
 });
+/**
+ * The marketing site's calm motion scale (STYLE-GUIDE 11), as `durations.marketing.*` and
+ * `easings.marketing.*`. Only `apps/marketing` adds this preset: the web app never gets the calm
+ * scale (UX-GUIDELINES M2), so its generated token types and CSS variables never include it.
+ */
+export const flumpMarketingPreset = definePreset({
+  theme: {
+    extend: {
+      tokens: {
+        durations: { marketing: marketingDurations },
+        easings: { marketing: marketingEasings },
+      },
+    },
+  },
+});
+
 export default flumpPreset;

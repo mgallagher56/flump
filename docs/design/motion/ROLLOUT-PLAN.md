@@ -1,6 +1,6 @@
 # Marketing design language rollout plan
 
-Decisions: D1 to D6 accepted as recommended by the owner on 27 November 2026 ("Everything looks good with the recommendations"; on D6: "happy to rewrite these rules to fit the new approvals").
+Decisions: D1 to D6 accepted as recommended by the owner on 27 November 2026 ("Everything looks good with the recommendations"; on D6: "happy to rewrite these rules to fit the new approvals"). D7, the pay rise tool's result may glide on the marketing site, accepted the same day ("Yes, let it glide"; `docs/audit/plans/DECISIONS.md`).
 
 Written 27 November 2026 from a read-only review of `main` and of branch `claude/marketing-motion-prototypes-66c08d` (commit 015481a1d). Nothing was run and no files were changed.
 
@@ -43,6 +43,7 @@ Written 27 November 2026 from a read-only review of `main` and of branch `claude
 | Tilt-and-light hover              | Pointer light, a moving gradient and up to six degrees of tilt (from prototype 1b)           |
 | Entrance                          | A card or tag arriving once, staggered                                                       |
 | Count-up                          | A sample figure counting to its value once                                                   |
+| Glide                             | The pay rise tool's result moving to its new value when the visitor changes an input (D7)    |
 | Self-drawing chart                | Breathing room, savings line, debt payoff drawing once                                       |
 | Unfolding payslip, accounts tiles | The two approved set pieces                                                                  |
 | Triggered changeover              | Leave, beat, arrive, started by scroll and finished by time                                  |
@@ -66,6 +67,8 @@ Written 27 November 2026 from a read-only review of `main` and of branch `claude
 I recommend no new motion package. A law test should fail if `gsap` or `three` is imported outside `apps/marketing`.
 
 **Motion tokens.** Prototype 11 uses `TIMING` in `prototypes/shared/pace.tsx` multiplied by 1.4. Fix those products as the one scale: hover about 590 ms, entry 1,540, stagger 196, disclosure 980, count 2,240, chart 2,660, hero 4,760. The easings are "calm" `(0.25, 0.1, 0.2, 1)` and "calmInOut" `(0.45, 0, 0.3, 1)`. Name them as a marketing scale so the app's `fast`, `base` and `slow` are untouched. Drop the Medium and Brisk settings.
+
+Built in slice F2 (27 November 2026) as `marketingDurations` and `marketingEasings` in `packages/tokens/src/motion.ts`, read by Panda in `apps/marketing` only as `durations.marketing.*` and `easings.marketing.*`. Hover is exactly 588 ms (420 times 1.4). F2 adds `glide`, 588 ms, the short end of the scale, for decision D7. The prototype's own pay rise glide runs 1,344 ms (count times 0.6 times 1.4) and counts up from zero on arrival; production uses the shorter token and never glides on load. The orb sets, the glass and paper material and the orb-only colour check are in STYLE-GUIDE 2.7.
 
 **Trigger-and-complete helper.** One state machine: rest, leaving, beat, arriving, rest. A new trigger during a changeover queues the latest target and never interrupts. Tests cover each transition, rapid scrolling both ways, and unmount mid-play.
 
@@ -116,13 +119,13 @@ Routes come from `apps/marketing/src/App.tsx` and `apps/marketing/src/utils/tool
 
 **Order**
 
-| Slice | Content                                                                               | Agent-days |
-| ----- | ------------------------------------------------------------------------------------- | ---------- |
-| M1    | Home without the journey: hero, carousel, bands, FAQ, close, new band rules and tests | 4          |
-| M2    | Journey: orb, bead track, changeovers, receding scene, still fallback. Needs D1       | 4          |
-| M3    | Features index, five area pages, AI connection                                        | 3          |
-| M4    | Pricing, preview, security, contact                                                   | 2          |
-| M5    | Legal pages, not-found, final baselines                                               | 1          |
+| Slice | Content                                                                                                                                                                                                                                                                   | Agent-days |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| M1    | Home without the journey: hero, carousel, bands, FAQ, close, new band rules and tests. Background motion (bubble fields, the resting orb) gets a visible stop control or comes to rest within 5 seconds (UX-GUIDELINES MK14, WCAG 2.2.2); prototype 11 has no control yet | 4          |
+| M2    | Journey: orb, bead track, changeovers, receding scene, still fallback. Needs D1                                                                                                                                                                                           | 4          |
+| M3    | Features index, five area pages, AI connection                                                                                                                                                                                                                            | 3          |
+| M4    | Pricing, preview, security, contact                                                                                                                                                                                                                                       | 2          |
+| M5    | Legal pages, not-found, final baselines                                                                                                                                                                                                                                   | 1          |
 
 **SEO and no JavaScript.** All copy is server-rendered in reading order, including every journey stop and carousel item. Without JavaScript the journey is a plain vertical list and the carousel scrolls natively. Count-up figures are rendered at their final value. The canvas is decorative and hidden from assistive technology. `PageMeta` and the sitemap do not change.
 
@@ -152,7 +155,7 @@ Add the document style as a second style on the `Illustration` primitive. Market
 | B, named moments only | Once, after the content is readable, never on a control | Chart draws once per visit (already governed by `useChartAnimation`), the check-in completion picture settling, onboarding step entrances, setup progress (already approved in STYLE-GUIDE 11.1) |
 | C, never in the app   | Delays reading or moves a control                       | Scroll-driven scenes, the journey, three.js or WebGL, parallax, bubble fields behind data, tilt on cards holding figures, count-up on real money, carousels for data                             |
 
-**Count-up on money.** I recommend never in the app. UX-GUIDELINES M3 already says a counting figure "shows amounts that were never true", and a person glancing mid-count could read a wrong balance. The saved-figure cross-fade and wash in `useSavedFigureChange.ts` already mark a change honestly. Count-up stays on marketing, on sample figures tagged "Example", with the final value in the HTML. If the owner wants it in the app later, limit it to non-money values such as setup progress.
+**Count-up on money.** I recommend never in the app. UX-GUIDELINES M3 already says a counting figure "shows amounts that were never true", and a person glancing mid-count could read a wrong balance. The saved-figure cross-fade and wash in `useSavedFigureChange.ts` already mark a change honestly. On marketing, count-up stays on sample figures tagged "Example", with the final value in the HTML, and the pay rise tool's result may glide to its new value when the visitor changes an input, never on load and never under reduced motion (decision D7, owner, 27 November 2026: "Yes, let it glide"; UX-GUIDELINES MK13). If the owner wants it in the app later, limit it to non-money values such as setup progress.
 
 | Screen                            | A                             | B                               | Why                                                                                                                                                     |
 | --------------------------------- | ----------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -264,4 +267,4 @@ Added by slice F1 (27 November 2026). F1 rewrote the rules only; the pages on `m
 | `scripts/check-style-literals.ts`, `scripts/check-design-tokens.ts`                                                                            | Raw durations and colours                                                     | F2, F4, M2                                     | No change expected: timelines and three.js colours read the calm and orb tokens. A baseline raise or allow-list entry needs sign-off |
 | Marketing CSP, `apps/marketing/server/security.ts`                                                                                             | No worker rule                                                                | M2                                             | No change expected; any exception is a security exception for the owner                                                              |
 
-**Guards to add** (new, not changes): the orb-only colour check (F2); the import ban on `gsap` and `three` outside `apps/marketing`, the weight ratchet, and tests of the changeover helper, the power policy and the counting figure's final value (F4); the server HTML, no-JavaScript and reduced-motion screenshot check (M1); preview, security and not-found in the visual routes (M4, M5).
+**Guards to add** (new, not changes): the orb-only colour check (F2, added as `scripts/check-orb-colours.ts`); the import ban on `gsap` and `three` outside `apps/marketing`, the weight ratchet, and tests of the changeover helper, the power policy and the counting figure's final value (F4); the server HTML, no-JavaScript and reduced-motion screenshot check (M1); preview, security and not-found in the visual routes (M4, M5).

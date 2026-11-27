@@ -79,7 +79,21 @@ describe("native.generated.ts", () => {
     expect(native.light.shadows.focus).toBe("0 0 0 2px #f8fcfa, 0 0 0 4px #0b6b5d");
     expect(native.dark.shadows.focus).toBe("0 0 0 2px #1d2128, 0 0 0 4px #6fd0ba");
     expect(native.light.shadows.card).toContain("rgba(15, 42, 42, 0.08)");
-    expect(Object.keys(native.light.shadows)).toEqual(["card", "focus", "overlay", "raised", "xs"]);
+    expect(Object.keys(native.light.shadows)).toEqual([
+      "card",
+      "focus",
+      "glass",
+      "overlay",
+      "paper",
+      "raised",
+      "xs",
+    ]);
+    // F2 materials: the glass light and the paper edge resolve per theme.
+    expect(native.light.shadows.glass).toBe(
+      "inset 0 1px 0 rgba(248, 252, 250, 0.14), 0 1px 2px rgba(15, 42, 42, 0.08), 0 4px 14px rgba(15, 42, 42, 0.07)",
+    );
+    expect(native.light.shadows.paper).toContain("inset 0 0 0 1px #c8dcd5");
+    expect(native.dark.shadows.paper).toContain("inset 0 0 0 1px #303740");
   });
 
   it("emits lengths as unitless numbers, comfortable density only", () => {

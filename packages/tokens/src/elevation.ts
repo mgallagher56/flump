@@ -40,6 +40,20 @@ export const elevationShadows = {
       _dark: "0 0 0 2px {colors.surface.card}, 0 0 0 4px {colors.border.focusRing}",
     },
   },
+  // Marketing card materials (STYLE-GUIDE 2.7, prototype 11). The glass card: the card shadow
+  // under a faint inner top light. The paper document: a 1px edge and a soft drop below the sheet.
+  glass: {
+    value: {
+      base: "inset 0 1px 0 {colors.material.glass.light}, {shadows.cardLight}",
+      _dark: `inset 0 1px 0 rgba(255, 255, 255, 0.14), ${RING_DARK}, 0 1px 2px rgba(0, 0, 0, 0.2)`,
+    },
+  },
+  paper: {
+    value: {
+      base: "inset 0 0 0 1px {colors.material.paper.edge}, 0 22px 35px -19px rgba(15, 42, 42, 0.45)",
+      _dark: `${HAIRLINE_DARK}, inset 0 0 0 1px {colors.material.paper.edge}, ${RING_DARK}, 0 22px 35px -19px rgba(0, 0, 0, 0.3)`,
+    },
+  },
   // Legacy aliases (same elevation, lighter dark treatment)
   cardHover: {
     value: {

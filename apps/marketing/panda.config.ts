@@ -1,5 +1,5 @@
 import { defineConfig } from "@pandacss/dev";
-import { colorSchemeConditions, flumpPreset } from "@repo/ui/preset";
+import { colorSchemeConditions, flumpMarketingPreset, flumpPreset } from "@repo/ui/preset";
 
 export default defineConfig({
   // File extension for generated javascript files
@@ -15,7 +15,8 @@ export default defineConfig({
   exclude: [],
 
   // Utilize the shared preset
-  presets: ["@pandacss/preset-base", "@pandacss/preset-panda", flumpPreset],
+  // flumpMarketingPreset adds the calm motion scale, for the marketing site only (STYLE-GUIDE 11).
+  presets: ["@pandacss/preset-base", "@pandacss/preset-panda", flumpPreset, flumpMarketingPreset],
 
   // Useful for theme customization
   conditions: {

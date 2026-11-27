@@ -652,3 +652,11 @@ Relayed by the coordinator on 27 November 2026. Only the words in quotation mark
 - **Standing rules kept:** colour never signals judgement (debt is never rose), no finance shaming, AA accessibility and the reduced-motion setting on every surface.
 
 **Where it is written.** UX-GUIDELINES section 12 (12.1 the apps, 12.2 the marketing site); STYLE-GUIDE sections 2.4, 2.7, 8, 11 and 14. Supersedes: the 24 November 2026 marketing band order (solid mint band and charcoal closing band), STYLE-GUIDE 11.1 as the only list of decorative motion, and the "never count" rule outside the apps.
+
+## D7 (2026-11-27): the pay rise tool's result glides on the marketing site
+
+Relayed by the coordinator on 27 November 2026. Asked "Let the pay rise tool's result glide between values on the marketing site?", the owner answered: "Yes, let it glide".
+
+- **Decision.** On the marketing site only, the result of an interactive calculator (the pay rise tool) may glide briefly from its old value to its new one when the visitor changes its inputs. It uses the short end of the marketing calm scale (`durations.marketing.glide`, `easings.marketing.calm`), settles on the exact value, never glides on load or on first view, gives assistive technology the final value at once with no intermediate value announced, and does not move at all under reduced motion.
+- **Unchanged.** In the web and mobile apps a real figure still never counts, rolls or glides (UX-GUIDELINES M3, tier C). Count-up stays for fixed sample figures tagged "Example". Prices never move.
+- **Where it is written.** UX-GUIDELINES M3, M4, MK10 and MK13; STYLE-GUIDE 11 and 11.2; ROLLOUT-PLAN sections 1 and 4. Supersedes: F1's limit of moving figures on the marketing site to "Example" sample figures.

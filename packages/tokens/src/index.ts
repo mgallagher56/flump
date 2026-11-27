@@ -364,6 +364,50 @@ export const semanticTokens = {
       baseline: { value: { base: "{colors.mint.500}", _dark: "{colors.dark.borderInput}" } },
       grid: { value: { base: "rgba(15, 42, 42, 0.08)", _dark: "rgba(241, 238, 232, 0.08)" } },
     },
+
+    // 7. Marketing orb colour sets (owner, 27 Nov 2026; STYLE-GUIDE 2.7). The orb, its bead track
+    // and the bubble fields only, never a tint, gradient or background of anything else (MC1,
+    // enforced for violetRose by scripts/check-orb-colours.ts). Their own values, read from
+    // prototype 11: they never alias surface.tint.*, so a tint change cannot move the orb and an
+    // orb change cannot move a tile. core and shade are the orb's two tones (the beads alternate
+    // them); bubble and bubbleShade a bubble's lit and far fill; rim its translucent edge.
+    orb: {
+      skyTeal: {
+        core: { value: { base: "#2f7fa0", _dark: "#6db5d6" } },
+        shade: { value: { base: "#0b6b5d", _dark: "#6fd0ba" } },
+        bubble: { value: { base: "#d8e8f2", _dark: "#1d3846" } },
+        bubbleShade: { value: { base: "#c6e6dc", _dark: "#1d3934" } },
+        rim: { value: { base: "rgba(47, 127, 160, 0.22)", _dark: "rgba(109, 181, 214, 0.22)" } },
+      },
+      violetRose: {
+        core: { value: { base: "#7e67a8", _dark: "#a98fe0" } },
+        shade: { value: { base: "#b03f6a", _dark: "#e58aa2" } },
+        bubble: { value: { base: "#e3e0f4", _dark: "#353050" } },
+        bubbleShade: { value: { base: "#f3e3ea", _dark: "#4d2939" } },
+        rim: { value: { base: "rgba(126, 103, 168, 0.22)", _dark: "rgba(169, 143, 224, 0.22)" } },
+      },
+    },
+
+    // 8. Card materials (STYLE-GUIDE 2.7). Neutral only: no violet or rose. The glass card is a
+    // card with a soft border, a faint inner top light and a faint diagonal sheen; the paper
+    // document is paper on the card colour with faint ruled lines and a soft edge. Text sits on
+    // both, so text.primary, secondary and muted clear 4.5:1 on each (tokens.a11y.test.ts, MC3).
+    // Elevation: shadows.glass and shadows.paper (elevation.ts).
+    material: {
+      glass: {
+        fill: { value: { base: "{colors.mint.950}", _dark: "{colors.dark.surface}" } },
+        border: { value: { base: "{colors.mint.250}", _dark: "{colors.dark.border}" } },
+        // The inner top light and the sheen's bright end: the off-white mint.950, translucent.
+        light: { value: { base: "rgba(248, 252, 250, 0.14)", _dark: "rgba(248, 252, 250, 0.14)" } },
+        sheen: { value: { base: "rgba(248, 252, 250, 0.07)", _dark: "rgba(248, 252, 250, 0.07)" } },
+      },
+      paper: {
+        fill: { value: { base: "{colors.mint.950}", _dark: "{colors.dark.surface}" } },
+        edge: { value: { base: "{colors.mint.250}", _dark: "{colors.dark.border}" } },
+        // Faint ruled lines: the text colour at 2.5%.
+        rule: { value: { base: "rgba(15, 42, 42, 0.025)", _dark: "rgba(241, 238, 232, 0.025)" } },
+      },
+    },
   },
   shadows: elevationShadows,
   radii: densityRadii.radii,

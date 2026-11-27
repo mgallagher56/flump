@@ -32,6 +32,41 @@ export const easings = {
   settle: { value: "cubic-bezier(0.16, 1, 0.3, 1)" },
 } as const;
 
+/**
+ * The marketing site's calm scale (owner, 27 Nov 2026; STYLE-GUIDE 11, UX-GUIDELINES M2 and
+ * MK4). Prototype 11's `TIMING` (branch `claude/marketing-motion-prototypes-66c08d`,
+ * `prototypes/shared/pace.tsx`) times the page's 1.4 slowdown. Kept apart from `durations` so the
+ * apps' `fast`, `base` and `slow` never change for it: Panda reads it in `apps/marketing` only (as
+ * `durations.marketing.*`), and the native theme leaves it out. No faster variants.
+ */
+export const marketingDurations = {
+  // The pay rise tool's result gliding to its new value on the visitor's input (DECISIONS D7,
+  // MK13). The short end of the scale, so the figure keeps up with a slider.
+  glide: { value: "588ms" },
+  // Hover light, tilt settle, colour changes (420 x 1.4).
+  hover: { value: "588ms" },
+  // The gap between neighbours arriving (140 x 1.4).
+  stagger: { value: "196ms" },
+  // A disclosure opening or closing: FAQ, more detail (700 x 1.4).
+  disclosure: { value: "980ms" },
+  // One card, tag or line arriving (1100 x 1.4).
+  entry: { value: "1540ms" },
+  // A sample figure tagged "Example" counting to its value, once (1600 x 1.4).
+  count: { value: "2240ms" },
+  // A chart line drawing itself, once (1900 x 1.4).
+  chart: { value: "2660ms" },
+  // The whole hero sequence when it plays on time rather than on scroll (3400 x 1.4).
+  hero: { value: "4760ms" },
+} as const;
+
+/** The marketing easings: a gentle out and a gentle in-out. Neither overshoots. */
+export const marketingEasings = {
+  // Arriving, opening, gliding.
+  calm: { value: "cubic-bezier(0.25, 0.1, 0.2, 1)" },
+  // Travel, and a disclosure's height.
+  calmInOut: { value: "cubic-bezier(0.45, 0, 0.3, 1)" },
+} as const;
+
 /** Panda `keyframes`. Reference only under `_motionSafe` (e.g. `_motionSafe: { animation: ... }`). */
 export const motionKeyframes = {
   fadeIn: {
