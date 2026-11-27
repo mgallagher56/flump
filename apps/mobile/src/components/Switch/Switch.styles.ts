@@ -95,15 +95,16 @@ export const createStyles = (theme: Theme, os: string) => {
 };
 
 /**
- * The switch's colours: primary fill when on, strong border when off, card thumb. Disabled states
- * use muted and sunken semantic tokens at full opacity so both states stay clear.
+ * The switch's colours: primary fill when on, strong border when off, card thumb. Disabled-on uses
+ * `primary.border` with a sunken thumb: it stays quieter than `border.strong` (enabled-off) in
+ * both light and dark themes while keeping 3:1 UI contrast at full opacity.
  */
 const switchColours = (theme: Theme) => ({
   track: { false: theme.colors["border.strong"], true: theme.colors["primary.solid"] },
   thumb: theme.colors["surface.card"],
   // The thumb's edge, so it stays visible where it stands over the page (Android) or the track.
   thumbEdge: theme.colors["border.strong"],
-  disabledTrackOn: theme.colors["text.muted"],
+  disabledTrackOn: theme.colors["primary.border"],
   disabledTrackOffFill: theme.colors["surface.sunken"],
   disabledTrackOffEdge: theme.colors["border.strong"],
   disabledThumbOn: theme.colors["surface.sunken"],

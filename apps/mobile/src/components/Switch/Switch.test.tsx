@@ -541,4 +541,80 @@ describe("Switch", () => {
       expect(layoutSnapshot(view.toJSON() as HostNode | HostNode[] | null)).toEqual(idleLayout);
     },
   );
+
+  it.each([
+    ["light", "ios", light],
+    ["light", "android", light],
+    ["dark", "ios", dark],
+    ["dark", "android", dark],
+  ] as const)(
+    "%s %s: disabled-on uses primary.border and is less prominent than enabled-off while keeping 3:1 UI contrast",
+    async (scheme, os, set) => {
+      jest.replaceProperty(Platform, "OS", os);
+      const renderState = async (
+        view: Awaited<ReturnType<typeof render>> | null,
+        value: boolean,
+        disabled: boolean,
+      ) => {
+        const node = (
+          <ThemeProvider scheme={scheme}>
+            <Switch label="Count" value={value} disabled={disabled} onValueChange={jest.fn()} />
+          </ThemeProvider>
+        );
+        const rendered = view ? (await view.rerender(node), view) : await render(node);
+        return {
+          view: rendered,
+          track: StyleSheet.flatten(track().props.style) as ViewStyle,
+          thumb: StyleSheet.flatten(thumb().props.style) as ViewStyle,
+        };
+      };
+
+      const enabledOn = await renderState(null, true, false);
+      const enabledOff = await renderState(enabledOn.view, false, false);
+      const disabledOn = await renderState(enabledOn.view, true, true);
+      const disabledOff = await renderState(enabledOn.view, false, true);
+
+      expect(enabledOn.track.backgroundColor).toBe(set.colors["primary.solid"]);
+      expect(enabledOn.thumb.backgroundColor).toBe(set.colors["surface.card"]);
+      expect(enabledOn.thumb.borderColor).toBe(set.colors["border.strong"]);
+
+      expect(enabledOff.track.backgroundColor).toBe(set.colors["border.strong"]);
+      expect(enabledOff.thumb.backgroundColor).toBe(set.colors["surface.card"]);
+      expect(enabledOff.thumb.borderColor).toBe(set.colors["border.strong"]);
+
+      expect(disabledOn.track.backgroundColor).toBe(set.colors["primary.border"]);
+      expect(disabledOn.thumb.backgroundColor).toBe(set.colors["surface.sunken"]);
+
+      expect(disabledOff.track.backgroundColor).toBe(set.colors["surface.sunken"]);
+      expect(disabledOff.track.borderColor).toBe(set.colors["border.strong"]);
+      expect(disabledOff.thumb.backgroundColor).toBe(set.colors["border.strong"]);
+
+      for (const surface of [set.colors["surface.canvas"], set.colors["surface.card"]] as const) {
+        const disabledOnContrast = contrast(
+          String(disabledOn.track.backgroundColor),
+          surface,
+          surface,
+        );
+        const enabledOffContrast = contrast(
+          String(enabledOff.track.backgroundColor),
+          surface,
+          surface,
+        );
+        const enabledOnContrast = contrast(
+          String(enabledOn.track.backgroundColor),
+          surface,
+          surface,
+        );
+        const disabledOffFillContrast = contrast(
+          String(disabledOff.track.backgroundColor),
+          surface,
+          surface,
+        );
+        expect(disabledOnContrast).toBeGreaterThanOrEqual(3);
+        expect(disabledOnContrast).toBeLessThan(enabledOffContrast);
+        expect(enabledOffContrast).toBeLessThan(enabledOnContrast);
+        expect(disabledOffFillContrast).toBeLessThan(enabledOffContrast);
+      }
+    },
+  );
 });
