@@ -124,8 +124,9 @@ const NullableAmount = ResponseMoney.nullable();
 
 /**
  * The profile as `UserProfileService.formatProfile` puts it on the wire, plus `email` (the
- * caller's own address from the auth token, or null). Every key is always present: nullable
- * columns are null, never absent. Decimal columns arrive as numbers (B-05). `userId` is the
+ * caller's own address from the auth token, or null). The server always sends every key: nullable
+ * columns are null, never absent. Keys added after the v1 baseline carry a `.default()`, so a
+ * reader also accepts an older backend's answer without them. Decimal columns arrive as numbers (B-05). `userId` is the
  * caller's own id, so it is harmless.
  */
 export const UserProfileDto = z.strictObject({
@@ -163,7 +164,12 @@ export const UserProfileDto = z.strictObject({
   taxRegion: z.enum(["ENGLAND", "WALES", "SCOTLAND", "NORTHERN_IRELAND"]).nullable(),
   birthYear: z.number().int().nullable(),
   checkInDay: z.number().int().nullable(),
-  wellbeingQuestions: z.boolean(),
+  /**
+   * Added in E35 (26 November 2026), after the v1 baseline: an older backend does not send it, so
+   * readers fill in the backend's own default (asking is on). Fields added to a response from now
+   * on carry a default the same way (docs/api/versioning.md).
+   */
+  wellbeingQuestions: z.boolean().default(true),
   studentLoanPlans: z
     .array(z.enum(["PLAN_1", "PLAN_2", "PLAN_4", "PLAN_5", "POSTGRAD"]))
     .nullable(),
@@ -349,7 +355,12 @@ export const AccountExportProfile = z.strictObject({
   taxRegion: NullableText,
   birthYear: z.number().int().nullable(),
   checkInDay: z.number().int().nullable(),
-  wellbeingQuestions: z.boolean(),
+  /**
+   * Added in E35 (26 November 2026), after the v1 baseline: an older backend does not send it, so
+   * readers fill in the backend's own default (asking is on). Fields added to a response from now
+   * on carry a default the same way (docs/api/versioning.md).
+   */
+  wellbeingQuestions: z.boolean().default(true),
   studentLoanPlans: TextList,
   housingStatus: NullableText,
   monthlyHousingCost: NullableNumber,

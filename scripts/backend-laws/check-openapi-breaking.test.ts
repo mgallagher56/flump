@@ -204,6 +204,47 @@ describe("findBreakingChanges", () => {
     expect(findBreakingChanges(base, doc({ response: after }))).toEqual([]);
   });
 
+  test("a new required response field with no default", () => {
+    const after = {
+      ...withProps(baseResponse, { owner: { type: "string" } }),
+      required: ["id", "status", "amount", "owner"],
+    };
+    const changes = findBreakingChanges(base, doc({ response: after }));
+    expect(changes.map((c) => c.kind)).toEqual(["new-required-response-field"]);
+    expect(changes[0]?.where).toBe("PATCH /v1/things/{id} 200 response.owner");
+  });
+
+  test("a new required response field with a default is not breaking", () => {
+    const after = {
+      ...withProps(baseResponse, { owner: { type: "boolean", default: false } }),
+      required: ["id", "status", "amount", "owner"],
+    };
+    expect(findBreakingChanges(base, doc({ response: after }))).toEqual([]);
+  });
+
+  test("a new required field inside a nested response object, or an array's items", () => {
+    const nested = (props: Json, required: string[]): Json => ({
+      ...baseResponse,
+      properties: {
+        ...(baseResponse.properties as Json),
+        rows: {
+          type: "array",
+          items: { type: "object", required, properties: { id: { type: "string" }, ...props } },
+        },
+      },
+    });
+    const before = doc({ response: nested({}, ["id"]) });
+    const after = doc({ response: nested({ label: { type: "string" } }, ["id", "label"]) });
+    const changes = findBreakingChanges(before, after);
+    expect(changes.map((c) => c.kind)).toEqual(["new-required-response-field"]);
+    expect(changes[0]?.where).toBe("PATCH /v1/things/{id} 200 response.rows[].label");
+  });
+
+  test("a new optional response field, or a new route, is not breaking", () => {
+    const after = withProps(baseResponse, { owner: { type: "string" } });
+    expect(findBreakingChanges(base, doc({ response: after }))).toEqual([]);
+  });
+
   test("allOf members are walked like one merged object", () => {
     const split = (props: Json, required: string[]): Json => ({
       allOf: [

@@ -137,6 +137,12 @@ export function runCheck(input: {
         "",
         "Within /v1 only additive changes are allowed (docs/api/versioning.md). Either make the change",
         "additive, or put it on a new version path (/v2) or under the deprecation policy.",
+        ...(unallowed.some((c) => c.kind === "new-required-response-field")
+          ? [
+              "A new response field must carry a default in packages/api-contract (for example",
+              "`z.boolean().default(false)`), so a client built now still reads an older backend's answer.",
+            ]
+          : []),
         "A deliberate, agreed exception goes in packages/api-contract/openapi-breaking-allowlist.json",
         "as {kind, where, reason}; say so in the PR.",
       );
