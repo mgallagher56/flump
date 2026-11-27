@@ -60,6 +60,13 @@
     "typescript": "7.0.2"
   },
   "expo": {
+    "doctor": {
+      "reactNativeDirectoryCheck": {
+        "exclude": [
+          "@react-native-masked-view/masked-view"
+        ]
+      }
+    },
     "install": {
       "exclude": [
         "react",
