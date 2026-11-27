@@ -528,11 +528,6 @@ test.describe("marketing home: page length (MK11)", () => {
   test("a device too slow for the scene drops to the still without changing the page's length", async ({
     browser,
   }) => {
-    const live = await openPage(browser, { viewport: { width: 1440, height: 900 } });
-    const liveLength = await lengthAfterScroll(live);
-    await expect(live.getByTestId("journey-stage")).toHaveAttribute("data-scene", "live");
-    await live.context().close();
-
     // Every frame about 45 ms late: a steady 20 fps, under the 28 fps floor.
     const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
     await context.addInitScript(() => {
@@ -551,8 +546,15 @@ test.describe("marketing home: page length (MK11)", () => {
     });
     const slow = await context.newPage();
     await slow.goto(HOME);
-    await slow.locator("#journey").scrollIntoViewIfNeeded();
+    // The length with the hero pinned and the journey live: final from here (the arrival test
+    // above), whether or not the scene has started yet.
+    await expect(slow.getByTestId("home-hero")).toHaveAttribute("data-hero-live", "true", {
+      timeout: 15_000,
+    });
+    await expect(slow.locator("#journey")).toHaveAttribute("data-live", "on", { timeout: 15_000 });
     const stage = slow.getByTestId("journey-stage");
+    const before = await slow.evaluate(() => document.documentElement.scrollHeight);
+    await slow.locator("#journey").scrollIntoViewIfNeeded();
     await expect(stage).toHaveAttribute("data-still-reason", "slow-frames", { timeout: 20_000 });
     await expect(stage.locator("canvas")).toHaveCount(0);
     // The still orbs are in the sticky stage, at its edges as prototype 11 places them, so they
@@ -584,7 +586,9 @@ test.describe("marketing home: page length (MK11)", () => {
       teal: { painted: true, left: false, right: false, top: false, foot: true },
       rose: { painted: true, left: false, right: true, top: false, foot: true },
     });
-    expect(Math.abs((await lengthAfterScroll(slow)) - liveLength)).toBeLessThanOrEqual(4);
+    expect(
+      Math.abs((await slow.evaluate(() => document.documentElement.scrollHeight)) - before),
+    ).toBeLessThanOrEqual(4);
     await context.close();
   });
 });

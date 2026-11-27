@@ -102,16 +102,10 @@ export type FrameVerdict =
 export const FRAME_WINDOW_MS = 2000;
 export const DOWNGRADE_FPS = 40;
 /**
- * After the page was hidden, or after a stall, frames for this long are not counted: a browser
- * coming back from a background tab, or a throttled pane, runs a few uneven frames first.
+ * After the page was hidden, frames for this long are not counted: a browser coming back from a
+ * background tab runs a few uneven frames first.
  */
 export const SETTLE_MS = 1000;
-/**
- * A gap between two frames longer than this is a stall (a throttled or occluded pane, the tab
- * going to the background before the visibility event, a long task), not a slow frame: the
- * window starts again after a settle. The slowest steady rate the check still counts is 4 fps.
- */
-export const MAX_FRAME_GAP_MS = 250;
 
 export interface FrameRateCheckOptions {
   /** Whether the page is hidden now. Defaults to `document.hidden` (false without a document). */
@@ -128,14 +122,14 @@ const documentHidden = () => typeof document !== "undefined" && document.hidden;
  * counted as slow frames.
  *
  * Only frames a visitor could see count: a frame ticked while the page is hidden is ignored, and
- * after the page was hidden (seen by `tick` or `reset`) or after a stall longer than
- * `MAX_FRAME_GAP_MS`, the next `SETTLE_MS` of frames are ignored too before a window starts. So
- * background throttling never reads as a slow device (MK11).
+ * after the page was hidden (seen by `tick` or `reset`) the next `SETTLE_MS` of frames are ignored
+ * too before a window starts. So background throttling never reads as a slow device, while every
+ * visible frame counts, however far apart: a slow device still drops to the still within its
+ * first seconds of visible frames (MK11). Slow frames never restart the window.
  */
 export function createFrameRateCheck({ isHidden = documentHidden }: FrameRateCheckOptions = {}) {
   let frames = 0;
   let windowStart: number | null = null;
-  let last: number | null = null;
   /** Waiting out a settle; `settleFrom` is its first frame, null until that frame comes. */
   let settling = false;
   let settleFrom: number | null = null;
@@ -143,25 +137,19 @@ export function createFrameRateCheck({ isHidden = documentHidden }: FrameRateChe
   const restart = () => {
     frames = 0;
     windowStart = null;
-    last = null;
   };
-  const settle = (from: number | null) => {
+  const settle = () => {
     settling = true;
-    settleFrom = from;
+    settleFrom = null;
   };
   return {
     tick(now: number): FrameVerdict | null {
       if (stage === "done") return null;
       if (isHidden()) {
         restart();
-        settle(null);
+        settle();
         return null;
       }
-      if (last !== null && now - last > MAX_FRAME_GAP_MS) {
-        restart();
-        settle(now);
-      }
-      last = now;
       if (settling) {
         if (settleFrom === null) settleFrom = now;
         if (now - settleFrom < SETTLE_MS) return null;
@@ -188,7 +176,7 @@ export function createFrameRateCheck({ isHidden = documentHidden }: FrameRateChe
     },
     reset() {
       restart();
-      if (isHidden()) settle(null);
+      if (isHidden()) settle();
     },
   };
 }
