@@ -59,6 +59,7 @@ export {
   TermsStatusResponse,
   UpdateChecklistResponse,
   UpdateProfileResponse,
+  UserEmailResponse,
   UserProfileResponse,
 } from "./domains/profile.js";
 export { RetirementPlanResponse } from "./domains/retirement.js";

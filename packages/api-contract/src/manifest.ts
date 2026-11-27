@@ -128,6 +128,7 @@ import {
   UpdateChecklistResponse,
   UpdateProfileResponse,
   UpsertSnapshotResponse,
+  UserEmailResponse,
   UserProfileResponse,
   WellbeingQuestionsStatusResponse,
   WorkLogEntryListResponse,
@@ -863,6 +864,15 @@ export const routes = {
       group: "profile",
       response: UserProfileResponse,
       etag: "read",
+    }),
+    email: defineRoute({
+      id: "profile.email",
+      method: "GET",
+      path: "user-profile/email",
+      auth: "user",
+      ownership: "user",
+      group: "profile",
+      response: UserEmailResponse,
     }),
     update: defineRoute({
       id: "profile.update",

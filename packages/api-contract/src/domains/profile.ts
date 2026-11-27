@@ -191,6 +191,16 @@ export type UserProfileDto = z.infer<typeof UserProfileDto>;
 export const UserProfileResponse = UserProfileDto;
 export type UserProfileResponse = z.infer<typeof UserProfileResponse>;
 
+/**
+ * GET /user-profile/email: the caller's sign-in email from the auth token or identity provider,
+ * or null when it cannot be resolved. Reader default is null so a newer reader copes with a
+ * body lacking the key; the server always sends `{ email }`.
+ */
+export const UserEmailResponse = z.strictObject({
+  email: z.string().nullable().default(null),
+});
+export type UserEmailResponse = z.infer<typeof UserEmailResponse>;
+
 /** PATCH /user-profile */
 export const UpdateProfileResponse = UserProfileDto;
 export type UpdateProfileResponse = z.infer<typeof UpdateProfileResponse>;

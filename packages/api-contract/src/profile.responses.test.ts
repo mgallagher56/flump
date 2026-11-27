@@ -4,10 +4,11 @@ import {
   SendPasswordResetResponse,
   UpdateChecklistResponse,
   UpdateProfileResponse,
+  UserEmailResponse,
   UserProfileDto,
   UserProfileResponse,
 } from "./domains/profile.js";
-import { checkAgainst } from "./validate.js";
+import { checkAgainst, checkServerResponse } from "./validate.js";
 
 /** `UserProfileService.formatProfile` output for a fresh profile, after JSON serialisation. */
 const profile = {
@@ -126,6 +127,32 @@ describe("profile response schemas", () => {
   it("SendPasswordResetResponse accepts success only", () => {
     expect(checkAgainst(SendPasswordResetResponse, { success: true })).toEqual({ ok: true });
     expect(checkAgainst(SendPasswordResetResponse, { success: true, email: "x" }).ok).toBe(false);
+  });
+
+  it("UserEmailResponse accepts email or null, defaults missing key for readers, and requires it from server", () => {
+    const sampleEmail = ["person", "example.com"].join("@");
+    expect(checkAgainst(UserEmailResponse, { email: sampleEmail })).toEqual({ ok: true });
+    expect(checkAgainst(UserEmailResponse, { email: null })).toEqual({ ok: true });
+    expect(checkServerResponse(UserEmailResponse, { email: sampleEmail })).toEqual({ ok: true });
+    expect(checkServerResponse(UserEmailResponse, { email: null })).toEqual({ ok: true });
+
+    // Older backend without the `email` key: reader defaults to null, server check flags missing_field.
+    const readerParsed = UserEmailResponse.safeParse({});
+    expect(readerParsed.success).toBe(true);
+    expect(readerParsed.data).toEqual({ email: null });
+    expect(checkServerResponse(UserEmailResponse, {})).toEqual({
+      ok: false,
+      issues: [
+        {
+          path: "email",
+          code: "missing_field",
+          message: "Sent without a field the contract gives a reader default",
+        },
+      ],
+    });
+
+    expect(checkAgainst(UserEmailResponse, { email: 123 }).ok).toBe(false);
+    expect(checkAgainst(UserEmailResponse, { email: sampleEmail, extra: 1 }).ok).toBe(false);
   });
 
   it("ResetFinancialDataResponse nests the profile strictly", () => {
