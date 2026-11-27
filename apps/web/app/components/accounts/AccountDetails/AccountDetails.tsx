@@ -18,6 +18,13 @@ import { detailsRoot } from "./AccountDetails.styles";
 export const sourceLabel = (source: unknown): string | null =>
   source === "calculated" ? "Calculated" : source === "confirmed" ? "Confirmed" : null;
 
+/** The section's other words, also pinned by the mobile app's copy parity test (E12 S6). */
+export const BALANCE_HISTORY_COPY = {
+  title: "Balance history",
+  emptyTitle: "No balance history yet",
+  emptyDescription: "Record this account's balance each month and its history shows here.",
+} as const;
+
 /** The section's line for an account held alone. */
 export const HISTORY_DESCRIPTION = "This account's balance each month, as recorded.";
 
@@ -35,7 +42,7 @@ const HistorySection: FC<{ children: ReactNode; description?: string | null }> =
     domain="accounts"
     icon={History}
     id="account-balance-history"
-    title="Balance history"
+    title={BALANCE_HISTORY_COPY.title}
   >
     {children}
   </PageSection>
@@ -82,10 +89,10 @@ const AccountDetails: FC = () => {
       <HistorySection>
         <Card padding="none">
           <EmptyState
-            description="Record this account's balance each month and its history shows here."
+            description={BALANCE_HISTORY_COPY.emptyDescription}
             headingLevel="h3"
             illustration={<Illustration scene="onboarding" />}
-            title="No balance history yet"
+            title={BALANCE_HISTORY_COPY.emptyTitle}
           />
         </Card>
       </HistorySection>

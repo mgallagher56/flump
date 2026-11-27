@@ -22,6 +22,10 @@ import {
 } from "../../snapshotModel";
 import { changeCell, changeTable, tableBlock, wideOnly } from "./MonthlyChangeTable.styles";
 
+/** The table's caption: "Change by account, September 2026 to October 2026". */
+export const changeByAccountCaption = (previousMonth: MonthKey, month: MonthKey): string =>
+  `Change by account, ${formatMonth(previousMonth)} to ${formatMonth(month)}`;
+
 export interface MonthlyChangeTableProps {
   rows: readonly AccountChange[];
   month: MonthKey;
@@ -83,10 +87,7 @@ export const MonthlyChangeTable: FC<MonthlyChangeTableProps> = ({ rows, month, p
           onChange={(v) => setFilter("kind", v)}
         />
       </TableToolbar>
-      <Table
-        className={changeTable()}
-        caption={`Change by account, ${formatMonth(previousMonth)} to ${formatMonth(month)}`}
-      >
+      <Table className={changeTable()} caption={changeByAccountCaption(previousMonth, month)}>
         <THead>
           <Tr>
             <Th text {...getSortProps("account")}>

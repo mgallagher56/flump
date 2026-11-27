@@ -56,7 +56,15 @@ export const balanceDateLine = ({ current, latest }: BalanceDateInput): string |
 };
 
 /** "Not counted in your net worth.": said under the hero when the user's choices leave it out. */
-const NOT_COUNTED_TEXT = "Not counted in your net worth.";
+export const NOT_COUNTED_TEXT = "Not counted in your net worth.";
+
+/** The page's other words, also pinned by the mobile app's copy parity test (E12 S6). */
+export const ACCOUNT_DETAIL_COPY = {
+  balanceLabel: "Current balance",
+  owedLabel: "Amount owed",
+  notFound: "We cannot find that account.",
+  backToAccounts: "Back to accounts",
+} as const;
 
 /**
  * Whether the user's net worth choices count this account (a student loan is left out by default).
@@ -106,7 +114,7 @@ const sentences = (...parts: (string | null)[]): string | undefined => {
 const BackLink: FC = () => (
   <Link className={backLink()} to="/app/accounts">
     <Icon icon={ArrowLeft} size="sm" />
-    Back to accounts
+    {ACCOUNT_DETAIL_COPY.backToAccounts}
   </Link>
 );
 
@@ -144,7 +152,7 @@ const AccountDetailContainer: FC = () => {
     return (
       <PageBody>
         <BackLink />
-        <p className={notFound()}>We cannot find that account.</p>
+        <p className={notFound()}>{ACCOUNT_DETAIL_COPY.notFound}</p>
       </PageBody>
     );
   }
@@ -222,7 +230,7 @@ const AccountDetailContainer: FC = () => {
       />
 
       <HeroFigure
-        label={isLiability ? "Amount owed" : "Current balance"}
+        label={isLiability ? ACCOUNT_DETAIL_COPY.owedLabel : ACCOUNT_DETAIL_COPY.balanceLabel}
         subline={sentences(jointLine, dateLine, notCounted)}
         value={current}
       />
