@@ -56,3 +56,7 @@ export const BUDGET_WEB_ROUTE = "/app/budget";
 export const NET_WORTH_HISTORY_WEB_ROUTE = "/app/accounts/history";
 /** Web's page for one account, where it is edited until the app can (S8). */
 export const accountWebRoute = (id: string) => `/app/accounts/${encodeURIComponent(id)}`;
+/** Web's mortgage page, which owns a mortgage's detail (`ownerPageFor`), until the app has it (S11). */
+export const MORTGAGE_WEB_ROUTE = "/app/mortgage";
+/** Web's debts page, which owns a debt's or student loan's detail, until the app has it (S12). */
+export const DEBTS_WEB_ROUTE = "/app/debt";

@@ -23,6 +23,7 @@ import {
   ACCOUNT_DETAIL_COPY,
   balanceDateLine,
   NOT_COUNTED_TEXT,
+  ownerPageFor,
   typeSubtitle,
 } from "~/containers/accounts/accountDetailContainer/AccountDetailContainer";
 import { ACCOUNTS_EMPTY } from "~/containers/accounts/accountsContainer/AccountsContainer";
@@ -111,9 +112,12 @@ interface MobileAccounts {
   spokenChange: Fn<[number], string>;
   historySourceLabel: Fn<[string | null | undefined], string | undefined>;
   pounds: Fn<[number], string>;
+  ownerPageFor: Fn<[string], "mortgage" | "debts" | null>;
 }
 interface MobileShell {
   NET_WORTH_HISTORY_WEB_ROUTE: string;
+  MORTGAGE_WEB_ROUTE: string;
+  DEBTS_WEB_ROUTE: string;
   accountWebRoute(id: string): string;
 }
 
@@ -204,6 +208,26 @@ describe("the mobile account page says what web's says", () => {
     expect(ACCOUNT.historyDescription).toBe(HISTORY_DESCRIPTION);
     expect(ACCOUNT.chartNotEnough).toBe(ACCOUNT_CHART_NOT_ENOUGH);
   });
+
+  it.each(Object.keys(TYPE_LABEL).concat("Bonds from a later backend"))(
+    "the owner page link for %s: web's words, on the website, and web's route",
+    async (type) => {
+      const m = await mobile();
+      const shell = await load<MobileShell>("navigation/shell.ts");
+      const { ACCOUNT } = m;
+      const web = ownerPageFor(type);
+      const page = m.ownerPageFor(type);
+      if (!web) {
+        expect(page).toBeNull();
+        return;
+      }
+      const mobileLink =
+        page === "mortgage"
+          ? { to: shell.MORTGAGE_WEB_ROUTE, label: ACCOUNT.seeMortgage }
+          : { to: shell.DEBTS_WEB_ROUTE, label: ACCOUNT.seeDebts };
+      expect(mobileLink).toEqual({ to: web.to, label: `${web.label} on the website` });
+    },
+  );
 
   it.each([
     { name: "Barclaycard", type: "Credit Card" },

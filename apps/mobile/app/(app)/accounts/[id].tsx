@@ -1,6 +1,8 @@
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import {
   accountWebRoute,
+  DEBTS_WEB_ROUTE,
+  MORTGAGE_WEB_ROUTE,
   SET_UP_WEB_ROUTE,
   useShell,
   webLink,
@@ -21,7 +23,12 @@ export default function AccountDetailRoute() {
       id={id}
       onSignOut={shell.signOut}
       marketingOrigin={shell.marketingOrigin}
-      links={{ setUp: webLink(shell, SET_UP_WEB_ROUTE), edit: webLink(shell, accountWebRoute(id)) }}
+      links={{
+        setUp: webLink(shell, SET_UP_WEB_ROUTE),
+        edit: webLink(shell, accountWebRoute(id)),
+        mortgage: webLink(shell, MORTGAGE_WEB_ROUTE),
+        debts: webLink(shell, DEBTS_WEB_ROUTE),
+      }}
       onBackToAccounts={() => router.navigate("/accounts")}
       header={(title) => <Stack.Screen options={{ title }} />}
     />

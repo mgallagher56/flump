@@ -20,6 +20,7 @@ import {
   accountTypeSubtitle,
   balanceDateLine,
   heroSentences,
+  ownerPageFor,
   pointMonth,
   pounds,
   SHOW_DATA,
@@ -47,6 +48,10 @@ export interface AccountDetailProps {
     setUp: WebLink;
     /** The account's own page on the website, where it is edited until S8. */
     edit: WebLink;
+    /** Web's mortgage page, which owns a mortgage's detail (web's `ownerPageFor`). */
+    mortgage: WebLink;
+    /** Web's debts page, which owns a debt's or student loan's detail. */
+    debts: WebLink;
   };
   /** Back to the accounts list, from "We cannot find that account." */
   onBackToAccounts(): void;
@@ -170,6 +175,7 @@ function Loaded({ detail, links }: { detail: Detail; links: AccountDetailProps["
     detail.notCounted ? ACCOUNT.notCounted : null,
   );
   const typeSubtitle = accountTypeSubtitle({ ...account, name: detail.name });
+  const owner = ownerLink(account.type, links);
   return (
     <>
       {typeSubtitle ? (
@@ -224,6 +230,18 @@ function Loaded({ detail, links }: { detail: Detail; links: AccountDetailProps["
           testID="account-no-history"
         />
       )}
+      {owner ? (
+        <Button
+          label={owner.link.exact ? owner.label : OPEN_FLUMP_WEBSITE}
+          variant="link"
+          accessibilityRole="link"
+          testID="account-owner-page"
+          onPress={() => void Linking.openURL(owner.link.url)}
+        />
+      ) : null}
+      <Text textStyle="body.sm" color="secondary" testID="account-on-website">
+        {ACCOUNT.onWebsite}
+      </Text>
       <Button
         label={links.edit.exact ? ACCOUNT.edit : OPEN_FLUMP_WEBSITE}
         variant="link"
@@ -233,4 +251,12 @@ function Loaded({ detail, links }: { detail: Detail; links: AccountDetailProps["
       />
     </>
   );
+}
+
+/** Web's owner page link for this type, with the words and the website link for it. */
+function ownerLink(type: string, links: AccountDetailProps["links"]) {
+  const page = ownerPageFor(type);
+  if (page === "mortgage") return { label: ACCOUNT.seeMortgage, link: links.mortgage };
+  if (page === "debts") return { label: ACCOUNT.seeDebts, link: links.debts };
+  return null;
 }
