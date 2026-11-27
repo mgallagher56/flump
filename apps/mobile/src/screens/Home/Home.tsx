@@ -12,6 +12,8 @@ import { Text } from "../../components/Text";
 import { CHECK_IN } from "../../copy/checkIn";
 import { changeLine, HOME, STRIP } from "../../copy/home";
 import { OPEN_FLUMP_WEBSITE } from "../../copy/navigation";
+import { useBudgetEntriesQuery } from "../../data/budget";
+import { useCheckInQueries } from "../../data/checkIn";
 import { useDelayedLoading } from "../../data/useDelayedLoading";
 import { checkInRow } from "../../features/check-in/checkInFlow";
 import { type CheckInDataState, londonToday } from "../../features/check-in/useCheckInData";
@@ -66,6 +68,10 @@ export function Home({
   now = () => new Date(),
 }: HomeProps) {
   const { home, checkIn } = useHomeData(now);
+  const { refreshAll } = useCheckInQueries();
+  // Pull to refresh reads again everything Home shows: the check-in's four reads and the budget.
+  const budget = useBudgetEntriesQuery();
+  const onRefresh = () => Promise.all([refreshAll(), budget.refetch()]).then(() => undefined);
   // The terms changed while signed in (PR #939): every read is refused until they are agreed.
   if (home.status === "error" && home.problem === "termsNotAccepted") {
     return (
@@ -78,7 +84,14 @@ export function Home({
     );
   }
   return (
-    <HomeBody home={home} checkIn={checkIn} links={links} onOpenCheckIn={onOpenCheckIn} now={now} />
+    <HomeBody
+      home={home}
+      checkIn={checkIn}
+      links={links}
+      onOpenCheckIn={onOpenCheckIn}
+      onRefresh={onRefresh}
+      now={now}
+    />
   );
 }
 
@@ -87,12 +100,14 @@ function HomeBody({
   checkIn,
   links,
   onOpenCheckIn,
+  onRefresh,
   now,
 }: {
   home: HomeDataState;
   checkIn: CheckInDataState;
   links: HomeWebLinks;
   onOpenCheckIn(): void;
+  onRefresh(): Promise<void>;
   now: () => Date;
 }) {
   // Nothing for 200 ms, then blocks the hero's and the strip's size for at least 400 ms, on one
@@ -100,7 +115,7 @@ function HomeBody({
   const skeleton = useDelayedLoading(home.status === "loading");
   if (home.status === "notSetUp") return <NotSetUp setUp={links.setUp} edges={TAB_EDGES} />;
   return (
-    <Screen edges={TAB_EDGES} testID="home">
+    <Screen edges={TAB_EDGES} testID="home" onRefresh={onRefresh}>
       {/* Above the hero, where web's dashboard puts TaxRatesStatusBanner (HomeDashboard). */}
       {home.status === "ready" && home.strip.status === "ready" ? (
         <TaxRatesStatusBanner rates={home.strip.value.ratesNotice} />

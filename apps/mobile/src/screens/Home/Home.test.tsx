@@ -9,6 +9,7 @@ import {
   NOW,
   routes,
 } from "../../features/check-in/checkInTestData";
+import { refreshControl } from "../../testing/refresh";
 import { Home, type HomeWebLinks } from "./Home";
 
 /** The website's pages (placeholder addresses). */
@@ -394,6 +395,63 @@ describe("Home", () => {
     expect(await screen.findByText("Record your November balances")).toBeOnTheScreen();
     expect(screen.getByTestId("home-error")).toBeOnTheScreen();
     expect(screen.queryByText("£0")).toBeNull();
+  });
+
+  describe("pull to refresh", () => {
+    it("reads all four again and keeps the figures on screen, with no blocks", async () => {
+      let answer: (value: unknown) => void = () => {};
+      let slow = false;
+      const h = household(RISING);
+      const api = fakeApi(
+        routes(h, {
+          "GET /accounts": () =>
+            slow
+              ? new Promise((resolve) => {
+                  answer = resolve;
+                })
+              : h.accounts,
+        }),
+      );
+      await home(api);
+      expect(await screen.findByText("£52,100")).toBeOnTheScreen();
+      await settle();
+      expect(api.request).toHaveBeenCalledTimes(4);
+      slow = true;
+      await act(async () => {
+        void refreshControl()?.onRefresh();
+      });
+      expect(api.request).toHaveBeenCalledTimes(8);
+      expect(refreshControl()?.refreshing).toBe(true);
+      // Long after the skeleton's 200 ms the figures are still there, and no blocks.
+      await act(async () => jest.advanceTimersByTimeAsync(1000));
+      expect(screen.getByText("£52,100")).toBeOnTheScreen();
+      expect(screen.queryByTestId("home-hero-loading")).toBeNull();
+      await act(async () => {
+        answer(h.accounts);
+        await jest.advanceTimersByTimeAsync(0);
+      });
+      expect(refreshControl()?.refreshing).toBe(false);
+      expect(screen.getByText("£52,100")).toBeOnTheScreen();
+    });
+
+    it("a failed refresh keeps the figures and shows no failure over them", async () => {
+      let down = false;
+      const h = household(RISING);
+      const api = fakeApi(
+        routes(h, { "GET /accounts": () => (down ? fail("unavailable", 503) : h.accounts) }),
+      );
+      await home(api);
+      expect(await screen.findByText("£52,100")).toBeOnTheScreen();
+      down = true;
+      await act(async () => {
+        void refreshControl()?.onRefresh();
+      });
+      // The refresh and its two retries fail.
+      await act(async () => jest.advanceTimersByTimeAsync(10_000));
+      expect(refreshControl()?.refreshing).toBe(false);
+      expect(screen.getByText("£52,100")).toBeOnTheScreen();
+      expect(screen.queryByTestId("home-error")).toBeNull();
+    });
   });
 });
 

@@ -1,6 +1,7 @@
 import { dark } from "@flump/tokens/native";
-import { render, screen } from "@testing-library/react-native";
+import { act, render, screen } from "@testing-library/react-native";
 import { StyleSheet, type ViewStyle } from "react-native";
+import { refreshControl } from "../../testing/refresh";
 import { expectHoldsAtDoubleText } from "../../testing/textScale";
 import { ThemeProvider } from "../../theme/ThemeProvider";
 import { Text } from "../Text";
@@ -90,5 +91,44 @@ describe("Screen", () => {
 
   it.each(Object.entries(screenStates))("%s holds at 200%% text", async (_name, props) => {
     await expectHoldsAtDoubleText(<Screen {...props} />);
+  });
+
+  it("pull to refresh: the control spins until the refresh settles, then stops, even on failure", async () => {
+    let settle: (ok: boolean) => void = () => {};
+    const onRefresh = jest.fn(
+      () =>
+        new Promise<void>((resolve, reject) => {
+          settle = (ok) => (ok ? resolve() : reject(new Error("refused")));
+        }),
+    );
+    await render(
+      <ThemeProvider scheme="light">
+        <Screen testID="s" onRefresh={onRefresh}>
+          <Text>Body</Text>
+        </Screen>
+      </ThemeProvider>,
+    );
+    expect(refreshControl()?.refreshing).toBe(false);
+    await act(async () => {
+      void refreshControl()?.onRefresh();
+    });
+    expect(onRefresh).toHaveBeenCalledTimes(1);
+    expect(refreshControl()?.refreshing).toBe(true);
+    // The content stays while it refreshes.
+    expect(screen.getByText("Body")).toBeOnTheScreen();
+    await act(async () => settle(false));
+    expect(refreshControl()?.refreshing).toBe(false);
+    expect(screen.getByText("Body")).toBeOnTheScreen();
+  });
+
+  it("no refresh control unless asked for", async () => {
+    await render(
+      <ThemeProvider scheme="light">
+        <Screen testID="s">
+          <Text>Body</Text>
+        </Screen>
+      </ThemeProvider>,
+    );
+    expect(refreshControl()).toBeUndefined();
   });
 });

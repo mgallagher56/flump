@@ -82,6 +82,11 @@ export interface CheckInQueries {
   checkIns: { data?: CheckIns; error: unknown; isFetching: boolean };
   /** Fetches whatever failed again. */
   refetch(): void;
+  /**
+   * Pull to refresh: every read is fetched again. What is on screen stays while it runs, and a
+   * failed refresh keeps it (a read with data never shows as failed). Never rejects.
+   */
+  refreshAll(): Promise<void>;
 }
 
 /** The four reads the check-in and its row need, in parallel and cached under one key each. */
@@ -131,6 +136,10 @@ export function useCheckInQueries(): CheckInQueries {
         if (q.isError) void q.refetch();
       }
     },
+    refreshAll: () =>
+      Promise.all([accounts, details, profile, checkIns].map((q) => q.refetch())).then(
+        () => undefined,
+      ),
   };
 }
 
