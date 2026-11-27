@@ -148,7 +148,9 @@ export const HomeJourney: FC = () => {
     >
       <SceneStage data-testid="journey-stage" start={start} watchRef={journeyRef}>
         {STILL_ORBS.map(({ place, tone }) => (
-          <GlassOrb className={s.stillOrb({ place })} key={place} tone={tone} />
+          <span className={s.stillOrb({ place })} data-still-orb={place} key={place}>
+            <GlassOrb tone={tone} />
+          </span>
         ))}
         {SWATCHES.map((tone) => (
           <span className={s.swatch({ tone })} data-scene-swatch={tone} key={tone} />

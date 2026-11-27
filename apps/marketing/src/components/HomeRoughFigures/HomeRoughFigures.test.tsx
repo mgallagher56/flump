@@ -58,11 +58,11 @@ describe("HomeRoughFigures", () => {
     const steps = create.mock.calls[0]?.[0].scrollTrigger as Record<string, unknown>;
     expect(steps.scrub).toBe(SCROLL_LAG);
     expect(steps.once).toBeUndefined();
-    // 0.55 x 1.4 x 1.4 x 1.4 screens of 1000px = 1509.2, rounded to 1509.
-    expect((steps.end as () => string)()).toBe("+=1509");
+    // 0.55 x 1.4 (pace) x 1.4 (steps) screens of 1000px = 1078.
+    expect((steps.end as () => string)()).toBe("+=1078");
     const picture = create.mock.calls[1]?.[0].scrollTrigger as Record<string, unknown>;
-    // 0.55 x 1.4 x 1.4 x 1.6 screens of 1000px = 1724.8, rounded to 1725.
-    expect((picture.end as () => string)()).toBe("+=1725");
+    // 0.55 x 1.4 (pace) x 1.6 (calendar) screens of 1000px = 1232.
+    expect((picture.end as () => string)()).toBe("+=1232");
 
     const [line, ...rest] = calls;
     expect(line?.vars).toMatchObject({ scaleY: 1, duration: 3 });

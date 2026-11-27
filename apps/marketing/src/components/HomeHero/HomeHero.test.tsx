@@ -374,8 +374,9 @@ describe("heroScroll (prototype 11's version)", () => {
     expect(FOLLOW_S).toBeCloseTo(1.4);
     expect(ASSEMBLE_S).toBeCloseTo(3.36);
     expect(PART_S).toBeCloseTo(2.24);
-    // 1.4 screens x 0.4 x 1.4 x 1.4 = 1.0976 screens of pinned scroll.
-    expect(PIN_SCREENS).toBeCloseTo(1.0976);
+    // 1.4 screens x 0.4 x 1.4 (the prototype's pace factor, Calm 1 x its scale 1.4) = 0.784
+    // screens of pinned scroll: 706 px on a 900 px screen.
+    expect(PIN_SCREENS).toBeCloseTo(0.784);
     expect(TOTAL).toBe(10);
   });
 

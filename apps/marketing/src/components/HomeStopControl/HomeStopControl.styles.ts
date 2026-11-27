@@ -42,6 +42,15 @@ export const dock = css({
   transitionDuration: "base",
   transitionTimingFunction: "standard",
   "& [data-motion-control]": { ...pill, px: "1" },
+  // The motion control beside the nav: a full 44px target. Under 30rem the dock has no room for
+  // its words beside the count, so it is an icon button there; its words stay in the page, out of
+  // sight, as its accessible name ("Pause animation", WCAG 4.1.2), and with no visible words
+  // there is no visible label for that name to differ from (WCAG 2.5.3).
+  "& [data-motion-control] button": { height: "11" },
+  "@media (max-width: 29.99rem)": {
+    "& [data-motion-control] button": { width: "11", px: "0", justifyContent: "center" },
+    "& [data-motion-label]": { srOnly: true },
+  },
   "&[data-scrolling]:not(:focus-within):not(:hover)": {
     opacity: 0,
     pointerEvents: "none",
@@ -51,14 +60,13 @@ export const dock = css({
 
 export const nav = css(pill);
 
-/** Real 44px buttons (40px on a narrow phone); the next button wears the mint circle. */
+/** Real 44px buttons at every width; the next button wears the mint circle. */
 export const button = cva({
   base: {
     display: "grid",
     placeItems: "center",
-    width: "10",
-    height: "10",
-    "@media (min-width: 30rem)": { width: "11", height: "11" },
+    width: "11",
+    height: "11",
     borderRadius: "full",
     borderWidth: 0,
     cursor: "pointer",

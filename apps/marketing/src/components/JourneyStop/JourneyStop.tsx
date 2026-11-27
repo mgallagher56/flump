@@ -1,4 +1,4 @@
-import { type FC, useRef } from "react";
+import { type FC, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { SAMPLE_MOMENTS } from "../../motion/journey/sampleMoments";
 import { leaveSeconds, pairArrive, pairLeave } from "../../motion/moments/arrive";
@@ -58,6 +58,34 @@ export const JourneyStop: FC<JourneyStopProps> = ({ stop, index, total, live }) 
   const id = journeyStopId(stop.key);
   const titleId = `${id}-title`;
   const last = index === total - 1;
+
+  // The last frame is a full screen but its pair is often shorter: pull what follows up over the
+  // empty foot, so no empty screen follows the journey. Set as soon as the journey is live, not
+  // when its motion loads near the viewport, so the page's length is final from the start and
+  // never shrinks while the visitor reads (MK11: the page lays out the same live or still).
+  useEffect(() => {
+    const root = ref.current;
+    const frame = root?.querySelector<HTMLElement>("[data-stop-frame]");
+    const pairEl = root?.querySelector<HTMLElement>("[data-stop-pair]");
+    if (!live || !last || !root || !frame || !pairEl) return;
+    const trim = () => {
+      const empty = frame.getBoundingClientRect().bottom - pairEl.getBoundingClientRect().bottom;
+      root.style.marginBottom = `${-Math.max(0, Math.round(empty - 56))}px`;
+    };
+    trim();
+    if (typeof ResizeObserver === "undefined") {
+      return () => {
+        root.style.marginBottom = "";
+      };
+    }
+    const observer = new ResizeObserver(trim);
+    observer.observe(frame);
+    observer.observe(pairEl);
+    return () => {
+      observer.disconnect();
+      root.style.marginBottom = "";
+    };
+  }, [live, last]);
 
   useGsapMoment(
     ref,
@@ -141,19 +169,8 @@ export const JourneyStop: FC<JourneyStopProps> = ({ stop, index, total, live }) 
       if (holdsFocus(root)) arrive.timeScale(1).progress(1);
 
       if (last) {
-        // The last frame is a full screen but its pair is often shorter: pull what follows up
-        // over the empty foot, so no empty screen follows the journey.
-        const trim = () => {
-          const empty =
-            frame.getBoundingClientRect().bottom - pairEl.getBoundingClientRect().bottom;
-          root.style.marginBottom = `${-Math.max(0, Math.round(empty - 56))}px`;
-        };
-        trim();
-        ScrollTrigger.addEventListener("refreshInit", trim);
         return () => {
           removeListeners();
-          ScrollTrigger.removeEventListener("refreshInit", trim);
-          root.style.marginBottom = "";
           settleCounts(root);
           settleDrawnCharts(root);
         };

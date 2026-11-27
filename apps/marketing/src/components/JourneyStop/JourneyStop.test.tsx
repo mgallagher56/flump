@@ -282,19 +282,43 @@ describe("JourneyStop", () => {
     vi.unstubAllGlobals();
   });
 
-  it("lets the last pair stay: no leave, and the empty foot of its frame trimmed", () => {
+  it("lets the last pair stay: no leave and no trigger beyond its arrive", () => {
+    const { triggers, kit } = runSetup(5, true);
+    expect(triggers).toHaveLength(1);
+    expect(kit.gsap.fromTo).not.toHaveBeenCalled();
+  });
+
+  it("trims the empty foot of the last frame as soon as the journey is live, before any motion loads", () => {
     vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (
       this: HTMLElement,
     ) {
       const bottom = this.hasAttribute("data-stop-frame") ? 1000 : 600;
       return { top: 0, bottom } as DOMRect;
     });
-    const { triggers, root, cleanup, kit } = runSetup(5, true);
-    expect(triggers).toHaveLength(1);
-    expect(kit.gsap.fromTo).not.toHaveBeenCalled();
+    // No GSAP setup is run here: the trim must not wait for the stop's motion.
+    const { container, rerender, unmount } = render(tree(5, true));
+    const root = container.querySelector("section") as HTMLElement;
     // 1000 − 600 = 400 empty, less 56 kept = 344
     expect(root.style.marginBottom).toBe("-344px");
-    cleanup?.();
+    // Not live (paused, reduced motion): the plain list keeps its own foot.
+    rerender(tree(5, false));
     expect(root.style.marginBottom).toBe("");
+    rerender(tree(5, true));
+    expect(root.style.marginBottom).toBe("-344px");
+    unmount();
+  });
+
+  it("never trims a stop that is not the last, or a pair that fills its frame", () => {
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (
+      this: HTMLElement,
+    ) {
+      // 40 px empty is under the 56 kept: no pull.
+      const bottom = this.hasAttribute("data-stop-frame") ? 1000 : 960;
+      return { top: 0, bottom } as DOMRect;
+    });
+    const fourth = render(tree(4, true)).container.querySelector("section") as HTMLElement;
+    expect(fourth.style.marginBottom).toBe("");
+    const lastStop = render(tree(5, true)).container.querySelector("section") as HTMLElement;
+    expect(lastStop.style.marginBottom).toBe("0px");
   });
 });

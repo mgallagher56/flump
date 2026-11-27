@@ -104,11 +104,20 @@ export const stepBody = css({
 /**
  * The calendar page, under the steps and from 60rem beside them, at every width as prototype 11
  * (it shows a date, no figure). The wrapper keeps room under the page, which is drawn a little
- * taller than its box and rises as it arrives, so it never reaches the next band.
+ * taller than its box and rises as it arrives, so it never reaches the next band. Beside the steps
+ * it is drawn 400px wide, so the calendar stands as tall as prototype 11's (its art box, 364px with
+ * the room under it, sets the band's height there).
  */
 export const roughPicture = css({
   width: "full",
   maxWidth: "xs",
+  // Stacked, the drawing keeps the small document size (280px).
+  "& > svg": { maxWidth: "280px" },
+  "@media (min-width: 60rem)": {
+    width: "400px",
+    maxWidth: "400px",
+    "& > svg": { maxWidth: "400px" },
+  },
   justifySelf: "center",
   pb: "clamp(56px, 3rem + 1.5vw, 88px)",
 });

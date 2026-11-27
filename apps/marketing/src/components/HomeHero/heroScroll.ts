@@ -62,10 +62,10 @@ export const ASSEMBLE_S = heroShare(2400);
 export const PART_S = heroShare(1600);
 
 /**
- * The pinned run's length: prototype 11's hero pin (1.4 screens) at 0.4, scaled by its pace of
- * 1.4 twice (its pace factor and its pixel scale).
+ * The pinned run's length: prototype 11's hero pin (1.4 screens) at 0.4, scaled once by its pace
+ * of 1.4 (`pace.px` multiplies by the pace factor, which already holds the page's 1.4 scale).
  */
-export const PIN_SCREENS = 1.4 * 0.4 * 1.4 * 1.4;
+export const PIN_SCREENS = 1.4 * 0.4 * 1.4;
 
 const centre = (r: DOMRect) => ({ x: r.left + r.width / 2, y: r.top + r.height / 2 });
 const one = (root: HTMLElement, attr: string, key: string) =>
