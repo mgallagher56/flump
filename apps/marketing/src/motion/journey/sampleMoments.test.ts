@@ -73,6 +73,23 @@ describe("budget: fill the bar", () => {
     expect(count?.[2]).toMatchObject({ v: 10, ease: "calm" });
     expect(Math.max(...ends(calls))).toBeLessThanOrEqual(MOMENT_END);
   });
+
+  it("fills a segment with no row beside it on its own", () => {
+    // Two segments, one row: the second segment has no row to bring up.
+    const { calls, moved } = run(
+      "budget",
+      sample(
+        `<svg><rect data-bar-segment></rect><rect data-bar-segment></rect></svg>
+         <ol><li data-budget-row></li></ol>`,
+      ),
+    );
+    const rows = calls.filter(([, from]) => from.opacity === 0.3);
+    // The one row, 0.08 after the first segment at 0.3.
+    expect(rows.map(([, , , at]) => at)).toEqual([0.38]);
+    // Two segments, one row, then the empty left-over and stats calls.
+    expect(calls).toHaveLength(5);
+    expect(moved).toHaveLength(3);
+  });
 });
 
 describe("savings and debt: draw the line", () => {

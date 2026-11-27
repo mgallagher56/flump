@@ -47,4 +47,17 @@ describe("HomeClose", () => {
     expect(vars.scrollTrigger.scrub).toBeUndefined();
     expect(targets).toEqual([root, screen.getByTestId("home-final-cta-illustration")]);
   });
+
+  it("brings only the card in when there is no ticket picture", () => {
+    const root = document.createElement("div");
+    const targets: unknown[] = [];
+    const timeline = {
+      from: (target: unknown) => {
+        targets.push(target);
+        return timeline;
+      },
+    };
+    closeMoment({ gsap: { timeline: () => timeline } } as unknown as GsapKit, root);
+    expect(targets).toEqual([root]);
+  });
 });

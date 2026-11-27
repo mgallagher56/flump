@@ -26,7 +26,7 @@ export function closeMoment({ gsap }: GsapKit, root: HTMLElement): undefined {
 /**
  * The home page's close (ROLLOUT-PLAN M1, from prototype 11): calm, on the canvas band as the
  * prototype's, with no dark band. The getting started ticket, the question, one line and the page's
- * second and last "Request an invite". The shared `ClosingCta` stays as it is for the other pages.
+ * last "Request an invite". The shared `ClosingCta` stays as it is for the other pages.
  */
 export const HomeClose: FC = () => {
   const cta = signupCta();

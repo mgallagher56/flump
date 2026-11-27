@@ -1,4 +1,8 @@
-import { buildFinancialPicture, SAMPLE_HOUSEHOLDS } from "@flump/finance-engine";
+import {
+  buildFinancialPicture,
+  SAMPLE_HOUSEHOLDS,
+  type SampleHousehold,
+} from "@flump/finance-engine";
 import { breathingRoomValue } from "@repo/ui";
 
 /**
@@ -7,26 +11,11 @@ import { breathingRoomValue } from "@repo/ui";
  * from" rows and the six pieces) is read from here once, so a piece and its row cannot drift. All
  * are labelled "Example" and shown in neutral text: no status colours, debt never red (MK6).
  */
-const FIXTURE = SAMPLE_HOUSEHOLDS.homeowner.fixture;
-const PICTURE = buildFinancialPicture(FIXTURE);
+type Fixture = SampleHousehold["fixture"];
 
-const account = (type: string) => FIXTURE.accounts.find((a) => a.type === type);
 const balanceOf = (a?: { balance?: unknown }) => Number(a?.balance ?? 0);
-
-const savings = account("Saving");
-const pension = account("Pension");
-const mortgage = account("Mortgage");
-const card = account("Credit Card");
-const home = account("Property");
-const loan = account("Loan");
-
-const income = FIXTURE.budget.filter((entry) => entry.isIncome);
-const outgoings = FIXTURE.budget.filter((entry) => !entry.isIncome);
 const sum = (entries: readonly { amount: number }[]) =>
   entries.reduce((total, entry) => total + entry.amount, 0);
-const comesIn = sum(income);
-const goesOut = sum(outgoings);
-const salary = Number(FIXTURE.profile.annualSalary ?? 0);
 
 const gbp = new Intl.NumberFormat("en-GB", {
   style: "currency",
@@ -46,39 +35,59 @@ const monthYear = new Intl.DateTimeFormat("en-GB", {
 });
 /**
  * "September 2028" from "2028-09-30": a fixed sample date, read as its year and month in UTC, so
- * no clock or time zone can move it.
+ * no clock or time zone can move it. A date with no month ("2030") reads as January.
  */
 const formatMonthYear = (isoDate: string) => {
-  const [year, month] = isoDate.split("-").map(Number);
-  return monthYear.format(new Date(Date.UTC(year ?? 2026, (month ?? 1) - 1, 15)));
+  const [year = 2026, month = 1] = isoDate.split("-").map(Number);
+  return monthYear.format(new Date(Date.UTC(year, month - 1, 15)));
 };
 
-export const HERO_FIGURES = {
-  savings: formatGbp(balanceOf(savings)),
-  savingsRate: `${percent(savings?.interestRate)} AER`,
-  salary: formatGbp(salary),
-  grossMonthly: formatGbp(Math.round(salary / 12)),
-  netMonthly: formatGbp(comesIn),
-  comesIn: formatGbp(comesIn),
-  goesOut: formatGbp(goesOut),
-  leftOver: formatGbp(comesIn - goesOut),
-  mortgage: formatGbp(balanceOf(mortgage)),
-  mortgageRate: percent(mortgage?.interestRate),
-  fixedUntil: mortgage?.fixedRateEndDate ? formatMonthYear(mortgage.fixedRateEndDate) : "",
-  pension: formatGbp(balanceOf(pension)),
-  card: formatGbp(balanceOf(card)),
-  cardRate: `${percent(card?.interestRate)} APR`,
-  cardMonthly: formatGbp(Number(card?.monthlyContribution ?? 0)),
-  home: formatGbp(balanceOf(home)),
-  loan: formatGbp(balanceOf(loan)),
-  netWorth: formatGbp(PICTURE.netWorth.netWorth),
-  leftOverMonthly:
-    PICTURE.budget.status === "known" ? formatGbp(PICTURE.budget.value.surplus) : null,
-  breathingRoom:
-    PICTURE.monthsOfCover.status === "known"
-      ? breathingRoomValue(PICTURE.monthsOfCover.value.months)
-      : null,
-} as const;
+/**
+ * Every figure the hero shows for a sample household, run through the engine. A missing account
+ * or rate reads as £0 or blank; a figure the engine does not know is null.
+ */
+export function heroFiguresFor(fixture: Fixture) {
+  const picture = buildFinancialPicture(fixture);
+  const account = (type: string) => fixture.accounts.find((a) => a.type === type);
+  const savings = account("Saving");
+  const pension = account("Pension");
+  const mortgage = account("Mortgage");
+  const card = account("Credit Card");
+  const home = account("Property");
+  const loan = account("Loan");
+  const comesIn = sum(fixture.budget.filter((entry) => entry.isIncome));
+  const goesOut = sum(fixture.budget.filter((entry) => !entry.isIncome));
+  const salary = Number(fixture.profile.annualSalary ?? 0);
+  return {
+    savings: formatGbp(balanceOf(savings)),
+    savingsRate: `${percent(savings?.interestRate)} AER`,
+    salary: formatGbp(salary),
+    grossMonthly: formatGbp(Math.round(salary / 12)),
+    netMonthly: formatGbp(comesIn),
+    comesIn: formatGbp(comesIn),
+    goesOut: formatGbp(goesOut),
+    leftOver: formatGbp(comesIn - goesOut),
+    mortgage: formatGbp(balanceOf(mortgage)),
+    mortgageRate: percent(mortgage?.interestRate),
+    fixedUntil: mortgage?.fixedRateEndDate ? formatMonthYear(mortgage.fixedRateEndDate) : "",
+    pension: formatGbp(balanceOf(pension)),
+    card: formatGbp(balanceOf(card)),
+    cardRate: `${percent(card?.interestRate)} APR`,
+    cardMonthly: formatGbp(Number(card?.monthlyContribution ?? 0)),
+    home: formatGbp(balanceOf(home)),
+    loan: formatGbp(balanceOf(loan)),
+    netWorth: formatGbp(picture.netWorth.netWorth),
+    leftOverMonthly:
+      picture.budget.status === "known" ? formatGbp(picture.budget.value.surplus) : null,
+    breathingRoom:
+      picture.monthsOfCover.status === "known"
+        ? breathingRoomValue(picture.monthsOfCover.value.months)
+        : null,
+  } as const;
+}
+
+/** The hero's figures: the engine's "homeowner" sample. */
+export const HERO_FIGURES = heroFiguresFor(SAMPLE_HOUSEHOLDS.homeowner.fixture);
 
 export type PieceKey = "card" | "pension" | "payslip" | "receipt" | "statement" | "credit";
 

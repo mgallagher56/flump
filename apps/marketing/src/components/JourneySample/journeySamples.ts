@@ -3,6 +3,7 @@ import {
   calculateDebtSchedule,
   type DebtItem,
   SAMPLE_HOUSEHOLDS,
+  type SampleHousehold,
 } from "@flump/finance-engine";
 import { formatGbp, formatGbpHundreds, formatMonths } from "../CountUpFigure/figureFormats";
 
@@ -14,23 +15,11 @@ import { formatGbp, formatGbpHundreds, formatMonths } from "../CountUpFigure/fig
  * status colours, nothing celebrated, debt never red or rose (MK6).
  */
 
-const SAMPLE = SAMPLE_HOUSEHOLDS.homeowner;
-const FIXTURE = SAMPLE.fixture;
-const PICTURE = buildFinancialPicture(FIXTURE);
+type Fixture = SampleHousehold["fixture"];
 
 /** An account's balance as a number (fixture balances may be typed loosely). */
 const balanceOf = (a?: { balance?: unknown }) => Number(a?.balance ?? 0);
 const num = (value: unknown) => Number(value ?? 0);
-const account = (type: string) => FIXTURE.accounts.find((a) => a.type === type);
-
-const ACCOUNTS = {
-  savings: account("Saving"),
-  pension: account("Pension"),
-  home: account("Property"),
-  mortgage: account("Mortgage"),
-  creditCard: account("Credit Card"),
-  loan: account("Loan"),
-} as const;
 
 const shortMonth = new Intl.DateTimeFormat("en-GB", { month: "short", timeZone: "UTC" });
 const longMonthYear = new Intl.DateTimeFormat("en-GB", {
@@ -45,61 +34,8 @@ const monthDate = (year: number, monthIndex: number) => new Date(Date.UTC(year, 
 /** The month the sample's figures are "now". Fixed, so the server and browser agree. */
 const NOW = { year: 2026, month: 10 }; // November 2026 (months count from 0)
 
-type BudgetEntry = (typeof FIXTURE.budget)[number];
-const sum = (entries: readonly BudgetEntry[]) =>
+const sum = (entries: readonly { amount: number }[]) =>
   entries.reduce((total, entry) => total + entry.amount, 0);
-const income = FIXTURE.budget.filter((entry) => entry.isIncome);
-const outgoings = FIXTURE.budget.filter((entry) => !entry.isIncome);
-
-/** The Home page's three figures, from the engine (null when the engine does not know one). */
-export const SAMPLE_HOME = {
-  netWorth: PICTURE.netWorth.netWorth,
-  leftOverMonthly: PICTURE.budget.status === "known" ? PICTURE.budget.value.surplus : null,
-  monthsOfCover:
-    PICTURE.monthsOfCover.status === "known" ? PICTURE.monthsOfCover.value.months : null,
-} as const;
-
-/** The six account cards, what you have first, then what you owe. */
-export const SAMPLE_ACCOUNT_CARDS = [
-  { id: "cash", name: "Cash and savings", amount: balanceOf(ACCOUNTS.savings), owed: false },
-  { id: "pension", name: "Pension", amount: balanceOf(ACCOUNTS.pension), owed: false },
-  { id: "home", name: "Home (your estimate)", amount: balanceOf(ACCOUNTS.home), owed: false },
-  { id: "mortgage", name: "Mortgage", amount: balanceOf(ACCOUNTS.mortgage), owed: true },
-  { id: "card", name: "Credit card", amount: balanceOf(ACCOUNTS.creditCard), owed: true },
-  { id: "loan", name: "Personal loan", amount: balanceOf(ACCOUNTS.loan), owed: true },
-] as const;
-
-/** Budget: each outgoing as a share of what comes in, laid end to end along one bar. */
-export const SAMPLE_BUDGET = (() => {
-  const comesIn = sum(income);
-  let start = 0;
-  const segments = outgoings.map((entry) => {
-    const share = comesIn > 0 ? entry.amount / comesIn : 0;
-    const segment = { id: entry.id, label: entry.name, amount: entry.amount, start, share };
-    start += share;
-    return segment;
-  });
-  return { comesIn, leftOver: comesIn - sum(outgoings), segments, leftOverStart: start };
-})();
-
-/** The payslip: the engine's take-home breakdown for the sample salary, one month of it. */
-export const SAMPLE_PAYSLIP = (() => {
-  const salary = FIXTURE.profile.annualSalary ?? 0;
-  const takeHome = PICTURE.takeHome.status === "known" ? PICTURE.takeHome.value : null;
-  const month = (annual: number | null | undefined) => (annual ?? 0) / 12;
-  const gross = salary / 12;
-  const rows = [
-    { id: "tax", label: "Income Tax", amount: month(takeHome?.incomeTax) },
-    { id: "ni", label: "National Insurance", amount: month(takeHome?.nationalInsurance) },
-    {
-      id: "pension",
-      label: `Pension (${FIXTURE.profile.pensionPercent}%)`,
-      amount: month(takeHome?.pension),
-    },
-  ];
-  const net = gross - rows.reduce((total, row) => total + row.amount, 0);
-  return { salary, gross, rows, net };
-})();
 
 /** A point on a sample chart: its value and the words a reader gets for it. */
 export interface ChartPoint {
@@ -112,74 +48,163 @@ export interface ChartPoint {
 }
 
 /**
- * Example cash savings for the 12 months to now, ending at the fixture's savings balance. Worked
- * back from today: each month adds the budget's cash saving and a month of interest at the
- * account's AER, and in August £1,200 was taken out. Illustrative history, not a forecast.
+ * Every figure the journey's samples show for one sample household. A missing account reads as
+ * £0, and a figure the engine does not know is null.
  */
-export const SAMPLE_SAVINGS = (() => {
-  const end = balanceOf(ACCOUNTS.savings);
-  const rate = num(ACCOUNTS.savings?.interestRate) / 100 / 12;
-  const saving = outgoings.find((o) => o.name === "Cash saving")?.amount ?? 0;
-  const withdrawal = 1200;
-  const withdrawalMonth = 7; // August
-  const values: number[] = [end];
-  for (let i = 1; i < 12; i++) {
-    const thisMonth = (NOW.month - (i - 1) + 12) % 12;
-    const later = values[0] ?? end;
-    const out = thisMonth === withdrawalMonth ? withdrawal : 0;
-    values.unshift((later - saving + out) / (1 + rate));
-  }
-  const points = values.map((value, i) => {
-    const date = monthDate(NOW.year, NOW.month + i - 11);
-    return {
-      value: Math.round(value),
-      label: `${longMonthYear.format(date)}: ${formatGbp(value)}`,
-      tick: shortMonth.format(date),
-      when: shortMonth.format(date),
-    };
-  });
-  return { points, end, saving, withdrawal };
-})();
+export function sampleFiguresFor(fixture: Fixture) {
+  const picture = buildFinancialPicture(fixture);
+  const account = (type: string) => fixture.accounts.find((a) => a.type === type);
+  const accounts = {
+    savings: account("Saving"),
+    pension: account("Pension"),
+    home: account("Property"),
+    mortgage: account("Mortgage"),
+    creditCard: account("Credit Card"),
+    loan: account("Loan"),
+  } as const;
+  const income = fixture.budget.filter((entry) => entry.isIncome);
+  const outgoings = fixture.budget.filter((entry) => !entry.isIncome);
 
-/**
- * The card and the loan at their minimum payments, through the engine's own payoff schedule
- * (highest rate first; when the card clears, its payment moves to the loan). The mortgage is not
- * in the payoff set, as in the app.
- */
-export const SAMPLE_DEBT = (() => {
-  const debts: DebtItem[] = [ACCOUNTS.creditCard, ACCOUNTS.loan]
-    .filter((a) => a !== undefined)
-    .map((a) => ({
-      id: a.id ?? "debt",
-      name: a.name ?? "Debt",
-      balanceGbp: balanceOf(a),
-      interestRateApr: num(a.interestRate),
-      minimumPaymentGbp: num(a.monthlyContribution),
-      debtType: a.type === "Loan" ? "loan_personal" : "credit_card",
+  /** The Home page's three figures, from the engine (null when the engine does not know one). */
+  const home = {
+    netWorth: picture.netWorth.netWorth,
+    leftOverMonthly: picture.budget.status === "known" ? picture.budget.value.surplus : null,
+    monthsOfCover:
+      picture.monthsOfCover.status === "known" ? picture.monthsOfCover.value.months : null,
+  } as const;
+
+  /** The six account cards, what you have first, then what you owe. */
+  const accountCards = [
+    { id: "cash", name: "Cash and savings", amount: balanceOf(accounts.savings), owed: false },
+    { id: "pension", name: "Pension", amount: balanceOf(accounts.pension), owed: false },
+    { id: "home", name: "Home (your estimate)", amount: balanceOf(accounts.home), owed: false },
+    { id: "mortgage", name: "Mortgage", amount: balanceOf(accounts.mortgage), owed: true },
+    { id: "card", name: "Credit card", amount: balanceOf(accounts.creditCard), owed: true },
+    { id: "loan", name: "Personal loan", amount: balanceOf(accounts.loan), owed: true },
+  ] as const;
+
+  /** Budget: each outgoing as a share of what comes in, laid end to end along one bar. */
+  const budget = (() => {
+    const comesIn = sum(income);
+    let start = 0;
+    const segments = outgoings.map((entry) => {
+      const share = comesIn > 0 ? entry.amount / comesIn : 0;
+      const segment = { id: entry.id, label: entry.name, amount: entry.amount, start, share };
+      start += share;
+      return segment;
+    });
+    return { comesIn, leftOver: comesIn - sum(outgoings), segments, leftOverStart: start };
+  })();
+
+  /** The payslip: the engine's take-home breakdown for the sample salary, one month of it. */
+  const payslip = (() => {
+    const salary = fixture.profile.annualSalary ?? 0;
+    const takeHome = picture.takeHome.status === "known" ? picture.takeHome.value : null;
+    const month = (annual: number | null | undefined) => (annual ?? 0) / 12;
+    const gross = salary / 12;
+    const rows = [
+      { id: "tax", label: "Income Tax", amount: month(takeHome?.incomeTax) },
+      { id: "ni", label: "National Insurance", amount: month(takeHome?.nationalInsurance) },
+      {
+        id: "pension",
+        label: `Pension (${fixture.profile.pensionPercent}%)`,
+        amount: month(takeHome?.pension),
+      },
+    ];
+    const net = gross - rows.reduce((total, row) => total + row.amount, 0);
+    return { salary, gross, rows, net };
+  })();
+
+  /**
+   * Example cash savings for the 12 months to now, ending at the fixture's savings balance. Worked
+   * back from today: each month adds the budget's cash saving and a month of interest at the
+   * account's AER, and in August £1,200 was taken out. Illustrative history, not a forecast.
+   */
+  const savings = (() => {
+    const end = balanceOf(accounts.savings);
+    const rate = num(accounts.savings?.interestRate) / 100 / 12;
+    const saving = outgoings.find((o) => o.name === "Cash saving")?.amount ?? 0;
+    const withdrawal = 1200;
+    const withdrawalMonth = 7; // August
+    const values: number[] = [end];
+    for (let i = 1; i < 12; i++) {
+      const thisMonth = (NOW.month - (i - 1) + 12) % 12;
+      const later = values[0] ?? end;
+      const out = thisMonth === withdrawalMonth ? withdrawal : 0;
+      values.unshift((later - saving + out) / (1 + rate));
+    }
+    const points = values.map((value, i) => {
+      const date = monthDate(NOW.year, NOW.month + i - 11);
+      return {
+        value: Math.round(value),
+        label: `${longMonthYear.format(date)}: ${formatGbp(value)}`,
+        tick: shortMonth.format(date),
+        when: shortMonth.format(date),
+      };
+    });
+    return { points, end, saving, withdrawal };
+  })();
+
+  /**
+   * The card and the loan at their minimum payments, through the engine's own payoff schedule
+   * (highest rate first; when the card clears, its payment moves to the loan). The mortgage is not
+   * in the payoff set, as in the app.
+   */
+  const debt = (() => {
+    const debts: DebtItem[] = [accounts.creditCard, accounts.loan]
+      .filter((a) => a !== undefined)
+      .map((a) => ({
+        id: a.id ?? "debt",
+        name: a.name ?? "Debt",
+        balanceGbp: balanceOf(a),
+        interestRateApr: num(a.interestRate),
+        minimumPaymentGbp: num(a.monthlyContribution),
+        debtType: a.type === "Loan" ? "loan_personal" : "credit_card",
+      }));
+    const start = debts.reduce((total, d) => total + (d.balanceGbp ?? 0), 0);
+    const monthly = debts.reduce((total, d) => total + (d.minimumPaymentGbp ?? 0), 0);
+    const result = calculateDebtSchedule(debts, 0, "AVALANCHE", {
+      referenceDate: monthDate(NOW.year, NOW.month),
+    });
+    const ym = (s: string) => {
+      const [y = NOW.year, m = 1] = s.split("-").map(Number);
+      return monthDate(y, m - 1);
+    };
+    const points = [
+      { value: start, date: monthDate(NOW.year, NOW.month) },
+      ...result.schedule.map((row) => ({
+        value: row.remainingDebtGbp,
+        date: ym(row.calendarDate),
+      })),
+    ].map((p) => ({
+      value: p.value,
+      label: `${longMonthYear.format(p.date)}: ${formatGbp(p.value)}`,
+      tick: String(p.date.getUTCFullYear()),
+      when: longMonthYear.format(p.date),
     }));
-  const start = debts.reduce((total, d) => total + (d.balanceGbp ?? 0), 0);
-  const monthly = debts.reduce((total, d) => total + (d.minimumPaymentGbp ?? 0), 0);
-  const result = calculateDebtSchedule(debts, 0, "AVALANCHE", {
-    referenceDate: monthDate(NOW.year, NOW.month),
-  });
-  const ym = (s: string) => {
-    const [y, m] = s.split("-").map(Number);
-    return monthDate(y ?? NOW.year, (m ?? 1) - 1);
-  };
-  const points = [
-    { value: start, date: monthDate(NOW.year, NOW.month) },
-    ...result.schedule.map((row) => ({ value: row.remainingDebtGbp, date: ym(row.calendarDate) })),
-  ].map((p) => ({
-    value: p.value,
-    label: `${longMonthYear.format(p.date)}: ${formatGbp(p.value)}`,
-    tick: String(p.date.getUTCFullYear()),
-    when: longMonthYear.format(p.date),
-  }));
-  const startLabel = longMonthYear.format(monthDate(NOW.year, NOW.month));
-  const last = result.schedule.at(-1);
-  const endLabel = last ? longMonthYear.format(ym(last.calendarDate)) : startLabel;
-  const fixedEnd = ACCOUNTS.mortgage?.fixedRateEndDate;
-  // A fixed sample date, read as its year and month (no clock and no time zone involved).
-  const fixedEndLabel = fixedEnd ? longMonthYear.format(ym(fixedEnd)) : null;
-  return { start, monthly, points, startLabel, endLabel, fixedEndLabel };
-})();
+    const startLabel = longMonthYear.format(monthDate(NOW.year, NOW.month));
+    const last = result.schedule.at(-1);
+    const endLabel = last ? longMonthYear.format(ym(last.calendarDate)) : startLabel;
+    const fixedEnd = accounts.mortgage?.fixedRateEndDate;
+    // A fixed sample date, read as its year and month (no clock and no time zone involved).
+    const fixedEndLabel = fixedEnd ? longMonthYear.format(ym(fixedEnd)) : null;
+    return { start, monthly, points, startLabel, endLabel, fixedEndLabel };
+  })();
+
+  return { home, accountCards, budget, payslip, savings, debt };
+}
+
+const FIGURES = sampleFiguresFor(SAMPLE_HOUSEHOLDS.homeowner.fixture);
+
+/** The Home page's three figures, from the engine (null when the engine does not know one). */
+export const SAMPLE_HOME = FIGURES.home;
+/** The six account cards, what you have first, then what you owe. */
+export const SAMPLE_ACCOUNT_CARDS = FIGURES.accountCards;
+/** Budget: each outgoing as a share of what comes in, laid end to end along one bar. */
+export const SAMPLE_BUDGET = FIGURES.budget;
+/** The payslip: the engine's take-home breakdown for the sample salary, one month of it. */
+export const SAMPLE_PAYSLIP = FIGURES.payslip;
+/** Example cash savings for the 12 months to now, ending at the fixture's savings balance. */
+export const SAMPLE_SAVINGS = FIGURES.savings;
+/** The card and the loan at their minimum payments, through the engine's payoff schedule. */
+export const SAMPLE_DEBT = FIGURES.debt;

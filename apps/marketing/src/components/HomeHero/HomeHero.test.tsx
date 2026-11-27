@@ -1,3 +1,4 @@
+import { SAMPLE_HOUSEHOLDS } from "@flump/finance-engine";
 import { act, render, screen, within } from "@testing-library/react";
 import { renderToString } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -6,7 +7,7 @@ import type { GsapKit } from "../../motion/loadGsapKit";
 import { signupCta } from "../../utils/site";
 import { HomeHero as Hero, heroModeFrom } from "./HomeHero";
 import { ASSEMBLY_UNITS, armHeroAssembly, FLIGHTS_START } from "./heroAssembly";
-import { HERO_FIGURES, HERO_SOURCES } from "./heroData";
+import { HERO_FIGURES, HERO_SOURCES, heroFiguresFor } from "./heroData";
 import {
   ASSEMBLE_S,
   armHeroScroll,
@@ -14,6 +15,7 @@ import {
   INTRO_DELAY_S,
   PART_S,
   PIN_SCREENS,
+  placeAfterPin,
   TOTAL,
 } from "./heroScroll";
 
@@ -405,6 +407,47 @@ describe("heroScroll (prototype 11's version)", () => {
     expect(root.dataset.heroReady).toBeUndefined();
   });
 
+  it("keeps the place of a reader already below the hero when its pin is added", () => {
+    stubWidth(true);
+    const { kit } = fakeScrollKit();
+    const root = renderHero().getByTestId("home-hero");
+    let pinned = false;
+    (kit.ScrollTrigger.refresh as ReturnType<typeof vi.fn>).mockImplementation(() => {
+      pinned = true;
+    });
+    // The hero ends 900px down the page; the pin's run adds 790px to it.
+    vi.spyOn(root, "getBoundingClientRect").mockImplementation(
+      () => ({ bottom: (pinned ? 1690 : 900) - window.scrollY }) as DOMRect,
+    );
+    vi.spyOn(window, "scrollY", "get").mockReturnValue(3000);
+    const scrollTo = vi.fn();
+    vi.stubGlobal("scrollTo", scrollTo);
+    armHeroScroll(kit, root);
+    // 3000 + 790 = 3790: what the reader was looking at stays put.
+    expect(scrollTo).toHaveBeenCalledWith({ top: 3790, behavior: "auto" });
+  });
+
+  it("leaves the scroll alone when the reader is still in the hero as it sets up", () => {
+    stubWidth(true);
+    const { kit } = fakeScrollKit();
+    const root = renderHero().getByTestId("home-hero");
+    const scrollTo = vi.fn();
+    vi.stubGlobal("scrollTo", scrollTo);
+    armHeroScroll(kit, root);
+    expect(scrollTo).not.toHaveBeenCalled();
+  });
+
+  it("moves a reader below the hero by what the pin added, and no one else", () => {
+    // Below the hero's end (900): moved by 1690 − 900 = 790.
+    expect(placeAfterPin(3000, 900, 1690)).toBe(3790);
+    // On the edge: the hero ends at the top of the screen.
+    expect(placeAfterPin(900, 900, 1690)).toBe(1690);
+    // Still in the hero: the pin's own run takes care of it.
+    expect(placeAfterPin(899, 900, 1690)).toBeNull();
+    // Nothing added (under 1024px there is no pin).
+    expect(placeAfterPin(3000, 900, 900)).toBeNull();
+  });
+
   it("makes its run's timeline inside its gsap context, so teardown and a width change revert it", () => {
     stubWidth(true);
     const { kit, gsap, made } = fakeScrollKit();
@@ -434,5 +477,59 @@ describe("heroScroll (prototype 11's version)", () => {
       expect.anything(),
       expect.objectContaining({ progress: 0, duration: PART_S }),
     );
+  });
+});
+
+describe("heroFiguresFor", () => {
+  const renter = SAMPLE_HOUSEHOLDS.renter.fixture;
+
+  it("reads a renter's figures, with £0 or blank for the accounts they do not have", () => {
+    expect(heroFiguresFor(renter)).toEqual({
+      // Cash ISA £4,200 at 4.1% AER
+      savings: "£4,200",
+      savingsRate: "4.1% AER",
+      // £38,000 / 12 = £3,166.67, shown to the pound: £3,167
+      salary: "£38,000",
+      grossMonthly: "£3,167",
+      netMonthly: "£2,382",
+      comesIn: "£2,382",
+      // 850 + 120 + 220 + 90 + 150 + 200 = £1,630 out; 2,382 − 1,630 = £752 left
+      goesOut: "£1,630",
+      leftOver: "£752",
+      // No mortgage, pension, card, home or loan: £0, with no rate and no fixed date.
+      mortgage: "£0",
+      mortgageRate: "",
+      fixedUntil: "",
+      pension: "£0",
+      card: "£0",
+      cardRate: " APR",
+      cardMonthly: "£0",
+      home: "£0",
+      loan: "£0",
+      // Current £1,850 + ISA £4,200 = £6,050 (the default basis leaves the student loan out)
+      netWorth: "£6,050",
+      leftOverMonthly: "£752",
+      // £6,050 over essentials 850 + 120 + 220 + 90 = £1,280 a month: 4.73, so about 4.7 months
+      breathingRoom: "About 4.7 months",
+    });
+  });
+
+  it("leaves out what the engine cannot know, and reads a year-only fixed date as January", () => {
+    const figures = heroFiguresFor({
+      ...renter,
+      profile: { ...renter.profile, annualSalary: null },
+      accounts: [
+        { id: "m", name: "Mortgage", type: "Mortgage", balance: 1000, fixedRateEndDate: "2030" },
+      ],
+      budget: [],
+    });
+    expect(figures.salary).toBe("£0");
+    expect(figures.savingsRate).toBe(" AER");
+    expect(figures.mortgage).toBe("£1,000");
+    expect(figures.fixedUntil).toBe("January 2030");
+    // Only the £1,000 mortgage: −£1,000
+    expect(figures.netWorth).toBe("-£1,000");
+    expect(figures.leftOverMonthly).toBeNull();
+    expect(figures.breathingRoom).toBeNull();
   });
 });

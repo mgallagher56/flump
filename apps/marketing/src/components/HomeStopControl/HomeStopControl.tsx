@@ -21,6 +21,69 @@ export const STOP_CONTROL_RETURN_MS = 700;
 /** A stop is current once its top passes the header plus this share of the screen. */
 const DEFAULT_LINE = 1 / 3;
 
+/** How long a smooth move keeps its stop in place against the page measuring itself again. */
+export const STOP_HOLD_MS = 4000;
+/** How often a held move checks where the page is. */
+export const STOP_HOLD_TICK_MS = 200;
+
+/**
+ * What a held move does on a check: nothing when the page is within 2px of the stop's place, or
+ * while a smooth scroll is still on its way; a jump to the place when the scroll has stopped short
+ * of it (`stopped`: the scroll ended, or it has not moved since the last check).
+ */
+export function holdAction(state: {
+  readonly y: number;
+  readonly top: number;
+  readonly stopped: boolean;
+}): "stay" | "jump" {
+  return Math.abs(state.y - state.top) > 2 && state.stopped ? "jump" : "stay";
+}
+
+/** Anything the reader does to scroll by themselves: a held move lets go at once. */
+const READER_SCROLL_EVENTS = ["wheel", "touchstart", "keydown", "pointerdown"] as const;
+
+/**
+ * Keeps a smooth move's stop in place for `STOP_HOLD_MS`. A smooth scroll stops short when the page
+ * measures itself again on the way (a band's real size arriving makes ScrollTrigger refresh, which
+ * resets the scroll, sometimes before the scroll has moved at all, so no scroll end follows), and
+ * the hero's pin can lengthen the page above the stop after it lands. So at every scroll end, and
+ * every `STOP_HOLD_TICK_MS`, a scroll that has stopped away from the stop's place jumps the rest; a
+ * second smooth scroll would be stopped the same way. The reader scrolling by themselves ends the
+ * hold, so a later scroll is never pulled back. `onJump` runs after each jump (the page passing
+ * the stop on the way may have started its changeover). `onRelease` runs when the hold ends,
+ * however it ends. Returns the function that ends it.
+ */
+function holdMove(targetTop: () => number, onJump: () => void, onRelease: () => void): () => void {
+  let lastY = window.scrollY;
+  const check = (ended: boolean) => {
+    const y = window.scrollY;
+    const top = targetTop();
+    const stopped = ended || Math.abs(y - lastY) < 1;
+    lastY = y;
+    if (holdAction({ y, top, stopped }) === "jump") {
+      window.scrollTo({ top, behavior: "auto" });
+      // Where the jump lands, so the next check does not take the jump for a scroll on its way.
+      lastY = window.scrollY;
+      onJump();
+    }
+  };
+  const onEnd = () => check(true);
+  const tick = window.setInterval(() => check(false), STOP_HOLD_TICK_MS);
+  const end = () => {
+    window.clearInterval(tick);
+    window.clearTimeout(limit);
+    window.removeEventListener("scrollend", onEnd);
+    for (const type of READER_SCROLL_EVENTS) window.removeEventListener(type, end, true);
+    onRelease();
+  };
+  const limit = window.setTimeout(end, STOP_HOLD_MS);
+  window.addEventListener("scrollend", onEnd);
+  for (const type of READER_SCROLL_EVENTS) {
+    window.addEventListener(type, end, { capture: true, passive: true });
+  }
+  return end;
+}
+
 const headerHeight = () => document.querySelector("header")?.offsetHeight ?? 0;
 
 /**
@@ -59,17 +122,23 @@ export interface HomeStopControlProps {
  * `data-home-section-name`.
  *
  * Moving tells the stop to finish arriving (`STOP_ARRIVE_EVENT`), scrolls it to just under the
- * header (smooth unless motion is reduced) and moves focus to its heading, so a keyboard or screen reader user lands where a sighted one does. While the
- * page scrolls the control steps out of the way and returns 700ms after the last scroll, never
- * while it holds focus. Nothing is rendered until mounted: the count depends on the scroll
+ * header (smooth unless motion is reduced, then held there while the page settles: `holdMove`) and
+ * moves focus to its heading, so a keyboard or screen reader user lands where a sighted one does.
+ * While the page scrolls the control steps out of the way and returns 700ms after the last scroll,
+ * never while it holds focus or the pointer is on it. Nothing is rendered until mounted: the count depends on the scroll
  * position, so the server HTML and a page without JavaScript have no control.
  */
 export const HomeStopControl: FC<HomeStopControlProps> = ({ aside }) => {
   const reduced = usePrefersReducedMotion();
   const [stops, setStops] = useState<HTMLElement[]>([]);
   const [current, setCurrent] = useState(0);
-  /** Drops the pending finish of the last move (see `go`). */
+  /** Ends the hold of the last move (`holdMove`). */
   const finishRef = useRef<(() => void) | undefined>(undefined);
+  /**
+   * The stop a held move is going to: the count keeps showing it while the page settles, since the
+   * scroll the page makes then is not the reader's (it can reset to the top for a moment).
+   */
+  const heldRef = useRef<number | null>(null);
   useEffect(() => () => finishRef.current?.(), []);
   const [scrolling, setScrolling] = useState(false);
 
@@ -78,6 +147,10 @@ export const HomeStopControl: FC<HomeStopControlProps> = ({ aside }) => {
     setStops(found);
     let timer = 0;
     const update = () => {
+      if (heldRef.current !== null) {
+        setCurrent(heldRef.current);
+        return;
+      }
       const tops = found.map((stop) => ({
         top: stop.getBoundingClientRect().top,
         line: lineOf(stop),
@@ -105,28 +178,21 @@ export const HomeStopControl: FC<HomeStopControlProps> = ({ aside }) => {
       const stop = stops[index];
       if (!stop) return;
       // Finished first: a heading still hidden for its arrive cannot take focus.
-      stop.dispatchEvent(new CustomEvent(STOP_ARRIVE_EVENT));
+      const arrive = () => stop.dispatchEvent(new CustomEvent(STOP_ARRIVE_EVENT));
+      arrive();
       const behavior = reduced ? "auto" : "smooth";
       const targetTop = () => stop.getBoundingClientRect().top + window.scrollY - headerHeight();
       const first = targetTop();
       window.scrollTo({ top: first, behavior });
-      // A smooth scroll stops short when the page measures itself again on the way (a band's real
-      // size arriving makes ScrollTrigger refresh, which resets the scroll): once it ends, finish
-      // the move with one jump, since a second smooth scroll would be stopped the same way. Only
-      // while this move is the latest, so a later scroll by the reader is never pulled back.
+      // Only the latest move is held, so a later move or the reader is never pulled back.
       finishRef.current?.();
-      if (behavior === "smooth" && Math.abs(window.scrollY - first) > 2) {
-        const finish = () => {
-          const top = targetTop();
-          if (Math.abs(window.scrollY - top) > 2) window.scrollTo({ top, behavior: "auto" });
-        };
-        const timer = window.setTimeout(() => finishRef.current?.(), 3000);
-        window.addEventListener("scrollend", finish, { once: true });
-        finishRef.current = () => {
-          window.clearTimeout(timer);
-          window.removeEventListener("scrollend", finish);
+      if (behavior === "smooth") {
+        heldRef.current = index;
+        // After a jump the stop is shown finished again, in case the page passed it on the way.
+        finishRef.current = holdMove(targetTop, arrive, () => {
+          heldRef.current = null;
           finishRef.current = undefined;
-        };
+        });
       }
       const headingId = stop.getAttribute("aria-labelledby")?.split(" ")[0];
       const heading = headingId ? document.getElementById(headingId) : null;

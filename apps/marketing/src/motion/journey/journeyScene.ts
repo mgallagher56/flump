@@ -32,14 +32,50 @@ import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment
 import type { OrbTone } from "../../components/GlassOrb/GlassOrb";
 import type { SceneHandle, SceneVerdict } from "../../components/SceneStage/SceneStage";
 import {
-  clamp01,
-  colourMixAt,
-  piecewise,
-  progressFromScroll,
-  restShare,
-  smooth,
-  waypointProgress,
-} from "./journeyRoute";
+  beadLook,
+  bubbleRise,
+  followLean,
+  followProgress,
+  frameAction,
+  frameDelta,
+  isDarkCanvas,
+  orbToneAt,
+  rimRole,
+  rollStep,
+  routeAlong,
+  routeShare,
+  type SceneLook,
+  sceneLook,
+  shouldLoop,
+  stopIndexAt,
+  stopLightIntensity,
+  stopTonesAt,
+  toneShare,
+} from "./journeyFrame";
+import {
+  beadDistances,
+  bubbleField,
+  cssPixels,
+  DIST,
+  FLOOR_Y,
+  FOLLOW,
+  FOV,
+  farZ,
+  floorLattice,
+  journeyAnchors,
+  journeyEnd,
+  laneFor,
+  moteField,
+  NEAR_Z,
+  nearestAlong,
+  routeWaypoints,
+  START_S,
+  stopDepth,
+  stopSide,
+  TAN,
+} from "./journeyLayout";
+import { piecewise, progressFromScroll, waypointProgress } from "./journeyRoute";
+import { mulberry32, SCENE_SEEDS } from "./seededRandom";
 
 /*
  * The journey's travelling layer (three.js 0.187.0, UX-GUIDELINES MK12), ported from prototype
@@ -90,17 +126,6 @@ export interface JourneySceneOptions {
   readonly onFirstFrame: () => void;
 }
 
-const FOV = 35;
-const TAN = Math.tan((FOV * Math.PI) / 360);
-/** World depth between stops. */
-const GAP = 15;
-/** How far behind the orb the camera rides. */
-const DIST = 11;
-/** How much of the orb's sideways travel the camera follows. */
-const FOLLOW = 0.6;
-/** The marketing site's calm pace (prototype 11's timings times 1.4): how gently the orb follows. */
-const PACE = 1.4;
-const START_S = -1.4;
 const TONE_NAMES: readonly OrbTone[] = ["sky", "violet", "teal", "rose"];
 
 const FLOOR_VERTEX = /* glsl */ `
@@ -195,8 +220,6 @@ function toColour(css: string, ctx: CanvasRenderingContext2D | null, out = new C
   const [r = 0, g = 0, b = 0] = ctx.getImageData(0, 0, 1, 1).data;
   return out.setRGB(r / 255, g / 255, b / 255, SRGBColorSpace);
 }
-
-const luminance = (c: Color) => 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b;
 
 /** A soft round alpha mask, for the orb's shadow on the floor. */
 function softDot(size = 64): CanvasTexture {
@@ -297,8 +320,7 @@ export async function createJourneyScene(options: JourneySceneOptions): Promise<
 
   const sections = Array.from(journey.querySelectorAll<HTMLElement>("[data-journey-stop]"));
   const stopCount = Math.max(1, sections.length);
-  const stopTone = (k: number) =>
-    options.stopTones[Math.max(0, Math.min(stopCount - 1, k))] ?? (["sky", "violet"] as const);
+  const stopTone = (k: number) => stopTonesAt(options.stopTones, k, stopCount);
   const tones = TONE_NAMES.map(() => new Color());
   const toneOf = (name: OrbTone) => tones[TONE_NAMES.indexOf(name)] ?? white;
   const white = new Color(1, 1, 1);
@@ -373,14 +395,14 @@ export async function createJourneyScene(options: JourneySceneOptions): Promise<
   shadow.rotation.x = -Math.PI / 2;
   scene.add(shadow);
 
-  let floorY = -2.8;
+  const floorY = FLOOR_Y;
   let orbR = 0.6;
   let camH = 2.6;
   let amplitude = 4;
   let phone = false;
-  const zNear = GAP * 2;
-  const zFar = -(stopCount + 2) * GAP;
-  const endS = stopCount - 1 + 1.8;
+  const zNear = NEAR_Z;
+  const zFar = farZ(stopCount);
+  const endS = journeyEnd(stopCount);
 
   const floorUniforms = {
     uSize: { value: 2.3 },
@@ -404,14 +426,7 @@ export async function createJourneyScene(options: JourneySceneOptions): Promise<
     ),
   );
   const buildFloor = () => {
-    const positions: number[] = [];
-    const seeds: number[] = [];
-    for (let z = zNear; z >= zFar - 20; z -= 1.1) {
-      for (let x = -24; x <= 24; x += 1.1) {
-        positions.push(x, floorY, z);
-        seeds.push(Math.random());
-      }
-    }
+    const { positions, seeds } = floorLattice(zNear, zFar, floorY, mulberry32(SCENE_SEEDS.floor));
     floorGeometry.setAttribute("position", new Float32BufferAttribute(positions, 3));
     floorGeometry.setAttribute("aSeed", new Float32BufferAttribute(seeds, 1));
     floorGeometry.computeBoundingSphere();
@@ -433,18 +448,13 @@ export async function createJourneyScene(options: JourneySceneOptions): Promise<
   });
   scene.add(new Points(moteGeometry, moteMaterial));
   const buildMotes = () => {
-    const positions: number[] = [];
-    const seeds: number[] = [];
-    const toneIds: number[] = [];
-    for (let i = 0; i < 200; i += 1) {
-      positions.push(
-        (Math.random() - 0.5) * 30,
-        floorY + Math.random() * 1.6,
-        zNear - Math.random() * (zNear - zFar),
-      );
-      seeds.push(Math.random());
-      toneIds.push(i % 4);
-    }
+    const { positions, seeds, toneIds } = moteField(
+      200,
+      floorY,
+      zNear,
+      zFar,
+      mulberry32(SCENE_SEEDS.motes),
+    );
     moteGeometry.setAttribute("position", new Float32BufferAttribute(positions, 3));
     moteGeometry.setAttribute("aSeed", new Float32BufferAttribute(seeds, 1));
     moteGeometry.setAttribute("aTone", new Float32BufferAttribute(toneIds, 1));
@@ -462,39 +472,25 @@ export async function createJourneyScene(options: JourneySceneOptions): Promise<
   let restShares: number[] = [];
 
   const buildRoute = () => {
-    const pts = [new Vector3(0, floorY, -START_S * GAP)];
-    for (let k = 0; k < stopCount; k += 1) {
-      const side = k % 2 === 0 ? -1 : 1;
-      pts.push(new Vector3(side * amplitude, floorY, -(k + 0.3) * GAP));
-    }
-    pts.push(new Vector3(0, floorY, -endS * GAP));
+    const pts = routeWaypoints(stopCount, amplitude, floorY).map(
+      ([x, y, z]) => new Vector3(x, y, z),
+    );
     const curve = new CatmullRomCurve3(pts, false, "centripetal");
     route = curve;
     routeLength = curve.getLength();
-    routeAt = pts.map((pt) => {
-      let best = 0;
-      let bestD = Number.POSITIVE_INFINITY;
-      for (let i = 0; i <= 800; i += 1) {
-        const d = curve.getPointAt(i / 800).distanceToSquared(pt);
-        if (d < bestD) {
-          bestD = d;
-          best = (i / 800) * routeLength;
-        }
-      }
-      return best;
-    });
+    const sample = new Vector3();
+    routeAt = pts.map((pt) =>
+      nearestAlong((u) => curve.getPointAt(u, sample).distanceToSquared(pt), routeLength),
+    );
   };
 
   const colourAt = (s: number, out: Color) => {
-    const { from, to, t } = colourMixAt(s, restShares, stopCount);
-    const a = toneOf(stopTone(from.stop)[from.role]);
-    const b = toneOf(stopTone(to.stop)[to.role]);
-    return out.copy(a).lerpHSL(b, t);
+    const { from, to, t } = orbToneAt(s, restShares, options.stopTones, stopCount);
+    return out.copy(toneOf(from)).lerpHSL(toneOf(to), t);
   };
 
   const MAX_BEADS = 420;
   const BEAD_STEP = 0.6;
-  const BEAD_R = 0.075;
   const sphere = new SphereGeometry(1, 24, 16);
   const beadSet = new InstancedMesh(sphere, beadGlass, MAX_BEADS);
   beadSet.instanceMatrix.setUsage(DynamicDrawUsage);
@@ -515,55 +511,31 @@ export async function createJourneyScene(options: JourneySceneOptions): Promise<
     beads = [];
     const curve = route;
     if (!curve) return;
-    for (let d = 0; d < routeLength && beads.length < MAX_BEADS; d += BEAD_STEP) {
-      beads.push({ p: curve.getPointAt(d / routeLength), d });
-    }
+    beads = beadDistances(routeLength, BEAD_STEP, MAX_BEADS).map((d) => ({
+      p: curve.getPointAt(d / routeLength),
+      d,
+    }));
     beadSet.count = beads.length;
   };
 
   let dark = false;
+  let look: SceneLook = sceneLook(dark);
   const tint = new Color();
   const paintBubbles = () => {
     bubbles.forEach((b, i) => {
       const [own, accent] = stopTone(b.stop);
-      tint.copy(white).lerp(toneOf(b.accent ? accent : own), dark ? 1 : 0.88);
+      tint.copy(white).lerp(toneOf(b.accent ? accent : own), look.bubbleTint);
       bubbleSet.setColorAt(i, tint);
     });
     if (bubbleSet.instanceColor) bubbleSet.instanceColor.needsUpdate = true;
   };
 
   const buildBubbles = () => {
-    bubbles = [];
-    const aspect = camera.aspect || 1;
-    for (let k = 0; k < stopCount; k += 1) {
-      const side = k % 2 === 0 ? -1 : 1;
-      const wx = side * amplitude;
-      const wz = -(k + 0.3) * GAP;
-      // Out at both edges of the screen as the camera passes, behind the stop, never mid-screen:
-      // [edge side, share of half width, height above floor, depth behind, radius, accent].
-      const set: [number, number, number, number, number, boolean][] = [
-        [1, 0.78, 2.1, 3, 0.55, false],
-        [1, 1.02, 3.4, 6, 0.4, true],
-        [1, 0.66, 4.4, 4.5, 0.24, true],
-        [-1, 0.82, 3.0, 4, 0.48, true],
-        [-1, 1.05, 1.6, 6.5, 0.62, false],
-        [-1, 0.7, 4.2, 5.5, 0.22, false],
-      ];
-      for (const [edge, share, up, back, r, accent] of set) {
-        const half = (DIST + back) * TAN * aspect;
-        bubbles.push({
-          p: new Vector3(
-            wx * FOLLOW + edge * side * half * share * (phone ? 0.9 : 1),
-            floorY + up * (phone ? 1.25 : 1),
-            wz - back,
-          ),
-          r: r * (phone ? 0.6 : 1),
-          stop: k,
-          seed: Math.random() * Math.PI * 2,
-          accent,
-        });
-      }
-    }
+    const lane = { amplitude, aspect: camera.aspect || 1, phone };
+    bubbles = bubbleField(stopCount, lane, floorY, mulberry32(SCENE_SEEDS.bubbles)).map((spot) => ({
+      ...spot,
+      p: new Vector3(...spot.p),
+    }));
     bubbleSet.count = bubbles.length;
     paintBubbles();
   };
@@ -572,47 +544,31 @@ export async function createJourneyScene(options: JourneySceneOptions): Promise<
 
   let anchors: number[] = [];
   const measure = () => {
-    const vh = window.innerHeight;
+    const stops = sections.map((section) => {
+      const frame = section.querySelector<HTMLElement>("[data-stop-frame]");
+      const style = frame ? getComputedStyle(frame) : null;
+      return {
+        top: section.getBoundingClientRect().top + window.scrollY,
+        stickyTop: cssPixels(style?.top),
+        beat: -cssPixels(style?.marginTop),
+      };
+    });
     const journeyTop = journey.getBoundingClientRect().top + window.scrollY;
-    const frames = sections.map((section) =>
-      section.querySelector<HTMLElement>("[data-stop-frame]"),
-    );
-    anchors = sections.map((section, i) => {
-      const frame = frames[i];
-      const stickyTop = frame ? Number.parseFloat(getComputedStyle(frame).top) || 0 : 0;
-      return section.getBoundingClientRect().top + window.scrollY - stickyTop;
-    });
-    const first = anchors[0] ?? journeyTop;
-    const unit = Math.max(1, (anchors[1] ?? first + vh) - first);
-    restShares = sections.map((_section, i) => {
-      const start = anchors[i] ?? first;
-      const span = Math.max(1, (anchors[i + 1] ?? start + unit) - start);
-      const frame = frames[i];
-      const beat = frame ? -(Number.parseFloat(getComputedStyle(frame).marginTop) || 0) : 0;
-      return restShare(span, beat);
-    });
-    anchors.unshift(first - unit);
-    anchors.push((anchors.at(-1) ?? first) + unit);
+    const measured = journeyAnchors(stops, journeyTop, window.innerHeight);
+    anchors = measured.anchors;
+    restShares = measured.restShares;
     waypointS = waypointProgress(restShares, START_S, endS);
   };
 
   const layout = () => {
     const width = container.clientWidth;
     const height = container.clientHeight;
-    if (!width || !height) return;
+    const lane = laneFor(width, height);
+    if (!lane) return;
     renderer.setSize(width, height, false);
-    camera.aspect = width / height;
+    camera.aspect = lane.aspect;
     camera.updateProjectionMatrix();
-    phone = width < 768;
-    const halfH = DIST * TAN;
-    // The lane: the orb's centre this far up from the bottom of the screen, under the content.
-    const laneShare = phone ? 0.125 : Math.min(0.17, Math.max(0.11, 130 / height));
-    const radiusPx = phone ? 38 : Math.min(66, laneShare * height * 0.5);
-    orbR = (radiusPx / (height / 2)) * halfH;
-    camH = -(-1 + laneShare * 2) * halfH;
-    floorY = -2.8;
-    // How far the route swings: the orb crosses from one side of the screen to the other.
-    amplitude = Math.max(1.4, ((phone ? 0.42 : 0.4) * halfH * camera.aspect) / (1 - FOLLOW));
+    ({ phone, orbR, camH, amplitude } = lane);
     orb.scale.setScalar(orbR);
     buildFloor();
     buildMotes();
@@ -631,39 +587,40 @@ export async function createJourneyScene(options: JourneySceneOptions): Promise<
   const refreshColours = () => {
     const palette = options.palette();
     const canvasColour = toColour(palette.canvas, probe);
-    dark = luminance(canvasColour) < 0.3;
+    dark = isDarkCanvas(canvasColour.r, canvasColour.g, canvasColour.b);
+    look = sceneLook(dark);
     backdropMaterial.color.copy(canvasColour);
     floorUniforms.uCanvas.value.copy(canvasColour);
     toColour(palette.floor, probe, floorUniforms.uColour.value);
-    floorUniforms.uOpacity.value = dark ? 0.72 : 0.4;
+    floorUniforms.uOpacity.value = look.floorOpacity;
     TONE_NAMES.forEach((name, i) => {
       const tone = tones[i];
       if (tone) toColour(palette.tones[name], probe, tone);
     });
     toColour(palette.ink, probe, inkColour);
-    moteUniforms.uOpacity.value = dark ? 0.55 : 0.4;
-    moteMaterial.blending = dark ? AdditiveBlending : NormalBlending;
+    const blending = look.additive ? AdditiveBlending : NormalBlending;
+    moteUniforms.uOpacity.value = look.moteOpacity;
+    moteMaterial.blending = blending;
     moteMaterial.needsUpdate = true;
     for (const m of [orbGlass, beadGlass, bubbleGlass]) {
-      // Midnight: a little diffuse share so the tinted body shows. Mint: nearly clear.
-      m.transmission = dark ? 0.88 : 0.94;
-      m.envMapIntensity = dark ? 1.05 : 0.75;
-      m.roughness = dark ? 0.05 : 0.04;
+      m.transmission = look.glassTransmission;
+      m.envMapIntensity = look.glassEnvIntensity;
+      m.roughness = look.glassRoughness;
     }
-    orbGlass.thickness = dark ? 0.9 : 0.8;
-    orbGlass.attenuationDistance = dark ? 0.8 : 1.6;
-    beadGlass.transmission = dark ? 0.55 : 0.85;
+    orbGlass.thickness = look.orbThickness;
+    orbGlass.attenuationDistance = look.orbAttenuationDistance;
+    beadGlass.transmission = look.beadTransmission;
     beadGlass.attenuationColor.copy(white);
     bubbleGlass.attenuationColor.copy(white).lerp(toColour(palette.primary, probe), 0.25);
-    orbRim.strength.value = dark ? 1.2 : 0.8;
-    orbRim.glow.value = dark ? 0.06 : 0;
-    beadRim.strength.value = dark ? 0.9 : 0.6;
-    beadRim.glow.value = dark ? 0.14 : 0.04;
-    bubbleRim.strength.value = dark ? 1.0 : 0.7;
-    bubbleRim.glow.value = dark ? 0.05 : 0;
-    shadowMaterial.blending = dark ? AdditiveBlending : NormalBlending;
+    orbRim.strength.value = look.orbRim;
+    orbRim.glow.value = look.orbGlow;
+    beadRim.strength.value = look.beadRim;
+    beadRim.glow.value = look.beadGlow;
+    bubbleRim.strength.value = look.bubbleRim;
+    bubbleRim.glow.value = look.bubbleGlow;
+    shadowMaterial.blending = blending;
     shadowMaterial.needsUpdate = true;
-    key.intensity = dark ? 1.3 : 1.8;
+    key.intensity = look.keyLight;
     paintBubbles();
   };
 
@@ -703,21 +660,19 @@ export async function createJourneyScene(options: JourneySceneOptions): Promise<
     if (anchors.length < 2 || !curve) return;
     const target = progressFromScroll(window.scrollY, anchors);
     // Follows scroll softly, at the calm pace; never stops while scroll moves.
-    s = s < -1.5 || snap ? target : s + (target - s) * (1 - Math.exp((-dt * 3.6) / PACE));
+    s = followProgress(s, target, dt, snap);
     moteUniforms.uTime.value = t;
 
     // The orb rolls along the route.
-    const along = Math.max(0, Math.min(routeLength, piecewise(s, waypointS, routeAt)));
-    const u = clamp01(along / routeLength);
+    const along = routeAlong(s, waypointS, routeAt, routeLength);
+    const u = routeShare(along, routeLength);
     curve.getPointAt(u, head);
     curve.getTangentAt(u, tangent);
     const bob = Math.sin(t * 0.9) * orbR * 0.05;
     orb.position.set(head.x, floorY + orbR + bob, head.z);
-    if (lastAlong >= 0 && Math.abs(along - lastAlong) < 3) {
-      const step = (along - lastAlong) / orbR;
-      rollX += tangent.z * step;
-      rollZ -= tangent.x * step;
-    }
+    const roll = rollStep(along, lastAlong, orbR);
+    rollX += tangent.z * roll;
+    rollZ -= tangent.x * roll;
     lastAlong = along;
     orb.rotation.set(rollX, t * 0.06, rollZ);
     shadow.position.set(head.x, floorY + 0.01, head.z);
@@ -725,7 +680,7 @@ export async function createJourneyScene(options: JourneySceneOptions): Promise<
     floorUniforms.uHead.value.copy(head);
 
     // The camera rides behind and above, following part of the swing, leaning into the turns.
-    lean = snap ? tangent.x : lean + (tangent.x - lean) * (1 - Math.exp(-dt * 2.5));
+    lean = followLean(lean, tangent.x, dt, snap);
     camera.position.set(head.x * FOLLOW, floorY + orbR + camH, head.z + DIST);
     camera.rotation.set(0, -lean * 0.05, -lean * 0.025);
 
@@ -735,48 +690,42 @@ export async function createJourneyScene(options: JourneySceneOptions): Promise<
       orbTone.copy(orbTarget);
       toneReady = true;
     }
-    orbTone.lerpHSL(orbTarget, 1 - Math.exp((-dt * 2.2) / PACE));
-    orbGlass.attenuationColor.copy(white).lerp(orbTone, dark ? 0.85 : 0.7);
-    orbGlass.color.copy(white).lerp(orbTone, dark ? 0.9 : 0.75);
+    orbTone.lerpHSL(orbTarget, toneShare(dt));
+    orbGlass.attenuationColor.copy(white).lerp(orbTone, look.orbAttenuationTint);
+    orbGlass.color.copy(white).lerp(orbTone, look.orbColourTint);
     orbGlass.emissive.copy(orbTone);
-    orbGlass.emissiveIntensity = dark ? 0.08 : 0;
+    orbGlass.emissiveIntensity = look.orbEmissive;
     orbRim.colour.copy(orbTone);
     floorUniforms.uLitColour.value.copy(orbTone);
-    shadowMaterial.color.copy(dark ? orbTone : inkColour);
-    shadowMaterial.opacity = dark ? 0.2 : 0.22;
+    shadowMaterial.color.copy(look.shadowInOrbTone ? orbTone : inkColour);
+    shadowMaterial.opacity = look.shadowOpacity;
 
     // Two rims light the orb from behind and beside, in its colour and the stop's other colour.
-    const k = Math.max(0, Math.min(stopCount - 1, Math.floor(s)));
-    const [own, accent] = stopTone(k);
+    const k = stopIndexAt(s, stopCount);
     rimA.position.set(head.x - 1.5, floorY + orbR + 1.3, head.z - 1.6);
     rimB.position.set(head.x + 1.7, floorY + orbR + 0.7, head.z - 1.2);
     rimA.color.copy(orbTone);
-    rimB.color.copy(toneOf(s - k < (restShares[k] ?? 0.5) ? accent : own));
-    rimA.intensity = dark ? 12 : 9;
-    rimB.intensity = dark ? 9 : 6;
+    rimB.color.copy(toneOf(stopTone(k)[rimRole(s, k, restShares)]));
+    rimA.intensity = look.rimA;
+    rimB.intensity = look.rimB;
 
     // Each stop's light swells as the orb rolls past its waypoint (the middle of the rest).
     stopLights.forEach((light, i) => {
-      const side = i % 2 === 0 ? -1 : 1;
-      const ws = waypointS[i + 1] ?? i;
-      light.position.set(side * amplitude * 0.7, floorY + 2.6, -(i + 0.3) * GAP + 2);
+      light.position.set(stopSide(i) * amplitude * 0.7, floorY + 2.6, stopDepth(i) + 2);
       light.color.copy(toneOf(stopTone(i)[0]));
-      light.intensity = (1 - smooth(Math.abs(s - ws) / 0.9)) * (dark ? 22 : 28);
+      light.intensity = stopLightIntensity(s, waypointS[i + 1] ?? i, dark);
     });
 
     // Beads: small ahead, full size behind; those just passed glow in the orb's colour.
     beads.forEach((bead, index) => {
-      const g = smooth((along - bead.d + 2.4) / 2.4);
-      const r = BEAD_R * (0.45 + 0.55 * g) * (phone ? 0.85 : 1);
+      const { radius, glow, whiten } = beadLook(along, bead.d, phone, dark);
       pos.copy(bead.p);
-      pos.y = floorY + r;
-      scaleV.setScalar(r);
+      pos.y = floorY + radius;
+      scaleV.setScalar(radius);
       matrix.compose(pos, quaternion, scaleV);
       beadSet.setMatrixAt(index, matrix);
       colourAt(piecewise(bead.d, routeAt, waypointS), beadTint);
-      const behind = along - bead.d;
-      const trail = behind >= 0 ? Math.exp(-behind / 2.2) : 0;
-      beadTint.lerp(white, dark ? 0 : 0.08).multiplyScalar(1 + trail * (dark ? 1.1 : 1.2));
+      beadTint.lerp(white, whiten).multiplyScalar(glow);
       beadSet.setColorAt(index, beadTint);
     });
     beadSet.instanceMatrix.needsUpdate = true;
@@ -784,12 +733,15 @@ export async function createJourneyScene(options: JourneySceneOptions): Promise<
 
     // Bubbles: a stop's cluster rises as the reader nears it, drifts, and sinks before the camera.
     bubbles.forEach((bubble, index) => {
-      const clearance = smooth((camera.position.z - bubble.p.z - 4) / 5);
-      const grow = smooth((s - bubble.stop + 0.4) / 0.6) * clearance;
-      const lift = Math.sin(t * 0.45 + bubble.seed) * 0.14 - (1 - grow) * 0.9;
+      const { lift, scale } = bubbleRise(
+        { z: bubble.p.z, stop: bubble.stop, seed: bubble.seed, r: bubble.r },
+        camera.position.z,
+        s,
+        t,
+      );
       pos.copy(bubble.p);
       pos.y += lift;
-      scaleV.setScalar(Math.max(1e-4, bubble.r * grow));
+      scaleV.setScalar(scale);
       matrix.compose(pos, quaternion, scaleV);
       bubbleSet.setMatrixAt(index, matrix);
     });
@@ -809,15 +761,16 @@ export async function createJourneyScene(options: JourneySceneOptions): Promise<
   let last = 0;
   const frame = (now: number) => {
     raf = 0;
-    const dt = last ? Math.min(0.05, (now - last) / 1000) : 0;
+    const dt = frameDelta(now, last);
     last = now;
     t += dt;
     const verdict = frameCheck.tick(now);
-    if (verdict?.kind === "downgrade") {
+    const action = frameAction(verdict);
+    if (action === "downgrade") {
       renderer.setPixelRatio(1);
       floorUniforms.uPixelRatio.value = 1;
       layout();
-    } else if (verdict) {
+    } else if (action === "report" && verdict) {
       options.onVerdict(verdict);
     }
     draw(dt);
@@ -825,7 +778,7 @@ export async function createJourneyScene(options: JourneySceneOptions): Promise<
   };
   function schedule() {
     if (raf || disposed) return;
-    if (!onScreen || !running || document.hidden) {
+    if (!shouldLoop({ onScreen, running, hidden: document.hidden })) {
       last = 0;
       frameCheck.reset();
       return;

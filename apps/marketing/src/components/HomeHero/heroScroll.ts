@@ -90,6 +90,16 @@ const header = () => document.querySelector("header")?.offsetHeight ?? 0;
  * Reduced motion and no JavaScript never run this: they show the finished, still picture. A width
  * change rebuilds from the finished picture. Returns a clean-up that leaves the finished picture.
  */
+/**
+ * Where to scroll once the pin is added, so a reader already below the hero keeps their place: on
+ * a slow device the hero can set up after the reader has scrolled on, and the pin's run is then
+ * added above them. Null when the reader is above the hero's end, or the hero did not grow.
+ */
+export function placeAfterPin(scrollY: number, endBefore: number, endAfter: number): number | null {
+  const grown = endAfter - endBefore;
+  return scrollY >= endBefore && grown > 0 ? scrollY + grown : null;
+}
+
 export function armHeroScroll(kit: GsapKit, root: HTMLElement): () => void {
   const { gsap, ScrollTrigger, Flip } = kit;
   let ctx: gsap.Context | null = null;
@@ -364,10 +374,15 @@ export function armHeroScroll(kit: GsapKit, root: HTMLElement): () => void {
     ctx = null;
   };
 
+  const heroEnd = () => root.getBoundingClientRect().bottom + window.scrollY;
+  const readerY = window.scrollY;
+  const endBefore = heroEnd();
   build();
   // The pin adds length above every band below, so their triggers measure again.
   ScrollTrigger.sort();
   ScrollTrigger.refresh();
+  const place = placeAfterPin(readerY, endBefore, heroEnd());
+  if (place !== null) window.scrollTo({ top: place, behavior: "auto" });
 
   let lastWidth = window.innerWidth;
   let timer = 0;

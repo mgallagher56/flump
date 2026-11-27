@@ -41,6 +41,25 @@ describe("chart geometry", () => {
     expect(pointAt([0, 50, 100], 1, 100)).toEqual({ x: 1, y: 0, index: 2 });
   });
 
+  it("holds progress to 0 to 1", () => {
+    // Below 0 is the first point, above 1 the last.
+    expect(pointAt([0, 50, 100], -0.5, 100)).toEqual({ x: 0, y: 1, index: 0 });
+    expect(pointAt([0, 50, 100], 1.5, 100)).toEqual({ x: 1, y: 0, index: 2 });
+  });
+
+  it("puts a single value at the right edge, and no values at the floor", () => {
+    // One value, 40 of 0 to 100: x 1, y 1 − 0.4 = 0.6
+    expect(pointAt([40], 0.5, 100)).toEqual({ x: 1, y: 0.6, index: 0 });
+    // None: the floor's value, 20 of 20 to 120, is 1 from the top.
+    expect(pointAt([], 0.5, 120, 20)).toEqual({ x: 1, y: 1, index: 0 });
+  });
+
+  it("puts a flat range at the top instead of dividing by zero", () => {
+    // max = min = 50: the range counts as 1, so 1 − (50 − 50) / 1 = 1 and 1 − (51 − 50) / 1 = 0
+    expect(shareFromTop(50, 50, 50)).toBe(1);
+    expect(shareFromTop(51, 50, 50)).toBe(0);
+  });
+
   it("sizes the readout box to its label", () => {
     // 8 characters × 7.4 + 18 = 77.2, rounded 77
     expect(readoutWidth("£100, Ma")).toBe(77);

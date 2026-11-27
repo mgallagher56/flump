@@ -20,8 +20,9 @@ const pill = {
 
 /**
  * Fixed at the bottom left, inside the safe area (R5). While the page scrolls it steps out of the
- * way (a short fade and drop), never while it holds focus; with reduced motion it simply hides and
- * returns. The page gives its footer room for it (HomePage `pageShell`), so it never covers the
+ * way (a short fade and drop), never while it holds focus or the pointer is on it (a control that
+ * is visible must take a click: after a click focus moves to the stop's heading, and the pointer
+ * still on the control keeps it); with reduced motion it simply hides and returns. The page gives its footer room for it (HomePage `pageShell`), so it never covers the
  * last lines.
  */
 export const dock = css({
@@ -41,7 +42,7 @@ export const dock = css({
   transitionDuration: "base",
   transitionTimingFunction: "standard",
   "& [data-motion-control]": { ...pill, px: "1" },
-  "&[data-scrolling]:not(:focus-within)": {
+  "&[data-scrolling]:not(:focus-within):not(:hover)": {
     opacity: 0,
     pointerEvents: "none",
     _motionSafe: { translate: "0 token(spacing.3)" },
