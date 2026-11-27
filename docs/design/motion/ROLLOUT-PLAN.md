@@ -76,17 +76,19 @@ Built in slice F2 (27 November 2026) as `marketingDurations` and `marketingEasin
 
 **Performance budget, as ratchets**
 
-| Measure                                    | Budget        | Measured                           |
-| ------------------------------------------ | ------------- | ---------------------------------- |
-| Extra first-load script, home              | 25 KB gzip    | 20.5 KB                            |
-| Extra CSS, home                            | 25 KB gzip    | 21.9 KB                            |
-| Lazy script after first paint              | 230 KB gzip   | 224 KB                             |
-| Layout shift                               | 0.05          | 0.018 to 0.045                     |
-| Longest main-thread stall, throttled phone | 200 ms        | about 730 ms. Fails; cause unknown |
-| Frame rate in the journey                  | 55 fps median | 60 on a Mac                        |
-| Smallest text                              | 12 px         | Passes                             |
+| Measure                                    | Budget        | Measured                                                                         |
+| ------------------------------------------ | ------------- | -------------------------------------------------------------------------------- |
+| Extra first-load script, home              | 25 KB gzip    | 20.5 KB                                                                          |
+| Extra CSS, home                            | 25 KB gzip    | 21.9 KB                                                                          |
+| Lazy script after first paint              | 230 KB gzip   | 224 KB                                                                           |
+| Layout shift                               | 0.05          | 0.018 to 0.045                                                                   |
+| Longest main-thread stall, throttled phone | 200 ms        | about 730 ms on the dev server. Cause found in F4: see the M1 notes in section 3 |
+| Frame rate in the journey                  | 55 fps median | 60 on a Mac                                                                      |
+| Smallest text                              | 12 px         | Passes                                                                           |
 
 CI: turn `prototypes/tools/measure-weight.ts` into a `scripts/` check with a baseline file, run after the build. Raising a baseline falls under the Guard Changes law. Timing measures run as an advisory Playwright job in `apps/e2e`, like `visual-regression.yml`.
+
+Built in slice F4 (27 November 2026). `scripts/check-marketing-weight.ts` reads the built `index.html` and gzips what it loads, against `scripts/marketing-weight-baseline.json`. The baseline is `main` at 0b291c6ec: first-load script 236,083 bytes, first-load CSS 32,094, lazy script 0 (the site has no lazy chunk yet). The budgets above are added on top (1 KB = 1,000 bytes), so the ceilings are 261,083, 57,094 and 230,000. It runs as a step of the required Build job: the build and the measure repeat byte for byte and take under a second, and the full budget is headroom, so a failure means real growth. Lazy script counts every chunk `index.html` does not load, an upper bound for home until another page gains a lazy chunk; whoever adds route splitting gives the check a per-route list. The import ban is `scripts/check-motion-imports.ts` in `check:laws`. The hooks are `useChangeover`, `useCountUp` and `useGlide`, `useTiltLight` and `useScenePower` in `packages/ui/src/hooks`, documented in `docs/agents/component-guidelines.md`.
 
 **Prototype to production.** For each block: a colocated directory, Panda styles with semantic tokens, stories in light and dark showing the rest state and the reduced-motion state, tests that assert specific states, the four local checks, then CI. Every PR names the review-only rules it checked.
 
@@ -99,7 +101,7 @@ CI: turn `prototypes/tools/measure-weight.ts` into a `scripts/` check with a bas
 | F1    | Rule changes: amend STYLE-GUIDE 8, 11 and line 113 and UX-GUIDELINES M1, M3, M5, M7 with a marketing exception; record the decisions in `docs/audit/plans/DECISIONS.md` | 1          |
 | F2    | Tokens: calm scale, orb sets, glass and paper material, the orb-only colour check                                                                                       | 2          |
 | F3    | Document card pictures, "Example" tag, glass card, carousel dots in `packages/ui`                                                                                       | 4          |
-| F4    | Hooks, the import ban, the weight check in CI                                                                                                                           | 3          |
+| F4    | Hooks, the import ban, the weight check in CI. Done 27 November 2026                                                                                                    | 3          |
 
 ## 3. Marketing rollout
 
@@ -126,6 +128,17 @@ Routes come from `apps/marketing/src/App.tsx` and `apps/marketing/src/utils/tool
 | M3    | Features index, five area pages, AI connection                                                                                                                                                                                                                            | 3          |
 | M4    | Pricing, preview, security, contact                                                                                                                                                                                                                                       | 2          |
 | M5    | Legal pages, not-found, final baselines                                                                                                                                                                                                                                   | 1          |
+
+**M1 notes: the 730 ms stall (profiled in F4, 27 November 2026).** Prototype 11 on the prototype worktree's dev server, 375 px at device scale 2, CPU slowed four times, Playwright's Chromium on the Mac's GPU (Metal), no tracing. Three cold loads gave a longest task of 735, 764 and 743 ms at about 0.5 s; the trace splits it into the dev server's 760 unbundled modules evaluating (about 410 ms), then, in the same task, the first full style recalculation (95 ms) and layout of the whole page (335 ms, 1,027 layout objects). In dev mode Vite injects every stylesheet from JavaScript, so the server HTML has no stylesheet and the page is styled and laid out only when the modules run. The second longest task is React hydrating the page (280 to 450 ms). It is not the 3D scene: the scene loads after the load event, and with reduced motion (no scene) the task grows to 1,643 to 1,699 ms, a 947 ms style recalculation on 760 elements that I did not explain further. Headless runs on software WebGL (SwiftShader) add 1 to 3 s waits in `Commit` after the scene's first frames; with Metal there are none. For comparison, the production home page on `main` (built, same profile) has a longest task of 211 to 222 ms in five of six loads (one 818 ms first load): evaluating its one 236 KB bundle.
+
+What M1 must do, as a result:
+
+- Measure the stall on a production build (`vite build` and `bun server.ts` with `NODE_ENV=production`), never the dev server. The dev server's figure is mostly an artefact.
+- Keep all CSS in the linked stylesheet Panda emits. Never inject a stylesheet from JavaScript or let a lazy chunk carry CSS the first paint needs, or the whole page's style and layout lands inside a script task as it does here.
+- The 200 ms budget is already at its edge before M1 adds anything: today's bundle evaluation alone takes about 215 ms on this profile. Split the route (the new home in its own chunk, other pages out of the first load), and cut first layout on below-the-fold bands, for example `content-visibility: auto` with a reserved size, checked for no layout shift.
+- Hydration of a long page is the next largest task. Keep below-the-fold set pieces cheap to hydrate, and check the hydration task in the profile.
+- Profile the reduced-motion page too. A visitor who asks for less motion must not get a slower first load; find the 947 ms style recalculation before the still path ships.
+- M2's real-device run (D5) should time the scene's first frames (shader compilation and the environment map), since software WebGL hid them here.
 
 **SEO and no JavaScript.** All copy is server-rendered in reading order, including every journey stop and carousel item. Without JavaScript the journey is a plain vertical list and the carousel scrolls natively. Count-up figures are rendered at their final value. The canvas is decorative and hidden from assistive technology. `PageMeta` and the sitemap do not change.
 

@@ -83,6 +83,13 @@ css({
 });
 ```
 
+**Marketing motion hooks** (`packages/ui/src/hooks`, slice F4 of `docs/design/motion/ROLLOUT-PLAN.md`). Pure logic with no animation library; GSAP and three.js stay in `apps/marketing` (`check-motion-imports`). All four do nothing under reduced motion.
+
+- `useChangeover(initial, durations?)` returns `{ phase, shown, target, queued, trigger }`. Phases run rest, leaving, beat, arriving, rest over `disclosure`, `stagger` and `entry`; a trigger mid-way queues the latest target and never reverses (MK2). `changeoverReducer` is the pure machine.
+- `useCountUp(value, { inView, from?, format? })` and `useGlide(value, { format? })` return `{ display, displayText, text, moving }`. Render `text` for assistive technology and `displayText` with `aria-hidden`, in tabular figures; `text` is final from the server render. Count-up runs once on first view for a fixed "Example" figure; glide runs only on input change, never on mount (MK13, MK10). Never on a real figure in the apps.
+- `useTiltLight({ tilt?, maxDeg? })` returns a callback ref and writes `--tilt-rx`, `--tilt-ry`, `--light-x`, `--light-y` and `data-tilt-light` for the card's styles: up to six degrees, mouse only. `tilt: false` keeps a still light, the apps' tier A (AT3).
+- `useScenePower()` returns `{ mode: "live" | "still", reason, reportFps }` from `decideScenePower` (reduced motion, data saver, under 4 GB or 4 cores, no WebGL, under 28 fps; MK11). It is `still` until mounted. `createFrameRateCheck()` is the scene loop's frame rate check.
+
 ### Elevation
 
 Use the semantic shadow keys `xs`, `card`, `raised`, `overlay`, `focus` (`boxShadow: "card"`). They are themed for dark mode. Do not write raw `boxShadow` values.
