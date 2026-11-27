@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 import { AccessibilityInfo, Platform, View } from "react-native";
 import { useTheme } from "../../theme/ThemeProvider";
 import { pressedStyle } from "../Button/Button.styles";
@@ -16,6 +16,8 @@ export interface InfoTipProps {
   label?: string;
   /** Defaults to closed. */
   initiallyOpen?: boolean;
+  /** Optional label node placed beside the trigger; the expanded panel stays full width below. */
+  children?: ReactNode;
   testID?: string;
 }
 
@@ -23,7 +25,14 @@ export interface InfoTipProps {
  * Quiet "i" button that toggles a plain-English explanation in place and announces it to screen
  * readers when opened. Keeps a 48 by 48 point target via `Pressable`.
  */
-export function InfoTip({ term, body, label, initiallyOpen = false, testID }: InfoTipProps) {
+export function InfoTip({
+  term,
+  body,
+  label,
+  initiallyOpen = false,
+  children,
+  testID,
+}: InfoTipProps) {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [open, setOpen] = useState(initiallyOpen);
@@ -34,19 +43,30 @@ export function InfoTip({ term, body, label, initiallyOpen = false, testID }: In
     if (next) AccessibilityInfo.announceForAccessibility(body);
   };
 
+  const trigger = (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label ?? `About ${term}`}
+      accessibilityState={{ expanded: open }}
+      android_ripple={{ color: theme.colors["surface.subtle"] }}
+      style={({ pressed }) => [styles.trigger, pressedStyle(pressed, Platform.OS)]}
+      testID={testID ? `${testID}-trigger` : undefined}
+      onPress={toggle}
+    >
+      <Icon name="info" size="sm" color="secondary" />
+    </Pressable>
+  );
+
   return (
     <View style={styles.base} testID={testID}>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={label ?? `About ${term}`}
-        accessibilityState={{ expanded: open }}
-        android_ripple={{ color: theme.colors["surface.subtle"] }}
-        style={({ pressed }) => [styles.trigger, pressedStyle(pressed, Platform.OS)]}
-        testID={testID ? `${testID}-trigger` : undefined}
-        onPress={toggle}
-      >
-        <Icon name="info" size="sm" color="secondary" />
-      </Pressable>
+      {children ? (
+        <View style={styles.row} testID={testID ? `${testID}-row` : undefined}>
+          <View style={styles.labelSlot}>{children}</View>
+          {trigger}
+        </View>
+      ) : (
+        trigger
+      )}
       {open ? (
         <View accessible style={styles.panel} testID={testID ? `${testID}-body` : undefined}>
           <Text textStyle="body.sm" color="secondary">

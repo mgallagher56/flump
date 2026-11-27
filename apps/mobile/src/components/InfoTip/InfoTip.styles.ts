@@ -7,6 +7,15 @@ export const createStyles = (theme: Theme) =>
       alignSelf: "stretch",
       gap: theme.spacing["2"],
     },
+    row: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: theme.spacing["1"],
+    },
+    labelSlot: {
+      flex: 1,
+      minWidth: 0,
+    },
     trigger: {
       alignSelf: "flex-start",
       alignItems: "center",

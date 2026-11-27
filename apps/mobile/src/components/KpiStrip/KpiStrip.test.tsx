@@ -1,5 +1,5 @@
 import { dark, light, textStyles } from "@flump/tokens/native";
-import { render, screen, userEvent } from "@testing-library/react-native";
+import { render, screen, userEvent, within } from "@testing-library/react-native";
 import {
   AccessibilityInfo,
   Dimensions,
@@ -326,6 +326,32 @@ describe("KpiStrip", () => {
       await userEvent.setup().press(trigger);
       expect(screen.getByText(EXPLAIN)).toBeOnTheScreen();
     });
+
+    it.each([
+      ["twoFigures", "Left over each month", "kpi-strip-left-over", kpiStripStates.twoFigures],
+      ["short", "Short each month", "kpi-strip-short", kpiStripStates.short],
+    ] as const)(
+      "%s places the info tip trigger beside %s above the figure group",
+      async (_name, label, groupTestID, props) => {
+        await strip(props);
+        const card = screen.getByTestId("kpi-strip-first");
+        const childIds = card.children.map(
+          (child) => (child as { props: { testID?: string } }).props.testID,
+        );
+        expect(childIds).toEqual(["kpi-strip-first-explain", groupTestID]);
+
+        const row = screen.getByTestId("kpi-strip-first-explain-row");
+        expect((StyleSheet.flatten(row.props.style) as ViewStyle).flexDirection).toBe("row");
+        expect(within(row).getByText(label)).toBeOnTheScreen();
+        expect(within(row).getByRole("button", { name: `About ${label}` })).toBeOnTheScreen();
+
+        await userEvent.setup().press(within(row).getByRole("button", { name: `About ${label}` }));
+        const explain = screen.getByTestId("kpi-strip-first-explain");
+        expect(
+          explain.children.map((child) => (child as { props: { testID?: string } }).props.testID),
+        ).toEqual(["kpi-strip-first-explain-row", "kpi-strip-first-explain-body"]);
+      },
+    );
 
     it.each([
       ["incomeOnly", kpiStripStates.incomeOnly],
