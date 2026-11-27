@@ -120,24 +120,76 @@ describe("useVisualViewportInset", () => {
     expect(root.hasAttribute(KEYBOARD_OPEN_ATTR)).toBe(false);
   });
 
-  it("keeps the focused field in a dialog in view when the keyboard opens", () => {
-    const dialog = document.createElement("div");
-    dialog.setAttribute("role", "dialog");
-    const input = document.createElement("input");
-    dialog.appendChild(input);
-    document.body.appendChild(dialog);
-    const scroll = vi.fn();
-    input.scrollIntoView = scroll;
-    input.focus();
-    const { unmount } = renderHook(() => useVisualViewportInset(true));
-    expect(scroll).not.toHaveBeenCalled();
-    act(() => {
+  describe("bringing the focused field into view", () => {
+    // Frames queue here and run only when flushed, so a test can tell "now" from "next frame".
+    let frames: Map<number, FrameRequestCallback>;
+    let nextId: number;
+    const flush = () => {
+      const queued = [...frames.values()];
+      frames.clear();
+      for (const cb of queued) cb(0);
+    };
+    let dialog: HTMLElement;
+    let input: HTMLInputElement;
+    let scroll: ReturnType<typeof vi.fn>;
+
+    beforeEach(() => {
+      frames = new Map();
+      nextId = 1;
+      vi.spyOn(window, "requestAnimationFrame").mockImplementation((cb) => {
+        const id = nextId++;
+        frames.set(id, cb);
+        return id;
+      });
+      vi.spyOn(window, "cancelAnimationFrame").mockImplementation((id) => {
+        frames.delete(id);
+      });
+      dialog = document.createElement("div");
+      dialog.setAttribute("role", "dialog");
+      input = document.createElement("input");
+      dialog.appendChild(input);
+      document.body.appendChild(dialog);
+      scroll = vi.fn();
+      input.scrollIntoView = scroll;
+      input.focus();
+    });
+
+    afterEach(() => dialog.remove());
+
+    const openKeyboard = () => {
       viewport.height = 476;
       viewport.dispatchEvent(new Event("resize"));
+      flush(); // the measuring frame: the sheet gets its new height
+    };
+
+    it("scrolls the field in on the frame after the sheet takes its new height, not before", () => {
+      const { unmount } = renderHook(() => useVisualViewportInset(true));
+      act(openKeyboard);
+      expect(scroll).not.toHaveBeenCalled();
+      act(flush);
+      expect(scroll).toHaveBeenCalledTimes(1);
+      expect(scroll).toHaveBeenCalledWith({ block: "nearest" });
+      unmount();
     });
-    expect(scroll).toHaveBeenCalledWith({ block: "nearest" });
-    unmount();
-    dialog.remove();
+
+    it("leaves the field alone when focus has moved on by then", () => {
+      const other = document.createElement("input");
+      dialog.appendChild(other);
+      const { unmount } = renderHook(() => useVisualViewportInset(true));
+      act(openKeyboard);
+      other.focus();
+      act(flush);
+      expect(scroll).not.toHaveBeenCalled();
+      unmount();
+    });
+
+    it("cancels the scroll when the modal closes first", () => {
+      const { unmount } = renderHook(() => useVisualViewportInset(true));
+      act(openKeyboard);
+      unmount();
+      act(flush);
+      expect(scroll).not.toHaveBeenCalled();
+    });
   });
 
   it("leaves a focused field outside any dialog where it is", () => {

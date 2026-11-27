@@ -28,8 +28,9 @@ export const monthNote = cva({
     margin: 0,
     textStyle: "body.sm",
     color: "text.secondary",
-    // Empty, it takes no grid row (and no gap).
-    _empty: { display: "none" },
+    // Empty, it is visually hidden (out of the grid, so no gap) but stays in the accessibility
+    // tree, so a screen reader hears the note when it arrives.
+    _empty: { srOnly: true },
   },
 });
 
@@ -107,5 +108,11 @@ export const keepRow = cva({
 
 /** "6 balances kept as they are…": quiet, and takes no room while it says nothing. */
 export const keptStatus = cva({
-  base: { margin: 0, textStyle: "body.sm", color: "text.secondary", _empty: { display: "none" } },
+  base: {
+    margin: 0,
+    textStyle: "body.sm",
+    color: "text.secondary",
+    // Visually hidden while empty, never display none: the live region stays in the tree.
+    _empty: { srOnly: true },
+  },
 });
