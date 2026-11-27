@@ -1,48 +1,18 @@
 /**
- * The sealed offline cache file (E12 S7). The sealing box here is real AES-256-GCM from Node, built
- * as expo-crypto's is used (12 byte IV, 16 byte tag, associated data), so encryption at rest,
- * tampering and a missing key are tested for real.
+ * The sealed offline cache file (E12 S7). The sealing box here is real AES-256-GCM from Node
+ * (`testing/nodeAesBox.ts`), so encryption at rest, tampering and a missing key are tested for real.
  */
-import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
+import { randomBytes } from "node:crypto";
 import type { SecureStoreLike } from "../auth/tokenStore";
 import { OFFLINE_CACHE_KEY } from "../device/storageKeys";
-import {
-  type CacheFile,
-  createCacheStore,
-  type SealingBox,
-  utf8Decode,
-  utf8Encode,
-} from "./cacheStore";
+import { nodeAesBox } from "../testing/nodeAesBox";
+import { type CacheFile, createCacheStore, utf8Decode, utf8Encode } from "./cacheStore";
 import { CACHE_FILE, CACHE_FOLDER, cacheFileUri } from "./deviceCache";
 
 jest.mock("expo-file-system/legacy", () => ({}));
 jest.mock("expo-crypto", () => ({}));
 
 const ACCESSIBLE = 7;
-
-const nodeBox: SealingBox = {
-  generateKey: async () => randomBytes(32).toString("base64"),
-  async seal(key, plaintext, associated) {
-    const iv = randomBytes(12);
-    const cipher = createCipheriv("aes-256-gcm", Buffer.from(key, "base64"), iv);
-    cipher.setAAD(associated);
-    const body = Buffer.concat([cipher.update(plaintext), cipher.final()]);
-    return Buffer.concat([iv, body, cipher.getAuthTag()]).toString("base64");
-  },
-  async open(key, sealed, associated) {
-    const all = Buffer.from(sealed, "base64");
-    const decipher = createDecipheriv(
-      "aes-256-gcm",
-      Buffer.from(key, "base64"),
-      all.subarray(0, 12),
-    );
-    decipher.setAAD(associated);
-    decipher.setAuthTag(all.subarray(all.length - 16));
-    return new Uint8Array(
-      Buffer.concat([decipher.update(all.subarray(12, all.length - 16)), decipher.final()]),
-    );
-  },
-};
 
 function memoryStore() {
   const values = new Map<string, string>();
@@ -82,7 +52,7 @@ function memoryFile() {
 function setup() {
   const store = memoryStore();
   const file = memoryFile();
-  const cache = createCacheStore({ box: nodeBox, file, store, accessible: ACCESSIBLE });
+  const cache = createCacheStore({ box: nodeAesBox, file, store, accessible: ACCESSIBLE });
   return { store, file, cache };
 }
 
