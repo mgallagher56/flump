@@ -1,1 +1,2 @@
-export { HomeMoreDetail } from "./HomeMoreDetail";
+export * from "./HomeMoreDetail";
+export * from "./HomeMoreDetail.styles";

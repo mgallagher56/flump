@@ -1,2 +1,2 @@
-export type { HomeFaqEntry } from "./HomeFAQ";
-export { HOME_FAQS, HomeFAQ } from "./HomeFAQ";
+export * from "./HomeFAQ";
+export * from "./HomeFAQ.styles";

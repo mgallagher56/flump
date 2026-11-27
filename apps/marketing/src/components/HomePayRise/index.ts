@@ -1,1 +1,2 @@
-export { HomePayRise } from "./HomePayRise";
+export * from "./HomePayRise";
+export * from "./HomePayRise.styles";

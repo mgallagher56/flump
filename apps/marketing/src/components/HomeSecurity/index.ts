@@ -1,1 +1,2 @@
-export { HomeSecurity } from "./HomeSecurity";
+export * from "./HomeSecurity";
+export * from "./HomeSecurity.styles";

@@ -11,25 +11,28 @@ sections:
     component: apps/marketing/src/components/Header/Header.tsx
 
   - id: hero
-    component: apps/marketing/src/components/BaselineSnapshotPreview/BaselineSnapshotPreview.tsx
+    component: apps/marketing/src/components/HomeHero/HomeHero.tsx
 
   - id: features
-    component: apps/marketing/src/components/FeatureTiles/FeatureTiles.tsx
+    component: apps/marketing/src/components/HomeFeatures/HomeFeatures.tsx
 
   - id: rough-figures
-    component: apps/marketing/src/pages/HomePage/HomePage.tsx
-
-  - id: more-detail
-    component: apps/marketing/src/pages/HomePage/HomePage.tsx
+    component: apps/marketing/src/components/HomeRoughFigures/HomeRoughFigures.tsx
 
   - id: pay-rise
-    component: apps/marketing/src/components/PayRiseTeaser/PayRiseTeaser.tsx
+    component: apps/marketing/src/components/HomePayRise/HomePayRise.tsx
 
   - id: security
-    component: apps/marketing/src/components/SecurityPrivacySection/SecurityPrivacySection.tsx
+    component: apps/marketing/src/components/HomeSecurity/HomeSecurity.tsx
+
+  - id: more-detail
+    component: apps/marketing/src/components/HomeMoreDetail/HomeMoreDetail.tsx
 
   - id: faq
     component: apps/marketing/src/components/HomeFAQ/HomeFAQ.tsx
+
+  - id: get-started
+    component: apps/marketing/src/components/HomeClose/HomeClose.tsx
 
   - id: site-footer
     component: apps/marketing/src/components/Footer/Footer.tsx

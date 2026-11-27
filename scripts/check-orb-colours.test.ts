@@ -65,7 +65,7 @@ describe("ORB_COLOUR_ALLOW_LIST", () => {
     }
   });
 
-  it("starts with exactly the six entries main needed on 27 Nov 2026 (a new one needs sign-off)", () => {
+  it("holds exactly the signed-off entries: main's six on 27 Nov 2026, then the M1 orb-like components (a new one needs sign-off)", () => {
     expect(ORB_COLOUR_ALLOW_LIST.map((e) => e.path)).toEqual([
       "packages/ui/src/primitives/IconTile/",
       "apps/web/app/features/dashboard/components/WidgetCard/",
@@ -73,6 +73,8 @@ describe("ORB_COLOUR_ALLOW_LIST", () => {
       "apps/web/app/utils/pageConfig.ts",
       "packages/ui/src/foundations/MarketingTokens/",
       "packages/ui/src/foundations/ColorPalette/",
+      "apps/marketing/src/components/BubbleField/",
+      "apps/marketing/src/components/JourneyOrb/",
     ]);
   });
 

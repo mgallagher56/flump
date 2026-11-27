@@ -2,7 +2,7 @@
 
 # Functionality map: overview
 
-Mapped pages: 58 | Sections: 304 | Excluded routes: 25
+Mapped pages: 58 | Sections: 305 | Excluded routes: 25
 
 ## web
 
@@ -483,17 +483,18 @@ Mapped pages: 58 | Sections: 304 | Excluded routes: 25
 - Route: `/` (auth: `public`, file: `apps/marketing/src/pages/HomePage/HomePage.tsx`)
 - Purpose: Introduce Flump's five money areas, let visitors try the pay rise tool, read the FAQ, and request an invite or open the interactive preview.
 
-| Section         | Component                                                                           | Facts read | Figures |
-| --------------- | ----------------------------------------------------------------------------------- | ---------- | ------- |
-| `site-header`   | `apps/marketing/src/components/Header/Header.tsx`                                   | -          | -       |
-| `hero`          | `apps/marketing/src/components/BaselineSnapshotPreview/BaselineSnapshotPreview.tsx` | -          | -       |
-| `features`      | `apps/marketing/src/components/FeatureTiles/FeatureTiles.tsx`                       | -          | -       |
-| `rough-figures` | `apps/marketing/src/pages/HomePage/HomePage.tsx`                                    | -          | -       |
-| `more-detail`   | `apps/marketing/src/pages/HomePage/HomePage.tsx`                                    | -          | -       |
-| `pay-rise`      | `apps/marketing/src/components/PayRiseTeaser/PayRiseTeaser.tsx`                     | -          | -       |
-| `security`      | `apps/marketing/src/components/SecurityPrivacySection/SecurityPrivacySection.tsx`   | -          | -       |
-| `faq`           | `apps/marketing/src/components/HomeFAQ/HomeFAQ.tsx`                                 | -          | -       |
-| `site-footer`   | `apps/marketing/src/components/Footer/Footer.tsx`                                   | -          | -       |
+| Section         | Component                                                             | Facts read | Figures |
+| --------------- | --------------------------------------------------------------------- | ---------- | ------- |
+| `site-header`   | `apps/marketing/src/components/Header/Header.tsx`                     | -          | -       |
+| `hero`          | `apps/marketing/src/components/HomeHero/HomeHero.tsx`                 | -          | -       |
+| `features`      | `apps/marketing/src/components/HomeFeatures/HomeFeatures.tsx`         | -          | -       |
+| `rough-figures` | `apps/marketing/src/components/HomeRoughFigures/HomeRoughFigures.tsx` | -          | -       |
+| `pay-rise`      | `apps/marketing/src/components/HomePayRise/HomePayRise.tsx`           | -          | -       |
+| `security`      | `apps/marketing/src/components/HomeSecurity/HomeSecurity.tsx`         | -          | -       |
+| `more-detail`   | `apps/marketing/src/components/HomeMoreDetail/HomeMoreDetail.tsx`     | -          | -       |
+| `faq`           | `apps/marketing/src/components/HomeFAQ/HomeFAQ.tsx`                   | -          | -       |
+| `get-started`   | `apps/marketing/src/components/HomeClose/HomeClose.tsx`               | -          | -       |
+| `site-footer`   | `apps/marketing/src/components/Footer/Footer.tsx`                     | -          | -       |
 
 ### not-found: We cannot find that page | Flump
 

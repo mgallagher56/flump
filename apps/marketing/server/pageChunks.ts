@@ -7,7 +7,7 @@
  */
 
 /** The part of a Vite manifest entry this module reads. */
-export interface ManifestChunk {
+interface ManifestChunk {
   readonly file: string;
   readonly imports?: readonly string[];
   readonly dynamicImports?: readonly string[];

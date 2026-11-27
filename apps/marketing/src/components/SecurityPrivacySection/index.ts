@@ -1,1 +1,0 @@
-export { SecurityPrivacySection } from "./SecurityPrivacySection";

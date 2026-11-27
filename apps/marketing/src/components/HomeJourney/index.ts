@@ -1,1 +1,2 @@
-export { HomeJourney } from "./HomeJourney";
+export * from "./HomeJourney";
+export * from "./HomeJourney.styles";
