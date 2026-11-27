@@ -6,6 +6,8 @@
  * boxes enforce as they are typed, said under the field instead, and the request body built from
  * what the engine says to send.
  */
+
+import { Money } from "@flump/api-contract";
 import {
   type AccountFieldSet,
   type AccountFormState,
@@ -52,7 +54,14 @@ export interface ValidateInput {
   /** Whether ownership and share are on the form (web's partner mode rule). */
   showsJoint: boolean;
   unread: UnreadFields;
+  /** Fields where a minus was typed into a box that takes none. */
+  belowZero?: UnreadFields;
+  /** The home's value, when its field is on the form. */
+  homeValue?: number | null;
 }
+
+/** The contract's money rule (below 10 billion either way), so the phone refuses what the backend would. */
+const withinLimit = (text: string): boolean => text === "" || Money.safeParse(Number(text)).success;
 
 /**
  * What needs changing before anything is sent, field by field. Web's bounds: a rate 0 to 100, a
@@ -64,21 +73,34 @@ export function validateAccountForm({
   editing,
   showsJoint,
   unread,
+  belowZero = new Set(),
+  homeValue = null,
 }: ValidateInput): AccountFormErrors {
   const set: AccountFieldSet = accountFieldSet(state);
   const owed = isOwedAccountType(state.type);
   const errors: AccountFormErrors = {};
+  /** What is wrong with a typed amount, if anything: a minus, unreadable text, or over the limit. */
+  const amountError = (field: AccountFormField, text: string): string | undefined => {
+    if (belowZero.has(field)) {
+      return field === "balance" && owed ? FIELD_ERRORS.owedBelowZero : FIELD_ERRORS.belowZero;
+    }
+    if (unread.has(field)) return FIELD_ERRORS.amount;
+    if (!withinLimit(text)) return FIELD_ERRORS.tooLarge;
+    return undefined;
+  };
   if (state.name.trim() === "") errors.name = FIELD_ERRORS.name;
-  if (unread.has("balance")) errors.balance = FIELD_ERRORS.amount;
+  const balanceError = amountError("balance", state.balance);
+  if (balanceError) errors.balance = balanceError;
   else if (!editing && state.balance === "")
     errors.balance = owed ? FIELD_ERRORS.owed : FIELD_ERRORS.balance;
   if (accountFormNeedsPlan(state)) errors.studentLoanPlan = ACCOUNT_FORM.planRequired;
   if (set.interestRate && (unread.has("interestRate") || !inRange(state.interestRate, 0, 100))) {
     errors.interestRate = FIELD_ERRORS.rate;
   }
-  if (set.monthlyContribution && unread.has("monthlyContribution")) {
-    errors.monthlyContribution = FIELD_ERRORS.amount;
-  }
+  const monthlyError = set.monthlyContribution
+    ? amountError("monthlyContribution", state.monthlyContribution)
+    : undefined;
+  if (monthlyError) errors.monthlyContribution = monthlyError;
   if (
     showsJoint &&
     set.joint &&
@@ -97,10 +119,12 @@ export function validateAccountForm({
       errors.termExtraMonths = FIELD_ERRORS.months;
     }
     if (unread.has("fixedRateEndDate")) errors.fixedRateEndDate = FIELD_ERRORS.date;
-    if (unread.has("homeValue")) errors.homeValue = FIELD_ERRORS.amount;
+    const homeError = amountError("homeValue", homeValue === null ? "" : String(homeValue));
+    if (homeError) errors.homeValue = homeError;
   }
   if (set.creditFields) {
-    if (unread.has("creditLimit")) errors.creditLimit = FIELD_ERRORS.amount;
+    const limitError = amountError("creditLimit", state.creditLimit);
+    if (limitError) errors.creditLimit = limitError;
     if (unread.has("promoZeroPercentUntil")) errors.promoZeroPercentUntil = FIELD_ERRORS.date;
   }
   return errors;

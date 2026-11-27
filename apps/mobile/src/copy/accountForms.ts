@@ -104,6 +104,10 @@ export const FIELD_ERRORS = {
   balance: "Enter the balance. Use 0 if it is empty.",
   owed: "Enter the amount owed. Use 0 if nothing is owed.",
   amount: "Enter an amount in pounds, such as 250 or 250.50.",
+  /** The contract's money limit, the same as the backend's and web's. */
+  tooLarge: "Enter an amount below £10,000,000,000.",
+  owedBelowZero: "An amount owed cannot be below £0. Enter it without a minus sign.",
+  belowZero: "This amount cannot be below £0. Enter it without a minus sign.",
   rate: "Enter a percentage from 0 to 100.",
   share: "Enter your share as a whole percentage from 1 to 99.",
   years: "Enter a number of years from 0 to 50.",

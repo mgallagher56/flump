@@ -1,3 +1,4 @@
+import { Money } from "@flump/api-contract";
 import {
   accountBalanceShown,
   accountBalanceStored,
@@ -19,7 +20,7 @@ import { HeroFigure } from "../../components/HeroFigure";
 import { QuickBalanceUpdate } from "../../components/QuickBalanceUpdate";
 import { Screen } from "../../components/Screen";
 import { Text } from "../../components/Text";
-import { ACCOUNT_FORM, saveFailedMessage } from "../../copy/accountForms";
+import { ACCOUNT_FORM, FIELD_ERRORS, saveFailedMessage } from "../../copy/accountForms";
 import {
   ACCOUNT,
   accountChartSummary,
@@ -224,6 +225,8 @@ function Loaded({
           current={savedShown === "" ? null : Number(savedShown)}
           hint={describeJointWholeValue(share, wholeOf)}
           onSave={async (shown) => {
+            // The contract's money limit, said before anything is sent, as the edit form says it.
+            if (!Money.safeParse(shown).success) return FIELD_ERRORS.tooLarge;
             // Stored as minus the amount owed for a debt, as the edit form sends it.
             const balance = Number(accountBalanceStored(account.type, String(shown)));
             const result = await writes.update(account.id, { balance }, account.updatedAt);

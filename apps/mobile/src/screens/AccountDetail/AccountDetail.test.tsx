@@ -292,6 +292,23 @@ describe("AccountDetail", () => {
     expect(scroller?.keyboardShouldPersistTaps).toBe("handled");
   });
 
+  it("a quick update at the backend's limit says so and sends nothing (S8 device check)", async () => {
+    const h = household();
+    const id = h.idOf("Mortgage");
+    const api = fakeApi(routes(h));
+    await detail(api, id);
+    const user = userEvent.setup();
+    await user.press(await screen.findByRole("button", { name: "Update amount owed" }));
+    await user.clear(screen.getByTestId("quick-balance-value"));
+    await user.type(screen.getByTestId("quick-balance-value"), "99999999999999");
+    await user.press(screen.getByRole("button", { name: "Save" }));
+    await settle();
+    expect(await screen.findByTestId("quick-balance-error")).toHaveTextContent(
+      "Enter an amount below £10,000,000,000.",
+    );
+    expect(api.calls.filter((c) => c.method === "PATCH")).toEqual([]);
+  });
+
   it("a quick update refused with 412 says it changed somewhere else", async () => {
     const h = household();
     const id = h.idOf("Mortgage");
