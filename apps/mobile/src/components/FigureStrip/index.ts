@@ -1,1 +1,0 @@
-export { FigureStrip } from "./FigureStrip";

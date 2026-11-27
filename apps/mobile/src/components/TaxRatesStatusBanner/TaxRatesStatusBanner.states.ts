@@ -1,7 +1,7 @@
-import type { RatesNoticeProps } from "./RatesNotice";
+import type { TaxRatesStatusBannerProps } from "./TaxRatesStatusBanner";
 
 /** Named prop sets for the dev gallery and the tests (in place of Storybook stories). */
-export const ratesNoticeStates = {
+export const taxRatesStatusBannerStates = {
   provisional: {
     rates: {
       calendarYear: "2027/28",
@@ -19,4 +19,4 @@ export const ratesNoticeStates = {
   confirmed: {
     rates: { calendarYear: "2026/27", ratesYear: "2026/27", isFallback: false },
   },
-} satisfies Record<string, RatesNoticeProps>;
+} satisfies Record<string, TaxRatesStatusBannerProps>;

@@ -1,10 +1,10 @@
-import type { FigureStripProps } from "./FigureStrip";
+import type { KpiStripProps } from "./KpiStrip";
 
 const noop = () => {};
 const links = { onAddBudget: noop, onAddSpending: noop } as const;
 
 /** Named prop sets for the dev gallery and the tests (in place of Storybook stories). */
-export const figureStripStates = {
+export const kpiStripStates = {
   /** The renter of personas.ts: £125 left over, £1,800 on the credit card. */
   twoFigures: {
     ...links,
@@ -79,4 +79,4 @@ export const figureStripStates = {
     },
   },
   loading: { ...links, loading: true },
-} satisfies Record<string, FigureStripProps>;
+} satisfies Record<string, KpiStripProps>;

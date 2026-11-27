@@ -46,24 +46,15 @@ type AccountDetails = ReturnType<typeof AppAccountDetailList.parse>;
  * be absent, and other fields ignored. Not the whole strict profile: a field added to or dropped
  * from the profile elsewhere (staging runs older than main) must not stop the check-in, as S2b's
  * account check reads no body for the same reason. An empty answer is a person with no profile yet.
- * Since S5b it also carries the facts Home's strip reads for a budget line linked to take-home pay
- * (`profileFactsFromProfile`), each optional too.
+ * Loose, so the answer keeps every field: Home's strip parses its own facts from the same cached
+ * answer (`parseStripProfile` in `budget.ts`), and a field only the strip reads can never stop
+ * the check-in or the hero.
  */
 const CheckInProfile = UserProfileResponse.pick({
   onboardingCompleted: true,
   checkInDay: true,
   netWorthCountsProperty: true,
   netWorthCountsStudentLoan: true,
-  annualSalary: true,
-  employmentType: true,
-  taxRegion: true,
-  studentLoanPlans: true,
-  pensionPercent: true,
-  isSalarySacrifice: true,
-  monthlyTakeHome: true,
-  housingStatus: true,
-  monthlyHousingCost: true,
-  propertyOwnershipShare: true,
 })
   .partial()
   .loose();

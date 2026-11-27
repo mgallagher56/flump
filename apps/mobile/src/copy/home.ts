@@ -60,6 +60,8 @@ export const STRIP = {
   prompt: "Add your budget to see what is left over each month",
   /** Web's "Add your budget", saying it opens the website (the budget arrives in S10). */
   addBudget: "Add your budget on the website",
+  /** When only the strip's facts cannot be read (the app and Flump out of step). Mobile only. */
+  loadErrorHeading: "We could not show what is left over each month",
 } as const;
 
 /** The rates context the notice reads: the engine's `UkTaxYearContext`, in its own words. */

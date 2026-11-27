@@ -3,12 +3,12 @@ import { View } from "react-native";
 import { type RatesContext, ratesNoticeSentence } from "../../copy/home";
 import { useTheme } from "../../theme/ThemeProvider";
 import { Text } from "../Text";
-import { createStyles, KIND_COLOURS } from "./RatesNotice.styles";
+import { createStyles, KIND_COLOURS } from "./TaxRatesStatusBanner.styles";
 
-export interface RatesNoticeProps {
+export interface TaxRatesStatusBannerProps {
   /** The engine's rates context (`HomeStrip.ratesNotice`), or null when no notice is due. */
   rates: RatesContext | null;
-  /** Defaults to "rates-notice". */
+  /** Defaults to "tax-rates-status-banner". */
   testID?: string;
 }
 
@@ -18,7 +18,10 @@ export interface RatesNoticeProps {
  * year's rates in the warning colours. Nothing when the rates match the calendar. A fact, not an
  * alarm: the figures stand.
  */
-export function RatesNotice({ rates, testID = "rates-notice" }: RatesNoticeProps) {
+export function TaxRatesStatusBanner({
+  rates,
+  testID = "tax-rates-status-banner",
+}: TaxRatesStatusBannerProps) {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const sentence = rates ? ratesNoticeSentence(rates) : "";

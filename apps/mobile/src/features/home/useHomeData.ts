@@ -16,10 +16,12 @@ import {
   selectNetWorthTrend,
   selectSavedNetWorthSeries,
 } from "@flump/finance-engine/net-worth";
+import { useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { useBudgetEntriesQuery } from "../../data/budget";
+import { parseStripProfile, useBudgetEntriesQuery } from "../../data/budget";
 import { useCheckInQueries } from "../../data/checkIn";
 import { classifyApiError } from "../../data/problems";
+import { queryKeys } from "../../data/queryKeys";
 import { type CheckInDataState, useCheckInData } from "../check-in/useCheckInData";
 
 interface NetWorthHero {
@@ -37,6 +39,14 @@ interface NetWorthHero {
   currentMonth: string;
 }
 
+/**
+ * The strip, or out of step when the profile's facts it reads do not parse (a newer backend's
+ * value): then only the strip says so, and the hero and the check-in row stay.
+ */
+export type HomeStripState =
+  | { status: "ready"; value: HomeStrip }
+  | { status: "outOfStep"; retry: () => void };
+
 export type HomeDataState =
   | { status: "loading" }
   | { status: "notSetUp" }
@@ -45,7 +55,7 @@ export type HomeDataState =
    * `hero` is null with no accounts yet: an empty prompt, never £0. `strip` is the engine's
    * `selectHomeStrip` over the same rows web's Home reads.
    */
-  | { status: "ready"; hero: NetWorthHero | null; strip: HomeStrip };
+  | { status: "ready"; hero: NetWorthHero | null; strip: HomeStripState };
 
 type Rows<T> = T extends { data?: infer D } ? NonNullable<D> : never;
 type Accounts = Rows<ReturnType<typeof useCheckInQueries>["accounts"]>;
@@ -90,27 +100,36 @@ export function useHomeData(now: () => Date = () => new Date()): {
     () => (ready && a && d ? selectNetWorthHero(a, d, ready.basis, ready.month) : null),
     [ready, a, d],
   );
-  const strip = useMemo(
-    () =>
-      ready && b
-        ? selectHomeStripFromRows({
-            accounts: a,
-            details: d,
-            budgetEntries: b,
-            profile: p,
-            today,
-          })
-        : null,
-    [ready, a, d, p, b, today],
-  );
-  if (checkIn.status === "error") return { home: checkIn, checkIn };
+  const queryClient = useQueryClient();
+  const strip = useMemo((): HomeStripState | null => {
+    if (!ready || !b) return null;
+    const facts = parseStripProfile(p);
+    if (!facts) {
+      const retry = () => void queryClient.invalidateQueries({ queryKey: queryKeys.userProfile() });
+      return { status: "outOfStep", retry };
+    }
+    const value = selectHomeStripFromRows({
+      accounts: a,
+      details: d,
+      budgetEntries: b,
+      profile: facts,
+      today,
+    });
+    return { status: "ready", value };
+  }, [ready, a, d, p, b, today, queryClient]);
+  // Not set up wins: the set-up screen shows whatever the budget read did.
+  if (checkIn.status === "notSetUp") return { home: checkIn, checkIn };
+  // One Try again reads again whatever failed, the check-in's reads and the budget alike.
+  const retry = () => {
+    if (checkIn.status === "error") checkIn.retry();
+    if (budget.error) void budget.refetch();
+  };
+  if (checkIn.status === "error") return { home: { ...checkIn, retry }, checkIn };
   // A failed budget read is Home's error, never the budget prompt; a refetch that fails keeps the
   // strip on screen, as the check-in's reads do.
   if (budget.error && b === undefined && !budget.isFetching) {
-    const retry = () => void budget.refetch();
     return { home: { status: "error", problem: classifyApiError(budget.error), retry }, checkIn };
   }
-  if (checkIn.status !== "ready") return { home: checkIn, checkIn };
-  if (!strip) return { home: { status: "loading" }, checkIn };
+  if (checkIn.status !== "ready" || !strip) return { home: { status: "loading" }, checkIn };
   return { home: { status: "ready", hero, strip }, checkIn };
 }

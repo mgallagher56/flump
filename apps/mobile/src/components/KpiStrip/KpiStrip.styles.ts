@@ -2,17 +2,16 @@ import { StyleSheet } from "react-native";
 import type { Theme } from "../../theme/ThemeProvider";
 
 /**
- * Narrower than this (a 320 point phone, or a split screen) the two cells stack, so neither figure
- * is squeezed onto two lines.
+ * From this text size up (150%) the two cards stack, so 200% text is never clipped. Below it they
+ * sit side by side at any phone width, 320 points included (STYLE-GUIDE section 12, `KpiStrip`).
+ * Stacking at large text is a recorded difference from web (CROSS-PLATFORM section 5).
  */
-export const STACK_BELOW_WIDTH = 360;
-/** From this text size up (150%) the cells stack too, so 200% text is never clipped. */
 export const STACK_FROM_FONT_SCALE = 1.5;
 
-/** Whether the cells sit one above the other. A gallery preview passes its own text scale. */
-export function stacks(theme: Theme, fontScale: number, width: number): boolean {
+/** Whether the cards sit one above the other. A gallery preview passes its own text scale. */
+export function stacks(theme: Theme, fontScale: number): boolean {
   const scale = theme.textScale === 1 ? fontScale : theme.textScale;
-  return scale >= STACK_FROM_FONT_SCALE || width < STACK_BELOW_WIDTH;
+  return scale >= STACK_FROM_FONT_SCALE;
 }
 
 /**

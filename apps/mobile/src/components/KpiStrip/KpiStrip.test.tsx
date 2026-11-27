@@ -3,8 +3,8 @@ import { render, screen, userEvent } from "@testing-library/react-native";
 import { Dimensions, StyleSheet, type TextStyle, type ViewStyle } from "react-native";
 import { expectHoldsAtDoubleText } from "../../testing/textScale";
 import { ThemeProvider } from "../../theme/ThemeProvider";
-import { FigureStrip, type FigureStripProps } from "./FigureStrip";
-import { figureStripStates } from "./FigureStrip.states";
+import { KpiStrip, type KpiStripProps } from "./KpiStrip";
+import { kpiStripStates } from "./KpiStrip.states";
 
 /** The window the strip lays itself out in (useWindowDimensions reads Dimensions, as TabBar's test). */
 const windowSize = (width: number, fontScale: number) =>
@@ -14,20 +14,20 @@ const textOf = (words: string) =>
   StyleSheet.flatten(screen.getByText(words).props.style) as TextStyle;
 
 async function strip(
-  props: Partial<FigureStripProps>,
+  props: Partial<KpiStripProps>,
   { scheme = "light", textScale }: { scheme?: "light" | "dark"; textScale?: number } = {},
 ) {
   const onAddBudget = jest.fn();
   const onAddSpending = jest.fn();
   await render(
     <ThemeProvider scheme={scheme} textScale={textScale}>
-      <FigureStrip {...props} onAddBudget={onAddBudget} onAddSpending={onAddSpending} />
+      <KpiStrip {...props} onAddBudget={onAddBudget} onAddSpending={onAddSpending} />
     </ThemeProvider>,
   );
   return { onAddBudget, onAddSpending };
 }
 
-describe("FigureStrip", () => {
+describe("KpiStrip", () => {
   beforeEach(() => {
     // A 390 point phone at the normal text size: the cells sit side by side.
     windowSize(390, 1);
@@ -37,7 +37,7 @@ describe("FigureStrip", () => {
   });
 
   it("two figures: left over from the budget and what is owed, each read out as one item", async () => {
-    await strip(figureStripStates.twoFigures);
+    await strip(kpiStripStates.twoFigures);
     expect(screen.getByText("Left over each month")).toBeOnTheScreen();
     expect(screen.getByText("£125")).toBeOnTheScreen();
     expect(screen.getByText("From your budget")).toBeOnTheScreen();
@@ -53,7 +53,7 @@ describe("FigureStrip", () => {
     // Whole pounds in the strip's figure size, with tabular numerals.
     expect(textOf("£125").fontSize).toBe(textStyles["heading.md"].fontSize);
     expect(textOf("£125").fontVariant).toEqual(["tabular-nums"]);
-    expect(screen.queryByTestId("figure-strip-prompt")).toBeNull();
+    expect(screen.queryByTestId("kpi-strip-prompt")).toBeNull();
   });
 
   it.each([
@@ -62,7 +62,7 @@ describe("FigureStrip", () => {
   ] as const)(
     "short: the label says so, the figure keeps the ordinary colour, no icon (%s)",
     async (scheme, tokens) => {
-      await strip(figureStripStates.short, { scheme });
+      await strip(kpiStripStates.short, { scheme });
       expect(screen.getByText("Short each month")).toBeOnTheScreen();
       expect(screen.queryByText("Left over each month")).toBeNull();
       expect(screen.getByText("-£240")).toBeOnTheScreen();
@@ -74,7 +74,7 @@ describe("FigureStrip", () => {
   );
 
   it("income only: the budget's income, and a link to add spending on the website", async () => {
-    const { onAddSpending, onAddBudget } = await strip(figureStripStates.incomeOnly);
+    const { onAddSpending, onAddBudget } = await strip(kpiStripStates.incomeOnly);
     expect(screen.getByText("Income in your budget")).toBeOnTheScreen();
     expect(screen.getByText("£2,085")).toBeOnTheScreen();
     expect(screen.queryByText("Left over each month")).toBeNull();
@@ -93,7 +93,7 @@ describe("FigureStrip", () => {
   });
 
   it("no budget: one prompt in place of the whole strip, hiding what is owed", async () => {
-    const { onAddBudget } = await strip(figureStripStates.prompt);
+    const { onAddBudget } = await strip(kpiStripStates.prompt);
     expect(
       screen.getByText("Add your budget to see what is left over each month"),
     ).toBeOnTheScreen();
@@ -107,20 +107,35 @@ describe("FigureStrip", () => {
   });
 
   it("refused: the notice in place of the figure, never £0 and never the budget prompt", async () => {
-    await strip(figureStripStates.refused);
+    await strip(kpiStripStates.refused);
     const notice =
       "Scottish Income Tax rates for 2027/28 are not published yet, so there is no estimate for this year.";
     expect(screen.getByText(notice)).toBeOnTheScreen();
     expect(screen.getByLabelText(`Left over each month, ${notice}`).props.accessible).toBe(true);
-    expect(screen.queryByTestId("figure-strip-first-figure")).toBeNull();
+    expect(screen.queryByTestId("kpi-strip-first-figure")).toBeNull();
     expect(screen.queryByText("£0")).toBeNull();
     expect(screen.queryByText("Not set")).toBeNull();
-    expect(screen.queryByTestId("figure-strip-prompt")).toBeNull();
+    expect(screen.queryByTestId("kpi-strip-prompt")).toBeNull();
     expect(screen.getByText("What you owe")).toBeOnTheScreen();
   });
 
+  it.each([
+    ["twoFigures", ["kpi-strip-left-over", "kpi-strip-owed"]],
+    ["short", ["kpi-strip-short", "kpi-strip-owed"]],
+    ["incomeOnly", ["kpi-strip-income-only", "kpi-strip-pension"]],
+    ["refused", ["kpi-strip-refused", "kpi-strip-owed"]],
+    ["pension", ["kpi-strip-left-over", "kpi-strip-pension"]],
+  ] as const)("%s: each card's group carries its kind as a test id", async (state, ids) => {
+    await strip(kpiStripStates[state]);
+    for (const id of ids) expect(screen.getByTestId(id).props.accessible).toBe(true);
+    const others = ["owed", "pension"]
+      .map((k) => `kpi-strip-${k}`)
+      .filter((id) => !ids.includes(id as never));
+    for (const id of others) expect(screen.queryByTestId(id)).toBeNull();
+  });
+
   it("pension with no debt: the pension pots in the second card", async () => {
-    await strip(figureStripStates.pension);
+    await strip(kpiStripStates.pension);
     expect(screen.getByLabelText("Pension pots, £9,000, From your accounts").props.accessible).toBe(
       true,
     );
@@ -137,11 +152,11 @@ describe("FigureStrip", () => {
       },
     });
     expect(screen.getByText("£125")).toBeOnTheScreen();
-    expect(screen.queryByTestId("figure-strip-second")).toBeNull();
+    expect(screen.queryByTestId("kpi-strip-second")).toBeNull();
     expect(screen.queryByText("Pension pots")).toBeNull();
     // No second card reading "Not set": the strip holds the one known figure (web's P3.2).
     expect(screen.queryByText("Not set")).toBeNull();
-    expect(screen.getByTestId("figure-strip").children).toHaveLength(1);
+    expect(screen.getByTestId("kpi-strip").children).toHaveLength(1);
   });
 
   it("follows the engine's collapsed flag: one prompt whenever it says so", async () => {
@@ -153,12 +168,12 @@ describe("FigureStrip", () => {
         ratesNotice: null,
       },
     });
-    expect(screen.getByTestId("figure-strip-prompt")).toBeOnTheScreen();
+    expect(screen.getByTestId("kpi-strip-prompt")).toBeOnTheScreen();
     expect(screen.queryByText("£125")).toBeNull();
   });
 
   it("what the budget leaves out replaces the caption", async () => {
-    await strip(figureStripStates.leavesOut);
+    await strip(kpiStripStates.leavesOut);
     const leavesOut =
       "The 2027/28 repayment threshold for this student loan plan is not published yet, so repayments are not included.";
     expect(screen.getByText(leavesOut)).toBeOnTheScreen();
@@ -182,7 +197,7 @@ describe("FigureStrip", () => {
 
   it("with no web app address, the links say they open the Flump website", async () => {
     const { onAddBudget } = await strip({
-      ...figureStripStates.prompt,
+      ...kpiStripStates.prompt,
       websiteLabel: "Open the Flump website",
     });
     await userEvent.setup().press(screen.getByRole("link", { name: "Open the Flump website" }));
@@ -192,58 +207,54 @@ describe("FigureStrip", () => {
   it("loading: two cells of still blocks, hidden from screen readers; nothing with no strip", async () => {
     await strip({ loading: true });
     expect(
-      screen.getByTestId("figure-strip-loading-first", { includeHiddenElements: true }),
+      screen.getByTestId("kpi-strip-loading-first", { includeHiddenElements: true }),
     ).toBeTruthy();
     expect(
-      screen.getByTestId("figure-strip-loading-second", { includeHiddenElements: true }),
+      screen.getByTestId("kpi-strip-loading-second", { includeHiddenElements: true }),
     ).toBeTruthy();
-    expect(screen.queryByTestId("figure-strip-loading")).toBeNull();
+    expect(screen.queryByTestId("kpi-strip-loading")).toBeNull();
     await strip({});
-    expect(screen.queryByTestId("figure-strip", { includeHiddenElements: true })).toBeNull();
+    expect(screen.queryByTestId("kpi-strip", { includeHiddenElements: true })).toBeNull();
   });
 
   describe("layout", () => {
     const direction = () =>
-      (StyleSheet.flatten(screen.getByTestId("figure-strip").props.style) as ViewStyle)
-        .flexDirection;
+      (StyleSheet.flatten(screen.getByTestId("kpi-strip").props.style) as ViewStyle).flexDirection;
 
     it("side by side on a 390 point phone at the normal text size", async () => {
-      await strip(figureStripStates.twoFigures);
+      await strip(kpiStripStates.twoFigures);
       expect(direction()).toBe("row");
     });
 
     it("stacked at 150% text and more (the phone's own size)", async () => {
       windowSize(390, 1.5);
-      await strip(figureStripStates.twoFigures);
+      await strip(kpiStripStates.twoFigures);
       expect(direction()).toBe("column");
     });
 
     it("side by side just under 150% text", async () => {
       windowSize(390, 1.49);
-      await strip(figureStripStates.twoFigures);
+      await strip(kpiStripStates.twoFigures);
       expect(direction()).toBe("row");
     });
 
-    it("stacked at 320 points wide, side by side at 360", async () => {
-      windowSize(359, 1);
-      await strip(figureStripStates.twoFigures);
-      expect(direction()).toBe("column");
-      windowSize(360, 1);
-      await strip(figureStripStates.twoFigures);
+    it("side by side at 320 points wide with the default text (STYLE-GUIDE 12, KpiStrip)", async () => {
+      windowSize(320, 1);
+      await strip(kpiStripStates.twoFigures);
       expect(direction()).toBe("row");
     });
 
     it("a gallery preview at 200% stacks", async () => {
-      await strip(figureStripStates.twoFigures, { textScale: 2 });
+      await strip(kpiStripStates.twoFigures, { textScale: 2 });
       expect(direction()).toBe("column");
     });
   });
 
   // The loading blocks hold no text; their heights follow the text size (skeletonHeights).
-  it.each(Object.entries(figureStripStates).filter(([name]) => name !== "loading"))(
+  it.each(Object.entries(kpiStripStates).filter(([name]) => name !== "loading"))(
     "%s holds at 200%% text",
     async (_name, props) => {
-      await expectHoldsAtDoubleText(<FigureStrip {...props} />);
+      await expectHoldsAtDoubleText(<KpiStrip {...props} />);
     },
   );
 });
