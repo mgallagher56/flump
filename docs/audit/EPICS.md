@@ -55,7 +55,7 @@ Refreshed on 2026-11-20 against `origin/main` and the merged pull requests up to
 | E41 | Mutation testing and faster tests | Merged (M4 in #847, M5 in #857); nothing in progress |
 | E17 | MCP write tools (PR D, #653) and web review of staged imports (PR E, #654) | Merged; nothing in progress |
 | E15 phase 8 and follow-ups | Visual regression guard (#651), follow-up sweep (#647) | Merged |
-| E12 mobile | S1a merged (#925), S1b merged (#926), S2c merged (#927): `apps/mobile` skeleton, native theme, components, dev gallery, UI law checks, the e2e fixture server and CI `🤖 Mobile e2e (Android)`. Slice S2a: sign-in with WorkOS (PKCE in the browser sheet, refresh token in the secure store, sign-out that clears the device), the Not invited, session-ended and offline screens, Maestro flows for sign-in, denied, not invited, sign-out and session ended, and the dev-only sign-in check (plan section 9.5) | S2a in review (2026-11-25), waiting on the owner's sign-in check on a development build; S2b (401 handling in screens, update-required, hand checks) after; D1, B-A and P5 can start |
+| E12 mobile | Merged: S1a (#925), S1b (#926), S2c (#927), S2a sign-in with WorkOS (#928), S2b session handling, server sign-out and update gate (#951), S3 monthly check-in (#943), S4 tab bar and More list (#954), S5 net worth on Home (#957, 26 November 2026) | In progress: S5b Home two-figure strip, S6 Accounts tab, S9 settings |
 | E4 tax | 2027/28 tax year with property and savings rates | Merged (#833), marked provisional until the rates are law. CI fails from 1 April 2027 unless the provisional marker in `PROVISIONAL_UK_TAX_YEARS` is removed or extended |
 
 ### Owner actions
