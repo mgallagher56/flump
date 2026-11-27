@@ -175,6 +175,7 @@ const AccountDetailContainer: FC = () => {
   // Said quietly in the hero's subline, so no extra line sits between the hero and the chart.
   // Left out when the net worth choices could not be read (basis null): unknown is not "no".
   const notCounted = accountCounts(account.type, basis) === false ? NOT_COUNTED_TEXT : null;
+  // The whole is formatted into the hero's subline, which HeroFigure sets in tabular-nums.
   // A joint account's hero is the user's share; its own page says the whole beside it (owner
   // decision 9 A), in whole pounds as the hero shows its figure. Null for an account held alone.
   const jointLine = describeJointShareOfWhole(
