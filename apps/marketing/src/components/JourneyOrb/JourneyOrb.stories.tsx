@@ -3,6 +3,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { type FC, useRef } from "react";
 import { expect, within } from "storybook/test";
 import { AmbientMotionProvider } from "../../context/AmbientMotionContext";
+import { StillMotionProvider } from "../../context/StillMotionContext";
 import { JourneyOrb } from "./JourneyOrb";
 
 const demo = css({ display: "grid", gridTemplateColumns: "160px 1fr", gap: "8" });
@@ -30,6 +31,14 @@ const RailDemo: FC = () => {
 const meta: Meta<typeof RailDemo> = {
   title: "3. Patterns/Marketing/JourneyOrb",
   component: RailDemo,
+  // The rest state, as with reduced motion: axe checks what a reader sees once a moment ends.
+  decorators: [
+    (Story) => (
+      <StillMotionProvider>
+        <Story />
+      </StillMotionProvider>
+    ),
+  ],
   parameters: { layout: "padded" },
 };
 

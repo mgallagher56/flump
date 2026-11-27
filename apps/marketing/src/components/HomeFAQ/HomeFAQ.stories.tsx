@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { MemoryRouter } from "react-router-dom";
 import { expect, userEvent, waitFor, within } from "storybook/test";
+import { StillMotionProvider } from "../../context/StillMotionContext";
 import { HomeFAQ } from "./HomeFAQ";
 
 const meta: Meta<typeof HomeFAQ> = {
@@ -8,6 +9,12 @@ const meta: Meta<typeof HomeFAQ> = {
   component: HomeFAQ,
   parameters: { layout: "fullscreen" },
   decorators: [
+    // The rest state, as with reduced motion: axe checks what a reader sees once a moment ends.
+    (Story) => (
+      <StillMotionProvider>
+        <Story />
+      </StillMotionProvider>
+    ),
     (Story) => (
       <MemoryRouter>
         <Story />

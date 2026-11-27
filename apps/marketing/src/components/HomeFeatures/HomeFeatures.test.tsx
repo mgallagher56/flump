@@ -1,7 +1,8 @@
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { FEATURE_PICTURES, FEATURES_LIST_ID, HomeFeatures } from "./HomeFeatures";
+import type { GsapKit } from "../../motion/loadGsapKit";
+import { FEATURE_PICTURES, FEATURES_LIST_ID, featuresMoment, HomeFeatures } from "./HomeFeatures";
 
 // The GSAP moment loads after first paint in the browser; here only the markup is under test.
 vi.mock("../../motion/useGsapMoment", () => ({ useGsapMoment: vi.fn() }));
@@ -193,5 +194,55 @@ describe("HomeFeatures: the carousel dots (MK9)", () => {
     } finally {
       window.matchMedia = original;
     }
+  });
+});
+
+describe("featuresMoment", () => {
+  /** A list whose right edge is at 400px, with one tile per left edge given. */
+  const band = (lefts: number[] | null) => {
+    const root = document.createElement("section");
+    if (lefts) {
+      const list = document.createElement("ul");
+      list.id = FEATURES_LIST_ID;
+      list.getBoundingClientRect = () => ({ right: 400 }) as DOMRect;
+      for (const left of lefts) {
+        const tile = document.createElement("li");
+        tile.getBoundingClientRect = () => ({ left }) as DOMRect;
+        list.append(tile);
+      }
+      root.append(list);
+    }
+    const from = vi.fn();
+    featuresMoment({ gsap: { from } } as unknown as GsapKit, root);
+    return { root, from };
+  };
+
+  it("brings in only the tiles at least 24px inside the list's right edge, once by time", () => {
+    // Edge 400 - 24 = 376: a tile at 375 is in view, one at 376 is off to the side.
+    const { root, from } = band([0, 375, 376, 600]);
+    const tiles = Array.from(root.querySelectorAll("li"));
+    expect(from).toHaveBeenCalledTimes(1);
+    const [targets, vars] = from.mock.calls[0] as [Element[], Record<string, unknown>];
+    expect(targets).toHaveLength(2);
+    expect(targets[0]).toBe(tiles[0]);
+    expect(targets[1]).toBe(tiles[1]);
+    // Entry 1540ms and stagger 196ms in seconds.
+    expect(vars).toMatchObject({
+      y: 20,
+      opacity: 0,
+      duration: 1.54,
+      stagger: 0.196,
+      ease: "calm",
+      clearProps: "transform,opacity",
+    });
+    const trigger = vars.scrollTrigger as Record<string, unknown>;
+    expect(trigger.trigger).toBe(root.querySelector("ul"));
+    expect(trigger.start).toBe("top 86%");
+    expect(trigger.once).toBe(true);
+  });
+
+  it("moves nothing with no tile in view or no list", () => {
+    expect(band([376, 500]).from).not.toHaveBeenCalled();
+    expect(band(null).from).not.toHaveBeenCalled();
   });
 });

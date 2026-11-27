@@ -1,6 +1,7 @@
 import { css } from "@repo/ui/styled-system/css";
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, within } from "storybook/test";
+import { StillMotionProvider } from "../../context/StillMotionContext";
 import { JourneySample } from "./JourneySample";
 
 const column = css({ display: "grid", gap: "6", maxWidth: "560px" });
@@ -26,6 +27,14 @@ const AllSamples = () => (
 const meta: Meta<typeof AllSamples> = {
   title: "3. Patterns/Marketing/JourneySample",
   component: AllSamples,
+  // The rest state, as with reduced motion: axe checks what a reader sees once a moment ends.
+  decorators: [
+    (Story) => (
+      <StillMotionProvider>
+        <Story />
+      </StillMotionProvider>
+    ),
+  ],
   parameters: { layout: "padded" },
 };
 
