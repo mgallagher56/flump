@@ -135,7 +135,7 @@
 }
 
 .o1 .o1-hero__ctas {
-  margin-top: 0.5rem;
+  margin-top: var(--spacing-1);
 }
 
 .o1 .o1-hero__ctas > div {
@@ -201,38 +201,64 @@
   height: 100%;
   display: grid;
   align-content: start;
-  gap: 0.75rem;
-  padding: 1.25rem 1.35rem;
+  gap: var(--spacing-1);
+  padding: var(--spacing-4) var(--spacing-5) var(--spacing-3);
   border-radius: 22px;
 }
 
 .o1 .o1-goal__title {
   margin: 0;
-  font-weight: 700;
-  font-size: 1.0625rem;
   color: var(--colors-text-primary);
 }
 
+/* Links flow side by side in wrapped rows, each still a 44px target, so the card stays short. */
 .o1 .o1-goal__links {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: grid;
-  gap: 0.4rem;
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: var(--spacing-4);
+}
+
+.o1 .o1-goal__link {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  text-decoration: none;
+}
+
+.o1 .o1-goal__link:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Layout a's small left bubble drifts up behind the Start here heading; this band leaves it out. */
+.o1 .o1-start-band .proto-bubbles__bubble:nth-child(3) {
+  display: none;
 }
 
 /* ---------- Features index: the groups ---------- */
 
+/*
+ * Balanced columns: groups fill each column top to bottom, so a short group never leaves a hole
+ * beside a long one. Reading and tab order are the DOM's, the app's area order, down each column.
+ */
 .o1 .o1-groups {
-  display: grid;
-  gap: 1.25rem;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 25rem), 1fr));
-  align-items: start;
+  columns: 22rem 3;
+  column-gap: var(--spacing-5);
 }
 
 .o1 .o1-group {
-  padding: 1.25rem;
+  break-inside: avoid;
+  margin-bottom: var(--spacing-5);
+  padding: var(--spacing-5);
   border-radius: 24px;
+}
+
+/* More air before the index than between the other bands. */
+.o1 .o1-index-band {
+  padding-top: var(--spacing-8);
 }
 
 .o1 .o1-group__head {
@@ -243,10 +269,7 @@
 }
 
 .o1 .o1-group__title {
-  font-weight: 700;
   margin: 0;
-  font-size: 1.25rem;
-  line-height: 1.25;
   color: var(--colors-text-primary);
 }
 
@@ -296,13 +319,11 @@
 }
 
 .o1 .o1-line__name {
-  font-weight: 600;
   color: var(--colors-text-primary);
 }
 
 .o1 .o1-line__line {
   color: var(--colors-text-secondary);
-  font-size: 0.9375rem;
 }
 
 .o1 .o1-line__chevron {
@@ -556,4 +577,22 @@
 .o1 .o1-line__summary:focus-visible {
   outline: 2px solid var(--colors-border-focus-ring);
   outline-offset: 2px;
+}
+
+/* ---------- Features menu (prototype header): a divider before Security and privacy ---------- */
+
+.o1 header div > a[href="/security"],
+.o1 #mobile-nav-drawer a[href="/security"] {
+  position: relative;
+  margin-top: var(--spacing-3);
+}
+
+.o1 header div > a[href="/security"]::before,
+.o1 #mobile-nav-drawer a[href="/security"]::before {
+  content: "";
+  position: absolute;
+  left: var(--spacing-3);
+  right: var(--spacing-3);
+  top: calc(var(--spacing-2) * -1);
+  border-top: 1px solid var(--colors-border);
 }

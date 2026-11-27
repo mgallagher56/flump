@@ -4,69 +4,69 @@
   "pages": {
     "features": {
       "s0": {
-        "initialGzip": 6934,
-        "cssGzip": 8829,
+        "initialGzip": 10671,
+        "cssGzip": 9166,
         "lazyGzip": 74558
       },
       "s1": {
-        "initialGzip": 6934,
-        "cssGzip": 8829,
+        "initialGzip": 10671,
+        "cssGzip": 9166,
         "lazyGzip": 215349
       },
       "s2": {
-        "initialGzip": 6934,
-        "cssGzip": 8829,
+        "initialGzip": 10671,
+        "cssGzip": 9166,
         "lazyGzip": 215349
       }
     },
     "pay": {
       "s0": {
         "initialGzip": 14338,
-        "cssGzip": 19999,
+        "cssGzip": 20337,
         "lazyGzip": 74558
       },
       "s1": {
         "initialGzip": 14338,
-        "cssGzip": 19999,
+        "cssGzip": 20337,
         "lazyGzip": 215323
       },
       "s2": {
         "initialGzip": 14338,
-        "cssGzip": 19999,
+        "cssGzip": 20337,
         "lazyGzip": 215323
       }
     },
     "debt": {
       "s0": {
         "initialGzip": 14338,
-        "cssGzip": 19999,
+        "cssGzip": 20337,
         "lazyGzip": 74558
       },
       "s1": {
         "initialGzip": 14338,
-        "cssGzip": 19999,
+        "cssGzip": 20337,
         "lazyGzip": 215323
       },
       "s2": {
         "initialGzip": 14338,
-        "cssGzip": 19999,
+        "cssGzip": 20337,
         "lazyGzip": 215323
       }
     },
     "pricing": {
       "s0": {
         "initialGzip": 5739,
-        "cssGzip": 8835,
+        "cssGzip": 9170,
         "lazyGzip": 74558
       },
       "s1": {
         "initialGzip": 5739,
-        "cssGzip": 8835,
+        "cssGzip": 9170,
         "lazyGzip": 215298
       },
       "s2": {
         "initialGzip": 5739,
-        "cssGzip": 8835,
+        "cssGzip": 9170,
         "lazyGzip": 215298
       }
     },
@@ -78,17 +78,17 @@
       },
       "s0": {
         "initialGzip": 3331,
-        "cssGzip": 4905,
+        "cssGzip": 5257,
         "lazyGzip": 0
       },
       "s1": {
         "initialGzip": 3331,
-        "cssGzip": 4905,
+        "cssGzip": 5257,
         "lazyGzip": 140740
       },
       "s2": {
         "initialGzip": 3331,
-        "cssGzip": 4905,
+        "cssGzip": 5257,
         "lazyGzip": 140740
       }
     }

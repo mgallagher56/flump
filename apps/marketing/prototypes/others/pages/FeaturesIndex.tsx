@@ -1,18 +1,14 @@
 import { Icon, StatusBadge } from "@repo/ui";
+import { css } from "@repo/ui/styled-system/css";
 import { ArrowRight, ChevronDown } from "lucide-react";
 import { type FC, type MouseEvent, useEffect, useRef } from "react";
 import { openFeatureLine } from "../../../src/components/FeatureIndex";
-import { Footer } from "../../../src/components/Footer";
-import { Header } from "../../../src/components/Header";
 import { mainContent } from "../../../src/pages/HomePage/HomePage.styles";
-import { AI_CONNECTION, FEATURES_INDEX, MONEY_AREAS } from "../../../src/utils/featureAreas";
+import { AI_CONNECTION, MONEY_AREAS } from "../../../src/utils/featureAreas";
 import {
-  ALL_FEATURE_LINES,
-  FEATURE_GROUPS,
   FEATURE_TAG_LABELS,
   type FeatureGroup,
   type FeatureLine,
-  START_HERE,
 } from "../../../src/utils/featureIndex";
 import { GlassOrb } from "../../p11/art/GlassOrb";
 import { type OrbToneName, STOP_ORB_TONES } from "../../p11/journeyTypes";
@@ -21,6 +17,9 @@ import { useMotion } from "../../shared/motion";
 import { EASE, TIMING, usePace } from "../../shared/pace";
 import { usePointerLightAndTilt } from "../../shared/round3";
 import { arriveAll, type Moment, OBand, OHero } from "../blocks";
+import { ProtoFooter } from "../chrome/ProtoFooter";
+import { ProtoHeader } from "../chrome/ProtoHeader";
+import { FEATURES_PAGE, PROTO_GROUPS, protoNameOf, START_HERE } from "../featuresCopy";
 import { OtherShell } from "../OtherShell";
 import { heroLayout, pageLayout } from "../scene/layouts";
 import { PageOrbs } from "../scene/SceneLayers";
@@ -29,8 +28,12 @@ import { PageOrbs } from "../scene/SceneLayers";
  * The features index (family A) in prototype 11's language: the hero with the scene, "Start here"
  * as four glass cards, then every group as a glass card headed by a small orb in its area's
  * journey colour, its lines opening smoothly. (The home tiles' pictures were tried as emblems and
- * dropped: eight pictures in one band, and they crowded the headings.) Copy and lines come from
- * production's `utils/featureAreas` and `utils/featureIndex` unchanged.
+ * dropped: eight pictures in one band, and they crowded the headings.)
+ *
+ * Revision after the owner's review of the live page: the proposed names, one-liners and intro
+ * from `featuresCopy.ts` (details, ids and links stay production's), the header and footer copies
+ * with "All features" at the bottom of the Features menu, the middle of the type scale, a varied
+ * rhythm and a balanced index (columns that fill top to bottom, in the app's area order).
  */
 
 const GROUP_HREFS: Partial<Record<FeatureGroup["key"], string>> = Object.fromEntries(
@@ -49,7 +52,18 @@ const GROUP_TONE: Record<FeatureGroup["key"], OrbToneName> = {
   settings: "teal",
 };
 
-const nameOf = (id: string) => ALL_FEATURE_LINES.find((line) => line.id === id)?.name ?? id;
+/*
+ * The type scale's middle, from the design system's text styles (no raw sizes): group headings
+ * heading.lg, clearly above the 16px semibold line names; Start here's goals heading.md over
+ * 16px links.
+ */
+const TYPE = {
+  groupTitle: css({ textStyle: "heading.lg" }),
+  goalTitle: css({ textStyle: "heading.md" }),
+  goalLink: css({ textStyle: "body.md", fontWeight: "semibold" }),
+  lineName: css({ textStyle: "body.md", fontWeight: "semibold" }),
+  lineText: css({ textStyle: "body.sm" }),
+};
 
 /**
  * A line as a native `details` (readable and openable with no script, as production), whose panel
@@ -97,8 +111,8 @@ const Line: FC<{ line: FeatureLine }> = ({ line }) => {
         {/* biome-ignore lint/a11y/noStaticElementInteractions: a summary is the details element's own button; its click also fires from the keyboard. */}
         <summary className="o1-line__summary" onClick={onToggleClick}>
           <span className="o1-line__text">
-            <span className="o1-line__name">{line.name}</span>
-            <span className="o1-line__line">{line.line}</span>
+            <span className={`o1-line__name ${TYPE.lineName}`}>{line.name}</span>
+            <span className={`o1-line__line ${TYPE.lineText}`}>{line.line}</span>
           </span>
           {line.tag && (
             <StatusBadge size="sm" variant="neutral">
@@ -130,8 +144,10 @@ const groupsMoment: Moment = (kit, root, pace) => {
 };
 
 const StartHere: FC = () => (
+  // Layout a: its big bubble sits top right, clear of the heading at every width.
   <OBand
-    bubbles="b"
+    bubbles="a"
+    className="o1-start-band"
     id="start-here"
     moment={arriveAll(".o1-goal", 16)}
     title="Start here"
@@ -141,18 +157,18 @@ const StartHere: FC = () => (
       {START_HERE.map((entry) => (
         <li className="o1-goal" key={entry.goal}>
           <div className="o1-goal__card p11-soft-card" data-tilt="">
-            <p className="o1-goal__title">{entry.goal}</p>
+            <p className={`o1-goal__title ${TYPE.goalTitle}`}>{entry.goal}</p>
             <ul aria-label={entry.goal} className="o1-goal__links">
               {entry.lines.map((id) => (
                 <li key={id}>
                   <a
-                    className="o1-link"
+                    className={`o1-link o1-goal__link ${TYPE.goalLink}`}
                     href={`#${id}`}
                     onClick={() => {
                       if (window.location.hash === `#${id}`) openFeatureLine(id);
                     }}
                   >
-                    {nameOf(id)}
+                    {protoNameOf(id)}
                   </a>
                 </li>
               ))}
@@ -178,16 +194,22 @@ const Groups: FC = () => {
     return () => window.removeEventListener("hashchange", fromHash);
   }, []);
   return (
-    <OBand bubbles="c" id="every-feature" moment={groupsMoment} tone="canvas">
+    <OBand
+      bubbles="c"
+      className="o1-index-band"
+      id="every-feature"
+      moment={groupsMoment}
+      tone="canvas"
+    >
       <div className="o1-groups">
-        {FEATURE_GROUPS.map((group) => {
+        {PROTO_GROUPS.map((group) => {
           const headingId = `group-${group.key}`;
           const href = GROUP_HREFS[group.key];
           return (
             <section aria-labelledby={headingId} className="o1-group p11-soft-card" key={group.key}>
               <div className="o1-group__head">
                 <GlassOrb size={34} tone={GROUP_TONE[group.key]} />
-                <h3 className="o1-group__title" id={headingId}>
+                <h3 className={`o1-group__title ${TYPE.groupTitle}`} id={headingId}>
                   {href ? (
                     <a className="o1-group__link" href={href}>
                       {group.name}
@@ -218,15 +240,11 @@ const Body: FC = () => {
     <main className={mainContent()} id="main" ref={ref} tabIndex={-1}>
       <OHero
         layout={heroLayout(["sky", "violet", "teal", "rose"])}
-        lead={FEATURES_INDEX.lead}
-        title={FEATURES_INDEX.title}
+        lead={FEATURES_PAGE.lead}
+        title={FEATURES_PAGE.title}
         titleId="features-title"
       >
-        {FEATURES_INDEX.intro.map((paragraph) => (
-          <p className="o1-hero__intro" key={paragraph}>
-            {paragraph}
-          </p>
-        ))}
+        <p className="o1-hero__intro">{FEATURES_PAGE.hint}</p>
       </OHero>
       <StartHere />
       <Groups />
@@ -237,8 +255,8 @@ const Body: FC = () => {
 export const FeaturesIndexProto: FC = () => (
   <OtherShell defaultLevel="s1" id="features">
     <PageOrbs layout={pageLayout(["sky", "violet", "teal", "rose"])} />
-    <Header />
+    <ProtoHeader />
     <Body />
-    <Footer />
+    <ProtoFooter />
   </OtherShell>
 );
