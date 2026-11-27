@@ -22,8 +22,8 @@
  *    recommendation, a table this script cannot read, or a publish date npm does not give still
  *    fail. Signed off by the coordinator on 26 November 2026 (Guard changes in its PR).
  *
- * 3. One package skipped by the React Native Directory check (guard change, pending the
- *    coordinator's sign-off, 27 November 2026). The directory marked
+ * 3. One package skipped by the React Native Directory check (guard change, for the
+ *    coordinator's sign-off before merge, 27 November 2026). The directory marked
  *    `@react-native-masked-view/masked-view` unmaintained, an online lookup that turned the check red
  *    for every pull request with no change in the repo. The app does not use it: `expo-router`
  *    58.0.32 depends on it, and 58.0.33, which drops it, is under 7 days old until 3 December 2026.
@@ -31,8 +31,8 @@
  *    `expo.doctor.reactNativeDirectoryCheck.exclude`, and `directoryExcludeProblems` below fails the
  *    run when the list holds anything else, or still holds it once `expo-router` is 58.0.33 or later.
  *    Revisit with the Expo 58.1 bump, on or after 3 December 2026. The check's "No metadata
- *    available" line (`expo-modules-core`) is advice only: with `listUnknownPackages` unset it fails
- *    nothing, so it needs no exclusion.
+ *    available" line (`expo-modules-core`) is not reported at all once masked-view is skipped: with
+ *    `listUnknownPackages` unset, unknown packages alone pass the check, so it needs no exclusion.
  *
  * All three fail closed: any other failed check, or output this script cannot parse, fails.
  * The parser is written for expo-doctor 1.21.8, pinned exactly in apps/mobile/package.json.
@@ -287,13 +287,23 @@ export const EXPO_ROUTER_WITHOUT_MASKED_VIEW = "58.0.33";
  * Why apps/mobile/package.json's directory check exclusions are not allowed, or none: the list must
  * be exactly `DIRECTORY_EXCLUDES`, and must go once `expo-router` no longer brings masked-view in.
  */
-export function directoryExcludeProblems(pkg: unknown): string[] {
+export function directoryExcludeProblems(
+  pkg: unknown,
+  env: Readonly<Record<string, string | undefined>> = {},
+): string[] {
   const p = (pkg ?? {}) as {
     dependencies?: Record<string, string>;
-    expo?: { doctor?: { reactNativeDirectoryCheck?: { exclude?: unknown; enabled?: unknown } } };
+    expo?: { doctor?: { reactNativeDirectoryCheck?: unknown } };
   };
-  const check = p.expo?.doctor?.reactNativeDirectoryCheck;
+  const raw = p.expo?.doctor?.reactNativeDirectoryCheck;
   const problems: string[] = [];
+  if (env.EXPO_DOCTOR_ENABLE_DIRECTORY_CHECK !== undefined) {
+    problems.push("EXPO_DOCTOR_ENABLE_DIRECTORY_CHECK must not be set: it overrides the check");
+  }
+  if (raw !== undefined && (raw === null || typeof raw !== "object" || Array.isArray(raw))) {
+    return [...problems, "expo.doctor.reactNativeDirectoryCheck must be an object"];
+  }
+  const check = raw as { exclude?: unknown } | undefined;
   if (check && "enabled" in check) {
     problems.push("expo.doctor.reactNativeDirectoryCheck.enabled must not be set");
   }
@@ -303,13 +313,14 @@ export function directoryExcludeProblems(pkg: unknown): string[] {
   if (extra.length > 0) {
     problems.push(`the directory check skips packages with no sign-off: ${extra.join(", ")}`);
   }
-  const router = p.dependencies?.["expo-router"]?.replace(/^[~^]/, "");
-  if (
-    listed.length > 0 &&
-    router &&
-    /^\d+\.\d+\.\d+$/.test(router) &&
-    compare(router, EXPO_ROUTER_WITHOUT_MASKED_VIEW) >= 0
-  ) {
+  const spec = p.dependencies?.["expo-router"];
+  const router = spec?.replace(/^[~^]/, "");
+  if (listed.length > 0 && !(router && /^\d+\.\d+\.\d+$/.test(router))) {
+    // A range, tag or prerelease could already be a release without masked-view: fail closed.
+    problems.push(
+      `expo-router's version (${spec ?? "missing"}) cannot be read, so the masked-view exclusion cannot be checked`,
+    );
+  } else if (listed.length > 0 && router && compare(router, EXPO_ROUTER_WITHOUT_MASKED_VIEW) >= 0) {
     problems.push(
       `expo-router ${router} no longer depends on masked-view: remove it from expo.doctor.reactNativeDirectoryCheck.exclude`,
     );
@@ -342,7 +353,7 @@ if (import.meta.main) {
   const mobilePackage = JSON.parse(
     readFileSync(resolve(import.meta.dir, "../apps/mobile/package.json"), "utf8"),
   ) as unknown;
-  const excludeProblems = directoryExcludeProblems(mobilePackage);
+  const excludeProblems = directoryExcludeProblems(mobilePackage, process.env);
   for (const problem of excludeProblems) console.error(`FAIL ${problem}`);
   if (excludeProblems.length > 0) process.exit(1);
   const run = spawnSync("bun", ["run", "doctor:raw"], {
