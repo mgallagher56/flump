@@ -1,5 +1,6 @@
 import { css } from "@repo/ui/styled-system/css";
 import type { Meta, StoryObj } from "@storybook/react";
+import { expect } from "storybook/test";
 import { BubbleField } from "./BubbleField";
 
 const band = css({
@@ -27,10 +28,23 @@ const meta: Meta<typeof BubbleField> = {
 export default meta;
 type Story = StoryObj<typeof BubbleField>;
 
-export const Light: Story = { args: { layout: "a" }, globals: { theme: "light" } };
+/** Decoration only: hidden from assistive technology, one bubble per layout entry, below the content. */
+const assertField: Story["play"] = async ({ canvasElement, args }) => {
+  const field = canvasElement.querySelector("[data-bubble-field]");
+  await expect(field?.getAttribute("aria-hidden")).toBe("true");
+  await expect(field?.getAttribute("data-bubble-field")).toBe(args.layout);
+  await expect(field?.querySelectorAll("span").length).toBeGreaterThan(1);
+};
+
+export const Light: Story = {
+  args: { layout: "a" },
+  globals: { theme: "light" },
+  play: assertField,
+};
 
 export const Dark: Story = {
   args: { layout: "b" },
   globals: { theme: "dark" },
   parameters: { backgrounds: { default: "dark" } },
+  play: assertField,
 };

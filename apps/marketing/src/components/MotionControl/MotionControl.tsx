@@ -13,7 +13,7 @@ import { control } from "./MotionControl.styles";
 export const MotionControl: FC = () => {
   const { available, paused, toggle } = useAmbientMotion();
   return (
-    <span className={control({ available })} data-testid="motion-control">
+    <span className={control({ available })} data-motion-control="">
       <Button
         aria-hidden={available ? undefined : true}
         disabled={!available}

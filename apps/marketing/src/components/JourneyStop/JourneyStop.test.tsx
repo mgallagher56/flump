@@ -55,6 +55,7 @@ describe("JourneyStop", () => {
       "debt-and-borrowing",
       "picture",
     ]);
-    expect(JOURNEY_STOPS.find((s) => s.key === "debt-and-borrowing")?.orbTone).toBe("violet");
+    // No orb colour is paired with a debt (STYLE-GUIDE MC2): debt's orb is sky, never violet or rose.
+    expect(JOURNEY_STOPS.find((s) => s.key === "debt-and-borrowing")?.orbTone).toBe("sky");
   });
 });

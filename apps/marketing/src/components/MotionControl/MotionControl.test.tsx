@@ -43,7 +43,7 @@ describe("MotionControl", () => {
       </AmbientMotionProvider>,
     );
     expect(screen.queryByRole("button")).toBeNull();
-    const hidden = screen.getByTestId("motion-control").querySelector("button");
+    const hidden = document.querySelector("[data-motion-control] button");
     expect(hidden?.getAttribute("tabindex")).toBe("-1");
     expect(hidden?.hasAttribute("disabled")).toBe(true);
   });
