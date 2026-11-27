@@ -148,8 +148,8 @@ describe("Switch", () => {
   });
 
   it.each([
-    ["busyOn", switchStates.busyOn, { busy: true, disabled: true }],
-    ["busyOff", switchStates.busyOff, { busy: true, disabled: true }],
+    ["busyOn", switchStates.busyOn, { busy: true, disabled: false }],
+    ["busyOff", switchStates.busyOff, { busy: true, disabled: false }],
     ["disabledOn", switchStates.disabledOn, { busy: false, disabled: true }],
     ["disabledOff", switchStates.disabledOff, { busy: false, disabled: true }],
   ])("%s ignores presses and says so", async (_name, props, state) => {
@@ -426,7 +426,7 @@ describe("Switch", () => {
       expect(control.props.accessibilityState).toMatchObject({
         checked: value,
         busy: true,
-        disabled: true,
+        disabled: false,
       });
       await userEvent.setup().press(control);
       expect(onValueChange).not.toHaveBeenCalled();
@@ -478,11 +478,12 @@ describe("Switch", () => {
     expect(busySpinner()).toBeNull();
   });
 
-  it("when both disabled and busy, disabled styles apply and no busy spinner appears", async () => {
+  it("when both disabled and busy, disabled styles apply, no busy spinner appears, and presses are ignored", async () => {
     jest.useFakeTimers();
+    const onValueChange = jest.fn();
     await render(
       <ThemeProvider scheme="light">
-        <Switch label="Self Assessment" value={false} disabled busy onValueChange={jest.fn()} />
+        <Switch label="Self Assessment" value={false} disabled busy onValueChange={onValueChange} />
       </ThemeProvider>,
     );
     await act(async () => jest.advanceTimersByTime(durations.pendingDelay + 100));
@@ -490,6 +491,11 @@ describe("Switch", () => {
     expect(StyleSheet.flatten(screen.getByText("Self Assessment").props.style).color).toBe(
       light.colors["text.muted"],
     );
+    const control = screen.getByRole("switch");
+    expect(control.props.accessibilityState).toMatchObject({ busy: true, disabled: true });
+    jest.useRealTimers();
+    await userEvent.setup().press(control);
+    expect(onValueChange).not.toHaveBeenCalled();
   });
 
   it.each(["ios", "android"] as const)(
