@@ -106,9 +106,6 @@ export function validateAccountForm({
     const owedBalance = field === "balance" && owed;
     if (belowZero.has(field)) return amountProblemMessage("belowZero", owedBalance);
     if (unread.has(field)) return amountProblemMessage("unread", owedBalance);
-    if (owedBalance && text !== "" && Number(text) < 0) {
-      return amountProblemMessage("belowZero", true);
-    }
     const problem = text === "" ? null : amountProblem(Number(text), text);
     return problem ? amountProblemMessage(problem, owedBalance) : undefined;
   };
