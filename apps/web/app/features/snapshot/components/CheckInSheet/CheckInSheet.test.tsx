@@ -432,6 +432,27 @@ describe("CheckInSheet", () => {
       await waitFor(() => expect(screen.getByText(note)).toBeDefined());
     });
 
+    it("counts only accounts it can fill in: a connected account's monthly rows move nothing", () => {
+      // The joint account is connected: the bank sync records it every month, so August to
+      // October all hold a row for it. The manual accounts only have October.
+      const synced = [8, 9, 10].map((m) => ({ accountId: BANK, year: 2026, month: m, value: 900 }));
+      setup({ mode: "backfill", accountDetails: [...details, ...synced] });
+      const month = screen.getByRole("combobox", { name: "Month" }) as HTMLSelectElement;
+      expect(month.value).toBe("09");
+      expect(screen.queryByText(/already has balances/)).toBeNull();
+    });
+
+    it("says the chosen month has balances in a status line a screen reader hears", async () => {
+      setup({ mode: "backfill" });
+      const status = screen.getByTestId("snapshot-month-recorded");
+      expect(status.getAttribute("role")).toBe("status");
+      expect(status.textContent).toBe("");
+      fireEvent.change(screen.getByRole("combobox", { name: "Month" }), {
+        target: { value: "10" },
+      });
+      await waitFor(() => expect(status.textContent).toMatch(/^October 2026 already has balances/));
+    });
+
     it("opens on last month when every earlier month back to 2000 has balances", () => {
       // One row per month from January 2000 to October 2026 for the current account.
       const full = [];

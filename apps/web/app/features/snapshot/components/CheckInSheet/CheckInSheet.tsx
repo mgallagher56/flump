@@ -75,7 +75,8 @@ export interface CheckInSheetProps {
    */
   checkedIn?: boolean;
   /**
-   * The page's "Start monthly check-in" control, where focus returns on close when the check-in opened
+   * The page's check-in button ("Start monthly check-in", or "See this month's check-in" once it is
+   * done), where focus returns on close when the check-in opened
    * with nothing focused (from `?checkIn=1`).
    */
   returnFocusTo?: () => HTMLElement | null;
@@ -84,7 +85,7 @@ export interface CheckInSheetProps {
 const CHECK_IN_TITLE = "Monthly check-in";
 
 /**
- * The first of these elements that is shown (a page can hold one "Start monthly check-in" for phones and
+ * The first of these elements that is shown (a page can hold one check-in button for phones and
  * one from md, with CSS hiding the other), for `returnFocusTo`.
  */
 export const firstShownElement = (ids: readonly string[]) => (): HTMLElement | null => {
@@ -288,13 +289,14 @@ const ListFormSheet: FC<CheckInSheetProps> = ({
   const { formatCurrencyDecimal } = useFormatCurrency();
   const isBackfill = mode === "backfill";
   const latestPast = addMonths(currentMonth, -1);
-  // Months that already hold a balance for one of these accounts: back-fill opens on the latest
-  // earlier month with none, and says when the chosen month has some.
+  // Months that already hold a balance for an account the user fills in: back-fill opens on the
+  // latest earlier month with none, and says when the chosen month has some. Connected accounts
+  // are left out: the bank sync records them every month and the sheet cannot change them.
   const recorded = useMemo(
     () =>
       recordedMonthSet(
         accountDetails,
-        accounts.flatMap((a) => (a.id ? [String(a.id)] : [])),
+        accounts.flatMap((a) => (a.id && !a.connectionId ? [String(a.id)] : [])),
       ),
     [accountDetails, accounts],
   );
@@ -411,15 +413,15 @@ const ListFormSheet: FC<CheckInSheetProps> = ({
               />
             )}
           </FormField>
-          {monthHasBalances ? (
-            <p
-              className={monthNote()}
-              data-testid="snapshot-month-recorded"
-              id="snapshot-month-recorded"
-            >
-              {monthHasBalancesText(month)}
-            </p>
-          ) : null}
+          {/* Always on the page, so a screen reader hears the note when a month change adds it. */}
+          <p
+            className={monthNote()}
+            data-testid="snapshot-month-recorded"
+            id="snapshot-month-recorded"
+            role="status"
+          >
+            {monthHasBalances ? monthHasBalancesText(month) : null}
+          </p>
         </fieldset>
       ) : null}
 

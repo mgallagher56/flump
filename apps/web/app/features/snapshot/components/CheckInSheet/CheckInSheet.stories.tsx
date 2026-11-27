@@ -114,3 +114,23 @@ export const AddEarlierMonth: Story = {
 };
 
 export const AddEarlierMonthDark: Story = { ...AddEarlierMonth, globals: { theme: "dark" } };
+
+/** A month that already has balances: the note under the pickers says so. */
+export const AddEarlierMonthRecorded: Story = {
+  args: AddEarlierMonth.args,
+  play: async () => {
+    const body = within(document.body);
+    // September and October are recorded, so the sheet opens on August.
+    const month = (await body.findAllByRole("combobox", { name: "Month" }))[0] as HTMLSelectElement;
+    await expect(month.value).toBe("08");
+    await userEvent.selectOptions(month, "10");
+    await expect(
+      await body.findByText("October 2026 already has balances. Saving replaces the ones shown."),
+    ).toBeDefined();
+  },
+};
+
+export const AddEarlierMonthRecordedDark: Story = {
+  ...AddEarlierMonthRecorded,
+  globals: { theme: "dark" },
+};

@@ -40,7 +40,7 @@ import { CHECK_IN_ROUTE } from "../MonthlyCheckInCard";
 import { MIN_CHART_MONTHS, NetWorthHistoryChart } from "../NetWorthHistoryChart";
 import { changesBody, flushLink, heroPromptLink, sectionStack } from "./SnapshotHistoryPage.styles";
 
-/** Opened from "?checkIn=1", the check-in returns focus to the page's "Start monthly check-in". */
+/** Opened from "?checkIn=1", the check-in returns focus to the page's check-in button. */
 const RETURN_FOCUS_TO = firstShownElement(["snapshot-open-check-in"]);
 /**
  * The back-fill returns focus to "Add earlier months" when its opener is gone (a save that brings
