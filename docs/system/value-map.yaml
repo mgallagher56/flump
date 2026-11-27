@@ -2330,10 +2330,7 @@ figures:
     name: An account's balance each month
     area: accounts
     computed_by:
-      {
-        function: selectAccountBalanceSeries,
-        path: packages/finance-engine/src/account-balance.ts,
-      }
+      { function: selectAccountBalanceSeries, path: packages/finance-engine/src/account-balance.ts }
     other_paths: []
     inputs: [account-balance, balance-history, account-type]
     shown_on:
