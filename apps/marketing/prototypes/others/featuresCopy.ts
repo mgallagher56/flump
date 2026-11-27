@@ -12,7 +12,9 @@ import {
  * id, so the ids, details, app places, tags and links stay production's own.
  *
  * Voice: every one-liner is the voice of the Start here goals ("See what is left over each month",
- * "Understand your pay"): it starts with what the reader does, in sentence case, no full stop.
+ * "Understand your pay"): it starts with what the reader does, in sentence case, no full stop. The
+ * verb is the one truest to the task (list, track, check, work out, compare, find out, keep, set,
+ * plan), so no verb opens more than about a third of the lines.
  * Estimates stay "an estimate". Where a new name comes from the app's own label it says so.
  */
 
@@ -34,10 +36,10 @@ export const LINE_CHANGES: Readonly<Record<string, Change>> = {
   "home-page": { name: "Your money", nameFrom: "app", line: "See all your figures on one page" },
   "choose-sections": { line: "Choose which sections you see, and their order" },
   // Accounts
-  "accounts-list": { line: "See what you own and what you owe" },
+  "accounts-list": { line: "List what you own and what you owe" },
   "net-worth": { line: "See everything you own, less what you owe" },
   "monthly-check-in": { line: "Update your balances once a month" },
-  "net-worth-history": { line: "See how your net worth changes, month by month" },
+  "net-worth-history": { line: "Track how your net worth changes, month by month" },
   "account-goals": { line: "Set a target for any account" },
   "joint-accounts": { line: "Count only your share of a joint account" },
   // The app's Settings section is titled "What counts in your net worth".
@@ -49,62 +51,61 @@ export const LINE_CHANGES: Readonly<Record<string, Change>> = {
   // Budget
   "income-and-spending": { line: "List what comes in and what goes out" },
   "left-over": { line: "See what is left over each month, or how much you are short" },
-  "breathing-room": { line: "See how long your savings would cover the essentials" },
+  "breathing-room": { line: "Find out how long your savings would cover the essentials" },
   "essential-and-flexible": { line: "Mark which costs are essential" },
   "income-stopping": {
     name: "If your income stopped",
-    line: "See how long your savings would last",
+    line: "Check how long your savings would last",
   },
   "linked-figures": {
-    name: "A budget that keeps up",
-    line: "Change your pay or housing once, and your budget follows",
+    name: "Enter each figure once",
+    line: "Change your pay or housing in one place and your budget follows",
   },
   // Pay
   "take-home-pay": { line: "See an estimate of your take-home pay" },
-  "pay-rise": { line: "See how much of a pay rise you would keep" },
+  "pay-rise": { line: "Work out how much of a pay rise you would keep" },
   "self-assessment": { line: "See an estimate of your tax bill" },
   // The app's page for one source is titled "Income source".
   "income-by-source": {
     name: "Income sources",
     line: "Keep each kind of income in its own records",
   },
-  receipts: { line: "Keep each receipt with its record" },
+  receipts: { line: "Attach each receipt to its record" },
   "payments-on-account": { line: "See an estimate of your advance tax payments" },
-  "compare-tax-years": { line: "See one tax year beside another" },
+  "compare-tax-years": { line: "Compare one tax year with another" },
   // Savings and pension
-  "savings-accounts": { line: "See each account's balance, rate and interest" },
-  "isa-allowance": { line: "See an estimate of the ISA allowance you have used" },
+  "savings-accounts": { line: "Check each account's balance, rate and interest" },
+  "isa-allowance": { line: "Track an estimate of the ISA allowance you have used" },
   "savings-growth": { line: "See an estimate of how your savings could grow" },
-  "time-to-target": { line: "See when your savings could reach a target" },
+  "time-to-target": { line: "Find out when your savings could reach a target" },
   "investment-returns": { line: "See an estimate of what your investments returned" },
-  "pension-pots": { line: "See your pots and what goes into them" },
-  "pension-contributions": { line: "See what a change would do to your take-home pay" },
-  "retirement-plan": { line: "See an estimate of your income in retirement" },
+  "pension-pots": { line: "Keep your pots and what goes into them in one place" },
+  "pension-contributions": { line: "Work out what a change would do to your take-home pay" },
+  "retirement-plan": { line: "Plan with an estimate of your income in retirement" },
   // Debt and borrowing
-  "cards-and-loans": { line: "See every debt with its rate" },
-  // The site already calls the app's tool "the pay extra tool on Cards and loans" (TRY_IT).
+  "cards-and-loans": { line: "List every debt with its rate" },
   "pay-extra": {
-    name: "Pay extra",
+    name: "Which debt to pay first",
     line: "Compare paying the highest rate first with the smallest balance first",
   },
   "uk-debt-tools": {
     name: "Other debt estimates",
     line: "See estimates for 0% deals, overdrafts, car finance and student loans",
   },
-  mortgage: { line: "See your balance, rate and repayment schedule" },
-  overpayment: { line: "See what paying extra could save" },
+  mortgage: { line: "Track your balance, rate and repayment schedule" },
+  overpayment: { line: "Find out what paying extra could save" },
   "fixed-rate-end": { line: "See an estimate of your payment afterwards" },
   "overpay-or-save": { line: "Compare an overpayment with saving in an ISA" },
-  "loan-to-value": { line: "See your mortgage against your home's value" },
-  "buy-to-let": { line: "See a rental mortgage beside your own, with its yield" },
-  "mortgage-estimates": { line: "See estimated loan sizes from your figures" },
+  "loan-to-value": { line: "Check your mortgage against your home's value" },
+  "buy-to-let": { line: "Keep a rental mortgage beside your own, with its yield" },
+  "mortgage-estimates": { line: "Work out estimated loan sizes from your figures" },
   // AI connection
   "ask-ai": { line: "Ask about your saved figures in your own words" },
   "ai-imports": { line: "Check suggested balances before anything is saved" },
   // Settings and your data
-  "download-data": { line: "Get everything you have saved as one file" },
+  "download-data": { line: "Download everything you have saved as one file" },
   "reset-data": { line: "Delete your figures and keep your login" },
-  "delete-account": { line: "Delete your account and your saved data" },
+  "delete-account": { line: "Close your account and delete your saved data" },
   "light-and-dark": { line: "Choose a light or a dark look" },
 };
 
