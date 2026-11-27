@@ -2,9 +2,11 @@ import { Linking } from "react-native";
 import { Button } from "../../components/Button";
 import { Card } from "../../components/Card";
 import { ErrorState } from "../../components/ErrorState";
+import { FigureStrip } from "../../components/FigureStrip";
 import { HeroFigure } from "../../components/HeroFigure";
 import { NetWorthBasisLine } from "../../components/NetWorthBasisLine";
 import { NetWorthTrendBars, TREND_PLOT_HEIGHT } from "../../components/NetWorthTrendBars";
+import { RatesNotice } from "../../components/RatesNotice";
 import { Screen } from "../../components/Screen";
 import { Text } from "../../components/Text";
 import { CHECK_IN } from "../../copy/checkIn";
@@ -21,7 +23,7 @@ import { TermsRequired } from "../TermsRequired";
 /** Home sits under the tab header and above the tab bar, which pad the top and bottom. */
 const TAB_EDGES = ["right", "left"] as const;
 
-/** The website pages Home links to until the app has them (S8, S9). */
+/** The website pages Home links to until the app has them (S8, S9, S10). */
 export interface HomeWebLinks {
   /** Web's onboarding, for a person who has not finished setting up. */
   setUp: WebLink;
@@ -31,6 +33,10 @@ export interface HomeWebLinks {
   changeWhatCounts: WebLink;
   /** Where a home estimate is added (S8). */
   addEstimate: WebLink;
+  /** Web's budget page, where a budget is added (S10). */
+  addBudget: WebLink;
+  /** Web's budget page, where spending is added to a budget that holds income only (S10). */
+  addSpending: WebLink;
 }
 
 export interface HomeProps {
@@ -47,9 +53,10 @@ export interface HomeProps {
 const open = (link: WebLink) => () => void Linking.openURL(link.url);
 
 /**
- * The Home tab (E12 S5, plan 9.8): the net worth hero with its change and trend bars, the line
- * saying what the figure leaves out, then the check-in row when one is due. Offline is the shell's
- * (the route shows `Offline`); terms and setup are their own screens in the tab.
+ * The Home tab (E12 S5, plan 9.8; the strip since S5b, 9.8b): the net worth hero with its change
+ * and trend bars, the line saying what the figure leaves out, the rates notice when one is due, the
+ * two-figure strip, then the check-in row when one is due. Offline is the shell's (the route shows
+ * `Offline`); terms and setup are their own screens in the tab.
  */
 export function Home({
   onSignOut,
@@ -70,12 +77,71 @@ export function Home({
       />
     );
   }
+  return (
+    <HomeBody home={home} checkIn={checkIn} links={links} onOpenCheckIn={onOpenCheckIn} now={now} />
+  );
+}
+
+function HomeBody({
+  home,
+  checkIn,
+  links,
+  onOpenCheckIn,
+  now,
+}: {
+  home: HomeDataState;
+  checkIn: CheckInDataState;
+  links: HomeWebLinks;
+  onOpenCheckIn(): void;
+  now: () => Date;
+}) {
+  // Nothing for 200 ms, then blocks the hero's and the strip's size for at least 400 ms, on one
+  // timer so both arrive together. A refetch keeps what is shown.
+  const skeleton = useDelayedLoading(home.status === "loading");
   if (home.status === "notSetUp") return <NotSetUp setUp={links.setUp} edges={TAB_EDGES} />;
   return (
     <Screen edges={TAB_EDGES} testID="home">
-      <NetWorth home={home} links={links} />
+      <NetWorth home={home} links={links} skeleton={skeleton} />
+      <Strip home={home} links={links} skeleton={skeleton} />
       <CheckInRow data={checkIn} onOpen={onOpenCheckIn} now={now} />
     </Screen>
+  );
+}
+
+/**
+ * The rates notice and the two-figure strip under the hero, or their blocks while loading. Nothing
+ * after a failed read: the hero's place says what went wrong, never the budget prompt.
+ */
+function Strip({
+  home,
+  links,
+  skeleton,
+}: {
+  home: Exclude<HomeDataState, { status: "notSetUp" }>;
+  links: HomeWebLinks;
+  skeleton: boolean;
+}) {
+  if (home.status === "error") return null;
+  if (home.status === "loading" || skeleton) {
+    return skeleton ? (
+      <FigureStrip
+        loading
+        onAddBudget={open(links.addBudget)}
+        onAddSpending={open(links.addSpending)}
+      />
+    ) : null;
+  }
+  const exact = links.addBudget.exact && links.addSpending.exact;
+  return (
+    <>
+      <RatesNotice rates={home.strip.ratesNotice} />
+      <FigureStrip
+        strip={home.strip}
+        onAddBudget={open(links.addBudget)}
+        onAddSpending={open(links.addSpending)}
+        websiteLabel={exact ? undefined : OPEN_FLUMP_WEBSITE}
+      />
+    </>
   );
 }
 
@@ -83,12 +149,12 @@ export function Home({
 function NetWorth({
   home,
   links,
+  skeleton,
 }: {
   home: Exclude<HomeDataState, { status: "notSetUp" }>;
   links: HomeWebLinks;
+  skeleton: boolean;
 }) {
-  // Nothing for 200 ms, then blocks the hero's size for at least 400 ms. A refetch keeps the hero.
-  const skeleton = useDelayedLoading(home.status === "loading");
   if (home.status === "error") {
     // Never "Add an account" or £0 for a failed read; out of step never blames the connection.
     return (

@@ -2,7 +2,13 @@ import { light } from "@flump/tokens/native";
 import { act, render, screen, userEvent } from "@testing-library/react-native";
 import { Linking, StyleSheet, type TextStyle } from "react-native";
 import { fail, fakeApi, withApi } from "../../data/fakeApi";
-import { household, MONTH, NOW, routes } from "../../features/check-in/checkInTestData";
+import {
+  type BudgetSeed,
+  household,
+  MONTH,
+  NOW,
+  routes,
+} from "../../features/check-in/checkInTestData";
 import { Home, type HomeWebLinks } from "./Home";
 
 /** The website's pages (placeholder addresses). */
@@ -14,6 +20,8 @@ const LINKS: HomeWebLinks = {
     exact: true,
   },
   addEstimate: { url: "https://app.test.invalid/app/accounts?add=property", exact: true },
+  addBudget: { url: "https://app.test.invalid/app/budget", exact: true },
+  addSpending: { url: "https://app.test.invalid/app/budget", exact: true },
 };
 
 /** Today 2026-11 (NOW): two accounts recorded in September, October and November. */
@@ -29,7 +37,11 @@ const RISING = [
   },
 ] as const;
 
-async function home(api: ReturnType<typeof fakeApi>, links: HomeWebLinks = LINKS) {
+async function home(
+  api: ReturnType<typeof fakeApi>,
+  links: HomeWebLinks = LINKS,
+  now: () => Date = NOW,
+) {
   const onSignOut = jest.fn();
   const onOpenCheckIn = jest.fn();
   const { ui } = withApi(
@@ -38,7 +50,7 @@ async function home(api: ReturnType<typeof fakeApi>, links: HomeWebLinks = LINKS
       onOpenCheckIn={onOpenCheckIn}
       marketingOrigin="https://m.test.invalid"
       links={links}
-      now={NOW}
+      now={now}
     />,
     api.client,
   );
@@ -218,10 +230,15 @@ describe("Home", () => {
       addAccount: site,
       changeWhatCounts: site,
       addEstimate: site,
+      addBudget: site,
+      addSpending: site,
     });
-    await userEvent
-      .setup()
-      .press(await screen.findByRole("link", { name: "Open the Flump website" }));
+    // The hero's link first; the strip's prompt has the same words (S5b).
+    const both = await screen.findAllByRole("link", { name: "Open the Flump website" });
+    expect(both).toHaveLength(2);
+    const [heroLink] = both;
+    if (!heroLink) throw new Error("expected the hero's link");
+    await userEvent.setup().press(heroLink);
     expect(Linking.openURL).toHaveBeenCalledWith("https://m.test.invalid");
   });
 
@@ -340,7 +357,8 @@ describe("Home", () => {
     await home(api);
     await screen.findByTestId("home-hero");
     await settle();
-    expect(api.request).toHaveBeenCalledTimes(4);
+    // The check-in's four reads and the budget.
+    expect(api.request).toHaveBeenCalledTimes(5);
     expect(screen.queryByTestId("check-in-row")).toBeNull();
   });
 
@@ -376,5 +394,374 @@ describe("Home", () => {
     expect(await screen.findByText("Record your November balances")).toBeOnTheScreen();
     expect(screen.getByTestId("home-error")).toBeOnTheScreen();
     expect(screen.queryByText("£0")).toBeNull();
+  });
+});
+
+/**
+ * The renting household of apps/e2e/support/personas.ts: a current account, savings, a pension, a
+ * credit card and a Plan 2 student loan (debts stored negative).
+ */
+const RENTER = [
+  { name: "Current account", type: "Current", balance: 1300, oct: 1280 },
+  { name: "Easy access savings", type: "Saving", balance: 3200, oct: 3050 },
+  { name: "Workplace pension", type: "Pension", balance: 9000, oct: 8740 },
+  { name: "Credit card", type: "Credit Card", balance: -1800, oct: -1835 },
+  { name: "Student loan", type: "Student Loan", balance: -38500, oct: -38380 },
+] as const;
+const NO_DEBT = RENTER.slice(0, 3);
+
+/** personas.ts's renter budget, none of it linked. */
+const SALARY: BudgetSeed = {
+  name: "Salary after tax",
+  category: "income",
+  amount: 2085,
+  isIncome: true,
+};
+const SPENDING: readonly BudgetSeed[] = [
+  { name: "Rent", category: "housing", amount: 950, isEssential: true },
+  { name: "Council tax", category: "bills", amount: 115, isEssential: true },
+  { name: "Energy", category: "bills", amount: 80, isEssential: true },
+  { name: "Phone and broadband", category: "bills", amount: 40, isEssential: true },
+  { name: "Groceries", category: "expenses", amount: 250, isEssential: true },
+  { name: "Travel", category: "expenses", amount: 120, isEssential: true },
+  { name: "Eating out", category: "expenses", amount: 90 },
+  { name: "Subscriptions", category: "expenses", amount: 25 },
+  { name: "Everything else", category: "expenses", amount: 80 },
+  { name: "Credit card payment", category: "bills", amount: 60, isEssential: true },
+  { name: "Easy access savings", category: "savings", amount: 150 },
+];
+const RENTER_BUDGET = [SALARY, ...SPENDING];
+/** The same budget with the income line linked to take-home pay, worked out from the salary. */
+const LINKED_BUDGET = [{ ...SALARY, linkKind: "take_home" } as BudgetSeed, ...SPENDING];
+/** personas.ts's renter profile facts: what a linked take-home line is worked out from. */
+const RENTER_FACTS = {
+  employmentType: "employed",
+  annualSalary: 32000,
+  taxRegion: "ENGLAND",
+  studentLoanPlans: ["PLAN_2"],
+  pensionPercent: 5,
+  isSalarySacrifice: false,
+} as const;
+
+/** 10 May 2027, London: the 2027/28 tax year, whose rates are provisional (no Scottish rates). */
+const MAY_2027 = () => new Date("2027-05-10T12:00:00Z");
+/** 1 June 2028: after the latest tax year in Flump, so 2027/28 rates are used. */
+const JUNE_2028 = () => new Date("2028-06-01T12:00:00Z");
+
+const LEFT_OVER_EXPLAINED = "Left over each month, £125, From your budget";
+
+/** The given test ids in the order they are drawn, top to bottom. */
+function testIdOrder(ids: readonly string[]): string[] {
+  const found: string[] = [];
+  const walk = (node: unknown) => {
+    if (!node || typeof node !== "object") return;
+    if (Array.isArray(node)) return node.forEach(walk);
+    const { props, children } = node as { props?: { testID?: string }; children?: unknown };
+    const id = props?.testID;
+    if (id && ids.includes(id) && !found.includes(id)) found.push(id);
+    walk(children);
+  };
+  walk(screen.toJSON());
+  return found;
+}
+
+function withFacts(
+  h: ReturnType<typeof household>,
+  facts: Record<string, unknown>,
+  overrides: Parameters<typeof routes>[1] = {},
+) {
+  return routes(h, { "GET /user-profile": () => ({ ...h.profile, ...facts }), ...overrides });
+}
+
+describe("Home's two-figure strip (S5b)", () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+    jest.spyOn(Linking, "openURL").mockResolvedValue(undefined);
+  });
+  afterEach(() => {
+    jest.useRealTimers();
+    jest.restoreAllMocks();
+  });
+
+  it("the renter: £125 left over and £1,800 owed, under the hero and above the check-in row", async () => {
+    await home(fakeApi(routes(household(RENTER, undefined, RENTER_BUDGET))));
+    // Income 2,085. Essentials 950 + 115 + 80 + 40 + 250 + 120 + 60 = 1,615; other spending
+    // 90 + 25 + 80 = 195; savings 150. Left over 2,085 - 1,615 - 195 - 150 = 125.
+    expect(await screen.findByLabelText(LEFT_OVER_EXPLAINED)).toBeOnTheScreen();
+    // Owed: the credit card's 1,800. The student loan is not consumer debt, and with debt the
+    // pension pots are not shown.
+    expect(
+      screen.getByLabelText("What you owe, £1,800, Cards, loans and overdrafts"),
+    ).toBeOnTheScreen();
+    expect(screen.queryByText("Pension pots")).toBeNull();
+    expect(screen.queryByTestId("rates-notice")).toBeNull();
+    // Under the hero and above the check-in row, in that order.
+    const order = testIdOrder(["home-hero", "figure-strip", "check-in-row"]);
+    expect(order).toEqual(["home-hero", "figure-strip", "check-in-row"]);
+  });
+
+  it("short: the label says so and the figure keeps the ordinary text colour", async () => {
+    await home(
+      fakeApi(
+        routes(
+          household(NO_DEBT, undefined, [
+            { name: "Pay", category: "income", amount: 1000, isIncome: true },
+            { name: "Rent", category: "housing", amount: 1200, isEssential: true },
+          ]),
+        ),
+      ),
+    );
+    // 1,000 - 1,200 = -200.
+    expect(await screen.findByText("Short each month")).toBeOnTheScreen();
+    expect(screen.getByText("-£200")).toBeOnTheScreen();
+    expect(textColour("-£200")).toBe(light.colors["text.primary"]);
+    expect(screen.queryByText("Left over each month")).toBeNull();
+  });
+
+  it("income only: the income and a link to add spending on the website", async () => {
+    await home(fakeApi(routes(household(NO_DEBT, undefined, [SALARY]))));
+    expect(await screen.findByLabelText("Income in your budget, £2,085")).toBeOnTheScreen();
+    await userEvent.setup().press(
+      screen.getByRole("link", {
+        name: "Add your spending on the website to see what is left over each month",
+      }),
+    );
+    expect(Linking.openURL).toHaveBeenCalledWith(LINKS.addSpending.url);
+    // No debt: 9,000 in the one pension.
+    expect(screen.getByLabelText("Pension pots, £9,000, From your accounts")).toBeOnTheScreen();
+  });
+
+  it("no budget: one prompt in place of the strip, which hides what is owed too", async () => {
+    await home(fakeApi(routes(household(RENTER))));
+    expect(
+      await screen.findByText("Add your budget to see what is left over each month"),
+    ).toBeOnTheScreen();
+    expect(screen.queryByText("What you owe")).toBeNull();
+    expect(screen.queryByText("£0")).toBeNull();
+    await userEvent
+      .setup()
+      .press(screen.getByRole("link", { name: "Add your budget on the website" }));
+    expect(Linking.openURL).toHaveBeenCalledWith(LINKS.addBudget.url);
+  });
+
+  it("spending and no income row: the prompt, never minus the spending as left over", async () => {
+    await home(fakeApi(routes(household(RENTER, undefined, SPENDING))));
+    expect(await screen.findByTestId("figure-strip-prompt")).toBeOnTheScreen();
+    expect(screen.queryByText("Left over each month")).toBeNull();
+    expect(screen.queryByText("-£1,960")).toBeNull();
+  });
+
+  it("pension and no debt: the pension pots in the second card", async () => {
+    await home(fakeApi(routes(household(NO_DEBT, undefined, RENTER_BUDGET))));
+    expect(await screen.findByLabelText(LEFT_OVER_EXPLAINED)).toBeOnTheScreen();
+    expect(screen.getByLabelText("Pension pots, £9,000, From your accounts")).toBeOnTheScreen();
+    expect(screen.queryByText("What you owe")).toBeNull();
+  });
+
+  it("neither debt nor pension: the one figure", async () => {
+    await home(fakeApi(routes(household(RENTER.slice(0, 2), undefined, RENTER_BUDGET))));
+    expect(await screen.findByLabelText(LEFT_OVER_EXPLAINED)).toBeOnTheScreen();
+    expect(screen.queryByTestId("figure-strip-second")).toBeNull();
+    expect(screen.queryByText("Not set")).toBeNull();
+  });
+
+  it("a linked take-home: worked out from the salary, with no rates notice in a confirmed year", async () => {
+    const h = household(RENTER, undefined, LINKED_BUDGET);
+    await home(fakeApi(withFacts(h, RENTER_FACTS)));
+    // 2026/27, salary 32,000: pension 5% = 1,600 (net pay). Tax (32,000 - 1,600 - 12,570) x 20%
+    // = 3,566. NI (32,000 - 12,570) x 8% = 1,554.40. Plan 2 (32,000 - 29,385) x 9% = 235.35.
+    // Take-home 32,000 - 1,600 - 3,566 - 1,554.40 - 235.35 = 25,044.25 a year, 2,087 a month.
+    // Left over 2,087 - 1,615 - 195 - 150 = 127.
+    expect(
+      await screen.findByLabelText("Left over each month, £127, From your budget"),
+    ).toBeOnTheScreen();
+    expect(screen.queryByTestId("rates-notice")).toBeNull();
+  });
+
+  it("provisional rates: the notice above the strip when the budget counts a worked-out take-home", async () => {
+    const h = household(RENTER, undefined, LINKED_BUDGET);
+    await home(fakeApi(withFacts(h, RENTER_FACTS)), LINKS, MAY_2027);
+    expect(
+      await screen.findByText(
+        "2027/28 rates are provisional: announced but not yet confirmed. Figures may change.",
+      ),
+    ).toBeOnTheScreen();
+    const order = testIdOrder(["rates-notice", "figure-strip"]);
+    expect(order).toEqual(["rates-notice", "figure-strip"]);
+  });
+
+  it("after the latest year in Flump: the year whose rates are used", async () => {
+    const h = household(RENTER, undefined, LINKED_BUDGET);
+    await home(fakeApi(withFacts(h, RENTER_FACTS)), LINKS, JUNE_2028);
+    expect(
+      await screen.findByText(
+        "Using 2027/28 rates. The 2028/29 rates are not in Flump yet, so figures may be out of date.",
+      ),
+    ).toBeOnTheScreen();
+  });
+
+  it("a typed income in a provisional year: no rates notice, since no rates are used", async () => {
+    await home(
+      fakeApi(withFacts(household(RENTER, undefined, RENTER_BUDGET), RENTER_FACTS)),
+      LINKS,
+      MAY_2027,
+    );
+    expect(await screen.findByLabelText(LEFT_OVER_EXPLAINED)).toBeOnTheScreen();
+    expect(screen.queryByTestId("rates-notice")).toBeNull();
+  });
+
+  it("refused: no Scottish rates for the year, so the notice in place of the figure", async () => {
+    const h = household(RENTER, undefined, LINKED_BUDGET);
+    await home(fakeApi(withFacts(h, { ...RENTER_FACTS, taxRegion: "SCOTLAND" })), LINKS, MAY_2027);
+    const notice =
+      "Scottish Income Tax rates for 2027/28 are not published yet, so there is no estimate for this year.";
+    expect(await screen.findByText(notice)).toBeOnTheScreen();
+    expect(screen.getByLabelText(`Left over each month, ${notice}`)).toBeOnTheScreen();
+    expect(screen.queryByText("£0")).toBeNull();
+    expect(screen.queryByTestId("figure-strip-prompt")).toBeNull();
+    expect(screen.queryByTestId("rates-notice")).toBeNull();
+    expect(screen.getByText("What you owe")).toBeOnTheScreen();
+  });
+
+  it("a student loan plan with no threshold for the year: the figure stands and says what it leaves out", async () => {
+    const h = household(RENTER, undefined, LINKED_BUDGET);
+    await home(
+      fakeApi(withFacts(h, { ...RENTER_FACTS, studentLoanPlans: ["PLAN_1"] })),
+      LINKS,
+      MAY_2027,
+    );
+    // 2027/28, Plan 1 left out: pension 1,600; tax 3,566; NI 1,554.40 (the 2027/28 allowance and
+    // rates are 2026/27's). Take-home 32,000 - 1,600 - 3,566 - 1,554.40 = 25,279.60 a year,
+    // 2,107 a month. Left over 2,107 - 1,960 = 147.
+    const leavesOut =
+      "The 2027/28 repayment threshold for this student loan plan is not published yet, so repayments are not included.";
+    expect(
+      await screen.findByLabelText(`Left over each month, £147, ${leavesOut}`),
+    ).toBeOnTheScreen();
+    expect(screen.queryByText("From your budget")).toBeNull();
+  });
+
+  it("a failed budget read is Home's error with Try again, never the budget prompt", async () => {
+    let down = true;
+    const h = household(RENTER, undefined, RENTER_BUDGET);
+    const api = fakeApi(
+      routes(h, {
+        "GET /budget-entries": () => (down ? fail("unavailable", 503) : h.budgetEntries),
+      }),
+    );
+    await home(api);
+    await act(async () => jest.advanceTimersByTimeAsync(10_000));
+    expect(screen.getByTestId("home-error")).toBeOnTheScreen();
+    expect(screen.getByText("Check your connection and try again.")).toBeOnTheScreen();
+    expect(screen.queryByTestId("figure-strip-prompt")).toBeNull();
+    expect(screen.queryByTestId("home-hero")).toBeNull();
+    expect(screen.queryByText("£0")).toBeNull();
+    // The check-in row keeps working under the failure (S5).
+    expect(screen.getByTestId("check-in-row")).toBeOnTheScreen();
+    down = false;
+    await userEvent.setup().press(screen.getByTestId("home-retry"));
+    await settle();
+    expect(screen.getByLabelText(LEFT_OVER_EXPLAINED)).toBeOnTheScreen();
+  });
+
+  it("a budget row with no amount is out of step, never the connection or the prompt", async () => {
+    const h = household(RENTER, undefined, RENTER_BUDGET);
+    const [first, ...rest] = h.budgetEntries;
+    const { amount: _amount, ...noAmount } = first as (typeof h.budgetEntries)[number];
+    await home(fakeApi(routes(h, { "GET /budget-entries": () => [noAmount, ...rest] })));
+    expect(
+      await screen.findByText(
+        "This version of the app did not understand Flump's answer. Try again later, or update the app if an update is available.",
+      ),
+    ).toBeOnTheScreen();
+    expect(screen.queryByText(/connection/)).toBeNull();
+    expect(screen.queryByTestId("figure-strip-prompt")).toBeNull();
+  });
+
+  it("terms not agreed on the budget read: the terms screen", async () => {
+    await home(
+      fakeApi(
+        routes(household(RENTER, undefined, RENTER_BUDGET), {
+          "GET /budget-entries": () => fail("forbidden", 403, "terms_not_accepted"),
+        }),
+      ),
+    );
+    expect(
+      await screen.findByRole("header", { name: "Please agree to our terms on the website" }),
+    ).toBeOnTheScreen();
+  });
+
+  it("an older backend (no link or share columns) and a newer one (fields added) still show the strip", async () => {
+    const h = household(RENTER, undefined, RENTER_BUDGET);
+    const older = h.budgetEntries.map(
+      ({ ownership: _o, sharePercent: _s, linkKind: _l, linkAccountId: _a, ...row }) => row,
+    );
+    await home(fakeApi(routes(h, { "GET /budget-entries": () => older })));
+    expect(await screen.findByLabelText(LEFT_OVER_EXPLAINED)).toBeOnTheScreen();
+    await act(async () => {
+      await screen.unmount();
+    });
+    const newer = h.budgetEntries.map((row) => ({ ...row, fieldFromALaterBackend: "new" }));
+    await home(fakeApi(routes(h, { "GET /budget-entries": () => newer })));
+    expect(await screen.findByLabelText(LEFT_OVER_EXPLAINED)).toBeOnTheScreen();
+  });
+
+  it("loading: the strip's blocks come and go with the hero's, and wait for the budget", async () => {
+    let answer: (value: unknown) => void = () => {};
+    const h = household(RENTER, undefined, RENTER_BUDGET);
+    await home(
+      fakeApi(
+        routes(h, {
+          "GET /budget-entries": () =>
+            new Promise((resolve) => {
+              answer = resolve;
+            }),
+        }),
+      ),
+    );
+    // Every other read has answered; Home still waits for the budget.
+    await act(async () => jest.advanceTimersByTimeAsync(199));
+    expect(screen.queryByTestId("home-hero")).toBeNull();
+    expect(
+      screen.queryByTestId("figure-strip-loading", { includeHiddenElements: true }),
+    ).toBeNull();
+    await act(async () => jest.advanceTimersByTimeAsync(1));
+    expect(screen.getByLabelText("Loading your net worth")).toBeOnTheScreen();
+    expect(
+      screen.getByTestId("figure-strip-loading", { includeHiddenElements: true }),
+    ).toBeTruthy();
+    await act(async () => {
+      answer(h.budgetEntries);
+      await jest.advanceTimersByTimeAsync(50);
+    });
+    // The blocks stay 400 ms from when they showed, both together.
+    expect(screen.getByTestId("home-hero-loading")).toBeOnTheScreen();
+    expect(
+      screen.getByTestId("figure-strip-loading", { includeHiddenElements: true }),
+    ).toBeTruthy();
+    await act(async () => jest.advanceTimersByTimeAsync(349));
+    expect(
+      screen.getByTestId("figure-strip-loading", { includeHiddenElements: true }),
+    ).toBeTruthy();
+    await act(async () => jest.advanceTimersByTimeAsync(1));
+    expect(
+      screen.queryByTestId("figure-strip-loading", { includeHiddenElements: true }),
+    ).toBeNull();
+    expect(screen.queryByTestId("home-hero-loading")).toBeNull();
+    expect(screen.getByLabelText(LEFT_OVER_EXPLAINED)).toBeOnTheScreen();
+    expect(screen.getByTestId("home-hero")).toBeOnTheScreen();
+  });
+
+  it("with no web app address, the strip's link says it opens the Flump website", async () => {
+    const site = { url: "https://m.test.invalid", exact: false };
+    await home(fakeApi(routes(household(RENTER))), {
+      ...LINKS,
+      addBudget: site,
+      addSpending: site,
+    });
+    await userEvent
+      .setup()
+      .press(await screen.findByRole("link", { name: "Open the Flump website" }));
+    expect(Linking.openURL).toHaveBeenCalledWith("https://m.test.invalid");
   });
 });
