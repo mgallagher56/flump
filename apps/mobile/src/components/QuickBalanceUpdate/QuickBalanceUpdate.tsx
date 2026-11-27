@@ -22,6 +22,11 @@ export interface QuickBalanceUpdateProps {
    * with what went wrong in web's words, or null once it saved.
    */
   onSave(value: number): Promise<string | null>;
+  /**
+   * The form's check of what was typed (the account forms' own, so both say the same): what is
+   * wrong under the field, or null. Runs on Save before anything is sent.
+   */
+  check?(value: number | null, text: string): string | null;
   testID?: string;
 }
 
@@ -37,12 +42,16 @@ export function QuickBalanceUpdate({
   current,
   hint,
   onSave,
+  check = () => null,
   testID = "quick-balance",
 }: QuickBalanceUpdateProps) {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState<number | null>(current);
+  // What was typed, so a minus or text that is not an amount can be told apart from blank.
+  const [text, setText] = useState("");
+  const [fieldError, setFieldError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -55,6 +64,8 @@ export function QuickBalanceUpdate({
         testID={`${testID}-open`}
         onPress={() => {
           setValue(current);
+          setText(current === null ? "" : String(current));
+          setFieldError(null);
           setError(null);
           setOpen(true);
         }}
@@ -64,7 +75,15 @@ export function QuickBalanceUpdate({
 
   const label = owed ? QUICK_BALANCE.fieldOwed : QUICK_BALANCE.fieldBalance;
   const save = async () => {
-    if (value === null || pending) return;
+    if (pending) return;
+    const problem = check(value, text);
+    if (problem) {
+      setFieldError(problem);
+      // Read out on both platforms: the field's error line is not a live region on iOS.
+      AccessibilityInfo.announceForAccessibility(problem);
+      return;
+    }
+    if (value === null) return;
     setPending(true);
     setError(null);
     const failed = await onSave(value);
@@ -78,12 +97,18 @@ export function QuickBalanceUpdate({
 
   return (
     <View style={styles.group} testID={`${testID}-form`}>
-      <FormField label={label} hint={hint ?? undefined}>
+      <FormField label={label} hint={hint ?? undefined} error={fieldError}>
         <CurrencyInput
           value={value}
           // A debt's amount owed is never below zero (web refuses one); a balance can be.
           allowNegative={!owed}
-          onValueChange={setValue}
+          onValueChange={(next, typed) => {
+            setValue(next);
+            setText(typed);
+            // A new figure replaces what was said about the last one.
+            setFieldError(null);
+            setError(null);
+          }}
           accessibilityLabel={`${label}, ${accountName}`}
           editable={!pending}
           testID={`${testID}-value`}
@@ -96,7 +121,7 @@ export function QuickBalanceUpdate({
           label={pending ? QUICK_BALANCE.saving : QUICK_BALANCE.save}
           size="sm"
           pending={pending}
-          disabled={value === null}
+          disabled={text.trim() === ""}
           testID={`${testID}-save`}
           onPress={() => void save()}
         />

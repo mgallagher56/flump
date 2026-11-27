@@ -307,9 +307,35 @@ describe("AccountDetail", () => {
     await user.type(screen.getByTestId("quick-balance-value"), "99999999999999");
     await user.press(screen.getByRole("button", { name: "Save" }));
     await settle();
-    expect(await screen.findByTestId("quick-balance-error")).toHaveTextContent(
-      "Enter an amount below £10,000,000,000.",
-    );
+    // Under the field, as the edit form says it (one shared check), not in the save's alert.
+    expect(await screen.findByText("Enter an amount below £10,000,000,000.")).toBeOnTheScreen();
+    expect(screen.queryByTestId("quick-balance-error")).toBeNull();
+    expect(api.calls.filter((c) => c.method === "PATCH")).toEqual([]);
+  });
+
+  it("a minus amount owed in the quick update says so under the field, as the edit form does, and an earlier message goes (device re-check)", async () => {
+    const h = household();
+    const id = h.idOf("Mortgage");
+    const api = fakeApi(routes(h));
+    await detail(api, id);
+    const user = userEvent.setup();
+    await user.press(await screen.findByRole("button", { name: "Update amount owed" }));
+    const field = screen.getByTestId("quick-balance-value");
+    // First over the limit: its message shows.
+    await user.clear(field);
+    await user.type(field, "99999999999999");
+    await user.press(screen.getByRole("button", { name: "Save" }));
+    await settle();
+    expect(screen.getByText("Enter an amount below £10,000,000,000.")).toBeOnTheScreen();
+    // Then a minus: the limit message goes, and Save says what is wrong instead of greying out.
+    await user.clear(field);
+    await user.type(field, "-20");
+    expect(screen.queryByText("Enter an amount below £10,000,000,000.")).toBeNull();
+    await user.press(screen.getByRole("button", { name: "Save" }));
+    await settle();
+    expect(
+      screen.getByText("An amount owed cannot be below £0. Enter it without a minus sign."),
+    ).toBeOnTheScreen();
     expect(api.calls.filter((c) => c.method === "PATCH")).toEqual([]);
   });
 
