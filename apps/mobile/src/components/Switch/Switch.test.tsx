@@ -67,7 +67,47 @@ function switchGeometry(trackStyle: ViewStyle, thumbStyle: ViewStyle) {
 /** The rendered host tree, as `toJSON` gives it. */
 interface HostNode {
   type: string;
+  props?: Record<string, unknown>;
   children: (HostNode | string)[] | null;
+}
+
+function layoutSnapshot(tree: HostNode | HostNode[] | null) {
+  const root = Array.isArray(tree) ? tree[0] : tree;
+  if (!root) throw new Error("Expected Switch root host node");
+  const children = (root.children ?? []).filter((c): c is HostNode => typeof c !== "string");
+  const words = children[0];
+  const control = children[1];
+  if (!words || !control) throw new Error("Expected words and control columns inside Switch row");
+  const rowStyle = (StyleSheet.flatten(root.props?.style as ViewStyle) ?? {}) as ViewStyle;
+  const wordsStyle = (StyleSheet.flatten(words.props?.style as ViewStyle) ?? {}) as ViewStyle;
+  const controlStyle = (StyleSheet.flatten(control.props?.style as ViewStyle) ?? {}) as ViewStyle;
+  const controlChildren = (control.children ?? [])
+    .filter((c): c is HostNode => typeof c !== "string")
+    .map((child) => {
+      const s = (StyleSheet.flatten(child.props?.style as ViewStyle) ?? {}) as ViewStyle;
+      return {
+        type: child.type,
+        position: s.position,
+        width: s.width,
+        height: s.height,
+        flex: s.flex,
+      };
+    });
+  return {
+    row: { flexDirection: rowStyle.flexDirection, gap: rowStyle.gap },
+    words: {
+      flex: wordsStyle.flex,
+      width: wordsStyle.width,
+      marginRight: wordsStyle.marginRight,
+      paddingRight: wordsStyle.paddingRight,
+    },
+    control: {
+      flexDirection: controlStyle.flexDirection,
+      gap: controlStyle.gap,
+      width: controlStyle.width,
+    },
+    controlChildren,
+  };
 }
 
 const track = () => screen.getByTestId("switch-track", { includeHiddenElements: true });
@@ -451,4 +491,48 @@ describe("Switch", () => {
       light.colors["text.muted"],
     );
   });
+
+  it.each(["ios", "android"] as const)(
+    "%s: showing and hiding the busy spinner does not change row or control layout width",
+    async (os) => {
+      jest.replaceProperty(Platform, "OS", os);
+      jest.useFakeTimers();
+      const label = "Count property you own, less the mortgage on it";
+      const view = await render(
+        <ThemeProvider scheme="light">
+          <Switch label={label} value={true} busy={false} onValueChange={jest.fn()} />
+        </ThemeProvider>,
+      );
+
+      const idleLayout = layoutSnapshot(view.toJSON() as HostNode | HostNode[] | null);
+      expect(idleLayout.controlChildren).toHaveLength(2);
+      for (const child of idleLayout.controlChildren) {
+        expect(typeof child.width).toBe("number");
+        expect(child.width as number).toBeGreaterThan(0);
+        expect(typeof child.height).toBe("number");
+        expect(child.height as number).toBeGreaterThan(0);
+      }
+
+      await view.rerender(
+        <ThemeProvider scheme="light">
+          <Switch label={label} value={true} busy onValueChange={jest.fn()} />
+        </ThemeProvider>,
+      );
+      expect(busySpinner()).toBeNull();
+      expect(layoutSnapshot(view.toJSON() as HostNode | HostNode[] | null)).toEqual(idleLayout);
+
+      await act(async () => jest.advanceTimersByTime(durations.pendingDelay));
+      expect(busySpinner()).not.toBeNull();
+      expect(layoutSnapshot(view.toJSON() as HostNode | HostNode[] | null)).toEqual(idleLayout);
+
+      await view.rerender(
+        <ThemeProvider scheme="light">
+          <Switch label={label} value={true} busy={false} onValueChange={jest.fn()} />
+        </ThemeProvider>,
+      );
+      await act(async () => jest.advanceTimersByTime(durations.pendingMinimum));
+      expect(busySpinner()).toBeNull();
+      expect(layoutSnapshot(view.toJSON() as HostNode | HostNode[] | null)).toEqual(idleLayout);
+    },
+  );
 });

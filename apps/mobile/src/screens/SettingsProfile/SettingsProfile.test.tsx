@@ -293,33 +293,52 @@ describe("SettingsProfile", () => {
     await profilePage(api);
     await settle();
 
-    const propertySwitch = screen.getByTestId("settings-counts-property");
-    const loanSwitch = screen.getByTestId("settings-counts-student-loan");
-    await userEvent.setup({ advanceTimers: jest.advanceTimersByTime }).press(propertySwitch);
+    const propertyName = "Count property you own, less the mortgage on it";
+    const loanName = "Count your student loan as a debt";
+    const propertySwitch = () => screen.getByRole("switch", { name: propertyName });
+    const loanSwitch = () => screen.getByRole("switch", { name: loanName });
+    const selfAssessmentSwitch = () => screen.getByRole("switch", { name: "Self Assessment" });
+    await userEvent.setup({ advanceTimers: jest.advanceTimersByTime }).press(propertySwitch());
 
     // Both switches share the netWorth busy flag: both announce busy and keep enabled colours.
-    expect(screen.getByTestId("settings-counts-property")).toBeBusy();
-    expect(screen.getByTestId("settings-counts-student-loan")).toBeBusy();
+    expect(propertySwitch()).toBeBusy();
+    expect(loanSwitch()).toBeBusy();
+    expect(
+      StyleSheet.flatten(within(propertySwitch()).getByText(propertyName).props.style).color,
+    ).toBe(light.colors["text.primary"]);
+    expect(StyleSheet.flatten(within(loanSwitch()).getByText(loanName).props.style).color).toBe(
+      light.colors["text.primary"],
+    );
     expect(
       StyleSheet.flatten(
-        screen.getByText("Count property you own, less the mortgage on it").props.style,
-      ).color,
-    ).toBe(light.colors["text.primary"]);
+        within(propertySwitch()).getByTestId("switch-track", { includeHiddenElements: true }).props
+          .style,
+      ).backgroundColor,
+    ).toBe(light.colors["border.strong"]);
     expect(
-      StyleSheet.flatten(screen.getByText("Count your student loan as a debt").props.style).color,
-    ).toBe(light.colors["text.primary"]);
-    const tracks = screen.getAllByTestId("switch-track", { includeHiddenElements: true });
-    expect(StyleSheet.flatten(tracks[0]?.props.style).backgroundColor).toBe(
-      light.colors["border.strong"],
-    );
-    expect(StyleSheet.flatten(tracks[1]?.props.style).backgroundColor).toBe(
-      light.colors["primary.solid"],
-    );
-    expect(screen.queryAllByTestId("switch-busy", { includeHiddenElements: true })).toHaveLength(0);
+      StyleSheet.flatten(
+        within(loanSwitch()).getByTestId("switch-track", { includeHiddenElements: true }).props
+          .style,
+      ).backgroundColor,
+    ).toBe(light.colors["primary.solid"]);
+    expect(
+      within(propertySwitch()).queryByTestId("switch-busy", { includeHiddenElements: true }),
+    ).toBeNull();
+    expect(
+      within(loanSwitch()).queryByTestId("switch-busy", { includeHiddenElements: true }),
+    ).toBeNull();
 
     // At pendingDelay (200 ms) the spinner appears for both busy netWorth switches.
     await act(async () => jest.advanceTimersByTimeAsync(durations.pendingDelay));
-    expect(screen.queryAllByTestId("switch-busy", { includeHiddenElements: true })).toHaveLength(2);
+    expect(
+      within(propertySwitch()).queryByTestId("switch-busy", { includeHiddenElements: true }),
+    ).not.toBeNull();
+    expect(
+      within(loanSwitch()).queryByTestId("switch-busy", { includeHiddenElements: true }),
+    ).not.toBeNull();
+    expect(
+      within(selfAssessmentSwitch()).queryByTestId("switch-busy", { includeHiddenElements: true }),
+    ).toBeNull();
 
     resolvePatch?.({
       ...h.profile,
@@ -328,7 +347,12 @@ describe("SettingsProfile", () => {
     });
     await settle();
     await act(async () => jest.advanceTimersByTimeAsync(durations.pendingMinimum));
-    expect(screen.queryAllByTestId("switch-busy", { includeHiddenElements: true })).toHaveLength(0);
+    expect(
+      within(propertySwitch()).queryByTestId("switch-busy", { includeHiddenElements: true }),
+    ).toBeNull();
+    expect(
+      within(loanSwitch()).queryByTestId("switch-busy", { includeHiddenElements: true }),
+    ).toBeNull();
   });
 
   it("a fast net worth save (< 200 ms) never shows the busy spinner", async () => {
@@ -345,11 +369,14 @@ describe("SettingsProfile", () => {
     await profilePage(api);
     await settle();
 
-    await userEvent
-      .setup({ advanceTimers: jest.advanceTimersByTime })
-      .press(screen.getByTestId("settings-counts-property"));
+    const propertySwitch = () =>
+      screen.getByRole("switch", { name: "Count property you own, less the mortgage on it" });
+    await userEvent.setup({ advanceTimers: jest.advanceTimersByTime }).press(propertySwitch());
     await act(async () => jest.advanceTimersByTimeAsync(durations.pendingDelay - 10));
-    expect(screen.queryByTestId("switch-busy", { includeHiddenElements: true })).toBeNull();
+    expect(propertySwitch()).toBeBusy();
+    expect(
+      within(propertySwitch()).queryByTestId("switch-busy", { includeHiddenElements: true }),
+    ).toBeNull();
 
     resolvePatch?.({
       ...h.profile,
@@ -357,8 +384,13 @@ describe("SettingsProfile", () => {
       updatedAt: "2026-11-20T12:05:00.000Z",
     });
     await settle();
-    await act(async () => jest.advanceTimersByTimeAsync(durations.pendingMinimum));
-    expect(screen.queryByTestId("switch-busy", { includeHiddenElements: true })).toBeNull();
+    expect(propertySwitch()).not.toBeBusy();
+    // Advance past the 200 ms delay mark while staying under the 400 ms minimum hold: an
+    // undelayed spinner would still be held open, and an uncancelled delay timer would fire now.
+    await act(async () => jest.advanceTimersByTimeAsync(20));
+    expect(
+      within(propertySwitch()).queryByTestId("switch-busy", { includeHiddenElements: true }),
+    ).toBeNull();
   });
 
   it("a failed save puts the switch back, says so in web's words, and changes nothing", async () => {

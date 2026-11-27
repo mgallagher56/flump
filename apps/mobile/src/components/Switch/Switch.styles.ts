@@ -4,6 +4,9 @@ import type { Theme } from "../../theme/ThemeProvider";
 /** Outlined border width for a disabled off track and the Android disabled on thumb ring. */
 const DISABLED_TRACK_BORDER = 1.5;
 
+/** Small ActivityIndicator box (20x20 on iOS and Android), always reserved so saving never shifts the label. */
+const BUSY_SLOT_SIZE = 20;
+
 /**
  * The platform switch's size, so the drawn one looks as React Native's did: iOS's 51 by 31 track
  * with a 27 thumb inset by 2, and Android's Material track (36 by 14) with a 20 thumb that stands
@@ -36,6 +39,12 @@ export const createStyles = (theme: Theme, os: string) => {
       flexDirection: "row",
       alignItems: "center",
       gap: theme.spacing["2"],
+    },
+    busySlot: {
+      width: BUSY_SLOT_SIZE,
+      height: BUSY_SLOT_SIZE,
+      alignItems: "center",
+      justifyContent: "center",
     },
     track: {
       width: shape.width,
