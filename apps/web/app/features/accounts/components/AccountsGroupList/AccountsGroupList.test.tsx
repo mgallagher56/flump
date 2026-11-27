@@ -239,6 +239,27 @@ describe("<AccountsGroupList />", () => {
     expect(owe.textContent).toContain("Mortgage · Joint, 50%");
   });
 
+  test("shows a share that does not divide evenly to two decimals at most", () => {
+    const { getByRole } = customRender(
+      <AccountsGroupList
+        {...props}
+        rows={[
+          row({
+            id: "m1",
+            name: "Home loan",
+            type: "Mortgage",
+            balance: 140_000,
+            ownership: "joint",
+            sharePercent: 33.333,
+          }),
+        ]}
+      />,
+    );
+    expect(getByRole("list", { name: "What you owe" }).textContent).toContain(
+      "Mortgage · Joint, 33.33%",
+    );
+  });
+
   test("puts an overdrawn current account under what you owe, as the amount owed", () => {
     const { getByRole } = customRender(
       <AccountsGroupList

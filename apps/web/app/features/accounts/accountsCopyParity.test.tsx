@@ -162,6 +162,7 @@ describe("the mobile accounts list says what web's says", () => {
     { name: "Mortgage", type: "Mortgage", ownership: "joint" as const, sharePercent: 50 },
     { name: "Our home", type: "Property", ownership: "joint" as const, sharePercent: 40 },
     { name: "Mortgage", type: "Mortgage", ownership: "joint" as const, sharePercent: 0 },
+    { name: "Mortgage", type: "Mortgage", ownership: "joint" as const, sharePercent: 33.333 },
     { name: "ISA", type: "Investment", accountSubtype: "stocks_and_shares_isa" },
     { name: "Bonds", type: "Bonds from a later backend" },
   ])("the type line for $name ($type)", async (row) => {

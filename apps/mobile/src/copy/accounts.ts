@@ -9,7 +9,11 @@
  * whichever way it went, a debt is an amount owed, and nothing grades the figure or the person
  * (advice policy R1). Every figure comes from the engine; these functions only format it.
  */
-import type { NetWorthLeftOut, RecordedMonthComparison } from "@flump/finance-engine/accounts";
+import {
+  jointShareLabel,
+  type NetWorthLeftOut,
+  type RecordedMonthComparison,
+} from "@flump/finance-engine/accounts";
 import { formatCurrency, formatMonthYear } from "@flump/format";
 import { HOME, leftOutSentence } from "./home";
 
@@ -98,7 +102,7 @@ export function typeLine(row: TypeLineInput): string | null {
   const subtypeLabel = row.accountSubtype ? ACCOUNT_SUBTYPE_LABEL[row.accountSubtype] : undefined;
   const label = subtypeLabel ?? TYPE_LABEL[row.type] ?? row.type;
   const baseType = label.trim().toLowerCase() === row.name.trim().toLowerCase() ? null : label;
-  const jointLabel = row.ownership === "joint" ? `Joint, ${row.sharePercent}%` : null;
+  const jointLabel = jointShareLabel(row);
   if (baseType && jointLabel) return `${baseType} · ${jointLabel}`;
   return baseType || jointLabel;
 }
