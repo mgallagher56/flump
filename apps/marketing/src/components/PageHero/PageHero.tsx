@@ -21,7 +21,9 @@ export interface PageHeroProps {
   label?: string;
   title: string;
   lead: string;
-  /** One more line under the lead. */
+  /** A small label under the lead (the AI connection's "Preview"). */
+  badge?: ReactNode;
+  /** One more line under the lead (and the badge). */
   note?: string;
   /** Where "Interactive preview" beside "Request an invite" goes; left out, no second button. */
   previewHref?: string;
@@ -42,6 +44,7 @@ export const PageHero: FC<PageHeroProps> = ({
   label,
   title,
   lead,
+  badge,
   note,
   previewHref,
   tones,
@@ -59,6 +62,7 @@ export const PageHero: FC<PageHeroProps> = ({
             {title}
           </h1>
           <p className={heroLead}>{lead}</p>
+          {badge}
           {note && <p className={heroNote}>{note}</p>}
           {children}
           <div className={heroCtas}>

@@ -14,7 +14,7 @@ describe("marketing copy (R-10)", () => {
     "components/HomeFeatures/HomeFeatures.tsx",
     "components/HomePayRise/HomePayRise.tsx",
     "components/TryItSection/TryItSection.tsx",
-    "pages/FeaturePage/FeaturePage.tsx",
+    "pages/AreaPage/AreaPage.tsx",
     "utils/featureAreas.ts",
   ])("%s does not over-claim", (file) => {
     expect(read(file)).not.toMatch(/\bexact\b|guaranteed|gross take-home/i);
@@ -33,9 +33,12 @@ const PR12_SOURCES = [
   "pages/SecurityPage/SecurityPage.tsx",
   "pages/AiConnectionPage/AiConnectionPage.tsx",
   "pages/AiConnectionPage/mcpTools.ts",
-  "pages/FeaturePage/FeaturePage.tsx",
+  "pages/AreaPage/AreaPage.tsx",
+  "components/PageHero/PageHero.tsx",
+  "components/TicketClose/TicketClose.tsx",
+  "components/StartHere/StartHere.tsx",
   "pages/FeaturesIndexPage/FeaturesIndexPage.tsx",
-  "components/AreaStrip/AreaStrip.tsx",
+  "components/AreaPills/AreaPills.tsx",
   "utils/featureAreas.ts",
   "pages/ContactPage/ContactPage.tsx",
   "pages/NotFoundPage/NotFoundPage.tsx",

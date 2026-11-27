@@ -1,0 +1,1 @@
+export { AreaPills } from "./AreaPills";

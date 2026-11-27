@@ -27,6 +27,7 @@ const PAGES: readonly PageRow[] = [
   { name: "pay", path: "/features/pay", h1: "Take-home pay and Self Assessment" },
   { name: "savings and pension", path: "/features/savings-and-pension", h1: "Savings and pension" },
   { name: "debt and borrowing", path: "/features/debt-and-borrowing", h1: "Debt and borrowing" },
+  { name: "AI connection", path: "/features/ai-connection", h1: "AI connection" },
 ];
 
 /** Everything a band's moment brings in: still once every moment has finished. */
