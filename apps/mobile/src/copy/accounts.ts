@@ -84,6 +84,26 @@ const ACCOUNT_SUBTYPE_LABEL: Readonly<Record<string, string>> = {
   other_loan: "Personal or other loan",
 };
 
+/** The subtype's label, else the type's, else the type as stored (an unknown type, section 4.9). */
+function typeLabel(row: { type: string; accountSubtype?: string | null }): string {
+  const subtypeLabel = row.accountSubtype ? ACCOUNT_SUBTYPE_LABEL[row.accountSubtype] : undefined;
+  return subtypeLabel || TYPE_LABEL[row.type] || row.type;
+}
+
+/**
+ * Web's account page subline (`typeSubtitle` in `AccountDetailContainer`): the type under the
+ * name, unless the name contains it. "Barclaycard" reads "Credit card"; "Residential mortgage"
+ * hides "Mortgage". Unlike the list's type line, a name that only contains the type hides it.
+ */
+export function accountTypeSubtitle(account: {
+  name: string;
+  type: string;
+  accountSubtype?: string | null;
+}): string | null {
+  const label = typeLabel(account);
+  return account.name.toLowerCase().includes(label.trim().toLowerCase()) ? null : label;
+}
+
 /** What a row's type line reads. `sharePercent` is the engine's `resolveAccountSharePercent`. */
 export interface TypeLineInput {
   name: string;
@@ -99,8 +119,7 @@ export interface TypeLineInput {
  * unknown type shows as stored (section 4.9: the row keeps its name and balance).
  */
 export function typeLine(row: TypeLineInput): string | null {
-  const subtypeLabel = row.accountSubtype ? ACCOUNT_SUBTYPE_LABEL[row.accountSubtype] : undefined;
-  const label = subtypeLabel ?? TYPE_LABEL[row.type] ?? row.type;
+  const label = typeLabel(row);
   const baseType = label.trim().toLowerCase() === row.name.trim().toLowerCase() ? null : label;
   const jointLabel = jointShareLabel(row);
   if (baseType && jointLabel) return `${baseType} · ${jointLabel}`;

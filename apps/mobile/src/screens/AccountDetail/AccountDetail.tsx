@@ -17,6 +17,7 @@ import {
   ACCOUNT,
   accountChartSummary,
   accountMonthNote,
+  accountTypeSubtitle,
   balanceDateLine,
   heroSentences,
   pointMonth,
@@ -168,8 +169,14 @@ function Loaded({ detail, links }: { detail: Detail; links: AccountDetailProps["
     balanceDateLine(detail.current, hero.month),
     detail.notCounted ? ACCOUNT.notCounted : null,
   );
+  const typeSubtitle = accountTypeSubtitle({ ...account, name: detail.name });
   return (
     <>
+      {typeSubtitle ? (
+        <Text color="secondary" testID="account-type">
+          {typeSubtitle}
+        </Text>
+      ) : null}
       <HeroFigure
         label={owed ? ACCOUNT.owedLabel : ACCOUNT.balanceLabel}
         value={hero.balance}
