@@ -380,4 +380,36 @@ describe("Screen", () => {
     );
     expect(refreshControl()).toBeUndefined();
   });
+
+  it("renders overlay outside the scroll view in an absolute container without top safe-area padding", async () => {
+    await render(
+      <ThemeProvider scheme="light">
+        <Screen
+          testID="s"
+          edges={["top", "right", "bottom", "left"]}
+          overlay={<Text testID="floating">Saved</Text>}
+        >
+          <Text>Body</Text>
+        </Screen>
+      </ThemeProvider>,
+    );
+    const tree = screen.toJSON() as unknown as Tree;
+    expect(tree.children).toHaveLength(2);
+    expect(tree.children[0]?.type).toBe("RCTScrollView");
+    const overlay = screen.getByTestId("s-overlay");
+    expect(flat(overlay.props.style)).toMatchObject({
+      position: "absolute",
+      bottom: 0,
+      left: 0,
+      right: 0,
+    });
+    expect(overlay.props.edges).toEqual({
+      top: "off",
+      right: "additive",
+      bottom: "additive",
+      left: "additive",
+    });
+    expect(overlay.props.pointerEvents).toBe("box-none");
+    expect(screen.getByTestId("floating")).toBeOnTheScreen();
+  });
 });
