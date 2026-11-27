@@ -47,6 +47,31 @@ describe("BudgetEntryForm", () => {
     expect(onSave).not.toHaveBeenCalled();
   });
 
+  it("an amount at or over the backend's limit names the field and sends nothing; just below goes", async () => {
+    // Device check: 99999999999999 sent nothing and said only "We could not add that entry".
+    // The contract's Money is below 10 billion: 10,000,000,000 is on the limit, 9,999,999,999.99 under it.
+    const onSave = jest.fn();
+    const onTry = jest.fn();
+    await draw({ ...budgetEntryFormStates.add, onSave, onTry });
+    const user = userEvent.setup();
+    await user.type(screen.getByLabelText("Name"), "Water");
+    const amount = screen.getByLabelText("Amount");
+    for (const typed of ["99999999999999", "10000000000"]) {
+      await user.clear(amount);
+      await user.type(amount, typed);
+      await user.press(screen.getByRole("button", { name: "Save" }));
+      expect(screen.getByText("Enter an amount below £10,000,000,000.")).toBeOnTheScreen();
+    }
+    expect(onSave).not.toHaveBeenCalled();
+    await user.clear(amount);
+    await user.type(amount, "9999999999.99");
+    await user.press(screen.getByRole("button", { name: "Save" }));
+    expect(screen.queryByText("Enter an amount below £10,000,000,000.")).toBeNull();
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ amount: 9999999999.99 }));
+    // Every press told the screen, so it can clear the last save's error first.
+    expect(onTry).toHaveBeenCalledTimes(3);
+  });
+
   it("a name of spaces only is no name", async () => {
     const onSave = jest.fn();
     await draw({ ...budgetEntryFormStates.add, onSave });
