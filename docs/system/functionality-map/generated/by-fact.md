@@ -106,6 +106,7 @@
 | `account-rate`                    | `web.self-assessment.calculated-figures`             | web/self-assessment             | `/app/self-assessment`         |
 | `account-type`                    | `mobile.mobile-account-detail.hero`                  | mobile/mobile-account-detail    | `/accounts/:id`                |
 | `account-type`                    | `mobile.mobile-accounts.accounts-lists`              | mobile/mobile-accounts          | `/accounts`                    |
+| `account-type`                    | `mobile.mobile-settings-profile.net-worth-choices`   | mobile/mobile-settings-profile  | `/settings/profile`            |
 | `account-type`                    | `web.account-detail.edit-account-dialog`             | web/account-detail              | `/app/accounts/:account`       |
 | `account-type`                    | `web.account-detail.hero`                            | web/account-detail              | `/app/accounts/:account`       |
 | `account-type`                    | `web.accounts.accounts-lists`                        | web/accounts                    | `/app/accounts`                |
@@ -164,6 +165,7 @@
 | `card-limit-and-zero-percent-end` | `web.debt.debt-dialog`                               | web/debt                        | `/app/debt`                    |
 | `card-limit-and-zero-percent-end` | `web.debt.debts-list`                                | web/debt                        | `/app/debt`                    |
 | `card-limit-and-zero-percent-end` | `web.debt.hero-and-kpis`                             | web/debt                        | `/app/debt`                    |
+| `check-in-day`                    | `mobile.mobile-settings-profile.check-in-day`        | mobile/mobile-settings-profile  | `/settings/profile`            |
 | `check-in-day`                    | `mobile.sign-in.check-in-row`                        | mobile/sign-in                  | `/`                            |
 | `check-in-day`                    | `web.dashboard.housekeeping`                         | web/dashboard                   | `/`                            |
 | `check-in-day`                    | `web.history.history-chart`                          | web/history                     | `/app/accounts/history`        |
@@ -184,6 +186,8 @@
 | `employment-type`                 | `web.self-assessment.mtd-notice`                     | web/self-assessment             | `/app/self-assessment`         |
 | `employment-type`                 | `web.settings.age-and-pay`                           | web/settings                    | `/app/profile`                 |
 | `employment-type`                 | `web.take-home.hero-and-kpis`                        | web/take-home                   | `/app/take-home`               |
+| `enabled-pages-and-widgets`       | `mobile.mobile-more.list`                            | mobile/mobile-more              | `/more`                        |
+| `enabled-pages-and-widgets`       | `mobile.mobile-settings-profile.sections`            | mobile/mobile-settings-profile  | `/settings/profile`            |
 | `enabled-pages-and-widgets`       | `web.dashboard.housekeeping`                         | web/dashboard                   | `/`                            |
 | `enabled-pages-and-widgets`       | `web.dashboard.sections-grid`                        | web/dashboard                   | `/`                            |
 | `enabled-pages-and-widgets`       | `web.dashboard.visibility-sheet`                     | web/dashboard                   | `/`                            |
@@ -228,12 +232,14 @@
 | `mortgage-term-and-fix-end`       | `web.mortgage.hero-and-kpis`                         | web/mortgage                    | `/app/mortgage`                |
 | `mortgage-term-and-fix-end`       | `web.mortgage.scenario-zone`                         | web/mortgage                    | `/app/mortgage`                |
 | `mortgage-term-and-fix-end`       | `web.retirement.hero`                                | web/retirement                  | `/app/retirement`              |
+| `name-and-avatar`                 | `mobile.mobile-settings-profile.details`             | mobile/mobile-settings-profile  | `/settings/profile`            |
 | `net-worth-choices`               | `mobile.check-in.cards`                              | mobile/check-in                 | `/check-in`                    |
 | `net-worth-choices`               | `mobile.check-in.summary`                            | mobile/check-in                 | `/check-in`                    |
 | `net-worth-choices`               | `mobile.mobile-account-detail.hero`                  | mobile/mobile-account-detail    | `/accounts/:id`                |
 | `net-worth-choices`               | `mobile.mobile-accounts.accounts-lists`              | mobile/mobile-accounts          | `/accounts`                    |
 | `net-worth-choices`               | `mobile.mobile-accounts.net-worth-summary`           | mobile/mobile-accounts          | `/accounts`                    |
 | `net-worth-choices`               | `mobile.mobile-net-worth-history.hero`               | mobile/mobile-net-worth-history | `/accounts/history`            |
+| `net-worth-choices`               | `mobile.mobile-settings-profile.net-worth-choices`   | mobile/mobile-settings-profile  | `/settings/profile`            |
 | `net-worth-choices`               | `web.account-detail.hero`                            | web/account-detail              | `/app/accounts/:account`       |
 | `net-worth-choices`               | `web.accounts.accounts-lists`                        | web/accounts                    | `/app/accounts`                |
 | `net-worth-choices`               | `web.accounts.net-worth-summary`                     | web/accounts                    | `/app/accounts`                |

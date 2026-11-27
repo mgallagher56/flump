@@ -9,7 +9,8 @@ import { createStyles } from "./ListRow.styles";
 
 export interface ListRowProps {
   label: string;
-  icon: IconName;
+  /** Left out where the list has no icons (the Settings list, E12 S9). */
+  icon?: IconName;
   onPress(): void;
   /** `link` for a row that opens a page (the default); `button` for an action such as Sign out. */
   accessibilityRole?: "link" | "button";
@@ -36,7 +37,7 @@ export function ListRow({
       style={({ pressed }) => [styles.row, pressed ? styles.pressed : null]}
       onPress={onPress}
     >
-      <Icon name={icon} />
+      {icon ? <Icon name={icon} /> : null}
       <Text style={styles.label}>{label}</Text>
       {accessibilityRole === "link" ? (
         <View style={styles.end}>

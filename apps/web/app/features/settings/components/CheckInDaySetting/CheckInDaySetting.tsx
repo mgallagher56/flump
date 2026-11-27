@@ -3,6 +3,7 @@ import {
   Card,
   controlProps,
   FormField,
+  ordinalDay,
   PageSection,
   Select,
   type SelectOption,
@@ -23,12 +24,8 @@ export const CHECK_IN_DAY_HINT =
 export const CHECK_IN_DAY_SAVED = "Saved";
 export const CHECK_IN_DAY_ERROR = "We could not save that change. Nothing has changed. Try again.";
 
-const ORDINAL_SUFFIX: Record<string, string> = { one: "st", two: "nd", few: "rd", other: "th" };
-const ordinalRules = new Intl.PluralRules("en-GB", { type: "ordinal" });
-
-/** "1st", "2nd", "3rd", "11th", "22nd", "31st" (en-GB). */
-export const ordinalDay = (day: number): string =>
-  `${day}${ORDINAL_SUFFIX[ordinalRules.select(day)] ?? "th"}`;
+/** "1st" to "31st", from `@flump/format` so the mobile app lists the same days (E12 S9). */
+export { ordinalDay };
 
 const DAY_OPTIONS: readonly SelectOption[] = CHECK_IN_DAYS.map((day) => ({
   value: String(day),

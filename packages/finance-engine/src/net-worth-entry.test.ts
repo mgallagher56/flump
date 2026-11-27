@@ -32,6 +32,8 @@ describe("the net worth entry", () => {
       "selectNetWorth",
       "PortfolioSnapshot",
       "selectSavedNetWorthSeries",
+      // The settings page offers only the choices that change a figure (E12 S9).
+      "netWorthChoicesAvailable",
     ]) {
       expect(typeof (entry as Record<string, unknown>)[name]).toBe("function");
     }

@@ -2,6 +2,7 @@ import {
   INITIAL_STATE,
   type SessionEvent,
   type SessionState,
+  sessionHoldsData,
   sessionReducer,
 } from "./sessionMachine";
 
@@ -15,6 +16,8 @@ const S = {
   notInvited: { status: "notInvited" },
   termsRequired: { status: "termsRequired" },
   signingOut: { status: "signingOut" },
+  deletionPending: { status: "deletionPending" },
+  accountDeleted: { status: "accountDeleted" },
 } satisfies Record<SessionState["status"], SessionState>;
 
 const ALL = Object.values(S) as SessionState[];
@@ -68,6 +71,19 @@ describe("sessionReducer", () => {
     [S.notInvited, { type: "SIGN_OUT_STARTED" }, S.signingOut],
     [S.sessionEnded, { type: "SIGN_OUT_STARTED" }, S.signingOut],
     [S.signingOut, { type: "SIGNED_OUT" }, S.signedOut],
+    // Account deletion (E12 S9): an erased account found on launch, at sign-in or mid-session.
+    [S.loading, { type: "DELETION_PENDING" }, S.deletionPending],
+    [S.signingIn, { type: "DELETION_PENDING" }, S.deletionPending],
+    [S.signedIn, { type: "DELETION_PENDING" }, S.deletionPending],
+    [S.notInvited, { type: "DELETION_PENDING" }, S.deletionPending],
+    [S.termsRequired, { type: "DELETION_PENDING" }, S.deletionPending],
+    [S.signedIn, { type: "ACCOUNT_DELETED" }, S.accountDeleted],
+    [S.notInvited, { type: "ACCOUNT_DELETED" }, S.accountDeleted],
+    [S.termsRequired, { type: "ACCOUNT_DELETED" }, S.accountDeleted],
+    [S.deletionPending, { type: "ACCOUNT_DELETED" }, S.accountDeleted],
+    [S.deletionPending, { type: "SESSION_ENDED" }, S.sessionEnded],
+    [S.deletionPending, { type: "SIGN_OUT_STARTED" }, S.signingOut],
+    [S.accountDeleted, { type: "DELETION_ACKNOWLEDGED" }, S.signedOut],
   ])("%j + %j -> %j", (from, event, to) => {
     expect(sessionReducer(from, event)).toEqual(to);
   });
@@ -101,6 +117,18 @@ describe("sessionReducer", () => {
       "notInvited:SIGN_OUT_STARTED",
       "sessionEnded:SIGN_OUT_STARTED",
       "signingOut:SIGNED_OUT",
+      "loading:DELETION_PENDING",
+      "signingIn:DELETION_PENDING",
+      "signedIn:DELETION_PENDING",
+      "notInvited:DELETION_PENDING",
+      "termsRequired:DELETION_PENDING",
+      "signedIn:ACCOUNT_DELETED",
+      "notInvited:ACCOUNT_DELETED",
+      "termsRequired:ACCOUNT_DELETED",
+      "deletionPending:ACCOUNT_DELETED",
+      "deletionPending:SESSION_ENDED",
+      "deletionPending:SIGN_OUT_STARTED",
+      "accountDeleted:DELETION_ACKNOWLEDGED",
     ]);
     const events: SessionEvent[] = [
       { type: "NO_SESSION" },
@@ -115,6 +143,9 @@ describe("sessionReducer", () => {
       { type: "SESSION_ENDED" },
       { type: "SIGN_OUT_STARTED" },
       { type: "SIGNED_OUT" },
+      { type: "DELETION_PENDING" },
+      { type: "ACCOUNT_DELETED" },
+      { type: "DELETION_ACKNOWLEDGED" },
     ];
     for (const state of ALL) {
       for (const event of events) {
@@ -122,5 +153,12 @@ describe("sessionReducer", () => {
         expect(sessionReducer(state, event)).toBe(state);
       }
     }
+  });
+});
+
+describe("sessionHoldsData", () => {
+  it("is true only while signed in or restored offline: every other state drops the cache", () => {
+    const holding = ALL.filter((state) => sessionHoldsData(state.status)).map((s) => s.status);
+    expect(holding.sort()).toEqual(["restoredOffline", "signedIn"]);
   });
 });

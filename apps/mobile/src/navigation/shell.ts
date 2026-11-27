@@ -46,8 +46,12 @@ export const SET_UP_WEB_ROUTE = "/app/onboarding";
 
 /** Web's accounts page, where an account is added until the app can (S8). */
 export const ADD_ACCOUNT_WEB_ROUTE = "/app/accounts";
-/** Web's net worth choices in Settings (`NET_WORTH_SETTINGS_HREF`), until the app has them (S9). */
-export const NET_WORTH_SETTINGS_WEB_ROUTE = "/app/profile?tab=profile#net-worth";
+/** The app's own net worth choices: Settings, Profile, opened at the group (E12 S9). */
+export const NET_WORTH_SETTINGS_ROUTE = "/settings/profile?focus=net-worth";
+/** Web's Profile settings, where the rest of the profile is changed (E12 S9). */
+export const PROFILE_SETTINGS_WEB_ROUTE = "/app/profile?tab=profile";
+/** Web's Security settings, where the password is changed: the app never takes one (E12 S9). */
+export const SECURITY_SETTINGS_WEB_ROUTE = "/app/profile?tab=security";
 /** Web's form for adding the home's value (`ADD_HOME_VALUE_HREF`), until the app has it (S8). */
 export const ADD_HOME_VALUE_WEB_ROUTE = "/app/accounts?add=property";
 /** Web's budget page, where a budget and its spending are added until the app has it (S10). */

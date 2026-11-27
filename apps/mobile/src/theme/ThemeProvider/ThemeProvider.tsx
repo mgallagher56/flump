@@ -9,8 +9,21 @@ import {
   spacing,
   textStyles,
 } from "@flump/tokens/native";
-import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from "react";
+import {
+  createContext,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { Appearance, AppState, type ColorSchemeName } from "react-native";
+import {
+  memoryThemePreferenceStore,
+  type ThemePreference,
+  type ThemePreferenceStore,
+} from "../../device/themePreference";
 
 type ColorScheme = "light" | "dark";
 
@@ -53,11 +66,27 @@ const ThemeContext = createContext<Theme | null>(null);
 
 export interface ThemeProviderProps {
   children: ReactNode;
-  /** Forces a scheme. Leave unset to follow the system setting, the only mode until the stored theme choice lands. */
+  /**
+   * Forces a scheme (the gallery's panels and tests). Leave unset to follow the stored choice: Light,
+   * Dark, or System, which follows the phone's setting.
+   */
   scheme?: ColorScheme;
   /** Dev gallery and tests only: draws text at this multiple of its token size (2 is 200%). */
   textScale?: number;
+  /**
+   * Where the choice is kept: the secure store in the app (`app/_layout.tsx`). Left out, the choice
+   * lives in memory and starts at System.
+   */
+  store?: ThemePreferenceStore;
 }
+
+/** The person's choice and the one way to change it, for the header button and Settings. */
+export interface ThemeChoice {
+  readonly preference: ThemePreference;
+  setPreference(preference: ThemePreference): void;
+}
+
+const ThemeChoiceContext = createContext<ThemeChoice | null>(null);
 
 /**
  * The system light or dark setting, live. One value that two sources write: React Native's change
@@ -65,8 +94,9 @@ export interface ThemeProviderProps {
  * to the front, because a change made in the phone's settings while the app was in the background
  * was not heard until a restart on an Android 17 emulator (device check, 26 November 2026).
  */
-function useSystemScheme(): ColorSchemeName | null {
+function useSystemScheme(): [ColorSchemeName | null, () => void] {
   const [scheme, setScheme] = useState<ColorSchemeName | null>(() => Appearance.getColorScheme());
+  const reread = useCallback(() => setScheme(Appearance.getColorScheme()), []);
   useEffect(() => {
     const appearance = Appearance.addChangeListener(({ colorScheme }) => setScheme(colorScheme));
     const appState = AppState.addEventListener("change", (state) => {
@@ -77,20 +107,60 @@ function useSystemScheme(): ColorSchemeName | null {
       appState.remove();
     };
   }, []);
-  return scheme;
+  return [scheme, reread];
 }
 
 /**
- * Follows the system light or dark setting. React Native reads the setting before the first render,
- * so the first frame already has the right colours.
+ * Tells React Native the app's choice, so the platform's alerts and the keyboard match it: "auto"
+ * for System removes the override and follows the phone again.
  */
-export function ThemeProvider({ children, scheme, textScale = 1 }: ThemeProviderProps) {
-  const system = useSystemScheme();
-  const resolved: ColorScheme = scheme ?? (system === "dark" ? "dark" : "light");
+function applyToPlatform(preference: ThemePreference) {
+  if (typeof Appearance.setColorScheme !== "function") return;
+  Appearance.setColorScheme(preference === "system" ? "auto" : preference);
+}
+
+/**
+ * Follows the person's colour theme choice (E12 S9): Light, Dark, or System, which follows the
+ * phone's setting live. The stored choice is read synchronously and React Native reads the phone's
+ * setting before the first render, so the first frame already has the right colours.
+ */
+export function ThemeProvider({ children, scheme, textScale = 1, store }: ThemeProviderProps) {
+  const [choices] = useState(() => store ?? memoryThemePreferenceStore());
+  const [preference, setStored] = useState<ThemePreference>(() => choices.read());
+  const [system, rereadSystem] = useSystemScheme();
+  const followed: ColorScheme =
+    preference === "system" ? (system === "dark" ? "dark" : "light") : preference;
+  const resolved: ColorScheme = scheme ?? followed;
+  // Only the provider that follows the choice tells the platform; a forced preview does not.
+  useEffect(() => {
+    if (scheme) return;
+    applyToPlatform(preference);
+    // Back to System: React Native now reports the phone's own setting again.
+    if (preference === "system") rereadSystem();
+  }, [preference, scheme, rereadSystem]);
+  const setPreference = useCallback(
+    (next: ThemePreference) => {
+      setStored(next);
+      void choices.write(next);
+    },
+    [choices],
+  );
+  const choice = useMemo(() => ({ preference, setPreference }), [preference, setPreference]);
   // A release build ignores the preview scale, so no screen can stop following the phone's text size.
   const scale = __DEV__ ? textScale : 1;
   const theme = useMemo(() => buildTheme(resolved, scale), [resolved, scale]);
-  return <ThemeContext.Provider value={theme}>{children}</ThemeContext.Provider>;
+  return (
+    <ThemeChoiceContext.Provider value={choice}>
+      <ThemeContext.Provider value={theme}>{children}</ThemeContext.Provider>
+    </ThemeChoiceContext.Provider>
+  );
+}
+
+/** The colour theme choice: System, Light or Dark, and the way to change it. */
+export function useThemeChoice(): ThemeChoice {
+  const choice = useContext(ThemeChoiceContext);
+  if (!choice) throw new Error("useThemeChoice must be used inside ThemeProvider");
+  return choice;
 }
 
 export function useTheme(): Theme {

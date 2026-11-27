@@ -38,6 +38,29 @@ describe("createAccountCheck", () => {
     expect(await createAccountCheck(client)()).toBe("terms-not-accepted");
   });
 
+  it("a 410 account_deleted is account-deleted, never unavailable (E12 S9)", async () => {
+    const client = clientThat(async () => {
+      const error = new BackendError("client", "/user-profile", 410);
+      error.code = "account_deleted";
+      throw error;
+    });
+    expect(await createAccountCheck(client)()).toBe("account-deleted");
+  });
+
+  it("a 410 with another code, or another status with that code, stays unavailable", async () => {
+    for (const [status, code] of [
+      [410, "gone"],
+      [400, "account_deleted"],
+    ] as const) {
+      const client = clientThat(async () => {
+        const error = new BackendError("client", "/user-profile", status);
+        error.code = code;
+        throw error;
+      });
+      expect(await createAccountCheck(client)()).toBe("unavailable");
+    }
+  });
+
   it("anything that is not a backend error is unavailable", async () => {
     const client = clientThat(async () => {
       throw new TypeError("boom");

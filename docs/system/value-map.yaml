@@ -3188,3 +3188,22 @@ browser_storage:
       path: apps/mobile/src/auth/tokenStore.ts,
       note: "mobile app (E12 S2a): the WorkOS refresh token, the only value the app stores; iOS Keychain when unlocked, this device only, Android Keystore-encrypted and left out of Auto Backup; deleted on sign-out, a rejected refresh and a refused fresh token; kept by hand, as the scanner does not read apps/mobile until S7",
     }
+  - {
+      key: flump.theme,
+      storage: secureStore,
+      user_data: false,
+      path: apps/mobile/src/device/themePreference.ts,
+      note: "mobile app (E12 S9): light or dark, absent for System, as web's flump-theme; the secure store only because it is the app's one store; kept through sign-out; kept by hand, as the scanner does not read apps/mobile until S7",
+    }
+  - {
+      key: flump.device-lock,
+      storage: secureStore,
+      user_data: false,
+      path: apps/mobile/src/device/storageKeys.ts,
+      note: 'mobile app (E12 S9): "on" while app lock is switched on, absent otherwise; a screen gate on this phone only; cleared on sign-out, session end, deletion and a reinstall; the check follows it from apps/mobile/src/auth since S9',
+    }
+  # Not a storage key, so not an entry (the scanner finds keys only): the mobile app's data export
+  # (E12 S9, apps/mobile/src/data/exportData.ts) is downloaded to exports/flump-export-<date>.json in
+  # the app's cache folder (out of backups, never shared storage), holds every figure the person
+  # has, lives only while the share sheet is open, is deleted when it closes, and the folder is
+  # swept on launch, sign-out and deletion.

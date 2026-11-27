@@ -110,6 +110,18 @@ describe("Button", () => {
     expect(pressedStyle(true, "android")).toBeNull();
   });
 
+  it("a link's words line up on the left when they wrap; other buttons stay centred", async () => {
+    // Device check at 200% text: "Cookies and browser storage" wrapped centred under left links.
+    await render(
+      <ThemeProvider scheme="light">
+        <Button label="Cookies and browser storage" variant="link" accessibilityRole="link" />
+        <Button label="Save" />
+      </ThemeProvider>,
+    );
+    expect(labelOf("Cookies and browser storage").textAlign).toBe("left");
+    expect(labelOf("Save").textAlign).toBe("center");
+  });
+
   it("link variant can be announced as a link", async () => {
     await render(
       <ThemeProvider scheme="light">

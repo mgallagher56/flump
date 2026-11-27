@@ -1,0 +1,81 @@
+# E12 S9: Delete your account. From Settings, Data: the danger button waits for the typed phrase,
+# then the deletion wipes the device and the confirmation replaces the app. After a relaunch the
+# sign-in screen shows, so nothing of the session was left on the phone. No retries.
+appId: app.flump.mobile
+---
+- runScript:
+    file: ../scripts/fixture.js
+    env:
+      SCENARIO: "{}"
+- runFlow: ../subflows/launch-signed-out.yaml
+- runFlow: ../subflows/sign-in-to-home.yaml
+- tapOn:
+    id: "tab-more"
+- scrollUntilVisible:
+    element:
+      id: "more-row-settings"
+    direction: DOWN
+    timeout: 10000
+- tapOn:
+    id: "more-row-settings"
+- extendedWaitUntil:
+    visible:
+      id: "settings-row-data"
+    timeout: 10000
+- tapOn:
+    id: "settings-row-data"
+- scrollUntilVisible:
+    element:
+      id: "delete-account-open"
+    direction: DOWN
+    timeout: 10000
+- tapOn:
+    id: "delete-account-open"
+# The list of what goes fills the first screen, so the phrase field and the button sit below it.
+- scrollUntilVisible:
+    element:
+      id: "delete-account-confirm-field"
+    direction: DOWN
+    timeout: 10000
+- scrollUntilVisible:
+    element:
+      id: "delete-account-confirm-confirm"
+    direction: DOWN
+    timeout: 10000
+- assertVisible:
+    id: "delete-account-confirm-confirm"
+    enabled: false
+- scrollUntilVisible:
+    element:
+      id: "delete-account-confirm-field"
+    direction: UP
+    timeout: 10000
+- tapOn:
+    id: "delete-account-confirm-field"
+- inputText: "DELETE"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "delete-account-confirm-confirm"
+    direction: DOWN
+    timeout: 10000
+- assertVisible:
+    id: "delete-account-confirm-confirm"
+    enabled: true
+- tapOn:
+    id: "delete-account-confirm-confirm"
+- extendedWaitUntil:
+    visible: "Your account has been deleted"
+    timeout: 40000
+- takeScreenshot: account-deleted-${THEME}
+- runScript:
+    file: ../scripts/assert-account-data.js
+    env:
+      DELETIONS: "1"
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible: "Create account"
+    timeout: 60000
+- assertNotVisible:
+    id: "home"

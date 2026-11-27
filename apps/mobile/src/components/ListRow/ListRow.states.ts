@@ -7,4 +7,5 @@ export const listRowStates = {
   page: { label: "Pension", icon: "coins", onPress: noop },
   longLabel: { label: "Savings and pension", icon: "piggy-bank", onPress: noop },
   action: { label: "Sign out", icon: "log-out", onPress: noop, accessibilityRole: "button" },
+  noIcon: { label: "This phone", onPress: noop },
 } satisfies Record<string, ListRowProps>;

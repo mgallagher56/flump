@@ -42,9 +42,12 @@ describe("<SecurityTab />", () => {
     expect(screen.queryByText("Verified")).toBeNull();
   });
 
-  it("says Not set rather than inventing an email", () => {
+  it("with no email in the sign-in token, says it cannot be shown rather than inventing one", () => {
+    // An account always has an email; the token may carry no email claim (E12 S9 device check).
     render(<SecurityTab email={null} />);
-    expect(screen.getByTestId("user-email-display").textContent).toContain("Not set");
+    expect(screen.getByTestId("user-email-display").textContent).toBe(
+      "Your email cannot be shown here right now.",
+    );
     expect(screen.queryByText("Verified")).toBeNull();
   });
 

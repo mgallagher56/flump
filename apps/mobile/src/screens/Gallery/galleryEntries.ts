@@ -5,6 +5,8 @@ import { AccountRow } from "../../components/AccountRow";
 import { accountRowStates } from "../../components/AccountRow/AccountRow.states";
 import { AppHeader } from "../../components/AppHeader";
 import { appHeaderStates } from "../../components/AppHeader/AppHeader.states";
+import { AppLockSetting } from "../../components/AppLockSetting";
+import { appLockSettingStates } from "../../components/AppLockSetting/AppLockSetting.states";
 import { Button } from "../../components/Button";
 import { buttonStates } from "../../components/Button/Button.states";
 import { Card } from "../../components/Card";
@@ -24,6 +26,8 @@ import { EmptyState } from "../../components/EmptyState";
 import { emptyStateStates } from "../../components/EmptyState/EmptyState.states";
 import { ErrorState } from "../../components/ErrorState";
 import { errorStateStates } from "../../components/ErrorState/ErrorState.states";
+import { ExportDataSection } from "../../components/ExportDataSection";
+import { exportDataSectionStates } from "../../components/ExportDataSection/ExportDataSection.states";
 import { FlumpLogo } from "../../components/FlumpLogo";
 import { flumpLogoStates } from "../../components/FlumpLogo/FlumpLogo.states";
 import { FormField } from "../../components/FormField";
@@ -44,6 +48,11 @@ import { NetWorthBasisLine } from "../../components/NetWorthBasisLine";
 import { netWorthBasisLineStates } from "../../components/NetWorthBasisLine/NetWorthBasisLine.states";
 import { NetWorthTrendBars } from "../../components/NetWorthTrendBars";
 import { netWorthTrendBarsStates } from "../../components/NetWorthTrendBars/NetWorthTrendBars.states";
+import { OptionList } from "../../components/OptionList";
+import type { OptionListProps } from "../../components/OptionList/OptionList";
+import { optionListStates } from "../../components/OptionList/OptionList.states";
+import { PhraseConfirm } from "../../components/PhraseConfirm";
+import { phraseConfirmStates } from "../../components/PhraseConfirm/PhraseConfirm.states";
 import { Pressable } from "../../components/Pressable";
 import { pressableStates } from "../../components/Pressable/Pressable.states";
 import { Screen } from "../../components/Screen";
@@ -52,12 +61,18 @@ import { Skeleton } from "../../components/Skeleton";
 import { skeletonStates } from "../../components/Skeleton/Skeleton.states";
 import { StatusBadge } from "../../components/StatusBadge";
 import { statusBadgeStates } from "../../components/StatusBadge/StatusBadge.states";
+import { Switch } from "../../components/Switch";
+import { switchStates } from "../../components/Switch/Switch.states";
 import { TabBar } from "../../components/TabBar";
 import { tabBarStates } from "../../components/TabBar/TabBar.states";
 import { TaxRatesStatusBanner } from "../../components/TaxRatesStatusBanner";
 import { taxRatesStatusBannerStates } from "../../components/TaxRatesStatusBanner/TaxRatesStatusBanner.states";
 import { Text } from "../../components/Text";
 import { textStates } from "../../components/Text/Text.states";
+import { TextField } from "../../components/TextField";
+import { textFieldStates } from "../../components/TextField/TextField.states";
+import { ThemeCycleButton } from "../../components/ThemeCycleButton";
+import { themeCycleButtonStates } from "../../components/ThemeCycleButton/ThemeCycleButton.states";
 import { Toast } from "../../components/Toast";
 import { toastStates } from "../../components/Toast/Toast.states";
 
@@ -140,4 +155,11 @@ export const GALLERY: readonly GalleryEntry[] = [
   entry("DataList", DataList, dataListStates),
   entry("ChartFigure", ChartFigure, chartFigureStates),
   entry("CollapsibleDrawer", CollapsibleDrawer, collapsibleDrawerStates),
+  entry("Switch", Switch, switchStates),
+  entry("OptionList", OptionList as ComponentType<OptionListProps<string>>, optionListStates),
+  entry("TextField", TextField, textFieldStates),
+  entry("ThemeCycleButton", ThemeCycleButton, themeCycleButtonStates),
+  entry("ExportDataSection", ExportDataSection, exportDataSectionStates),
+  entry("PhraseConfirm", PhraseConfirm, phraseConfirmStates),
+  entry("AppLockSetting", AppLockSetting, appLockSettingStates),
 ];

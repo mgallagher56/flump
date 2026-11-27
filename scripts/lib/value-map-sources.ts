@@ -359,7 +359,7 @@ function importedValues(
 
 /** The first argument of a Storage call: a literal, a template with a literal start, or a name. */
 const STORAGE_CALL =
-  /\b(?:getItem|setItem|removeItem)\(\s*(?:`\$\{\s*([A-Za-z_$][\w$]*)\s*\}|(["'`])([^"'`$\\\n]*)(\$\{)?|([A-Za-z_$][\w$]*)\s*(\+)?)/g;
+  /\b(?:getItem|setItem|removeItem|getItemAsync|setItemAsync|deleteItemAsync)\(\s*(?:`\$\{\s*([A-Za-z_$][\w$]*)\s*\}|(["'`])([^"'`$\\\n]*)(\$\{)?|([A-Za-z_$][\w$]*)\s*(\+)?)/g;
 
 /**
  * The storage and cookie keys in one file, or none when the file touches no storage API. Two

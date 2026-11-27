@@ -10,6 +10,7 @@ import {
   TERMS_REQUIRED_NOTE,
   TRY_AGAIN,
 } from "../../copy/auth";
+import { AccountDataActions } from "../AccountDataActions";
 import { StatusMessage } from "../StatusMessage";
 
 export interface TermsRequiredProps {
@@ -19,6 +20,8 @@ export interface TermsRequiredProps {
   onRetry(): void;
   /** Left out where the screen shows inside a signed-in screen that has its own way out. */
   onSignOut?: () => void;
+  /** Opens "Delete your account" (E12 S9); with it, "Download your data" shows too. */
+  onDeleteAccount?: () => void;
   /** Safe-area edges; inside a tab, the header and tab bar pad the top and bottom. */
   edges?: readonly Edge[];
 }
@@ -28,7 +31,13 @@ export interface TermsRequiredProps {
  * agreed. The phone does not show or record the agreement: it sends the person to the website, then
  * checks again. A plain way on, not an error.
  */
-export function TermsRequired({ marketingOrigin, onRetry, onSignOut, edges }: TermsRequiredProps) {
+export function TermsRequired({
+  marketingOrigin,
+  onRetry,
+  onSignOut,
+  onDeleteAccount,
+  edges,
+}: TermsRequiredProps) {
   return (
     <StatusMessage heading={TERMS_REQUIRED_HEADING} body={TERMS_REQUIRED_BODY} edges={edges}>
       <Button
@@ -40,6 +49,7 @@ export function TermsRequired({ marketingOrigin, onRetry, onSignOut, edges }: Te
       />
       <Button label={TRY_AGAIN} variant="secondary" testID="terms-retry" onPress={onRetry} />
       <Text color="secondary">{TERMS_REQUIRED_NOTE}</Text>
+      {onDeleteAccount ? <AccountDataActions onOpenDelete={onDeleteAccount} /> : null}
       {onSignOut ? <Button label={SIGN_OUT} variant="ghost" onPress={onSignOut} /> : null}
     </StatusMessage>
   );

@@ -144,3 +144,18 @@ export function formatDuration(
   if (rest > 0 || years === 0) parts.push(plural(rest, "month"));
   return parts.join(" ");
 }
+
+/**
+ * A day of the month as an en-GB ordinal: "1st", "2nd", "3rd", "11th", "22nd", "31st". Plain rules
+ * rather than `Intl.PluralRules`, which Hermes on Android does not always carry, so web and the
+ * mobile app share one list of check-in days.
+ */
+export function ordinalDay(day: number): string {
+  const lastTwo = day % 100;
+  if (lastTwo >= 11 && lastTwo <= 13) return `${day}th`;
+  const last = day % 10;
+  if (last === 1) return `${day}st`;
+  if (last === 2) return `${day}nd`;
+  if (last === 3) return `${day}rd`;
+  return `${day}th`;
+}

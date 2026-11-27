@@ -1,0 +1,1 @@
+export { SettingsPhone } from "./SettingsPhone";

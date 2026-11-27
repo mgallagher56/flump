@@ -27,14 +27,12 @@ import { TermsRequired } from "../TermsRequired";
 /** Home sits under the tab header and above the tab bar, which pad the top and bottom. */
 const TAB_EDGES = ["right", "left"] as const;
 
-/** The website pages Home links to until the app has them (S8, S9, S10). */
+/** The website pages Home links to until the app has them (S8, S10). */
 export interface HomeWebLinks {
   /** Web's onboarding, for a person who has not finished setting up. */
   setUp: WebLink;
   /** Where an account is added (S8). */
   addAccount: WebLink;
-  /** The net worth choices in Settings (S9). */
-  changeWhatCounts: WebLink;
   /** Where a home estimate is added (S8). */
   addEstimate: WebLink;
   /** Web's budget page, where a budget is added (S10). */
@@ -52,6 +50,8 @@ export interface HomeProps {
   onOpenCheckIn(): void;
   /** Net worth history (S6), opened from the trend bars and the link under them. */
   onOpenHistory(): void;
+  /** Opens the app's net worth choices (Settings, Profile, E12 S9). */
+  onChangeWhatCounts(): void;
   /** Injected clock for tests. */
   now?: () => Date;
 }
@@ -68,6 +68,7 @@ export function Home({
   onSignOut,
   onOpenCheckIn,
   onOpenHistory,
+  onChangeWhatCounts,
   marketingOrigin,
   links,
   now = () => new Date(),
@@ -96,6 +97,7 @@ export function Home({
       onOpenCheckIn={onOpenCheckIn}
       onOpenHistory={onOpenHistory}
       onRefresh={onRefresh}
+      onChangeWhatCounts={onChangeWhatCounts}
       now={now}
     />
   );
@@ -108,6 +110,7 @@ function HomeBody({
   onOpenCheckIn,
   onOpenHistory,
   onRefresh,
+  onChangeWhatCounts,
   now,
 }: {
   home: HomeDataState;
@@ -116,6 +119,7 @@ function HomeBody({
   onOpenCheckIn(): void;
   onOpenHistory(): void;
   onRefresh(): Promise<void>;
+  onChangeWhatCounts(): void;
   now: () => Date;
 }) {
   // Nothing for 200 ms, then blocks the hero's and the strip's size for at least 400 ms, on one
@@ -128,7 +132,13 @@ function HomeBody({
       {home.status === "ready" && home.strip.status === "ready" ? (
         <TaxRatesStatusBanner rates={home.strip.value.ratesNotice} />
       ) : null}
-      <NetWorth home={home} links={links} skeleton={skeleton} onOpenHistory={onOpenHistory} />
+      <NetWorth
+        home={home}
+        links={links}
+        skeleton={skeleton}
+        onOpenHistory={onOpenHistory}
+        onChangeWhatCounts={onChangeWhatCounts}
+      />
       <Strip home={home} links={links} skeleton={skeleton} />
       <CheckInRow data={checkIn} onOpen={onOpenCheckIn} now={now} />
     </Screen>
@@ -188,11 +198,13 @@ function NetWorth({
   links,
   skeleton,
   onOpenHistory,
+  onChangeWhatCounts,
 }: {
   home: Exclude<HomeDataState, { status: "notSetUp" }>;
   links: HomeWebLinks;
   skeleton: boolean;
   onOpenHistory(): void;
+  onChangeWhatCounts(): void;
 }) {
   if (home.status === "error") {
     // Never "Add an account" or £0 for a failed read; out of step never blames the connection.
@@ -239,7 +251,6 @@ function NetWorth({
       />
     );
   }
-  const exact = links.changeWhatCounts.exact && links.addEstimate.exact;
   return (
     <>
       <HeroFigure
@@ -272,9 +283,9 @@ function NetWorth({
       ) : null}
       <NetWorthBasisLine
         leftOut={hero.leftOut}
-        onChangeWhatCounts={open(links.changeWhatCounts)}
+        onChangeWhatCounts={onChangeWhatCounts}
         onAddEstimate={open(links.addEstimate)}
-        websiteLabel={exact ? undefined : OPEN_FLUMP_WEBSITE}
+        estimateWebsiteLabel={links.addEstimate.exact ? undefined : OPEN_FLUMP_WEBSITE}
       />
     </>
   );

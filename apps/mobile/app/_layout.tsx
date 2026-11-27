@@ -9,10 +9,12 @@ import {
   type StartProblem,
   useSession,
 } from "../src/auth/SessionProvider";
+import { sessionHoldsData } from "../src/auth/sessionMachine";
 import { loadSignInConfig } from "../src/config";
 import { HOME_TITLE } from "../src/copy/brand";
 import { ApiProvider } from "../src/data/ApiProvider";
 import { createQueryClient } from "../src/data/queryClient";
+import { deviceThemePreferenceStore } from "../src/device/themePreference";
 import { useUpdateRequired } from "../src/features/app-update/useUpdateRequired";
 import { useStackScreenOptions } from "../src/navigation/stackOptions";
 import { UpdateRequired } from "../src/screens/UpdateRequired";
@@ -29,12 +31,14 @@ function startApp(): { app: AppSession | null; problem?: StartProblem } {
   try {
     const config = loadSignInConfig();
     const { createAppSession }: typeof AuthDeps = require("../src/auth/authDeps");
-    const { session, api, checkForUpdate } = createAppSession(config);
+    const { session, api, checkForUpdate, accountData, appLock } = createAppSession(config);
     return {
       app: {
         session,
         api,
         checkForUpdate,
+        accountData,
+        appLock,
         marketingOrigin: config.site.marketingOrigin,
         webAppOrigin: config.site.webAppOrigin,
       },
@@ -87,8 +91,7 @@ function DataLayer({
   children: ReactNode;
 }) {
   const app = useSession();
-  const status = app?.state.status;
-  const signedIn = status === "signedIn" || status === "restoredOffline";
+  const signedIn = app ? sessionHoldsData(app.state.status) : false;
   return (
     <ApiProvider client={app?.api ?? null} queryClient={queryClient} signedIn={signedIn}>
       {children}
@@ -98,9 +101,14 @@ function DataLayer({
 
 export default function RootLayout() {
   const [{ app, problem }] = useState(startApp);
-  const [queryClient] = useState(createQueryClient);
+  // Any read answering 410 account_deleted shows the last step of the deletion (E12 S9).
+  const [queryClient] = useState(() =>
+    createQueryClient({ onAccountDeleted: () => app?.session.deletionPending() }),
+  );
+  // The colour theme choice, read before the first frame and kept through sign-out (E12 S9).
+  const [themeStore] = useState(deviceThemePreferenceStore);
   return (
-    <ThemeProvider>
+    <ThemeProvider store={themeStore}>
       {/* A null app makes the first route say why sign-in is off; dev screens still open. */}
       <SessionProvider app={app} problem={problem}>
         <DataLayer queryClient={queryClient}>

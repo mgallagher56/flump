@@ -20,5 +20,12 @@ export const createStyles = (theme: Theme) =>
     rowWithBack: { paddingLeft: theme.spacing["1"] },
     // The title takes the room left by the button and wraps at large text rather than clip.
     title: { flex: 1, paddingVertical: theme.spacing["2"] },
-    menu: { alignItems: "center", justifyContent: "center", borderRadius: theme.radii.full },
+    // The glyph keeps this padding inside the button: at 200% text the icon fills 48 points, so the
+    // button grows rather than put the glyph against the screen edge (ThemeCycleButton matches).
+    menu: {
+      alignItems: "center",
+      justifyContent: "center",
+      borderRadius: theme.radii.full,
+      padding: theme.spacing["2"],
+    },
   });

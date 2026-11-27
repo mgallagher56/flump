@@ -202,7 +202,7 @@ The generated `ios/` and `android/` folders are not committed (continuous native
 
 Expo Router, file based. `(auth)` for sign-in; `(app)` for the signed-in app with a tab bar whose entries, order and icons equal web's `BOTTOM_BAR_TABS` plus More: **Home, Accounts, Budget, Pay, More**. More is an ordinary fifth tab that opens our own list (the pages web's drawer lists, plus Settings and Connect AI), not the system overflow. S4 chose the JavaScript tab bar with our own `TabBar` over native tabs (`expo-router/native-tabs`): its roles, targets and large-text layout can be tested in Jest, which native tabs cannot (9.7).
 
-Under R4 each top-level screen's header has a menu button that opens the More list, and a light and dark toggle. Both the menu button and the More tab stay (S4, 10.3); the toggle comes with S9.
+Under R4 each top-level screen's header has a menu button that opens the More list, and one button that cycles System, Light and Dark, as web's phone bar (`Header.tsx`, `ThemeToggle`). Both the menu button and the More tab stay (S4, 10.3); the button came with S9.
 
 Deep links use the `flump://` scheme and, later, universal and app links on the website's domain. A link opened while signed out resumes after sign-in and never performs a write.
 
@@ -227,7 +227,7 @@ The four seams, and where each lands:
 
 **Seam budget.** The decision drops the seams if they cost more than about 5 agent-days in all. Each slice that does seam work states its share in its PR description under "Seam cost", and the plan keeps a running total here. Estimate today: seam 1 is a review rule (0), seam 2 is a lint rule in S1b (0.5), seam 3 is D1 (1), seam 4 is the part of S7 beyond a plain cache (1.5): about 3 in all. If the running total passes 5, the coordinator stops the seam work and records the app as plain option (a) in `DECISIONS.md`.
 
-Running total: 0.5 agent-days (S1a 0; S1b 0.5, the data door rule in `biome.json`; S2c 0; S2a 0; S3 0; S2b 0).
+Running total: 0.5 agent-days (S1a 0; S1b 0.5, the data door rule in `biome.json`; S2c 0; S2a 0; S3 0; S2b 0; S9 0).
 
 **The cache (S7).** The last successful responses for the screens in the first release, kept 7 days, labelled with their age, read-only; writes need a connection (round 2, E12 D4-A). Platform facts, CONFIRMED on 25 November 2026:
 
@@ -308,7 +308,7 @@ States: `loading`, then `signedOut`, `signedIn`, `restoredOffline` (refresh toke
 ## 6. Accessibility and the theme on native
 
 - Target WCAG 2.2 AA, read for apps as in WCAG2ICT.
-- `ThemeProvider` reads `@flump/tokens/native` light and dark sets, follows the system scheme by default, remembers a three-way choice (System, Light, Dark) and the header toggle switches light and dark. No flash of the wrong theme on launch: the stored choice is read before the first screen renders.
+- `ThemeProvider` reads `@flump/tokens/native` light and dark sets, follows the system scheme by default, remembers a three-way choice (System, Light, Dark) and the header button cycles the three (S9). No flash of the wrong theme on launch: the stored choice is read before the first screen renders.
 - Token contrast is already tested on the generated values. The S1b components draw only pairs the shared matrix already checks (each button label on its fill, text and status text on every surface, the muted label on the disabled fill); the mobile-only pairs (placeholder, tab icon states) arrive with the input and the tab bar that use them.
 - Each slice's acceptance: 200% text and 320 points wide with nothing clipped; VoiceOver and TalkBack reach and name every control in order; Reduce Motion removes slides and shimmer; nothing needs dragging.
 - Recalculated results are announced without moving focus; in a scenario the announcement starts with "Illustration:".
@@ -379,7 +379,7 @@ Each slice is one PR. Sizes are rough agent-days. "Depends on" names slices, bac
 | S6 | Accounts list, account detail with joint share line, net worth history | S5 | 6 |
 | S7 | Offline reading: SQLCipher cache, age labels, `restoredOffline`, backup exclusion (O5 seam 4) | S6 | 5 |
 | S8 | Add, edit and delete an account, including kind, credit limit and joint marker | S6 | 4 |
-| S9 | Settings: profile, net worth choices, theme, privacy mode, device lock, export, delete account, links to the four legal pages | S5 | 6 |
+| S9 | Settings: profile, net worth choices, theme, app lock, export, delete account, links to the four legal pages | S5 | 8 (hide amounts moved to S18, 27 November 2026) |
 | S10 | Budget | S6 | 6 |
 | S11 | Debt and mortgage | S8 | 8 |
 | S12 | Pension and savings | S8 | 7 |
@@ -388,7 +388,7 @@ Each slice is one PR. Sizes are rough agent-days. "Depends on" names slices, bac
 | S15 | Onboarding | S8, S10 | 4 |
 | S16 | Connect AI: token list, create, revoke | S9 | 3 |
 | S17 | Sandbox with sample households, signed out | S5 | 3 |
-| S18 | Hardening: VoiceOver and TalkBack audits, performance, `security-reviewer` on `src/auth` and `src/data`, offline edge cases | S9 | 8 |
+| S18 | Hardening: VoiceOver and TalkBack audits, performance, `security-reviewer` on `src/auth` and `src/data`, offline edge cases; hide amounts on both platforms with the Android app switcher cover (`FLAG_SECURE`), moved from S9 on 27 November 2026 | S9 | 8 |
 | S19 | Release: profiles, store assets, privacy labels, reviewer account, TestFlight and Play | S18, OS2 to OS8, OS12 to OS16 | 6 |
 | S21 | Retirement | S12 | 5 |
 | S22 | Mortgage estimates (affordability) | S11 | 4 |
@@ -571,7 +571,7 @@ More lists, in web's drawer order: Savings, Pension, Retirement, Cards and loans
 
 - **S5:** the hero (label, figure, the one change line, trend bars) and the line under it saying what the figure leaves out; the check-in row; every state below.
 - **S6:** the Accounts section card, account rows, history. The hero's bars link nowhere until then.
-- **S9:** the two net worth switches. S5 reads `netWorthCountsProperty` and `netWorthCountsStudentLoan` and shows their effect; "Change what counts" opens the website's settings (`/app/profile?tab=profile#net-worth`) until S9. Also "Choose what shows here" and the section order.
+- **S9:** the two net worth switches. S5 reads `netWorthCountsProperty` and `netWorthCountsStudentLoan` and shows their effect; "Change what counts" opens the website's settings (`/app/profile?tab=profile#net-worth`) until S9. "Choose what shows here" and the section order move to S10 with the section cards.
 - **S10 and later:** the two-figure strip ("Left over each month", then "What you owe" or "Pension pots"), the other section cards and the notice at their foot. Left over and breathing room do not share the hero on web: left over is in the strip, breathing room on the Budget card. Both need the whole financial picture, which reaches the tax vector catalogue (`picture/build.ts` to `debt-payoff.ts` to `uk-tax.ts` to `tax-year-verification.ts`).
 - **S15:** the setup checklist row. The no-profile state from S4 stays.
 
@@ -788,14 +788,112 @@ Characterisation tests come first and pass against today's code: `home-strip.cha
 
 **Built (S6, 27 November 2026).** As above, with these details. Engine: `account-balance.ts` (`selectAccountBalance` with the hero and its whole, `selectAccountBalanceSeries`, `selectSeriesChange`, `selectAccountChangeEffect`, `selectAccountGroups`), `chart-fractions.ts` (`selectChartFractions`: each point's height as a fraction, so the app draws with no arithmetic on money), and `accounts-entry.ts`, which also carries the history selectors mobile reads; web's characterisation tests (`apps/web/app/features/accounts/*.characterisation.test.tsx`) passed unchanged across the move, apart from the one ruled fix in its own commit. Mobile: the three screens read `src/features/accounts/useAccountsData.ts` over the check-in's four queries (the profile pick gains `homeValue`, optional), with `accountsModel.ts` shaping engine results into rows and words; new components `AccountRow`, `AccountGroup`, `FigureList` (the month lists), `MonthLineChart` (`react-native-svg`; after the device check, one image named by web's title and summary, with its end label), `Disclosure` (changes by account) and `EmptyState`. Words in `src/copy/accounts.ts`, pinned to web's by `apps/web/app/features/accounts/accountsCopyParity.test.tsx`. Website links: "Add an account on the website", "Edit this account on the website", "Add earlier months on the website", or "Open the Flump website" without a web app address. `EXPO_PUBLIC_WEB_APP_URL` is now required in a release build and optional in development (coordinator, 27 November 2026), changing S4's decision that it is optional, so no release build sends its website links to the marketing home page. Fixture data `joint` and `twoMonths`; flows `accounts-list.yaml`, `account-detail.yaml`, `net-worth-history.yaml`. Folded in from the coordinator's S5 device check: the loaded hero was read out as busy on Android because the loading and loaded views shared one native view (now keyed apart, busy false); pull to refresh through one `onRefresh` on `Screen`, on Home and the three screens, keeping the figures during and after a failed refresh; Home's first test paid the cold module load on a slow runner, now taken by a warm render in `beforeAll`, as CheckIn, with no test's timeout raised. Acceptance 1 and 2 by hand from `personas.ts`: home owner own £427,000, owe £195,600, total £231,400, history +£2,575 from September to October and "Up £15,450 since May 2026"; renter own £13,500, owe £1,800, total £11,700 with the £38,500 student loan not counted, history +£465 and up £2,790 since May. Left for the device run: 200% text at 320 points, the Maestro flows, TalkBack and VoiceOver.
 
-### 9.10 Later slices
+### 9.10 S9. Settings
+
+Written by a Fable planner on 26 November 2026 from web's settings as they are now. Decisions: accepted on 27 November 2026 (coordinator), as below; where this section's earlier text disagrees, these win.
+
+**Decided by the coordinator (27 November 2026).**
+
+1. **App lock:** `expo-local-authentication`, off by default, on a cold start and after 60 seconds away; a failed unlock stays locked with Sign out; unavailable, with a plain sentence saying why, when the phone has no lock. It is a screen gate only and is never described as encryption or as protecting the account. The lock screen shows no figures and the app switcher snapshot is covered while locked. Tests for the timer, for sign-out from the lock screen clearing everything, and for the flag cleared on sign-out and deletion. The Face ID sentence is neutral en-GB.
+2. **Export:** share sheet only, never a silent write to shared storage. The temporary file lives in the cache folder (out of backups), is deleted when the share sheet closes whether or not it was shared, and is swept on launch, sign-out and deletion, each with a test. One sentence before sharing says the file holds all their figures and leaves Flump's protection once shared. The backend's audit row still comes first.
+3. **Recent sign-in:** `reauthenticate()` as below. A different `sub` drops the new tokens, keeps the current session and says plainly that a different account signed in (tested). The person presses delete again; re-authentication deletes nothing.
+4. **Hide amounts is not in S9.** Web has no privacy mode, so it is mobile-only; it moves whole to S18 with Android's `FLAG_SECURE`, so both platforms get it together. S9 keeps only the app switcher cover while the app lock is on. No `flump.privacy-mode` key. Text below about hide amounts is superseded.
+5. **Theme:** three-way System, Light, Dark matching web's cycle, on the device only, kept through sign-out. Not sensitive: it sits in the secure store only because that is the one store the app has.
+6. **Profile:** as below. "Change password" opens the browser; the app never shows or takes a password. Email is read only.
+7. **Not invited and Terms screens** offer export and delete too: data rights do not depend on accepting new terms. The backend allows both routes there (`@AllowUninvited`, `@AllowWithoutTerms` on `GET /user-profile/export` and `DELETE /user-profile`, checked 27 November 2026).
+8. **JSON only, as web.** No CSV on mobile in S9; the backend's CSV route is unused by both, logged as a question for later.
+9. **Page filter:** mirrored, exhaustive parity test, exception list emptied.
+
+**Stored on the device by S9** (for the app's storage notice): `flump.device-lock` (secure store, cleared on sign-out, session end and deletion), `flump.theme` (secure store, kept through sign-out), and the temporary export file (cache folder, deleted when the share sheet closes and swept on launch, sign-out and deletion). New native modules: `expo-local-authentication` 58.0.3, `expo-sharing` 58.0.23, `expo-file-system` 58.0.14 declared (each over 7 days old on 27 November 2026), so the APK cache key changes and development builds need rebuilding.
+
+**Three facts that correct earlier text.** Web has no privacy mode: nothing under `apps/web/app`, `packages/ui` or the profile contract hides amounts, so "hide amounts" is a mobile addition, not a mirror. Web's phone header theme control cycles System, Light and Dark in one button (`Header.tsx:74`, `ThemeToggle.tsx:49`), not a light and dark toggle. Web's Settings offers the JSON export only (`DataExportSection.tsx:53`); the CSV route exists on the backend but no web page calls it.
+
+**Goal.** A signed-in person changes what web's Settings lets them change that the app can honour today, chooses how the app looks and guards itself on this phone, takes a copy of their data and deletes their account, all without the website.
+
+**Decisions (10.3, small and reversible).**
+
+- **Shape:** web has three tabs (Profile, Security, Data: `settings-tabs.ts:4`). Mobile has no tabs component, so Settings is a list of four rows, each a pushed page: Profile, This phone, Security, Data. Same names and order as web, plus the one mobile-only group.
+- **Typed phrase:** the platform alert cannot hold a text field, so "Delete your account" is a pushed page whose typed `DELETE` and danger button are the confirmation. No second alert.
+- **Saves:** every Profile change saves at once with a "Saved" toast and goes back with web's words when it fails, as `ProfileTab.tsx:141`.
+- **Switched-off pages:** mirror, not move, as S4. `src/navigation/pageSwitches.ts` copies `isPageEnabled`, the opt-in list and the following-page rule from `apps/web/app/utils/pageConfig.ts`; web's parity test runs both over every combination, including web's collapse of a group left with one row (`navConfig.ts:161`).
+- **Re-authentication** keeps the session: a new `reauthenticate()` on the session controller, never sign-out then sign-in.
+- **Deferred, with web's page linked ("on the website"):** profile picture, "Your age and pay", tax region and student loan plan (S13), Partner mode (S6 and S8), "Questions after a check-in" (with the questions), "Delete your financial data" (S15: the app has no onboarding to return to), invites, Household, Connect AI (S16), imports. "Choose what shows here" moves to S10 with the section cards.
+
+**What web has, and where each part lands.**
+
+- **Profile** (`ProfileTab.tsx`): first and last name; "What counts in your net worth", two switches shown by `netWorthChoicesAvailable`, both when accounts cannot be read; "Monthly check-in", check-in day 1st to 31st; "Sections you use", Self Assessment (it drives the filter). The rest is deferred as above.
+- **Security** (`SecurityTab.tsx`): account email, read only, and "Change password", which emails a link.
+- **Data** (`DataTab.tsx`): "Download your data", "Delete your account", the four legal pages from `LEGAL_PAGES`, in the system browser as `SignIn.tsx`. Web's browser storage switch has no counterpart.
+- **This phone** (mobile only, CROSS-PLATFORM X9): colour theme, hide amounts, app lock.
+- **Header:** mobile's `AppHeader` gains web's one button that cycles System, Light, Dark, with web's label.
+
+**The flow.**
+
+- More's Settings row and `flump://page/settings` open the Settings list. Home's "Change what counts" opens Profile at the net worth group and drops "on the website".
+- **Net worth switches:** a change patches the profile, writes the answer into the profile query, and Home's figure, change line, bars and leaves-out line follow with no second request.
+- **Theme:** three radio rows (System, Light, Dark). The header button and the rows write one stored choice. `Appearance.setColorScheme` is set too, so alerts and the keyboard match. The choice stays through sign-out, as web's `flump-theme`.
+- **Hide amounts:** a switch. While on, `Money`, `HeroFigure` and the trend bars draw a fixed mask, spoken as "Hidden". The check-in and any field being edited stay readable, and the switch's hint says so.
+- **App lock:** a switch, off by default. Turning it on or off asks the phone to confirm first. While on, the signed-in shell is covered by a `Locked` screen on a cold start and on return after 60 seconds in the background. Unlock asks for the phone's biometrics or passcode; a failed or cancelled prompt stays on `Locked` with Unlock and Sign out. If the phone has no screen lock the switch is disabled and says why. It is never a way to sign in and guards nothing on the server.
+- **Download:** the file is fetched to the app's cache folder, handed to the system share sheet, then deleted. Nothing is written to shared storage.
+- **Delete:** the page lists what goes (web's list, `DeleteAccountSection.tsx:101`), takes the typed phrase and sends the request. On `deleted` the device is wiped as at sign-out and `AccountDeleted` replaces the shell. On `identity_pending` `FinishDeletion` replaces it (web's `FinishDeletionPanel` words) and repeats the same request. On `recent_login_required` it shows web's sentence with "Sign in again": the system browser opens the usual PKCE address, which always carries `max_age=0`; the new tokens are adopted only if their `sub` equals the current one; the person then presses delete again. Nothing is deleted without that press.
+
+**States.**
+
+- **Loading:** 200 ms and 400 ms as S5. **No profile or setup unfinished:** Profile shows `NotSetUp`; This phone, Security and Data still work.
+- **Offline** (`restoredOffline`): This phone works; Profile shows `Offline`; the Security and Data actions are disabled with one line saying they need a connection.
+- **Save failed:** the control goes back and the group says so, with Try again. **412:** web's "changed somewhere else" words, the profile is read again, the control shows the saved value.
+- **Export:** preparing, shared, rate limited (429), failed. A failure names no connection unless there is none.
+- **Delete:** sending (up to 30 seconds, as web's `DELETE_TIMEOUT_MS`), recent sign-in needed, rate limited, unavailable (503 `account_deletion_unavailable`: nothing changed), failed, a different account signed in (the new tokens are dropped, the session is kept). A time-out claims nothing.
+- **Erased account:** any read answering 410 `account_deleted` shows `FinishDeletion`, never `Offline`. Today `createAccountCheck` turns it into `unavailable` (`src/data/account.ts`).
+- **Terms:** `TermsRequired` in the page body, as S4.
+
+**How it reads and writes data.** No new endpoint and no backend change. Contract schemas in `packages/api-contract/src/domains/profile.ts`, routes in `manifest.ts`.
+
+- `GET /v1/user-profile`: the one profile query. Its loose pick grows by `firstName`, `lastName`, `email`, `enabledPages`, `dashboardWidgets` and `updatedAt`.
+- `PATCH /v1/user-profile`: the body is parsed with the strict `UpdateProfileRequest` before sending. `If-Match` is `etagFor(updatedAt)` from the contract, as web; none when `updatedAt` is absent. The answer is parsed with the loose pick and written to the query.
+- `POST /v1/user-profile/send-password-reset`: no body, credential rate limit.
+- `GET /v1/user-profile/export` (and `/export/csv` if CSV is kept): streamed attachments, 10 an hour, open to an uninvited person and one who has not agreed the terms. `@flump/api-client` parses JSON only, so `src/data/exportData.ts` downloads with the bearer token and on a 401 runs the session's one shared refresh and tries once more.
+- `DELETE /v1/user-profile`: `{ confirmation: "DELETE" }`. Guards as built (`user-profile.controller.ts`): typed phrase, then `assertRecentLogin` (the token's `auth_time` within 15 minutes, `auth/recent-login.ts`), 10 an hour, allowed for erased, uninvited and terms-refusing accounts. The app reads `BackendError.code`.
+- `POST /v1/session/sign-out`: best effort on the old session after a re-authentication. Not called after `deleted`, since the login is gone.
+- Engine: `netWorthChoicesAvailable` and `CHECK_IN_DAYS` through the narrow entries. No money maths in the app (seam cost 0).
+
+**Older and newer backends.** The profile pick ignores unknown fields and lets every field be absent. A missing `enabledPages` reads as the default set (Self Assessment off). A missing net worth choice falls back inside `netWorthBasisFromProfile`. A missing `updatedAt` sends no `If-Match`. An unknown `status` from deletion is treated as failed, never as deleted.
+
+**Files.** Routes `app/(app)/settings/*`; auth `session.ts` (`reauthenticate`, deletion wipe), `sessionMachine.ts` (`accountDeleted`, `deletionPending`), `reinstall.ts`, `deviceLock.ts`; data `src/data/{profile,exportData,deleteAccount}.ts`, `account.ts` (410); device `src/device/preferences.ts`, `ThemeProvider` (stored choice), `PrivacyProvider`; components `Switch`, `TextField`, `OptionList`, `ThemeCycleButton`, with `Money`, `HeroFigure`, `NetWorthTrendBars`, `AppHeader` changed; screens `Settings*`, `DeleteAccount`, `FinishDeletion`, `AccountDeleted`, `Locked`, `More`; `navItems.ts`, `pageSwitches.ts`, `src/copy/settings.ts`; web `mobileNavParity.test.tsx` (exception list emptied) and a strings parity test; fixture server routes for the profile patch, export and deletion; Maestro flows for the switches, theme, export and delete; value map, functionality map, parity log, CROSS-PLATFORM.
+
+**Acceptance**
+
+1. Each net worth switch saves at once. Home's figure, change, bars and leaves-out line then follow, with no reload. A failed save leaves the switch and Home unchanged.
+2. "Change what counts" opens the app's setting and no browser. The group is hidden when the person has no property, mortgage or student loan account, and both switches show when accounts cannot be read.
+3. Names save on leaving the field only when changed. The check-in day lists 1st to 31st with web's hint, and Home's check-in row follows the new day.
+4. Every `PATCH` sends `If-Match` when the profile has `updatedAt`. A 412 shows web's words, reads the profile again and saves nothing.
+5. The parity test fails if More's rows differ from web's filtered drawer for every combination of switchable pages, empty and missing lists included. The exception list is empty.
+6. Theme: the stored choice applies on the first frame; header button and Settings rows agree; System follows the phone live; the choice survives sign-out.
+7. Hide amounts: with it on, Home holds no digit of the figure and the reader hears "Hidden". The check-in still shows its figures. Sign-out switches it off.
+8. App lock: a Jest test each for cold start, return before and after 60 seconds, cancelled unlock, failed unlock, no screen lock, and a screen lock removed while on. No path clears the token except Sign out.
+9. Export: the request carries the bearer token; the share sheet gets the server's file name; the file is gone after sharing, on the next launch and on sign-out. Nothing is written outside the app's cache folder.
+10. Delete: the button is disabled until the phrase matches. `deleted` leaves no token, cached query, person preference or export file, and shows `AccountDeleted`. `identity_pending` and any 410 show `FinishDeletion`, and repeating succeeds.
+11. Recent sign-in: a 403 `recent_login_required` offers "Sign in again". A cancelled browser changes nothing. A different `sub` is refused and the first session kept. No deletion is sent without a press.
+12. 503 `account_deletion_unavailable` and a time-out each leave the person signed in with data shown.
+13. Offline: This phone works; Profile, Security and Data send no request and say why.
+14. Older and newer backends still show Settings.
+15. The legal rows equal `LEGAL_PAGES` in title, order and path, and open in the system browser.
+16. Accessibility: switches have role, state and hint; option lists are radio groups; targets 48 by 48; 200% text at 320 points clips nothing.
+17. The net worth labels are web's, word for word.
+18. The gallery shows the new components in light, dark and 200% text; the bundle search passes.
+19. Lint, types, `check:laws`, and the web and mobile tests pass. The PR lists "Guard changes" and states "Seam cost: 0".
+20. The parity log marks the rows built and records what is deferred. The PR states the CROSS-PLATFORM section 7 result.
+
+**Built (S9, 27 November 2026).** To the coordinator's decisions, with these details. Settings is a list of four pushed pages under `app/(app)/settings/`, plus `data` and `delete-account`. The profile is one query (`src/data/profile.ts`); a change is a `PATCH` with `If-Match` from `etagFor(updatedAt)`, written into the cache, so Home follows a net worth switch with no second request. The theme choice is read from the secure store with the synchronous `getItem` before the first frame (`src/device/themePreference.ts`); `ThemeCycleButton` in `AppHeader` and the This phone rows write it. `pageSwitches.ts` mirrors web's filter; turning Self Assessment on with an empty stored list starts from the default set, where web would save `["tax"]` alone (parity log, proposed web fix). Re-authentication (`session.reauthenticate`) takes the refresh slot, adopts only the same `sub`, and revokes the old session only when its `sid` differs. Any read answering 410 `account_deleted` moves the session to `deletionPending`. The export re-checks the session after the download and shares nothing after sign-out; a refresh mid-download fails safe. The deletion answer is read loosely, so a newer backend's extra field still wipes the device. `Switch` is React Native's own inside a whole-row pressable. The check-in day is a 31-row radio list, recorded as a CROSS-PLATFORM section 5 exception (a native picker needs a new dependency); revisit at S18. After the coordinator's device check (27 November 2026, Android 17 emulator): while locked, the Locked screen replaces the signed-in shell instead of covering it, because a native stack's screens ignore a parent's accessibility flags and a screen reader could read Home's figures behind the cover. Each switch row is one accessible control; a busy button keeps its label; with no email on the sign-in token Security says the email cannot be shown here (web too); names stay empty until edited, as web stores them only from Settings. Not verified on a device: biometrics, a real share, signing in again, deletion itself, saving name edits, TalkBack speech. **For S18:** changing the system text size while the app is open recreates the Android activity and returns to Home, losing the route (Expo's default `configChanges`; see S5's Built paragraph). Also for S18, from the security re-check (coordinator, 27 November 2026): while the sign-in or re-authentication browser is open and the app is unlocked, nothing covers the app switcher snapshot (existing design);. **After the second emulator check (27 November 2026):** while app lock is on, the lock calls expo-screen-capture's `preventScreenCaptureAsync` on Android only (FLAG_SECURE: a blank recents card, no screenshots), set from the lock's own phase so from a cold start too, and `allowScreenCaptureAsync` when it is turned off or cleared (sign-out, session end, deletion); This phone says so on Android. While unlocked, a system sheet or prompt no longer unmounts the shell: iOS puts an opaque cover over it while the app is away, Android has FLAG_SECURE, so an export finishes on Data; after a real lock, Unlock replaces back to the last pathname shown (its search parameters are not kept), and each switch row's native switch takes no touches of its own.
+
+### 9.11 Later slices
 
 Each is specified in full when the slice before it merges, from the web page as it then is and the parity log. Fixed now:
 
 - **S5:** specified in 9.8. `GET /v1/portfolio-snapshot` does not exist; the hero is built by engine selectors over the reads S3 already makes, and the one figure web worked out outside the engine (the change since the last recorded month) moves into the engine first (O5 seam 1).
 - **S6:** specified in 9.9.
 - **S7:** SQLCipher with the key check; the database out of iCloud and Android backups; a test that a cold start with no network keeps saved data; a test that a restored backup without the key shows no cached data and asks to sign in.
-- **S9:** the two net worth switches (R1), export, deletion with the typed phrase, recent sign-in when asked; the four legal pages linked, opening in the browser. Web's optional browser storage switch has no mobile counterpart (parity log, 25 November).
+- **S9:** specified in 9.10. Web has no privacy mode and offers the JSON export only: hide amounts moved to S18, CSV is a question for later. Re-authentication keeps the session and checks the same person signed in.
 - **S10 to S13, S21, S22:** saved versus scenario: changing a scenario input changes no saved figure and sends no request.
 - **S16:** a new token is shown once and never cached.
 - **S18:** `security-reviewer` again on `apps/mobile/src/auth`, `src/data`, the cache and any backend route added for mobile (the first review is in S2b).

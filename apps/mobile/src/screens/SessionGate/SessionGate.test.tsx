@@ -15,7 +15,8 @@ jest.mock("expo-router", () => {
   const { Fragment } = require("react");
   return {
     Link: ({ children }: { children: unknown }) => <Fragment>{children}</Fragment>,
-    router: { push: jest.fn() },
+    router: { push: jest.fn(), replace: jest.fn() },
+    usePathname: () => "/",
   };
 });
 

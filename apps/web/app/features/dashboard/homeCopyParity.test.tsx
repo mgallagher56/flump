@@ -18,7 +18,6 @@ import {
   CHANGE_WHAT_COUNTS,
   HOME_VALUE_MISSING_TEXT,
   leftOutSentence,
-  NET_WORTH_SETTINGS_HREF,
 } from "~/features/accounts/components/NetWorthBasisLine/NetWorthBasisLine";
 import {
   ADD_SPENDING_PROMPT,
@@ -59,7 +58,6 @@ interface MobileStrip {
 interface MobileShell {
   BUDGET_WEB_ROUTE: string;
   ADD_ACCOUNT_WEB_ROUTE: string;
-  NET_WORTH_SETTINGS_WEB_ROUTE: string;
   ADD_HOME_VALUE_WEB_ROUTE: string;
 }
 type IconShape = readonly [string, Readonly<Record<string, string>>];
@@ -83,8 +81,9 @@ describe("the mobile Home hero says what web's Home says", () => {
     expect(HOME.heroLabel).toBe(HERO_LABEL);
     expect(HOME.heroLabelWithHome).toBe(HERO_LABEL_WITH_HOME);
     expect(HOME.homeValueMissing).toBe(HOME_VALUE_MISSING_TEXT);
-    // The app's links open the website until S8 and S9, and say so after web's own words.
-    expect(HOME.changeWhatCounts).toBe(`${CHANGE_WHAT_COUNTS} on the website`);
+    // "Change what counts" opens the app's own setting (S9), so it says web's words as they are.
+    expect(HOME.changeWhatCounts).toBe(CHANGE_WHAT_COUNTS);
+    // The estimate link opens the website until S8, and says so after web's own words.
     expect(HOME.addEstimate).toBe(`${ADD_AN_ESTIMATE} on the website`);
     // The hero's empty prompt and action are written inline in HomeDashboard.
     const dashboard = readFileSync(
@@ -142,7 +141,6 @@ describe("the mobile Home hero says what web's Home says", () => {
 
   it("the website pages the app links to are web's", async () => {
     const shell = await load<MobileShell>("navigation/shell.ts");
-    expect(shell.NET_WORTH_SETTINGS_WEB_ROUTE).toBe(NET_WORTH_SETTINGS_HREF);
     expect(shell.ADD_HOME_VALUE_WEB_ROUTE).toBe(ADD_HOME_VALUE_HREF);
     expect(shell.ADD_ACCOUNT_WEB_ROUTE).toBe("/app/accounts");
   });

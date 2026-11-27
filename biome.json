@@ -91,7 +91,11 @@
                     ],
                     "message": "Use Text, Pressable or Button from src/components (an input wrapper joins them when a form needs one): they keep text scalable, targets at least 48pt and every control named (E12 S1b)."
                   },
-                  "@flump/api-client": "Use the API client exported by src/data (added in S2b): only src/data talks to the API (O5 seam 2, plan section 4.6)."
+                  "@flump/api-client": "Use the API client exported by src/data (added in S2b): only src/data talks to the API (O5 seam 2, plan section 4.6).",
+                  "expo-file-system": "Only src/data writes files or opens the share sheet (E12 S9): the export keeps its file in the cache folder and deletes it when the sheet closes. Use the export exported by src/data.",
+                  "expo-file-system/legacy": "Only src/data writes files or opens the share sheet (E12 S9): the export keeps its file in the cache folder and deletes it when the sheet closes. Use the export exported by src/data.",
+                  "expo-file-system/next": "Only src/data writes files or opens the share sheet (E12 S9): the export keeps its file in the cache folder and deletes it when the sheet closes. Use the export exported by src/data.",
+                  "expo-sharing": "Only src/data writes files or opens the share sheet (E12 S9): the export keeps its file in the cache folder and deletes it when the sheet closes. Use the export exported by src/data."
                 },
                 "patterns": [
                   {
@@ -123,7 +127,11 @@
               "level": "error",
               "options": {
                 "paths": {
-                  "@flump/api-client": "Use the API client exported by src/data (added in S2b): only src/data talks to the API (O5 seam 2, plan section 4.6)."
+                  "@flump/api-client": "Use the API client exported by src/data (added in S2b): only src/data talks to the API (O5 seam 2, plan section 4.6).",
+                  "expo-file-system": "Only src/data writes files or opens the share sheet (E12 S9): the export keeps its file in the cache folder and deletes it when the sheet closes. Use the export exported by src/data.",
+                  "expo-file-system/legacy": "Only src/data writes files or opens the share sheet (E12 S9): the export keeps its file in the cache folder and deletes it when the sheet closes. Use the export exported by src/data.",
+                  "expo-file-system/next": "Only src/data writes files or opens the share sheet (E12 S9): the export keeps its file in the cache folder and deletes it when the sheet closes. Use the export exported by src/data.",
+                  "expo-sharing": "Only src/data writes files or opens the share sheet (E12 S9): the export keeps its file in the cache folder and deletes it when the sheet closes. Use the export exported by src/data."
                 },
                 "patterns": [
                   {

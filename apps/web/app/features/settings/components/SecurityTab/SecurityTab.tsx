@@ -92,7 +92,7 @@ export const SecurityTab: FC<SecurityTabProps> = ({
                   id="user-email-display"
                 >
                   {/* No "Verified" badge: nothing here reads the provider's verified flag (ruling 4). */}
-                  <span>{email || "Not set"}</span>
+                  <span>{email || "Your email cannot be shown here right now."}</span>
                 </div>
               </div>
             </div>

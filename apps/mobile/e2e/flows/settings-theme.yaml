@@ -1,0 +1,71 @@
+# E12 S9: the colour theme on This phone. Choosing Dark draws the app dark whatever the phone is
+# set to, and stays chosen after the app is stopped and opened again; choosing System follows the
+# phone again. The rows are radio buttons, checked by test id. The runner runs it in light and in
+# dark, stopping and settling the app first; no retries.
+appId: app.flump.mobile
+---
+- runScript:
+    file: ../scripts/fixture.js
+    env:
+      SCENARIO: "{}"
+- runFlow: ../subflows/launch-signed-out.yaml
+- runFlow: ../subflows/sign-in-to-home.yaml
+- tapOn:
+    id: "tab-more"
+- scrollUntilVisible:
+    element:
+      id: "more-row-settings"
+    direction: DOWN
+    timeout: 10000
+- tapOn:
+    id: "more-row-settings"
+- extendedWaitUntil:
+    visible:
+      id: "settings-row-phone"
+    timeout: 10000
+- tapOn:
+    id: "settings-row-phone"
+- extendedWaitUntil:
+    visible:
+      id: "settings-theme-system"
+    timeout: 10000
+- assertVisible:
+    id: "settings-theme-system"
+    checked: true
+- tapOn:
+    id: "settings-theme-dark"
+- assertVisible:
+    id: "settings-theme-dark"
+    checked: true
+- takeScreenshot: settings-theme-dark-${THEME}
+# Read before the first frame: still Dark after the app is stopped and opened again.
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: "home"
+    timeout: 60000
+- tapOn:
+    id: "tab-more"
+- scrollUntilVisible:
+    element:
+      id: "more-row-settings"
+    direction: DOWN
+    timeout: 10000
+- tapOn:
+    id: "more-row-settings"
+- tapOn:
+    id: "settings-row-phone"
+- extendedWaitUntil:
+    visible:
+      id: "settings-theme-dark"
+    timeout: 10000
+- assertVisible:
+    id: "settings-theme-dark"
+    checked: true
+- tapOn:
+    id: "settings-theme-system"
+- assertVisible:
+    id: "settings-theme-system"
+    checked: true
+- takeScreenshot: settings-theme-system-${THEME}

@@ -10,15 +10,15 @@ import { createStyles } from "./NetWorthBasisLine.styles";
 export interface NetWorthBasisLineProps {
   /** What the net worth figure leaves out, from the engine (`NetWorthTotals.leftOut`). */
   leftOut: readonly NetWorthLeftOut[];
-  /** Opens where the net worth choices are changed (the website's settings until S9). */
+  /** Opens the app's net worth choices (Settings, Profile, E12 S9). */
   onChangeWhatCounts(): void;
   /** Opens where a home estimate is added (the website until S8). */
   onAddEstimate(): void;
   /**
-   * The link's words when it does not open the page itself (no web app address in this build: the
-   * website's home page). Defaults to the page's own words.
+   * The add-estimate link's words when it does not open the page itself (no web app address in
+   * this build: the website's home page). Defaults to the page's own words.
    */
-  websiteLabel?: string;
+  estimateWebsiteLabel?: string;
   /**
    * Show the "Change what counts" link on its own when nothing is left out, so the choice can be
    * found from the figure (web: the accounts list only). Needs `choicesAvailable`.
@@ -39,7 +39,7 @@ export function NetWorthBasisLine({
   leftOut,
   onChangeWhatCounts,
   onAddEstimate,
-  websiteLabel,
+  estimateWebsiteLabel,
   alwaysShowLink = false,
   choicesAvailable = true,
   testID = "net-worth-basis-line",
@@ -57,7 +57,7 @@ export function NetWorthBasisLine({
         </Text>
       ) : null}
       <Button
-        label={websiteLabel ?? (missingHome ? HOME.addEstimate : HOME.changeWhatCounts)}
+        label={missingHome ? (estimateWebsiteLabel ?? HOME.addEstimate) : HOME.changeWhatCounts}
         variant="link"
         size="sm"
         accessibilityRole="link"

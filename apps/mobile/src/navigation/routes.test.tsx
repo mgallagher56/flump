@@ -13,6 +13,10 @@ import PayTab from "../../app/(app)/(tabs)/pay";
 import AccountDetailRoute from "../../app/(app)/accounts/[id]";
 import NetWorthHistoryRoute from "../../app/(app)/accounts/history";
 import MorePageRoute from "../../app/(app)/page/[key]";
+import SettingsRoute from "../../app/(app)/settings/index";
+import SettingsPhoneRoute from "../../app/(app)/settings/phone";
+import SettingsProfileRoute from "../../app/(app)/settings/profile";
+import SettingsSecurityRoute from "../../app/(app)/settings/security";
 import { type AppSession, SessionProvider } from "../auth/SessionProvider";
 import type { Session } from "../auth/session";
 import type { SessionState } from "../auth/sessionMachine";
@@ -71,12 +75,16 @@ function Root() {
   );
 }
 
-/** The household every route test reads: the check-in fixture's six accounts. */
+/** The household every route test reads unless it passes its own: the check-in fixture's six accounts. */
 let data = household();
 
-async function openApp(initialUrl: string, initial: SessionState = { status: "signedIn" }) {
+async function openApp(
+  initialUrl: string,
+  initial: SessionState = { status: "signedIn" },
+  h = data,
+) {
   const app = fakeSession(initial);
-  const api = fakeApi(routes(data));
+  const api = fakeApi(routes(h));
   current = {
     app: {
       session: app.session,
@@ -100,6 +108,10 @@ async function openApp(initialUrl: string, initial: SessionState = { status: "si
       "(app)/accounts/[id]": AccountDetailRoute,
       "(app)/accounts/history": NetWorthHistoryRoute,
       "(app)/page/[key]": MorePageRoute,
+      "(app)/settings/index": SettingsRoute,
+      "(app)/settings/profile": SettingsProfileRoute,
+      "(app)/settings/phone": SettingsPhoneRoute,
+      "(app)/settings/security": SettingsSecurityRoute,
       "(app)/+not-found": NotFoundRoute,
       "(app)/check-in": () => <Text>Check-in stand-in</Text>,
     },
@@ -115,6 +127,8 @@ describe("the signed-in routes", () => {
     data = household();
     jest.useRealTimers();
     jest.spyOn(Linking, "openURL").mockResolvedValue(undefined);
+    // Calls from an earlier test are not this test's.
+    (Linking.openURL as jest.Mock).mockClear();
   });
   afterEach(() => jest.restoreAllMocks());
 
@@ -166,6 +180,41 @@ describe("the signed-in routes", () => {
     expect(Linking.openURL).toHaveBeenCalledWith(
       "https://app.test.invalid/app/profile?tab=ai_connections",
     );
+  });
+
+  it("More's Settings row opens the Settings list, whose rows open their pages (S9)", async () => {
+    const { router } = await openApp("/more");
+    const user = userEvent.setup();
+    await user.press(screen.getByRole("link", { name: "Settings" }));
+    expect(router.getPathname()).toBe("/settings");
+    expect(screen.getByRole("header", { name: "Settings" })).toBeOnTheScreen();
+    await user.press(screen.getByRole("link", { name: "This phone" }));
+    expect(router.getPathname()).toBe("/settings/phone");
+    expect(screen.getByRole("radio", { name: "System" })).toBeOnTheScreen();
+  });
+
+  it("flump://page/settings opens the Settings list, not a placeholder (S9)", async () => {
+    const { router } = await openApp("/page/settings");
+    expect(await screen.findByTestId("settings")).toBeOnTheScreen();
+    expect(router.getPathname()).toBe("/settings");
+    expect(screen.queryByText(/This page is not in the app yet/)).toBeNull();
+  });
+
+  it("Home's Change what counts opens the app's Profile settings, never the browser (S9)", async () => {
+    // The profile leaves the student loan out, so Home's line offers to change what counts.
+    const { router } = await openApp(
+      "/",
+      { status: "signedIn" },
+      household([
+        { name: "Current account", type: "Current", balance: 3000, oct: 2800 },
+        { name: "Student loan", type: "Student Loan", balance: -38500, oct: -38620 },
+      ]),
+    );
+    await userEvent.setup().press(await screen.findByRole("link", { name: "Change what counts" }));
+    expect(router.getPathname()).toBe("/settings/profile");
+    expect(router.getSearchParams()).toEqual({ focus: "net-worth" });
+    expect(await screen.findByText("What counts in your net worth")).toBeOnTheScreen();
+    expect(Linking.openURL).not.toHaveBeenCalled();
   });
 
   it.each([

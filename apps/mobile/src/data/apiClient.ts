@@ -14,6 +14,8 @@ export interface AppApiClientOptions {
   session: Pick<Session, "getAccessToken" | "refresh">;
   client: { version: string; platform: ClientPlatform };
   fetch?: typeof fetch;
+  /** Defaults to the client's 15 seconds; the account deletion waits 30 (E12 S9). */
+  timeoutMs?: number;
 }
 
 export function createAppApiClient(options: AppApiClientOptions): ApiClient {
@@ -23,5 +25,6 @@ export function createAppApiClient(options: AppApiClientOptions): ApiClient {
     onUnauthorised: () => options.session.refresh(),
     client: options.client,
     fetch: options.fetch,
+    timeoutMs: options.timeoutMs,
   });
 }

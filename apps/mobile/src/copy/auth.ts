@@ -45,7 +45,7 @@ export const TERMS_REQUIRED_HEADING = "Please agree to our terms on the website"
 export const TERMS_REQUIRED_BODY =
   "You need to agree to our terms of use before you carry on. Sign in on the Flump website to read and agree to them, then come back and select Try again.";
 export const TERMS_REQUIRED_NOTE =
-  "If you do not agree, you cannot use Flump. You can still download your data or delete your account on the website.";
+  "If you do not agree, you cannot use Flump. You can still download your data or delete your account.";
 export const OPEN_WEBSITE = "Open the Flump website";
 
 /** The version gate (plan section 4.9). No store link until the app has a listing (S19). */

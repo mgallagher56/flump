@@ -3,9 +3,11 @@ app: mobile
 route: /more
 title: More
 auth: required
-purpose: The More tab (E12 S4), also opened by each tab's header menu button. It lists what web's phone drawer lists below the bottom bar, in its groups and order (Savings, Pension, Retirement, Cards and loans, Mortgage), then Settings, Connect AI and Calculators, then Sign out, which asks first. Self Assessment, opt-in per person, arrives with S9's filter. It reads nothing.
+purpose: The More tab (E12 S4), also opened by each tab's header menu button. It lists what web's phone drawer lists below the bottom bar for the pages the person has switched on (E12 S9), in its groups and order (Self Assessment under Pay when on, Savings, Pension, Retirement, Cards and loans, Mortgage), then Settings, which opens the Settings list, Connect AI and Calculators, then Sign out, which asks first. It reads the switched-on pages from the profile; with none read, the default set.
 route_file: apps/mobile/app/(app)/(tabs)/more.tsx
 
 sections:
   - id: list
     component: apps/mobile/src/screens/More/More.tsx
+    facts_read:
+      - enabled-pages-and-widgets

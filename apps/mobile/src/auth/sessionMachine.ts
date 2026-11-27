@@ -19,7 +19,14 @@ export type SessionState =
   | { status: "notInvited" }
   /** Signed in, but the API answers 403 `terms_not_accepted` until the terms are agreed on the website. */
   | { status: "termsRequired" }
-  | { status: "signingOut" };
+  | { status: "signingOut" }
+  /**
+   * The account's data is erased but its login is not yet removed (E12 S9): the delete answered
+   * `identity_pending`, or a read answered 410 `account_deleted`. Repeating the delete finishes it.
+   */
+  | { status: "deletionPending" }
+  /** The account is deleted and the device wiped, as at sign-out: the confirmation shows. */
+  | { status: "accountDeleted" };
 
 export type SessionEvent =
   | { type: "NO_SESSION" }
@@ -33,7 +40,11 @@ export type SessionEvent =
   | { type: "TERMS_REQUIRED" }
   | { type: "SESSION_ENDED" }
   | { type: "SIGN_OUT_STARTED" }
-  | { type: "SIGNED_OUT" };
+  | { type: "SIGNED_OUT" }
+  | { type: "DELETION_PENDING" }
+  | { type: "ACCOUNT_DELETED" }
+  /** The person has read the deletion confirmation: on to the sign-in screen. */
+  | { type: "DELETION_ACKNOWLEDGED" };
 
 export const INITIAL_STATE: SessionState = { status: "loading" };
 
@@ -59,10 +70,29 @@ const FROM: { [E in SessionEvent["type"]]: readonly SessionState["status"][] } =
     "restoredOffline",
     "notInvited",
     "termsRequired",
+    "deletionPending",
   ],
-  SIGN_OUT_STARTED: ["signedIn", "restoredOffline", "notInvited", "termsRequired", "sessionEnded"],
+  SIGN_OUT_STARTED: [
+    "signedIn",
+    "restoredOffline",
+    "notInvited",
+    "termsRequired",
+    "sessionEnded",
+    "deletionPending",
+  ],
   SIGNED_OUT: ["signingOut"],
+  // Found on launch or at sign-in (the account check answers 410), or after a delete; never while
+  // offline, where no answer came.
+  DELETION_PENDING: ["loading", "signingIn", "signedIn", "notInvited", "termsRequired"],
+  // The backend lets an uninvited person and one who has not agreed to the terms delete too.
+  ACCOUNT_DELETED: ["signedIn", "notInvited", "termsRequired", "deletionPending"],
+  DELETION_ACKNOWLEDGED: ["accountDeleted"],
 };
+
+/** Whether screens may hold the person's data: any other state drops the query cache. */
+export function sessionHoldsData(status: SessionState["status"]): boolean {
+  return status === "signedIn" || status === "restoredOffline";
+}
 
 export function sessionReducer(state: SessionState, event: SessionEvent): SessionState {
   if (!FROM[event.type].includes(state.status)) return state;
@@ -70,7 +100,12 @@ export function sessionReducer(state: SessionState, event: SessionEvent): Sessio
     case "NO_SESSION":
     case "SIGN_IN_CANCELLED":
     case "SIGNED_OUT":
+    case "DELETION_ACKNOWLEDGED":
       return SIGNED_OUT;
+    case "DELETION_PENDING":
+      return { status: "deletionPending" };
+    case "ACCOUNT_DELETED":
+      return { status: "accountDeleted" };
     case "SIGN_IN_STARTED":
       return { status: "signingIn" };
     case "SIGN_IN_FAILED":

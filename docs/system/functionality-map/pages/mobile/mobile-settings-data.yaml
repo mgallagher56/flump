@@ -1,0 +1,15 @@
+id: mobile-settings-data
+app: mobile
+route: /settings/data
+title: Data settings
+auth: required
+purpose: Web's Data tab on a phone (E12 S9). Download your data hands the JSON export to the system share sheet and deletes the app's copy when the sheet closes; Delete your account opens its own page; the four legal pages open in the system browser. Restored offline both actions wait for a connection. The Not invited and Terms screens offer the same two actions.
+route_file: apps/mobile/app/(app)/settings/data.tsx
+
+sections:
+  - id: export
+    component: apps/mobile/src/components/ExportDataSection/ExportDataSection.tsx
+  - id: delete
+    component: apps/mobile/src/screens/AccountDataActions/AccountDataActions.tsx
+  - id: legal
+    component: apps/mobile/src/screens/DataSettings/DataSettings.tsx

@@ -110,6 +110,7 @@ export const createStyles = (theme: Theme) => {
     },
     disabledQuiet: { backgroundColor: "transparent", borderColor: "transparent" },
     label: { fontWeight: "700", textAlign: "center" },
-    underline: { textDecorationLine: "underline" },
+    // A link's words line up on the left when they wrap, as the links listed beside it (200% text).
+    linkLabel: { textDecorationLine: "underline", textAlign: "left" },
   });
 };

@@ -1,0 +1,70 @@
+# E12 S9: the net worth choice in Settings. The home-owning household (`owner`) counts its home,
+# so Home has no leave-out line. Turning off "Count property you own" in Settings, Profile saves
+# at once, and Home's figure follows with no relaunch: the leave-out line appears under the hero.
+# Checked by test id. The runner runs it in light and in dark, stopping and settling the app
+# first; no retries.
+appId: app.flump.mobile
+---
+- runScript:
+    file: ../scripts/fixture.js
+    env:
+      SCENARIO: '{"data": "owner"}'
+- runFlow: ../subflows/launch-signed-out.yaml
+- runFlow: ../subflows/sign-in-to-home.yaml
+- extendedWaitUntil:
+    visible:
+      id: "home-hero"
+    timeout: 30000
+- assertNotVisible:
+    id: "net-worth-basis-line"
+- tapOn:
+    id: "tab-more"
+- scrollUntilVisible:
+    element:
+      id: "more-row-settings"
+    direction: DOWN
+    timeout: 10000
+- tapOn:
+    id: "more-row-settings"
+- extendedWaitUntil:
+    visible:
+      id: "settings-row-profile"
+    timeout: 10000
+- tapOn:
+    id: "settings-row-profile"
+- extendedWaitUntil:
+    visible:
+      id: "settings-profile"
+    timeout: 30000
+- scrollUntilVisible:
+    element:
+      id: "settings-counts-property"
+    direction: DOWN
+    timeout: 10000
+- tapOn:
+    id: "settings-counts-property"
+- extendedWaitUntil:
+    visible:
+      id: "settings-saved"
+    timeout: 30000
+- takeScreenshot: settings-profile-${THEME}
+# Profile and Settings are pushed pages with no tab bar (S4): Back twice returns to More.
+- back
+- extendedWaitUntil:
+    visible:
+      id: "settings-row-profile"
+    timeout: 10000
+- back
+- extendedWaitUntil:
+    visible:
+      id: "tab-home"
+    timeout: 10000
+- tapOn:
+    id: "tab-home"
+- extendedWaitUntil:
+    visible:
+      id: "net-worth-basis-line"
+    timeout: 30000
+- assertVisible:
+    id: "home-hero"
+- takeScreenshot: home-not-counting-property-${THEME}

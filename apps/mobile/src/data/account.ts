@@ -11,6 +11,9 @@ import { type ApiClient, BackendError, createApiClient } from "@flump/api-client
 import type { AccountCheck } from "../auth/session";
 import { TERMS_NOT_ACCEPTED_CODE } from "./problems";
 
+/** The backend's code for an erased account (`auth/recent-login.ts`, 410 Gone). */
+export const ACCOUNT_DELETED_CODE = "account_deleted";
+
 export function createAccountCheck(client: ApiClient): () => Promise<AccountCheck> {
   return async () => {
     try {
@@ -23,6 +26,9 @@ export function createAccountCheck(client: ApiClient): () => Promise<AccountChec
       if (error.kind === "forbidden" && error.code === TERMS_NOT_ACCEPTED_CODE) {
         return "terms-not-accepted";
       }
+      // An erased account (E12 S9): its data is gone but its login remains, so the last step of
+      // the deletion shows, never the offline screen.
+      if (error.status === 410 && error.code === ACCOUNT_DELETED_CODE) return "account-deleted";
       // The client has already refreshed once and retried: a 401 now means the session is over.
       if (error.kind === "unauthorised") return "unauthorised";
       // With no body parsed, a `bad-response` here can only be a body cut off mid-stream (a dropped
