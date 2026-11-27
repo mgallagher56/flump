@@ -247,7 +247,9 @@ describe("NetWorthHistory", () => {
     await history(fakeApi(routes(personaHousehold(HOMEOWNER))), NO_WEB_APP);
     expect(await screen.findByText(ON_WEBSITE)).toBeOnTheScreen();
     expect(screen.queryByText("Add earlier months on the website")).toBeNull();
-    await userEvent.setup().press(screen.getByRole("link", { name: "Open the Flump website" }));
+    await userEvent
+      .setup()
+      .press(screen.getByRole("link", { name: /^Open the Flump website\. ./ }));
     expect(Linking.openURL).toHaveBeenCalledWith(MARKETING.url);
   });
 
@@ -257,7 +259,7 @@ describe("NetWorthHistory", () => {
       NO_WEB_APP,
     );
     expect(await screen.findByText(ON_WEBSITE)).toBeOnTheScreen();
-    expect(screen.getByRole("link", { name: "Open the Flump website" })).toBeOnTheScreen();
+    expect(screen.getByRole("link", { name: /^Open the Flump website\. ./ })).toBeOnTheScreen();
   });
 
   it("no accounts: web's sentence and Add account, opening the app's form (S8)", async () => {

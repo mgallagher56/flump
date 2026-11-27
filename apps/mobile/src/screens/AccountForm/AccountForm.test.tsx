@@ -168,12 +168,13 @@ describe("AccountForm: add", () => {
     await choose("account-form-type", "Student Loan");
     await save();
     expect(screen.getByText("Enter a name for this account.")).toBeOnTheScreen();
-    // Each error is said with its control, not only in the line below it (S8 device check).
-    expect(screen.getByTestId("account-form-name").props.accessibilityHint).toBe(
-      "Enter a name for this account.",
+    // Each error is in its control's accessible name, the one channel Android exposes for a text
+    // field (device re-check: the hint was empty in TalkBack's tree).
+    expect(screen.getByTestId("account-form-name").props.accessibilityLabel).toBe(
+      "Name. Enter a name for this account.",
     );
-    expect(screen.getByTestId("account-form-plan").props.accessibilityHint).toBe(
-      "Choose a repayment plan. Opens a list to choose from",
+    expect(screen.getByTestId("account-form-plan").props.accessibilityLabel).toBe(
+      "Repayment plan, Choose a plan. Choose a repayment plan.",
     );
     expect(screen.getByText("Enter the amount owed. Use 0 if nothing is owed.")).toBeOnTheScreen();
     expect(screen.getByText("Choose a repayment plan")).toBeOnTheScreen();

@@ -3,7 +3,7 @@ import { Linking } from "react-native";
 import type { Edge } from "react-native-safe-area-context";
 import { Button } from "../../components/Button";
 import { CHECK_IN } from "../../copy/checkIn";
-import { OPEN_FLUMP_WEBSITE, websiteFallbackHint } from "../../copy/navigation";
+import { OPEN_FLUMP_WEBSITE, websiteButtonName } from "../../copy/navigation";
 import type { WebLink } from "../../navigation/shell";
 import { StatusMessage } from "../StatusMessage";
 
@@ -25,7 +25,7 @@ export function NotSetUp({ setUp, edges, children }: NotSetUpProps) {
     <StatusMessage heading={CHECK_IN.notSetUpHeading} body={CHECK_IN.notSetUpBody} edges={edges}>
       <Button
         label={setUp.exact ? CHECK_IN.notSetUpAction : OPEN_FLUMP_WEBSITE}
-        accessibilityHint={websiteFallbackHint(setUp, CHECK_IN.notSetUpAction)}
+        accessibilityLabel={websiteButtonName(setUp, CHECK_IN.notSetUpAction)}
         accessibilityRole="link"
         testID="not-set-up-open-website"
         onPress={() => void Linking.openURL(setUp.url)}

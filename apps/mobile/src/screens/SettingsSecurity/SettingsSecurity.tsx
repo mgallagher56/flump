@@ -3,7 +3,7 @@ import { Button } from "../../components/Button";
 import { Card } from "../../components/Card";
 import { Screen } from "../../components/Screen";
 import { Text } from "../../components/Text";
-import { OPEN_FLUMP_WEBSITE, websiteFallbackHint } from "../../copy/navigation";
+import { OPEN_FLUMP_WEBSITE, websiteButtonName } from "../../copy/navigation";
 import { SECURITY } from "../../copy/settings";
 import { useProfile } from "../../data/profile";
 import type { WebLink } from "../../navigation/shell";
@@ -43,7 +43,7 @@ export function SettingsSecurity({ offline, changePassword }: SettingsSecurityPr
         </Text>
         <Button
           label={changePassword.exact ? SECURITY.changePassword : OPEN_FLUMP_WEBSITE}
-          accessibilityHint={websiteFallbackHint(changePassword, SECURITY.changePassword)}
+          accessibilityLabel={websiteButtonName(changePassword, SECURITY.changePassword)}
           variant="secondary"
           accessibilityRole="link"
           disabled={offline}

@@ -222,12 +222,12 @@ describe("AccountDetail", () => {
     await detail(fakeApi(routes(h)), h.idOf("Mortgage"), NO_WEB_APP);
     expect(await screen.findByText(ON_WEBSITE)).toBeOnTheScreen();
     expect(screen.queryByText("See your mortgage on the website")).toBeNull();
-    const links = screen.getAllByRole("link", { name: "Open the Flump website" });
+    const links = screen.getAllByRole("link", { name: /^Open the Flump website\. ./ });
     // The mortgage's own page only: Edit stays in the app.
     expect(links).toHaveLength(1);
-    // The words say where it really goes; the hint says what it was for (S8 device check).
-    expect(links[0]?.props.accessibilityHint).toBe(
-      "Opens the Flump website's home page. From there: See your mortgage on the website.",
+    // The words say where it really goes; its name adds what it was for, as Android exposes no hint.
+    expect(links[0]?.props.accessibilityLabel).toBe(
+      "Open the Flump website. See your mortgage on the website.",
     );
     await userEvent.setup().press(links[0] as never);
     expect(Linking.openURL).toHaveBeenCalledWith(MARKETING.url);

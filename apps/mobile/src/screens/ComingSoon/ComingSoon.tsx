@@ -6,7 +6,7 @@ import {
   COMING_SOON_BODY,
   comingSoonAction,
   OPEN_FLUMP_WEBSITE,
-  websiteFallbackHint,
+  websiteButtonName,
 } from "../../copy/navigation";
 import { useShell, webLink } from "../../navigation/shell";
 
@@ -32,7 +32,7 @@ export function ComingSoon({ pageKey, label, webRoute }: ComingSoonProps) {
       </Text>
       <Button
         label={link.exact ? comingSoonAction(label) : OPEN_FLUMP_WEBSITE}
-        accessibilityHint={websiteFallbackHint(link, comingSoonAction(label))}
+        accessibilityLabel={websiteButtonName(link, comingSoonAction(label))}
         accessibilityRole="link"
         testID="coming-soon-open-website"
         onPress={() => void Linking.openURL(link.url)}

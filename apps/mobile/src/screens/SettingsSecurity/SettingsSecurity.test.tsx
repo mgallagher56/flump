@@ -39,7 +39,7 @@ describe("SettingsSecurity", () => {
       // An account always has an email; the sign-in token may carry no email claim.
       "Your email cannot be shown here right now.",
     );
-    expect(screen.getByRole("link", { name: "Open the Flump website" })).toBeOnTheScreen();
+    expect(screen.getByRole("link", { name: /^Open the Flump website\. ./ })).toBeOnTheScreen();
     // The line says where a password is changed whatever the link can say.
     expect(
       screen.getByText("You change your password on the Flump website, which emails you a link."),

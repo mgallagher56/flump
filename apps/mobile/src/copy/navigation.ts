@@ -29,15 +29,15 @@ export const comingSoonAction = (page: string) => `Open ${page} on the website`;
 export const OPEN_FLUMP_WEBSITE = "Open the Flump website";
 
 /**
- * What such a button was for, said after its words by a screen reader, so "Open the Flump website"
- * names its destination (S8 device check): "Opens the website's home page. From there: See your
- * mortgage on the website." Nothing when the button opens the page itself.
+ * Such a button's accessible name: where it really goes, then what it was for, so a screen reader
+ * hears both ("Open the Flump website. See your mortgage on the website."). The name, not a hint:
+ * Android exposes no hint on these (device re-check, 27 Nov 2026). Nothing when the button opens
+ * the page itself, which keeps its own words as its name.
  */
-export const websiteFallbackHint = (
+export const websiteButtonName = (
   link: { exact: boolean },
   intended: string,
-): string | undefined =>
-  link.exact ? undefined : `Opens the Flump website's home page. From there: ${intended}.`;
+): string | undefined => (link.exact ? undefined : `${OPEN_FLUMP_WEBSITE}. ${intended}.`);
 
 /** More's last group: Settings, Connect AI, Calculators and Sign out (web's drawer has no heading). */
 export const MORE_SETTINGS_HEADING = "Settings and tools";
