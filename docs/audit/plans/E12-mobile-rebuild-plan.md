@@ -643,7 +643,7 @@ Figures, all from a new narrow entry `@flump/finance-engine/net-worth` (the root
 
 Specified 27 November 2026 by a fable planner; the choices marked "Decided" were made by the lane under the coordinator's rules and are called out in the PR.
 
-**Goal.** Under the hero, Home shows web's strip (`apps/web/app/features/dashboard/components/DashboardKpiStrip/DashboardKpiStrip.tsx`, wired at `HomeDashboard.tsx:419-427`) with the same figures, words and refusals.
+**Goal.** Under the hero, Home shows web's strip (`apps/web/app/features/dashboard/components/DashboardKpiStrip/DashboardKpiStrip.tsx`, wired at `HomeDashboard.tsx:434`) with the same figures, words and refusals.
 
 **Seam check.** No backend service works out either figure: web builds both in `buildFinancialPicture` (`packages/finance-engine/src/picture/build.ts:133`, `:150`). Three rules sit in web, outside the engine, and move into it first with no figure change: `hasSpending` (`routes/_index.tsx:247-254`), `monthlySurplus: hasIncome ? surplus : null` (`:259`) and `incomeOnly` (`HomeDashboard.tsx:194-197`). Neither figure reads tax records (only `selectEstimatedTaxDue` does, `build.ts:145`), so mobile does not read `/tax-records`.
 
@@ -672,6 +672,8 @@ Specified 27 November 2026 by a fable planner; the choices marked "Decided" were
 4. `selectConsumerDebtTotal(snapshot)` in `picture/selectors/portfolio-totals.ts` holds the rule at `debt-summary.ts:37-39`; `selectDebtSummary` calls it, so the entry carries no `debt-payoff.ts`.
 5. `selectHomeStrip` in `src/home-strip.ts` returns the first cell (left over, short, income only, unset or refused, with figure, leaves-out and notice) and the second (owed, pension or none). Web's loader and `HomeDashboard` call it.
 6. `src/home-strip-entry.ts`, exported as `@flump/finance-engine/home-strip`, with what mobile needs to build the budget from rows (`budgetEntryFromRow` and `profileFactsFromProfile` move out of `build.ts` if they live there, re-exported from it).
+
+Signed by a fable decider on 27 November 2026 (`docs/testing/mutation-triage.md`, S5b): no figure change, and mobile loses nothing for the strip by leaving out the vector sign-off, since the strip's take-home never carried it on web. Condition for later slices: a mobile screen that shows what-if, marginal-rate, HICBC, pension-effect or tax card figures needs the sign-off status by another route, such as a generated per-year, per-feature table checked by a test.
 
 Characterisation tests come first and pass against today's code: `home-strip.characterisation.test.ts` pins `picture.budget`, `picture.takeHome` and `debtSummary.totalDebt` from `buildFinancialPicture` (employee with a linked take-home row, self-employed, typed take-home, no budget, income only, short, no debts, overdraft only, pension and no debt, Scotland with no Scottish rates, Plan 1 in 2027/28, unsupported year, a date after the latest supported year); `uk-take-home.characterisation.test.ts` pins whole `computeUkTakeHome` breakdowns, `verification` included, and `calculateUkTax` results. The reach test `home-strip-entry.test.ts` keeps out `test-vectors`, `tax-year-verification.ts` and `debt-payoff.ts`, and asserts `uk-take-home.ts` still reaches the check.
 
