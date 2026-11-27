@@ -335,6 +335,32 @@ describe("the React Native Directory check's one skipped package", () => {
     ]);
   });
 
+  test("fails on a single string in place of a list, and on a setting that is not an object", () => {
+    expect(directoryExcludeProblems(pkg("58.0.32", "/.*/"))).toEqual([
+      "the directory check skips packages with no sign-off: /.*/",
+    ]);
+    expect(
+      directoryExcludeProblems({ expo: { doctor: { reactNativeDirectoryCheck: false } } }),
+    ).toEqual(["expo.doctor.reactNativeDirectoryCheck must be an object"]);
+  });
+
+  test("fails closed when expo-router's version is a range, tag or prerelease", () => {
+    for (const spec of [">=58.0.33", "latest", "workspace:*", "58.1.0-canary.1"]) {
+      expect(directoryExcludeProblems(pkg(spec, [MASKED]))).toEqual([
+        `expo-router's version (${spec}) cannot be read, so the masked-view exclusion cannot be checked`,
+      ]);
+    }
+    expect(directoryExcludeProblems({ expo: pkg("58.0.32", [MASKED]).expo })).toHaveLength(1);
+  });
+
+  test("fails when the environment switches the check", () => {
+    expect(
+      directoryExcludeProblems(pkg("58.0.32", [MASKED]), {
+        EXPO_DOCTOR_ENABLE_DIRECTORY_CHECK: "false",
+      }),
+    ).toEqual(["EXPO_DOCTOR_ENABLE_DIRECTORY_CHECK must not be set: it overrides the check"]);
+  });
+
   test("apps/mobile/package.json passes as it stands", () => {
     const real = JSON.parse(
       readFileSync(resolve(import.meta.dir, "../apps/mobile/package.json"), "utf8"),
