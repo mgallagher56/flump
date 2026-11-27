@@ -73,7 +73,8 @@ export function toggleLine(details: HTMLDetailsElement): boolean {
   if (!content || typeof content.animate !== "function") return false;
   const options = { duration: marketingMs("disclosure"), easing: easing() };
   for (const running of content.getAnimations()) running.cancel();
-  if (!details.open) {
+  // Open, or opening: close. Closed, or closing (a cancelled closing never finishes): open.
+  if (!details.open || details.dataset.state === "closed") {
     details.dataset.state = "open";
     details.open = true;
     content.animate(

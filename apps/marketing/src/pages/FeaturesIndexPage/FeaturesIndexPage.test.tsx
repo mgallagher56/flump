@@ -51,6 +51,10 @@ describe("FeaturesIndexPage", () => {
       ["Settings and your data", null],
     ]);
     expect(document.querySelectorAll("main details")).toHaveLength(ALL_FEATURE_LINES.length);
+    // The groups sit under their own band heading, not under Start here.
+    const band = screen.getByRole("region", { name: "Every feature" });
+    expect(within(band).getByRole("heading", { level: 2, name: "Every feature" })).toBeDefined();
+    expect(within(band).getAllByRole("heading", { level: 3 })).toHaveLength(headings.length);
     // Start here comes before the index, and the hero before both.
     const order = ["features-title", "start-here-title", "group-home"].map((id) =>
       document.getElementById(id),

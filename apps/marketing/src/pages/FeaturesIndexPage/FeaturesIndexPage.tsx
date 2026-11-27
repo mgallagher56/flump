@@ -1,3 +1,4 @@
+import { VisuallyHidden } from "@repo/ui";
 import { type FC, useRef } from "react";
 import { FeatureIndex } from "../../components/FeatureIndex";
 import { Footer } from "../../components/Footer";
@@ -26,7 +27,17 @@ const EveryFeature: FC = () => {
   const ref = useRef<HTMLDivElement>(null);
   useGsapMoment(ref, groupsDealt);
   return (
-    <MarketingBand bubbles="c" className={indexBand} id="every-feature" tone="canvas">
+    <MarketingBand
+      bubbles="c"
+      className={indexBand}
+      id="every-feature"
+      labelledBy="every-feature-title"
+      tone="canvas"
+    >
+      {/* The approved prototype shows no heading here; the outline still needs one over the groups. */}
+      <VisuallyHidden as="h2" id="every-feature-title">
+        Every feature
+      </VisuallyHidden>
       <div ref={ref}>
         <FeatureIndex band="canvas" groupHrefs={GROUP_HREFS} />
       </div>

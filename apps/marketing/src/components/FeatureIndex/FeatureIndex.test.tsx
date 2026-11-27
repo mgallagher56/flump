@@ -78,6 +78,26 @@ describe("FeatureIndex", () => {
     expect(details.dataset.state).toBeUndefined();
   });
 
+  it("opens a line again when it is clicked while closing", () => {
+    render(<FeatureIndex />);
+    const details = detailsOf("net-worth");
+    const panel = details.querySelector<HTMLElement>("[data-line-panel]") as HTMLElement;
+    const runs: Keyframe[][] = [];
+    panel.animate = ((frames: Keyframe[]) => {
+      runs.push(frames);
+      return { onfinish: null } as unknown as Animation;
+    }) as typeof panel.animate;
+    panel.getAnimations = () => [];
+    toggleLine(details);
+    toggleLine(details);
+    expect(details.dataset.state).toBe("closed");
+    // The closing never finished: the next click opens it, not closes it again.
+    toggleLine(details);
+    expect(details.open).toBe(true);
+    expect(details.dataset.state).toBe("open");
+    expect(runs[2]?.map((f) => f.opacity)).toEqual([0, 1]);
+  });
+
   it("opens and focuses the line named by the hash on load, and no other", () => {
     window.history.replaceState(null, "", "/features#pay-extra");
     render(<FeatureIndex />);
