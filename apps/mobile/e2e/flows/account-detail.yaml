@@ -14,26 +14,39 @@ appId: app.flump.mobile
     id: "tab-accounts"
 - extendedWaitUntil:
     visible:
-      id: "accounts-owe"
+      id: "accounts-hero"
     timeout: 30000
-# Account ids are made at runtime, so the row is found by its name.
-- tapOn: "Residential mortgage"
+# Account ids are made at runtime, so the row is found by its name (the row's spoken label starts
+# with it). "What you owe" sits below the fold.
+- scrollUntilVisible:
+    element:
+      text: "Residential mortgage.*"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    text: "Residential mortgage.*"
 - extendedWaitUntil:
     visible:
       id: "account-detail-hero"
     timeout: 30000
-- assertVisible:
-    id: "account-history-description"
-- assertVisible:
-    id: "account-chart-summary"
-- assertVisible:
-    id: "account-edit-on-website"
+# The chart's spoken name carries its summary and the joint sentence, so the chart is checked,
+# not the text beside it, which a screen reader (and Maestro on Android) skips.
+- scrollUntilVisible:
+    element:
+      id: "account-chart"
+    direction: DOWN
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      id: "account-edit-on-website"
+    direction: DOWN
+    timeout: 15000
 - takeScreenshot: account-joint-mortgage-${THEME}
 - tapOn:
     id: "header-back"
 - extendedWaitUntil:
     visible:
-      id: "accounts-hero"
+      id: "accounts"
     timeout: 10000
 # A link to an account that is not in the list.
 - openLink: flump://accounts/not-an-account
@@ -46,5 +59,5 @@ appId: app.flump.mobile
     id: "account-back-to-accounts"
 - extendedWaitUntil:
     visible:
-      id: "accounts-hero"
+      id: "accounts"
     timeout: 10000

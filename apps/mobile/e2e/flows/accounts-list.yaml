@@ -18,9 +18,13 @@ appId: app.flump.mobile
       id: "accounts-hero"
     timeout: 30000
 - assertVisible:
-    id: "accounts-own-total"
-- assertVisible:
     id: "accounts-view-history"
+# The groups sit below the hero, its links and the check-in button: scroll to the total.
+- scrollUntilVisible:
+    element:
+      id: "accounts-own-total"
+    direction: DOWN
+    timeout: 15000
 - takeScreenshot: accounts-owner-${THEME}
 # The joint household: a relaunch reads it (the cache lives only while the app runs).
 - runScript:
@@ -39,9 +43,14 @@ appId: app.flump.mobile
     visible:
       id: "accounts-hero"
     timeout: 30000
+- scrollUntilVisible:
+    element:
+      id: "accounts-owe-total"
+    direction: DOWN
+    timeout: 15000
+# The row's spoken label joins name, type line and figure with commas; the type line shows "·".
 - assertVisible:
-    id: "accounts-owe-total"
-- assertVisible: "Mortgage · Joint, 50%"
+    text: ".*Joint, 50%.*"
 - takeScreenshot: accounts-joint-${THEME}
 # No accounts: the empty state, never £0.
 - runScript:

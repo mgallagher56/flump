@@ -931,6 +931,8 @@ describe("mobile e2e job sign-in config (E12 S2a)", () => {
       "EXPO_PUBLIC_WORKOS_API_URL=http://10.0.2.2:8787",
       "EXPO_PUBLIC_WORKOS_CLIENT_ID=client_e2e_fixture",
       "EXPO_PUBLIC_MARKETING_URL=https://flump.example",
+      // Required in release builds since E12 S6 (coordinator, 27 November 2026): a placeholder.
+      "EXPO_PUBLIC_WEB_APP_URL=https://app.flump.example",
     ]);
   });
 
@@ -953,6 +955,7 @@ describe("mobile e2e job sign-in config (E12 S2a)", () => {
       EXPO_PUBLIC_WORKOS_API_URL: "http://10.0.2.2:8787",
       EXPO_PUBLIC_WORKOS_CLIENT_ID: "client_e2e_fixture",
       EXPO_PUBLIC_MARKETING_URL: "https://flump.example",
+      EXPO_PUBLIC_WEB_APP_URL: "https://app.flump.example",
     });
   });
 });
