@@ -21,7 +21,8 @@ export const DOCUMENT_MIN_TEXT = 13;
 export const EXAMPLE_TAG = { text: "Example", width: 66, height: 22, size: 13 } as const;
 
 /** What a card or a filled shape is made of. Each surface has the inks that clear AA on it. */
-export type DocumentSurface = "paper" | "charcoal" | "mint" | "soft" | "band";
+/** `mark` is a graphic-only fill (a seal): no text ever sits on it. */
+export type DocumentSurface = "paper" | "charcoal" | "mint" | "soft" | "band" | "mark";
 export type DocumentInk = "ink" | "inkSecondary" | "primary" | "onCharcoal" | "onBand";
 export type DocumentFill = DocumentSurface | "line" | "primary" | "tag" | "markOnCharcoal";
 export type DocumentStroke = "edge" | "rule" | "slot" | "primary" | "onBand" | "onCharcoal";
@@ -33,7 +34,9 @@ export const documentRoleTokens = {
     charcoal: "surface.contrast",
     mint: "primary.subtle",
     soft: "primary.subtle",
-    band: "primary",
+    // Text sits on the band, so it is the text-bearing fill (ui-laws section 2), not `primary`.
+    band: "primary.solid",
+    mark: "primary",
   },
   ink: {
     ink: "text.primary",
@@ -42,7 +45,14 @@ export const documentRoleTokens = {
     onCharcoal: "text.onContrast",
     onBand: "primary.foreground",
   },
+  // Any surface can also fill a plain shape (the calendar band's square-off corner).
   fill: {
+    paper: "material.paper.fill",
+    charcoal: "surface.contrast",
+    mint: "primary.subtle",
+    soft: "primary.subtle",
+    band: "primary.solid",
+    mark: "primary",
     line: "border",
     primary: "primary",
     tag: "surface.sunken",
@@ -58,6 +68,33 @@ export const documentRoleTokens = {
   },
 } as const;
 
+/**
+ * The effects a drawer needs beyond the roles, so the web and mobile draw them alike. The web's
+ * Panda classes (`documentClasses`) hold the same numbers; `Illustration.test.tsx` checks them.
+ */
+export const documentEffects = {
+  /** A soft drop under each piece: inset from its sides, moved down, blurred, faint. */
+  shadow: {
+    token: "surface.contrast",
+    inset: 6,
+    offsetY: 10,
+    blur: 8,
+    opacity: { light: 0.14, dark: 0.6 },
+  },
+  /** The "Example" tag: on paper a sunken pill with a hairline; on charcoal an outline only. */
+  tag: {
+    fill: "surface.sunken",
+    edge: "border",
+    ink: "text.secondary",
+    onCharcoalInk: "text.onContrast",
+    onCharcoalEdgeOpacity: 0.6,
+  },
+  /** The `onCharcoal` stroke (the chip's contact lines) is drawn at half strength. */
+  onCharcoalStrokeOpacity: 0.5,
+  /** Dashed lines: dash and gap, in grid units. */
+  dash: [3, 3],
+} as const;
+
 /** The inks allowed on each surface (every pair is in `PASSING_PAIRS`, `@flump/tokens`). */
 export const documentInksBySurface: Record<DocumentSurface, readonly DocumentInk[]> = {
   paper: ["ink", "inkSecondary", "primary"],
@@ -65,6 +102,7 @@ export const documentInksBySurface: Record<DocumentSurface, readonly DocumentInk
   mint: ["ink", "inkSecondary"],
   soft: ["ink", "inkSecondary"],
   band: ["onBand"],
+  mark: [],
 };
 
 export interface DocumentText {
@@ -346,11 +384,12 @@ function creditCard(
 ): DocumentPiece {
   const shapes: DocumentShape[] = [
     text(18, 32, "Credit card", 15, "ink", { weight: 600, font: "display" }),
-    tag(width - 14, 16),
     ...discs(28, 58),
   ];
+  // A card with no figure carries no tag (STYLE-GUIDE 8.3).
   if (options.figure !== false) {
     shapes.push(
+      tag(width - 14, 16),
       text(18, height - 34, "£1,800", 30, "ink", { weight: 700, font: "display", numeric: true }),
       text(18, height - 14, options.meta ?? "22.9% APR", 13, "inkSecondary", { numeric: true }),
     );
@@ -488,7 +527,8 @@ export const documentDefinitions: Record<DocumentScene, DocumentPicture> = {
           tag(156, 14),
           ...rows(14, 154, 62, [
             { label: "Nov 2026", value: "£9,000" },
-            { label: "Jan 2028", value: "£6,000" },
+            // More than a year ahead: a projection, so "~" (UX-GUIDELINES B9).
+            { label: "Jan 2028", value: "~£6,000" },
             { label: "Feb 2030", value: "£0", total: true },
           ]),
         ],
@@ -803,7 +843,7 @@ export const documentDefinitions: Record<DocumentScene, DocumentPicture> = {
         64,
         64,
         0,
-        "band",
+        "mark",
         [
           {
             kind: "path",

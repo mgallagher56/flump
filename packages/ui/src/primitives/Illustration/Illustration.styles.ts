@@ -119,12 +119,12 @@ export const documentRecipe = cva({
     height: "auto",
     flexShrink: 0,
     overflow: "visible",
-    // Forced colours (Windows contrast themes) ignore SVG fills, so the system pair is set here:
-    // paper on Canvas with a CanvasText edge, every word in CanvasText, no shadows.
+    // Forced colours (Windows contrast themes) may leave SVG fills as authored, so the system pair
+    // is set on everything: every shape on Canvas with a CanvasText edge, every word in CanvasText,
+    // no shadows. A coloured band under light words can then never survive under CanvasText.
     _highContrast: {
       "& text": { fill: "CanvasText" },
-      "& [data-doc-body]": { fill: "Canvas", stroke: "CanvasText" },
-      "& [data-doc-tag] rect": { fill: "Canvas", stroke: "CanvasText" },
+      "& rect, & circle, & path": { fill: "Canvas", stroke: "CanvasText" },
       "& [data-doc-shadow]": { display: "none" },
     },
   },
@@ -146,7 +146,8 @@ export const documentClasses = {
     charcoal: css({ fill: "surface.contrast" }),
     mint: css({ fill: "primary.subtle" }),
     soft: css({ fill: "primary.subtle" }),
-    band: css({ fill: "primary" }),
+    band: css({ fill: "primary.solid" }),
+    mark: css({ fill: "primary" }),
   },
   ink: {
     ink: css({ fill: "text.primary" }),
@@ -160,7 +161,8 @@ export const documentClasses = {
     charcoal: css({ fill: "surface.contrast" }),
     mint: css({ fill: "primary.subtle" }),
     soft: css({ fill: "primary.subtle" }),
-    band: css({ fill: "primary" }),
+    band: css({ fill: "primary.solid" }),
+    mark: css({ fill: "primary" }),
     line: css({ fill: "border" }),
     primary: css({ fill: "primary" }),
     tag: css({ fill: "surface.sunken" }),

@@ -10,6 +10,7 @@ import {
   type DocumentPiece,
   type DocumentShape,
   documentDefinitions,
+  documentEffects,
   documentInksBySurface,
   documentRoleTokens,
   documentSceneIds,
@@ -18,6 +19,7 @@ import {
   walkDocument,
 } from "./Illustration.documents";
 import { illustrationScenes } from "./Illustration.scenes";
+import { documentClasses } from "./Illustration.styles";
 
 describe("Illustration primitive", () => {
   it("offers all nine scenes from the shared shape definitions", () => {
@@ -99,8 +101,8 @@ describe("Illustration primitive", () => {
   });
 });
 
-/** Sample figures: a pound sign or a percentage. */
-const FIGURE = /£|%/;
+/** Sample figures: an amount, a rate, or a length of time such as "10.2 months". */
+const FIGURE = /£|%|\d+(\.\d+)? months?/;
 
 const texts = (shapes: readonly DocumentShape[]) =>
   shapes.flatMap((shape): string[] =>
@@ -173,12 +175,16 @@ describe("Illustration document pictures (STYLE-GUIDE 8.3)", () => {
     expect(label?.getAttribute("font-size")).toBe("13");
   });
 
-  it.each(documentScenes)("tags every card in %s that shows a sample figure", (scene) => {
-    for (const piece of documentDefinitions[scene].pieces) {
-      const showsFigure = texts(piece.shapes).some((line) => FIGURE.test(line));
-      if (showsFigure) expect(hasTag(piece)).toBe(true);
-    }
-  });
+  it.each(documentScenes)(
+    "tags the cards in %s that show a sample figure, and no others",
+    (scene) => {
+      for (const piece of documentDefinitions[scene].pieces) {
+        const showsFigure = texts(piece.shapes).some((line) => FIGURE.test(line));
+        // A tag exactly where a card shows a figure: never missing, never on a card without one.
+        expect(hasTag(piece), `${scene}: piece at ${piece.x},${piece.y}`).toBe(showsFigure);
+      }
+    },
+  );
 
   it("leaves the tag off the pictures that show no figure, as the owner picked them", () => {
     const untagged = documentScenes.filter(
@@ -240,10 +246,18 @@ describe("Illustration document pictures (STYLE-GUIDE 8.3)", () => {
         expect(checked, `${fg} on ${bg}`).toBe(true);
       }
     }
-    // The tag: secondary text on the sunken fill, and the light text on the charcoal card.
-    expect(PASSING_PAIRS.some((p) => p.fg === "text.secondary" && p.bg === "surface.sunken")).toBe(
-      true,
-    );
+    // The tag's own pairs: secondary text on the sunken pill, light text on the charcoal card.
+    const both = (fg: string, bg: string) =>
+      PASSING_PAIRS.some(
+        (p) =>
+          p.fg === fg &&
+          p.bg === bg &&
+          p.min === 4.5 &&
+          p.themes.includes("light") &&
+          p.themes.includes("dark"),
+      );
+    expect(both(documentEffects.tag.ink, documentEffects.tag.fill)).toBe(true);
+    expect(both(documentEffects.tag.onCharcoalInk, "surface.contrast")).toBe(true);
   });
 
   it("uses no violet, rose or raw colour (STYLE-GUIDE MC1)", () => {
@@ -262,5 +276,33 @@ describe("Illustration document pictures (STYLE-GUIDE 8.3)", () => {
         expect(Math.abs(piece.rotate), scene).toBeLessThanOrEqual(6);
       }
     }
+  });
+});
+
+describe("document picture effects are one set of numbers for web and mobile", () => {
+  it("draws the shadow, the tags, the charcoal strokes and the dashes from documentEffects", () => {
+    const { shadow, tag, onCharcoalStrokeOpacity, dash } = documentEffects;
+    expect(documentClasses.shadow).toBe(
+      `fill_${shadow.token} fill-opacity_${shadow.opacity.light} dark:fill-opacity_${shadow.opacity.dark} systemDark:fill-opacity_${shadow.opacity.dark} filter_blur(${shadow.blur}px)`,
+    );
+    expect(documentClasses.tagPaper).toBe(`fill_${tag.fill} stk_${tag.edge} stk-w_1`);
+    expect(documentClasses.tagOnCharcoal).toBe(
+      `fill_none stk_${tag.onCharcoalInk} stk-op_${tag.onCharcoalEdgeOpacity}`,
+    );
+    expect(documentClasses.stroke.onCharcoal).toBe(
+      `stk_text.onContrast stk-op_${onCharcoalStrokeOpacity}`,
+    );
+    expect(documentClasses.dashed).toBe(`stk-dsh_${dash.join("_")}`);
+  });
+
+  it("insets and drops the shadow by the shared numbers", () => {
+    const { container } = render(<Illustration scene="feature-pay" variant="document" />);
+    const shadow = container.querySelector("[data-doc-shadow]");
+    const piece = documentDefinitions["feature-pay"].pieces[0];
+    expect(shadow?.getAttribute("x")).toBe(String(documentEffects.shadow.inset));
+    expect(shadow?.getAttribute("y")).toBe(String(documentEffects.shadow.offsetY));
+    expect(shadow?.getAttribute("width")).toBe(
+      String((piece?.width ?? 0) - 2 * documentEffects.shadow.inset),
+    );
   });
 });

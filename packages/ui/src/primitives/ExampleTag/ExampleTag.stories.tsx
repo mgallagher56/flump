@@ -34,15 +34,16 @@ const meta: Meta<typeof ExampleTag> = {
 export default meta;
 type Story = StoryObj<typeof ExampleTag>;
 
-export const Default: Story = {
-  globals: { theme: "light" },
-  play: async ({ canvasElement }) => {
-    const tag = within(canvasElement).getByText("Example");
-    await expect(tag.tagName).toBe("SPAN");
-    // 12px or larger, so it stays readable and scales with text size.
-    await expect(Number.parseFloat(getComputedStyle(tag).fontSize)).toBeGreaterThanOrEqual(12);
-  },
+const defaultPlay: Story["play"] = async ({ canvasElement }) => {
+  const tag = within(canvasElement).getByText("Example");
+  await expect(tag.tagName).toBe("SPAN");
+  // 12px or larger, so it stays readable and scales with text size.
+  await expect(Number.parseFloat(getComputedStyle(tag).fontSize)).toBeGreaterThanOrEqual(12);
 };
+
+export const Default: Story = { globals: { theme: "light" }, play: defaultPlay };
+
+export const DefaultDark: Story = { globals: { theme: "dark" }, play: defaultPlay };
 
 const OnCards = () => (
   <div className={row}>
@@ -55,7 +56,7 @@ const OnCards = () => (
       <p className={cardTitle}>Budget slip</p>
     </Card>
     <article className={contrastCard}>
-      <ExampleTag tone="onContrast" />
+      <ExampleTag variant="onContrast" />
       <p className={cardTitle}>Bank card</p>
     </article>
   </div>
@@ -80,7 +81,24 @@ export const OnCardsDark: Story = {
   play: onCardsPlay,
 };
 
-export const CustomLabel: Story = {
-  globals: { theme: "light" },
-  args: { label: "Sample" },
+const phone375 = {
+  viewports: {
+    phone375: { name: "Phone 375", styles: { width: "375px", height: "812px" }, type: "mobile" },
+  },
+  defaultViewport: "phone375",
 };
+const desktop1280 = {
+  viewports: {
+    desktop1280: {
+      name: "Desktop 1280",
+      styles: { width: "1280px", height: "800px" },
+      type: "desktop",
+    },
+  },
+  defaultViewport: "desktop1280",
+};
+
+export const OnCardsLight375: Story = { ...OnCardsLight, parameters: { viewport: phone375 } };
+export const OnCardsDark375: Story = { ...OnCardsDark, parameters: { viewport: phone375 } };
+export const OnCardsLight1280: Story = { ...OnCardsLight, parameters: { viewport: desktop1280 } };
+export const OnCardsDark1280: Story = { ...OnCardsDark, parameters: { viewport: desktop1280 } };

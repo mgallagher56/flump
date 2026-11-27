@@ -1,7 +1,7 @@
 import { cva } from "../../../styled-system/css";
 
 // WCAG 2.5.8: every control is at least 24 by 24 CSS px, even where the visible dot is smaller.
-// On a coarse pointer the hit area grows to the 44px touch size.
+// No 44px growth on coarse pointers: six dots and two step buttons must stay on one row at 375.
 const MIN_TARGET = "24px";
 
 const focusRing = {
@@ -21,7 +21,8 @@ export const carouselDotsGroupRecipe = cva({
   base: {
     display: "inline-flex",
     alignItems: "center",
-    flexWrap: "wrap",
+    // One row: dots never wrap (a carousel of more items than fit is the caller's to avoid).
+    flexWrap: "nowrap",
     gap: "0",
   },
 });
@@ -39,7 +40,6 @@ export const carouselDotButtonRecipe = cva({
     borderRadius: "full",
     backgroundColor: "transparent",
     cursor: "pointer",
-    "@media (pointer: coarse)": { minWidth: "touch", minHeight: "touch" },
     _focusVisible: focusRing,
   },
 });
@@ -80,43 +80,4 @@ export const carouselDotRecipe = cva({
     },
   },
   defaultVariants: { current: false },
-});
-
-/** Previous and next: real buttons with a chevron, at least 24px square. */
-export const carouselStepButtonRecipe = cva({
-  base: {
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    flex: "none",
-    minWidth: MIN_TARGET,
-    minHeight: MIN_TARGET,
-    p: "6px",
-    borderRadius: "full",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: "border",
-    backgroundColor: "surface.card",
-    color: "text.primary",
-    cursor: "pointer",
-    "@media (pointer: coarse)": { minWidth: "touch", minHeight: "touch" },
-    _motionSafe: {
-      transitionProperty: "border-color, color",
-      transitionDuration: "fast",
-      transitionTimingFunction: "standard",
-    },
-    "@media (hover: hover)": {
-      _hover: { borderColor: "primary.border", color: "primary" },
-    },
-    _focusVisible: focusRing,
-    // At an end without `loop`: still focusable (so the keyboard order never shifts), but quiet.
-    "&[aria-disabled=true]": {
-      color: "text.muted",
-      borderColor: "border.subtle",
-      cursor: "not-allowed",
-      "@media (hover: hover)": {
-        _hover: { borderColor: "border.subtle", color: "text.muted" },
-      },
-    },
-  },
 });

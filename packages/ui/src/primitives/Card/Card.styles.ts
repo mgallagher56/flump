@@ -35,8 +35,8 @@ export const cardRecipe = cva({
     /**
      * The card's material (STYLE-GUIDE 2.7). `plain` is today's card. `glass` is the card fill
      * under a faint diagonal sheen, with a soft border and a faint inner top light (carried by
-     * `shadows.glass`); with `elevation="interactive"` it gains a still hover light, never a top
-     * border, a border colour change or a tilt. `paper` is the paper fill with faint ruled lines
+     * `shadows.glass`); with `elevation="interactive"` it gains a still hover light on top of the
+     * usual whole-border hover cue, never a top-only border or a tilt. `paper` is the paper fill with faint ruled lines
      * and its edge, with no hover light. Glass suits cards holding no figure in the apps (AT3).
      */
     material: {
@@ -73,7 +73,7 @@ export const cardRecipe = cva({
       elevation: ["resting", "interactive", "floating"],
       css: { boxShadow: "paper" },
     },
-    // Hover keeps the material's border and shadow: no border colour change, no top border.
+    // Paper hover keeps its border and shadow: no border colour change, no top border.
     {
       material: "paper",
       elevation: "interactive",
@@ -85,7 +85,10 @@ export const cardRecipe = cva({
       css: {
         position: "relative",
         isolation: "isolate",
-        _hover: { borderColor: "material.glass.border", boxShadow: "glass" },
+        // Glass keeps the interactive elevation's hover cue (the whole border to border.strong and
+        // shadows.cardHover, never a top-only border or a transform), since the light alone is
+        // near-invisible in light theme.
+        // Follow-up: material.glass.light and .sheen (F2) are off-white over an off-white fill in light.
         // The still hover light: a soft layer behind the content that brightens in place. It
         // never moves; under reduced motion it changes at once.
         _before: {

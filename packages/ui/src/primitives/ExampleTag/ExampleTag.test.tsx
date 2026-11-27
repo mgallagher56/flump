@@ -14,10 +14,11 @@ describe("ExampleTag", () => {
     expect(tag.textContent).toBe("Example");
   });
 
-  it("takes another label", () => {
-    render(<ExampleTag label="Sample" />);
-    expect(screen.getByText("Sample").tagName).toBe("SPAN");
-    expect(screen.queryByText("Example")).toBeNull();
+  it("always says Example, whatever is passed", () => {
+    // @ts-expect-error children are not accepted: the approved word is "Example" only.
+    render(<ExampleTag>Sample</ExampleTag>);
+    expect(screen.getByText("Example").textContent).toBe("Example");
+    expect(screen.queryByText("Sample")).toBeNull();
   });
 
   it("is static text, not a control", () => {
@@ -40,27 +41,32 @@ describe("ExampleTag", () => {
     expect(style.forcedColorAdjust).toBeUndefined();
   });
 
-  it("defaults to the paper tone", () => {
-    expect(exampleTagRecipe.raw({})).toEqual(exampleTagRecipe.raw({ tone: "paper" }));
+  it("defaults to the paper variant", () => {
+    expect(exampleTagRecipe.raw({})).toEqual(exampleTagRecipe.raw({ variant: "paper" }));
     expect(exampleTagRecipe.raw({}).color).toBe("text.secondary");
   });
 
   it("uses the off-white text and edge on a contrast card", () => {
-    const style = exampleTagRecipe.raw({ tone: "onContrast" });
+    const style = exampleTagRecipe.raw({ variant: "onContrast" });
     expect(style.color).toBe("text.onContrast");
     expect(style.borderColor).toBe("text.onContrast");
     expect(style.backgroundColor).toBe("transparent");
   });
 
-  it("renders different classes per tone and keeps a caller's class", () => {
+  it("renders different classes per variant and keeps a caller's class", () => {
     const { container } = render(
       <>
         <ExampleTag />
-        <ExampleTag tone="onContrast" className="extra" />
+        <ExampleTag variant="paper" />
+        <ExampleTag variant="onContrast" />
+        <ExampleTag variant="onContrast" className="extra" />
       </>,
     );
-    const [paper, onContrast] = Array.from(container.children);
-    expect(paper?.className).not.toBe(onContrast?.className);
-    expect(onContrast?.className.split(" ")).toContain("extra");
+    const [plain, paper, onContrast, withExtra] = Array.from(container.children).map(
+      (el) => el.className,
+    );
+    expect(paper).toBe(plain);
+    expect(onContrast).not.toBe(paper);
+    expect(withExtra).toBe(`${onContrast} extra`);
   });
 });

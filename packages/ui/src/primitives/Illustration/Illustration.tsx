@@ -16,7 +16,8 @@ interface CommonProps {
   /**
    * The largest width the picture may take (it fills its container up to this). Flat scenes: sm
    * 140px, md 200px, lg 260px, xl 320px. Document pictures are never narrower than 280px, so their
-   * text stays at 12px or more: sm 280px, md 320px, lg 360px, xl 400px.
+   * text stays at 12px or more: sm 280px, md 320px, lg 360px, xl 400px. Give a document picture
+   * at least 280px of room, or it scrolls sideways on a 320px screen.
    */
   size?: "sm" | "md" | "lg" | "xl";
   id?: string;
