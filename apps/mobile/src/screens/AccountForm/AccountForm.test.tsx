@@ -354,25 +354,6 @@ describe("AccountForm: add", () => {
     expect(screen.queryByTestId("account-form-alert")).toBeNull();
     await save();
     expect(posts(api)[0]?.body).toMatchObject({ type: "Saving", balance: -500 });
-
-    // Switching from Current with a negative balance to Credit Card surfaces the owed error; switching back clears it.
-    await form(fakeApi(routes(household())), { kind: "add" });
-    await type("account-form-balance", "-120");
-    await save();
-    expect(screen.getByText("Enter a name for this account.")).toBeOnTheScreen();
-    expect(
-      screen.queryByText("An amount owed cannot be below £0. Enter it without a minus sign."),
-    ).toBeNull();
-
-    await choose("account-form-type", "Credit Card");
-    expect(
-      screen.getByText("An amount owed cannot be below £0. Enter it without a minus sign."),
-    ).toBeOnTheScreen();
-
-    await choose("account-form-type", "Current");
-    expect(
-      screen.queryByText("An amount owed cannot be below £0. Enter it without a minus sign."),
-    ).toBeNull();
   });
 });
 
@@ -432,6 +413,27 @@ describe("AccountForm: edit and delete", () => {
     const props = await form(api, { kind: "edit", id: h.idOf("Mortgage") });
     await save();
     expect(posts(api)).toEqual([]);
+    expect(props.onSaved).toHaveBeenCalledTimes(1);
+  });
+
+  it("allows editing an overdrawn Current account (-50) and changing its type to Credit Card (web parity)", async () => {
+    const h = household([{ name: "Overdrawn current", type: "Current", balance: -50 }]);
+    const id = h.idOf("Overdrawn current");
+    const api = fakeApi(routes(h, { [`PATCH /accounts/${id}`]: () => ({ id }) }));
+    const props = await form(api, { kind: "edit", id });
+    await choose("account-form-type", "Credit Card");
+    await save();
+    expect(
+      screen.queryByText("An amount owed cannot be below £0. Enter it without a minus sign."),
+    ).toBeNull();
+    expect(posts(api)).toEqual([
+      {
+        method: "PATCH",
+        path: `/accounts/${id}`,
+        body: { type: "Credit Card" },
+        ifMatch: `"${NOW().toISOString()}"`,
+      },
+    ]);
     expect(props.onSaved).toHaveBeenCalledTimes(1);
   });
 
