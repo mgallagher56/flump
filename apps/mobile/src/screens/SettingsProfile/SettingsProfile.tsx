@@ -148,7 +148,7 @@ function ProfileForm({
       <CheckInDay profile={profile} saves={saves} />
       <Sections profile={profile} saves={saves} />
       <View>
-        <Text textStyle="body.sm" color="secondary">
+        <Text textStyle="body.sm" color="secondary" testID="settings-profile-on-website">
           {PROFILE.moreOnWebsite}
         </Text>
         <Button

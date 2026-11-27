@@ -58,9 +58,12 @@ export const PROFILE = {
   selfAssessment: "Self Assessment",
   selfAssessmentHint:
     "Income and expense records by tax year, for self-employed or rental income. Adds a tax page to your menu and dashboard.",
-  /** The rest of web's Profile tab, which the app does not have yet. */
+  /**
+   * The rest of web's Profile tab, which the app does not have yet. Shown whatever the build's
+   * configuration, so the page says it even when the link can only say "Open the Flump website".
+   */
   moreOnWebsite:
-    "Your picture, age and pay, tax details, partner mode, check-in questions, Connect AI and deleting your financial data are on the Flump website.",
+    "Your picture, age and pay, tax details, partner mode, check-in questions, Connect AI and deleting your financial data are on the Flump website for now.",
   /** The website link's words when it opens web's settings. */
   openOnWebsite: "Open Settings on the website",
   loading: "Loading your profile",

@@ -20,11 +20,10 @@ import { TermsRequired } from "../TermsRequired";
 /** The list sits under the tab header and above the tab bar, which pad the top and bottom. */
 const TAB_EDGES = ["right", "left"] as const;
 
-/** The website pages the list links to until the app has them (S8, S9). */
+/** The website pages the list links to until the app has them (S8). */
 export interface AccountsWebLinks {
   setUp: WebLink;
   addAccount: WebLink;
-  changeWhatCounts: WebLink;
   addEstimate: WebLink;
 }
 
@@ -35,6 +34,8 @@ export interface AccountsProps {
   onOpenAccount(id: string): void;
   onOpenHistory(): void;
   onOpenCheckIn(): void;
+  /** Opens the app's net worth choices (Settings, Profile, E12 S9). */
+  onChangeWhatCounts(): void;
   /** Injected clock for tests. */
   now?: () => Date;
 }
@@ -53,6 +54,7 @@ export function Accounts({
   onOpenAccount,
   onOpenHistory,
   onOpenCheckIn,
+  onChangeWhatCounts,
   now = () => new Date(),
 }: AccountsProps) {
   const { state, refresh } = useAccountsList(now);
@@ -75,6 +77,7 @@ export function Accounts({
         onOpenAccount={onOpenAccount}
         onOpenHistory={onOpenHistory}
         onOpenCheckIn={onOpenCheckIn}
+        onChangeWhatCounts={onChangeWhatCounts}
       />
     </Screen>
   );
@@ -86,9 +89,13 @@ function Body({
   onOpenAccount,
   onOpenHistory,
   onOpenCheckIn,
+  onChangeWhatCounts,
 }: {
   state: Exclude<AccountsListState, { status: "notSetUp" }>;
-} & Pick<AccountsProps, "links" | "onOpenAccount" | "onOpenHistory" | "onOpenCheckIn">) {
+} & Pick<
+  AccountsProps,
+  "links" | "onOpenAccount" | "onOpenHistory" | "onOpenCheckIn" | "onChangeWhatCounts"
+>) {
   // Nothing for 200 ms, then blocks for at least 400 ms. A refetch keeps the list on screen.
   const skeleton = useDelayedLoading(state.status === "loading");
   const addAccount = links.addAccount.exact ? ACCOUNTS.addAccount : OPEN_FLUMP_WEBSITE;
@@ -136,7 +143,6 @@ function Body({
       />
     );
   }
-  const exact = links.changeWhatCounts.exact && links.addEstimate.exact;
   const row = (r: Row) => (
     <AccountRow
       key={r.id}
@@ -154,9 +160,9 @@ function Body({
         leftOut={list.leftOut}
         alwaysShowLink
         choicesAvailable={list.choicesAvailable}
-        onChangeWhatCounts={open(links.changeWhatCounts)}
+        onChangeWhatCounts={onChangeWhatCounts}
         onAddEstimate={open(links.addEstimate)}
-        websiteLabel={exact ? undefined : OPEN_FLUMP_WEBSITE}
+        estimateWebsiteLabel={links.addEstimate.exact ? undefined : OPEN_FLUMP_WEBSITE}
         testID="accounts-basis-line"
       />
       <Button

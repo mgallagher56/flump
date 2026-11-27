@@ -2,7 +2,7 @@ import { router } from "expo-router";
 import {
   ADD_ACCOUNT_WEB_ROUTE,
   ADD_HOME_VALUE_WEB_ROUTE,
-  NET_WORTH_SETTINGS_WEB_ROUTE,
+  NET_WORTH_SETTINGS_ROUTE,
   SET_UP_WEB_ROUTE,
   useShell,
   webLink,
@@ -24,10 +24,10 @@ export default function AccountsTab() {
       onOpenAccount={(id) => router.push({ pathname: "/accounts/[id]", params: { id } })}
       onOpenHistory={() => router.push("/accounts/history")}
       onOpenCheckIn={() => router.push("/check-in")}
+      onChangeWhatCounts={() => router.push(NET_WORTH_SETTINGS_ROUTE)}
       links={{
         setUp: webLink(shell, SET_UP_WEB_ROUTE),
         addAccount: webLink(shell, ADD_ACCOUNT_WEB_ROUTE),
-        changeWhatCounts: webLink(shell, NET_WORTH_SETTINGS_WEB_ROUTE),
         addEstimate: webLink(shell, ADD_HOME_VALUE_WEB_ROUTE),
       }}
     />

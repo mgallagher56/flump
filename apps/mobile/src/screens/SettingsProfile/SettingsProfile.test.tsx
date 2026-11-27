@@ -80,6 +80,21 @@ describe("SettingsProfile", () => {
     expect(Linking.openURL).toHaveBeenCalledWith(WEBSITE.url);
   });
 
+  it("with no web app address, the link says it opens the Flump website and the page still says what is there", async () => {
+    await profilePage(fakeApi(routes(household(OWNER))), {
+      website: { url: "https://m.test.invalid", exact: false },
+    });
+    await settle();
+    expect(screen.getByTestId("settings-profile-on-website")).toHaveTextContent(
+      "Your picture, age and pay, tax details, partner mode, check-in questions, Connect AI and deleting your financial data are on the Flump website for now.",
+    );
+    expect(screen.queryByRole("link", { name: "Open Settings on the website" })).toBeNull();
+    await userEvent
+      .setup({ advanceTimers: jest.advanceTimersByTime })
+      .press(screen.getByRole("link", { name: "Open the Flump website" }));
+    expect(Linking.openURL).toHaveBeenCalledWith("https://m.test.invalid");
+  });
+
   it("opened from Home's link, it scrolls to the net worth choices once", async () => {
     const scrollTo = jest.spyOn(ScrollView.prototype, "scrollTo").mockImplementation(() => {});
     scrollTo.mockClear();
@@ -152,6 +167,7 @@ describe("SettingsProfile", () => {
         <Home
           onSignOut={jest.fn()}
           onOpenCheckIn={jest.fn()}
+          onOpenHistory={jest.fn()}
           onChangeWhatCounts={jest.fn()}
           marketingOrigin="https://m.test.invalid"
           links={{
@@ -223,6 +239,7 @@ describe("SettingsProfile", () => {
         <Home
           onSignOut={jest.fn()}
           onOpenCheckIn={jest.fn()}
+          onOpenHistory={jest.fn()}
           onChangeWhatCounts={jest.fn()}
           marketingOrigin="https://m.test.invalid"
           links={{

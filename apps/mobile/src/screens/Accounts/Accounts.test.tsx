@@ -10,10 +10,6 @@ import { Accounts, type AccountsWebLinks } from "./Accounts";
 const LINKS: AccountsWebLinks = {
   setUp: { url: "https://app.test.invalid/app/onboarding", exact: true },
   addAccount: { url: "https://app.test.invalid/app/accounts", exact: true },
-  changeWhatCounts: {
-    url: "https://app.test.invalid/app/profile?tab=profile#net-worth",
-    exact: true,
-  },
   addEstimate: { url: "https://app.test.invalid/app/accounts?add=property", exact: true },
 };
 
@@ -23,6 +19,7 @@ async function accounts(api: ReturnType<typeof fakeApi>, links: AccountsWebLinks
     onOpenAccount: jest.fn(),
     onOpenHistory: jest.fn(),
     onOpenCheckIn: jest.fn(),
+    onChangeWhatCounts: jest.fn(),
   };
   const { ui } = withApi(
     <Accounts {...props} marketingOrigin="https://m.test.invalid" links={links} now={NOW} />,
@@ -101,12 +98,17 @@ describe("Accounts", () => {
     expect(screen.getByText("Not counting your student loan.")).toBeOnTheScreen();
   });
 
-  it("nothing left out but a choice applies: Change what counts on its own", async () => {
-    await accounts(fakeApi(routes(personaHousehold(HOMEOWNER))));
-    await userEvent
-      .setup()
-      .press(await screen.findByRole("link", { name: "Change what counts on the website" }));
-    expect(Linking.openURL).toHaveBeenCalledWith(LINKS.changeWhatCounts.url);
+  it("nothing left out but a choice applies: Change what counts on its own, opening the app's setting (S9)", async () => {
+    // With no web app address too: the link opens the app, so it keeps its own words.
+    const site = { url: "https://m.test.invalid", exact: false };
+    const { onChangeWhatCounts } = await accounts(fakeApi(routes(personaHousehold(HOMEOWNER))), {
+      setUp: site,
+      addAccount: site,
+      addEstimate: site,
+    });
+    await userEvent.setup().press(await screen.findByRole("link", { name: "Change what counts" }));
+    expect(onChangeWhatCounts).toHaveBeenCalledTimes(1);
+    expect(Linking.openURL).not.toHaveBeenCalled();
     expect(screen.queryByText(/Not counting/)).toBeNull();
   });
 
@@ -192,7 +194,6 @@ describe("Accounts", () => {
     await accounts(fakeApi(routes(household([]))), {
       setUp: site,
       addAccount: site,
-      changeWhatCounts: site,
       addEstimate: site,
     });
     expect(await screen.findByRole("link", { name: "Open the Flump website" })).toBeOnTheScreen();
