@@ -16,6 +16,36 @@ function deps() {
   };
 }
 
+describe("the HTTP cache sweep (E12 S7)", () => {
+  function withHttp() {
+    const d = deps();
+    return {
+      ...d,
+      sweepHttpCache: jest.fn(async () => {
+        d.order.push("http");
+      }),
+    };
+  }
+
+  it("runs on every launch, after the export sweep", async () => {
+    const d = withHttp();
+    await createDeviceHousekeeping(d).onLaunch();
+    expect(d.order).toEqual(["reinstall", "sweep", "http"]);
+  });
+
+  it("runs with every wipe (sign-out, session end, deletion)", async () => {
+    const d = withHttp();
+    await createDeviceHousekeeping(d).wipe();
+    expect(d.order).toEqual(["lock", "sweep", "http"]);
+  });
+
+  it("a sweep that fails stops nothing", async () => {
+    const d = withHttp();
+    d.sweepHttpCache.mockRejectedValueOnce(new Error("busy"));
+    await expect(createDeviceHousekeeping(d).wipe()).resolves.toBeUndefined();
+  });
+});
+
 describe("device housekeeping (E12 S9)", () => {
   it("on launch: the reinstall wipe, then the export folder is swept", async () => {
     const d = deps();

@@ -35,25 +35,28 @@ export function SavedFiguresFrame({
   const styles = useMemo(() => createStyles(theme), [theme]);
   // A clock a little behind the server's never says "in 2 minutes".
   const when = formatRelativeTime(Math.min(savedAt, now), now);
+  // One paragraph, read out as written: two Text nodes were joined by the screen reader as
+  // "just now., Changes". Try again sits in the same box, so at 200% text the notice takes less room.
+  const message = `${SAVED_FIGURES.lastUpdated(when)} ${SAVED_FIGURES.changes}`;
   return (
     <View style={styles.frame}>
-      <View
-        accessible
-        accessibilityRole="alert"
-        accessibilityLiveRegion="polite"
-        style={styles.notice}
-        testID="saved-figures-notice"
-      >
-        <Text>{SAVED_FIGURES.lastUpdated(when)}</Text>
-        <Text color="secondary">{SAVED_FIGURES.changes}</Text>
-      </View>
-      <View style={styles.action}>
-        <Button
-          label={SAVED_FIGURES.tryAgain}
-          variant="secondary"
-          pending={checking}
-          onPress={onTryAgain}
-        />
+      <View style={styles.notice} testID="saved-figures-box">
+        <Text
+          accessibilityRole="alert"
+          accessibilityLiveRegion="polite"
+          accessibilityLabel={message}
+          testID="saved-figures-notice"
+        >
+          {message}
+        </Text>
+        <View style={styles.action}>
+          <Button
+            label={SAVED_FIGURES.tryAgain}
+            variant="secondary"
+            pending={checking}
+            onPress={onTryAgain}
+          />
+        </View>
       </View>
       <View style={styles.body}>{children}</View>
     </View>

@@ -3,12 +3,15 @@
  * the coordinator on 27 November 2026):
  * - on launch: the iOS reinstall wipe, then the temporary export folder is swept, in case the app
  *   was stopped while a share sheet was open;
- * - on sign-out, session end and deletion: the app lock flag goes and the export folder is swept.
+ * - on sign-out, session end and deletion: the app lock flag goes and the export folder is swept;
+ * - on both, since E12 S7, the phone's HTTP cache is emptied (`httpCacheSweep.ts`).
  * The theme choice is kept through all of them, as web's.
  */
 
 export interface HousekeepingDeps {
   sweepExports(): Promise<void>;
+  /** The phone's HTTP cache, which kept API answers before E12 S7 (`httpCacheSweep.ts`). */
+  sweepHttpCache?(): Promise<void>;
   clearLock(): Promise<void>;
   /** iOS only: the Keychain wipe after a reinstall (`reinstall.ts`). */
   reinstallWipe?: () => Promise<void>;
@@ -27,10 +30,12 @@ export function createDeviceHousekeeping(deps: HousekeepingDeps) {
     async onLaunch() {
       await quietly(deps.reinstallWipe);
       await quietly(deps.sweepExports);
+      await quietly(deps.sweepHttpCache);
     },
     async wipe() {
       await quietly(deps.clearLock);
       await quietly(deps.sweepExports);
+      await quietly(deps.sweepHttpCache);
     },
   };
 }
