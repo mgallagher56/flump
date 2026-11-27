@@ -5,6 +5,8 @@ export const FRAME_NOW = Date.UTC(2026, 10, 27, 12, 0, 0);
 
 /** Named prop sets for the dev gallery and the tests (in place of Storybook stories). */
 export const savedFiguresFrameStates = {
+  /** Online: the screen alone, no notice. */
+  online: { savedAt: null, now: FRAME_NOW, checking: false, onTryAgain: () => {} },
   justNow: { savedAt: FRAME_NOW - 20_000, now: FRAME_NOW, checking: false, onTryAgain: () => {} },
   hoursAgo: {
     savedAt: FRAME_NOW - 2 * 3_600_000,

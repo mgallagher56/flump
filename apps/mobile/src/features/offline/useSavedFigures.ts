@@ -2,12 +2,14 @@
  * The saved figures while restored offline (E12 S7), for the session gate's shell:
  * - loads the sealed cache into the query cache once per offline spell, and only while `canRead`
  *   (the signed-in shell is showing: never behind the app lock or the iOS app switcher cover);
+ *   when the connection drops mid-session with no sealed file (none written yet, or no cache on
+ *   this phone), the figures already in memory are the ones shown, with their own time;
  * - tries a quiet reconnect every 30 seconds and whenever the app comes back to the front;
  * - once signed in again, marks every read stale, so the screens fetch fresh figures at once;
  * - checks the figures' age each minute while they show, and past 7 days (or with the clock turned
  *   back) forgets them and leaves the offline screen in their place.
  */
-import { QueryClientContext } from "@tanstack/react-query";
+import { type QueryClient, QueryClientContext } from "@tanstack/react-query";
 import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { AppState } from "react-native";
 import type { OfflineCache, SavedFigures } from "../../data/offlineCache";
@@ -77,7 +79,13 @@ export function useSavedFigures({
       return;
     }
     wasOffline.current = true;
-    if (!cache || !queryClient || !canRead || phase !== "idle") return;
+    if (!queryClient || !canRead || phase !== "idle") return;
+    if (!cache) {
+      // No cache on this phone: only figures still in memory from before a drop can show.
+      setSaved(heldFigures(queryClient));
+      setPhase("done");
+      return;
+    }
     setPhase("restoring");
     cache
       .restore(queryClient, canReadNow)
@@ -87,7 +95,7 @@ export function useSavedFigures({
         // Stopped because the lock came on (not because nothing was saved): try again once the
         // shell shows. After a sign-out the state is not offline, which resets this anyway.
         if (!figures && !canReadNow()) return setPhase("idle");
-        setSaved(figures);
+        setSaved(figures ?? heldFigures(queryClient));
         setPhase("done");
       });
   }, [offline, canRead, cache, queryClient, phase, canReadNow]);
@@ -144,8 +152,22 @@ export function useSavedFigures({
 
   return {
     saved: offline ? saved : null,
-    restoring: offline && Boolean(cache && queryClient) && phase !== "done",
+    restoring: offline && Boolean(queryClient) && phase !== "done",
     checking,
     tryAgain,
   };
+}
+
+/**
+ * The figures already in memory (a drop mid-session with no sealed file to read), as the oldest time
+ * Flump sent one of them; null when none are held, as on a cold start. Nothing is written anywhere:
+ * the cache's rules are untouched.
+ */
+function heldFigures(queryClient: QueryClient): SavedFigures | null {
+  let oldest = Number.POSITIVE_INFINITY;
+  for (const query of queryClient.getQueryCache().findAll({ queryKey: queryKeys.all })) {
+    if (query.state.data === undefined) continue;
+    oldest = Math.min(oldest, query.state.dataUpdatedAt);
+  }
+  return Number.isFinite(oldest) ? { savedAt: oldest } : null;
 }

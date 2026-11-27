@@ -618,7 +618,7 @@ describe("the connection drops mid-session (E12 S7 follow-up)", () => {
   }
 
   /** Signed in and online, on the Budget, with figures sealed an hour ago as reads do. */
-  async function onlineBudget() {
+  async function onlineBudget({ file = true, cacheBuilt = true } = {}) {
     // The live reads happen now, so their own time is NOW_MS.
     jest.setSystemTime(NOW_MS);
     const h = renterHousehold();
@@ -635,11 +635,13 @@ describe("the connection drops mid-session (E12 S7 follow-up)", () => {
       },
     });
     const store: CacheStore = {
-      read: jest.fn(async () => text),
+      read: jest.fn(async () => (file ? text : null)),
       write: jest.fn(async () => {}),
       wipe: jest.fn(async () => true),
     };
-    const cache = createOfflineCache({ store, now: () => NOW_MS, owner: OWNER });
+    const cache = cacheBuilt
+      ? createOfflineCache({ store, now: () => NOW_MS, owner: OWNER })
+      : undefined;
     const net = phoneNetwork();
     const app = fakeApp(
       { status: "signedIn" },
@@ -710,7 +712,8 @@ describe("the connection drops mid-session (E12 S7 follow-up)", () => {
     await settle();
     const before = app.session.reconnect.mock.calls.length;
     await net.push(true);
-    expect(app.session.reconnect.mock.calls.length).toBe(before + 1);
+    // At once, and once more after it (in case it joined a timed one already running).
+    expect(app.session.reconnect.mock.calls.length).toBe(before + 2);
     await act(async () => app.set({ status: "signedIn" }));
     await settle();
     expect(screen.queryByTestId("saved-figures-notice")).toBeNull();
@@ -742,6 +745,24 @@ describe("the connection drops mid-session (E12 S7 follow-up)", () => {
     expect(post).toHaveBeenCalledTimes(1);
     expect(post).toHaveBeenCalledWith(expect.objectContaining({ name: "Water", amount: 25 }));
   });
+
+  it.each([
+    ["no sealed file yet", { file: false }],
+    ["no offline cache on this phone", { cacheBuilt: false }],
+  ])(
+    "with %s, the figures in memory stay under the notice, and an open sheet with them",
+    async (_name, over) => {
+      const { net } = await onlineBudget(over);
+      await typeUnsavedEntry();
+      await net.push(false);
+      await settle();
+      expect(screen.queryByText(OFFLINE_HEADING)).toBeNull();
+      expect(screen.getByTestId("saved-figures-notice")).toHaveTextContent(
+        `${SAVED_FIGURES.lastUpdated("just now")} ${SAVED_FIGURES.changes}`,
+      );
+      expect(screen.getByLabelText(/^Name/).props.value).toBe("Water");
+    },
+  );
 
   it("leaves the sealed file as it was: a drop neither wipes nor rewrites what is cached", async () => {
     const { store, net } = await onlineBudget();
