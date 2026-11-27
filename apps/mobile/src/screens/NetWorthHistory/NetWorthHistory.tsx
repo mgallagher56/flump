@@ -1,6 +1,6 @@
 import { Linking } from "react-native";
 import { Button } from "../../components/Button";
-import { ChartFigure } from "../../components/ChartFigure";
+import { ChartFigure, SAID_BY_CHART } from "../../components/ChartFigure";
 import { CollapsibleDrawer } from "../../components/CollapsibleDrawer";
 import { DataList } from "../../components/DataList";
 import { EmptyState } from "../../components/EmptyState";
@@ -239,7 +239,12 @@ function Loaded({
           testID="history-chart"
         />
       ) : null}
-      {summary ? <Text testID="history-chart-summary">{summary}</Text> : null}
+      {summary ? (
+        // With the chart drawn, its spoken name already carries the summary: read it once.
+        <Text testID="history-chart-summary" {...(enoughForChart ? SAID_BY_CHART : {})}>
+          {summary}
+        </Text>
+      ) : null}
       {enoughForChart ? null : (
         <Text color="secondary" testID="history-few-months">
           {fewMonthsPrompt(history.recordedMonths)}

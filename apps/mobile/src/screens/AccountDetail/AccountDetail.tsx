@@ -5,7 +5,7 @@ import {
 import type { ReactNode } from "react";
 import { Linking } from "react-native";
 import { Button } from "../../components/Button";
-import { ChartFigure } from "../../components/ChartFigure";
+import { ChartFigure, SAID_BY_CHART } from "../../components/ChartFigure";
 import { CollapsibleDrawer } from "../../components/CollapsibleDrawer";
 import { DataList } from "../../components/DataList";
 import { EmptyState } from "../../components/EmptyState";
@@ -198,7 +198,13 @@ function Loaded({ detail, links }: { detail: Detail; links: AccountDetailProps["
       </Text>
       {detail.hasMonths ? (
         <>
-          <Text textStyle="body.sm" color="secondary" testID="account-history-description">
+          <Text
+            textStyle="body.sm"
+            color="secondary"
+            testID="account-history-description"
+            // A joint account's sentence is in the chart's spoken name when the chart is drawn.
+            {...(jointHistory && detail.series.length >= MIN_ACCOUNT_POINTS ? SAID_BY_CHART : {})}
+          >
             {jointHistory ?? ACCOUNT.historyDescription}
           </Text>
           {detail.series.length >= MIN_ACCOUNT_POINTS ? (
@@ -211,7 +217,10 @@ function Loaded({ detail, links }: { detail: Detail; links: AccountDetailProps["
                 endLabel={lastPoint ? pounds(lastPoint.value) : undefined}
                 testID="account-chart"
               />
-              <Text testID="account-chart-summary">{chartSummary}</Text>
+              {/* The chart's spoken name carries this summary: read it once. */}
+              <Text testID="account-chart-summary" {...SAID_BY_CHART}>
+                {chartSummary}
+              </Text>
             </>
           ) : (
             <Text color="secondary">{ACCOUNT.chartNotEnough}</Text>

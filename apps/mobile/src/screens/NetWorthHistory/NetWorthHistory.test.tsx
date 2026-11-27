@@ -61,7 +61,11 @@ describe("NetWorthHistory", () => {
     ).toBeOnTheScreen();
     expect(screen.getByText("+£2,575")).toBeOnTheScreen();
     // May 215,950 to November's 231,400.
-    expect(screen.getByTestId("history-chart-summary")).toHaveTextContent(
+    // The chart's name carries the summary, so the text under it is skipped by a screen reader.
+    expect(screen.queryByTestId("history-chart-summary")).toBeNull();
+    expect(
+      screen.getByTestId("history-chart-summary", { includeHiddenElements: true }),
+    ).toHaveTextContent(
       "Up £15,450 since May 2026. The dashed end is this month's saved balances, not yet recorded.",
     );
     // One image named as web's figure: its title, then its summary; the end labelled as web's.
@@ -101,7 +105,9 @@ describe("NetWorthHistory", () => {
       ),
     ).toBeOnTheScreen();
     // May 8,910 to November 11,700.
-    expect(screen.getByTestId("history-chart-summary")).toHaveTextContent(
+    expect(
+      screen.getByTestId("history-chart-summary", { includeHiddenElements: true }),
+    ).toHaveTextContent(
       "Up £2,790 since May 2026. The dashed end is this month's saved balances, not yet recorded.",
     );
     const user = userEvent.setup();
@@ -178,9 +184,10 @@ describe("NetWorthHistory", () => {
         "You have two months of history. The chart appears after your third check-in.",
       ),
     ).toBeOnTheScreen();
-    expect(screen.getByTestId("history-chart-summary")).toHaveTextContent(
-      "Net worth recorded for October 2026: £800.",
-    );
+    expect(
+      // No chart: the summary is read on its own.
+      screen.getByTestId("history-chart-summary"),
+    ).toHaveTextContent("Net worth recorded for October 2026: £800.");
   });
 
   it("one recorded month: Monthly change with No earlier month", async () => {

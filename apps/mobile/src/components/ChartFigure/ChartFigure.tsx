@@ -42,6 +42,15 @@ function place(index: number, count: number, fraction: number, width: number) {
 }
 
 /**
+ * For the text beside a drawn chart that the chart's spoken name already carries (its summary, a
+ * joint account's sentence): shown on screen, skipped by a screen reader, so it is heard once.
+ */
+export const SAID_BY_CHART = {
+  accessibilityElementsHidden: true,
+  importantForAccessibility: "no-hide-descendants",
+} as const;
+
+/**
  * A balance or net worth over the months, as web's `MonthLinePlot` without its axes: straight
  * segments between the engine's point heights, a dashed segment where a month is carried, the
  * latest month marked and labelled with its figure. In the text colour, so a fall has no colour of

@@ -73,7 +73,9 @@ describe("AccountDetail", () => {
     expect(screen.getByTestId("header-title")).toHaveTextContent("Residential mortgage");
     expect(screen.getByText("This account's balance each month, as recorded.")).toBeOnTheScreen();
     // May 189,300 to November's saved 186,000: down 3,300.
-    expect(screen.getByTestId("account-chart-summary")).toHaveTextContent(
+    expect(
+      screen.getByTestId("account-chart-summary", { includeHiddenElements: true }),
+    ).toHaveTextContent(
       "Down £3,300 since May 2026. The dashed end is this month's saved balance, not yet recorded.",
     );
     // The months sit behind "Show data", closed until pressed.
@@ -139,13 +141,20 @@ describe("AccountDetail", () => {
         "Amount owed, £100,000, Your 50% share. The whole amount owed is £200,000.",
       ),
     ).toBeOnTheScreen();
+    // Shown on screen, but a screen reader hears it once, in the chart's name below.
     expect(
-      screen.getByText("The whole amount owed each month, as recorded. Your share is 50% of it."),
+      screen.getByText("The whole amount owed each month, as recorded. Your share is 50% of it.", {
+        includeHiddenElements: true,
+      }),
     ).toBeOnTheScreen();
+    expect(
+      screen.queryByText("The whole amount owed each month, as recorded. Your share is 50% of it."),
+    ).toBeNull();
+    expect(screen.queryByTestId("account-chart-summary")).toBeNull();
     // October 200,400 to November 200,000.
-    expect(screen.getByTestId("account-chart-summary")).toHaveTextContent(
-      "Down £400 since October 2026.",
-    );
+    expect(
+      screen.getByTestId("account-chart-summary", { includeHiddenElements: true }),
+    ).toHaveTextContent("Down £400 since October 2026.");
     // The chart's text alternative says it is the whole, as the description does.
     expect(screen.getByTestId("account-chart").props.accessibilityLabel).toBe(
       "Residential mortgage balance history. The whole amount owed each month, as recorded. Your share is 50% of it. Down £400 since October 2026.",

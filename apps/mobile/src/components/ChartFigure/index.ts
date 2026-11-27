@@ -1,1 +1,1 @@
-export { ChartFigure } from "./ChartFigure";
+export { ChartFigure, SAID_BY_CHART } from "./ChartFigure";
