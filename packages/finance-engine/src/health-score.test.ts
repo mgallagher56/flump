@@ -174,6 +174,28 @@ describe("health-score module", () => {
       expect(res.canonicalStage).toBe("STAGE_1_DEBT_RECOVERY");
     });
 
+    it("compares the unrounded runway with 3 months: 2.95 is still Stage 2 (D8, 27 November 2026)", () => {
+      // 2,950 / 1,000 = 2.95 months, under 3. Rounded first to one decimal it read 3.0 and passed.
+      const res = evaluateFinancialStage({
+        debts: [],
+        monthlySurplus: 0,
+        liquidSavings: 2950,
+        monthlyEssentialExpenses: 1000,
+      });
+      expect(res.stage).toBe("buffer");
+      // The returned figure stays at one decimal place, half up: 2.95 shows as 3.
+      expect(res.emergencyRunwayMonths).toBe(3);
+      // 3,000 / 1,000 = 3 exactly is not under 3: the next stage.
+      expect(
+        evaluateFinancialStage({
+          debts: [],
+          monthlySurplus: 0,
+          liquidSavings: 3000,
+          monthlyEssentialExpenses: 1000,
+        }).stage,
+      ).not.toBe("buffer");
+    });
+
     it("evaluates Stage 2 when debt is cleared but runway < 3 months", () => {
       const res = evaluateFinancialStage({
         debts: [],
