@@ -51,12 +51,14 @@ export * from "./patterns/TopBar";
 // Primitives
 export * from "./primitives/Button";
 export * from "./primitives/Card";
+export * from "./primitives/CarouselDots";
 export * from "./primitives/Checkbox";
 export * from "./primitives/CollapsibleDrawer";
 export * from "./primitives/CurrencyInput";
 export * from "./primitives/DataList";
 export * from "./primitives/DatePicker";
 export * from "./primitives/Dialog";
+export * from "./primitives/ExampleTag";
 export * from "./primitives/FlumpLogo";
 export * from "./primitives/FormField";
 export * from "./primitives/Heading";

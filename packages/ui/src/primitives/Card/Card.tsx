@@ -16,13 +16,17 @@ export const Card = ({
   as = "div",
   className,
   elevation,
+  material,
   padding,
   surface,
   ...props
 }: CardProps) => {
   const Component = as as ElementType;
   return (
-    <Component className={cx(cardRecipe({ elevation, padding, surface }), className)} {...props} />
+    <Component
+      className={cx(cardRecipe({ elevation, material, padding, surface }), className)}
+      {...props}
+    />
   );
 };
 

@@ -23,7 +23,7 @@ Mature multi-platform design systems (Fluent, Spectrum, Polaris, Primer) share *
 | Component code and Panda recipes                                                | Marketing and web share `@repo/ui`. Mobile does not | Panda recipes cannot run on React Native. Mobile builds its own components to the same specification |
 | Page layouts                                                                    | No                                                  | Each platform lays out for its own screen and conventions                                            |
 
-**X1.** Marketing and web import every shared component from `@repo/ui`; neither keeps a private copy of a listed component. **Enforced by** `chrome-parity.laws.test.ts` (chrome) and `architecture.laws.test.ts` (`FLP*` baseline, polish PR 1). **X2.** Mobile imports no web component code and no `@repo/ui`. **Proposed check** (import rule in the mobile lint config).
+**X1.** Marketing and web import every shared component from `@repo/ui`; neither keeps a private copy of a listed component. **Enforced by** `chrome-parity.laws.test.ts` (chrome) and `architecture.laws.test.ts` (`FLP*` baseline, polish PR 1). **X2.** Mobile imports no web component code and no `@repo/ui`, with one exception: `@repo/ui/illustration-data`, the document pictures' shape lists (STYLE-GUIDE IL4), which is pure data with no imports, no React and no Panda (slice F3, 27 Nov 2026; `apps/mobile/src/illustrations/documentPictures.test.ts`). **Proposed check** (import rule in the mobile lint config).
 
 ## 2. The token pipeline
 

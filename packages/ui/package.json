@@ -23,6 +23,7 @@
     "./tools/guide": "./src/tools/ToolGuide/index.ts",
     "./tools/breadcrumbs": "./src/tools/ToolBreadcrumbs/index.ts",
     "./testing": "./src/testing/index.ts",
+    "./illustration-data": "./src/primitives/Illustration/Illustration.documents.ts",
     "./*": "./src/*.tsx"
   },
   "scripts": {
