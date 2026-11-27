@@ -29,6 +29,8 @@ describe("pageForPath", () => {
     expect(pageForPath("/Pricing/")).toBe("PricingPage");
     expect(pageForPath("/features/PAY?from=home#top")).toBe("FeaturePage");
     expect(pageForPath("")).toBe("HomePage");
+    expect(pageForPath("/%70ricing")).toBe("PricingPage");
+    expect(pageForPath("/%E0%A4%A")).toBe("NotFoundPage");
   });
 
   it("sends anything else to the not-found page", () => {

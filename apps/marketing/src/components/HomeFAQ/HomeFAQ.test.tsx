@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
+import { renderToString } from "react-dom/server";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import type { GsapKit } from "../../motion/loadGsapKit";
@@ -122,18 +123,25 @@ describe("HomeFAQ: the band and the answers opening in place (MK9)", () => {
 
 describe("HomeFAQ: dealing in (MK2)", () => {
   it("deals the questions in once, in document order, by time and never by scroll", () => {
-    renderFaq();
-    const list = screen.getByRole("list");
+    const { container } = renderFaq();
+    // Plain selectors: role queries over the whole band are slow in happy-dom.
+    const list = container.querySelector("ul") as HTMLElement;
     const from = vi.fn();
     faqMoment({ gsap: { from } } as unknown as GsapKit, list);
     expect(from).toHaveBeenCalledTimes(1);
     const [targets, vars] = from.mock.calls[0] as [Element[], Record<string, unknown>];
-    expect(targets).toEqual(within(list).getAllByRole("listitem"));
+    // Compared by identity: a failed deep comparison of DOM nodes prints the whole tree.
+    const items = [...list.querySelectorAll(":scope > li")];
+    expect(targets.length).toBe(items.length);
+    expect(targets.every((target, i) => target === items[i])).toBe(true);
     // durations.marketing.entry 1,540 ms and stagger 196 ms, in seconds; the calm ease.
     expect(vars).toMatchObject({ y: 12, opacity: 0, duration: 1.54, stagger: 0.196, ease: "calm" });
     // Cleared afterwards, so an opening answer pushes the next question down.
     expect(vars.clearProps).toBe("transform,opacity");
-    expect(vars.scrollTrigger).toMatchObject({ trigger: list, once: true });
+    // The trigger by identity: a deep comparison of a DOM node never finishes in happy-dom.
+    const trigger = vars.scrollTrigger as Record<string, unknown>;
+    expect(trigger.trigger === list).toBe(true);
+    expect(trigger.once).toBe(true);
     expect((vars.scrollTrigger as Record<string, unknown>).scrub).toBeUndefined();
   });
 
@@ -141,5 +149,17 @@ describe("HomeFAQ: dealing in (MK2)", () => {
     const from = vi.fn();
     faqMoment({ gsap: { from } } as unknown as GsapKit, document.createElement("ul"));
     expect(from).not.toHaveBeenCalled();
+  });
+});
+
+describe("HomeFAQ with no JavaScript", () => {
+  it("serves every answer reachable: none inert in the server HTML (MK1)", () => {
+    const html = renderToString(
+      <MemoryRouter>
+        <HomeFAQ />
+      </MemoryRouter>,
+    );
+    expect(html).not.toContain("inert");
+    for (const faq of HOME_FAQS) expect(html).toContain(`id="faq-answer-${faq.id}"`);
   });
 });

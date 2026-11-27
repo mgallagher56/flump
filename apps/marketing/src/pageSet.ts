@@ -47,7 +47,14 @@ const FIXED: Record<string, PageName> = {
  * like the router). Used to load the right chunk before hydrating and to preload it from the server.
  */
 export function pageForPath(pathname: string): PageName {
-  const lower = (pathname.split(/[?#]/)[0] || "/").toLowerCase();
+  const raw = pathname.split(/[?#]/)[0] || "/";
+  let decoded = raw;
+  try {
+    decoded = decodeURIComponent(raw);
+  } catch {
+    // A malformed escape: match it as written, as the router does not match it either.
+  }
+  const lower = decoded.toLowerCase();
   const path = lower.length > 1 ? lower.replace(/\/+$/, "") : lower;
   const fixed = FIXED[path];
   if (fixed) return fixed;

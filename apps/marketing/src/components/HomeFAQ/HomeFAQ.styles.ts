@@ -87,7 +87,11 @@ export const faqAnswer = cva({
   variants: {
     open: {
       true: { gridTemplateRows: "1fr", visibility: "visible" },
-      false: { gridTemplateRows: "0fr", visibility: "hidden" },
+      // Collapsed only where script runs: the theme script marks <html data-theme> before first
+      // paint, so with no JavaScript every answer stays open and readable (MK1).
+      false: {
+        "html[data-theme] &": { gridTemplateRows: "0fr", visibility: "hidden" },
+      },
     },
   },
   defaultVariants: { open: false },

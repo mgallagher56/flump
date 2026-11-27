@@ -90,7 +90,8 @@ export function measureClientBuild(dir: string): Weights {
     if (!manifest[HOME_PAGE_KEY]) throw new Error(`${dir}/${MANIFEST} has no ${HOME_PAGE_KEY}`);
     const home = pageFiles(manifest, HOME_PAGE_KEY).filter((rel) => /\.m?js$/.test(rel));
     const first = [...new Set([...scripts, ...home])];
-    const lazy = pageLazyFiles(manifest, HOME_PAGE_KEY).filter((rel) => /\.m?js$/.test(rel));
+    // Everything home loads later: scripts, and any stylesheet, image or font a lazy chunk brings.
+    const lazy = pageLazyFiles(manifest, HOME_PAGE_KEY);
     return { firstLoadJsGzip: sum(first), cssGzip: sum(styles), lazyJsGzip: sum(lazy) };
   }
   const first = new Set(scripts);

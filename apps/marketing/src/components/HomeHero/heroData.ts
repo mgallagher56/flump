@@ -42,10 +42,16 @@ const percent = (value: unknown) =>
 const monthYear = new Intl.DateTimeFormat("en-GB", {
   month: "long",
   year: "numeric",
-  timeZone: "Europe/London",
+  timeZone: "UTC",
 });
-/** "September 2028" from "2028-09-30", read at midday UTC so the London date is the same day. */
-const formatMonthYear = (isoDate: string) => monthYear.format(new Date(`${isoDate}T12:00:00Z`));
+/**
+ * "September 2028" from "2028-09-30": a fixed sample date, read as its year and month in UTC, so
+ * no clock or time zone can move it.
+ */
+const formatMonthYear = (isoDate: string) => {
+  const [year, month] = isoDate.split("-").map(Number);
+  return monthYear.format(new Date(Date.UTC(year ?? 2026, (month ?? 1) - 1, 15)));
+};
 
 export const HERO_FIGURES = {
   savings: formatGbp(balanceOf(savings)),

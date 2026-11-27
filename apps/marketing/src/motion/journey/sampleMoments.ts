@@ -35,9 +35,9 @@ const deal: SampleMoment = (_kit, tl, root, at) => {
       {
         x: () => deck.clientWidth / 2 - (card.offsetLeft + card.offsetWidth / 2),
         y: () => deck.clientHeight / 2 - (card.offsetTop + card.offsetHeight / 2),
-        autoAlpha: 0,
+        opacity: 0,
       },
-      { x: 0, y: 0, autoAlpha: 1, duration: seconds("disclosure"), ease: "calmInOut" },
+      { x: 0, y: 0, opacity: 1, duration: seconds("disclosure"), ease: "calmInOut" },
       at + i * step,
     );
   });
@@ -61,16 +61,16 @@ const fillBar: SampleMoment = (_kit, tl, root, at) => {
     if (row) {
       tl.fromTo(
         row,
-        { autoAlpha: 0, y: 6 },
-        { autoAlpha: 1, y: 0, duration: seconds("hover"), ease: "calm" },
+        { opacity: 0, y: 6 },
+        { opacity: 1, y: 0, duration: seconds("hover"), ease: "calm" },
         at + i * step,
       );
     }
   });
   tl.fromTo(
     left,
-    { autoAlpha: 0 },
-    { autoAlpha: 1, duration: seconds("hover"), ease: "calm" },
+    { opacity: 0 },
+    { opacity: 1, duration: seconds("hover"), ease: "calm" },
     at + segments.length * step,
   );
   return [...segments, ...rows, ...left];
@@ -84,16 +84,16 @@ const unfold: SampleMoment = (_kit, tl, root, at) => {
   if (bottom) {
     tl.fromTo(
       bottom,
-      { rotationX: -90, autoAlpha: 0 },
-      { rotationX: 0, autoAlpha: 1, duration: turn, ease: "calmInOut" },
+      { rotationX: -90, opacity: 0 },
+      { rotationX: 0, opacity: 1, duration: turn, ease: "calmInOut" },
       at,
     );
   }
   if (top) {
     tl.fromTo(
       top,
-      { rotationX: 90, autoAlpha: 0 },
-      { rotationX: 0, autoAlpha: 1, duration: turn, ease: "calmInOut" },
+      { rotationX: 90, opacity: 0 },
+      { rotationX: 0, opacity: 1, duration: turn, ease: "calmInOut" },
       at + turn * 0.7,
     );
   }
@@ -115,8 +115,8 @@ const drawLine: SampleMoment = (_kit, tl, root, at) => {
   if (marker) {
     tl.fromTo(
       marker,
-      { autoAlpha: 0 },
-      { autoAlpha: 1, duration: seconds("hover"), ease: "calm" },
+      { opacity: 0 },
+      { opacity: 1, duration: seconds("hover"), ease: "calm" },
       at + seconds("chart"),
     );
   }
@@ -128,9 +128,9 @@ const tiles: SampleMoment = (_kit, tl, root, at) => {
   const items = all(root, "[data-tile]");
   tl.fromTo(
     items,
-    { autoAlpha: 0, y: 16 },
+    { opacity: 0, y: 16 },
     {
-      autoAlpha: 1,
+      opacity: 1,
       y: 0,
       duration: seconds("entry"),
       ease: "calm",

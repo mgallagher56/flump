@@ -91,6 +91,8 @@ test.describe("marketing home: without JavaScript and with reduced motion (MK1)"
     expect(await list.evaluate((el) => getComputedStyle(el).overflowX)).toBe("auto");
     await list.evaluate((el) => el.scrollBy({ left: 400 }));
     expect(await list.evaluate((el) => el.scrollLeft)).toBeGreaterThan(0);
+    // Every FAQ answer is open and readable, not only the first.
+    await expect(page.locator("#faq-answer-pricing")).toBeVisible();
     // Every entrance's content is visible: nothing waits for a script to fade it in.
     const hidden = await page
       .locator("main h2, main h3, main p")

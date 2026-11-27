@@ -341,7 +341,8 @@ export async function createJourneyScene(
   const beadTint = new Color();
   let firstFrame = true;
 
-  const draw = (dt: number) => {
+  /** One frame. `snap` puts the orb on its goal at once: used while ambient motion is paused. */
+  const draw = (dt: number, snap = false) => {
     const railRect = rail.getBoundingClientRect();
     const stageRect = stage.getBoundingClientRect();
     const stageTop = stageRect.top - railRect.top;
@@ -358,7 +359,7 @@ export async function createJourneyScene(
       orbRadius: metrics.orbRadius,
     });
     const before = orbY ?? goal;
-    orbY = orbY === null ? goal : orbY + (goal - orbY) * approach(dt, 0.55);
+    orbY = orbY === null || snap ? goal : orbY + (goal - orbY) * approach(dt, 0.55);
     const x = trackX(orbY, anchors, metrics.amplitude);
     orb.position.set(x, -orbY, 0);
     glow.position.set(x, -orbY, -metrics.orbRadius * 2);
@@ -368,7 +369,7 @@ export async function createJourneyScene(
     orb.rotation.set(roll, spin, 0);
 
     colourAt(orbY, target);
-    if (firstFrame) tone.copy(target);
+    if (firstFrame || snap) tone.copy(target);
     tone.lerpHSL(target, approach(dt, 0.6));
     orbGlass.color.copy(white).lerp(tone, dark ? 0.9 : 0.8);
     orbGlass.emissive.copy(tone);
@@ -450,6 +451,17 @@ export async function createJourneyScene(
   });
   intersection.observe(journey);
   const onVisibility = () => (document.hidden ? stop() : schedule());
+  // Paused, the orb has no ambient motion of its own (no spin, no easing), but it stays in line
+  // with the stops as the visitor scrolls: one snapped frame per scroll, never a loop (MK14).
+  let pausedFrame = 0;
+  const onScroll = () => {
+    if (running || !onScreen || pausedFrame || disposed) return;
+    pausedFrame = requestAnimationFrame(() => {
+      pausedFrame = 0;
+      draw(0, true);
+    });
+  };
+  window.addEventListener("scroll", onScroll, { passive: true });
   document.addEventListener("visibilitychange", onVisibility);
   const onLost = (event: Event) => {
     event.preventDefault();
@@ -477,6 +489,8 @@ export async function createJourneyScene(
       resizeObserver.disconnect();
       intersection.disconnect();
       document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("scroll", onScroll);
+      if (pausedFrame) cancelAnimationFrame(pausedFrame);
       canvas.removeEventListener("webglcontextlost", onLost);
       scene.traverse((object) => {
         const mesh = object as { geometry?: { dispose: () => void }; material?: unknown };
