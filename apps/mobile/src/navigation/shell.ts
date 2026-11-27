@@ -50,3 +50,5 @@ export const ADD_ACCOUNT_WEB_ROUTE = "/app/accounts";
 export const NET_WORTH_SETTINGS_WEB_ROUTE = "/app/profile?tab=profile#net-worth";
 /** Web's form for adding the home's value (`ADD_HOME_VALUE_HREF`), until the app has it (S8). */
 export const ADD_HOME_VALUE_WEB_ROUTE = "/app/accounts?add=property";
+/** Web's budget page, where a budget and its spending are added until the app has it (S10). */
+export const BUDGET_WEB_ROUTE = "/app/budget";
