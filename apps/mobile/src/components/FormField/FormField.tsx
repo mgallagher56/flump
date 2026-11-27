@@ -1,4 +1,4 @@
-import { type ReactNode, useMemo } from "react";
+import { createContext, type ReactNode, useContext, useMemo } from "react";
 import { View } from "react-native";
 import { useTheme } from "../../theme/ThemeProvider";
 import { Text } from "../Text";
@@ -16,6 +16,21 @@ export interface FormFieldProps {
   testID?: string;
 }
 
+/** The field's error, for the control inside it to say with its own name (S8 device check). */
+const FieldError = createContext<string | null>(null);
+
+/**
+ * A control's spoken hint with its field's error first, so a screen reader on the control hears
+ * what to change there, not only in a separate line below it.
+ */
+export function useFieldHint(own?: string): string | undefined {
+  const error = useContext(FieldError);
+  if (!error) return own || undefined;
+  if (!own) return error;
+  // The error a sentence of its own before the hint: a full stop if it has none.
+  return `${error.endsWith(".") ? error : `${error}.`} ${own}`;
+}
+
 /** A label, a control, an optional hint and an error read out when it appears. */
 export function FormField({ label, hint, error, children, testID }: FormFieldProps) {
   const theme = useTheme();
@@ -23,7 +38,7 @@ export function FormField({ label, hint, error, children, testID }: FormFieldPro
   return (
     <View style={styles.base} testID={testID}>
       <Text textStyle="label.md">{label}</Text>
-      {children}
+      <FieldError.Provider value={error ?? null}>{children}</FieldError.Provider>
       {hint ? (
         <Text textStyle="body.sm" color="secondary">
           {hint}

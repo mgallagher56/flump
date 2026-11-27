@@ -225,6 +225,10 @@ describe("AccountDetail", () => {
     const links = screen.getAllByRole("link", { name: "Open the Flump website" });
     // The mortgage's own page only: Edit stays in the app.
     expect(links).toHaveLength(1);
+    // The words say where it really goes; the hint says what it was for (S8 device check).
+    expect(links[0]?.props.accessibilityHint).toBe(
+      "Opens the Flump website's home page. From there: See your mortgage on the website.",
+    );
     await userEvent.setup().press(links[0] as never);
     expect(Linking.openURL).toHaveBeenCalledWith(MARKETING.url);
   });

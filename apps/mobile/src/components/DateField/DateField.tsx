@@ -5,6 +5,7 @@ import { useScrollFieldIntoView } from "../../device/keyboardInset";
 import { useTheme } from "../../theme/ThemeProvider";
 import { useTextScale } from "../../theme/useTextScale";
 import { Button } from "../Button";
+import { useFieldHint } from "../FormField/FormField";
 import { Text } from "../Text";
 import { boxWidth, createStyles } from "./DateField.styles";
 
@@ -100,6 +101,7 @@ export function DateField({
   testID,
 }: DateFieldProps) {
   const theme = useTheme();
+  const spokenHint = useFieldHint();
   // In a form, the field scrolls above the keyboard when it gains focus.
   const showField = useScrollFieldIntoView();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -160,6 +162,7 @@ export function DateField({
                 inputMode="numeric"
                 maxLength={chars}
                 accessibilityLabel={`${label}, ${name.toLowerCase()}`}
+                accessibilityHint={spokenHint}
                 accessibilityState={{ disabled: !editable }}
                 editable={editable}
                 {...(preview ? { allowFontScaling: false } : {})}

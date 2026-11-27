@@ -18,7 +18,7 @@ import { Text } from "../../components/Text";
 import { TextField } from "../../components/TextField";
 import { Toast } from "../../components/Toast";
 import { CHECK_IN } from "../../copy/checkIn";
-import { OPEN_FLUMP_WEBSITE } from "../../copy/navigation";
+import { OPEN_FLUMP_WEBSITE, websiteFallbackHint } from "../../copy/navigation";
 import { checkInDayLabel, PROFILE, SAVE } from "../../copy/settings";
 import { useAccounts } from "../../data/checkIn";
 import { classifyApiError } from "../../data/problems";
@@ -153,6 +153,7 @@ function ProfileForm({
         </Text>
         <Button
           label={website.exact ? PROFILE.openOnWebsite : OPEN_FLUMP_WEBSITE}
+          accessibilityHint={websiteFallbackHint(website, PROFILE.openOnWebsite)}
           variant="link"
           size="sm"
           accessibilityRole="link"
