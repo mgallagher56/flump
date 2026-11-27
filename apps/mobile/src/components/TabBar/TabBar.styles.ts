@@ -11,13 +11,16 @@ export const LABEL_STYLE = "label.sm" as const;
 const LABEL_ONLY_FROM = 1.5;
 
 /**
- * Average width of a label character as a share of the font size: generous for the system sans
- * at semibold, so an estimate errs towards another row rather than a clipped word. At the normal
- * size the five labels fit one row at 320 points, as on web; the fit on a phone is a device check.
+ * Average width of a label character as a share of the font size at the selected semibold weight
+ * (`fontWeight: "600"`), so every tab is estimated as if selected (any tab can be selected).
  */
-const CHARACTER_WIDTH = 0.55;
-/** The pill's padding on each side of a label (`spacing["1"]`). */
+const CHARACTER_WIDTH = 0.58;
+/** The pill's padding on each side of a label (`spacing["1"]`); cells have 0 horizontal padding. */
 const LABEL_PADDING = 4;
+/** Minimum tab target width (`sizes["control.lg"]`). */
+const MIN_TAB_WIDTH = 48;
+/** Safety margin (10%) so wide glyphs like "Home" do not wrap mid-word at large text. */
+const SAFETY_MARGIN = 1.1;
 
 export interface TabLayoutInput {
   readonly labels: readonly string[];
@@ -42,8 +45,11 @@ export interface TabLayout {
  * scrolling row otherwise.
  */
 export function tabLayout({ labels, width, fontSize, textScale }: TabLayoutInput): TabLayout {
-  const labelWidths = labels.map(
-    (label) => label.length * fontSize * CHARACTER_WIDTH + LABEL_PADDING * 2,
+  const labelWidths = labels.map((label) =>
+    Math.max(
+      MIN_TAB_WIDTH,
+      (label.length * fontSize * CHARACTER_WIDTH + LABEL_PADDING * 2) * SAFETY_MARGIN,
+    ),
   );
   const longest = labelWidths.reduce((max, w) => Math.max(max, w), 0);
   const totalWidth = labelWidths.reduce((sum, w) => sum + w, 0);

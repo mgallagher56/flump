@@ -72,7 +72,7 @@ export function TabBar({ items, activeKey, onSelect }: TabBarProps) {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const window = useWindowDimensions();
-  const [width, setWidth] = useState(window.width);
+  const [width, setWidth] = useState(() => Math.max(0, window.width - theme.spacing["1"] * 2));
   const textScale = useTextScale();
   const labels = useMemo(() => items.map((item) => item.label), [items]);
   const layout = tabLayout({
@@ -181,6 +181,7 @@ export function TabBar({ items, activeKey, onSelect }: TabBarProps) {
               ) : null}
               <Text
                 textStyle={LABEL_STYLE}
+                lineClamp={1}
                 style={[styles.label, selected ? styles.labelSelected : null]}
               >
                 {item.label}
