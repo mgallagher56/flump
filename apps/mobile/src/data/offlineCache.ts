@@ -25,6 +25,7 @@
  */
 import { parseResponse } from "@flump/api-client";
 import type { QueryClient, QueryKey } from "@tanstack/react-query";
+import { type CacheOwner, OWNER_UNAVAILABLE } from "../auth/tokenStore";
 import { AppBudgetEntryList } from "./budget";
 import type { CacheStore } from "./cacheStore";
 import { AppAccountDetailList, AppAccountList, AppCheckIns } from "./checkIn";
@@ -94,8 +95,11 @@ const CACHED_KEYS = new Map(READ_NAMES.map((name) => [keyOf(CACHED_READS[name].k
 export function createOfflineCache(deps: {
   store: CacheStore;
   now(): number;
-  /** The signed-in person, hashed (`Session.cacheOwner`); null turns the cache off. */
-  owner(): Promise<string | null>;
+  /**
+   * The signed-in person, hashed (`Session.cacheOwner`): null turns the cache off and drops the
+   * file; `OWNER_UNAVAILABLE` (the store could not be read now) leaves the file alone.
+   */
+  owner(): Promise<CacheOwner>;
 }): OfflineCache {
   /** Bumped by every wipe: a save planned before it is dropped. */
   let generation = 0;
@@ -155,9 +159,11 @@ export function createOfflineCache(deps: {
   ): Promise<SavedFigures | null> {
     const startedAt = generation;
     const owner = await deps.owner();
+    // The store could not say whose it is right now: keep the file for a later start.
+    if (owner === OWNER_UNAVAILABLE) return null;
     if (!owner) {
       // Nobody to seal for: whatever is there can never be shown.
-      await deps.store.wipe();
+      await forget();
       return null;
     }
     const text = await deps.store.read(owner);
@@ -167,8 +173,9 @@ export function createOfflineCache(deps: {
     const now = envelope ? trustedNow() : null;
     const reads = envelope && now !== null ? usableReads(envelope, now) : null;
     if (!envelope || !reads) {
-      // Too old, from another format, or no longer parsing: it will never be shown, so it goes.
-      await deps.store.wipe();
+      // Too old (or the clock turned back), from another format, or no longer parsing: it will
+      // never be shown, so it goes, and the latest time seen starts again from the clock.
+      await forget();
       return null;
     }
     // Asked again right before the figures go in, with no await after: a sign-out (or a session
@@ -229,7 +236,8 @@ export function createOfflineCache(deps: {
           if (Object.keys(reads).length === 0 || planned !== generation) return;
           try {
             const owner = await deps.owner();
-            if (!owner || planned !== generation || !canSave()) return;
+            if (typeof owner !== "string" || !owner) return;
+            if (planned !== generation || !canSave()) return;
             const seenAt = Math.max(highWater, deps.now());
             highWater = seenAt;
             await deps.store.write(JSON.stringify({ format: CACHE_FORMAT, seenAt, reads }), owner);
@@ -252,13 +260,23 @@ export function createOfflineCache(deps: {
     });
   }
 
-  async function wipe() {
-    generation += 1;
+  /**
+   * The file and its key go, and the latest time seen starts again from the clock: with no file
+   * there is nothing left to guard, and a clock once set ahead then corrected must not keep
+   * offline reading off until the real date passes the wrong one.
+   */
+  async function forget() {
+    highWater = deps.now();
     try {
       await deps.store.wipe();
     } catch {
       // `CacheStore.wipe` never throws; a stand-in might.
     }
+  }
+
+  async function wipe() {
+    generation += 1;
+    await forget();
   }
 
   return { restore, watch, isFresh, wipe };

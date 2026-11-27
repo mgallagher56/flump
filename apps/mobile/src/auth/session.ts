@@ -26,7 +26,7 @@ import {
   type SessionState,
   sessionReducer,
 } from "./sessionMachine";
-import type { TokenStore } from "./tokenStore";
+import { type CacheOwner, OWNER_UNAVAILABLE, type TokenStore } from "./tokenStore";
 
 /** What the system browser sheet returned: the redirect it stopped at, or nothing. */
 export type BrowserResult = { type: "success"; url: string } | { type: "closed" };
@@ -106,8 +106,11 @@ export interface Session {
   reconnect(): Promise<void>;
   /** Whether the state is restoredOffline right now (E12 S7: the cache's last check). */
   isRestoredOffline(): boolean;
-  /** The hashed owner of the stored session, for the offline cache's seal; null when none. */
-  cacheOwner(): Promise<string | null>;
+  /**
+   * The hashed owner of the stored session, for the offline cache's seal: null when none,
+   * `OWNER_UNAVAILABLE` when the store could not be read just now.
+   */
+  cacheOwner(): Promise<CacheOwner>;
   signIn(screen?: AuthorizeScreen): Promise<void>;
   signOut(): Promise<void>;
   /** For the API client: the access token in memory. */
@@ -530,7 +533,7 @@ export function createSession(deps: SessionDeps): Session {
       try {
         return (await deps.tokens.readOwner?.()) || null;
       } catch {
-        return null;
+        return OWNER_UNAVAILABLE;
       }
     },
     signIn,

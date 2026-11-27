@@ -15,7 +15,12 @@ import { household } from "../features/check-in/checkInTestData";
 import { nodeAesBox } from "../testing/nodeAesBox";
 import { readQuery } from "./authorizeUrl";
 import { type AccountCheck, createSession, type Session } from "./session";
-import { createTokenStore, type SecureStoreLike } from "./tokenStore";
+import {
+  CACHE_OWNER_KEY,
+  type CacheOwner,
+  createTokenStore,
+  type SecureStoreLike,
+} from "./tokenStore";
 
 const b64 = (value: unknown) => Buffer.from(JSON.stringify(value)).toString("base64url");
 const tokensFor = (sub: string) => ({
@@ -41,7 +46,7 @@ function device() {
     },
   };
   const cacheStore = createCacheStore({ box: nodeAesBox, file, store, accessible: 7 });
-  let owner: () => Promise<string | null> = async () => null;
+  let owner: () => Promise<CacheOwner> = async () => null;
   const cache = createOfflineCache({
     store: cacheStore,
     now: () => Date.now(),
@@ -53,7 +58,7 @@ function device() {
     disk,
     cacheStore,
     cache,
-    setOwner: (o: () => Promise<string | null>) => {
+    setOwner: (o: () => Promise<CacheOwner>) => {
       owner = o;
     },
   };
@@ -124,18 +129,24 @@ async function signedInWithCache(w: ReturnType<typeof wired>) {
   await readEverything(w.queryClient);
   expect(w.disk.text).not.toBeNull();
   expect(w.secure.get(OFFLINE_CACHE_KEY)).toBeTruthy();
-  const owner = await w.session.cacheOwner();
+  const owner = await ownerOf(w.session);
   expect(owner).toMatch(/^[A-Za-z0-9_-]{43}$/);
   // Hashed: the raw sub is not in the secure store.
   expect([...w.secure.values()].join("|")).not.toContain("user_a");
-  expect(await w.cacheStore.read(owner ?? "")).not.toBeNull();
+  expect(await w.cacheStore.read(owner)).not.toBeNull();
 }
 
 async function expectNothingLeft(w: ReturnType<typeof wired>) {
   expect(w.disk.text).toBeNull();
   expect(w.secure.get(OFFLINE_CACHE_KEY) ?? "").toBe("");
-  expect(await w.cacheStore.read((await w.session.cacheOwner()) ?? "any")).toBeNull();
+  expect(await w.cacheStore.read((await ownerOf(w.session)) || "any")).toBeNull();
   expect(await w.cache.restore(testQueryClient())).toBeNull();
+}
+
+/** The owner as a string, for reading the store directly. */
+async function ownerOf(session: Session): Promise<string> {
+  const owner = await session.cacheOwner();
+  return typeof owner === "string" ? owner : "";
 }
 
 afterEach(() => {
@@ -148,6 +159,8 @@ describe("the offline cache after a session ends", () => {
     await signedInWithCache(w);
     await w.session.signOut();
     await expectNothingLeft(w);
+    // The hashed owner (pseudonymous personal data) goes with the session.
+    expect(w.secure.get(CACHE_OWNER_KEY) ?? "").toBe("");
     w.stop();
   });
 
@@ -158,6 +171,8 @@ describe("the offline cache after a session ends", () => {
     await w.session.refresh();
     expect(w.session.getState()).toEqual({ status: "sessionEnded" });
     await expectNothingLeft(w);
+    // The hashed owner (pseudonymous personal data) goes with the session.
+    expect(w.secure.get(CACHE_OWNER_KEY) ?? "").toBe("");
     w.stop();
   });
 
@@ -167,6 +182,8 @@ describe("the offline cache after a session ends", () => {
     await w.session.accountDeleted();
     expect(w.session.getState()).toEqual({ status: "accountDeleted" });
     await expectNothingLeft(w);
+    // The hashed owner (pseudonymous personal data) goes with the session.
+    expect(w.secure.get(CACHE_OWNER_KEY) ?? "").toBe("");
     w.stop();
   });
 
@@ -204,7 +221,7 @@ describe("sealed for one person", () => {
     expect(w.session.getState()).toEqual({ status: "signedIn" });
     w.disk.text = file;
     if (key) w.secure.set(OFFLINE_CACHE_KEY, key);
-    expect(await w.cacheStore.read((await w.session.cacheOwner()) ?? "")).toBeNull();
+    expect(await w.cacheStore.read((await ownerOf(w.session)) || "")).toBeNull();
     w.stop();
   });
 

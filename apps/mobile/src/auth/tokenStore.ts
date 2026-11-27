@@ -13,6 +13,13 @@ export const REFRESH_TOKEN_KEY = "flump.auth.refresh-token";
  */
 export const CACHE_OWNER_KEY = "flump.auth.cache-owner";
 
+/**
+ * The owner could not be read just now (a locked iPhone, a passing Android Keystore error): unlike
+ * "no owner", the offline cache is then neither read nor thrown away.
+ */
+export const OWNER_UNAVAILABLE = Symbol("cache owner unavailable");
+export type CacheOwner = string | null | typeof OWNER_UNAVAILABLE;
+
 /** The three expo-secure-store calls this needs, so tests pass a memory store. */
 export interface SecureStoreLike {
   getItemAsync(key: string, options: { keychainAccessible: number }): Promise<string | null>;

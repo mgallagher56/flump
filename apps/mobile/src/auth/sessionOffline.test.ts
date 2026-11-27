@@ -8,7 +8,7 @@ import type { TokenResult, WorkosClient } from "../data/workos";
 import { readQuery } from "./authorizeUrl";
 import type { PkceCrypto } from "./pkce";
 import { type AccountCheck, type BrowserResult, createSession, type SessionDeps } from "./session";
-import type { TokenStore } from "./tokenStore";
+import { OWNER_UNAVAILABLE, type TokenStore } from "./tokenStore";
 
 const config = {
   authBaseUrl: "https://auth.test.invalid",
@@ -329,11 +329,17 @@ describe("the cache owner", () => {
     expect(owners).toEqual([""]);
   });
 
-  it("a store that cannot be read gives no owner", async () => {
+  it("a store that cannot be read says so (unavailable), which is not the same as no owner", async () => {
     const h = harness("r_stored");
     h.tokens.readOwner = jest.fn(async () => {
       throw new Error("locked");
     });
+    expect(await createSession(h.deps).cacheOwner()).toBe(OWNER_UNAVAILABLE);
+  });
+
+  it("no owner stored reads as null", async () => {
+    const h = harness("r_stored");
+    h.tokens.readOwner = jest.fn(async () => null);
     expect(await createSession(h.deps).cacheOwner()).toBeNull();
   });
 });

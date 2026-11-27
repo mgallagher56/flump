@@ -4,6 +4,7 @@
  * are built by the check-in's test data, each parsed with its contract schema.
  */
 import type { QueryClient } from "@tanstack/react-query";
+import { OWNER_UNAVAILABLE } from "../auth/tokenStore";
 import { household } from "../features/check-in/checkInTestData";
 import type { CacheStore } from "./cacheStore";
 import { testQueryClient } from "./fakeApi";
@@ -500,6 +501,74 @@ describe("the owner", () => {
   it("with no owner, nothing is saved", async () => {
     const store = memoryStore();
     const cache = createOfflineCache({ store, now: () => NOW, owner: async () => null });
+    const queryClient = testQueryClient();
+    const stop = cache.watch(queryClient, () => true);
+    await fetchAll(queryClient, NOW);
+    await settle();
+    stop();
+    expect(store.write).not.toHaveBeenCalled();
+  });
+});
+
+describe("after the clock was set ahead, then corrected", () => {
+  it("the wipe starts the latest time seen again from the clock, so new figures show", async () => {
+    const DAY = 24 * HOUR;
+    const store = memoryStore();
+    // Last used with the clock 10 days ahead.
+    store.text = envelope(allSavedAt(NOW + 10 * DAY), NOW + 10 * DAY);
+    const cache = createOfflineCache({ store, now: () => NOW, owner: OWNER });
+    expect(await cache.restore(testQueryClient())).toBeNull();
+    expect(store.wipe).toHaveBeenCalledTimes(1);
+    // Online again: fresh figures saved at the corrected time, then an offline start an hour on.
+    const online = testQueryClient();
+    const stop = cache.watch(online, () => true);
+    await fetchAll(online, NOW);
+    await settle();
+    stop();
+    expect(JSON.parse(store.text ?? "{}").seenAt).toBe(NOW);
+    const later = createOfflineCache({ store, now: () => NOW + HOUR, owner: OWNER });
+    expect(await later.restore(testQueryClient())).toEqual({ savedAt: NOW });
+  });
+
+  it("the same cache, still open, shows the new figures too", async () => {
+    const DAY = 24 * HOUR;
+    let clock = NOW;
+    const store = memoryStore();
+    store.text = envelope(allSavedAt(NOW + 10 * DAY), NOW + 10 * DAY);
+    const cache = createOfflineCache({ store, now: () => clock, owner: OWNER });
+    expect(await cache.restore(testQueryClient())).toBeNull();
+    const online = testQueryClient();
+    const stop = cache.watch(online, () => true);
+    await fetchAll(online, NOW);
+    await settle();
+    stop();
+    clock = NOW + HOUR;
+    expect(await cache.restore(testQueryClient())).toEqual({ savedAt: NOW });
+  });
+});
+
+describe("an owner that cannot be read just now", () => {
+  it("neither reads nor throws the file away", async () => {
+    const store = memoryStore();
+    store.text = envelope(allSavedAt(NOW - HOUR));
+    const cache = createOfflineCache({
+      store,
+      now: () => NOW,
+      owner: async () => OWNER_UNAVAILABLE,
+    });
+    expect(await cache.restore(testQueryClient())).toBeNull();
+    expect(store.read).not.toHaveBeenCalled();
+    expect(store.wipe).not.toHaveBeenCalled();
+    expect(store.text).not.toBeNull();
+  });
+
+  it("saves nothing", async () => {
+    const store = memoryStore();
+    const cache = createOfflineCache({
+      store,
+      now: () => NOW,
+      owner: async () => OWNER_UNAVAILABLE,
+    });
     const queryClient = testQueryClient();
     const stop = cache.watch(queryClient, () => true);
     await fetchAll(queryClient, NOW);
