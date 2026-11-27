@@ -167,8 +167,10 @@ export interface SiteConfig {
   /** The marketing site, home of the legal pages the sign-in screen links to. */
   readonly marketingOrigin: string;
   /**
-   * The web app, where a page the app does not have yet is opened (E12 S4). Optional: a build
-   * without it links those pages to the marketing site's home page instead.
+   * The web app, where a page the app does not have yet is opened (E12 S4). Required in a release
+   * build (E12 S6, 27 November 2026), so no website link there quietly opens the marketing home
+   * page. Optional in a development build, whose links then open the marketing site's home page
+   * and say "Open the Flump website".
    */
   readonly webAppOrigin: string | null;
 }
@@ -188,9 +190,10 @@ export function readSiteConfig(
       source.EXPO_PUBLIC_MARKETING_URL,
       options,
     ),
-    webAppOrigin: source.EXPO_PUBLIC_WEB_APP_URL?.trim()
-      ? checkedOrigin("EXPO_PUBLIC_WEB_APP_URL", source.EXPO_PUBLIC_WEB_APP_URL, options)
-      : null,
+    webAppOrigin:
+      options.releaseBuild || source.EXPO_PUBLIC_WEB_APP_URL?.trim()
+        ? checkedOrigin("EXPO_PUBLIC_WEB_APP_URL", source.EXPO_PUBLIC_WEB_APP_URL, options)
+        : null,
   };
 }
 

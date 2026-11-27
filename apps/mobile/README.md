@@ -25,7 +25,7 @@ Then, from the Expo prompt:
 
 Switch the phone or simulator between light and dark to see the theme follow it. Tap **Device check** (development builds only) to see "All vectors pass" and "All formatting cases match" with the JavaScript engine named. Tap **Component gallery** to see the components.
 
-Sign-in needs four values, all public configuration, never secrets (Expo puts every `EXPO_PUBLIC_*` value in the bundle): `EXPO_PUBLIC_API_URL` (the backend), `EXPO_PUBLIC_WORKOS_CLIENT_ID` (the WorkOS client id, `client_...`; never an API key), `EXPO_PUBLIC_MARKETING_URL` (the site with the legal pages) and, for the e2e build only, `EXPO_PUBLIC_WORKOS_API_URL` (defaults to `https://api.workos.com`). A missing or unsafe value shows "This build is misconfigured". One more is optional: `EXPO_PUBLIC_WEB_APP_URL`, the web app, where a page the app does not have yet opens (S4); without it those links open the marketing site's home page, and an unsafe value is refused like the others. Expo Go cannot finish a sign-in: it never receives the `flump://auth/callback` redirect, so a real sign-in needs a development build (`bunx expo run:android`). It must be HTTPS in a release build; a development build also accepts plain HTTP to `localhost`, `127.0.0.1`, `[::1]`, `10.0.2.2` (the Android emulator's name for your computer) or a `name.local` address.
+Sign-in needs four values, all public configuration, never secrets (Expo puts every `EXPO_PUBLIC_*` value in the bundle): `EXPO_PUBLIC_API_URL` (the backend), `EXPO_PUBLIC_WORKOS_CLIENT_ID` (the WorkOS client id, `client_...`; never an API key), `EXPO_PUBLIC_MARKETING_URL` (the site with the legal pages) and, for the e2e build only, `EXPO_PUBLIC_WORKOS_API_URL` (defaults to `https://api.workos.com`). A missing or unsafe value shows "This build is misconfigured". One more, `EXPO_PUBLIC_WEB_APP_URL`, is the web app, where a page or action the app does not have yet opens (S4). A release build needs it and shows "This build is misconfigured" without it (S6, 27 November 2026); a development build may leave it out, and its website links then open the marketing site's home page and say "Open the Flump website". An unsafe value is refused like the others. Expo Go cannot finish a sign-in: it never receives the `flump://auth/callback` redirect, so a real sign-in needs a development build (`bunx expo run:android`). It must be HTTPS in a release build; a development build also accepts plain HTTP to `localhost`, `127.0.0.1`, `[::1]`, `10.0.2.2` (the Android emulator's name for your computer) or a `name.local` address.
 
 The Maestro flow `e2e/flows/engine-check.yaml` checks the device check on a debug Android build. CI's `🤖 Mobile e2e (Android)` job runs it on every run (light on pull requests, light and dark on `main` and nightly); to run it by hand, see `e2e/README.md`.
 
@@ -33,13 +33,13 @@ The Maestro flow `e2e/flows/engine-check.yaml` checks the device check on a debu
 
 Expo Go cannot finish a sign-in, so this needs a development build of Flump on the phone. Two free routes, no new account. Either way, the app's code comes from Metro on your computer, with your own settings, and nothing secret is ever typed into the app except your password, on the WorkOS page.
 
-**Settings (both routes).** Keep `.env.local` in the main checkout's `apps/mobile`, not in a session worktree: a worktree is removed when its session ends, and the file goes with it. Check out the branch you are testing there, copy `apps/mobile/.env.example` to `apps/mobile/.env.local` (git ignores it) and fill in the three lines. To run against the fixture server instead, follow "By hand" in [`e2e/README.md`](./e2e/README.md): it stops this Metro first and starts one that cannot read `.env.local`.
+**Settings (both routes).** Keep `.env.local` in the main checkout's `apps/mobile`, not in a session worktree: a worktree is removed when its session ends, and the file goes with it. Check out the branch you are testing there, copy `apps/mobile/.env.example` to `apps/mobile/.env.local` (git ignores it) and fill in the four lines. To run against the fixture server instead, follow "By hand" in [`e2e/README.md`](./e2e/README.md): it stops this Metro first and starts one that cannot read `.env.local`.
 
 ```text
 EXPO_PUBLIC_API_URL=<the staging backend's https address>
 EXPO_PUBLIC_WORKOS_CLIENT_ID=<the staging WorkOS client id, starting client_>
 EXPO_PUBLIC_MARKETING_URL=<the staging marketing site's https address>
-EXPO_PUBLIC_WEB_APP_URL=<the staging web app's https address, optional>
+EXPO_PUBLIC_WEB_APP_URL=<the staging web app's https address; a release build needs it>
 ```
 
 The client id is public configuration. Never put the WorkOS API key (it starts `sk_`) here or anywhere in the app. Then build the shared packages:

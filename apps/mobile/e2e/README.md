@@ -62,6 +62,7 @@ lsof -ti tcp:8081 | xargs kill   # stops any Metro already on 8081, the real-con
 bun e2e/fixture-server/main.ts &
 EXPO_NO_DOTENV=1 EXPO_PUBLIC_API_URL=http://10.0.2.2:8787 EXPO_PUBLIC_WORKOS_API_URL=http://10.0.2.2:8787 \
   EXPO_PUBLIC_WORKOS_CLIENT_ID=client_e2e_fixture EXPO_PUBLIC_MARKETING_URL=https://flump.example \
+  EXPO_PUBLIC_WEB_APP_URL=https://app.flump.example \
   bunx expo run:android --port 8081
 maestro test -e THEME=light e2e/flows
 ```

@@ -134,9 +134,32 @@ describe("readAuthConfig", () => {
 describe("readSiteConfig", () => {
   it("keeps the marketing site's origin", () => {
     expect(
-      readSiteConfig({ EXPO_PUBLIC_MARKETING_URL: "https://site.example.com/path" }, release),
-    ).toEqual({ marketingOrigin: "https://site.example.com", webAppOrigin: null });
+      readSiteConfig(
+        {
+          EXPO_PUBLIC_MARKETING_URL: "https://site.example.com/path",
+          EXPO_PUBLIC_WEB_APP_URL: "https://app.example.com",
+        },
+        release,
+      ),
+    ).toEqual({
+      marketingOrigin: "https://site.example.com",
+      webAppOrigin: "https://app.example.com",
+    });
   });
+
+  it.each([undefined, "", "   "])(
+    "needs the web app's address in a release build, so no link quietly opens the marketing home page (%p)",
+    (value) => {
+      const site = { EXPO_PUBLIC_MARKETING_URL: "https://site.example.com" };
+      expect(
+        codeOf(() => readSiteConfig({ ...site, EXPO_PUBLIC_WEB_APP_URL: value }, release)),
+      ).toBe("missing-api-url");
+      // A development build may leave it out: its website links then say "Open the Flump website".
+      expect(
+        readSiteConfig({ ...site, EXPO_PUBLIC_WEB_APP_URL: value }, dev).webAppOrigin,
+      ).toBeNull();
+    },
+  );
 
   it("keeps the web app's origin when set, checked as the marketing site's is", () => {
     const site = "https://site.example.com";
@@ -146,10 +169,6 @@ describe("readSiteConfig", () => {
         release,
       ).webAppOrigin,
     ).toBe("https://app.example.com");
-    expect(
-      readSiteConfig({ EXPO_PUBLIC_MARKETING_URL: site, EXPO_PUBLIC_WEB_APP_URL: "  " }, release)
-        .webAppOrigin,
-    ).toBeNull();
     expect(
       codeOf(() =>
         readSiteConfig(

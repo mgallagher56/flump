@@ -744,6 +744,7 @@ jobs:
           EXPO_PUBLIC_WORKOS_API_URL: http://10.0.2.2:8787
           EXPO_PUBLIC_WORKOS_CLIENT_ID: client_e2e_fixture
           EXPO_PUBLIC_MARKETING_URL: https://flump.example
+          EXPO_PUBLIC_WEB_APP_URL: https://app.flump.example
         run: |
           mkdir -p "$RUNNER_TEMP/e2e-logs"
           nohup bun apps/mobile/e2e/fixture-server/main.ts > "$RUNNER_TEMP/e2e-logs/fixture-server.log" 2>&1 &
