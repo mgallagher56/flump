@@ -90,9 +90,19 @@ async function signedIn() {
 }
 
 describe("sign-in against the WorkOS stand-in", () => {
-  it("signs in, stores only a refresh token, and reads the profile", async () => {
+  it("signs in, stores only a refresh token and its hashed owner, and reads the profile", async () => {
     const { secure, session } = await signedIn();
-    expect([...secure.items.keys()]).toEqual(["flump.auth.refresh-token"]);
+    // The owner (E12 S7) is a SHA-256 of the sub in base64url, never the token or the raw sub.
+    expect([...secure.items.keys()]).toEqual([
+      "flump.auth.refresh-token",
+      "flump.auth.cache-owner",
+    ]);
+    const owner = secure.items.get("flump.auth.cache-owner") ?? "";
+    expect(owner).toMatch(/^[A-Za-z0-9_-]{43}$/);
+    const sub = JSON.parse(
+      Buffer.from((session.getAccessToken() ?? "").split(".")[1] ?? "", "base64url").toString(),
+    ).sub;
+    expect(owner).not.toContain(sub);
     expect(session.getAccessToken()).toMatch(/^[\w-]+\.[\w-]+\.[\w-]+$/);
     expect(server.stats()).toMatchObject({ exchanges: 1, apiRequests: 1 });
   });
@@ -160,7 +170,10 @@ describe("sign-in against the WorkOS stand-in", () => {
     const relaunch = app(first.secure);
     await relaunch.session.restore();
     expect(relaunch.session.getState()).toEqual({ status: "restoredOffline" });
-    expect(first.secure.items.size).toBe(1);
+    expect([...first.secure.items.keys()]).toEqual([
+      "flump.auth.refresh-token",
+      "flump.auth.cache-owner",
+    ]);
   });
 
   it("sign-out clears the device, opens no browser and revokes the session on the server", async () => {

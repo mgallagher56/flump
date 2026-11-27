@@ -131,7 +131,12 @@ export function createAppSession(config: { api: MobileConfig; auth: AuthConfig }
   // The offline cache (E12 S7): sealed with AES-256-GCM, its key beside the refresh token.
   const cacheStore = createDeviceCacheStore(SecureStore, accessible);
   const offlineCache = cacheStore
-    ? createOfflineCache({ store: cacheStore, now: () => Date.now() })
+    ? createOfflineCache({
+        store: cacheStore,
+        now: () => Date.now(),
+        // Sealed for the person whose session is stored; the session exists before any read.
+        owner: () => session?.cacheOwner() ?? Promise.resolve(null),
+      })
     : undefined;
   const housekeeping = createDeviceHousekeeping({
     sweepExports: () => sweepExports(files),

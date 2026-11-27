@@ -1,5 +1,10 @@
 import { randomUUID } from "node:crypto";
-import { createTokenStore, REFRESH_TOKEN_KEY, type SecureStoreLike } from "./tokenStore";
+import {
+  CACHE_OWNER_KEY,
+  createTokenStore,
+  REFRESH_TOKEN_KEY,
+  type SecureStoreLike,
+} from "./tokenStore";
 
 const ACCESSIBLE = 7; // Stands in for expo-secure-store's WHEN_UNLOCKED_THIS_DEVICE_ONLY.
 const token = () => `r_${randomUUID()}`;
@@ -24,6 +29,30 @@ function memoryStore() {
   return { store, items, options };
 }
 
+describe("the cache owner (E12 S7)", () => {
+  it("is saved and read under its own key, and cleared with the token", async () => {
+    const { store, items } = memoryStore();
+    const tokens = createTokenStore(store, ACCESSIBLE);
+    await tokens.save(token());
+    await tokens.saveOwner?.("owner_hash");
+    expect(items.get(CACHE_OWNER_KEY)).toBe("owner_hash");
+    expect(await tokens.readOwner?.()).toBe("owner_hash");
+    await tokens.clear();
+    expect(items.size).toBe(0);
+    expect(await tokens.readOwner?.()).toBeNull();
+  });
+
+  it("a save that fails removes the older owner, so it never names someone else", async () => {
+    const { store, items } = memoryStore();
+    const tokens = createTokenStore(store, ACCESSIBLE);
+    await tokens.saveOwner?.("owner_old");
+    (store.setItemAsync as jest.Mock).mockRejectedValueOnce(new Error("busy"));
+    await tokens.saveOwner?.("owner_new");
+    expect(items.has(CACHE_OWNER_KEY)).toBe(false);
+    expect(await tokens.readOwner?.()).toBeNull();
+  });
+});
+
 describe("tokenStore", () => {
   it("saves, reads and deletes the refresh token under one key", async () => {
     const { store, items } = memoryStore();
@@ -42,12 +71,12 @@ describe("tokenStore", () => {
     const tokens = createTokenStore(store, ACCESSIBLE);
     await tokens.save(token());
     await tokens.read();
+    await tokens.saveOwner?.("owner_hash");
+    await tokens.readOwner?.();
     await tokens.clear();
-    expect(options).toEqual([
-      { keychainAccessible: ACCESSIBLE },
-      { keychainAccessible: ACCESSIBLE },
-      { keychainAccessible: ACCESSIBLE },
-    ]);
+    // Save, read, the owner's save and read, then clear's two deletes (token and owner).
+    expect(options).toHaveLength(6);
+    for (const used of options) expect(used).toEqual({ keychainAccessible: ACCESSIBLE });
   });
 
   it("a read error is passed on and deletes nothing (a locked iPhone throws for a good token)", async () => {

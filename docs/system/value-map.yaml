@@ -3203,6 +3203,13 @@ browser_storage:
       note: 'mobile app (E12 S9): "on" while app lock is switched on, absent otherwise; a screen gate on this phone only; cleared on sign-out, session end, deletion and a reinstall; the check follows it from apps/mobile/src/auth since S9',
     }
   - {
+      key: flump.auth.cache-owner,
+      storage: secureStore,
+      user_data: false,
+      path: apps/mobile/src/auth/tokenStore.ts,
+      note: "mobile app (E12 S7): a SHA-256 (base64url) of the WorkOS sub whose session the refresh token belongs to, never the raw sub; sealed into the offline cache as associated data so one person's file never opens for another; saved with the refresh token and cleared with it, including by the iOS reinstall wipe",
+    }
+  - {
       key: flump.offline-cache-key,
       storage: secureStore,
       user_data: false,
@@ -3211,7 +3218,8 @@ browser_storage:
     }
   # Not a storage key, so not an entry: the mobile app's offline cache (E12 S7,
   # apps/mobile/src/data/offlineCache.ts) is one file, offline/reads.sealed in the app's cache folder
-  # (out of iOS and Android backups), sealed with AES-256-GCM under flump.offline-cache-key. It copies
+  # (out of iOS and Android backups), sealed with AES-256-GCM under flump.offline-cache-key, bound to
+  # flump.auth.cache-owner, and holding the latest time the phone's clock has shown. It copies
   # the last good answers of GET /accounts, /account-details, /user-profile, /snapshots/check-ins and
   # /budget-entries, kept at most 7 days, read back through the same contract parsing as a live
   # answer, and only while restored offline with the app lock open. Wiped with its key at the moments

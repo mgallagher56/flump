@@ -1,8 +1,16 @@
 import { useNavigationContainerRef } from "expo-router";
-import { type ReactElement, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import {
+  type ReactElement,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Platform, StyleSheet, View } from "react-native";
 import { useSession, useStartProblem } from "../../auth/SessionProvider";
-import { useAppLock } from "../../auth/useAppLock";
+import { lockHidesShell, useAppLock } from "../../auth/useAppLock";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
 import { SIGN_OUT, SIGN_OUT_CONFIRM_TITLE, signOutConfirmMessage } from "../../copy/auth";
 import { useSavedFigures } from "../../features/offline/useSavedFigures";
@@ -33,7 +41,6 @@ import { TermsRequired } from "../TermsRequired";
  * on iOS an opaque cover goes over it while the app is away (Android has FLAG_SECURE instead).
  */
 const noReconnect = () => Promise.resolve();
-const notOffline = () => false;
 
 export function SessionGate({ children }: { children?: ReactNode }) {
   const app = useSession();
@@ -45,12 +52,24 @@ export function SessionGate({ children }: { children?: ReactNode }) {
   useReturnAfterUnlock(status === "signedIn" || status === "restoredOffline", lock.locked);
   // The sealed cache is read only while the shell itself shows: never behind the lock or the iOS
   // app switcher cover (E12 S7).
+  const lockState = useRef({ locked: lock.locked, cover: lock.switcherCover });
+  lockState.current = { locked: lock.locked, cover: lock.switcherCover };
+  const appLock = app?.appLock;
+  const appSession = app?.session;
+  const canReadNow = useCallback(
+    () =>
+      Boolean(appSession?.isRestoredOffline()) &&
+      !lockHidesShell(appLock?.getPhase() ?? "off") &&
+      !lockState.current.locked &&
+      !lockState.current.cover,
+    [appSession, appLock],
+  );
   const savedFigures = useSavedFigures({
     cache: app?.offlineCache,
     offline: status === "restoredOffline",
     canRead: !lock.locked && !lock.switcherCover,
     reconnect: app ? app.session.reconnect : noReconnect,
-    isStillOffline: app ? app.session.isRestoredOffline : notOffline,
+    canReadNow,
   });
   const shell = useMemo<Shell | null>(
     () =>

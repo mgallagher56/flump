@@ -13,6 +13,8 @@ jest.mock("expo-file-system/legacy", () => ({}));
 jest.mock("expo-crypto", () => ({}));
 
 const ACCESSIBLE = 7;
+/** A hashed owner, as `Session.cacheOwner` gives it. */
+const OWNER = "owner_hash_a";
 
 function memoryStore() {
   const values = new Map<string, string>();
@@ -61,13 +63,13 @@ const FIGURES = JSON.stringify({ accounts: [{ name: "Café ISA", balance: 12_345
 describe("the sealed cache file", () => {
   it("gives back exactly what was saved", async () => {
     const { cache } = setup();
-    await cache.write(FIGURES);
-    expect(await cache.read()).toBe(FIGURES);
+    await cache.write(FIGURES, OWNER);
+    expect(await cache.read(OWNER)).toBe(FIGURES);
   });
 
   it("is encrypted at rest: no figure or name is in the file", async () => {
     const { cache, file } = setup();
-    await cache.write(FIGURES);
+    await cache.write(FIGURES, OWNER);
     const raw = Buffer.from(file.text ?? "", "base64").toString("latin1");
     expect(raw).not.toContain("12345.67");
     expect(raw).not.toContain("ISA");
@@ -76,7 +78,7 @@ describe("the sealed cache file", () => {
 
   it("keeps its key in the secure store, when unlocked and on this device only", async () => {
     const { cache, store } = setup();
-    await cache.write(FIGURES);
+    await cache.write(FIGURES, OWNER);
     expect(store.setItemAsync).toHaveBeenCalledWith(OFFLINE_CACHE_KEY, expect.any(String), {
       keychainAccessible: ACCESSIBLE,
     });
@@ -86,46 +88,46 @@ describe("the sealed cache file", () => {
 
   it("reuses the key it has, so saving again does not make a new one", async () => {
     const { cache, store } = setup();
-    await cache.write(FIGURES);
+    await cache.write(FIGURES, OWNER);
     const key = store.values.get(OFFLINE_CACHE_KEY);
-    await cache.write("{}");
+    await cache.write("{}", OWNER);
     expect(store.values.get(OFFLINE_CACHE_KEY)).toBe(key);
     expect(store.calls.filter((c) => c.startsWith("set:"))).toHaveLength(1);
   });
 
   it("restored onto a phone without its key (a backup), reads as nothing and the file goes", async () => {
     const { cache, store, file } = setup();
-    await cache.write(FIGURES);
+    await cache.write(FIGURES, OWNER);
     store.values.delete(OFFLINE_CACHE_KEY);
-    expect(await cache.read()).toBeNull();
+    expect(await cache.read(OWNER)).toBeNull();
     expect(file.text).toBeNull();
   });
 
   it("opened with another key (copied from another phone), reads as nothing and both go", async () => {
     const { cache, store, file } = setup();
-    await cache.write(FIGURES);
+    await cache.write(FIGURES, OWNER);
     store.values.set(OFFLINE_CACHE_KEY, randomBytes(32).toString("base64"));
-    expect(await cache.read()).toBeNull();
+    expect(await cache.read(OWNER)).toBeNull();
     expect(file.text).toBeNull();
     expect(store.values.has(OFFLINE_CACHE_KEY)).toBe(false);
   });
 
   it("a changed byte fails the GCM tag: dropped, never half read", async () => {
     const { cache, file } = setup();
-    await cache.write(FIGURES);
+    await cache.write(FIGURES, OWNER);
     const bytes = Buffer.from(file.text ?? "", "base64");
     bytes[20] = (bytes[20] ?? 0) ^ 0x01;
     file.text = bytes.toString("base64");
-    expect(await cache.read()).toBeNull();
+    expect(await cache.read(OWNER)).toBeNull();
     expect(file.text).toBeNull();
   });
 
   it("a truncated file (a write cut short) reads as nothing, with no partial data, and both go", async () => {
     const { cache, store, file } = setup();
-    await cache.write(FIGURES);
+    await cache.write(FIGURES, OWNER);
     const bytes = Buffer.from(file.text ?? "", "base64");
     file.text = bytes.subarray(0, bytes.length - 10).toString("base64");
-    expect(await cache.read()).toBeNull();
+    expect(await cache.read(OWNER)).toBeNull();
     expect(file.text).toBeNull();
     expect(store.values.has(OFFLINE_CACHE_KEY)).toBe(false);
   });
@@ -133,45 +135,62 @@ describe("the sealed cache file", () => {
   it("an empty or garbled file reads as nothing and never throws", async () => {
     for (const garbage of ["AAAA", "not base64 at all", "x"]) {
       const { cache, file } = setup();
-      await cache.write(FIGURES);
+      await cache.write(FIGURES, OWNER);
       file.text = garbage;
-      await expect(cache.read()).resolves.toBeNull();
+      await expect(cache.read(OWNER)).resolves.toBeNull();
     }
   });
 
   it("every write uses a fresh nonce: the same figures sealed twice differ, and both open", async () => {
     const { cache, file } = setup();
-    await cache.write(FIGURES);
+    await cache.write(FIGURES, OWNER);
     const first = file.text ?? "";
-    await cache.write(FIGURES);
+    await cache.write(FIGURES, OWNER);
     const second = file.text ?? "";
     expect(second).not.toBe(first);
     // The first 12 bytes are the IV.
     expect(Buffer.from(second, "base64").subarray(0, 12)).not.toEqual(
       Buffer.from(first, "base64").subarray(0, 12),
     );
-    expect(await cache.read()).toBe(FIGURES);
+    expect(await cache.read(OWNER)).toBe(FIGURES);
   });
 
   it("a locked store (an iPhone still locked) reads as nothing and throws nothing away", async () => {
     const { cache, store, file } = setup();
-    await cache.write(FIGURES);
+    await cache.write(FIGURES, OWNER);
     (store.getItemAsync as jest.Mock).mockRejectedValueOnce(new Error("locked"));
-    expect(await cache.read()).toBeNull();
+    expect(await cache.read(OWNER)).toBeNull();
     expect(file.text).not.toBeNull();
-    expect(await cache.read()).toBe(FIGURES);
+    expect(await cache.read(OWNER)).toBe(FIGURES);
+  });
+
+  it("sealed for one person, never opens for another, even with the same key: both go", async () => {
+    const { cache, store, file } = setup();
+    await cache.write(FIGURES, OWNER);
+    expect(await cache.read("owner_hash_b")).toBeNull();
+    expect(file.text).toBeNull();
+    expect(store.values.has(OFFLINE_CACHE_KEY)).toBe(false);
+  });
+
+  it("an empty file reads as nothing and is removed", async () => {
+    const { cache, file } = setup();
+    await cache.write(FIGURES, OWNER);
+    file.text = "";
+    expect(await cache.read(OWNER)).toBeNull();
+    expect(file.remove).toHaveBeenCalled();
+    expect(file.text).toBeNull();
   });
 
   it("with no file, reads as nothing", async () => {
     const { cache } = setup();
-    expect(await cache.read()).toBeNull();
+    expect(await cache.read(OWNER)).toBeNull();
   });
 });
 
 describe("wiping the cache", () => {
   it("deletes the key first, then the file", async () => {
     const { cache, store, file } = setup();
-    await cache.write(FIGURES);
+    await cache.write(FIGURES, OWNER);
     const order: string[] = [];
     (store.deleteItemAsync as jest.Mock).mockImplementationOnce(async (key: string) => {
       order.push("key");
@@ -183,21 +202,21 @@ describe("wiping the cache", () => {
     });
     expect(await cache.wipe()).toBe(true);
     expect(order).toEqual(["key", "file"]);
-    expect(await cache.read()).toBeNull();
+    expect(await cache.read(OWNER)).toBeNull();
   });
 
   it("a file that will not go is unreadable all the same, since its key is gone", async () => {
     const { cache, file } = setup();
-    await cache.write(FIGURES);
+    await cache.write(FIGURES, OWNER);
     (file.remove as jest.Mock).mockRejectedValueOnce(new Error("busy"));
     expect(await cache.wipe()).toBe(false);
     expect(file.text).not.toBeNull();
-    expect(await cache.read()).toBeNull();
+    expect(await cache.read(OWNER)).toBeNull();
   });
 
   it("a key that will not delete is overwritten with nothing, which reads as no key", async () => {
     const { cache, store } = setup();
-    await cache.write(FIGURES);
+    await cache.write(FIGURES, OWNER);
     (store.deleteItemAsync as jest.Mock).mockRejectedValueOnce(new Error("busy"));
     expect(await cache.wipe()).toBe(true);
     expect(store.values.get(OFFLINE_CACHE_KEY)).toBe("");
@@ -224,14 +243,14 @@ describe("wiping the cache", () => {
           };
         }),
     );
-    const writing = cache.write(FIGURES);
+    const writing = cache.write(FIGURES, OWNER);
     const wiping = cache.wipe();
     // Let the write reach the file before releasing it.
     await new Promise((resolve) => setImmediate(resolve));
     release();
     await Promise.all([writing, wiping]);
     expect(file.calls).toEqual(["write", "remove"]);
-    expect(await cache.read()).toBeNull();
+    expect(await cache.read(OWNER)).toBeNull();
   });
 });
 

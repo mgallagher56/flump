@@ -3,7 +3,9 @@
  * - loads the sealed cache into the query cache once per offline spell, and only while `canRead`
  *   (the signed-in shell is showing: never behind the app lock or the iOS app switcher cover);
  * - tries a quiet reconnect every 30 seconds and whenever the app comes back to the front;
- * - once signed in again, marks every read stale, so the screens fetch fresh figures at once.
+ * - once signed in again, marks every read stale, so the screens fetch fresh figures at once;
+ * - checks the figures' age each minute while they show, and past 7 days (or with the clock turned
+ *   back) forgets them and leaves the offline screen in their place.
  */
 import { QueryClientContext } from "@tanstack/react-query";
 import { useCallback, useContext, useEffect, useRef, useState } from "react";
@@ -13,6 +15,8 @@ import { queryKeys } from "../../data/queryKeys";
 
 /** How often a quiet reconnect is tried while the app is open and offline. */
 export const RECONNECT_EVERY_MS = 30_000;
+/** How often the saved figures' age is checked while they show. */
+export const AGE_CHECK_EVERY_MS = 60_000;
 
 export interface SavedFiguresState {
   /** The saved figures' oldest time, or null: none, too old, or not loaded. */
@@ -31,12 +35,15 @@ export function useSavedFigures({
   offline,
   canRead,
   reconnect,
-  isStillOffline,
+  canReadNow,
 }: {
   cache: OfflineCache | undefined;
   offline: boolean;
-  /** The session's state read now, not at the last render: still restoredOffline? */
-  isStillOffline: () => boolean;
+  /**
+   * Read now, not at the last render: still restoredOffline, and nothing (the app lock, the iOS
+   * switcher cover) over the shell? Asked right before the figures go into memory.
+   */
+  canReadNow: () => boolean;
   canRead: boolean;
   reconnect: () => Promise<void>;
 }): SavedFiguresState {
@@ -67,14 +74,30 @@ export function useSavedFigures({
     if (!cache || !queryClient || !canRead || phase !== "idle") return;
     setPhase("restoring");
     cache
-      .restore(queryClient, isStillOffline)
+      .restore(queryClient, canReadNow)
       .catch(() => null)
       .then((figures) => {
         if (!mounted.current) return;
+        // Stopped because the lock came on (not because nothing was saved): try again once the
+        // shell shows. After a sign-out the state is not offline, which resets this anyway.
+        if (!figures && !canReadNow()) return setPhase("idle");
         setSaved(figures);
         setPhase("done");
       });
-  }, [offline, canRead, cache, queryClient, phase, isStillOffline]);
+  }, [offline, canRead, cache, queryClient, phase, canReadNow]);
+
+  // Past the age limit while on screen: forgotten, and the offline screen takes their place.
+  useEffect(() => {
+    if (!offline || !saved || !cache) return;
+    const check = () => {
+      if (cache.isFresh(saved.savedAt)) return;
+      queryClient?.removeQueries({ queryKey: queryKeys.all });
+      setSaved(null);
+      void cache.wipe();
+    };
+    const timer = setInterval(check, AGE_CHECK_EVERY_MS);
+    return () => clearInterval(timer);
+  }, [offline, saved, cache, queryClient]);
 
   useEffect(() => {
     if (!offline || !canRead) return;
