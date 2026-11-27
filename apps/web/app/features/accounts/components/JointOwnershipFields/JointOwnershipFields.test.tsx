@@ -1,6 +1,7 @@
+import { resolveSharePercent } from "@flump/finance-engine";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, test, vi } from "vitest";
-import { JointOwnershipFields, resolveSharePercent } from "./JointOwnershipFields";
+import { JointOwnershipFields } from "./JointOwnershipFields";
 
 describe("<JointOwnershipFields />", () => {
   test("shows only the ownership choice for a sole account", () => {

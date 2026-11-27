@@ -1,5 +1,6 @@
 export * from "./account-balance.js";
 export * from "./account-category.js";
+export * from "./account-form.js";
 export * from "./account-type-change.js";
 export * from "./ai-context-pack.js";
 export * from "./anonymise.js";

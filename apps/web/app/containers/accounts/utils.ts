@@ -14,15 +14,6 @@ export enum AccountTypeEnum {
   STUDENT_LOAN = "Student Loan",
 }
 
-/** Student loan repayment plans (stored values, matches the backend allow-list). */
-export const STUDENT_LOAN_PLAN_OPTIONS = [
-  { id: "PLAN_1", name: "Plan 1" },
-  { id: "PLAN_2", name: "Plan 2" },
-  { id: "PLAN_4", name: "Plan 4 (Scotland)" },
-  { id: "PLAN_5", name: "Plan 5" },
-  { id: "POSTGRAD", name: "Postgraduate" },
-] as const;
-
 export type AccountType = `${AccountTypeEnum}` | string;
 
 /**

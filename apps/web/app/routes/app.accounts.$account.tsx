@@ -7,12 +7,11 @@ import {
   UpdateAccountResponse,
   UserProfileResponse,
 } from "@flump/api-contract";
-import { netWorthBasisFromProfile } from "@flump/finance-engine";
+import { accountRequestFrom, netWorthBasisFromProfile } from "@flump/finance-engine";
 import type { ReactElement } from "react";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { data, redirect } from "react-router";
 import AccountDetailContainer from "~/containers/accounts/accountDetailContainer/AccountDetailContainer";
-import { accountFieldsFromForm } from "~/features/accounts/accountFormBody";
 import { backendFetch, backendFetchAll } from "~/services/backend-client.server";
 import { BackendError } from "~/services/backend-error";
 import { ifMatchFromForm, revalidateOnConflict } from "~/services/conflict";
@@ -32,19 +31,21 @@ export const action = async (args: ActionFunctionArgs) => {
 
   try {
     if (intent === "update") {
-      const name = formData.get("name");
-      const type = formData.get("type");
+      const request = accountRequestFrom({
+        editing: true,
+        get: (key) => {
+          const value = formData.get(key);
+          return value === null ? null : String(value);
+        },
+        homeValue: null,
+      });
       await backendFetch(`/accounts/${accountId}`, {
         accessToken: token,
         method: "PATCH",
         schema: UpdateAccountResponse,
         ifMatch: ifMatchFromForm(formData),
         // An edit sends only the fields the user changed: a name or type left out stays as saved.
-        body: {
-          ...(name !== null ? { name } : {}),
-          ...(type !== null ? { type } : {}),
-          ...accountFieldsFromForm(formData),
-        },
+        body: request.kind === "update" ? request.body : {},
       });
       return data({ success: true });
     }
