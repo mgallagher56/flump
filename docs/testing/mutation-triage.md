@@ -4147,3 +4147,13 @@ Measured by forced runs of `src/auth/workos-jwt.verifier.ts:68-101` (the `verify
 | Line                   | Fault                                              | Class      | Reason                                                                                                                                    |
 | ---------------------- | -------------------------------------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | `isBudgetEmpty` reduce | ArithmeticOperator `sum + amount` → `sum - amount` | Equivalent | The mutant totals minus the sum of the amounts, and minus a sum is £0 exactly when the sum is, so "the rows add up to £0" reads the same. |
+
+## Breathing room rounds down, and the stage reads the unrounded runway (E12 S10, D8, 27 November 2026)
+
+`--mutate "src/breathing-room-wording.ts,src/health-score.ts:239-260"`. `health-score.ts` 239 to 260 (`evaluateFinancialStage`'s runway and threshold): 18 of 18 killed, the unrounded `< 3` comparison included (savings 2,950 over essentials 1,000). `breathing-room-wording.ts`: 73 killed, 3 survivors, 1 compile error. The changed line (`Math.floor(tenths)` for the year form) is killed by 12.5, 16.5, 23.6 and 23.94. The survivors are in lines this change did not touch:
+
+| Line | Fault                                                      | Class      | Reason                                                                                                                     |
+| ---- | ---------------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------- |
+| L53  | StringLiteral: the cap's singular "year" emptied           | Equivalent | Above the cap (more than 120 months) the years are at least 10, so the singular is never shown.                            |
+| L43  | ConditionalExpression: `typeof months === "number"` → true | Equivalent | `Number.isFinite` returns false for anything that is not a number, so the second test alone gives the same answer.         |
+| L28  | ObjectLiteral: `{ maximumFractionDigits: 1 }` emptied      | Equivalent | The figure is rounded to one decimal place before formatting, so the default of three fraction digits shows the same text. |
