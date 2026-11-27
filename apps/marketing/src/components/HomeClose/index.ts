@@ -1,1 +1,2 @@
-export { HomeClose } from "./HomeClose";
+export * from "./HomeClose";
+export * from "./HomeClose.styles";

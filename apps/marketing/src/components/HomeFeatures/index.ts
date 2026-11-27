@@ -1,1 +1,2 @@
-export { HomeFeatures } from "./HomeFeatures";
+export * from "./HomeFeatures";
+export * from "./HomeFeatures.styles";

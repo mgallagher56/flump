@@ -1,10 +1,17 @@
-import { Icon } from "@repo/ui";
+import { Icon, marketingMs } from "@repo/ui";
 import { ChevronDown } from "lucide-react";
-import { type FC, type ReactNode, useState } from "react";
+import { type FC, type ReactNode, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import type { GsapKit } from "../../motion/loadGsapKit";
+import { useGsapMoment } from "../../motion/useGsapMoment";
+import { BubbleField } from "../BubbleField";
+import { MarketingSection } from "../MarketingSection";
 import {
+  bubbleLayer,
   faqAnswer,
+  faqAnswerInner,
   faqAnswerText,
+  faqBand,
   faqChevron,
   faqItem,
   faqLink,
@@ -52,7 +59,7 @@ export const HOME_FAQS: HomeFaqEntry[] = [
         Yes. The AI connection lets an AI assistant such as Claude Desktop answer questions from the
         figures you have saved. During testing it is switched on one account at a time, so ask us to
         switch it on for yours.{" "}
-        <Link className={faqLink()} to="/features/ai-connection">
+        <Link className={faqLink} to="/features/ai-connection">
           About the AI connection
         </Link>
       </>
@@ -60,40 +67,80 @@ export const HOME_FAQS: HomeFaqEntry[] = [
   },
 ];
 
+/**
+ * The questions deal in, in document order: a small rise and a fade, staggered, played once when
+ * the list nears the viewport and finished by time, never tied to scroll (MK2). Transforms are
+ * cleared afterwards, so an opening answer always pushes the next question down.
+ */
+export function faqMoment({ gsap }: GsapKit, root: HTMLElement): undefined {
+  const items = Array.from(root.querySelectorAll("[data-deal-item]"));
+  if (items.length === 0) return;
+  gsap.from(items, {
+    y: 12,
+    opacity: 0,
+    duration: marketingMs("entry") / 1000,
+    stagger: marketingMs("stagger") / 1000,
+    ease: "calm",
+    clearProps: "transform,opacity",
+    scrollTrigger: { trigger: root, start: "top 90%", once: true },
+  });
+}
+
+/**
+ * "Frequently asked questions" (ROLLOUT-PLAN M1, from prototype 11), beside More detail on wide
+ * screens (`pairBands` on the home page). One answer open at a time, the first on arrival. Every
+ * answer is in the page; each opens in place and in order, and what follows moves down smoothly,
+ * never overlapping (MK9).
+ */
 export const HomeFAQ: FC = () => {
   const [openId, setOpenId] = useState<string | null>(HOME_FAQS[0]?.id ?? null);
+  const listRef = useRef<HTMLUListElement>(null);
+  useGsapMoment(listRef, faqMoment);
 
   return (
-    <ul className={faqList()}>
-      {HOME_FAQS.map((faq) => {
-        const isOpen = openId === faq.id;
-        return (
-          <li className={faqItem()} key={faq.id}>
-            <button
-              aria-controls={`faq-answer-${faq.id}`}
-              aria-expanded={isOpen}
-              className={faqQuestion()}
-              id={`faq-question-${faq.id}`}
-              type="button"
-              onClick={() => setOpenId(isOpen ? null : faq.id)}
-            >
-              <span>{faq.q}</span>
-              <span aria-hidden="true" className={faqChevron({ open: isOpen })}>
-                <Icon icon={ChevronDown} size="sm" />
-              </span>
-            </button>
-            {isOpen && (
+    <MarketingSection
+      className={faqBand}
+      id="faq"
+      title="Frequently asked questions"
+      tone="canvas"
+      width="narrow"
+    >
+      <div className={bubbleLayer}>
+        <BubbleField layout="c" />
+      </div>
+      <ul className={faqList} ref={listRef}>
+        {HOME_FAQS.map((faq) => {
+          const isOpen = openId === faq.id;
+          return (
+            <li className={faqItem} data-deal-item="" key={faq.id}>
+              <button
+                aria-controls={`faq-answer-${faq.id}`}
+                aria-expanded={isOpen}
+                className={faqQuestion}
+                id={`faq-question-${faq.id}`}
+                type="button"
+                onClick={() => setOpenId(isOpen ? null : faq.id)}
+              >
+                <span>{faq.q}</span>
+                <span aria-hidden="true" className={faqChevron({ open: isOpen })}>
+                  <Icon icon={ChevronDown} size="sm" />
+                </span>
+              </button>
               <section
                 aria-labelledby={`faq-question-${faq.id}`}
-                className={faqAnswer()}
+                className={faqAnswer({ open: isOpen })}
+                data-open={isOpen}
                 id={`faq-answer-${faq.id}`}
+                inert={!isOpen}
               >
-                <p className={faqAnswerText()}>{faq.a}</p>
+                <div className={faqAnswerInner}>
+                  <p className={faqAnswerText}>{faq.a}</p>
+                </div>
               </section>
-            )}
-          </li>
-        );
-      })}
-    </ul>
+            </li>
+          );
+        })}
+      </ul>
+    </MarketingSection>
   );
 };

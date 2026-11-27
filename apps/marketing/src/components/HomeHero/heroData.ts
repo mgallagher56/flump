@@ -1,0 +1,124 @@
+import { buildFinancialPicture, SAMPLE_HOUSEHOLDS } from "@flump/finance-engine";
+import { breathingRoomValue } from "@repo/ui";
+
+/**
+ * The hero's sample household: the engine's "homeowner" sample, the same fixture the interactive
+ * preview offers, run through the engine. Every figure the hero shows (the dashboard, its "Made
+ * from" rows and the six pieces) is read from here once, so a piece and its row cannot drift. All
+ * are labelled "Example" and shown in neutral text: no status colours, debt never red (MK6).
+ */
+const FIXTURE = SAMPLE_HOUSEHOLDS.homeowner.fixture;
+const PICTURE = buildFinancialPicture(FIXTURE);
+
+const account = (type: string) => FIXTURE.accounts.find((a) => a.type === type);
+const balanceOf = (a?: { balance?: unknown }) => Number(a?.balance ?? 0);
+
+const savings = account("Saving");
+const pension = account("Pension");
+const mortgage = account("Mortgage");
+const card = account("Credit Card");
+const home = account("Property");
+const loan = account("Loan");
+
+const income = FIXTURE.budget.filter((entry) => entry.isIncome);
+const outgoings = FIXTURE.budget.filter((entry) => !entry.isIncome);
+const sum = (entries: readonly { amount: number }[]) =>
+  entries.reduce((total, entry) => total + entry.amount, 0);
+const comesIn = sum(income);
+const goesOut = sum(outgoings);
+const salary = Number(FIXTURE.profile.annualSalary ?? 0);
+
+const gbp = new Intl.NumberFormat("en-GB", {
+  style: "currency",
+  currency: "GBP",
+  maximumFractionDigits: 0,
+});
+const formatGbp = (value: number) => gbp.format(value);
+
+const percentFormat = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 2 });
+const percent = (value: unknown) =>
+  value === undefined || value === null ? "" : `${percentFormat.format(Number(value))}%`;
+
+const monthYear = new Intl.DateTimeFormat("en-GB", {
+  month: "long",
+  year: "numeric",
+  timeZone: "Europe/London",
+});
+/** "September 2028" from "2028-09-30", read at midday UTC so the London date is the same day. */
+const formatMonthYear = (isoDate: string) => monthYear.format(new Date(`${isoDate}T12:00:00Z`));
+
+export const HERO_FIGURES = {
+  savings: formatGbp(balanceOf(savings)),
+  savingsRate: `${percent(savings?.interestRate)} AER`,
+  salary: formatGbp(salary),
+  grossMonthly: formatGbp(Math.round(salary / 12)),
+  netMonthly: formatGbp(comesIn),
+  comesIn: formatGbp(comesIn),
+  goesOut: formatGbp(goesOut),
+  leftOver: formatGbp(comesIn - goesOut),
+  mortgage: formatGbp(balanceOf(mortgage)),
+  mortgageRate: percent(mortgage?.interestRate),
+  fixedUntil: mortgage?.fixedRateEndDate ? formatMonthYear(mortgage.fixedRateEndDate) : "",
+  pension: formatGbp(balanceOf(pension)),
+  card: formatGbp(balanceOf(card)),
+  cardRate: `${percent(card?.interestRate)} APR`,
+  cardMonthly: formatGbp(Number(card?.monthlyContribution ?? 0)),
+  home: formatGbp(balanceOf(home)),
+  loan: formatGbp(balanceOf(loan)),
+  netWorth: formatGbp(PICTURE.netWorth.netWorth),
+  leftOverMonthly:
+    PICTURE.budget.status === "known" ? formatGbp(PICTURE.budget.value.surplus) : null,
+  breathingRoom:
+    PICTURE.monthsOfCover.status === "known"
+      ? breathingRoomValue(PICTURE.monthsOfCover.value.months)
+      : null,
+} as const;
+
+export type PieceKey = "card" | "pension" | "payslip" | "receipt" | "statement" | "credit";
+
+export interface HeroSource {
+  readonly key: PieceKey;
+  readonly name: string;
+  readonly figure: string;
+  readonly detail: string;
+}
+
+/** The "Made from" rows, in the order their pieces arrive. */
+export const HERO_SOURCES: readonly HeroSource[] = [
+  {
+    key: "card",
+    name: "Cash and savings",
+    figure: HERO_FIGURES.savings,
+    detail: HERO_FIGURES.savingsRate,
+  },
+  {
+    key: "pension",
+    name: "Pension",
+    figure: HERO_FIGURES.pension,
+    detail: "Workplace and personal",
+  },
+  {
+    key: "payslip",
+    name: "Salary",
+    figure: HERO_FIGURES.salary,
+    detail: `${HERO_FIGURES.netMonthly} a month after tax`,
+  },
+  {
+    key: "receipt",
+    name: "Budget",
+    figure: `${HERO_FIGURES.leftOver} left`,
+    detail: `${HERO_FIGURES.comesIn} in, ${HERO_FIGURES.goesOut} out`,
+  },
+  {
+    key: "statement",
+    name: "Mortgage",
+    figure: HERO_FIGURES.mortgage,
+    detail: `${HERO_FIGURES.mortgageRate}, fixed until ${HERO_FIGURES.fixedUntil}`,
+  },
+  {
+    key: "credit",
+    name: "Credit card",
+    figure: HERO_FIGURES.card,
+    detail: HERO_FIGURES.cardRate,
+  },
+];

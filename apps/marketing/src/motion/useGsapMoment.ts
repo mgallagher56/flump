@@ -20,6 +20,28 @@ function drain(): void {
   window.setTimeout(drain, 0);
 }
 
+let watched: { main: HTMLElement; observer: ResizeObserver } | undefined;
+
+/**
+ * Below the hero the home page's bands skip layout until they near the viewport, so their real
+ * height arrives late. Recompute every trigger's position when the page's height changes (debounced),
+ * or a trigger set from a reserved height could fire early or never.
+ */
+function watchPageHeight(kit: GsapKit): void {
+  if (typeof ResizeObserver === "undefined") return;
+  const main = document.getElementById("main");
+  // A link to another page and back mounts a new main: watch that one instead.
+  if (!main || watched?.main === main) return;
+  watched?.observer.disconnect();
+  let timer: number | undefined;
+  const observer = new ResizeObserver(() => {
+    window.clearTimeout(timer);
+    timer = window.setTimeout(() => kit.ScrollTrigger.refresh(), 200);
+  });
+  observer.observe(main);
+  watched = { main, observer };
+}
+
 function enqueue(job: Job): void {
   queue.push(job);
   if (!draining) {
@@ -74,6 +96,7 @@ export function useGsapMoment(
             delete element.dataset.enhanced;
           };
           refreshAfter = kit;
+          watchPageHeight(kit);
         });
       });
     };

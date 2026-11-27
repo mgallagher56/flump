@@ -1,93 +1,84 @@
-import { expectPageRules } from "@repo/ui/testing";
 import { render, screen, waitFor, within } from "@testing-library/react";
+import { renderToString } from "react-dom/server";
 import { HelmetProvider } from "react-helmet-async";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
+import { HOME_FAQS } from "../../components/HomeFAQ";
 import { HomePage } from "./HomePage";
 
-const renderHome = () =>
-  render(
-    <HelmetProvider>
-      <MemoryRouter>
-        <HomePage />
-      </MemoryRouter>
-    </HelmetProvider>,
-  );
+const page = (
+  <HelmetProvider>
+    <MemoryRouter>
+      <HomePage />
+    </MemoryRouter>
+  </HelmetProvider>
+);
 
+const renderHome = () => render(page);
 const main = () => screen.getByRole("main");
 
-describe("Marketing HomePage (E16 PR 12, E42 S5)", () => {
-  it("has a hero with the decided h1 and lead (D2) and the example preview", () => {
+/** The server's HTML, as a browser with no JavaScript gets it (MK1). */
+const serverMain = () => {
+  const doc = new DOMParser().parseFromString(renderToString(page), "text/html");
+  return doc.querySelector("main") as HTMLElement;
+};
+
+const JOURNEY_STOPS = [
+  "Accounts and net worth",
+  "Budget and breathing room",
+  "Take-home pay and Self Assessment",
+  "Savings and pension",
+  "Debt and borrowing",
+  "Where you stand, on one page",
+];
+
+describe("Marketing HomePage (ROLLOUT-PLAN M1, prototype 11)", () => {
+  it("has the decided h1 and lead, both calls to action and the example picture in the hero", () => {
     renderHome();
+    const hero = within(screen.getByTestId("home-hero"));
     expect(
-      screen.getByRole("heading", { level: 1, name: "All your money. One clear picture." }),
+      hero.getByRole("heading", { level: 1, name: "All your money. One clear picture." }),
     ).toBeDefined();
     expect(
-      screen.getByText("Accounts, budget, pay, savings, pension and debts in one place."),
+      hero.getByText("Accounts, budget, pay, savings, pension and debts in one place."),
     ).toBeDefined();
-    const preview = screen.getByTestId("baseline-snapshot-preview");
-    expect(within(preview).getByText("Example")).toBeDefined();
-    // /sandbox now redirects to sign-up, so the second hero button opens the interactive preview.
-    const tryIt = within(main()).getByRole("link", { name: "Interactive preview" });
-    expect(tryIt.getAttribute("href")).toBe("/preview");
-    expect(tryIt.getAttribute("target")).toBeNull();
+    expect(hero.getByRole("heading", { level: 2, name: "Monthly picture" })).toBeDefined();
+    expect(hero.getAllByText("Example").length).toBeGreaterThanOrEqual(1);
+    const preview = hero.getByRole("link", { name: "Interactive preview" });
+    expect(preview.getAttribute("href")).toBe("/preview");
     expect(document.querySelector('a[href*="/sandbox"]')).toBeNull();
   });
 
-  it("keeps the hero inside the first-view number budget with one primary button", () => {
+  it("orders the bands hero, features, journey, rough figures, pay rise, security, the pair, close", () => {
     renderHome();
-    expectPageRules(screen.getByTestId("home-hero"), { maxFigures: 3, projectionNotices: 0 });
-    // One hero block (the preview's net worth) and one notice on the page. The two invite bands
-    // (hero and the final band) each hold one primary button.
-    expect(main().querySelectorAll('[data-tone="hero"]')).toHaveLength(1);
-    expect(main().querySelectorAll('[data-notice="projection"]')).toHaveLength(1);
-    expectPageRules(screen.getByTestId("home-final-cta"), { projectionNotices: 0 });
-  });
-
-  it("has the E42 bands: hero, features, rough figures, more detail, pay rise, security, FAQ, then the closing CTA", () => {
-    const { container } = renderHome();
-    const sections = Array.from(main().children).filter((el) => el.tagName === "SECTION");
-    expect(sections.map((s) => s.id || s.getAttribute("data-testid"))).toEqual([
+    const bands = Array.from(main().children);
+    expect(bands.map((el) => el.id || el.getAttribute("data-testid") || el.tagName)).toEqual([
       "home-hero",
       "features",
+      "journey",
       "rough-figures",
-      "more-detail",
       "pay-rise",
       "security",
-      "faq",
+      "DIV",
       "get-started",
     ]);
-    // D1: the band is "Flump features", never "What Flump covers".
-    expect(screen.getByRole("heading", { level: 2, name: "Flump features" })).toBeDefined();
-    expect(container.textContent ?? "").not.toMatch(/what flump covers/i);
-    // The final call to action is the dark closing band after the FAQ (Midnight and Mint).
-    const faq = container.querySelector("#faq") as HTMLElement;
-    const closing = container.querySelector("#get-started") as HTMLElement;
-    expect(within(closing).getByTestId("home-final-cta")).toBeDefined();
-    expect(
-      within(screen.getByTestId("home-final-cta"))
-        .getByRole("link", { name: "Request an invite" })
-        .getAttribute("data-variant"),
-    ).toBe("primary");
-    expect(
-      screen.getByRole("heading", { level: 2, name: "Ready to see where you stand?" }),
-    ).toBeDefined();
-    // P74: the FAQ heading starts at the left, like every other band's heading.
-    const faqHeader = within(faq).getByRole("heading", { level: 2 }).parentElement as HTMLElement;
-    expect(faqHeader.className).toContain("ta_left");
-    expect(faqHeader.className).not.toContain("ta_center");
-    // Midnight and Mint (owner, 24 Nov 2026): after the pale mint hero, bands alternate off-white
-    // (card) and pale mint (canvas), with the security strip on the one solid mint band and a dark
-    // closing band. The hero is a plain section, no tone mark.
-    expect(sections.slice(1).map((s) => s.getAttribute("data-tone-band"))).toEqual([
-      "card",
-      "canvas",
-      "card",
-      "canvas",
-      "hero",
-      "card",
-      "contrast",
+    // More detail beside the questions, both on the pair's canvas.
+    const pair = Array.from(bands[6]?.children ?? []);
+    expect(pair.map((s) => [s.id, s.getAttribute("data-tone-band")])).toEqual([
+      ["more-detail", "canvas"],
+      ["faq", "canvas"],
     ]);
+  });
+
+  it("alternates card and canvas bands with no solid band anywhere (UX-GUIDELINES 12.2)", () => {
+    renderHome();
+    const tones = Array.from(main().children)
+      .slice(1)
+      .map((el) => el.getAttribute("data-tone-band") ?? "pair");
+    expect(tones).toEqual(["card", "canvas", "card", "canvas", "card", "pair", "card"]);
+    // The owner's rulings: no solid mint band, no dark closing band, no tinted band.
+    expect(main().querySelector('[data-tone-band="hero"], [data-tone-band="contrast"]')).toBeNull();
+    expect(main().querySelector('[data-tone-band="teal"]')).toBeNull();
   });
 
   it("states the tagline in the title, never in the h1", async () => {
@@ -96,26 +87,25 @@ describe("Marketing HomePage (E16 PR 12, E42 S5)", () => {
     expect(screen.getByRole("heading", { level: 1 }).textContent).not.toMatch(/fog/i);
   });
 
-  it("shows 'Request an invite' exactly twice in the page body: hero and end", () => {
+  it("shows 'Request an invite' exactly twice in the page body: hero and close", () => {
     renderHome();
-    const invites = within(main()).getAllByRole("link", { name: "Request an invite" });
-    expect(invites).toHaveLength(2);
-    expect(within(screen.getByTestId("home-hero")).getByText("Request an invite")).toBeDefined();
+    expect(within(main()).getAllByRole("link", { name: "Request an invite" })).toHaveLength(2);
     expect(
-      within(screen.getByTestId("home-final-cta")).getByText("Request an invite"),
+      within(screen.getByTestId("home-hero")).getByRole("link", { name: "Request an invite" }),
+    ).toBeDefined();
+    const close = within(screen.getByTestId("home-final-cta"));
+    expect(
+      close.getByRole("link", { name: "Request an invite" }).getAttribute("data-variant"),
+    ).toBe("primary");
+    expect(
+      close.getByRole("heading", { level: 2, name: "Ready to see where you stand?" }),
     ).toBeDefined();
   });
 
   it("shows the five area tiles and the AI connection tile, each linked to its page", () => {
     renderHome();
-    const tiles = within(screen.getByRole("region", { name: "Flump features" })).getByRole("list", {
-      name: "Flump features",
-    });
-    expect(
-      within(tiles)
-        .getAllByRole("link")
-        .map((a) => a.getAttribute("href")),
-    ).toEqual([
+    const tiles = within(screen.getByRole("list", { name: "Flump features" }));
+    expect(tiles.getAllByRole("link").map((a) => a.getAttribute("href"))).toEqual([
       "/features/accounts",
       "/features/budget",
       "/features/pay",
@@ -123,12 +113,22 @@ describe("Marketing HomePage (E16 PR 12, E42 S5)", () => {
       "/features/debt-and-borrowing",
       "/features/ai-connection",
     ]);
-    expect(
-      within(tiles).getByText("Switched on for an account on request during testing."),
-    ).toBeDefined();
+    expect(tiles.getByText("Switched on for an account on request during testing.")).toBeDefined();
     expect(
       screen.getByRole("link", { name: "All Flump features on one page" }).getAttribute("href"),
     ).toBe("/features");
+  });
+
+  it("lists the six journey stops in reading order, the last linking to the preview", () => {
+    renderHome();
+    const journey = within(main().querySelector("#journey") as HTMLElement);
+    expect(
+      journey.getByRole("heading", { level: 2, name: "From rough figures to one picture" }),
+    ).toBeDefined();
+    expect(journey.getAllByRole("heading", { level: 3 }).map((h) => h.textContent)).toEqual(
+      JOURNEY_STOPS,
+    );
+    expect(journey.queryByRole("link", { name: "Request an invite" })).toBeNull();
   });
 
   it("starts with rough figures, then offers more detail, each linked to its area", () => {
@@ -159,14 +159,51 @@ describe("Marketing HomePage (E16 PR 12, E42 S5)", () => {
     expect(container.querySelector('a[href^="/tools"], a[href^="/mcp"]')).toBeNull();
   });
 
-  it("has no MCP section, code block, monospace pill or off-system colour (D13)", () => {
+  it("serves the whole page in reading order with no JavaScript: journey, every tile, every answer (MK1)", () => {
+    const html = serverMain();
+    const text = html.textContent ?? "";
+    const order = [
+      "All your money. One clear picture.",
+      "Flump features",
+      "From rough figures to one picture",
+      ...JOURNEY_STOPS,
+      "Start with rough figures",
+      "What you keep from a pay rise",
+      "Security and privacy",
+      "More detail when you want it",
+      "Frequently asked questions",
+      "Ready to see where you stand?",
+    ];
+    // Each heading is found after the one before it (a tile may repeat an area's name earlier).
+    let from = 0;
+    for (const heading of order) {
+      const index = text.indexOf(heading, from);
+      expect(index, `"${heading}" after position ${from}`).toBeGreaterThanOrEqual(from);
+      from = index + heading.length;
+    }
+    expect(html.querySelectorAll('[aria-label="Flump features"] > li')).toHaveLength(6);
+    for (const faq of HOME_FAQS) {
+      expect(text).toContain(faq.q);
+      // Every answer is in the page, open or not, so it reads and finds without script.
+      const answer = html.querySelector(`#faq-answer-${faq.id}`);
+      expect(answer?.textContent?.length ?? 0, faq.id).toBeGreaterThan(20);
+    }
+    // Sample figures are at their final value in the HTML, never part-way (MK10).
+    expect(text).toContain("£232,000");
+  });
+
+  it("has no MCP section, code block, monospace pill, inline style or off-system colour (D13)", () => {
     renderHome();
-    const body = main();
-    expect(body.querySelector("code, pre")).toBeNull();
-    // The slider sets its own fill as a CSS variable; nothing else carries an inline style.
-    expect(body.querySelector("[style]:not(input[type=range])")).toBeNull();
-    expect(body.innerHTML).not.toMatch(/rgba\(|#[0-9a-f]{6}|mono/i);
-    expect(body.textContent ?? "").not.toMatch(/Model Context Protocol|MCP server|Local CLI/);
+    expect(main().querySelector("code, pre")).toBeNull();
+    // In the server HTML only the pay rise sliders carry an inline style (their fill, a CSS
+    // variable). In the browser the tilt-and-light hover (useTiltLight) writes only its own CSS
+    // variables after mount.
+    expect(serverMain().querySelector("[style]:not(input[type=range])")).toBeNull();
+    for (const el of main().querySelectorAll("[style]")) {
+      expect(el.getAttribute("style")).toMatch(/^(--[\w-]+: [^;]+;\s*)+$/);
+    }
+    expect(main().innerHTML).not.toMatch(/rgba\(|#[0-9a-f]{6}|mono/i);
+    expect(main().textContent ?? "").not.toMatch(/Model Context Protocol|MCP server|Local CLI/);
     // The one MCP mention is the FAQ answer, and the footer links the page.
     expect(screen.getByRole("button", { name: /AI assistant/ })).toBeDefined();
     expect(
@@ -186,18 +223,20 @@ describe("Marketing HomePage (E16 PR 12, E42 S5)", () => {
     expect(text).not.toMatch(/AISP|PISP|FCA-regulated/);
   });
 
-  it("adds illustrations only where no figure follows, and none in the hero", () => {
+  it("draws every picture as decoration: document pictures, hidden from assistive technology", () => {
     const { container } = renderHome();
     const scenes = [...container.querySelectorAll("svg[data-scene]")];
-    expect(scenes.map((svg) => svg.getAttribute("data-scene"))).toEqual(["check-in", "onboarding"]);
-    expect(screen.getByTestId("home-hero").querySelector("svg[data-scene]")).toBeNull();
-    for (const svg of scenes) {
-      expect(svg.getAttribute("aria-hidden")).toBe("true");
-      // The owner found the 140px scenes far too small: both are the 320px spot size now.
-      expect(svg.getAttribute("class")).toContain("max-w_xs");
-    }
-    expect(
-      within(screen.getByTestId("home-final-cta")).getByTestId("home-final-cta-illustration"),
-    ).toBeDefined();
+    expect(scenes.map((svg) => svg.getAttribute("data-scene"))).toEqual([
+      "feature-accounts",
+      "feature-budget",
+      "feature-pay",
+      "feature-savings-pension",
+      "feature-debt",
+      "feature-ai-connection",
+      "check-in",
+      "security",
+      "onboarding",
+    ]);
+    for (const svg of scenes) expect(svg.getAttribute("aria-hidden")).toBe("true");
   });
 });

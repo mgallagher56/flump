@@ -70,6 +70,16 @@ export const ORB_COLOUR_ALLOW_LIST: ReadonlyArray<{ path: string; reason: string
     path: "packages/ui/src/foundations/ColorPalette/",
     reason: "the Storybook colour page, which shows every primitive scale, purple among them",
   },
+  {
+    path: "apps/marketing/src/components/BubbleField/",
+    reason:
+      "the home page's bubble fields (M1): soft spheres in the two orb sets behind a band's content, the orb-like element MC1 names",
+  },
+  {
+    path: "apps/marketing/src/components/JourneyOrb/",
+    reason:
+      "the home journey's orb and bead track (M1): the still orb and track, and the hidden swatches the three.js orb reads its per-stop orb colours from; the scene module in src/motion/journey writes no colour of its own",
+  },
 ];
 
 export function isOrbColourAllowed(relPath: string): boolean {
