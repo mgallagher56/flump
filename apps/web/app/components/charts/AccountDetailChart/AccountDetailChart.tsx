@@ -35,6 +35,10 @@ interface AccountDetailChartProps {
   title?: string;
 }
 
+/** Said in place of the chart below two months (pinned by the mobile copy parity test). */
+export const ACCOUNT_CHART_NOT_ENOUGH =
+  "The chart appears once this account has more monthly balances.";
+
 /** Fewest months worth a line on the account page. */
 const MIN_ACCOUNT_POINTS = 2;
 
@@ -165,7 +169,7 @@ const AccountDetailChart: FC<AccountDetailChartProps> = ({
         headingLevel="h2"
         hideTitle
         minPoints={MIN_ACCOUNT_POINTS}
-        notEnoughDataText="The chart appears once this account has more monthly balances."
+        notEnoughDataText={ACCOUNT_CHART_NOT_ENOUGH}
         pointCount={points.length}
         summary={accountChartSummary(accountDetails, whole)}
         title={title}

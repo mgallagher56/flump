@@ -37,7 +37,7 @@ export interface NetWorthHistoryChartProps {
   dataNote?: ReactNode;
 }
 
-const sourceLabel = (p: HistoryChartPoint) =>
+export const sourceLabel = (p: Pick<HistoryChartPoint, "recorded">) =>
   p.recorded !== null ? "Recorded" : "Carried forward";
 
 const SOURCE_OPTIONS = [

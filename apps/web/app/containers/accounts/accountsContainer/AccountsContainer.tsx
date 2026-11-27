@@ -15,6 +15,12 @@ import { emptyWrap, headerActions, phoneOnly, wideOnly } from "./AccountsContain
 
 const ADD_HREF = "/app/accounts?add=1";
 const CHECK_IN_HREF = "/app/accounts?checkIn=1";
+/** The empty list's words, also pinned by the mobile app's copy parity test (E12 S6). */
+export const ACCOUNTS_EMPTY = {
+  title: "No accounts yet",
+  description: "Add a current account, savings or pension and your totals will appear here.",
+} as const;
+
 // Opened from "?checkIn=1", the check-in returns focus to whichever "Start monthly check-in" is shown.
 const RETURN_FOCUS_TO = firstShownElement([
   "accounts-open-check-in",
@@ -172,9 +178,9 @@ const AccountsContainer: FC = () => {
                 variant="primary"
               />
             }
-            description="Add a current account, savings or pension and your totals will appear here."
+            description={ACCOUNTS_EMPTY.description}
             headingLevel="h2"
-            title="No accounts yet"
+            title={ACCOUNTS_EMPTY.title}
           />
         </div>
       )}

@@ -71,6 +71,30 @@ export interface SnapshotHistoryPageProps {
   lastCheckInMonth?: MonthKey | null;
 }
 
+/** The page's fixed words, also pinned by the mobile app's copy parity test (E12 S6). */
+export const HISTORY_COPY = {
+  title: "Net worth history",
+  description: "Your net worth, recorded once a month.",
+  heroLabel: "Net worth change",
+  noChangeLabel: "Monthly change",
+  noChangePrompt: "The change shows once you have two months recorded.",
+  noEarlierMonth: "No earlier month",
+  chartTitle: "Net worth over time",
+  chartDescription: "Your net worth each month, from your recorded balances.",
+  emptyTitle: "No monthly balances yet",
+  emptyWithAccounts:
+    "Record this month's balances to start your history. You can add earlier months too.",
+  emptyNoAccounts:
+    "Add your accounts first. Their balances then become your first month of history.",
+  addEarlierMonths: "Add earlier months",
+  showChanges: "Show changes by account",
+  startCheckIn: "Start monthly check-in",
+} as const;
+
+/** The summary below three recorded months: "Net worth recorded for October 2026: £800." */
+export const recordedForSentence = (monthName: string, netWorthText: string): string =>
+  `Net worth recorded for ${monthName}: ${netWorthText}.`;
+
 const MONTH_WORDS = ["no months", "one month", "two months"] as const;
 
 /** "You have one month of history. The chart appears after your third check-in." (P10.6) */
@@ -237,7 +261,7 @@ export const SnapshotHistoryPage: FC<SnapshotHistoryPageProps> = ({
   const summary = enoughForChart
     ? chartSummary(series, currentMonth, (v) => formatCurrency(v, { maximumFractionDigits: 0 }))
     : latest
-      ? `Net worth recorded for ${formatMonth(latest.month)}: ${formatCurrency(latest.netWorth)}.`
+      ? recordedForSentence(formatMonth(latest.month), formatCurrency(latest.netWorth))
       : "";
 
   // The change by account sits behind one quiet drawer. The month-by-month view is the chart's
@@ -255,8 +279,8 @@ export const SnapshotHistoryPage: FC<SnapshotHistoryPageProps> = ({
     <PageBody data-testid="snapshot-history" id="snapshot-history">
       <PageHeader
         actions={headerActions}
-        description="Your net worth, recorded once a month."
-        title="Net worth history"
+        description={HISTORY_COPY.description}
+        title={HISTORY_COPY.title}
       />
 
       {stage === "none" ? (
@@ -272,11 +296,7 @@ export const SnapshotHistoryPage: FC<SnapshotHistoryPageProps> = ({
               </Button>
             )
           }
-          description={
-            hasAccounts
-              ? "Record this month's balances to start your history. You can add earlier months too."
-              : "Add your accounts first. Their balances then become your first month of history."
-          }
+          description={hasAccounts ? HISTORY_COPY.emptyWithAccounts : HISTORY_COPY.emptyNoAccounts}
           id="snapshot-empty"
           secondaryAction={
             hasAccounts ? (
@@ -285,34 +305,31 @@ export const SnapshotHistoryPage: FC<SnapshotHistoryPageProps> = ({
               </Button>
             ) : undefined
           }
-          title="No monthly balances yet"
+          title={HISTORY_COPY.emptyTitle}
         />
       ) : (
         <>
           {comparison ? (
             <HeroFigure
-              label="Net worth change"
+              label={HISTORY_COPY.heroLabel}
               subline={heroSubline}
               value={comparison.netWorthChange}
               valueFormat={{ fractionDigits: 0, signDisplay: "always" }}
             />
           ) : (
             <HeroFigure
-              emptyPrompt={sentences(
-                "The change shows once you have two months recorded.",
-                basisText,
-              )}
-              label="Monthly change"
-              notSetLabel="No earlier month"
+              emptyPrompt={sentences(HISTORY_COPY.noChangePrompt, basisText)}
+              label={HISTORY_COPY.noChangeLabel}
+              notSetLabel={HISTORY_COPY.noEarlierMonth}
             />
           )}
 
           <PageSection
             className={sectionStack()}
-            description="Your net worth each month, from your recorded balances."
+            description={HISTORY_COPY.chartDescription}
             icon={ChartLine}
             id="snapshot-chart"
-            title="Net worth over time"
+            title={HISTORY_COPY.chartTitle}
             tone="neutral"
           >
             <NetWorthHistoryChart
@@ -353,7 +370,7 @@ export const SnapshotHistoryPage: FC<SnapshotHistoryPageProps> = ({
           {changes ? (
             <CollapsibleDrawer
               className={changesBody()}
-              title="Show changes by account"
+              title={HISTORY_COPY.showChanges}
               variant="quiet"
             >
               {changes}

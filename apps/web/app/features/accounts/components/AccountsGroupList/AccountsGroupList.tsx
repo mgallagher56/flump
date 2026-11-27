@@ -52,6 +52,20 @@ import {
   totalRow,
 } from "./AccountsGroupList.styles";
 
+/** The list's words, also pinned by the mobile app's copy parity test (E12 S6). */
+export const ACCOUNTS_LIST_COPY = {
+  heroLabel: "Total of the accounts listed",
+  seeHowItHasChanged: "See how it has changed",
+  ownTitle: "What you own",
+  ownDescription: "Money and property you own, from your saved balances.",
+  ownTotal: "Total you own",
+  oweTitle: "What you owe",
+  oweDescription: "Your debts, from your saved balances.",
+  oweTotal: "Total you owe",
+  notCountedTitle: "Not counted in net worth",
+  notCountedDescription: "Accounts your net worth choices leave out.",
+} as const;
+
 /** The net worth history page, linked from the net worth figure. */
 export const HISTORY_HREF = "/app/accounts/history";
 
@@ -159,7 +173,7 @@ export const VISIBLE_ROWS = 8;
 const isIsa = (row: AccountRow) => /\bisas?\b/i.test(row.name);
 
 /** The type under the name, unless the name already says it ("Current account"), plus joint share when joint. */
-const typeLine = (row: AccountRow): string | null => {
+export const typeLine = (row: AccountRow): string | null => {
   const subtypeLabel = row.accountSubtype ? ACCOUNT_SUBTYPE_LABEL[row.accountSubtype] : undefined;
   const label = subtypeLabel ?? TYPE_LABEL[row.type] ?? row.type;
   const baseType = label.trim().toLowerCase() === row.name.trim().toLowerCase() ? null : label;
@@ -269,7 +283,7 @@ export const AccountsGroupList: FC<AccountsGroupListProps> = ({
         <HeroFigure
           explain="What you own minus what you owe, from the balances saved on this page, under your choices about what counts."
           id="accounts-net-worth"
-          label="Total of the accounts listed"
+          label={ACCOUNTS_LIST_COPY.heroLabel}
           value={netWorth}
         />
         <div className={netWorthAfter()}>
@@ -288,7 +302,7 @@ export const AccountsGroupList: FC<AccountsGroupListProps> = ({
               id="accounts-view-history"
               to={HISTORY_HREF}
             >
-              See how it has changed
+              {ACCOUNTS_LIST_COPY.seeHowItHasChanged}
             </Link>
           </div>
           {afterNetWorth}
@@ -297,37 +311,41 @@ export const AccountsGroupList: FC<AccountsGroupListProps> = ({
       <div className={groupsGrid()}>
         {own.length > 0 ? (
           <Group
-            description="Money and property you own, from your saved balances."
+            description={ACCOUNTS_LIST_COPY.ownDescription}
             domain="accounts"
             icon={Wallet}
             id="accounts-own-heading"
             rows={own}
-            title="What you own"
+            title={ACCOUNTS_LIST_COPY.ownTitle}
             // A total that repeats its one row is noise.
-            total={own.length > 1 ? { text: "Total you own", value: totalOwn } : undefined}
+            total={
+              own.length > 1 ? { text: ACCOUNTS_LIST_COPY.ownTotal, value: totalOwn } : undefined
+            }
           />
         ) : null}
         {owe.length > 0 ? (
           <Group
-            description="Your debts, from your saved balances."
+            description={ACCOUNTS_LIST_COPY.oweDescription}
             domain="debt"
             footnote={countedStudentLoan ? studentLoanFootnote(true) : undefined}
             icon={CreditCard}
             id="accounts-owe-heading"
             rows={owe}
-            title="What you owe"
-            total={owe.length > 1 ? { text: "Total you owe", value: totalOwe } : undefined}
+            title={ACCOUNTS_LIST_COPY.oweTitle}
+            total={
+              owe.length > 1 ? { text: ACCOUNTS_LIST_COPY.oweTotal, value: totalOwe } : undefined
+            }
           />
         ) : null}
         {notCounted.length > 0 ? (
           <Group
             // The heading and the line under net worth already say it is left out; keep the facts.
-            description="Accounts your net worth choices leave out."
+            description={ACCOUNTS_LIST_COPY.notCountedDescription}
             footnote={leftOutStudentLoan ? STUDENT_LOAN_FACTS : undefined}
             icon={EyeOff}
             id="accounts-not-counted-heading"
             rows={notCounted}
-            title="Not counted in net worth"
+            title={ACCOUNTS_LIST_COPY.notCountedTitle}
           />
         ) : null}
       </div>
