@@ -4,35 +4,18 @@
  * expo-crypto's), wired as `authDeps.ts` wires them, over an in-memory secure store and file. After
  * each way out, the sealed file and its key are gone, and a fresh read gives nothing.
  */
-import { createCipheriv, createDecipheriv, createHash, randomBytes, randomUUID } from "node:crypto";
+import { createHash, randomBytes, randomUUID } from "node:crypto";
 import type { QueryClient } from "@tanstack/react-query";
-import { type CacheFile, createCacheStore, type SealingBox } from "../data/cacheStore";
+import { type CacheFile, createCacheStore } from "../data/cacheStore";
 import { testQueryClient } from "../data/fakeApi";
 import { CACHED_READS, createOfflineCache } from "../data/offlineCache";
 import type { TokenResult, WorkosClient } from "../data/workos";
 import { OFFLINE_CACHE_KEY } from "../device/storageKeys";
 import { household } from "../features/check-in/checkInTestData";
+import { nodeAesBox } from "../testing/nodeAesBox";
 import { readQuery } from "./authorizeUrl";
 import { type AccountCheck, createSession, type Session } from "./session";
 import { createTokenStore, type SecureStoreLike } from "./tokenStore";
-
-const box: SealingBox = {
-  generateKey: async () => randomBytes(32).toString("base64"),
-  async seal(key, plaintext, associated) {
-    const iv = randomBytes(12);
-    const cipher = createCipheriv("aes-256-gcm", Buffer.from(key, "base64"), iv);
-    cipher.setAAD(associated);
-    const body = Buffer.concat([cipher.update(plaintext), cipher.final()]);
-    return Buffer.concat([iv, body, cipher.getAuthTag()]).toString("base64");
-  },
-  async open(key, sealed, associated) {
-    const all = Buffer.from(sealed, "base64");
-    const d = createDecipheriv("aes-256-gcm", Buffer.from(key, "base64"), all.subarray(0, 12));
-    d.setAAD(associated);
-    d.setAuthTag(all.subarray(all.length - 16));
-    return new Uint8Array(Buffer.concat([d.update(all.subarray(12, all.length - 16)), d.final()]));
-  },
-};
 
 const b64 = (value: unknown) => Buffer.from(JSON.stringify(value)).toString("base64url");
 const tokensFor = (sub: string) => ({
@@ -57,7 +40,7 @@ function device() {
       disk.text = null;
     },
   };
-  const cacheStore = createCacheStore({ box, file, store, accessible: 7 });
+  const cacheStore = createCacheStore({ box: nodeAesBox, file, store, accessible: 7 });
   const cache = createOfflineCache({ store: cacheStore, now: () => Date.now() });
   return { secure, store, disk, cacheStore, cache };
 }
