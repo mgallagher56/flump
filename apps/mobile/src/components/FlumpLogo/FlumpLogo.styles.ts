@@ -7,44 +7,89 @@ export type FlumpLogoSize = "sm" | "md" | "lg";
 /** The web logo's sizes in points (packages/ui FlumpLogo.styles.ts: 32, 50 and 96 px). */
 export const LOGO_SIZES: Record<FlumpLogoSize, number> = { sm: 32, md: 50, lg: 96 };
 
-/**
- * The web logo's colours: the logo's own mark tokens, primary.mark lit from above by
- * primary.markLit (teal in light, mint in dark; not the charcoal button fill, owner 25 November
- * 2026, style guide section 14), a shadow in text.primary, and highlights in the button label colour.
- */
-const LOGO_COLOURS = {
-  bodyTop: "primary.markLit",
-  bodyBottom: "primary.mark",
-  shadow: "text.primary",
-  highlight: "primary.foreground",
-} as const satisfies Record<string, ColorKey>;
+export type LogoTone = "teal" | "sky" | "violet" | "rose";
 
-/** The artwork, in the web logo's 200 by 200 view box. */
+/**
+ * The logo "K2" (owner, 27 Nov 2026), the same table as the web logo (packages/ui FlumpLogo.art.ts;
+ * the test checks they agree): three glass bubbles, back to front, over one floor shadow, in a 200
+ * by 200 view box. `light` is the colour lighting a bubble's lower right edge.
+ */
 export const LOGO_ART = {
   viewBox: "0 0 200 200",
-  shadow: { cx: 100, cy: 168, rx: 62, ry: 9, opacity: 0.18 },
-  body: "M100 38c36 0 64 30 64 66 0 36-20 62-64 62s-64-26-64-62c0-36 28-66 64-66z",
-  highlights: [
-    { d: "M78 52c14-9 38-9 50 3-14-3-34-1-50-3z", opacity: 0.6 },
-    {
-      d: "M52 92c4-16 16-28 28-34-8 12-8 22-12 34 2 14 8 24 6 32-12-8-26-18-22-32z",
-      opacity: 0.4,
-    },
-    { d: "M146 82c8 10 12 24 8 40-6-8-10-20-8-40z", opacity: 0.25 },
+  orbs: [
+    { cx: 108, cy: 54, r: 20, tone: "violet", light: "rose", glint: false },
+    { cx: 140, cy: 92, r: 28, tone: "sky", light: "violet", glint: true },
+    { cx: 84, cy: 122, r: 48, tone: "teal", light: "violet", glint: true },
   ],
+  floor: { cx: 99, cy: 177, rx: 53 },
+} as const satisfies {
+  viewBox: string;
+  orbs: readonly {
+    cx: number;
+    cy: number;
+    r: number;
+    tone: LogoTone;
+    light: LogoTone;
+    glint: boolean;
+  }[];
+  floor: { cx: number; cy: number; rx: number };
+};
+
+/** Opacities that differ by theme (glass is clearer on the dark canvas); the web logo's values. */
+export const LOGO_OPACITY = {
+  light: { backing: 0.55, core: 0.4, mid: 0.62, sheen: 0.6, glint: 0.9 },
+  dark: { backing: 0.35, core: 0.28, mid: 0.5, sheen: 0.5, glint: 0.85 },
 } as const;
 
-/** The box for each size, and the artwork's paints in the theme's colours. */
+/** Where each light sits on a bubble, from its centre and radius (as the web logo). */
+export function orbLayout({ cx, cy, r }: { cx: number; cy: number; r: number }) {
+  const glintX = cx - r * 0.36;
+  const glintY = cy - r * 0.5;
+  return {
+    body: { cx: cx - r * 0.12, cy: cy - r * 0.18, r: r * 1.12 },
+    rim: { cx: cx + r * 0.62, cy: cy + r * 0.66, r: r * 1.05 },
+    sheen: { cx: cx - r * 0.3, cy: cy - r * 0.55, r: r * 0.85 },
+    glint: {
+      cx: glintX,
+      cy: glintY,
+      rx: r * 0.2,
+      ry: r * 0.11,
+      rotate: `rotate(-32 ${glintX} ${glintY})`,
+    },
+  };
+}
+
+/** The floor: one flat ellipse in light; a soft contact shadow with a teal pool over it in dark. */
+export function floorLayout({ cx, cy, rx }: { cx: number; cy: number; rx: number }) {
+  const ry = rx * 0.15;
+  return {
+    light: { cx, cy, rx, ry: rx * 0.13, opacity: 0.16 },
+    contact: { cx, cy, rx: rx * 1.3, ry: ry * 1.5 },
+    pool: { cx: cx + rx * 0.12, cy, rx: rx * 1.05, ry: ry * 1.1 },
+  };
+}
+
+/** The logo tokens (`logo.*`), the same as the web logo's. */
+const LOGO_COLOURS = {
+  teal: "logo.teal",
+  sky: "logo.sky",
+  violet: "logo.violet",
+  rose: "logo.rose",
+  glint: "logo.glint",
+  backing: "logo.backing",
+  shadow: "logo.shadow",
+} as const satisfies Record<string, ColorKey>;
+
+/** The box for each size, and the artwork's paints and opacities in the theme. */
 export const createStyles = (theme: Theme) => ({
   box: StyleSheet.create({
     sm: { width: LOGO_SIZES.sm, height: LOGO_SIZES.sm },
     md: { width: LOGO_SIZES.md, height: LOGO_SIZES.md },
     lg: { width: LOGO_SIZES.lg, height: LOGO_SIZES.lg },
   }),
-  paint: {
-    bodyTop: theme.colors[LOGO_COLOURS.bodyTop],
-    bodyBottom: theme.colors[LOGO_COLOURS.bodyBottom],
-    shadow: theme.colors[LOGO_COLOURS.shadow],
-    highlight: theme.colors[LOGO_COLOURS.highlight],
-  },
+  paint: Object.fromEntries(
+    Object.entries(LOGO_COLOURS).map(([role, key]) => [role, theme.colors[key]]),
+  ) as Record<keyof typeof LOGO_COLOURS, string>,
+  opacity: LOGO_OPACITY[theme.scheme],
+  dark: theme.scheme === "dark",
 });

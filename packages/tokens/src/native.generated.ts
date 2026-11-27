@@ -37,6 +37,13 @@ export type ColorKey =
   | "chart.series8"
   | "chart.warning"
   | "chart.wealth"
+  | "logo.backing"
+  | "logo.glint"
+  | "logo.rose"
+  | "logo.shadow"
+  | "logo.sky"
+  | "logo.teal"
+  | "logo.violet"
   | "material.glass.border"
   | "material.glass.fill"
   | "material.glass.light"
@@ -144,6 +151,13 @@ export const light: NativeTheme = {
     "chart.series8": "#5f7470",
     "chart.warning": "#94750f",
     "chart.wealth": "#64885c",
+    "logo.backing": "#f8fcfa",
+    "logo.glint": "#f8fcfa",
+    "logo.rose": "#b03f6a",
+    "logo.shadow": "#0f2a2a",
+    "logo.sky": "#2f7fa0",
+    "logo.teal": "#0b6b5d",
+    "logo.violet": "#7e67a8",
     "material.glass.border": "#c8dcd5",
     "material.glass.fill": "#f8fcfa",
     "material.glass.light": "rgba(248, 252, 250, 0.14)",
@@ -256,6 +270,13 @@ export const dark: NativeTheme = {
     "chart.series8": "#a9afb9",
     "chart.warning": "#e3b452",
     "chart.wealth": "#9ad0a0",
+    "logo.backing": "#14171c",
+    "logo.glint": "#f8fcfa",
+    "logo.rose": "#e58aa2",
+    "logo.shadow": "#05070a",
+    "logo.sky": "#6db5d6",
+    "logo.teal": "#6fd0ba",
+    "logo.violet": "#a98fe0",
     "material.glass.border": "#303740",
     "material.glass.fill": "#1d2128",
     "material.glass.light": "rgba(248, 252, 250, 0.14)",

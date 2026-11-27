@@ -37,20 +37,34 @@ const resolved = (variable: string, host: HTMLElement) => {
   return colour;
 };
 
+/** The bubble tints, back to front, and the colour lighting each one's lower right edge. */
+const BUBBLES = [
+  ["violet", "rose"],
+  ["sky", "violet"],
+  ["teal", "violet"],
+] as const;
+
 const play: Story["play"] = async ({ canvasElement }) => {
   const canvas = within(canvasElement);
   const logos = canvas.getAllByRole("img", { name: "Flump" });
   await expect(logos).toHaveLength(3);
-  // The body stops resolve to the logo's own tokens in this theme, not the charcoal button fill
-  // and not the black an unresolved stop colour falls back to (owner report, 25 Nov 2026).
-  const lit = resolved("--colors-primary-mark-lit", canvasElement);
-  const mark = resolved("--colors-primary-mark", canvasElement);
+  // Every stop resolves to the logo's own tokens in this theme, not the black an unresolved stop
+  // colour falls back to (owner report, 25 Nov 2026).
   for (const logo of logos) {
-    const [top, bottom] = Array.from(logo.querySelectorAll("stop")).map(
-      (stop) => getComputedStyle(stop).stopColor,
-    );
-    await expect(top).toBe(lit);
-    await expect(bottom).toBe(mark);
+    const gradients = Array.from(logo.querySelectorAll("radialGradient")).slice(2);
+    for (const [i, [tone, light]] of BUBBLES.entries()) {
+      const [body, rim] = gradients
+        .slice(i * 3, i * 3 + 2)
+        .map((g) =>
+          Array.from(g.querySelectorAll("stop")).map((s) => getComputedStyle(s).stopColor),
+        );
+      for (const colour of body ?? []) {
+        await expect(colour).toBe(resolved(`--colors-logo-${tone}`, canvasElement));
+      }
+      for (const colour of rim ?? []) {
+        await expect(colour).toBe(resolved(`--colors-logo-${light}`, canvasElement));
+      }
+    }
   }
 };
 

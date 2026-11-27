@@ -9,6 +9,7 @@ import { findOrbColourUses, isOrbColourAllowed, ORB_COLOUR_ALLOW_LIST } from "./
 // Token names are built at runtime so this file never reads as a use itself.
 const VR = ["orb", "violetRose"].join(".");
 const TINT = ["surface", "tint"].join(".");
+const LOGO = (tone: string) => ["logo", tone].join(".");
 
 describe("findOrbColourUses (STYLE-GUIDE 2.7 MC1)", () => {
   it.each([
@@ -29,6 +30,9 @@ describe("findOrbColourUses (STYLE-GUIDE 2.7 MC1)", () => {
     [`chartColor("series5")`, `"series5"`],
     ["chartColor('accentPurple')", "'accentPurple'"],
     [`{ scale: ${["colors", "purple"].join(".")} }`, ["colors", "purple"].join(".")],
+    [`css({ stopColor: "token(colors.${LOGO("violet")})" })`, LOGO("violet")],
+    [`theme.colors["${LOGO("rose")}"]`, LOGO("rose")],
+    [`fill: var(--colors-${["logo", "rose"].join("-")})`, `--colors-${["logo", "rose"].join("-")}`],
   ])("finds %s", (source, use) => {
     expect(findOrbColourUses(source)).toEqual([use]);
   });
@@ -39,6 +43,8 @@ describe("findOrbColourUses (STYLE-GUIDE 2.7 MC1)", () => {
     [`css({ color: "chart.series1" })`, "another series"],
     [`css({ color: "chart.series45" })`, "a longer series name"],
     [`chartColor("series6")`, "another role"],
+    [`css({ stopColor: "token(colors.logo.teal)" })`, "the logo's teal"],
+    [`css({ stopColor: "token(colors.logo.sky)" })`, "the logo's sky"],
     [`const tone = "violet";`, "the word alone, as IconTile's tone names"],
     [`// uses ${VR}.core on the orb`, "a line comment"],
     [`/* ${TINT}.rose */ const a = 1;`, "a block comment"],
@@ -65,7 +71,7 @@ describe("ORB_COLOUR_ALLOW_LIST", () => {
     }
   });
 
-  it("holds exactly the signed-off entries: main's six on 27 Nov 2026, then the M1 orb-like components (a new one needs sign-off)", () => {
+  it("holds exactly the signed-off entries: main's six on 27 Nov 2026, then the M1 orb-like components and the K2 logo (a new one needs sign-off)", () => {
     expect(ORB_COLOUR_ALLOW_LIST.map((e) => e.path)).toEqual([
       "packages/ui/src/primitives/IconTile/",
       "apps/web/app/features/dashboard/components/WidgetCard/",
@@ -75,6 +81,8 @@ describe("ORB_COLOUR_ALLOW_LIST", () => {
       "packages/ui/src/foundations/ColorPalette/",
       "apps/marketing/src/components/BubbleField/",
       "apps/marketing/src/components/JourneyOrb/",
+      "packages/ui/src/primitives/FlumpLogo/",
+      "apps/mobile/src/components/FlumpLogo/",
     ]);
   });
 

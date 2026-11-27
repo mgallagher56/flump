@@ -56,12 +56,14 @@ describe("Tokens & Typography A11y Suite", () => {
 
   it("enforces the canonical semantic token namespaces and eliminates redundancies", () => {
     const namespaces = Object.keys(semanticTokens.colors);
-    // F2 (owner, 27 Nov 2026; STYLE-GUIDE 2.7) added the marketing orb sets and card materials.
+    // F2 (owner, 27 Nov 2026; STYLE-GUIDE 2.7) added the marketing orb sets and card materials, and
+    // the logo "K2" (owner, 27 Nov 2026) its own tokens.
     expect(namespaces.sort()).toEqual(
       [
         "accent",
         "border",
         "chart",
+        "logo",
         "material",
         "orb",
         "primary",
@@ -979,4 +981,33 @@ describe("Logo mark tokens", () => {
       assertPair({ fg, bg, themes: BOTH, min: 3, role: "graphic" });
     },
   );
+});
+
+// The logo "K2" (owner, 27 Nov 2026): three glass bubbles in the chart series tones, held as the
+// logo's own tokens. Logos are exempt from WCAG 1.4.11; the coordinator ruled the approved drawing
+// ships as it is, so no contrast floor is set here for the glass. The favicon keeps 3:1.
+describe("Logo K2 tokens", () => {
+  const TONES = [
+    ["logo.teal", "chart.series1"],
+    ["logo.sky", "chart.series6"],
+    ["logo.violet", "chart.series4"],
+    ["logo.rose", "chart.series5"],
+  ] as const;
+
+  it.each(TONES)("%s has the values of %s in both themes", (logo, series) => {
+    for (const theme of BOTH) {
+      expect(resolveColor(logo, theme), `${logo} (${theme})`).toBe(resolveColor(series, theme));
+    }
+  });
+
+  it("the glass backing is the off-white in light and the Midnight canvas in dark", () => {
+    expect(resolveColor("logo.backing", "light")).toBe(resolveColor("surface.card", "light"));
+    expect(resolveColor("logo.backing", "dark")).toBe(resolveColor("surface.canvas", "dark"));
+  });
+
+  it("the glint is the off-white in both themes, never pure white", () => {
+    for (const theme of BOTH) {
+      expect(resolveColor("logo.glint", theme).toLowerCase()).toBe("#f8fcfa");
+    }
+  });
 });
