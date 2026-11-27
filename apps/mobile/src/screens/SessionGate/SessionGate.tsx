@@ -1,4 +1,4 @@
-import { type Href, router, usePathname } from "expo-router";
+import { useNavigationContainerRef } from "expo-router";
 import { type ReactElement, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { Platform, StyleSheet, View } from "react-native";
 import { useSession, useStartProblem } from "../../auth/SessionProvider";
@@ -165,16 +165,29 @@ export function SessionGate({ children }: { children?: ReactNode }) {
   }
 }
 
+type RootState = ReturnType<ReturnType<typeof useNavigationContainerRef>["getRootState"]>;
+
 /**
- * After a real lock (60 seconds away), Unlock returns to the page the person was on. The shell is
- * not rendered while locked, so its stack starts again at Home when it comes back; the last page
- * shown is kept here and replaced back in once unlocked. Its search parameters are not kept. Nothing
- * is kept past signing out or the session ending, so the next sign-in starts afresh.
+ * After a real lock (60 seconds away), Unlock returns to the page the person was on, with the same
+ * stack under it: the tab it was opened from and the pages between, so Back and the tab bar work as
+ * before the lock. The shell is not rendered while locked, so its stack starts again at Home when it
+ * comes back; the navigation state last shown while unlocked is kept here and reset back in once
+ * unlocked (replacing only the page left it alone, with no Back and no tab bar, and system Back left
+ * the app). Nothing is kept past signing out or the session ending, so the next sign-in starts afresh.
  */
 function useReturnAfterUnlock(signedIn: boolean, locked: boolean) {
-  const pathname = usePathname();
-  const lastShown = useRef<string | null>(null);
-  const returnTo = useRef<string | null>(null);
+  const navigation = useNavigationContainerRef();
+  const lastShown = useRef<RootState | null>(null);
+  const returnTo = useRef<RootState | null>(null);
+  // Each new state as it arrives: read when the pathname changes, the root state can still be the
+  // one before. The lock takes its copy (below) before unmounting the shell empties the stack.
+  useEffect(
+    () =>
+      navigation.addListener("state", () => {
+        lastShown.current = navigation.getRootState();
+      }),
+    [navigation],
+  );
   useEffect(() => {
     if (!signedIn) {
       lastShown.current = null;
@@ -187,8 +200,6 @@ function useReturnAfterUnlock(signedIn: boolean, locked: boolean) {
     }
     const target = returnTo.current;
     returnTo.current = null;
-    // Pathnames come from the router itself, so each is one of the app's routes.
-    if (target !== null && target !== pathname) router.replace(target as Href);
-    else lastShown.current = pathname;
-  }, [signedIn, locked, pathname]);
+    if (target !== null) navigation.reset(target);
+  }, [signedIn, locked, navigation]);
 }

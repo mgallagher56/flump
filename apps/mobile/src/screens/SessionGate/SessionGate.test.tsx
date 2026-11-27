@@ -15,8 +15,13 @@ jest.mock("expo-router", () => {
   const { Fragment } = require("react");
   return {
     Link: ({ children }: { children: unknown }) => <Fragment>{children}</Fragment>,
-    router: { push: jest.fn(), replace: jest.fn() },
-    usePathname: () => "/",
+    // No navigator here: the routes test (src/navigation/routesAppLock.test.tsx) covers return
+    // after unlock with the real one.
+    useNavigationContainerRef: () => ({
+      addListener: () => () => undefined,
+      getRootState: () => undefined,
+      reset: jest.fn(),
+    }),
   };
 });
 
