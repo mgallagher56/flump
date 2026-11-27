@@ -6,7 +6,7 @@
 //
 // A "use" is the token's name in any of the forms the code base writes it:
 // - a Panda or native token path: `orb.violetRose.core`, `surface.tint.rose`, `chart.series5`,
-//   `chart.accentPurple`, the purple primitive scale and the dark pink primitive (also inside
+//   `chart.accentPurple`, `logo.violet`, `logo.rose`, the purple primitive scale and the dark pink primitive (also inside
 //   `token(...)` and `{colors...}`);
 // - the same names as CSS variables (`--colors-orb-violet-rose-core`, `--colors-chart-series4`,
 //   `--colors-chart-accent-purple` and so on);
@@ -27,8 +27,9 @@ const VIOLET_ROSE_TOKEN = new RegExp(
     String.raw`(?<![\w$/-])purple\.\d+\b`,
     String.raw`(?<![\w$/-])colors\.purple\b`,
     String.raw`(?<![\w$/-])dark\.pink\b`,
+    String.raw`(?<![\w$/-])logo\.(?:violet|rose)\b`,
     // CSS variables.
-    String.raw`--colors-(?:orb-violet-rose[\w-]*|surface-tint-(?:violet|rose)|chart-(?:series[45]|accent-purple)|purple-\d+|dark-pink)\b`,
+    String.raw`--colors-(?:orb-violet-rose[\w-]*|surface-tint-(?:violet|rose)|chart-(?:series[45]|accent-purple)|purple-\d+|dark-pink|logo-(?:violet|rose))\b`,
     // Chart roles as string literals.
     String.raw`["'\x60](?:series[45]|accentPurple)["'\x60]`,
   ].join("|"),
@@ -79,6 +80,16 @@ export const ORB_COLOUR_ALLOW_LIST: ReadonlyArray<{ path: string; reason: string
     path: "apps/marketing/src/components/JourneyOrb/",
     reason:
       "the home journey's orb and bead track (M1): the still orb and track, and the hidden swatches the three.js orb reads its per-stop orb colours from; the scene module in src/motion/journey writes no colour of its own",
+  },
+  {
+    path: "packages/ui/src/primitives/FlumpLogo/",
+    reason:
+      "the logo K2 (owner, 27 Nov 2026): three glass bubbles, violet lit by rose, sky and teal lit by violet; an orb-like element in the logo.* tokens",
+  },
+  {
+    path: "apps/mobile/src/components/FlumpLogo/",
+    reason:
+      "the mobile logo: the same K2 drawing as packages/ui FlumpLogo, in the native logo.* tokens",
   },
 ];
 

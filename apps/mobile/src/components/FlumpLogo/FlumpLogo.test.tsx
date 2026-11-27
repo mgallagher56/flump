@@ -6,7 +6,7 @@ import { processColor } from "react-native";
 import { ThemeProvider } from "../../theme/ThemeProvider";
 import { FlumpLogo } from "./FlumpLogo";
 import { flumpLogoStates } from "./FlumpLogo.states";
-import { LOGO_ART } from "./FlumpLogo.styles";
+import { LOGO_ART, LOGO_OPACITY } from "./FlumpLogo.styles";
 
 /** The hidden logo is still in the tree; queries skip hidden elements unless asked. */
 const HIDDEN = { includeHiddenElements: true } as const;
@@ -27,9 +27,8 @@ function svgNodes(type: string): SvgNode[] {
   return out;
 }
 
-/** react-native-svg passes colours on as processed integers (signed inside gradients). */
+/** react-native-svg passes colours on as processed integers; inside gradients the stop opacity is in the alpha byte. */
 const asInt = (hex: string) => processColor(hex) as number;
-const asSigned = (hex: string) => asInt(hex) | 0;
 
 describe("FlumpLogo", () => {
   it("has the web logo's sizes", async () => {
@@ -71,46 +70,90 @@ describe("FlumpLogo", () => {
   it.each([
     ["light", light],
     ["dark", dark],
-  ] as const)("draws in the %s theme's token colours", async (scheme, set) => {
+  ] as const)("draws in the %s theme's logo tokens", async (scheme, set) => {
     await render(
       <ThemeProvider scheme={scheme}>
         <FlumpLogo />
       </ThemeProvider>,
     );
-    const [shadow] = svgNodes("RNSVGEllipse");
-    expect(shadow?.props.fill?.payload).toBe(asInt(set.colors["text.primary"]));
-    const highlights = svgNodes("RNSVGPath").filter((p) => p.props.fill?.type === 0);
-    expect(highlights).toHaveLength(3);
-    for (const h of highlights) {
-      expect(h.props.fill?.payload).toBe(asInt(set.colors["primary.foreground"]));
-    }
-    const [gradient] = svgNodes("RNSVGRadialGradient");
-    expect(gradient?.props.gradient).toEqual([
-      0,
-      asSigned(set.colors["primary.markLit"]),
-      1,
-      asSigned(set.colors["primary.mark"]),
-    ]);
+    const circles = svgNodes("RNSVGCircle");
+    // Four layers per bubble: the backing, the tint, the second light and the sheen.
+    expect(circles).toHaveLength(4 * LOGO_ART.orbs.length);
+    const backings = circles.filter((c) => c.props.fill?.type === 0);
+    expect(backings).toHaveLength(LOGO_ART.orbs.length);
+    for (const b of backings) expect(b.props.fill?.payload).toBe(asInt(set.colors["logo.backing"]));
+    const gradients = svgNodes("RNSVGRadialGradient");
+    expect(gradients).toHaveLength(2 + 3 * LOGO_ART.orbs.length);
+    // Each bubble's tint is its own tone at three opacities, lit by its second colour.
+    LOGO_ART.orbs.forEach((orb, i) => {
+      const body = gradients[2 + i * 3]?.props.gradient ?? [];
+      const rim = gradients[3 + i * 3]?.props.gradient ?? [];
+      const tone = asInt(set.colors[`logo.${orb.tone}`]);
+      const lit = asInt(set.colors[`logo.${orb.light}`]);
+      expect([body[1], body[3], body[5]].map((c) => (c ?? 0) & 0xffffff)).toEqual([
+        tone & 0xffffff,
+        tone & 0xffffff,
+        tone & 0xffffff,
+      ]);
+      expect([rim[1], rim[3], rim[5]].map((c) => (c ?? 0) & 0xffffff)).toEqual([
+        lit & 0xffffff,
+        lit & 0xffffff,
+        lit & 0xffffff,
+      ]);
+    });
   });
 
-  it("the two themes' logo colours differ, so a wrong scheme would show", () => {
-    expect(light.colors["primary.mark"]).not.toBe(dark.colors["primary.mark"]);
-  });
-
-  it("is teal in light, not the charcoal button fill (owner, 25 November 2026)", () => {
-    expect(light.colors["primary.mark"]).not.toBe(light.colors["primary.solid"]);
-    expect(light.colors["primary.markLit"]).not.toBe(light.colors["primary.hover"]);
+  it("has one floor shadow: a flat ellipse in light, a contact shade with a teal pool in dark", async () => {
+    await render(
+      <ThemeProvider scheme="light">
+        <FlumpLogo />
+      </ThemeProvider>,
+    );
+    const glints = LOGO_ART.orbs.filter((o) => o.glint).length;
+    const lightFloor = svgNodes("RNSVGEllipse");
+    expect(lightFloor).toHaveLength(1 + glints);
+    expect(lightFloor[0]?.props.fill?.payload).toBe(asInt(light.colors["logo.shadow"]));
+    await render(
+      <ThemeProvider scheme="dark">
+        <FlumpLogo />
+      </ThemeProvider>,
+    );
+    expect(svgNodes("RNSVGEllipse")).toHaveLength(2 + glints);
   });
 
   it("draws the same artwork as the web logo", () => {
-    const web = readFileSync(
-      resolve(__dirname, "../../../../../packages/ui/src/primitives/FlumpLogo/FlumpLogo.tsx"),
+    const art = readFileSync(
+      resolve(__dirname, "../../../../../packages/ui/src/primitives/FlumpLogo/FlumpLogo.art.ts"),
       "utf8",
     );
-    for (const d of [LOGO_ART.body, ...LOGO_ART.highlights.map((h) => h.d)]) {
-      expect(web).toContain(`d="${d}"`);
+    const styles = readFileSync(
+      resolve(__dirname, "../../../../../packages/ui/src/primitives/FlumpLogo/FlumpLogo.styles.ts"),
+      "utf8",
+    );
+    expect(art).toContain(`LOGO_VIEWBOX = "${LOGO_ART.viewBox}"`);
+    for (const o of LOGO_ART.orbs) {
+      expect(art).toContain(
+        `{ cx: ${o.cx}, cy: ${o.cy}, r: ${o.r}, tone: "${o.tone}", light: "${o.light}", glint: ${o.glint} }`,
+      );
     }
-    expect(web).toContain(`viewBox="${LOGO_ART.viewBox}"`);
+    const { cx, cy, rx } = LOGO_ART.floor;
+    expect(art).toContain(`LOGO_FLOOR = { cx: ${cx}, cy: ${cy}, rx: ${rx} }`);
+    const pairs = [
+      ["backing", "opacity"],
+      ["core", "stopOpacity"],
+      ["mid", "stopOpacity"],
+      ["sheen", "stopOpacity"],
+      ["glint", "opacity"],
+    ] as const;
+    for (const [role, prop] of pairs) {
+      const l = LOGO_OPACITY.light[role];
+      const d = LOGO_OPACITY.dark[role];
+      expect(styles).toMatch(
+        new RegExp(
+          `${role}: css\\(\\{[^}]*${prop}: \\{ base: ${l}, _dark: ${d}, _systemDark: ${d} \\}`,
+        ),
+      );
+    }
   });
 
   it("every state renders", async () => {

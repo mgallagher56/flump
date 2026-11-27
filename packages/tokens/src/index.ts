@@ -388,6 +388,23 @@ export const semanticTokens = {
       },
     },
 
+    // 7b. The logo, "K2" (owner, 27 Nov 2026): three glass bubbles, violet lit by rose, sky and
+    // teal lit by violet, over one floor shadow. The logo only (STYLE-GUIDE 2.7 MC1: an orb-like
+    // element; scripts/check-orb-colours.ts). The four tones are the chart series values (teal
+    // series1, sky series6, violet series4, rose series5) held as the logo's own, like orb.*, so a
+    // chart change cannot move the logo. glint is the off-white sheen and glint in both themes;
+    // backing is the pale or dark glass behind each bubble's tint; shadow is the floor shadow
+    // (deep ink in light, a near-black contact shadow in dark, with a faint teal pool over it).
+    logo: {
+      teal: { value: { base: "#0b6b5d", _dark: "#6fd0ba" } },
+      sky: { value: { base: "#2f7fa0", _dark: "#6db5d6" } },
+      violet: { value: { base: "#7e67a8", _dark: "#a98fe0" } },
+      rose: { value: { base: "#b03f6a", _dark: "#e58aa2" } },
+      glint: { value: { base: "{colors.mint.950}", _dark: "{colors.mint.950}" } },
+      backing: { value: { base: "{colors.mint.950}", _dark: "{colors.dark.canvas}" } },
+      shadow: { value: { base: "{colors.mint.900}", _dark: "#05070a" } },
+    },
+
     // 8. Card materials (STYLE-GUIDE 2.7). Neutral only: no violet or rose. The glass card is a
     // card with a soft border, a faint inner top light and a faint diagonal sheen; the paper
     // document is paper on the card colour with faint ruled lines and a soft edge. Text sits on

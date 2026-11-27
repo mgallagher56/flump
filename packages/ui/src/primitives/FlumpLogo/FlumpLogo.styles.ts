@@ -13,15 +13,37 @@ export const flumpLogoRecipe = cva({
 });
 
 /**
- * The logo's own tokens: a teal mark in light and a mint mark in dark (primary.mark, lit from above
- * by primary.markLit). Not the charcoal button fill, which read as a black ball (owner, 25 Nov
- * 2026). The highlights take the button label colour, so they read on either mark. Panda has no
- * colour utility for `stopColor`, so a bare token name is emitted as an invalid value and the stop
- * falls back to black. `token()` resolves it to the CSS variable.
+ * The logo's paints: the `logo.*` tokens, so the bubbles follow light and dark. Panda has no colour
+ * utility for `stopColor`, so a bare token name would fall back to black; `token()` resolves it to
+ * the CSS variable. Each theme-dependent value names `_systemDark` too, for a dark system setting
+ * with JavaScript off (D30). Colour and opacity are separate classes, combined on each stop. The opacities
+ * that differ by theme (glass is clearer on the dark canvas) are mirrored by the mobile logo
+ * (apps/mobile FlumpLogo.styles.ts, LOGO_OPACITY), whose test reads this file.
  */
+export const logoStop = {
+  teal: css({ stopColor: "token(colors.logo.teal)" }),
+  sky: css({ stopColor: "token(colors.logo.sky)" }),
+  violet: css({ stopColor: "token(colors.logo.violet)" }),
+  rose: css({ stopColor: "token(colors.logo.rose)" }),
+  glint: css({ stopColor: "token(colors.logo.glint)" }),
+  shadow: css({ stopColor: "token(colors.logo.shadow)" }),
+};
+
+export const logoOpacity = {
+  /** The tint at the bubble's centre and two thirds out. */
+  core: css({ stopOpacity: { base: 0.4, _dark: 0.28, _systemDark: 0.28 } }),
+  mid: css({ stopOpacity: { base: 0.62, _dark: 0.5, _systemDark: 0.5 } }),
+  sheen: css({ stopOpacity: { base: 0.6, _dark: 0.5, _systemDark: 0.5 } }),
+};
+
 export const logoClasses = {
-  bodyTop: css({ stopColor: "token(colors.primary.markLit)" }),
-  bodyBottom: css({ stopColor: "token(colors.primary.mark)" }),
-  shadow: css({ fill: "text.primary", opacity: 0.18 }),
-  highlight: css({ fill: "primary.foreground" }),
+  backing: css({ fill: "logo.backing", opacity: { base: 0.55, _dark: 0.35, _systemDark: 0.35 } }),
+  glint: css({ fill: "logo.glint", opacity: { base: 0.9, _dark: 0.85, _systemDark: 0.85 } }),
+  /** Light: one flat ellipse in deep ink. */
+  floorLight: css({
+    fill: "logo.shadow",
+    display: { base: "inline", _dark: "none", _systemDark: "none" },
+  }),
+  /** Dark: a soft contact shadow with the teal pooling faintly over it, both fading to nothing. */
+  floorDark: css({ display: { base: "none", _dark: "inline", _systemDark: "inline" } }),
 };
