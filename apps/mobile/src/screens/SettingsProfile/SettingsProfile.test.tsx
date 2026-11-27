@@ -169,11 +169,11 @@ describe("SettingsProfile", () => {
           onOpenCheckIn={jest.fn()}
           onOpenHistory={jest.fn()}
           onChangeWhatCounts={jest.fn()}
+          onAddAccount={jest.fn()}
+          onAddEstimate={jest.fn()}
           marketingOrigin="https://m.test.invalid"
           links={{
             setUp: SET_UP,
-            addAccount: SET_UP,
-            addEstimate: SET_UP,
             addBudget: SET_UP,
             addSpending: SET_UP,
           }}
@@ -241,11 +241,11 @@ describe("SettingsProfile", () => {
           onOpenCheckIn={jest.fn()}
           onOpenHistory={jest.fn()}
           onChangeWhatCounts={jest.fn()}
+          onAddAccount={jest.fn()}
+          onAddEstimate={jest.fn()}
           marketingOrigin="https://m.test.invalid"
           links={{
             setUp: SET_UP,
-            addAccount: SET_UP,
-            addEstimate: SET_UP,
             addBudget: SET_UP,
             addSpending: SET_UP,
           }}

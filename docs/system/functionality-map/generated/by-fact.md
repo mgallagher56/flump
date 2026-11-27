@@ -8,8 +8,11 @@
 | --------------------------------- | ---------------------------------------------------- | ------------------------------- | ------------------------------ |
 | `account-balance`                 | `mobile.check-in.cards`                              | mobile/check-in                 | `/check-in`                    |
 | `account-balance`                 | `mobile.check-in.summary`                            | mobile/check-in                 | `/check-in`                    |
+| `account-balance`                 | `mobile.mobile-account-add.add-account-form`         | mobile/mobile-account-add       | `/accounts/new`                |
 | `account-balance`                 | `mobile.mobile-account-detail.balance-history`       | mobile/mobile-account-detail    | `/accounts/:id`                |
 | `account-balance`                 | `mobile.mobile-account-detail.hero`                  | mobile/mobile-account-detail    | `/accounts/:id`                |
+| `account-balance`                 | `mobile.mobile-account-detail.quick-balance-update`  | mobile/mobile-account-detail    | `/accounts/:id`                |
+| `account-balance`                 | `mobile.mobile-account-edit.edit-account-form`       | mobile/mobile-account-edit      | `/accounts/:id/edit`           |
 | `account-balance`                 | `mobile.mobile-accounts.accounts-lists`              | mobile/mobile-accounts          | `/accounts`                    |
 | `account-balance`                 | `mobile.mobile-accounts.net-worth-summary`           | mobile/mobile-accounts          | `/accounts`                    |
 | `account-balance`                 | `mobile.mobile-net-worth-history.hero`               | mobile/mobile-net-worth-history | `/accounts/history`            |
@@ -56,6 +59,8 @@
 | `account-balance`                 | `web.self-assessment.calculated-figures`             | web/self-assessment             | `/app/self-assessment`         |
 | `account-balance`                 | `web.self-assessment.sources-panel`                  | web/self-assessment             | `/app/self-assessment`         |
 | `account-goal`                    | `web.account-detail.goal-section`                    | web/account-detail              | `/app/accounts/:account`       |
+| `account-monthly-amount`          | `mobile.mobile-account-add.add-account-form`         | mobile/mobile-account-add       | `/accounts/new`                |
+| `account-monthly-amount`          | `mobile.mobile-account-edit.edit-account-form`       | mobile/mobile-account-edit      | `/accounts/:id/edit`           |
 | `account-monthly-amount`          | `web.account-detail.balance-history`                 | web/account-detail              | `/app/accounts/:account`       |
 | `account-monthly-amount`          | `web.account-detail.edit-account-dialog`             | web/account-detail              | `/app/accounts/:account`       |
 | `account-monthly-amount`          | `web.budget.editor`                                  | web/budget                      | `/app/budget`                  |
@@ -73,7 +78,9 @@
 | `account-monthly-amount`          | `web.savings.hero-and-kpis`                          | web/savings                     | `/app/savings`                 |
 | `account-monthly-amount`          | `web.savings.investment-returns`                     | web/savings                     | `/app/savings`                 |
 | `account-monthly-amount`          | `web.savings.scenario-zone`                          | web/savings                     | `/app/savings`                 |
+| `account-name`                    | `mobile.mobile-account-add.add-account-form`         | mobile/mobile-account-add       | `/accounts/new`                |
 | `account-name`                    | `mobile.mobile-account-detail.hero`                  | mobile/mobile-account-detail    | `/accounts/:id`                |
+| `account-name`                    | `mobile.mobile-account-edit.edit-account-form`       | mobile/mobile-account-edit      | `/accounts/:id/edit`           |
 | `account-name`                    | `mobile.mobile-accounts.accounts-lists`              | mobile/mobile-accounts          | `/accounts`                    |
 | `account-name`                    | `web.account-detail.edit-account-dialog`             | web/account-detail              | `/app/accounts/:account`       |
 | `account-name`                    | `web.account-detail.hero`                            | web/account-detail              | `/app/accounts/:account`       |
@@ -86,6 +93,8 @@
 | `account-name`                    | `web.pension.pot-dialog`                             | web/pension                     | `/app/pension`                 |
 | `account-name`                    | `web.savings.account-dialog`                         | web/savings                     | `/app/savings`                 |
 | `account-name`                    | `web.savings.accounts-list`                          | web/savings                     | `/app/savings`                 |
+| `account-rate`                    | `mobile.mobile-account-add.add-account-form`         | mobile/mobile-account-add       | `/accounts/new`                |
+| `account-rate`                    | `mobile.mobile-account-edit.edit-account-form`       | mobile/mobile-account-edit      | `/accounts/:id/edit`           |
 | `account-rate`                    | `web.account-detail.balance-history`                 | web/account-detail              | `/app/accounts/:account`       |
 | `account-rate`                    | `web.account-detail.edit-account-dialog`             | web/account-detail              | `/app/accounts/:account`       |
 | `account-rate`                    | `web.debt.debt-dialog`                               | web/debt                        | `/app/debt`                    |
@@ -104,7 +113,9 @@
 | `account-rate`                    | `web.savings.scenario-zone`                          | web/savings                     | `/app/savings`                 |
 | `account-rate`                    | `web.self-assessment-source.calculated-figures`      | web/self-assessment-source      | `/app/self-assessment/:source` |
 | `account-rate`                    | `web.self-assessment.calculated-figures`             | web/self-assessment             | `/app/self-assessment`         |
+| `account-type`                    | `mobile.mobile-account-add.add-account-form`         | mobile/mobile-account-add       | `/accounts/new`                |
 | `account-type`                    | `mobile.mobile-account-detail.hero`                  | mobile/mobile-account-detail    | `/accounts/:id`                |
+| `account-type`                    | `mobile.mobile-account-edit.edit-account-form`       | mobile/mobile-account-edit      | `/accounts/:id/edit`           |
 | `account-type`                    | `mobile.mobile-accounts.accounts-lists`              | mobile/mobile-accounts          | `/accounts`                    |
 | `account-type`                    | `mobile.mobile-settings-profile.net-worth-choices`   | mobile/mobile-settings-profile  | `/settings/profile`            |
 | `account-type`                    | `web.account-detail.edit-account-dialog`             | web/account-detail              | `/app/accounts/:account`       |
@@ -161,6 +172,8 @@
 | `budget-entry-link-kind`          | `web.budget.overview`                                | web/budget                      | `/app/budget`                  |
 | `buy-to-let-mortgage`             | `web.mortgage.btl-overview`                          | web/mortgage                    | `/app/mortgage`                |
 | `buy-to-let-rent`                 | `web.mortgage.btl-overview`                          | web/mortgage                    | `/app/mortgage`                |
+| `card-limit-and-zero-percent-end` | `mobile.mobile-account-add.add-account-form`         | mobile/mobile-account-add       | `/accounts/new`                |
+| `card-limit-and-zero-percent-end` | `mobile.mobile-account-edit.edit-account-form`       | mobile/mobile-account-edit      | `/accounts/:id/edit`           |
 | `card-limit-and-zero-percent-end` | `web.account-detail.edit-account-dialog`             | web/account-detail              | `/app/accounts/:account`       |
 | `card-limit-and-zero-percent-end` | `web.debt.debt-dialog`                               | web/debt                        | `/app/debt`                    |
 | `card-limit-and-zero-percent-end` | `web.debt.debts-list`                                | web/debt                        | `/app/debt`                    |
@@ -220,8 +233,12 @@
 | `invoicing-settings`              | `web.invoicing.invoices-panel`                       | web/invoicing                   | `/app/invoicing`               |
 | `invoicing-settings`              | `web.invoicing.settings-panel`                       | web/invoicing                   | `/app/invoicing`               |
 | `invoicing-settings`              | `web.invoicing.work-log-panel`                       | web/invoicing                   | `/app/invoicing`               |
+| `mortgage-property-link`          | `mobile.mobile-account-add.add-account-form`         | mobile/mobile-account-add       | `/accounts/new`                |
+| `mortgage-property-link`          | `mobile.mobile-account-edit.edit-account-form`       | mobile/mobile-account-edit      | `/accounts/:id/edit`           |
 | `mortgage-property-link`          | `web.account-detail.edit-account-dialog`             | web/account-detail              | `/app/accounts/:account`       |
 | `mortgage-property-link`          | `web.mortgage.hero-and-kpis`                         | web/mortgage                    | `/app/mortgage`                |
+| `mortgage-term-and-fix-end`       | `mobile.mobile-account-add.add-account-form`         | mobile/mobile-account-add       | `/accounts/new`                |
+| `mortgage-term-and-fix-end`       | `mobile.mobile-account-edit.edit-account-form`       | mobile/mobile-account-edit      | `/accounts/:id/edit`           |
 | `mortgage-term-and-fix-end`       | `web.account-detail.edit-account-dialog`             | web/account-detail              | `/app/accounts/:account`       |
 | `mortgage-term-and-fix-end`       | `web.mortgage-estimates.scenario-zone`               | web/mortgage-estimates          | `/app/mortgage-estimates`      |
 | `mortgage-term-and-fix-end`       | `web.mortgage.alerts`                                | web/mortgage                    | `/app/mortgage`                |
@@ -249,7 +266,10 @@
 | `net-worth-choices`               | `web.settings.net-worth-choices`                     | web/settings                    | `/app/profile`                 |
 | `other-outgoings`                 | `web.mortgage-estimates.housing-room-details`        | web/mortgage-estimates          | `/app/mortgage-estimates`      |
 | `other-outgoings`                 | `web.onboarding.step-review`                         | web/onboarding                  | `/app/onboarding`              |
+| `ownership-share`                 | `mobile.mobile-account-add.add-account-form`         | mobile/mobile-account-add       | `/accounts/new`                |
 | `ownership-share`                 | `mobile.mobile-account-detail.hero`                  | mobile/mobile-account-detail    | `/accounts/:id`                |
+| `ownership-share`                 | `mobile.mobile-account-detail.quick-balance-update`  | mobile/mobile-account-detail    | `/accounts/:id`                |
+| `ownership-share`                 | `mobile.mobile-account-edit.edit-account-form`       | mobile/mobile-account-edit      | `/accounts/:id/edit`           |
 | `ownership-share`                 | `mobile.mobile-accounts.accounts-lists`              | mobile/mobile-accounts          | `/accounts`                    |
 | `ownership-share`                 | `mobile.mobile-accounts.net-worth-summary`           | mobile/mobile-accounts          | `/accounts`                    |
 | `ownership-share`                 | `web.account-detail.edit-account-dialog`             | web/account-detail              | `/app/accounts/:account`       |
@@ -286,6 +306,8 @@
 | `rental-share-for-tax`            | `web.self-assessment.calculation-drawer`             | web/self-assessment             | `/app/self-assessment`         |
 | `rental-share-for-tax`            | `web.self-assessment.headline-or-empty`              | web/self-assessment             | `/app/self-assessment`         |
 | `rental-share-for-tax`            | `web.self-assessment.mtd-notice`                     | web/self-assessment             | `/app/self-assessment`         |
+| `repayment-type`                  | `mobile.mobile-account-add.add-account-form`         | mobile/mobile-account-add       | `/accounts/new`                |
+| `repayment-type`                  | `mobile.mobile-account-edit.edit-account-form`       | mobile/mobile-account-edit      | `/accounts/:id/edit`           |
 | `repayment-type`                  | `web.account-detail.edit-account-dialog`             | web/account-detail              | `/app/accounts/:account`       |
 | `repayment-type`                  | `web.mortgage.cost-details-drawer`                   | web/mortgage                    | `/app/mortgage`                |
 | `repayment-type`                  | `web.mortgage.details-summary`                       | web/mortgage                    | `/app/mortgage`                |

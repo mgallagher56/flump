@@ -55,7 +55,7 @@ export async function fetchProfile(
 }
 
 /** Web's `versionEtag`: the `If-Match` for a version, or none when it is missing or not a date. */
-function ifMatchFor(updatedAt: string | null | undefined): string | undefined {
+export function ifMatchFor(updatedAt: string | null | undefined): string | undefined {
   if (typeof updatedAt !== "string" || Number.isNaN(Date.parse(updatedAt))) return undefined;
   return etagFor(updatedAt);
 }

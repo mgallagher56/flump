@@ -46,9 +46,7 @@ describe("NetWorthBasisLine", () => {
       screen.getByText("Your home's value is not counted until you add an estimate."),
     ).toBeOnTheScreen();
     expect(screen.queryByText(/Not counting/)).toBeNull();
-    await userEvent
-      .setup()
-      .press(screen.getByRole("link", { name: "Add an estimate on the website" }));
+    await userEvent.setup().press(screen.getByRole("link", { name: "Add an estimate" }));
     expect(onAddEstimate).toHaveBeenCalledTimes(1);
   });
 
@@ -57,13 +55,8 @@ describe("NetWorthBasisLine", () => {
     expect(screen.queryByTestId("net-worth-basis-line")).toBeNull();
   });
 
-  it("the estimate link says it opens the website's home page when it cannot open the page", async () => {
-    await line({ leftOut: ["homeValueMissing"], estimateWebsiteLabel: "Open the Flump website" });
-    expect(screen.getByRole("link", { name: "Open the Flump website" })).toBeOnTheScreen();
-  });
-
-  it("Change what counts opens the app's own setting, whatever the website's address", async () => {
-    await line({ leftOut: ["studentLoan"], estimateWebsiteLabel: "Open the Flump website" });
+  it("Change what counts opens the app's own setting", async () => {
+    await line({ leftOut: ["studentLoan"] });
     expect(screen.getByRole("link", { name: "Change what counts" })).toBeOnTheScreen();
   });
 

@@ -1,4 +1,5 @@
 import { Stack } from "expo-router";
+import { ACCOUNT_FORM } from "../../src/copy/accountForms";
 import { ACCOUNT, HISTORY } from "../../src/copy/accounts";
 import { HOME_TITLE } from "../../src/copy/brand";
 import { CHECK_IN } from "../../src/copy/checkIn";
@@ -27,6 +28,8 @@ export default function SignedInLayout() {
         <Stack.Screen name="accounts/history" options={{ title: HISTORY.title }} />
         {/* The page sets the account's name once it is known. */}
         <Stack.Screen name="accounts/[id]" options={{ title: ACCOUNT.titleFallback }} />
+        <Stack.Screen name="accounts/new" options={{ title: ACCOUNT_FORM.addTitle }} />
+        <Stack.Screen name="accounts/[id]/edit" options={{ title: ACCOUNT_FORM.editTitle }} />
         <Stack.Screen name="page/[key]" />
         <Stack.Screen name="+not-found" />
       </Stack>

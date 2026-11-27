@@ -69,7 +69,7 @@ describe("CurrencyInput", () => {
     const { onValueChange, ui } = renderInput();
     await render(ui());
     await fireEvent.changeText(input(), "1,204.50");
-    expect(onValueChange).toHaveBeenLastCalledWith(1204.5);
+    expect(onValueChange).toHaveBeenLastCalledWith(1204.5, "1,204.50");
     expect(input().props.value).toBe("1,204.50");
   });
 
@@ -78,7 +78,7 @@ describe("CurrencyInput", () => {
     await render(ui());
     expect(input().props.value).toBe("50");
     await fireEvent.changeText(input(), "");
-    expect(onValueChange).toHaveBeenLastCalledWith(null);
+    expect(onValueChange).toHaveBeenLastCalledWith(null, "");
     expect(onValueChange).not.toHaveBeenCalledWith(0);
   });
 
@@ -86,7 +86,8 @@ describe("CurrencyInput", () => {
     const { onValueChange, ui } = renderInput();
     const view = await render(ui());
     await fireEvent.changeText(input(), "12.345");
-    expect(onValueChange).toHaveBeenLastCalledWith(null);
+    // The typed text comes with the null, so a form can say it cannot read it.
+    expect(onValueChange).toHaveBeenLastCalledWith(null, "12.345");
     // The parent passes the null back; the typed text stays.
     await view.rerender(ui({ value: null }));
     await fireEvent(input(), "blur");
@@ -171,5 +172,39 @@ describe("CurrencyInput", () => {
 
   it.each(Object.entries(currencyInputStates))("%s holds at 200%% text", async (_name, props) => {
     await expectHoldsAtDoubleText(<CurrencyInput {...props} />);
+  });
+});
+
+describe("CurrencyInput below zero (E12 S8)", () => {
+  it("parseMoneyInput refuses a minus unless asked, and reads one when asked", () => {
+    expect(parseMoneyInput("-250")).toBeNull();
+    expect(parseMoneyInput("-250", true)).toBe(-250);
+    // The typographic minus and a "£" after the sign read the same.
+    expect(parseMoneyInput("−£1,204.50", true)).toBe(-1204.5);
+    expect(parseMoneyInput("-£0", true)).toBe(0);
+    expect(parseMoneyInput("-", true)).toBeNull();
+    expect(parseMoneyInput("--5", true)).toBeNull();
+  });
+
+  it("a balance that can be negative reports the minus and keeps a keyboard with one", async () => {
+    const onValueChange = jest.fn();
+    await render(
+      <ThemeProvider scheme="light">
+        <CurrencyInput
+          value={null}
+          onValueChange={onValueChange}
+          accessibilityLabel="Balance"
+          allowNegative
+          testID="neg"
+        />
+      </ThemeProvider>,
+    );
+    const box = screen.getByTestId("neg");
+    expect(box.props.inputMode).toBeUndefined();
+    expect(["numbers-and-punctuation", "numeric"]).toContain(box.props.keyboardType);
+    await fireEvent.changeText(box, "-75.20");
+    expect(onValueChange).toHaveBeenLastCalledWith(-75.2, "-75.20");
+    await fireEvent(box, "blur");
+    expect(box.props.value).toBe("-75.20");
   });
 });

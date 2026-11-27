@@ -1,5 +1,11 @@
 import { type ReactNode, type Ref, useCallback, useMemo, useState } from "react";
-import { RefreshControl, ScrollView, type ScrollViewInstance, View } from "react-native";
+import {
+  KeyboardAvoidingView,
+  RefreshControl,
+  ScrollView,
+  type ScrollViewInstance,
+  View,
+} from "react-native";
 import { type Edge, SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "../../theme/ThemeProvider";
 import { createStyles } from "./Screen.styles";
@@ -23,6 +29,11 @@ export interface ScreenProps {
    * stay on screen while it runs. Only on a screen that scrolls.
    */
   onRefresh?: () => Promise<unknown>;
+  /**
+   * A form: the page shrinks above the keyboard so the field being typed in and the buttons under
+   * it can be scrolled to, and a tap on a button while the keyboard is open presses it.
+   */
+  keyboardAware?: boolean;
   /** The scroll view, for a screen that opens at one of its groups (Settings' net worth choices). */
   scrollRef?: Ref<ScrollViewInstance>;
   testID?: string;
@@ -37,6 +48,7 @@ export function Screen({
   centred = false,
   edges = ALL_EDGES,
   onRefresh,
+  keyboardAware = false,
   scrollRef,
   testID,
 }: ScreenProps) {
@@ -56,28 +68,43 @@ export function Screen({
     }
   }, [onRefresh]);
 
+  const page = scroll ? (
+    <ScrollView
+      ref={scrollRef}
+      contentContainerStyle={content}
+      {...(keyboardAware ? { keyboardShouldPersistTaps: "handled" as const } : {})}
+      refreshControl={
+        onRefresh ? (
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={refresh}
+            tintColor={theme.colors["text.secondary"]}
+            colors={[theme.colors.primary]}
+            progressBackgroundColor={theme.colors["surface.card"]}
+          />
+        ) : undefined
+      }
+    >
+      {children}
+    </ScrollView>
+  ) : (
+    <View style={content}>{children}</View>
+  );
+
   return (
     <SafeAreaView style={styles.screen} edges={edges} testID={testID}>
-      {scroll ? (
-        <ScrollView
-          ref={scrollRef}
-          contentContainerStyle={content}
-          refreshControl={
-            onRefresh ? (
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={refresh}
-                tintColor={theme.colors["text.secondary"]}
-                colors={[theme.colors.primary]}
-                progressBackgroundColor={theme.colors["surface.card"]}
-              />
-            ) : undefined
-          }
+      {keyboardAware ? (
+        // Edge to edge on Android, the window no longer resizes for the keyboard, so both
+        // platforms pad the page by the keyboard's height.
+        <KeyboardAvoidingView
+          behavior="padding"
+          style={styles.keyboard}
+          testID={testID ? `${testID}-keyboard` : undefined}
         >
-          {children}
-        </ScrollView>
+          {page}
+        </KeyboardAvoidingView>
       ) : (
-        <View style={content}>{children}</View>
+        page
       )}
     </SafeAreaView>
   );

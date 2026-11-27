@@ -1,7 +1,7 @@
 import { formatCurrency } from "@flump/format";
 import { useEffect, useMemo, useRef, useState } from "react";
 // Raw React Native inputs are allowed inside src/components (biome.json, apps/mobile override).
-import { TextInput, View } from "react-native";
+import { Platform, TextInput, View } from "react-native";
 import { useTheme } from "../../theme/ThemeProvider";
 import { Text } from "../Text";
 import { createStyles } from "./CurrencyInput.styles";
@@ -9,26 +9,41 @@ import { createStyles } from "./CurrencyInput.styles";
 export interface CurrencyInputProps {
   /** Pounds, or `null` for blank. Blank is never 0. */
   value: number | null;
-  /** Called on every change with the parsed amount, or `null` while the text is blank or invalid. */
-  onValueChange(value: number | null): void;
+  /**
+   * Called on every change with the parsed amount, or `null` while the text is blank or invalid,
+   * and the text as typed, so a form can tell blank from an amount it cannot read.
+   */
+  onValueChange(value: number | null, text: string): void;
   accessibilityLabel: string;
   accessibilityHint?: string;
   /** Defaults to true. */
   editable?: boolean;
+  /**
+   * A balance that can go below zero (an overdrawn current account, as web's balance field takes).
+   * Off by default: an amount owed, a payment or a limit is never negative.
+   */
+  allowNegative?: boolean;
   testID?: string;
   onSubmitEditing?: () => void;
 }
 
 const AMOUNT = /^(\d+(\.\d{0,2})?|\.\d{1,2})$/;
+/** A leading minus, or the typographic one, before or after the "£". */
+const MINUS = /^[-\u2212]/;
 
 /**
  * Reads a typed amount in pounds. Tolerant of "£", commas, spaces and surrounding blanks; at most
- * two decimal places. Blank, negative, non-numeric or three or more decimals give `null`.
+ * two decimal places. Blank, non-numeric or three or more decimals give `null`, and so does a
+ * negative amount unless `allowNegative` is set.
  */
-export function parseMoneyInput(text: string): number | null {
+export function parseMoneyInput(text: string, allowNegative = false): number | null {
   const plain = text.trim().replace(/[£,\s]/g, "");
-  if (!AMOUNT.test(plain)) return null;
-  return Number(plain);
+  const negative = MINUS.test(plain);
+  if (negative && !allowNegative) return null;
+  const digits = negative ? plain.slice(1) : plain;
+  if (!AMOUNT.test(digits)) return null;
+  const value = Number(digits);
+  return negative && value !== 0 ? -value : value;
 }
 
 /** The amount as the field shows it after editing: "1,204.50" or "1,204". The prefix shows the "£". */
@@ -47,6 +62,7 @@ export function CurrencyInput({
   accessibilityLabel,
   accessibilityHint,
   editable = true,
+  allowNegative = false,
   testID,
   onSubmitEditing,
 }: CurrencyInputProps) {
@@ -65,14 +81,14 @@ export function CurrencyInput({
 
   const handleChange = (next: string) => {
     setText(next);
-    const parsed = parseMoneyInput(next);
+    const parsed = parseMoneyInput(next, allowNegative);
     reported.current = parsed;
-    onValueChange(parsed);
+    onValueChange(parsed, next);
   };
 
   const handleBlur = () => {
     setFocused(false);
-    const parsed = parseMoneyInput(text);
+    const parsed = parseMoneyInput(text, allowNegative);
     if (parsed !== null) setText(display(parsed));
   };
 
@@ -95,8 +111,17 @@ export function CurrencyInput({
         onFocus={() => setFocused(true)}
         onBlur={handleBlur}
         onSubmitEditing={onSubmitEditing}
-        keyboardType="decimal-pad"
-        inputMode="decimal"
+        // Neither decimal pad has a minus key, so a balance that can be negative gets a keyboard
+        // with one: iOS's numbers and punctuation, Android's signed decimal numbers. `inputMode`
+        // would override the choice, so it is set only for the plain decimal pad.
+        keyboardType={
+          allowNegative
+            ? Platform.OS === "ios"
+              ? "numbers-and-punctuation"
+              : "numeric"
+            : "decimal-pad"
+        }
+        {...(allowNegative ? {} : { inputMode: "decimal" as const })}
         accessibilityLabel={accessibilityLabel}
         accessibilityHint={accessibilityHint}
         accessibilityState={{ disabled: !editable }}

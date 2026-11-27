@@ -1,0 +1,22 @@
+id: mobile-account-add
+app: mobile
+route: /accounts/new
+title: Add an account
+auth: required
+purpose: Add an account (E12 S8), also opened by flump://accounts/new, with web's fields for each type, web's words and web's rules from the engine's shared form logic. Opened with ?estimate=1 it starts as web's "Add an estimate" does. A mortgage with no property to link can add the home's value, and both are added together.
+route_file: apps/mobile/app/(app)/accounts/new.tsx
+
+sections:
+  - id: add-account-form
+    component: apps/mobile/src/screens/AccountForm/AccountForm.tsx
+    facts_read:
+      - account-name
+      - account-type
+      - account-balance
+      - account-rate
+      - account-monthly-amount
+      - ownership-share
+      - repayment-type
+      - mortgage-term-and-fix-end
+      - mortgage-property-link
+      - card-limit-and-zero-percent-end

@@ -45,6 +45,8 @@ export interface AppAccount {
   accountSubtype?: string | null;
   ownership?: string | null;
   sharePercent?: number | null;
+  /** The saved version, sent as `If-Match` with a balance update (E12 S8). */
+  updatedAt?: string | null;
 }
 
 /** A recorded month as the app's loose read holds it. */

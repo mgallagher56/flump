@@ -2,7 +2,7 @@
 
 # Functionality map: overview
 
-Mapped pages: 56 | Sections: 301 | Excluded routes: 25
+Mapped pages: 58 | Sections: 304 | Excluded routes: 25
 
 ## web
 
@@ -605,15 +605,34 @@ Mapped pages: 56 | Sections: 301 | Excluded routes: 25
 | `cards`   | `apps/mobile/src/screens/CheckIn/CheckIn.tsx`         | `account-balance`, `balance-history`, `check-in-done`, `net-worth-choices` | `check-in-calculated-balance` |
 | `summary` | `apps/mobile/src/screens/CheckInDone/CheckInDone.tsx` | `account-balance`, `balance-history`, `net-worth-choices`                  | `net-worth`                   |
 
+### mobile-account-add: Add an account
+
+- Route: `/accounts/new` (auth: `required`, file: `apps/mobile/app/(app)/accounts/new.tsx`)
+- Purpose: Add an account (E12 S8), also opened by flump://accounts/new, with web's fields for each type, web's words and web's rules from the engine's shared form logic. Opened with ?estimate=1 it starts as web's "Add an estimate" does. A mortgage with no property to link can add the home's value, and both are added together.
+
+| Section            | Component                                             | Facts read                                                                                                                                                                                                                 | Figures |
+| ------------------ | ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| `add-account-form` | `apps/mobile/src/screens/AccountForm/AccountForm.tsx` | `account-name`, `account-type`, `account-balance`, `account-rate`, `account-monthly-amount`, `ownership-share`, `repayment-type`, `mortgage-term-and-fix-end`, `mortgage-property-link`, `card-limit-and-zero-percent-end` | -       |
+
 ### mobile-account-detail: Account detail
 
 - Route: `/accounts/:id` (auth: `required`, file: `apps/mobile/app/(app)/accounts/[id].tsx`)
-- Purpose: One account's page (E12 S6), also opened by flump://accounts/<id>, as web's. The balance or amount owed with the line that dates it, a joint account's whole beside the share, then its balance history with the chart, its summary and every month. Read only; editing opens the website until S8. An unknown id says so with Back to accounts.
+- Purpose: One account's page (E12 S6), also opened by flump://accounts/<id>, as web's. The balance or amount owed with the line that dates it, a joint account's whole beside the share, then its balance history with the chart, its summary and every month. Edit opens the edit form, and the quick update saves a new balance in place (S8); goals stay on the website. An unknown id says so with Back to accounts.
 
-| Section           | Component                                                 | Facts read                                                                                                   | Figures |
-| ----------------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ------- |
-| `hero`            | `apps/mobile/src/screens/AccountDetail/AccountDetail.tsx` | `account-name`, `account-type`, `account-balance`, `ownership-share`, `balance-history`, `net-worth-choices` | -       |
-| `balance-history` | `apps/mobile/src/components/ChartFigure/ChartFigure.tsx`  | `account-balance`, `balance-history`                                                                         | -       |
+| Section                | Component                                                              | Facts read                                                                                                   | Figures |
+| ---------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ------- |
+| `hero`                 | `apps/mobile/src/screens/AccountDetail/AccountDetail.tsx`              | `account-name`, `account-type`, `account-balance`, `ownership-share`, `balance-history`, `net-worth-choices` | -       |
+| `balance-history`      | `apps/mobile/src/components/ChartFigure/ChartFigure.tsx`               | `account-balance`, `balance-history`                                                                         | -       |
+| `quick-balance-update` | `apps/mobile/src/components/QuickBalanceUpdate/QuickBalanceUpdate.tsx` | `account-balance`, `ownership-share`                                                                         | -       |
+
+### mobile-account-edit: Edit an account
+
+- Route: `/accounts/:id/edit` (auth: `required`, file: `apps/mobile/app/(app)/accounts/[id]/edit.tsx`)
+- Purpose: Edit or delete an account (E12 S8), also opened by flump://accounts/<id>/edit, with the same fields as adding. An edit sends only what changed, with If-Match for the version read. Delete sits inside edit, as on web, and asks first with the platform alert.
+
+| Section             | Component                                             | Facts read                                                                                                                                                                                                                 | Figures |
+| ------------------- | ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| `edit-account-form` | `apps/mobile/src/screens/AccountForm/AccountForm.tsx` | `account-name`, `account-type`, `account-balance`, `account-rate`, `account-monthly-amount`, `ownership-share`, `repayment-type`, `mortgage-term-and-fix-end`, `mortgage-property-link`, `card-limit-and-zero-percent-end` | -       |
 
 ### mobile-accounts: Accounts
 

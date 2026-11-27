@@ -1,6 +1,5 @@
 import { router } from "expo-router";
 import {
-  ADD_ACCOUNT_WEB_ROUTE,
   NET_WORTH_HISTORY_WEB_ROUTE,
   SET_UP_WEB_ROUTE,
   useShell,
@@ -21,9 +20,9 @@ export default function NetWorthHistoryRoute() {
       onSignOut={shell.signOut}
       marketingOrigin={shell.marketingOrigin}
       onOpenCheckIn={() => router.push("/check-in")}
+      onAddAccount={() => router.push("/accounts/new")}
       links={{
         setUp: webLink(shell, SET_UP_WEB_ROUTE),
-        addAccount: webLink(shell, ADD_ACCOUNT_WEB_ROUTE),
         addEarlierMonths: webLink(shell, NET_WORTH_HISTORY_WEB_ROUTE),
       }}
     />

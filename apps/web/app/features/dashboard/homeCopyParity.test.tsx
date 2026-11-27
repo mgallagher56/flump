@@ -14,7 +14,6 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import {
   ADD_AN_ESTIMATE,
-  ADD_HOME_VALUE_HREF,
   CHANGE_WHAT_COUNTS,
   HOME_VALUE_MISSING_TEXT,
   leftOutSentence,
@@ -57,8 +56,6 @@ interface MobileStrip {
 }
 interface MobileShell {
   BUDGET_WEB_ROUTE: string;
-  ADD_ACCOUNT_WEB_ROUTE: string;
-  ADD_HOME_VALUE_WEB_ROUTE: string;
 }
 type IconShape = readonly [string, Readonly<Record<string, string>>];
 
@@ -83,16 +80,15 @@ describe("the mobile Home hero says what web's Home says", () => {
     expect(HOME.homeValueMissing).toBe(HOME_VALUE_MISSING_TEXT);
     // "Change what counts" opens the app's own setting (S9), so it says web's words as they are.
     expect(HOME.changeWhatCounts).toBe(CHANGE_WHAT_COUNTS);
-    // The estimate link opens the website until S8, and says so after web's own words.
-    expect(HOME.addEstimate).toBe(`${ADD_AN_ESTIMATE} on the website`);
+    // The estimate link opens the app's add form (E12 S8), in web's own words.
+    expect(HOME.addEstimate).toBe(ADD_AN_ESTIMATE);
     // The hero's empty prompt and action are written inline in HomeDashboard.
     const dashboard = readFileSync(
       new URL("./components/HomeDashboard/HomeDashboard.tsx", import.meta.url),
       "utf8",
     );
     expect(dashboard).toContain(`emptyPrompt="${HOME.emptyPrompt}"`);
-    expect(dashboard).toContain(">Add an account</SampleAwareLink>");
-    expect(HOME.addAccount).toBe("Add an account on the website");
+    expect(dashboard).toContain(`>${HOME.addAccount}</SampleAwareLink>`);
   });
 
   it.each([
@@ -137,12 +133,6 @@ describe("the mobile Home hero says what web's Home says", () => {
     ]) {
       expect(mobile.missedLine(missed)).toBe(missedLine(missed));
     }
-  });
-
-  it("the website pages the app links to are web's", async () => {
-    const shell = await load<MobileShell>("navigation/shell.ts");
-    expect(shell.ADD_HOME_VALUE_WEB_ROUTE).toBe(ADD_HOME_VALUE_HREF);
-    expect(shell.ADD_ACCOUNT_WEB_ROUTE).toBe("/app/accounts");
   });
 
   it.each([

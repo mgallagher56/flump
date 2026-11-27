@@ -44,22 +44,16 @@ export const webLink = (
 /** Web's onboarding, where a person with no profile yet sets up. */
 export const SET_UP_WEB_ROUTE = "/app/onboarding";
 
-/** Web's accounts page, where an account is added until the app can (S8). */
-export const ADD_ACCOUNT_WEB_ROUTE = "/app/accounts";
 /** The app's own net worth choices: Settings, Profile, opened at the group (E12 S9). */
 export const NET_WORTH_SETTINGS_ROUTE = "/settings/profile?focus=net-worth";
 /** Web's Profile settings, where the rest of the profile is changed (E12 S9). */
 export const PROFILE_SETTINGS_WEB_ROUTE = "/app/profile?tab=profile";
 /** Web's Security settings, where the password is changed: the app never takes one (E12 S9). */
 export const SECURITY_SETTINGS_WEB_ROUTE = "/app/profile?tab=security";
-/** Web's form for adding the home's value (`ADD_HOME_VALUE_HREF`), until the app has it (S8). */
-export const ADD_HOME_VALUE_WEB_ROUTE = "/app/accounts?add=property";
 /** Web's budget page, where a budget and its spending are added until the app has it (S10). */
 export const BUDGET_WEB_ROUTE = "/app/budget";
 /** Web's net worth history, where earlier months are added until the app can (S8). */
 export const NET_WORTH_HISTORY_WEB_ROUTE = "/app/accounts/history";
-/** Web's page for one account, where it is edited until the app can (S8). */
-export const accountWebRoute = (id: string) => `/app/accounts/${encodeURIComponent(id)}`;
 /** Web's mortgage page, which owns a mortgage's detail (`ownerPageFor`), until the app has it (S11). */
 export const MORTGAGE_WEB_ROUTE = "/app/mortgage";
 /** Web's debts page, which owns a debt's or student loan's detail, until the app has it (S12). */

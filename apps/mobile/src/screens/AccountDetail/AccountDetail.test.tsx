@@ -9,7 +9,6 @@ import { AccountDetail, type AccountDetailProps } from "./AccountDetail";
 
 const LINKS: AccountDetailProps["links"] = {
   setUp: { url: "https://app.test.invalid/app/onboarding", exact: true },
-  edit: { url: "https://app.test.invalid/app/accounts/the-id", exact: true },
   mortgage: { url: "https://app.test.invalid/app/mortgage", exact: true },
   debts: { url: "https://app.test.invalid/app/debt", exact: true },
 };
@@ -18,16 +17,14 @@ const LINKS: AccountDetailProps["links"] = {
 const MARKETING = { url: "https://m.test.invalid", exact: false };
 const NO_WEB_APP: AccountDetailProps["links"] = {
   setUp: MARKETING,
-  edit: MARKETING,
   mortgage: MARKETING,
   debts: MARKETING,
 };
 
-const ON_WEBSITE =
-  "Editing this account, updating its balance, goals and the estimated return are on the Flump website for now.";
+const ON_WEBSITE = "Goals and the estimated return are on the Flump website for now.";
 
 async function detail(api: ReturnType<typeof fakeApi>, id: string, links = LINKS) {
-  const props = { onSignOut: jest.fn(), onBackToAccounts: jest.fn() };
+  const props = { onSignOut: jest.fn(), onBackToAccounts: jest.fn(), onEdit: jest.fn() };
   const { ui } = withApi(
     <AccountDetail
       {...props}
@@ -205,36 +202,65 @@ describe("AccountDetail", () => {
     expect(screen.queryByTestId("account-chart", { includeHiddenElements: true })).toBeNull();
   });
 
-  it("Edit opens the account on the website", async () => {
+  it("Edit opens the app's edit form (S8)", async () => {
     const h = household();
-    await detail(fakeApi(routes(h)), h.idOf("Mortgage"));
-    await userEvent
-      .setup()
-      .press(await screen.findByRole("link", { name: "Edit this account on the website" }));
-    expect(Linking.openURL).toHaveBeenCalledWith(LINKS.edit.url);
+    const props = await detail(fakeApi(routes(h)), h.idOf("Mortgage"));
+    await userEvent.setup().press(await screen.findByRole("button", { name: "Edit" }));
+    expect(props.onEdit).toHaveBeenCalledTimes(1);
+    expect(Linking.openURL).not.toHaveBeenCalled();
   });
 
-  it("says what is on the website for now, and Edit names the action, with a web app address", async () => {
+  it("says what is still on the website for now", async () => {
     const h = household();
     await detail(fakeApi(routes(h)), h.idOf("Mortgage"));
     expect(await screen.findByText(ON_WEBSITE)).toBeOnTheScreen();
-    expect(
-      screen.getByRole("link", { name: "Edit this account on the website" }),
-    ).toBeOnTheScreen();
-    expect(screen.queryByText("Open the Flump website")).toBeNull();
+    expect(screen.queryByText(/Edit this account on the website/)).toBeNull();
   });
 
-  it("without a web app address, the same line, and the link says where it really goes", async () => {
+  it("without a web app address, the owner page link says where it really goes", async () => {
     const h = household();
     await detail(fakeApi(routes(h)), h.idOf("Mortgage"), NO_WEB_APP);
     expect(await screen.findByText(ON_WEBSITE)).toBeOnTheScreen();
-    expect(screen.queryByText("Edit this account on the website")).toBeNull();
     expect(screen.queryByText("See your mortgage on the website")).toBeNull();
     const links = screen.getAllByRole("link", { name: "Open the Flump website" });
-    // Edit, and the mortgage's own page.
-    expect(links).toHaveLength(2);
+    // The mortgage's own page only: Edit stays in the app.
+    expect(links).toHaveLength(1);
     await userEvent.setup().press(links[0] as never);
     expect(Linking.openURL).toHaveBeenCalledWith(MARKETING.url);
+  });
+
+  it("the quick update saves a debt's amount owed as minus it, with If-Match (S8)", async () => {
+    const h = household();
+    const id = h.idOf("Mortgage");
+    const api = fakeApi(routes(h, { [`PATCH /accounts/${id}`]: () => ({ id }) }));
+    await detail(api, id);
+    const user = userEvent.setup();
+    await user.press(await screen.findByRole("button", { name: "Update amount owed" }));
+    // By hand: £184,000 owed is stored as -184000.
+    await user.clear(screen.getByTestId("quick-balance-value"));
+    await user.type(screen.getByTestId("quick-balance-value"), "184000");
+    await user.press(screen.getByRole("button", { name: "Save" }));
+    await settle();
+    const patch = api.calls.find((c) => c.method === "PATCH");
+    expect(patch).toEqual({
+      method: "PATCH",
+      path: `/accounts/${id}`,
+      body: { balance: -184000 },
+      ifMatch: `"${NOW().toISOString()}"`,
+    });
+  });
+
+  it("a quick update refused with 412 says it changed somewhere else", async () => {
+    const h = household();
+    const id = h.idOf("Mortgage");
+    await detail(fakeApi(routes(h, { [`PATCH /accounts/${id}`]: () => fail("client", 412) })), id);
+    const user = userEvent.setup();
+    await user.press(await screen.findByRole("button", { name: "Update amount owed" }));
+    await user.press(screen.getByRole("button", { name: "Save" }));
+    await settle();
+    expect(await screen.findByTestId("quick-balance-error")).toHaveTextContent(
+      /changed somewhere else/,
+    );
   });
 
   it("a mortgage links to See your mortgage on the website, as web's owner page link", async () => {

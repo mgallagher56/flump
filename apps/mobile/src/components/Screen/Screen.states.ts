@@ -10,5 +10,6 @@ export const screenStates = {
   scrolling: { children: body("A screen that scrolls.") },
   centred: { children: body("Short content in the middle."), centred: true },
   fixed: { children: body("A screen that manages its own scrolling."), scroll: false },
+  form: { children: body("A form above the keyboard."), keyboardAware: true },
   underHeader: { children: body("Under a stack header."), edges: ["right", "bottom", "left"] },
 } satisfies Record<string, ScreenProps>;

@@ -17,6 +17,8 @@ interface FakeCall {
   body: unknown;
   /** Present only when the call sent `If-Match` (S9's profile saves). */
   ifMatch?: string;
+  /** Present only when the call named its own `Idempotency-Key` (S8's account adds). */
+  idempotencyKey?: string;
 }
 
 /** A route answers with a body, or throws (use `fail`). Keyed "GET /accounts". */
@@ -39,6 +41,7 @@ export function fakeApi(routes: Record<string, FakeRoute>) {
         schema?: { parse(u: unknown): unknown } | null;
         allowEmpty?: boolean;
         ifMatch?: string;
+        idempotencyKey?: string | false;
       },
     ) => {
       const method = options.method ?? "GET";
@@ -47,6 +50,7 @@ export function fakeApi(routes: Record<string, FakeRoute>) {
         path,
         body: options.body,
         ...(options.ifMatch ? { ifMatch: options.ifMatch } : {}),
+        ...(options.idempotencyKey ? { idempotencyKey: options.idempotencyKey } : {}),
       });
       const route = routes[`${method} ${path}`];
       if (!route) fail("not-found", 404);

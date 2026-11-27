@@ -1,5 +1,6 @@
 // @vitest-environment node
 
+import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import {
   ACCOUNT_SUBTYPE_LABEL,
@@ -63,6 +64,10 @@ import {
  * The mobile files sit outside this project, so they are loaded by path (as `homeCopyParity`).
  */
 const MOBILE_SRC = new URL("../../../../mobile/src/", import.meta.url);
+/** Web's i18n strings, where the add button's words live. */
+const COMMON = JSON.parse(
+  readFileSync(new URL("../../../public/locales/en/common.json", import.meta.url), "utf8"),
+) as Record<string, string>;
 
 type Fn<A extends unknown[], R> = (...args: A) => R;
 interface MobileAccounts {
@@ -119,7 +124,6 @@ interface MobileShell {
   NET_WORTH_HISTORY_WEB_ROUTE: string;
   MORTGAGE_WEB_ROUTE: string;
   DEBTS_WEB_ROUTE: string;
-  accountWebRoute(id: string): string;
 }
 
 const load = async <T,>(path: string) =>
@@ -143,7 +147,8 @@ describe("the mobile accounts list says what web's says", () => {
     expect(ACCOUNTS.emptyTitle).toBe(ACCOUNTS_EMPTY.title);
     expect(ACCOUNTS.emptyDescription).toBe(ACCOUNTS_EMPTY.description);
     expect(ACCOUNTS.startCheckIn).toBe(HISTORY_COPY.startCheckIn);
-    expect(ACCOUNTS.addAccount).toBe("Add an account on the website");
+    // Web's `t("addAccount")` (E12 S8: the app opens its own add form).
+    expect(ACCOUNTS.addAccount).toBe(COMMON.addAccount);
   });
 
   it("the student loan words and the type labels", async () => {
@@ -189,10 +194,9 @@ describe("the mobile accounts list says what web's says", () => {
     expect(m.typeLine(row)).toBe("Stocks and shares ISA");
   });
 
-  it("the history route and an account's route are web's", async () => {
+  it("the history route is web's", async () => {
     const shell = await load<MobileShell>("navigation/shell.ts");
     expect(shell.NET_WORTH_HISTORY_WEB_ROUTE).toBe(HISTORY_HREF);
-    expect(shell.accountWebRoute("abc-123")).toBe("/app/accounts/abc-123");
   });
 });
 

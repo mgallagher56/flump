@@ -62,6 +62,34 @@ describe("Screen", () => {
     });
   });
 
+  it("a form sits above the keyboard, and a tap with the keyboard open presses what it lands on", async () => {
+    await render(
+      <ThemeProvider scheme="light">
+        <Screen testID="s" keyboardAware>
+          <Text>Form</Text>
+        </Screen>
+      </ThemeProvider>,
+    );
+    expect(screen.getByTestId("s-keyboard")).toBeOnTheScreen();
+    const [avoider] = (screen.toJSON() as unknown as Tree).children;
+    const [scroller] = avoider?.children ?? [];
+    expect(scroller?.type).toBe("RCTScrollView");
+    expect(scroller?.props.keyboardShouldPersistTaps).toBe("handled");
+
+    // Not a form: no keyboard padding and the platform's default taps.
+    await render(
+      <ThemeProvider scheme="light">
+        <Screen testID="s">
+          <Text>Page</Text>
+        </Screen>
+      </ThemeProvider>,
+    );
+    const [plain] = (screen.toJSON() as unknown as Tree).children;
+    expect(plain?.type).toBe("RCTScrollView");
+    expect(plain?.props.keyboardShouldPersistTaps).toBeUndefined();
+    expect(screen.queryByTestId("s-keyboard")).toBeNull();
+  });
+
   it("pads every safe-area edge unless told otherwise", async () => {
     await render(
       <ThemeProvider scheme="light">

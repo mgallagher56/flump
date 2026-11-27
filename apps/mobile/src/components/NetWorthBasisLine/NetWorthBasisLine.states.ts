@@ -20,12 +20,6 @@ export const netWorthBasisLineStates = {
     onChangeWhatCounts: noop,
     onAddEstimate: noop,
   },
-  websiteOnly: {
-    leftOut: ["homeValueMissing"],
-    onChangeWhatCounts: noop,
-    onAddEstimate: noop,
-    estimateWebsiteLabel: "Open the Flump website",
-  },
   linkOnly: {
     leftOut: [],
     onChangeWhatCounts: noop,
