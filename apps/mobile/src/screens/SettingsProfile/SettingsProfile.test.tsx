@@ -1,5 +1,6 @@
+import { durations, light } from "@flump/tokens/native";
 import { act, fireEvent, render, screen, userEvent, within } from "@testing-library/react-native";
-import { AccessibilityInfo, Linking, ScrollView } from "react-native";
+import { AccessibilityInfo, Linking, ScrollView, StyleSheet } from "react-native";
 import { fail, fakeApi, withApi } from "../../data/fakeApi";
 import { household, NOW, routes } from "../../features/check-in/checkInTestData";
 import { Home } from "../Home";
@@ -272,6 +273,92 @@ describe("SettingsProfile", () => {
     // 3,400 - 1,200 without the home and its mortgage; the mortgage was never in What you owe.
     expect(within(screen.getByTestId("home-hero")).getByText("£2,200")).toBeOnTheScreen();
     expect(screen.getByLabelText(owed)).toBeOnTheScreen();
+  });
+
+  it("while saving net worth choices, switches keep enabled colours and show the spinner only after 200 ms", async () => {
+    const h = household([
+      ...OWNER,
+      { name: "Student loan", type: "Student Loan", balance: -12000 },
+    ]);
+    h.profile.netWorthCountsStudentLoan = true;
+    let resolvePatch: ((value: unknown) => void) | undefined;
+    const api = fakeApi(
+      routes(h, {
+        "PATCH /user-profile": () =>
+          new Promise((resolve) => {
+            resolvePatch = resolve;
+          }),
+      }),
+    );
+    await profilePage(api);
+    await settle();
+
+    const propertySwitch = screen.getByTestId("settings-counts-property");
+    const loanSwitch = screen.getByTestId("settings-counts-student-loan");
+    await userEvent.setup({ advanceTimers: jest.advanceTimersByTime }).press(propertySwitch);
+
+    // Both switches share the netWorth busy flag: both announce busy and keep enabled colours.
+    expect(screen.getByTestId("settings-counts-property")).toBeBusy();
+    expect(screen.getByTestId("settings-counts-student-loan")).toBeBusy();
+    expect(
+      StyleSheet.flatten(
+        screen.getByText("Count property you own, less the mortgage on it").props.style,
+      ).color,
+    ).toBe(light.colors["text.primary"]);
+    expect(
+      StyleSheet.flatten(screen.getByText("Count your student loan as a debt").props.style).color,
+    ).toBe(light.colors["text.primary"]);
+    const tracks = screen.getAllByTestId("switch-track", { includeHiddenElements: true });
+    expect(StyleSheet.flatten(tracks[0]?.props.style).backgroundColor).toBe(
+      light.colors["border.strong"],
+    );
+    expect(StyleSheet.flatten(tracks[1]?.props.style).backgroundColor).toBe(
+      light.colors["primary.solid"],
+    );
+    expect(screen.queryAllByTestId("switch-busy", { includeHiddenElements: true })).toHaveLength(0);
+
+    // At pendingDelay (200 ms) the spinner appears for both busy netWorth switches.
+    await act(async () => jest.advanceTimersByTimeAsync(durations.pendingDelay));
+    expect(screen.queryAllByTestId("switch-busy", { includeHiddenElements: true })).toHaveLength(2);
+
+    resolvePatch?.({
+      ...h.profile,
+      netWorthCountsProperty: false,
+      updatedAt: "2026-11-20T12:05:00.000Z",
+    });
+    await settle();
+    await act(async () => jest.advanceTimersByTimeAsync(durations.pendingMinimum));
+    expect(screen.queryAllByTestId("switch-busy", { includeHiddenElements: true })).toHaveLength(0);
+  });
+
+  it("a fast net worth save (< 200 ms) never shows the busy spinner", async () => {
+    const h = household(OWNER);
+    let resolvePatch: ((value: unknown) => void) | undefined;
+    const api = fakeApi(
+      routes(h, {
+        "PATCH /user-profile": () =>
+          new Promise((resolve) => {
+            resolvePatch = resolve;
+          }),
+      }),
+    );
+    await profilePage(api);
+    await settle();
+
+    await userEvent
+      .setup({ advanceTimers: jest.advanceTimersByTime })
+      .press(screen.getByTestId("settings-counts-property"));
+    await act(async () => jest.advanceTimersByTimeAsync(durations.pendingDelay - 10));
+    expect(screen.queryByTestId("switch-busy", { includeHiddenElements: true })).toBeNull();
+
+    resolvePatch?.({
+      ...h.profile,
+      netWorthCountsProperty: false,
+      updatedAt: "2026-11-20T12:05:00.000Z",
+    });
+    await settle();
+    await act(async () => jest.advanceTimersByTimeAsync(durations.pendingMinimum));
+    expect(screen.queryByTestId("switch-busy", { includeHiddenElements: true })).toBeNull();
   });
 
   it("a failed save puts the switch back, says so in web's words, and changes nothing", async () => {
