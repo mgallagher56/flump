@@ -307,7 +307,8 @@ function Ready({
               monthly: row.monthly,
               fixedReason: row.fixedReason,
               counted: row.counted,
-              editable: saved.has(row.entry.id),
+              // Joint and linked entries are read-only on the phone, their essential flag too.
+              editable: editableRow(row.entry, saved) !== null,
             }))}
             counted={page.basis.counted}
             onSetEssential={setEssential}
@@ -550,15 +551,18 @@ function EntrySheet({
       finish(result, EDITOR.addFailed, EDITOR.saved);
       return;
     }
-    const moved = values.category !== sheet.row.category;
+    // Moving into or out of the income category changes what an entry is, as web's add sets it.
+    // An income entry saved in another category stays income when moved between spending ones.
+    const wasIncome = sheet.row.isIncome === true;
+    const stillIncome =
+      values.category === "income" || (sheet.row.category !== "income" && wasIncome);
     const result = await writes.update(sheet.id, {
       name: values.name,
       amount: values.amount,
       frequency: values.frequency,
       category: values.category,
-      isEssential: isIncome ? true : values.isEssential,
-      // An entry moved into or out of income changes what it is, as web's add sets it.
-      ...(moved ? { isIncome } : {}),
+      isEssential: stillIncome ? true : values.isEssential,
+      ...(stillIncome !== wasIncome ? { isIncome: stillIncome } : {}),
     });
     finish(result, EDITOR.saveFailed, EDITOR.saved);
   };

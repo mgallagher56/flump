@@ -129,6 +129,7 @@ export function BudgetCategoryList({
                 </Pressable>
               ) : (
                 <Pressable
+                  accessibilityRole="button"
                   accessibilityLabel={words}
                   accessibilityState={{ expanded: isOpen }}
                   testID={`${testID}-${row.category}`}

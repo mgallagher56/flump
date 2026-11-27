@@ -91,6 +91,8 @@ export function ScenarioZone({
         </Text>
         {collapsible ? (
           <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={open ? hideLabel : showLabel}
             accessibilityState={{ expanded: open }}
             testID={`${testID}-toggle`}
             style={styles.toggle}

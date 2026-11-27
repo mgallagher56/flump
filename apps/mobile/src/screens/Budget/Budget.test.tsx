@@ -374,6 +374,60 @@ describe("Budget", () => {
       expect(screen.getByLabelText(/^Left over each month, £75, /)).toBeOnTheScreen();
     });
 
+    it("an income entry saved under bills stays income when moved to another spending category", async () => {
+      const base = renterHousehold();
+      const h = renterHousehold([
+        ...base.budgetEntries,
+        { name: "Side work", category: "bills", amount: 200, isIncome: true, isEssential: true },
+      ]);
+      const side = h.budgetEntries.find((r) => r.name === "Side work");
+      if (!side) throw new Error("no row");
+      const api = fakeApi(
+        routes(h, {
+          [`PATCH /budget-entries/${side.id}`]: (body) => ({ ...side, ...(body as object) }),
+        }),
+      );
+      await budget(api);
+      await screen.findByTestId("budget-hero");
+      await openEntry(/^Side work, /);
+      const u = user();
+      await u.press(screen.getByRole("radio", { name: "Expenses" }));
+      await u.press(screen.getByRole("button", { name: "Save" }));
+      await settle();
+      const call = api.calls.find((c) => c.method === "PATCH");
+      // Not moved into or out of income: what the entry is stays as saved, so no isIncome is sent.
+      expect(call?.body).toEqual({
+        name: "Side work",
+        amount: 200,
+        frequency: "monthly",
+        category: "expenses",
+        isEssential: true,
+      });
+    });
+
+    it("an entry moved out of income becomes spending", async () => {
+      const h = renterHousehold([
+        { name: "Salary after tax", category: "income", amount: 2085, isIncome: true },
+        { name: "Gift", category: "income", amount: 50, isIncome: true },
+      ]);
+      const gift = h.budgetEntries.find((r) => r.name === "Gift");
+      if (!gift) throw new Error("no row");
+      const api = fakeApi(
+        routes(h, {
+          [`PATCH /budget-entries/${gift.id}`]: (body) => ({ ...gift, ...(body as object) }),
+        }),
+      );
+      await budget(api);
+      await screen.findByTestId("budget-hero");
+      await openEntry(/^Gift, /);
+      const u = user();
+      await u.press(screen.getByRole("radio", { name: "Expenses" }));
+      await u.press(screen.getByRole("button", { name: "Save" }));
+      await settle();
+      const call = api.calls.find((c) => c.method === "PATCH");
+      expect(call?.body).toMatchObject({ category: "expenses", isIncome: false });
+    });
+
     it("a 412 keeps the sheet and what was typed, says so in web's words, and reads the list again", async () => {
       const h = renterHousehold();
       const rent = h.budgetEntries.find((r) => r.name === "Rent");
@@ -569,6 +623,21 @@ describe("Budget", () => {
       expect(
         screen.getByRole("switch", { name: "Eating out" }).props.accessibilityState,
       ).toMatchObject({ checked: true });
+    });
+
+    it("a joint entry's Breathing room switch is read only and sends nothing", async () => {
+      const base = renterHousehold();
+      const h = { ...base, budgetEntries: withJoint(base.budgetEntries, "Eating out") };
+      const api = fakeApi(routes(h));
+      await budget(api);
+      await screen.findByTestId("budget-hero");
+      const u = user();
+      await u.press(screen.getByRole("button", { name: "Show what counts" }));
+      const joint = screen.getByRole("switch", { name: "Eating out" });
+      expect(joint.props.accessibilityState).toMatchObject({ disabled: true });
+      await u.press(joint);
+      await settle();
+      expect(api.calls.some((c) => c.method !== "GET")).toBe(false);
     });
 
     it("a failed switch save says so at the top and keeps the saved value", async () => {
