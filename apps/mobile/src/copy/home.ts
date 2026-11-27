@@ -34,6 +34,59 @@ export const HOME = {
   loading: "Loading your net worth",
 } as const;
 
+/**
+ * The two-figure strip's words (E12 S5b, plan 9.8b), copied from web's `DashboardKpiStrip` and its
+ * `KpiStrip` prompt. A shortfall changes the label only: no colour, icon or grading (R1).
+ */
+export const STRIP = {
+  leftOver: "Left over each month",
+  short: "Short each month",
+  /** Web's `LEFT_OVER_CAPTION`. */
+  leftOverCaption: "From your budget",
+  /** Web's `INCOME_ONLY_LABEL`. */
+  incomeOnly: "Income in your budget",
+  /**
+   * Web's `ADD_SPENDING_PROMPT` link, saying it opens the website (the budget arrives in S10). The
+   * words stay web's around the "on the website".
+   */
+  addSpending: "Add your spending on the website to see what is left over each month",
+  owed: "What you owe",
+  /** Web's `OWED_CAPTION`. */
+  owedCaption: "Cards, loans and overdrafts",
+  pension: "Pension pots",
+  /** Web's `PENSION_CAPTION`. */
+  pensionCaption: "From your accounts",
+  /** Web's strip prompt when the budget is not set (`KpiStrip` `emptyPrompt.title`). */
+  prompt: "Add your budget to see what is left over each month",
+  /** Web's "Add your budget", saying it opens the website (the budget arrives in S10). */
+  addBudget: "Add your budget on the website",
+} as const;
+
+/** The rates context the notice reads: the engine's `UkTaxYearContext`, in its own words. */
+export interface RatesContext {
+  calendarYear: string;
+  ratesYear: string;
+  isFallback: boolean;
+  kind?: "fallback" | "provisional";
+}
+
+/**
+ * Web's `TaxRatesStatusBanner` sentence: which year's rates the figures use when they are not the
+ * calendar year's confirmed ones. "" when they are.
+ */
+export function ratesNoticeSentence(rates: RatesContext): string {
+  if (rates.kind === "provisional") {
+    return `${rates.calendarYear} rates are provisional: announced but not yet confirmed. Figures may change.`;
+  }
+  if (rates.isFallback) {
+    return `Using ${rates.ratesYear} rates. The ${rates.calendarYear} rates are not in Flump yet, so figures may be out of date.`;
+  }
+  if (rates.ratesYear !== rates.calendarYear) {
+    return `Using ${rates.ratesYear} rates, not ${rates.calendarYear} rates, so figures may be out of date.`;
+  }
+  return "";
+}
+
 /** "October 2026" for "2026-10" (web's `formatMonth`). */
 function monthLabel(month: string): string {
   return formatMonthYear(`${month}-01`, { month: "long" });

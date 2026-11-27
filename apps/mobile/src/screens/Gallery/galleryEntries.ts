@@ -12,6 +12,8 @@ import { CurrencyInput } from "../../components/CurrencyInput";
 import { currencyInputStates } from "../../components/CurrencyInput/CurrencyInput.states";
 import { ErrorState } from "../../components/ErrorState";
 import { errorStateStates } from "../../components/ErrorState/ErrorState.states";
+import { FigureStrip } from "../../components/FigureStrip";
+import { figureStripStates } from "../../components/FigureStrip/FigureStrip.states";
 import { FlumpLogo } from "../../components/FlumpLogo";
 import { flumpLogoStates } from "../../components/FlumpLogo/FlumpLogo.states";
 import { FormField } from "../../components/FormField";
@@ -32,6 +34,8 @@ import { NetWorthTrendBars } from "../../components/NetWorthTrendBars";
 import { netWorthTrendBarsStates } from "../../components/NetWorthTrendBars/NetWorthTrendBars.states";
 import { Pressable } from "../../components/Pressable";
 import { pressableStates } from "../../components/Pressable/Pressable.states";
+import { RatesNotice } from "../../components/RatesNotice";
+import { ratesNoticeStates } from "../../components/RatesNotice/RatesNotice.states";
 import { Screen } from "../../components/Screen";
 import { screenStates } from "../../components/Screen/Screen.states";
 import { Skeleton } from "../../components/Skeleton";
@@ -109,6 +113,8 @@ export const GALLERY: readonly GalleryEntry[] = [
   entry("HeroFigure", HeroFigure, heroFigureStates),
   entry("NetWorthTrendBars", NetWorthTrendBars, netWorthTrendBarsStates),
   entry("NetWorthBasisLine", NetWorthBasisLine, netWorthBasisLineStates),
+  entry("FigureStrip", FigureStrip, figureStripStates),
+  entry("RatesNotice", RatesNotice, ratesNoticeStates),
   entry("CurrencyInput", CurrencyInput, currencyInputStates),
   entry("FormField", FormField, formFieldStates),
   entry("Toast", Toast, toastStates),
