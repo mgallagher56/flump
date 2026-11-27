@@ -60,8 +60,30 @@ export interface ValidateInput {
   homeValue?: number | null;
 }
 
-/** The contract's money rule (below 10 billion either way), so the phone refuses what the backend would. */
-const withinLimit = (text: string): boolean => text === "" || Money.safeParse(Number(text)).success;
+/** What is wrong with a typed amount: a minus where none is taken, text that is not an amount, or
+ * over the contract's money rule (below 10 billion either way), which the backend would refuse. */
+export type AmountProblem = "belowZero" | "unread" | "tooLarge";
+
+/**
+ * The one check of a typed amount, for the account forms and the quick update alike. `value` is
+ * what the money box read (null when blank or unreadable), `text` what was typed.
+ */
+export function amountProblem(value: number | null, text: string): AmountProblem | null {
+  const typed = text.trim();
+  if (value === null) {
+    if (typed === "") return null;
+    return typed.startsWith("-") || typed.startsWith("\u2212") ? "belowZero" : "unread";
+  }
+  return Money.safeParse(value).success ? null : "tooLarge";
+}
+
+/** What a problem says under its field; an amount owed says so in its own words. */
+export function amountProblemMessage(problem: AmountProblem, owedBalance: boolean): string {
+  if (problem === "belowZero")
+    return owedBalance ? FIELD_ERRORS.owedBelowZero : FIELD_ERRORS.belowZero;
+  if (problem === "unread") return FIELD_ERRORS.amount;
+  return FIELD_ERRORS.tooLarge;
+}
 
 /**
  * What needs changing before anything is sent, field by field. Web's bounds: a rate 0 to 100, a
@@ -81,12 +103,11 @@ export function validateAccountForm({
   const errors: AccountFormErrors = {};
   /** What is wrong with a typed amount, if anything: a minus, unreadable text, or over the limit. */
   const amountError = (field: AccountFormField, text: string): string | undefined => {
-    if (belowZero.has(field)) {
-      return field === "balance" && owed ? FIELD_ERRORS.owedBelowZero : FIELD_ERRORS.belowZero;
-    }
-    if (unread.has(field)) return FIELD_ERRORS.amount;
-    if (!withinLimit(text)) return FIELD_ERRORS.tooLarge;
-    return undefined;
+    const owedBalance = field === "balance" && owed;
+    if (belowZero.has(field)) return amountProblemMessage("belowZero", owedBalance);
+    if (unread.has(field)) return amountProblemMessage("unread", owedBalance);
+    const problem = text === "" ? null : amountProblem(Number(text), text);
+    return problem ? amountProblemMessage(problem, owedBalance) : undefined;
   };
   if (state.name.trim() === "") errors.name = FIELD_ERRORS.name;
   const balanceError = amountError("balance", state.balance);

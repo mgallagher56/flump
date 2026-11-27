@@ -30,6 +30,7 @@ import { type AccountWriteResult, useAccountWrites } from "../../data/accountWri
 import {
   type AccountFormErrors,
   type AccountFormField,
+  amountProblem,
   buildAccountRequest,
   validateAccountForm,
 } from "./accountFormModel";
@@ -92,8 +93,7 @@ export function useAccountForm({
   const noteMinus = useCallback((key: AccountFormField, value: number | null, text: string) => {
     setBelowZero((prev) => {
       const next = new Set(prev);
-      const t = text.trim();
-      if (value === null && (t.startsWith("-") || t.startsWith("\u2212"))) next.add(key);
+      if (amountProblem(value, text) === "belowZero") next.add(key);
       else next.delete(key);
       return next;
     });
