@@ -1,16 +1,25 @@
 import { dark, light } from "@flump/tokens/native";
 import { render, screen, userEvent } from "@testing-library/react-native";
-import { StyleSheet } from "react-native";
+import { Platform, StyleSheet } from "react-native";
 import { expectHoldsAtDoubleText } from "../../testing/textScale";
 import { ThemeProvider } from "../../theme/ThemeProvider";
 import { Switch } from "./Switch";
 import { switchStates } from "./Switch.states";
+import { DISABLED_OPACITY } from "./Switch.styles";
 
-/** The platform's switch inside the row: hidden from screen readers, since the row is the control. */
-const native = () => screen.getByTestId("switch-native", { includeHiddenElements: true });
+/** The drawn switch inside the row: hidden from screen readers, since the row is the control. */
+/** The rendered host tree, as `toJSON` gives it. */
+interface HostNode {
+  type: string;
+  children: (HostNode | string)[] | null;
+}
+
+const track = () => screen.getByTestId("switch-track", { includeHiddenElements: true });
+const thumb = () => screen.getByTestId("switch-thumb", { includeHiddenElements: true });
 
 describe("Switch", () => {
   beforeEach(() => jest.useRealTimers());
+  afterEach(() => jest.restoreAllMocks());
 
   it("is a switch named by its label, with its state and hint, at least 48 high", async () => {
     await render(
@@ -61,75 +70,99 @@ describe("Switch", () => {
     ["light", light],
     ["dark", dark],
   ] as const)(
-    "%s: the native switch shows the value in our colours, primary when on and the strong border when off",
+    "%s: the drawn switch shows the value in our colours, primary when on and the strong border when off",
     async (scheme, set) => {
       const view = await render(
         <ThemeProvider scheme={scheme}>
           <Switch {...switchStates.on} />
         </ThemeProvider>,
       );
-      expect(native().props.value).toBe(true);
-      expect(native().props.onTintColor).toBe(set.colors["primary.solid"]);
-      expect(native().props.tintColor).toBe(set.colors["border.strong"]);
-      expect(native().props.thumbTintColor).toBe(set.colors["surface.card"]);
+      expect(StyleSheet.flatten(track().props.style)).toMatchObject({
+        backgroundColor: set.colors["primary.solid"],
+        justifyContent: "flex-end",
+      });
+      expect(StyleSheet.flatten(thumb().props.style)).toMatchObject({
+        backgroundColor: set.colors["surface.card"],
+      });
       await view.rerender(
         <ThemeProvider scheme={scheme}>
           <Switch {...switchStates.off} />
         </ThemeProvider>,
       );
-      expect(native().props.value).toBe(false);
+      // Off: the strong border's colour, and the thumb at the start.
+      expect(StyleSheet.flatten(track().props.style)).toMatchObject({
+        backgroundColor: set.colors["border.strong"],
+        justifyContent: "flex-start",
+      });
     },
   );
 
   it.each([
-    ["on", switchStates.on, false],
-    ["saving", switchStates.saving, true],
-    ["disabled", switchStates.disabled, true],
-  ] as const)(
-    "%s: the native switch is greyed out only when the row is",
-    async (_n, props, off) => {
-      await render(
-        <ThemeProvider scheme="light">
-          <Switch {...props} />
-        </ThemeProvider>,
-      );
-      expect(native().props.disabled).toBe(off);
-    },
-  );
-
-  it("the row is one control: the native switch is hidden from screen readers", async () => {
+    ["on", switchStates.on, 1],
+    ["saving", switchStates.saving, DISABLED_OPACITY],
+    ["disabled", switchStates.disabled, DISABLED_OPACITY],
+  ] as const)("%s: the drawn switch is greyed out only when the row is", async (_n, props, o) => {
     await render(
+      <ThemeProvider scheme="light">
+        <Switch {...props} />
+      </ThemeProvider>,
+    );
+    expect(StyleSheet.flatten(track().props.style).opacity ?? 1).toBe(o);
+  });
+
+  it.each([
+    // iOS: the 51 by 31 track, a 27 thumb inset by 2.
+    ["ios", { width: 51, height: 31, padding: 2, marginVertical: 0 }, 27],
+    // Android: the 36 by 14 track, a 20 thumb standing 3 above and below it.
+    ["android", { width: 36, height: 14, padding: 0, marginVertical: 3 }, 20],
+  ] as const)("%s: drawn to the platform switch's size", async (os, size, thumbSize) => {
+    jest.replaceProperty(Platform, "OS", os);
+    await render(
+      <ThemeProvider scheme="light">
+        <Switch {...switchStates.off} />
+      </ThemeProvider>,
+    );
+    expect(StyleSheet.flatten(track().props.style)).toMatchObject(size);
+    expect(StyleSheet.flatten(thumb().props.style)).toMatchObject({
+      width: thumbSize,
+      height: thumbSize,
+    });
+  });
+
+  it("the row is the only control: no platform switch inside it, one switch for a screen reader", async () => {
+    const view = await render(
       <ThemeProvider scheme="light">
         <Switch {...switchStates.on} />
       </ThemeProvider>,
     );
-    expect(screen.getAllByRole("switch")).toHaveLength(1);
-    expect(screen.queryByTestId("switch-native")).toBeNull();
-    // Even counting hidden elements there is one switch, the labelled row: the native switch is not
-    // an accessibility element itself, since a parent's flags did not hide it on the device check
-    // (the wrapper view can be flattened away).
+    // The device check: on Android a native switch inside the row was a second clickable,
+    // focusable Switch node whatever its props said, so the switch is drawn with plain views. React
+    // Native's switch renders as RCTSwitch on iOS and AndroidSwitch on Android.
+    const hostTypes = new Set<string>();
+    const walk = (node: HostNode | HostNode[] | null) => {
+      if (node === null) return;
+      for (const n of Array.isArray(node) ? node : [node]) {
+        hostTypes.add(n.type);
+        for (const child of n.children ?? []) if (typeof child !== "string") walk(child);
+      }
+    };
+    walk(view.toJSON() as HostNode | HostNode[] | null);
+    expect([...hostTypes].filter((type) => /switch/i.test(type))).toEqual([]);
     const switches = screen.getAllByRole("switch", { includeHiddenElements: true });
     expect(switches).toHaveLength(1);
     expect(switches[0]?.props.accessibilityLabel).toBe(switchStates.on.label);
-    expect(native().props).toMatchObject({
-      accessible: false,
-      focusable: false,
-      accessibilityElementsHidden: true,
-      importantForAccessibility: "no-hide-descendants",
-    });
+    // The drawing is hidden from screen readers; the row carries the state.
+    expect(screen.queryByTestId("switch-track")).toBeNull();
   });
 
-  it("the native switch takes no focus or presses of its own, so the row toggles once", async () => {
+  it("one press anywhere on the row is one change", async () => {
     const onValueChange = jest.fn();
     await render(
       <ThemeProvider scheme="light">
         <Switch label="Count" value={false} onValueChange={onValueChange} />
       </ThemeProvider>,
     );
-    // Not focusable by a keyboard or switch access, and no touches reach it even if its wrapper
-    // view were flattened away: React Native's switch claims every touch it gets and flips itself.
-    expect(native().props).toMatchObject({ focusable: false, pointerEvents: "none" });
-    await userEvent.setup().press(screen.getByRole("switch"));
+    await userEvent.setup().press(screen.getByText("Count"));
     expect(onValueChange.mock.calls).toEqual([[true]]);
   });
 

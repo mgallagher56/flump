@@ -1,4 +1,4 @@
-import { Stack } from "expo-router";
+import { router as appRouter, Stack } from "expo-router";
 import { act, fireEvent, renderRouter, screen } from "expo-router/testing-library";
 import { AppState, type AppStateStatus } from "react-native";
 import * as signedInLayout from "../../app/(app)/_layout";
@@ -75,6 +75,9 @@ async function openLocked(initialUrl: string) {
       "(app)/(tabs)/_layout": TabsLayout,
       "(app)/(tabs)/index": HomeTab,
       "(app)/(tabs)/more": MoreTab,
+      "(app)/(tabs)/accounts": () => null,
+      "(app)/(tabs)/budget": () => null,
+      "(app)/(tabs)/pay": () => null,
       "(app)/settings/index": SettingsRoute,
       "(app)/settings/data": SettingsDataRoute,
       "(app)/settings/phone": SettingsPhoneRoute,
@@ -139,6 +142,47 @@ describe("app lock with the signed-in routes", () => {
     await act(async () => fireEvent.press(screen.getByRole("button", { name: LOCKED.unlock })));
     expect(router.getPathname()).toBe("/settings/phone");
     expect(screen.getByRole("switch", { name: "App lock" })).toBeOnTheScreen();
+  });
+
+  /** Away for the lock's time, then Unlock. */
+  async function timedLockThenUnlock() {
+    await appState("background");
+    clock += LOCK_AFTER_MS;
+    await appState("active");
+    expect(screen.getByText(LOCKED.heading)).toBeOnTheScreen();
+    await act(async () => fireEvent.press(screen.getByRole("button", { name: LOCKED.unlock })));
+  }
+
+  it("a page opened from More comes back on its stack: Back goes to Settings, then More with the tab bar", async () => {
+    const { router } = await openLocked("/more");
+    expect(await screen.findByLabelText("Main navigation")).toBeOnTheScreen();
+    await act(async () => appRouter.push("/settings"));
+    await act(async () => appRouter.push("/settings/phone"));
+    expect(router.getPathname()).toBe("/settings/phone");
+    await timedLockThenUnlock();
+    expect(router.getPathname()).toBe("/settings/phone");
+    expect(screen.getByRole("switch", { name: "App lock" })).toBeOnTheScreen();
+    // The device check: Profile came back alone, with no Back, and system Back left the app.
+    expect(appRouter.canGoBack()).toBe(true);
+    await act(async () => appRouter.back());
+    expect(router.getPathname()).toBe("/settings");
+    await act(async () => appRouter.back());
+    expect(router.getPathname()).toBe("/more");
+    expect(screen.getByLabelText("Main navigation")).toBeOnTheScreen();
+    // More was opened from Home, so Back from it is Home, as before the lock.
+    await act(async () => appRouter.back());
+    expect(router.getPathname()).toBe("/");
+  });
+
+  it("a tab comes back as that tab, with the tab bar", async () => {
+    const { router } = await openLocked("/");
+    expect(await screen.findByLabelText("Main navigation")).toBeOnTheScreen();
+    await act(async () => appRouter.navigate("/accounts"));
+    expect(router.getPathname()).toBe("/accounts");
+    await timedLockThenUnlock();
+    expect(router.getPathname()).toBe("/accounts");
+    expect(screen.getByLabelText("Main navigation")).toBeOnTheScreen();
+    expect(screen.getByRole("tab", { name: /Accounts/, selected: true })).toBeOnTheScreen();
   });
 
   it("signing out from the lock screen restores nothing for the next sign-in", async () => {
