@@ -545,24 +545,35 @@ function EntrySheet({
     else setError(result === "conflict" ? EDITOR.conflict : failed);
   };
 
+  const lastAdd = useRef<{ sheet: string; body: string; key: string } | null>(null);
   const save = async (values: ValidEntryValues) => {
     if (!sheet) return;
     setSaving(true);
     setError(null);
     const isIncome = values.category === "income";
     if (sheet.mode === "add") {
-      const result = await writes.add(
-        {
-          category: values.category,
-          name: values.name,
-          amount: values.amount,
-          frequency: values.frequency,
-          isIncome,
-          isEssential: isIncome ? true : values.isEssential,
-          ownership: "sole",
-        },
-        sheet.requestKey,
-      );
+      const entry = {
+        category: values.category,
+        name: values.name,
+        amount: values.amount,
+        frequency: values.frequency,
+        isIncome,
+        isEssential: isIncome ? true : values.isEssential,
+        ownership: "sole" as const,
+      };
+      // The same entry tried again keeps its key, so an add that landed but timed out is not made
+      // twice; a changed entry is a new add with a new key (the backend refuses a key reused for a
+      // different body, 422 idempotency_key_reused).
+      const body = JSON.stringify(entry);
+      const last = lastAdd.current;
+      const key =
+        last?.sheet !== sheetKey
+          ? sheet.requestKey
+          : last.body === body
+            ? last.key
+            : Crypto.randomUUID();
+      lastAdd.current = { sheet: sheetKey, body, key };
+      const result = await writes.add(entry, key);
       finish(result, EDITOR.addFailed, EDITOR.saved);
       return;
     }

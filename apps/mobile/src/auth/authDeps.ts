@@ -117,6 +117,7 @@ export function createAppSession(config: { api: MobileConfig; auth: AuthConfig }
     apiBaseUrl: config.api.apiBaseUrl,
     session: sessionForApi,
     client: { version, platform },
+    newIdempotencyKey: () => Crypto.randomUUID(),
   });
   // Deleting every row can take longer than an ordinary write (web's DELETE_TIMEOUT_MS).
   const deletionApi = createAppApiClient({
@@ -124,6 +125,7 @@ export function createAppSession(config: { api: MobileConfig; auth: AuthConfig }
     session: sessionForApi,
     client: { version, platform },
     timeoutMs: DELETE_TIMEOUT_MS,
+    newIdempotencyKey: () => Crypto.randomUUID(),
   });
   const accessible = SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY;
   const tokens = createTokenStore(SecureStore, accessible);

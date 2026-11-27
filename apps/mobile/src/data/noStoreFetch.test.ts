@@ -32,6 +32,7 @@ describe("noStoreFetch", () => {
       session: { getAccessToken: () => "access_1", refresh: async () => "refreshed" as const },
       client: { version: "1.0.0", platform: "android" },
       fetch: base as unknown as typeof fetch,
+      newIdempotencyKey: () => "key_1",
     });
     await api.request("/accounts", {
       schema: { safeParse: (v: unknown) => ({ success: true as const, data: v }) } as never,

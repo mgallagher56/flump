@@ -6,6 +6,17 @@ import { Gallery, PANELS } from "./Gallery";
 import { GALLERY } from "./galleryEntries";
 
 describe("Gallery", () => {
+  // The first render loads every component and its states (as Accounts.test warms the engine), which
+  // with S7, S8 and S10's components outgrew a test's 5 seconds; the tests then time only their own.
+  beforeAll(async () => {
+    await render(
+      <ThemeProvider scheme="light">
+        <Gallery />
+      </ThemeProvider>,
+    );
+    screen.unmount();
+  }, 30_000);
+
   it("lists every component folder in src/components", () => {
     const folders = readdirSync(resolve(__dirname, "../../components"), { withFileTypes: true })
       .filter((d) => d.isDirectory())

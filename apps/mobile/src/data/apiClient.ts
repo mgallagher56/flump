@@ -20,10 +20,15 @@ export interface AppApiClientOptions {
   fetch?: typeof fetch;
   /** Defaults to the client's 15 seconds; the account deletion waits 30 (E12 S9). */
   timeoutMs?: number;
+  /**
+   * A fresh Idempotency-Key for a POST that names none: expo-crypto's UUID in the app (authDeps),
+   * passed in so this file stays loadable on Node (the e2e tooling).
+   */
+  newIdempotencyKey: () => string;
 }
 
 export function createAppApiClient(options: AppApiClientOptions): ApiClient {
-  return createApiClient({
+  const client = createApiClient({
     baseUrl: options.apiBaseUrl,
     getAccessToken: () => options.session.getAccessToken(),
     onUnauthorised: () => options.session.refresh(),
@@ -32,4 +37,17 @@ export function createAppApiClient(options: AppApiClientOptions): ApiClient {
     fetch: noStoreFetch(() => options.fetch ?? fetch),
     timeoutMs: options.timeoutMs,
   });
+  const newKey = options.newIdempotencyKey;
+  // The shared client's default key for a POST reads the global `crypto.randomUUID`, which Hermes
+  // does not have, so a POST naming no key threw before it was sent (the S10 device check's add).
+  // Every POST from the phone gets one here; a caller's own key (one per retried add) or `false`
+  // (no key at all, as sign-out sends) is kept.
+  const request = ((path: string, opts: { method?: string; idempotencyKey?: string | false }) =>
+    client.request(
+      path,
+      (opts.method === "POST" && opts.idempotencyKey === undefined
+        ? { ...opts, idempotencyKey: newKey() }
+        : opts) as never,
+    )) as ApiClient["request"];
+  return { ...client, request };
 }
