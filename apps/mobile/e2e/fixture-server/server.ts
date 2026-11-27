@@ -21,6 +21,12 @@
  *   GET  /v1/snapshots/check-ins             bearer; last month started and completed
  *   GET  /v1/budget-entries                  bearer; the household's saved budget (S5b), none for
  *                                           the canned data
+ *   POST /v1/budget-entries                  bearer; the strict CreateBudgetEntryRequest body (S10)
+ *   PATCH /v1/budget-entries/:id             bearer; the strict UpdateBudgetEntryRequest body and,
+ *                                           when sent, If-Match against the row's version (412
+ *                                           precondition_failed); 404 for an unknown row (S10)
+ *   DELETE /v1/budget-entries/:id            bearer; `{ success: true }`, 404 for an unknown row.
+ *                                           Budget writes are kept until the next reset (S10)
  *   PUT  /v1/snapshots/:month                bearer; applied as the backend does (fixtures.ts)
  *   GET  /v1/user-profile/export             bearer; the export as an attachment with the backend's
  *                                           file name (S9); open to people not invited or who
@@ -81,11 +87,14 @@ import { createHash, randomUUID } from "node:crypto";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import type { AddressInfo } from "node:net";
 import {
+  type BudgetEntryListResponse,
   CreateAccountRequest,
+  CreateBudgetEntryRequest,
   CreateMortgageWithPropertyRequest,
   etagFor,
   SnapshotMonth,
   UpdateAccountRequest,
+  UpdateBudgetEntryRequest,
   UpdateProfileRequest,
   UpsertSnapshotRequest,
   type UserProfileResponse,
@@ -281,6 +290,8 @@ interface FixtureCounts {
   deletions: number;
   /** Account adds, changes and deletes that were applied (S8). */
   accountWrites: number;
+  /** Budget writes that changed the saved budget: adds, edits and deletes (S10). */
+  budgetWrites: number;
 }
 
 interface FixtureStats extends FixtureCounts {
@@ -304,6 +315,7 @@ const ZERO_COUNTS: FixtureCounts = {
   exports: 0,
   deletions: 0,
   accountWrites: 0,
+  budgetWrites: 0,
 };
 
 /** The backend's recent sign-in window for a deletion (`auth/recent-login.ts`). */
@@ -381,14 +393,23 @@ export async function startFixtureServer(options: FixtureServerOptions): Promise
   });
 
   /** The data scenario's household, or the canned data's while the data is unavailable. */
-  const household = () => HOUSEHOLDS[scenario.data === "unavailable" ? "ok" : scenario.data];
-  // Parse every canned body once now, so a contract change fails the start, not a flow.
-  for (const h of Object.values(HOUSEHOLDS)) {
-    cannedProfile(userId, new Date(now()), h.facts);
-    cannedBudgetEntries(userId, new Date(now()), h.budget, { linkTakeHome: h.linkTakeHome });
-  }
+  const householdKey = () => (scenario.data === "unavailable" ? "ok" : scenario.data);
+  const household = () => HOUSEHOLDS[householdKey()];
+  /**
+   * Each household's saved budget, with ids made once, so an edit or delete finds its row; writes
+   * are kept until a reset (S10). Built now, so a contract change fails the start, not a flow.
+   */
+  const buildBudgets = () =>
+    Object.fromEntries(
+      Object.entries(HOUSEHOLDS).map(([key, h]) => [
+        key,
+        cannedBudgetEntries(userId, new Date(now()), h.budget, { linkTakeHome: h.linkTakeHome }),
+      ]),
+    ) as Record<keyof typeof HOUSEHOLDS, BudgetEntryListResponse>;
+  for (const h of Object.values(HOUSEHOLDS)) cannedProfile(userId, new Date(now()), h.facts);
   cannedClientPolicy(DEFAULT_SCENARIO.minVersion);
   let stores = buildStores();
+  let budgets = buildBudgets();
 
   let scenario: Scenario = { ...DEFAULT_SCENARIO };
   let counts: FixtureCounts = { ...ZERO_COUNTS };
@@ -638,6 +659,18 @@ export async function startFixtureServer(options: FixtureServerOptions): Promise
       }
       return handleAccountWrite(path, accountId, session, req, res);
     }
+    const budgetId = /^\/budget-entries\/([^/]+)$/.exec(path)?.[1];
+    const isBudgetWrite =
+      (req.method === "POST" && path === "/budget-entries") ||
+      ((req.method === "PATCH" || req.method === "DELETE") && budgetId !== undefined);
+    if (isBudgetWrite) {
+      const session = invitedSession(req, res);
+      if (!session) return;
+      if (scenario.data === "unavailable") {
+        return apiError(res, 503, "service_unavailable", "The service is not available.");
+      }
+      return handleBudgetWrite(session, budgetId ? decodeURIComponent(budgetId) : null, req, res);
+    }
     const snapshotMonth = /^\/snapshots\/([^/]+)$/.exec(path)?.[1];
     const isSnapshotPut = req.method === "PUT" && snapshotMonth !== undefined;
     if ((req.method === "GET" && CHECK_IN_ROUTES.has(path)) || isSnapshotPut) {
@@ -652,16 +685,7 @@ export async function startFixtureServer(options: FixtureServerOptions): Promise
         return json(res, 200, cannedAccounts(store()));
       }
       if (path === "/account-details") return json(res, 200, cannedAccountDetails(store()));
-      if (path === "/budget-entries") {
-        const h = household();
-        return json(
-          res,
-          200,
-          cannedBudgetEntries(session.userId, new Date(now()), h.budget, {
-            linkTakeHome: h.linkTakeHome,
-          }),
-        );
-      }
+      if (path === "/budget-entries") return json(res, 200, budgets[householdKey()]);
       return json(res, 200, cannedCheckIns(store()));
     }
     return apiError(res, 404, "not_found", "No canned response for this route.");
@@ -760,6 +784,83 @@ export async function startFixtureServer(options: FixtureServerOptions): Promise
         at,
       ),
     );
+  }
+
+  /**
+   * The budget's writes (S10), as the backend: the strict body first (a server-owned key such as
+   * `isPrimaryIncome` is refused), then the row, then the version in If-Match when one is sent.
+   */
+  async function handleBudgetWrite(
+    session: Session,
+    id: string | null,
+    req: IncomingMessage,
+    res: ServerResponse,
+  ) {
+    const key = householdKey();
+    const rows = budgets[key];
+    const iso = () => new Date(now()).toISOString();
+    if (req.method === "DELETE") {
+      if (!rows.some((r) => r.id === id)) return apiError(res, 404, "not_found", "No such entry.");
+      budgets = { ...budgets, [key]: rows.filter((r) => r.id !== id) };
+      counts.budgetWrites += 1;
+      return json(res, 200, { success: true });
+    }
+    const raw = await readJson(req);
+    if (raw === undefined) return apiError(res, 400, "invalid_json", "The body is not JSON.");
+    const parsed =
+      req.method === "POST"
+        ? CreateBudgetEntryRequest.safeParse(raw)
+        : UpdateBudgetEntryRequest.safeParse(raw);
+    if (!parsed.success) {
+      const issues = parsed.error.issues.map((i) => ({
+        path: ["body", ...i.path.map(String)].join("."),
+        code: i.code,
+        message: i.message,
+      }));
+      return apiError(res, 400, "validation_failed", "The request is not valid.", issues);
+    }
+    const body = parsed.data;
+    if (req.method === "POST") {
+      const row = {
+        id: randomUUID(),
+        userId: session.userId,
+        category: body.category ?? "expenses",
+        name: body.name ?? body.title ?? "",
+        amount: body.linkKind ? 0 : (body.amount ?? 0),
+        frequency: body.frequency ?? "monthly",
+        isIncome: body.isIncome ?? false,
+        isPrimaryIncome: false,
+        isEssential: body.isEssential ?? false,
+        notes: body.notes ?? null,
+        isDefault: false,
+        ownership: body.ownership ?? "sole",
+        sharePercent: body.ownership === "joint" ? (body.sharePercent ?? 50) : null,
+        linkKind: body.linkKind ?? null,
+        linkAccountId: body.linkAccountId ?? null,
+        createdAt: iso(),
+        updatedAt: iso(),
+      };
+      budgets = { ...budgets, [key]: [...rows, row] };
+      counts.budgetWrites += 1;
+      return json(res, 200, row);
+    }
+    const current = rows.find((r) => r.id === id);
+    if (!current) return apiError(res, 404, "not_found", "No such entry.");
+    const ifMatch = req.headers["if-match"];
+    if (ifMatch !== undefined && ifMatch !== etagFor(current.updatedAt)) {
+      return apiError(res, 412, "precondition_failed", "The entry changed since it was read.");
+    }
+    const { title, ...fields } = body as typeof body & { title?: string };
+    const next = {
+      ...current,
+      ...Object.fromEntries(Object.entries(fields).filter(([, v]) => v !== undefined)),
+      ...(title && !fields.name ? { name: title } : {}),
+      // A new version, always later than the last, as the backend's updatedAt.
+      updatedAt: new Date(Math.max(now(), Date.parse(current.updatedAt) + 1)).toISOString(),
+    };
+    budgets = { ...budgets, [key]: rows.map((r) => (r.id === id ? next : r)) };
+    counts.budgetWrites += 1;
+    return json(res, 200, next);
   }
 
   /** As the backend: the strict body first, then the version in If-Match when one is sent. */
@@ -912,6 +1013,7 @@ export async function startFixtureServer(options: FixtureServerOptions): Promise
     scenario = { ...DEFAULT_SCENARIO };
     counts = { ...ZERO_COUNTS };
     stores = buildStores();
+    budgets = buildBudgets();
     profileEdits = {};
     profileUpdatedAt = new Date(now()).toISOString();
     codes.clear();
