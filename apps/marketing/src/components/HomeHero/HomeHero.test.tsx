@@ -41,7 +41,7 @@ describe("HomeHero", () => {
     expect(screen.getByRole("link", { name: "See the five areas" }).getAttribute("href")).toBe(
       "#features",
     );
-    expect(screen.getByTestId("motion-control")).toBeDefined();
+    expect(document.querySelector("[data-motion-control] button")).not.toBeNull();
   });
 
   it("names the dashboard 'Monthly picture Example' and shows every figure at its final value", () => {

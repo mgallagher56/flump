@@ -27,15 +27,16 @@ const FACT_INDEX: Record<MoneyAreaKey, 0 | 1 | 2> = {
 };
 
 /**
- * Each stop's orb colour, mixing both sets along the way. Debt takes violet, never rose (MK6: the
- * orb's colour never reads as a judgement).
+ * Each stop's orb colour, mixing both sets along the way. Debt takes sky, the neutral first colour
+ * the journey opens with, never violet or rose (STYLE-GUIDE MC2: no orb colour is paired with a debt;
+ * MK6).
  */
 const ORB_TONE: Record<JourneyStopKey, JourneyOrbTone> = {
   accounts: "sky",
   budget: "violet",
   pay: "teal",
   "savings-and-pension": "rose",
-  "debt-and-borrowing": "violet",
+  "debt-and-borrowing": "sky",
   picture: "teal",
 };
 

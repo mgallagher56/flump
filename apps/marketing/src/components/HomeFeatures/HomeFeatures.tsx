@@ -214,6 +214,7 @@ export const HomeFeatures: FC = () => {
         <div
           className={controls()}
           data-testid="home-features-controls"
+          id="home-features-controls"
           hidden={!position.overflow}
         >
           <CarouselStepButton

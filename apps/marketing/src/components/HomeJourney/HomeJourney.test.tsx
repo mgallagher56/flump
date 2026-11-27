@@ -118,7 +118,7 @@ describe("HomeJourney", () => {
     expect(rail?.getAttribute("aria-hidden")).toBe("true");
     expect(rail?.getAttribute("data-scene")).toBe("still");
     expect(rail?.querySelector("canvas")).toBeNull();
-    expect(host.querySelector('[data-testid="motion-control"]')).not.toBeNull();
+    expect(host.querySelector("[data-motion-control]")).not.toBeNull();
   });
 
   it("never loads three.js or GSAP under reduced motion, and shows the complete still page", async () => {
