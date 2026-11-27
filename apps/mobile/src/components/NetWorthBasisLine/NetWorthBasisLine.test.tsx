@@ -85,7 +85,7 @@ describe("NetWorthBasisLine", () => {
       </ThemeProvider>,
     );
     expect(screen.queryByText(/Not counting/)).toBeNull();
-    fireEvent.press(screen.getByRole("link", { name: "Change what counts on the website" }));
+    fireEvent.press(screen.getByRole("link", { name: "Change what counts" }));
     expect(onChangeWhatCounts).toHaveBeenCalledTimes(1);
     await view.rerender(
       <ThemeProvider scheme="light">

@@ -829,7 +829,7 @@ Written by a Fable planner on 26 November 2026 from web's settings as they are n
 
 **The flow.**
 
-- More's Settings row and `flump://page/settings` open the Settings list. Home's "Change what counts" opens Profile at the net worth group and drops "on the website".
+- More's Settings row and `flump://page/settings` open the Settings list. Home's and the Accounts list's "Change what counts" open Profile at the net worth group and drop "on the website" (the Accounts list since S6 joined main).
 - **Net worth switches:** a change patches the profile, writes the answer into the profile query, and Home's figure, change line, bars and leaves-out line follow with no second request.
 - **Theme:** three radio rows (System, Light, Dark). The header button and the rows write one stored choice. `Appearance.setColorScheme` is set too, so alerts and the keyboard match. The choice stays through sign-out, as web's `flump-theme`.
 - **Hide amounts:** a switch. While on, `Money`, `HeroFigure` and the trend bars draw a fixed mask, spoken as "Hidden". The check-in and any field being edited stay readable, and the switch's hint says so.

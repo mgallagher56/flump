@@ -40,6 +40,10 @@ describe("SettingsSecurity", () => {
       "Your email cannot be shown here right now.",
     );
     expect(screen.getByRole("link", { name: "Open the Flump website" })).toBeOnTheScreen();
+    // The line says where a password is changed whatever the link can say.
+    expect(
+      screen.getByText("You change your password on the Flump website, which emails you a link."),
+    ).toBeOnTheScreen();
   });
 
   it("restored offline: no request, the button disabled with one line saying why", async () => {

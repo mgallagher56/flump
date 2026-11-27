@@ -63,8 +63,12 @@ appId: app.flump.mobile
     id: "tab-home"
 - extendedWaitUntil:
     visible:
-      id: "net-worth-basis-line"
+      id: "home-hero"
     timeout: 30000
-- assertVisible:
-    id: "home-hero"
+# The line sits under the hero, its trend bars and "See how it has changed" (S6): scroll to it.
+- scrollUntilVisible:
+    element:
+      id: "net-worth-basis-line"
+    direction: DOWN
+    timeout: 30000
 - takeScreenshot: home-not-counting-property-${THEME}
