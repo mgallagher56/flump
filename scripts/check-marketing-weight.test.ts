@@ -69,6 +69,47 @@ describe("measureClientBuild", () => {
     });
   });
 
+  it("with a build manifest, counts the home page's own chunks as first load and only what home imports later as lazy", () => {
+    const entry = "console.log('entry');".repeat(40);
+    const home = "export const home = 'hero';".repeat(30);
+    const shared = "export const card = 1;".repeat(20);
+    const motion = "export const gsap = () => 'tween';".repeat(50);
+    const pricing = "export const price = 'later';".repeat(60);
+    const css = ".a{color:red}".repeat(20);
+    const manifest = {
+      "index.html": {
+        file: "assets/index.js",
+        isEntry: true,
+        dynamicImports: ["src/pages/HomePage/index.ts", "src/pages/PricingPage/index.ts"],
+      },
+      "src/pages/HomePage/index.ts": {
+        file: "assets/HomePage.js",
+        imports: ["_Card.js", "index.html"],
+        dynamicImports: ["src/motion/gsap.ts"],
+      },
+      "src/pages/PricingPage/index.ts": { file: "assets/PricingPage.js", imports: ["_Card.js"] },
+      "_Card.js": { file: "assets/Card.js" },
+      "src/motion/gsap.ts": { file: "assets/gsap.js", imports: ["_Card.js"] },
+    };
+    const root = build({
+      "index.html": `<script type="module" src="/assets/index.js"></script><link rel="stylesheet" href="/assets/index.css">`,
+      ".vite/manifest.json": JSON.stringify(manifest),
+      "assets/index.js": entry,
+      "assets/HomePage.js": home,
+      "assets/Card.js": shared,
+      "assets/gsap.js": motion,
+      "assets/PricingPage.js": pricing,
+      "assets/index.css": css,
+    });
+    // First load: the entry, home's chunk and the shared card chunk it imports. Lazy: GSAP only
+    // (its shared import is already loaded). The pricing page's chunk counts nowhere.
+    expect(measureClientBuild(root)).toEqual({
+      firstLoadJsGzip: gz(entry) + gz(home) + gz(shared),
+      cssGzip: gz(css),
+      lazyJsGzip: gz(motion),
+    });
+  });
+
   it("refuses a build whose index.html loads no script, or loads a missing file", () => {
     expect(() => measureClientBuild(build({ "index.html": "<p>empty</p>" }))).toThrow(
       "loads no script",

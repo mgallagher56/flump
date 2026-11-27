@@ -26,7 +26,16 @@ export default defineConfig({
     },
   },
   theme: {
-    extend: {},
+    extend: {
+      // Marketing-only keyframes (UX-GUIDELINES 12.2). Reference them only under `_motionSafe`.
+      keyframes: {
+        // A bubble's slow drift between --drift-from and --drift-to (BubbleField; MK14).
+        marketingDrift: {
+          from: { transform: "translate3d(0, var(--drift-from, 0px), 0)" },
+          to: { transform: "translate3d(0, var(--drift-to, 0px), 0)" },
+        },
+      },
+    },
   },
 
   // Use a JSX framework

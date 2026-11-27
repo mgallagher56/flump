@@ -57,3 +57,6 @@ function parseCubicBezier(value: string): (t: number) => number {
 
 /** `easings.marketing.calm` as a function: arriving, opening, gliding. */
 export const calmEase = parseCubicBezier(marketingEasings.calm.value);
+
+/** `easings.marketing.calmInOut` as a function: travel, and a disclosure's height. */
+export const calmInOutEase = parseCubicBezier(marketingEasings.calmInOut.value);

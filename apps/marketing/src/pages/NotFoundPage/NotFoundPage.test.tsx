@@ -3,6 +3,7 @@ import { HelmetProvider } from "react-helmet-async";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 import App from "../../App";
+import { eagerPages } from "../../eagerPages";
 import { isKnownPath, resolveStatus } from "../../routes";
 import { NotFoundPage } from "./NotFoundPage";
 
@@ -10,7 +11,7 @@ const renderAt = (path: string) =>
   render(
     <HelmetProvider>
       <MemoryRouter initialEntries={[path]}>
-        <App />
+        <App pages={eagerPages} />
       </MemoryRouter>
     </HelmetProvider>,
   );

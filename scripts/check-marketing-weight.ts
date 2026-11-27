@@ -2,11 +2,14 @@
  * The marketing page-weight ratchet (ROLLOUT-PLAN section 2, UX-GUIDELINES MK12). Runs after the
  * marketing build and measures the home page as the browser loads it, gzipped:
  *
- * - first-load script: the module entry and its modulepreloads in index.html;
+ * - first-load script: the module entry and its modulepreloads in index.html, plus the home page's
+ *   own chunk and the shared chunks it imports. Each page is its own chunk (M1,
+ *   `apps/marketing/src/lazyPages.tsx`); the server preloads the requested page's chunks, read
+ *   from Vite's build manifest (`apps/marketing/server/pageChunks.ts`), and so does this check;
  * - first-load CSS: the stylesheets index.html links;
- * - lazy script: every other JavaScript chunk, loaded by a dynamic import after first paint. The
- *   site has no route splitting today, so every lazy chunk counts against the home page: an upper
- *   bound, which stays honest until a page other than home gains a lazy chunk.
+ * - lazy script: what the home page may load later by dynamic import (GSAP, three.js), from the
+ *   same manifest. Other pages' chunks are never loaded by home, so they do not count. A build
+ *   with no manifest counts every chunk index.html does not load, an upper bound.
  *
  * Each measure must stay at or under its baseline (main before the new design, F4) plus the plan's
  * budget for the new blocks. Raising a baseline or a budget is a guard change (AGENTS.md section
@@ -17,6 +20,11 @@
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { gzipSync } from "node:zlib";
+import { type BuildManifest, pageFiles, pageLazyFiles } from "../apps/marketing/server/pageChunks";
+
+/** The home page's module, the key Vite's build manifest gives its chunk (`pageSource` in `apps/marketing/src/pageSet.ts`). */
+export const HOME_PAGE_KEY = "src/pages/HomePage/index.ts";
+const MANIFEST = ".vite/manifest.json";
 
 export const MEASURES = ["firstLoadJsGzip", "cssGzip", "lazyJsGzip"] as const;
 export type Measure = (typeof MEASURES)[number];
@@ -76,8 +84,16 @@ export function measureClientBuild(dir: string): Weights {
     if (!existsSync(join(dir, rel)))
       throw new Error(`${dir}/index.html loads a missing file: ${rel}`);
   }
-  const first = new Set(scripts);
   const sum = (files: string[]) => files.reduce((total, rel) => total + gzipSize(dir, rel), 0);
+  if (existsSync(join(dir, MANIFEST))) {
+    const manifest = JSON.parse(readFileSync(join(dir, MANIFEST), "utf8")) as BuildManifest;
+    if (!manifest[HOME_PAGE_KEY]) throw new Error(`${dir}/${MANIFEST} has no ${HOME_PAGE_KEY}`);
+    const home = pageFiles(manifest, HOME_PAGE_KEY).filter((rel) => /\.m?js$/.test(rel));
+    const first = [...new Set([...scripts, ...home])];
+    const lazy = pageLazyFiles(manifest, HOME_PAGE_KEY).filter((rel) => /\.m?js$/.test(rel));
+    return { firstLoadJsGzip: sum(first), cssGzip: sum(styles), lazyJsGzip: sum(lazy) };
+  }
+  const first = new Set(scripts);
   return {
     firstLoadJsGzip: sum(scripts),
     cssGzip: sum(styles),
