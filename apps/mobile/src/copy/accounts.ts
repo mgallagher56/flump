@@ -133,6 +133,8 @@ export const ACCOUNT = {
   savedBalance: "Saved balance",
   calculated: "Calculated",
   confirmed: "Confirmed",
+  /** A month typed by hand, as web's "Show data" table and history's month list say. */
+  recorded: "Recorded",
 } as const;
 
 /** "October 2026" for "2026-10". */
@@ -181,12 +183,15 @@ export function heroSentences(...parts: (string | null)[]): string | null {
   return said.map((part) => (part.endsWith(".") ? part : `${part}.`)).join(" ");
 }
 
-/** How a month's figure was given, beside it in the month list; null for a typed one. */
-export function accountMonthNote(point: { source?: string | null; carried?: true }): string | null {
+/**
+ * Web's `accountSourceLabel`: how a month's figure was given, beside it in the month list, as the
+ * "Show data" table's Source column. A month typed by hand is "Recorded".
+ */
+export function accountMonthNote(point: { source?: string | null; carried?: true }): string {
   if (point.carried) return ACCOUNT.savedBalance;
   if (point.source === "calculated") return ACCOUNT.calculated;
   if (point.source === "confirmed") return ACCOUNT.confirmed;
-  return null;
+  return ACCOUNT.recorded;
 }
 
 /**

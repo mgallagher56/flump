@@ -68,7 +68,7 @@ describe("AccountDetail", () => {
     await userEvent.setup().press(screen.getByTestId("account-data-toggle"));
     expect(screen.getByText("Hide data")).toBeOnTheScreen();
     expect(screen.getByTestId("account-months-row-2026-5").props.accessibilityLabel).toBe(
-      "May 2026, £189,300",
+      "May 2026, £189,300, Recorded",
     );
     expect(screen.getByTestId("account-months-row-2026-11").props.accessibilityLabel).toBe(
       "November 2026, £186,000, Saved balance",
