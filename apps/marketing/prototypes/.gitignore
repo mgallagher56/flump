@@ -1,2 +1,3 @@
 # Screenshots stay in the worktree; they are not committed (8 MB of PNG in a public repo).
 screenshots/*.png
+screenshots/others/

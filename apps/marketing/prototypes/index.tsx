@@ -1,6 +1,10 @@
 import type { FC, ReactNode } from "react";
 import { Route } from "react-router-dom";
 import { Header } from "../src/components/Header";
+import { DebtProto, PayProto } from "./others/pages/AreaPage";
+import { FeaturesIndexProto } from "./others/pages/FeaturesIndex";
+import { PricingProto } from "./others/pages/Pricing";
+import { PrivacyProto } from "./others/pages/Privacy";
 import { P1 } from "./p1/P1";
 import { P1b } from "./p1b/P1b";
 import { P2 } from "./p2/P2";
@@ -121,6 +125,40 @@ const ROUND_FOUR: Entry[] = [
   },
 ];
 
+/** Other pages, round one (OTHER-PAGES-PLAN R1): built from prototype 11's blocks. */
+const OTHER_PAGES: Entry[] = [
+  {
+    path: "others/features",
+    Page: FeaturesIndexProto,
+    title: "Features index",
+    about: "The features page: hero with the scene, Start here cards, every group as a glass card.",
+  },
+  {
+    path: "others/pay",
+    Page: PayProto,
+    title: "Area page template: Pay",
+    about: "The area template with the payslip unfolding beside What you see.",
+  },
+  {
+    path: "others/debt",
+    Page: DebtProto,
+    title: "Area page template: Debt and borrowing",
+    about: "The same template with the debt running down; violet and teal, never rose.",
+  },
+  {
+    path: "others/pricing",
+    Page: PricingProto,
+    title: "Pricing",
+    about: "The beta plan as a glass card; no picture, tilt or counting near the price.",
+  },
+  {
+    path: "others/privacy",
+    Page: PrivacyProto,
+    title: "Legal page: Privacy",
+    about: "Production's privacy notice with orbs in the header band only, or nothing.",
+  },
+];
+
 const List: FC<{ entries: Entry[] }> = ({ entries }) => (
   <ol>
     {entries.map((entry) => (
@@ -140,10 +178,16 @@ const PrototypeIndex = () => (
     <main className="proto-index" id="main">
       <h1>Motion prototypes</h1>
       <p>
-        Throwaway versions of the home page, for judging the feel. Development only: a production
-        build has none of this. Each page has a panel with a reduce motion switch, the frame rate
-        and the added weight. Prototypes 8 to 11b also have Speed and Bubbles controls.
+        Throwaway versions of the marketing pages, for judging the feel. Development only: a
+        production build has none of this. Each page has a panel with a reduce motion switch, the
+        frame rate and the added weight. Prototypes 8 to 11b also have Speed and Bubbles controls.
       </p>
+      <h2>Other pages, round one</h2>
+      <p>
+        Pages other than home, from prototype 11's blocks. Each has a Scene switch in its panel: S0
+        still orbs, S1 a live scene in the first band, S2 one canvas behind the whole page.
+      </p>
+      <List entries={OTHER_PAGES} />
       <h2>Round four: reworked</h2>
       <List entries={ROUND_FOUR} />
       <h2>Round three: combined</h2>
@@ -158,7 +202,7 @@ const PrototypeIndex = () => (
 
 export const prototypeRoutes: ReactNode = [
   <Route element={<PrototypeIndex />} key="index" path="/prototypes" />,
-  ...[...ROUND_ONE, ...ROUND_TWO, ...ROUND_THREE, ...ROUND_FOUR].map(({ path, Page }) => (
-    <Route element={<Page />} key={path} path={`/prototypes/${path}`} />
-  )),
+  ...[...ROUND_ONE, ...ROUND_TWO, ...ROUND_THREE, ...ROUND_FOUR, ...OTHER_PAGES].map(
+    ({ path, Page }) => <Route element={<Page />} key={path} path={`/prototypes/${path}`} />,
+  ),
 ];

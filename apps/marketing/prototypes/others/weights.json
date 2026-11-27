@@ -1,0 +1,96 @@
+{
+  "measuredAt": "2026-11-27",
+  "note": "Minified and gzipped (CSS unminified), excluding what production already ships and the dev shell. Lazy at S0 is GSAP; S1 and S2 add the orb scene and three.js.",
+  "pages": {
+    "features": {
+      "s0": {
+        "initialGzip": 6846,
+        "cssGzip": 8808,
+        "lazyGzip": 74558
+      },
+      "s1": {
+        "initialGzip": 6846,
+        "cssGzip": 8808,
+        "lazyGzip": 215349
+      },
+      "s2": {
+        "initialGzip": 6846,
+        "cssGzip": 8808,
+        "lazyGzip": 215349
+      }
+    },
+    "pay": {
+      "s0": {
+        "initialGzip": 14250,
+        "cssGzip": 19978,
+        "lazyGzip": 74558
+      },
+      "s1": {
+        "initialGzip": 14250,
+        "cssGzip": 19978,
+        "lazyGzip": 215323
+      },
+      "s2": {
+        "initialGzip": 14250,
+        "cssGzip": 19978,
+        "lazyGzip": 215323
+      }
+    },
+    "debt": {
+      "s0": {
+        "initialGzip": 14250,
+        "cssGzip": 19978,
+        "lazyGzip": 74558
+      },
+      "s1": {
+        "initialGzip": 14250,
+        "cssGzip": 19978,
+        "lazyGzip": 215323
+      },
+      "s2": {
+        "initialGzip": 14250,
+        "cssGzip": 19978,
+        "lazyGzip": 215323
+      }
+    },
+    "pricing": {
+      "s0": {
+        "initialGzip": 5646,
+        "cssGzip": 8814,
+        "lazyGzip": 74558
+      },
+      "s1": {
+        "initialGzip": 5646,
+        "cssGzip": 8814,
+        "lazyGzip": 215298
+      },
+      "s2": {
+        "initialGzip": 5646,
+        "cssGzip": 8814,
+        "lazyGzip": 215298
+      }
+    },
+    "privacy": {
+      "none": {
+        "initialGzip": 0,
+        "cssGzip": 0,
+        "lazyGzip": 0
+      },
+      "s0": {
+        "initialGzip": 3263,
+        "cssGzip": 4885,
+        "lazyGzip": 0
+      },
+      "s1": {
+        "initialGzip": 3263,
+        "cssGzip": 4885,
+        "lazyGzip": 140740
+      },
+      "s2": {
+        "initialGzip": 3263,
+        "cssGzip": 4885,
+        "lazyGzip": 140740
+      }
+    }
+  }
+}

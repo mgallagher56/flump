@@ -1,0 +1,552 @@
+/*
+ * The other pages' own CSS (round one of OTHER-PAGES-PLAN). Every rule is scoped under `.o1`, the
+ * shell's root, so nothing here can change prototype 11 when both are loaded in one session.
+ * Semantic token variables only.
+ */
+
+.o1 {
+  position: relative;
+  isolation: isolate;
+  background: var(--colors-surface-canvas);
+}
+
+.o1 .o1-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ---------- Scene stages: behind the content of their band (or the page, at S2) ---------- */
+
+.o1 .o1-band {
+  position: relative;
+  isolation: isolate;
+}
+
+.o1 .o1-stage {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.o1 .o1-stage--fixed {
+  position: fixed;
+}
+
+.o1 .o1-stage .o1-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity var(--t-entry) var(--ease-out);
+}
+
+.o1 .o1-stage__still {
+  position: absolute;
+  inset: 0;
+  transition: opacity var(--t-entry) var(--ease-out);
+}
+
+.o1 .o1-stage__orb {
+  position: absolute;
+  translate: -50% -50%;
+}
+
+/* Still and live share one layout, so the change from one to the other is a cross-fade. */
+.o1 .o1-stage[data-live="true"] .o1-canvas {
+  opacity: 1;
+}
+
+.o1 .o1-stage[data-live="true"] .o1-stage__still {
+  opacity: 0;
+}
+
+/* Paused: the bubbles' small drift stops as well. */
+.o1[data-ambient="paused"] .proto-bubbles__bubble {
+  animation: none;
+}
+
+/* S2: the bands give up their own colour so the page canvas shows through; cards keep theirs. */
+.o1[data-scene="s2"] .o1-band:not(.o1-band--solid),
+.o1[data-scene="s2"] .o1-legal > div:not(.o1-legal__band) {
+  background: transparent;
+}
+
+/* ---------- The pause control ---------- */
+
+.o1 .o1-pause {
+  position: fixed;
+  left: 12px;
+  bottom: 12px;
+  z-index: 55;
+  border-radius: 999px;
+  border: 1px solid var(--colors-border);
+  background: color-mix(in oklab, var(--colors-surface-card) 94%, transparent);
+  box-shadow: var(--shadows-sm);
+}
+
+.o1 .o1-pause--inline {
+  position: static;
+  box-shadow: none;
+}
+
+/* ---------- Hero: copy left, scene right; on phones the orbs sit on a shelf below ---------- */
+
+.o1 .o1-hero {
+  padding: clamp(2.5rem, 6vw, 5rem) 1rem;
+}
+
+.o1 .o1-hero__inner {
+  position: relative;
+  width: 100%;
+  max-width: 72rem;
+  margin: 0 auto;
+}
+
+.o1 .o1-hero__copy {
+  display: grid;
+  gap: 1rem;
+  justify-items: start;
+}
+
+.o1 .o1-hero__label {
+  margin: 0;
+  font-weight: 600;
+  color: var(--colors-text-secondary);
+}
+
+.o1 .o1-hero__title {
+  text-wrap: balance;
+}
+
+.o1 .o1-hero__lead {
+  max-width: 34ch;
+}
+
+.o1 .o1-hero__intro {
+  margin: 0;
+  max-width: 44ch;
+  color: var(--colors-text-secondary);
+}
+
+.o1 .o1-hero__ctas {
+  margin-top: 0.5rem;
+}
+
+.o1 .o1-hero__ctas > div {
+  justify-content: flex-start;
+}
+
+@media (max-width: 47.99rem) {
+  /* The shelf the orbs sit on, below the calls to action. */
+  .o1:not([data-scene="none"]):not([data-scene="s2"]) .o1-hero {
+    padding-bottom: 9rem;
+  }
+}
+
+@media (min-width: 48rem) {
+  .o1 .o1-hero {
+    display: flex;
+    align-items: center;
+    min-height: 26rem;
+  }
+
+  .o1 .o1-hero__copy {
+    max-width: min(38rem, 62%);
+  }
+}
+
+@media (min-width: 64rem) {
+  .o1 .o1-hero {
+    min-height: 30rem;
+  }
+
+  .o1 .o1-hero__copy {
+    max-width: min(38rem, 54%);
+  }
+}
+
+/* ---------- Shared bits ---------- */
+
+.o1 .o1-link {
+  color: var(--colors-primary);
+  font-weight: 600;
+  text-underline-offset: 3px;
+}
+
+/* ---------- Features index: Start here ---------- */
+
+.o1 .o1-goals {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12.5rem), 1fr));
+}
+
+.o1 .o1-goal__card {
+  height: 100%;
+  display: grid;
+  align-content: start;
+  gap: 0.75rem;
+  padding: 1.25rem 1.35rem;
+  border-radius: 22px;
+}
+
+.o1 .o1-goal__title {
+  margin: 0;
+  font-weight: 700;
+  font-size: 1.0625rem;
+  color: var(--colors-text-primary);
+}
+
+.o1 .o1-goal__links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.4rem;
+}
+
+/* ---------- Features index: the groups ---------- */
+
+.o1 .o1-groups {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 25rem), 1fr));
+  align-items: start;
+}
+
+.o1 .o1-group {
+  padding: 1.25rem;
+  border-radius: 24px;
+}
+
+.o1 .o1-group__head {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.o1 .o1-group__title {
+  font-weight: 700;
+  margin: 0;
+  font-size: 1.25rem;
+  line-height: 1.25;
+  color: var(--colors-text-primary);
+}
+
+.o1 .o1-group__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+.o1 .o1-group__link:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.o1 .o1-lines {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+}
+
+.o1 .o1-lines > li + li {
+  border-top: 1px solid var(--colors-border);
+}
+
+.o1 .o1-line__summary {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0.25rem;
+  cursor: pointer;
+  list-style: none;
+  border-radius: 10px;
+}
+
+.o1 .o1-line__summary::-webkit-details-marker {
+  display: none;
+}
+
+.o1 .o1-line__text {
+  flex: 1;
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.o1 .o1-line__name {
+  font-weight: 600;
+  color: var(--colors-text-primary);
+}
+
+.o1 .o1-line__line {
+  color: var(--colors-text-secondary);
+  font-size: 0.9375rem;
+}
+
+.o1 .o1-line__chevron {
+  flex: none;
+  color: var(--colors-text-secondary);
+  transition: rotate var(--t-disclosure) var(--ease-in-out);
+}
+
+.o1 .o1-line[open]:not([data-state="closed"]) .o1-line__chevron {
+  rotate: 180deg;
+}
+
+.o1 .o1-line__panel {
+  overflow: hidden;
+  display: grid;
+  gap: 0.5rem;
+  padding: 0 0.25rem 0.9rem;
+}
+
+.o1 .o1-line__panel p {
+  margin: 0;
+  color: var(--colors-text-secondary);
+}
+
+.o1[data-motion="reduce"] .o1-line__chevron {
+  transition: none;
+}
+
+/* ---------- Area page: facts beside the set piece ---------- */
+
+.o1 .o1-split {
+  display: grid;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+@media (min-width: 60rem) {
+  .o1 .o1-split {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 3rem;
+  }
+}
+
+.o1 .o1-facts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.o1 .o1-fact {
+  padding: 1.1rem 1.25rem;
+  border-radius: 20px;
+}
+
+.o1 .o1-fact p {
+  margin: 0;
+  color: var(--colors-text-primary);
+}
+
+.o1 .o1-fact-footer {
+  margin-top: 1rem;
+}
+
+.o1 .o1-setpiece {
+  min-width: 0;
+  max-width: 34rem;
+  width: 100%;
+  justify-self: center;
+}
+
+/* ---------- Area page: more detail ---------- */
+
+.o1 .o1-depth {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+}
+
+.o1 .o1-depth > li {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.15rem;
+  border-radius: 18px;
+  color: var(--colors-text-primary);
+  font-weight: 500;
+}
+
+/* ---------- Area page: part of one picture ---------- */
+
+.o1 .o1-pills {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.o1 .o1-pill__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 1rem 0.5rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid var(--colors-border);
+  background: var(--colors-surface-card);
+  box-shadow: var(--shadows-sm);
+  color: var(--colors-text-primary);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.o1 .o1-pill__link[data-current="true"] {
+  border-color: var(--colors-border-strong);
+}
+
+.o1 .o1-pill__here {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--colors-text-secondary);
+}
+
+/* ---------- Close: the getting started ticket ---------- */
+
+.o1 .o1-close {
+  display: grid;
+  justify-items: center;
+  gap: 1rem;
+  text-align: center;
+}
+
+.o1 .o1-close__title {
+  font-weight: 700;
+  margin: 0;
+  font-size: clamp(1.5rem, 1.2rem + 1vw, 2rem);
+  line-height: 1.2;
+  color: var(--colors-text-primary);
+  text-wrap: balance;
+}
+
+.o1 .o1-close__text {
+  margin: 0;
+  color: var(--colors-text-secondary);
+}
+
+/* ---------- Pricing ---------- */
+
+.o1 .o1-plan {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.o1 .o1-plan__name {
+  font-weight: 700;
+  margin: 0;
+  font-size: 1.5rem;
+  line-height: 1.25;
+  color: var(--colors-text-primary);
+}
+
+.o1 .o1-plan__features {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.o1 .o1-plan__features li {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  color: var(--colors-text-primary);
+}
+
+.o1 .o1-plan__tick {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  margin-top: 0.15rem;
+  color: var(--colors-primary);
+}
+
+.o1 .o1-paid {
+  margin-top: 1.25rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.75rem;
+  padding: 0 0.25rem;
+}
+
+.o1 .o1-paid__name {
+  font-weight: 700;
+  margin: 0;
+  font-size: 1rem;
+  color: var(--colors-text-primary);
+}
+
+.o1 .o1-paid__price {
+  color: var(--colors-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.o1 .o1-paid__note {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--colors-text-secondary);
+  font-size: 0.9375rem;
+}
+
+/* No bubbles behind the price on phones, where the card fills the width. */
+@media (max-width: 63.99rem) {
+  .o1 .o1-plan-band .proto-bubbles {
+    display: none;
+  }
+}
+
+/* ---------- Legal: the header band ---------- */
+
+.o1 .o1-legal {
+  position: relative;
+  isolation: isolate;
+}
+
+.o1 .o1-legal__band {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* The page's own background moves to the shell root, so the band's orbs can sit behind it. */
+.o1 .o1-legal > div:not(.o1-legal__band) {
+  background: transparent;
+}
+
+/* ---------- Focus, last so it wins over every state above ---------- */
+
+.o1 .o1-link:focus-visible,
+.o1 .o1-group__link:focus-visible,
+.o1 .o1-pill__link:focus-visible,
+.o1 .o1-line__summary:focus-visible {
+  outline: 2px solid var(--colors-border-focus-ring);
+  outline-offset: 2px;
+}
