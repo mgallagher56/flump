@@ -24,7 +24,7 @@ const SAFETY_MARGIN = 1.1;
 /** Extra pre-measurement headroom so an unmeasured bar near the proportional limit chooses scroll. */
 const PRE_MEASURE_SCROLL_HEADROOM = 1.1;
 /** Per-label rounding headroom (1 pt) so Android pixel rounding does not wrap a label at exact fit. */
-const LABEL_FIT_EPSILON = 1;
+export const LABEL_FIT_EPSILON = 1;
 
 export interface TabLayoutInput {
   readonly labels: readonly string[];
@@ -155,7 +155,7 @@ export const createStyles = (theme: Theme) =>
     row: { flexDirection: "row" },
     scrollRow: { flexDirection: "row" },
     cell: { flex: 1, flexBasis: 0, alignItems: "stretch" },
-    proportionalCell: { flexBasis: 0, alignItems: "stretch" },
+    proportionalCell: { flexGrow: 1, flexShrink: 0, alignItems: "stretch" },
     scrollCell: { flexShrink: 0, alignItems: "stretch" },
     fade: { position: "absolute", top: 0, bottom: 0, width: theme.spacing["6"] },
     fadeLeft: { left: 0 },
