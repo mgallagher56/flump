@@ -21,7 +21,7 @@ describe("BreathingRoom", () => {
     ).toBeOnTheScreen();
   });
 
-  it("from a year, the whole months round down (D8): the device check's 16.5 is 1 year 4 months", async () => {
+  it("from a year, the whole months round down (D9): the device check's 16.5 is 1 year 4 months", async () => {
     // 21,000 / 1,275 = 16.47, stored as 16.5: 16 whole months, never 17 (rounded up twice).
     await draw({
       ...breathingRoomStates.renter,

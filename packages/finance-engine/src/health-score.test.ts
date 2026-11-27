@@ -174,7 +174,7 @@ describe("health-score module", () => {
       expect(res.canonicalStage).toBe("STAGE_1_DEBT_RECOVERY");
     });
 
-    it("compares the unrounded runway with 3 months: 2.95 is still Stage 2 (D8, 27 November 2026)", () => {
+    it("compares the unrounded runway with 3 months: 2.95 is still Stage 2 (D9, 27 November 2026)", () => {
       // 2,950 / 1,000 = 2.95 months, under 3. Rounded first to one decimal it read 3.0 and passed.
       const res = evaluateFinancialStage({
         debts: [],

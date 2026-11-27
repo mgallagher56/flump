@@ -5,7 +5,7 @@
  *
  * Owner rulings: "About 1.5 months" style under a year (15 November 2026); from 12 months, whole
  * years and months, "1 year", "1 year 1 month" (18 November 2026); the whole months round down
- * (fable-decider and owner, 27 November 2026, DECISIONS.md), superseding 18 November's half up.
+ * (fable-decider and owner, 27 November 2026, DECISIONS.md D9), superseding 18 November's half up.
  *
  * Rounding happens once: the figure is taken to one decimal place (half up, as stored). Under 12 it
  * reads as that ("About 9.3 months"); from 12 (so 11.96 never reads "About 12 months") the year form
