@@ -43,7 +43,7 @@ interface NetWorthHero {
  * The strip, or out of step when the profile's facts it reads do not parse (a newer backend's
  * value): then only the strip says so, and the hero and the check-in row stay.
  */
-export type HomeStripState =
+type HomeStripState =
   | { status: "ready"; value: HomeStrip }
   | { status: "outOfStep"; retry: () => void };
 

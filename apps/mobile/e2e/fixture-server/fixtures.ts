@@ -279,7 +279,7 @@ export const HOMEOWNER_ACCOUNTS: readonly PersonaAccount[] = [
 ];
 
 /** The renter's accounts with no debt: the pension pots take the strip's second card (S5b). */
-export const PENSION_ONLY_ACCOUNTS: readonly PersonaAccount[] = RENTER_ACCOUNTS.filter(
+const PENSION_ONLY_ACCOUNTS: readonly PersonaAccount[] = RENTER_ACCOUNTS.filter(
   (a) => a.type !== "Credit Card" && a.type !== "Student Loan",
 );
 
