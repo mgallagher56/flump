@@ -65,6 +65,7 @@ describe("Money", () => {
   it.each([
     ["sm", "body.sm"],
     ["md", "body.md"],
+    ["kpi", "heading.md"],
     ["lg", "heading.lg"],
   ] as const)("size %s uses the %s text style", async (size, key) => {
     await render(
