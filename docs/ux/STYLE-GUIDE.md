@@ -117,7 +117,7 @@ Light mode ("Mint") adds colour without tinting data:
 
 **Rule C5.** `surface.hero` appears at most once per page, on the page's headline figure. **Enforced by** `expectPageRules` **[PR 2]**.
 
-**Rule C6.** Marketing uses the same tokens as the app, plus its own material tokens (section 2.7), and no off-system colour. In the apps the logo is the only gradient or glow. On the marketing site the only others are the orb's own shading and the light of the glass card and the tilt-and-light hover (section 2.7). None is drawn over text or a figure, and none is violet or rose except on the orb itself. **Enforced by** `scripts/check-design-tokens.ts` (baseline may only shrink).
+**Rule C6.** Marketing uses the same tokens as the app, plus its own material tokens (section 2.7), and no off-system colour. In the apps the logo is the only gradient; the only light is the glass card material on cards holding no figure and a still focus or hover light (tier A). On the marketing site the only others are the orb's own shading and the light of the glass card and the tilt-and-light hover (section 2.7). None is drawn over text or a figure, and none is violet or rose except on the orb itself. **Enforced by** `scripts/check-design-tokens.ts` (baseline may only shrink).
 
 ### 2.5 Contrast
 
@@ -150,7 +150,7 @@ Since Midnight and Mint (24 Nov 2026) the accent is a deep blue-teal in light an
 
 ### 2.7 Marketing colour and material (27 Nov 2026)
 
-The marketing site adds an orb, bubble fields and two card materials to the palette above. They are tokens like any other **[F2]**: `orb.skyTeal.*` and `orb.violetRose.*` in `packages/tokens/src/index.ts`, plus the glass and paper material. Only `apps/marketing` and the shared marketing pieces use them. Behaviour is in UX-GUIDELINES 12.2.
+The marketing site adds an orb, bubble fields and two card materials to the palette above. They are tokens like any other **[F2]**: `orb.skyTeal.*` and `orb.violetRose.*` in `packages/tokens/src/index.ts`, plus the glass and paper material. The orb and bubble tokens are marketing only. The glass material and the still hover light may also be used in the apps on cards holding no figure (tier A, AT3). Behaviour is in UX-GUIDELINES 12.2.
 
 | Element              | Colour and material                                                                                                                               | Never                                                                        |
 | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
@@ -364,7 +364,7 @@ The approved sheet is prototype 11's picture set (`apps/marketing/prototypes/p11
 
 ## 9. Logo
 
-- The logo is the Flump blob: a soft teal form with a radial gradient and a small ground shadow, drawn inline so it follows the theme. It is the only gradient in the apps; on the marketing site the orb and the material light in section 2.7 are the others (rule C6).
+- The logo is the Flump blob: a soft teal form with a radial gradient and a small ground shadow, drawn inline so it follows the theme. It is the only gradient in the apps (material light: rule C6); on the marketing site the orb and the material light in section 2.7 are the others (rule C6).
 - One component (`FlumpLogo`, wrapped by `HomeLogo` in the header) on marketing and web. The mobile app icon and in-app logo are drawn from the same artwork.
 - Sizes `sm`, `md`, `lg`. Clear space around it is at least half its width. Do not recolour it, rotate it, add a wordmark in another typeface, or place it on `surface.hero` or a photograph.
 - In a header it links to home and takes its accessible name from the link.
@@ -410,7 +410,7 @@ These are the app scale. The marketing site has its own calm scale **[F2]**, nam
 
 ### 11.1 Approved animations in the apps (E17; tiers in UX-GUIDELINES 12.1)
 
-These are the only animations in the web and mobile apps beyond tier A. Each plays once, in answer to something the user did or the first time a thing is seen. None plays on every page load and none loops. Working demos are in the options page, section 4. The first four mark a change of state; the rest are tier B moments.
+These are the only animations in the web and mobile apps beyond tier A. Each plays once, in answer to something the user did or the first time a thing is seen. None plays on every page load and none loops. Working demos are in the options page, section 4. A saved figure changing, the check-in moving on and the save confirmation mark a change of state. The rest are tier B moments: setup progress, the chart draw, the check-in completion picture and onboarding entrances from the tier table, and the empty-state settle (ROLLOUT-PLAN section 4, "Empty and error states").
 
 | Animation                               | Tokens                                                                                   | Plays                                                                                                                                                 | With reduced motion                               |
 | --------------------------------------- | ---------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
