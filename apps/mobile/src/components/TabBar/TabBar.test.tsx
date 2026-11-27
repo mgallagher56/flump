@@ -603,16 +603,22 @@ describe("tabLayout", () => {
     }
   });
 
-  it("from measured label widths, picks scroll when wider than estimate, exact equal/proportional boundaries, and keeps every share >= measured cell width", () => {
+  it("from measured label widths, picks scroll when wider than estimate, exact equal/proportional boundaries with 1pt per-label epsilon, and keeps every share >= measured cell width", () => {
     // Measured widths [66, 126, 94, 48, 66] + 8pt horizontal pill padding = [74, 134, 102, 56, 74].
-    // Longest * 5 = 134 * 5 = 670; sum = 440.
+    // With 1pt per-label rounding epsilon (5 labels):
+    // - Proportional/scroll boundary: sum = 74 + 134 + 102 + 56 + 74 = 440; sum + 5 * 1 = 445.
+    //   At 440 (exact sum) and 444 (sum + 4), mode is "scroll"; at 445 (sum + 5 * 1), "proportional".
+    // - Equal/proportional boundary: longest = 134; (134 + 1) * 5 = 675 (longest * 5 = 670).
+    //   At 670 and 674, mode is "proportional"; at 675, "equal".
     const measured = [66, 126, 94, 48, 66] as const;
-    const eq = atMeasured(670, 2, measured);
+    const eq = atMeasured(675, 2, measured);
     expect(eq.mode).toBe("equal");
     expect(eq.labelWidths).toEqual([74, 134, 102, 56, 74]);
-    expect(atMeasured(669, 2, measured).mode).toBe("proportional");
-    expect(atMeasured(440, 2, measured).mode).toBe("proportional");
-    expect(atMeasured(439, 2, measured).mode).toBe("scroll");
+    expect(atMeasured(674, 2, measured).mode).toBe("proportional");
+    expect(atMeasured(670, 2, measured).mode).toBe("proportional");
+    expect(atMeasured(445, 2, measured).mode).toBe("proportional");
+    expect(atMeasured(444, 2, measured).mode).toBe("scroll");
+    expect(atMeasured(440, 2, measured).mode).toBe("scroll");
 
     // Measured "Home" wider than estimate at width 472 (where estimate says proportional) -> scroll.
     expect(at(472, 2).mode).toBe("proportional");
@@ -622,7 +628,7 @@ describe("tabLayout", () => {
     expect(atMeasured(400, 1, [36, 62, 46, 26, 36]).labelWidths).toEqual([48, 70, 54, 48, 48]);
 
     // Every equal and proportional share is at least the measured cell width.
-    for (const width of [440, 480, 669, 670, 720]) {
+    for (const width of [445, 480, 674, 675, 720]) {
       const res = atMeasured(width, 2, measured);
       expect(res.mode).not.toBe("scroll");
       const total = res.labelWidths.reduce((sum, w) => sum + w, 0);
