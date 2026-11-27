@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   type BuildManifest,
   entryKey,
+  type ManifestChunk,
   pageFiles,
   pageLazyFiles,
   pagePreloadLinks,
@@ -65,5 +66,33 @@ describe("pageChunks", () => {
     expect(() => staticClosure({ a: { file: "a.js", imports: ["gone"] } }, "a")).toThrow(
       "The build manifest has no chunk gone",
     );
+  });
+});
+
+describe("pageLazyFiles with assets", () => {
+  it("counts a lazy chunk's stylesheet and images, not the first-load ones", () => {
+    const manifest: BuildManifest = {
+      ...MANIFEST,
+      // The entry links the site's stylesheet and its font; a lazy chunk that shares them does
+      // not load them again.
+      "index.html": {
+        ...(MANIFEST["index.html"] as ManifestChunk),
+        css: ["assets/index.css"],
+        assets: ["assets/inter.woff2"],
+      },
+      "_gsap.js": { file: "assets/gsap.js", imports: ["index.html"], css: ["assets/index.css"] },
+      "src/motion/gsapKit.ts": {
+        file: "assets/gsapKit.js",
+        imports: ["_Card.js", "_gsap.js"],
+        css: ["assets/scene.css"],
+        assets: ["assets/env.png"],
+      },
+    };
+    expect(pageLazyFiles(manifest, "src/pages/HomePage/index.ts")).toEqual([
+      "assets/gsap.js",
+      "assets/gsapKit.js",
+      "assets/scene.css",
+      "assets/env.png",
+    ]);
   });
 });

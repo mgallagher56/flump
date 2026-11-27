@@ -1,6 +1,6 @@
 import { Icon, marketingMs } from "@repo/ui";
 import { ChevronDown } from "lucide-react";
-import { type FC, type ReactNode, useRef, useState } from "react";
+import { type FC, type ReactNode, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import type { GsapKit } from "../../motion/loadGsapKit";
 import { useGsapMoment } from "../../motion/useGsapMoment";
@@ -95,6 +95,10 @@ export function faqMoment({ gsap }: GsapKit, root: HTMLElement): undefined {
 export const HomeFAQ: FC = () => {
   const [openId, setOpenId] = useState<string | null>(HOME_FAQS[0]?.id ?? null);
   const listRef = useRef<HTMLUListElement>(null);
+  // Closed answers leave the tab order only once script runs; the server HTML keeps every answer
+  // reachable for a page with no JavaScript.
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => setHydrated(true), []);
   useGsapMoment(listRef, faqMoment);
 
   return (
@@ -131,7 +135,7 @@ export const HomeFAQ: FC = () => {
                 className={faqAnswer({ open: isOpen })}
                 data-open={isOpen}
                 id={`faq-answer-${faq.id}`}
-                inert={!isOpen}
+                inert={hydrated && !isOpen}
               >
                 <div className={faqAnswerInner}>
                   <p className={faqAnswerText}>{faq.a}</p>

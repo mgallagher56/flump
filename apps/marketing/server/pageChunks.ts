@@ -7,10 +7,12 @@
  */
 
 /** The part of a Vite manifest entry this module reads. */
-interface ManifestChunk {
+export interface ManifestChunk {
   readonly file: string;
   readonly imports?: readonly string[];
   readonly dynamicImports?: readonly string[];
+  readonly css?: readonly string[];
+  readonly assets?: readonly string[];
   readonly isEntry?: boolean;
 }
 
@@ -30,6 +32,18 @@ export function staticClosure(manifest: BuildManifest, key: string): string[] {
   };
   visit(key);
   return files;
+}
+
+/** The manifest keys a chunk loads at once: itself and its static imports. */
+function chunksOf(manifest: BuildManifest, key: string): string[] {
+  const seen = new Set<string>();
+  const visit = (k: string) => {
+    if (seen.has(k) || !manifest[k]) return;
+    seen.add(k);
+    for (const imported of manifest[k]?.imports ?? []) visit(imported);
+  };
+  visit(key);
+  return [...seen];
 }
 
 /** The manifest key of the client entry (the script index.html loads). */
@@ -52,7 +66,15 @@ export function pageFiles(manifest: BuildManifest, pageKey: string): string[] {
  */
 export function pageLazyFiles(manifest: BuildManifest, pageKey: string): string[] {
   const entry = entryKey(manifest);
-  const first = new Set([...staticClosure(manifest, entry), ...staticClosure(manifest, pageKey)]);
+  // Everything the first load brings: the entry's and the page's chunks with their stylesheets and
+  // assets (the linked CSS and its fonts), so a lazy chunk that shares them does not count them again.
+  const first = new Set(
+    [...chunksOf(manifest, entry), ...chunksOf(manifest, pageKey)].flatMap((k) => [
+      manifest[k]?.file ?? "",
+      ...(manifest[k]?.css ?? []),
+      ...(manifest[k]?.assets ?? []),
+    ]),
+  );
   const lazy = new Set<string>();
   const seen = new Set<string>([entry]);
   const walk = (k: string) => {
@@ -63,6 +85,11 @@ export function pageLazyFiles(manifest: BuildManifest, pageKey: string): string[
     for (const imported of chunk.imports ?? []) walk(imported);
     for (const dynamic of chunk.dynamicImports ?? []) {
       for (const file of staticClosure(manifest, dynamic)) if (!first.has(file)) lazy.add(file);
+      // A lazy chunk's own stylesheets and assets (images, fonts) load with it.
+      for (const k of chunksOf(manifest, dynamic)) {
+        for (const file of [...(manifest[k]?.css ?? []), ...(manifest[k]?.assets ?? [])])
+          if (!first.has(file)) lazy.add(file);
+      }
       walk(dynamic);
     }
   };

@@ -192,13 +192,8 @@ export const SAMPLE_DEBT = (() => {
   const last = result.schedule.at(-1);
   const endLabel = last ? longMonthYear.format(ym(last.calendarDate)) : startLabel;
   const fixedEnd = ACCOUNTS.mortgage?.fixedRateEndDate;
-  const fixedEndLabel = fixedEnd
-    ? new Intl.DateTimeFormat("en-GB", {
-        month: "long",
-        year: "numeric",
-        timeZone: "Europe/London",
-      }).format(new Date(`${fixedEnd}T12:00:00Z`))
-    : null;
+  // A fixed sample date, read as its year and month (no clock and no time zone involved).
+  const fixedEndLabel = fixedEnd ? longMonthYear.format(ym(fixedEnd)) : null;
   return { start, monthly, points, startLabel, endLabel, fixedEndLabel };
 })();
 

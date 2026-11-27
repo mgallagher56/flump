@@ -53,9 +53,9 @@ export const JourneyStop: FC<JourneyStopProps> = ({ stop, index }) => {
       const tl = gsap.timeline({ paused: true });
       tl.fromTo(
         sides,
-        { autoAlpha: 0, y: 24 },
+        { opacity: 0, y: 24 },
         {
-          autoAlpha: 1,
+          opacity: 1,
           y: 0,
           duration: seconds("entry"),
           ease: "calm",
@@ -67,7 +67,7 @@ export const JourneyStop: FC<JourneyStopProps> = ({ stop, index }) => {
       const moved = sampleRoot && moment ? moment(kit, tl, sampleRoot, seconds("disclosure")) : [];
       // At rest nothing carries a transform or an inline opacity (MK3).
       tl.eventCallback("onComplete", () => {
-        gsap.set([...sides, ...moved], { clearProps: "transform,opacity,visibility" });
+        gsap.set([...sides, ...moved], { clearProps: "transform,opacity" });
       });
       ScrollTrigger.create({
         trigger: root,
