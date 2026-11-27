@@ -81,11 +81,41 @@ export function TabBar({ items, activeKey, onSelect }: TabBarProps) {
   const [height, setHeight] = useState(0);
   const textScale = useTextScale();
   const labels = useMemo(() => items.map((item) => item.label), [items]);
+  const labelsKey = useMemo(
+    () => items.map((item) => `${item.key}:${item.label}`).join("\0"),
+    [items],
+  );
+  const measureKey = `${textScale}\0${labelsKey}`;
+  const [measured, setMeasured] = useState<{
+    readonly key: string;
+    readonly widths: Readonly<Record<string, number>>;
+  }>(() => ({ key: measureKey, widths: {} }));
+
+  const onMeasureLabel = useCallback(
+    (itemKey: string, nextWidth: number) => {
+      if (!Number.isFinite(nextWidth) || nextWidth <= 0) return;
+      setMeasured((prev) => {
+        const current = prev.key === measureKey ? prev.widths : {};
+        if (current[itemKey] === nextWidth && prev.key === measureKey) return prev;
+        return { key: measureKey, widths: { ...current, [itemKey]: nextWidth } };
+      });
+    },
+    [measureKey],
+  );
+
+  const measuredLabelWidths = useMemo(() => {
+    if (measured.key !== measureKey) return undefined;
+    const widths = items.map((item) => measured.widths[item.key]);
+    if (widths.some((w): w is undefined => w === undefined || w <= 0)) return undefined;
+    return widths as number[];
+  }, [items, measureKey, measured]);
+
   const layout = tabLayout({
     labels,
     width,
     fontSize: theme.textStyles[LABEL_STYLE].fontSize * textScale,
     textScale,
+    measuredLabelWidths,
   });
   const isScroll = layout.mode === "scroll";
 
@@ -253,6 +283,28 @@ export function TabBar({ items, activeKey, onSelect }: TabBarProps) {
         ) : (
           row
         )}
+        <View
+          key={measureKey}
+          testID="tab-measure-row"
+          pointerEvents="none"
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          style={styles.measureRow}
+        >
+          {items.map((item) => (
+            <Text
+              key={item.key}
+              testID={`tab-measure-${item.key}`}
+              textStyle={LABEL_STYLE}
+              style={styles.label}
+              onLayout={(event) => {
+                onMeasureLabel(item.key, event.nativeEvent.layout.width);
+              }}
+            >
+              {item.label}
+            </Text>
+          ))}
+        </View>
       </View>
     </SafeAreaView>
   );
