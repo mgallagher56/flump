@@ -103,7 +103,7 @@ export function FlumpLogo({ size = "md", label, testID }: FlumpLogoProps) {
         ) : (
           <Ellipse {...floor.light} fill={paint.shadow} />
         )}
-        {/* The lights all sit inside the bubble, so each paints a circle and needs no clip path. */}
+        {/* Every light sits inside its bubble, so each paints a circle and needs no clip. */}
         {LOGO_ART.orbs.map((orb, i) => {
           const { glint } = orbLayout(orb);
           const circle = { cx: orb.cx, cy: orb.cy, r: orb.r };
@@ -119,7 +119,7 @@ export function FlumpLogo({ size = "md", label, testID }: FlumpLogoProps) {
                   cy={glint.cy}
                   rx={glint.rx}
                   ry={glint.ry}
-                  transform={glint.rotate}
+                  transform={glint.transform}
                   fill={paint.glint}
                   opacity={opacity.glint}
                 />

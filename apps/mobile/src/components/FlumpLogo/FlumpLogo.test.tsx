@@ -3,10 +3,11 @@ import { resolve } from "node:path";
 import { dark, light } from "@flump/tokens/native";
 import { render, screen } from "@testing-library/react-native";
 import { processColor } from "react-native";
+import * as web from "../../../../../packages/ui/src/primitives/FlumpLogo/FlumpLogo.art";
 import { ThemeProvider } from "../../theme/ThemeProvider";
 import { FlumpLogo } from "./FlumpLogo";
 import { flumpLogoStates } from "./FlumpLogo.states";
-import { LOGO_ART, LOGO_OPACITY } from "./FlumpLogo.styles";
+import { floorLayout, LOGO_ART, LOGO_OPACITY, orbLayout } from "./FlumpLogo.styles";
 
 /** The hidden logo is still in the tree; queries skip hidden elements unless asked. */
 const HIDDEN = { includeHiddenElements: true } as const;
@@ -27,7 +28,10 @@ function svgNodes(type: string): SvgNode[] {
   return out;
 }
 
-/** react-native-svg passes colours on as processed integers; inside gradients the stop opacity is in the alpha byte. */
+/**
+ * react-native-svg passes colours on as processed integers; inside gradients the stop opacity is in
+ * the alpha byte.
+ */
 const asInt = (hex: string) => processColor(hex) as number;
 
 describe("FlumpLogo", () => {
@@ -119,6 +123,16 @@ describe("FlumpLogo", () => {
       </ThemeProvider>,
     );
     expect(svgNodes("RNSVGEllipse")).toHaveLength(2 + glints);
+  });
+
+  it("places every light and the floor where the web logo does", () => {
+    expect(LOGO_ART.orbs).toEqual(web.LOGO_ORBS);
+    expect(LOGO_ART.floor).toEqual(web.LOGO_FLOOR);
+    expect(LOGO_OPACITY).toEqual(web.LOGO_OPACITY);
+    for (const orb of LOGO_ART.orbs) {
+      expect(orbLayout(orb)).toEqual(web.orbLayout(orb));
+    }
+    expect(floorLayout(LOGO_ART.floor)).toEqual(web.floorLayout(web.LOGO_FLOOR));
   });
 
   it("draws the same artwork as the web logo", () => {

@@ -12,6 +12,7 @@ import { dark } from "../../../packages/tokens/src/native.generated";
 import {
   floorLayout,
   LOGO_FLOOR,
+  LOGO_OPACITY,
   LOGO_ORBS,
   orbLayout,
 } from "../../../packages/ui/src/primitives/FlumpLogo/FlumpLogo.art";
@@ -25,8 +26,8 @@ const tone = {
   violet: c["logo.violet"],
   rose: c["logo.rose"],
 };
-// The dark theme's glass (packages/ui FlumpLogo.styles.ts, `_dark` values).
-const O = { backing: 0.35, core: 0.28, mid: 0.5, sheen: 0.5, glint: 0.85 };
+// The dark theme's glass.
+const O = LOGO_OPACITY.dark;
 
 /** The drawing's extent in view box units, the dark floor shadow included. */
 const floor = floorLayout(LOGO_FLOOR);

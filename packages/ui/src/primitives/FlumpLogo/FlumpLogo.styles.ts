@@ -16,8 +16,9 @@ export const flumpLogoRecipe = cva({
  * The logo's paints: the `logo.*` tokens, so the bubbles follow light and dark. Panda has no colour
  * utility for `stopColor`, so a bare token name would fall back to black; `token()` resolves it to
  * the CSS variable. Each theme-dependent value names `_systemDark` too, for a dark system setting
- * with JavaScript off (D30). Colour and opacity are separate classes, combined on each stop. The opacities
- * that differ by theme (glass is clearer on the dark canvas) are mirrored by the mobile logo
+ * with JavaScript off (D30). Colour and opacity are separate classes, combined on each stop. The
+ * opacities that differ by theme (glass is clearer on the dark canvas) are LOGO_OPACITY in
+ * FlumpLogo.art.ts (FlumpLogo.test.tsx checks them) and are mirrored by the mobile logo
  * (apps/mobile FlumpLogo.styles.ts, LOGO_OPACITY), whose test reads this file.
  */
 export const logoStop = {

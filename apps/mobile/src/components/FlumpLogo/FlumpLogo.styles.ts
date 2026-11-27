@@ -54,7 +54,7 @@ export function orbLayout({ cx, cy, r }: { cx: number; cy: number; r: number }) 
       cy: glintY,
       rx: r * 0.2,
       ry: r * 0.11,
-      rotate: `rotate(-32 ${glintX} ${glintY})`,
+      transform: `rotate(-32 ${glintX} ${glintY})`,
     },
   };
 }
