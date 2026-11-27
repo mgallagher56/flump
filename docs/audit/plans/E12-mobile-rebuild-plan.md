@@ -699,12 +699,99 @@ Characterisation tests come first and pass against today's code: `home-strip.cha
 
 **Built (S5b, 27 November 2026).** As above, with these details. `src/data/budget.ts` reads `GET /budget-entries` under `queryKeys.budgetEntries()` with a loose pick of `BudgetEntryDto` (unknown fields ignored; `category`, `amount`, `frequency` and `isIncome` required, since the engine would read a missing one as another figure; the share and link columns allowed to be absent, which the contract reads as sole and unlinked). The check-in's profile pick is unchanged; the ten facts `profileFactsFromProfile` reads are parsed separately from the same cached answer (`parseStripProfile`), so a value only they hold (a region a newer backend adds) puts only the strip out of step, with Try again, and the hero and check-in row stay. `useHomeData` adds the budget read to Home's one state: loading until it answers, its failure Home's error (a bad body is out of step, terms not agreed the terms screen), never the budget prompt; not set up wins over a failed budget read, and one Try again reads again every read that failed; the check-in row keeps its S5 behaviour, and Home now makes five requests. `strip` on the ready state is `selectHomeStripFromRows` over the same rows, with the London date read once per screen, so the app does no sum or comparison of money. Components, named as the CROSS-PLATFORM matrix names them: `KpiStrip` (each cell one spoken group, "Left over each month, £125, From your budget"; the figure in Money's new `kpi` size, heading.md, tabular; a shortfall changes the label only; a refused cell shows its notice with no figure; the income-only link and the prompt's link are their own controls; each card's group carries its kind as a test id (`kpi-strip-owed`, `kpi-strip-pension` and so on); the two cards sit side by side at any phone width, 320 points included (STYLE-GUIDE section 12), and stack from 150% text, a recorded difference from web; the engine's `collapsed` gives the one prompt) and `TaxRatesStatusBanner` (web's `TaxRatesStatusBanner` sentence, info colours when provisional and warning colours otherwise, not dismissible). Home draws the rates sentence above the hero, where web's dashboard puts its banner, and the strip under the hero and basis line and above the check-in row; their blocks share the hero's `useDelayedLoading` timer, two cells of label, figure and caption lines at the current text size. The links say "Add your budget on the website" and "Add your spending on the website to see what is left over each month" (web's sentence around the words), or "Open the Flump website" with no web app address. No new colour pair: the cells are cards with the ordinary text colours, and the notice's status text on status fill pairs are in the matrix. Words in `src/copy/home.ts` (`STRIP`, `ratesNoticeSentence`), pinned by new cases in `homeCopyParity.test.tsx`. Fixture server: `/budget-entries` (none for the canned data, 503 when unavailable), the persona budgets and profile answers copied from `personas.ts` and pinned to it, and `data` gains `renter-linked`, `scottish-refused`, `no-budget` and `pension-only`. Acceptance 1, by hand: the renter £125 left over and £1,800 owed; the home owner £135 (3,450 - 2,675 - 340 - 300) and £9,600 (car loan and card); `renter-linked` £127 in 2026/27 (take-home 25,044.25 a year, 2,087 a month) and the same with the provisional notice in 2027/28; `pension-only` £125 and £9,000. The refusal and the rates notice follow the device's date, so `home-strip.yaml` covers the renter, `pension-only` and `no-budget`, and Jest covers the refusal, the leaves-out caption and both notices with a fixed clock. Left for the device run: 200% text and 320 points wide, and the flow itself.
 
-### 9.9 Later slices
+### 9.9 S6. Accounts, account detail and net worth history
+
+**Goal.** The Accounts tab answers "what do I own and owe, account by account", an account's page answers "what is this balance and how has it moved", and history answers "how has my net worth changed", each with the figures web shows (`apps/web/app/routes/app.accounts._index.tsx`, `app.accounts.$account.tsx`, `app.accounts.history.tsx`). Read only: adding, editing and back-fill stay on the website until S8.
+
+**Seam check (26 November 2026).** The three loaders ask the backend for rows only; no backend figure is shown. Figure by figure:
+
+- **List, from the engine:** net worth, "Total you own" and "Total you owe" are `picture.netWorth`, which is `selectNetWorth` (`picture/selectors/portfolio-totals.ts`). The percentage in "Joint, 50%" is `resolveAccountSharePercent`; the words are web's (`AccountsGroupList.tsx`). Which group is left out reads the engine's `leftOut`.
+- **List, outside the engine:** each row's balance was `summariseAccountBalance` (`apps/web/app/features/accounts/accountRows.ts`): the saved balance, else the latest recorded month, at the person's share, a debt as the amount owed. An overdrawn account was moved to "What you owe" and made positive in the component.
+- **Detail, outside the engine:** the hero was the row balance, except that with a future-month row it took the latest month's whole value with no share applied (`AccountDetailContainer.tsx`). The balance chart's points were `accountChartRows` (`AccountDetails.tsx`), whole values, never at the share. Its summary subtracted in web. The goal's progress line subtracts in web too (`AccountGoalSection.tsx`); the recorded return is the engine's `estimateRecordedReturn` over rows web filters.
+- **History, from the engine:** every series point is `selectSavedNetWorthSeries`, the hero's change is `selectRecordedMonthComparison`, each account's change is `selectAccountDeltas`, the next check-in date is the engine's.
+- **History, outside the engine:** the chart summary "Up £15,450 since May 2026" subtracted and rounded in web (`changeSinceSentence`, `snapshotModel.ts`); "Effect on net worth" flipped the sign for a debt in web.
+
+**Decided by the coordinator (26 November 2026).** The row balance, groups and overdrawn rule, the account's balance series and the change since the first month move into a new engine module `packages/finance-engine/src/account-balance.ts` (`selectAccountBalance`, `selectAccountGroups`, `selectAccountBalanceSeries`, `selectSeriesChange`) behind a narrow entry `@flump/finance-engine/accounts`. As S5: characterisation tests of today's web results, run against the old code and committed first, pass unchanged after the move; web's copies are deleted; Stryker on the new file with survivors triaged. The future-month joint hero is a figure change: proved by a test on the old code, pinned at today's value in the move, fixed in its own commit that changes that one expectation, signed by a `fable-decider` subagent against E34 C1's share rule. Goal progress and the recorded return stay on web for now (parity log, waiting). A future-month row is refused by every writer today (`snapshot-rules.ts`, the imports, the snapshots migration's clean-up), so it is not a normal state; validation is not changed here.
+
+**Joint figures on the account page (`fable-decider`, 26 November 2026).** The rule is owner decision 9, option A (`DECISIONS.md`, 19 November): totals and headline figures show the person's share; an account's own page shows the whole with the share beside it. The future-month hero at the whole value is a fault, fixed to the share (joint 50%, £1,000 whole: £1,000 before, £500 after; a joint 40% mortgage of £200,000: £200,000 owed before, £80,000 after). The balance chart at the whole value is deliberate, but nothing said so, which is a fault of wording. For a joint account only, web and mobile both show the hero subline "Your 50% share. The whole balance is £1,000." ("The whole amount owed is" for a debt) and the chart description "The whole balance each month, as recorded. Your share is 50% of it." ("The whole amount owed each month"). Net worth history, Home, the check-in and the backend AI tools already use the share; the export carries stored rows with their ownership and share, by design. Follow-up, not in S6: the hero shows the share first where decision 9 says whole first; it stays, because the list, goal progress and net worth tie to it.
+
+**What web has, and where each part lands.**
+
+- **S6:** the list (net worth, the leaves-out line, groups with totals, the joint line, the not-counted group, the student loan footnote); the account page (hero, date line, not counted, balance history with its chart and month list); history (the change hero, the chart from three recorded months, its month list, changes by account, the next check-in date); every state below; Home's trend bars link to history.
+- **S8:** add, edit and delete an account, the quick balance update with its "This is the whole balance" hint, the goal section, "Add earlier months". Until then each is one link that says "on the website".
+- **S9:** the net worth switches ("Change what counts on the website", as S5).
+- **S11, S12:** "See your mortgage", "See your debts", "See your ISA allowance" and the recorded return. Left out until their pages exist.
+- **Not on mobile in S6:** sorting and filtering the month lists; recorded as waiting.
+
+**The flow.**
+
+- **Accounts tab** (`flump://accounts`): the hero "Total of the accounts listed" with the leaves-out line and "See how it has changed" (opens history); "Start monthly check-in" (opens S3's check-in); then "What you own", "What you owe" and "Not counted in net worth", in web's type order, each row a name, a type line and one balance. A total shows only for a group of two or more. A joint row reads "Mortgage · Joint, 50%" and shows the balance at the person's share, exactly as web. A debt is the amount owed, with no red. Under the groups: "Add an account on the website".
+- **Account page** (`flump://accounts/<id>`): the header carries the name; the hero is "Current balance" or "Amount owed" with "As of October", "Calculated for November" or nothing, then "Not counted in your net worth." when that applies; "Balance history" with the chart, its one-sentence summary and the month list; "Edit this account on the website". An id that is not in the list shows "We cannot find that account." with "Back to accounts".
+- **History** (`flump://accounts/history`): "Net worth change" with its months and, while this month's check-in is not done, the check-in prompt; "Net worth over time" with the line chart and summary, or below three recorded months web's sentence; the month list; changes by account; "Add earlier months on the website". No field edits a month.
+- **Home:** touching the trend bars opens history, and a text link under them, "See how it has changed", is what a screen reader meets. Web's Home has no such link; the parity log records it.
+
+**States.**
+
+- **Loading:** S5's rule on all three screens: nothing for 200 ms, then a skeleton for at least 400 ms, replaced with no jump. A refetch and a move between the three screens never show it.
+- **Empty:** the list shows "No accounts yet" with web's sentence and "Add an account on the website", never £0 and no empty groups. History with no recorded month shows web's empty words with "Start monthly check-in". An account with no months shows "No balance history yet".
+- **Error:** `unavailable` or `server` after two retries shows `ErrorState` with "Try again". Never an empty list, "No accounts yet" or £0.
+- **Out of step** (`bad-response`): the check-in's out-of-step words with "Try again"; never the connection.
+- **Offline** (`restoredOffline`): `Offline` with "Try again", tab bar kept, as S4. **Terms:** `TermsRequired` in the body. **Not set up:** `NotSetUp`.
+- **Unknown account type:** the row keeps its name and balance (section 4.9).
+
+**How it reads data.** No new endpoint and no new request. All three screens read the four queries of `apps/mobile/src/data/checkIn.ts` through `useCheckInData`, shared with Home by query key; the account page finds its account and months in the cached lists, where web makes its own request for one account. Figures come from `@flump/finance-engine/accounts`, with a reach test as `net-worth-entry.test.ts`:
+
+- totals and leaves-out: `selectNetWorth`, `netWorthBasisFromProfile`, `netWorthChoicesAvailable`;
+- rows and groups: `selectAccountGroups` over `selectAccountBalance`;
+- an account's months: `selectAccountBalanceSeries`;
+- history: `selectSavedNetWorthSeries`, `selectRecordedMonthComparison`, `selectAccountDeltas`, `selectSeriesChange`;
+- each chart's point heights as fractions from the engine, as `selectNetWorthTrend` gives bars, so the app draws with no arithmetic on money.
+
+**Older and newer backends.** As S5: the loose picks in `src/data/checkIn.ts`. `name`, `accountSubtype`, `ownership`, `sharePercent` and a row's `source` may be absent; a missing share falls back inside the engine, never in the app. Only a missing `id`, `type` or `balance`, or a row without its account, month or value, is out of step.
+
+**Files.**
+
+- Engine: `src/account-balance.ts`, `src/accounts-entry.ts` with its reach test, the `package.json` export, hand-worked tests (law 14), Stryker (law 17), value map entries (law 16).
+- Web: characterisation tests in `apps/web/app/features/accounts/`, written first; then web calls the selectors. A copy parity test pins every mobile string to web's (most are constants in components, not `locales/en/common.json`).
+- Mobile routes: `app/(app)/(tabs)/accounts.tsx` (the list replaces `ComingSoon`), new `app/(app)/accounts/[id].tsx` and `app/(app)/accounts/history.tsx`, `src/navigation/routes.test.tsx`. `navItems.ts` is untouched, so the navigation parity test is unaffected.
+- Mobile data and words: `src/features/accounts/`; `src/copy/accounts.ts`.
+- Mobile components, five files each, tokens only: new ones for a group, an empty state and the line chart (`react-native-svg`); `ListRow` and `HeroFigure` gain what the rows and heroes need.
+- Screens: `screens/{Accounts,AccountDetail,NetWorthHistory}/`; `screens/Home/` (the bars link).
+- Fixture server: `data` gains `joint` (a joint mortgage at 50% and an overdrawn current account) and `twoMonths`; a test pins every figure.
+- End to end: `e2e/flows/accounts-list.yaml`, `account-detail.yaml`, `net-worth-history.yaml`; the screenshot list and its test; gallery entries.
+- Docs: parity log rows; this section's Built paragraph.
+
+**Acceptance**
+
+1. For the two households in `apps/e2e/support/personas.ts` the list equals web. By hand: home owner, own 3,400 + 7,600 + 10,000 + 310,000 + 96,000 = £427,000, owe 186,000 + 8,400 + 1,200 = £195,600, net worth £231,400; renter, own £13,500, owe £1,800, net worth £11,700, with the £38,500 student loan under "Not counted in net worth".
+2. History for the same households: "Net worth change" +£2,575 (home owner) and +£465 (renter) between the last two recorded months, and the summary since the first recorded month. Recorded in the PR.
+3. **Seam (O5 seam 1):** every figure on the three screens comes from an engine selector that web also calls. No sum, subtraction, sign flip or share of money in `apps/mobile/src`. The characterisation tests pass unchanged apart from the one ruled fix. The PR states "Seam cost".
+4. The `accounts` entry reaches no `test-vectors` module and not `tax-year-verification.ts`; the bundle search still passes.
+5. One balance per account: a row and its account page's hero agree for every fixture account.
+6. With `joint`, the mortgage row reads "Joint, 50%" with half the balance, the totals count half, and the wording equals web's.
+7. An overdrawn current account sits under "What you owe" as a positive amount.
+8. No chart below three recorded months on history (`twoMonths` shows the sentence).
+9. Nothing on the three screens writes. Every add, edit and back-fill action is a link whose text ends "on the website", or "Open the Flump website" when no web app address is set.
+10. Loading: nothing before 200 ms; a skeleton shown stays 400 ms; timed tests with a fake clock.
+11. One Jest test per state per screen: empty, unavailable, out of step, offline, terms, not set up, unknown id. A failed read never shows "No accounts yet", an empty list or £0; out of step never mentions the connection.
+12. An older backend (fields missing) and a newer one (unknown fields) still show all three screens; `malformed` shows out of step.
+13. `flump://accounts/<id>` and `flump://accounts/history` open their screens with Back; signed out they show sign-in, then the screen; an unknown id shows not found with "Back to accounts".
+14. Home's bars open history; the text link has role link; S5's Home tests pass otherwise unchanged.
+15. Accessibility: each row is one element; each chart is hidden from the reader, which hears the summary and the month list, as web; every target is at least 48 by 48; at 200% text and 320 points wide nothing is clipped. Tabular numerals.
+16. No shaming: a fall, a debt and a negative net worth use ordinary text colour; the same words up or down; the renter's screens are the same components.
+17. Colour pairs drawn are in the shared contrast matrix or join it, in both themes.
+18. The three flows assert by test id, settle the app first, use no retries and take light and dark screenshots.
+19. The gallery shows the new and changed components in light, dark and 200% text.
+20. Lint, types, `check:laws` and the engine, web and mobile tests pass. The parity log marks the accounts and history rows and records what waits. The PR states the CROSS-PLATFORM section 7 result.
+
+**Small decisions (lane, 26 November 2026).** No goal on mobile in S6 (S8 with editing). Recorded return waits for S12. No chart library: straight segments from the engine's fractions. The account chart draws from two points, as web; three is the rule for net worth history. Month lists in web's order with no sort or filter. A new entry rather than widening `net-worth`, so each entry stays as small as its screen.
+
+### 9.10 Later slices
 
 Each is specified in full when the slice before it merges, from the web page as it then is and the parity log. Fixed now:
 
 - **S5:** specified in 9.8. `GET /v1/portfolio-snapshot` does not exist; the hero is built by engine selectors over the reads S3 already makes, and the one figure web worked out outside the engine (the change since the last recorded month) moves into the engine first (O5 seam 1).
-- **S6:** one balance per account everywhere; the joint share line as on web (E34 C1); history chart only from three recorded months; history not editable.
+- **S6:** specified in 9.9.
 - **S7:** SQLCipher with the key check; the database out of iCloud and Android backups; a test that a cold start with no network keeps saved data; a test that a restored backup without the key shows no cached data and asks to sign in.
 - **S9:** the two net worth switches (R1), export, deletion with the typed phrase, recent sign-in when asked; the four legal pages linked, opening in the browser. Web's optional browser storage switch has no mobile counterpart (parity log, 25 November).
 - **S10 to S13, S21, S22:** saved versus scenario: changing a scenario input changes no saved figure and sends no request.
