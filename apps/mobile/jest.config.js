@@ -1,7 +1,12 @@
 /** Jest with jest-expo (SDK 58 needs Jest 30). Runs on Node in CI; Hermes is proved on device. */
 
 // The shared packages resolve to their TypeScript source here, which imports siblings as "./x.js".
-const moduleNameMapper = { "^(\\.{1,2}/.*)\\.js$": "$1" };
+const moduleNameMapper = {
+  "^(\\.{1,2}/.*)\\.js$": "$1",
+  // The document pictures' shape lists, read by path (tsconfig.json "paths" says why).
+  "^@repo/ui/illustration-data$":
+    "<rootDir>/../../packages/ui/src/primitives/Illustration/Illustration.documents.ts",
+};
 // Babel helpers in the shared packages' source resolve from the app, which depends on @babel/runtime.
 const modulePaths = ["<rootDir>/node_modules"];
 const testPathIgnorePatterns = ["/node_modules/", "/dist/"];

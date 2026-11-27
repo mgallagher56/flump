@@ -1,7 +1,14 @@
 {
   "extends": ["expo/tsconfig.base", "@repo/typescript-config/expo.json"],
   "compilerOptions": {
-    "types": ["jest", "node"]
+    "types": ["jest", "node"],
+    // The document pictures' shape lists (STYLE-GUIDE IL4): one pure-data file from packages/ui,
+    // mapped by path rather than a dependency on @repo/ui, whose react-dom peer expo-doctor rejects.
+    "paths": {
+      "@repo/ui/illustration-data": [
+        "../../packages/ui/src/primitives/Illustration/Illustration.documents.ts"
+      ]
+    }
   },
   "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"],
   "exclude": ["node_modules", "dist"]
