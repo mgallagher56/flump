@@ -321,8 +321,41 @@ export function buildAssemble(kit: GsapKit, root: HTMLElement, pace: PaceState):
       };
       root.addEventListener("pointermove", onMove);
 
-      // Load assembled, then part to where the scroll position says (no jump on hydration).
-      const pinEl = (wide ? root.querySelector<HTMLElement>(".p11-hero__inner") : stage) ?? stage;
+      // Stacked layouts (phones and tablets, under 1024px): never scrubbed. Crossing a line under
+      // the stage triggers the assembly, which then plays to the end in its own time; scrolling back
+      // above the line plays it back to the tray. Wherever the reader stops, every piece is either
+      // in the tray or docked, never part-way (the journey's rule). The page loads assembled from
+      // the server and parts to the tray only if the stage has not been reached yet.
+      if (!wide) {
+        const flight = (to: 0 | 1) =>
+          gsap.to(tl, {
+            progress: to,
+            duration: pace.s(to === 1 ? 2400 : 1600),
+            ease: "calmInOut",
+            overwrite: true,
+          });
+        tl.progress(1);
+        const trigger = ScrollTrigger.create({
+          trigger: stage,
+          // The assembly starts once the stage's top has risen past 60% of the screen.
+          start: "top 60%",
+          onEnter: () => flight(1),
+          onLeaveBack: () => flight(0),
+        });
+        if (!trigger.isActive && trigger.progress === 0 && window.scrollY < trigger.start) {
+          introTween = gsap.to(tl, {
+            progress: 0,
+            duration: pace.s(TIMING.hero * 0.5),
+            delay: pace.s(500),
+            ease: "calmInOut",
+          });
+        }
+        return () => root.removeEventListener("pointermove", onMove);
+      }
+
+      // Two columns (1024px and up): load assembled, then part to where the scroll position says
+      // (no jump on hydration).
+      const pinEl = root.querySelector<HTMLElement>(".p11-hero__inner") ?? stage;
       const startY = pinEl.getBoundingClientRect().top + window.scrollY - header();
       // Shorter than round three's heroPin: prototype 11 keeps the whole page near 11 screens.
       const run = () => pace.px(SCROLL.heroPin * 0.4);
@@ -359,25 +392,6 @@ export function buildAssemble(kit: GsapKit, root: HTMLElement, pace: PaceState):
           else light(0.25 + self.progress * 0.5, 0.3);
         },
       });
-
-      // On a phone the stage starts below the copy: the pieces turn gently as it rises to the pin.
-      if (!wide) {
-        gsap.fromTo(
-          layer,
-          { rotationX: 5, y: 20 },
-          {
-            rotationX: 0,
-            y: 0,
-            ease: "none",
-            scrollTrigger: {
-              trigger: stage,
-              start: "top bottom",
-              end: () => `top top+=${header()}`,
-              scrub: 0.6,
-            },
-          },
-        );
-      }
 
       return () => root.removeEventListener("pointermove", onMove);
     }, root);
