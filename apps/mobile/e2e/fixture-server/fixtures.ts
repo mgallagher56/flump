@@ -496,7 +496,7 @@ interface TwoMonthSeed {
  * and 7). Today: own 4,000 + half of 310,000 = 159,000; owe 350 overdrawn + half of 186,000 =
  * 93,350; net worth 65,650. `home-data.test.ts` pins every figure.
  */
-export const JOINT_ACCOUNTS: readonly TwoMonthSeed[] = [
+const JOINT_ACCOUNTS: readonly TwoMonthSeed[] = [
   {
     name: "Residential mortgage",
     type: "Mortgage",
@@ -540,7 +540,7 @@ export const JOINT_ACCOUNTS: readonly TwoMonthSeed[] = [
 ];
 
 /** `twoMonths`: two recorded months only, so history shows its sentence, not a chart. */
-export const TWO_MONTH_ACCOUNTS: readonly TwoMonthSeed[] = [
+const TWO_MONTH_ACCOUNTS: readonly TwoMonthSeed[] = [
   {
     name: "Current account",
     type: "Current",

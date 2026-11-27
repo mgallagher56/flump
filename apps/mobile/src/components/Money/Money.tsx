@@ -22,7 +22,7 @@ export function formatWholePounds(value: number | null): string {
 }
 
 /** "+£2,575" and "-£300": a change with its sign, as web's Money with `signDisplay: "always"`. */
-export function formatSignedPounds(value: number | null): string {
+function formatSignedPounds(value: number | null): string {
   const text = formatWholePounds(value);
   return value === null || text.startsWith("-") ? text : `+${text}`;
 }

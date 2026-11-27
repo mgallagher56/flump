@@ -46,7 +46,7 @@ export const studentLoanFootnote = (counted: boolean): string =>
     : `Student loans are not in your net worth. ${STUDENT_LOAN_FACTS}`;
 
 /** Web's `TYPE_LABEL`: plain names for the stored types. */
-export const TYPE_LABEL: Readonly<Record<string, string>> = {
+const TYPE_LABEL: Readonly<Record<string, string>> = {
   Current: "Current account",
   Saving: "Savings",
   Investment: "Investments",
@@ -61,7 +61,7 @@ export const TYPE_LABEL: Readonly<Record<string, string>> = {
 };
 
 /** Web's `ACCOUNT_SUBTYPE_LABEL`. */
-export const ACCOUNT_SUBTYPE_LABEL: Readonly<Record<string, string>> = {
+const ACCOUNT_SUBTYPE_LABEL: Readonly<Record<string, string>> = {
   easy_access: "Easy access savings",
   notice: "Notice savings",
   regular_saver: "Regular saver",
@@ -186,7 +186,7 @@ export function accountMonthNote(point: { source?: string | null; carried?: true
  * Web's `changeSinceSentence`, over the engine's `selectSeriesChange`: "Up £15,000 since May
  * 2026.", "Down £1,200 since May 2026." or "No change since May 2026.". Empty with no change.
  */
-export function changeSinceSentence(firstMonth: string | null, change: number | null): string {
+function changeSinceSentence(firstMonth: string | null, change: number | null): string {
   if (firstMonth === null || change === null) return "";
   const since = `since ${monthLabel(firstMonth)}.`;
   if (change === 0) return `No change ${since}`;

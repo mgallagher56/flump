@@ -100,7 +100,7 @@ const shareInput = (account: AppAccount) => ({
 });
 
 /** Web's `buildAccountRows`: one row per account, its balance from `selectAccountBalance`. */
-export function buildAccountRows(
+function buildAccountRows(
   accounts: readonly AppAccount[],
   details: readonly AppAccountMonth[],
   currentMonth: string,
@@ -155,7 +155,7 @@ export function buildAccountsList(
 }
 
 /** One point of a drawn line: its height as a fraction of the plot, and whether it is carried. */
-export interface ChartPoint {
+interface ChartPoint {
   /** 0 is the bottom of the plot, 1 the top (the engine's `selectChartFractions`). */
   fraction: number;
   carried: boolean;
@@ -219,7 +219,7 @@ export function buildAccountDetail(
 }
 
 /** One account's change between the last two recorded months, as web's `AccountChange`. */
-export interface AccountChange {
+interface AccountChange {
   accountId: string;
   name: string;
   isLiability: boolean;

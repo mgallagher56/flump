@@ -69,8 +69,6 @@ interface MobileAccounts {
   HISTORY: Record<string, string>;
   STUDENT_LOAN_FACTS: string;
   studentLoanFootnote: Fn<[boolean], string>;
-  TYPE_LABEL: Record<string, string>;
-  ACCOUNT_SUBTYPE_LABEL: Record<string, string>;
   typeLine: Fn<
     [
       {
@@ -93,7 +91,6 @@ interface MobileAccounts {
   heroSentences: Fn<(string | null)[], string | null>;
   accountMonthNote: Fn<[{ source?: string | null; carried?: true }], string | null>;
   accountChartSummary: Fn<[string | null, number | null, boolean], string>;
-  changeSinceSentence: Fn<[string | null, number | null], string>;
   fewMonthsPrompt: Fn<[number], string>;
   comparedMonthsText: Fn<[RecordedMonthComparison], string>;
   notRecordedPrompt: Fn<[string], string>;
@@ -143,8 +140,20 @@ describe("the mobile accounts list says what web's says", () => {
     expect(m.STUDENT_LOAN_FACTS).toBe(STUDENT_LOAN_FACTS);
     expect(m.studentLoanFootnote(true)).toBe(studentLoanFootnote(true));
     expect(m.studentLoanFootnote(false)).toBe(studentLoanFootnote(false));
-    expect(m.TYPE_LABEL).toEqual(TYPE_LABEL);
-    expect(m.ACCOUNT_SUBTYPE_LABEL).toEqual(ACCOUNT_SUBTYPE_LABEL);
+  });
+
+  it("every type and subtype label, through the type line", async () => {
+    const m = await mobile();
+    const row = { id: "x", name: "x", balance: 1, changePercent: null, favourable: true };
+    for (const type of Object.keys(TYPE_LABEL)) {
+      expect([type, m.typeLine({ name: "x", type })]).toEqual([type, typeLine({ ...row, type })]);
+    }
+    for (const accountSubtype of Object.keys(ACCOUNT_SUBTYPE_LABEL)) {
+      expect([accountSubtype, m.typeLine({ name: "x", type: "Saving", accountSubtype })]).toEqual([
+        accountSubtype,
+        typeLine({ ...row, type: "Saving", accountSubtype }),
+      ]);
+    }
   });
 
   it.each([
@@ -331,7 +340,8 @@ describe("the mobile net worth history says what web's says", () => {
         { month: first, value: 0 },
         { month: "2026-11", value: change },
       ];
-      expect(m.changeSinceSentence(first, selectSeriesChange(points))).toBe(
+      // Without a carried end the chart summary is the change sentence alone.
+      expect(m.accountChartSummary(first, selectSeriesChange(points), false)).toBe(
         changeSinceSentence(points, whole),
       );
     }

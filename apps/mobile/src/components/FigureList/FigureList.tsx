@@ -6,7 +6,7 @@ import { Text } from "../Text";
 import { createStyles } from "./FigureList.styles";
 
 /** One line of the list: what it is, its figure already formatted, and a note. */
-export interface FigureListRow {
+interface FigureListRow {
   id: string;
   /** "October 2026", or an account's name. */
   label: string;

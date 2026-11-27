@@ -12,7 +12,7 @@ import {
 } from "./MonthLineChart.styles";
 
 /** One month on the line: the engine's height fraction, and whether its figure is carried. */
-export interface MonthLinePoint {
+interface MonthLinePoint {
   /** 0 is the bottom of the plot, 1 the top (`selectChartFractions`). */
   fraction: number;
   /** Not recorded: a segment to or from it is dashed. */
