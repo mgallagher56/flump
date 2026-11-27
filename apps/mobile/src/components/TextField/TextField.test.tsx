@@ -1,6 +1,7 @@
 import { dark, light } from "@flump/tokens/native";
 import { fireEvent, render, screen } from "@testing-library/react-native";
 import { StyleSheet, type ViewStyle } from "react-native";
+import { ScrollFieldIntoView } from "../../device/keyboardInset";
 import { ThemeProvider } from "../../theme/ThemeProvider";
 import { TextField } from "./TextField";
 import { textFieldStates } from "./TextField.states";
@@ -80,5 +81,17 @@ describe("TextField", () => {
     };
     const normal = await sizeAt(1);
     expect(await sizeAt(2)).toBe(normal * 2);
+  });
+});
+
+describe("TextField in a form", () => {
+  it("asks the form to bring it above the keyboard when it gains focus", async () => {
+    const showField = jest.fn();
+    await render(
+      <ScrollFieldIntoView.Provider value={showField}>{ui()}</ScrollFieldIntoView.Provider>,
+    );
+    expect(showField).not.toHaveBeenCalled();
+    await fireEvent(screen.getByLabelText("First name"), "focus");
+    expect(showField).toHaveBeenCalledTimes(1);
   });
 });

@@ -283,6 +283,15 @@ describe("AccountDetail", () => {
     ]);
   });
 
+  it("the page makes room for the keyboard, for the quick update (S8 device check)", async () => {
+    const h = household();
+    await detail(fakeApi(routes(h)), h.idOf("Mortgage"));
+    await screen.findByTestId("account-detail-hero");
+    const page = screen.getByTestId("account-detail");
+    const scroller = (page.children[0] as { props: Record<string, unknown> } | undefined)?.props;
+    expect(scroller?.keyboardShouldPersistTaps).toBe("handled");
+  });
+
   it("a quick update refused with 412 says it changed somewhere else", async () => {
     const h = household();
     const id = h.idOf("Mortgage");

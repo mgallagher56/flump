@@ -1,12 +1,29 @@
-import { type ReactNode, type Ref, useCallback, useMemo, useState } from "react";
 import {
-  KeyboardAvoidingView,
+  type ReactNode,
+  type Ref,
+  type RefObject,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import {
+  type LayoutChangeEvent,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
   RefreshControl,
   ScrollView,
   type ScrollViewInstance,
+  TextInput,
   View,
 } from "react-native";
 import { type Edge, SafeAreaView } from "react-native-safe-area-context";
+import {
+  ScrollFieldIntoView,
+  scrollToShowField,
+  useKeyboardInset,
+} from "../../device/keyboardInset";
 import { useTheme } from "../../theme/ThemeProvider";
 import { createStyles } from "./Screen.styles";
 
@@ -30,8 +47,9 @@ export interface ScreenProps {
    */
   onRefresh?: () => Promise<unknown>;
   /**
-   * A form: the page shrinks above the keyboard so the field being typed in and the buttons under
-   * it can be scrolled to, and a tap on a button while the keyboard is open presses it.
+   * A form: while the keyboard is open the keyboard's height is added below the content, so every
+   * field and button can be scrolled above it, and the field being typed in is scrolled into view.
+   * A tap on a button while the keyboard is open presses it.
    */
   keyboardAware?: boolean;
   /** The scroll view, for a screen that opens at one of its groups (Settings' net worth choices). */
@@ -56,6 +74,46 @@ export function Screen({
   const styles = useMemo(() => createStyles(theme), [theme]);
   const content = [styles.content, centred ? styles.centred : null];
   const [refreshing, setRefreshing] = useState(false);
+  const own = useRef<ScrollViewInstance | null>(null);
+  const setScroller = useCallback(
+    (node: ScrollViewInstance | null) => {
+      own.current = node;
+      if (typeof scrollRef === "function") scrollRef(node);
+      else if (scrollRef) (scrollRef as RefObject<ScrollViewInstance | null>).current = node;
+    },
+    [scrollRef],
+  );
+  const inset = useKeyboardInset();
+  const room = keyboardAware ? inset : 0;
+  const scrollY = useRef(0);
+  const viewport = useRef(0);
+  const margin = theme.spacing["density.gap"];
+  const showFocusedField = useCallback(() => {
+    if (!keyboardAware || room === 0) return;
+    const field = TextInput.State.currentlyFocusedInput();
+    const scroller = own.current;
+    const content = scroller?.getInnerViewRef?.();
+    if (!field || !scroller || !content) return;
+    field.measureLayout(
+      content as never,
+      (_x, y, _w, height) => {
+        const to = scrollToShowField({
+          fieldY: y,
+          fieldHeight: height,
+          scrollY: scrollY.current,
+          viewport: viewport.current,
+          inset: room,
+          margin,
+        });
+        if (to !== null) scroller.scrollTo({ y: to, animated: false });
+      },
+      () => {},
+    );
+  }, [keyboardAware, room, margin]);
+  // When the keyboard opens, the field that opened it comes into view.
+  useEffect(() => {
+    if (room > 0) showFocusedField();
+  }, [room, showFocusedField]);
   const refresh = useCallback(async () => {
     if (!onRefresh) return;
     setRefreshing(true);
@@ -68,11 +126,27 @@ export function Screen({
     }
   }, [onRefresh]);
 
+  const keyboardProps = keyboardAware
+    ? {
+        keyboardShouldPersistTaps: "handled" as const,
+        scrollEventThrottle: 16,
+        onScroll: (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+          scrollY.current = e.nativeEvent.contentOffset.y;
+        },
+        onLayout: (e: LayoutChangeEvent) => {
+          viewport.current = e.nativeEvent.layout.height;
+        },
+      }
+    : {};
   const page = scroll ? (
     <ScrollView
-      ref={scrollRef}
-      contentContainerStyle={content}
-      {...(keyboardAware ? { keyboardShouldPersistTaps: "handled" as const } : {})}
+      ref={setScroller}
+      contentContainerStyle={[
+        content,
+        // Below a form's content: the page's own space, and the keyboard's height while it is open.
+        keyboardAware ? { paddingBottom: theme.spacing["page.top.sm"] + room } : null,
+      ]}
+      {...keyboardProps}
       refreshControl={
         onRefresh ? (
           <RefreshControl
@@ -94,15 +168,7 @@ export function Screen({
   return (
     <SafeAreaView style={styles.screen} edges={edges} testID={testID}>
       {keyboardAware ? (
-        // Edge to edge on Android, the window no longer resizes for the keyboard, so both
-        // platforms pad the page by the keyboard's height.
-        <KeyboardAvoidingView
-          behavior="padding"
-          style={styles.keyboard}
-          testID={testID ? `${testID}-keyboard` : undefined}
-        >
-          {page}
-        </KeyboardAvoidingView>
+        <ScrollFieldIntoView.Provider value={showFocusedField}>{page}</ScrollFieldIntoView.Provider>
       ) : (
         page
       )}

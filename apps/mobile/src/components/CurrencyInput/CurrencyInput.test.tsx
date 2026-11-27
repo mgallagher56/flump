@@ -1,6 +1,7 @@
 import { dark, light, sizes, textStyles } from "@flump/tokens/native";
 import { fireEvent, render, screen } from "@testing-library/react-native";
 import { StyleSheet, type TextStyle, type ViewStyle } from "react-native";
+import { ScrollFieldIntoView } from "../../device/keyboardInset";
 import { expectHoldsAtDoubleText } from "../../testing/textScale";
 import { ThemeProvider } from "../../theme/ThemeProvider";
 import { CurrencyInput, type CurrencyInputProps, parseMoneyInput } from "./CurrencyInput";
@@ -206,5 +207,25 @@ describe("CurrencyInput below zero (E12 S8)", () => {
     expect(onValueChange).toHaveBeenLastCalledWith(-75.2, "-75.20");
     await fireEvent(box, "blur");
     expect(box.props.value).toBe("-75.20");
+  });
+});
+
+describe("CurrencyInput in a form", () => {
+  it("asks the form to bring it above the keyboard when it gains focus", async () => {
+    const showField = jest.fn();
+    await render(
+      <ScrollFieldIntoView.Provider value={showField}>
+        <ThemeProvider scheme="light">
+          <CurrencyInput
+            value={null}
+            onValueChange={jest.fn()}
+            accessibilityLabel="Balance"
+            testID="b"
+          />
+        </ThemeProvider>
+      </ScrollFieldIntoView.Provider>,
+    );
+    await fireEvent(screen.getByTestId("b"), "focus");
+    expect(showField).toHaveBeenCalledTimes(1);
   });
 });

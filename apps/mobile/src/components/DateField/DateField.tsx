@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 // Raw React Native inputs are allowed inside src/components (biome.json, apps/mobile override).
 import { TextInput, View } from "react-native";
+import { useScrollFieldIntoView } from "../../device/keyboardInset";
 import { useTheme } from "../../theme/ThemeProvider";
 import { useTextScale } from "../../theme/useTextScale";
 import { Button } from "../Button";
@@ -99,6 +100,8 @@ export function DateField({
   testID,
 }: DateFieldProps) {
   const theme = useTheme();
+  // In a form, the field scrolls above the keyboard when it gains focus.
+  const showField = useScrollFieldIntoView();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const textScale = useTextScale();
   const [parts, setParts] = useState<Parts>(() => partsFrom(value));
@@ -148,7 +151,10 @@ export function DateField({
               <TextInput
                 value={parts[key]}
                 onChangeText={(text) => report({ ...parts, [key]: text })}
-                onFocus={() => setFocused(key)}
+                onFocus={() => {
+                  setFocused(key);
+                  showField();
+                }}
                 onBlur={() => setFocused(null)}
                 keyboardType="number-pad"
                 inputMode="numeric"
