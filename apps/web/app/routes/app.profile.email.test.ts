@@ -3,12 +3,13 @@ import { UserEmailResponse } from "@flump/api-contract";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const backendFetch = vi.fn();
+const getAuthSession = vi.fn();
 vi.mock("~/services/backend-client.server", () => ({
   backendFetch: (...a: unknown[]) => backendFetch(...a),
   backendFetchAll: async () => [],
 }));
 vi.mock("~/utils/auth.server", () => ({
-  getAuthSession: async () => ({ user: { id: "u1" }, accessToken: "token" }),
+  getAuthSession: (...a: unknown[]) => getAuthSession(...a),
 }));
 
 import { BackendError } from "~/services/backend-error";
@@ -28,7 +29,54 @@ const runLoader = async () => {
 describe("settings loader: account email resolution", () => {
   beforeEach(() => {
     backendFetch.mockReset();
+    getAuthSession.mockReset();
+    getAuthSession.mockResolvedValue({ user: { id: "u1" }, accessToken: "token" });
   });
+
+  it("skips GET /user-profile/email and resolves null when the AuthKit session already has an email", async () => {
+    const sessionEmail = ["session", "example.com"].join("@");
+    getAuthSession.mockResolvedValue({
+      user: { id: "u1", email: sessionEmail },
+      accessToken: "token",
+    });
+    backendFetch.mockImplementation(async (endpoint: string) => {
+      if (endpoint === "/user-profile") return PROFILE;
+      if (endpoint === "/beta/admin") throw new BackendError("not-found", endpoint, 404);
+      if (endpoint === "/household") throw new BackendError("not-found", endpoint, 404);
+      throw new Error(`unexpected ${endpoint}`);
+    });
+
+    const loaded = await runLoader();
+    expect(loaded.accountEmail).toBeNull();
+    expect(loaded.userProfile).toEqual(PROFILE);
+    const endpoints = backendFetch.mock.calls.map(([endpoint]) => endpoint);
+    expect(endpoints).toContain("/user-profile");
+    expect(endpoints).not.toContain("/user-profile/email");
+  });
+
+  it.each(["", "   "])(
+    "calls GET /user-profile/email when the session email is empty or blank (%j)",
+    async (blankEmail) => {
+      const sampleEmail = ["person", "example.com"].join("@");
+      getAuthSession.mockResolvedValue({
+        user: { id: "u1", email: blankEmail },
+        accessToken: "token",
+      });
+      backendFetch.mockImplementation(async (endpoint: string) => {
+        if (endpoint === "/user-profile") return PROFILE;
+        if (endpoint === "/user-profile/email") return { email: sampleEmail };
+        if (endpoint === "/beta/admin") throw new BackendError("not-found", endpoint, 404);
+        if (endpoint === "/household") throw new BackendError("not-found", endpoint, 404);
+        throw new Error(`unexpected ${endpoint}`);
+      });
+
+      const loaded = await runLoader();
+      expect(loaded.accountEmail).toBe(sampleEmail);
+      expect(backendFetch.mock.calls.map(([endpoint]) => endpoint)).toContain(
+        "/user-profile/email",
+      );
+    },
+  );
 
   it("loads the account email from GET /user-profile/email with UserEmailResponse", async () => {
     const sampleEmail = ["person", "example.com"].join("@");

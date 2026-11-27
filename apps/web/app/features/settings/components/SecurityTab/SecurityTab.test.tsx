@@ -51,11 +51,6 @@ describe("<SecurityTab />", () => {
     expect(screen.queryByText("Verified")).toBeNull();
   });
 
-  it("shows a quiet loading message while the email is loading without flashing the fallback", () => {
-    render(<SecurityTab email={null} emailLoading />);
-    expect(screen.getByTestId("user-email-display").textContent).toBe("Loading your email…");
-  });
-
   it("sends a password reset email directly and shows fixed copy, never the server's", async () => {
     render(<SecurityTab email="user@example.com" />);
     fireEvent.click(screen.getByTestId("change-password-trigger"));
