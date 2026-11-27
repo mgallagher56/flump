@@ -8,8 +8,16 @@ import {
   runwayIllustration,
 } from "@flump/finance-engine/budget";
 import * as Crypto from "expo-crypto";
-import { useContext, useEffect, useMemo, useRef, useState } from "react";
-import { AccessibilityInfo, Keyboard, Linking, Modal, Platform, View } from "react-native";
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import {
+  AccessibilityInfo,
+  Keyboard,
+  Linking,
+  Modal,
+  Platform,
+  type ScrollViewInstance,
+  View,
+} from "react-native";
 import { BreathingRoom } from "../../components/BreathingRoom";
 import { BudgetCategoryList } from "../../components/BudgetCategoryList";
 import { BudgetEditor } from "../../components/BudgetEditor";
@@ -131,6 +139,14 @@ export function Budget({
   // Pull to refresh reads again everything the page shows: the check-in's reads and the budget.
   const onRefresh = () => Promise.all([refreshAll(), budget.refetch()]).then(() => undefined);
   const skeleton = useDelayedLoading(data.status === "loading");
+  // "Saved" and a save's error sit in the flow at the top of the page (Toast has no floating), so
+  // after a change made far down the editor the page scrolls back to them, as the account form
+  // does with its alert; otherwise they were out of sight (Maestro's budget flow).
+  const scrollRef = useRef<ScrollViewInstance>(null);
+  const showMessages = useCallback(
+    () => scrollRef.current?.scrollTo({ y: 0, animated: false }),
+    [],
+  );
   if (data.status === "error" && data.problem === "termsNotAccepted") {
     return (
       <TermsRequired
@@ -143,14 +159,20 @@ export function Budget({
   }
   if (data.status === "notSetUp") return <NotSetUp setUp={links.setUp} edges={TAB_EDGES} />;
   return (
-    <Screen edges={TAB_EDGES} testID="budget" onRefresh={onRefresh}>
+    <Screen edges={TAB_EDGES} testID="budget" onRefresh={onRefresh} scrollRef={scrollRef}>
       <View>
         <Text accessibilityRole="header" textStyle="heading.md">
           {BUDGET.title}
         </Text>
         <Text color="secondary">{BUDGET.subtitle}</Text>
       </View>
-      <Body data={data} skeleton={skeleton} links={links} onOpenAccounts={onOpenAccounts} />
+      <Body
+        data={data}
+        skeleton={skeleton}
+        links={links}
+        onOpenAccounts={onOpenAccounts}
+        onMessage={showMessages}
+      />
     </Screen>
   );
 }
@@ -160,11 +182,13 @@ function Body({
   skeleton,
   links,
   onOpenAccounts,
+  onMessage,
 }: {
   data: Exclude<BudgetDataState, { status: "notSetUp" }>;
   skeleton: boolean;
   links: BudgetWebLinks;
   onOpenAccounts(): void;
+  onMessage(): void;
 }) {
   if (data.status === "error") {
     // Never "No budget yet" or £0 for a failed read; out of step never blames the connection.
@@ -192,7 +216,7 @@ function Body({
       />
     ) : null;
   }
-  return <Ready data={data} links={links} onOpenAccounts={onOpenAccounts} />;
+  return <Ready data={data} links={links} onOpenAccounts={onOpenAccounts} onMessage={onMessage} />;
 }
 
 type ReadyData = Extract<BudgetDataState, { status: "ready" }>;
@@ -217,10 +241,13 @@ function Ready({
   data,
   links,
   onOpenAccounts,
+  onMessage,
 }: {
   data: ReadyData;
   links: BudgetWebLinks;
   onOpenAccounts(): void;
+  /** A new toast or error sits at the top of the page: bring it into view (as the account form). */
+  onMessage(): void;
 }) {
   const { page, saved, housingStatus, customCategories } = data;
   const writes = useBudgetWrites();
@@ -233,6 +260,9 @@ function Ready({
   const [sheet, setSheet] = useState<Sheet>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [toast, setToast] = useState<ToastState | null>(null);
+  useEffect(() => {
+    if (toast || actionError) onMessage();
+  }, [toast, actionError, onMessage]);
   const toasts = useRef(0);
   const say = (message: string) => {
     toasts.current += 1;
