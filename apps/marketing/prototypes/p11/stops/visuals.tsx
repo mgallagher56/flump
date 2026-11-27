@@ -291,7 +291,7 @@ const buildBudget: Build = ({ gsap }, tl, root) => {
 
 const PayVisual: FC = () => (
   <div className="p11-v p11-v-pay">
-    <article aria-label="Example payslip" className="p11-v-slip">
+    <article aria-label="Example payslip" className="p11-v-slip" data-tilt="">
       <div className="p11-v-slip__panel p11-v-slip__panel--top">
         <div className="p11-v-slip__face">
           <p className="p11-v-slip__head">

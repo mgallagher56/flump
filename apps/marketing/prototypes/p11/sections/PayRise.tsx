@@ -31,8 +31,8 @@ import {
 import { payRiseResult, taxYearInWords } from "../../../src/components/PayRiseTeaser/payRise";
 import { usePace } from "../../shared/pace";
 import { Bubbles } from "../../shared/round3";
-import { useGsap } from "../../shared/useGsap";
 import { arrive } from "./moments";
+import { useNearGsap } from "./useNearGsap";
 import { useTweened } from "./useTweened";
 
 const gbp = (value: number) => formatMoney(Math.round(value), { fractionDigits: 0 }).text;
@@ -73,7 +73,7 @@ export const PayRise: FC = () => {
   const ref = useRef<HTMLDivElement>(null);
   const pace = usePace();
 
-  useGsap(
+  useNearGsap(
     ref,
     (kit, root) => {
       const card = root.querySelector(".p11-pay__card");

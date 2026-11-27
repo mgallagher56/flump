@@ -85,13 +85,49 @@ export function buildAssemble(kit: GsapKit, root: HTMLElement, pace: PaceState):
           scale: gr.width / pr.width,
         });
       }
+      // Stacked (phone and tablet): the rows are one list, and the pieces rest in a tidy tray over
+      // them, so at rest no piece hides the dashboard's own figures.
+      const phone = !wide;
+      const trayFor = () => {
+        const slots = new Map<
+          PieceKey,
+          { x: number; y: number; scale: number; cx: number; cy: number }
+        >();
+        const rows = FLIGHTS.map(([k]) => row(k)?.getBoundingClientRect());
+        const list = root.querySelector(".p11-made__list")?.getBoundingClientRect();
+        if (!list || rows.some((r) => !r)) return null;
+        const gap = 8;
+        const cellW = (list.width - gap) / 2;
+        FLIGHTS.forEach(([k], i) => {
+          const p = piece(k);
+          const top = rows[i - (i % 2)];
+          const bottom = rows[i - (i % 2) + 1] ?? top;
+          if (!p || !top || !bottom) return;
+          const pr = p.getBoundingClientRect();
+          const cellH = bottom.bottom - top.top - 6;
+          const scale = Math.min(0.8, (cellW - 6) / pr.width, cellH / pr.height);
+          const cx = list.left + (i % 2 ? cellW + gap : 0) + cellW / 2;
+          const cy = top.top + 3 + cellH / 2;
+          const pc = centre(pr);
+          slots.set(k, { x: cx - pc.x, y: cy - pc.y, scale, cx, cy });
+        });
+        return slots;
+      };
       const receipt = piece("receipt");
       const ghostAt = { x: 0, y: 0 };
+      let ghostScale = 1;
       if (receipt) {
         const rc = centre(receipt.getBoundingClientRect());
         const fc = centre(leftFrom.getBoundingClientRect());
-        ghostAt.x = SCATTER.receipt.x * s.width * spreadX + (fc.x - rc.x);
-        ghostAt.y = SCATTER.receipt.y * s.height + (fc.y - rc.y);
+        const slot = phone ? trayFor()?.get("receipt") : undefined;
+        if (slot) {
+          ghostAt.x = slot.x + (fc.x - rc.x) * slot.scale;
+          ghostAt.y = slot.y + (fc.y - rc.y) * slot.scale;
+          ghostScale = slot.scale;
+        } else {
+          ghostAt.x = SCATTER.receipt.x * s.width * spreadX + (fc.x - rc.x);
+          ghostAt.y = SCATTER.receipt.y * s.height + (fc.y - rc.y);
+        }
       }
       const leftValue = value("left");
       // The ghost's landing, fitted to the tile's figure while the dashboard is flat.
@@ -100,23 +136,54 @@ export function buildAssemble(kit: GsapKit, root: HTMLElement, pace: PaceState):
         : null;
       const fitScale = Number(fit?.scaleY ?? 1);
 
-      // 2. The scattered state.
+      // 2. The scattered state. On a phone the pieces rest in a tidy tray instead: two to a
+      // shelf over the hidden "Made from" rows, each pair over the two rows it will fill, so no
+      // piece covers any visible text at rest and the rows appear only where pieces have left.
+      const tray = phone ? trayFor() : null;
       for (const [k] of FLIGHTS) {
         const p = piece(k);
         const at = SCATTER[k];
         if (!p) continue;
-        gsap.set(p, {
-          x: at.x * s.width * spreadX,
-          y: at.y * s.height,
-          z: at.z,
-          rotationX: at.rx,
-          rotationY: at.ry,
-          rotationZ: at.rz,
-          opacity: 1,
-        });
+        const slot = tray?.get(k);
+        gsap.set(
+          p,
+          slot
+            ? { x: slot.x, y: slot.y, z: 0, scale: slot.scale, rotation: 0, opacity: 1 }
+            : {
+                x: at.x * s.width * spreadX,
+                y: at.y * s.height,
+                z: at.z,
+                rotationX: at.rx,
+                rotationY: at.ry,
+                rotationZ: at.rz,
+                opacity: 1,
+              },
+        );
+        // GSAP folds the piece's CSS centring into its own transform, which can shift some
+        // pieces: measure where each landed and correct it onto its shelf.
+        if (slot) {
+          const landed = centre(p.getBoundingClientRect());
+          const dx = slot.cx - landed.x;
+          const dy = slot.cy - landed.y;
+          gsap.set(p, { x: slot.x + dx, y: slot.y + dy });
+          // The same shift applies to its landing on the row.
+          const dock = docks.get(k);
+          if (dock) docks.set(k, { ...dock, x: dock.x + dx, y: dock.y + dy });
+        }
       }
-      gsap.set(ghost, { x: ghostAt.x, y: ghostAt.y, z: SCATTER.receipt.z + 2, opacity: 0 });
-      gsap.set(dash, { z: -120, rotationX: 4, y: 16, transformOrigin: "50% 40%" });
+      gsap.set(ghost, {
+        x: ghostAt.x,
+        y: ghostAt.y,
+        z: tray ? 2 : SCATTER.receipt.z + 2,
+        scale: ghostScale,
+        opacity: 0,
+      });
+      gsap.set(
+        dash,
+        tray
+          ? { y: 0, transformOrigin: "50% 40%" }
+          : { z: -120, rotationX: 4, y: 16, transformOrigin: "50% 40%" },
+      );
       gsap.set(root.querySelectorAll("[data-p11-value]"), { opacity: 0, y: 10 });
       gsap.set(root.querySelectorAll("[data-p11-slot]"), { opacity: 1 });
       gsap.set(root.querySelectorAll("[data-p11-row]"), { opacity: 0 });
@@ -127,18 +194,21 @@ export function buildAssemble(kit: GsapKit, root: HTMLElement, pace: PaceState):
       const tl = gsap.timeline({ paused: true, defaults: { ease: "calm" } });
       tl.to(dash, { z: 0, rotationX: 0, y: 0, duration: 3.4, ease: "calmInOut" }, 0.1);
       // The first half screen: everything drifts a little nearer before anything leaves.
-      tl.to(
-        [...layer.querySelectorAll<HTMLElement>("[data-p11-piece]")].map(
-          (p) => p.firstElementChild,
-        ),
-        {
-          y: -8,
-          rotationZ: (i: number) => (i % 2 ? 1.5 : -1.5),
-          duration: 1.4,
-          ease: "sine.inOut",
-        },
-        0,
-      );
+      // (Not on a phone, where the tray's shelves sit close together.)
+      if (!phone) {
+        tl.to(
+          [...layer.querySelectorAll<HTMLElement>("[data-p11-piece]")].map(
+            (p) => p.firstElementChild,
+          ),
+          {
+            y: -8,
+            rotationZ: (i: number) => (i % 2 ? 1.5 : -1.5),
+            duration: 1.4,
+            ease: "sine.inOut",
+          },
+          0,
+        );
+      }
 
       const reveal = (k: string, at: number) => {
         const v = value(k);
@@ -152,7 +222,7 @@ export function buildAssemble(kit: GsapKit, root: HTMLElement, pace: PaceState):
         const d = docks.get(k);
         const r = row(k);
         if (!p || !d || !r) continue;
-        const peak = SCATTER[k].z + 50;
+        const peak = phone ? 40 : SCATTER[k].z + 50;
         tl.to(
           p,
           {

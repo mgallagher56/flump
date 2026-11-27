@@ -66,6 +66,8 @@ export const BACKDROP_LABEL: Record<Backdrop, string> = {
 export interface PaceState {
   pace: Pace;
   factor: number;
+  /** The page's own slowdown (1 unless the page asks for more). */
+  scale: number;
   setPace: (pace: Pace) => void;
   backdrop: Backdrop;
   setBackdrop: (backdrop: Backdrop) => void;
@@ -82,11 +84,13 @@ const make = (
   setPace: (p: Pace) => void,
   backdrop: Backdrop,
   setBackdrop: (b: Backdrop) => void,
+  scale = 1,
 ): PaceState => {
-  const factor = PACE_FACTOR[pace];
+  const factor = PACE_FACTOR[pace] * scale;
   return {
     pace,
     factor,
+    scale,
     setPace,
     backdrop,
     setBackdrop,
@@ -126,7 +130,11 @@ const write = (key: string, value: string) => {
 };
 
 /** Pace and backdrop choices, remembered in this browser only (a dev convenience). */
-export function usePaceState(defaultBackdrop: Backdrop = "a"): PaceState {
+/**
+ * `scale` slows one page as a whole (every duration and scrubbed distance, at every Speed
+ * setting). Round five: 11 and 11b use 1.4 after the owner found them fast again.
+ */
+export function usePaceState(defaultBackdrop: Backdrop = "a", scale = 1): PaceState {
   // Pages that default to both sets remember their own choice, so earlier pages keep theirs.
   const backdropKey =
     defaultBackdrop === "a" ? "flump-proto-backdrop" : `flump-proto-backdrop-${defaultBackdrop}`;
@@ -144,5 +152,5 @@ export function usePaceState(defaultBackdrop: Backdrop = "a"): PaceState {
     setBackdropState(value);
     write(backdropKey, value);
   };
-  return make(pace, setPace, backdrop, setBackdrop);
+  return make(pace, setPace, backdrop, setBackdrop, scale);
 }

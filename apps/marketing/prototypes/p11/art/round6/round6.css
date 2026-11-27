@@ -1,0 +1,546 @@
+/*
+ * Prototype 11's spot pictures, round six: tilted cards and paper documents, the empty-accounts
+ * and features-tiles style. Semantic token variables only. The frame sizes its em to its
+ * container (22.5em across, 13px to 17px); small text is held at 12px or more with max().
+ */
+
+@property --p11-r6-u {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 16px;
+}
+
+.p11-r6-fit {
+  container-type: inline-size;
+  width: 100%;
+}
+
+.p11-r6 {
+  position: relative;
+  margin: 0;
+  font-size: clamp(var(--p11-r6-min, 13px), 100cqi / 22.5, var(--p11-r6-max, 17px));
+  font-family: var(--fonts-body);
+  line-height: 1.2;
+  color: var(--colors-text-primary);
+}
+
+.p11-r6__stage {
+  --p11-r6-u: 1em;
+  position: relative;
+  width: 22em;
+  height: var(--h, 15em);
+  margin-inline: auto;
+}
+
+.p11-r6__stage > * {
+  position: absolute;
+}
+
+.p11-r6-paper {
+  border-radius: 0.6em;
+}
+
+.p11-r6-note {
+  font-size: max(12px, 0.82em);
+  color: var(--colors-text-secondary);
+}
+
+.p11-r6-big {
+  font-size: 1.7em;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+/* The last plain row of a list: no rule under it. */
+.p11-rows > .p11-r6-lastrow {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+/* A second sheet peeking from under a document. */
+.p11-r6-under {
+  height: 10em;
+  opacity: 0.85;
+}
+
+/* ---------- Cards: two extra tones ---------- */
+
+.p11-r6 .p11-r6-cardwrap--pension .p11-card {
+  --p11-card-bg: color-mix(in oklab, var(--colors-chart-series4) 26%, var(--colors-surface-card));
+  --p11-card-ink: var(--colors-text-primary);
+}
+
+.p11-r6 .p11-r6-cardwrap--goal .p11-card {
+  --p11-card-bg: color-mix(in oklab, var(--colors-chart-series6) 30%, var(--colors-surface-card));
+  --p11-card-ink: var(--colors-text-primary);
+}
+
+:is(html.dark, [data-theme="dark"]) .p11-r6 .p11-r6-cardwrap--pension .p11-card {
+  --p11-card-bg: color-mix(in oklab, var(--colors-chart-series4) 24%, var(--colors-surface-card));
+}
+
+:is(html.dark, [data-theme="dark"]) .p11-r6 .p11-r6-cardwrap--goal .p11-card {
+  --p11-card-bg: color-mix(in oklab, var(--colors-chart-series6) 22%, var(--colors-surface-card));
+}
+
+/* More room inside every card, as on empty-accounts. */
+.p11-r6 .p11-r6-card {
+  width: 16.4em;
+  height: 10.2em;
+}
+
+.p11-r6 .p11-r6-card .p11-card__face {
+  padding: 1.3em 1.4em 1.25em;
+  row-gap: 0.5em;
+}
+
+.p11-r6 .p11-r6-card .p11-card__top {
+  gap: 0.8em;
+}
+
+.p11-r6 .p11-r6-card .p11-card__bank {
+  white-space: nowrap;
+}
+
+.p11-r6-cardtrack {
+  height: 0.55em;
+  margin-top: 0.4em;
+  border-radius: 999px;
+  border: 1.5px dashed color-mix(in oklab, var(--p11-card-ink) 45%, transparent);
+}
+
+.p11-r6-slot {
+  display: grid;
+  place-items: start center;
+  height: 7.6em;
+  padding-top: 1.4em;
+  border-radius: 0.9em;
+  border: 2px dashed var(--colors-border-strong);
+  background: color-mix(in oklab, var(--colors-surface-card) 70%, transparent);
+  color: var(--colors-text-secondary);
+  font-size: max(12px, 0.9em);
+  font-weight: 600;
+}
+
+/* ---------- Goals ---------- */
+
+.p11-r6-goal {
+  gap: 0.9em;
+  padding: 1.3em 1.4em 1.4em;
+}
+
+.p11-r6-pennant {
+  position: absolute;
+  right: 1.6em;
+  top: -2.2em;
+  width: 2.6em;
+  height: 2.4em;
+  border-left: 0.18em solid var(--colors-text-secondary);
+}
+
+.p11-r6-pennant::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 2.2em;
+  height: 1.5em;
+  background: var(--colors-primary);
+  clip-path: polygon(0 0, 100% 50%, 0 100%);
+}
+
+.p11-r6-fields {
+  margin: 0;
+  display: grid;
+  gap: 0.6em;
+  font-size: max(12px, 0.9em);
+}
+
+.p11-r6-fields > div {
+  display: grid;
+  grid-template-columns: 4.2em 1fr;
+  align-items: center;
+  gap: 0.6em;
+}
+
+.p11-r6-fields dt {
+  color: var(--colors-text-secondary);
+}
+
+.p11-r6-blank {
+  margin: 0;
+  height: 1.9em;
+  border-radius: 0.45em;
+  border: 1.5px dashed var(--colors-border-strong);
+}
+
+.p11-r6-track {
+  height: 0.6em;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--colors-text-primary) 8%, transparent);
+}
+
+.p11-r6-slip {
+  gap: 0.35em;
+}
+
+/* ---------- Savings ---------- */
+
+.p11-r6-receipt {
+  border-radius: 0.2em;
+  padding-bottom: 1.6em;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      color-mix(in oklab, var(--colors-text-primary) 2%, transparent) 0 1px,
+      transparent 1px 3px
+    ),
+    var(--colors-surface-sunken);
+  -webkit-mask:
+    linear-gradient(var(--colors-text-primary), var(--colors-text-primary)) top / 100%
+    calc(100% - 0.55em) no-repeat,
+    conic-gradient(from 135deg at top, var(--colors-text-primary) 90deg, transparent 0) bottom /
+    1.1em 0.55em repeat-x;
+  mask:
+    linear-gradient(var(--colors-text-primary), var(--colors-text-primary)) top / 100%
+    calc(100% - 0.55em) no-repeat,
+    conic-gradient(from 135deg at top, var(--colors-text-primary) 90deg, transparent 0) bottom /
+    1.1em 0.55em repeat-x;
+}
+
+.p11-r6-pot {
+  gap: 0.6em;
+  padding: 1.3em 1.4em;
+}
+
+.p11-r6-spark {
+  display: block;
+  width: 100%;
+  height: 2.4em;
+  overflow: visible;
+}
+
+.p11-r6-spark path {
+  fill: none;
+  stroke: var(--colors-primary);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+/* ---------- Statements ---------- */
+
+.p11-r6-statement {
+  border-radius: 0.3em;
+  gap: 0.8em;
+  padding: 1.2em 1.3em 1.3em;
+}
+
+/* ---------- Check-in ---------- */
+
+.p11-r6-check {
+  gap: 0.8em;
+  padding: 1.2em 1.3em 1.3em;
+}
+
+.p11-r6-check dt {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
+}
+
+.p11-r6-tick {
+  display: inline-grid;
+  place-items: center;
+  width: 1.2em;
+  height: 1.2em;
+  border-radius: 50%;
+  background: var(--colors-primary);
+  color: var(--colors-primary-foreground);
+}
+
+.p11-r6-tick svg {
+  width: 0.8em;
+  height: 0.8em;
+}
+
+.p11-r6-page {
+  justify-items: center;
+  gap: 0.3em;
+  padding: 0 0 1.2em;
+  border-radius: 0.6em;
+  overflow: hidden;
+}
+
+.p11-r6-page__band {
+  justify-self: stretch;
+  padding: 0.6em;
+  background: var(--colors-primary);
+  color: var(--colors-primary-foreground);
+  font-family: var(--fonts-heading);
+  font-weight: 700;
+  text-align: center;
+}
+
+.p11-r6-page__day {
+  margin-top: 0.2em;
+  font-size: 3.6em;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.p11-r6-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
+  padding: 0.5em 0.9em;
+  border-radius: 0.4em;
+  border: 1px solid var(--colors-border);
+  background: var(--colors-surface-card);
+  box-shadow: 0 0.8em 1.4em -0.9em color-mix(in oklab, var(--colors-text-primary) 45%, transparent);
+  font-size: max(12px, 0.9em);
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+/* ---------- Onboarding ---------- */
+
+.p11-r6-stepcard {
+  gap: 0.3em;
+  padding: 1em 0.9em 1.1em;
+}
+
+.p11-r6-stepnum {
+  font-family: var(--fonts-heading);
+  font-size: 1.6em;
+  font-weight: 700;
+  color: var(--colors-primary);
+  line-height: 1;
+}
+
+.p11-r6-steplabel {
+  font-weight: 650;
+  font-size: max(12px, 0.95em);
+}
+
+.p11-r6-expos {
+  display: block;
+}
+
+.p11-r6-ticket {
+  gap: 0.8em;
+  padding: 1em 1.2em 1.2em;
+  border-radius: 0.5em;
+}
+
+.p11-r6-ticket__parts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.p11-r6-ticket__parts li {
+  display: grid;
+  align-content: start;
+  gap: 0.3em;
+  padding: 0.2em 0.7em;
+  border-left: 2px dashed var(--colors-border-strong);
+}
+
+.p11-r6-ticket__parts li:first-child {
+  padding-left: 0;
+  border-left: 0;
+}
+
+/* ---------- Not found ---------- */
+
+.p11-r6-torn {
+  gap: 0.9em;
+  padding: 1.6em 1.3em 1.8em;
+  -webkit-mask:
+    conic-gradient(from -45deg at bottom, var(--colors-text-primary) 90deg, transparent 0) top /
+    1.1em 0.55em repeat-x,
+    linear-gradient(var(--colors-text-primary), var(--colors-text-primary)) center / 100%
+    calc(100% - 1.1em) no-repeat,
+    conic-gradient(from 135deg at top, var(--colors-text-primary) 90deg, transparent 0) bottom /
+    1.1em 0.55em repeat-x;
+  mask:
+    conic-gradient(from -45deg at bottom, var(--colors-text-primary) 90deg, transparent 0) top /
+    1.1em 0.55em repeat-x,
+    linear-gradient(var(--colors-text-primary), var(--colors-text-primary)) center / 100%
+    calc(100% - 1.1em) no-repeat,
+    conic-gradient(from 135deg at top, var(--colors-text-primary) 90deg, transparent 0) bottom /
+    1.1em 0.55em repeat-x;
+}
+
+.p11-r6-lines {
+  display: grid;
+  gap: 0.75em;
+}
+
+.p11-r6-lines i {
+  display: block;
+  height: 0.45em;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--colors-text-secondary) 22%, transparent);
+}
+
+.p11-r6-lines i:nth-child(2) {
+  width: 80%;
+}
+
+.p11-r6-lines i:nth-child(3) {
+  width: 90%;
+}
+
+.p11-r6-lines i:nth-child(4) {
+  width: 55%;
+}
+
+.p11-r6-where {
+  gap: 1em;
+  padding: 1.3em 1.4em 1.6em;
+  height: 9em;
+}
+
+.p11-r6-dirtab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
+  padding: 0.7em 1em;
+  border-radius: 0.5em;
+  border: 1px solid var(--colors-border);
+  background: color-mix(in oklab, var(--colors-surface-tint-teal) 70%, var(--colors-surface-card));
+  box-shadow: 0 0.9em 1.5em -0.9em color-mix(in oklab, var(--colors-text-primary) 45%, transparent);
+  font-size: max(12px, 0.95em);
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.p11-r6-dirtab--left {
+  background: color-mix(
+    in oklab,
+    var(--colors-surface-tint-violet) 70%,
+    var(--colors-surface-card)
+  );
+}
+
+.p11-r6-dirtab svg {
+  width: 1.1em;
+  height: 1.1em;
+  color: var(--colors-primary);
+}
+
+/* ---------- Savings and pension tile ---------- */
+
+.p11-r6-tilestatement {
+  gap: 0.8em;
+  padding: 1.1em 1.2em 1.3em;
+  border-radius: 0.3em;
+}
+
+.p11-r6-tilestatement .p11-rows > div {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.p11-r6-tilestatement dt {
+  white-space: nowrap;
+}
+
+.p11-r6-two {
+  gap: 0.8em;
+  padding: 1.2em 1.3em 1.3em;
+}
+
+.p11-r6-book {
+  height: 10.6em;
+}
+
+.p11-r6-book__cover {
+  position: absolute;
+  inset: -0.35em -0.4em -0.55em;
+  border-radius: 0.7em;
+  background: color-mix(in oklab, var(--colors-primary) 60%, var(--colors-surface-card));
+  box-shadow: 0 1.4em 2.2em -1.2em color-mix(in oklab, var(--colors-text-primary) 55%, transparent);
+}
+
+:is(html.dark, [data-theme="dark"]) .p11-r6-book__cover {
+  background: color-mix(in oklab, var(--colors-primary) 36%, var(--colors-surface-card));
+}
+
+.p11-r6-book__page {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 50%;
+  gap: 0.35em;
+  padding: 1.2em 1.1em;
+  border-radius: 0.4em 0 0 0.4em;
+  box-shadow:
+    inset -1.2em 0 1.2em -1em color-mix(in oklab, var(--colors-text-primary) 22%, transparent),
+    inset 0 0 0 1px var(--colors-border);
+}
+
+.p11-r6-book__page--right {
+  left: 50%;
+  border-radius: 0 0.4em 0.4em 0;
+  box-shadow:
+    inset 1.2em 0 1.2em -1em color-mix(in oklab, var(--colors-text-primary) 22%, transparent),
+    inset 0 0 0 1px var(--colors-border);
+}
+
+.p11-r6-book__page .p11-ex {
+  justify-self: start;
+}
+
+.p11-r6-sparktag {
+  gap: 0.35em;
+  padding: 0.8em 0.9em;
+}
+
+.p11-r6-check .p11-paper__title {
+  white-space: nowrap;
+}
+
+/* ---------- On prototype 11's page: bigger where the picture carries the band ---------- */
+
+.p11-rough__art .p11-r6-fit,
+.p11-tone--contrast .p11-r6-fit {
+  --p11-r6-max: 21px;
+  width: min(30rem, calc(100vw - 48px));
+  margin-inline: auto;
+}
+
+/* A features tile: the picture fills the tile's width. */
+.p11-tile-pic .p11-piece:has(> .p11-r6-fit) {
+  --p11-r6-min: 10.5px;
+  width: 100%;
+  rotate: 0deg;
+}
+
+/* ---------- The sheet: the chosen picture first, the rest below ---------- */
+
+.p11-sheet6__chosen {
+  border-color: var(--colors-primary);
+  color: var(--colors-text-primary);
+}
+
+.p11-sheet6__rest {
+  opacity: 0.92;
+}
+
+/* ---------- Pension statement mark: a small violet dot, like the orbs ---------- */
+
+.p11-r6--pension-a .p11-statement__mark {
+  background: radial-gradient(
+    circle at 35% 30%,
+    color-mix(in oklab, var(--colors-chart-series4) 50%, var(--colors-surface-card)),
+    var(--colors-chart-series4) 70%
+  );
+}

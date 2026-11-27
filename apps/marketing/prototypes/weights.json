@@ -1,5 +1,5 @@
 {
-  "measuredAt": "2026-11-26",
+  "measuredAt": "2026-11-27",
   "note": "Minified and gzipped (CSS unminified), excluding what production already ships and the dev panel.",
   "prototypes": {
     "p1": {
@@ -60,38 +60,38 @@
     },
     "p8": {
       "initialGzip": 14965,
-      "lazyGzip": 76919,
-      "initialRaw": 45755,
+      "lazyGzip": 76920,
+      "initialRaw": 45753,
       "lazyRaw": 192800,
       "cssGzip": 8864
     },
     "p9": {
-      "initialGzip": 11531,
+      "initialGzip": 11539,
       "lazyGzip": 224245,
-      "initialRaw": 30123,
+      "initialRaw": 30121,
       "lazyRaw": 772067,
       "cssGzip": 3611
     },
     "p10": {
-      "initialGzip": 17413,
-      "lazyGzip": 226547,
-      "initialRaw": 50408,
+      "initialGzip": 17420,
+      "lazyGzip": 226548,
+      "initialRaw": 50406,
       "lazyRaw": 777695,
       "cssGzip": 7614
     },
     "p11": {
-      "initialGzip": 18983,
-      "lazyGzip": 223597,
-      "initialRaw": 59919,
-      "lazyRaw": 769807,
-      "cssGzip": 14246
+      "initialGzip": 20479,
+      "lazyGzip": 223962,
+      "initialRaw": 64940,
+      "lazyRaw": 770657,
+      "cssGzip": 21864
     },
     "p11b": {
-      "initialGzip": 20549,
-      "lazyGzip": 76912,
-      "initialRaw": 64095,
-      "lazyRaw": 192813,
-      "cssGzip": 15030
+      "initialGzip": 21961,
+      "lazyGzip": 77301,
+      "initialRaw": 69104,
+      "lazyRaw": 193711,
+      "cssGzip": 22665
     }
   }
 }

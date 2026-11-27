@@ -510,15 +510,14 @@ export function createJourneyScene({
       const wz = -(k + 0.3) * GAP;
       // Out at both edges of the screen as the camera passes, behind the stop, never mid-screen.
       // [edge side, share of half width, height above floor, depth behind, radius, accent]
+      // Six a stop (round five dropped the two deepest, which blurred into grey behind the scrim).
       const set: [number, number, number, number, number, boolean][] = [
         [1, 0.78, 2.1, 3, 0.55, false],
         [1, 1.02, 3.4, 6, 0.4, true],
         [1, 0.66, 4.4, 4.5, 0.24, true],
-        [1, 1.08, 1.2, 7.5, 0.7, false],
         [-1, 0.82, 3.0, 4, 0.48, true],
         [-1, 1.05, 1.6, 6.5, 0.62, false],
         [-1, 0.7, 4.2, 5.5, 0.22, false],
-        [-1, 0.95, 4.9, 8, 0.32, true],
       ];
       for (const [edge, share, up, back, r, accent] of set) {
         const depth = DIST + back;

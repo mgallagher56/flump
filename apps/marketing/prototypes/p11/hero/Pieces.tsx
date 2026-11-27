@@ -4,7 +4,7 @@ import { FIG, type PieceKey } from "./pieceData";
 /*
  * The six pieces of the household's money, drawn as small physical objects in DOM and CSS so the
  * text stays crisp: a savings card, a payslip, a till receipt for the budget, a mortgage
- * statement, a pension jar and a credit card. Decorative duplicates of the dashboard's "made
+ * statement, a pension statement and a credit card. Decorative duplicates of the dashboard's "made
  * from" rows, so every piece is aria-hidden by its container. Sizes are in em, so one font size
  * on the container scales a whole piece for a phone.
  */
@@ -125,18 +125,29 @@ const Statement: FC = () => (
   </div>
 );
 
-const PensionJar: FC = () => (
-  <div className="p11-jar" style={{ "--p11-fill": `${FIG.pensionFill}%` } as React.CSSProperties}>
-    <span className="p11-jar__lid" />
-    <span className="p11-jar__glass">
-      <span className="p11-jar__fill" />
-      <span className="p11-jar__label">
-        <span className="p11-jar__name">Pension</span>
-        <span className="p11-jar__figure tabular-nums">{FIG.pension}</span>
-        <Example />
+/** The pension as a statement slip, in the same paper style as the mortgage statement. */
+const PensionStatement: FC = () => (
+  <div className="p11-paper p11-statement p11-pension-slip">
+    <div className="p11-statement__letterhead">
+      <span className="p11-statement__mark" />
+      <span className="p11-statement__lines">
+        <i />
+        <i />
       </span>
-      <span className="p11-jar__glint" />
-    </span>
+      <Example />
+    </div>
+    <span className="p11-paper__title">Pension statement</span>
+    <dl className="p11-rows tabular-nums">
+      <div className="p11-rows__total">
+        <dt>Pot value</dt>
+        <dd>{FIG.pension}</dd>
+      </div>
+      <div>
+        <dt>Kind</dt>
+        <dd>Workplace and personal</dd>
+      </div>
+    </dl>
+    <span className="p11-paper__sheen" />
   </div>
 );
 
@@ -145,7 +156,7 @@ export const PIECES: Record<PieceKey, FC> = {
   payslip: Payslip,
   receipt: Receipt,
   statement: Statement,
-  pension: PensionJar,
+  pension: PensionStatement,
   credit: CreditCard,
 };
 

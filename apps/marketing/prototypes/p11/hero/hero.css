@@ -44,6 +44,24 @@
   margin: 0 auto;
 }
 
+/*
+ * Stacked (under 1024px): the picture is centred under the copy and grows with the screen up to
+ * 46rem. The pin wraps the stage in a spacer (a grid item), so the grid centres its items.
+ */
+@media (max-width: 1023.98px) {
+  .p11-stage {
+    max-width: min(100%, 46rem);
+  }
+
+  .p11-hero__inner {
+    justify-items: center;
+  }
+
+  .p11-hero__copy {
+    width: 100%;
+  }
+}
+
 .p11-scene {
   position: relative;
   perspective: 1300px;
@@ -229,7 +247,10 @@
     padding: 1.25rem 1.4rem;
     gap: 1rem;
   }
+}
 
+/* The rows sit in two columns once the hero is side by side; stacked, one column holds the tray. */
+@media (min-width: 1024px) {
   .p11-made__list {
     grid-template-columns: 1fr 1fr;
   }

@@ -29,7 +29,8 @@ const JourneyIntro: FC = () => (
 /** The page inside the shell, so the pointer light and tilt read the shell's motion state. */
 const Body: FC<{ Journey: ComponentType<JourneyProps> }> = ({ Journey }) => {
   const mainRef = useRef<HTMLElement>(null);
-  usePointerLightAndTilt(mainRef);
+  // 1b's tilt, at the round-three ceiling of about six degrees.
+  usePointerLightAndTilt(mainRef, 6);
   return (
     <main className={mainContent()} id="main" ref={mainRef} tabIndex={-1}>
       <AssembleHero />
@@ -64,7 +65,7 @@ export const Page11: FC<{ id: "p11" | "p11b"; Journey: ComponentType<JourneyProp
   id,
   Journey,
 }) => (
-  <PrototypeShell backdrop="both" id={id} paced panel="closed">
+  <PrototypeShell backdrop="both" id={id} paceScale={1.4} paced panel="closed">
     <Header />
     <Body Journey={Journey} />
     <SectionNav />

@@ -160,7 +160,7 @@ const DevPanel: FC<{
                 <select onChange={(e) => pace.setPace(e.target.value as Pace)} value={pace.pace}>
                   {(Object.keys(PACE_LABEL) as Pace[]).map((key) => (
                     <option key={key} value={key}>
-                      {PACE_LABEL[key]} ({PACE_FACTOR[key]}x)
+                      {PACE_LABEL[key]} ({Number((PACE_FACTOR[key] * pace.scale).toFixed(2))}x)
                     </option>
                   ))}
                 </select>
@@ -212,9 +212,11 @@ export const PrototypeShell: FC<{
   paced?: boolean;
   /** The bubble colours a paced page starts with. */
   backdrop?: Backdrop;
-}> = ({ id, children, panel = "open", paced = false, backdrop = "a" }) => {
+  /** Slows the whole page at every Speed setting (see usePaceState). */
+  paceScale?: number;
+}> = ({ id, children, panel = "open", paced = false, backdrop = "a", paceScale = 1 }) => {
   const motion = useMotionState();
-  const pace = usePaceState(backdrop);
+  const pace = usePaceState(backdrop, paceScale);
   return (
     <MotionContext.Provider value={motion}>
       <Helmet>

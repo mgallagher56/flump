@@ -53,31 +53,134 @@
 }
 
 /*
- * The tiles run sideways in one row (native scroll, nothing captured), so six tiles cost under
- * one screen of page instead of two or three. Each width shows a peek of the next tile.
+ * Below 1024px the tiles run sideways in one row (native scroll, nothing captured), each width
+ * showing a clear peek of the next tile, with Previous and Next buttons under the row. Every tile
+ * is the same height, so the row has no ragged empty space below it.
  */
 .p11-features {
   grid-template-columns: none;
   grid-auto-flow: column;
-  grid-auto-columns: clamp(16.5rem, 82%, 20rem);
+  grid-auto-columns: min(82%, 20rem);
   overflow-x: auto;
   overscroll-behavior-x: contain;
-  scroll-snap-type: x proximity;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
   margin-inline: -16px;
-  padding: 4px 16px 14px;
+  padding: 16px 16px 20px;
   scroll-padding-inline: 16px;
+}
+
+.p11-features::-webkit-scrollbar {
+  display: none;
 }
 
 @media (min-width: 48rem) {
   .p11-features {
-    grid-auto-columns: clamp(17rem, 30%, 26rem);
-    gap: clamp(16px, 1.4vw, 28px);
+    grid-auto-columns: min(42%, 22rem);
+    gap: 20px;
   }
 }
 
 .p11-feature {
   scroll-snap-align: start;
-  align-self: start;
+}
+
+/* From 1024px: a plain grid, three tiles to a row, nothing hidden to the side. */
+@media (min-width: 64rem) {
+  .p11-features {
+    grid-auto-flow: row;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    overflow: visible;
+    margin-inline: 0;
+    padding: 0;
+    gap: clamp(20px, 1.6vw, 32px);
+  }
+}
+
+.p11-strip__controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.p11-strip__controls[hidden] {
+  display: none;
+}
+
+.p11-strip__dots {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* Each dot is a 24px target around a small pip; the current one is a longer, filled pill. */
+.p11-strip__dot {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.p11-strip__pip {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--colors-text-secondary);
+  transition:
+    width var(--t-hover, 300ms) var(--ease-out, ease),
+    background-color var(--t-hover, 300ms) ease;
+}
+
+.p11-strip__dot[aria-current="true"] .p11-strip__pip {
+  width: 20px;
+  background: var(--colors-primary);
+}
+
+.p11-strip__dot:hover .p11-strip__pip {
+  background: var(--colors-text-primary);
+}
+
+.p11-strip__dot[aria-current="true"]:hover .p11-strip__pip {
+  background: var(--colors-primary);
+}
+
+.p11-strip__dot:focus-visible {
+  outline: 2px solid var(--colors-border-focus-ring);
+  outline-offset: 1px;
+}
+
+.p11-strip__button {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--colors-border-strong);
+  background: var(--colors-surface-canvas);
+  color: var(--colors-text-primary);
+  cursor: pointer;
+}
+
+.p11-strip__button:hover:not(:disabled) {
+  border-color: var(--colors-primary);
+}
+
+.p11-strip__button:disabled {
+  cursor: default;
+  color: color-mix(in oklab, var(--colors-text-secondary) 55%, transparent);
+  border-color: var(--colors-border);
+}
+
+.p11-strip__button:focus-visible {
+  outline: 2px solid var(--colors-border-focus-ring);
+  outline-offset: 2px;
 }
 
 .p11-features:focus-visible {
@@ -87,6 +190,11 @@
 
 .p11-feature {
   display: grid;
+}
+
+.p11-feature__card {
+  height: 100%;
+  box-sizing: border-box;
 }
 
 .p11-feature__card {
@@ -175,9 +283,26 @@
   }
 }
 
-.p11-rough .p11-art-checkin {
+/*
+ * The calendar card is drawn a little taller than its figure's box (and rises 24px as it
+ * arrives), so the wrapper reserves that room below it and keeps it in the band's own layer.
+ */
+.p11-rough__art {
+  position: relative;
+  z-index: 0;
   justify-self: center;
+  display: grid;
+  justify-items: center;
+  padding-bottom: clamp(56px, 3rem + 1.5vw, 88px);
+}
+
+.p11-rough .p11-art-checkin {
   padding-left: 1.5em;
+}
+
+/* The band paints above the band before it and below the band after it, never across them. */
+.p11-band {
+  isolation: isolate;
 }
 
 .p11-steps {
@@ -313,33 +438,96 @@
 
 /*
  * Wide screens: More detail and the questions share one band, side by side, on one tone. Each
- * keeps its own heading and SectionNav stop.
+ * keeps its own heading and SectionNav stop. The pair sits in one centred column (wider than a
+ * single section, never edge to edge) with a clear gutter between the two lists.
  */
 @media (min-width: 75rem) {
   .p11-pair-bands {
+    --p11-pair-max: clamp(72rem, 64rem + 14vw, 100rem);
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: clamp(40px, 4vw, 96px);
     background: var(--colors-surface-card);
   }
 
+  /* The outer gutters belong to the bands, so each band's bubbles reach the page's edge. */
   .p11-pair-bands > .p11-band {
+    --p11-gutter: max(24px, calc((100vw - var(--p11-pair-max)) / 2));
     background: transparent;
+  }
+
+  .p11-pair-bands > .p11-band:first-child {
+    padding-left: var(--p11-gutter);
+  }
+
+  .p11-pair-bands > .p11-band:last-child {
+    padding-right: var(--p11-gutter);
+  }
+
+  .p11-pair-bands > .p11-band > section {
+    padding-inline: 0;
   }
 
   .p11-pair-bands > .p11-band > section > div {
     max-width: none;
-  }
-
-  .p11-pair-bands > .p11-band:first-child > section {
-    padding-right: clamp(12px, 1.5vw, 32px);
-  }
-
-  .p11-pair-bands > .p11-band:last-child > section {
-    padding-left: clamp(12px, 1.5vw, 32px);
+    padding-inline: 0;
   }
 
   .p11-pair-bands .p11-depth__sheet {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/*
+ * From 1440px the cards' body text, More detail and the questions step up with the viewport, so
+ * side by side they read at the same comfortable size as the sections around them.
+ */
+@media (min-width: 90rem) {
+  .p11-feature__card {
+    padding: clamp(24px, 1.8vw, 36px);
+  }
+
+  .p11-feature__text {
+    font-size: clamp(1.125rem, 0.6rem + 0.6vw, 1.375rem);
+  }
+
+  .p11-feature__note {
+    font-size: clamp(1rem, 0.6rem + 0.4vw, 1.125rem);
+  }
+
+  .p11-pair-bands .p11-depth {
+    gap: 16px;
+  }
+
+  .p11-pair-bands .p11-depth__sheet {
+    padding: clamp(20px, 1.4vw, 28px) clamp(22px, 1.6vw, 32px);
+  }
+
+  .p11-pair-bands .p11-depth__text,
+  .p11-pair-bands .proto-faq__question {
+    font-size: clamp(1.125rem, 0.6rem + 0.6vw, 1.375rem);
+  }
+
+  .p11-pair-bands .p11-depth__sheet a {
+    font-size: clamp(1rem, 0.6rem + 0.45vw, 1.1875rem);
+  }
+
+  .p11-pair-bands .proto-faq {
+    gap: 14px;
+  }
+
+  .p11-pair-bands .proto-faq__question {
+    padding: clamp(1.1rem, 0.6rem + 0.5vw, 1.4rem) clamp(1.2rem, 0.7rem + 0.5vw, 1.6rem);
+  }
+
+  .p11-pair-bands .proto-faq__answer p {
+    padding: 0 clamp(1.2rem, 0.7rem + 0.5vw, 1.6rem) 1.2rem;
+    font-size: clamp(1.0625rem, 0.6rem + 0.5vw, 1.25rem);
+    line-height: 1.55;
+  }
+
+  .p11-pair-bands h2 {
+    font-size: clamp(2.25rem, 1rem + 1.4vw, 3rem);
   }
 }
 
@@ -360,8 +548,63 @@
   }
 }
 
+.p11-security__text {
+  display: grid;
+  gap: 12px;
+  max-width: 36rem;
+}
+
+.p11-security__title {
+  margin: 0;
+  color: var(--colors-text-primary);
+  font-family: var(--fonts-heading);
+  font-size: clamp(1.75rem, 1.2rem + 1.4vw, 2.5rem);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+}
+
+.p11-security__body {
+  margin: 0;
+  color: var(--colors-text-secondary);
+  font-size: clamp(1rem, 0.85rem + 0.3vw, 1.25rem);
+  line-height: 1.55;
+}
+
 .p11-security__more {
   margin: 4px 0 0;
+}
+
+/*
+ * A soft card on a pale band, like the feature tiles and the pay rise card: the security row and
+ * the closing call to action sit in one, with the band's orbs behind it.
+ */
+.p11-soft-card {
+  padding: clamp(24px, 3vw, 48px);
+  border-radius: 28px;
+  border: 1px solid var(--colors-border);
+  background:
+    linear-gradient(
+      155deg,
+      color-mix(in oklab, var(--colors-text-on-contrast) 6%, transparent),
+      transparent 45%
+    ),
+    var(--colors-surface-canvas);
+  box-shadow: var(--shadows-card);
+}
+
+.p11-tone--canvas .p11-soft-card {
+  background: var(--colors-surface-card);
+}
+
+:is(html.dark, [data-theme="dark"]) .p11-soft-card {
+  background:
+    linear-gradient(
+      155deg,
+      color-mix(in oklab, var(--colors-text-on-contrast) 8%, transparent),
+      transparent 45%
+    ),
+    var(--colors-surface-overlay);
 }
 
 /* ---------- Pay rise: the outcome's split bar and its key (from prototype 10). ---------- */
@@ -437,32 +680,57 @@
   }
 }
 
-/* ---------- The close: the glass steps sit on the dark band. ---------- */
+/* ---------- The close: the ticket, the question and the button in one soft card. ---------- */
 
-.p11-tone--contrast .p11-art-steps {
-  margin-bottom: 0.5rem;
+.p11-close__card {
+  display: grid;
+  justify-items: center;
+  gap: 16px;
+  text-align: center;
 }
 
-/* The closing band: compact, the picture does the work. */
-.p11-tone--contrast > section {
-  padding-block: clamp(40px, 7vh, 80px);
+.p11-close__card .p11-r6-fit {
+  --p11-r6-max: 21px;
+  width: min(30rem, calc(100vw - 96px));
+  margin: 0 auto 8px;
 }
 
-/* Wide screens: the closing band's heading, line and button grow with the viewport. */
+.p11-close__card .p11-pic {
+  font-size: clamp(14px, 9px + 0.85vw, 24px);
+}
+
+.p11-close__title {
+  margin: 0;
+  color: var(--colors-text-primary);
+  font-family: var(--fonts-heading);
+  font-size: clamp(1.75rem, 1.1rem + 1.6vw, 3rem);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+.p11-close__text {
+  margin: 0 0 8px;
+  color: var(--colors-text-secondary);
+  font-size: clamp(1.0625rem, 0.9rem + 0.35vw, 1.375rem);
+}
+
 @media (min-width: 90rem) {
-  .p11-tone--contrast h2 {
-    font-size: clamp(2.25rem, 1rem + 1.6vw, 3.25rem);
-  }
-
-  .p11-tone--contrast p {
-    font-size: clamp(1.125rem, 0.8rem + 0.4vw, 1.375rem);
-  }
-
-  .p11-tone--contrast a[data-light] {
+  .p11-close__card a[data-light] {
     height: auto;
     padding: 1rem 2.25rem;
     font-size: 1.1875rem;
   }
+}
+
+/*
+ * Orbs stay behind text and off headings: in the two paired lists the small upper orb would sit
+ * on the heading or the intro line, so only the large lower edge orb is kept.
+ */
+.p11-pair-bands .proto-bubbles__bubble:nth-child(2),
+.p11-close .proto-bubbles__bubble:nth-child(2) {
+  display: none;
 }
 
 /*
@@ -508,4 +776,50 @@
   overflow: hidden;
   clip-path: inset(50%);
   white-space: nowrap;
+}
+
+/*
+ * ---------- Violet and rose: only on orb-like objects ----------
+ * Like the background orbs, the two colour sets appear only on round objects: the rough figures
+ * steps' second and third circles wear a soft violet or rose halo. No card, band, border or text
+ * takes these colours, and colour carries no judgement.
+ */
+.p11-step:nth-child(2) .p11-step__node {
+  box-shadow: 0 0 0 5px color-mix(in oklab, var(--colors-chart-series4) 18%, transparent);
+}
+
+.p11-step:nth-child(3) .p11-step__node {
+  box-shadow: 0 0 0 5px color-mix(in oklab, var(--colors-chart-series5) 16%, transparent);
+}
+
+/*
+ * ---------- Hover: 1b's 3D tilt with the light moving across the card ----------
+ * The shared usePointerLightAndTilt sets the angle and the light's position (mouse only, never
+ * with reduced motion); here the light is a little brighter, as in 1b, and the card lifts with a
+ * deeper shadow. No border changes on hover. Keyboard focus keeps each link's own ring.
+ */
+.p11-band [data-tilt]::after {
+  background: radial-gradient(
+    320px circle at var(--hx, 50%) var(--hy, 0%),
+    color-mix(in oklab, var(--colors-primary) 16%, transparent),
+    color-mix(in oklab, var(--colors-primary) 6%, transparent) 40%,
+    transparent 72%
+  );
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .proto[data-motion="full"] .p11-band [data-tilt][data-tilting="on"] {
+    box-shadow: var(--shadows-floating);
+  }
+}
+
+/* Touch screens: no tilt and no moving light (a press should not tip the card). */
+@media (hover: none) {
+  .proto[data-motion="full"] .p11-band [data-tilt] {
+    transform: none;
+  }
+
+  .proto .p11-band [data-tilt]::after {
+    opacity: 0;
+  }
 }

@@ -76,7 +76,7 @@
   background: var(--colors-surface-card);
   box-shadow: 0 0.8em 1.4em -0.9em color-mix(in oklab, var(--colors-text-primary) 45%, transparent);
   color: var(--colors-text-primary);
-  font-size: 0.875em;
+  font-size: max(12px, 0.875em);
   font-weight: 600;
   white-space: nowrap;
 }
@@ -84,7 +84,7 @@
 /* ---------- empty-accounts ---------- */
 
 .p11-pic--empty-accounts {
-  --pic-h: 16.5em;
+  --pic-h: 17.6em;
 }
 
 .p11-pic__slot {
@@ -101,8 +101,26 @@
 }
 
 .p11-pic--empty-accounts .p11-card {
-  width: 14.5em;
-  height: 9.2em;
+  width: 16.4em;
+  height: 10.2em;
+}
+
+/* More room inside the cards: wider padding, a clear gap between the rows. */
+.p11-pic--empty-accounts .p11-card__face {
+  padding: 1.3em 1.4em 1.25em;
+  row-gap: 0.5em;
+}
+
+.p11-pic--empty-accounts .p11-card__top {
+  gap: 0.8em;
+}
+
+.p11-pic--empty-accounts .p11-card__bank {
+  white-space: nowrap;
+}
+
+.p11-pic--empty-accounts .p11-card__meta {
+  margin-top: 0.3em;
 }
 
 /* ---------- empty-goals ---------- */

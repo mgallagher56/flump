@@ -11,11 +11,18 @@
   isolation: isolate;
   --p11-head: 4.25rem;
   --p11-screen: calc(100svh - var(--p11-head));
-  /* Scroll per stop at Calm, times the pace (Medium 0.75, Brisk 0.55): the beat in which one pair
-     leaves and the next arrives, then the rest, when both sides hold completely still. */
-  --p11-beat: calc(22svh * var(--pace, 1));
-  --p11-rest: calc(36svh * var(--pace, 1));
+  /* Scroll per stop, times the pace (the page's 1.4 slowdown times Calm 1, Medium 0.75 or Brisk
+     0.55): the beat in which one pair leaves, a short clear gap, and the next arrives, then the
+     rest, when both sides hold completely still. About 1.45 screens a stop at Calm. */
+  --p11-beat: calc(40svh * var(--pace, 1));
+  --p11-rest: calc(64svh * var(--pace, 1));
   --p11-span: calc(var(--p11-beat) + var(--p11-rest));
+  /* Quiet accents beside the mint lead (round five): violet and rose from the chart series,
+     alternating by stop, used only for the kicker's small dot (the cards stay neutral glass).
+     Rose never marks debt (debt takes violet). */
+  --p11-violet: var(--colors-chart-series4);
+  --p11-rose: var(--colors-chart-series5);
+  --p11-accent: var(--p11-violet);
   /* The orb's lane under each frame's content. */
   --p11-lane: clamp(64px, 15svh, 150px);
 }
@@ -92,6 +99,16 @@
   min-width: 0;
 }
 
+/* Which accent each stop takes: violet for accounts, pay and debt; rose for budget, savings and
+   the picture. */
+.p11-stop:is(
+  [data-stop-key="budget"],
+  [data-stop-key="savings-and-pension"],
+  [data-stop-key="dashboard"]
+) {
+  --p11-accent: var(--p11-rose);
+}
+
 .p11-stop__panel {
   display: grid;
   gap: 12px;
@@ -106,9 +123,7 @@
       transparent 45%
     ),
     var(--colors-surface-card);
-  box-shadow:
-    inset 0 1px 0 color-mix(in oklab, var(--colors-text-on-contrast) 12%, transparent),
-    var(--shadows-card);
+  box-shadow: var(--shadows-card);
   color: var(--colors-text-primary);
 }
 
@@ -124,6 +139,16 @@
   font-size: 0.875rem;
   font-weight: 600;
   letter-spacing: 0.02em;
+}
+
+/* The kicker's small accent dot (decorative). */
+.p11-stop__kicker::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--p11-accent);
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--p11-accent) 18%, transparent);
 }
 
 .p11-stop__title {
@@ -175,6 +200,78 @@
   }
 }
 
+/* ---------- The scrim: the scene recedes behind the stops ----------
+ * A tinted layer of the canvas colour between the travelling scene and the stops, sticky like the
+ * stage. Strongest behind the pair, lighter in the orb's lane at the foot of the frame, so the
+ * travelling orb stays bright while the track, floor, bubbles and motes fall back. On wider
+ * screens a soft blur joins it (masked to the same shape), a cheap depth of field. Only live: the
+ * still page has no scene to calm. */
+
+.p11-jscrim {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  margin-bottom: -100svh;
+  z-index: 0;
+  pointer-events: none;
+  display: none;
+}
+
+.p11-journey[data-live="on"] .p11-jscrim {
+  display: block;
+}
+
+.p11-scrim {
+  --p11-scrim-strong: color-mix(in oklab, var(--colors-surface-canvas) 66%, transparent);
+  --p11-scrim-soft: color-mix(in oklab, var(--colors-surface-canvas) 22%, transparent);
+  --p11-scrim-foot: calc(100% - var(--p11-lane) - 6svh);
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    var(--p11-scrim-strong) 0,
+    var(--p11-scrim-strong) var(--p11-scrim-foot),
+    var(--p11-scrim-soft) calc(var(--p11-scrim-foot) + 10svh),
+    var(--p11-scrim-soft) 100%
+  );
+}
+
+/* Midnight: a lighter tint, so the coloured glass behind keeps its colour rather than greying. */
+:is(html.dark, [data-theme="dark"]) .p11-scrim {
+  --p11-scrim-strong: color-mix(in oklab, var(--colors-surface-canvas) 50%, transparent);
+  --p11-scrim-soft: color-mix(in oklab, var(--colors-surface-canvas) 14%, transparent);
+}
+
+/* The blur is its own layer, a sibling of the tint (a parent's fading opacity would cut a child's
+   backdrop off from the scene), masked to the same shape. Any opaque colour masks. */
+.p11-scrim-blur {
+  display: none;
+}
+
+@media (min-width: 48rem) {
+  .p11-scrim-blur {
+    --p11-scrim-foot: calc(100% - var(--p11-lane) - 6svh);
+    display: block;
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    pointer-events: none;
+    backdrop-filter: blur(5px) saturate(0.9);
+    mask-image: linear-gradient(
+      to bottom,
+      var(--colors-text-primary) 0,
+      var(--colors-text-primary) var(--p11-scrim-foot),
+      transparent calc(var(--p11-scrim-foot) + 10svh)
+    );
+  }
+
+  :is(html.dark, [data-theme="dark"]) .p11-scrim-blur {
+    backdrop-filter: blur(4px) saturate(1.5) brightness(1.15);
+  }
+}
+
 /* ---------- Live: the pairs change over in place ----------
  * Every stop is one screen plus one span tall, and each stop after the first is pulled up by a
  * screen, so the stops start one span apart. Each frame is a full screen, sticky under the header,
@@ -184,6 +281,10 @@
  * The section top is where the pair has fully arrived, so SectionNav lands on a finished pair. */
 
 .p11-journey[data-live="on"] .p11-stop {
+  /* Its own formatting context, so the frame's negative margin lifts the frame above the section
+     instead of collapsing into the section's margin (which left each frame a beat late, still
+     scrolling into place after its pair had arrived). */
+  display: flow-root;
   height: calc(var(--p11-screen) + var(--p11-span));
 }
 
@@ -196,21 +297,37 @@
   height: calc(var(--p11-screen) + var(--p11-span) - var(--p11-beat));
 }
 
+.p11-journey[data-live="on"] .p11-stop__pair {
+  pointer-events: auto;
+}
+
 .p11-journey[data-live="on"] .p11-stop__frame {
+  /* The frames are full screens stacked over each other; only the visible pair takes the pointer
+     (a hidden pair is visibility: hidden), so links, tilt and the pointer light reach it. */
+  pointer-events: none;
   position: sticky;
   top: var(--p11-head);
   height: var(--p11-screen);
   margin-top: calc(-1 * var(--p11-beat));
-  padding-top: clamp(12px, 3vh, 32px);
+  /* Top-aligned, so the first pair follows the journey's intro at section spacing and every pair
+     holds at the same height, with the orb's lane free below. */
+  align-items: start;
+  padding-top: clamp(16px, 4vh, 40px);
   padding-bottom: var(--p11-lane);
+}
+
+/* The first frame starts at its section's top, right after the content before the journey (at
+   normal section spacing), rather than a beat above it over that content. */
+.p11-journey[data-live="on"] .p11-stop:first-of-type .p11-stop__frame {
+  margin-top: 0;
 }
 
 /* Phones: a compact panel above the component, the lane for the orb kept short. */
 @media (max-width: 47.99rem) {
   .p11-journey {
     --p11-lane: 72px;
-    --p11-beat: calc(20svh * var(--pace, 1));
-    --p11-rest: calc(38svh * var(--pace, 1));
+    --p11-beat: calc(38svh * var(--pace, 1));
+    --p11-rest: calc(66svh * var(--pace, 1));
   }
 
   .p11-stop__frame {
@@ -289,9 +406,7 @@
       transparent 45%
     ),
     var(--colors-surface-card);
-  box-shadow:
-    inset 0 1px 0 color-mix(in oklab, var(--colors-text-on-contrast) 12%, transparent),
-    var(--shadows-card);
+  box-shadow: var(--shadows-card);
   color: var(--colors-text-primary);
 }
 
@@ -349,9 +464,7 @@
       transparent 50%
     ),
     var(--colors-surface-card);
-  box-shadow:
-    inset 0 1px 0 color-mix(in oklab, var(--colors-text-on-contrast) 12%, transparent),
-    var(--shadows-card);
+  box-shadow: var(--shadows-card);
 }
 
 .p11-v-acard__name {

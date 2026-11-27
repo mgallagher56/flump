@@ -38,3 +38,27 @@ export const momentScroll = (
   scrub: 0.8,
   invalidateOnRefresh: true,
 });
+
+/**
+ * A list's items dealt in, in document order: a small rise and a fade, staggered, played once when
+ * the list nears the viewport and finishing on its own (time-based, paced). Never tied to scroll,
+ * and transforms are cleared afterwards, so an opening answer always pushes the next items down.
+ */
+export function dealIn(
+  { gsap }: GsapKit,
+  trigger: Element,
+  targets: Iterable<Element> | ArrayLike<Element>,
+  pace: PaceState,
+): void {
+  const list = Array.from(targets);
+  if (list.length === 0) return;
+  gsap.from(list, {
+    y: 12,
+    opacity: 0,
+    duration: pace.s(TIMING.entry),
+    stagger: pace.s(TIMING.stagger),
+    ease: "calm",
+    clearProps: "transform,opacity",
+    scrollTrigger: { trigger, start: "top 90%", once: true },
+  });
+}

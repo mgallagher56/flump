@@ -1,19 +1,7 @@
 import { Button } from "@repo/ui";
 import { type FC, type ReactNode, useRef } from "react";
 import { Link } from "react-router-dom";
-import {
-  closingCtaBody,
-  closingCtaScene,
-  closingCtaText,
-  closingCtaTitle,
-} from "../../../src/components/ClosingCta/ClosingCta.styles";
 import { MarketingSection } from "../../../src/components/MarketingSection";
-import {
-  stripBody,
-  stripLink,
-  stripText,
-  stripTitle,
-} from "../../../src/components/SecurityPrivacySection/SecurityPrivacySection.styles";
 import { bandFooter, bandLink } from "../../../src/pages/HomePage/HomePage.styles";
 import {
   AI_CONNECTION,
@@ -23,18 +11,19 @@ import {
 } from "../../../src/utils/featureAreas";
 import { signupCta } from "../../../src/utils/site";
 import type { GsapKit } from "../../shared/gsapKit";
-import { type PaceState, SCROLL, usePace } from "../../shared/pace";
-import { Bubbles, SmoothFaq, unstackMoment } from "../../shared/round3";
+import { type PaceState, SCROLL, TIMING, usePace } from "../../shared/pace";
+import { Bubbles, SmoothFaq } from "../../shared/round3";
 import { areaFor, HOME_DEPTH, ROUGH_FIGURE_STEPS } from "../../shared/sections";
-import { useGsap } from "../../shared/useGsap";
 import { TilePicture } from "../art/Pictures";
 import { CheckInArt, OnboardingArt, ShieldArt } from "../art/Scenes";
-import { arrive, momentScroll } from "./moments";
+import { FeatureStrip } from "./FeatureStrip";
+import { arrive, dealIn, momentScroll } from "./moments";
+import { useNearGsap } from "./useNearGsap";
 
 /*
  * Prototype 11's bands after the hero: the features (each with its area's piece), the rough figures steps
- * with the check-in calendar, More detail and the questions dealing out of one stack, security
- * with the glass shield, and the close with the glass steps. Each is a SectionNav stop with one
+ * with the check-in calendar page, More detail and the questions dealing out of one stack, security
+ * with its card, and the close with the getting started ticket. Each is a SectionNav stop with one
  * paced moment; tones alternate; bubbles in both sets sit at the edges of a few.
  */
 
@@ -52,7 +41,7 @@ export const Band: FC<{
 }> = ({ name, labelledBy, tone, bubbles, moment, className = "", children }) => {
   const ref = useRef<HTMLDivElement>(null);
   const pace = usePace();
-  useGsap(ref, (kit, root) => moment(kit, root, pace), [pace.pace]);
+  useNearGsap(ref, (kit, root) => moment(kit, root, pace), [pace.pace]);
   return (
     // biome-ignore lint/a11y/useAriaPropsSupportedByRole: SectionNav reads the label to find each stop's heading; the section inside carries the landmark.
     <div
@@ -70,12 +59,19 @@ export const Band: FC<{
 
 /* ---------- Features: one tile per area, each with its piece ---------- */
 
-/** The tiles arrive in turn; each piece settles a moment after its tile. */
+/**
+ * The tiles in view arrive in turn (a short stagger, so none is caught half faded); tiles off to
+ * the side of the sideways strip are already at rest. Each piece settles a moment after its tile.
+ */
 const featuresMoment: Moment = (kit, root, pace) => {
   const grid = root.querySelector(".p11-features");
   if (!grid) return;
-  arrive(kit, grid, root.querySelectorAll(".p11-feature"), pace, 20);
-  kit.gsap.from(root.querySelectorAll(".p11-tile-pic"), {
+  const edge = grid.getBoundingClientRect().right;
+  const inView = [...root.querySelectorAll<HTMLElement>(".p11-feature")].filter(
+    (tile) => tile.getBoundingClientRect().left < edge - 24,
+  );
+  arrive(kit, grid, inView, pace, 20);
+  kit.gsap.from(inView.map((tile) => tile.querySelector(".p11-tile-pic")).filter(Boolean), {
     y: 10,
     opacity: 0,
     duration: pace.s(1100),
@@ -99,7 +95,7 @@ export const Features: FC = () => (
       subtitle="The same five areas as the app. Use one or all five."
       title={FEATURES_INDEX.title}
     >
-      <ul aria-label="Flump features" className="p11-features">
+      <FeatureStrip names={FEATURES.map((feature) => feature.name)}>
         {FEATURES.map((feature) => {
           const isAi = feature.key === AI_CONNECTION.key;
           return (
@@ -117,7 +113,7 @@ export const Features: FC = () => (
             </li>
           );
         })}
-      </ul>
+      </FeatureStrip>
       <p className={bandFooter()}>
         <Link className={bandLink()} to={FEATURES_INDEX.path}>
           All Flump features on one page
@@ -127,7 +123,7 @@ export const Features: FC = () => (
   </Band>
 );
 
-/* ---------- Rough figures: one line runs through the steps; the calendar fills in ---------- */
+/* ---------- Rough figures: one line runs through the steps; the calendar page arrives ---------- */
 
 const stepsMoment: Moment = ({ gsap }, root, pace) => {
   const wrap = root.querySelector(".p11-steps");
@@ -149,45 +145,26 @@ const stepsMoment: Moment = ({ gsap }, root, pace) => {
       at,
     );
   });
-  // The calendar: the card rises, the days come in along the weeks, the orb settles on today,
-  // then each balance is ticked.
-  const card = root.querySelector(".p11-art-checkin__card");
-  if (!card) return;
+  // The calendar page rises, the sheet under it settles, then the check-in tag arrives.
+  const page = root.querySelector(".p11-r6-page");
+  if (!page) return;
   const cal = gsap.timeline({
-    scrollTrigger: momentScroll(card, pace, SCROLL.moment * 1.6),
+    scrollTrigger: momentScroll(page, pace, SCROLL.moment * 1.6),
     defaults: { ease: "calm" },
   });
   cal
-    .fromTo(card, { y: 24, opacity: 0 }, { y: 0, opacity: 1, duration: 1 }, 0)
+    .fromTo(page, { y: 24, opacity: 0 }, { y: 0, opacity: 1, duration: 1 }, 0)
     .fromTo(
-      root.querySelector(".p11-pic-cal__behind"),
+      root.querySelector(".p11-rough__art .p11-r6-under"),
       { x: 20, opacity: 0 },
-      { x: 0, opacity: 0.9, duration: 1 },
+      { x: 0, opacity: 0.85, duration: 1 },
       0.2,
     )
     .fromTo(
-      root.querySelectorAll(".p11-art-checkin__day"),
-      { opacity: 0, y: 6 },
-      { opacity: 1, y: 0, duration: 0.5, stagger: 0.035 },
-      0.3,
-    )
-    .fromTo(
-      root.querySelector(".p11-art-checkin__day[data-today]"),
-      { opacity: 0.3 },
-      { opacity: 1, duration: 0.6 },
-      1.4,
-    )
-    .fromTo(
-      root.querySelectorAll(".p11-art-checkin__row"),
-      { opacity: 0, x: 10 },
-      { opacity: 1, x: 0, duration: 0.6, stagger: 0.2 },
-      2,
-    )
-    .fromTo(
-      root.querySelectorAll(".p11-art-checkin__tick"),
-      { scale: 0.96, opacity: 0 },
-      { scale: 1, opacity: 1, duration: 0.5, stagger: 0.2 },
-      2.2,
+      root.querySelector(".p11-rough__art .p11-r6-tag"),
+      { y: 12, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.8 },
+      1.1,
     );
 };
 
@@ -219,17 +196,24 @@ export const RoughFigures: FC = () => (
             ))}
           </ol>
         </div>
-        <CheckInArt />
+        {/* The wrapper holds the picture's full height, so its rows never spill into the next band. */}
+        <div className="p11-rough__art">
+          <CheckInArt />
+        </div>
       </div>
     </MarketingSection>
   </Band>
 );
 
-/* ---------- More detail and the questions: one stack dealing out ---------- */
+/*
+ * ---------- More detail and the questions: dealt in, in order ----------
+ * Each list's items arrive in document order with a small rise and fade, once, on a timer (not
+ * tied to scroll), so a reader can never stop on a half-dealt, overlapping stack.
+ */
 
 const depthMoment: Moment = (kit, root, pace) => {
   const list = root.querySelector<HTMLElement>(".p11-depth");
-  if (list) unstackMoment(kit, list, ".p11-depth__sheet", pace);
+  if (list) dealIn(kit, list, list.querySelectorAll(".p11-depth__sheet"), pace);
 };
 
 export const MoreDetail: FC = () => (
@@ -249,7 +233,7 @@ export const MoreDetail: FC = () => (
         {HOME_DEPTH.map((item) => {
           const area = areaFor(item.area);
           return (
-            <li className="p11-depth__sheet" key={item.area}>
+            <li className="p11-depth__sheet" data-tilt="" key={item.area}>
               <span className="p11-depth__text">{item.text}</span>
               {area && (
                 <Link className={bandLink()} to={area.path}>
@@ -266,7 +250,7 @@ export const MoreDetail: FC = () => (
 
 const faqMoment: Moment = (kit, root, pace) => {
   const list = root.querySelector<HTMLElement>(".proto-faq");
-  if (list) unstackMoment(kit, list, ".proto-faq__item", pace);
+  if (list) dealIn(kit, list, list.querySelectorAll(".proto-faq__item"), pace);
 };
 
 export const Faq: FC = () => (
@@ -277,46 +261,49 @@ export const Faq: FC = () => (
   </Band>
 );
 
-/* ---------- Security: the card settles, its lines come in, then the seal ---------- */
+/*
+ * ---------- Security: a card like its neighbours, on the same pale band ----------
+ * The picture card and the text arrive once, on a timer, and finish on their own: nothing in this
+ * band can rest half faded.
+ */
 
 const securityMoment: Moment = ({ gsap }, root, pace) => {
   const row = root.querySelector(".p11-security");
   if (!row) return;
   const tl = gsap.timeline({
-    scrollTrigger: momentScroll(row, pace, SCROLL.moment * 1.2),
-    defaults: { ease: "calm" },
+    scrollTrigger: { trigger: row, start: "top 86%", once: true },
+    defaults: { ease: "calm", duration: pace.s(TIMING.entry) },
   });
-  tl.fromTo(".p11-pic-sec", { y: 18, opacity: 0 }, { y: 0, opacity: 1, duration: 1 }, 0)
-    .fromTo(
-      ".p11-pic-sec .p11-rows > div",
-      { x: 10, opacity: 0 },
-      { x: 0, opacity: 1, duration: 0.6, stagger: 0.15 },
-      0.4,
+  const step = pace.s(TIMING.stagger);
+  tl.from(row, { y: 16, opacity: 0 }, 0)
+    .from(
+      root.querySelectorAll(".p11-pic-sec .p11-rows > div"),
+      { y: 8, opacity: 0, stagger: step },
+      step * 2,
     )
-    .fromTo(".p11-pic-seal", { y: 12, opacity: 0 }, { y: 0, opacity: 1, duration: 0.8 }, 0.9)
-    .fromTo(
-      ".p11-security__text > *",
-      { y: 12, opacity: 0 },
-      { y: 0, opacity: 1, duration: 0.8, stagger: 0.12 },
-      0.3,
+    .from(root.querySelectorAll(".p11-pic-seal"), { y: 8, opacity: 0 }, step * 4)
+    .from(
+      root.querySelectorAll(".p11-security__text > *"),
+      { y: 12, opacity: 0, stagger: step },
+      step,
     );
 };
 
 export const Security: FC = () => (
-  <Band labelledBy="security-title" moment={securityMoment} name="Security" tone="hero">
-    <MarketingSection id="security" labelledBy="security-title" size="compact" tone="hero">
-      <div className="p11-security">
+  <Band bubbles="a" labelledBy="security-title" moment={securityMoment} name="Security" tone="card">
+    <MarketingSection id="security" labelledBy="security-title" size="compact">
+      <div className="p11-security p11-soft-card">
         <ShieldArt />
-        <div className={`${stripText()} p11-security__text`}>
-          <h2 className={stripTitle()} id="security-title">
+        <div className="p11-security__text">
+          <h2 className="p11-security__title" id="security-title">
             Security and privacy
           </h2>
-          <p className={stripBody()}>
+          <p className="p11-security__body">
             You type in your own figures, so no bank login is needed. Flump has no feature to make
             payments or move money.
           </p>
           <p className="p11-security__more">
-            <Link className={stripLink()} to="/security">
+            <Link className={bandLink()} to="/security">
               What Flump can and cannot do
             </Link>
           </p>
@@ -326,48 +313,42 @@ export const Security: FC = () => (
   </Band>
 );
 
-/* ---------- Close: the paper steps rise in turn, then the sprout on the tallest ---------- */
-
+/*
+ * Close: the getting started ticket rises, then its three parts in turn. Played once on arrival
+ * (not scrubbed): this is the last band, so a scrubbed run could stop half done at the page's end.
+ */
 const closingMoment: Moment = ({ gsap }, root, pace) => {
-  const art = root.querySelector(".p11-art-steps");
-  if (!art) return;
+  const ticket = root.querySelector(".p11-r6-ticket");
+  if (!ticket) return;
   const tl = gsap.timeline({
-    scrollTrigger: { ...momentScroll(art, pace, SCROLL.moment * 1.4), start: "top 95%" },
+    scrollTrigger: { trigger: ticket, start: "top 88%", once: true },
     defaults: { ease: "calm" },
   });
-  tl.fromTo(
-    root.querySelectorAll(".p11-art-steps__step"),
-    { y: 24, opacity: 0 },
-    { y: 0, opacity: 1, duration: 0.9, stagger: 0.3 },
-    0,
-  )
-    .fromTo(
-      root.querySelector(".p11-art-steps__sprout"),
-      { y: 10, opacity: 0 },
-      { y: 0, opacity: 1, duration: 0.9 },
-      0.9,
-    )
-    .fromTo(
-      root.querySelector(".p11-pic__arc"),
-      { opacity: 0 },
-      { opacity: 1, duration: 0.8 },
-      0.6,
-    );
+  tl.from(ticket, { y: 16, opacity: 0, duration: pace.s(TIMING.entry) }, 0).from(
+    root.querySelectorAll(".p11-r6-ticket__parts li"),
+    { y: 10, opacity: 0, duration: pace.s(TIMING.entry), stagger: pace.s(TIMING.stagger * 2) },
+    pace.s(TIMING.stagger * 2),
+  );
 };
 
 export const Close: FC = () => {
   const cta = signupCta();
   return (
-    <Band labelledBy="home-cta-title" moment={closingMoment} name="Get started" tone="contrast">
-      <MarketingSection id="get-started" labelledBy="home-cta-title" tone="contrast" width="narrow">
-        <div className={closingCtaBody()}>
-          <div className={closingCtaScene()} data-theme="dark">
-            <OnboardingArt />
-          </div>
-          <h2 className={closingCtaTitle()} id="home-cta-title">
+    <Band
+      bubbles="b"
+      className="p11-close"
+      labelledBy="home-cta-title"
+      moment={closingMoment}
+      name="Get started"
+      tone="canvas"
+    >
+      <MarketingSection id="get-started" labelledBy="home-cta-title" width="narrow">
+        <div className="p11-close__card p11-soft-card">
+          <OnboardingArt />
+          <h2 className="p11-close__title" id="home-cta-title">
             Ready to see where you stand?
           </h2>
-          <p className={closingCtaText()}>Start with a few rough numbers.</p>
+          <p className="p11-close__text">Start with a few rough numbers.</p>
           <Button asChild size="lg" variant="primary">
             <a data-light="" href={cta.href}>
               {cta.label}

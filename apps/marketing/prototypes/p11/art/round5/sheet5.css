@@ -1,0 +1,52 @@
+/* The round-five sheet: each scene's live original beside its options. Tokens only. */
+
+.p11-sheet5__item {
+  align-items: start;
+}
+
+@media (min-width: 60rem) {
+  .p11-sheet5__item {
+    grid-template-columns: 1fr;
+  }
+}
+
+.p11-sheet5__row {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr));
+  align-items: start;
+}
+
+.p11-sheet5__live,
+.p11-sheet5__option {
+  align-content: start;
+  padding: 12px;
+  border-radius: 18px;
+  background: var(--colors-surface-canvas);
+}
+
+.p11-sheet5__live {
+  min-height: 100%;
+  align-content: center;
+}
+
+/* The earlier pictures (empty-accounts) have a fixed 22em stage: size their em to the tile. */
+.p11-sheet5__option {
+  container-type: inline-size;
+}
+
+.p11-sheet5__option > .p11-pic {
+  font-size: clamp(13px, 100cqi / 23, 18px);
+}
+
+/* Phones: less frame around each picture, so the pictures keep their size. */
+@media (max-width: 30rem) {
+  .p11-sheet5__item {
+    padding: 12px;
+  }
+
+  .p11-sheet5__live,
+  .p11-sheet5__option {
+    padding: 6px;
+  }
+}

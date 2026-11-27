@@ -3,11 +3,12 @@ import { Link } from "react-router-dom";
 import { bandLink } from "../../../src/pages/HomePage/HomePage.styles";
 import { MONEY_AREAS } from "../../../src/utils/featureAreas";
 import { useMotion } from "../../shared/motion";
-import { usePace } from "../../shared/pace";
+import { TIMING, usePace } from "../../shared/pace";
 import { useGsap } from "../../shared/useGsap";
 import type { OrbTone } from "../art/GlassOrb";
 import { LitCtas } from "../hero/LitCtas";
 import { journeyStopId, STOP_SHORT, type StopKey } from "../journeyTypes";
+import { useNearGsap } from "../sections/useNearGsap";
 import { MOMENT_END, STOP_VISUALS } from "./visuals";
 import "./stops.css";
 
@@ -15,18 +16,18 @@ import "./stops.css";
  * One stop of the journey, shared by prototypes 11 and 11b: the text panel and the information
  * component, side by side (stacked on a phone), swapping sides at every stop.
  *
- * Choreography, all from scroll:
+ * Choreography: scroll decides when, time decides how fast.
  * - The frames all hold in the same place under the header (see stops.css), one span of scroll
- *   apart, so a stop costs about half a screen and no screen is ever empty.
- * - Arrive (`--p11-beat`, about a fifth of a screen): ONE timeline moves both sides together, in
- *   place: the pair rises 24px and fades in, the panel's lines follow, and the information
- *   component plays its own moment (cards dealt, bar filling, payslip opening, line drawing,
- *   figures counting), in the second half of the beat; the previous pair leaves in the first half,
- *   so two pairs never overlap.
- * - Rest (`--p11-rest`, a little over a third of a screen at Calm, times the pace): nothing in the frame
- *   moves. Only the travelling layer behind (the orb) keeps going.
- * - Leave: in the next stop's arrive beat, both sides fade and lift together (short, so a leaving
- *   pair never lingers half-faded). The last pair does not fade; it scrolls away with the page.
+ *   apart (about 1.45 screens at Calm), so no screen is ever empty.
+ * - Change-over: the middle of each stop's beat (`--p11-beat`). Crossing it, the previous pair
+ *   leaves on time (both sides fade and lift together, about 0.7s at Calm), then ONE timeline
+ *   brings both sides in together, in place, over about 2.5s: the pair rises 24px and fades in,
+ *   the panel's lines follow, and the information component plays its own moment (cards dealt,
+ *   bar filling, payslip opening, line drawing, figures counting). Nothing is scrubbed, so a
+ *   reader who stops anywhere sees one finished pair, never a half-faded one or a figure
+ *   mid-count. Scrolling back reverses it: this pair goes quickly, then the previous returns.
+ * - Rest: the rest of the span. Nothing in the frame moves; only the orb behind keeps going.
+ * - The last pair does not leave; it scrolls away with the page.
  *
  * Before scripts, with reduced motion or no JS, the stop is a plain compact section: no sticky
  * rest, everything finished and visible.
@@ -86,10 +87,11 @@ export const JourneyStop: FC<{ stopKey: StopKey; index: number; total: number }>
   const titleId = `${journeyStopId(stopKey)}-title`;
   const cardSide = index % 2 === 0 ? "right" : "left";
 
-  useGsap(
+  // Set up only as the stop nears the viewport (one task each, one refresh), to break up the load.
+  useNearGsap(
     ref,
     (kit, root) => {
-      const { gsap } = kit;
+      const { gsap, ScrollTrigger } = kit;
       const sides = root.querySelectorAll<HTMLElement>(".p11-stop__side");
       const pair = root.querySelector<HTMLElement>(".p11-stop__pair");
       const panelLines = root.querySelectorAll<HTMLElement>(".p11-stop__panel > *");
@@ -99,22 +101,27 @@ export const JourneyStop: FC<{ stopKey: StopKey; index: number; total: number }>
       const frame = root.querySelector<HTMLElement>("[data-stop-frame]");
       // The beat (the frame starts that far above its section) and the span between stops.
       const beat = () => -(Number.parseFloat(frame ? getComputedStyle(frame).marginTop : "") || 0);
-      const span = () => root.offsetHeight - (frame?.offsetHeight ?? 0) + beat();
+      // The span between this stop's top and the next one's (round four added a stray beat here,
+      // so a pair left only after the next had landed and the two showed stacked).
+      const next = root.nextElementSibling as HTMLElement | null;
+      const span = () =>
+        next?.hasAttribute("data-journey-stop")
+          ? next.offsetTop - root.offsetTop
+          : root.offsetHeight - (frame?.offsetHeight ?? 0);
+      // The next stop's beat sets where this pair leaves (the first stop's own beat is zero).
+      const nextFrame = next?.querySelector<HTMLElement>("[data-stop-frame]");
+      const nextBeat = () =>
+        -(Number.parseFloat(nextFrame ? getComputedStyle(nextFrame).marginTop : "") || 0);
       const last = index === total - 1;
 
-      // Arrive: one timeline for both sides.
-      const tl = gsap.timeline({
-        defaults: { ease: "calm" },
-        scrollTrigger: {
-          trigger: root,
-          // The second half of the beat (the previous pair leaves in the first half, so two
-          // pairs never overlap), ending as the section's top reaches the header.
-          start: () => `top top+=${head() + beat() * 0.5}`,
-          end: () => `top top+=${head()}`,
-          scrub: pace.s(500),
-          invalidateOnRefresh: true,
-        },
-      });
+      // The change-over point: the middle of this stop's beat. Crossing it plays the change on time, not with scroll, so a
+      // reader who stops anywhere sees one finished pair: never half faded, never a figure
+      // mid-count, never an empty screen beyond the brief swap.
+      const leaveS = pace.s(TIMING.entry * 0.45);
+      const arriveS = pace.s(TIMING.entry * 1.6);
+
+      // Arrive: one timeline for both sides, after the previous pair has gone.
+      const tl = gsap.timeline({ defaults: { ease: "calm" } });
       tl.fromTo(sides, { y: 24, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 1 }, 0);
       tl.fromTo(
         panelLines,
@@ -124,27 +131,61 @@ export const JourneyStop: FC<{ stopKey: StopKey; index: number; total: number }>
       );
       build(kit, tl, visual);
       tl.set({}, {}, MOMENT_END);
+      tl.timeScale(tl.duration() / arriveS);
+      const arrive = gsap.timeline({ paused: true });
+      arrive.add(tl, index === 0 ? 0 : leaveS);
 
-      // Leave: in the next stop's arrive beat, both sides together. The last pair stays.
-      if (!last)
-        gsap.fromTo(
+      ScrollTrigger.create({
+        // The first pair has none to replace: it arrives as its frame comes up below the content
+        // before the journey, so the screen between them is never empty.
+        trigger: index === 0 && frame ? frame : root,
+        start: () => (index === 0 ? "top 75%" : `top top+=${head() + beat() * 0.5}`),
+        invalidateOnRefresh: true,
+        onEnter: () => arrive.timeScale(1).play(),
+        // Back up past it: this pair goes quickly, and the previous one returns (below).
+        onLeaveBack: () => arrive.timeScale(arrive.duration() / leaveS).reverse(),
+      });
+
+      // The last frame is a full screen, but its pair is often shorter: pull what follows the
+      // journey up over the empty foot of the frame, so no empty screen follows the last stop.
+      if (last && frame) {
+        const trim = () => {
+          const empty = frame.getBoundingClientRect().bottom - pair.getBoundingClientRect().bottom;
+          root.style.marginBottom = `${-Math.max(0, Math.round(empty - 56))}px`;
+        };
+        trim();
+        ScrollTrigger.addEventListener("refreshInit", trim);
+        return () => {
+          ScrollTrigger.removeEventListener("refreshInit", trim);
+          root.style.marginBottom = "";
+        };
+      }
+
+      // Leave: at the next stop's change-over point, both sides together. The last pair stays.
+      if (!last) {
+        const leave = gsap.fromTo(
           pair,
           { autoAlpha: 1, y: 0 },
-          {
-            autoAlpha: 0,
-            y: -24,
-            ease: "calmInOut",
-            immediateRender: false,
-            scrollTrigger: {
-              trigger: root,
-              // The first half of the next stop's beat.
-              start: () => `top top+=${head() + beat() - span()}`,
-              end: () => `top top+=${head() + beat() * 0.55 - span()}`,
-              scrub: pace.s(500),
-              invalidateOnRefresh: true,
-            },
-          },
+          { autoAlpha: 0, y: -20, ease: "calmInOut", duration: leaveS, paused: true },
         );
+        let back: ReturnType<typeof gsap.delayedCall> | undefined;
+        ScrollTrigger.create({
+          trigger: root,
+          start: () => `top top+=${head() + nextBeat() * 0.5 - span()}`,
+          invalidateOnRefresh: true,
+          onEnter: () => {
+            back?.kill();
+            leave.play();
+          },
+          // Wait while the next pair goes, so the two never overlap.
+          onLeaveBack: () => {
+            back?.kill();
+            back = gsap.delayedCall(leaveS, () => {
+              leave.reverse();
+            });
+          },
+        });
+      }
     },
     [pace.pace, index, total],
   );
@@ -225,6 +266,39 @@ function useJourneyLive(ref: RefObject<HTMLElement | null>): void {
 }
 
 /**
+ * The scrim lets the travelling scene recede behind the stops (the owner found it distracting):
+ * it fades in over the scroll into the first stop, so the hero keeps its full scene, and stays
+ * for the rest of the journey.
+ */
+function useScrimFade(ref: RefObject<HTMLElement | null>): void {
+  const pace = usePace();
+  useGsap(
+    ref,
+    ({ gsap }, journey) => {
+      const scrims = journey.querySelectorAll<HTMLElement>("[data-journey-scrim]");
+      const first = journey.querySelector<HTMLElement>("[data-journey-stop]");
+      if (!scrims.length || !first) return;
+      gsap.fromTo(
+        scrims,
+        { opacity: 0 },
+        {
+          opacity: 1,
+          ease: "none",
+          scrollTrigger: {
+            trigger: first,
+            start: "top bottom",
+            end: "top 40%",
+            scrub: pace.s(900),
+            invalidateOnRefresh: true,
+          },
+        },
+      );
+    },
+    [pace.pace],
+  );
+}
+
+/**
  * The journey without its travelling layer: the wrapper (`data-journey`), the optional intro and
  * one JourneyStop per stop. `layer` is the travelling layer (aria-hidden), sticky behind the
  * stops; prototype 11 passes its three.js stage, 11b may pass its CSS one.
@@ -236,14 +310,23 @@ export const JourneyShell: FC<{
   className?: string;
   journeyRef?: RefObject<HTMLDivElement | null>;
   scene?: string;
+  /** False when the layer draws its own scrim (`data-journey-scrim`) inside itself. */
+  scrim?: boolean;
   children?: ReactNode;
-}> = ({ stops, intro, layer, className = "", journeyRef, scene, children }) => {
+}> = ({ stops, intro, layer, className = "", journeyRef, scene, scrim = true, children }) => {
   const ownRef = useRef<HTMLDivElement>(null);
   const ref = journeyRef ?? ownRef;
   useJourneyLive(ref);
+  useScrimFade(ref);
   return (
     <div className={`p11-journey ${className}`} data-journey="" data-scene={scene} ref={ref}>
       {layer}
+      {scrim && (
+        <div aria-hidden="true" className="p11-jscrim">
+          <div className="p11-scrim-blur" data-journey-scrim="" />
+          <div className="p11-scrim" data-journey-scrim="" />
+        </div>
+      )}
       {intro && (
         <div className="p11-journey__intro" data-journey-intro="">
           {intro}

@@ -51,8 +51,6 @@ export const FIG = {
     SAMPLE_DASHBOARD.monthsOfCover === null
       ? null
       : breathingRoomValue(SAMPLE_DASHBOARD.monthsOfCover),
-  /** A pension pot as a jar: filled to its share of what the household owns, for the drawing only. */
-  pensionFill: Math.round((balanceOf(pension) / (balanceOf(pension) + balanceOf(savings))) * 70),
 } as const;
 
 export type PieceKey = "card" | "payslip" | "receipt" | "statement" | "pension" | "credit";

@@ -575,18 +575,16 @@
   border-top: 2px solid var(--colors-primary);
 }
 
+/* The pension row's glyph: a statement slip, like the mortgage's. */
 .p11-glyph--pension {
   width: 1.3rem;
-  aspect-ratio: 10.5 / 14;
-  border-radius: 0.2rem 0.2rem 0.35rem 0.35rem;
+  aspect-ratio: 13 / 15;
+  border-radius: 0.15rem;
+  border-top: 2px solid var(--colors-primary);
   background:
-    linear-gradient(var(--colors-surface-contrast), var(--colors-surface-contrast)) top / 75% 0.2rem
-    no-repeat,
-    linear-gradient(
-      color-mix(in oklab, var(--colors-primary) 55%, var(--colors-surface-card)),
-      color-mix(in oklab, var(--colors-primary) 55%, var(--colors-surface-card))
-    )
-    bottom / 100% 55% no-repeat,
+    linear-gradient(var(--colors-border-strong), var(--colors-border-strong)) 0.2rem 0.35rem / 60%
+    2px no-repeat,
+    linear-gradient(var(--colors-border), var(--colors-border)) 0.2rem 0.65rem / 70% 2px no-repeat,
     var(--colors-surface-card);
   box-shadow: inset 0 0 0 1px var(--colors-border-strong);
 }

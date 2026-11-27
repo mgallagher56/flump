@@ -131,7 +131,9 @@ export const Bubbles: FC<{ layout?: "a" | "b" | "c" }> = ({ layout = "a" }) => (
     aria-hidden="true"
     className="proto-bubbles"
     // Inline so the layer never takes space, even before its stylesheet arrives (no layout shift).
-    style={{ position: "absolute", inset: 0, overflow: "clip", pointerEvents: "none" }}
+    // Not clipped: bubbles bleed past their box rather than ending in a straight cut. The page root
+    // clips sideways overflow, so they never cause a horizontal scroll.
+    style={{ position: "absolute", inset: 0, pointerEvents: "none" }}
   >
     {LAYOUTS[layout].map((b, i) => (
       <span
