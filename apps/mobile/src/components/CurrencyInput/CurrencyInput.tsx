@@ -27,9 +27,26 @@ export interface CurrencyInputProps {
   onSubmitEditing?: () => void;
 }
 
-const AMOUNT = /^(\d+(\.\d{0,2})?|\.\d{1,2})$/;
-/** A leading minus, or the typographic one, before or after the "£". */
-const MINUS = /^[-\u2212]/;
+/** Characters a typed amount may carry that are not part of the number. */
+const IGNORED = new Set(["£", ",", " ", "\t", "\n", "\r", "\u00a0"]);
+/** A leading minus, or the typographic one. */
+const MINUS = new Set(["-", "\u2212"]);
+const isDigit = (c: string) => c >= "0" && c <= "9";
+
+/**
+ * Whether `digits` is a plain amount: digits with at most one point and at most two decimals after
+ * it, or a point with one or two decimals (".5"). Read one character at a time, with no regular
+ * expression, so no typed text can make the check slow.
+ */
+function isAmount(digits: string): boolean {
+  const point = digits.indexOf(".");
+  const whole = point < 0 ? digits : digits.slice(0, point);
+  const pence = point < 0 ? "" : digits.slice(point + 1);
+  if (![...whole].every(isDigit) || ![...pence].every(isDigit)) return false;
+  if (pence.length > 2) return false;
+  // "12." is still being typed and reads as 12; "." alone and "" are not amounts.
+  return point < 0 ? whole.length > 0 : whole.length > 0 || pence.length > 0;
+}
 
 /**
  * Reads a typed amount in pounds. Tolerant of "£", commas, spaces and surrounding blanks; at most
@@ -37,11 +54,11 @@ const MINUS = /^[-\u2212]/;
  * negative amount unless `allowNegative` is set.
  */
 export function parseMoneyInput(text: string, allowNegative = false): number | null {
-  const plain = text.trim().replace(/[£,\s]/g, "");
-  const negative = MINUS.test(plain);
+  const plain = [...text].filter((c) => !IGNORED.has(c)).join("");
+  const negative = plain.length > 0 && MINUS.has(plain.charAt(0));
   if (negative && !allowNegative) return null;
   const digits = negative ? plain.slice(1) : plain;
-  if (!AMOUNT.test(digits)) return null;
+  if (!isAmount(digits)) return null;
   const value = Number(digits);
   return negative && value !== 0 ? -value : value;
 }
