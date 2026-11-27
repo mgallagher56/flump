@@ -35,7 +35,7 @@ const AppBudgetEntry = BudgetEntryDto.pick({
   .loose();
 const AppBudgetEntryList = AppBudgetEntry.array();
 
-export type BudgetEntries = ReturnType<typeof AppBudgetEntryList.parse>;
+type BudgetEntries = ReturnType<typeof AppBudgetEntryList.parse>;
 
 function need(api: ApiClient | null): ApiClient {
   if (!api) throw new Error("No API client");
