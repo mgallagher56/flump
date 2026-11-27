@@ -2212,6 +2212,17 @@ facts:
         }
     verdict: not-checked
     note: "Added by E12 S7 for the mobile app's hashed copy. The sub itself is the sign-in provider's; Flump keys rows by it."
+  - id: sign-in-email
+    name: Sign-in email address
+    area: preferences
+    source_of_truth:
+      {
+        ref: "the WorkOS user's email, read by WorkOSIdentityAdapter.getUserEmail",
+        path: apps/backend/src/identity/identity.adapter.ts,
+      }
+    other_stores: []
+    verdict: not-checked
+    note: "Held only by WorkOS; Flump stores no copy. Read for the password reset and, since PR 976, by GET /v1/user-profile/email for Settings > Security (the token claim when present, else WorkOS, 2 s timeout, 30 a minute per user). Passed to the web page (no-store) and the mobile app's in-memory query; not stored, not logged, not in the mobile offline cache."
 
 figures:
   - id: net-worth
