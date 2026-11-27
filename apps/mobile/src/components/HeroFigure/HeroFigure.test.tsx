@@ -212,4 +212,36 @@ describe("HeroFigure", () => {
       screen.getByLabelText("Net worth, £52,100, up £320 since October").props.accessibilityState,
     ).toEqual({ busy: false });
   });
+
+  it("a signed change: +£2,575 read as plus, a fall as minus, never coloured", async () => {
+    const view = await render(
+      <ThemeProvider scheme="light">
+        <HeroFigure {...heroFigureStates.signedChange} />
+      </ThemeProvider>,
+    );
+    expect(screen.getByText("+£2,575")).toBeOnTheScreen();
+    expect(
+      screen.getByLabelText("Net worth change, plus £2,575, September to October 2026."),
+    ).toBeOnTheScreen();
+    await view.rerender(
+      <ThemeProvider scheme="light">
+        <HeroFigure {...heroFigureStates.signedChange} value={-300} />
+      </ThemeProvider>,
+    );
+    expect(screen.getByText("-£300")).toBeOnTheScreen();
+    expect(textOf("-£300").color).toBe(light.colors["text.primary"]);
+  });
+
+  it("no figure with its own words in place of Not set", async () => {
+    await render(
+      <ThemeProvider scheme="light">
+        <HeroFigure {...heroFigureStates.noEarlierMonth} />
+      </ThemeProvider>,
+    );
+    expect(screen.getByText("No earlier month")).toBeOnTheScreen();
+    expect(screen.queryByText("Not set")).toBeNull();
+    expect(
+      screen.getByText("The change shows once you have two months recorded."),
+    ).toBeOnTheScreen();
+  });
 });

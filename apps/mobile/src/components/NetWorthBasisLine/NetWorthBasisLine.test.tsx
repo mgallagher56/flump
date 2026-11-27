@@ -1,4 +1,4 @@
-import { render, screen, userEvent } from "@testing-library/react-native";
+import { fireEvent, render, screen, userEvent } from "@testing-library/react-native";
 import { expectHoldsAtDoubleText } from "../../testing/textScale";
 import { ThemeProvider } from "../../theme/ThemeProvider";
 import { NetWorthBasisLine, type NetWorthBasisLineProps } from "./NetWorthBasisLine";
@@ -70,4 +70,25 @@ describe("NetWorthBasisLine", () => {
       await expectHoldsAtDoubleText(<NetWorthBasisLine {...props} />);
     },
   );
+
+  it("the accounts list's line: the link alone when nothing is left out and a choice applies", async () => {
+    const onChangeWhatCounts = jest.fn();
+    const view = await render(
+      <ThemeProvider scheme="light">
+        <NetWorthBasisLine
+          {...netWorthBasisLineStates.linkOnly}
+          onChangeWhatCounts={onChangeWhatCounts}
+        />
+      </ThemeProvider>,
+    );
+    expect(screen.queryByText(/Not counting/)).toBeNull();
+    fireEvent.press(screen.getByRole("link", { name: "Change what counts on the website" }));
+    expect(onChangeWhatCounts).toHaveBeenCalledTimes(1);
+    await view.rerender(
+      <ThemeProvider scheme="light">
+        <NetWorthBasisLine {...netWorthBasisLineStates.linkOnly} choicesAvailable={false} />
+      </ThemeProvider>,
+    );
+    expect(screen.queryByTestId("net-worth-basis-line")).toBeNull();
+  });
 });
