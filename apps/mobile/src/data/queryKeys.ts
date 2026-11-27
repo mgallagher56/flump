@@ -11,4 +11,5 @@ export const queryKeys = {
   accountDetails: () => [...all, "account-details"] as const,
   userProfile: () => [...all, "user-profile"] as const,
   checkIns: () => [...all, "snapshots", "check-ins"] as const,
+  budgetEntries: () => [...all, "budget-entries"] as const,
 };
