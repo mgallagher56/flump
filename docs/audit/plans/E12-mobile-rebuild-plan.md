@@ -799,6 +799,7 @@ Each is specified in full when the slice before it merges, from the web page as 
 - **S10 to S13, S21, S22:** saved versus scenario: changing a scenario input changes no saved figure and sends no request.
 - **S16:** a new token is shown once and never cached.
 - **S18:** `security-reviewer` again on `apps/mobile/src/auth`, `src/data`, the cache and any backend route added for mobile (the first review is in S2b).
+- **S19:** with the production build profile, a build-time check in `apps/mobile/app.config.ts` that refuses a release build without `EXPO_PUBLIC_WEB_APP_URL` (the runtime check from S6 stays), so a build that would send website links to the marketing home page never ships (coordinator, 27 November 2026).
 
 ---
 
@@ -847,6 +848,7 @@ Adopted in `DECISIONS.md` round 2 (reversible defaults) or round 3, updated wher
 - **S2a and S2b:** whether B-B is needed (no: refresh needs no secret); whether iOS uses a private browser session (yes). S2b, by a Fable decider on 26 November 2026: refresh token reuse within WorkOS's 30 second grace period is acceptable for the beta; sign-out opens no browser and revokes on the server (`POST /v1/session/sign-out`); every sign-in sends `max_age=0`, always, with no "signed out on purpose" marker. Suggested to the owner, not required: in the WorkOS dashboard's Sessions tab, an inactivity timeout (14 days) and a maximum session length (30 days).
 - **S3:** the shape of `packages/copy` (one module per flow, re-exported by web).
 - **S4:** the JavaScript tab bar, not native tabs; the header menu button and the More tab both stay (9.7, by a Fable planner on 26 November 2026).
+- **S6:** `EXPO_PUBLIC_WEB_APP_URL` is required at runtime in release builds (a missing value shows the misconfigured screen through `MobileConfigError`) and stays optional in development builds, replacing S4's "optional" decision: without it every website link silently opened the marketing home page. CI's e2e env and the `eas.json` e2e profile use `https://app.flump.example`. Approved by the coordinator on 27 November 2026; the build-time check waits for S19.
 
 ---
 
