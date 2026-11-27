@@ -33,14 +33,26 @@ describe("Header", () => {
         .getAllByRole("link")
         .map((link) => [link.textContent, link.getAttribute("href")]),
     ).toEqual([
-      ["Flump features", "/features"],
       ["Accounts", "/features/accounts"],
       ["Budget", "/features/budget"],
       ["Pay", "/features/pay"],
       ["Savings and pension", "/features/savings-and-pension"],
       ["Debt and borrowing", "/features/debt-and-borrowing"],
       ["AI connection", "/features/ai-connection"],
+      ["All features", "/features"],
       ["Security and privacy", "/security"],
+    ]);
+    // A divider sets Security and privacy apart (the approved features prototype); only there.
+    const items = within(group).getAllByRole("listitem");
+    expect(items.map((item) => item.className !== "")).toEqual([
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
     ]);
     expect(within(drawer).queryByRole("link", { name: /calculators/i })).toBeNull();
     // Each hint adds meaning rather than repeating its label (P71).
@@ -88,7 +100,7 @@ describe("Header", () => {
     fireEvent.click(features);
     expect(features.getAttribute("aria-expanded")).toBe("true");
     for (const [name, href] of [
-      ["Flump features", "/features"],
+      ["All features", "/features"],
       ["Debt and borrowing", "/features/debt-and-borrowing"],
       ["AI connection", "/features/ai-connection"],
       ["Security and privacy", "/security"],

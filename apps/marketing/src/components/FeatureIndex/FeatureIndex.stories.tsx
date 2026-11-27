@@ -47,7 +47,7 @@ const getKeyboard = async (): Promise<Keyboard> => {
 /** Tabs to a line, opens it with Enter, closes it with Space and opens it again with Space. */
 const openWithKeyboard: Story["play"] = async ({ canvasElement }) => {
   const canvas = within(canvasElement);
-  await expect(canvas.getAllByRole("heading", { level: 2 })).toHaveLength(FEATURE_GROUPS.length);
+  await expect(canvas.getAllByRole("heading", { level: 3 })).toHaveLength(FEATURE_GROUPS.length);
   const details = canvasElement.querySelector<HTMLDetailsElement>("#breathing-room");
   const summary = details?.querySelector("summary");
   if (!details || !summary) throw new Error("breathing-room line missing");

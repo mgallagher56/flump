@@ -28,7 +28,7 @@ export interface FeatureLine {
   /** The line's anchor on /features (`/features#<id>`), unique on the page. */
   id: string;
   name: string;
-  /** What it does, in six words or fewer. */
+  /** What the reader does with it, in sentence case with no full stop, 13 words at most (the approved features prototype, 27 Nov 2026). */
   line: string;
   /** Two or three sentences, shown when the line is opened. */
   detail: readonly string[];
@@ -65,7 +65,7 @@ export const FEATURE_GROUPS: readonly FeatureGroup[] = [
       {
         id: "guided-setup",
         name: "Guided setup",
-        line: "Add your figures in four steps",
+        line: "Add your figures in four short steps",
         detail: [
           "Enter your income, housing, savings and any debts in four steps. Rough figures are enough.",
           "You can save and come back to it later.",
@@ -75,8 +75,8 @@ export const FEATURE_GROUPS: readonly FeatureGroup[] = [
       },
       {
         id: "home-page",
-        name: "Home page",
-        line: "Your figures on one page",
+        name: "Your money",
+        line: "See all your figures on one page",
         detail: [
           "Your net worth at the top, with a short summary of each area you use underneath.",
           "It also shows when your monthly check-in is due.",
@@ -87,7 +87,7 @@ export const FEATURE_GROUPS: readonly FeatureGroup[] = [
       {
         id: "choose-sections",
         name: "Choose your sections",
-        line: "Show, hide and order sections",
+        line: "Choose which sections you see, and their order",
         detail: [
           "Pick which sections appear on your Home page, and in what order.",
           "Turn areas you do not use off in Settings, and back on at any time.",
@@ -103,7 +103,7 @@ export const FEATURE_GROUPS: readonly FeatureGroup[] = [
       {
         id: "accounts-list",
         name: "Accounts list",
-        line: "What you own and owe",
+        line: "List what you own and what you owe",
         detail: [
           "Add current accounts, savings, pensions, property, cards and loans, each with its balance.",
           "You type the figures in yourself, so no bank login is needed.",
@@ -114,7 +114,7 @@ export const FEATURE_GROUPS: readonly FeatureGroup[] = [
       {
         id: "net-worth",
         name: "Net worth",
-        line: "Everything you own, less debts",
+        line: "See everything you own, less what you owe",
         detail: [
           "Flump adds up what you own and takes away what you owe.",
           "The result is your net worth, shown at the top of your Home page.",
@@ -125,7 +125,7 @@ export const FEATURE_GROUPS: readonly FeatureGroup[] = [
       {
         id: "monthly-check-in",
         name: "Monthly check-in",
-        line: "New balances, once a month",
+        line: "Update your balances once a month",
         detail: [
           "Once a month, a short check-in asks for each account's new balance.",
           "Afterwards you see a brief summary of the month. You choose the day it is due.",
@@ -136,7 +136,7 @@ export const FEATURE_GROUPS: readonly FeatureGroup[] = [
       {
         id: "net-worth-history",
         name: "Net worth history",
-        line: "How it changes, month by month",
+        line: "Track how your net worth changes, month by month",
         detail: [
           "A chart of your net worth across the months you have checked in.",
           "See which accounts changed and by how much. You can add earlier months too.",
@@ -147,7 +147,7 @@ export const FEATURE_GROUPS: readonly FeatureGroup[] = [
       {
         id: "account-goals",
         name: "Account goals",
-        line: "A target for any account",
+        line: "Set a target for any account",
         detail: [
           "Set a goal on an account, such as a savings target, and see how far along it is.",
           "Update a balance in a moment from the account's own page.",
@@ -157,7 +157,7 @@ export const FEATURE_GROUPS: readonly FeatureGroup[] = [
       {
         id: "joint-accounts",
         name: "Joint accounts",
-        line: "Count only your share",
+        line: "Count only your share of a joint account",
         detail: [
           "Switch on Partner mode in Settings, then mark an account as joint and enter your share.",
           "Your net worth then counts your share, and the account page shows the whole value too.",
@@ -167,8 +167,8 @@ export const FEATURE_GROUPS: readonly FeatureGroup[] = [
       },
       {
         id: "net-worth-choices",
-        name: "Net worth choices",
-        line: "Choose what counts towards it",
+        name: "What counts in your net worth",
+        line: "Choose whether your home and student loan count",
         detail: [
           "Decide whether property you own, less its mortgage, counts towards your net worth, and whether your student loan counts as a debt.",
           "Change it in Settings, and every page follows.",
@@ -185,7 +185,7 @@ export const FEATURE_GROUPS: readonly FeatureGroup[] = [
       {
         id: "income-and-spending",
         name: "Income and spending",
-        line: "What comes in and goes out",
+        line: "List what comes in and what goes out",
         detail: [
           "List your income and your regular spending by category, such as housing and bills.",
           "Rent and mortgage payments are counted the same way. Rough totals are enough to start.",
@@ -196,7 +196,7 @@ export const FEATURE_GROUPS: readonly FeatureGroup[] = [
       {
         id: "left-over",
         name: "Left over each month",
-        line: "What is left, or short",
+        line: "See what is left over each month, or how much you are short",
         detail: [
           "Flump takes your spending from your income.",
           "It shows what is left over each month, or how much you are short.",
@@ -207,7 +207,7 @@ export const FEATURE_GROUPS: readonly FeatureGroup[] = [
       {
         id: "breathing-room",
         name: "Breathing room",
-        line: "How long savings cover essentials",
+        line: "Find out how long your savings would cover the essentials",
         detail: [
           "Breathing room is how long your savings would cover the essentials.",
           "It divides the cash you can get at quickly by your essential spending each month.",
@@ -228,8 +228,8 @@ export const FEATURE_GROUPS: readonly FeatureGroup[] = [
       },
       {
         id: "income-stopping",
-        name: "If income stopped",
-        line: "Model a pause in your income",
+        name: "If your income stopped",
+        line: "Check how long your savings would last",
         detail: [
           "Model a pause in your income and see how long your savings would last.",
           "It is an illustration only and changes none of your saved figures.",
@@ -239,8 +239,8 @@ export const FEATURE_GROUPS: readonly FeatureGroup[] = [
       },
       {
         id: "linked-figures",
-        name: "Linked figures",
-        line: "Each figure entered once",
+        name: "Enter each figure once",
+        line: "Change your pay or housing in one place and your budget follows",
         detail: [
           "Your take-home pay, housing cost and savings payments feed your budget from where you saved them.",
           "Change one and your budget follows.",
@@ -257,7 +257,7 @@ export const FEATURE_GROUPS: readonly FeatureGroup[] = [
       {
         id: "take-home-pay",
         name: "Take-home pay",
-        line: "Your pay after deductions",
+        line: "See an estimate of your take-home pay",
         detail: [
           "Enter your salary to see an estimate of your take-home pay under UK rules.",
           "It shows Income Tax, National Insurance, pension and student loan line by line.",
@@ -268,7 +268,7 @@ export const FEATURE_GROUPS: readonly FeatureGroup[] = [
       {
         id: "pay-rise",
         name: "Pay rise",
-        line: "What a rise adds to pay",
+        line: "Work out how much of a pay rise you would keep",
         detail: [
           "Model a pay rise to see how much more you would take home each month.",
           "It is an illustration and does not change your saved salary.",
@@ -279,7 +279,7 @@ export const FEATURE_GROUPS: readonly FeatureGroup[] = [
       {
         id: "self-assessment",
         name: "Self Assessment",
-        line: "An estimate of your tax bill",
+        line: "See an estimate of your tax bill",
         detail: [
           "For self-employment, letting property or other income outside PAYE.",
           "Keep income and costs for each tax year and see an estimate of your tax bill. Flump does not file anything with HMRC.",
@@ -290,8 +290,8 @@ export const FEATURE_GROUPS: readonly FeatureGroup[] = [
       },
       {
         id: "income-by-source",
-        name: "Records by source",
-        line: "Income and costs, kept apart",
+        name: "Income sources",
+        line: "Keep each kind of income in its own records",
         detail: [
           "Self-employment, rental, savings and PAYE income each have their own records.",
           "Rental records can include your share of a property and your mortgage interest.",
@@ -303,7 +303,7 @@ export const FEATURE_GROUPS: readonly FeatureGroup[] = [
       {
         id: "receipts",
         name: "Receipts",
-        line: "Attach receipts to each record",
+        line: "Attach each receipt to its record",
         detail: [
           "Attach a photo or PDF of a receipt to the record it belongs to.",
           "Open it again from the same record when you need it.",
@@ -315,7 +315,7 @@ export const FEATURE_GROUPS: readonly FeatureGroup[] = [
       {
         id: "payments-on-account",
         name: "Payments on account",
-        line: "Advance payments, estimated",
+        line: "See an estimate of your advance tax payments",
         detail: [
           "Payments on account are advance payments towards next year's tax bill.",
           "Flump shows an estimate of them beside your tax bill.",
@@ -327,7 +327,7 @@ export const FEATURE_GROUPS: readonly FeatureGroup[] = [
       {
         id: "compare-tax-years",
         name: "Compare tax years",
-        line: "One tax year beside another",
+        line: "Compare one tax year with another",
         detail: [
           "See this tax year's figures beside last year's.",
           "Copy recurring records into a new tax year instead of typing them again.",
@@ -345,7 +345,7 @@ export const FEATURE_GROUPS: readonly FeatureGroup[] = [
       {
         id: "savings-accounts",
         name: "Savings accounts",
-        line: "Balances, rates and interest",
+        line: "Check each account's balance, rate and interest",
         detail: [
           "Each savings account with its balance and interest rate (AER).",
           "See an estimate of the interest over the next 12 months.",
@@ -356,7 +356,7 @@ export const FEATURE_GROUPS: readonly FeatureGroup[] = [
       {
         id: "isa-allowance",
         name: "ISA allowance",
-        line: "How much is used this year",
+        line: "Track an estimate of the ISA allowance you have used",
         detail: [
           "See an estimate of how much of this tax year's ISA allowance you have used.",
           "It counts your saved monthly amount into each ISA for every month since 6 April.",
@@ -367,7 +367,7 @@ export const FEATURE_GROUPS: readonly FeatureGroup[] = [
       {
         id: "savings-growth",
         name: "How savings could grow",
-        line: "An estimate over time",
+        line: "See an estimate of how your savings could grow",
         detail: [
           "See an estimate of how your savings could grow at their rates.",
           "Model a different monthly amount. It is an illustration, and the assumptions are shown.",
@@ -378,7 +378,7 @@ export const FEATURE_GROUPS: readonly FeatureGroup[] = [
       {
         id: "time-to-target",
         name: "Time to a target",
-        line: "When you could reach it",
+        line: "Find out when your savings could reach a target",
         detail: [
           "Enter a target, such as a deposit, and see an estimate of when your savings could reach it.",
           "Change the monthly amount to see how the date moves.",
@@ -389,7 +389,7 @@ export const FEATURE_GROUPS: readonly FeatureGroup[] = [
       {
         id: "investment-returns",
         name: "Investment returns",
-        line: "Estimated from your balances",
+        line: "See an estimate of what your investments returned",
         detail: [
           "Flump estimates what your investments returned from the balances you record each month.",
           "It allows for what you pay in, and sits beside your savings.",
@@ -400,7 +400,7 @@ export const FEATURE_GROUPS: readonly FeatureGroup[] = [
       {
         id: "pension-pots",
         name: "Pension pots",
-        line: "Pots and what goes in",
+        line: "Keep your pots and what goes into them in one place",
         detail: [
           "Add your pension pots with their values.",
           "See what you and your employer pay in each month.",
@@ -411,7 +411,7 @@ export const FEATURE_GROUPS: readonly FeatureGroup[] = [
       {
         id: "pension-contributions",
         name: "Contribution changes",
-        line: "Effect on your take-home pay",
+        line: "Work out what a change would do to your take-home pay",
         detail: [
           "Model a change to what you pay into your pension, including salary sacrifice.",
           "See what it would do to your take-home pay. Nothing is saved.",
@@ -422,7 +422,7 @@ export const FEATURE_GROUPS: readonly FeatureGroup[] = [
       {
         id: "retirement-plan",
         name: "Retirement plan",
-        line: "Estimated income in retirement",
+        line: "Plan with an estimate of your income in retirement",
         detail: [
           "Set a target of your own and see an estimate of your yearly income in retirement, in today's prices.",
           "The assumptions are listed, and you can change them.",
@@ -439,7 +439,7 @@ export const FEATURE_GROUPS: readonly FeatureGroup[] = [
       {
         id: "cards-and-loans",
         name: "Cards and loans",
-        line: "Every debt with its rate",
+        line: "List every debt with its rate",
         detail: [
           "List your credit cards, loans and overdrafts with their balances and rates.",
           "See an estimate of your debt-free date, and when any 0% deal ends.",
@@ -449,8 +449,8 @@ export const FEATURE_GROUPS: readonly FeatureGroup[] = [
       },
       {
         id: "pay-extra",
-        name: "Two ways to pay off",
-        line: "Highest rate or smallest balance",
+        name: "Which debt to pay first",
+        line: "Compare paying the highest rate first with the smallest balance first",
         detail: [
           "Model paying a bit extra each month.",
           "Compare paying the highest rate first with paying the smallest balance first, and the interest for each.",
@@ -460,8 +460,8 @@ export const FEATURE_GROUPS: readonly FeatureGroup[] = [
       },
       {
         id: "uk-debt-tools",
-        name: "UK debt tools",
-        line: "Overdrafts, car finance, student loans",
+        name: "Other debt estimates",
+        line: "See estimates for 0% deals, overdrafts, car finance and student loans",
         detail: [
           "Estimates for a 0% balance transfer, an arranged overdraft, a car finance final payment and a student loan.",
           "Each uses UK rules.",
@@ -472,7 +472,7 @@ export const FEATURE_GROUPS: readonly FeatureGroup[] = [
       {
         id: "mortgage",
         name: "Mortgage",
-        line: "Balance, rate and schedule",
+        line: "Track your balance, rate and repayment schedule",
         detail: [
           "See your remaining balance, monthly payment, rate and years left.",
           "The repayment schedule shows how the balance falls over time.",
@@ -483,7 +483,7 @@ export const FEATURE_GROUPS: readonly FeatureGroup[] = [
       {
         id: "overpayment",
         name: "Overpayments",
-        line: "What paying extra would do",
+        line: "Find out what paying extra could save",
         detail: [
           "Model an overpayment and see an estimate of the interest and time it could save.",
           "It is an illustration and changes none of your saved figures.",
@@ -494,7 +494,7 @@ export const FEATURE_GROUPS: readonly FeatureGroup[] = [
       {
         id: "fixed-rate-end",
         name: "When a fixed rate ends",
-        line: "Your payment afterwards, estimated",
+        line: "See an estimate of your payment afterwards",
         detail: [
           "See an estimate of your monthly payment when your fixed rate ends.",
           "Try a higher or lower rate to see the difference.",
@@ -505,7 +505,7 @@ export const FEATURE_GROUPS: readonly FeatureGroup[] = [
       {
         id: "overpay-or-save",
         name: "Overpay or save",
-        line: "An overpayment beside an ISA",
+        line: "Compare an overpayment with saving in an ISA",
         detail: [
           "Compare the interest an overpayment could save with what the same money could grow to in an ISA.",
           "You choose the ISA rate.",
@@ -516,7 +516,7 @@ export const FEATURE_GROUPS: readonly FeatureGroup[] = [
       {
         id: "loan-to-value",
         name: "Loan to value",
-        line: "Your mortgage against your home's value",
+        line: "Check your mortgage against your home's value",
         detail: [
           "Loan to value (LTV) is your mortgage as a share of your home's value.",
           "Flump shows your LTV against common bands, and how much less you would need to owe to reach each.",
@@ -527,7 +527,7 @@ export const FEATURE_GROUPS: readonly FeatureGroup[] = [
       {
         id: "buy-to-let",
         name: "Buy to let",
-        line: "Rental mortgages and yield",
+        line: "Keep a rental mortgage beside your own, with its yield",
         detail: [
           "Keep a buy-to-let mortgage beside your own home's.",
           "See its yield, using the rent from your Self Assessment records.",
@@ -537,7 +537,7 @@ export const FEATURE_GROUPS: readonly FeatureGroup[] = [
       {
         id: "mortgage-estimates",
         name: "Mortgage estimates",
-        line: "Loan sizes from your figures",
+        line: "Work out estimated loan sizes from your figures",
         detail: [
           "See what is left each month before housing, from your saved pay and budget.",
           "Then see estimated loan sizes from a monthly payment or an income multiple, and an estimate of Stamp Duty.",
@@ -553,7 +553,7 @@ export const FEATURE_GROUPS: readonly FeatureGroup[] = [
       {
         id: "ask-ai",
         name: "Ask an AI assistant",
-        line: "Questions about your saved figures",
+        line: "Ask about your saved figures in your own words",
         detail: [
           "Connect an AI assistant such as Claude Desktop and ask about your figures in your own words.",
           "Tax and debt figures are calculated by Flump, not by the AI model. It is switched on for an account on request during testing.",
@@ -565,7 +565,7 @@ export const FEATURE_GROUPS: readonly FeatureGroup[] = [
       {
         id: "ai-imports",
         name: "Imports to review",
-        line: "Balances you check first",
+        line: "Check suggested balances before anything is saved",
         detail: [
           "An assistant can suggest new balances for you, if you allow it. This is off by default.",
           "Nothing is saved until you review the changes and confirm them, and you can undo an import.",
@@ -583,7 +583,7 @@ export const FEATURE_GROUPS: readonly FeatureGroup[] = [
       {
         id: "download-data",
         name: "Download your data",
-        line: "Your saved figures as a file",
+        line: "Download everything you have saved as one file",
         detail: [
           "Download everything you have saved in Flump as one file, from Settings.",
           "You can do this at any time.",
@@ -594,7 +594,7 @@ export const FEATURE_GROUPS: readonly FeatureGroup[] = [
       {
         id: "reset-data",
         name: "Start again",
-        line: "Delete your figures, keep your login",
+        line: "Delete your figures and keep your login",
         detail: [
           "Delete all your saved figures and start again with an empty account.",
           "Your login stays. This cannot be undone.",
@@ -604,7 +604,7 @@ export const FEATURE_GROUPS: readonly FeatureGroup[] = [
       {
         id: "delete-account",
         name: "Delete your account",
-        line: "Delete your account and data",
+        line: "Close your account and delete your saved data",
         detail: [
           "Delete your account and your saved data from Settings.",
           "This cannot be undone.",
@@ -615,7 +615,7 @@ export const FEATURE_GROUPS: readonly FeatureGroup[] = [
       {
         id: "light-and-dark",
         name: "Light and dark",
-        line: "Pick the look you prefer",
+        line: "Choose a light or a dark look",
         detail: [
           "Use Flump in a light or a dark theme, or let it follow your device.",
           "The switch is in the header, here and in the app.",

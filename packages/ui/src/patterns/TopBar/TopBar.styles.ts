@@ -192,6 +192,27 @@ export const topBarFlyout = cva({
   },
 });
 
+/**
+ * A flyout link set apart from the links before it (`dividerBefore`): a little more space above,
+ * and a thin rule in that space, inset to the links' own padding.
+ */
+export const topBarFlyoutDivided = cva({
+  base: {
+    position: "relative",
+    mt: "3",
+    _before: {
+      content: '""',
+      position: "absolute",
+      left: "3",
+      right: "3",
+      top: "-2",
+      borderTopWidth: "1px",
+      borderTopStyle: "solid",
+      borderTopColor: "border",
+    },
+  },
+});
+
 export const topBarFlyoutLink = cva({
   base: {
     display: "flex",

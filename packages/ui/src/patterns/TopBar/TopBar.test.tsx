@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { sampleNavItems } from "../AppShell/AppShell.fixtures";
 import { TopBar } from "./TopBar";
-import { topBarBadge, topBarOptionalAction } from "./TopBar.styles";
+import { topBarBadge, topBarFlyoutDivided, topBarOptionalAction } from "./TopBar.styles";
 
 describe("TopBar", () => {
   it("renders items as links and marks the active one with aria-current", () => {
@@ -37,6 +37,27 @@ describe("TopBar", () => {
     fireEvent.keyDown(screen.getByRole("link", { name: /Pension/ }), { key: "Escape" });
     expect(trigger.getAttribute("aria-expanded")).toBe("false");
     expect(document.activeElement).toBe(trigger);
+  });
+
+  it("sets apart only the flyout links marked dividerBefore", () => {
+    const items = sampleNavItems.map((item) =>
+      item.key === "plan"
+        ? {
+            ...item,
+            children: (item.children ?? []).map((child, i) =>
+              i === 1 ? { ...child, dividerBefore: true } : child,
+            ),
+          }
+        : item,
+    );
+    render(<TopBar items={items} />);
+    fireEvent.click(screen.getByRole("button", { name: "Plan" }));
+    const divided = topBarFlyoutDivided().split(" ")[0] ?? "";
+    const links = (items.find((item) => item.key === "plan")?.children ?? []).map((child) =>
+      screen.getByRole("link", { name: new RegExp(`^${child.label}`) }).classList.contains(divided),
+    );
+    expect(links.slice(0, 2)).toEqual([false, true]);
+    expect(links.filter(Boolean)).toHaveLength(1);
   });
 
   it("caps a flyout to the screen below the sticky bar and lets it scroll (E42 PR 2, short tablets)", () => {

@@ -1,9 +1,9 @@
 import type { PageSet } from "./pageSet";
 import { AccessibilityPage } from "./pages/AccessibilityPage";
 import { AiConnectionPage } from "./pages/AiConnectionPage";
+import { AreaPage } from "./pages/AreaPage";
 import { ContactPage } from "./pages/ContactPage";
 import { CookiesPage } from "./pages/CookiesPage";
-import { FeaturePage } from "./pages/FeaturePage";
 import { FeaturesIndexPage } from "./pages/FeaturesIndexPage";
 import { HomePage } from "./pages/HomePage";
 import { NotFoundPage } from "./pages/NotFoundPage";
@@ -17,7 +17,7 @@ import { TermsPage } from "./pages/TermsPage";
 export const eagerPages: PageSet = {
   HomePage,
   FeaturesIndexPage,
-  FeaturePage,
+  AreaPage,
   AiConnectionPage,
   PreviewPage,
   PricingPage,

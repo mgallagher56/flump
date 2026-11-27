@@ -3,6 +3,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "nod
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { gzipSync } from "node:zlib";
+import { PAGE_NAMES } from "../apps/marketing/src/pageSet";
 import {
   BASELINE_FILE,
   compareWeights,
@@ -10,6 +11,7 @@ import {
   loweredBaseline,
   measureClientBuild,
   type WeightBaseline,
+  type WeightFile,
 } from "./check-marketing-weight";
 
 describe("firstLoadAssets", () => {
@@ -108,6 +110,16 @@ describe("measureClientBuild", () => {
       cssGzip: gz(css),
       lazyJsGzip: gz(motion),
     });
+    // A named page: the pricing page's own chunk and the card, and nothing lazy; home's chunk and
+    // GSAP count nowhere for it.
+    expect(measureClientBuild(root, "PricingPage")).toEqual({
+      firstLoadJsGzip: gz(entry) + gz(pricing) + gz(shared),
+      cssGzip: gz(css),
+      lazyJsGzip: 0,
+    });
+    expect(() => measureClientBuild(root, "AreaPage")).toThrow(
+      "has no src/pages/AreaPage/index.ts",
+    );
   });
 
   it("refuses a build whose index.html loads no script, or loads a missing file", () => {
@@ -148,15 +160,43 @@ describe("compareWeights and loweredBaseline", () => {
 });
 
 describe("the committed baseline file", () => {
-  it("records the plan's budgets: 25 KB script, 25 KB CSS, 230 KB lazy (ROLLOUT-PLAN section 2)", () => {
-    const committed = JSON.parse(readFileSync(BASELINE_FILE, "utf8")) as WeightBaseline;
-    expect(committed.budget).toEqual({
+  const committed = JSON.parse(readFileSync(BASELINE_FILE, "utf8")) as WeightFile;
+  const budget = (page: string) => committed.pages[page]?.budget;
+
+  it("has one entry for every page, and no other", () => {
+    expect(Object.keys(committed.pages).sort()).toEqual([...PAGE_NAMES].sort());
+    for (const entry of Object.values(committed.pages)) {
+      for (const value of [...Object.values(entry.baseline), ...Object.values(entry.budget)]) {
+        expect(Number.isInteger(value) && value >= 0).toBe(true);
+      }
+    }
+  });
+
+  it("records the plans' budgets: home 25 KB script, 25 KB CSS, 230 KB lazy (ROLLOUT-PLAN section 2)", () => {
+    expect(budget("HomePage")).toEqual({
       firstLoadJsGzip: 25_000,
       cssGzip: 25_000,
       lazyJsGzip: 230_000,
     });
-    for (const value of Object.values(committed.baseline)) {
-      expect(Number.isInteger(value) && value >= 0).toBe(true);
-    }
+  });
+
+  it("records the per-family budgets of OTHER-PAGES-PLAN section 4", () => {
+    const family = (first: number, lazy: number) => ({
+      firstLoadJsGzip: first,
+      cssGzip: 25_000,
+      lazyJsGzip: lazy,
+    });
+    for (const page of ["FeaturesIndexPage", "AreaPage", "AiConnectionPage"])
+      expect(budget(page), page).toEqual(family(15_000, 230_000));
+    for (const page of [
+      "PreviewPage",
+      "PricingPage",
+      "SecurityPage",
+      "ContactPage",
+      "NotFoundPage",
+    ])
+      expect(budget(page), page).toEqual(family(8_000, 80_000));
+    for (const page of ["PrivacyPage", "TermsPage", "CookiesPage", "AccessibilityPage"])
+      expect(budget(page), page).toEqual(family(2_000, 0));
   });
 });

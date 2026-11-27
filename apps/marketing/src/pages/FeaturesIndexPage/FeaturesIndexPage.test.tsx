@@ -16,10 +16,15 @@ const renderPage = () =>
   );
 
 describe("FeaturesIndexPage", () => {
-  it("is titled 'Flump features' and never 'What Flump covers' (D1)", () => {
+  it("is headed 'Everything Flump does' (the approved features prototype) and never 'What Flump covers' (D1)", () => {
     renderPage();
-    expect(screen.getByRole("heading", { level: 1, name: "Flump features" })).toBeDefined();
-    expect(screen.getByText("Everything Flump does, one line each.")).toBeDefined();
+    expect(screen.getByRole("heading", { level: 1, name: "Everything Flump does" })).toBeDefined();
+    expect(
+      screen.getByText(
+        "You add your figures once. Flump shows your net worth, what is left over each month, your pay, your savings and what you owe.",
+      ),
+    ).toBeDefined();
+    expect(screen.getByText("Select a line to read a little more.")).toBeDefined();
     expect(document.body.textContent).not.toMatch(/what flump covers/i);
     expectPageRules(screen.getByRole("main"), { projectionNotices: 0 });
   });
@@ -28,7 +33,7 @@ describe("FeaturesIndexPage", () => {
     renderPage();
     expect(screen.getByRole("navigation", { name: "Start here" })).toBeDefined();
     const headings = screen
-      .getAllByRole("heading", { level: 2 })
+      .getAllByRole("heading", { level: 3 })
       .filter((heading) => heading.id.startsWith("group-"));
     expect(
       headings.map((heading) => [
@@ -46,6 +51,15 @@ describe("FeaturesIndexPage", () => {
       ["Settings and your data", null],
     ]);
     expect(document.querySelectorAll("main details")).toHaveLength(ALL_FEATURE_LINES.length);
+    // Start here comes before the index, and the hero before both.
+    const order = ["features-title", "start-here-title", "group-home"].map((id) =>
+      document.getElementById(id),
+    );
+    expect(order.every(Boolean)).toBe(true);
+    expect(
+      order[0]?.compareDocumentPosition(order[1] as Node) === Node.DOCUMENT_POSITION_FOLLOWING &&
+        order[1]?.compareDocumentPosition(order[2] as Node) === Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBe(true);
   });
 
   it("offers the invite and the interactive preview", () => {

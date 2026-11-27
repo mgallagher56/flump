@@ -1,72 +1,66 @@
-import { Button } from "@repo/ui";
-import type { FC } from "react";
+import { type FC, useRef } from "react";
 import { FeatureIndex } from "../../components/FeatureIndex";
 import { Footer } from "../../components/Footer";
 import { Header } from "../../components/Header";
+import { MarketingBand } from "../../components/MarketingBand";
+import { MarketingPageShell } from "../../components/MarketingPageShell";
+import { PageHero } from "../../components/PageHero";
 import { PageMeta } from "../../components/PageMeta";
 import { StartHere } from "../../components/StartHere";
+import { dealEachMoment } from "../../motion/moments/bandMoments";
+import { useGsapMoment } from "../../motion/useGsapMoment";
+import { FEATURES_HERO_TONES } from "../../utils/areaOrbTones";
 import { AI_CONNECTION, FEATURES_INDEX, MONEY_AREAS } from "../../utils/featureAreas";
 import type { FeatureGroup } from "../../utils/featureIndex";
-import { signupCta } from "../../utils/site";
-import {
-  container,
-  ctaRow,
-  headerBlock,
-  heading,
-  introText,
-  lead,
-  mainContent,
-  pageShell,
-} from "./FeaturesIndexPage.styles";
+import { indexBand, mainContent } from "./FeaturesIndexPage.styles";
 
 /** Each area's group heading links to its own page. */
 const GROUP_HREFS: Partial<Record<FeatureGroup["key"], string>> = Object.fromEntries(
   [...MONEY_AREAS, AI_CONNECTION].map((feature) => [feature.key, feature.path]),
 );
 
-/**
- * "Flump features" (D1): every feature as one line, grouped by area like a documentation home
- * (owner, 26 November 2026, option A). A short "Start here" strip, then the index; nothing is
- * explained until a line is opened.
- */
-export const FeaturesIndexPage: FC = () => {
-  const cta = signupCta();
+const groupsDealt = dealEachMoment("[data-deal-item]");
 
+/** The index band: every group, each card dealt in as it nears the viewport. */
+const EveryFeature: FC = () => {
+  const ref = useRef<HTMLDivElement>(null);
+  useGsapMoment(ref, groupsDealt);
   return (
-    <div className={pageShell()} data-testid="features-index-page">
-      <PageMeta description={FEATURES_INDEX.meta.description} title={FEATURES_INDEX.meta.title} />
-
-      <Header />
-
-      <main className={mainContent()} id="main" tabIndex={-1}>
-        <div className={container()}>
-          <section aria-labelledby="features-title" className={headerBlock()}>
-            <h1 className={heading()} id="features-title">
-              {FEATURES_INDEX.title}
-            </h1>
-            <p className={lead()}>{FEATURES_INDEX.lead}</p>
-            {FEATURES_INDEX.intro.map((paragraph) => (
-              <p className={introText()} key={paragraph}>
-                {paragraph}
-              </p>
-            ))}
-            <div className={ctaRow()}>
-              <Button asChild size="lg" variant="primary">
-                <a href={cta.href}>{cta.label}</a>
-              </Button>
-              <Button asChild size="lg" variant="outline">
-                <a href="/preview">Interactive preview</a>
-              </Button>
-            </div>
-          </section>
-
-          <StartHere />
-
-          <FeatureIndex groupHrefs={GROUP_HREFS} />
-        </div>
-      </main>
-
-      <Footer />
-    </div>
+    <MarketingBand bubbles="c" className={indexBand} id="every-feature" tone="canvas">
+      <div ref={ref}>
+        <FeatureIndex band="canvas" groupHrefs={GROUP_HREFS} />
+      </div>
+    </MarketingBand>
   );
 };
+
+/**
+ * "Everything Flump does" (D1; the approved features prototype, 27 Nov 2026, OTHER-PAGES-PLAN
+ * slice P1): the hero with the live orbs (scene level S1), "Start here" as four glass cards, then
+ * every feature as one line, grouped by area in glass cards (owner, 26 November 2026, option A).
+ * Nothing is explained until a line is opened. The server render is the finished, still page:
+ * every motion loads after first paint and none plays with reduced motion.
+ */
+export const FeaturesIndexPage: FC = () => (
+  <MarketingPageShell>
+    <PageMeta description={FEATURES_INDEX.meta.description} title={FEATURES_INDEX.meta.title} />
+
+    <Header />
+
+    <main className={mainContent} data-testid="features-index-page" id="main" tabIndex={-1}>
+      <PageHero
+        data-testid="features-hero"
+        lead={FEATURES_INDEX.lead}
+        note={FEATURES_INDEX.hint}
+        previewHref="/preview"
+        title={FEATURES_INDEX.heading}
+        titleId="features-title"
+        tones={FEATURES_HERO_TONES}
+      />
+      <StartHere />
+      <EveryFeature />
+    </main>
+
+    <Footer />
+  </MarketingPageShell>
+);

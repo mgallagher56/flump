@@ -1,19 +1,21 @@
 /**
- * The marketing page-weight ratchet (ROLLOUT-PLAN section 2, UX-GUIDELINES MK12). Runs after the
- * marketing build and measures the home page as the browser loads it, gzipped:
+ * The marketing page-weight ratchet (ROLLOUT-PLAN section 2, OTHER-PAGES-PLAN section 4,
+ * UX-GUIDELINES MK12). Runs after the marketing build and measures every page as the browser loads
+ * it, gzipped:
  *
- * - first-load script: the module entry and its modulepreloads in index.html, plus the home page's
- *   own chunk and the shared chunks it imports. Each page is its own chunk (M1,
+ * - first-load script: the module entry and its modulepreloads in index.html, plus the page's own
+ *   chunk and the shared chunks it imports. Each page is its own chunk (M1,
  *   `apps/marketing/src/lazyPages.tsx`); the server preloads the requested page's chunks, read
  *   from Vite's build manifest (`apps/marketing/server/pageChunks.ts`), and so does this check;
- * - first-load CSS: the stylesheets index.html links;
- * - lazy script: what the home page may load later by dynamic import (GSAP, three.js), from the
- *   same manifest. Other pages' chunks are never loaded by home, so they do not count. A build
- *   with no manifest counts every chunk index.html does not load, an upper bound.
+ * - first-load CSS: the stylesheets index.html links (one stylesheet for the whole site);
+ * - lazy script: what the page may load later by dynamic import (GSAP, three.js), from the same
+ *   manifest. Other pages' chunks are never loaded by it, so they do not count. A build with no
+ *   manifest counts every chunk index.html does not load, an upper bound.
  *
- * Each measure must stay at or under its baseline (main before the new design, F4) plus the plan's
- * budget for the new blocks. Raising a baseline or a budget is a guard change (AGENTS.md section
- * 15) and is a hand edit to the baseline file; `--write-baseline` only ever lowers a baseline.
+ * Each page has its own entry in the baseline file: each measure must stay at or under the page's
+ * baseline (main before the page's new design) plus its budget for the new blocks. Raising a
+ * baseline or a budget is a guard change (AGENTS.md section 15) and is a hand edit to the baseline
+ * file; `--write-baseline` only ever lowers a baseline.
  *
  *   bun scripts/check-marketing-weight.ts apps/marketing/dist/client [--write-baseline]
  */
@@ -22,8 +24,8 @@ import { join, resolve } from "node:path";
 import { gzipSync } from "node:zlib";
 import { type BuildManifest, pageFiles, pageLazyFiles } from "../apps/marketing/server/pageChunks";
 
-/** The home page's module, the key Vite's build manifest gives its chunk (`pageSource` in `apps/marketing/src/pageSet.ts`). */
-export const HOME_PAGE_KEY = "src/pages/HomePage/index.ts";
+/** A page's module, the key Vite's build manifest gives its chunk (`pageSource` in `apps/marketing/src/pageSet.ts`). */
+export const pageKey = (page: string) => `src/pages/${page}/index.ts`;
 const MANIFEST = ".vite/manifest.json";
 
 export const MEASURES = ["firstLoadJsGzip", "cssGzip", "lazyJsGzip"] as const;
@@ -33,6 +35,11 @@ export type Weights = Record<Measure, number>;
 export interface WeightBaseline {
   readonly baseline: Weights;
   readonly budget: Weights;
+}
+
+/** The committed file: one baseline and budget per page, by page name (`PageName`). */
+export interface WeightFile {
+  readonly pages: Readonly<Record<string, WeightBaseline>>;
 }
 
 const LABELS: Record<Measure, string> = {
@@ -75,8 +82,12 @@ function allJs(dir: string, prefix = ""): string[] {
 
 const gzipSize = (dir: string, rel: string) => gzipSync(readFileSync(join(dir, rel))).length;
 
-/** Measures a client build directory. Throws when index.html loads no script, so a read of the wrong folder cannot pass. */
-export function measureClientBuild(dir: string): Weights {
+/**
+ * Measures one page of a client build directory (the home page unless named). Throws when
+ * index.html loads no script, so a read of the wrong folder cannot pass, and when the manifest has
+ * no such page.
+ */
+export function measureClientBuild(dir: string, page = "HomePage"): Weights {
   const html = readFileSync(join(dir, "index.html"), "utf8");
   const { scripts, styles } = firstLoadAssets(html);
   if (scripts.length === 0) throw new Error(`${dir}/index.html loads no script`);
@@ -87,11 +98,12 @@ export function measureClientBuild(dir: string): Weights {
   const sum = (files: string[]) => files.reduce((total, rel) => total + gzipSize(dir, rel), 0);
   if (existsSync(join(dir, MANIFEST))) {
     const manifest = JSON.parse(readFileSync(join(dir, MANIFEST), "utf8")) as BuildManifest;
-    if (!manifest[HOME_PAGE_KEY]) throw new Error(`${dir}/${MANIFEST} has no ${HOME_PAGE_KEY}`);
-    const home = pageFiles(manifest, HOME_PAGE_KEY).filter((rel) => /\.m?js$/.test(rel));
-    const first = [...new Set([...scripts, ...home])];
-    // Everything home loads later: scripts, and any stylesheet, image or font a lazy chunk brings.
-    const lazy = pageLazyFiles(manifest, HOME_PAGE_KEY);
+    const key = pageKey(page);
+    if (!manifest[key]) throw new Error(`${dir}/${MANIFEST} has no ${key}`);
+    const own = pageFiles(manifest, key).filter((rel) => /\.m?js$/.test(rel));
+    const first = [...new Set([...scripts, ...own])];
+    // Everything the page loads later: scripts, and any stylesheet, image or font a lazy chunk brings.
+    const lazy = pageLazyFiles(manifest, key);
     return { firstLoadJsGzip: sum(first), cssGzip: sum(styles), lazyJsGzip: sum(lazy) };
   }
   const first = new Set(scripts);
@@ -134,26 +146,31 @@ if (import.meta.main) {
     );
     process.exit(2);
   }
-  const file = JSON.parse(readFileSync(BASELINE_FILE, "utf8")) as WeightBaseline &
+  const file = JSON.parse(readFileSync(BASELINE_FILE, "utf8")) as WeightFile &
     Record<string, unknown>;
-  const measured = measureClientBuild(resolve(dir));
-  const rows = compareWeights(measured, file);
-  for (const row of rows) {
-    const extra = row.measured - file.baseline[row.measure];
-    console.log(
-      `${row.ok ? "ok  " : "FAIL"} ${LABELS[row.measure]}: ${kb(row.measured)} gzip (baseline ${kb(file.baseline[row.measure])}, ${extra >= 0 ? "+" : ""}${kb(extra)} of the ${kb(file.budget[row.measure])} budget; ceiling ${kb(row.ceiling)})`,
-    );
+  const lowered: Record<string, WeightBaseline> = {};
+  const over: string[] = [];
+  for (const [page, entry] of Object.entries(file.pages)) {
+    const measured = measureClientBuild(resolve(dir), page);
+    console.log(page);
+    for (const row of compareWeights(measured, entry)) {
+      const extra = row.measured - entry.baseline[row.measure];
+      console.log(
+        `  ${row.ok ? "ok  " : "FAIL"} ${LABELS[row.measure]}: ${kb(row.measured)} gzip (baseline ${kb(entry.baseline[row.measure])}, ${extra >= 0 ? "+" : ""}${kb(extra)} of the ${kb(entry.budget[row.measure])} budget; ceiling ${kb(row.ceiling)})`,
+      );
+      if (!row.ok) over.push(`${page} ${LABELS[row.measure]}`);
+    }
+    lowered[page] = { ...entry, baseline: loweredBaseline(measured, entry.baseline) };
   }
   if (process.argv.includes("--write-baseline")) {
-    const baseline = loweredBaseline(measured, file.baseline);
-    writeFileSync(BASELINE_FILE, `${JSON.stringify({ ...file, baseline }, null, 2)}\n`);
+    writeFileSync(BASELINE_FILE, `${JSON.stringify({ ...file, pages: lowered }, null, 2)}\n`);
     console.log(
       "Baselines lowered where the build is lighter. Raising one is a hand edit and a guard change.",
     );
   }
-  if (rows.some((r) => !r.ok)) {
+  if (over.length > 0) {
     console.error(
-      "FAIL the marketing home page is over its weight budget (ROLLOUT-PLAN section 2, UX-GUIDELINES MK12). Make it lighter, load it after first paint, or get sign-off to raise the budget in scripts/marketing-weight-baseline.json (AGENTS.md section 15)",
+      `FAIL over the weight budget: ${over.join(", ")} (OTHER-PAGES-PLAN section 4, UX-GUIDELINES MK12). Make it lighter, load it after first paint, or get sign-off to raise the budget in scripts/marketing-weight-baseline.json (AGENTS.md section 15)`,
     );
     process.exit(1);
   }

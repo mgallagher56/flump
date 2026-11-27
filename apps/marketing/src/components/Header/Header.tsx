@@ -26,6 +26,7 @@ import {
   belowWide,
   drawerCta,
   drawerCtas,
+  drawerDivided,
   drawerGroup,
   drawerGroupHeading,
   drawerLinkCurrent,
@@ -50,16 +51,11 @@ const DRAWER_ID = "mobile-nav-drawer";
 const FEATURES_INDEX_KEY = "features-index";
 
 /**
- * The Features menu (E42 S4): the features page, the five areas in the app's order, the AI
- * connection, then Security and privacy, so it stays one press from every page.
+ * The Features menu (E42 S4; order from the approved features prototype, 27 Nov 2026): the five
+ * areas in the app's order, the AI connection, then "All features"; a divider; then Security and
+ * privacy, so it stays one press from every page.
  */
 const FEATURE_LINKS: AppNavChild[] = [
-  {
-    key: FEATURES_INDEX_KEY,
-    label: FEATURES_INDEX.title,
-    href: FEATURES_INDEX.path,
-    description: "Every feature on one page",
-  },
   ...FEATURES.map((feature) => ({
     key: feature.key,
     label: feature.name,
@@ -67,10 +63,17 @@ const FEATURE_LINKS: AppNavChild[] = [
     description: feature.menuDescription,
   })),
   {
+    key: FEATURES_INDEX_KEY,
+    label: FEATURES_INDEX.menuLabel,
+    href: FEATURES_INDEX.path,
+    description: FEATURES_INDEX.menuDescription,
+  },
+  {
     key: "security",
     label: "Security and privacy",
     href: "/security",
     description: "What Flump can see",
+    dividerBefore: true,
   },
 ];
 
@@ -259,7 +262,7 @@ export const Header: FC = () => {
           </p>
           <ul aria-labelledby="drawer-features-heading" className={drawerGroup()}>
             {FEATURE_LINKS.map((link) => (
-              <li key={link.key}>
+              <li className={link.dividerBefore ? drawerDivided() : undefined} key={link.key}>
                 <Link
                   aria-current={link.key === activeKey ? "page" : undefined}
                   className={cx(

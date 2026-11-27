@@ -40,12 +40,13 @@ export const Footer: FC = () => {
         {
           heading: "Product",
           links: [
-            { key: "features", label: FEATURES_INDEX.title, href: FEATURES_INDEX.path },
             ...FEATURES.map((feature) => ({
               key: feature.key,
               label: feature.name,
               href: feature.path,
             })),
+            // After the areas, as in the Features menu (the approved features prototype).
+            { key: "features", label: FEATURES_INDEX.menuLabel, href: FEATURES_INDEX.path },
             { key: "preview", label: "Interactive preview", href: "/preview" },
             { key: "pricing", label: "Pricing", href: "/pricing" },
           ],

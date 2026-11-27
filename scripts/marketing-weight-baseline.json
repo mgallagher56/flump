@@ -1,13 +1,161 @@
 {
-  "$comment": "The marketing home page weight ratchet (scripts/check-marketing-weight.ts; ROLLOUT-PLAN section 2; UX-GUIDELINES MK12). Bytes, gzipped. baseline: main before the new design, measured on 27 Nov 2026 at commit 0b291c6ec (deterministic across rebuilds). budget: the plan's extra weight for the new blocks (1 KB = 1000 bytes), so each ceiling is baseline plus budget, the figure M1 and M2 are measured against. Raising a baseline or a budget is a guard change (AGENTS.md section 15): a hand edit, signed off and listed in the PR. --write-baseline only lowers.",
-  "baseline": {
-    "firstLoadJsGzip": 236083,
-    "cssGzip": 32094,
-    "lazyJsGzip": 0
-  },
-  "budget": {
-    "firstLoadJsGzip": 25000,
-    "cssGzip": 25000,
-    "lazyJsGzip": 230000
+  "$comment": "The marketing page weight ratchet, one entry per page (scripts/check-marketing-weight.ts; ROLLOUT-PLAN section 2; OTHER-PAGES-PLAN section 4; UX-GUIDELINES MK12). Bytes, gzipped (1 KB = 1000 bytes). baseline: main before the page's new design. HomePage: measured on 27 Nov 2026 at commit 0b291c6ec. The other pages: measured on 27 Nov 2026 at commit 001d2adb2 (AreaPage from the area pages' chunk, then FeaturePage); their CSS baseline is home's, since the site has one stylesheet. budget: the plan's extra weight for the new blocks, by family: features, areas and AI connection 15 KB script and 230 KB lazy; preview, pricing, security, contact and not found 8 KB and 80 KB; the four legal pages 2 KB and none lazy; CSS 25 KB everywhere. Each ceiling is baseline plus budget. Raising a baseline or a budget is a guard change (AGENTS.md section 15): a hand edit, signed off and listed in the PR. --write-baseline only lowers.",
+  "pages": {
+    "HomePage": {
+      "baseline": {
+        "firstLoadJsGzip": 236083,
+        "cssGzip": 32094,
+        "lazyJsGzip": 0
+      },
+      "budget": {
+        "firstLoadJsGzip": 25000,
+        "cssGzip": 25000,
+        "lazyJsGzip": 230000
+      }
+    },
+    "FeaturesIndexPage": {
+      "baseline": {
+        "firstLoadJsGzip": 173106,
+        "cssGzip": 32094,
+        "lazyJsGzip": 0
+      },
+      "budget": {
+        "firstLoadJsGzip": 15000,
+        "cssGzip": 25000,
+        "lazyJsGzip": 230000
+      }
+    },
+    "AreaPage": {
+      "baseline": {
+        "firstLoadJsGzip": 215609,
+        "cssGzip": 32094,
+        "lazyJsGzip": 0
+      },
+      "budget": {
+        "firstLoadJsGzip": 15000,
+        "cssGzip": 25000,
+        "lazyJsGzip": 230000
+      }
+    },
+    "AiConnectionPage": {
+      "baseline": {
+        "firstLoadJsGzip": 218693,
+        "cssGzip": 32094,
+        "lazyJsGzip": 0
+      },
+      "budget": {
+        "firstLoadJsGzip": 15000,
+        "cssGzip": 25000,
+        "lazyJsGzip": 230000
+      }
+    },
+    "PreviewPage": {
+      "baseline": {
+        "firstLoadJsGzip": 208466,
+        "cssGzip": 32094,
+        "lazyJsGzip": 0
+      },
+      "budget": {
+        "firstLoadJsGzip": 8000,
+        "cssGzip": 25000,
+        "lazyJsGzip": 80000
+      }
+    },
+    "PricingPage": {
+      "baseline": {
+        "firstLoadJsGzip": 166429,
+        "cssGzip": 32094,
+        "lazyJsGzip": 0
+      },
+      "budget": {
+        "firstLoadJsGzip": 8000,
+        "cssGzip": 25000,
+        "lazyJsGzip": 80000
+      }
+    },
+    "SecurityPage": {
+      "baseline": {
+        "firstLoadJsGzip": 167813,
+        "cssGzip": 32094,
+        "lazyJsGzip": 0
+      },
+      "budget": {
+        "firstLoadJsGzip": 8000,
+        "cssGzip": 25000,
+        "lazyJsGzip": 80000
+      }
+    },
+    "ContactPage": {
+      "baseline": {
+        "firstLoadJsGzip": 166818,
+        "cssGzip": 32094,
+        "lazyJsGzip": 0
+      },
+      "budget": {
+        "firstLoadJsGzip": 8000,
+        "cssGzip": 25000,
+        "lazyJsGzip": 80000
+      }
+    },
+    "NotFoundPage": {
+      "baseline": {
+        "firstLoadJsGzip": 173230,
+        "cssGzip": 32094,
+        "lazyJsGzip": 0
+      },
+      "budget": {
+        "firstLoadJsGzip": 8000,
+        "cssGzip": 25000,
+        "lazyJsGzip": 80000
+      }
+    },
+    "PrivacyPage": {
+      "baseline": {
+        "firstLoadJsGzip": 171767,
+        "cssGzip": 32094,
+        "lazyJsGzip": 0
+      },
+      "budget": {
+        "firstLoadJsGzip": 2000,
+        "cssGzip": 25000,
+        "lazyJsGzip": 0
+      }
+    },
+    "TermsPage": {
+      "baseline": {
+        "firstLoadJsGzip": 169822,
+        "cssGzip": 32094,
+        "lazyJsGzip": 0
+      },
+      "budget": {
+        "firstLoadJsGzip": 2000,
+        "cssGzip": 25000,
+        "lazyJsGzip": 0
+      }
+    },
+    "CookiesPage": {
+      "baseline": {
+        "firstLoadJsGzip": 170261,
+        "cssGzip": 32094,
+        "lazyJsGzip": 0
+      },
+      "budget": {
+        "firstLoadJsGzip": 2000,
+        "cssGzip": 25000,
+        "lazyJsGzip": 0
+      }
+    },
+    "AccessibilityPage": {
+      "baseline": {
+        "firstLoadJsGzip": 168151,
+        "cssGzip": 32094,
+        "lazyJsGzip": 0
+      },
+      "budget": {
+        "firstLoadJsGzip": 2000,
+        "cssGzip": 25000,
+        "lazyJsGzip": 0
+      }
+    }
   }
 }

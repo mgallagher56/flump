@@ -15,7 +15,7 @@ const stub = vi.hoisted(() => (name: string) => () => ({
 
 vi.mock("./pages/HomePage", stub("HomePage"));
 vi.mock("./pages/FeaturesIndexPage", stub("FeaturesIndexPage"));
-vi.mock("./pages/FeaturePage", stub("FeaturePage"));
+vi.mock("./pages/AreaPage", stub("AreaPage"));
 vi.mock("./pages/AiConnectionPage", stub("AiConnectionPage"));
 vi.mock("./pages/PreviewPage", stub("PreviewPage"));
 // The pricing chunk waits for the test to let it load, to show the page suspending meanwhile.
@@ -41,7 +41,7 @@ vi.mock("./pages/NotFoundPage", stub("NotFoundPage"));
 const NAMES: PageName[] = [
   "HomePage",
   "FeaturesIndexPage",
-  "FeaturePage",
+  "AreaPage",
   "AiConnectionPage",
   "PreviewPage",
   "PricingPage",
@@ -101,15 +101,13 @@ describe("lazyPages", () => {
   });
 
   it("passes the feature through to the feature page", async () => {
-    await preloadPage("FeaturePage");
-    const Page = lazyPages.FeaturePage;
+    await preloadPage("AreaPage");
+    const Page = lazyPages.AreaPage;
     render(<Page feature={feature} />);
-    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe(
-      `FeaturePage: ${feature.name}`,
-    );
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe(`AreaPage: ${feature.name}`);
   });
 
-  it.each(NAMES.filter((name) => name !== "FeaturePage"))(
+  it.each(NAMES.filter((name) => name !== "AreaPage"))(
     "renders %s from its own chunk",
     async (name) => {
       await act(() => preloadPage(name));

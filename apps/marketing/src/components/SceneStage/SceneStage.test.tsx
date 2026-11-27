@@ -3,6 +3,7 @@ import { act, render, screen } from "@testing-library/react";
 import { createRef } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SceneStage, type SceneStartContext } from "./SceneStage";
+import { stage } from "./SceneStage.styles";
 
 const power = vi.hoisted(() => ({
   current: { mode: "still", reason: "pending", reportFps: () => {} } as unknown as ScenePower,
@@ -67,6 +68,22 @@ afterEach(() => {
 });
 
 describe("SceneStage", () => {
+  it("is the journey's full-screen layer by default and fills its band with fit band", () => {
+    power.current = still("pending");
+    const { rerender } = render(tree());
+    const screenClass = screen.getByTestId("scene-stage").className;
+    expect(screenClass).toContain(stage({ fit: "screen" }));
+    rerender(
+      <div ref={watchRef}>
+        <SceneStage fit="band" start={scene.start} watchRef={watchRef}>
+          <span />
+        </SceneStage>
+      </div>,
+    );
+    expect(screen.getByTestId("scene-stage").className).toContain(stage({ fit: "band" }));
+    expect(stage({ fit: "band" })).not.toBe(stage({ fit: "screen" }));
+  });
+
   it.each<StillReason>([
     "pending",
     "reduced-motion",

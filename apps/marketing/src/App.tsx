@@ -13,7 +13,7 @@ export default function App({ pages }: { pages: PageSet }) {
   const {
     HomePage,
     FeaturesIndexPage,
-    FeaturePage,
+    AreaPage,
     AiConnectionPage,
     PreviewPage,
     PricingPage,
@@ -37,7 +37,7 @@ export default function App({ pages }: { pages: PageSet }) {
             <Route
               key={area.key}
               path={area.path}
-              element={<FeaturePage feature={area} key={area.key} />}
+              element={<AreaPage feature={area} key={area.key} />}
             />
           ))}
           {/* /mcp answers 301 here, and /tools and the former calculator pages to the features and
