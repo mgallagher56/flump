@@ -9,7 +9,7 @@ These rules say how work is done in this repository. They apply to every task, a
 3. The guides the laws point to: `docs/agents/component-guidelines.md`, `docs/ux/`, `docs/copy/COPY-GUIDE.md`, `docs/compliance/advice-boundary-policy.md`, `docs/system/README.md`, `docs/testing/writing-tests.md`.
 4. `project_rules.md`. Where it disagrees with anything above, the item above wins; correct `project_rules.md` in the same PR.
 
-`AGENTS.md` section 6 names Claude models. Here, use the strongest model available for code, for review and for anything touching money or tax, sign-in or security, privacy or migrations. Use a cheaper model only for mechanical, fully specified work.
+`AGENTS.md` section 6 names Claude models. Here, the models for each kind of work, and how an Antigravity run is set up and checked, are in [`docs/agents/antigravity-models.md`](../../docs/agents/antigravity-models.md).
 
 ## 2. Before writing code
 
