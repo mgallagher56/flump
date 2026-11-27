@@ -1,4 +1,5 @@
 import { act, render, renderHook, screen } from "@testing-library/react";
+import { StrictMode } from "react";
 import { renderToString } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { calmEase, cubicBezier } from "./marketingTiming";
@@ -116,6 +117,42 @@ describe("useCountUp", () => {
     rerender(<SampleFigure value={500} inView />);
     act(() => vi.advanceTimersByTime(16));
     expect(screen.getByTestId("drawn").textContent).toBe("£500");
+  });
+
+  it("keeps counting when it leaves view mid-count", () => {
+    mockReducedMotion(false);
+    const { rerender } = render(<SampleFigure value={12400} inView />);
+    playFor(1000);
+    rerender(<SampleFigure value={12400} inView={false} />);
+    act(() => vi.advanceTimersByTime(16));
+    const drawn = Number(screen.getByTestId("drawn").textContent?.replace(/[£,]/g, ""));
+    expect(drawn).toBeGreaterThan(0);
+    expect(drawn).toBeLessThan(12400);
+    playFor(1400);
+    expect(screen.getByTestId("drawn").textContent).toBe("£12,400");
+  });
+
+  it("counts under StrictMode when already in view at mount", () => {
+    mockReducedMotion(false);
+    render(
+      <StrictMode>
+        <SampleFigure value={600} inView />
+      </StrictMode>,
+    );
+    playFor(1000);
+    const drawn = Number(screen.getByTestId("drawn").textContent?.replace(/[£,]/g, ""));
+    expect(drawn).toBeGreaterThan(0);
+    expect(drawn).toBeLessThan(600);
+    playFor(1400);
+    expect(screen.getByTestId("drawn").textContent).toBe("£600");
+  });
+
+  it("shows a new value at once once counted", () => {
+    mockReducedMotion(false);
+    const { rerender } = render(<SampleFigure value={500} inView />);
+    playFor(2400);
+    rerender(<SampleFigure value={700} inView />);
+    expect(screen.getByTestId("drawn").textContent).toBe("£700");
   });
 
   it("never moves under reduced motion", () => {

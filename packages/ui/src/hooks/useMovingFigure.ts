@@ -72,7 +72,7 @@ function useTween(initial: number) {
   );
 
   const start = useCallback(
-    (from: number, to: number, duration: number) => {
+    (from: number, to: number, duration: number, onDone?: () => void) => {
       stop();
       if (from === to || duration <= 0) {
         jump(to);
@@ -87,6 +87,7 @@ function useTween(initial: number) {
         const done = elapsed >= duration;
         setTween({ display: value, moving: !done });
         raf.current = done ? 0 : requestAnimationFrame(step);
+        if (done) onDone?.();
       };
       current.current = from;
       setTween({ display: from, moving: true });
@@ -97,7 +98,9 @@ function useTween(initial: number) {
 
   useEffect(() => stop, [stop]);
 
-  return { tween, current, start, jump };
+  const running = useCallback(() => raf.current !== 0, []);
+
+  return { tween, current, start, jump, running };
 }
 
 function toFigure(tween: Tween, value: number, format: (value: number) => string): MovingFigure {
@@ -128,8 +131,9 @@ export interface CountUpOptions extends MovingFigureOptions {
 export function useCountUp(value: number, options: CountUpOptions): MovingFigure {
   const { inView, from = 0, format = String, durationMs = marketingMs("count") } = options;
   const reduced = usePrefersReducedMotion();
-  const { tween, start, jump } = useTween(value);
-  const phase = useRef<"server" | "armed" | "counted">("server");
+  const { tween, current, start, jump, running } = useTween(value);
+  const phase = useRef<"server" | "armed" | "counting" | "counted">("server");
+  const shownValue = useRef(value);
 
   // Arm after mount: a figure that has not been seen waits at its start value.
   useEffect(() => {
@@ -142,19 +146,27 @@ export function useCountUp(value: number, options: CountUpOptions): MovingFigure
     jump(from);
   }, [reduced, from, jump]);
 
+  // Leaving view mid-count never stops the count: only a new value or reduced motion does.
   useEffect(() => {
+    const valueChanged = !Object.is(shownValue.current, value);
+    shownValue.current = value;
+    const done = () => {
+      phase.current = "counted";
+    };
     if (reduced) {
-      phase.current = "counted";
+      done();
       jump(value);
-      return;
-    }
-    if (phase.current === "armed" && inView) {
-      phase.current = "counted";
-      start(from, value, durationMs);
-    } else if (phase.current === "counted") {
+    } else if (phase.current === "armed" && inView) {
+      phase.current = "counting";
+      start(from, value, durationMs, done);
+    } else if (phase.current === "counting" && !valueChanged && !running()) {
+      // StrictMode's rehearsal unmount cancelled the frames: carry on from the figure shown.
+      start(current.current, value, durationMs, done);
+    } else if (phase.current !== "armed" && phase.current !== "server" && valueChanged) {
+      done();
       jump(value);
     }
-  }, [inView, reduced, value, from, durationMs, start, jump]);
+  }, [inView, reduced, value, from, durationMs, start, jump, running, current]);
 
   return toFigure(tween, value, format);
 }

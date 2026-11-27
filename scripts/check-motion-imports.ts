@@ -2,7 +2,8 @@
 // site only: nothing outside apps/marketing imports `gsap` or `three` (or a subpath, or GSAP's and
 // three.js's scoped packages), and no other workspace declares them as a dependency. The shared
 // hooks in packages/ui hold the logic only. Every tracked source file counts, tests and stories too,
-// since a test import would make the package depend on the library. No allow-list, no baseline.
+// since a test import would make the package depend on the library. Comments count too (the safe
+// direction). No allow-list, no baseline.
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { readSource, repoRoot, trackedFiles } from "./lib/scan";
