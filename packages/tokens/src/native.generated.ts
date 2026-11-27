@@ -37,6 +37,23 @@ export type ColorKey =
   | "chart.series8"
   | "chart.warning"
   | "chart.wealth"
+  | "material.glass.border"
+  | "material.glass.fill"
+  | "material.glass.light"
+  | "material.glass.sheen"
+  | "material.paper.edge"
+  | "material.paper.fill"
+  | "material.paper.rule"
+  | "orb.skyTeal.bubble"
+  | "orb.skyTeal.bubbleShade"
+  | "orb.skyTeal.core"
+  | "orb.skyTeal.rim"
+  | "orb.skyTeal.shade"
+  | "orb.violetRose.bubble"
+  | "orb.violetRose.bubbleShade"
+  | "orb.violetRose.core"
+  | "orb.violetRose.rim"
+  | "orb.violetRose.shade"
   | "primary"
   | "primary.border"
   | "primary.emphasis"
@@ -88,7 +105,7 @@ export type ColorKey =
   | "text.primary"
   | "text.secondary";
 
-export type ShadowKey = "card" | "focus" | "overlay" | "raised" | "xs";
+export type ShadowKey = "card" | "focus" | "glass" | "overlay" | "paper" | "raised" | "xs";
 
 export interface NativeTheme {
   readonly colors: Readonly<Record<ColorKey, string>>;
@@ -127,6 +144,23 @@ export const light: NativeTheme = {
     "chart.series8": "#5f7470",
     "chart.warning": "#94750f",
     "chart.wealth": "#64885c",
+    "material.glass.border": "#c8dcd5",
+    "material.glass.fill": "#f8fcfa",
+    "material.glass.light": "rgba(248, 252, 250, 0.14)",
+    "material.glass.sheen": "rgba(248, 252, 250, 0.07)",
+    "material.paper.edge": "#c8dcd5",
+    "material.paper.fill": "#f8fcfa",
+    "material.paper.rule": "rgba(15, 42, 42, 0.025)",
+    "orb.skyTeal.bubble": "#d8e8f2",
+    "orb.skyTeal.bubbleShade": "#c6e6dc",
+    "orb.skyTeal.core": "#2f7fa0",
+    "orb.skyTeal.rim": "rgba(47, 127, 160, 0.22)",
+    "orb.skyTeal.shade": "#0b6b5d",
+    "orb.violetRose.bubble": "#e3e0f4",
+    "orb.violetRose.bubbleShade": "#f3e3ea",
+    "orb.violetRose.core": "#7e67a8",
+    "orb.violetRose.rim": "rgba(126, 103, 168, 0.22)",
+    "orb.violetRose.shade": "#b03f6a",
     primary: "#0b6b5d",
     "primary.border": "#5a8f83",
     "primary.emphasis": "#084f45",
@@ -181,7 +215,10 @@ export const light: NativeTheme = {
   shadows: {
     card: "0 1px 2px rgba(15, 42, 42, 0.08), 0 4px 14px rgba(15, 42, 42, 0.07)",
     focus: "0 0 0 2px #f8fcfa, 0 0 0 4px #0b6b5d",
+    glass:
+      "inset 0 1px 0 rgba(248, 252, 250, 0.14), 0 1px 2px rgba(15, 42, 42, 0.08), 0 4px 14px rgba(15, 42, 42, 0.07)",
     overlay: "0 12px 32px -4px rgba(15, 42, 42, 0.16), 0 4px 8px -2px rgba(15, 42, 42, 0.08)",
+    paper: "inset 0 0 0 1px #c8dcd5, 0 22px 35px -19px rgba(15, 42, 42, 0.45)",
     raised: "0 2px 8px -2px rgba(15, 42, 42, 0.12), 0 1px 2px rgba(15, 42, 42, 0.06)",
     xs: "0 1px 2px rgba(15, 42, 42, 0.07)",
   },
@@ -219,6 +256,23 @@ export const dark: NativeTheme = {
     "chart.series8": "#a9afb9",
     "chart.warning": "#e3b452",
     "chart.wealth": "#9ad0a0",
+    "material.glass.border": "#303740",
+    "material.glass.fill": "#1d2128",
+    "material.glass.light": "rgba(248, 252, 250, 0.14)",
+    "material.glass.sheen": "rgba(248, 252, 250, 0.07)",
+    "material.paper.edge": "#303740",
+    "material.paper.fill": "#1d2128",
+    "material.paper.rule": "rgba(241, 238, 232, 0.025)",
+    "orb.skyTeal.bubble": "#1d3846",
+    "orb.skyTeal.bubbleShade": "#1d3934",
+    "orb.skyTeal.core": "#6db5d6",
+    "orb.skyTeal.rim": "rgba(109, 181, 214, 0.22)",
+    "orb.skyTeal.shade": "#6fd0ba",
+    "orb.violetRose.bubble": "#353050",
+    "orb.violetRose.bubbleShade": "#4d2939",
+    "orb.violetRose.core": "#a98fe0",
+    "orb.violetRose.rim": "rgba(169, 143, 224, 0.22)",
+    "orb.violetRose.shade": "#e58aa2",
     primary: "#6fd0ba",
     "primary.border": "#53877d",
     "primary.emphasis": "#9be3d2",
@@ -273,8 +327,12 @@ export const dark: NativeTheme = {
   shadows: {
     card: "inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 0 0 1px rgba(255, 255, 255, 0.05), 0 1px 2px rgba(0, 0, 0, 0.2)",
     focus: "0 0 0 2px #1d2128, 0 0 0 4px #6fd0ba",
+    glass:
+      "inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 0 0 1px rgba(255, 255, 255, 0.05), 0 1px 2px rgba(0, 0, 0, 0.2)",
     overlay:
       "inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.05), 0 8px 24px rgba(0, 0, 0, 0.3)",
+    paper:
+      "inset 0 1px 0 rgba(255, 255, 255, 0.06), inset 0 0 0 1px #303740, 0 0 0 1px rgba(255, 255, 255, 0.05), 0 22px 35px -19px rgba(0, 0, 0, 0.3)",
     raised:
       "inset 0 1px 0 rgba(255, 255, 255, 0.09), 0 0 0 1px rgba(255, 255, 255, 0.05), 0 4px 12px rgba(0, 0, 0, 0.24)",
     xs: "inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 0 0 1px rgba(255, 255, 255, 0.05)",

@@ -239,6 +239,37 @@ export const PASSING_PAIRS: Pair[] = [
   ...["surface.sunken", "surface.subtle", "surface.overlay"].map(
     (bg): Pair => ({ fg: "border.focusRing", bg, themes: BOTH, min: 3, role: "ui" }),
   ),
+  // F2 (STYLE-GUIDE 2.7, MC3): text on the glass card (its fill, and under its sheen) and on the
+  // paper document (its fill, and under its ruled lines), in both themes.
+  ...TEXTS.flatMap((fg): Pair[] => [
+    { fg, bg: "material.glass.fill", themes: BOTH, min: 4.5, role: "text" },
+    {
+      fg,
+      bg: "material.glass.sheen",
+      under: "material.glass.fill",
+      themes: BOTH,
+      min: 4.5,
+      role: "text",
+    },
+    { fg, bg: "material.paper.fill", themes: BOTH, min: 4.5, role: "text" },
+    {
+      fg,
+      bg: "material.paper.rule",
+      under: "material.paper.fill",
+      themes: BOTH,
+      min: 4.5,
+      role: "text",
+    },
+  ]),
+  // A bubble at a band's edge may sit beside or under the edge of a line of text: text keeps
+  // 4.5:1 on either bubble fill of both orb sets.
+  ...TEXTS.flatMap((fg) =>
+    ["skyTeal", "violetRose"].flatMap((set) =>
+      ["bubble", "bubbleShade"].map(
+        (fill): Pair => ({ fg, bg: `orb.${set}.${fill}`, themes: BOTH, min: 4.5, role: "text" }),
+      ),
+    ),
+  ),
   // primary.foreground on a status fill: only the fills in PRIMARY_FOREGROUND_OK.
   ...Object.entries(PRIMARY_FOREGROUND_OK).flatMap(([s, themes]) =>
     themes.length
