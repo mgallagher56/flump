@@ -25,6 +25,8 @@ module.exports = {
       transformIgnorePatterns: [
         "node_modules/(?!(\\.bun/[^/]+/node_modules/)?((jest-)?react-native|@react-native(-community)?|expo(nent)?|@expo(nent)?/.*|expo-.*|react-navigation|@react-navigation/.*|standard-navigation))",
       ],
+      // expo-crypto's randomUUID answers a real UUID, as on the phone (src/testing/jestSetup.ts).
+      setupFiles: ["<rootDir>/src/testing/jestSetup.ts"],
       moduleNameMapper,
       modulePaths,
       testPathIgnorePatterns: [...testPathIgnorePatterns, "<rootDir>/e2e/"],

@@ -551,6 +551,19 @@ describe("Budget", () => {
         ownership: "sole",
       });
       expect(screen.getByText("Saved")).toBeOnTheScreen();
+      // Its own Idempotency-Key, from expo-crypto: the client's default needs a global crypto that
+      // Hermes lacks (the device check's add never left the phone). A second add gets a new key.
+      const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+      const first = api.calls.filter((c) => c.method === "POST")[0]?.idempotencyKey;
+      expect(first).toMatch(UUID);
+      await u.press(screen.getByRole("button", { name: "Add to bills" }));
+      await u.type(screen.getByLabelText("Name"), "Gas");
+      await u.type(screen.getByLabelText("Amount"), "40");
+      await u.press(screen.getByRole("button", { name: "Save" }));
+      await settle();
+      const second = api.calls.filter((c) => c.method === "POST")[1]?.idempotencyKey;
+      expect(second).toMatch(UUID);
+      expect(second).not.toBe(first);
     });
 
     it("a failed add says so and keeps the form", async () => {
