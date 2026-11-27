@@ -60,9 +60,16 @@ export function editorSections(
   }));
 }
 
-/** The categories an entry may sit in: the page's, income included, in the editor's order. */
-export function categoryChoices(sections: readonly EditorSection[]): string[] {
-  return sections.map((s) => s.category);
+/**
+ * The categories an entry may sit in, income included, in the page's fixed order (the engine's
+ * `budgetPageCategories`: the standard ones, then custom ones), so the add and edit forms list
+ * them alike and the list never moves as amounts change (the editor ranks by amount).
+ */
+export function categoryChoices(
+  rows: readonly BudgetPageRow[],
+  customCategories: readonly string[],
+): string[] {
+  return budgetPageCategories(customCategories, rows);
 }
 
 /**
