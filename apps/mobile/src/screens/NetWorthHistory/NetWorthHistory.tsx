@@ -1,3 +1,4 @@
+import { useContext } from "react";
 import { Linking } from "react-native";
 import { Button } from "../../components/Button";
 import { ChartFigure, SAID_BY_CHART } from "../../components/ChartFigure";
@@ -38,7 +39,7 @@ import {
   type NetWorthHistoryState,
   useNetWorthHistory,
 } from "../../features/accounts/useAccountsData";
-import type { WebLink } from "../../navigation/shell";
+import { ShellContext, type WebLink } from "../../navigation/shell";
 import { NotSetUp } from "../NotSetUp";
 import { TermsRequired } from "../TermsRequired";
 
@@ -105,6 +106,8 @@ function Body({
 }: {
   state: Exclude<NetWorthHistoryState, { status: "notSetUp" }>;
 } & Pick<NetWorthHistoryProps, "links" | "onOpenCheckIn" | "onAddAccount">) {
+  // Saved figures shown offline (E12 S7): adding writes, so no way in is offered.
+  const offline = useContext(ShellContext)?.offline ?? false;
   const skeleton = useDelayedLoading(state.status === "loading");
   if (state.status === "error") {
     return (
@@ -153,14 +156,16 @@ function Body({
                     testID: "history-add-earlier",
                   },
                 ]
-              : [
-                  {
-                    label: ACCOUNTS.addAccount,
-                    onPress: onAddAccount,
-                    variant: "primary",
-                    testID: "history-add-account",
-                  },
-                ]
+              : offline
+                ? []
+                : [
+                    {
+                      label: ACCOUNTS.addAccount,
+                      onPress: onAddAccount,
+                      variant: "primary",
+                      testID: "history-add-account",
+                    },
+                  ]
           }
           testID="history-empty"
         />

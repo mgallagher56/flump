@@ -3,6 +3,7 @@ import { Linking } from "react-native";
 import { fail, fakeApi, withApi } from "../../data/fakeApi";
 import { HOMEOWNER, personaHousehold, RENTER } from "../../features/accounts/accountsTestData";
 import { household, NOW, routes } from "../../features/check-in/checkInTestData";
+import { ShellContext } from "../../navigation/shell";
 import { refreshControl } from "../../testing/refresh";
 import { Accounts, type AccountsWebLinks } from "./Accounts";
 
@@ -355,6 +356,40 @@ describe("Accounts: a balance below zero to check (ruled 27 November 2026)", () 
       `Rainy day, Savings, £150, ${note}`,
     );
     expect(screen.queryByTestId(`account-row-${h.idOf("Everyday")}-note`)).toBeNull();
+    jest.useRealTimers();
+  });
+});
+
+describe("Accounts with saved figures offline (E12 S7 with S8)", () => {
+  it("offers no way to add: no Add account and no Add an estimate, the sentence kept", async () => {
+    jest.useFakeTimers();
+    const shell = { offline: true } as never;
+    const { ui } = withApi(
+      <ShellContext.Provider value={shell}>
+        <Accounts
+          onSignOut={jest.fn()}
+          onOpenAccount={jest.fn()}
+          onAddAccount={jest.fn()}
+          onAddEstimate={jest.fn()}
+          onOpenHistory={jest.fn()}
+          onOpenCheckIn={jest.fn()}
+          onChangeWhatCounts={jest.fn()}
+          marketingOrigin="https://m.test.invalid"
+          links={LINKS}
+          now={NOW}
+        />
+      </ShellContext.Provider>,
+      fakeApi(routes(household())).client,
+    );
+    await render(ui);
+    await act(async () => jest.advanceTimersByTimeAsync(0));
+    expect(await screen.findByTestId("accounts-hero")).toBeOnTheScreen();
+    // A mortgage with no home listed: the sentence stays, with no link to add one.
+    expect(
+      screen.getByText("Your home's value is not counted until you add an estimate."),
+    ).toBeOnTheScreen();
+    expect(screen.queryByRole("link", { name: "Add an estimate" })).toBeNull();
+    expect(screen.queryByTestId("accounts-add-account")).toBeNull();
     jest.useRealTimers();
   });
 });

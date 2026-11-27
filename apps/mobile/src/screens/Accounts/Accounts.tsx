@@ -1,3 +1,4 @@
+import { useContext } from "react";
 import { AccountGroup } from "../../components/AccountGroup";
 import { AccountRow } from "../../components/AccountRow";
 import { Button } from "../../components/Button";
@@ -12,7 +13,7 @@ import { CHECK_IN } from "../../copy/checkIn";
 import { useDelayedLoading } from "../../data/useDelayedLoading";
 import type { AccountRow as Row } from "../../features/accounts/accountsModel";
 import { type AccountsListState, useAccountsList } from "../../features/accounts/useAccountsData";
-import type { WebLink } from "../../navigation/shell";
+import { ShellContext, type WebLink } from "../../navigation/shell";
 import { NotSetUp } from "../NotSetUp";
 import { TermsRequired } from "../TermsRequired";
 
@@ -108,6 +109,8 @@ function Body({
   | "onOpenCheckIn"
   | "onChangeWhatCounts"
 >) {
+  // Saved figures shown offline (E12 S7): adding writes, so no way in is offered.
+  const offline = useContext(ShellContext)?.offline ?? false;
   // Nothing for 200 ms, then blocks for at least 400 ms. A refetch keeps the list on screen.
   const skeleton = useDelayedLoading(state.status === "loading");
   if (state.status === "error") {
@@ -142,14 +145,18 @@ function Body({
       <EmptyState
         title={ACCOUNTS.emptyTitle}
         description={ACCOUNTS.emptyDescription}
-        actions={[
-          {
-            label: ACCOUNTS.addAccount,
-            variant: "primary",
-            onPress: onAddAccount,
-            testID: "accounts-add-account",
-          },
-        ]}
+        actions={
+          offline
+            ? []
+            : [
+                {
+                  label: ACCOUNTS.addAccount,
+                  variant: "primary",
+                  onPress: onAddAccount,
+                  testID: "accounts-add-account",
+                },
+              ]
+        }
         testID="accounts-empty"
       />
     );
@@ -173,7 +180,7 @@ function Body({
         alwaysShowLink
         choicesAvailable={list.choicesAvailable}
         onChangeWhatCounts={onChangeWhatCounts}
-        onAddEstimate={onAddEstimate}
+        onAddEstimate={offline ? undefined : onAddEstimate}
         testID="accounts-basis-line"
       />
       <Button
@@ -220,12 +227,14 @@ function Body({
           {list.notCounted.map(row)}
         </AccountGroup>
       ) : null}
-      <Button
-        label={ACCOUNTS.addAccount}
-        variant="outline"
-        testID="accounts-add-account"
-        onPress={onAddAccount}
-      />
+      {offline ? null : (
+        <Button
+          label={ACCOUNTS.addAccount}
+          variant="outline"
+          testID="accounts-add-account"
+          onPress={onAddAccount}
+        />
+      )}
     </>
   );
 }
