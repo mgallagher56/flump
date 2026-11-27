@@ -150,6 +150,39 @@ describe("the sealed cache file", () => {
     expect(file.text).toBeNull();
   });
 
+  it("a truncated file (a write cut short) reads as nothing, with no partial data, and both go", async () => {
+    const { cache, store, file } = setup();
+    await cache.write(FIGURES);
+    const bytes = Buffer.from(file.text ?? "", "base64");
+    file.text = bytes.subarray(0, bytes.length - 10).toString("base64");
+    expect(await cache.read()).toBeNull();
+    expect(file.text).toBeNull();
+    expect(store.values.has(OFFLINE_CACHE_KEY)).toBe(false);
+  });
+
+  it("an empty or garbled file reads as nothing and never throws", async () => {
+    for (const garbage of ["AAAA", "not base64 at all", "x"]) {
+      const { cache, file } = setup();
+      await cache.write(FIGURES);
+      file.text = garbage;
+      await expect(cache.read()).resolves.toBeNull();
+    }
+  });
+
+  it("every write uses a fresh nonce: the same figures sealed twice differ, and both open", async () => {
+    const { cache, file } = setup();
+    await cache.write(FIGURES);
+    const first = file.text ?? "";
+    await cache.write(FIGURES);
+    const second = file.text ?? "";
+    expect(second).not.toBe(first);
+    // The first 12 bytes are the IV.
+    expect(Buffer.from(second, "base64").subarray(0, 12)).not.toEqual(
+      Buffer.from(first, "base64").subarray(0, 12),
+    );
+    expect(await cache.read()).toBe(FIGURES);
+  });
+
   it("a locked store (an iPhone still locked) reads as nothing and throws nothing away", async () => {
     const { cache, store, file } = setup();
     await cache.write(FIGURES);

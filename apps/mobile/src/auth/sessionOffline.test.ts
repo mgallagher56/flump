@@ -218,15 +218,16 @@ describe("quiet reconnect from restoredOffline", () => {
     expect(h.account).toHaveBeenCalledTimes(1);
   });
 
-  it("after a refresh that worked but an account check that did not, checks again only", async () => {
+  it("a refresh that worked but an account check that did not: no token is kept, so no read goes out", async () => {
     const h = harness("r_stored");
     const session = await offlineSession(h);
     h.account.mockResolvedValueOnce("unavailable");
     await session.reconnect();
     expect(session.getState()).toEqual({ status: "restoredOffline" });
-    const refreshes = h.refresh.mock.calls.length;
+    expect(session.getAccessToken()).toBeNull();
+    // The rotated refresh token was saved, so the next try refreshes with it and signs in.
+    expect(h.tokens.clear).not.toHaveBeenCalled();
     await session.reconnect();
-    expect(h.refresh.mock.calls.length).toBe(refreshes);
     expect(session.getState()).toEqual({ status: "signedIn" });
   });
 
@@ -234,12 +235,39 @@ describe("quiet reconnect from restoredOffline", () => {
     ["not-invited", "notInvited"],
     ["terms-not-accepted", "termsRequired"],
     ["account-deleted", "deletionPending"],
-  ] as const)("an account check answering %s moves to %s", async (answer, status) => {
+  ] as const)(
+    "an account check answering %s moves to %s and forgets the cache",
+    async (answer, status) => {
+      const h = harness("r_stored");
+      const session = await offlineSession(h);
+      h.account.mockResolvedValueOnce(answer);
+      await session.reconnect();
+      expect(session.getState()).toEqual({ status });
+      expect(h.clearCache).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  it.each([
+    ["not-invited", "notInvited"],
+    ["terms-not-accepted", "termsRequired"],
+    ["account-deleted", "deletionPending"],
+  ] as const)("on launch, %s also forgets the cache", async (answer, status) => {
     const h = harness("r_stored");
-    const session = await offlineSession(h);
     h.account.mockResolvedValueOnce(answer);
-    await session.reconnect();
+    const session = createSession(h.deps);
+    await session.restore();
     expect(session.getState()).toEqual({ status });
+    expect(h.clearCache).toHaveBeenCalledTimes(1);
+  });
+
+  it("a read answering 410 mid-session (deletionPending) forgets the cache", async () => {
+    const h = harness("r_stored");
+    const session = createSession(h.deps);
+    await session.restore();
+    session.deletionPending();
+    await new Promise((resolve) => setImmediate(resolve));
+    expect(session.getState()).toEqual({ status: "deletionPending" });
+    expect(h.clearCache).toHaveBeenCalledTimes(1);
   });
 
   it("does nothing outside restoredOffline", async () => {
