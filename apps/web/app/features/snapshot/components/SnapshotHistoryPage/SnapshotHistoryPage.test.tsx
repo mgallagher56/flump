@@ -208,6 +208,27 @@ describe("SnapshotHistoryPage", () => {
     expect(screen.getByText("Next check-in: 31 December 2026")).toBeDefined();
   });
 
+  it("offers to see this month's check-in, not to start one, once it is done", () => {
+    renderPage({
+      accountDetails: TREND.concat(row(CURRENT, 2026, 11, 2000)),
+      lastCheckInMonth: "2026-11",
+    });
+    expect(screen.getByRole("button", { name: "See this month's check-in" })).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Start monthly check-in" })).toBeNull();
+  });
+
+  it("says Start monthly check-in while this month's check-in is not done", () => {
+    renderPage({ accountDetails: TREND, lastCheckInMonth: "2026-10" });
+    expect(screen.getByRole("button", { name: "Start monthly check-in" })).toBeDefined();
+    expect(screen.queryByRole("button", { name: "See this month's check-in" })).toBeNull();
+  });
+
+  it("returns focus to Add earlier months, not the check-in button, when the back-fill closes", async () => {
+    renderPage({ accountDetails: TREND, initialSheet: "backfill" });
+    await userEvent.click(await screen.findByRole("button", { name: "Cancel" }));
+    await waitFor(() => expect(document.activeElement?.id).toBe("snapshot-open-backfill"));
+  });
+
   it("shows the next check-in date once this month's check-in is done", () => {
     renderPage({
       accountDetails: [row(CURRENT, 2026, 10, 2000), row(CURRENT, 2026, 11, 2100)],

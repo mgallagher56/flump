@@ -46,6 +46,16 @@ export const motionKeyframes = {
     from: { opacity: "0", transform: "translateX(24px)" },
     to: { opacity: "1", transform: "translateX(0)" },
   },
+  // Sheets slide in solid: fading one in let the page show through it while it moved (phone check,
+  // 27 November 2026). The same distances as slideUp and slideInRight, with no opacity.
+  sheetUp: {
+    from: { transform: "translateY(8px)" },
+    to: { transform: "translateY(0)" },
+  },
+  sheetInRight: {
+    from: { transform: "translateX(24px)" },
+    to: { transform: "translateX(0)" },
+  },
   scaleIn: {
     from: { opacity: "0", transform: "scale(0.96)" },
     to: { opacity: "1", transform: "scale(1)" },

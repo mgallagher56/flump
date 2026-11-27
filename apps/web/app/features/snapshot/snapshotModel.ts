@@ -311,3 +311,34 @@ export function latestRecordedMonth(details: readonly AccountDetailInput[]): Mon
   }
   return best;
 }
+
+/** Every month ("YYYY-MM") with a recorded value for one of `accountIds` (ids in any case). */
+export function recordedMonthSet(
+  details: readonly AccountDetailInput[],
+  accountIds: Iterable<string>,
+): Set<MonthKey> {
+  const ids = new Set([...accountIds].map((id) => id.toLowerCase()));
+  const months = new Set<MonthKey>();
+  for (const r of toSnapshotRows(details)) {
+    if (!ids.has(r.accountId) || r.value === "" || r.value === null) continue;
+    const key = `${r.year}-${String(r.month).padStart(2, "0")}`;
+    if (MONTH_RE.test(key)) months.add(key);
+  }
+  return months;
+}
+
+/**
+ * The month "Add an earlier month" opens on: the latest month from `from` back to `earliest` with
+ * nothing recorded, so reopening it never lands on a month already filled in. `from` when every
+ * one of those months has balances.
+ */
+export function latestUnrecordedMonth(
+  recorded: ReadonlySet<MonthKey>,
+  from: MonthKey,
+  earliest: MonthKey,
+): MonthKey {
+  for (let m = from; compareMonths(m, earliest) >= 0; m = addMonths(m, -1)) {
+    if (!recorded.has(m)) return m;
+  }
+  return from;
+}

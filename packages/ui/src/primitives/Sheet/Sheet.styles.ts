@@ -48,8 +48,12 @@ export const sheetContentRecipe = cva({
     "@supports (height: 1dvh)": {
       maxHeight: "min(90dvh, calc(var(--visual-viewport-height, 100dvh) * 0.9))",
     },
+    // Keyboard open: the whole sheet scrolls, header and buttons with the fields, so the fields get
+    // the little height left above the keyboard (useVisualViewportInset sets the attribute).
+    "html[data-keyboard-open] &": { overflowY: "auto", overscrollBehavior: "contain" },
     _motionSafe: {
-      animationName: "slideUp",
+      // Solid as it slides: a fade let the page show through the sheet while it moved.
+      animationName: "sheetUp",
       animationDuration: "base",
       animationTimingFunction: "enter",
     },
@@ -89,7 +93,7 @@ export const sheetContentRecipe = cva({
           paddingRight: "max({spacing.7}, env(safe-area-inset-right, 0px))",
           paddingBottom: "calc({spacing.7} + env(safe-area-inset-bottom, 0px))",
           _motionSafe: {
-            animationName: "slideInRight",
+            animationName: "sheetInRight",
           },
         },
       },
@@ -128,6 +132,12 @@ export const sheetBodyRecipe = cva({
     minHeight: 0,
     overflowY: "auto",
     overscrollBehavior: "contain",
+    // Reach into the sheet's side padding and pad by the same amount: content stays put, but a
+    // field's focus ring and a scrollbar have room inside the scroller instead of cutting into
+    // the right edge of the inputs (phone check, 27 November 2026).
+    marginInline: "-2",
+    paddingInline: "2",
+    "html[data-keyboard-open] &": { flex: "none", overflowY: "visible" },
   },
   variants: {
     side: {

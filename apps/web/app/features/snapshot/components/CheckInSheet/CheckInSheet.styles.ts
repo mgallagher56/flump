@@ -21,6 +21,11 @@ export const monthPicker = cva({
   },
 });
 
+/** "October 2026 already has balances…": under both pickers, across the full width. */
+export const monthNote = cva({
+  base: { gridColumn: "1 / -1", margin: 0, textStyle: "body.sm", color: "text.secondary" },
+});
+
 export const accountList = cva({
   base: {
     listStyle: "none",

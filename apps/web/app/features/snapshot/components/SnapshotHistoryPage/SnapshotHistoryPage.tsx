@@ -42,6 +42,12 @@ import { changesBody, flushLink, heroPromptLink, sectionStack } from "./Snapshot
 
 /** Opened from "?checkIn=1", the check-in returns focus to the page's "Start monthly check-in". */
 const RETURN_FOCUS_TO = firstShownElement(["snapshot-open-check-in"]);
+/**
+ * The back-fill returns focus to "Add earlier months" when its opener is gone (a save that brings
+ * the third month swaps the prompt for the chart). Falling back to the check-in button, which then
+ * sits in the header, scrolled the page to the top.
+ */
+const BACKFILL_RETURN_FOCUS_TO = firstShownElement(["snapshot-open-backfill"]);
 
 export interface SnapshotHistoryPageProps {
   accounts: readonly SnapshotAccountInput[];
@@ -219,7 +225,7 @@ export const SnapshotHistoryPage: FC<SnapshotHistoryPageProps> = ({
       onClick={() => setSheet("checkIn")}
       type="button"
     >
-      Start monthly check-in
+      {currentMonthRecorded ? "See this month's check-in" : "Start monthly check-in"}
     </Button>
   );
 
@@ -370,7 +376,7 @@ export const SnapshotHistoryPage: FC<SnapshotHistoryPageProps> = ({
           }}
           onSave={onSave}
           open
-          returnFocusTo={RETURN_FOCUS_TO}
+          returnFocusTo={sheet === "backfill" ? BACKFILL_RETURN_FOCUS_TO : RETURN_FOCUS_TO}
         />
       ) : null}
     </PageBody>

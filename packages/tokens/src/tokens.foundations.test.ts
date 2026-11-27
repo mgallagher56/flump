@@ -265,6 +265,8 @@ describe("E15 motion", () => {
       "scaleIn",
       "sceneGrow",
       "sceneRise",
+      "sheetInRight",
+      "sheetUp",
       "shimmer",
       "slideInLeft",
       "slideInRight",

@@ -350,12 +350,13 @@ describe("CheckInSheet", () => {
   });
 
   describe("back-fill", () => {
-    it("starts at last month and records any earlier month the user picks", async () => {
+    it("starts at the latest earlier month with nothing recorded and records any month picked", async () => {
       const { onSave } = setup({ mode: "backfill" });
       expect(screen.getByRole("dialog", { name: "Add an earlier month" })).toBeDefined();
       const month = screen.getByRole("combobox", { name: "Month" }) as HTMLSelectElement;
       const year = screen.getByRole("combobox", { name: "Year" }) as HTMLSelectElement;
-      expect(month.value).toBe("10");
+      // October 2026 already has balances, so the sheet opens on September.
+      expect(month.value).toBe("09");
       expect(year.value).toBe("2026");
 
       fireEvent.change(year, { target: { value: "2024" } });
@@ -379,11 +380,70 @@ describe("CheckInSheet", () => {
       });
     });
 
-    it("clamps a pick in this month or later back to last month", async () => {
+    it("offers only months before this one in this year, and every month in an earlier year", () => {
       setup({ mode: "backfill" });
       const month = screen.getByRole("combobox", { name: "Month" }) as HTMLSelectElement;
-      fireEvent.change(month, { target: { value: "12" } });
-      await waitFor(() => expect(month.value).toBe("10"));
+      const year = screen.getByRole("combobox", { name: "Year" }) as HTMLSelectElement;
+      const labels = () => [...month.options].map((o) => o.textContent);
+      // This month is November 2026: January to October only.
+      expect(labels()).toEqual([
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+      ]);
+      fireEvent.change(year, { target: { value: "2025" } });
+      expect(labels()).toHaveLength(12);
+      expect(labels().at(-1)).toBe("December");
+    });
+
+    it("leaves this year out of the Year list in January, when it has no earlier month", () => {
+      setup({ mode: "backfill", currentMonth: "2027-01" });
+      const year = screen.getByRole("combobox", { name: "Year" }) as HTMLSelectElement;
+      expect(year.value).toBe("2026");
+      expect([...year.options].map((o) => o.value)).not.toContain("2027");
+    });
+
+    it("says nothing is recorded for the chosen month when only a later month has a balance", async () => {
+      setup({ mode: "backfill" });
+      const year = screen.getByRole("combobox", { name: "Year" }) as HTMLSelectElement;
+      const month = screen.getByRole("combobox", { name: "Month" }) as HTMLSelectElement;
+      fireEvent.change(year, { target: { value: "2023" } });
+      fireEvent.change(month, { target: { value: "05" } });
+      // Both accounts have later balances (2024 and 2026), none in or before May 2023.
+      await waitFor(() =>
+        expect(screen.getAllByText("Nothing recorded for May 2023")).toHaveLength(2),
+      );
+      expect(screen.queryByText("No balance recorded yet")).toBeNull();
+    });
+
+    it("says when the chosen month already has balances, and not otherwise", async () => {
+      setup({ mode: "backfill" });
+      const note = "October 2026 already has balances. Saving replaces the ones shown.";
+      expect(screen.queryByText(note)).toBeNull();
+      const month = screen.getByRole("combobox", { name: "Month" }) as HTMLSelectElement;
+      fireEvent.change(month, { target: { value: "10" } });
+      await waitFor(() => expect(screen.getByText(note)).toBeDefined());
+    });
+
+    it("opens on last month when every earlier month back to 2000 has balances", () => {
+      // One row per month from January 2000 to October 2026 for the current account.
+      const full = [];
+      for (let y = 2000; y <= 2026; y++) {
+        for (let m = 1; m <= 12; m++) {
+          if (y === 2026 && m > 10) break;
+          full.push({ accountId: CURRENT, year: y, month: m, value: 100 });
+        }
+      }
+      setup({ mode: "backfill", accountDetails: full });
+      const month = screen.getByRole("combobox", { name: "Month" }) as HTMLSelectElement;
+      expect(month.value).toBe("10");
     });
   });
 

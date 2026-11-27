@@ -41,6 +41,13 @@ describe("snapshot copy", () => {
 
   it("describes account states with no overdue wording", () => {
     expect(statusText("notUpdated", "2026-11", "2026-09")).toBe("Not updated since September 2026");
+    // Nothing in or before the month: for this month, nothing yet; for an earlier month, nothing
+    // for that month (a later month may well have a balance).
+    expect(statusText("noHistory", "2026-11", null, "2026-11")).toBe("No balance recorded yet");
+    expect(statusText("noHistory", "2026-10", null, "2026-11")).toBe(
+      "Nothing recorded for October 2026",
+    );
+    expect(statusText("noHistory", "2026-10", null)).toBe("No balance recorded yet");
     expect(statusText("recorded", "2026-11", "2026-11")).toBe("Recorded for November 2026");
     expect(statusText("connected", "2026-11", null)).toMatch(/updates from your bank/);
     for (const s of ["connected", "recorded", "notUpdated", "noHistory"] as const) {
