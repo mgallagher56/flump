@@ -135,17 +135,26 @@ describe("TabBar", () => {
     },
   );
 
-  it("at 200% text on 320 points, rows of two with a spacer keeping the last tab's width", async () => {
-    phone(2);
-    await renderBar();
-    expect(rows().map((row) => row.tabs)).toEqual([
-      ["tab-home", "tab-accounts"],
-      ["tab-budget", "tab-taxAndPay"],
-      ["tab-more"],
-    ]);
-    const last = screen.getAllByTestId("tab-row")[2];
-    expect(last?.children).toHaveLength(2);
-  });
+  it.each([320, 412])(
+    "at 200%% text on %i points, keeps all five tabs on one horizontally scrollable row without disabling font scaling",
+    async (width) => {
+      phone(2, width);
+      await renderBar();
+      expect(rows().map((row) => row.tabs)).toEqual([
+        ["tab-home", "tab-accounts", "tab-budget", "tab-taxAndPay", "tab-more"],
+      ]);
+      expect(
+        screen.queryAllByTestId(/^tab-.+-icon$/, { includeHiddenElements: true }),
+      ).toHaveLength(0);
+      expect(screen.getByTestId("tab-scroll").props.horizontal).toBe(true);
+      for (const tab of screen.getAllByRole("tab")) {
+        expect(flat<ViewStyle>(tab.props.style)).toMatchObject({ minHeight: 48, minWidth: 48 });
+      }
+      for (const item of TABS) {
+        expect(screen.getByText(item.label).props.allowFontScaling).not.toBe(false);
+      }
+    },
+  );
 
   it.each(Object.entries(tabBarStates))("%s holds at 200%% text", async (_name, props) => {
     await expectHoldsAtDoubleText(<TabBar {...props} />);
@@ -157,29 +166,26 @@ describe("tabLayout", () => {
   const at = (width: number, textScale: number) =>
     tabLayout({ count: 5, width, longestLabel: 8, fontSize: 12 * textScale, textScale });
 
-  it("keeps the five tabs on one row at 320 points and the normal size, with icons", () => {
+  it("keeps the five tabs on one fixed row at 320 points and the normal size, with icons", () => {
     // 8 x 12 x 0.55 + 8 = 60.8 points a label; 312 points of bar (320 less 4 each side) fit 5.
-    expect(at(312, 1)).toEqual({ columns: 5, rows: 1, showIcons: true });
+    expect(at(312, 1)).toEqual({ scroll: false, showIcons: true });
   });
 
-  it("at 200% text on 320 points, two a row over three rows, labels only", () => {
-    // 8 x 24 x 0.55 + 8 = 113.6 points a label; 312 / 113.6 fits 2; five at two a row is 3 rows.
-    expect(at(312, 2)).toEqual({ columns: 2, rows: 3, showIcons: false });
+  it("at 200% text on 320 and 412 points, scrolls horizontally on one row, labels only", () => {
+    // 8 x 24 x 0.55 + 8 = 113.6 points a label; 5 labels need ~568 > 312 and 404.
+    expect(at(312, 2)).toEqual({ scroll: true, showIcons: false });
+    expect(at(412, 2)).toEqual({ scroll: true, showIcons: false });
   });
 
-  it("spreads tabs evenly: 1.5 times text on 320 points is three and two, not four and one", () => {
-    // 8 x 18 x 0.55 + 8 = 87.2 points a label; 312 / 87.2 fits 3; five tabs is 2 rows of 3.
-    expect(at(312, 1.5)).toMatchObject({ columns: 3, rows: 2, showIcons: false });
-    // Just under 1.5: 8 x 17.4 x 0.55 + 8 = 84.56; 312 / 84.56 fits 3; icons stay.
-    expect(at(312, 1.45)).toMatchObject({ columns: 3, rows: 2, showIcons: true });
+  it("switches to horizontal scrolling once five labels no longer fit one row", () => {
+    // 8 x 18 x 0.55 + 8 = 87.2 points a label; 312 / 87.2 fits 3 < 5; icons hide from 1.5x.
+    expect(at(312, 1.5)).toEqual({ scroll: true, showIcons: false });
+    // Just under 1.5: 8 x 17.4 x 0.55 + 8 = 84.56; 312 / 84.56 fits 3 < 5; icons stay.
+    expect(at(312, 1.45)).toEqual({ scroll: true, showIcons: true });
   });
 
-  it("a wide phone at 1.25 times text keeps one row", () => {
+  it("a wide phone at 1.25 times text keeps one fixed row without scrolling", () => {
     // 8 x 15 x 0.55 + 8 = 74 points a label; 422 / 74 fits 5.
-    expect(at(422, 1.25)).toMatchObject({ columns: 5, rows: 1 });
-  });
-
-  it("never fewer than one a row", () => {
-    expect(at(40, 2)).toMatchObject({ columns: 1, rows: 5 });
+    expect(at(422, 1.25)).toEqual({ scroll: false, showIcons: true });
   });
 });
