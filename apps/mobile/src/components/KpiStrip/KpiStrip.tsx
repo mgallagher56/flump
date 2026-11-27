@@ -89,7 +89,16 @@ function KpiCard({
     value === undefined ? null : value === null ? formatWholePounds(null) : spokenPounds(value);
   const spoken = [label, figure, caption].filter(Boolean).join(", ");
   const labelNode = (
-    <Text textStyle="label.md" color="secondary">
+    <Text
+      textStyle="label.md"
+      color="secondary"
+      {...(explain
+        ? {
+            accessibilityElementsHidden: true,
+            importantForAccessibility: "no-hide-descendants" as const,
+          }
+        : {})}
+    >
       {label}
     </Text>
   );
