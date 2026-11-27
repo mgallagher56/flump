@@ -102,7 +102,7 @@ export function budgetHasSpending(
 
 /** Left over each month, or null without an income row (it would only be minus the spending). */
 export function budgetSurplusOrNull(
-  totals: Pick<BudgetTotals, "hasIncome" | "surplus"> | null,
+  totals: { hasIncome: boolean; surplus: number | null } | null,
 ): number | null {
   return totals?.hasIncome ? totals.surplus : null;
 }
@@ -180,16 +180,13 @@ function firstCell(budget: HomeStripBudget): HomeStripFirstCell {
   if (budget.hasIncome && !budget.hasSpending && budget.income !== null) {
     return { kind: "incomeOnly", figure: budget.income, leavesOut: budget.leavesOut };
   }
-  const surplus =
-    budget.surplus === null
-      ? null
-      : budgetSurplusOrNull({ hasIncome: budget.hasIncome, surplus: budget.surplus });
+  const surplus = budgetSurplusOrNull(budget);
   if (surplus === null) return { kind: "unset" };
   return { kind: surplus < 0 ? "short" : "leftOver", figure: surplus, leavesOut: budget.leavesOut };
 }
 
 function secondCell(consumerDebt: number | null, pensionPot: number | null): HomeStripSecondCell {
-  if (consumerDebt !== null && consumerDebt > 0) return { kind: "owed", figure: consumerDebt };
+  if ((consumerDebt ?? 0) > 0) return { kind: "owed", figure: consumerDebt as number };
   if (pensionPot !== null) return { kind: "pension", figure: pensionPot };
   return { kind: "none" };
 }
@@ -203,9 +200,9 @@ function ratesNeedNotice(rates: UkTaxYearContext): boolean {
 export function selectHomeStrip(facts: HomeStripFacts): HomeStrip {
   const first = firstCell(facts.budget);
   const second = secondCell(facts.consumerDebt, facts.pensionPot);
-  const cards = second.kind === "none" ? 1 : 2;
-  const unset = first.kind === "unset" ? 1 : 0;
-  const collapsed = unset * 2 >= cards;
+  // KpiStrip's rule: one prompt when unset cards * 2 >= cards. Only the first card can be unset
+  // and there are at most two, so the rule comes to "the first card is unset" (1 of 1, 1 of 2).
+  const collapsed = first.kind === "unset";
   const rates = facts.takeHomeRates ?? null;
   const showsFigure = first.kind !== "unset" && first.kind !== "refused";
   return {
