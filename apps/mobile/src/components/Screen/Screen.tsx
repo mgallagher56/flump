@@ -110,13 +110,15 @@ export function Screen({
       () => {},
     );
   }, [keyboardAware, room, margin]);
-  // When the keyboard opens, the field that opened it comes into view: now, and again once the
-  // keyboard's room below the content is laid out. Before that, a field near the end cannot be
-  // scrolled far enough: the scroll view stops at its old end (device re-check, 27 Nov 2026).
-  const roomPending = useRef(false);
+  // When the keyboard opens, the field that opened it comes into view: now, and again on every
+  // content-size change while it is open. Until the keyboard's room below the content is laid out, a
+  // field near the end cannot be scrolled far enough: the scroll view stops at its old end (device
+  // re-check, 27 Nov 2026). The second try used to be a one-shot flag set here, which a size change
+  // arriving before this effect, or another size change, could spend, leaving the field behind the
+  // keyboard 2 times in 4 (device check after PR 973). Each try scrolls only when the field is
+  // hidden, so trying on every size change is safe.
   useEffect(() => {
     if (room === 0) return;
-    roomPending.current = true;
     showFocusedField();
   }, [room, showFocusedField]);
   const refresh = useCallback(async () => {
@@ -141,11 +143,7 @@ export function Screen({
         onLayout: (e: LayoutChangeEvent) => {
           viewport.current = e.nativeEvent.layout.height;
         },
-        onContentSizeChange: () => {
-          if (!roomPending.current) return;
-          roomPending.current = false;
-          showFocusedField();
-        },
+        onContentSizeChange: () => showFocusedField(),
       }
     : {};
   const page = scroll ? (
