@@ -22,8 +22,8 @@
  *    recommendation, a table this script cannot read, or a publish date npm does not give still
  *    fail. Signed off by the coordinator on 26 November 2026 (Guard changes in its PR).
  *
- * 3. One package skipped by the React Native Directory check (guard change, for the
- *    coordinator's sign-off before merge, 27 November 2026). The directory marked
+ * 3. One package skipped by the React Native Directory check (guard change, signed by the
+ *    coordinator, 27 November 2026). The directory marked
  *    `@react-native-masked-view/masked-view` unmaintained, an online lookup that turned the check red
  *    for every pull request with no change in the repo. The app does not use it: `expo-router`
  *    58.0.32 depends on it, and 58.0.33, which drops it, is under 7 days old until 3 December 2026.
