@@ -96,7 +96,7 @@ export function budgetHasSpending(
   if ((totals?.outgoings ?? 0) > 0 || (totals?.savings ?? 0) > 0) return true;
   return (
     Array.isArray(rows) &&
-    rows.some((row) => row != null && row.isIncome !== true && Number(row.amount) > 0)
+    rows.some((row) => row != null && !row.isIncome && Number(row.amount) > 0)
   );
 }
 
