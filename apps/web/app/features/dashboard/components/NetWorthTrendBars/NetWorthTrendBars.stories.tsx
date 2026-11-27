@@ -164,6 +164,10 @@ export const ThreeCloseMonths: Story = {
   play: async ({ canvasElement }) => {
     const rects = [...canvasElement.querySelectorAll("svg[aria-hidden='true'] rect")];
     await expect(rects).toHaveLength(3);
+    // The honest scale runs every bar from zero: 230,281 / 232,000 = 99.26% and
+    // 231,140 / 232,000 = 99.63% of the tallest, so all three are within 1% of each other.
+    const heights = rects.map((r) => Number(r.getAttribute("height")));
+    await expect(heights).toEqual([99.26, 99.63, 100]);
     const latest = rects.at(-1) as SVGRectElement;
     await expect(latest.getAttribute("data-latest")).toBe("true");
     await expect(getComputedStyle(latest).fill).not.toBe("none");
