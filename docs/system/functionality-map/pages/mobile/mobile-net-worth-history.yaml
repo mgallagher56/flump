@@ -1,0 +1,30 @@
+id: mobile-net-worth-history
+app: mobile
+route: /accounts/history
+title: Net worth history
+auth: required
+purpose: Net worth history (E12 S6), also opened by flump://accounts/history, from the Accounts list and Home's trend bars, as web's. The change between the last two recorded months, the chart from three recorded months with its summary, every month, each account's change behind one control and the next check-in date. Read only; earlier months are added on the website until S8.
+route_file: apps/mobile/app/(app)/accounts/history.tsx
+
+sections:
+  - id: hero
+    component: apps/mobile/src/screens/NetWorthHistory/NetWorthHistory.tsx
+    facts_read:
+      - balance-history
+      - account-balance
+      - net-worth-choices
+      - check-in-done
+    figures_shown:
+      - net-worth-over-time
+
+  - id: history-chart
+    component: apps/mobile/src/components/MonthLineChart/MonthLineChart.tsx
+    facts_read:
+      - balance-history
+    figures_shown:
+      - net-worth-over-time
+
+  - id: changes-by-account
+    component: apps/mobile/src/components/FigureList/FigureList.tsx
+    facts_read:
+      - balance-history
