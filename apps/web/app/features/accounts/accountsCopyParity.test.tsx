@@ -90,7 +90,7 @@ interface MobileAccounts {
     string | null
   >;
   heroSentences: Fn<(string | null)[], string | null>;
-  accountMonthNote: Fn<[{ source?: string | null; carried?: true }], string | null>;
+  accountMonthNote: Fn<[{ source?: string | null; carried?: true }], string>;
   accountChartSummary: Fn<[string | null, number | null, boolean], string>;
   fewMonthsPrompt: Fn<[number], string>;
   comparedMonthsText: Fn<[RecordedMonthComparison], string>;
@@ -212,7 +212,7 @@ describe("the mobile account page says what web's says", () => {
     expect(m.balanceDateLine(current, latest)).toBe(balanceDateLine({ current, latest }));
   });
 
-  it("each month's note is web's source word, except a typed one, which has none", async () => {
+  it("each month's note is web's Show data source word, a typed one Recorded", async () => {
     const m = await mobile();
     const row = (over: Partial<AccountChartRow>): AccountChartRow => ({
       month: 10,
@@ -225,7 +225,10 @@ describe("the mobile account page says what web's says", () => {
       expect(m.accountMonthNote({ source })).toBe(accountSourceLabel(row({ source })));
       expect(m.accountMonthNote({ source })).toBe(accountSourceNote(source));
     }
-    expect(m.accountMonthNote({ source: "manual" })).toBe(accountSourceNote("manual"));
+    for (const source of ["manual", null, undefined]) {
+      expect(m.accountMonthNote({ source })).toBe(accountSourceLabel(row({ source })));
+    }
+    expect(m.accountMonthNote({ source: "manual" })).toBe("Recorded");
   });
 
   it.each([
