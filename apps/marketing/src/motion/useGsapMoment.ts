@@ -1,5 +1,6 @@
 import { usePrefersReducedMotion } from "@repo/ui";
 import { type RefObject, useEffect, useRef } from "react";
+import { useAmbientMotion } from "../context/AmbientMotionContext";
 import { useStillMotion } from "../context/StillMotionContext";
 import { type GsapKit, loadGsapKit } from "./loadGsapKit";
 
@@ -57,6 +58,9 @@ function enqueue(job: Job): void {
  * run one task apart and end with one `ScrollTrigger.refresh`, so the load never becomes one long
  * main-thread task (ROLLOUT-PLAN M1 notes). Everything is reverted on unmount.
  *
+ * After the visitor pauses animation (MotionControl), a moment not yet finished shows its end
+ * state at once and never replays.
+ *
  * With reduced motion `setup` never runs and GSAP is never loaded (MK12), so the band must be
  * complete and still without it (MK1). While set up, `root` carries `data-enhanced="true"`.
  * `setup` may return a clean-up for anything outside GSAP (listeners, observers).
@@ -72,7 +76,12 @@ export function useGsapMoment(
   // A still page (reduced motion, or a story showing the rest state) never sets up a moment.
   const prefersReduced = usePrefersReducedMotion();
   const still = useStillMotion();
-  const reduced = prefersReduced || still;
+  // Once the visitor presses "Pause animation", every moment still to play shows its finished
+  // state at once (its context is reverted) and never replays, even after "Play animation".
+  const { paused } = useAmbientMotion();
+  const stopped = useRef(false);
+  if (paused) stopped.current = true;
+  const reduced = prefersReduced || still || stopped.current;
   // The latest `setup`, read when the band is set up; `key` re-runs it when `deps` change.
   const setupRef = useRef(setup);
   setupRef.current = setup;

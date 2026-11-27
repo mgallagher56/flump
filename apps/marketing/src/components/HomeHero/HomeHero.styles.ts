@@ -114,9 +114,14 @@ export const dashHead = css({
 
 export const dashTitle = css({ textStyle: "heading.sm", color: "text.primary", margin: 0 });
 
+/**
+ * Net worth across the top, then the two tiles side by side; under the `md` width (768px) one per row,
+ * so "About 10.2 months" stays on one line (PR 975 review).
+ */
 export const dashTiles = css({
   display: "grid",
-  gridTemplateColumns: "1fr 1fr",
+  gridTemplateColumns: "1fr",
+  md: { gridTemplateColumns: "1fr 1fr" },
   gap: "10px",
   "& > *": { minWidth: 0 },
 });

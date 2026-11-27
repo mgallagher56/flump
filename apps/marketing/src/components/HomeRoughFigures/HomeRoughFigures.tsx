@@ -39,8 +39,8 @@ export const ROUGH_FIGURE_STEPS = [
 ] as const;
 
 /**
- * The line draws down through the steps once, by time, and each step arrives as the line reaches
- * it; then the calendar page rises. Started when the steps near the viewport and finished by time,
+ * The line draws down through the steps once, by time, while the steps arrive in turn on the
+ * stagger token; the calendar page rises with the last step. Started when the steps near the viewport and finished by time,
  * never scrubbed by scroll (MK2).
  */
 export function roughFiguresMoment({ gsap }: GsapKit, root: HTMLElement): undefined {
@@ -55,11 +55,14 @@ export function roughFiguresMoment({ gsap }: GsapKit, root: HTMLElement): undefi
     defaults: { ease: "calm" },
   });
   timeline.fromTo(line, { scaleY: 0 }, { scaleY: 1, duration: draw, ease: "calmInOut" }, 0);
+  // The steps arrive on the stagger token, not with the line: the last is readable within half a
+  // second of the band arriving (UX-GUIDELINES M1, motion never delays reading; PR 975 review).
+  const stagger = marketingMs("stagger") / 1000;
   items.forEach((item, index) => {
     timeline.from(
       item,
       { x: 12, opacity: 0, duration: entry, clearProps: "transform,opacity" },
-      (draw / items.length) * index,
+      stagger * index,
     );
   });
   if (picture) {

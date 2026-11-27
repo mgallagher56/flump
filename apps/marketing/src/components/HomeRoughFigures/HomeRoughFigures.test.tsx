@@ -53,10 +53,11 @@ describe("HomeRoughFigures", () => {
     expect(line?.method).toBe("fromTo");
     // durations.marketing.chart is 2,660 ms.
     expect(line?.vars).toMatchObject({ scaleY: 1, duration: 2.66, ease: "calmInOut" });
-    // Three steps a third of the draw apart (2.66 / 3 = 0.8867 s), then the picture after two
-    // staggers (2 × 196 ms = 0.392 s).
+    // Three steps one stagger apart (196 ms: 0, 0.196, 0.392 s), never waiting for the line, then
+    // the picture after two staggers (2 × 196 ms = 0.392 s). The last step is fully in at
+    // 0.392 + 1.54 = 1.932 s.
     const at = rest.map((c) => Number(c.at).toFixed(3));
-    expect(at).toEqual(["0.000", "0.887", "1.773", "0.392"]);
+    expect(at).toEqual(["0.000", "0.196", "0.392", "0.392"]);
     expect(rest.every((c) => c.vars.duration === 1.54)).toBe(true);
   });
 });
