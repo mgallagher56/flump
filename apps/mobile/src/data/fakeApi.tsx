@@ -44,15 +44,24 @@ export function fail(kind: BackendError["kind"], status?: number, code?: string)
  * refuses a body the backend would refuse (as a 400), so a test cannot pass on a body the real
  * contract rejects.
  */
-const REQUEST_SCHEMAS: readonly [RegExp, { safeParse(u: unknown): { success: boolean } }][] = [
-  [/^POST \/budget-entries$/, CreateBudgetEntryRequest],
-  [/^PATCH \/budget-entries\/[^/]+$/, UpdateBudgetEntryRequest],
-  [/^POST \/accounts$/, CreateAccountRequest],
-  [/^POST \/accounts\/mortgage-with-property$/, CreateMortgageWithPropertyRequest],
-  [/^PATCH \/accounts\/[^/]+$/, UpdateAccountRequest],
-  [/^PATCH \/user-profile$/, UpdateProfileRequest],
-  [/^PUT \/snapshots\/[^/]+$/, UpsertSnapshotRequest],
-];
+const REQUEST_SCHEMAS: Readonly<Record<string, { safeParse(u: unknown): { success: boolean } }>> = {
+  "POST /budget-entries": CreateBudgetEntryRequest,
+  "PATCH /budget-entries/:id": UpdateBudgetEntryRequest,
+  "POST /accounts": CreateAccountRequest,
+  "POST /accounts/mortgage-with-property": CreateMortgageWithPropertyRequest,
+  "PATCH /accounts/:id": UpdateAccountRequest,
+  "PATCH /user-profile": UpdateProfileRequest,
+  "PUT /snapshots/:id": UpsertSnapshotRequest,
+};
+
+/** "PATCH /accounts/:id" for "PATCH /accounts/abc": the route's shape, by plain string steps. */
+function routeShape(method: string, path: string): string {
+  const [, first = "", second, ...rest] = path.split("/");
+  if (rest.length > 0) return `${method} ${path}`;
+  if (second === undefined) return `${method} /${first}`;
+  const named = `${method} /${first}/${second}`;
+  return named in REQUEST_SCHEMAS ? named : `${method} /${first}/:id`;
+}
 
 export function fakeApi(routes: Record<string, FakeRoute>) {
   const calls: FakeCall[] = [];
@@ -76,7 +85,7 @@ export function fakeApi(routes: Record<string, FakeRoute>) {
         ...(options.ifMatch ? { ifMatch: options.ifMatch } : {}),
         ...(options.idempotencyKey ? { idempotencyKey: options.idempotencyKey } : {}),
       });
-      const schema = REQUEST_SCHEMAS.find(([route]) => route.test(`${method} ${path}`))?.[1];
+      const schema = REQUEST_SCHEMAS[routeShape(method, path)];
       if (schema && !schema.safeParse(options.body).success)
         fail("client", 400, "validation_failed");
       const route = routes[`${method} ${path}`];
