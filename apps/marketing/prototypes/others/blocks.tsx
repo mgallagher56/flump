@@ -96,12 +96,18 @@ export const OHero: FC<{
   children?: ReactNode;
   ctas?: ReactNode;
   layout: OrbLayout;
-}> = ({ titleId, label, title, lead, children, ctas = <LitCtas />, layout }) => (
-  <section aria-labelledby={titleId} className="o1-band o1-hero p11-tone--canvas">
+  /** A shorter band, for a page whose hero is a title and one line (Pricing). */
+  compact?: boolean;
+}> = ({ titleId, label, title, lead, children, ctas = <LitCtas />, layout, compact = false }) => (
+  <section
+    aria-labelledby={titleId}
+    className={`o1-band o1-hero p11-tone--canvas${compact ? " o1-hero--compact" : ""}`}
+  >
     <HeroOrbs layout={layout} />
     <div className="o1-hero__inner">
       <div className="o1-hero__copy">
-        {label && <p className="o1-hero__label">{label}</p>}
+        {/* No kicker when it would only repeat the title (Debt and borrowing). */}
+        {label && label !== title && <p className="o1-hero__label">{label}</p>}
         <h1 className={`${heroHeading()} o1-hero__title`} id={titleId}>
           {title}
         </h1>

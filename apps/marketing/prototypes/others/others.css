@@ -171,6 +171,13 @@
   }
 }
 
+@media (min-width: 48rem) {
+  .o1 .o1-hero--compact,
+  .o1 .o1-hero.o1-hero--compact {
+    min-height: 17rem;
+  }
+}
+
 /* ---------- Shared bits ---------- */
 
 .o1 .o1-link {

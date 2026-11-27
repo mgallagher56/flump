@@ -37,8 +37,12 @@ export interface OrbSpec {
 
 export type OrbLayout = (width: number, height: number) => readonly OrbSpec[];
 
-const FOV = 35;
-const DIST = 12;
+/*
+ * A long lens: a wide band (S1's is about 3:1) seen through a 35 degree lens stretches orbs near its
+ * edges into ellipses, so the camera stands far back with a narrow view and the orbs stay round.
+ */
+const FOV = 10;
+const DIST = 42;
 const TAN = Math.tan((FOV * Math.PI) / 360);
 
 /** The journey's rim: a coloured Fresnel edge and a faint glow (copied from journeyScene). */

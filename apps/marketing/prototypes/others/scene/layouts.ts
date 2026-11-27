@@ -47,12 +47,26 @@ export const pageLayout =
         { x: 0.1, y: 0.86, d: 34, tone: d },
       ];
     }
-    const gutter = Math.max(0.06, (width - 1180) / 2 / width);
+    // The margin beside the 72rem content column; orbs stay inside it so none sits behind a heading.
+    const margin = Math.max(0, (width - 1152) / 2);
+    const big = clampD(margin * 0.85, 170);
+    const small = clampD(margin * 0.55, 110);
+    const left = Math.max(big / 2 + 8, margin / 2) / width;
+    const right = 1 - left;
+    if (big < 48) {
+      // No real margin (under about 1250px): orbs at the very edges, as on phones.
+      return [
+        { x: 0.04, y: 0.3, d: 64, tone: a },
+        { x: 0.96, y: 0.16, d: 48, tone: b },
+        { x: 0.95, y: 0.7, d: 72, tone: c },
+        { x: 0.05, y: 0.86, d: 40, tone: d },
+      ];
+    }
     return [
-      { x: gutter, y: 0.32, d: 170, tone: a },
-      { x: 1 - gutter, y: 0.18, d: 110, tone: b },
-      { x: 1 - gutter * 0.9, y: 0.72, d: 180, tone: c },
-      { x: gutter * 1.1, y: 0.84, d: 90, tone: d },
+      { x: left, y: 0.32, d: big, tone: a },
+      { x: right, y: 0.18, d: small, tone: b },
+      { x: right, y: 0.7, d: big, tone: c },
+      { x: left, y: 0.86, d: small, tone: d },
     ];
   };
 

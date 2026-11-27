@@ -47,6 +47,7 @@ const Body: FC = () => {
   return (
     <main className={mainContent()} id="main" ref={ref} tabIndex={-1}>
       <OHero
+        compact
         ctas={null}
         layout={heroLayout(["sky", "violet", "teal", "rose"])}
         lead={BETA_STATEMENT}

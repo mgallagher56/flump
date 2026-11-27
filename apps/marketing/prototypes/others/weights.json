@@ -4,69 +4,69 @@
   "pages": {
     "features": {
       "s0": {
-        "initialGzip": 6846,
-        "cssGzip": 8808,
+        "initialGzip": 6934,
+        "cssGzip": 8829,
         "lazyGzip": 74558
       },
       "s1": {
-        "initialGzip": 6846,
-        "cssGzip": 8808,
+        "initialGzip": 6934,
+        "cssGzip": 8829,
         "lazyGzip": 215349
       },
       "s2": {
-        "initialGzip": 6846,
-        "cssGzip": 8808,
+        "initialGzip": 6934,
+        "cssGzip": 8829,
         "lazyGzip": 215349
       }
     },
     "pay": {
       "s0": {
-        "initialGzip": 14250,
-        "cssGzip": 19978,
+        "initialGzip": 14338,
+        "cssGzip": 19999,
         "lazyGzip": 74558
       },
       "s1": {
-        "initialGzip": 14250,
-        "cssGzip": 19978,
+        "initialGzip": 14338,
+        "cssGzip": 19999,
         "lazyGzip": 215323
       },
       "s2": {
-        "initialGzip": 14250,
-        "cssGzip": 19978,
+        "initialGzip": 14338,
+        "cssGzip": 19999,
         "lazyGzip": 215323
       }
     },
     "debt": {
       "s0": {
-        "initialGzip": 14250,
-        "cssGzip": 19978,
+        "initialGzip": 14338,
+        "cssGzip": 19999,
         "lazyGzip": 74558
       },
       "s1": {
-        "initialGzip": 14250,
-        "cssGzip": 19978,
+        "initialGzip": 14338,
+        "cssGzip": 19999,
         "lazyGzip": 215323
       },
       "s2": {
-        "initialGzip": 14250,
-        "cssGzip": 19978,
+        "initialGzip": 14338,
+        "cssGzip": 19999,
         "lazyGzip": 215323
       }
     },
     "pricing": {
       "s0": {
-        "initialGzip": 5646,
-        "cssGzip": 8814,
+        "initialGzip": 5739,
+        "cssGzip": 8835,
         "lazyGzip": 74558
       },
       "s1": {
-        "initialGzip": 5646,
-        "cssGzip": 8814,
+        "initialGzip": 5739,
+        "cssGzip": 8835,
         "lazyGzip": 215298
       },
       "s2": {
-        "initialGzip": 5646,
-        "cssGzip": 8814,
+        "initialGzip": 5739,
+        "cssGzip": 8835,
         "lazyGzip": 215298
       }
     },
@@ -77,18 +77,18 @@
         "lazyGzip": 0
       },
       "s0": {
-        "initialGzip": 3263,
-        "cssGzip": 4885,
+        "initialGzip": 3331,
+        "cssGzip": 4905,
         "lazyGzip": 0
       },
       "s1": {
-        "initialGzip": 3263,
-        "cssGzip": 4885,
+        "initialGzip": 3331,
+        "cssGzip": 4905,
         "lazyGzip": 140740
       },
       "s2": {
-        "initialGzip": 3263,
-        "cssGzip": 4885,
+        "initialGzip": 3331,
+        "cssGzip": 4905,
         "lazyGzip": 140740
       }
     }

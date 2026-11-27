@@ -12,6 +12,11 @@
  *
  *   bun prototypes/tools/review-others.ts [base] [page] [level]
  *
+ * The browser is launched with the GPU on (Metal through ANGLE). Plain headless Chromium draws
+ * WebGL in software at a few frames a second, so the live scene falls back to its still orbs after
+ * the stage's frame-rate check (under 28 fps): S1 and S2 then look like S0. That is the power
+ * policy working, not a fault; capture with these flags to see the live scene.
+ *
  * Shots go to prototypes/screenshots/others (gitignored with the rest).
  */
 import fs from "node:fs";
