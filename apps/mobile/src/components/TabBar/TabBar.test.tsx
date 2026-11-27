@@ -307,6 +307,66 @@ describe("TabBar", () => {
     expect(onRender).not.toHaveBeenCalled();
   });
 
+  it("gives each edge fade a safe SVG gradient id matching its url(#...) fill", async () => {
+    interface JsonNode {
+      type: string;
+      props: Record<string, unknown>;
+      children: (JsonNode | string)[] | null;
+    }
+    const findNodes = (root: unknown, predicate: (node: JsonNode) => boolean): JsonNode[] => {
+      const found: JsonNode[] = [];
+      const walk = (node: unknown) => {
+        if (!node || typeof node !== "object") return;
+        if (Array.isArray(node)) {
+          for (const item of node) walk(item);
+          return;
+        }
+        const candidate = node as JsonNode;
+        if (predicate(candidate)) found.push(candidate);
+        for (const child of candidate.children ?? []) walk(child);
+      };
+      walk(root);
+      return found;
+    };
+    const fadeNodes = (testID: string) => {
+      const [fade] = findNodes(screen.toJSON(), (n) => n.props.testID === testID);
+      const [gradient] = findNodes(fade, (n) => n.type === "RNSVGLinearGradient");
+      const [rect] = findNodes(fade, (n) => n.type === "RNSVGRect");
+      return {
+        gradientId: gradient?.props.name as string,
+        brushRef: (rect?.props.fill as { type: number; brushRef: string } | undefined)?.brushRef,
+      };
+    };
+
+    const SAFE_ID = /^[A-Za-z0-9_-]+$/;
+    const useIdSpy = jest
+      .spyOn(require("react") as typeof import("react"), "useId")
+      .mockReturnValue(":r0:");
+    phone(2, 320);
+    await renderBar();
+    const mocked = fadeNodes("tab-fade-right");
+    expect(mocked.gradientId).toMatch(SAFE_ID);
+    expect(mocked.gradientId).not.toContain(":");
+    expect(mocked.brushRef).toBe(mocked.gradientId);
+
+    useIdSpy.mockRestore();
+    await renderBar();
+    await fireEvent(screen.getByTestId("tab-bar"), "layout", {
+      nativeEvent: { layout: { width: 312 } },
+    });
+    await fireEvent(screen.getByTestId("tab-scroll"), "contentSizeChange", 370, 48);
+    await fireEvent(screen.getByTestId("tab-scroll"), "scroll", {
+      nativeEvent: { contentOffset: { x: 20 } },
+    });
+    const left = fadeNodes("tab-fade-left");
+    const right = fadeNodes("tab-fade-right");
+    expect(left.gradientId).toMatch(SAFE_ID);
+    expect(right.gradientId).toMatch(SAFE_ID);
+    expect(left.brushRef).toBe(left.gradientId);
+    expect(right.brushRef).toBe(right.gradientId);
+    expect(left.gradientId).not.toBe(right.gradientId);
+  });
+
   it.each(Object.entries(tabBarStates))("%s holds at 200%% text", async (_name, props) => {
     await expectHoldsAtDoubleText(<TabBar {...props} />);
   });

@@ -39,7 +39,7 @@ function EdgeFade({
   color: string;
   style: object;
 }) {
-  const id = useId();
+  const id = `tab-fade-${side}-${useId().replace(/[^A-Za-z0-9_-]/g, "")}`;
   return (
     <View
       pointerEvents="none"
