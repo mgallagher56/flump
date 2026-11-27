@@ -1,6 +1,6 @@
 import { etagFor } from "@flump/api-contract";
 import { act, render, screen, userEvent } from "@testing-library/react-native";
-import { Alert, type AlertButton, Keyboard, Linking } from "react-native";
+import { Alert, type AlertButton, Keyboard, Linking, ScrollView } from "react-native";
 import { fail, fakeApi, withApi } from "../../data/fakeApi";
 import {
   RENTER_BUDGET,
@@ -506,6 +506,30 @@ describe("Budget", () => {
       await settle();
       const call = api.calls.find((c) => c.method === "PATCH");
       expect(call?.body).toMatchObject({ category: "expenses", isIncome: false });
+    });
+
+    it("after a save the page scrolls back to Saved, at its top, so it is seen", async () => {
+      // Maestro's budget flow: saved from far down the editor, "Saved" sat out of sight.
+      const scrollTo = jest.spyOn(ScrollView.prototype, "scrollTo");
+      const h = renterHousehold();
+      const rent = h.budgetEntries.find((r) => r.name === "Rent");
+      if (!rent) throw new Error("no rent");
+      await budget(
+        fakeApi(
+          routes(h, {
+            [`PATCH /budget-entries/${rent.id}`]: (body) => ({ ...rent, ...(body as object) }),
+          }),
+        ),
+      );
+      await screen.findByLabelText(HERO);
+      await openEntry(/^Rent, £950 a month/);
+      // Only what the save does counts (a previous test's tree may still be settling).
+      scrollTo.mockClear();
+      await user().press(screen.getByRole("button", { name: "Save" }));
+      await settle();
+      expect(screen.getByText("Saved")).toBeOnTheScreen();
+      expect(scrollTo).toHaveBeenCalledWith({ y: 0, animated: false });
+      scrollTo.mockRestore();
     });
 
     it("a 412 keeps the sheet and what was typed, says so in web's words, and reads the list again", async () => {
