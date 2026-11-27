@@ -317,6 +317,22 @@ describe("the age limit while on screen", () => {
     expect(screen.queryByText(/£/)).toBeNull();
   });
 
+  it("on returning to the front (iOS stops timers in the background), the age is checked at once", async () => {
+    let clock = NOW_MS;
+    const savedAt = NOW_MS - 7 * 24 * HOUR + 60_000;
+    const { store } = savedStore(savedAt);
+    const cache = createOfflineCache({ store, now: () => clock, owner: OWNER });
+    await start(fakeApp({ status: "restoredOffline" }, { offlineCache: cache }));
+    expect(await screen.findByLabelText(TOTAL)).toBeOnTheScreen();
+    // Away for an hour with no timer running; back in front before any minute tick.
+    clock = NOW_MS + HOUR;
+    await act(async () => {
+      for (const listener of appStateListeners) listener("active");
+    });
+    expect(screen.queryByText(/£/)).toBeNull();
+    expect(screen.getByText(OFFLINE_HEADING)).toBeOnTheScreen();
+  });
+
   it("within 7 days, the figures stay", async () => {
     let clock = NOW_MS;
     const { store } = savedStore(NOW_MS - HOUR);

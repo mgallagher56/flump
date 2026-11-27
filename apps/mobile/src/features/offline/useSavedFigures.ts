@@ -96,7 +96,14 @@ export function useSavedFigures({
       void cache.wipe();
     };
     const timer = setInterval(check, AGE_CHECK_EVERY_MS);
-    return () => clearInterval(timer);
+    // iOS stops timers in the background: check again whenever the app comes back to the front.
+    const subscription = AppState.addEventListener("change", (next) => {
+      if (next === "active") check();
+    });
+    return () => {
+      clearInterval(timer);
+      subscription.remove();
+    };
   }, [offline, saved, cache, queryClient]);
 
   useEffect(() => {

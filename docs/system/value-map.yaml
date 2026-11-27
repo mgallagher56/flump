@@ -2195,6 +2195,23 @@ facts:
         }
     verdict: not-checked
     note: "Added by slice 1 so every column has an entry. The audit did not check who reads it."
+  - id: sign-in-identity
+    name: Who is signed in
+    area: preferences
+    source_of_truth:
+      {
+        ref: "the WorkOS user id (the sub claim of the sign-in token)",
+        path: apps/backend/src/auth/workos-jwt.verifier.ts,
+      }
+    other_stores:
+      - {
+          ref: "mobile secure store flump.auth.cache-owner",
+          status: duplicate,
+          path: apps/mobile/src/auth/tokenStore.ts,
+          note: "E12 S7: a SHA-256 of the sub, pseudonymous personal data, so the offline cache opens only for the person who saved it",
+        }
+    verdict: not-checked
+    note: "Added by E12 S7 for the mobile app's hashed copy. The sub itself is the sign-in provider's; Flump keys rows by it."
 
 figures:
   - id: net-worth
@@ -3205,9 +3222,10 @@ browser_storage:
   - {
       key: flump.auth.cache-owner,
       storage: secureStore,
-      user_data: false,
+      user_data: true,
+      fact: sign-in-identity,
       path: apps/mobile/src/auth/tokenStore.ts,
-      note: "mobile app (E12 S7): a SHA-256 (base64url) of the WorkOS sub whose session the refresh token belongs to, never the raw sub; sealed into the offline cache as associated data so one person's file never opens for another; saved with the refresh token and cleared with it, including by the iOS reinstall wipe",
+      note: "mobile app (E12 S7): a SHA-256 (base64url) of the WorkOS sub whose session the refresh token belongs to, never the raw sub; pseudonymous personal data; sealed into the offline cache as associated data so one person's file never opens for another; saved with the refresh token and cleared with it on sign-out, session end, account deletion and the iOS reinstall wipe",
     }
   - {
       key: flump.offline-cache-key,

@@ -1,8 +1,9 @@
 /**
  * The real pieces behind the offline cache (E12 S7): expo-crypto's AES-256-GCM, expo-file-system for
  * the one sealed file, and expo-secure-store for its key. No new native module: both expo-crypto
- * (since S2a) and expo-file-system (since S9) are already in the app. Not unit tested: the cache's
- * tests drive `cacheStore.ts` and `offlineCache.ts` with in-memory stand-ins.
+ * (since S2a) and expo-file-system (since S9) are already in the app. `deviceCache.test.ts` checks
+ * the calls made, with both modules mocked; that the native AES seals and opens correctly is
+ * checked on a device.
  */
 import {
   AESEncryptionKey,
