@@ -2,7 +2,12 @@ import { etagFor } from "@flump/api-contract";
 import { act, render, screen, userEvent } from "@testing-library/react-native";
 import { Alert, type AlertButton, Linking } from "react-native";
 import { fail, fakeApi, withApi } from "../../data/fakeApi";
-import { RENTER_FACTS, renterHousehold, withJoint } from "../../features/budget/budgetTestData";
+import {
+  RENTER_BUDGET,
+  RENTER_FACTS,
+  renterHousehold,
+  withJoint,
+} from "../../features/budget/budgetTestData";
 import { household, NOW, routes } from "../../features/check-in/checkInTestData";
 import { refreshControl } from "../../testing/refresh";
 import { Budget, type BudgetWebLinks } from "./Budget";
@@ -375,9 +380,8 @@ describe("Budget", () => {
     });
 
     it("an income entry saved under bills stays income when moved to another spending category", async () => {
-      const base = renterHousehold();
       const h = renterHousehold([
-        ...base.budgetEntries,
+        ...RENTER_BUDGET,
         { name: "Side work", category: "bills", amount: 200, isIncome: true, isEssential: true },
       ]);
       const side = h.budgetEntries.find((r) => r.name === "Side work");

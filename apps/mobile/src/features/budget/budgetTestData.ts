@@ -7,7 +7,7 @@ import type { BudgetEntryListResponse } from "@flump/api-contract";
 import { type BudgetSeed, type Household, household } from "../check-in/checkInTestData";
 
 /** personas.ts `RENTER.budget`. */
-const RENTER_BUDGET: readonly BudgetSeed[] = [
+export const RENTER_BUDGET: readonly BudgetSeed[] = [
   { name: "Salary after tax", category: "income", amount: 2085, isIncome: true },
   { name: "Rent", category: "housing", amount: 950, isEssential: true },
   { name: "Council tax", category: "bills", amount: 115, isEssential: true },
