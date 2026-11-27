@@ -8,6 +8,7 @@ import {
   type TermsStatusResponse,
   type UpdateChecklistRequest,
   type UpdateProfileRequest,
+  type UserEmailResponse,
 } from "@flump/api-contract";
 import {
   BadRequestException,
@@ -72,6 +73,18 @@ export class UserProfileController {
     const profile = await this.userProfileService.getProfile(req.user.id, req.user?.email);
     setEtag(res, profile.updatedAt);
     return profile;
+  }
+
+  /**
+   * Resolves the caller's sign-in email for Settings > Security (claim first, then WorkOS).
+   * Always answers 200 with `{ email: string | null }`.
+   */
+  @Get("user-profile/email")
+  @HttpCode(200)
+  @RateLimit("read")
+  async getUserEmail(@Req() req: AuthenticatedRequest): Promise<UserEmailResponse> {
+    const email = await this.userProfileService.getEmail(req.user.id, req.user?.email);
+    return { email };
   }
 
   @Patch("user-profile")

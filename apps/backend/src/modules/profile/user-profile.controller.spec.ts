@@ -126,6 +126,52 @@ describe("UserProfileController", () => {
     });
   });
 
+  describe("getUserEmail", () => {
+    it("returns the token claim email when present without asking the identity adapter", async () => {
+      const claimEmail = ["claim", "example.com"].join("@");
+      await expect(
+        controller.getUserEmail({ user: { id: "user-123", email: claimEmail } }),
+      ).resolves.toEqual({ email: claimEmail });
+    });
+
+    it("falls back to the identity adapter when the token has no email claim", async () => {
+      const storedEmail = ["person", "example.com"].join("@");
+      const adapter = new InMemoryIdentityAdapter();
+      adapter.emails.set("user-123", storedEmail);
+      const localController = new UserProfileController(
+        new UserProfileService(
+          ...([
+            mockUserProfileRepo,
+            mockAccountRepo,
+            mockAccountDetailRepo,
+            mockBankConnectionRepo,
+            adapter,
+            { transaction: vi.fn() },
+            { revokeAll: vi.fn() },
+            { isErased: vi.fn().mockResolvedValue(false) },
+          ] as unknown as ConstructorParameters<typeof UserProfileService>),
+        ),
+        {} as never,
+        {} as never,
+        {} as never,
+      );
+
+      await expect(localController.getUserEmail({ user: { id: "user-123" } })).resolves.toEqual({
+        email: storedEmail,
+      });
+      await expect(localController.getUserEmail({ user: { id: "user-none" } })).resolves.toEqual({
+        email: null,
+      });
+    });
+
+    it("is a 200 GET on user-profile/email using the read rate-limit class", () => {
+      const handler = UserProfileController.prototype.getUserEmail;
+      expect(Reflect.getMetadata("__httpCode__", handler)).toBe(200);
+      expect(Reflect.getMetadata("path", handler)).toBe("user-profile/email");
+      expect(Reflect.getMetadata(RATE_LIMIT_CLASS, handler)).toBe("read");
+    });
+  });
+
   describe("updateUserProfile", () => {
     it("updates firstName and lastName", async () => {
       mockUserProfileRepo.findOne.mockResolvedValueOnce({

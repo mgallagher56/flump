@@ -69,6 +69,20 @@ export type {
   ResetFinancialDataResult,
 } from "./profile-view";
 
+export const EMAIL_LOOKUP_TIMEOUT_MS = 2_000;
+
+/**
+ * Error class, code and numeric HTTP status only: never `err.message`, so a provider message
+ * echoing an email address or user id can never reach logs.
+ */
+function emailLookupErrorSummary(err: unknown): string {
+  if (!(err instanceof Error)) return typeof err;
+  const e = err as Error & { code?: unknown; status?: unknown };
+  const code = typeof e.code === "string" && e.code.length > 0 ? ` code=${e.code}` : "";
+  const status = typeof e.status === "number" ? ` status=${e.status}` : "";
+  return `${e.name}${code}${status}`;
+}
+
 @Injectable()
 export class UserProfileService implements ProfileLifecycle {
   private readonly logger = new Logger(UserProfileService.name);
@@ -176,6 +190,42 @@ export class UserProfileService implements ProfileLifecycle {
       ...this.formatProfile(profile),
       email: email || null,
     };
+  }
+
+  /**
+   * Resolves the caller's sign-in email for Settings > Security: uses the token's `email` claim
+   * when present, otherwise queries WorkOS bounded by `EMAIL_LOOKUP_TIMEOUT_MS`. Any failure,
+   * timeout, missing client or missing user returns `null` (never throws); failures log class/code
+   * only, never the address or user id.
+   */
+  async getEmail(userId: string, tokenEmail?: string): Promise<string | null> {
+    const claimEmail = tokenEmail?.trim();
+    if (claimEmail) return claimEmail;
+    if (!userId) return null;
+
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const lookup = this.identityAdapter.getUserEmail(userId);
+    // Avoid an unhandled rejection if WorkOS rejects after the timeout race already settled.
+    lookup.catch(() => undefined);
+
+    try {
+      const resolved = await Promise.race([
+        lookup,
+        new Promise<null>((_, reject) => {
+          timer = setTimeout(() => {
+            const err = new Error();
+            err.name = "TimeoutError";
+            reject(err);
+          }, EMAIL_LOOKUP_TIMEOUT_MS);
+        }),
+      ]);
+      return resolved?.trim() || null;
+    } catch (err: unknown) {
+      this.logger.warn(`Account email lookup failed: ${emailLookupErrorSummary(err)}`);
+      return null;
+    } finally {
+      clearTimeout(timer);
+    }
   }
 
   /**

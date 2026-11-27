@@ -158,6 +158,7 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
       body?: object;
     }> = [
       { key: "GET /user-profile", method: "get", path: "/user-profile" },
+      { key: "GET /user-profile/email", method: "get", path: "/user-profile/email" },
       {
         key: "PATCH /user-profile",
         method: "patch",
@@ -647,6 +648,15 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
     expect(resetSentTo).toEqual([emails[USER_B]]);
     expect(resetSentTo).not.toContain(emails[USER_A]);
     ran("POST /user-profile/send-password-reset");
+  });
+
+  it("GET /user-profile/email: resolves only the caller's own address, query ignored", async () => {
+    const res = await h.call("get", `/user-profile/email?userId=${USER_A}`, h.tokens.b);
+    expect(res.status).toBe(200);
+    expect(lookedUp).toEqual([USER_B]);
+    expect(res.body).toEqual({ email: emails[USER_B] });
+    expect(res.body?.email).not.toBe(emails[USER_A]);
+    ran("GET /user-profile/email");
   });
 
   it("POST /session/sign-out: ends only the session in the caller's token, body and query ignored", async () => {

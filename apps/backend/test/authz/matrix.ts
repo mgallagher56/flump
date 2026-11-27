@@ -112,6 +112,7 @@ export const ROUTE_MATRIX: Readonly<Record<string, MatrixRow>> = {
 
   // User-profile controller (E20-N23).
   "GET /user-profile": userProfile,
+  "GET /user-profile/email": userProfile,
   "PATCH /user-profile": userProfile,
   "POST /user-profile/send-password-reset": userProfile,
   // Lives in authz.user-profile.spec.ts: like the password reset it acts only on the caller.
