@@ -1,0 +1,58 @@
+# E12 S5b: Home's two-figure strip under the hero, for the renting household of
+# apps/e2e/support/personas.ts: £125 left over each month and £1,800 owed. Then the renter with no
+# debts (`pension-only`: the pension pots take the second card), and with no budget (`no-budget`:
+# one prompt in place of the strip, hiding what is owed). The refusal and the rates notice depend
+# on the device's date, so Jest covers them (Home.test.tsx).
+# The runner runs it in light and in dark, stopping and settling the app first; no retries.
+appId: app.flump.mobile
+---
+- runScript:
+    file: ../scripts/fixture.js
+    env:
+      SCENARIO: '{"data": "renter"}'
+- runFlow: ../subflows/launch-signed-out.yaml
+- runFlow: ../subflows/sign-in-to-home.yaml
+- extendedWaitUntil:
+    visible:
+      id: "figure-strip"
+    timeout: 30000
+- assertVisible:
+    id: "home-hero"
+- assertVisible:
+    id: "figure-strip-first"
+- assertVisible:
+    id: "figure-strip-second"
+- assertNotVisible:
+    id: "figure-strip-prompt"
+- takeScreenshot: home-strip-renter-${THEME}
+# No debts: a relaunch reads the new household (the cache lives only while the app runs).
+- runScript:
+    file: ../scripts/scenario.js
+    env:
+      SCENARIO: '{"data": "pension-only"}'
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: "figure-strip"
+    timeout: 60000
+- assertVisible:
+    id: "figure-strip-second"
+- takeScreenshot: home-strip-pension-${THEME}
+# No budget: the prompt stands in for the whole strip, never £0.
+- runScript:
+    file: ../scripts/scenario.js
+    env:
+      SCENARIO: '{"data": "no-budget"}'
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: "figure-strip-prompt"
+    timeout: 60000
+- assertVisible:
+    id: "figure-strip-add-budget"
+- assertNotVisible:
+    id: "figure-strip"
+- assertNotVisible: "£0"
+- takeScreenshot: home-strip-prompt-${THEME}

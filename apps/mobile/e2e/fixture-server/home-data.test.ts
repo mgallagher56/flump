@@ -4,7 +4,9 @@
 /**
  * Home's data scenarios (E12 S5): `owner` and `renter`, the home-owning and renting households of
  * `apps/e2e/support/personas.ts` with six recorded months, and `malformed`. The households' figures
- * are copied (personas.ts imports Playwright), so the first test pins them to the source.
+ * are copied (personas.ts imports Playwright), so the first tests pin them to the source. Since S5b
+ * each also has a saved budget, and `renter-linked`, `scottish-refused`, `no-budget` and
+ * `pension-only` give the strip's other states; the strip's figures are worked out by hand below.
  */
 import { createHash, randomBytes } from "node:crypto";
 import { readFileSync } from "node:fs";
@@ -12,8 +14,11 @@ import { join } from "node:path";
 import {
   AccountDetailListResponse,
   AccountListResponse,
+  BudgetEntryListResponse,
   SnapshotCheckInsResponse,
+  UserProfileResponse,
 } from "@flump/api-contract";
+import { type HomeStrip, selectHomeStripFromRows } from "@flump/finance-engine/home-strip";
 import {
   netWorthBasisFromProfile,
   PortfolioSnapshot,
@@ -24,9 +29,14 @@ import {
 } from "@flump/finance-engine/net-worth";
 import {
   HOMEOWNER_ACCOUNTS,
+  HOMEOWNER_BUDGET,
+  HOMEOWNER_FACTS,
   PERSONA_HISTORY_MONTHS,
   type PersonaAccount,
+  type PersonaBudgetRow,
   RENTER_ACCOUNTS,
+  RENTER_BUDGET,
+  RENTER_FACTS,
 } from "./fixtures";
 import { type FixtureServer, startFixtureServer } from "./server";
 import { newSigningKey } from "./tokens";
@@ -185,3 +195,167 @@ describe("Home's households", () => {
     expect(AccountListResponse.safeParse(body).success).toBe(false);
   });
 });
+
+/** personas.ts's source text, and one persona's block of it. */
+function personaBlock(name: string, from: string, to: string): string {
+  const source = readFileSync(join(__dirname, "../../../e2e/support/personas.ts"), "utf8");
+  const start = source.indexOf(`export const ${name}: Persona = {`);
+  const at = source.indexOf(from, start);
+  return source.slice(at, source.indexOf(to, at));
+}
+
+/** 25 November 2026 (2026/27, confirmed rates) and 10 May 2027 (2027/28, provisional, no Scottish rates). */
+const NOV_2026 = new Date(Date.UTC(2026, 10, 25, 12, 0, 0));
+const MAY_2027 = new Date(Date.UTC(2027, 4, 10, 12, 0, 0));
+
+type HomeData =
+  | "owner"
+  | "renter"
+  | "renter-linked"
+  | "scottish-refused"
+  | "no-budget"
+  | "pension-only";
+
+/** The strip as the app builds it from the served bodies (useHomeData), on the device's date. */
+async function stripFor(data: HomeData, today = NOV_2026): Promise<HomeStrip> {
+  server.setScenario({ data });
+  const api = await signedIn();
+  const accounts = AccountListResponse.parse(await (await api("/v1/accounts")).json());
+  const details = AccountDetailListResponse.parse(await (await api("/v1/account-details")).json());
+  const budgetEntries = BudgetEntryListResponse.parse(
+    await (await api("/v1/budget-entries")).json(),
+  );
+  const profile = UserProfileResponse.parse(await (await api("/v1/user-profile")).json());
+  return selectHomeStripFromRows({ accounts, details, budgetEntries, profile, today });
+}
+
+describe("Home's strip in each household (S5b)", () => {
+  it.each([
+    ["RENTER", RENTER_BUDGET],
+    ["HOMEOWNER", HOMEOWNER_BUDGET],
+  ] as const)("%s's budget is personas.ts's, row for row", (name, copied) => {
+    const block = personaBlock(name, "budget: [", "],");
+    const fromSource = [...block.matchAll(/\{([^{}]*)\}/g)].map((m) => {
+      const text = m[1] ?? "";
+      const field = (key: string) =>
+        new RegExp(`\\b${key}: ("[^"]*"|-?[\\d.]+|true|false)`)
+          .exec(text)?.[1]
+          ?.replaceAll('"', "");
+      return Object.fromEntries(
+        ["name", "category", "amount", "isIncome", "isEssential"].flatMap((k) =>
+          field(k) === undefined ? [] : [[k, field(k)]],
+        ),
+      );
+    });
+    const fromCopy = copied.map((row: PersonaBudgetRow) =>
+      Object.fromEntries(Object.entries(row).map(([k, v]) => [k, String(v)])),
+    );
+    expect(fromCopy).toEqual(fromSource);
+  });
+
+  it.each([
+    ["RENTER", RENTER_FACTS],
+    ["HOMEOWNER", HOMEOWNER_FACTS],
+  ] as const)("%s's profile answers are personas.ts's", (name, facts) => {
+    const block = personaBlock(name, "profile: {", "accounts:");
+    for (const [key, value] of Object.entries(facts)) {
+      expect(block).toContain(`${key}: ${JSON.stringify(value).replaceAll(",", ", ")}`);
+    }
+  });
+
+  it("the renter: £125 left over from the typed budget and £1,800 owed (acceptance 1)", async () => {
+    // Income 2,085. Essentials 950 + 115 + 80 + 40 + 250 + 120 + 60 = 1,615; other spending
+    // 90 + 25 + 80 = 195; savings 150. Left over 2,085 - 1,615 - 195 - 150 = 125. Owed: the
+    // credit card's 1,800; the student loan is not consumer debt, and with debt no pension card.
+    expect(await stripFor("renter")).toEqual({
+      first: { kind: "leftOver", figure: 125, leavesOut: null },
+      second: { kind: "owed", figure: 1800 },
+      collapsed: false,
+      ratesNotice: null,
+    });
+  });
+
+  it("the home owner: £135 left over and £9,600 owed", async () => {
+    // Income 3,450. Essentials 1,250 + 190 + 140 + 45 + 55 + 30 + 265 + 520 + 180 = 2,675; other
+    // spending 120 + 40 + 180 = 340; savings 100 + 200 = 300. Left over 3,450 - 2,675 - 340 - 300
+    // = 135. Owed: the car loan's 8,400 and the card's 1,200 = 9,600; the mortgage is not
+    // consumer debt.
+    expect(await stripFor("owner")).toEqual({
+      first: { kind: "leftOver", figure: 135, leavesOut: null },
+      second: { kind: "owed", figure: 9600 },
+      collapsed: false,
+      ratesNotice: null,
+    });
+  });
+
+  it("renter-linked: the take-home worked out from the salary, £127 left over, no notice in 2026/27", async () => {
+    const budget = BudgetEntryListResponse.parse(
+      await (await (await signedInAs("renter-linked"))("/v1/budget-entries")).json(),
+    );
+    const income = budget.find((row) => row.isIncome);
+    expect([income?.linkKind, income?.amount]).toEqual(["take_home", 0]);
+    // 2026/27, salary 32,000: pension 5% = 1,600 (net pay). Tax (32,000 - 1,600 - 12,570) x 20%
+    // = 3,566. NI (32,000 - 12,570) x 8% = 1,554.40. Plan 2 (32,000 - 29,385) x 9% = 235.35.
+    // Take-home 32,000 - 1,600 - 3,566 - 1,554.40 - 235.35 = 25,044.25 a year, 2,087 a month.
+    // Left over 2,087 - 1,615 - 195 - 150 = 127.
+    expect(await stripFor("renter-linked")).toEqual({
+      first: { kind: "leftOver", figure: 127, leavesOut: null },
+      second: { kind: "owed", figure: 1800 },
+      collapsed: false,
+      ratesNotice: null,
+    });
+  });
+
+  it("renter-linked in 2027/28: the same figure with the provisional rates notice", async () => {
+    // 2027/28 keeps 2026/27's allowance, bands, NI and Plan 2 threshold, so 127 again.
+    expect(await stripFor("renter-linked", MAY_2027)).toEqual({
+      first: { kind: "leftOver", figure: 127, leavesOut: null },
+      second: { kind: "owed", figure: 1800 },
+      collapsed: false,
+      ratesNotice: {
+        calendarYear: "2027/28",
+        ratesYear: "2027/28",
+        isFallback: false,
+        kind: "provisional",
+      },
+    });
+  });
+
+  it("scottish-refused: refused in 2027/28, which has no Scottish rates; a figure in 2026/27", async () => {
+    expect((await stripFor("scottish-refused", MAY_2027)).first).toEqual({
+      kind: "refused",
+      notice:
+        "Scottish Income Tax rates for 2027/28 are not published yet, so there is no estimate for this year.",
+    });
+    // 2026/27 has Scottish rates: a figure, not a refusal (the device's date decides which).
+    expect((await stripFor("scottish-refused")).first.kind).toBe("leftOver");
+  });
+
+  it("no-budget: the one prompt, which hides what is owed", async () => {
+    const strip = await stripFor("no-budget");
+    expect(strip.first).toEqual({ kind: "unset" });
+    expect(strip.collapsed).toBe(true);
+  });
+
+  it("pension-only: £125 left over and the £9,000 pension, with no debt", async () => {
+    // The renter's budget, so 125 as above; the one pension pot holds 9,000.
+    expect(await stripFor("pension-only")).toEqual({
+      first: { kind: "leftOver", figure: 125, leavesOut: null },
+      second: { kind: "pension", figure: 9000 },
+      collapsed: false,
+      ratesNotice: null,
+    });
+  });
+
+  it("the canned data has no budget, and unavailable answers 503", async () => {
+    const api = await signedIn();
+    expect(await (await api("/v1/budget-entries")).json()).toEqual([]);
+    server.setScenario({ data: "unavailable" });
+    expect((await api("/v1/budget-entries")).status).toBe(503);
+  });
+});
+
+async function signedInAs(data: HomeData) {
+  server.setScenario({ data });
+  return signedIn();
+}
