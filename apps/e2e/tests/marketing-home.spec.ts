@@ -13,15 +13,88 @@ const HOME = `${MARKETING_URL}/`;
 const WIDTHS = [360, 768, 1000, 1440, 1920] as const;
 const THEMES = ["light", "dark"] as const;
 
-/** Scrolls the whole page in steps, so every band's moment is triggered, then waits for time to finish them. */
+/**
+ * Scrolls `by` pixels in `steps` steps `gap` ms apart, inside the page. Scroll events drive every
+ * trigger, so this sets off what a wheel does; Playwright's wheel waits for each scroll to be
+ * acknowledged, about 0.4 s a step while the scene draws, so a run of wheels took most of a
+ * test's time.
+ */
+async function scrollInSteps(page: Page, by: number, steps: number, gap: number): Promise<void> {
+  await page.evaluate(
+    async (run) => {
+      for (let step = 0; step < run.steps; step++) {
+        window.scrollBy({ top: run.by / run.steps, behavior: "instant" });
+        await new Promise((resolve) => setTimeout(resolve, run.gap));
+      }
+    },
+    { by, steps, gap },
+  );
+}
+
+/**
+ * Waits until nothing in `selector` has changed for 1.2 s (more than a changeover's beat, 0.69 s):
+ * each element's opacity (times its ancestors'), place on the page, visibility and, for a counting
+ * figure, its text. A moment left running or stuck moving fails at `timeout`.
+ */
+async function untilStill(page: Page, selector: string, timeout = 15_000): Promise<void> {
+  let last = "";
+  let since = Date.now();
+  await expect
+    .poll(
+      async () => {
+        const now = await page.locator(selector).evaluateAll((els) =>
+          els
+            .map((el) => {
+              let opacity = 1;
+              for (let node: Element | null = el; node; node = node.parentElement)
+                opacity *= Number(getComputedStyle(node).opacity);
+              const r = el.getBoundingClientRect();
+              const text = el.hasAttribute("data-count") ? el.textContent : "";
+              return `${opacity.toFixed(2)},${Math.round(r.left)},${Math.round(r.top + scrollY)},${getComputedStyle(el).visibility},${text}`;
+            })
+            .join(";"),
+        );
+        if (now !== last) {
+          last = now;
+          since = Date.now();
+        }
+        return Date.now() - since;
+      },
+      { timeout, intervals: [200], message: `${selector} still moving` },
+    )
+    .toBeGreaterThanOrEqual(1200);
+}
+
+/** The text and figures every band's moment brings in: still once every moment has finished. */
+const MOMENT_PARTS =
+  "main :is(h1, h2, h3, p, li, figure, [data-count], [data-hero-value], [data-step], [data-stop-side], [data-stop-pair])";
+
+/**
+ * Scrolls to the page's foot a screen at a time, re-reading its length as pins lay out (the hero's pin
+ * lengthens the page from 1024px), so every band's moment is triggered; then waits for any code
+ * they load and for every moment to finish.
+ */
 async function scrollThrough(page: Page): Promise<void> {
-  const height = await page.evaluate(() => document.documentElement.scrollHeight);
-  for (let y = 0; y < height; y += 500) {
-    await page.mouse.wheel(0, 500);
-    await page.waitForTimeout(120);
-  }
-  // The longest moment is the hero's assembly (durations.marketing.hero, 4,760 ms).
-  await page.waitForTimeout(5500);
+  await page.evaluate(async () => {
+    const atFoot = () =>
+      window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 2;
+    const frame = () => new Promise((resolve) => requestAnimationFrame(resolve));
+    // Bounded: 300 steps is far past the longest page.
+    for (let step = 0; step < 300 && !atFoot(); step++) {
+      // Most of a screen at a time, so every band is in view at some step.
+      window.scrollBy({ top: Math.round(window.innerHeight * 0.85), behavior: "instant" });
+      // Two frames: the page has drawn this place, so its triggers and observers have seen it.
+      await frame();
+      await frame();
+    }
+  });
+  expect(
+    await page.evaluate(
+      () => window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 2,
+    ),
+  ).toBe(true);
+  await page.waitForLoadState("networkidle");
+  await untilStill(page, MOMENT_PARTS);
 }
 
 /** A page in its own context (axe needs one), at the home page. Close it with `page.context().close()`. */
@@ -346,7 +419,8 @@ test.describe("marketing home: controls", () => {
     await page.goto(HOME);
     const faq = page.locator("#faq");
     await faq.scrollIntoViewIfNeeded();
-    await page.waitForTimeout(3000);
+    // The band's entrance has finished, so only an opening answer moves the items.
+    await untilStill(page, "#faq li");
     const items = faq.locator("li");
     const count = await items.count();
     for (let i = 1; i < count; i++) {
@@ -379,15 +453,11 @@ test.describe("marketing home: controls", () => {
     const box = await journey.boundingBox();
     const span = Math.round(box?.height ?? 3000);
     // Fast down and up twice, as a visitor flicking past would.
-    for (const direction of [1, -1, 1, -1, 1]) {
-      for (let step = 0; step < 8; step++) {
-        await page.mouse.wheel(0, (direction * span) / 8);
-        await page.waitForTimeout(40);
-      }
-    }
-    // Time completes every changeover: leave, beat, arrive is under 3 s at the calm scale.
-    await page.waitForTimeout(4000);
+    for (const direction of [1, -1, 1, -1, 1]) await scrollInSteps(page, direction * span, 8, 40);
+    // Time completes every changeover (leave, beat, arrive is under 3 s at the calm scale): wait
+    // until the journey is still, then nothing may be part-way.
     const parts = "h2, p, [data-stop-side], [data-stop-pair]";
+    await untilStill(page, `#journey :is(${parts})`);
     const partial = await journey.locator(parts).evaluateAll((els, shownSrc) => {
       const shown = new Function(`return ${shownSrc}`)() as typeof shownInJourney;
       return els
@@ -401,7 +471,7 @@ test.describe("marketing home: controls", () => {
       const header = document.querySelector("header")?.offsetHeight ?? 0;
       window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - header });
     });
-    await page.waitForTimeout(4000);
+    await untilStill(page, `#journey :is(${parts})`);
     const thirdParts = await third
       .locator(parts)
       .evaluateAll(
