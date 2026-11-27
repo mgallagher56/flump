@@ -88,8 +88,21 @@ export function TabBar({ items, activeKey, onSelect }: TabBarProps) {
   const scrollXRef = useRef(0);
   const scrolledForKey = useRef<string | null>(null);
   const lastSentX = useRef<number | null>(null);
-  const [scrollX, setScrollX] = useState(0);
+  const [cues, setCues] = useState(() =>
+    overflowCues({ scroll: isScroll, scrollX: 0, viewportWidth: width, contentWidth: 0 }),
+  );
+  const cuesRef = useRef(cues);
   const [contentWidth, setContentWidth] = useState(0);
+
+  const syncCues = useCallback(
+    (scroll: boolean, scrollX: number, viewportWidth: number, contentW: number) => {
+      const next = overflowCues({ scroll, scrollX, viewportWidth, contentWidth: contentW });
+      if (next.left === cuesRef.current.left && next.right === cuesRef.current.right) return;
+      cuesRef.current = next;
+      setCues(next);
+    },
+    [],
+  );
 
   const edgePadding = theme.spacing["6"];
   const scrollActiveIntoView = useCallback(() => {
@@ -117,7 +130,6 @@ export function TabBar({ items, activeKey, onSelect }: TabBarProps) {
     lastSentX.current = null;
     if (!isScroll) {
       scrollXRef.current = 0;
-      setScrollX(0);
       setContentWidth(0);
     }
   }, [activeKey, isScroll]);
@@ -126,12 +138,9 @@ export function TabBar({ items, activeKey, onSelect }: TabBarProps) {
     scrollActiveIntoView();
   }, [scrollActiveIntoView]);
 
-  const cues = overflowCues({
-    scroll: isScroll,
-    scrollX,
-    viewportWidth: width,
-    contentWidth,
-  });
+  useEffect(() => {
+    syncCues(isScroll, scrollXRef.current, width, contentWidth);
+  }, [contentWidth, isScroll, syncCues, width]);
 
   const row = (
     <View testID="tab-row" style={isScroll ? styles.scrollRow : styles.row}>
@@ -206,7 +215,7 @@ export function TabBar({ items, activeKey, onSelect }: TabBarProps) {
                 const x = event.nativeEvent.contentOffset.x;
                 scrollXRef.current = x;
                 lastSentX.current = null;
-                setScrollX(x);
+                syncCues(isScroll, x, width, contentWidth);
               }}
             >
               {row}
