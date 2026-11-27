@@ -75,3 +75,44 @@ export const checkAgainst = (schema: z.ZodType, value: unknown): ValidateResult 
   const result = parseAgainst(schema, value);
   return result.ok ? { ok: true } : result;
 };
+
+const isPlainObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+/** Paths of keys the parse filled in from a default, because `raw` did not have them. */
+const defaultedPaths = (parsed: unknown, raw: unknown, path: string, out: string[]): void => {
+  if (Array.isArray(parsed) && Array.isArray(raw)) {
+    // Paths stay index-free, like every other issue path.
+    for (const [i, item] of parsed.entries()) defaultedPaths(item, raw[i], path, out);
+    return;
+  }
+  if (!isPlainObject(parsed) || !isPlainObject(raw)) return;
+  for (const [key, value] of Object.entries(parsed)) {
+    const at = path === "" ? key : `${path}.${key}`;
+    if (!(key in raw)) {
+      if (!out.includes(at)) out.push(at);
+    } else defaultedPaths(value, raw[key], at, out);
+  }
+};
+
+/**
+ * The server's own check of a response it sends (the backend's contract-shadow interceptor).
+ * Like `parseAgainst`, and stricter in one way: a field the contract gives a reader default
+ * (`.default(...)`, docs/api/versioning.md) must still be sent, so a key the parse filled in is
+ * a `missing_field` issue. Readers keep the default; only the producer is held to the full shape.
+ */
+export const checkServerResponse = (schema: z.ZodType, value: unknown): ValidateResult => {
+  const result = parseAgainst(schema, value);
+  if (!result.ok) return result;
+  const missing: string[] = [];
+  defaultedPaths(result.data, value, "", missing);
+  if (missing.length === 0) return { ok: true };
+  return {
+    ok: false,
+    issues: missing.map((path) => ({
+      path,
+      code: "missing_field",
+      message: "Sent without a field the contract gives a reader default",
+    })),
+  };
+};

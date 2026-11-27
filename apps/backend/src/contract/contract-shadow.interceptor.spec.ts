@@ -2,6 +2,8 @@ import "reflect-metadata";
 import { Logger } from "@nestjs/common";
 import { of } from "rxjs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { UserProfile } from "../entities/user-profile.entity";
+import { formatProfileRow, PROFILE_UPDATE_DEFAULTS } from "../modules/profile/profile-view";
 import { at } from "../testing/must";
 import {
   ContractShadowInterceptor,
@@ -160,6 +162,31 @@ describe("response shape check", () => {
       count: 1,
     });
     expect(JSON.stringify(violation)).not.toContain("secret-name");
+  });
+
+  it("logs a defaulted field the server left out (missing_field), though a reader would accept it", () => {
+    const warn = vi.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
+    const userId = "user-1";
+    const row = {
+      ...PROFILE_UPDATE_DEFAULTS(userId),
+      mortgageType: "repayment",
+      id: "6f1c2a3b-4d5e-4f60-8a7b-9c0d1e2f3a4b",
+      createdAt: new Date("2026-11-01T00:00:00Z"),
+      updatedAt: new Date("2026-11-01T00:00:00Z"),
+    } as UserProfile;
+    const profile = { ...formatProfileRow(row), email: null };
+    const getProfile = { method: "GET", route: { path: "/user-profile" }, params: {}, query: {} };
+
+    respond(profile, getProfile);
+    expect(warn).not.toHaveBeenCalled();
+
+    const { wellbeingQuestions: _left, ...withoutField } = profile;
+    respond(withoutField, getProfile);
+    expect(at(warnings(warn), 0)).toMatchObject({
+      event: "contract_response_violation",
+      routeId: "profile.get",
+      issues: [{ path: "wellbeingQuestions", code: "missing_field" }],
+    });
   });
 
   it("stays quiet for a valid body", () => {
