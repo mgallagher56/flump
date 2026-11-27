@@ -87,6 +87,17 @@ export function useAccountForm({
   const [linkTouched, setLinkTouched] = useState(false);
   const [homeValue, setHomeValue] = useState<number | null>(null);
   const [unread, setUnread] = useState<ReadonlySet<AccountFormField>>(new Set());
+  const [belowZero, setBelowZero] = useState<ReadonlySet<AccountFormField>>(new Set());
+  /** Notes whether a minus was typed into a box that refuses one, so the form can say so. */
+  const noteMinus = useCallback((key: AccountFormField, value: number | null, text: string) => {
+    setBelowZero((prev) => {
+      const next = new Set(prev);
+      const t = text.trim();
+      if (value === null && (t.startsWith("-") || t.startsWith("\u2212"))) next.add(key);
+      else next.delete(key);
+      return next;
+    });
+  }, []);
   const [errors, setErrors] = useState<AccountFormErrors>({});
   const [busy, setBusy] = useState<"saving" | "deleting" | null>(null);
   const [alert, setAlertState] = useState<string | null>(null);
@@ -136,6 +147,7 @@ export function useAccountForm({
   const setFigure = useCallback(
     (key: AccountFormField & keyof AccountFormState, value: number | null, text: string) => {
       setForm((prev) => ({ ...prev, [key]: asText(value) }));
+      noteMinus(key, value, text);
       setUnread((prev) => {
         const next = new Set(prev);
         if (value === null && text.trim() !== "") next.add(key);
@@ -143,7 +155,7 @@ export function useAccountForm({
         return next;
       });
     },
-    [],
+    [noteMinus],
   );
 
   /** A date: its ISO text, or blank, or unread while the boxes do not make a real date. */
@@ -173,15 +185,19 @@ export function useAccountForm({
     });
   }, []);
 
-  const setHome = useCallback((value: number | null, text: string) => {
-    setHomeValue(value);
-    setUnread((prev) => {
-      const next = new Set(prev);
-      if (value === null && text.trim() !== "") next.add("homeValue");
-      else next.delete("homeValue");
-      return next;
-    });
-  }, []);
+  const setHome = useCallback(
+    (value: number | null, text: string) => {
+      setHomeValue(value);
+      noteMinus("homeValue", value, text);
+      setUnread((prev) => {
+        const next = new Set(prev);
+        if (value === null && text.trim() !== "") next.add("homeValue");
+        else next.delete("homeValue");
+        return next;
+      });
+    },
+    [noteMinus],
+  );
 
   /** A new type clears the kind, as web's select does. */
   const setType = useCallback((type: string) => {
@@ -209,7 +225,14 @@ export function useAccountForm({
 
   const save = useCallback(async () => {
     if (busy) return;
-    const found = validateAccountForm({ state: form, editing, showsJoint, unread });
+    const found = validateAccountForm({
+      state: form,
+      editing,
+      showsJoint,
+      unread,
+      belowZero,
+      homeValue: links.showHomeValue ? homeValue : null,
+    });
     setErrors(found);
     if (Object.keys(found).length > 0) {
       setAlert(FIX_FIELDS);
@@ -260,6 +283,7 @@ export function useAccountForm({
     editing,
     showsJoint,
     unread,
+    belowZero,
     opened,
     links,
     homeValue,

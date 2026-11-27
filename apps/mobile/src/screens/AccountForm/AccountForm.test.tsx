@@ -198,6 +198,37 @@ describe("AccountForm: add", () => {
     expect(posts(api)).toHaveLength(1);
   });
 
+  it("a balance at the backend's limit says so under the field; one below it saves (S8 device check)", async () => {
+    const api = fakeApi(routes(household(), { "POST /accounts": created }));
+    await form(api, { kind: "add" });
+    await type("account-form-name", "Savings");
+    // The contract's Money: below 10 billion. 99,999,999,999,999 is far over; 10,000,000,000 is on it.
+    await type("account-form-balance", "99999999999999");
+    await save();
+    expect(screen.getByText("Enter an amount below £10,000,000,000.")).toBeOnTheScreen();
+    await type("account-form-balance", "10000000000");
+    await save();
+    expect(screen.getByText("Enter an amount below £10,000,000,000.")).toBeOnTheScreen();
+    expect(posts(api)).toEqual([]);
+    await type("account-form-balance", "9999999999.99");
+    await save();
+    expect(posts(api)[0]?.body).toMatchObject({ balance: 9999999999.99 });
+  });
+
+  it("a minus amount owed says plainly it cannot be below £0 (S8 device check)", async () => {
+    const api = fakeApi(routes(household()));
+    await form(api, { kind: "add" });
+    await type("account-form-name", "Card");
+    await choose("account-form-type", "Credit Card");
+    await type("account-form-balance", "-500");
+    await save();
+    expect(
+      screen.getByText("An amount owed cannot be below £0. Enter it without a minus sign."),
+    ).toBeOnTheScreen();
+    expect(screen.queryByText("Enter an amount in pounds, such as 250 or 250.50.")).toBeNull();
+    expect(posts(api)).toEqual([]);
+  });
+
   it("a mortgage with no property to link adds both through the pair route", async () => {
     const api = fakeApi(
       routes(household([{ name: "Current account", type: "Current", balance: 100, nov: 100 }]), {
