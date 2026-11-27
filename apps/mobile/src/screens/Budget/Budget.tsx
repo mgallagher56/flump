@@ -7,7 +7,7 @@ import {
   type RunwayScenarioInputs,
   runwayIllustration,
 } from "@flump/finance-engine/budget";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { AccessibilityInfo, Linking, Modal, View } from "react-native";
 import { BreathingRoom } from "../../components/BreathingRoom";
 import { BudgetCategoryList } from "../../components/BudgetCategoryList";
@@ -76,7 +76,7 @@ import {
   type BudgetPageState,
   useBudgetData,
 } from "../../features/budget/useBudgetData";
-import type { WebLink } from "../../navigation/shell";
+import { ShellContext, type WebLink } from "../../navigation/shell";
 import { NotSetUp } from "../NotSetUp";
 import { TermsRequired } from "../TermsRequired";
 
@@ -219,7 +219,12 @@ function Ready({
 }) {
   const { page, saved, housingStatus, customCategories } = data;
   const writes = useBudgetWrites();
-  const [view, setView] = useState<"budget" | "editing">("budget");
+  // Saved figures shown offline (E12 S7): no Edit budget, no editor and no Breathing room
+  // switches, since each writes; the notice above already says changes need a connection. Read
+  // softly: tests render no shell. The what-if zone stays, as it sends nothing.
+  const offline = useContext(ShellContext)?.offline ?? false;
+  const [chosenView, setView] = useState<"budget" | "editing">("budget");
+  const view = offline ? "budget" : chosenView;
   const [sheet, setSheet] = useState<Sheet>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [toast, setToast] = useState<ToastState | null>(null);
@@ -291,7 +296,7 @@ function Ready({
             linkFor={(c) =>
               c === "housing" && housingStatus === "mortgage" ? open(links.mortgage) : undefined
             }
-            onEditBudget={() => setView("editing")}
+            onEditBudget={offline ? undefined : () => setView("editing")}
           />
           <BreathingRoom
             figure={isFigureKnown(page.monthsOfCover) ? page.monthsOfCover.value : null}
@@ -308,7 +313,7 @@ function Ready({
               fixedReason: row.fixedReason,
               counted: row.counted,
               // Joint and linked entries are read-only on the phone, their essential flag too.
-              editable: editableRow(row.entry, saved) !== null,
+              editable: !offline && editableRow(row.entry, saved) !== null,
             }))}
             counted={page.basis.counted}
             onSetEssential={setEssential}
@@ -320,7 +325,7 @@ function Ready({
       {/* The same line for everyone, never triggered by their figures (ruling 1, R3, R4). */}
       <DebtHelpLink />
       <EntrySheet
-        sheet={sheet}
+        sheet={offline ? null : sheet}
         categories={categoryChoices(editorSections(page.rows, customCategories))}
         onClose={() => setSheet(null)}
         onDone={(message) => {
