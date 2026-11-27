@@ -50,6 +50,34 @@ describe("OptionList", () => {
     expect(onChange.mock.calls).toEqual([["dark"]]);
   });
 
+  it("disabled, every option ignores presses, says it is disabled, and the choice is unchanged", async () => {
+    const onChange = jest.fn();
+    await render(
+      <ThemeProvider scheme="light">
+        <OptionList {...optionListStates.disabled} onChange={onChange} />
+      </ThemeProvider>,
+    );
+    const first = screen.getByRole("radio", { name: "1st" });
+    expect(first.props.accessibilityState).toMatchObject({ disabled: true, checked: false });
+    expect(screen.getByRole("radio", { name: "2nd" }).props.accessibilityState).toMatchObject({
+      disabled: true,
+      checked: true,
+    });
+    await userEvent.setup().press(first);
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("enabled by default", async () => {
+    await render(
+      <ThemeProvider scheme="light">
+        <OptionList {...optionListStates.days} />
+      </ThemeProvider>,
+    );
+    expect(screen.getByRole("radio", { name: "1st" }).props.accessibilityState).toMatchObject({
+      disabled: false,
+    });
+  });
+
   it("while saving, every option ignores presses and says it is busy", async () => {
     const onChange = jest.fn();
     await render(

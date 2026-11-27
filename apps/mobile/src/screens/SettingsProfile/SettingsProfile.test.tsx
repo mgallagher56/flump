@@ -584,6 +584,20 @@ describe("SettingsProfile", () => {
     expect(
       screen.getByRole("switch", { name: "Self Assessment" }).props.accessibilityState,
     ).toMatchObject({ disabled: true });
+    // Every control that saves is off: the check-in day radios too, the choice unchanged.
+    const radios = within(screen.getByTestId("settings-check-in-day")).getAllByRole("radio");
+    const chosen = radios.filter((r) => r.props.accessibilityState.checked);
+    for (const radio of radios) {
+      expect(radio.props.accessibilityState).toMatchObject({ disabled: true });
+    }
+    const other = radios.find((r) => !r.props.accessibilityState.checked);
+    if (other) await fireEvent.press(other);
+    await settle();
+    expect(
+      within(screen.getByTestId("settings-check-in-day"))
+        .getAllByRole("radio")
+        .filter((r) => r.props.accessibilityState.checked),
+    ).toEqual(chosen);
     expect(patch).not.toHaveBeenCalled();
     // Back online: leaving the field saves what was typed.
     await act(async () => rerender(at(false)));

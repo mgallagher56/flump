@@ -373,6 +373,7 @@ function CheckInDay({ profile, saves }: { profile: AppProfile; saves: ProfileSav
         options={DAY_OPTIONS}
         value={String(day)}
         busy={saves.busy.has("checkIn")}
+        disabled={saves.offline}
         testID="settings-check-in-day"
         onChange={(value) => void saves.save("checkIn", { checkInDay: Number(value) })}
       />
