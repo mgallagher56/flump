@@ -6,9 +6,11 @@ import type {
   FinancialStageEvaluation,
   HealthScoreComponent,
   HealthScoreResult,
-  SafeToSpendResult,
 } from "./types.js";
 import { getLatestSupportedUkTaxYear, getUkTaxYearRules } from "./uk-tax-year.js";
+
+// In its own module (E12 S10) so the mobile Budget entry reaches it without the debt payoff schedule.
+export { calculateSafeToSpend } from "./safe-to-spend-allowance.js";
 
 export interface HealthScoreInput {
   stage: FinancialStage;
@@ -220,29 +222,6 @@ export function calculateFinancialHealthScore(input: HealthScoreInput): HealthSc
     observations: observations.slice(0, 3),
     /** @deprecated Always empty; use `observations`. Removed after E15 migrates its consumers. */
     topRecommendations: [],
-  };
-}
-
-/**
- * Calculates Weekly Safe-to-Spend Allowance Metric.
- */
-export function calculateSafeToSpend(
-  monthlyIncome: number,
-  fixedBills: number,
-  minDebtPayments: number,
-  essentialGroceries: number,
-): SafeToSpendResult {
-  const fixedCommitments = fixedBills + minDebtPayments + essentialGroceries;
-  const monthlyDiscretionary = Math.max(0, monthlyIncome - fixedCommitments);
-  // 52 weeks / 12 months = 4.3333 weeks per month
-  const weeklyAllowance = Math.round((monthlyDiscretionary / 4.333333) * 100) / 100;
-  const dailyAllowance = Math.round((weeklyAllowance / 7) * 100) / 100;
-
-  return {
-    weeklyAllowance,
-    dailyAllowance,
-    monthlyDiscretionary: Math.round(monthlyDiscretionary * 100) / 100,
-    fixedCommitments: Math.round(fixedCommitments * 100) / 100,
   };
 }
 
