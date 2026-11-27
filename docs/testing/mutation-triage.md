@@ -4148,7 +4148,7 @@ Measured by forced runs of `src/auth/workos-jwt.verifier.ts:68-101` (the `verify
 | ---------------------- | -------------------------------------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | `isBudgetEmpty` reduce | ArithmeticOperator `sum + amount` → `sum - amount` | Equivalent | The mutant totals minus the sum of the amounts, and minus a sum is £0 exactly when the sum is, so "the rows add up to £0" reads the same. |
 
-## Breathing room rounds down, and the stage reads the unrounded runway (E12 S10, D8, 27 November 2026)
+## Breathing room rounds down, and the stage reads the unrounded runway (E12 S10, D9, 27 November 2026)
 
 `--mutate "src/breathing-room-wording.ts,src/health-score.ts:239-260"`. `health-score.ts` 239 to 260 (`evaluateFinancialStage`'s runway and threshold): 18 of 18 killed, the unrounded `< 3` comparison included (savings 2,950 over essentials 1,000). `breathing-room-wording.ts`: 73 killed, 3 survivors, 1 compile error. The changed line (`Math.floor(tenths)` for the year form) is killed by 12.5, 16.5, 23.6 and 23.94. The survivors are in lines this change did not touch:
 

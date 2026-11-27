@@ -251,7 +251,7 @@ export function evaluateFinancialStage(params: {
     .filter((d) => isHighInterestDebt(d))
     .reduce((sum, d) => sum + d.balanceGbp, 0);
 
-  // The stage reads the unrounded ratio, so 2.95 months is under 3 (D8, 27 November 2026); the
+  // The stage reads the unrounded ratio, so 2.95 months is under 3 (D9, 27 November 2026); the
   // figure returned stays at one decimal place.
   const runwayRatio = monthlyEssentialExpenses > 0 ? liquidSavings / monthlyEssentialExpenses : 0;
   const emergencyRunwayMonths = Math.round(runwayRatio * 10) / 10;
