@@ -71,7 +71,7 @@ describe("ORB_COLOUR_ALLOW_LIST", () => {
     }
   });
 
-  it("holds exactly the signed-off entries: main's six on 27 Nov 2026, then the M1 orb-like components and the K2 logo (a new one needs sign-off)", () => {
+  it("holds exactly the signed-off entries: main's six on 27 Nov 2026, the M1 orb-like components, prototype 11's colours, then the K2 logo (a new one needs sign-off)", () => {
     expect(ORB_COLOUR_ALLOW_LIST.map((e) => e.path)).toEqual([
       "packages/ui/src/primitives/IconTile/",
       "apps/web/app/features/dashboard/components/WidgetCard/",
@@ -80,7 +80,11 @@ describe("ORB_COLOUR_ALLOW_LIST", () => {
       "packages/ui/src/foundations/MarketingTokens/",
       "packages/ui/src/foundations/ColorPalette/",
       "apps/marketing/src/components/BubbleField/",
-      "apps/marketing/src/components/JourneyOrb/",
+      "apps/marketing/src/components/GlassOrb/",
+      "apps/marketing/src/components/HomeRoughFigures/HomeRoughFigures.styles.ts",
+      "apps/marketing/src/components/DrawnLineChart/DrawnLineChart.styles.ts",
+      "apps/marketing/src/components/JourneySample/JourneySample.styles.ts",
+      "packages/ui/src/primitives/Illustration/Illustration.styles.ts",
       "packages/ui/src/primitives/FlumpLogo/",
       "apps/mobile/src/components/FlumpLogo/",
     ]);

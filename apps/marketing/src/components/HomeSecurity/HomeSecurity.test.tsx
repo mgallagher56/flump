@@ -20,6 +20,7 @@ describe("HomeSecurity", () => {
     expect(band.getAttribute("data-tone-band")).toBe("card");
     expect(band.id).toBe("security");
     expect(screen.getByRole("region", { name: "Security and privacy" })).toBe(band);
+    expect(band.getAttribute("data-home-section-name")).toBe("Security");
     expect(
       screen.getByRole("link", { name: "What Flump can and cannot do" }).getAttribute("href"),
     ).toBe("/security");

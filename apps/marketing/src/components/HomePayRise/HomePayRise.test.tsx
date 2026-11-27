@@ -4,7 +4,7 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import { renderToString } from "react-dom/server";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { HomePayRise } from "./HomePayRise";
+import { HomePayRise, splitShares } from "./HomePayRise";
 
 vi.mock("../../motion/useGsapMoment", () => ({ useGsapMoment: vi.fn() }));
 
@@ -142,5 +142,28 @@ describe("HomePayRise: the result glides on input only (MK13, MK10)", () => {
     } finally {
       window.matchMedia = original;
     }
+  });
+});
+
+describe("HomePayRise: the split bar and the stop (prototype 11)", () => {
+  it("splits the rise into what is kept, Income Tax and National Insurance", () => {
+    // A £2,000 rise keeping £1,440, with £400 tax and £160 NI: 72%, 20% and 8%.
+    expect(splitShares(2_000, 1_440, 400, 160)).toEqual({ kept: 0.72, tax: 0.2, ni: 0.08 });
+    // No rise: nothing to split, and no part below zero.
+    expect(splitShares(0, 0, -5, 0)).toEqual({ kept: 0, tax: 0, ni: 0 });
+  });
+
+  it("draws the default rise's bar in the server HTML, decoration only, with no inline style", () => {
+    const { container } = render(tool);
+    const bar = screen.getByTestId("pay-rise-split");
+    expect(bar.getAttribute("aria-hidden")).toBe("true");
+    // 1,000 units less two 6-unit gaps leaves 988: 72% is 711.36, 20% is 197.6, 8% is 79.04.
+    const widths = Array.from(bar.querySelectorAll("rect")).map((r) =>
+      Number(r.getAttribute("width")).toFixed(2),
+    );
+    expect(widths).toEqual(["711.36", "197.60", "79.04"]);
+    expect(bar.getAttribute("style")).toBeNull();
+    const band = container.querySelector("#pay-rise");
+    expect(band?.getAttribute("data-home-section-name")).toBe("Pay rise");
   });
 });

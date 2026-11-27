@@ -1,18 +1,16 @@
 import {
   BREATHING_ROOM_DESCRIPTION,
   BREATHING_ROOM_LABEL,
-  Button,
   ExampleTag,
   HeroFigure,
   KpiCard,
 } from "@repo/ui";
 import { cx } from "@repo/ui/styled-system/css";
 import { ChevronDown } from "lucide-react";
-import { type FC, useRef } from "react";
+import { type FC, useEffect, useRef, useState } from "react";
 import { useGsapMoment } from "../../motion/useGsapMoment";
-import { signupCta } from "../../utils/site";
 import { BubbleField } from "../BubbleField";
-import { MotionControl } from "../MotionControl";
+import { LitCtas } from "../LitCtas";
 import {
   card,
   cardChip,
@@ -26,13 +24,15 @@ import {
   cardTone,
   cardTop,
   cardWave,
-  ctaRow,
   dash,
   dashCaption,
   dashHead,
   dashHeroTile,
   dashTiles,
   dashTitle,
+  ghost,
+  glint,
+  glintClip,
   glyph,
   hero,
   heroAside,
@@ -100,7 +100,7 @@ const glyphClass = (k: PieceKey) =>
  * name and every figure are always here; the pieces only ever play over it.
  */
 const Dashboard: FC = () => (
-  <figure aria-labelledby="home-dash-title home-dash-tag" className={dash}>
+  <figure aria-labelledby="home-dash-title home-dash-tag" className={dash} data-hero-dash="">
     <div className={dashHead}>
       <h2 className={dashTitle} id="home-dash-title">
         Monthly picture
@@ -130,7 +130,7 @@ const Dashboard: FC = () => (
     </div>
     <div className={made}>
       <h3 className={madeTitle}>Made from</h3>
-      <ul className={madeList}>
+      <ul className={madeList} data-hero-list="">
         {HERO_SOURCES.map((source) => (
           <li className={madeRow} data-hero-row={source.key} key={source.key}>
             <span aria-hidden="true" className={madeBar} data-hero-bar="" />
@@ -151,6 +151,10 @@ const Dashboard: FC = () => (
     <figcaption className={dashCaption}>
       Example household. Net worth also counts a {FIG.home} home estimate and a {FIG.loan} loan.
     </figcaption>
+    {/* The lock: one sweep of light across the finished frame (prototype 11's glint). */}
+    <span aria-hidden="true" className={glintClip}>
+      <span className={glint} data-hero-glint="" />
+    </span>
   </figure>
 );
 
@@ -183,12 +187,17 @@ const CardPiece: FC<{
 
 type Row = readonly [label: string, figure: string];
 
-const PieceRows: FC<{ rows: readonly Row[]; total: number }> = ({ rows, total }) => (
+const PieceRows: FC<{ rows: readonly Row[]; total: number; from?: "left" }> = ({
+  rows,
+  total,
+  from,
+}) => (
   <dl className={pieceRows}>
     {rows.map(([label, figure], index) => (
       <div className={index === total ? pieceRowTotal : undefined} key={label}>
         <dt>{label}</dt>
-        <dd>{figure}</dd>
+        {/* The receipt's total is where the "left over" figure lifts off (`data-hero-from`). */}
+        <dd data-hero-from={index === total ? from : undefined}>{figure}</dd>
       </div>
     ))}
   </dl>
@@ -204,7 +213,7 @@ const PaperPiece: FC<{ kind: "payslip" | "receipt"; title: string; rows: readonl
       <span className={paperTitle}>{title}</span>
       <ExampleTag />
     </div>
-    <PieceRows rows={rows} total={rows.length - 1} />
+    <PieceRows from={kind === "receipt" ? "left" : undefined} rows={rows} total={rows.length - 1} />
   </div>
 );
 
@@ -279,22 +288,63 @@ const PIECES: Record<PieceKey, FC> = {
 };
 
 /**
+ * The cue to the five areas (prototype 11's `ScrollCue`): it fades out once the page has scrolled
+ * more than 60px, and back at the top. Keyboard focus shows it again. The server HTML shows it.
+ */
+const ScrollCue: FC = () => {
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const update = () => setScrolled(window.scrollY > 60);
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    return () => window.removeEventListener("scroll", update);
+  }, []);
+  return (
+    <a
+      className={scrollCue}
+      data-scrolled={scrolled}
+      data-testid="hero-scroll-cue"
+      href="#features"
+    >
+      <span>See the five areas</span>
+      <ChevronDown aria-hidden="true" size={20} />
+    </a>
+  );
+};
+
+/** The two ways the assembly can play; the owner compares them with `?hero=timed`. */
+export type HeroMode = "scroll" | "timed";
+
+/** Reads the mode from the address on the client: `?hero=timed`, otherwise prototype 11's scroll. */
+export function heroModeFrom(search: string): HeroMode {
+  return new URLSearchParams(search).get("hero") === "timed" ? "timed" : "scroll";
+}
+
+/**
  * The home hero (ROLLOUT-PLAN M1, from prototype 11): the decided headline and lead, the two calls
- * to action, the motion control and a cue to the five areas, then the "Monthly picture" dashboard,
- * all in one centred column at every width. Once GSAP has loaded after first paint and the
- * dashboard is in view, six pieces of a household's money fly into its "Made from" rows by time,
- * never by scroll (`heroAssembly.ts`). The server HTML, no JavaScript and reduced motion all show
- * the finished, still dashboard, and GSAP never loads under reduced motion.
+ * to action and a cue to the five areas, then the "Monthly picture" dashboard. Under 1024px one
+ * centred column; from 1024px the copy on the left beside the dashboard.
+ *
+ * Once GSAP has loaded after first paint, six pieces of a household's money float apart and fly
+ * into the dashboard's "Made from" rows. By default this is prototype 11's version (`heroScroll.ts`):
+ * from 1024px the hero pins and the picture follows the scroll; under 1024px scroll triggers it and
+ * time completes it. With `?hero=timed` in the address (read on the client after mount) it is the
+ * earlier timed version (`heroAssembly.ts`): played once by time, never pinned or scrubbed. The
+ * server HTML, no JavaScript and reduced motion all show the finished, still dashboard, and GSAP
+ * never loads under reduced motion.
  */
 export const HomeHero: FC = () => {
   const ref = useRef<HTMLElement>(null);
-  const cta = signupCta();
 
   useGsapMoment(ref, (kit, root) => {
     let finish: (() => void) | undefined;
     let cancelled = false;
-    import("./heroAssembly").then(({ armHeroAssembly }) => {
-      if (!cancelled) finish = armHeroAssembly(kit, root);
+    const arm =
+      heroModeFrom(window.location.search) === "timed"
+        ? import("./heroAssembly").then((m) => m.armHeroAssembly)
+        : import("./heroScroll").then((m) => m.armHeroScroll);
+    arm.then((start) => {
+      if (!cancelled) finish = start(kit, root);
     });
     return () => {
       cancelled = true;
@@ -303,9 +353,17 @@ export const HomeHero: FC = () => {
   });
 
   return (
-    <section aria-labelledby="home-title" className={hero} data-testid="home-hero" ref={ref}>
-      <BubbleField layout="a" />
-      <div className={heroInner}>
+    <section
+      aria-labelledby="home-title"
+      className={hero}
+      data-home-section=""
+      data-home-section-name="One picture"
+      data-testid="home-hero"
+      id="home-hero"
+      ref={ref}
+    >
+      <BubbleField fit="hero" layout="a" />
+      <div className={heroInner} data-hero-inner="">
         <div className={heroCopy}>
           <h1 className={heroHeading} id="home-title">
             All your money. One clear picture.
@@ -313,26 +371,15 @@ export const HomeHero: FC = () => {
           <p className={heroLead}>
             Accounts, budget, pay, savings, pension and debts in one place.
           </p>
-          <div className={ctaRow}>
-            <Button asChild size="lg" variant="primary">
-              <a href={cta.href}>{cta.label}</a>
-            </Button>
-            <Button asChild size="lg" variant="outline">
-              <a href="/preview">Interactive preview</a>
-            </Button>
-          </div>
+          <LitCtas />
           <div className={heroAside}>
-            <MotionControl />
-            <a className={scrollCue} href="#features">
-              <span>See the five areas</span>
-              <ChevronDown aria-hidden="true" size={20} />
-            </a>
+            <ScrollCue />
           </div>
         </div>
         <div className={stage} data-hero-stage="">
           <div className={scene}>
             <Dashboard />
-            <div aria-hidden="true" className={piecesLayer}>
+            <div aria-hidden="true" className={piecesLayer} data-hero-layer="">
               {HERO_SOURCES.map(({ key }) => {
                 const Body = PIECES[key];
                 return (
@@ -341,6 +388,10 @@ export const HomeHero: FC = () => {
                   </div>
                 );
               })}
+              {/* The receipt's "left over" figure, which lifts off into the dashboard's tile. */}
+              <span className={ghost} data-hero-ghost="">
+                {FIG.leftOver}
+              </span>
             </div>
           </div>
         </div>

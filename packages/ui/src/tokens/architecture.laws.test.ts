@@ -532,6 +532,11 @@ describe("Architecture & Design System Laws", () => {
           count: 1,
           reason: "active child dot (graphic)",
         },
+        "apps/marketing/src/components/HomeStopControl/HomeStopControl.styles.ts": {
+          count: 1,
+          reason:
+            "next-section circle as prototype 11 (teal fill in light, mint in dark): its icon in primary.foreground clears 6.3:1 in light and about 10:1 in dark (guard change, coordinator sign-off)",
+        },
       };
       const repoRoot = path.resolve(__dirname, "../../../..");
       const roots = [

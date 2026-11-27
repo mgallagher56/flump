@@ -1,11 +1,5 @@
 import { css, cva } from "@repo/ui/styled-system/css";
 
-/** The band: positioned, and its own stacking context, so the bubble layer sits under the content. */
-export const featuresBand = css({ position: "relative", isolation: "isolate" });
-
-/** Under everything in the band, above the band's own fill (MK8: never over text). */
-export const bubbleLayer = css({ position: "absolute", inset: 0, zIndex: -1 });
-
 export const strip = css({ display: "flex", flexDirection: "column", gap: "2" });
 
 /**
@@ -43,51 +37,23 @@ export const featureList = css({
     overflowX: "visible",
     mx: "0",
     p: "0",
-    gap: "6",
+    gap: "clamp(20px, 1.6vw, 32px)",
   },
 });
 
-/**
- * One tile and its "1b" hover: the light follows the pointer and the tile tilts toward it, up to six
- * degrees (`useTiltLight` writes the custom properties, mouse only, never with reduced motion). No
- * border change and no top border on hover (STYLE-GUIDE 2.7).
- */
-export const featureItem = css({
-  scrollSnapAlign: "start",
-  position: "relative",
-  display: "grid",
-  borderRadius: "card",
-  transform: "perspective(900px) rotateX(var(--tilt-rx, 0deg)) rotateY(var(--tilt-ry, 0deg))",
-  _motionSafe: {
-    transitionProperty: "transform",
-    transitionDuration: "marketing.hover",
-    transitionTimingFunction: "marketing.calm",
-  },
-  // The moving light: a soft mint gradient that follows the pointer, over the glass card.
-  _after: {
-    content: '""',
-    position: "absolute",
-    inset: "0",
-    borderRadius: "inherit",
-    pointerEvents: "none",
-    backgroundImage:
-      "radial-gradient(320px circle at var(--light-x, 50%) var(--light-y, 0%), color-mix(in oklab, token(colors.primary) 16%, transparent), color-mix(in oklab, token(colors.primary) 6%, transparent) 40%, transparent 72%)",
-    opacity: "0",
-    _motionSafe: {
-      transitionProperty: "opacity",
-      transitionDuration: "marketing.hover",
-      transitionTimingFunction: "marketing.calm",
-    },
-  },
-  "&[data-tilt-light=on]::after": { opacity: "1" },
-});
+/** One tile: the tilt and light come from `TiltLight`; here it snaps into the row. */
+export const featureItem = css({ scrollSnapAlign: "start", borderRadius: "2xl" });
 
+/** As prototype 11's tile: 24px in and a 24px corner, roomier from 90rem. */
 export const featureCard = css({
   height: "full",
   display: "flex",
   flexDirection: "column",
   alignItems: "flex-start",
-  gap: "3",
+  gap: "2.5",
+  p: "6",
+  borderRadius: "2xl",
+  "@media (min-width: 90rem)": { p: "clamp(24px, 1.8vw, 36px)" },
 });
 
 /**
@@ -105,7 +71,13 @@ export const featurePicture = css({
   "& svg": { height: "full", width: "auto", maxWidth: "full" },
 });
 
-export const featureName = css({ textStyle: "heading.md", color: "text.primary", margin: 0 });
+export const featureName = css({
+  textStyle: "heading.md",
+  fontSize: { base: "xl", xl: "2xl" },
+  fontWeight: "bold",
+  color: "text.primary",
+  margin: 0,
+});
 
 export const featureLink = css({
   color: "text.primary",
@@ -122,9 +94,19 @@ export const featureLink = css({
   },
 });
 
-export const featureText = css({ textStyle: "body.md", color: "text.secondary", margin: 0 });
+export const featureText = css({
+  textStyle: "body.md",
+  color: "text.secondary",
+  margin: 0,
+  "@media (min-width: 90rem)": { fontSize: "lg" },
+});
 
-export const featureNote = css({ textStyle: "body.sm", color: "text.secondary", margin: 0 });
+export const featureNote = css({
+  textStyle: "body.sm",
+  color: "text.secondary",
+  margin: 0,
+  "@media (min-width: 90rem)": { fontSize: "md" },
+});
 
 /** Previous, the dots and next, under the row. Shown only once script has measured an overflow. */
 export const controls = cva({

@@ -14,8 +14,7 @@ import { Link } from "react-router-dom";
 import type { GsapKit } from "../../motion/loadGsapKit";
 import { useGsapMoment } from "../../motion/useGsapMoment";
 import { signupCta } from "../../utils/site";
-import { BubbleField } from "../BubbleField";
-import { MarketingSection } from "../MarketingSection";
+import { MarketingBand } from "../MarketingBand";
 import { DEFAULT_RISE_GBP, DEFAULT_SALARY_GBP, PAY_RISE_TITLE } from "../PayRiseTeaser";
 import { payRiseResult, seedSalaryForOnboarding, taxYearInWords } from "../PayRiseTeaser/payRise";
 import {
@@ -23,15 +22,18 @@ import {
   breakdownRow,
   breakdownTerm,
   breakdownValue,
-  bubbleLayer,
   glideFigure,
+  legend,
+  legendKey,
+  legendRow,
   outcomeHeadline,
   outcomeLabel,
   payActions,
-  payBand,
   payCard,
   payControls,
   payOutcome,
+  split,
+  splitPart,
   taperFigure,
   taperNote,
 } from "./HomePayRise.styles";
@@ -66,6 +68,54 @@ const GlideFigure: FC<{ value: number; suffix?: string; testId: string }> = ({
 };
 
 /** The card arrives once, by time, when it nears the viewport (MK2). The figures do not move. */
+/** Each part's share of the rise, as prototype 11's split bar: kept, Income Tax, National Insurance. */
+export function splitShares(rise: number, kept: number, tax: number, ni: number) {
+  const total = Math.max(1, rise);
+  const share = (n: number) => Math.max(0, n) / total;
+  return { kept: share(kept), tax: share(tax), ni: share(ni) };
+}
+
+/** The gap between parts, in the bar's 1,000 units across. */
+const SPLIT_GAP = 6;
+
+/**
+ * Prototype 11's split bar: how the rise divides between what you keep, Income Tax and National
+ * Insurance, drawn from the same result as the figures. Decoration beside the figures, which carry
+ * the meaning, so hidden from assistive technology; drawn in SVG units, so the server HTML needs
+ * no inline style.
+ */
+const SplitBar: FC<{ shares: ReturnType<typeof splitShares> }> = ({ shares }) => {
+  const parts = (["kept", "tax", "ni"] as const).filter((key) => shares[key] > 0);
+  const room = 1000 - SPLIT_GAP * Math.max(0, parts.length - 1);
+  let x = 0;
+  return (
+    <svg
+      aria-hidden="true"
+      className={split}
+      data-testid="pay-rise-split"
+      focusable="false"
+      preserveAspectRatio="none"
+      viewBox="0 0 1000 12"
+    >
+      {parts.map((key) => {
+        const width = shares[key] * room;
+        const rect = (
+          <rect
+            className={splitPart({ part: key })}
+            data-part={key}
+            height="12"
+            key={key}
+            width={width}
+            x={x}
+          />
+        );
+        x += width + SPLIT_GAP;
+        return rect;
+      })}
+    </svg>
+  );
+};
+
 export function payRiseMoment({ gsap }: GsapKit, root: HTMLElement): undefined {
   gsap.from(root, {
     y: 24,
@@ -97,16 +147,14 @@ export const HomePayRise: FC = () => {
   };
 
   return (
-    <MarketingSection
-      className={payBand}
+    <MarketingBand
+      bubbles="a"
       id="pay-rise"
+      stop="Pay rise"
       subtitle={PAY_RISE_SUBTITLE}
       title={PAY_RISE_TITLE}
       tone="canvas"
     >
-      <div className={bubbleLayer}>
-        <BubbleField layout="c" />
-      </div>
       <div ref={cardRef}>
         <Card padding="lg">
           <div className={payCard}>
@@ -138,6 +186,29 @@ export const HomePayRise: FC = () => {
                   <GlideFigure suffix=" a year" testId="pay-rise-kept" value={result.keptAnnual} />
                 </p>
               </div>
+
+              <SplitBar
+                shares={splitShares(
+                  rise,
+                  result.keptAnnual,
+                  result.extraIncomeTax,
+                  result.extraNationalInsurance,
+                )}
+              />
+              <ul aria-hidden="true" className={legend}>
+                <li className={legendRow}>
+                  <span className={legendKey({ part: "kept" })} />
+                  You keep
+                </li>
+                <li className={legendRow}>
+                  <span className={legendKey({ part: "tax" })} />
+                  Income Tax
+                </li>
+                <li className={legendRow}>
+                  <span className={legendKey({ part: "ni" })} />
+                  National Insurance
+                </li>
+              </ul>
 
               <dl className={breakdownList}>
                 <div className={breakdownRow}>
@@ -193,6 +264,6 @@ export const HomePayRise: FC = () => {
           />
         </Card>
       </div>
-    </MarketingSection>
+    </MarketingBand>
   );
 };

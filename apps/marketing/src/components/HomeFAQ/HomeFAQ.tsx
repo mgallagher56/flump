@@ -4,14 +4,11 @@ import { type FC, type ReactNode, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import type { GsapKit } from "../../motion/loadGsapKit";
 import { useGsapMoment } from "../../motion/useGsapMoment";
-import { BubbleField } from "../BubbleField";
-import { MarketingSection } from "../MarketingSection";
+import { MarketingBand } from "../MarketingBand";
 import {
-  bubbleLayer,
   faqAnswer,
   faqAnswerInner,
   faqAnswerText,
-  faqBand,
   faqChevron,
   faqItem,
   faqLink,
@@ -102,16 +99,15 @@ export const HomeFAQ: FC = () => {
   useGsapMoment(listRef, faqMoment);
 
   return (
-    <MarketingSection
-      className={faqBand}
+    <MarketingBand
+      bubbleFit="beside"
+      bubbles="c"
       id="faq"
+      stop="Questions"
       title="Frequently asked questions"
       tone="canvas"
       width="narrow"
     >
-      <div className={bubbleLayer}>
-        <BubbleField layout="c" />
-      </div>
       <ul className={faqList} ref={listRef}>
         {HOME_FAQS.map((faq) => {
           const isOpen = openId === faq.id;
@@ -145,6 +141,6 @@ export const HomeFAQ: FC = () => {
           );
         })}
       </ul>
-    </MarketingSection>
+    </MarketingBand>
   );
 };

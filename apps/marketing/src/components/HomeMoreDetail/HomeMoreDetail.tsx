@@ -4,16 +4,9 @@ import { Link } from "react-router-dom";
 import type { GsapKit } from "../../motion/loadGsapKit";
 import { useGsapMoment } from "../../motion/useGsapMoment";
 import { MONEY_AREAS, type MoneyAreaKey } from "../../utils/featureAreas";
-import { BubbleField } from "../BubbleField";
-import { MarketingSection } from "../MarketingSection";
-import {
-  bubbleLayer,
-  detailBand,
-  detailItem,
-  detailLink,
-  detailList,
-  detailText,
-} from "./HomeMoreDetail.styles";
+import { MarketingBand } from "../MarketingBand";
+import { TiltLight } from "../TiltLight";
+import { detailItem, detailLink, detailList, detailText } from "./HomeMoreDetail.styles";
 
 /** "More detail when you want it": one deeper tool from four areas, each linked to its page. */
 export const HOME_DEPTH: readonly { area: MoneyAreaKey; text: string }[] = [
@@ -57,39 +50,41 @@ export function moreDetailMoment({ gsap }: GsapKit, root: HTMLElement): undefine
 }
 
 /**
- * "More detail when you want it" (ROLLOUT-PLAN M1, from prototype 11): beside the questions on wide
- * screens (`pairBands` on the home page), the four deeper tools dealt in, in order.
+ * "More detail when you want it" (ROLLOUT-PLAN M1, from prototype 11): beside the questions from
+ * 75rem (`pairBands` on the home page), the four deeper tools dealt in, in order, each a sheet with
+ * the tilt-and-light hover.
  */
 export const HomeMoreDetail: FC = () => {
   const listRef = useRef<HTMLUListElement>(null);
   useGsapMoment(listRef, moreDetailMoment);
 
   return (
-    <MarketingSection
-      className={detailBand}
+    <MarketingBand
+      bubbleFit="beside"
+      bubbles="b"
       id="more-detail"
+      stop="More detail"
       subtitle="Each area starts simple and has more underneath for when you want it."
       title="More detail when you want it"
-      tone="canvas"
+      tone="card"
     >
-      <div className={bubbleLayer}>
-        <BubbleField layout="b" />
-      </div>
       <ul className={detailList} ref={listRef}>
         {HOME_DEPTH.map((item) => {
           const area = areaFor(item.area);
           return (
-            <Card as="li" className={detailItem} data-deal-item="" key={item.area} padding="md">
-              <span className={detailText}>{item.text}</span>
-              {area && (
-                <Link className={detailLink} to={area.path}>
-                  About {area.name.toLowerCase()} in Flump
-                </Link>
-              )}
-            </Card>
+            <TiltLight as="li" data-deal-item="" key={item.area}>
+              <Card className={detailItem} padding="none">
+                <span className={detailText}>{item.text}</span>
+                {area && (
+                  <Link className={detailLink} to={area.path}>
+                    About {area.name.toLowerCase()} in Flump
+                  </Link>
+                )}
+              </Card>
+            </TiltLight>
           );
         })}
       </ul>
-    </MarketingSection>
+    </MarketingBand>
   );
 };

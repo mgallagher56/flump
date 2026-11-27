@@ -6,6 +6,7 @@ import { BubbleField } from "./BubbleField";
 const band = css({
   position: "relative",
   minHeight: "320px",
+  overflowX: "clip",
   backgroundColor: "surface.canvas",
   py: { base: "12", md: "16" },
   px: "4",
@@ -44,6 +45,33 @@ export const Light: Story = {
 
 export const Dark: Story = {
   args: { layout: "b" },
+  globals: { theme: "dark" },
+  parameters: { backgrounds: { default: "dark" } },
+  play: assertField,
+};
+
+/** Each orb colour set on its own, for pages that use one. */
+export const SkyTealLight: Story = {
+  args: { layout: "a", sets: "skyTeal" },
+  globals: { theme: "light" },
+  play: assertField,
+};
+
+export const SkyTealDark: Story = {
+  args: { layout: "a", sets: "skyTeal" },
+  globals: { theme: "dark" },
+  parameters: { backgrounds: { default: "dark" } },
+  play: assertField,
+};
+
+export const VioletRoseLight: Story = {
+  args: { layout: "c", sets: "violetRose" },
+  globals: { theme: "light" },
+  play: assertField,
+};
+
+export const VioletRoseDark: Story = {
+  args: { layout: "c", sets: "violetRose" },
   globals: { theme: "dark" },
   parameters: { backgrounds: { default: "dark" } },
   play: assertField,

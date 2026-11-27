@@ -3,12 +3,10 @@ import { type FC, useRef } from "react";
 import { Link } from "react-router-dom";
 import type { GsapKit } from "../../motion/loadGsapKit";
 import { useGsapMoment } from "../../motion/useGsapMoment";
-import { BubbleField } from "../BubbleField";
-import { MarketingSection } from "../MarketingSection";
+import { MarketingBand } from "../MarketingBand";
 import {
-  bubbleLayer,
-  securityBand,
   securityBody,
+  securityCard,
   securityLink,
   securityMore,
   securityPicture,
@@ -44,21 +42,20 @@ export const HomeSecurity: FC = () => {
   useGsapMoment(cardRef, securityMoment);
 
   return (
-    <MarketingSection
-      className={securityBand}
+    <MarketingBand
+      bubbles="a"
       data-testid="security-privacy-section"
       id="security"
       labelledBy="security-title"
+      size="compact"
+      stop="Security"
       tone="card"
     >
-      <div className={bubbleLayer}>
-        <BubbleField layout="a" />
-      </div>
       <div data-testid="security-card" ref={cardRef}>
-        <Card material="glass" padding="lg">
+        <Card className={securityCard} material="glass" padding="none">
           <div className={securityRow}>
             <div className={securityPicture} data-security-part="">
-              <Illustration scene="security" size="sm" variant="document" />
+              <Illustration scene="security" size="sm" palette="orb" variant="document" />
             </div>
             <div className={securityText}>
               <h2 className={securityTitle} data-security-part="" id="security-title">
@@ -77,6 +74,6 @@ export const HomeSecurity: FC = () => {
           </div>
         </Card>
       </div>
-    </MarketingSection>
+    </MarketingBand>
   );
 };

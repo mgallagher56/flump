@@ -4,7 +4,7 @@ import { css } from "../../../styled-system/css";
 import { EmptyState } from "../../patterns/EmptyState/EmptyState";
 import { Button } from "../Button/Button";
 import { Text } from "../Text/Text";
-import { Illustration } from "./Illustration";
+import { type DocumentPalette, Illustration } from "./Illustration";
 import {
   DOCUMENT_GRID_WIDTH,
   DOCUMENT_MIN_TEXT,
@@ -125,7 +125,13 @@ const frames = {
   1280: css({ width: "1280px", maxWidth: "none" }),
 };
 
-const DocumentSheet = ({ width }: { width: 375 | 1280 }) => (
+const DocumentSheet = ({
+  width,
+  palette = "app",
+}: {
+  width: 375 | 1280;
+  palette?: DocumentPalette;
+}) => (
   <div className={frames[width]}>
     <div className={sheet}>
       {[
@@ -135,7 +141,7 @@ const DocumentSheet = ({ width }: { width: 375 | 1280 }) => (
         <section key={heading} aria-label={heading} className={sheetGrid}>
           {ids.map((scene) => (
             <figure key={scene} className={sheetCell} data-sheet-cell={scene}>
-              <Illustration scene={scene} variant="document" />
+              <Illustration palette={palette} scene={scene} variant="document" />
               <figcaption>
                 <Text as="span" color="secondary" textStyle="body.sm">
                   {scene}: {documentDefinitions[scene].subject}
@@ -203,4 +209,29 @@ export const DocumentSheetDark375: Story = {
 export const Document: Story = {
   args: { variant: "document", scene: "check-in", size: "lg" },
   globals: { theme: "light" },
+};
+
+/* ---------------------------------------------------------------------------------------------
+ * The opt-in orb look (`palette="orb"`): the marketing home page's prototype 11 colours on the
+ * pension mark and rule, the ticket's top band, the check-in tab's edge, the calendar band, the
+ * question bubble and the not-found tabs. Marketing home page only (STYLE-GUIDE 8.3, MK5).
+ * ------------------------------------------------------------------------------------------- */
+
+const assertOrbSheet: Story["play"] = async (context) => {
+  await assertSheet?.(context);
+  const pictures = context.canvasElement.querySelectorAll('svg[data-variant="document"]');
+  for (const svg of pictures) await expect(svg.getAttribute("data-palette")).toBe("orb");
+  await expect(context.canvasElement.querySelectorAll("[data-doc-orb]").length).toBe(9);
+};
+
+export const OrbLookLight: Story = {
+  globals: { theme: "light" },
+  render: () => <DocumentSheet palette="orb" width={1280} />,
+  play: assertOrbSheet,
+};
+
+export const OrbLookDark: Story = {
+  globals: { theme: "dark" },
+  render: () => <DocumentSheet palette="orb" width={1280} />,
+  play: assertOrbSheet,
 };

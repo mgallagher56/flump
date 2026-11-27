@@ -42,6 +42,8 @@ export interface SectionBandProps {
   children?: ReactNode;
   className?: string;
   "data-testid"?: string;
+  /** Other data attributes, passed to the marketing band's `section` (a page's section marks). */
+  [dataAttribute: `data-${string}`]: string | undefined;
 }
 
 /**
@@ -61,6 +63,7 @@ export const SectionBand: FC<SectionBandProps> = ({
   children,
   className,
   "data-testid": testId,
+  ...data
 }) => {
   const titleId = id && title ? `${id}-title` : undefined;
   const labelId = titleId ?? labelledBy;
@@ -91,6 +94,7 @@ export const SectionBand: FC<SectionBandProps> = ({
   return (
     <section
       aria-labelledby={labelId}
+      {...data}
       className={cx(sectionBandRecipe({ tone, size }), className)}
       data-testid={testId}
       data-tone-band={tone}

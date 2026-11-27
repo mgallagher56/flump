@@ -35,44 +35,76 @@ async function openPage(
   return page;
 }
 
+/**
+ * How an element shows inside the journey: its opacity times every ancestor's up to the journey
+ * (computed opacity ignores the parents), and whether it is `visibility: hidden`. Runs in the page.
+ */
+function shownInJourney(el: Element): { opacity: number; hidden: boolean } {
+  let opacity = 1;
+  let node: Element | null = el;
+  while (node && node.id !== "journey") {
+    opacity *= Number(getComputedStyle(node).opacity);
+    node = node.parentElement;
+  }
+  return { opacity, hidden: getComputedStyle(el).visibility === "hidden" };
+}
+
 test.describe("marketing home: layout", () => {
   for (const theme of THEMES) {
     for (const width of WIDTHS) {
-      test(`the hero is centred at ${width}px, ${theme}`, async ({ browser }) => {
+      test(`the hero's layout at ${width}px, ${theme}`, async ({ browser }) => {
         const page = await openPage(browser, {
           viewport: { width, height: 900 },
           colorScheme: theme,
           reducedMotion: "reduce",
         });
-        const viewportCentre = width / 2;
-        for (const locator of [
-          page.getByRole("heading", { level: 1 }),
-          page.getByTestId("home-hero").getByRole("heading", { name: "Monthly picture" }),
-        ]) {
-          const box = await locator.boundingBox();
-          expect(box).not.toBeNull();
-          if (!box) continue;
-          // The block is centred; the dashboard's title sits at its card's left, so measure the card.
-          const target =
-            (await locator.evaluate((el) => el.tagName)) === "H1"
-              ? box
-              : await page.getByTestId("home-hero").locator("figure").first().boundingBox();
-          expect(target).not.toBeNull();
-          if (target)
-            expect(Math.abs(target.x + target.width / 2 - viewportCentre)).toBeLessThan(2);
+        const hero = page.getByTestId("home-hero");
+        const heading = await page.getByRole("heading", { level: 1 }).boundingBox();
+        const copy = await hero.locator("h1").locator("..").boundingBox();
+        // The dashboard's title sits at its card's left, so measure the card.
+        const card = await hero.locator("figure").first().boundingBox();
+        const ctas = await hero.locator("[data-lit-ctas]").boundingBox();
+        const firstCta = await hero.getByRole("link", { name: "Request an invite" }).boundingBox();
+        const align = await hero
+          .locator("h1")
+          .locator("..")
+          .evaluate((el) => getComputedStyle(el).textAlign);
+        expect(heading && copy && card && ctas && firstCta).toBeTruthy();
+        if (heading && copy && card && ctas && firstCta) {
+          if (width < 1024) {
+            // Prototype 11 under 1024px: one centred column, the copy centred and the card
+            // centred under it.
+            const viewportCentre = width / 2;
+            expect(align).toBe("center");
+            expect(Math.abs(heading.x + heading.width / 2 - viewportCentre)).toBeLessThan(2);
+            expect(Math.abs(ctas.x + ctas.width / 2 - viewportCentre)).toBeLessThan(2);
+            expect(Math.abs(card.x + card.width / 2 - viewportCentre)).toBeLessThan(2);
+            expect(card.y).toBeGreaterThan(heading.y + heading.height);
+          } else {
+            // Prototype 11 from 1024px: two columns, the copy column left of the card and
+            // left-aligned, its heading and first call to action starting at the column's edge.
+            expect(align).toBe("left");
+            expect(copy.x + copy.width).toBeLessThan(card.x);
+            expect(Math.abs(heading.x - copy.x)).toBeLessThan(2);
+            expect(Math.abs(firstCta.x - copy.x)).toBeLessThan(2);
+          }
         }
-        // Each hero figure sits on one line ("About 10.2 months" never wraps; PR 975 review).
-        const lines = await page
-          .locator("[data-hero-value]")
-          .evaluateAll((els) =>
-            els.map((el) =>
-              Math.round(
-                el.getBoundingClientRect().height /
-                  Number.parseFloat(getComputedStyle(el).lineHeight),
+        // Stacked, each hero figure sits on one line ("About 10.2 months" never wraps; PR 975
+        // review). Side by side, prototype 11's two-column tiles wrap the breathing room figure
+        // at its KpiCard size, so the check holds under 1024px only (listed for the owner).
+        if (width < 1024) {
+          const lines = await page
+            .locator("[data-hero-value]")
+            .evaluateAll((els) =>
+              els.map((el) =>
+                Math.round(
+                  el.getBoundingClientRect().height /
+                    Number.parseFloat(getComputedStyle(el).lineHeight),
+                ),
               ),
-            ),
-          );
-        expect(lines).toEqual([1, 1, 1]);
+            );
+          expect(lines).toEqual([1, 1, 1]);
+        }
         // No band, bubble or orb makes the page scroll sideways.
         expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
         await page.context().close();
@@ -82,7 +114,7 @@ test.describe("marketing home: layout", () => {
 });
 
 test.describe("marketing home: without JavaScript and with reduced motion (MK1)", () => {
-  test("is complete with no JavaScript: journey as a list, carousel scrolling natively", async ({
+  test("is complete with no JavaScript: journey stops in order, carousel scrolling natively", async ({
     browser,
   }) => {
     const context = await browser.newContext({
@@ -91,9 +123,9 @@ test.describe("marketing home: without JavaScript and with reduced motion (MK1)"
     });
     const page = await context.newPage();
     await page.goto(HOME);
-    const stops = page.locator("#journey li[data-journey-stop]");
+    const stops = page.locator("#journey section[data-journey-stop]");
     await expect(stops).toHaveCount(6);
-    // A plain vertical list: each stop starts below the one before it.
+    // Plain sections in reading order: each stop starts below the one before it.
     const tops = await stops.evaluateAll((items) =>
       items.map((item) => item.getBoundingClientRect().top),
     );
@@ -134,7 +166,7 @@ test.describe("marketing home: without JavaScript and with reduced motion (MK1)"
     // Only the first-load scripts: GSAP, the hero's assembly and three.js never download.
     expect(scripts.filter((url) => !preloaded.includes(url))).toEqual([]);
     await expect(page.locator("canvas")).toHaveCount(0);
-    await expect(page.getByTestId("journey-orb")).toHaveAttribute("data-scene", "still");
+    await expect(page.getByTestId("journey-stage")).toHaveAttribute("data-scene", "still");
     await expect(page.locator("[data-enhanced]")).toHaveCount(0);
     // Nothing ambient moves, so there is no control to stop it.
     await expect(page.getByRole("button", { name: /^(Pause|Play) animation$/ })).toHaveCount(0);
@@ -147,16 +179,20 @@ test.describe("marketing home: controls", () => {
     page,
   }) => {
     await page.goto(HOME);
-    const pause = page.getByTestId("home-hero").getByRole("button", { name: "Pause animation" });
+    // Beside the section control at the bottom left.
+    const pause = page
+      .locator("[data-stop-control]")
+      .getByRole("button", { name: "Pause animation" });
     await expect(pause).toBeEnabled();
     await pause.focus();
     await page.keyboard.press("Enter");
     await expect(page.locator("html")).toHaveAttribute("data-ambient", "paused");
+    // The bubbles' scroll-linked drift is switched off while paused.
     const states = await page
       .locator("[data-bubble-field] span")
-      .evaluateAll((els) => els.map((el) => getComputedStyle(el).animationPlayState));
+      .evaluateAll((els) => els.map((el) => getComputedStyle(el).animationName));
     expect(states.length).toBeGreaterThan(0);
-    expect(new Set(states)).toEqual(new Set(["paused"]));
+    expect(new Set(states)).toEqual(new Set(["none"]));
     // Every control on the page shows the same state.
     await expect(page.getByRole("button", { name: "Play animation" })).toHaveCount(2);
     // An entrance still to play shows at once: the rough figures steps are fully opaque the moment
@@ -166,7 +202,10 @@ test.describe("marketing home: controls", () => {
       .locator("#rough-figures [data-step]")
       .evaluateAll((els) => els.map((el) => getComputedStyle(el).opacity));
     expect(opacities).toEqual(["1", "1", "1"]);
-    await page.getByTestId("home-hero").getByRole("button", { name: "Play animation" }).click();
+    await page
+      .locator("[data-stop-control]")
+      .getByRole("button", { name: "Play animation" })
+      .click();
     await expect(page.locator("html")).not.toHaveAttribute("data-ambient", "paused");
     await page.waitForTimeout(300);
     expect(
@@ -174,6 +213,68 @@ test.describe("marketing home: controls", () => {
         .locator("#rough-figures [data-step]")
         .evaluateAll((els) => els.map((el) => getComputedStyle(el).opacity)),
     ).toEqual(["1", "1", "1"]);
+  });
+
+  test("the stop control steps next and previous and moves focus to each section's heading", async ({
+    page,
+  }) => {
+    await page.goto(HOME);
+    // From 1024px the hero's pin adds a run of scroll above every band once GSAP has loaded, so
+    // step once the hero is live (a visitor this quick would see the page lengthen under them).
+    await expect(page.getByTestId("home-hero")).toHaveAttribute("data-hero-live", "true", {
+      timeout: 15_000,
+    });
+    const control = page.locator("[data-stop-control]");
+    const next = control.getByRole("button", { name: /^Next section/ });
+    const previous = control.getByRole("button", { name: /^Previous section/ });
+    await expect(control.getByTestId("stop-control-label")).toContainText("1 of");
+    await expect(previous).toBeDisabled();
+    // The second stop's heading, read from the page rather than written here.
+    const second = page.locator("[data-home-section]").nth(1);
+    const secondHeading = await second.getAttribute("aria-labelledby");
+    await next.focus();
+    await page.keyboard.press("Enter");
+    await expect(control.getByTestId("stop-control-label")).toContainText("2 of");
+    await expect(page.locator(`[id="${secondHeading?.split(" ")[0]}"]`)).toBeFocused();
+    // Smooth scrolling: it lands just under the header.
+    await expect
+      .poll(async () => Math.round((await second.boundingBox())?.y ?? -1), { timeout: 10_000 })
+      .toBeLessThan(120);
+    await expect(second).toBeInViewport();
+    await previous.click();
+    await expect(control.getByTestId("stop-control-label")).toContainText("1 of");
+    await expect(page.getByRole("heading", { level: 1 })).toBeFocused();
+  });
+
+  test("?hero=timed plays the earlier timed assembly: never pinned, ending on the finished picture", async ({
+    browser,
+  }) => {
+    const page = await openPage(browser, { viewport: { width: 1440, height: 900 } });
+    const scripts: string[] = [];
+    const problems: string[] = [];
+    page.on("request", (request) => {
+      if (request.resourceType() === "script") scripts.push(request.url());
+    });
+    page.on("pageerror", (error) => problems.push(error.message));
+    await page.goto(`${HOME}?hero=timed`);
+    const hero = page.getByTestId("home-hero");
+    await expect(hero).toHaveAttribute("data-hero-live", "true", { timeout: 15_000 });
+    expect(scripts.some((url) => /heroAssembly/.test(url))).toBe(true);
+    expect(scripts.some((url) => /heroScroll/.test(url))).toBe(false);
+    // Played by time: no pin wraps the hero.
+    await expect(page.locator(".pin-spacer")).toHaveCount(0);
+    // The longest run is the hero's assembly (durations.marketing.hero, 4,760 ms).
+    await expect
+      .poll(
+        () =>
+          hero
+            .locator("[data-hero-value]")
+            .evaluateAll((els) => els.map((el) => getComputedStyle(el).opacity)),
+        { timeout: 15_000 },
+      )
+      .toEqual(["1", "1", "1"]);
+    expect(problems).toEqual([]);
+    await page.context().close();
   });
 
   test("the features carousel steps by keyboard, with dots and never a count (MK9)", async ({
@@ -242,14 +343,109 @@ test.describe("marketing home: controls", () => {
     }
     // Time completes every changeover: leave, beat, arrive is under 3 s at the calm scale.
     await page.waitForTimeout(4000);
-    const partial = await journey
-      .locator("h3, p, [data-stop-side]")
-      .evaluateAll((els) =>
-        els
-          .map((el) => Number(getComputedStyle(el).opacity))
-          .filter((opacity) => opacity > 0.02 && opacity < 0.98),
-      );
+    const parts = "h2, p, [data-stop-side], [data-stop-pair]";
+    const partial = await journey.locator(parts).evaluateAll((els, shownSrc) => {
+      const shown = new Function(`return ${shownSrc}`)() as typeof shownInJourney;
+      return els
+        .map((el) => shown(el).opacity)
+        .filter((opacity) => opacity > 0.02 && opacity < 0.98);
+    }, shownInJourney.toString());
     expect(partial).toEqual([]);
+    // Come to rest at the third stop: it shows whole, nothing in it faded or hidden.
+    const third = journey.locator("[data-journey-stop]").nth(2);
+    await third.evaluate((el) => {
+      const header = document.querySelector("header")?.offsetHeight ?? 0;
+      window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - header });
+    });
+    await page.waitForTimeout(4000);
+    const thirdParts = await third
+      .locator(parts)
+      .evaluateAll(
+        (els, shownSrc) =>
+          els.map((el) => (new Function(`return ${shownSrc}`)() as typeof shownInJourney)(el)),
+        shownInJourney.toString(),
+      );
+    expect(thirdParts.length).toBeGreaterThan(0);
+    for (const part of thirdParts) {
+      expect(part.opacity).toBeGreaterThan(0.98);
+      expect(part.hidden).toBe(false);
+    }
+  });
+
+  test("the stop control steps from Features through the journey, focusing each stop's heading shown whole", async ({
+    page,
+  }) => {
+    await page.goto(HOME);
+    await expect(page.getByTestId("home-hero")).toHaveAttribute("data-hero-live", "true", {
+      timeout: 15_000,
+    });
+    const control = page.locator("[data-stop-control]");
+    const label = control.getByTestId("stop-control-label");
+    const next = control.getByRole("button", { name: /^Next section/ });
+    const sections = page.locator("[data-home-section]");
+    const names = await sections.evaluateAll((els) =>
+      els.map((el) => el.getAttribute("data-home-section-name")),
+    );
+    const features = names.indexOf("Five areas");
+    expect(features).toBeGreaterThanOrEqual(0);
+    // Reach Features, then wait for the journey to go live as it nears.
+    for (let i = 0; i < features; i++) {
+      await next.click();
+      await expect(label).toContainText(`${i + 2} of`);
+    }
+    await expect(page.locator("#journey")).toHaveAttribute("data-live", "on", { timeout: 10_000 });
+    const stops = page.locator("[data-journey-stop]");
+    const count = await stops.count();
+    for (let k = 0; k < count; k++) {
+      const headingId = await stops.nth(k).getAttribute("aria-labelledby");
+      await next.click();
+      const heading = page.locator(`[id="${headingId}"]`);
+      await expect(heading).toBeFocused();
+      // Focus landed on a heading already shown whole, not one still waiting to arrive.
+      const shown = await heading.evaluate(
+        (el, shownSrc) => (new Function(`return ${shownSrc}`)() as typeof shownInJourney)(el),
+        shownInJourney.toString(),
+      );
+      expect(shown).toEqual({ opacity: 1, hidden: false });
+      // Wait for the smooth scroll to settle before the next step.
+      await expect
+        .poll(async () => Math.round((await stops.nth(k).boundingBox())?.y ?? -1), {
+          timeout: 10_000,
+        })
+        .toBeLessThan(120);
+    }
+  });
+
+  test("Tab goes from the journey's intro through every stop's link in order, each stop shown whole", async ({
+    page,
+  }) => {
+    await page.goto(HOME);
+    const journey = page.locator("#journey");
+    await journey.scrollIntoViewIfNeeded();
+    await expect(journey).toHaveAttribute("data-live", "on", { timeout: 15_000 });
+    const firstStop = journey.locator("[data-journey-stop]").first();
+    await expect(firstStop).toHaveAttribute("data-enhanced", "true", { timeout: 15_000 });
+    await journey.locator("[data-journey-intro] button").first().focus();
+    const count = await journey.locator("[data-journey-stop]").count();
+    for (let k = 1; k <= count; k++) {
+      await page.keyboard.press("Tab");
+      const focused = await page.evaluate(() => {
+        const el = document.activeElement;
+        return {
+          tag: el?.tagName,
+          stop: el?.closest<HTMLElement>("[data-journey-stop]")?.dataset.stop,
+        };
+      });
+      expect(focused).toEqual({ tag: "A", stop: String(k) });
+      const shown = await page.evaluate(
+        (shownSrc) =>
+          (new Function(`return ${shownSrc}`)() as typeof shownInJourney)(
+            document.activeElement as Element,
+          ),
+        shownInJourney.toString(),
+      );
+      expect(shown).toEqual({ opacity: 1, hidden: false });
+    }
   });
 });
 

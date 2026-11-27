@@ -1,40 +1,54 @@
 import { css, cva } from "@repo/ui/styled-system/css";
 
 /*
- * The hero (ROLLOUT-PLAN M1, prototype 11): one centred column at every width, copy then the
- * dashboard, on the canvas band. Every size is reserved in the server render: the pieces layer
- * sits over the dashboard and takes no space, so nothing shifts when the assembly plays.
+ * The hero (ROLLOUT-PLAN M1, prototype 11): under 1024px one centred column, copy then the
+ * dashboard; from 1024px two columns, the copy left-aligned beside the dashboard, the pair centred
+ * in the first screen under the header. Every size is reserved in the server render: the pieces
+ * layer sits over the dashboard and takes no space, so nothing shifts when the assembly plays.
  */
 
 export const hero = css({
   position: "relative",
   backgroundColor: "surface.canvas",
   px: "4",
-  pt: { base: "12", md: "16" },
-  pb: { base: "12", md: "16" },
+  pt: { base: "8", md: "12" },
+  pb: { base: "10", md: "12" },
   // Pieces in flight never cause a sideways scroll.
   overflowX: "clip",
   // Less top room in a short viewport (a phone in landscape), so the dashboard starts sooner.
   "@media screen and (max-height: 30rem)": { pt: "6" },
+  lg: { px: "6", py: "0" },
 });
 
-/** One centred column at every width (owner ruling 5): never a left-right split. */
+/**
+ * Stacked and centred under 1024px; from 1024px the two columns of prototype 11 (0.85 to 1.15),
+ * 76rem at most, at least the first screen under the header tall, both columns vertically centred.
+ */
 export const heroInner = css({
-  maxWidth: "6xl",
+  maxWidth: "76rem",
   mx: "auto",
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  gap: { base: "8", md: "10" },
+  display: "grid",
+  justifyItems: "center",
+  gap: "7",
+  lg: {
+    gridTemplateColumns: "minmax(0, 0.85fr) minmax(0, 1.15fr)",
+    justifyItems: "stretch",
+    alignItems: "center",
+    gap: "12",
+    minHeight: "calc(100svh - 4rem)",
+    py: "6",
+  },
 });
 
 export const heroCopy = css({
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
-  gap: "5",
+  gap: "4.5",
   textAlign: "center",
+  width: "full",
   maxWidth: "3xl",
+  lg: { alignItems: "flex-start", textAlign: "left" },
 });
 
 export const heroHeading = css({
@@ -44,43 +58,56 @@ export const heroHeading = css({
   textWrap: "balance",
 });
 
-export const heroLead = css({ textStyle: "body.lg", color: "text.secondary", margin: 0 });
-
-export const ctaRow = css({
-  display: "flex",
-  flexWrap: "wrap",
-  justifyContent: "center",
-  gap: "3",
+export const heroLead = css({
+  textStyle: "body.lg",
+  color: "text.secondary",
+  margin: 0,
+  maxWidth: "34ch",
 });
 
-/** The motion control and the scroll cue, quiet, under the calls to action. */
+/** The scroll cue, quiet, under the calls to action. */
 export const heroAside = css({
   display: "flex",
   flexWrap: "wrap",
   alignItems: "center",
   justifyContent: "center",
   gap: "2",
+  mt: "1",
+  lg: { justifyContent: "flex-start" },
 });
 
 export const scrollCue = css({
   display: "inline-flex",
   alignItems: "center",
   gap: "2",
-  px: "3",
+  px: "3.5",
   py: "2",
   borderRadius: "full",
   textStyle: "label.md",
   color: "text.secondary",
   textDecoration: "none",
-  transitionProperty: "color",
+  transitionProperty: "color, opacity",
   transitionDuration: "marketing.hover",
   transitionTimingFunction: "marketing.calm",
   _hover: { color: "text.primary" },
-  _focusVisible: { outline: "2px solid", outlineColor: "border.focusRing", outlineOffset: "2px" },
+  // Gone once the page has scrolled (prototype 11's `ScrollCue`), back on keyboard focus.
+  "&[data-scrolled=true]": { opacity: "0", pointerEvents: "none" },
+  _focusVisible: {
+    opacity: "1",
+    outline: "2px solid",
+    outlineColor: "border.focusRing",
+    outlineOffset: "2px",
+  },
 });
 
-/** The dashboard's column: grows with the screen up to 48rem, always centred. */
-export const stage = css({ position: "relative", width: "full", maxWidth: "3xl", mx: "auto" });
+/** The dashboard's column: stacked, it grows with the screen up to 46rem, centred; beside the copy, 40rem. */
+export const stage = css({
+  position: "relative",
+  width: "full",
+  maxWidth: "min(100%, 46rem)",
+  mx: "auto",
+  lg: { maxWidth: "40rem" },
+});
 
 export const scene = css({
   position: "relative",
@@ -103,6 +130,27 @@ export const dash = css({
   backgroundColor: "surface.card",
   boxShadow: "floating",
   textAlign: "left",
+});
+
+/**
+ * The lock's sweep of light (prototype 11's `p11-dash__glint`): a faint mint band that crosses the
+ * finished dashboard once as the last piece lands. Its own clip, so the dashboard itself is not
+ * clipped. Invisible at rest, so the server HTML, no JavaScript and reduced motion never show it.
+ */
+export const glintClip = css({
+  position: "absolute",
+  inset: "0",
+  overflow: "hidden",
+  borderRadius: "inherit",
+  pointerEvents: "none",
+});
+
+export const glint = css({
+  position: "absolute",
+  inset: "0",
+  opacity: "0",
+  backgroundImage:
+    "linear-gradient(104deg, transparent 38%, color-mix(in oklab, {colors.primary} 16%, transparent) 50%, transparent 62%)",
 });
 
 export const dashHead = css({
@@ -156,7 +204,8 @@ export const madeList = css({
   display: "grid",
   columnGap: "4",
   rowGap: "2px",
-  gridTemplateColumns: { base: "1fr", md: "1fr 1fr" },
+  // One column stacked (the pieces rest in a tray over it); two once the hero is side by side.
+  gridTemplateColumns: { base: "1fr", lg: "1fr 1fr" },
 });
 
 export const madeRow = css({
@@ -224,6 +273,24 @@ export const piecesLayer = css({
   "[data-hero-live=true] &": { visibility: "visible" },
 });
 
+/**
+ * The receipt's "left over" figure (prototype 11's `p11-ghost`): it shows as the receipt leaves,
+ * lifts off and lands on the dashboard tile's figure, then gives way to it. Placed like a piece,
+ * its top-left on the stage's centre until the run centres it. Invisible at rest.
+ */
+export const ghost = css({
+  position: "absolute",
+  left: "50%",
+  top: "50%",
+  fontSize: "md",
+  fontWeight: "bold",
+  color: "text.primary",
+  whiteSpace: "nowrap",
+  fontVariantNumeric: "tabular-nums",
+  opacity: "0",
+  "[data-hero-live=true] &": { willChange: "transform, opacity" },
+});
+
 export const piece = css({
   position: "absolute",
   left: "50%",
@@ -236,8 +303,8 @@ export const piece = css({
 
 /**
  * A card's colours as two custom properties, shared by the piece and its row's glyph. Charcoal
- * savings card and a mint-tinted credit card; in Midnight both lean towards mint so they stand off
- * the dark page. `surface.hero` stays on the HeroFigure alone.
+ * savings card and a mint credit card; in Midnight both lean towards mint so they stand off
+ * the dark page.
  */
 export const cardTone = cva({
   variants: {
@@ -254,9 +321,19 @@ export const cardTone = cva({
           "--card-ink": "{colors.text.primary}",
         },
       },
+      // Prototype 11: the solid mint hero fill with its own ink in light; a mint-tinted overlay in
+      // Midnight.
       credit: {
-        "--card-bg": "color-mix(in oklab, {colors.primary} 16%, {colors.surface.overlay})",
-        "--card-ink": "{colors.text.primary}",
+        "--card-bg": "{colors.surface.hero}",
+        "--card-ink": "{colors.text.onHero}",
+        _dark: {
+          "--card-bg": "color-mix(in oklab, {colors.primary} 12%, {colors.surface.overlay})",
+          "--card-ink": "{colors.text.primary}",
+        },
+        _systemDark: {
+          "--card-bg": "color-mix(in oklab, {colors.primary} 12%, {colors.surface.overlay})",
+          "--card-ink": "{colors.text.primary}",
+        },
       },
     },
   },

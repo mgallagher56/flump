@@ -3,13 +3,14 @@ import { useSceneSettle } from "../../hooks/useSceneSettle";
 import { DocumentShapeList } from "./Illustration.documentShapes";
 import {
   DOCUMENT_GRID_WIDTH,
+  type DocumentPalette,
   type DocumentScene,
   documentDefinitions,
 } from "./Illustration.documents";
 import { type IllustrationScene, SceneShapeList, sceneDefinitions } from "./Illustration.scenes";
 import { documentRecipe, illustrationRecipe } from "./Illustration.styles";
 
-export type { DocumentScene } from "./Illustration.documents";
+export type { DocumentPalette, DocumentScene } from "./Illustration.documents";
 export type { IllustrationScene } from "./Illustration.scenes";
 
 interface CommonProps {
@@ -39,6 +40,13 @@ export interface DocumentIllustrationProps extends CommonProps {
   /** Document cards (STYLE-GUIDE 8.3): tilted cards and paper with sample content. Never moves. */
   variant: "document";
   scene: DocumentScene;
+  /**
+   * `"app"` (default): the look every app and page uses (STYLE-GUIDE 8.3). `"orb"`: the marketing
+   * home page's opt-in look, prototype 11's orb colours on the pension mark and rule, the ticket's
+   * top band, the check-in tab's edge, the calendar band, the question bubble and the not-found
+   * tabs. Marketing home page only (UX-GUIDELINES MK5).
+   */
+  palette?: DocumentPalette;
 }
 
 export type IllustrationProps = FlatIllustrationProps | DocumentIllustrationProps;
@@ -65,7 +73,12 @@ const FlatIllustration: FC<FlatIllustrationProps> = ({ scene, size = "md", id, s
   );
 };
 
-const DocumentIllustration: FC<DocumentIllustrationProps> = ({ scene, size = "md", id }) => {
+const DocumentIllustration: FC<DocumentIllustrationProps> = ({
+  scene,
+  size = "md",
+  id,
+  palette = "app",
+}) => {
   const picture = documentDefinitions[scene];
   return (
     <svg
@@ -73,13 +86,14 @@ const DocumentIllustration: FC<DocumentIllustrationProps> = ({ scene, size = "md
       data-testid={id}
       data-scene={scene}
       data-variant="document"
+      data-palette={palette === "orb" ? "orb" : undefined}
       aria-hidden="true"
       className={documentRecipe({ size })}
       focusable="false"
       role="presentation"
       viewBox={`0 0 ${DOCUMENT_GRID_WIDTH} ${picture.height}`}
     >
-      <DocumentShapeList shapes={picture.pieces} />
+      <DocumentShapeList palette={palette} shapes={picture.pieces} />
     </svg>
   );
 };

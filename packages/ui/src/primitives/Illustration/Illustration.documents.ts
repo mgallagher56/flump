@@ -27,6 +27,30 @@ export type DocumentInk = "ink" | "inkSecondary" | "primary" | "onCharcoal" | "o
 export type DocumentFill = DocumentSurface | "line" | "primary" | "tag" | "markOnCharcoal";
 export type DocumentStroke = "edge" | "rule" | "slot" | "primary" | "onBand" | "onCharcoal";
 
+/**
+ * The marketing home page's opt-in look (`palette="orb"` on the `Illustration` document variant):
+ * prototype 11's colours on the few shapes F3 recoloured under rule MC1. A marked shape keeps its
+ * default role everywhere else, so the apps never see these. Tokens are in
+ * `documentOrbRoleTokens` (`Illustration.styles.ts`, the one file allowed the orb colours).
+ * - `violet` and `rose`: a graphic fill or line (the pension mark and rule, the ticket's top band,
+ *   the check-in tab's edge). No text sits on them.
+ * - `teal`: a fill words sit on (the calendar band, the question bubble), with `onBand` ink.
+ * - `violetTint` and `tealTint`: a piece's own fill (the not-found tabs), with `ink` text.
+ */
+export type DocumentOrbAccent = "violet" | "rose" | "teal" | "violetTint" | "tealTint";
+
+/** Which look a document picture is drawn in: the apps' (default) or the opt-in orb colours. */
+export type DocumentPalette = "app" | "orb";
+
+/** The inks allowed on each orb accent that text sits on (checked in `Illustration.test.tsx`). */
+export const documentOrbInksByAccent: Record<DocumentOrbAccent, readonly DocumentInk[]> = {
+  violet: [],
+  rose: [],
+  teal: ["onBand"],
+  violetTint: ["ink", "inkSecondary"],
+  tealTint: ["ink", "inkSecondary"],
+};
+
 /** Semantic token for each role. The web maps them in `documentClasses`; mobile reads its theme. */
 export const documentRoleTokens = {
   surface: {
@@ -142,6 +166,8 @@ export interface DocumentRect {
   stroke?: DocumentStroke;
   dashed?: boolean;
   opacity?: number;
+  /** Takes this orb colour under `palette="orb"` only. */
+  orb?: DocumentOrbAccent;
 }
 
 export interface DocumentCircle {
@@ -151,6 +177,8 @@ export interface DocumentCircle {
   r: number;
   fill: DocumentFill;
   opacity?: number;
+  /** Takes this orb colour under `palette="orb"` only. */
+  orb?: DocumentOrbAccent;
 }
 
 export interface DocumentPath {
@@ -161,6 +189,8 @@ export interface DocumentPath {
   strokeWidth?: number;
   dashed?: boolean;
   opacity?: number;
+  /** Takes this orb colour under `palette="orb"` only. */
+  orb?: DocumentOrbAccent;
 }
 
 /** A card or a sheet of paper: its own surface, tilted about its centre, holding shapes. */
@@ -182,6 +212,8 @@ export interface DocumentPiece {
   torn?: boolean;
   /** No body of its own: only its shapes are drawn (an empty, dashed space). */
   bare?: boolean;
+  /** Its body takes this orb colour under `palette="orb"` only. */
+  orb?: DocumentOrbAccent;
   shapes: readonly DocumentShape[];
 }
 
@@ -304,7 +336,7 @@ const piece = (
   rotate: number,
   surface: DocumentSurface,
   shapes: readonly DocumentShape[],
-  options: Partial<Pick<DocumentPiece, "rx" | "shadow" | "edge" | "torn" | "bare">> = {},
+  options: Partial<Pick<DocumentPiece, "rx" | "shadow" | "edge" | "torn" | "bare" | "orb">> = {},
 ): DocumentPiece => ({
   kind: "piece",
   x,
@@ -544,11 +576,11 @@ export const documentDefinitions: Record<DocumentScene, DocumentPicture> = {
     pieces: [
       underSheet(70, 26, 206, 164, 4),
       piece(30, 14, 236, 180, -2, "paper", [
-        { kind: "circle", cx: 26, cy: 28, r: 10, fill: "primary" },
+        { kind: "circle", cx: 26, cy: 28, r: 10, fill: "primary", orb: "violet" },
         { kind: "rect", x: 44, y: 20, width: 92, height: 5, rx: 2.5, fill: "line" },
         { kind: "rect", x: 44, y: 31, width: 62, height: 5, rx: 2.5, fill: "line" },
         tag(222, 16),
-        { kind: "path", d: "M16 50H220", stroke: "primary", strokeWidth: 2 },
+        { kind: "path", d: "M16 50H220", stroke: "primary", strokeWidth: 2, orb: "violet" },
         title(18, 78, "Pension statement", 15),
         ...rows(18, 218, 110, [
           { label: "Pot value", value: "£96,000", total: true },
@@ -575,9 +607,10 @@ export const documentDefinitions: Record<DocumentScene, DocumentPicture> = {
           rotate: 0,
           surface: "band",
           rx: 6,
+          orb: "teal",
           shapes: [
             // Squares off the band's lower corners where it meets the page.
-            { kind: "rect", x: 0, y: 30, width: 142, height: 14, fill: "band" },
+            { kind: "rect", x: 0, y: 30, width: 142, height: 14, fill: "band", orb: "teal" },
             text(71, 29, "November", 16, "onBand", {
               weight: 700,
               anchor: "middle",
@@ -601,7 +634,7 @@ export const documentDefinitions: Record<DocumentScene, DocumentPicture> = {
         6,
         "paper",
         [
-          { kind: "rect", x: 0, y: 0, width: 4, height: 32, fill: "primary" },
+          { kind: "rect", x: 0, y: 0, width: 4, height: 32, fill: "primary", orb: "rose" },
           text(16, 21, "Check-in day", 14, "ink", { weight: 700, font: "display" }),
         ],
         { rx: 4 },
@@ -635,7 +668,12 @@ export const documentDefinitions: Record<DocumentScene, DocumentPicture> = {
     subject: "A getting started ticket in three parts",
     pieces: [
       piece(8, 24, 284, 164, -2, "paper", [
-        { kind: "path", d: "M0 6a6 6 0 0 1 6-6H278a6 6 0 0 1 6 6V7H0Z", fill: "primary" },
+        {
+          kind: "path",
+          d: "M0 6a6 6 0 0 1 6-6H278a6 6 0 0 1 6 6V7H0Z",
+          fill: "primary",
+          orb: "violet",
+        },
         title(16, 38, "Getting started", 16),
         tag(270, 20),
         {
@@ -682,7 +720,7 @@ export const documentDefinitions: Record<DocumentScene, DocumentPicture> = {
           { kind: "path", d: "M26 18H14M19 12l-6 6 6 6", stroke: "primary", strokeWidth: 2 },
           text(36, 23, "Flump features", 14, "ink", { weight: 700, font: "display" }),
         ],
-        { rx: 7 },
+        { rx: 7, orb: "violetTint" },
       ),
       piece(
         168,
@@ -695,7 +733,7 @@ export const documentDefinitions: Record<DocumentScene, DocumentPicture> = {
           text(14, 23, "Home page", 14, "ink", { weight: 700, font: "display" }),
           { kind: "path", d: "M100 18H112M107 12l6 6-6 6", stroke: "primary", strokeWidth: 2 },
         ],
-        { rx: 7 },
+        { rx: 7, orb: "tealTint" },
       ),
     ],
   },
@@ -792,6 +830,7 @@ export const documentDefinitions: Record<DocumentScene, DocumentPicture> = {
           rotate: 0,
           surface: "band",
           rx: 10,
+          orb: "teal",
           shapes: [
             text(96, 24, ["How long would my", "savings cover the", "essentials?"], 13, "onBand", {
               weight: 600,

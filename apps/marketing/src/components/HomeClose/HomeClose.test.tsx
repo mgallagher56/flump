@@ -9,10 +9,11 @@ vi.mock("../../utils/site", () => ({
 }));
 
 describe("HomeClose", () => {
-  it("asks the closing question on the calm card band, never a dark band", () => {
+  it("asks the closing question on the calm canvas band (prototype 11), never a dark band", () => {
     const { container } = render(<HomeClose />);
     const band = container.querySelector("#get-started") as HTMLElement;
-    expect(band.getAttribute("data-tone-band")).toBe("card");
+    expect(band.getAttribute("data-tone-band")).toBe("canvas");
+    expect(band.getAttribute("data-home-section-name")).toBe("Get started");
     expect(screen.getByRole("region", { name: "Ready to see where you stand?" })).toBe(band);
     const card = within(band).getByTestId("home-final-cta");
     expect(within(card).getByText("Start with a few rough numbers.")).toBeDefined();
