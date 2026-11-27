@@ -183,7 +183,7 @@ function SecondCell({
  * each month (or short, or the budget's income only, or a refusal's notice), then what the person
  * owes or, with no debt, their pension pots. Everything comes from the engine's `selectHomeStrip`;
  * this draws it. With no budget the strip is one prompt, which hides the second figure too (web's
- * `KpiStrip` rule). The cells stack at large text and on narrow screens.
+ * `KpiStrip` rule). The cells stay side by side at any width and stack from 150% text.
  */
 export function KpiStrip({
   strip,
