@@ -3,6 +3,7 @@ import { render, screen, userEvent } from "@testing-library/react-native";
 import { AccessibilityInfo, StyleSheet, type TextStyle, type ViewStyle } from "react-native";
 import { expectHoldsAtDoubleText } from "../../testing/textScale";
 import { ThemeProvider } from "../../theme/ThemeProvider";
+import { Text } from "../Text";
 import { InfoTip } from "./InfoTip";
 import { infoTipStates } from "./InfoTip.states";
 
@@ -79,6 +80,26 @@ describe("InfoTip", () => {
       expect(text.color).toBe(tokens.colors["text.secondary"]);
     },
   );
+
+  it("places an optional label beside the trigger in a row with the panel full width below", async () => {
+    await render(
+      <ThemeProvider scheme="light">
+        <InfoTip {...infoTipStates.closed} testID="tip">
+          <Text>Left over each month</Text>
+        </InfoTip>
+      </ThemeProvider>,
+    );
+    const row = screen.getByTestId("tip-row");
+    expect((StyleSheet.flatten(row.props.style) as ViewStyle).flexDirection).toBe("row");
+    expect(screen.getByText("Left over each month")).toBeOnTheScreen();
+    await userEvent
+      .setup()
+      .press(screen.getByRole("button", { name: "About Left over each month" }));
+    const tip = screen.getByTestId("tip");
+    expect(
+      tip.children.map((child) => (child as { props: { testID?: string } }).props.testID),
+    ).toEqual(["tip-row", "tip-body"]);
+  });
 
   it("open holds at 200% text", async () => {
     await expectHoldsAtDoubleText(<InfoTip {...infoTipStates.open} />);

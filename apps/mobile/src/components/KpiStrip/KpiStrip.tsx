@@ -60,7 +60,7 @@ interface KpiCardProps {
   caption?: string | null;
   /** Its own control under the group (the income-only link). */
   action?: ReactNode;
-  /** Plain-English explanation shown via an `InfoTip` toggle under the group. */
+  /** Plain-English explanation shown via an `InfoTip` toggle beside the label. */
   explain?: string;
   testID: string;
   /** The group's test id, naming what the card shows ("kpi-strip-pension"). */
@@ -71,7 +71,8 @@ interface KpiCardProps {
 
 /**
  * One card: the label, the figure and its caption read out as one item ("Left over each month,
- * £125, From your budget"). A link stays its own control under the group.
+ * £125, From your budget"). A link stays its own control under the group; when an `InfoTip` is
+ * present it sits beside the label as web's `KpiCard` does.
  */
 function KpiCard({
   label,
@@ -87,12 +88,20 @@ function KpiCard({
   const figure =
     value === undefined ? null : value === null ? formatWholePounds(null) : spokenPounds(value);
   const spoken = [label, figure, caption].filter(Boolean).join(", ");
+  const labelNode = (
+    <Text textStyle="label.md" color="secondary">
+      {label}
+    </Text>
+  );
   return (
     <Card testID={testID} style={stacked ? styles.cellStacked : styles.cellInRow}>
+      {explain ? (
+        <InfoTip term={label} body={explain} testID={`${testID}-explain`}>
+          {labelNode}
+        </InfoTip>
+      ) : null}
       <View accessible accessibilityLabel={spoken} style={styles.group} testID={groupTestID}>
-        <Text textStyle="label.md" color="secondary">
-          {label}
-        </Text>
+        {explain ? null : labelNode}
         {value === undefined ? null : (
           <Money value={value} size="kpi" testID={`${testID}-figure`} />
         )}
@@ -102,7 +111,6 @@ function KpiCard({
           </Text>
         ) : null}
       </View>
-      {explain ? <InfoTip term={label} body={explain} testID={`${testID}-explain`} /> : null}
       {action}
     </Card>
   );
