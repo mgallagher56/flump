@@ -279,6 +279,8 @@ function Loaded({
               label: `${c.name}${c.isLiability ? HISTORY.owed : ""}`,
               figure: formatSignedChange(c.effect),
               spoken: spokenChange(c.effect),
+              // Web's latest-month column: the balance as saved, a debt as the amount owed.
+              detail: { label: formatMonth(latestRecorded.month), figure: pounds(c.current) },
               note: c.carried ? HISTORY.carriedForward : historySourceLabel(c.currentSource),
             }))}
             testID="history-change-rows"
