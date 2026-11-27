@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.47.1](https://github.com/mgallagher56/flump/compare/flump/backend-v1.47.0...flump/backend-v1.47.1) (2026-11-27)
+
+
+### Bug Fixes 🪲
+
+* authenticated API answers send Cache-Control no-store, the app asks for it on every request, and the phone's HTTP caches left by earlier builds are emptied on launch and every wipe; the offline notice reads as one paragraph with Try again inside it (E12 S7, coordinator device check) ([e815f08](https://github.com/mgallagher56/flump/commit/e815f08535421435a8eb4fa523bf0d89cbaac8c2))
+* **backend:** /mcp answers and personal-access-token routes send no-store too, and the interceptor comment order is corrected (E12 S7 security review) ([303a9ca](https://github.com/mgallagher56/flump/commit/303a9ca41b72fcf0b7c105461f90aeaf10357f8c))
+* **backend:** add accountEmail rate limit and tighten email tests ([135c419](https://github.com/mgallagher56/flump/commit/135c41923f374378c69fd60724fe46cc0250211d))
+* **backend:** resolve sign-in email from WorkOS on GET /user-profile/email ([2a2b2f1](https://github.com/mgallagher56/flump/commit/2a2b2f1d63974f34ed3d10e72544ab6014c7e832))
+* **contract:** review: the backend's response check still requires a defaulted field (missing_field); docs say what is enforced ([b81421c](https://github.com/mgallagher56/flump/commit/b81421cd9a4b575aaa00173a69939949bc35fe16))
+* **contract:** wellbeingQuestions reads as false from an older backend (it asks nothing); a reader default is the value safe against an older backend; test id built at runtime (Semgrep) ([5233002](https://github.com/mgallagher56/flump/commit/52330020aacc6849e3ae67f5677d57c9f208ac89))
+
+
+### Tests 🧪
+
+* **backend:** build sample user ids at runtime in the email lookup tests ([3805cbd](https://github.com/mgallagher56/flump/commit/3805cbda31c324d7d9df230daf15efe14671fab8))
+* the focused-field scroll waits a frame, skips moved focus and cancels on close; empty status lines stay in the accessibility tree; the backend refuses a future month on the back-fill route; a story for three close trend months ([56b2190](https://github.com/mgallagher56/flump/commit/56b2190c8bbee8527b34ae1b12df53f81acae677))
+
 ## [1.47.0](https://github.com/mgallagher56/flump/compare/flump/backend-v1.46.0...flump/backend-v1.47.0) (2026-11-26)
 
 

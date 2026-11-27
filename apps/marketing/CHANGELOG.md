@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.42.0](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.41.0...flump/marketing-v1.42.0) (2026-11-27)
+
+
+### Features ✨
+
+* **marketing:** M1 foundations: each page its own chunk with a server preload, the home weight check per route, GSAP and three.js pinned, the GSAP loader after first paint, the ambient motion control and bubble fields ([3af1d16](https://github.com/mgallagher56/flump/commit/3af1d16e1d796359fa3a67f792535a4712fac9dc))
+* **marketing:** the new home page from prototype 11 (M1): assembling hero, features carousel with dots, the journey with the three.js orb, rough figures, pay rise glide, security card, more detail beside the questions, calm close ([c613e87](https://github.com/mgallagher56/flump/commit/c613e8738d9219bed4e15dbd9618f34f29ffc860))
+* **tokens:** marketing calm scale, orb colour sets, glass and paper material, the orb-only colour check; D7 lets the pay rise tool's result glide on the marketing site (F2) ([464d2af](https://github.com/mgallagher56/flump/commit/464d2afd47ba357ce8e7f43151da1889bf081d14))
+
+
+### Bug Fixes 🪲
+
+* **e2e:** visual full-page shots paint every band (content-visibility), and printing the home page lays out every band ([2759e5c](https://github.com/mgallagher56/flump/commit/2759e5c96f161861a16a17263d8d9208e6b4e308))
+* **laws:** review fixes: MC1 names the area map, chart series and the dark accent; the check catches colors.purple and allows the colour page; M3 states its scope; ids paired with test ids (F2) ([cf15c90](https://github.com/mgallagher56/flump/commit/cf15c90aa1e637ab07e015056610762266f2916b))
+* **marketing:** CI: stories show each home band at rest (StillMotionProvider), the pay rise story waits for its glide, tests for the page chunks, GSAP loader, moment hook and journey sample moments bring coverage over its floors ([cec4a99](https://github.com/mgallagher56/flump/commit/cec4a99538d4ee6aeeb9ef032e6cd0a2de816a55))
+* **marketing:** code review findings: journey stops fade by opacity only so they stay in the accessibility tree, the paused orb still follows the reader's scroll, every FAQ answer readable with no JavaScript, lazy CSS and assets counted in the weight check, encoded paths preload the right page, sample dates read with no London formatter ([4a0ada6](https://github.com/mgallagher56/flump/commit/4a0ada67f6d3b595f0f11f399bffd5740b2544d8))
+* **marketing:** PR 975 review: the journey scene observes resizes only once its frame code exists (no temporal dead zone error), a full-scroll Playwright check fails on any page or console error, the features subtitle names six tiles, one picture height per feature tile, phone hero tiles one per row, rough figures steps on the stagger token, pausing animation shows pending entrances at once ([a0d4fac](https://github.com/mgallagher56/flump/commit/a0d4faccba05289e4fe4ad8bfda976a567171f60))
+* **marketing:** UI review findings: debt's orb is sky not violet (MC2), the assembling hero recorded in STYLE-GUIDE 11.2, play tests on the bubble field stories, id beside the carousel controls' test id ([cdc4d6c](https://github.com/mgallagher56/flump/commit/cdc4d6cfbc496a43c3fcb6b8781e84ab19bb22f2))
+
 ## [1.41.0](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.40.0...flump/marketing-v1.41.0) (2026-11-26)
 
 

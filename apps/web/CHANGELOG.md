@@ -1,5 +1,80 @@
 # Changelog
 
+## [1.55.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.54.0...flump/web-v1.55.0) (2026-11-27)
+
+
+### Features ✨
+
+* **engine:** account balances, series, change and groups as engine selectors; web reads them (E12 S6) ([89071ec](https://github.com/mgallagher56/flump/commit/89071ecd24cb7e8a9a92f3d497e388b61bef6bc4))
+* **engine:** selectNetWorthChange holds the Home hero's change since last month; web calls it; net-worth entry for mobile (E12 S5) ([2e8e3fe](https://github.com/mgallagher56/flump/commit/2e8e3fe697141b8a5c96e44996ff1a7fe6fc507c))
+* **finance-engine:** jointShareLabel says Joint and the share to two decimals, for web and mobile lists (E12 S6) ([a59e01d](https://github.com/mgallagher56/flump/commit/a59e01d2bc3c82b5cb3af88d166c95cb99ae3280))
+* **mobile:** add, edit and delete an account, the quick balance update, and in-app ways in from Accounts, Home and history, with web's fields, rules and words through @flump/finance-engine/account-form (E12 S8) ([16c0728](https://github.com/mgallagher56/flump/commit/16c072859d06eebbefde0cb5113e6959984cb1d2))
+* **mobile:** history's check-in button says "See this month's check-in" once done, as web now does (E12 S6) ([11ac8eb](https://github.com/mgallagher56/flump/commit/11ac8eb8e1fe44ebcd636d83855599f30182efd3))
+* **mobile:** net worth on Home: the hero with its change and trend bars, the leaves-out line, every state; dev links at the foot of More (E12 S5) ([7ff6748](https://github.com/mgallagher56/flump/commit/7ff674810669d1492cd7669af77adaf22835fcfa))
+* **mobile:** ScenarioZone, ProjectionNotice, DebtHelpLink, BudgetCategoryList, BreathingRoom, BudgetEntryForm and BudgetEditor, KpiStrip's items mode, and the Budget words pinned to web's (E12 S10) ([204266c](https://github.com/mgallagher56/flump/commit/204266c0a085be4831894b9b4b82eef6c60224a0))
+* **mobile:** Settings: profile, net worth switches, check-in day, Self Assessment and the page filter, three-way theme with the header button, app lock with Android screenshot blocking, JSON export to the share sheet, account deletion with the typed phrase and signing in again (E12 S9) ([9daa731](https://github.com/mgallagher56/flump/commit/9daa73118a77482db7c599fc9ee8ccac42c38655))
+* **mobile:** tab bar and More list mirrored from web's navigation (E12 S4) ([02b13d1](https://github.com/mgallagher56/flump/commit/02b13d1f483e95fb45324f7a14c9affea5f8fc12))
+* **mobile:** the month lists sit behind Show data, closed, as web (E12 S6) ([c33398e](https://github.com/mgallagher56/flump/commit/c33398e799540727a5468d6e56ce2afe8f5185d2))
+* **web:** a joint account's page says the whole beside the share; its history says it is the whole account (E12 S6) ([aa3561b](https://github.com/mgallagher56/flump/commit/aa3561b6d129cf41bf8432020911f68a31b6ee45))
+* **web:** the Debt page's empty state says when a current account is below zero and that Home counts it in "What you owe" (words only, after D8) ([bb23036](https://github.com/mgallagher56/flump/commit/bb23036e80c12cdb9c88e80a25322acf6569b6a4))
+
+
+### Bug Fixes 🪲
+
+* **engine:** Home's "What you owe" counts an overdrawn current account with or without a debt account; an overdrawn account that cannot be overdrawn is flagged on the list, not counted on Home (fable-decider, 27 Nov 2026) ([221811f](https://github.com/mgallagher56/flump/commit/221811fb63b9b45a07ce4eb4677197c707214127))
+* **engine:** the account hero shows the joint share after a future-month row (E12 S6) ([19713fb](https://github.com/mgallagher56/flump/commit/19713fb2f7c973dcbeaa996b2ffc789a6bb7697d))
+* **engine:** the list's below-zero flag spares any account Home counts as current (the cash category, as getTotalConsumerDebt); web reads the note with the row's link; D8 triage updated (review) ([f8171a6](https://github.com/mgallagher56/flump/commit/f8171a6bfbc4bd06a529bb63de712135d19aaa36))
+* **mobile:** device check fixes: one-row tab bar, set-up state for the check-in, honest website buttons (E12 S4) ([596b3ee](https://github.com/mgallagher56/flump/commit/596b3eeade391e9c3173650cf25cf37659a14120))
+* **mobile:** each chart is one image named by web's title and summary, with web's end label (E12 S6) ([fcab24e](https://github.com/mgallagher56/flump/commit/fcab24e5e070d02666d777945a1fd6fd93baf25d))
+* **mobile:** review fixes for the tab shell (E12 S4) ([bd2a649](https://github.com/mgallagher56/flump/commit/bd2a649cec6a411630c59144115f0a94040e6486))
+* **mobile:** review fixes: the loading hero keeps room for the trend bars, the bars read as an image, the gap from a token, the sign-in screenshot waits for the hero; web keeps the engine's point for a month (E12 S5) ([6f712af](https://github.com/mgallagher56/flump/commit/6f712af36b557f53187a5f9c0f5d6f86272429f9))
+* **mobile:** the account page and history say what is on the website for now; a mortgage or debt links to its own page there, as web (E12 S6) ([36bac96](https://github.com/mgallagher56/flump/commit/36bac9623fe085755a55ce97dcb11ab6c3c49a6a))
+* **mobile:** the account page shows the type under the name unless the name contains it, as web's subline (E12 S6) ([8698ae7](https://github.com/mgallagher56/flump/commit/8698ae7287e7e377162cd57da6a04167eb0f40d3))
+* **mobile:** the account's month list says Recorded for a month typed by hand, as web's Show data table (E12 S6) ([48687e9](https://github.com/mgallagher56/flump/commit/48687e985b8229948d2bcdd48202d4f97b419022))
+* **web,mobile:** the ISA subtype reads Stocks and shares ISA in sentence case (E12 S6) ([4be14b1](https://github.com/mgallagher56/flump/commit/4be14b1eea0ef56485dc922f537e6705639b0f04))
+* **web:** hydrate after a second at most when the browser reports no idle time; the E2E smoke stall and its 429 ([e931391](https://github.com/mgallagher56/flump/commit/e931391ae640d642c9950b20af4bb6645c2f23e3))
+* **web:** load sign-in email in settings loader with fallback chain ([3d9409c](https://github.com/mgallagher56/flump/commit/3d9409c2dd414453aa39fd25259051a9dd422109))
+* **web:** phone faults in "Add an earlier month" and the history check-in button ([7b13dc0](https://github.com/mgallagher56/flump/commit/7b13dc06aef78430a27ab3699feb3a0977412ca9))
+* **web:** review fixes: recorded months from manual accounts only, the note is a status line, the focused field scrolls in on the next frame, stories for the note and the checked-in button ([0ce0f85](https://github.com/mgallagher56/flump/commit/0ce0f85a2baf0ac8f70d08f308bf5162fec7d3e9))
+* **web:** skip email fetch with session email and drop dead emailLoading ([2c4df8b](https://github.com/mgallagher56/flump/commit/2c4df8b18cc3376fe1eafdb7c78b1de3f737b8fa))
+* **web:** the account page's whole figure is tabular through HeroFigure's subline (E12 S6) ([bfa16ae](https://github.com/mgallagher56/flump/commit/bfa16aeb5f215568670502735a24132fa5cece8c))
+* **web:** the copy parity test types the mobile Show data words; unused imports gone (E12 S6) ([6fda3cf](https://github.com/mgallagher56/flump/commit/6fda3cfe53511752cf499988805b308ffef8324c))
+
+
+### Documentation 📙
+
+* the Breathing room ruling is DECISIONS.md D9 (main's overdrawn-accounts ruling took D8) (E12 S10) ([6c9a8c7](https://github.com/mgallagher56/flump/commit/6c9a8c7cc3583305661980f4d3ad764662f263df))
+
+
+### Refactor 🔥
+
+* **engine:** the Budget page's sums and rules move into the engine behind @flump/finance-engine/budget, with selectBudgetPageFromRows for mobile and calculateSafeToSpend in its own module so the entry reaches no payoff schedule (E12 S10) ([38aa565](https://github.com/mgallagher56/flump/commit/38aa5653ec98fb18cdb0f8ef90d78dfe88cf5401))
+* **engine:** web's empty-budget rule moves into the engine as isBudgetEmpty, which the phone's page carries; web calls it with no change (E12 S10) ([ac036c5](https://github.com/mgallagher56/flump/commit/ac036c50dd4607d824796f0be95b0c2be8c01bc3))
+* **finance-engine:** the account form's fields, state, sign and share rules, save body, request and property prefill move to @flump/finance-engine/account-form; web reads them from the engine and its copies are deleted, no change to what is sent (E12 S8) ([4093dc4](https://github.com/mgallagher56/flump/commit/4093dc48c6c672767518414c1f50af532887d4fa))
+* **web:** Home's loader reads the engine's budget rules and the dashboard builds its strip with selectHomeStrip; web's copies of the rules removed (E12 S5b) ([7d846ef](https://github.com/mgallagher56/flump/commit/7d846ef3cdfabcada0e74cc0d04fe910baaa0f90))
+* **web:** the Budget page calls the engine's overview, ranking, page rows, source lines, basis and illustration; web's copies and income.ts are deleted, and the characterisation tests pass with only their imports changed (E12 S10) ([ab2e6de](https://github.com/mgallagher56/flump/commit/ab2e6de49bb08e19c0648b1a4ec45c99b3fa4efc))
+
+
+### Tests 🧪
+
+* **engine:** characterisation tests pin the strip's picture figures, whole take-home breakdowns and calculateUkTax results, and web's strip rules, run against today's code (E12 S5b) ([5699e8c](https://github.com/mgallagher56/flump/commit/5699e8c055b73db408dff147aa8866a17e84a95a))
+* the focused-field scroll waits a frame, skips moved focus and cancels on close; empty status lines stay in the accessibility tree; the backend refuses a future month on the back-fill route; a story for three close trend months ([56b2190](https://github.com/mgallagher56/flump/commit/56b2190c8bbee8527b34ae1b12df53f81acae677))
+* **web:** characterisation of account figures before the engine move (E12 S6) ([74eefa8](https://github.com/mgallagher56/flump/commit/74eefa880e8d21dfdb8a3698dd3df70062a676a0))
+* **web:** characterisation tests pin the Budget page's figures and rules before they move into the engine (E12 S10) ([c1a829d](https://github.com/mgallagher56/flump/commit/c1a829d05657a8d346caf1eb72ff1767bcec1b1f))
+* **web:** characterisation tests pin the hero's change line, run against the pre-move code and the engine selector; loader's month choice through priorNetWorth; mutation triage (E12 S5) ([477dcbe](https://github.com/mgallagher56/flump/commit/477dcbe3eb9afc2ac5f4335dc308c4354493a722))
+* **web:** characterise the Accounts dialog's save body before its form logic moves to the engine (E12 S8) ([a7f2c0a](https://github.com/mgallagher56/flump/commit/a7f2c0ac83ba58e2fb232fff3962515b768e1361))
+* **web:** characterise the accounts list action's create, pair and update bodies before the body decision moves to the engine (E12 S8) ([40948a5](https://github.com/mgallagher56/flump/commit/40948a5f5cea62c45f07eeb76ae2039ea42dd403))
+* **web:** the mobile accounts and history words pinned to web's (E12 S6) ([c883d09](https://github.com/mgallagher56/flump/commit/c883d09c98c2db6ce5b286d938a97059d2817e74))
+* **web:** the mobile strip's words, links and rates notice pinned to DashboardKpiStrip and TaxRatesStatusBanner (E12 S5b) ([11a57bb](https://github.com/mgallagher56/flump/commit/11a57bbea7eabdf262e606e8e383ca3e9bb6fb7d))
+* **web:** the runway illustration's 16.7 months reads 1 year 4 months under D8 (was 1 year 5 months) (E12 S10) ([04b81ba](https://github.com/mgallagher56/flump/commit/04b81ba0c84cd044d1dc57e19a1483569b93f746))
+* **web:** the three close months story checks the bars stay on the honest scale ([e863078](https://github.com/mgallagher56/flump/commit/e863078578b7f1dcc93b01c514a4898ee17fba44))
+
+
+### Miscellaneous 🙃
+
+* **mobile:** no unused exports for knip; the parity test reads the labels through the type line (E12 S6) ([6c1a52e](https://github.com/mgallagher56/flump/commit/6c1a52e0da21b851a96edafe405d02972cc05c07))
+* **web:** the Debt page's below-zero sentence is not exported (knip) ([fd41d77](https://github.com/mgallagher56/flump/commit/fd41d7757e3d60d235238d81d70c966619ec0ebf))
+
 ## [1.54.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.53.0...flump/web-v1.54.0) (2026-11-26)
 
 
