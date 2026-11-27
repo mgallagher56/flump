@@ -1,4 +1,3 @@
-import { Money } from "@flump/api-contract";
 import { useMemo, useState } from "react";
 import { View } from "react-native";
 import { addToLabel, categoryLabel, EDITOR, FREQUENCY_OPTIONS } from "../../copy/budget";
@@ -39,6 +38,14 @@ export interface BudgetEntryFormProps {
   onSave(values: ValidEntryValues): void;
   /** Every press of Save, before the checks: the screen clears the last save's error. */
   onTry?: () => void;
+  /**
+   * What is wrong with a typed amount, in words, or null: the account forms' one check (a minus,
+   * text it cannot read, over the contract's limit), given by the screen. A blank amount is this
+   * form's own "Enter an amount". Without it only a blank or unreadable amount is refused.
+   */
+  checkAmount?: (value: number | null, text: string) => string | null;
+  /** A Save refused for a field: the screen brings the top of the form, with its alert, into view. */
+  onInvalid?: () => void;
   onCancel(): void;
   /** Edit only: asks to delete the entry (the screen confirms first). */
   onDelete?: () => void;
@@ -63,6 +70,8 @@ export function BudgetEntryForm({
   error = null,
   onSave,
   onTry,
+  checkAmount,
+  onInvalid,
   onCancel,
   onDelete,
   testID = "budget-entry-form",
@@ -71,25 +80,33 @@ export function BudgetEntryForm({
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [values, setValues] = useState<EntryValues>(initial);
   const [tried, setTried] = useState(false);
+  const [amountText, setAmountText] = useState(() =>
+    initial.amount === null ? "" : String(initial.amount),
+  );
   const set = <K extends keyof EntryValues>(key: K, value: EntryValues[K]) =>
     setValues((v) => ({ ...v, [key]: value }));
   const nameError = tried && values.name.trim() === "" ? EDITOR.nameMissing : null;
-  // The contract's Money (below 10 billion either way), so the phone refuses what the backend would.
-  const amountOk = values.amount !== null && Money.safeParse(values.amount).success;
-  const amountError = !tried
-    ? null
-    : values.amount === null
+  const amountProblem =
+    values.amount === null && amountText.trim() === ""
       ? EDITOR.amountMissing
-      : amountOk
-        ? null
-        : EDITOR.amountTooLarge;
+      : checkAmount
+        ? checkAmount(values.amount, amountText)
+        : values.amount === null
+          ? EDITOR.amountMissing
+          : null;
+  const amountOk = values.amount !== null && amountProblem === null;
+  const amountError = tried ? amountProblem : null;
+  const invalid = tried && (nameError !== null || amountError !== null);
   const options = categories.map((c) => ({ value: c, label: categoryLabel(c) }));
 
   const submit = () => {
     onTry?.();
     setTried(true);
     const name = values.name.trim();
-    if (name === "" || values.amount === null || !amountOk) return;
+    if (name === "" || values.amount === null || !amountOk) {
+      onInvalid?.();
+      return;
+    }
     onSave({ ...values, name, amount: values.amount });
   };
 
@@ -99,6 +116,7 @@ export function BudgetEntryForm({
         {mode === "add" ? addToLabel(initial.category) : EDITOR.editTitle}
       </Text>
       {error ? <InlineAlert message={error} testID={`${testID}-error`} /> : null}
+      {invalid ? <InlineAlert message={EDITOR.fixFields} testID={`${testID}-fix`} /> : null}
       <FormField label={EDITOR.name} error={nameError}>
         <TextField
           value={values.name}
@@ -110,7 +128,10 @@ export function BudgetEntryForm({
       <FormField label={EDITOR.amount} error={amountError}>
         <CurrencyInput
           value={values.amount}
-          onValueChange={(amount) => set("amount", amount)}
+          onValueChange={(amount, text) => {
+            set("amount", amount);
+            setAmountText(text);
+          }}
           accessibilityLabel={EDITOR.amount}
           testID={`${testID}-amount`}
         />

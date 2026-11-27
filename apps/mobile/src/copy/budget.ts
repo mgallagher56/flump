@@ -16,6 +16,8 @@ import { formatCurrency } from "@flump/format";
 /** Whole pounds, as web's `formatCurrency` with no pence: "£1,960". */
 const pounds = (value: number) => formatCurrency(value);
 
+import { FIX_FIELDS } from "./accountForms";
+
 export const BUDGET = {
   /** Web's `PageHeader` title and subtitle. */
   title: "Your budget",
@@ -268,8 +270,8 @@ export const EDITOR = {
   /** Field errors (copy guide 5.6): the label and what is needed. Mobile only. */
   nameMissing: "Enter a name",
   amountMissing: "Enter an amount",
-  /** The contract's money limit, in the account form's words (S8 device check). */
-  amountTooLarge: "Enter an amount below £10,000,000,000.",
+  /** A Save with fields to change: the account form's words, shown at the top (device re-check). */
+  fixFields: FIX_FIELDS,
   addFailed: "We could not add that entry. Nothing has changed. Try again.",
   saveFailed: "We could not save your changes. Nothing has changed. Try again.",
   deleteFailed: "We could not delete that entry. Nothing has changed. Try again.",

@@ -1,6 +1,6 @@
 import { etagFor } from "@flump/api-contract";
 import { act, render, screen, userEvent } from "@testing-library/react-native";
-import { Alert, type AlertButton, Keyboard, Linking, ScrollView } from "react-native";
+import { Alert, type AlertButton, Keyboard, Linking, ScrollView, StyleSheet } from "react-native";
 import { fail, fakeApi, withApi } from "../../data/fakeApi";
 import {
   RENTER_BUDGET,
@@ -430,7 +430,7 @@ describe("Budget", () => {
       await budget(api);
       await screen.findByLabelText(HERO);
       await openEntry(/^Rent, £950 a month/);
-      const amount = screen.getByLabelText("Amount");
+      const amount = screen.getByLabelText(/^Amount/);
       const u = user();
       await u.clear(amount);
       await u.type(amount, "1000");
@@ -551,6 +551,34 @@ describe("Budget", () => {
       expect(editing).toEqual(adding);
     });
 
+    it("a refused Save brings the top of the sheet into view; the field's label carries its error", async () => {
+      // Device re-check at 200% text: the error sat under Amount, scrolled out of sight, and the
+      // field told assistive technology only "Amount".
+      const scrollTo = jest.spyOn(ScrollView.prototype, "scrollTo");
+      await budget(fakeApi(routes(renterHousehold())));
+      await screen.findByLabelText(HERO);
+      const u = user();
+      await u.press(screen.getByRole("button", { name: "Edit budget" }));
+      await u.press(screen.getByRole("button", { name: "Add to bills" }));
+      await u.type(screen.getByLabelText(/^Name/), "Refund");
+      await u.type(screen.getByLabelText(/^Amount/), "-5");
+      scrollTo.mockClear();
+      await u.press(screen.getByRole("button", { name: "Save" }));
+      await settle();
+      expect(scrollTo).toHaveBeenCalledWith({ y: 0, animated: false });
+      expect(
+        screen.getByText("Some details need changing. Each one says what to change."),
+      ).toBeOnTheScreen();
+      // PR 973's FormField: the error is part of the field's name, the one channel every screen
+      // reader reads on a text field.
+      expect(
+        screen.getByLabelText(
+          "Amount. This amount cannot be below £0. Enter it without a minus sign.",
+        ),
+      ).toBeOnTheScreen();
+      scrollTo.mockRestore();
+    });
+
     it("a 412 keeps the sheet and what was typed, says so in web's words, and reads the list again", async () => {
       const h = renterHousehold();
       const rent = h.budgetEntries.find((r) => r.name === "Rent");
@@ -655,8 +683,8 @@ describe("Budget", () => {
       const u = user();
       await u.press(screen.getByRole("button", { name: "Edit budget" }));
       await u.press(screen.getByRole("button", { name: "Add to bills" }));
-      await u.type(screen.getByLabelText("Name"), "Water");
-      await u.type(screen.getByLabelText("Amount"), "25");
+      await u.type(screen.getByLabelText(/^Name/), "Water");
+      await u.type(screen.getByLabelText(/^Amount/), "25");
       await u.press(screen.getByRole("button", { name: "Save" }));
       await settle();
       expect(post).toHaveBeenCalledTimes(1);
@@ -676,8 +704,8 @@ describe("Budget", () => {
       const first = api.calls.filter((c) => c.method === "POST")[0]?.idempotencyKey;
       expect(first).toMatch(UUID);
       await u.press(screen.getByRole("button", { name: "Add to bills" }));
-      await u.type(screen.getByLabelText("Name"), "Gas");
-      await u.type(screen.getByLabelText("Amount"), "40");
+      await u.type(screen.getByLabelText(/^Name/), "Gas");
+      await u.type(screen.getByLabelText(/^Amount/), "40");
       await u.press(screen.getByRole("button", { name: "Save" }));
       await settle();
       const second = api.calls.filter((c) => c.method === "POST")[1]?.idempotencyKey;
@@ -697,17 +725,36 @@ describe("Budget", () => {
       const u = user();
       await u.press(screen.getByRole("button", { name: "Edit budget" }));
       await u.press(screen.getByRole("button", { name: "Add to bills" }));
-      const room = () => screen.getByTestId("budget-entry-sheet-keyboard-room");
-      expect(room().props.style).toMatchObject({ height: 0 });
+      // The sheet is a keyboard-aware Screen (PR 973): its scroll view adds the keyboard's height
+      // below the content, and a tap on Save while the keyboard is open presses it.
+      type Node = { type?: unknown; props: Record<string, unknown>; children?: unknown[] };
+      const scroller = (): Node => {
+        const find = (n: Node): Node | null =>
+          n.type === "RCTScrollView"
+            ? n
+            : ((n.children ?? []) as Node[]).reduce<Node | null>(
+                (hit, c) => hit ?? (typeof c === "object" && c ? find(c) : null),
+                null,
+              );
+        const hit = find(screen.getByTestId("budget-entry-sheet") as unknown as Node);
+        if (!hit) throw new Error("no scroll view in the sheet");
+        return hit;
+      };
+      const below = () =>
+        (
+          StyleSheet.flatten(scroller().props.contentContainerStyle as never) as {
+            paddingBottom: number;
+          }
+        ).paddingBottom;
+      expect(scroller().props.keyboardShouldPersistTaps).toBe("handled");
+      const closed = below();
       const show = listeners.get("keyboardWillShow") ?? listeners.get("keyboardDidShow");
       await act(async () => show?.({ endCoordinates: { height: 336 } }));
-      // A 336 point keyboard: 336 points of room below the buttons, so Save scrolls above it.
-      expect(room().props.style).toMatchObject({ height: 336 });
-      // The sheet is a keyboard-aware Screen: a tap on Save while the keyboard is open presses it.
-      expect(screen.getByTestId("budget-entry-sheet-keyboard")).toBeOnTheScreen();
+      // A 336 point keyboard: 336 more points below the buttons, so Save scrolls above it.
+      expect(below()).toBe(closed + 336);
       const hide = listeners.get("keyboardWillHide") ?? listeners.get("keyboardDidHide");
       await act(async () => hide?.({}));
-      expect(room().props.style).toMatchObject({ height: 0 });
+      expect(below()).toBe(closed);
     });
 
     it("a failed add says so and keeps the form", async () => {
@@ -717,16 +764,16 @@ describe("Budget", () => {
       const u = user();
       await u.press(screen.getByRole("button", { name: "Edit budget" }));
       await u.press(screen.getByRole("button", { name: "Add income" }));
-      await u.type(screen.getByLabelText("Name"), "Child Benefit");
-      await u.type(screen.getByLabelText("Amount"), "100");
+      await u.type(screen.getByLabelText(/^Name/), "Child Benefit");
+      await u.type(screen.getByLabelText(/^Amount/), "100");
       await u.press(screen.getByRole("button", { name: "Save" }));
       await settle();
       expect(
         screen.getByText("We could not add that entry. Nothing has changed. Try again."),
       ).toBeOnTheScreen();
-      expect(screen.getByLabelText("Name").props.value).toBe("Child Benefit");
+      expect(screen.getByLabelText(/^Name/).props.value).toBe("Child Benefit");
       // The next try clears that banner, so it never sits beside a field's own error.
-      await u.clear(screen.getByLabelText("Name"));
+      await u.clear(screen.getByLabelText(/^Name/));
       await u.press(screen.getByRole("button", { name: "Save" }));
       expect(screen.getByText("Enter a name")).toBeOnTheScreen();
       expect(
@@ -742,16 +789,16 @@ describe("Budget", () => {
       const u = user();
       await u.press(screen.getByRole("button", { name: "Edit budget" }));
       await u.press(screen.getByRole("button", { name: "Add income" }));
-      await u.type(screen.getByLabelText("Name"), "Child Benefit");
-      await u.type(screen.getByLabelText("Amount"), "100");
+      await u.type(screen.getByLabelText(/^Name/), "Child Benefit");
+      await u.type(screen.getByLabelText(/^Amount/), "100");
       const save = async () => {
         await u.press(screen.getByRole("button", { name: "Save" }));
         await settle();
       };
       await save();
       await save();
-      await u.clear(screen.getByLabelText("Amount"));
-      await u.type(screen.getByLabelText("Amount"), "110");
+      await u.clear(screen.getByLabelText(/^Amount/));
+      await u.type(screen.getByLabelText(/^Amount/), "110");
       await save();
       const keys = api.calls.filter((c) => c.method === "POST").map((c) => c.idempotencyKey);
       expect(keys).toHaveLength(3);
