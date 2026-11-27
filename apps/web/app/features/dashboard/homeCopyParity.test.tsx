@@ -7,6 +7,7 @@ import {
   type NetWorthTrendBar,
   selectNetWorthChange,
 } from "@flump/finance-engine";
+import { TaxRatesStatusBanner, type TaxRatesStatusBannerProps } from "@repo/ui";
 import { ArrowDown, ArrowUp, Minus } from "lucide-react";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -19,6 +20,13 @@ import {
   leftOutSentence,
   NET_WORTH_SETTINGS_HREF,
 } from "~/features/accounts/components/NetWorthBasisLine/NetWorthBasisLine";
+import {
+  ADD_SPENDING_PROMPT,
+  INCOME_ONLY_LABEL,
+  LEFT_OVER_CAPTION,
+  OWED_CAPTION,
+  PENSION_CAPTION,
+} from "./components/DashboardKpiStrip/DashboardKpiStrip";
 import { HERO_LABEL, HERO_LABEL_WITH_HOME } from "./components/HomeDashboard/HomeDashboard";
 import { barLine, missedLine, trendIntro } from "./components/NetWorthTrendBars/NetWorthTrendBars";
 import { netWorthDelta } from "./netWorthDelta";
@@ -44,7 +52,12 @@ interface MobileHome {
   missedLine(missed: NonNullable<NetWorthTrendBar["missedBefore"]>): string;
   barLine(bar: NetWorthTrendBar): string;
 }
+interface MobileStrip {
+  STRIP: Record<string, string>;
+  ratesNoticeSentence(rates: TaxRatesStatusBannerProps): string;
+}
 interface MobileShell {
+  BUDGET_WEB_ROUTE: string;
   ADD_ACCOUNT_WEB_ROUTE: string;
   NET_WORTH_SETTINGS_WEB_ROUTE: string;
   ADD_HOME_VALUE_WEB_ROUTE: string;
@@ -156,6 +169,52 @@ describe("the mobile Home hero says what web's Home says", () => {
         )
         .join("");
       expect(mobile).toBe(inner);
+    },
+  );
+});
+
+describe("the mobile Home strip says what web's dashboard strip says (E12 S5b)", () => {
+  const strip = readFileSync(
+    new URL("./components/DashboardKpiStrip/DashboardKpiStrip.tsx", import.meta.url),
+    "utf8",
+  );
+
+  it("the labels and captions", async () => {
+    const { STRIP } = await load<MobileStrip>("copy/home.ts");
+    expect(STRIP.leftOverCaption).toBe(LEFT_OVER_CAPTION);
+    expect(STRIP.owedCaption).toBe(OWED_CAPTION);
+    expect(STRIP.pensionCaption).toBe(PENSION_CAPTION);
+    expect(STRIP.incomeOnly).toBe(INCOME_ONLY_LABEL);
+    // The card labels are written inline in DashboardKpiStrip.
+    expect(strip).toContain(`label={short ? "${STRIP.short}" : "${STRIP.leftOver}"}`);
+    expect(strip).toContain(`label="${STRIP.owed}"`);
+    expect(strip).toContain(`label="${STRIP.pension}"`);
+  });
+
+  it("the prompt and the links, which open the website until S10 and say so", async () => {
+    const { STRIP } = await load<MobileStrip>("copy/home.ts");
+    expect(strip).toContain(`title: "${STRIP.prompt}"`);
+    expect(strip).toContain('addLink("/app/budget", "Add your budget")');
+    expect(STRIP.addBudget).toBe("Add your budget on the website");
+    expect(STRIP.addSpending).toBe(
+      ADD_SPENDING_PROMPT.replace("Add your spending", "Add your spending on the website"),
+    );
+    const shell = await load<MobileShell>("navigation/shell.ts");
+    expect(strip).toContain(`to="${shell.BUDGET_WEB_ROUTE}"`);
+  });
+
+  it.each([
+    { calendarYear: "2027/28", ratesYear: "2027/28", isFallback: false, kind: "provisional" },
+    { calendarYear: "2028/29", ratesYear: "2027/28", isFallback: true },
+    { calendarYear: "2027/28", ratesYear: "2026/27", isFallback: false },
+    { calendarYear: "2026/27", ratesYear: "2026/27", isFallback: false },
+  ] satisfies TaxRatesStatusBannerProps[])(
+    "the rates notice for %j is TaxRatesStatusBanner's sentence",
+    async (rates) => {
+      const mobile = await load<MobileStrip>("copy/home.ts");
+      const banner = renderToStaticMarkup(createElement(TaxRatesStatusBanner, rates));
+      const web = /<span>([^<]*)<\/span>/.exec(banner)?.[1] ?? "";
+      expect(mobile.ratesNoticeSentence(rates)).toBe(web);
     },
   );
 });
