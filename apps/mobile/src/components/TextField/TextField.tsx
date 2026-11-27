@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 // Raw React Native inputs are allowed inside src/components (biome.json, apps/mobile override).
 import { TextInput, type TextInputProps, View } from "react-native";
+import { useScrollFieldIntoView } from "../../device/keyboardInset";
 import { useTheme } from "../../theme/ThemeProvider";
 import { createStyles } from "./TextField.styles";
 
@@ -34,6 +35,8 @@ export function TextField({
   testID,
 }: TextFieldProps) {
   const theme = useTheme();
+  // In a form, the field scrolls above the keyboard when it gains focus.
+  const showField = useScrollFieldIntoView();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [focused, setFocused] = useState(false);
   // A gallery preview draws the scale itself, so the phone's setting must not multiply it again.
@@ -46,7 +49,10 @@ export function TextField({
       <TextInput
         value={value}
         onChangeText={onChangeText}
-        onFocus={() => setFocused(true)}
+        onFocus={() => {
+          setFocused(true);
+          showField();
+        }}
         onBlur={() => {
           setFocused(false);
           onBlur?.();

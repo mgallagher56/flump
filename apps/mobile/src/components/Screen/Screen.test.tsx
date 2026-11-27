@@ -1,6 +1,6 @@
 import { dark } from "@flump/tokens/native";
 import { act, render, screen } from "@testing-library/react-native";
-import { StyleSheet, type ViewStyle } from "react-native";
+import { Keyboard, StyleSheet, TextInput, type ViewStyle } from "react-native";
 import { refreshControl } from "../../testing/refresh";
 import { expectHoldsAtDoubleText } from "../../testing/textScale";
 import { ThemeProvider } from "../../theme/ThemeProvider";
@@ -62,7 +62,12 @@ describe("Screen", () => {
     });
   });
 
-  it("a form sits above the keyboard, and a tap with the keyboard open presses what it lands on", async () => {
+  it("a form scrolls clear of the keyboard: its height is added below the content (S8 device check)", async () => {
+    const listeners = new Map<string, (e: unknown) => void>();
+    jest.spyOn(Keyboard, "addListener").mockImplementation((name, fn) => {
+      listeners.set(name, fn as (e: unknown) => void);
+      return { remove: jest.fn() } as never;
+    });
     await render(
       <ThemeProvider scheme="light">
         <Screen testID="s" keyboardAware>
@@ -70,13 +75,55 @@ describe("Screen", () => {
         </Screen>
       </ThemeProvider>,
     );
-    expect(screen.getByTestId("s-keyboard")).toBeOnTheScreen();
-    const [avoider] = (screen.toJSON() as unknown as Tree).children;
-    const [scroller] = avoider?.children ?? [];
-    expect(scroller?.type).toBe("RCTScrollView");
-    expect(scroller?.props.keyboardShouldPersistTaps).toBe("handled");
+    const scroller = () => (screen.toJSON() as unknown as Tree).children[0];
+    // page.top.sm (20) below the content while the keyboard is closed.
+    expect(flat(scroller()?.props.contentContainerStyle).paddingBottom).toBe(20);
+    expect(scroller()?.props.keyboardShouldPersistTaps).toBe("handled");
+    const show = listeners.get("keyboardWillShow") ?? listeners.get("keyboardDidShow");
+    const hide = listeners.get("keyboardWillHide") ?? listeners.get("keyboardDidHide");
+    // A 336 point keyboard: 20 + 336 = 356, so the last button can scroll above it.
+    await act(async () => show?.({ endCoordinates: { height: 336, screenY: 500 } }));
+    expect(flat(scroller()?.props.contentContainerStyle).paddingBottom).toBe(356);
+    await act(async () => hide?.({}));
+    expect(flat(scroller()?.props.contentContainerStyle).paddingBottom).toBe(20);
+    jest.restoreAllMocks();
+  });
 
-    // Not a form: no keyboard padding and the platform's default taps.
+  it("when the keyboard opens, the field being typed in scrolls above it", async () => {
+    const listeners = new Map<string, (e: unknown) => void>();
+    jest.spyOn(Keyboard, "addListener").mockImplementation((name, fn) => {
+      listeners.set(name, fn as (e: unknown) => void);
+      return { remove: jest.fn() } as never;
+    });
+    // The 0% date's year box, 1,500 points down the form and 56 high.
+    jest.spyOn(TextInput.State, "currentlyFocusedInput").mockReturnValue({
+      measureLayout: (_to: unknown, done: (x: number, y: number, w: number, h: number) => void) =>
+        done(0, 1500, 300, 56),
+    } as never);
+    const scrollTo = jest.fn();
+    const ref = { current: null as unknown };
+    await render(
+      <ThemeProvider scheme="light">
+        <Screen testID="s" keyboardAware scrollRef={ref as never}>
+          <Text>Form</Text>
+        </Screen>
+      </ThemeProvider>,
+    );
+    const scroller = ref.current as Record<string, unknown>;
+    scroller.scrollTo = scrollTo;
+    scroller.getInnerViewRef = () => ({});
+    const [view] = (screen.toJSON() as unknown as Tree).children;
+    if (!view) throw new Error("expected the scroll view");
+    const onLayout = view.props.onLayout as (e: unknown) => void;
+    await act(async () => onLayout({ nativeEvent: { layout: { height: 700 } } }));
+    const show = listeners.get("keyboardWillShow") ?? listeners.get("keyboardDidShow");
+    await act(async () => show?.({ endCoordinates: { height: 330, screenY: 500 } }));
+    // 700 high, 330 of keyboard, 16 of room (density.gap): 1,500 + 56 + 16 - 370 = 1,202.
+    expect(scrollTo).toHaveBeenCalledWith({ y: 1202, animated: false });
+    jest.restoreAllMocks();
+  });
+
+  it("not a form: no keyboard room and the platform's default taps", async () => {
     await render(
       <ThemeProvider scheme="light">
         <Screen testID="s">
@@ -87,7 +134,6 @@ describe("Screen", () => {
     const [plain] = (screen.toJSON() as unknown as Tree).children;
     expect(plain?.type).toBe("RCTScrollView");
     expect(plain?.props.keyboardShouldPersistTaps).toBeUndefined();
-    expect(screen.queryByTestId("s-keyboard")).toBeNull();
   });
 
   it("pads every safe-area edge unless told otherwise", async () => {

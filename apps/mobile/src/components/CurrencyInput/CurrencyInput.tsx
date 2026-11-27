@@ -2,6 +2,7 @@ import { formatCurrency } from "@flump/format";
 import { useEffect, useMemo, useRef, useState } from "react";
 // Raw React Native inputs are allowed inside src/components (biome.json, apps/mobile override).
 import { Platform, TextInput, View } from "react-native";
+import { useScrollFieldIntoView } from "../../device/keyboardInset";
 import { useTheme } from "../../theme/ThemeProvider";
 import { Text } from "../Text";
 import { createStyles } from "./CurrencyInput.styles";
@@ -84,6 +85,8 @@ export function CurrencyInput({
   onSubmitEditing,
 }: CurrencyInputProps) {
   const theme = useTheme();
+  // In a form, the field scrolls above the keyboard when it gains focus.
+  const showField = useScrollFieldIntoView();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [text, setText] = useState(() => (value === null ? "" : display(value)));
   const [focused, setFocused] = useState(false);
@@ -125,7 +128,10 @@ export function CurrencyInput({
       <TextInput
         value={text}
         onChangeText={handleChange}
-        onFocus={() => setFocused(true)}
+        onFocus={() => {
+          setFocused(true);
+          showField();
+        }}
         onBlur={handleBlur}
         onSubmitEditing={onSubmitEditing}
         // Neither decimal pad has a minus key, so a balance that can be negative gets a keyboard

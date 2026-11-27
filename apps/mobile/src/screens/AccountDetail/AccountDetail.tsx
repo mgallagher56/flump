@@ -112,7 +112,7 @@ export function AccountDetail({
   return (
     <>
       {header(title)}
-      <Screen edges={EDGES} testID="account-detail" onRefresh={refresh}>
+      <Screen edges={EDGES} testID="account-detail" onRefresh={refresh} keyboardAware>
         <Body state={state} links={links} onBackToAccounts={onBackToAccounts} onEdit={onEdit} />
       </Screen>
     </>
