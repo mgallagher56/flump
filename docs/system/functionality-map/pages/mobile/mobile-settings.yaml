@@ -1,0 +1,11 @@
+id: mobile-settings
+app: mobile
+route: /settings
+title: Settings
+auth: required
+purpose: Settings on a phone (E12 S9), opened by More's Settings row and flump://page/settings. Web's settings tabs as a list of pushed pages, Profile, This phone, Security and Data, since the app has no tabs component. It reads nothing.
+route_file: apps/mobile/app/(app)/settings/index.tsx
+
+sections:
+  - id: list
+    component: apps/mobile/src/screens/Settings/Settings.tsx

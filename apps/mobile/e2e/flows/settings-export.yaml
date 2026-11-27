@@ -1,0 +1,47 @@
+# E12 S9: Download your data. From Settings, Data, the app downloads the export with the bearer
+# token and opens the system share sheet. Closing the sheet without sharing deletes the app's copy,
+# and the page says so. What the sheet itself shows differs by Android version, so the flow checks
+# the server served one file and the app's own words after the sheet closes. No retries.
+appId: app.flump.mobile
+---
+- runScript:
+    file: ../scripts/fixture.js
+    env:
+      SCENARIO: "{}"
+- runFlow: ../subflows/launch-signed-out.yaml
+- runFlow: ../subflows/sign-in-to-home.yaml
+- tapOn:
+    id: "tab-more"
+- scrollUntilVisible:
+    element:
+      id: "more-row-settings"
+    direction: DOWN
+    timeout: 10000
+- tapOn:
+    id: "more-row-settings"
+- extendedWaitUntil:
+    visible:
+      id: "settings-row-data"
+    timeout: 10000
+- tapOn:
+    id: "settings-row-data"
+- extendedWaitUntil:
+    visible:
+      id: "export-data-button"
+    timeout: 10000
+- assertVisible: "The file holds all your figures. Once you share it, Flump can no longer protect it."
+- takeScreenshot: settings-data-${THEME}
+- tapOn:
+    id: "export-data-button"
+# The share sheet is open once the button is no longer waiting on the download.
+- extendedWaitUntil:
+    notVisible: "Preparing your file"
+    timeout: 30000
+- runScript:
+    file: ../scripts/assert-account-data.js
+    env:
+      EXPORTS: "1"
+- back
+- extendedWaitUntil:
+    visible: "Flump has removed its copy of the file from this phone."
+    timeout: 15000

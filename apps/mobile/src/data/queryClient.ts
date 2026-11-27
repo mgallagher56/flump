@@ -6,7 +6,8 @@
  * again" itself, so one tap is one request.
  */
 import { BackendError } from "@flump/api-client";
-import { QueryClient } from "@tanstack/react-query";
+import { QueryCache, QueryClient } from "@tanstack/react-query";
+import { ACCOUNT_DELETED_CODE } from "./account";
 
 const RETRYABLE = new Set(["unavailable", "server"]);
 
@@ -20,8 +21,28 @@ export function retryDelay(attempt: number): number {
   return Math.min(1000 * 2 ** attempt, 4000);
 }
 
-export function createQueryClient(): QueryClient {
+/** 410 `account_deleted`: the data is erased but the login remains (E12 S9). */
+function isAccountDeleted(error: unknown): boolean {
+  return (
+    error instanceof BackendError && error.status === 410 && error.code === ACCOUNT_DELETED_CODE
+  );
+}
+
+export interface QueryClientOptions {
+  /**
+   * Any read answering 410 `account_deleted` (plan 9.10): the session shows the last step of the
+   * deletion (`deletionPending`, which only moves from a signed-in state).
+   */
+  onAccountDeleted?: () => void;
+}
+
+export function createQueryClient(options: QueryClientOptions = {}): QueryClient {
   return new QueryClient({
+    queryCache: new QueryCache({
+      onError: (error) => {
+        if (isAccountDeleted(error)) options.onAccountDeleted?.();
+      },
+    }),
     defaultOptions: {
       queries: {
         retry: shouldRetry,

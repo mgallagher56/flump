@@ -9,6 +9,10 @@
  * Canned /v1:
  *   GET  /v1/app/client-policy               public
  *   GET  /v1/user-profile                    bearer; 401 or 403 not_invited by scenario
+ *   PATCH /v1/user-profile                   bearer; the strict UpdateProfileRequest body and,
+ *                                           when sent, If-Match against the profile's version
+ *                                           (412 precondition_failed); the change is kept until
+ *                                           the next reset, so Home follows it (S9)
  *   POST /v1/session/sign-out                bearer; revokes the token's session (sid), 204.
  *                                           Like the backend, it serves people who are not
  *                                           invited or have not agreed to the terms
@@ -18,6 +22,13 @@
  *   GET  /v1/budget-entries                  bearer; the household's saved budget (S5b), none for
  *                                           the canned data
  *   PUT  /v1/snapshots/:month                bearer; applied as the backend does (fixtures.ts)
+ *   GET  /v1/user-profile/export             bearer; the export as an attachment with the backend's
+ *                                           file name (S9); open to people not invited or who
+ *                                           have not agreed to the terms, as the backend
+ *   DELETE /v1/user-profile                  bearer; `{ confirmation: "DELETE" }`, a sign-in in the
+ *                                           last 15 minutes (`auth_time`), then deletes: every
+ *                                           later read answers 410 account_deleted and the login
+ *                                           (its refresh tokens) is gone (S9)
  *   anything else under /v1                  404 not_found, so a missing fixture is loud
  *   The check-in routes and the budget ignore query strings (`?details=none`, `?limit=`) and answer 401,
  *   403 not_invited and 403 terms_not_accepted as the profile does.
@@ -45,6 +56,13 @@
  *                                           terms_not_accepted (PR #939), after not_invited
  *   profile  set-up | not-set-up | none     not-set-up: onboardingCompleted false; none: the
  *                                           profile answers 200 with no body (no profile yet)
+ *   export   ok | rate-limited              the export answers 429 (S9)
+ *   deletion ok | recent-login              the delete answers deleted; 403 recent_login_required
+ *            | identity-pending             until a new sign-in; identity_pending once, then
+ *            | unavailable | rate-limited    deleted; 503 account_deletion_unavailable; 429 (S9)
+ *   signInAs fixture | other                other: the next sign-ins are a different person (a
+ *                                           different `sub`), for the re-authentication (S9)
+ * Issued access tokens carry `auth_time`, the sign-in time, unchanged by refreshes (S9).
  * Control (flows set the scenario before they launch the app):
  *   POST /__fixture/scenario, POST /__fixture/revoke, POST /__fixture/reset (also rebuilds the
  *   check-in data), GET /__fixture/stats (with `?signOutsAtLeast=N` it first waits, up to 10
@@ -60,7 +78,9 @@ import { createHash, randomUUID } from "node:crypto";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import type { AddressInfo } from "node:net";
 import {
+  etagFor,
   SnapshotMonth,
+  UpdateProfileRequest,
   UpsertSnapshotRequest,
   type UserProfileResponse,
 } from "@flump/api-contract";
@@ -179,6 +199,12 @@ interface Scenario {
   backend: "current" | "older" | "newer";
   /** A person who has not finished setup on the website, or has no profile at all yet. */
   profile: "set-up" | "not-set-up" | "none";
+  /** The export: the file, or 429 (S9). */
+  export: "ok" | "rate-limited";
+  /** The delete's answer (S9); see the header comment. */
+  deletion: "ok" | "recent-login" | "identity-pending" | "unavailable" | "rate-limited";
+  /** `other`: sign-ins from now are a different person, for the re-authentication (S9). */
+  signInAs: "fixture" | "other";
 }
 
 const DEFAULT_SCENARIO: Scenario = {
@@ -191,6 +217,9 @@ const DEFAULT_SCENARIO: Scenario = {
   terms: "agreed",
   backend: "current",
   profile: "set-up",
+  export: "ok",
+  deletion: "ok",
+  signInAs: "fixture",
 };
 
 const ALLOWED: { [K in keyof Scenario]: (v: unknown) => boolean } = {
@@ -203,6 +232,14 @@ const ALLOWED: { [K in keyof Scenario]: (v: unknown) => boolean } = {
   terms: (v) => v === "agreed" || v === "required",
   backend: (v) => v === "current" || v === "older" || v === "newer",
   profile: (v) => v === "set-up" || v === "not-set-up" || v === "none",
+  export: (v) => v === "ok" || v === "rate-limited",
+  deletion: (v) =>
+    v === "ok" ||
+    v === "recent-login" ||
+    v === "identity-pending" ||
+    v === "unavailable" ||
+    v === "rate-limited",
+  signInAs: (v) => v === "fixture" || v === "other",
 };
 
 /** A scenario patch, or undefined when any key or value is unknown. */
@@ -226,6 +263,10 @@ interface FixtureCounts {
   putsWithoutCheckIn: number;
   /** `POST /v1/session/sign-out` requests that revoked a session. */
   signOuts: number;
+  /** Export files served (S9). */
+  exports: number;
+  /** Deletions that removed the login (S9). */
+  deletions: number;
 }
 
 interface FixtureStats extends FixtureCounts {
@@ -235,6 +276,8 @@ interface FixtureStats extends FixtureCounts {
   currentMonth: string;
   /** The `max_age` of the last authorize request, or null when it had none (or none yet). */
   lastAuthorizeMaxAge: string | null;
+  /** True once a delete answered `deleted` or `identity_pending` (S9). */
+  erased: boolean;
 }
 
 const ZERO_COUNTS: FixtureCounts = {
@@ -244,7 +287,12 @@ const ZERO_COUNTS: FixtureCounts = {
   snapshotPuts: 0,
   putsWithoutCheckIn: 0,
   signOuts: 0,
+  exports: 0,
+  deletions: 0,
 };
+
+/** The backend's recent sign-in window for a deletion (`auth/recent-login.ts`). */
+const RECENT_LOGIN_MS = 15 * 60 * 1000;
 
 const CHECK_IN_ROUTES = new Set([
   "/accounts",
@@ -289,6 +337,8 @@ interface Session {
   id: string;
   userId: string;
   revoked: boolean;
+  /** When this sign-in happened (its tokens' `auth_time`); refreshes keep it (S9). */
+  authTimeMs: number;
 }
 
 export async function startFixtureServer(options: FixtureServerOptions): Promise<FixtureServer> {
@@ -301,6 +351,8 @@ export async function startFixtureServer(options: FixtureServerOptions): Promise
   const redirectUris = new Set(options.redirectUris ?? [APP_REDIRECT]);
   const key = options.signingKey ?? newSigningKey();
   const userId = `user_${opaque(12)}`;
+  /** A different person, for `signInAs: "other"` (S9). */
+  const otherUserId = `user_${opaque(12)}`;
 
   /** The check-in data for each data scenario, rebuilt (with new ids) on every reset. */
   const buildStores = () => ({
@@ -325,7 +377,16 @@ export async function startFixtureServer(options: FixtureServerOptions): Promise
 
   let scenario: Scenario = { ...DEFAULT_SCENARIO };
   let counts: FixtureCounts = { ...ZERO_COUNTS };
+  /** Profile changes saved by PATCH, and the profile's version: both kept until a reset (S9). */
+  let profileEdits: UpdateProfileRequest = {};
+  let profileUpdatedAt = new Date(now()).toISOString();
   let lastAuthorizeMaxAge: string | null = null;
+  /** The account is erased (S9): reads answer 410 account_deleted. */
+  let erased = false;
+  /** `identity-pending` answers identity_pending once, then the repeat finishes the deletion. */
+  let identityPendingSent = false;
+  /** With `deletion: "recent-login"`, sign-ins before this moment are not recent enough. */
+  let recentLoginAfter = 0;
   /** Stats requests waiting for the next sign-out. */
   const signOutWaiters: (() => void)[] = [];
 
@@ -350,6 +411,7 @@ export async function startFixtureServer(options: FixtureServerOptions): Promise
     latestCompletedMonth: store().latestCompletedMonth,
     currentMonth: londonMonth(new Date(now())),
     lastAuthorizeMaxAge,
+    erased,
   });
   const codes = new Map<string, PendingCode>();
   /** Refresh token to session. A used token moves to `spent`. */
@@ -367,6 +429,7 @@ export async function startFixtureServer(options: FixtureServerOptions): Promise
       iss: issuer(),
       sub: session.userId,
       sid: session.id,
+      auth_time: Math.floor(session.authTimeMs / 1000),
       client_id: options.clientId,
       iat,
       exp: iat + scenario.accessTokenSeconds,
@@ -451,7 +514,12 @@ export async function startFixtureServer(options: FixtureServerOptions): Promise
         return oauthError(res, 400, "invalid_grant");
       }
       counts.exchanges += 1;
-      const session: Session = { id: `session_${opaque(12)}`, userId, revoked: false };
+      const session: Session = {
+        id: `session_${opaque(12)}`,
+        userId: scenario.signInAs === "other" ? otherUserId : userId,
+        revoked: false,
+        authTimeMs: now(),
+      };
       sessions.set(session.id, session);
       return json(res, 200, issueTokens(session));
     }
@@ -488,6 +556,10 @@ export async function startFixtureServer(options: FixtureServerOptions): Promise
       apiError(res, 401, "unauthorized", "Sign in to continue.");
       return undefined;
     }
+    if (erased) {
+      apiError(res, 410, "account_deleted", "This account has been deleted.");
+      return undefined;
+    }
     if (scenario.account === "not-invited") {
       apiError(res, 403, "not_invited", "This account is not on the beta list.");
       return undefined;
@@ -515,17 +587,26 @@ export async function startFixtureServer(options: FixtureServerOptions): Promise
       for (const wake of signOutWaiters.splice(0)) wake();
       return void res.writeHead(204).end();
     }
+    if (req.method === "GET" && path === "/user-profile/export") return handleExport(req, res);
+    if (req.method === "DELETE" && path === "/user-profile") return handleDelete(req, res);
     if (req.method === "GET" && path === "/user-profile") {
       const session = invitedSession(req, res);
       if (!session) return;
       const profile: Record<string, unknown> = {
         ...cannedProfile(session.userId, new Date(now()), household().facts),
+        ...profileEdits,
+        updatedAt: profileUpdatedAt,
       };
       if (scenario.backend === "older") delete profile.wellbeingQuestions;
       if (scenario.backend === "newer") profile.fieldFromALaterBackend = "something new";
       if (scenario.profile === "none") return void res.writeHead(200).end();
       if (scenario.profile === "not-set-up") profile.onboardingCompleted = false;
       return json(res, 200, profile);
+    }
+    if (req.method === "PATCH" && path === "/user-profile") {
+      const session = invitedSession(req, res);
+      if (!session) return;
+      return handleProfilePatch(session, req, res);
     }
     const snapshotMonth = /^\/snapshots\/([^/]+)$/.exec(path)?.[1];
     const isSnapshotPut = req.method === "PUT" && snapshotMonth !== undefined;
@@ -586,6 +667,113 @@ export async function startFixtureServer(options: FixtureServerOptions): Promise
     return json(res, 200, result);
   }
 
+  /** As the backend: the strict body first, then the version in If-Match when one is sent. */
+  async function handleProfilePatch(session: Session, req: IncomingMessage, res: ServerResponse) {
+    const raw = await readJson(req);
+    if (raw === undefined) return apiError(res, 400, "invalid_json", "The body is not JSON.");
+    const body = UpdateProfileRequest.safeParse(raw);
+    if (!body.success) {
+      const issues = body.error.issues.map((i) => ({
+        path: ["body", ...i.path.map(String)].join("."),
+        code: i.code,
+        message: i.message,
+      }));
+      return apiError(res, 400, "validation_failed", "The request is not valid.", issues);
+    }
+    const ifMatch = req.headers["if-match"];
+    if (ifMatch !== undefined && ifMatch !== etagFor(profileUpdatedAt)) {
+      return apiError(res, 412, "precondition_failed", "The profile changed since it was read.");
+    }
+    profileEdits = { ...profileEdits, ...body.data };
+    // A new version, always later than the last, as the backend's updatedAt.
+    const previous = Date.parse(profileUpdatedAt);
+    profileUpdatedAt = new Date(Math.max(now(), previous + 1)).toISOString();
+    return json(res, 200, {
+      ...cannedProfile(session.userId, new Date(now())),
+      ...profileEdits,
+      updatedAt: profileUpdatedAt,
+    });
+  }
+
+  /**
+   * The export (S9): as the backend, open to a person who is not invited or has not agreed to the
+   * terms (`@AllowUninvited`, `@AllowWithoutTerms`), but not to an erased account.
+   */
+  function handleExport(req: IncomingMessage, res: ServerResponse) {
+    const session = sessionFor(req);
+    if (!session) return apiError(res, 401, "unauthorized", "Sign in to continue.");
+    if (erased) return apiError(res, 410, "account_deleted", "This account has been deleted.");
+    if (scenario.export === "rate-limited") {
+      return apiError(res, 429, "rate_limited", "Too many requests. Try again later.");
+    }
+    counts.exports += 1;
+    const today = new Date(now()).toISOString().slice(0, 10);
+    const body = {
+      exportedAt: new Date(now()).toISOString(),
+      profile: { email: FIXTURE_PERSON.email, firstName: FIXTURE_PERSON.firstName },
+      accounts: cannedAccounts(store()),
+    };
+    res
+      .writeHead(200, {
+        "content-type": "application/json; charset=utf-8",
+        "content-disposition": `attachment; filename="flump-export-${today}.json"`,
+        "cache-control": "no-store",
+      })
+      .end(JSON.stringify(body));
+  }
+
+  /**
+   * The deletion (S9), in the backend's order: a signed-in caller (erased, uninvited and
+   * terms-refusing accounts included), the typed phrase, the rate limit, a recent sign-in, then
+   * the erase. `deleted` removes the login: every session is revoked, so refreshes are refused.
+   */
+  async function handleDelete(req: IncomingMessage, res: ServerResponse) {
+    const session = sessionFor(req);
+    if (!session) return apiError(res, 401, "unauthorized", "Sign in to continue.");
+    const raw = await readJson(req);
+    const confirmation =
+      typeof raw === "object" && raw !== null && "confirmation" in raw ? raw.confirmation : null;
+    if (confirmation !== "DELETE") {
+      return apiError(res, 400, "validation_failed", "Type DELETE to confirm.");
+    }
+    if (scenario.deletion === "rate-limited") {
+      return apiError(res, 429, "rate_limited", "Too many requests. Try again later.");
+    }
+    const recent =
+      now() - session.authTimeMs <= RECENT_LOGIN_MS && session.authTimeMs >= recentLoginAfter;
+    if (!recent) {
+      return apiError(
+        res,
+        403,
+        "recent_login_required",
+        "For your security, sign in again, then try again.",
+      );
+    }
+    if (scenario.deletion === "unavailable") {
+      return apiError(
+        res,
+        503,
+        "account_deletion_unavailable",
+        "Account deletion is not available right now. Try again later.",
+      );
+    }
+    erased = true;
+    if (scenario.deletion === "identity-pending" && !identityPendingSent) {
+      identityPendingSent = true;
+      return json(res, 200, { status: "identity_pending" });
+    }
+    counts.deletions += 1;
+    for (const each of sessions.values()) if (each.userId === session.userId) each.revoked = true;
+    refreshTokens.clear();
+    spent.clear();
+    return json(res, 200, { status: "deleted" });
+  }
+
+  /** A sign-in made before a `recent-login` scenario is set is no longer recent (S9). */
+  function noteScenario(patch: Partial<Scenario>) {
+    if (patch.deletion === "recent-login") recentLoginAfter = now() + 1;
+  }
+
   async function route(req: IncomingMessage, res: ServerResponse) {
     const url = new URL(req.url ?? "/", "http://fixture.invalid");
     const path = url.pathname;
@@ -605,6 +793,7 @@ export async function startFixtureServer(options: FixtureServerOptions): Promise
       const patch = parseScenarioPatch(await readJson(req));
       if (!patch) return json(res, 400, { error: "unknown scenario key or value" });
       scenario = { ...scenario, ...patch };
+      noteScenario(patch);
       return void res.writeHead(204).end();
     }
     if (req.method === "POST" && path === "/__fixture/revoke") {
@@ -628,11 +817,16 @@ export async function startFixtureServer(options: FixtureServerOptions): Promise
     scenario = { ...DEFAULT_SCENARIO };
     counts = { ...ZERO_COUNTS };
     stores = buildStores();
+    profileEdits = {};
+    profileUpdatedAt = new Date(now()).toISOString();
     codes.clear();
     refreshTokens.clear();
     spent.clear();
     sessions.clear();
     lastAuthorizeMaxAge = null;
+    erased = false;
+    identityPendingSent = false;
+    recentLoginAfter = 0;
   }
 
   const server = createServer((req, res) => {
@@ -652,6 +846,7 @@ export async function startFixtureServer(options: FixtureServerOptions): Promise
       const checked = parseScenarioPatch(patch);
       if (!checked) throw new Error("unknown scenario key or value");
       scenario = { ...scenario, ...checked };
+      noteScenario(checked);
     },
     stats,
     close: () =>

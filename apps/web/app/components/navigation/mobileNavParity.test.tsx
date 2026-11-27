@@ -6,11 +6,13 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { withoutBarPages } from "~/components/structure/header/MobileNavDrawer/MobileNavDrawer";
+import { ALL_PAGE_KEYS, FOLLOWING_PAGE_KEYS, isPageEnabled } from "~/utils/pageConfig";
 import enCommon from "../../../public/locales/en/common.json";
 import {
   AUTH_NAV_ROUTES,
   BOTTOM_BAR_TABS,
   DRAWER_FOOTER_ROUTES,
+  filterNavRoutes,
   type NavRouteItem,
 } from "./navConfig";
 
@@ -37,8 +39,14 @@ interface MobilePage {
 }
 interface MobileNav {
   TABS: readonly MobileTab[];
-  MORE_GROUPS: readonly { key: string; label: string; pages: readonly MobilePage[] }[];
   MORE_FOOTER: readonly MobilePage[];
+}
+type MobileEntry =
+  | { kind: "group"; key: string; label: string; pages: readonly MobilePage[] }
+  | { kind: "row"; key: string; label: string; icon: string; webRoute: string; pageKey: string };
+interface MobileSwitches {
+  moreEntries(enabledPages: readonly string[] | null | undefined): MobileEntry[];
+  isPageEnabled(enabledPages: readonly string[] | null | undefined, key: string): boolean;
 }
 
 const loadMobile = async () => {
@@ -50,20 +58,13 @@ const loadMobile = async () => {
   )) as {
     ICON_SHAPES: Record<string, readonly IconShape[]>;
   };
-  return { ...nav, ICON_SHAPES: icons.ICON_SHAPES };
+  const switches = (await import(
+    /* @vite-ignore */ fileURLToPath(new URL("pageSwitches.ts", MOBILE_NAV))
+  )) as MobileSwitches;
+  return { ...nav, ...switches, ICON_SHAPES: icons.ICON_SHAPES };
 };
 
 const EN: Record<string, string> = enCommon;
-
-/**
- * Drawer rows the app leaves out on purpose. Each one depends on a per-person switch that the app
- * does not read until S9 brings the shared filter, and a row leading to a page someone has not
- * switched on is worse than no row (coordinator, 26 November 2026). Self Assessment is opt-in and
- * its page shows "switched off" until turned on. The other switchable pages (Savings, Pension,
- * Retirement, Cards and loans, Mortgage) are on by default and still open on web when switched off, so
- * they stay. A new conditional row must be added here, or to the app, on purpose.
- */
-const LEFT_OUT_UNTIL_S9: ReadonlySet<string> = new Set(["tax"]);
 
 /**
  * Tab icons the app draws differently on purpose. Pay: web gives Pay and Calculators the same
@@ -103,39 +104,95 @@ describe("the mobile More list mirrors the phone drawer", () => {
     icon: route.icon,
   });
 
-  it("leaves out only the named exceptions, each of which is a real drawer row", async () => {
-    const { MORE_GROUPS } = await loadMobile();
-    const drawerKeys = withoutBarPages(AUTH_NAV_ROUTES).flatMap((g) =>
-      (g.children ?? []).map((p) => p.key),
+  /** Web's phone drawer for a stored page list, as `MobileNavDrawer` builds it when signed in. */
+  const drawerFor = (enabled: string[]) =>
+    withoutBarPages(filterNavRoutes(AUTH_NAV_ROUTES, enabled, isPageEnabled)).map((route) =>
+      route.children
+        ? { kind: "group", key: route.key, label: EN[route.key], pages: route.children.map(pageOf) }
+        : { kind: "row", ...pageOf(route) },
     );
-    const mobileKeys = MORE_GROUPS.flatMap((g) => g.pages.map((p) => p.key));
-    expect(drawerKeys.filter((key) => !mobileKeys.includes(key))).toEqual([...LEFT_OUT_UNTIL_S9]);
+
+  const mobileFor = (entries: MobileEntry[]) =>
+    entries.map((entry) =>
+      entry.kind === "group"
+        ? {
+            kind: "group",
+            key: entry.key,
+            label: entry.label,
+            pages: entry.pages.map((p) => ({ ...p, icon: lucideIcon(p.icon) })),
+          }
+        : {
+            kind: "row",
+            key: entry.key,
+            label: entry.label,
+            webRoute: entry.webRoute,
+            icon: lucideIcon(entry.icon),
+          },
+    );
+
+  /**
+   * Every subset of the switchable pages, stored as web stores them: the following page
+   * (Retirement) is never switched on its own, so it is left out, as Profile and onboarding write
+   * the list. 2^7 lists, the empty one included.
+   */
+  const SWITCHABLE = ALL_PAGE_KEYS.filter((key) => !(key in FOLLOWING_PAGE_KEYS));
+  const ALL_LISTS: string[][] = Array.from({ length: 2 ** SWITCHABLE.length }, (_, mask) =>
+    SWITCHABLE.filter((_key, bit) => (mask >> bit) & 1),
+  );
+
+  it("lists every switchable page of web's (and no other) in its pages and footer", async () => {
+    const { moreEntries } = await loadMobile();
+    const pageKeys = (entries: MobileEntry[]) =>
+      entries.flatMap((e) => (e.kind === "group" ? e.pages.map((p) => p.key) : [e.pageKey]));
+    // With every page on, More reaches every switchable page the tab bar does not.
+    expect(pageKeys(moreEntries(SWITCHABLE)).sort()).toEqual(
+      ["debt", "mortgage", "pension", "retirement", "savings", "tax"].sort(),
+    );
+    expect(SWITCHABLE.length).toBe(7);
+    expect(ALL_LISTS).toHaveLength(128);
   });
 
-  it("has the drawer's groups and pages, without the tab bar's, in order", async () => {
-    const { MORE_GROUPS } = await loadMobile();
-    const drawer = withoutBarPages(AUTH_NAV_ROUTES)
-      .map((group) => ({
-        ...group,
-        children: group.children?.filter((page) => !LEFT_OUT_UNTIL_S9.has(page.key)),
-      }))
-      .filter((group) => (group.children ?? []).length > 0);
-    // Every drawer entry left once the bar's pages go is a group (Accounts and Budget are tabs).
-    expect(drawer.every((route) => route.children)).toBe(true);
+  it.each(ALL_LISTS.map((list) => [list.join(",") || "(empty)", list] as const))(
+    "has the drawer's groups and rows, without the tab bar's, for %s",
+    async (_name, list) => {
+      const { moreEntries } = await loadMobile();
+      expect(mobileFor(moreEntries(list))).toEqual(drawerFor(list));
+    },
+  );
+
+  it.each([
+    ["missing", undefined],
+    ["null", null],
+  ] as const)("a %s list reads as the default set, Self Assessment off", async (_name, list) => {
+    const { moreEntries } = await loadMobile();
+    // Web's drawer reads a missing list as [] (`profile.enabledPages || []`): the default set.
+    expect(mobileFor(moreEntries(list))).toEqual(drawerFor([]));
     expect(
-      MORE_GROUPS.map((g) => ({
-        key: g.key,
-        label: g.label,
-        pages: g.pages.map((p) => ({ ...p, icon: lucideIcon(p.icon) })),
-      })),
-    ).toEqual(
-      drawer.map((group) => ({
-        key: group.key,
-        label: EN[group.key],
-        pages: (group.children ?? []).map(pageOf),
-      })),
-    );
+      drawerFor([]).flatMap((e) => ("pages" in e ? e.pages.map((p) => p.key) : [])),
+    ).not.toContain("tax");
   });
+
+  it("ignores keys it does not know, as web's drawer does", async () => {
+    const { moreEntries } = await loadMobile();
+    for (const list of [
+      ["forecast"],
+      ["forecast", "tax"],
+      ["retirement"],
+      ["retirement", "pension"],
+    ]) {
+      expect(mobileFor(moreEntries(list))).toEqual(drawerFor(list));
+    }
+  });
+
+  it.each([...ALL_LISTS, ["retirement"], ["forecast"]].map((l) => [l.join(",") || "(empty)", l]))(
+    "agrees with web's isPageEnabled for every page key, for %s",
+    async (_name, list) => {
+      const { isPageEnabled: mobileIsPageEnabled } = await loadMobile();
+      for (const key of ALL_PAGE_KEYS) {
+        expect([key, mobileIsPageEnabled(list, key)]).toEqual([key, isPageEnabled(list, key)]);
+      }
+    },
+  );
 
   it("ends with the drawer's footer rows: Settings, Connect AI and Calculators", async () => {
     const { MORE_FOOTER } = await loadMobile();
@@ -164,6 +221,10 @@ describe("the mobile icon shapes are lucide's", () => {
     "menu",
     "chevron-right",
     "chevron-left",
+    "file-text",
+    "monitor",
+    "sun",
+    "moon",
   ])("%s draws the same shapes", async (name) => {
     const { ICON_SHAPES } = await loadMobile();
     const component = lucideIcon(name) as Parameters<typeof createElement>[0];

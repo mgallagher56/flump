@@ -213,7 +213,8 @@ describe("the dev sign-in check against the WorkOS stand-in", () => {
     });
     expect(report).toEqual({
       issuer: `${server.origin}/user_management/${CLIENT_ID}`,
-      claimNames: ["client_id", "exp", "iat", "iss", "sid", "sub"],
+      // `auth_time` since S9, as real WorkOS tokens carry it (the backend's recent sign-in check).
+      claimNames: ["auth_time", "client_id", "exp", "iat", "iss", "sid", "sub"],
       // The stand-in's default lifetime: 300 seconds.
       accessLifetimeSeconds: 300,
       refreshWithoutSecret: "accepted",

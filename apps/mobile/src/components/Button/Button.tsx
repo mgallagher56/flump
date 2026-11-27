@@ -45,6 +45,7 @@ export function Button({
   pending = false,
   disabled = false,
   accessibilityRole = "button",
+  accessibilityLabel,
   style,
   ...props
 }: ButtonProps) {
@@ -58,6 +59,9 @@ export function Button({
     <Pressable
       {...props}
       accessibilityRole={accessibilityRole}
+      // Set on the control, not left to the text inside: TalkBack lost a name read from the
+      // children across a busy change, and read only "busy" (device check, E12 S9).
+      accessibilityLabel={accessibilityLabel ?? label}
       disabled={disabled}
       busy={pending}
       android_ripple={rippleFor(variant, disabled, theme)}
@@ -85,7 +89,7 @@ export function Button({
       ) : null}
       <Text
         textStyle={SIZE_TEXT[size]}
-        style={[styles.label, { color: labelColour }, variant === "link" ? styles.underline : null]}
+        style={[styles.label, { color: labelColour }, variant === "link" ? styles.linkLabel : null]}
       >
         {label}
       </Text>

@@ -2,10 +2,11 @@ import { useMemo } from "react";
 import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BACK, OPEN_MENU } from "../../copy/navigation";
-import { useTheme } from "../../theme/ThemeProvider";
+import { useTheme, useThemeChoice } from "../../theme/ThemeProvider";
 import { Icon } from "../Icon";
 import { Pressable } from "../Pressable";
 import { Text } from "../Text";
+import { ThemeCycleButton } from "../ThemeCycleButton";
 import { createStyles } from "./AppHeader.styles";
 
 export interface AppHeaderProps {
@@ -19,11 +20,13 @@ export interface AppHeaderProps {
 
 /**
  * The top bar over each tab and each page stacked on them (E12 S4, plan 9.7): the screen's name,
- * Back on a stacked page, and, as web's phone top bar, a menu button that opens the More list. One
- * header everywhere, not the platform's on stacked pages. The light and dark toggle joins it in S9.
+ * Back on a stacked page, and, as web's phone top bar, the colour theme button (System, Light,
+ * Dark, E12 S9) and a menu button that opens the More list. One header everywhere, not the
+ * platform's on stacked pages.
  */
 export function AppHeader({ title, onOpenMenu, onBack }: AppHeaderProps) {
   const theme = useTheme();
+  const { preference, setPreference } = useThemeChoice();
   const styles = useMemo(() => createStyles(theme), [theme]);
   return (
     <SafeAreaView edges={["top", "right", "left"]} style={styles.bar}>
@@ -47,6 +50,7 @@ export function AppHeader({ title, onOpenMenu, onBack }: AppHeaderProps) {
         ) : (
           <View style={styles.title} />
         )}
+        <ThemeCycleButton preference={preference} onChange={setPreference} />
         {onOpenMenu ? (
           <Pressable
             accessibilityRole="button"

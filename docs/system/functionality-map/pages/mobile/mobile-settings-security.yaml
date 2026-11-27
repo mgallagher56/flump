@@ -1,0 +1,11 @@
+id: mobile-settings-security
+app: mobile
+route: /settings/security
+title: Security settings
+auth: required
+purpose: Web's How you sign in on a phone (E12 S9). The account email, read only, and Change password, which opens web's Security settings in the system browser; the app never shows or takes a password. Restored offline it reads nothing and the button waits for a connection.
+route_file: apps/mobile/app/(app)/settings/security.tsx
+
+sections:
+  - id: sign-in
+    component: apps/mobile/src/screens/SettingsSecurity/SettingsSecurity.tsx

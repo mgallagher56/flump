@@ -71,6 +71,8 @@ const STORAGE_ROOTS = [
   "apps/marketing/src",
   "packages/finance-engine/src",
   "apps/mobile/src/auth",
+  // The other secure store keys (E12 S9): their names live here, and src/auth reads them.
+  "apps/mobile/src/device",
 ];
 /** Where a second formula would be: web pages, backend services and the AI tools. */
 const FORMULA_ROOTS = ["apps/web/app", "apps/backend/src", "packages/mcp/src", ...MOBILE_SCAN_DIRS];

@@ -2,7 +2,7 @@
 
 # Functionality map: overview
 
-Mapped pages: 50 | Sections: 290 | Excluded routes: 25
+Mapped pages: 56 | Sections: 301 | Excluded routes: 25
 
 ## web
 
@@ -638,16 +638,16 @@ Mapped pages: 50 | Sections: 290 | Excluded routes: 25
 ### mobile-more: More
 
 - Route: `/more` (auth: `required`, file: `apps/mobile/app/(app)/(tabs)/more.tsx`)
-- Purpose: The More tab (E12 S4), also opened by each tab's header menu button. It lists what web's phone drawer lists below the bottom bar, in its groups and order (Savings, Pension, Retirement, Cards and loans, Mortgage), then Settings, Connect AI and Calculators, then Sign out, which asks first. Self Assessment, opt-in per person, arrives with S9's filter. It reads nothing.
+- Purpose: The More tab (E12 S4), also opened by each tab's header menu button. It lists what web's phone drawer lists below the bottom bar for the pages the person has switched on (E12 S9), in its groups and order (Self Assessment under Pay when on, Savings, Pension, Retirement, Cards and loans, Mortgage), then Settings, which opens the Settings list, Connect AI and Calculators, then Sign out, which asks first. It reads the switched-on pages from the profile; with none read, the default set.
 
-| Section | Component                               | Facts read | Figures |
-| ------- | --------------------------------------- | ---------- | ------- |
-| `list`  | `apps/mobile/src/screens/More/More.tsx` | -          | -       |
+| Section | Component                               | Facts read                  | Figures |
+| ------- | --------------------------------------- | --------------------------- | ------- |
+| `list`  | `apps/mobile/src/screens/More/More.tsx` | `enabled-pages-and-widgets` | -       |
 
 ### mobile-more-page: A More page
 
 - Route: `/page/:key` (auth: `required`, file: `apps/mobile/app/(app)/page/[key].tsx`)
-- Purpose: A page opened from the More list, also by flump://page/<key> (E12 S4). Until its own slice it says the page is on the Flump website for now and opens the same web page in the system browser. An unknown key shows not found with one way back, to More. It shows no figures and reads nothing.
+- Purpose: A page opened from the More list, also by flump://page/<key> (E12 S4). Until its own slice it says the page is on the Flump website for now and opens the same web page in the system browser. flump://page/settings opens the Settings list instead (E12 S9). An unknown key shows not found with one way back, to More. It shows no figures and reads nothing.
 
 | Section       | Component                                               | Facts read | Figures |
 | ------------- | ------------------------------------------------------- | ---------- | ------- |
@@ -682,6 +682,65 @@ Mapped pages: 50 | Sections: 290 | Excluded routes: 25
 | Section       | Component                                           | Facts read | Figures |
 | ------------- | --------------------------------------------------- | ---------- | ------- |
 | `placeholder` | `apps/mobile/src/screens/ComingSoon/ComingSoon.tsx` | -          | -       |
+
+### mobile-settings: Settings
+
+- Route: `/settings` (auth: `required`, file: `apps/mobile/app/(app)/settings/index.tsx`)
+- Purpose: Settings on a phone (E12 S9), opened by More's Settings row and flump://page/settings. Web's settings tabs as a list of pushed pages, Profile, This phone, Security and Data, since the app has no tabs component. It reads nothing.
+
+| Section | Component                                       | Facts read | Figures |
+| ------- | ----------------------------------------------- | ---------- | ------- |
+| `list`  | `apps/mobile/src/screens/Settings/Settings.tsx` | -          | -       |
+
+### mobile-settings-data: Data settings
+
+- Route: `/settings/data` (auth: `required`, file: `apps/mobile/app/(app)/settings/data.tsx`)
+- Purpose: Web's Data tab on a phone (E12 S9). Download your data hands the JSON export to the system share sheet and deletes the app's copy when the sheet closes; Delete your account opens its own page; the four legal pages open in the system browser. Restored offline both actions wait for a connection. The Not invited and Terms screens offer the same two actions.
+
+| Section  | Component                                                            | Facts read | Figures |
+| -------- | -------------------------------------------------------------------- | ---------- | ------- |
+| `export` | `apps/mobile/src/components/ExportDataSection/ExportDataSection.tsx` | -          | -       |
+| `delete` | `apps/mobile/src/screens/AccountDataActions/AccountDataActions.tsx`  | -          | -       |
+| `legal`  | `apps/mobile/src/screens/DataSettings/DataSettings.tsx`              | -          | -       |
+
+### mobile-settings-delete-account: Delete your account
+
+- Route: `/settings/delete-account` (auth: `required`, file: `apps/mobile/app/(app)/settings/delete-account.tsx`)
+- Purpose: Web's account deletion on a phone (E12 S9). Lists what goes, takes the typed phrase DELETE, then deletes; on success the device is wiped as at sign-out and the confirmation replaces the app. A deletion that stopped half way shows the last step instead, and a sign-in older than 15 minutes offers Sign in again, which re-authenticates in place and deletes nothing.
+
+| Section   | Component                                                 | Facts read | Figures |
+| --------- | --------------------------------------------------------- | ---------- | ------- |
+| `confirm` | `apps/mobile/src/screens/DeleteAccount/DeleteAccount.tsx` | -          | -       |
+
+### mobile-settings-phone: This phone
+
+- Route: `/settings/phone` (auth: `required`, file: `apps/mobile/app/(app)/settings/phone.tsx`)
+- Purpose: Choices kept on this phone only (E12 S9, CROSS-PLATFORM X9). The colour theme as three radio rows, System, Light and Dark, writing the same stored choice as the header's button; then app lock. It works offline and reads nothing from Flump.
+
+| Section | Component                                                 | Facts read | Figures |
+| ------- | --------------------------------------------------------- | ---------- | ------- |
+| `theme` | `apps/mobile/src/screens/SettingsPhone/SettingsPhone.tsx` | -          | -       |
+
+### mobile-settings-profile: Profile settings
+
+- Route: `/settings/profile` (auth: `required`, file: `apps/mobile/app/(app)/settings/profile.tsx`)
+- Purpose: What web's Profile tab lets a person change that the app honours today (E12 S9). First and last name, saved on leaving the field when changed; the two net worth switches, shown only for the accounts they change (both when the accounts cannot be read), which write the profile query so Home follows; the check-in day, 1st to 31st; and Self Assessment under Sections you use, which decides More's Pay group. Each change saves at once with PATCH /v1/user-profile and If-Match. The rest of web's tab is one link to the website. Home's Change what counts opens it at the net worth group.
+
+| Section             | Component                                                     | Facts read                          | Figures |
+| ------------------- | ------------------------------------------------------------- | ----------------------------------- | ------- |
+| `details`           | `apps/mobile/src/screens/SettingsProfile/SettingsProfile.tsx` | `name-and-avatar`                   | -       |
+| `net-worth-choices` | `apps/mobile/src/screens/SettingsProfile/SettingsProfile.tsx` | `net-worth-choices`, `account-type` | -       |
+| `check-in-day`      | `apps/mobile/src/screens/SettingsProfile/SettingsProfile.tsx` | `check-in-day`                      | -       |
+| `sections`          | `apps/mobile/src/screens/SettingsProfile/SettingsProfile.tsx` | `enabled-pages-and-widgets`         | -       |
+
+### mobile-settings-security: Security settings
+
+- Route: `/settings/security` (auth: `required`, file: `apps/mobile/app/(app)/settings/security.tsx`)
+- Purpose: Web's How you sign in on a phone (E12 S9). The account email, read only, and Change password, which opens web's Security settings in the system browser; the app never shows or takes a password. Restored offline it reads nothing and the button waits for a connection.
+
+| Section   | Component                                                       | Facts read | Figures |
+| --------- | --------------------------------------------------------------- | ---------- | ------- |
+| `sign-in` | `apps/mobile/src/screens/SettingsSecurity/SettingsSecurity.tsx` | -          | -       |
 
 ### sign-in: Flump
 

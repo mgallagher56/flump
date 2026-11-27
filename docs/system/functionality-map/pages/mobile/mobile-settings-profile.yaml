@@ -1,0 +1,26 @@
+id: mobile-settings-profile
+app: mobile
+route: /settings/profile
+title: Profile settings
+auth: required
+purpose: What web's Profile tab lets a person change that the app honours today (E12 S9). First and last name, saved on leaving the field when changed; the two net worth switches, shown only for the accounts they change (both when the accounts cannot be read), which write the profile query so Home follows; the check-in day, 1st to 31st; and Self Assessment under Sections you use, which decides More's Pay group. Each change saves at once with PATCH /v1/user-profile and If-Match. The rest of web's tab is one link to the website. Home's Change what counts opens it at the net worth group.
+route_file: apps/mobile/app/(app)/settings/profile.tsx
+
+sections:
+  - id: details
+    component: apps/mobile/src/screens/SettingsProfile/SettingsProfile.tsx
+    facts_read:
+      - name-and-avatar
+  - id: net-worth-choices
+    component: apps/mobile/src/screens/SettingsProfile/SettingsProfile.tsx
+    facts_read:
+      - net-worth-choices
+      - account-type
+  - id: check-in-day
+    component: apps/mobile/src/screens/SettingsProfile/SettingsProfile.tsx
+    facts_read:
+      - check-in-day
+  - id: sections
+    component: apps/mobile/src/screens/SettingsProfile/SettingsProfile.tsx
+    facts_read:
+      - enabled-pages-and-widgets

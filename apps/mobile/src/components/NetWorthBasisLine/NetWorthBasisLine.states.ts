@@ -21,10 +21,10 @@ export const netWorthBasisLineStates = {
     onAddEstimate: noop,
   },
   websiteOnly: {
-    leftOut: ["studentLoan"],
+    leftOut: ["homeValueMissing"],
     onChangeWhatCounts: noop,
     onAddEstimate: noop,
-    websiteLabel: "Open the Flump website",
+    estimateWebsiteLabel: "Open the Flump website",
   },
   linkOnly: {
     leftOut: [],

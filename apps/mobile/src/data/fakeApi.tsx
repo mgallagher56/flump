@@ -15,6 +15,8 @@ interface FakeCall {
   method: string;
   path: string;
   body: unknown;
+  /** Present only when the call sent `If-Match` (S9's profile saves). */
+  ifMatch?: string;
 }
 
 /** A route answers with a body, or throws (use `fail`). Keyed "GET /accounts". */
@@ -36,10 +38,16 @@ export function fakeApi(routes: Record<string, FakeRoute>) {
         body?: unknown;
         schema?: { parse(u: unknown): unknown } | null;
         allowEmpty?: boolean;
+        ifMatch?: string;
       },
     ) => {
       const method = options.method ?? "GET";
-      calls.push({ method, path, body: options.body });
+      calls.push({
+        method,
+        path,
+        body: options.body,
+        ...(options.ifMatch ? { ifMatch: options.ifMatch } : {}),
+      });
       const route = routes[`${method} ${path}`];
       if (!route) fail("not-found", 404);
       const data = await route(options.body);

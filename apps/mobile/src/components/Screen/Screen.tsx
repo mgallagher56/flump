@@ -1,5 +1,5 @@
-import { type ReactNode, useCallback, useMemo, useState } from "react";
-import { RefreshControl, ScrollView, View } from "react-native";
+import { type ReactNode, type Ref, useCallback, useMemo, useState } from "react";
+import { RefreshControl, ScrollView, type ScrollViewInstance, View } from "react-native";
 import { type Edge, SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "../../theme/ThemeProvider";
 import { createStyles } from "./Screen.styles";
@@ -23,6 +23,8 @@ export interface ScreenProps {
    * stay on screen while it runs. Only on a screen that scrolls.
    */
   onRefresh?: () => Promise<unknown>;
+  /** The scroll view, for a screen that opens at one of its groups (Settings' net worth choices). */
+  scrollRef?: Ref<ScrollViewInstance>;
   testID?: string;
 }
 
@@ -35,6 +37,7 @@ export function Screen({
   centred = false,
   edges = ALL_EDGES,
   onRefresh,
+  scrollRef,
   testID,
 }: ScreenProps) {
   const theme = useTheme();
@@ -57,6 +60,7 @@ export function Screen({
     <SafeAreaView style={styles.screen} edges={edges} testID={testID}>
       {scroll ? (
         <ScrollView
+          ref={scrollRef}
           contentContainerStyle={content}
           refreshControl={
             onRefresh ? (

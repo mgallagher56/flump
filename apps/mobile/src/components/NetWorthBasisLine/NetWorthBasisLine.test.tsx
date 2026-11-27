@@ -34,9 +34,7 @@ describe("NetWorthBasisLine", () => {
     async (leftOut, words) => {
       const { onChangeWhatCounts, onAddEstimate } = await line({ leftOut });
       expect(screen.getByText(words)).toBeOnTheScreen();
-      await userEvent
-        .setup()
-        .press(screen.getByRole("link", { name: "Change what counts on the website" }));
+      await userEvent.setup().press(screen.getByRole("link", { name: "Change what counts" }));
       expect(onChangeWhatCounts).toHaveBeenCalledTimes(1);
       expect(onAddEstimate).not.toHaveBeenCalled();
     },
@@ -59,9 +57,14 @@ describe("NetWorthBasisLine", () => {
     expect(screen.queryByTestId("net-worth-basis-line")).toBeNull();
   });
 
-  it("says it opens the website's home page when it cannot open the page itself", async () => {
-    await line({ leftOut: ["studentLoan"], websiteLabel: "Open the Flump website" });
+  it("the estimate link says it opens the website's home page when it cannot open the page", async () => {
+    await line({ leftOut: ["homeValueMissing"], estimateWebsiteLabel: "Open the Flump website" });
     expect(screen.getByRole("link", { name: "Open the Flump website" })).toBeOnTheScreen();
+  });
+
+  it("Change what counts opens the app's own setting, whatever the website's address", async () => {
+    await line({ leftOut: ["studentLoan"], estimateWebsiteLabel: "Open the Flump website" });
+    expect(screen.getByRole("link", { name: "Change what counts" })).toBeOnTheScreen();
   });
 
   it.each(Object.entries(netWorthBasisLineStates))(

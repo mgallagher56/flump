@@ -12,12 +12,12 @@ import {
   SnapshotCheckInsResponse,
   UpsertSnapshotRequest,
   UpsertSnapshotResponse,
-  UserProfileResponse,
 } from "@flump/api-contract";
 import type { SnapshotPayload } from "@flump/finance-engine/check-in";
-import { type QueryClient, useQueries, useQueryClient } from "@tanstack/react-query";
+import { type QueryClient, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useApi } from "./ApiProvider";
+import { type AppProfile, fetchProfile } from "./profile";
 import { queryKeys } from "./queryKeys";
 
 /**
@@ -41,24 +41,9 @@ const AppCheckIns = SnapshotCheckInsResponse.loose();
 
 type Accounts = ReturnType<typeof AppAccountList.parse>;
 type AccountDetails = ReturnType<typeof AppAccountDetailList.parse>;
-/**
- * The profile fields the check-in reads, taken from the contract's own definitions, each allowed to
- * be absent, and other fields ignored. Not the whole strict profile: a field added to or dropped
- * from the profile elsewhere (staging runs older than main) must not stop the check-in, as S2b's
- * account check reads no body for the same reason. An empty answer is a person with no profile yet.
- * Loose, so the answer keeps every field: Home's strip parses its own facts from the same cached
- * answer (`parseStripProfile` in `budget.ts`), and a field only the strip reads can never stop
- * the check-in or the hero.
- */
-const CheckInProfile = UserProfileResponse.pick({
-  onboardingCompleted: true,
-  checkInDay: true,
-  netWorthCountsProperty: true,
-  netWorthCountsStudentLoan: true,
-})
-  .partial()
-  .loose();
-type UserProfile = ReturnType<typeof CheckInProfile.parse>;
+/** The profile, from the one profile query (`profile.ts`, E12 S9). Loose, so Home's strip parses
+ * its own facts from the same cached answer (`parseStripProfile` in `budget.ts`). */
+type UserProfile = AppProfile;
 type CheckIns = ReturnType<typeof AppCheckIns.parse>;
 
 /** Thrown when there is no API client (a misconfigured build): reads as any load failure. */
@@ -89,21 +74,32 @@ export interface CheckInQueries {
   refreshAll(): Promise<void>;
 }
 
+/** `GET /accounts`, cached under one key for the check-in, Home and Settings. */
+const accountsQuery = (api: ApiClient | null) => ({
+  queryKey: queryKeys.accounts(),
+  // The history comes from /account-details, so the account list carries none.
+  queryFn: ({ signal }: { signal: AbortSignal }) =>
+    need(api).request("/accounts", {
+      schema: AppAccountList,
+      query: { details: "none" },
+      signal,
+    }),
+});
+
+/**
+ * The account list on its own, for Settings' net worth choices (E12 S9): the same cached read the
+ * check-in makes. `enabled: false` (restored offline) sends nothing.
+ */
+export function useAccounts({ enabled = true }: { enabled?: boolean } = {}) {
+  return useQuery({ ...accountsQuery(useApi()), enabled });
+}
+
 /** The four reads the check-in and its row need, in parallel and cached under one key each. */
 export function useCheckInQueries(): CheckInQueries {
   const api = useApi();
   const [accounts, details, profile, checkIns] = useQueries({
     queries: [
-      {
-        queryKey: queryKeys.accounts(),
-        // The history comes from /account-details, so the account list carries none.
-        queryFn: ({ signal }: { signal: AbortSignal }) =>
-          need(api).request("/accounts", {
-            schema: AppAccountList,
-            query: { details: "none" },
-            signal,
-          }),
-      },
+      accountsQuery(api),
       {
         queryKey: queryKeys.accountDetails(),
         queryFn: ({ signal }: { signal: AbortSignal }) =>
@@ -111,13 +107,7 @@ export function useCheckInQueries(): CheckInQueries {
       },
       {
         queryKey: queryKeys.userProfile(),
-        queryFn: async ({ signal }: { signal: AbortSignal }) =>
-          // A query's data cannot be undefined, so no body is null.
-          (await need(api).request("/user-profile", {
-            schema: CheckInProfile,
-            allowEmpty: true,
-            signal,
-          })) ?? null,
+        queryFn: ({ signal }: { signal: AbortSignal }) => fetchProfile(api, signal),
       },
       {
         queryKey: queryKeys.checkIns(),

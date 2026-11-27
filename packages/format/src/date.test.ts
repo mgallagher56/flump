@@ -5,6 +5,7 @@ import {
   formatMonthYear,
   formatRelativeTime,
   formatTaxYear,
+  ordinalDay,
 } from "./date.js";
 
 describe("formatDate", () => {
@@ -149,5 +150,33 @@ describe("formatDuration", () => {
     expect(formatDuration(-3)).toBe("Not set");
     expect(formatDuration(undefined)).toBe("Not set");
     expect(formatDuration(Number.POSITIVE_INFINITY, { placeholder: "-" })).toBe("-");
+  });
+});
+
+describe("ordinalDay", () => {
+  it("gives the en-GB ordinal for each day of a month, teens included", () => {
+    expect([1, 2, 3, 4, 11, 12, 13, 21, 22, 23, 30, 31].map(ordinalDay)).toEqual([
+      "1st",
+      "2nd",
+      "3rd",
+      "4th",
+      "11th",
+      "12th",
+      "13th",
+      "21st",
+      "22nd",
+      "23rd",
+      "30th",
+      "31st",
+    ]);
+  });
+
+  it("matches Intl's en-GB ordinal rules for every day 1 to 31", () => {
+    // Intl is the reference here only: the function itself uses none, as Hermes on Android may not.
+    const rules = new Intl.PluralRules("en-GB", { type: "ordinal" });
+    const suffix: Record<string, string> = { one: "st", two: "nd", few: "rd", other: "th" };
+    for (let day = 1; day <= 31; day += 1) {
+      expect(ordinalDay(day)).toBe(`${day}${suffix[rules.select(day)]}`);
+    }
   });
 });

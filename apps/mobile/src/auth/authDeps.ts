@@ -3,17 +3,28 @@
  * for the refresh token, the system browser sheet from expo-web-browser, and the app's API client.
  * Everything else in `src/auth` is plain code tested on Node.
  */
+import { requireOptionalNativeModule } from "expo";
 import Constants from "expo-constants";
 import * as Crypto from "expo-crypto";
+import type * as LocalAuthentication from "expo-local-authentication";
+import type * as ScreenCapture from "expo-screen-capture";
 import * as SecureStore from "expo-secure-store";
 import * as WebBrowser from "expo-web-browser";
 import { Platform, Settings } from "react-native";
 import type { AuthConfig, MobileConfig } from "../config";
+import { APP_LOCK } from "../copy/accountData";
 import { createAccountCheck } from "../data/account";
 import { type ApiClient, createAppApiClient } from "../data/apiClient";
 import { createUpdateCheck, type UpdateCheck } from "../data/clientPolicy";
+import { createDeleteAccount, DELETE_TIMEOUT_MS } from "../data/deleteAccount";
+import { createDeviceFiles, createShareSheet } from "../data/deviceFiles";
+import { createExportData, sweepExports } from "../data/exportData";
 import { createServerSignOut } from "../data/serverSignOut";
 import { createWorkosClient } from "../data/workos";
+import type { AccountDataActions } from "../features/account-data/useAccountData";
+import { createBrowserActivity, createDeviceHousekeeping } from "./deviceHousekeeping";
+import { deviceKeys } from "./deviceKeys";
+import { type AppLock, createAppLock, type ScreenCaptureGuard } from "./deviceLock";
 import { wipeAfterReinstall } from "./reinstall";
 import { type BrowserResult, createSession, type Session } from "./session";
 import { createTokenStore } from "./tokenStore";
@@ -27,7 +38,10 @@ const pkceCrypto = {
   },
 };
 
-async function openBrowser(url: string, redirectUri: string): Promise<BrowserResult> {
+/** Whether the sign-in browser is open: the app lock does not count that time as time away. */
+const browserActivity = createBrowserActivity();
+
+async function openSystemBrowser(url: string, redirectUri: string): Promise<BrowserResult> {
   // iOS: a private session, so no WorkOS cookie is kept. Android: a Custom Tab, which shares
   // Chrome's cookies; `max_age=0` in the address makes WorkOS ask again all the same.
   const result = await WebBrowser.openAuthSessionAsync(url, redirectUri, {
@@ -36,26 +50,89 @@ async function openBrowser(url: string, redirectUri: string): Promise<BrowserRes
   return result.type === "success" ? { type: "success", url: result.url } : { type: "closed" };
 }
 
+const openBrowser = (url: string, redirectUri: string) =>
+  browserActivity.track(() => openSystemBrowser(url, redirectUri));
+
+/**
+ * Android only: FLAG_SECURE on the app's window while app lock is on, so the recents card is blank
+ * and screenshots are refused. Not on iOS, where the same call also blocks screen recording and
+ * the gate's cover handles the app switcher. Absent from a build without the module.
+ */
+function createScreenCaptureGuard(): ScreenCaptureGuard | undefined {
+  if (Platform.OS !== "android" || !requireOptionalNativeModule("ExpoScreenCapture")) {
+    return undefined;
+  }
+  const capture: typeof ScreenCapture = require("expo-screen-capture");
+  return {
+    prevent: () => capture.preventScreenCaptureAsync(),
+    allow: () => capture.allowScreenCaptureAsync(),
+  };
+}
+
+/**
+ * The app lock, when this app binary carries expo-local-authentication (a development build from
+ * before S9 does not): the module is required only once it is known to be there.
+ */
+function createDeviceAppLock(): AppLock | undefined {
+  if (!requireOptionalNativeModule("ExpoLocalAuthentication")) return undefined;
+  const auth: typeof LocalAuthentication = require("expo-local-authentication");
+  return createAppLock({
+    auth,
+    store: SecureStore,
+    screenCapture: createScreenCaptureGuard(),
+    accessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+    now: () => Date.now(),
+    isExempt: browserActivity.isOpen,
+    prompts: {
+      unlock: APP_LOCK.promptUnlock,
+      turnOn: APP_LOCK.promptTurnOn,
+      turnOff: APP_LOCK.promptTurnOff,
+    },
+  });
+}
+
 export function createAppSession(config: { api: MobileConfig; auth: AuthConfig }): {
   session: Session;
   api: ApiClient;
   checkForUpdate: UpdateCheck;
+  accountData: AccountDataActions;
+  appLock: AppLock | undefined;
 } {
   const version = Constants.expoConfig?.version ?? "0.0.0";
   let session: Session | undefined;
+  const platform = Platform.OS === "ios" ? "ios" : "android";
+  // The clients are built before the session they ask; their calls happen only after sign-in starts.
+  const sessionForApi = {
+    getAccessToken: () => session?.getAccessToken() ?? null,
+    refresh: () => session?.refresh() ?? Promise.resolve("ended" as const),
+  };
   const api = createAppApiClient({
     apiBaseUrl: config.api.apiBaseUrl,
-    // The client is built before the session it asks; both calls happen only after sign-in starts.
-    session: {
-      getAccessToken: () => session?.getAccessToken() ?? null,
-      refresh: () => session?.refresh() ?? Promise.resolve("ended"),
-    },
-    client: {
-      version,
-      platform: Platform.OS === "ios" ? "ios" : "android",
-    },
+    session: sessionForApi,
+    client: { version, platform },
   });
-  const tokens = createTokenStore(SecureStore, SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY);
+  // Deleting every row can take longer than an ordinary write (web's DELETE_TIMEOUT_MS).
+  const deletionApi = createAppApiClient({
+    apiBaseUrl: config.api.apiBaseUrl,
+    session: sessionForApi,
+    client: { version, platform },
+    timeoutMs: DELETE_TIMEOUT_MS,
+  });
+  const accessible = SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY;
+  const tokens = createTokenStore(SecureStore, accessible);
+  const files = createDeviceFiles();
+  const appLock = createDeviceAppLock();
+  const housekeeping = createDeviceHousekeeping({
+    sweepExports: () => sweepExports(files),
+    clearLock: async () => {
+      await appLock?.clear();
+    },
+    // iOS keeps Keychain items after an uninstall; Android removes the app's storage with it.
+    reinstallWipe:
+      Platform.OS === "ios"
+        ? () => wipeAfterReinstall(Settings, tokens, deviceKeys(SecureStore, accessible))
+        : undefined,
+  });
   session = createSession({
     config: config.auth,
     crypto: pkceCrypto,
@@ -64,9 +141,18 @@ export function createAppSession(config: { api: MobileConfig; auth: AuthConfig }
     openBrowser,
     checkAccount: createAccountCheck(api),
     endServerSession: createServerSignOut(config.api.apiBaseUrl),
-    // iOS keeps Keychain items after an uninstall; Android removes the app's storage with it.
-    beforeFirstRestore:
-      Platform.OS === "ios" ? () => wipeAfterReinstall(Settings, tokens) : undefined,
+    beforeFirstRestore: housekeeping.onLaunch,
+    wipeDevice: housekeeping.wipe,
   });
-  return { session, api, checkForUpdate: createUpdateCheck(api, version) };
+  const accountData: AccountDataActions = {
+    exportData: createExportData({
+      apiBaseUrl: config.api.apiBaseUrl,
+      session,
+      files,
+      share: createShareSheet(),
+      clientHeader: `mobile/${version} (${platform})`,
+    }),
+    deleteAccount: createDeleteAccount(deletionApi),
+  };
+  return { session, api, checkForUpdate: createUpdateCheck(api, version), accountData, appLock };
 }

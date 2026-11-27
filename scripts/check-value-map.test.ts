@@ -359,6 +359,23 @@ describe("browser storage keys", () => {
     ]);
   });
 
+  test("the mobile secure store's calls are followed too, through an imported constant (E12 S9)", () => {
+    const shared = new Map([
+      ["DEVICE_LOCK_KEY", [{ file: "device/storageKeys.ts", value: "flump.device-lock" }]],
+    ]);
+    const source = [
+      'import { DEVICE_LOCK_KEY } from "../device/storageKeys";',
+      "export async function go(store: Store) {",
+      "  await store.getItemAsync(DEVICE_LOCK_KEY, options);",
+      '  await deps.store.setItemAsync(DEVICE_LOCK_KEY, "on", options);',
+      "  await store.deleteItemAsync(DEVICE_LOCK_KEY, options);",
+      "}",
+    ].join("\n");
+    expect(
+      findStorageKeys("auth/deviceLock.ts", source, shared).map((k) => `${k.key}@${k.line}`),
+    ).toEqual(["flump.device-lock@3", "flump.device-lock@4", "flump.device-lock@5"]);
+  });
+
   test("a key built from a parameter cannot be followed and is not reported", () => {
     expect(
       findStorageKeys(

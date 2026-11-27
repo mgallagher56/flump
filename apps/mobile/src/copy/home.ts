@@ -25,8 +25,8 @@ export const HOME = {
   emptyPrompt: "Add an account to see your net worth.",
   /** Web's hero action is "Add an account"; here it opens the website until S8, and says so. */
   addAccount: "Add an account on the website",
-  /** Web's `CHANGE_WHAT_COUNTS`, saying it opens the website (the choices arrive in S9). */
-  changeWhatCounts: "Change what counts on the website",
+  /** Web's `CHANGE_WHAT_COUNTS`: it opens the app's own Profile settings (E12 S9). */
+  changeWhatCounts: "Change what counts",
   /** Web's `HOME_VALUE_MISSING_TEXT`. */
   homeValueMissing: "Your home's value is not counted until you add an estimate.",
   /** Web's `ADD_AN_ESTIMATE`, saying it opens the website (estimates arrive in S8). */

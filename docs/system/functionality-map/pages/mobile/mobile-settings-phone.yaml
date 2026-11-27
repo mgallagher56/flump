@@ -1,0 +1,11 @@
+id: mobile-settings-phone
+app: mobile
+route: /settings/phone
+title: This phone
+auth: required
+purpose: Choices kept on this phone only (E12 S9, CROSS-PLATFORM X9). The colour theme as three radio rows, System, Light and Dark, writing the same stored choice as the header's button; then app lock. It works offline and reads nothing from Flump.
+route_file: apps/mobile/app/(app)/settings/phone.tsx
+
+sections:
+  - id: theme
+    component: apps/mobile/src/screens/SettingsPhone/SettingsPhone.tsx

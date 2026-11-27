@@ -1,0 +1,1 @@
+export { PhraseConfirm } from "./PhraseConfirm";

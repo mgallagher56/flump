@@ -3,7 +3,7 @@ import {
   ADD_ACCOUNT_WEB_ROUTE,
   ADD_HOME_VALUE_WEB_ROUTE,
   BUDGET_WEB_ROUTE,
-  NET_WORTH_SETTINGS_WEB_ROUTE,
+  NET_WORTH_SETTINGS_ROUTE,
   SET_UP_WEB_ROUTE,
   useShell,
   webLink,
@@ -23,11 +23,11 @@ export default function HomeTab() {
       onSignOut={shell.signOut}
       onOpenCheckIn={() => router.push("/check-in")}
       onOpenHistory={() => router.push("/accounts/history")}
+      onChangeWhatCounts={() => router.push(NET_WORTH_SETTINGS_ROUTE)}
       marketingOrigin={shell.marketingOrigin}
       links={{
         setUp: webLink(shell, SET_UP_WEB_ROUTE),
         addAccount: webLink(shell, ADD_ACCOUNT_WEB_ROUTE),
-        changeWhatCounts: webLink(shell, NET_WORTH_SETTINGS_WEB_ROUTE),
         addEstimate: webLink(shell, ADD_HOME_VALUE_WEB_ROUTE),
         addBudget: webLink(shell, BUDGET_WEB_ROUTE),
         addSpending: webLink(shell, BUDGET_WEB_ROUTE),

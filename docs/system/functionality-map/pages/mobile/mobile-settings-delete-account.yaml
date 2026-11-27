@@ -1,0 +1,11 @@
+id: mobile-settings-delete-account
+app: mobile
+route: /settings/delete-account
+title: Delete your account
+auth: required
+purpose: Web's account deletion on a phone (E12 S9). Lists what goes, takes the typed phrase DELETE, then deletes; on success the device is wiped as at sign-out and the confirmation replaces the app. A deletion that stopped half way shows the last step instead, and a sign-in older than 15 minutes offers Sign in again, which re-authenticates in place and deletes nothing.
+route_file: apps/mobile/app/(app)/settings/delete-account.tsx
+
+sections:
+  - id: confirm
+    component: apps/mobile/src/screens/DeleteAccount/DeleteAccount.tsx

@@ -48,6 +48,12 @@ export const SHOTS = [
   "account-not-found",
   "history-owner",
   "history-two-months",
+  "settings-profile",
+  "home-not-counting-property",
+  "settings-theme-dark",
+  "settings-theme-system",
+  "settings-data",
+  "account-deleted",
 ];
 
 export function run(

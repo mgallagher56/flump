@@ -1,11 +1,11 @@
 /**
  * The app's navigation, mirrored from web's `navConfig.ts` (E12 S4, plan 9.7): the tab bar is web's
  * `BOTTOM_BAR_TABS` plus More, and the More list is what web's phone drawer lists below the bottom
- * bar (`withoutBarPages(AUTH_NAV_ROUTES)`, then `DRAWER_FOOTER_ROUTES`), less Self Assessment: it
- * is opt-in per person and its page is off until switched on, so it waits for S9's shared filter
- * rather than lead someone to a page they have not switched on (coordinator, 26 November 2026). Plain data with no
- * imports, so web's Vitest suite reads it: `apps/web/app/components/navigation/mobileNavParity.test.tsx`
- * fails when the two drift. Labels are web's English locale strings.
+ * bar: `AUTH_NAV_ROUTES`' groups, filtered by the pages the person has switched on
+ * (`pageSwitches.ts`, E12 S9), less the pages the tab bar reaches, then `DRAWER_FOOTER_ROUTES`.
+ * Plain data with no imports, so web's Vitest suite reads it:
+ * `apps/web/app/components/navigation/mobileNavParity.test.tsx` fails when the two drift. Labels
+ * are web's English locale strings.
  */
 
 /** A shape in `iconShapes.ts`, named as lucide names it. */
@@ -29,7 +29,11 @@ export type IconName =
   | "chevron-left"
   | "arrow-up"
   | "arrow-down"
-  | "minus";
+  | "minus"
+  | "file-text"
+  | "monitor"
+  | "sun"
+  | "moon";
 
 export interface TabItem {
   /** Web's key. */
@@ -70,22 +74,53 @@ export interface MorePage {
   readonly label: string;
   readonly icon: IconName;
   readonly webRoute: string;
+  /** Shown whatever the person has switched off (web's `alwaysOn`): Take-home pay. */
+  readonly alwaysOn?: boolean;
 }
 
 export interface MoreGroup {
   readonly key: string;
   readonly label: string;
+  /** The group's icon, which a group left with one page keeps when `collapseTo` is "group". */
+  readonly icon: IconName;
+  /**
+   * Web's `collapseTo`: a group left with one page becomes a row for that page under the group's
+   * name ("group"), or under the page's own name (unset).
+   */
+  readonly collapseTo?: "group";
   readonly pages: readonly MorePage[];
 }
 
 /**
- * Web's drawer groups, without the pages the tab bar already reaches. Pay's group held only Self
- * Assessment, which is left out until S9 (above), so it is not here.
+ * Web's drawer groups (`AUTH_NAV_ROUTES`), every page included. `pageSwitches.ts` drops the pages
+ * the person has switched off and the ones the tab bar reaches (Take-home pay is the Pay tab).
  */
 export const MORE_GROUPS = [
   {
+    key: "taxAndPay",
+    label: "Pay",
+    icon: "calculator",
+    collapseTo: "group",
+    pages: [
+      {
+        key: "takeHome",
+        label: "Take-home pay",
+        icon: "calculator",
+        webRoute: "/app/take-home",
+        alwaysOn: true,
+      },
+      {
+        key: "tax",
+        label: "Self Assessment",
+        icon: "file-text",
+        webRoute: "/app/self-assessment",
+      },
+    ],
+  },
+  {
     key: "savingsAndPension",
     label: "Savings and pension",
+    icon: "piggy-bank",
     pages: [
       { key: "savings", label: "Savings", icon: "piggy-bank", webRoute: "/app/savings" },
       { key: "pension", label: "Pension", icon: "coins", webRoute: "/app/pension" },
@@ -95,6 +130,8 @@ export const MORE_GROUPS = [
   {
     key: "borrowing",
     label: "Debt and borrowing",
+    icon: "trending-down",
+    collapseTo: "group",
     pages: [
       { key: "debt", label: "Cards and loans", icon: "trending-down", webRoute: "/app/debt" },
       { key: "mortgage", label: "Mortgage", icon: "building-2", webRoute: "/app/mortgage" },

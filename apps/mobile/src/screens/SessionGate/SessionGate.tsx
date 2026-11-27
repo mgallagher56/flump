@@ -1,10 +1,16 @@
-import { type ReactElement, type ReactNode, useMemo, useState } from "react";
-import { Platform } from "react-native";
+import { type Href, router, usePathname } from "expo-router";
+import { type ReactElement, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { Platform, StyleSheet, View } from "react-native";
 import { useSession, useStartProblem } from "../../auth/SessionProvider";
+import { useAppLock } from "../../auth/useAppLock";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
 import { SIGN_OUT, SIGN_OUT_CONFIRM_TITLE, signOutConfirmMessage } from "../../copy/auth";
 import { type Shell, ShellContext } from "../../navigation/shell";
+import { AccountDeleted } from "../AccountDeleted";
+import { DeleteAccount } from "../DeleteAccount";
+import { FinishDeletion } from "../FinishDeletion";
 import { Loading } from "../Loading";
+import { Locked } from "../Locked";
 import { Misconfigured } from "../Misconfigured";
 import { NotInvited } from "../NotInvited";
 import { SessionEnded } from "../SessionEnded";
@@ -17,12 +23,22 @@ import { TermsRequired } from "../TermsRequired";
  * (plan section 5.2), and the signed-in shell (`children`, the tabs and their pages) only while
  * someone is signed in. Restored without reaching Flump, the shell stays and Home says so (S4,
  * plan 9.7). Every Sign out asks first, saying what sign-out does on this platform.
+ *
+ * Since S9: an erased account shows the last step of the deletion and a deleted one the
+ * confirmation, both in place of the shell; the Not invited and Terms screens open "Delete your
+ * account" in place; and while app lock is on, the `Locked` cover replaces the shell (which is not
+ * rendered at all) while locked or checking. While unlocked the shell is never unmounted by the
+ * lock, so a system sheet (the export's share sheet, a prompt) leaves the person where they were;
+ * on iOS an opaque cover goes over it while the app is away (Android has FLAG_SECURE instead).
  */
 export function SessionGate({ children }: { children?: ReactNode }) {
   const app = useSession();
   const problem = useStartProblem();
   const [confirmingSignOut, setConfirmingSignOut] = useState(false);
+  const [deletingInPlace, setDeletingInPlace] = useState(false);
+  const lock = useAppLock(app?.appLock);
   const status = app?.state.status;
+  useReturnAfterUnlock(status === "signedIn" || status === "restoredOffline", lock.locked);
   const shell = useMemo<Shell | null>(
     () =>
       app
@@ -65,6 +81,40 @@ export function SessionGate({ children }: { children?: ReactNode }) {
     </>
   );
 
+  /**
+   * The signed-in shell, or the app lock's cover in its place while locked or checking. The shell is
+   * not rendered behind that cover: a native stack's screens sit outside a parent view's
+   * accessibility flags, so a hidden shell still let a screen reader read figures. Unlock comes
+   * back to the page (`useReturnAfterUnlock`); what a page held only in its own state (an unsaved
+   * field) is lost. While unlocked, the iOS app switcher cover goes over the mounted shell.
+   */
+  function signedInShell(): ReactElement {
+    if (lock.locked) {
+      return (
+        <Locked
+          phase={lock.phase === "locked" || lock.phase === "noScreenLock" ? lock.phase : "checking"}
+          onUnlock={() => void app?.appLock?.unlock()}
+          onSignOut={signOut}
+        />
+      );
+    }
+    return (
+      <>
+        <ShellContext.Provider value={shell}>{children}</ShellContext.Provider>
+        {lock.switcherCover ? (
+          <View style={StyleSheet.absoluteFill} testID="app-switcher-cover">
+            <Locked phase="checking" onUnlock={() => undefined} onSignOut={signOut} />
+          </View>
+        ) : null}
+      </>
+    );
+  }
+
+  /** "Delete your account" in place of the Not invited or Terms screen, which have no stack. */
+  function deleteInPlace(): ReactElement {
+    return <DeleteAccount onCancel={() => setDeletingInPlace(false)} />;
+  }
+
   function gateScreen(): ReactElement {
     switch (state.status) {
       case "loading":
@@ -83,19 +133,62 @@ export function SessionGate({ children }: { children?: ReactNode }) {
         );
       case "signedIn":
       case "restoredOffline":
-        return <ShellContext.Provider value={shell}>{children}</ShellContext.Provider>;
+        return signedInShell();
       case "sessionEnded":
         return <SessionEnded onSignIn={signIn} />;
       case "notInvited":
-        return <NotInvited onSignOut={signOut} />;
+        if (deletingInPlace) return deleteInPlace();
+        return <NotInvited onSignOut={signOut} onDeleteAccount={() => setDeletingInPlace(true)} />;
       case "termsRequired":
+        if (deletingInPlace) return deleteInPlace();
         return (
           <TermsRequired
             marketingOrigin={marketingOrigin}
             onRetry={() => void session.retry()}
             onSignOut={signOut}
+            onDeleteAccount={() => setDeletingInPlace(true)}
+          />
+        );
+      case "deletionPending":
+        return <FinishDeletion onSignOut={signOut} />;
+      case "accountDeleted":
+        return (
+          <AccountDeleted
+            marketingOrigin={marketingOrigin}
+            onClose={() => {
+              setDeletingInPlace(false);
+              session.acknowledgeDeletion();
+            }}
           />
         );
     }
   }
+}
+
+/**
+ * After a real lock (60 seconds away), Unlock returns to the page the person was on. The shell is
+ * not rendered while locked, so its stack starts again at Home when it comes back; the last page
+ * shown is kept here and replaced back in once unlocked. Its search parameters are not kept. Nothing
+ * is kept past signing out or the session ending, so the next sign-in starts afresh.
+ */
+function useReturnAfterUnlock(signedIn: boolean, locked: boolean) {
+  const pathname = usePathname();
+  const lastShown = useRef<string | null>(null);
+  const returnTo = useRef<string | null>(null);
+  useEffect(() => {
+    if (!signedIn) {
+      lastShown.current = null;
+      returnTo.current = null;
+      return;
+    }
+    if (locked) {
+      returnTo.current ??= lastShown.current;
+      return;
+    }
+    const target = returnTo.current;
+    returnTo.current = null;
+    // Pathnames come from the router itself, so each is one of the app's routes.
+    if (target !== null && target !== pathname) router.replace(target as Href);
+    else lastShown.current = pathname;
+  }, [signedIn, locked, pathname]);
 }

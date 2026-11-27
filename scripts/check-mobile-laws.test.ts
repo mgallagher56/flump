@@ -149,6 +149,7 @@ describe("Biome: the raw primitives and the data door (apps/mobile)", () => {
   const callXhr = `export const x = () => new XMLHttpRequest();\n`;
   const apiClient = `import { createApiClient } from "@flump/api-client";\nexport const c = createApiClient;\n`;
   const callFetch = `export const load = () => fetch("https://example.test/v1");\n`;
+  const importAll = (module: string) => `import * as m from "${module}";\nexport const x = m;\n`;
   const fixture = (from: string) =>
     `import { startFixtureServer } from "${from}";\nexport const f = startFixtureServer;\n`;
 
@@ -193,6 +194,18 @@ describe("Biome: the raw primitives and the data door (apps/mobile)", () => {
       "apps/mobile/src/data/apiClient.ts",
       fixture("../../e2e/fixture-server/server"),
     ],
+    // E12 S9: only the data door writes files or opens the share sheet (the export's temp file).
+    ...[
+      "expo-file-system",
+      "expo-file-system/legacy",
+      "expo-file-system/next",
+      "expo-sharing",
+    ].flatMap((module) => [
+      [`${module} in a screen`, "apps/mobile/src/screens/Home/Home.tsx", importAll(module)],
+      [`${module} in a route`, "apps/mobile/app/index.tsx", importAll(module)],
+      [`${module} in a component`, "apps/mobile/src/components/Card/Card.tsx", importAll(module)],
+      [`${module} in src/auth`, "apps/mobile/src/auth/authDeps.ts", importAll(module)],
+    ]),
   ])("%s fails", (_name, path, source) => {
     const { exitCode, output } = lint(path, source);
     expect(exitCode).not.toBe(0);
@@ -204,6 +217,16 @@ describe("Biome: the raw primitives and the data door (apps/mobile)", () => {
     ["the API client inside src/data", "apps/mobile/src/data/apiClient.ts", apiClient],
     ["fetch inside src/data", "apps/mobile/src/data/apiClient.ts", callFetch],
     ["other React Native imports in a screen", "apps/mobile/src/screens/Home/Home.tsx", view],
+    [
+      "expo-file-system inside src/data",
+      "apps/mobile/src/data/deviceFiles.ts",
+      importAll("expo-file-system/legacy"),
+    ],
+    [
+      "expo-sharing inside src/data",
+      "apps/mobile/src/data/deviceFiles.ts",
+      importAll("expo-sharing"),
+    ],
   ])("%s passes", (_name, path, source) => {
     expect(lint(path, source)).toEqual({ exitCode: 0, output: expect.any(String) });
   });

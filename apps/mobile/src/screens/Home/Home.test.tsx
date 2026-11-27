@@ -16,10 +16,6 @@ import { Home, type HomeWebLinks } from "./Home";
 const LINKS: HomeWebLinks = {
   setUp: { url: "https://app.test.invalid/app/onboarding", exact: true },
   addAccount: { url: "https://app.test.invalid/app/accounts", exact: true },
-  changeWhatCounts: {
-    url: "https://app.test.invalid/app/profile?tab=profile#net-worth",
-    exact: true,
-  },
   addEstimate: { url: "https://app.test.invalid/app/accounts?add=property", exact: true },
   addBudget: { url: "https://app.test.invalid/app/budget", exact: true },
   addSpending: { url: "https://app.test.invalid/app/budget", exact: true },
@@ -46,11 +42,13 @@ async function home(
   const onSignOut = jest.fn();
   const onOpenCheckIn = jest.fn();
   const onOpenHistory = jest.fn();
+  const onChangeWhatCounts = jest.fn();
   const { ui } = withApi(
     <Home
       onSignOut={onSignOut}
       onOpenCheckIn={onOpenCheckIn}
       onOpenHistory={onOpenHistory}
+      onChangeWhatCounts={onChangeWhatCounts}
       marketingOrigin="https://m.test.invalid"
       links={links}
       now={now}
@@ -58,7 +56,7 @@ async function home(
     api.client,
   );
   await render(ui);
-  return { onSignOut, onOpenCheckIn, onOpenHistory };
+  return { onSignOut, onOpenCheckIn, onOpenHistory, onChangeWhatCounts };
 }
 
 /** Lets every read answer and the screen hear of it, inside act. */
@@ -154,7 +152,7 @@ describe("Home", () => {
 
   it("student loan not counted: left out of the figure, and the line says so and links to settings", async () => {
     // The fixture profile counts property and not the student loan.
-    await home(
+    const { onChangeWhatCounts } = await home(
       fakeApi(
         routes(
           household([
@@ -167,10 +165,10 @@ describe("Home", () => {
     expect(await screen.findByText("£3,000")).toBeOnTheScreen();
     expect(screen.getByText("£200 since October")).toBeOnTheScreen();
     expect(screen.getByText("Not counting your student loan.")).toBeOnTheScreen();
-    await userEvent
-      .setup()
-      .press(screen.getByRole("link", { name: "Change what counts on the website" }));
-    expect(Linking.openURL).toHaveBeenCalledWith(LINKS.changeWhatCounts.url);
+    await userEvent.setup().press(screen.getByRole("link", { name: "Change what counts" }));
+    // The app's own setting (S9): no browser.
+    expect(onChangeWhatCounts).toHaveBeenCalledTimes(1);
+    expect(Linking.openURL).not.toHaveBeenCalled();
   });
 
   it("property not counted: the home and its mortgage are left out, figure and change alike", async () => {
@@ -240,7 +238,6 @@ describe("Home", () => {
     await home(fakeApi(routes(household([]))), {
       setUp: site,
       addAccount: site,
-      changeWhatCounts: site,
       addEstimate: site,
       addBudget: site,
       addSpending: site,

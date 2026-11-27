@@ -18,6 +18,7 @@ import type { AuthConfig } from "../config";
 import type { ServerSignOutResult } from "../data/serverSignOut";
 import type { TokenResult, WorkosClient } from "../data/workos";
 import { type AuthorizeScreen, buildAuthorizeUrl, parseCallback } from "./authorizeUrl";
+import { readClaims } from "./claims";
 import { createPkce, createState, type PkceCrypto } from "./pkce";
 import {
   INITIAL_STATE,
@@ -36,10 +37,32 @@ export type AccountCheck =
   | "not-invited"
   | "terms-not-accepted"
   | "unauthorised"
-  | "unavailable";
+  | "unavailable"
+  /** 410 `account_deleted`: the data is erased but the login remains (E12 S9). */
+  | "account-deleted";
 
 /** As `@flump/api-client`'s `RefreshOutcome`. */
 type RefreshOutcome = "refreshed" | "ended" | "retryable";
+
+/**
+ * What a re-authentication for a recent sign-in came to (E12 S9). `confirmed`: the same person
+ * signed in again and the session now carries the fresh sign-in. `differentAccount`: someone else
+ * signed in; their tokens were dropped and the current session kept. Nothing else changes anything.
+ */
+export type ReauthResult =
+  | "confirmed"
+  | "differentAccount"
+  | "cancelled"
+  | "failed"
+  | "unavailable";
+
+/** The states a re-authentication may start from: signed in, with a live login. */
+const REAUTH_FROM: readonly SessionState["status"][] = [
+  "signedIn",
+  "notInvited",
+  "termsRequired",
+  "deletionPending",
+];
 
 export interface SessionDeps {
   config: Pick<AuthConfig, "authBaseUrl" | "clientId" | "redirectUri">;
@@ -55,6 +78,11 @@ export interface SessionDeps {
    * by an earlier installation (`reinstall.ts`). Must not throw.
    */
   beforeFirstRestore?(): Promise<void>;
+  /**
+   * Clears what else the device keeps for this person (the app lock flag, export files; E12 S9).
+   * Runs after the tokens are cleared on sign-out, session end and deletion. Never the theme.
+   */
+  wipeDevice?(): Promise<void>;
 }
 
 export interface Session {
@@ -70,6 +98,17 @@ export interface Session {
   getAccessToken(): string | null;
   /** For the API client's `onUnauthorised`: one refresh shared by every caller. */
   refresh(): Promise<RefreshOutcome>;
+  /**
+   * For a recent sign-in (E12 S9): the same system-browser sign-in, which always asks again
+   * (`max_age=0`). Never leaves the current state and never deletes anything.
+   */
+  reauthenticate(): Promise<ReauthResult>;
+  /** The delete answered `identity_pending`, or a read answered 410: show the last step. */
+  deletionPending(): void;
+  /** The delete answered `deleted`: wipe the device as sign-out does, with no server call. */
+  accountDeleted(): Promise<void>;
+  /** From the deletion confirmation, on to the sign-in screen. */
+  acknowledgeDeletion(): void;
 }
 
 export function createSession(deps: SessionDeps): Session {
@@ -97,8 +136,18 @@ export function createSession(deps: SessionDeps): Session {
     await deps.tokens.clear();
   }
 
+  /** Then the rest of what the device keeps for this person. Its failure stops nothing. */
+  async function wipeRest() {
+    try {
+      await deps.wipeDevice?.();
+    } catch {
+      // The tokens are gone already; a flag or file left behind is swept on the next launch.
+    }
+  }
+
   async function endSession() {
     await clearDevice();
+    await wipeRest();
     dispatch({ type: "SESSION_ENDED" });
   }
 
@@ -125,6 +174,7 @@ export function createSession(deps: SessionDeps): Session {
     else if (account === "not-invited") dispatch({ type: "NOT_INVITED" });
     else if (account === "terms-not-accepted") dispatch({ type: "TERMS_REQUIRED" });
     else if (account === "unavailable") dispatch({ type: "OFFLINE" });
+    else if (account === "account-deleted") dispatch({ type: "DELETION_PENDING" });
     else await endSession();
   }
 
@@ -237,8 +287,120 @@ export function createSession(deps: SessionDeps): Session {
       // A locked store: the server call falls back to the access token alone.
     }
     await clearDevice();
+    await wipeRest();
     dispatch({ type: "SIGNED_OUT" });
     await endServerSession(heldAccess, heldRefresh);
+  }
+
+  /**
+   * The account is deleted (E12 S9): the device is wiped exactly as at sign-out, but no server
+   * sign-out is sent, since the login it would end is gone.
+   */
+  async function accountDeleted() {
+    const status = state.status;
+    if (
+      status !== "signedIn" &&
+      status !== "notInvited" &&
+      status !== "termsRequired" &&
+      status !== "deletionPending"
+    ) {
+      return;
+    }
+    await clearDevice();
+    await wipeRest();
+    dispatch({ type: "ACCOUNT_DELETED" });
+  }
+
+  let reauthenticating: Promise<ReauthResult> | null = null;
+
+  function reauthenticate(): Promise<ReauthResult> {
+    if (!REAUTH_FROM.includes(state.status)) return Promise.resolve("failed");
+    if (!reauthenticating) {
+      reauthenticating = runReauthentication().finally(() => {
+        reauthenticating = null;
+      });
+    }
+    return reauthenticating;
+  }
+
+  /**
+   * The new tokens are adopted only when they name the same person as the current ones (`sub`):
+   * otherwise someone else signed in, and their tokens are dropped unsaved. On a match the new
+   * refresh token is saved first, then the access token is swapped, then the old WorkOS session is
+   * revoked (best effort) when its `sid` differs from the new one. The state never changes, and
+   * nothing is deleted.
+   */
+  async function runReauthentication(): Promise<ReauthResult> {
+    const startedAt = epoch;
+    try {
+      const { verifier, challenge } = await createPkce(deps.crypto);
+      const expectedState = createState(deps.crypto);
+      const url = buildAuthorizeUrl(deps.config, { challenge, state: expectedState }, "sign-in");
+      const browser = await deps.openBrowser(url, deps.config.redirectUri);
+      if (browser.type !== "success") return "cancelled";
+      const callback = parseCallback(browser.url, deps.config.redirectUri, expectedState);
+      if (callback.kind !== "code") return "failed";
+      const exchanged = await deps.workos.exchangeCode(callback.code, verifier);
+      if (!exchanged.ok) return exchanged.reason === "unavailable" ? "unavailable" : "failed";
+      // Signed out while the browser was open: the new tokens belong to nothing.
+      if (epoch !== startedAt || !accessToken) return "failed";
+
+      const heldAccess = accessToken;
+      const currentSub = subjectOf(heldAccess);
+      if (!currentSub || subjectOf(exchanged.tokens.accessToken) !== currentSub) {
+        // Someone else's fresh session is ended too, so it does not linger; the current one stays.
+        await revokeQuietly(exchanged.tokens.accessToken);
+        return "differentAccount";
+      }
+
+      // One lock with refresh: wait out a refresh in flight (it would save the old session's
+      // token after ours), then take the refresh slot before the first await, so a refresh asked
+      // for while the new tokens go in joins them instead of rotating the old session's token.
+      while (refreshing) await refreshing.catch(() => undefined);
+      if (epoch !== startedAt) return "failed";
+      let release: (outcome: RefreshOutcome) => void = () => {};
+      const lock = new Promise<RefreshOutcome>((resolve) => {
+        release = resolve;
+      });
+      refreshing = lock;
+      const oldAccess = accessToken ?? heldAccess;
+      let heldRefresh: string | null = null;
+      let adopted = false;
+      try {
+        try {
+          heldRefresh = await deps.tokens.read();
+        } catch {
+          // The old session is then revoked with the access token alone.
+        }
+        adopted = await adopt(exchanged, startedAt);
+        release(adopted ? "refreshed" : "ended");
+      } catch (error) {
+        release("retryable");
+        throw error;
+      } finally {
+        if (refreshing === lock) refreshing = null;
+      }
+      if (!adopted) return "failed";
+      // WorkOS may hand back the same session through Android's Custom Tab: revoking it would end
+      // the new sign-in. Only a session id that is readable in both and differs is revoked.
+      const oldSid = sessionIdOf(oldAccess);
+      const newSid = sessionIdOf(exchanged.tokens.accessToken);
+      if (oldSid && newSid && oldSid !== newSid) {
+        await endServerSession(oldAccess, heldRefresh);
+      }
+      return "confirmed";
+    } catch {
+      // The browser or the store failed: the current session carries on as it was.
+      return "failed";
+    }
+  }
+
+  async function revokeQuietly(access: string) {
+    try {
+      await deps.endServerSession(access);
+    } catch {
+      // Best effort.
+    }
   }
 
   /**
@@ -274,5 +436,20 @@ export function createSession(deps: SessionDeps): Session {
     signOut,
     getAccessToken: () => accessToken,
     refresh,
+    reauthenticate,
+    deletionPending: () => dispatch({ type: "DELETION_PENDING" }),
+    accountDeleted,
+    acknowledgeDeletion: () => dispatch({ type: "DELETION_ACKNOWLEDGED" }),
   };
 }
+
+/** A string claim of a token, or null when it cannot be read. */
+function claimOf(token: string, name: "sub" | "sid"): string | null {
+  const value = readClaims(token)?.[name];
+  return typeof value === "string" && value !== "" ? value : null;
+}
+
+/** The person a token names. */
+const subjectOf = (token: string) => claimOf(token, "sub");
+/** The WorkOS session a token belongs to. */
+const sessionIdOf = (token: string) => claimOf(token, "sid");
