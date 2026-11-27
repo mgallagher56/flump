@@ -5,7 +5,6 @@ import {
   STUDENT_LOAN_PLAN_OPTIONS,
 } from "@flump/finance-engine/account-form";
 import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
-import type { ScrollViewInstance } from "react-native";
 import { Button } from "../../components/Button";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
 import { CurrencyInput } from "../../components/CurrencyInput";
@@ -14,7 +13,7 @@ import { ErrorState } from "../../components/ErrorState";
 import { FormField } from "../../components/FormField";
 import { InlineAlert } from "../../components/InlineAlert";
 import { PercentInput } from "../../components/PercentInput";
-import { Screen } from "../../components/Screen";
+import { Screen, type ScreenHandle } from "../../components/Screen";
 import { SelectField } from "../../components/SelectField";
 import { Skeleton } from "../../components/Skeleton";
 import { Text } from "../../components/Text";
@@ -181,16 +180,16 @@ function AccountForm({
 }: AccountFormProps) {
   const form = useAccountForm({ mode, accounts, partnerMode, onSaved, onDeleted });
   const [confirming, setConfirming] = useState(false);
-  const scrollRef = useRef<ScrollViewInstance>(null);
+  const screenRef = useRef<ScreenHandle>(null);
   // A new alert sits at the top while Save is at the bottom: bring it into view.
   useEffect(() => {
-    if (form.alertCount > 0) scrollRef.current?.scrollTo({ y: 0, animated: false });
+    if (form.alertCount > 0) screenRef.current?.scrollToTop();
   }, [form.alertCount]);
   const deleteName = (mode.kind === "edit" && mode.account.name) || DELETE_ACCOUNT.fallbackName;
   return (
     <>
       {header(form.editing ? ACCOUNT_FORM.editTitle : ACCOUNT_FORM.addTitle)}
-      <Screen edges={EDGES} keyboardAware scrollRef={scrollRef} testID="account-form">
+      <Screen edges={EDGES} keyboardAware ref={screenRef} testID="account-form">
         {offline ? (
           <InlineAlert tone="info" message={SAVE_NEEDS_CONNECTION} testID="account-form-offline" />
         ) : null}

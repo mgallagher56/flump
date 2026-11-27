@@ -9,7 +9,7 @@ import {
 } from "@flump/finance-engine/budget";
 import * as Crypto from "expo-crypto";
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { AccessibilityInfo, Linking, Modal, type ScrollViewInstance, View } from "react-native";
+import { AccessibilityInfo, Linking, Modal, View } from "react-native";
 import { BreathingRoom } from "../../components/BreathingRoom";
 import { BudgetCategoryList } from "../../components/BudgetCategoryList";
 import { BudgetEditor } from "../../components/BudgetEditor";
@@ -31,7 +31,7 @@ import { HeroFigure } from "../../components/HeroFigure";
 import { InlineAlert } from "../../components/InlineAlert";
 import { KpiStrip } from "../../components/KpiStrip";
 import { ScenarioZone } from "../../components/ScenarioZone";
-import { Screen } from "../../components/Screen";
+import { Screen, type ScreenHandle } from "../../components/Screen";
 import { Switch } from "../../components/Switch";
 import { TaxRatesStatusBanner } from "../../components/TaxRatesStatusBanner";
 import { Text } from "../../components/Text";
@@ -135,11 +135,8 @@ export function Budget({
   // "Saved" and a save's error sit in the flow at the top of the page (Toast has no floating), so
   // after a change made far down the editor the page scrolls back to them, as the account form
   // does with its alert; otherwise they were out of sight (Maestro's budget flow).
-  const scrollRef = useRef<ScrollViewInstance>(null);
-  const showMessages = useCallback(
-    () => scrollRef.current?.scrollTo({ y: 0, animated: false }),
-    [],
-  );
+  const screenRef = useRef<ScreenHandle>(null);
+  const showMessages = useCallback(() => screenRef.current?.scrollToTop(), []);
   if (data.status === "error" && data.problem === "termsNotAccepted") {
     return (
       <TermsRequired
@@ -152,7 +149,7 @@ export function Budget({
   }
   if (data.status === "notSetUp") return <NotSetUp setUp={links.setUp} edges={TAB_EDGES} />;
   return (
-    <Screen edges={TAB_EDGES} testID="budget" onRefresh={onRefresh} scrollRef={scrollRef}>
+    <Screen edges={TAB_EDGES} testID="budget" onRefresh={onRefresh} ref={screenRef}>
       <View>
         <Text accessibilityRole="header" textStyle="heading.md">
           {BUDGET.title}
@@ -574,7 +571,7 @@ function EntrySheet({
     else setError(result === "conflict" ? EDITOR.conflict : failed);
   };
 
-  const sheetScroll = useRef<ScrollViewInstance>(null);
+  const sheetScroll = useRef<ScreenHandle>(null);
   const lastAdd = useRef<{ sheet: string; body: string; key: string } | null>(null);
   const save = async (values: ValidEntryValues) => {
     if (!sheet || offline) return;
@@ -658,7 +655,7 @@ function EntrySheet({
       onRequestClose={saving ? undefined : onClose}
     >
       {sheet && initial ? (
-        <Screen testID="budget-entry-sheet" keyboardAware scrollRef={sheetScroll}>
+        <Screen testID="budget-entry-sheet" keyboardAware ref={sheetScroll}>
           <BudgetEntryForm
             key={sheetKey}
             mode={sheet.mode}
@@ -670,7 +667,7 @@ function EntrySheet({
             onSave={(values) => void save(values)}
             onTry={() => setError(null)}
             checkAmount={budgetAmountProblem}
-            onInvalid={() => sheetScroll.current?.scrollTo({ y: 0, animated: false })}
+            onInvalid={() => sheetScroll.current?.scrollToTop()}
             onCancel={onClose}
             onDelete={() => setConfirming(true)}
           />

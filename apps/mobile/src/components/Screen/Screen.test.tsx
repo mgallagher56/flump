@@ -5,7 +5,7 @@ import { refreshControl } from "../../testing/refresh";
 import { expectHoldsAtDoubleText } from "../../testing/textScale";
 import { ThemeProvider } from "../../theme/ThemeProvider";
 import { Text } from "../Text";
-import { Screen } from "./Screen";
+import { Screen, type ScreenHandle } from "./Screen";
 import { screenStates } from "./Screen.states";
 
 interface Tree {
@@ -478,6 +478,92 @@ describe("Screen", () => {
     );
     // Overlay gone while keyboard remains open: 20 + 336 = 356.
     expect(flat(scroller()?.props.contentContainerStyle).paddingBottom).toBe(356);
+    jest.restoreAllMocks();
+  });
+
+  it("scrollToTop resets scrollY, stops following, and prevents contentSizeChange from scrolling back down", async () => {
+    jest.useFakeTimers();
+    const listeners = new Map<string, (e: unknown) => void>();
+    jest.spyOn(Keyboard, "addListener").mockImplementation((name, fn) => {
+      listeners.set(name, fn as (e: unknown) => void);
+      return { remove: jest.fn() } as never;
+    });
+    const focused = {
+      measureLayout: (_to: unknown, done: (x: number, y: number, w: number, h: number) => void) =>
+        done(0, 150, 300, 56),
+    };
+    jest.spyOn(TextInput.State, "currentlyFocusedInput").mockReturnValue(focused as never);
+    jest.spyOn(TextInput.State, "blurTextInput").mockImplementation(() => {});
+    const scrollTo = jest.fn();
+    const scrollRef = { current: null as unknown };
+    const handleRef = { current: null as ScreenHandle | null };
+    await render(
+      <ThemeProvider scheme="light">
+        <Screen testID="s" keyboardAware ref={handleRef as never} scrollRef={scrollRef as never}>
+          <Text>Form</Text>
+        </Screen>
+      </ThemeProvider>,
+    );
+    const scroller = scrollRef.current as Record<string, unknown>;
+    scroller.getInnerViewRef = () => ({});
+    scroller.scrollTo = scrollTo;
+    const [view] = (screen.toJSON() as unknown as Tree).children;
+    if (!view) throw new Error("expected the scroll view");
+    await act(async () =>
+      (view.props.onLayout as (e: unknown) => void)({ nativeEvent: { layout: { height: 700 } } }),
+    );
+    const show = listeners.get("keyboardWillShow") ?? listeners.get("keyboardDidShow");
+    await act(async () => show?.({ endCoordinates: { height: 330, screenY: 500 } }));
+    await act(async () =>
+      (view.props.onScroll as (e: unknown) => void)({
+        nativeEvent: { contentOffset: { y: 300 } },
+      }),
+    );
+    scrollTo.mockClear();
+
+    await act(async () => handleRef.current?.scrollToTop());
+    expect(scrollTo).toHaveBeenCalledWith({ y: 0, animated: false });
+
+    const [opened] = (screen.toJSON() as unknown as Tree).children;
+    if (!opened) throw new Error("expected the opened scroll view");
+    await act(async () =>
+      (opened.props.onContentSizeChange as (w: number, h: number) => void)(400, 1130),
+    );
+    await act(async () => jest.advanceTimersByTime(400));
+
+    const callsAboveZero = scrollTo.mock.calls.filter(
+      ([arg]: [{ y: number }]) => typeof arg?.y === "number" && arg.y > 0,
+    );
+    expect(callsAboveZero).toEqual([]);
+    jest.useRealTimers();
+    jest.restoreAllMocks();
+  });
+
+  it("scrollToTop blurs the currently focused input when one is focused", async () => {
+    const focused = { tag: 42 };
+    const currentSpy = jest
+      .spyOn(TextInput.State, "currentlyFocusedInput")
+      .mockReturnValue(focused as never);
+    const blurSpy = jest.spyOn(TextInput.State, "blurTextInput").mockImplementation(() => {});
+    const scrollRef = { current: null as unknown };
+    const handleRef = { current: null as ScreenHandle | null };
+    await render(
+      <ThemeProvider scheme="light">
+        <Screen testID="s" keyboardAware ref={handleRef as never} scrollRef={scrollRef as never}>
+          <Text>Form</Text>
+        </Screen>
+      </ThemeProvider>,
+    );
+    const scroller = scrollRef.current as Record<string, unknown>;
+    scroller.scrollTo = jest.fn();
+
+    await act(async () => handleRef.current?.scrollToTop());
+    expect(blurSpy).toHaveBeenCalledWith(focused);
+
+    blurSpy.mockClear();
+    currentSpy.mockReturnValue(null);
+    await act(async () => handleRef.current?.scrollToTop());
+    expect(blurSpy).not.toHaveBeenCalled();
     jest.restoreAllMocks();
   });
 });
