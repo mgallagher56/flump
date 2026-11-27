@@ -83,7 +83,8 @@ const FROM: { [E in SessionEvent["type"]]: readonly SessionState["status"][] } =
   ],
   SIGNED_OUT: ["signingOut"],
   // Found on launch, at sign-in or on a quiet reconnect (the account check answers 410), or after a
-  // delete; never from a read while offline, where no answer came.
+  // delete. A read while offline holds no token (a reconnect whose check failed drops it), so no
+  // 410 comes from one.
   DELETION_PENDING: [
     "loading",
     "signingIn",

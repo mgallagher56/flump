@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { SavedFiguresFrame } from "../../components/SavedFiguresFrame";
 import { useShell } from "../../navigation/shell";
 import { Loading } from "../Loading";
@@ -10,6 +10,8 @@ import { Offline } from "../Offline";
  * their age, when the sealed cache held them; otherwise `Offline`, as before S7. A spinner shows for
  * the moment the cache takes to read, so the offline screen never flashes first.
  */
+const AGE_REFRESH_MS = 60_000;
+
 export function OfflineReading({
   children,
   now = Date.now,
@@ -19,6 +21,14 @@ export function OfflineReading({
   now?: () => number;
 }) {
   const shell = useShell();
+  // Drawn again each minute, so "2 hours ago" does not go stale while the app stays open.
+  const [, setTick] = useState(0);
+  const showing = Boolean(shell.offline && shell.saved);
+  useEffect(() => {
+    if (!showing) return;
+    const timer = setInterval(() => setTick((n) => n + 1), AGE_REFRESH_MS);
+    return () => clearInterval(timer);
+  }, [showing]);
   if (!shell.offline) return children;
   if (shell.saved) {
     return (

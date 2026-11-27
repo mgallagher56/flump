@@ -29,6 +29,7 @@ function fakeSession(initial: SessionState = { status: "signedIn" }) {
     restore: jest.fn(async () => {}),
     retry: jest.fn(async () => {}),
     reconnect: jest.fn(async () => {}),
+    isRestoredOffline: () => state.status === "restoredOffline",
     signIn: jest.fn(async () => {}),
     signOut: jest.fn(async () => {}),
     getAccessToken: () => null,

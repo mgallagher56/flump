@@ -305,6 +305,29 @@ describe("restoring", () => {
     expect(queryClient.getQueryData(queryKeys.accounts())).toBe(fresher);
   });
 
+  it("a session that left restoredOffline while the file was read gets nothing put back", async () => {
+    const store = memoryStore();
+    store.text = envelope(allSavedAt(NOW - HOUR));
+    const queryClient = testQueryClient();
+    let offline = true;
+    let answer: (text: string | null) => void = () => {};
+    (store.read as jest.Mock).mockImplementationOnce(
+      () =>
+        new Promise<string | null>((resolve) => {
+          answer = resolve;
+        }),
+    );
+    const restoring = createOfflineCache({ store, now: () => NOW }).restore(
+      queryClient,
+      () => offline,
+    );
+    // Sign out began (signingOut) and cleared the query cache; the wipe has not run yet.
+    offline = false;
+    answer(envelope(allSavedAt(NOW - HOUR)));
+    expect(await restoring).toBeNull();
+    expect(queryClient.getQueryData(queryKeys.accounts())).toBeUndefined();
+  });
+
   it("with nothing saved, gives null and wipes nothing", async () => {
     const store = memoryStore();
     expect(

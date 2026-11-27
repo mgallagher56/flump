@@ -66,7 +66,7 @@ export interface OfflineCache {
    * when there is nothing usable. Called only from inside the signed-in shell, so never while the
    * app lock covers the app.
    */
-  restore(queryClient: QueryClient): Promise<SavedFigures | null>;
+  restore(queryClient: QueryClient, stillWanted?: () => boolean): Promise<SavedFigures | null>;
   /** Saves the reads after every successful one while `canSave()`. Returns the way to stop. */
   watch(queryClient: QueryClient, canSave: () => boolean): () => void;
   /** Forgets everything, and stops any save not yet started. Never throws. */
@@ -114,7 +114,10 @@ export function createOfflineCache(deps: { store: CacheStore; now(): number }): 
     return out;
   }
 
-  async function restore(queryClient: QueryClient): Promise<SavedFigures | null> {
+  async function restore(
+    queryClient: QueryClient,
+    stillWanted: () => boolean = () => true,
+  ): Promise<SavedFigures | null> {
     const startedAt = generation;
     const text = await deps.store.read();
     if (!text || startedAt !== generation) return null;
@@ -125,6 +128,10 @@ export function createOfflineCache(deps: { store: CacheStore; now(): number }): 
       await deps.store.wipe();
       return null;
     }
+    // Asked again right before the figures go in, with no await after: a sign-out (or a session
+    // end) that began while the file was read already cleared the query cache, and nothing may
+    // be put back into it.
+    if (startedAt !== generation || !stillWanted()) return null;
     let oldest = Number.POSITIVE_INFINITY;
     for (const [name, { savedAt, data }] of reads) {
       const key = CACHED_READS[name].key;
