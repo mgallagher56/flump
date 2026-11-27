@@ -114,7 +114,7 @@ describe("AddSavingsAccountDialog", () => {
           "Other savings account",
         ],
       },
-      { label: "ISAs", kinds: ["Cash ISA", "Lifetime ISA (LISA)", "Stocks and Shares ISA"] },
+      { label: "ISAs", kinds: ["Cash ISA", "Lifetime ISA (LISA)", "Stocks and shares ISA"] },
       { label: "Investments", kinds: ["General investment account", "Other investment"] },
     ]);
   });

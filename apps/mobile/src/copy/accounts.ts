@@ -73,7 +73,7 @@ const ACCOUNT_SUBTYPE_LABEL: Readonly<Record<string, string>> = {
   general_savings: "General savings",
   cash_isa: "Cash ISA",
   lifetime_isa: "Lifetime ISA (LISA)",
-  stocks_and_shares_isa: "Stocks and Shares ISA",
+  stocks_and_shares_isa: "Stocks and shares ISA",
   general_investment: "General investment account",
   residential_mortgage: "Residential mortgage",
   btl_mortgage: "Buy-to-let (BTL) mortgage",
@@ -148,9 +148,9 @@ function monthName(month: string): string {
 
 const key = (month: number, year: number) => `${year}-${String(month).padStart(2, "0")}`;
 
-/** Whole pounds: "£52,100", "-£6,400". */
+/** Whole pounds, rounded by Intl as on web: "£52,100", "-£6,400". */
 export function pounds(value: number): string {
-  return formatCurrency(Math.round(value));
+  return formatCurrency(value);
 }
 
 /** The figure's size only, for words that carry the direction ("Up £300"). */

@@ -16,7 +16,7 @@ export const accountRowStates = {
   noBalance: { name: "Pension", typeLine: null, balance: undefined, onPress: noop },
   longName: {
     name: "Stocks and shares ISA with a much longer name than most",
-    typeLine: "Stocks and Shares ISA",
+    typeLine: "Stocks and shares ISA",
     balance: 15500,
     onPress: noop,
   },

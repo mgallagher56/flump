@@ -9,7 +9,7 @@ export const SAVINGS_SUBTYPE_OPTIONS = [
 ] as const;
 
 export const INVESTMENT_SUBTYPE_OPTIONS = [
-  { value: "stocks_and_shares_isa", label: "Stocks and Shares ISA" },
+  { value: "stocks_and_shares_isa", label: "Stocks and shares ISA" },
   { value: "general_investment", label: "General investment account" },
 ] as const;
 
