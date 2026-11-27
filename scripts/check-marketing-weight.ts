@@ -36,7 +36,7 @@ const LABELS: Record<Measure, string> = {
 export const BASELINE_FILE = resolve(import.meta.dir, "marketing-weight-baseline.json");
 
 const attr = (tag: string, name: string) =>
-  new RegExp(String.raw`\b${name}\s*=\s*["']([^"']+)["']`).exec(tag)?.[1];
+  new RegExp(String.raw`(?:^|\s)${name}\s*=\s*["']([^"']+)["']`).exec(tag)?.[1];
 
 /** The script and stylesheet files index.html loads, as paths relative to the client build. */
 export function firstLoadAssets(html: string): { scripts: string[]; styles: string[] } {

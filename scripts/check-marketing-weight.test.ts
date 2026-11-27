@@ -17,9 +17,9 @@ describe("firstLoadAssets", () => {
     const html = `<!doctype html><head>
       <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
       <script data-flump-theme>/* inline */</script>
-      <script type="module" crossorigin src="/assets/index-abc.js"></script>
+      <script type="module" data-src="/assets/decoy.js" src="/assets/index-abc.js"></script>
       <link rel="modulepreload" crossorigin href="/assets/vendor-def.js">
-      <link rel="stylesheet" crossorigin href="/assets/index-ghi.css?v=1">
+      <link rel="stylesheet" data-href="/assets/decoy.css" href="/assets/index-ghi.css?v=1">
       <link rel="preload" as="font" href="/assets/inter.woff2">
       <script src="https://example.com/analytics.js"></script>
     </head>`;
