@@ -1,6 +1,6 @@
 import { etagFor } from "@flump/api-contract";
 import { act, render, screen, userEvent } from "@testing-library/react-native";
-import { Alert, type AlertButton, Linking } from "react-native";
+import { Alert, type AlertButton, Keyboard, Linking } from "react-native";
 import { fail, fakeApi, withApi } from "../../data/fakeApi";
 import {
   RENTER_BUDGET,
@@ -564,6 +564,31 @@ describe("Budget", () => {
       const second = api.calls.filter((c) => c.method === "POST")[1]?.idempotencyKey;
       expect(second).toMatch(UUID);
       expect(second).not.toBe(first);
+    });
+
+    it("the sheet leaves room for the keyboard below Save, and a tap on Save goes through", async () => {
+      // Device check: at full scroll Save stayed under the keyboard, at normal and 200% text.
+      const listeners = new Map<string, (event: unknown) => void>();
+      jest.spyOn(Keyboard, "addListener").mockImplementation((name, fn) => {
+        listeners.set(name, fn as (event: unknown) => void);
+        return { remove: () => listeners.delete(name) } as ReturnType<typeof Keyboard.addListener>;
+      });
+      await budget(fakeApi(routes(renterHousehold())));
+      await screen.findByLabelText(HERO);
+      const u = user();
+      await u.press(screen.getByRole("button", { name: "Edit budget" }));
+      await u.press(screen.getByRole("button", { name: "Add to bills" }));
+      const room = () => screen.getByTestId("budget-entry-sheet-keyboard-room");
+      expect(room().props.style).toMatchObject({ height: 0 });
+      const show = listeners.get("keyboardWillShow") ?? listeners.get("keyboardDidShow");
+      await act(async () => show?.({ endCoordinates: { height: 336 } }));
+      // A 336 point keyboard: 336 points of room below the buttons, so Save scrolls above it.
+      expect(room().props.style).toMatchObject({ height: 336 });
+      // The sheet is a keyboard-aware Screen: a tap on Save while the keyboard is open presses it.
+      expect(screen.getByTestId("budget-entry-sheet-keyboard")).toBeOnTheScreen();
+      const hide = listeners.get("keyboardWillHide") ?? listeners.get("keyboardDidHide");
+      await act(async () => hide?.({}));
+      expect(room().props.style).toMatchObject({ height: 0 });
     });
 
     it("a failed add says so and keeps the form", async () => {
