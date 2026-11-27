@@ -35,12 +35,28 @@ import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { useScenarioState } from "~/hooks/useScenarioState";
 import { useUserProfile } from "~/hooks/useUserProfile";
 import { versionField } from "~/services/conflict";
-import { emptyStack, emptyWrap, errorBanner, pageRoot, plainLink } from "./DebtContainer.styles";
+import {
+  emptyStack,
+  emptyWrap,
+  errorBanner,
+  overdrawnNote,
+  pageRoot,
+  plainLink,
+} from "./DebtContainer.styles";
 
 /** The overpay-or-save calculator (D5 replaces the debt "into savings" tool with this link). */
 const OVERPAY_OR_SAVE_SLUG: ToolSlug = "mortgage-overpayment-vs-isa-calculator";
 
 const SAVED_SCENARIO = { extraPayment: 0, strategy: "avalanche" as "avalanche" | "snowball" };
+
+/**
+ * Under "No debts added" when a current account is below zero: Home counts it in "What you owe"
+ * (DECISIONS.md D8), so the page says where that figure comes from. Words only, no figure here.
+ */
+export const overdrawnCurrentSentence = (count: number, amount: string): string =>
+  count === 1
+    ? `Your current account is ${amount} below zero. That is counted in "What you owe" on Home.`
+    : `Your current accounts are ${amount} below zero in total. That is counted in "What you owe" on Home.`;
 
 const SAVE_ERROR_FALLBACK = "We could not save that debt. Nothing has changed. Try again.";
 
@@ -115,6 +131,14 @@ export const DebtContainer: FC = () => {
   const totalDebt = Math.abs(debtInputs?.totalDebt ?? payoffBalance);
   const totalMin = debts.reduce((sum, d) => sum + (d.minimumPayment ?? 0), 0);
   const hasDebts = debts.length > 0;
+  // How many current accounts are below zero (a count, not a sum: the amount is the loader's).
+  const overdrawnCurrentCount = Array.isArray(accounts)
+    ? accounts.filter(
+        (a: { type?: string; balance?: unknown }) => a?.type === "Current" && Number(a.balance) < 0,
+      ).length
+    : 0;
+  const overdrawnCurrentTotal =
+    typeof loaderData?.overdrawnCurrentTotal === "number" ? loaderData.overdrawnCurrentTotal : null;
   // An unset APR is modelled as 0%, which would invent optimistic dates and savings.
   const missingApr = debts.filter((d) => d.aprKnown === false);
   const aprUnknown = missingApr.length > 0;
@@ -399,6 +423,16 @@ export const DebtContainer: FC = () => {
               id="debt-empty"
               title="No debts added"
             />
+            {overdrawnCurrentCount > 0 &&
+            overdrawnCurrentTotal !== null &&
+            overdrawnCurrentTotal > 0 ? (
+              <p className={overdrawnNote} id="debt-overdrawn-current">
+                {overdrawnCurrentSentence(
+                  overdrawnCurrentCount,
+                  formatCurrency(overdrawnCurrentTotal),
+                )}
+              </p>
+            ) : null}
           </div>
         </div>
       )}
