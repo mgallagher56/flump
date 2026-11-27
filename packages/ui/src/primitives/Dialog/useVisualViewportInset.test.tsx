@@ -2,6 +2,7 @@ import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   KEYBOARD_INSET_VAR,
+  KEYBOARD_OPEN_ATTR,
   measureKeyboard,
   useVisualViewportInset,
   VISUAL_VIEWPORT_HEIGHT_VAR,
@@ -91,6 +92,68 @@ describe("useVisualViewportInset", () => {
     unmount();
     expect(read(VISUAL_VIEWPORT_HEIGHT_VAR)).toBe("");
     expect(read(KEYBOARD_INSET_VAR)).toBe("");
+  });
+
+  it("marks the page while the keyboard is open, so a sheet can scroll as one piece", () => {
+    // Frame id 0, so each resize schedules a fresh write (the shared stub returns 1 after running it).
+    vi.spyOn(window, "requestAnimationFrame").mockImplementation((cb) => {
+      cb(0);
+      return 0;
+    });
+    const { unmount } = renderHook(() => useVisualViewportInset(true));
+    expect(root.hasAttribute(KEYBOARD_OPEN_ATTR)).toBe(false);
+    act(() => {
+      viewport.height = 476;
+      viewport.dispatchEvent(new Event("resize"));
+    });
+    expect(root.hasAttribute(KEYBOARD_OPEN_ATTR)).toBe(true);
+    act(() => {
+      viewport.height = 812;
+      viewport.dispatchEvent(new Event("resize"));
+    });
+    expect(root.hasAttribute(KEYBOARD_OPEN_ATTR)).toBe(false);
+    act(() => {
+      viewport.height = 476;
+      viewport.dispatchEvent(new Event("resize"));
+    });
+    unmount();
+    expect(root.hasAttribute(KEYBOARD_OPEN_ATTR)).toBe(false);
+  });
+
+  it("keeps the focused field in a dialog in view when the keyboard opens", () => {
+    const dialog = document.createElement("div");
+    dialog.setAttribute("role", "dialog");
+    const input = document.createElement("input");
+    dialog.appendChild(input);
+    document.body.appendChild(dialog);
+    const scroll = vi.fn();
+    input.scrollIntoView = scroll;
+    input.focus();
+    const { unmount } = renderHook(() => useVisualViewportInset(true));
+    expect(scroll).not.toHaveBeenCalled();
+    act(() => {
+      viewport.height = 476;
+      viewport.dispatchEvent(new Event("resize"));
+    });
+    expect(scroll).toHaveBeenCalledWith({ block: "nearest" });
+    unmount();
+    dialog.remove();
+  });
+
+  it("leaves a focused field outside any dialog where it is", () => {
+    const input = document.createElement("input");
+    document.body.appendChild(input);
+    const scroll = vi.fn();
+    input.scrollIntoView = scroll;
+    input.focus();
+    const { unmount } = renderHook(() => useVisualViewportInset(true));
+    act(() => {
+      viewport.height = 476;
+      viewport.dispatchEvent(new Event("resize"));
+    });
+    expect(scroll).not.toHaveBeenCalled();
+    unmount();
+    input.remove();
   });
 
   it("measures against innerHeight, not the small viewport iOS reports as clientHeight", () => {

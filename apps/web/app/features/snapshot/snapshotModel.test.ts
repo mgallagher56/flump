@@ -9,10 +9,12 @@ import {
   buildSnapshotHistory as historyFor,
   historySourceLabel,
   latestRecordedMonth,
+  latestUnrecordedMonth,
   londonDate,
   londonMonth,
   nextCheckInDate,
   projectFromSnapshot,
+  recordedMonthSet,
   toChartPoints,
   toLinePoints,
 } from "./snapshotModel";
@@ -278,5 +280,39 @@ describe("net worth choices", () => {
     expect(latest(DEFAULT_NET_WORTH_BASIS)).toBe(22400 - 180000);
     expect(latest(BOTH_ON)).toBe(22400 - 180000 - 25000);
     expect(latest(BOTH_OFF)).toBe(22400);
+  });
+});
+
+describe("recordedMonthSet", () => {
+  const A = "A0000000-0000-4000-8000-00000000000A";
+  const B = "b0000000-0000-4000-8000-00000000000b";
+  it("lists the months with a value for the given accounts, matching ids in any case", () => {
+    const set = recordedMonthSet(
+      [
+        { accountId: A.toLowerCase(), year: 2026, month: 9, value: 10 },
+        { account_id: A, year: 2026, month: 3, value: 0 },
+        // Another account's month is not counted, nor a row with no value.
+        { accountId: B, year: 2026, month: 8, value: 5 },
+        { accountId: A, year: 2026, month: 7, value: null },
+      ],
+      [A],
+    );
+    expect([...set].sort()).toEqual(["2026-03", "2026-09"]);
+  });
+});
+
+describe("latestUnrecordedMonth", () => {
+  it("is the starting month when it has nothing recorded", () => {
+    expect(latestUnrecordedMonth(new Set(["2026-09"]), "2026-10", "2000-01")).toBe("2026-10");
+  });
+  it("steps back over recorded months, across a year", () => {
+    const recorded = new Set(["2026-02", "2026-01", "2025-12"]);
+    expect(latestUnrecordedMonth(recorded, "2026-02", "2000-01")).toBe("2025-11");
+  });
+  it("stops at the earliest month: at it, and the starting month when every month is recorded", () => {
+    expect(latestUnrecordedMonth(new Set(["2000-02"]), "2000-02", "2000-01")).toBe("2000-01");
+    expect(latestUnrecordedMonth(new Set(["2000-02", "2000-01"]), "2000-02", "2000-01")).toBe(
+      "2000-02",
+    );
   });
 });

@@ -1,8 +1,14 @@
+import { motionKeyframes } from "@flump/tokens";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Sheet } from "./Sheet";
-import { sheetBodyRecipe } from "./Sheet.styles";
+import {
+  sheetBodyRecipe,
+  sheetContentRecipe,
+  sheetFooterRecipe,
+  sheetHeaderRecipe,
+} from "./Sheet.styles";
 
 const ReturnHarness = () => {
   const [open, setOpen] = useState(false);
@@ -133,6 +139,44 @@ describe("Sheet primitive", () => {
     const style = sheetBodyRecipe.raw({ side: "right" }) as { flex?: unknown };
     // Under md the right sheet is a bottom sheet, so it keeps the content-sized body.
     expect(style.flex).toEqual({ base: "0 1 auto", md: "1 1 auto" });
+  });
+
+  it("keeps room inside the scrolling body, so fields and focus rings are never cut at its edges", () => {
+    const style = sheetBodyRecipe.raw({ side: "bottom" }) as Record<string, unknown>;
+    // The body reaches 2 into the sheet's own padding and pads itself by the same 2, so content
+    // stays where it was but a 2px focus ring with a 2px offset, or a scrollbar, has room.
+    expect(style.marginInline).toBe("-2");
+    expect(style.paddingInline).toBe("2");
+  });
+
+  it("scrolls as one piece while the keyboard is open, so the fields get the room", () => {
+    const keyboard = "html[data-keyboard-open] &";
+    const content = sheetContentRecipe.raw({ side: "bottom" }) as Record<string, unknown>;
+    const body = sheetBodyRecipe.raw({ side: "bottom" }) as Record<string, unknown>;
+    expect(content[keyboard]).toEqual({ overflowY: "auto", overscrollBehavior: "contain" });
+    // The body stops being its own scroller and takes its full height.
+    expect(body[keyboard]).toEqual({ flex: "none", overflowY: "visible" });
+    // Header and buttons scroll with the fields instead of holding their room.
+    expect((sheetHeaderRecipe.raw() as Record<string, unknown>).flexShrink).toBe(0);
+    expect((sheetFooterRecipe.raw() as Record<string, unknown>).flexShrink).toBe(0);
+  });
+
+  it("slides in solid: the sheet never fades, so the page never shows through it", () => {
+    const content = sheetContentRecipe.raw({ side: "right" }) as {
+      _motionSafe: { animationName: string };
+      variants?: unknown;
+    };
+    expect(content._motionSafe.animationName).toBe("sheetUp");
+    const right = (
+      sheetContentRecipe.raw({ side: "right" }) as {
+        md?: { _motionSafe?: { animationName?: string } };
+      }
+    ).md;
+    expect(right?._motionSafe?.animationName).toBe("sheetInRight");
+    for (const name of ["sheetUp", "sheetInRight"] as const) {
+      const frames = motionKeyframes[name];
+      expect(JSON.stringify(frames)).not.toContain("opacity");
+    }
   });
 
   it("passes its side to the body", () => {

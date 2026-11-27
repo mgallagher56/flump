@@ -47,11 +47,18 @@ export const SAVE_ERROR_TOAST = {
   description: "Nothing has changed. Try again.",
 } as const;
 
+/**
+ * The line under an account in the list form. For an earlier month (`currentMonth` given and later
+ * than `month`), an account with nothing in or before it says so for that month: it may well have
+ * balances in later months, so "No balance recorded yet" would not be true.
+ */
 export function statusText(
   status: "connected" | "recorded" | "notUpdated" | "noHistory",
   month: MonthKey,
   lastRecordedMonth: MonthKey | null,
+  currentMonth?: MonthKey,
 ): string {
+  const earlierMonth = currentMonth !== undefined && month < currentMonth;
   switch (status) {
     case "connected":
       return "Connected: updates from your bank";
@@ -62,7 +69,9 @@ export function statusText(
         ? `Not updated since ${formatMonth(lastRecordedMonth)}`
         : "No balance recorded yet";
     default:
-      return "No balance recorded yet";
+      return earlierMonth
+        ? `Nothing recorded for ${formatMonth(month)}`
+        : "No balance recorded yet";
   }
 }
 
@@ -104,6 +113,11 @@ export function keepRestLabel(count: number, all: boolean): string {
   return all
     ? `Keep all ${count} ${noun} as they are`
     : `Keep the other ${count} ${noun} as they are`;
+}
+
+/** Under the month picker when the chosen earlier month already has balances. */
+export function monthHasBalancesText(month: MonthKey): string {
+  return `${formatMonth(month)} already has balances. Saving replaces the ones shown.`;
 }
 
 /** Said once the keep is saved: "6 balances kept as they are. You can still change any of them." */

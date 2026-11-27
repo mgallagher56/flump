@@ -4,6 +4,11 @@ import { useEffect } from "react";
 export const VISUAL_VIEWPORT_HEIGHT_VAR = "--visual-viewport-height";
 /** How much of the layout viewport the on-screen keyboard covers at the bottom, in px. */
 export const KEYBOARD_INSET_VAR = "--keyboard-inset";
+/**
+ * Set on `<html>` while the on-screen keyboard is open. A sheet then scrolls as one piece, header
+ * and buttons included, so the fields get the little height left above the keyboard.
+ */
+export const KEYBOARD_OPEN_ATTR = "data-keyboard-open";
 
 let openModals = 0;
 let stop: (() => void) | null = null;
@@ -48,6 +53,15 @@ function start(): () => void {
     last = next;
     root.style.setProperty(VISUAL_VIEWPORT_HEIGHT_VAR, `${height}px`);
     root.style.setProperty(KEYBOARD_INSET_VAR, `${inset}px`);
+    const opening = inset > 0 && !root.hasAttribute(KEYBOARD_OPEN_ATTR);
+    if (inset > 0) root.setAttribute(KEYBOARD_OPEN_ATTR, "");
+    else root.removeAttribute(KEYBOARD_OPEN_ATTR);
+    // The sheet has just moved up and shrunk to sit on the keyboard: bring the field being typed in
+    // back into view inside it, or it can end up under the keyboard or the sheet's own edge.
+    const active = document.activeElement;
+    if (opening && active instanceof HTMLElement && active.closest('[role="dialog"]')) {
+      active.scrollIntoView({ block: "nearest" });
+    }
   };
   const schedule = () => {
     if (!frame) frame = window.requestAnimationFrame(write);
@@ -61,6 +75,7 @@ function start(): () => void {
     viewport.removeEventListener("scroll", schedule);
     root.style.removeProperty(VISUAL_VIEWPORT_HEIGHT_VAR);
     root.style.removeProperty(KEYBOARD_INSET_VAR);
+    root.removeAttribute(KEYBOARD_OPEN_ATTR);
   };
 }
 

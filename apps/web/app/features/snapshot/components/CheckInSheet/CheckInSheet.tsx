@@ -10,10 +10,16 @@ import {
   Sheet,
   StatusBadge,
 } from "@repo/ui";
-import { type FC, useEffect, useMemo, useState } from "react";
+import { type FC, useEffect, useMemo, useRef, useState } from "react";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { buildCheckInSummary, type CheckInAccountInput } from "../../checkInModel";
-import { CHECK_IN_COPY, keepRestLabel, keptText, statusText } from "../../snapshotCopy";
+import {
+  CHECK_IN_COPY,
+  keepRestLabel,
+  keptText,
+  monthHasBalancesText,
+  statusText,
+} from "../../snapshotCopy";
 import {
   type AccountDetailInput,
   addMonths,
@@ -21,7 +27,9 @@ import {
   buildSnapshotPayload,
   compareMonths,
   formatMonth,
+  latestUnrecordedMonth,
   type MonthKey,
+  recordedMonthSet,
 } from "../../snapshotModel";
 import { useBelowMd } from "../../useBelowMd";
 import { useCheckIn } from "../../useCheckIn";
@@ -41,6 +49,7 @@ import {
   footerRow,
   keepRow,
   keptStatus,
+  monthNote,
   monthPicker,
   summaryLine,
 } from "./CheckInSheet.styles";
@@ -88,6 +97,7 @@ export const firstShownElement = (ids: readonly string[]) => (): HTMLElement | n
 
 /** Earliest month the backend accepts (E30 PR1 `EARLIEST_SNAPSHOT`). */
 const EARLIEST_YEAR = 2000;
+const EARLIEST_MONTH: MonthKey = `${EARLIEST_YEAR}-01`;
 
 const MONTH_OPTIONS = Array.from({ length: 12 }, (_, i) => ({
   value: String(i + 1).padStart(2, "0"),
@@ -278,7 +288,20 @@ const ListFormSheet: FC<CheckInSheetProps> = ({
   const { formatCurrencyDecimal } = useFormatCurrency();
   const isBackfill = mode === "backfill";
   const latestPast = addMonths(currentMonth, -1);
-  const [month, setMonth] = useState<MonthKey>(isBackfill ? latestPast : currentMonth);
+  // Months that already hold a balance for one of these accounts: back-fill opens on the latest
+  // earlier month with none, and says when the chosen month has some.
+  const recorded = useMemo(
+    () =>
+      recordedMonthSet(
+        accountDetails,
+        accounts.flatMap((a) => (a.id ? [String(a.id)] : [])),
+      ),
+    [accountDetails, accounts],
+  );
+  const openingMonth = isBackfill
+    ? latestUnrecordedMonth(recorded, latestPast, EARLIEST_MONTH)
+    : currentMonth;
+  const [month, setMonth] = useState<MonthKey>(openingMonth);
   const rows = useMemo(
     () => buildCheckInRows(accounts, accountDetails, month, currentMonth, basis),
     [accounts, accountDetails, month, currentMonth, basis],
@@ -292,20 +315,32 @@ const ListFormSheet: FC<CheckInSheetProps> = ({
     setValues(Object.fromEntries(rows.map((r) => [r.accountId, r.prefill])));
   }, [open, rows]);
 
+  // Read when the sheet opens only: saved data reloading under an open sheet must not move the
+  // picker the user is looking at.
+  const openingMonthRef = useRef(openingMonth);
+  openingMonthRef.current = openingMonth;
   useEffect(() => {
-    if (open) setMonth(isBackfill ? latestPast : currentMonth);
-  }, [open, isBackfill, latestPast, currentMonth]);
+    if (open) setMonth(openingMonthRef.current);
+  }, [open]);
 
   const isCurrentMonth = month === currentMonth;
   const { payload, saved, skipped } = buildSnapshotPayload(rows, values, { isCurrentMonth });
   const manualCount = rows.filter((r) => !r.isConnected).length;
 
   const [year, monthPart] = month.split("-") as [string, string];
-  const currentYear = Number(currentMonth.slice(0, 4));
-  const yearOptions = Array.from({ length: currentYear - EARLIEST_YEAR + 1 }, (_, i) => {
-    const y = String(currentYear - i);
+  // Back-fill offers earlier months only: this year stops at last month, and in January this
+  // year has none, so the Year list starts at last year.
+  const [latestYear, latestMonthPart] = latestPast.split("-") as [string, string];
+  const newestYear = isBackfill ? Number(latestYear) : Number(currentMonth.slice(0, 4));
+  const yearOptions = Array.from({ length: newestYear - EARLIEST_YEAR + 1 }, (_, i) => {
+    const y = String(newestYear - i);
     return { value: y, label: y };
   });
+  const monthOptions =
+    isBackfill && year === latestYear
+      ? MONTH_OPTIONS.filter((o) => o.value <= latestMonthPart)
+      : MONTH_OPTIONS;
+  const monthHasBalances = isBackfill && recorded.has(month);
   const pickMonth = (nextYear: string, nextMonth: string) => {
     let next: MonthKey = `${nextYear}-${nextMonth}`;
     // Back-fill is for earlier months only; clamp a pick at or after this month to last month.
@@ -361,7 +396,7 @@ const ListFormSheet: FC<CheckInSheetProps> = ({
               <Select
                 {...controlProps(field)}
                 onChange={(e) => pickMonth(year, e.target.value)}
-                options={MONTH_OPTIONS}
+                options={monthOptions}
                 value={monthPart}
               />
             )}
@@ -376,6 +411,15 @@ const ListFormSheet: FC<CheckInSheetProps> = ({
               />
             )}
           </FormField>
+          {monthHasBalances ? (
+            <p
+              className={monthNote()}
+              data-testid="snapshot-month-recorded"
+              id="snapshot-month-recorded"
+            >
+              {monthHasBalancesText(month)}
+            </p>
+          ) : null}
         </fieldset>
       ) : null}
 
@@ -395,7 +439,7 @@ const ListFormSheet: FC<CheckInSheetProps> = ({
                     </StatusBadge>
                   ) : (
                     <p className={accountStatus()}>
-                      {statusText(row.status, month, row.lastRecordedMonth)}
+                      {statusText(row.status, month, row.lastRecordedMonth, currentMonth)}
                       {row.outsideNetWorth ? ". Not counted in net worth" : ""}
                     </p>
                   )}
