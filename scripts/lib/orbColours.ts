@@ -12,7 +12,11 @@
 //   `--colors-chart-accent-purple` and so on);
 // - a chart colour role passed as a string: `"series4"`, `"series5"`, `"accentPurple"` (the roles
 //   `chartColor` turns into the chart tokens).
-// A name built at run time (`surface.tint.${tone}`) is not seen; review catches those.
+// - the purple primitive scale as a whole (`colors.purple`).
+// Not seen, so review catches them: a name built at run time (`surface.tint.${tone}`, as
+// `sectionColours.ts` does for the area map) and a series picked by index (`seriesColor(4)`, as
+// the budget chart does). Both are allowed uses under MC1 today (the area map; chart series).
+// Out of scope: the accent, which is the soft pink in dark (STYLE-GUIDE 2.6, rules C7 and C8).
 
 const VIOLET_ROSE_TOKEN = new RegExp(
   [
@@ -21,6 +25,7 @@ const VIOLET_ROSE_TOKEN = new RegExp(
     String.raw`(?<![\w$/-])surface\.tint\.(?:violet|rose)\b`,
     String.raw`(?<![\w$/-])chart\.(?:series[45]|accentPurple)\b`,
     String.raw`(?<![\w$/-])purple\.\d+\b`,
+    String.raw`(?<![\w$/-])colors\.purple\b`,
     String.raw`(?<![\w$/-])dark\.pink\b`,
     // CSS variables.
     String.raw`--colors-(?:orb-violet-rose[\w-]*|surface-tint-(?:violet|rose)|chart-(?:series[45]|accent-purple)|purple-\d+|dark-pink)\b`,
@@ -60,6 +65,10 @@ export const ORB_COLOUR_ALLOW_LIST: ReadonlyArray<{ path: string; reason: string
   {
     path: "packages/ui/src/foundations/MarketingTokens/",
     reason: "the Storybook page that documents the orb colour sets in light and dark",
+  },
+  {
+    path: "packages/ui/src/foundations/ColorPalette/",
+    reason: "the Storybook colour page, which shows every primitive scale, purple among them",
   },
 ];
 
