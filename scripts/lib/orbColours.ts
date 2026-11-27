@@ -6,8 +6,8 @@
 //
 // A "use" is the token's name in any of the forms the code base writes it:
 // - a Panda or native token path: `orb.violetRose.core`, `surface.tint.rose`, `chart.series5`,
-//   `chart.accentPurple`, `logo.violet`, `logo.rose`, the purple primitive scale and the dark pink primitive (also inside
-//   `token(...)` and `{colors...}`);
+//   `chart.accentPurple`, `logo.violet`, `logo.rose`, the purple primitive scale and the dark pink
+//   primitive (also inside `token(...)` and `{colors...}`);
 // - the same names as CSS variables (`--colors-orb-violet-rose-core`, `--colors-chart-series4`,
 //   `--colors-chart-accent-purple` and so on);
 // - a chart colour role passed as a string: `"series4"`, `"series5"`, `"accentPurple"` (the roles

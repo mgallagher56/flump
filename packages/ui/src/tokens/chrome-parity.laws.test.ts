@@ -1,7 +1,7 @@
 // @vitest-environment node
 import fs from "node:fs";
 import path from "node:path";
-import { colors, semanticTokens } from "@flump/tokens";
+import * as native from "@flump/tokens/native";
 import { describe, expect, it } from "vitest";
 import { NAV_BREAKPOINT, navConditions } from "./breakpoints";
 
@@ -167,19 +167,33 @@ describe("Shared chrome law (marketing and web)", () => {
       expect(read("apps/marketing/index.html")).toContain('href="/favicon.svg"');
     });
 
-    // Owner, 25 Nov 2026: "make the favicon teal to match". A static SVG cannot read tokens, so
-    // the tile's fills are pinned to the logo mark's resolved values: teal in light, mint in dark.
-    it("the favicon tile is the logo mark colour in each theme", () => {
-      const resolve = (ref: string) => {
-        const [, group, step] = /^\{colors\.(\w+)\.(\w+)\}$/.exec(ref) ?? [];
-        return (colors as Record<string, Record<string, { value: string }>>)[group][step].value;
-      };
-      const mark = semanticTokens.colors.primary.mark.value;
+    // The small mark (owner, 27 Nov 2026: "C, all three flat"): the logo K2's three bubbles in flat
+    // fills, a canvas-coloured gap round the teal bubble, one glint. A static SVG cannot read
+    // tokens, so each fill is pinned to the logo token's resolved value in each theme.
+    it("the favicon is the small K2 mark in the logo tokens, light and dark", () => {
       const svg = read("apps/web/public/favicon.svg").toLowerCase();
-      const [light, dark] = [...svg.matchAll(/\.b\{fill:(#[0-9a-f]{6})\}/g)].map((m) => m[1]);
-      expect(light, "light tile").toBe(resolve(mark.base).toLowerCase());
-      expect(svg, "dark variant").toContain("@media (prefers-color-scheme:dark)");
-      expect(dark, "dark tile").toBe(resolve(mark._dark).toLowerCase());
+      const [base, dark] = svg.split("@media (prefers-color-scheme:dark)");
+      expect(dark, "dark variant").toBeDefined();
+      const fill = (css: string | undefined, cls: string) =>
+        new RegExp(`\\.${cls}\\{fill:(#[0-9a-f]{6})`).exec(css ?? "")?.[1];
+      const pins = [
+        ["v", "logo.violet"],
+        ["s", "logo.sky"],
+        ["t", "logo.teal"],
+        ["k", "logo.backing"],
+      ] as const;
+      for (const [cls, token] of pins) {
+        expect(fill(base, cls), `${token} light`).toBe(native.light.colors[token].toLowerCase());
+        expect(fill(dark, cls), `${token} dark`).toBe(native.dark.colors[token].toLowerCase());
+      }
+      expect(fill(base, "g"), "glint").toBe(native.light.colors["logo.glint"].toLowerCase());
+      // One bubble each, teal (and its gap) drawn last, in front.
+      expect([...svg.matchAll(/<circle class="(\w)"/g)].map((m) => m[1])).toEqual([
+        "v",
+        "s",
+        "k",
+        "t",
+      ]);
     });
   });
 

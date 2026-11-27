@@ -1,7 +1,9 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { FlumpLogo } from "./FlumpLogo";
-import { floorLayout, LOGO_FLOOR, LOGO_ORBS, LOGO_VIEWBOX } from "./FlumpLogo.art";
+import { floorLayout, LOGO_FLOOR, LOGO_OPACITY, LOGO_ORBS, LOGO_VIEWBOX } from "./FlumpLogo.art";
 
 describe("FlumpLogo primitive", () => {
   it("is decorative by default", () => {
@@ -84,6 +86,26 @@ describe("FlumpLogo primitive", () => {
       for (const el of svg?.querySelectorAll("[fill^='url']") ?? []) {
         expect(own.has(el.getAttribute("fill") ?? "")).toBe(true);
       }
+    }
+  });
+
+  it("the styles' theme opacities are the art table's", () => {
+    const styles = readFileSync(resolve(__dirname, "FlumpLogo.styles.ts"), "utf8");
+    const props = {
+      backing: "opacity",
+      core: "stopOpacity",
+      mid: "stopOpacity",
+      sheen: "stopOpacity",
+      glint: "opacity",
+    } as const;
+    for (const [role, prop] of Object.entries(props) as [keyof typeof props, string][]) {
+      const l = LOGO_OPACITY.light[role];
+      const d = LOGO_OPACITY.dark[role];
+      expect(styles).toMatch(
+        new RegExp(
+          `${role}: css\\(\\{[^}]*${prop}: \\{ base: ${l}, _dark: ${d}, _systemDark: ${d} \\}`,
+        ),
+      );
     }
   });
 

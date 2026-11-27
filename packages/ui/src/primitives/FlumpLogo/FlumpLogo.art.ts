@@ -30,6 +30,15 @@ export const LOGO_ORBS: readonly LogoOrb[] = [
 /** The one floor shadow under all three bubbles. */
 export const LOGO_FLOOR = { cx: 99, cy: 177, rx: 53 } as const;
 
+/**
+ * Opacities that differ by theme (glass is clearer on the dark canvas). FlumpLogo.styles.ts writes
+ * them as literals, since Panda reads styles statically; FlumpLogo.test.tsx checks they agree.
+ */
+export const LOGO_OPACITY = {
+  light: { backing: 0.55, core: 0.4, mid: 0.62, sheen: 0.6, glint: 0.9 },
+  dark: { backing: 0.35, core: 0.28, mid: 0.5, sheen: 0.5, glint: 0.85 },
+} as const;
+
 /** Where each light sits on a bubble, from its centre and radius. */
 export function orbLayout({ cx, cy, r }: Pick<LogoOrb, "cx" | "cy" | "r">) {
   const glintX = cx - r * 0.36;
@@ -51,7 +60,7 @@ export function orbLayout({ cx, cy, r }: Pick<LogoOrb, "cx" | "cy" | "r">) {
   };
 }
 
-/** The floor in light: one flat ellipse. In dark: a soft contact shadow with a teal pool over it. */
+/** The floor in light: one flat ellipse. In dark: a soft contact shade with a teal pool over it. */
 export function floorLayout({ cx, cy, rx }: typeof LOGO_FLOOR) {
   const ry = rx * 0.15;
   return {
