@@ -21,18 +21,23 @@ export const slip = css({
 });
 
 export const panel = cva({
-  base: {
-    position: "relative",
-    height: { base: "6rem", md: "7.5rem", lg: "8.5rem" },
-    transformStyle: "preserve-3d",
-  },
+  base: { position: "relative", transformStyle: "preserve-3d" },
   variants: {
+    /**
+     * `journey`: the home journey's heights. `setPiece`: an area page's set piece, as the approved
+     * area prototypes (prototype 11's own `clamp(6.5rem, 15vh, 8.5rem)` from 48rem).
+     */
+    size: {
+      journey: { height: { base: "6rem", md: "7.5rem", lg: "8.5rem" } },
+      setPiece: { height: { base: "6rem", md: "clamp(6.5rem, 15vh, 8.5rem)" } },
+    },
     fold: {
       top: { zIndex: "2", transformOrigin: "50% 100%" },
       middle: {},
       bottom: { zIndex: "1", transformOrigin: "50% 0" },
     },
   },
+  defaultVariants: { size: "journey" },
 });
 
 const layer = {

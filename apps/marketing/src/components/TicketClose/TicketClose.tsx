@@ -1,7 +1,8 @@
-import { Button, Illustration } from "@repo/ui";
+import { Button } from "@repo/ui";
 import { type FC, useRef } from "react";
 import { useGsapMoment } from "../../motion/useGsapMoment";
 import { signupCta } from "../../utils/site";
+import { GettingStartedTicket } from "../GettingStartedTicket";
 import { closeMoment } from "../HomeClose";
 import { MarketingBand } from "../MarketingBand";
 import type { MarketingSectionTone } from "../MarketingSection";
@@ -36,7 +37,7 @@ export const TicketClose: FC<TicketCloseProps> = ({ tone }) => {
           data-testid="feature-final-cta"
         >
           <div className={closePicture} data-close-picture="">
-            <Illustration scene="onboarding" size="xl" variant="document" />
+            <GettingStartedTicket />
           </div>
           <h2 className={closeTitle} id="feature-cta-title">
             Ready to see your own figures?

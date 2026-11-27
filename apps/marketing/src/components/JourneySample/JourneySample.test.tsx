@@ -2,8 +2,11 @@ import { SAMPLE_HOUSEHOLDS } from "@flump/finance-engine";
 import { render, screen } from "@testing-library/react";
 import { renderToString } from "react-dom/server";
 import { describe, expect, it } from "vitest";
+import { chart } from "../DrawnLineChart/DrawnLineChart.styles";
 import type { JourneyStopKey } from "../JourneyStop/journeyStops";
+import { panel } from "../Payslip/Payslip.styles";
 import { JourneySample } from "./JourneySample";
+import { graphFigure } from "./JourneySample.styles";
 import {
   formatGbp,
   formatGbpHundreds,
@@ -33,6 +36,36 @@ describe("JourneySample", () => {
       expect(container.querySelector("[data-sample]")?.getAttribute("data-sample")).toBe(name);
     },
   );
+
+  it.each([
+    ["debt-and-borrowing", "violet"],
+    ["savings-and-pension", "sky"],
+  ] as const)(
+    "as a set piece, sizes the %s figure and chart as the area prototypes; on the journey, as before",
+    (stop, tone) => {
+      const { container, rerender } = render(<JourneySample stop={stop} />);
+      const figure = () => container.querySelector("figcaption > span:last-child") as HTMLElement;
+      const plot = () => container.querySelector("[data-drawn-chart]") as HTMLElement;
+      expect(figure().className).toBe(graphFigure({ setPiece: false }));
+      expect(plot().className).toBe(chart({ size: "journey", tone }));
+      rerender(<JourneySample setPiece stop={stop} />);
+      expect(figure().className).toBe(graphFigure({ setPiece: true }));
+      expect(plot().className).toBe(chart({ size: "setPiece", tone }));
+      expect(graphFigure({ setPiece: true })).not.toBe(graphFigure({ setPiece: false }));
+      expect(chart({ size: "setPiece", tone })).not.toBe(chart({ size: "journey", tone }));
+    },
+  );
+
+  it("as a set piece, sizes the payslip's folds as the area prototypes; on the journey, as before", () => {
+    const { container, rerender } = render(<JourneySample stop="pay" />);
+    const top = () => container.querySelector("[data-fold='top']") as HTMLElement;
+    expect(top().className).toBe(panel({ fold: "top", size: "journey" }));
+    rerender(<JourneySample setPiece stop="pay" />);
+    expect(top().className).toBe(panel({ fold: "top", size: "setPiece" }));
+    expect(panel({ fold: "top", size: "setPiece" })).not.toBe(
+      panel({ fold: "top", size: "journey" }),
+    );
+  });
 
   it("draws the debt line in violet as prototype 11, never rose", () => {
     const { container } = render(<JourneySample stop="debt-and-borrowing" />);

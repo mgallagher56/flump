@@ -12,18 +12,28 @@ import { css, cva } from "@repo/ui/styled-system/css";
  */
 
 export const chart = cva({
-  base: {
-    position: "relative",
-    height: { base: "110px", md: "160px", lg: "190px" },
-    margin: { base: "8px 6px 22px", md: "8px 6px 26px" },
-  },
+  base: { position: "relative" },
   variants: {
+    /**
+     * `journey`: the home journey's heights. `setPiece`: an area page's set piece, as the approved
+     * area prototypes draw it (prototype 11's own `clamp(120px, 22vh, 200px)`), taller at 1000px.
+     */
+    size: {
+      journey: {
+        height: { base: "110px", md: "160px", lg: "190px" },
+        margin: { base: "8px 6px 22px", md: "8px 6px 26px" },
+      },
+      setPiece: {
+        height: { base: "110px", md: "clamp(120px, 22vh, 200px)" },
+        margin: { base: "8px 6px 22px", md: "8px 6px 26px" },
+      },
+    },
     tone: {
       sky: { "--tone": "{colors.chart.series6}" },
       violet: { "--tone": "{colors.chart.series4}" },
     },
   },
-  defaultVariants: { tone: "sky" },
+  defaultVariants: { size: "journey", tone: "sky" },
 });
 
 /** The outer drawing: CSS pixels, so the marker, the readout and the ticks never stretch. */

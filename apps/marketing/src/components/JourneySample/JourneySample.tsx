@@ -28,7 +28,11 @@ import {
  * (MK13). Each root carries `data-sample` with its moment's name.
  */
 
-const BudgetSample: FC = () => (
+interface SampleProps {
+  setPiece?: boolean;
+}
+
+const BudgetSample: FC<SampleProps> = () => (
   <div className={`${s.panel} ${s.budget}`} data-sample="budget">
     <p className={s.budgetIn}>
       <span className={s.tagged}>
@@ -112,13 +116,13 @@ const SAVINGS_CHART: Omit<DrawnLineChartProps, "id"> = {
   tone: "sky",
 };
 
-const SavingsSample: FC = () => (
+const SavingsSample: FC<SampleProps> = ({ setPiece = false }) => (
   <figure className={`${s.panel} ${s.graph}`} data-sample="savings">
     <figcaption className={s.graphHead}>
       <span className={`${s.graphTitle} ${s.tagged}`}>
         Cash savings, past year <ExampleTag variant="paper" />
       </span>
-      <span className={s.graphFigure}>
+      <span className={s.graphFigure({ setPiece })}>
         <CountUpFigure
           data-testid="journey-figure-savings"
           format="gbp"
@@ -127,7 +131,7 @@ const SavingsSample: FC = () => (
         />
       </span>
     </figcaption>
-    <DrawnLineChart id="savings" {...SAVINGS_CHART} />
+    <DrawnLineChart id="savings" {...SAVINGS_CHART} size={setPiece ? "setPiece" : "journey"} />
     <p className={s.graphNote}>
       Each month adds {formatGbp(SAMPLE_SAVINGS.saving)} of saving and a little interest. In August{" "}
       {formatGbp(SAMPLE_SAVINGS.withdrawal)} was taken out.
@@ -157,17 +161,17 @@ const DEBT_CHART: Omit<DrawnLineChartProps, "id"> = {
   tone: "violet",
 };
 
-const DebtSample: FC = () => (
+const DebtSample: FC<SampleProps> = ({ setPiece = false }) => (
   <figure className={`${s.panel} ${s.graph}`} data-sample="debt">
     <figcaption className={s.graphHead}>
       <span className={`${s.graphTitle} ${s.tagged}`}>
         Card and loan, {formatGbp(SAMPLE_DEBT.monthly)} a month <ExampleTag variant="paper" />
       </span>
-      <span className={s.graphFigure}>
+      <span className={s.graphFigure({ setPiece })}>
         <CountUpFigure data-testid="journey-figure-debt" format="gbp" value={SAMPLE_DEBT.start} />
       </span>
     </figcaption>
-    <DrawnLineChart id="debt" {...DEBT_CHART} />
+    <DrawnLineChart id="debt" {...DEBT_CHART} size={setPiece ? "setPiece" : "journey"} />
     <dl className={s.graphFacts}>
       <div data-graph-fact="">
         <dt>Estimated paid off</dt>
@@ -233,9 +237,10 @@ const AccountsSample: FC = () => (
   </div>
 );
 
-const PaySample: FC = () => (
+const PaySample: FC<SampleProps> = ({ setPiece = false }) => (
   <div data-sample="pay">
     <Payslip
+      size={setPiece ? "setPiece" : "journey"}
       gross={SAMPLE_PAYSLIP.gross}
       net={SAMPLE_PAYSLIP.net}
       rows={SAMPLE_PAYSLIP.rows}
@@ -244,7 +249,7 @@ const PaySample: FC = () => (
   </div>
 );
 
-const SAMPLES: Record<JourneyStopKey, FC> = {
+const SAMPLES: Record<JourneyStopKey, FC<SampleProps>> = {
   accounts: AccountsSample,
   budget: BudgetSample,
   pay: PaySample,
@@ -255,10 +260,12 @@ const SAMPLES: Record<JourneyStopKey, FC> = {
 
 export interface JourneySampleProps {
   stop: JourneyStopKey;
+  /** Shown as an area page's set piece: the chart samples' figure and chart sized as its prototype. */
+  setPiece?: boolean;
 }
 
-/** The sample beside one journey stop. */
-export const JourneySample: FC<JourneySampleProps> = ({ stop }) => {
+/** The sample beside one journey stop, or as an area page's set piece. */
+export const JourneySample: FC<JourneySampleProps> = ({ stop, setPiece = false }) => {
   const Sample = SAMPLES[stop];
-  return <Sample />;
+  return <Sample setPiece={setPiece} />;
 };
