@@ -176,7 +176,6 @@ export function Screen({
 
   const keyboardProps = keyboardAware
     ? {
-        keyboardShouldPersistTaps: "handled" as const,
         scrollEventThrottle: 16,
         onScroll: (e: NativeSyntheticEvent<NativeScrollEvent>) => {
           scrollY.current = e.nativeEvent.contentOffset.y;
@@ -190,6 +189,9 @@ export function Screen({
   const page = scroll ? (
     <ScrollView
       ref={setScroller}
+      // Persist taps on every Screen so buttons on non-form screens and inside nested modal sheets
+      // act on the first tap while a keyboard is open.
+      keyboardShouldPersistTaps="handled"
       contentContainerStyle={[
         content,
         // Below a form's content: the page's own space, and the keyboard's height while it is open.

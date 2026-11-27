@@ -296,7 +296,7 @@ describe("Screen", () => {
     jest.restoreAllMocks();
   });
 
-  it("not a form: no keyboard room and the platform's default taps", async () => {
+  it("not a form: no keyboard room, but taps still act while a keyboard is open", async () => {
     await render(
       <ThemeProvider scheme="light">
         <Screen testID="s">
@@ -306,7 +306,9 @@ describe("Screen", () => {
     );
     const [plain] = (screen.toJSON() as unknown as Tree).children;
     expect(plain?.type).toBe("RCTScrollView");
-    expect(plain?.props.keyboardShouldPersistTaps).toBeUndefined();
+    expect(flat(plain?.props.contentContainerStyle).paddingBottom).toBeUndefined();
+    expect(plain?.props.onContentSizeChange).toBeUndefined();
+    expect(plain?.props.keyboardShouldPersistTaps).toBe("handled");
   });
 
   it("pads every safe-area edge unless told otherwise", async () => {

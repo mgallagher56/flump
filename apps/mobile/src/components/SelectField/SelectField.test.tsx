@@ -183,6 +183,23 @@ describe("SelectField", () => {
     ]);
   });
 
+  it("persists taps in its option list scroll view while a keyboard is open", async () => {
+    const { ui } = renderSelect();
+    await render(ui);
+    await fireEvent.press(row());
+    expect(sheet()).not.toBeNull();
+    type Node = { type?: unknown; props: Record<string, unknown>; children?: unknown[] };
+    const findScroller = (n: Node): Node | null =>
+      n.type === "RCTScrollView"
+        ? n
+        : ((n.children ?? []) as Node[]).reduce<Node | null>(
+            (hit, c) => hit ?? (typeof c === "object" && c ? findScroller(c) : null),
+            null,
+          );
+    const scroller = findScroller(screen.getByTestId("owner-sheet-body") as unknown as Node);
+    expect(scroller?.props.keyboardShouldPersistTaps).toBe("handled");
+  });
+
   it.each(Object.entries(selectFieldStates))("%s holds at 200%% text", async (_name, props) => {
     await expectHoldsAtDoubleText(<SelectField {...props} />);
   });

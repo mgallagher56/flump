@@ -757,6 +757,27 @@ describe("Budget", () => {
       expect(below()).toBe(closed);
     });
 
+    it("every scroll view around the add-entry sheet persists taps while the keyboard is open", async () => {
+      await budget(fakeApi(routes(renterHousehold())));
+      await screen.findByLabelText(HERO);
+      const u = user();
+      await u.press(screen.getByRole("button", { name: "Edit budget" }));
+      await u.press(screen.getByRole("button", { name: "Add to expenses" }));
+      type Node = { type?: unknown; props: Record<string, unknown>; children?: unknown[] };
+      const scrollers: Node[] = [];
+      const collect = (n: Node) => {
+        if (n.type === "RCTScrollView") scrollers.push(n);
+        for (const c of n.children ?? []) {
+          if (typeof c === "object" && c !== null) collect(c as Node);
+        }
+      };
+      collect(screen.toJSON() as unknown as Node);
+      expect(scrollers.length).toBeGreaterThanOrEqual(2);
+      for (const scroller of scrollers) {
+        expect(scroller.props.keyboardShouldPersistTaps).toBe("handled");
+      }
+    });
+
     it("a failed add says so and keeps the form", async () => {
       const h = renterHousehold();
       await budget(fakeApi(routes(h, { "POST /budget-entries": () => fail("server", 500) })));
