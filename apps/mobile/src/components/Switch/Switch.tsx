@@ -66,15 +66,22 @@ export function Switch({
         ) : null}
       </View>
       <View style={styles.control}>
-        {showBusy ? (
-          <ActivityIndicator
-            size="small"
-            color={theme.colors["text.secondary"]}
-            testID="switch-busy"
-            accessibilityElementsHidden
-            importantForAccessibility="no-hide-descendants"
-          />
-        ) : null}
+        <View
+          testID="switch-busy-slot"
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          style={styles.busySlot}
+        >
+          {showBusy ? (
+            <ActivityIndicator
+              size="small"
+              color={theme.colors["text.secondary"]}
+              testID="switch-busy"
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
+            />
+          ) : null}
+        </View>
         {/* A drawing only: the row above carries the role, state and presses. */}
         <View
           testID="switch-track"
