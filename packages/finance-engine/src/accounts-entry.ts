@@ -30,6 +30,7 @@ export {
   describeJointShareOfWhole,
   describeJointWholeHistory,
   describeJointWholeValue,
+  jointShareLabel,
   resolveAccountOwnership,
   resolveAccountSharePercent,
 } from "./joint-share.js";

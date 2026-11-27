@@ -231,6 +231,15 @@ export function describeJointLiabilityNotice(input?: AccountShareInput | null): 
 const SHARE_PERCENT_FORMAT = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 2 });
 
 /**
+ * The ownership label an account list shows: "Joint, 50%" (the share to two decimals at most), or
+ * `null` for a sole account. One home for the words, shared by web and mobile.
+ */
+export function jointShareLabel(input: AccountShareInput | null | undefined): string | null {
+  if (resolveAccountOwnership(input) !== "joint") return null;
+  return `Joint, ${SHARE_PERCENT_FORMAT.format(resolveAccountSharePercent(input))}%`;
+}
+
+/**
  * One plain line for an edit form whose field holds the whole stored figure of a joint account
  * (the balance, the monthly payment), so the user knows it is not their share. `wholeOf` names
  * the figure ("balance", "monthly payment"). Returns `null` for a sole account.

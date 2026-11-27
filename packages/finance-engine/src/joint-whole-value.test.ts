@@ -3,6 +3,7 @@ import {
   describeJointShareOfWhole,
   describeJointWholeHistory,
   describeJointWholeValue,
+  jointShareLabel,
 } from "./joint-share.js";
 
 describe("describeJointWholeValue", () => {
@@ -83,5 +84,30 @@ describe("describeJointWholeHistory", () => {
 
   it("says nothing for a sole account", () => {
     expect(describeJointWholeHistory({ type: "Saving" }, "balance")).toBeNull();
+  });
+});
+
+describe("jointShareLabel", () => {
+  it("says Joint and the share, to two decimals at most", () => {
+    expect(jointShareLabel({ type: "Saving", ownership: "joint", sharePercent: 40 })).toBe(
+      "Joint, 40%",
+    );
+    expect(jointShareLabel({ type: "Loan", ownership: "joint", sharePercent: 33.333 })).toBe(
+      "Joint, 33.33%",
+    );
+    expect(jointShareLabel({ type: "Loan", ownership: "joint", sharePercent: 33.336 })).toBe(
+      "Joint, 33.34%",
+    );
+  });
+
+  it("uses the 50% default when a joint account has no share saved", () => {
+    expect(jointShareLabel({ type: "Saving", ownership: "joint" })).toBe("Joint, 50%");
+  });
+
+  it("is null for a sole account and for no account", () => {
+    expect(jointShareLabel({ type: "Saving", ownership: "sole", sharePercent: 40 })).toBeNull();
+    expect(jointShareLabel({ type: "Saving" })).toBeNull();
+    expect(jointShareLabel(null)).toBeNull();
+    expect(jointShareLabel(undefined)).toBeNull();
   });
 });

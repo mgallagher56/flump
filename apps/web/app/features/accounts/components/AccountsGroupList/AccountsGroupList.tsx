@@ -1,5 +1,6 @@
 import {
   categorizeAccountType,
+  jointShareLabel,
   type NetWorthLeftOut,
   netWorthChoicesAvailable,
   selectAccountGroups,
@@ -177,7 +178,7 @@ export const typeLine = (row: AccountRow): string | null => {
   const subtypeLabel = row.accountSubtype ? ACCOUNT_SUBTYPE_LABEL[row.accountSubtype] : undefined;
   const label = subtypeLabel ?? TYPE_LABEL[row.type] ?? row.type;
   const baseType = label.trim().toLowerCase() === row.name.trim().toLowerCase() ? null : label;
-  const jointLabel = row.ownership === "joint" ? `Joint, ${row.sharePercent ?? 50}%` : null;
+  const jointLabel = jointShareLabel(row);
   if (baseType && jointLabel) return `${baseType} · ${jointLabel}`;
   return baseType ?? jointLabel;
 };

@@ -37,6 +37,7 @@ describe("the accounts entry", () => {
       "describeJointWholeValue",
       "describeJointShareOfWhole",
       "describeJointWholeHistory",
+      "jointShareLabel",
       "resolveAccountOwnership",
       "resolveAccountSharePercent",
       "netWorthChoicesAvailable",
