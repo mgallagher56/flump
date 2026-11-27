@@ -382,6 +382,20 @@ export function selectBudgetOverview(picture: {
   };
 }
 
+/**
+ * True when there is no budget to show yet: no saved rows, or only rows of £0 with none linked to
+ * a saved fact. A linked row stores £0 and reads its figure elsewhere, so it is a budget line
+ * whatever its stored amount. Web's empty state and the phone's both read it.
+ */
+export function isBudgetEmpty(
+  rows: readonly ({ amount?: unknown; linkKind?: unknown } | null | undefined)[],
+): boolean {
+  const saved = rows.filter((row) => row != null);
+  if (saved.some((row) => Boolean(row.linkKind))) return false;
+  const total = saved.reduce((sum, row) => sum + (Number(row.amount) || 0), 0);
+  return total === 0;
+}
+
 /** Why a spending row always counts in breathing room, or null when its switch can change. */
 export type BreathingRoomFixedReason = "housing" | "debt";
 
@@ -731,6 +745,8 @@ export function selectBudgetPageFromRows(rows: BudgetPageRows): BudgetPage<
 > & {
   ratesContext: UkTaxYearContext | null;
   takeHomeRates: UkTaxYearContext | null;
+  /** No budget to show yet (`isBudgetEmpty` over the saved rows): the empty state, never £0. */
+  isEmpty: boolean;
 } {
   const accounts = Array.isArray(rows.accounts) ? [...rows.accounts] : [];
   const details = Array.isArray(rows.details) ? [...rows.details] : [];
@@ -775,5 +791,6 @@ export function selectBudgetPageFromRows(rows: BudgetPageRows): BudgetPage<
     ...page,
     ratesContext: rates,
     takeHomeRates: budgetCountsWorkedOutTakeHome(figures.takeHome, budgetRows) ? rates : null,
+    isEmpty: isBudgetEmpty(savedRows),
   };
 }

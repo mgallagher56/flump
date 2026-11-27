@@ -9,6 +9,7 @@ import {
   budgetPageCategories,
   clampRunwayCut,
   clampRunwayLump,
+  isBudgetEmpty,
   isIncomeCategory,
   isIncomeEntry,
   linkedAccountFor,
@@ -981,5 +982,45 @@ describe("edges the mutation run asked for", () => {
     expect(result.basis.drawOn.map((d) => [d.account.name, d.balance])).toEqual([["", 75]]);
     // A tie at 30: the person's own order (pets, then travel), not the rows' order.
     expect(result.categories.map((c) => c.category)).toEqual(["pets", "travel"]);
+  });
+});
+
+describe("isBudgetEmpty (E12 S10: web's empty state rule, moved so the phone reads it too)", () => {
+  it("no saved rows, or only missing ones, is empty", () => {
+    expect(isBudgetEmpty([])).toBe(true);
+    expect(isBudgetEmpty([null, undefined])).toBe(true);
+  });
+
+  it("rows that add up to £0 with none linked are empty; a row of £1 is not", () => {
+    // 0 + 0 = 0: nothing in the budget yet.
+    expect(isBudgetEmpty([{ amount: 0 }, { amount: "0" }])).toBe(true);
+    // An unreadable amount counts as £0, as web's Number(amount) || 0.
+    expect(isBudgetEmpty([{ amount: "abc" }, { amount: undefined }])).toBe(true);
+    // 0 + 1 = 1: a budget.
+    expect(isBudgetEmpty([{ amount: 0 }, { amount: 1 }])).toBe(false);
+    // A string amount is read as a number: "250" is £250.
+    expect(isBudgetEmpty([{ amount: "250" }])).toBe(false);
+  });
+
+  it("amounts that cancel out to £0 still read as empty, as web's sum did", () => {
+    // 50 + (-50) = 0.
+    expect(isBudgetEmpty([{ amount: 50 }, { amount: -50 }])).toBe(true);
+  });
+
+  it("a linked row is a budget line whatever its stored £0", () => {
+    expect(isBudgetEmpty([{ amount: 0, linkKind: "take_home" }])).toBe(false);
+    expect(isBudgetEmpty([{ amount: 0, linkKind: null }])).toBe(true);
+    // One linked row among £0 ones is enough.
+    expect(isBudgetEmpty([{ amount: 0 }, { amount: 0, linkKind: "housing" }])).toBe(false);
+  });
+
+  it("the page says so from the rows", () => {
+    expect(selectBudgetPageFromRows({ budgetEntries: [], today: NOV_2026 }).isEmpty).toBe(true);
+    expect(
+      selectBudgetPageFromRows({
+        budgetEntries: [{ id: "r", category: "housing", name: "Rent", amount: 950 }],
+        today: NOV_2026,
+      }).isEmpty,
+    ).toBe(false);
   });
 });

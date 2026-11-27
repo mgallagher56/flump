@@ -14,6 +14,7 @@ import {
   getUkTaxYearContext,
   HOUSING_ROW_NAME,
   INCOME_CATEGORY,
+  isBudgetEmpty as isBudgetEmptyRows,
   PortfolioSnapshot,
   STANDARD_BUDGET_CATEGORIES,
   takeHomeLeavesOut,
@@ -258,12 +259,7 @@ const BudgetContainer: FC = () => {
   // A linked row stores £0 and reads its figure from a saved fact, so it is a budget line whatever
   // its stored amount. With no saved rows at all the budget is empty, saved facts or not, so a new
   // person still gets the setup wizard.
-  const isBudgetEmpty = useMemo(() => {
-    if (entries.length === 0) return true;
-    if (entries.some((e) => e.linkKind)) return false;
-    const total = entries.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
-    return total === 0;
-  }, [entries]);
+  const isBudgetEmpty = useMemo(() => isBudgetEmptyRows(entries), [entries]);
 
   const openWizard = () => {
     setWizardMode(isBudgetEmpty ? "setup" : "add");

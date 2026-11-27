@@ -35,6 +35,7 @@ export {
   clampRunwayCut,
   clampRunwayLump,
   INCOME_CATEGORY,
+  isBudgetEmpty,
   isIncomeCategory,
   isIncomeEntry,
   type LinkedBudgetPageRow,
