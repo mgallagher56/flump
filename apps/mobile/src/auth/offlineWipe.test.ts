@@ -41,8 +41,22 @@ function device() {
     },
   };
   const cacheStore = createCacheStore({ box: nodeAesBox, file, store, accessible: 7 });
-  const cache = createOfflineCache({ store: cacheStore, now: () => Date.now() });
-  return { secure, store, disk, cacheStore, cache };
+  let owner: () => Promise<string | null> = async () => null;
+  const cache = createOfflineCache({
+    store: cacheStore,
+    now: () => Date.now(),
+    owner: () => owner(),
+  });
+  return {
+    secure,
+    store,
+    disk,
+    cacheStore,
+    cache,
+    setOwner: (o: () => Promise<string | null>) => {
+      owner = o;
+    },
+  };
 }
 
 const h = household();
@@ -96,6 +110,7 @@ function wired(
     endServerSession: async () => "ended",
     clearCache: () => d.cache.wipe(),
   });
+  d.setOwner(() => session.cacheOwner());
   const queryClient = testQueryClient();
   const stop = d.cache.watch(queryClient, () => session.getState().status === "signedIn");
   return { ...d, session, queryClient, stop, exchangeCode, refresh };
@@ -109,13 +124,17 @@ async function signedInWithCache(w: ReturnType<typeof wired>) {
   await readEverything(w.queryClient);
   expect(w.disk.text).not.toBeNull();
   expect(w.secure.get(OFFLINE_CACHE_KEY)).toBeTruthy();
-  expect(await w.cacheStore.read()).not.toBeNull();
+  const owner = await w.session.cacheOwner();
+  expect(owner).toMatch(/^[A-Za-z0-9_-]{43}$/);
+  // Hashed: the raw sub is not in the secure store.
+  expect([...w.secure.values()].join("|")).not.toContain("user_a");
+  expect(await w.cacheStore.read(owner ?? "")).not.toBeNull();
 }
 
 async function expectNothingLeft(w: ReturnType<typeof wired>) {
   expect(w.disk.text).toBeNull();
   expect(w.secure.get(OFFLINE_CACHE_KEY) ?? "").toBe("");
-  expect(await w.cacheStore.read()).toBeNull();
+  expect(await w.cacheStore.read((await w.session.cacheOwner()) ?? "any")).toBeNull();
   expect(await w.cache.restore(testQueryClient())).toBeNull();
 }
 
@@ -171,6 +190,34 @@ describe("the offline cache after a session ends", () => {
   });
 });
 
+describe("sealed for one person", () => {
+  it("another person's file never opens, even with every wipe step failed and the key still there", async () => {
+    const w = wired();
+    await signedInWithCache(w);
+    const file = w.disk.text;
+    const key = w.secure.get(OFFLINE_CACHE_KEY);
+    // Someone else signs in on this phone; then put the first person's file and key back, as if
+    // every step of the wipe had failed.
+    await w.session.signOut();
+    w.exchangeCode.mockResolvedValueOnce({ ok: true, tokens: tokensFor("user_b") });
+    await w.session.signIn();
+    expect(w.session.getState()).toEqual({ status: "signedIn" });
+    w.disk.text = file;
+    if (key) w.secure.set(OFFLINE_CACHE_KEY, key);
+    expect(await w.cacheStore.read((await w.session.cacheOwner()) ?? "")).toBeNull();
+    w.stop();
+  });
+
+  it("with no owner recorded (an older install), nothing is read and the file goes", async () => {
+    const w = wired();
+    await signedInWithCache(w);
+    w.setOwner(async () => null);
+    expect(await w.cache.restore(testQueryClient())).toBeNull();
+    expect(w.disk.text).toBeNull();
+    w.stop();
+  });
+});
+
 describe("a cold start with no network", () => {
   it("keeps the saved figures and shows them, since the session is only offline", async () => {
     const w = wired();
@@ -198,6 +245,7 @@ describe("a cold start with no network", () => {
       endServerSession: jest.fn(),
       clearCache: () => w.cache.wipe(),
     });
+    w.setOwner(() => next.cacheOwner());
     await next.restore();
     expect(next.getState()).toEqual({ status: "restoredOffline" });
     expect(secure.get(OFFLINE_CACHE_KEY)).toBeTruthy();
@@ -232,6 +280,7 @@ describe("a cold start with no network", () => {
       endServerSession: jest.fn(),
       clearCache: () => fresh.cache.wipe(),
     });
+    fresh.setOwner(() => session.cacheOwner());
     await session.restore();
     expect(session.getState()).toEqual({ status: "signedOut", notice: null });
     expect(fresh.disk.text).toBeNull();

@@ -5,8 +5,15 @@
  * no connection. Read-only: nothing here sends a request or saves a change.
  *
  * Rules it keeps:
- * - Saved only after a read succeeds while someone is signed in and online (`canSave`), never from
- *   what was itself loaded from the cache, so a figure's time is always when Flump last sent it.
+ * - Saved after a read succeeds while someone is signed in and online (`canSave`). Each save writes
+ *   every read held in memory, so a read restored from the cache is written again beside a fresh
+ *   one, but always with its own `dataUpdatedAt`, which a restore sets to the saved time: a figure's
+ *   time is always when Flump last sent it, and a restore alone never makes it look newer.
+ * - The phone's clock is not trusted to go forward: the file keeps the latest time this phone has
+ *   seen (`seenAt`), and a clock earlier than that is treated as too old, so turning the clock back
+ *   does not stretch the 7 days. While saved figures are on screen their age is checked again each
+ *   minute (`isFresh`). What this cannot catch: a phone kept offline whose clock is honest reads for
+ *   the full 7 days, and one whose clock is held at a time after the last use keeps reading.
  * - Loaded back only through the same contract parsing as a live answer (`parseResponse` with the
  *   read's own schema), so a cache from an older app is read with today's defaults, and one that
  *   no longer parses is dropped, never shown.
@@ -14,6 +21,7 @@
  *   7 days. A partial picture (accounts without their months) could show a wrong net worth.
  * - Never over a fresher answer already in memory.
  * - The names inside the file are the reads' own (`accounts`), never an id, a token or a name.
+ * - Sealed for the signed-in person (`owner`, a hash of their `sub`): no owner, no cache.
  */
 import { parseResponse } from "@flump/api-client";
 import type { QueryClient, QueryKey } from "@tanstack/react-query";
@@ -27,8 +35,8 @@ import { queryKeys } from "./queryKeys";
 export const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 /** A saved time this far ahead of the phone's clock is not believed. */
 const CLOCK_SKEW_MS = 5 * 60 * 1000;
-/** Bumped when the file's shape changes; any other version is dropped. */
-export const CACHE_FORMAT = 1;
+/** Bumped when the file's shape changes; any other version is dropped. 2: `seenAt`. */
+export const CACHE_FORMAT = 2;
 
 interface CachedRead {
   key: QueryKey;
@@ -52,6 +60,8 @@ const READ_NAMES = Object.keys(CACHED_READS) as ReadName[];
 /** What the file holds. */
 interface Envelope {
   format: number;
+  /** The latest time this phone's clock has shown while the cache was in use. */
+  seenAt: number;
   reads: Partial<Record<ReadName, { savedAt: number; data: unknown }>>;
 }
 
@@ -69,6 +79,11 @@ export interface OfflineCache {
   restore(queryClient: QueryClient, stillWanted?: () => boolean): Promise<SavedFigures | null>;
   /** Saves the reads after every successful one while `canSave()`. Returns the way to stop. */
   watch(queryClient: QueryClient, canSave: () => boolean): () => void;
+  /**
+   * Whether figures saved at `savedAt` may still show now: within 7 days of the later of the clock
+   * and the latest time seen, and the clock not turned back past that time.
+   */
+  isFresh(savedAt: number): boolean;
   /** Forgets everything, and stops any save not yet started. Never throws. */
   wipe(): Promise<void>;
 }
@@ -76,17 +91,37 @@ export interface OfflineCache {
 const keyOf = (key: QueryKey) => JSON.stringify(key);
 const CACHED_KEYS = new Map(READ_NAMES.map((name) => [keyOf(CACHED_READS[name].key), name]));
 
-export function createOfflineCache(deps: { store: CacheStore; now(): number }): OfflineCache {
+export function createOfflineCache(deps: {
+  store: CacheStore;
+  now(): number;
+  /** The signed-in person, hashed (`Session.cacheOwner`); null turns the cache off. */
+  owner(): Promise<string | null>;
+}): OfflineCache {
   /** Bumped by every wipe: a save planned before it is dropped. */
   let generation = 0;
+  /** The latest time seen, from the file and from the clock since. */
+  let highWater = 0;
+
+  /** The time to judge age by, or null when the clock was turned back past the latest seen. */
+  function trustedNow(): number | null {
+    const now = deps.now();
+    if (now < highWater - CLOCK_SKEW_MS) return null;
+    highWater = Math.max(highWater, now);
+    return highWater;
+  }
 
   function parseEnvelope(text: string): Envelope | null {
     try {
       const value: unknown = JSON.parse(text);
       if (typeof value !== "object" || value === null) return null;
-      const { format, reads } = value as { format?: unknown; reads?: unknown };
+      const { format, seenAt, reads } = value as {
+        format?: unknown;
+        seenAt?: unknown;
+        reads?: unknown;
+      };
       if (format !== CACHE_FORMAT || typeof reads !== "object" || reads === null) return null;
-      return { format, reads: reads as Envelope["reads"] };
+      if (typeof seenAt !== "number" || !Number.isFinite(seenAt)) return null;
+      return { format, seenAt, reads: reads as Envelope["reads"] };
     } catch {
       return null;
     }
@@ -95,8 +130,8 @@ export function createOfflineCache(deps: { store: CacheStore; now(): number }): 
   /** Each read parsed as a live answer is, or null when any is missing, too old or out of step. */
   function usableReads(
     envelope: Envelope,
+    now: number,
   ): Map<ReadName, { savedAt: number; data: unknown }> | null {
-    const now = deps.now();
     const out = new Map<ReadName, { savedAt: number; data: unknown }>();
     for (const name of READ_NAMES) {
       const saved = envelope.reads[name];
@@ -119,11 +154,19 @@ export function createOfflineCache(deps: { store: CacheStore; now(): number }): 
     stillWanted: () => boolean = () => true,
   ): Promise<SavedFigures | null> {
     const startedAt = generation;
-    const text = await deps.store.read();
+    const owner = await deps.owner();
+    if (!owner) {
+      // Nobody to seal for: whatever is there can never be shown.
+      await deps.store.wipe();
+      return null;
+    }
+    const text = await deps.store.read(owner);
     if (!text || startedAt !== generation) return null;
     const envelope = parseEnvelope(text);
-    const reads = envelope ? usableReads(envelope) : null;
-    if (!reads) {
+    if (envelope) highWater = Math.max(highWater, envelope.seenAt);
+    const now = envelope ? trustedNow() : null;
+    const reads = envelope && now !== null ? usableReads(envelope, now) : null;
+    if (!envelope || !reads) {
       // Too old, from another format, or no longer parsing: it will never be shown, so it goes.
       await deps.store.wipe();
       return null;
@@ -144,7 +187,19 @@ export function createOfflineCache(deps: { store: CacheStore; now(): number }): 
       queryClient.setQueryData(key, data, { updatedAt: savedAt });
       oldest = Math.min(oldest, savedAt);
     }
+    // The latest time seen goes back into the file, so a clock turned back before the next start
+    // is caught then. The store runs this before any later wipe.
+    try {
+      await deps.store.write(JSON.stringify({ ...envelope, seenAt: highWater }), owner);
+    } catch {
+      // A locked or full store: the time in memory still guards this run.
+    }
     return { savedAt: oldest };
+  }
+
+  function isFresh(savedAt: number): boolean {
+    const now = trustedNow();
+    return now !== null && now - savedAt <= MAX_AGE_MS;
   }
 
   function watch(queryClient: QueryClient, canSave: () => boolean): () => void {
@@ -173,7 +228,11 @@ export function createOfflineCache(deps: { store: CacheStore; now(): number }): 
           }
           if (Object.keys(reads).length === 0 || planned !== generation) return;
           try {
-            await deps.store.write(JSON.stringify({ format: CACHE_FORMAT, reads }));
+            const owner = await deps.owner();
+            if (!owner || planned !== generation || !canSave()) return;
+            const seenAt = Math.max(highWater, deps.now());
+            highWater = seenAt;
+            await deps.store.write(JSON.stringify({ format: CACHE_FORMAT, seenAt, reads }), owner);
           } catch {
             // The store is locked or full: the next successful read tries again.
           }
@@ -202,5 +261,5 @@ export function createOfflineCache(deps: { store: CacheStore; now(): number }): 
     }
   }
 
-  return { restore, watch, wipe };
+  return { restore, watch, isFresh, wipe };
 }

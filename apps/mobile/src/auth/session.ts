@@ -19,7 +19,7 @@ import type { ServerSignOutResult } from "../data/serverSignOut";
 import type { TokenResult, WorkosClient } from "../data/workos";
 import { type AuthorizeScreen, buildAuthorizeUrl, parseCallback } from "./authorizeUrl";
 import { readClaims } from "./claims";
-import { createPkce, createState, type PkceCrypto } from "./pkce";
+import { base64Url, createPkce, createState, type PkceCrypto } from "./pkce";
 import {
   INITIAL_STATE,
   type SessionEvent,
@@ -106,6 +106,8 @@ export interface Session {
   reconnect(): Promise<void>;
   /** Whether the state is restoredOffline right now (E12 S7: the cache's last check). */
   isRestoredOffline(): boolean;
+  /** The hashed owner of the stored session, for the offline cache's seal; null when none. */
+  cacheOwner(): Promise<string | null>;
   signIn(screen?: AuthorizeScreen): Promise<void>;
   signOut(): Promise<void>;
   /** For the API client: the access token in memory. */
@@ -192,8 +194,28 @@ export function createSession(deps: SessionDeps): Session {
       await deps.tokens.clear();
       return false;
     }
+    await saveOwner(result.tokens.accessToken);
+    if (epoch !== startedAt) {
+      await deps.tokens.clear();
+      return false;
+    }
     accessToken = result.tokens.accessToken;
     return true;
+  }
+
+  /**
+   * Records whose session this is, as a SHA-256 of the token's `sub` (E12 S7), for the offline
+   * cache's seal. Best effort: a token with no readable person, or a store that refuses, leaves no
+   * owner, which only turns the cache off. Never throws.
+   */
+  async function saveOwner(token: string) {
+    if (!deps.tokens.saveOwner) return;
+    try {
+      const sub = subjectOf(token);
+      await deps.tokens.saveOwner(sub ? base64Url(await deps.crypto.sha256(sub)) : "");
+    } catch {
+      // `saveOwner` removes an older owner itself when it cannot save.
+    }
   }
 
   /** After new tokens: is this person on the beta, and does the API take the token? */
@@ -504,6 +526,13 @@ export function createSession(deps: SessionDeps): Session {
     retry,
     reconnect,
     isRestoredOffline: () => state.status === "restoredOffline",
+    async cacheOwner() {
+      try {
+        return (await deps.tokens.readOwner?.()) || null;
+      } catch {
+        return null;
+      }
+    },
     signIn,
     signOut,
     getAccessToken: () => accessToken,

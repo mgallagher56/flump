@@ -299,3 +299,41 @@ describe("quiet reconnect from restoredOffline", () => {
     expect(session.getAccessToken()).toBeNull();
   });
 });
+
+describe("the cache owner", () => {
+  it("is saved as a SHA-256 of the sub (base64url), never the raw sub, when tokens are adopted", async () => {
+    const h = harness("r_stored");
+    const owners: string[] = [];
+    h.tokens.saveOwner = jest.fn(async (owner: string) => {
+      owners.push(owner);
+    });
+    h.tokens.readOwner = jest.fn(async () => owners.at(-1) ?? null);
+    const session = createSession(h.deps);
+    await session.restore();
+    // SHA-256("user_a") in base64url, worked out with Node's own hash.
+    const expected = createHash("sha256").update("user_a").digest("base64url");
+    expect(owners).toEqual([expected]);
+    expect(owners[0]).not.toContain("user_a");
+    expect(await session.cacheOwner()).toBe(expected);
+  });
+
+  it("a token naming nobody saves an empty owner, which reads as none", async () => {
+    const h = harness("r_stored");
+    h.refresh.mockResolvedValueOnce(ok({ accessToken: "not-a-jwt", refreshToken: "r_odd" }));
+    const owners: string[] = [];
+    h.tokens.saveOwner = jest.fn(async (owner: string) => {
+      owners.push(owner);
+    });
+    const session = createSession(h.deps);
+    await session.restore();
+    expect(owners).toEqual([""]);
+  });
+
+  it("a store that cannot be read gives no owner", async () => {
+    const h = harness("r_stored");
+    h.tokens.readOwner = jest.fn(async () => {
+      throw new Error("locked");
+    });
+    expect(await createSession(h.deps).cacheOwner()).toBeNull();
+  });
+});

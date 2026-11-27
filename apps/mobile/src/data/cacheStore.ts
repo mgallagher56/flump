@@ -36,19 +36,26 @@ export interface CacheFile {
 }
 
 export interface CacheStore {
-  /** The saved text, or null: no file, no key, a locked store, or a file that does not open. */
-  read(): Promise<string | null>;
-  /** Seals and saves; makes a key first when there is none. Rejects when it could not save. */
-  write(text: string): Promise<void>;
+  /**
+   * The saved text, or null: no file, no key, a locked store, or a file that does not open,
+   * including one sealed for a different `owner`.
+   */
+  read(owner: string): Promise<string | null>;
+  /**
+   * Seals and saves for `owner` (the hashed person, `tokenStore.CACHE_OWNER_KEY`); makes a key first
+   * when there is none. Rejects when it could not save.
+   */
+  write(text: string, owner: string): Promise<void>;
   /** Key, then file. Never throws; false when either could not be removed. */
   wipe(): Promise<boolean>;
 }
 
 /**
- * Bound into every seal as associated data: a file sealed for another purpose or an older format
- * does not open as this one.
+ * Bound into every seal as associated data: the purpose, the format and whose session it is. A file
+ * sealed for another purpose, an older format or another person does not open, even if every step
+ * of a wipe had failed and the same key were still there.
  */
-const ASSOCIATED = utf8Encode("Flump offline cache, format 1");
+const associatedFor = (owner: string) => utf8Encode(`Flump offline cache, format 2, ${owner}`);
 
 export function createCacheStore(deps: {
   box: SealingBox;
@@ -97,7 +104,7 @@ export function createCacheStore(deps: {
     return keyGone && fileGone;
   }
 
-  async function readNow(): Promise<string | null> {
+  async function readNow(owner: string): Promise<string | null> {
     let key: string | null;
     try {
       key = (await deps.store.getItemAsync(OFFLINE_CACHE_KEY, options)) || null;
@@ -106,14 +113,19 @@ export function createCacheStore(deps: {
       return null;
     }
     const sealed = await deps.file.read().catch(() => null);
-    if (!sealed) return null;
+    if (sealed === null) return null;
+    if (sealed === "") {
+      // An empty file (a write cut short on a platform without the move): never readable.
+      await removeFile();
+      return null;
+    }
     if (!key) {
       // A file with no key (a restored backup, a reinstall): it can never be read, so it goes.
       await removeFile();
       return null;
     }
     try {
-      return utf8Decode(await deps.box.open(key, sealed, ASSOCIATED));
+      return utf8Decode(await deps.box.open(key, sealed, associatedFor(owner)));
     } catch {
       // Changed, truncated or sealed with another key: drop both.
       await wipeNow();
@@ -121,18 +133,18 @@ export function createCacheStore(deps: {
     }
   }
 
-  async function writeNow(text: string): Promise<void> {
+  async function writeNow(text: string, owner: string): Promise<void> {
     let key = (await deps.store.getItemAsync(OFFLINE_CACHE_KEY, options)) || null;
     if (!key) {
       key = await deps.box.generateKey();
       await deps.store.setItemAsync(OFFLINE_CACHE_KEY, key, options);
     }
-    await deps.file.write(await deps.box.seal(key, utf8Encode(text), ASSOCIATED));
+    await deps.file.write(await deps.box.seal(key, utf8Encode(text), associatedFor(owner)));
   }
 
   return {
-    read: () => inTurn(readNow),
-    write: (text) => inTurn(() => writeNow(text)),
+    read: (owner) => inTurn(() => readNow(owner)),
+    write: (text, owner) => inTurn(() => writeNow(text, owner)),
     wipe: () => inTurn(wipeNow),
   };
 }

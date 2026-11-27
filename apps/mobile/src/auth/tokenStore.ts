@@ -6,6 +6,12 @@
  * memory. Nothing here logs or throws a token value.
  */
 export const REFRESH_TOKEN_KEY = "flump.auth.refresh-token";
+/**
+ * Whose session the refresh token belongs to, as a SHA-256 of the WorkOS `sub` (E12 S7): sealed
+ * into the offline cache, so one person's file never opens for another. Never the raw `sub`.
+ * Saved and cleared with the refresh token.
+ */
+export const CACHE_OWNER_KEY = "flump.auth.cache-owner";
 
 /** The three expo-secure-store calls this needs, so tests pass a memory store. */
 export interface SecureStoreLike {
@@ -23,25 +29,35 @@ export interface TokenStore {
   save(refreshToken: string): Promise<void>;
   /** Resolves false when the delete failed; never throws, so sign-out always finishes. */
   clear(): Promise<boolean>;
+  /** The hashed owner of the stored session (E12 S7), or null. Rejects when the store is locked. */
+  readOwner?(): Promise<string | null>;
+  /** Saves the hashed owner; on failure removes any older one, so it never names someone else. */
+  saveOwner?(owner: string): Promise<void>;
 }
 
 /** `accessible` is expo-secure-store's WHEN_UNLOCKED_THIS_DEVICE_ONLY, passed in by `authDeps.ts`. */
 export function createTokenStore(store: SecureStoreLike, accessible: number): TokenStore {
   const options = { keychainAccessible: accessible };
 
-  /** Deletes the token; if the delete fails, overwrites it with an empty value, which reads as none. */
-  async function clear(): Promise<boolean> {
+  /** Deletes a key; if the delete fails, overwrites it with an empty value, which reads as none. */
+  async function remove(key: string): Promise<boolean> {
     try {
-      await store.deleteItemAsync(REFRESH_TOKEN_KEY, options);
+      await store.deleteItemAsync(key, options);
       return true;
     } catch {
       try {
-        await store.setItemAsync(REFRESH_TOKEN_KEY, "", options);
+        await store.setItemAsync(key, "", options);
         return true;
       } catch {
         return false;
       }
     }
+  }
+
+  async function clear(): Promise<boolean> {
+    const token = await remove(REFRESH_TOKEN_KEY);
+    const owner = await remove(CACHE_OWNER_KEY);
+    return token && owner;
   }
 
   return {
@@ -53,5 +69,15 @@ export function createTokenStore(store: SecureStoreLike, accessible: number): To
     },
     save: (refreshToken) => store.setItemAsync(REFRESH_TOKEN_KEY, refreshToken, options),
     clear,
+    async readOwner() {
+      return (await store.getItemAsync(CACHE_OWNER_KEY, options)) || null;
+    },
+    async saveOwner(owner) {
+      try {
+        await store.setItemAsync(CACHE_OWNER_KEY, owner, options);
+      } catch {
+        await remove(CACHE_OWNER_KEY);
+      }
+    },
   };
 }

@@ -32,6 +32,9 @@ export const CACHE_FOLDER = "offline/";
 /** The file's name says nothing about whose figures are in it. */
 export const CACHE_FILE = "reads.sealed";
 
+/** IV then ciphertext then tag: 12 and 16 bytes, stated rather than left to the defaults. */
+export const SEALED_LAYOUT = { ivLength: 12, tagLength: 16 } as const;
+
 /** Where the sealed file goes, under `cacheDirectory`; null when the platform gives none. */
 export function cacheFileUri(directory: string | null | undefined): string | null {
   if (!directory) return null;
@@ -53,13 +56,13 @@ function createAesBox(): SealingBox {
       const sealed = await aesEncryptAsync(
         plaintext,
         await AESEncryptionKey.import(key, "base64"),
-        { additionalData: associated },
+        { additionalData: associated, tagLength: SEALED_LAYOUT.tagLength },
       );
       return sealed.combined("base64");
     },
     async open(key, sealed, associated) {
       return aesDecryptAsync(
-        AESSealedData.fromCombined(sealed),
+        AESSealedData.fromCombined(sealed, SEALED_LAYOUT),
         await AESEncryptionKey.import(key, "base64"),
         { additionalData: associated, output: "bytes" },
       );
