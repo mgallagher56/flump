@@ -105,3 +105,89 @@ export const sceneClasses = {
     strokeLinejoin: "round",
   }),
 };
+
+/**
+ * Document card pictures (STYLE-GUIDE 8.3). The grid is 300 wide and the picture is never drawn
+ * narrower than 280px, so its smallest text (13 grid units) stays at 12px or more at any width
+ * (`DOCUMENT_MIN_WIDTH` in `Illustration.documents.ts`). It grows up to the size's cap.
+ */
+export const documentRecipe = cva({
+  base: {
+    display: "block",
+    width: "100%",
+    minWidth: "280px",
+    height: "auto",
+    flexShrink: 0,
+    overflow: "visible",
+    // Forced colours (Windows contrast themes) ignore SVG fills, so the system pair is set here:
+    // paper on Canvas with a CanvasText edge, every word in CanvasText, no shadows.
+    _highContrast: {
+      "& text": { fill: "CanvasText" },
+      "& [data-doc-body]": { fill: "Canvas", stroke: "CanvasText" },
+      "& [data-doc-tag] rect": { fill: "Canvas", stroke: "CanvasText" },
+      "& [data-doc-shadow]": { display: "none" },
+    },
+  },
+  variants: {
+    size: {
+      sm: { maxWidth: "280px" },
+      md: { maxWidth: "xs" },
+      lg: { maxWidth: "360px" },
+      xl: { maxWidth: "400px" },
+    },
+  },
+  defaultVariants: { size: "md" },
+});
+
+/** Colour roles for document pictures, mapped to the tokens in `documentRoleTokens`. */
+export const documentClasses = {
+  surface: {
+    paper: css({ fill: "material.paper.fill" }),
+    charcoal: css({ fill: "surface.contrast" }),
+    mint: css({ fill: "primary.subtle" }),
+    soft: css({ fill: "primary.subtle" }),
+    band: css({ fill: "primary" }),
+  },
+  ink: {
+    ink: css({ fill: "text.primary" }),
+    inkSecondary: css({ fill: "text.secondary" }),
+    primary: css({ fill: "primary" }),
+    onCharcoal: css({ fill: "text.onContrast" }),
+    onBand: css({ fill: "primary.foreground" }),
+  },
+  fill: {
+    paper: css({ fill: "material.paper.fill" }),
+    charcoal: css({ fill: "surface.contrast" }),
+    mint: css({ fill: "primary.subtle" }),
+    soft: css({ fill: "primary.subtle" }),
+    band: css({ fill: "primary" }),
+    line: css({ fill: "border" }),
+    primary: css({ fill: "primary" }),
+    tag: css({ fill: "surface.sunken" }),
+    markOnCharcoal: css({ fill: "text.onContrast" }),
+  },
+  stroke: {
+    edge: css({ stroke: "material.paper.edge", strokeWidth: "1" }),
+    rule: css({ stroke: "border" }),
+    slot: css({ stroke: "border.strong" }),
+    primary: css({ stroke: "primary" }),
+    onBand: css({ stroke: "primary.foreground" }),
+    onCharcoal: css({ stroke: "text.onContrast", strokeOpacity: "0.5" }),
+  },
+  noFill: css({ fill: "none", strokeLinecap: "round", strokeLinejoin: "round" }),
+  dashed: css({ strokeDasharray: "3 3" }),
+  edge: css({ stroke: "material.paper.edge", strokeWidth: "1" }),
+  tornEdge: css({ stroke: "none" }),
+  // A soft drop under each piece: the charcoal, faint and blurred (darker in dark, where a faint
+  // shadow would vanish on the Midnight canvas).
+  shadow: css({
+    fill: "surface.contrast",
+    fillOpacity: { base: "0.14", _dark: "0.6", _systemDark: "0.6" },
+    filter: "blur(8px)",
+  }),
+  tagPaper: css({ fill: "surface.sunken", stroke: "border", strokeWidth: "1" }),
+  tagOnCharcoal: css({ fill: "none", stroke: "text.onContrast", strokeOpacity: "0.6" }),
+  display: css({ fontFamily: "display" }),
+  body: css({ fontFamily: "sans" }),
+  numeric: css({ fontVariantNumeric: "tabular-nums" }),
+};

@@ -293,7 +293,7 @@ Rules for both styles:
 - A picture never moves in an error state. Where a picture may move, it follows UX-GUIDELINES 12.1 (apps) or 12.2 (marketing).
 - The hero block may carry one sun shape in `accent.onHero` **[E17]**, with no bars or arrows beside the figure. Nothing else in the app hero is decorated.
 
-**IL1.** Pictures use semantic tokens and follow the theme. **Enforced by** `scripts/check-design-tokens.ts`. **IL2.** Placement. **Review only**. **IL4.** Every picture, in either style, is stored as a list of shapes (kind, position, colour role, and for a document card its lines of sample text) in one shared file. The web draws the list as SVG and the mobile app draws the same list with its own SVG library. No image files. **Review only** until the shared file exists.
+**IL1.** Pictures use semantic tokens and follow the theme. **Enforced by** `scripts/check-design-tokens.ts`. **IL2.** Placement. **Review only**. **IL4.** Every picture, in either style, is stored as a list of shapes (kind, position, colour role, and for a document card its lines of sample text) in one shared file. The web draws the list as SVG and the mobile app draws the same list with its own SVG library. No image files. Document cards: `packages/ui/src/primitives/Illustration/Illustration.documents.ts`, pure data that the mobile app reads as `@repo/ui/illustration-data` (slice F3). Flat scenes: `Illustration.scenes.tsx`, not yet in a form mobile can read. **Enforced by** `Illustration.test.tsx` (the web draws exactly the listed words) and `apps/mobile/src/illustrations/documentPictures.test.ts` (every colour role is a native theme colour, every shape kind one `react-native-svg` draws) for document cards; **Review only** for flat scenes.
 
 ### 8.1 Flat scenes (E17)
 
@@ -349,18 +349,37 @@ The mortgage scene is shown only to people who use the mortgage page, so renting
 
 ### 8.3 Document cards (27 Nov 2026)
 
-The approved sheet is prototype 11's picture set (`apps/marketing/prototypes/p11/art/Pictures.tsx` on branch `claude/marketing-motion-prototypes-66c08d`); the chosen sheet is copied into `docs/design` when slice F3 builds the primitive.
+The approved sheet is prototype 11's picture set (`apps/marketing/prototypes/p11/art/Pictures.tsx` on branch `claude/marketing-motion-prototypes-66c08d`, the owner's picks of 27 Nov 2026). Slice F3 built it as the `document` style of the `Illustration` primitive. The chosen sheet lives as Storybook stories, not image files: "2. Primitives/Illustration", the four "Document sheet" stories (light and dark, 375 and 1280).
 
-| Part    | Rule                                                                                                                                                               |
-| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Objects | A bank card, a payslip, a budget slip, a statement, a calendar page or a ticket, slightly tilted, on paper (`surface.card`) with a soft shadow                     |
-| Content | Sample content only: made-up round figures in tabular numbers, no real names, account numbers or addresses. Figures follow the house rules (B8 dates, B9 rounding) |
-| Tag     | An "Example" tag on every card that shows figures, as real text (not drawn as shapes), so it scales with text size and survives forced colours                     |
-| Lines   | Hairline edges and ruled lines from border and text tokens. Flat-scene shapes may sit on a card                                                                    |
-| Colour  | Semantic tokens only. Debt in apricot, never rose; violet and rose never on a card (rule MC1)                                                                      |
-| Never   | Glass objects, bubble icons, people or faces, coins with symbols, arrows that grade, anything that implies the reader's own finances                               |
+| Part    | Rule                                                                                                                                                                                                                                                                                                                             |
+| ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Objects | A bank card, a payslip, a budget slip, a statement, a calendar page or a ticket, tilted six degrees at most, on paper (`material.paper.fill`) or a card colour, with a soft shadow                                                                                                                                               |
+| Content | Sample content only: made-up figures in tabular numbers, no real names, account numbers or addresses. Figures follow the house rules (B8 dates, B9 rounding)                                                                                                                                                                     |
+| Tag     | An "Example" tag on every card that shows a sample figure (a pound sign or a percentage), as real text (not drawn as shapes), so it survives forced colours. A card with no figure has none                                                                                                                                      |
+| Lines   | Hairline edges and dashed ruled lines from border and text tokens. Flat-scene shapes may sit on a card                                                                                                                                                                                                                           |
+| Colour  | Semantic tokens only, through the roles in `documentRoleTokens`: paper, the charcoal card (`surface.contrast`), the mint card (`primary.subtle`) and the primary band, each with inks that clear 4.5:1 on it in both themes. A credit card is mint like any card; debt is never rose; violet and rose never on a card (rule MC1) |
+| Size    | Drawn in a 300-wide grid and never narrower than 280px, so the smallest text (13 grid units) stays at 12px or more at any width. Sizes cap the width at 280, 320, 360 and 400px                                                                                                                                                  |
+| Never   | Glass objects, bubble icons, people or faces, coins with symbols, arrows that grade, motion of any kind, anything that implies the reader's own finances                                                                                                                                                                         |
 
-**IL5.** A document card follows the sheet above and carries its "Example" tag. **Review only**; the tag's presence **Proposed check** in the primitive's tests **[F3]**.
+The built set, each picture named by the flat scene it replaces:
+
+| Picture                                       | What it shows                                                                                                                                        |
+| --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `empty-accounts`                              | A charcoal savings card over a mint credit card, a dashed space, "No bank login"                                                                     |
+| `empty-goals`                                 | A blank "New goal" slip with a flag (no figure, no tag)                                                                                              |
+| `empty-savings`                               | One cash and savings statement with its year as a line                                                                                               |
+| `empty-debt`                                  | The credit card with a "Paying off" slip                                                                                                             |
+| `empty-pension`                               | A pension statement                                                                                                                                  |
+| `check-in`                                    | A calendar page, 26 November, with a "Check-in day" tab (a date, no tag)                                                                             |
+| `check-in-done`                               | The monthly check-in slip, ticked, "Updated 26 November"                                                                                             |
+| `onboarding`                                  | The "Getting started" ticket in three parts                                                                                                          |
+| `not-found`                                   | A "Where next?" card with two direction tabs (no figure, no tag)                                                                                     |
+| `feature-accounts` to `feature-ai-connection` | The features tiles: a savings card, a budget slip, a payslip, one savings and pension statement (option B), a credit card, a question and its answer |
+| `security`                                    | The "Your figures" card with a seal (no figure, no tag)                                                                                              |
+
+Where it differs from the prototype: the violet and rose in the prototype (the pension statement's mark and rule, the check-in tab's edge, the ticket's top band, the not-found tab) are mint or primary under rule MC1; the mint credit card is the paler `primary.subtle` in light so its dark text clears 4.5:1; the charcoal card in dark is `surface.contrast`, not a grey glass; cards are flat with one faint light across the charcoal card, not glossy.
+
+**IL5.** A document card follows the sheet above and carries its "Example" tag. **Enforced by** `Illustration.test.tsx` (a tag on every card with a figure, the tag is real text, no text under 12px at 280px, only AA ink and surface pairs, no violet or rose, six degrees at most) and the "Document sheet" stories' `play` checks; the look itself is **Review only**.
 
 ## 9. Logo
 

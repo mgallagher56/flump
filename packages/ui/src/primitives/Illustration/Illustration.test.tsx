@@ -1,7 +1,22 @@
+import { PASSING_PAIRS } from "@flump/tokens/contrast";
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { EmptyState } from "../../patterns/EmptyState/EmptyState";
 import { Illustration } from "./Illustration";
+import {
+  DOCUMENT_GRID_WIDTH,
+  DOCUMENT_MIN_TEXT,
+  DOCUMENT_MIN_WIDTH,
+  type DocumentPiece,
+  type DocumentShape,
+  documentDefinitions,
+  documentInksBySurface,
+  documentRoleTokens,
+  documentSceneIds,
+  documentScenes,
+  EXAMPLE_TAG,
+  walkDocument,
+} from "./Illustration.documents";
 import { illustrationScenes } from "./Illustration.scenes";
 
 describe("Illustration primitive", () => {
@@ -81,5 +96,171 @@ describe("Illustration primitive", () => {
   ] as const)("caps the %s size with %s", (size, maxWidthClass) => {
     const { container } = render(<Illustration scene="check-in" settle={false} size={size} />);
     expect(container.querySelector("svg")?.getAttribute("class")).toContain(maxWidthClass);
+  });
+});
+
+/** Sample figures: a pound sign or a percentage. */
+const FIGURE = /£|%/;
+
+const texts = (shapes: readonly DocumentShape[]) =>
+  shapes.flatMap((shape): string[] =>
+    shape.kind === "text"
+      ? [...shape.lines]
+      : shape.kind === "piece"
+        ? texts(shape.shapes)
+        : shape.kind === "tag"
+          ? [EXAMPLE_TAG.text]
+          : [],
+  );
+
+const hasTag = (piece: DocumentPiece): boolean =>
+  piece.shapes.some((shape) => shape.kind === "tag" || (shape.kind === "piece" && hasTag(shape)));
+
+describe("Illustration document pictures (STYLE-GUIDE 8.3)", () => {
+  it("keeps the flat scenes as the default style", () => {
+    const { container } = render(<Illustration scene="check-in" settle={false} />);
+    const svg = container.querySelector("svg");
+    expect(svg?.getAttribute("viewBox")).toBe("0 0 240 180");
+    expect(svg?.hasAttribute("data-variant")).toBe(false);
+    expect(svg?.querySelector("text")).toBeNull();
+  });
+
+  it("offers the owner's nine picks under the flat scenes' names, then the tiles and security", () => {
+    expect([...documentSceneIds]).toEqual(illustrationScenes);
+    expect(documentScenes).toEqual([
+      ...illustrationScenes,
+      "feature-accounts",
+      "feature-budget",
+      "feature-pay",
+      "feature-savings-pension",
+      "feature-debt",
+      "feature-ai-connection",
+      "security",
+    ]);
+  });
+
+  it.each(documentScenes)("draws %s as decorative SVG in the 300-wide grid", (scene) => {
+    const { container } = render(<Illustration id="doc" scene={scene} variant="document" />);
+    const svg = container.querySelector("svg");
+    expect(svg?.getAttribute("aria-hidden")).toBe("true");
+    expect(svg?.getAttribute("focusable")).toBe("false");
+    expect(svg?.getAttribute("data-variant")).toBe("document");
+    expect(svg?.getAttribute("data-scene")).toBe(scene);
+    expect(svg?.getAttribute("viewBox")).toBe(`0 0 300 ${documentDefinitions[scene].height}`);
+    // Still: no settle hook on a document picture.
+    expect(svg?.hasAttribute("data-scene-settle")).toBe(false);
+    // The words are real text, in order, exactly as the data lists them (a multi-line text draws
+    // its lines as tspans inside one text element).
+    const drawn = [...(svg?.querySelectorAll("text") ?? [])].map((t) => t.textContent);
+    const listed = documentDefinitions[scene].pieces.flatMap(function flat(
+      shape: DocumentShape,
+    ): string[] {
+      if (shape.kind === "piece") return shape.shapes.flatMap(flat);
+      if (shape.kind === "text") return [shape.lines.join("")];
+      if (shape.kind === "tag") return [EXAMPLE_TAG.text];
+      return [];
+    });
+    expect(listed.length).toBeGreaterThan(0);
+    expect(drawn).toEqual(listed);
+  });
+
+  it("draws the Example tag as real text, not shapes", () => {
+    const { container } = render(<Illustration scene="empty-savings" variant="document" />);
+    const tags = container.querySelectorAll("[data-doc-tag]");
+    expect(tags).toHaveLength(1);
+    const label = tags[0]?.querySelector("text");
+    expect(label?.textContent).toBe("Example");
+    expect(label?.getAttribute("font-size")).toBe("13");
+  });
+
+  it.each(documentScenes)("tags every card in %s that shows a sample figure", (scene) => {
+    for (const piece of documentDefinitions[scene].pieces) {
+      const showsFigure = texts(piece.shapes).some((line) => FIGURE.test(line));
+      if (showsFigure) expect(hasTag(piece)).toBe(true);
+    }
+  });
+
+  it("leaves the tag off the pictures that show no figure, as the owner picked them", () => {
+    const untagged = documentScenes.filter(
+      (scene) => !documentDefinitions[scene].pieces.some(hasTag),
+    );
+    expect(untagged).toEqual(["empty-goals", "check-in", "not-found", "security"]);
+  });
+
+  it("keeps every word at 12px or more at the narrowest width", () => {
+    // 13 grid units drawn at 280px of a 300 grid: 13 * 280 / 300 = 12.13px.
+    expect(DOCUMENT_GRID_WIDTH).toBe(300);
+    expect(DOCUMENT_MIN_WIDTH).toBe(280);
+    expect(DOCUMENT_MIN_TEXT).toBe(13);
+    expect((DOCUMENT_MIN_TEXT * DOCUMENT_MIN_WIDTH) / DOCUMENT_GRID_WIDTH).toBeGreaterThanOrEqual(
+      12,
+    );
+    expect(EXAMPLE_TAG.size).toBeGreaterThanOrEqual(DOCUMENT_MIN_TEXT);
+    for (const scene of documentScenes) {
+      for (const { shape } of walkDocument(documentDefinitions[scene])) {
+        if (shape.kind === "text")
+          expect(shape.size, `${scene}: ${shape.lines[0]}`).toBeGreaterThanOrEqual(13);
+      }
+    }
+  });
+
+  it.each(["sm", "md", "lg", "xl"] as const)(
+    "never draws a %s document picture narrower than 280px",
+    (size) => {
+      const { container } = render(
+        <Illustration scene="onboarding" size={size} variant="document" />,
+      );
+      expect(container.querySelector("svg")?.getAttribute("class")).toContain("min-w_280px");
+    },
+  );
+
+  it("puts only inks that clear AA on each surface, in both themes", () => {
+    for (const scene of documentScenes) {
+      for (const { shape, surface } of walkDocument(documentDefinitions[scene])) {
+        if (shape.kind !== "text") continue;
+        expect(
+          documentInksBySurface[surface],
+          `${scene}: ${shape.lines[0]} on ${surface}`,
+        ).toContain(shape.ink);
+      }
+    }
+    // Each allowed pair is a checked pair in @flump/tokens (tokens.a11y.test.ts runs them).
+    for (const [surface, inks] of Object.entries(documentInksBySurface)) {
+      for (const ink of inks) {
+        const fg = documentRoleTokens.ink[ink];
+        const bg = documentRoleTokens.surface[surface as keyof typeof documentRoleTokens.surface];
+        const checked = PASSING_PAIRS.some(
+          (pair) =>
+            pair.fg === fg &&
+            pair.bg === bg &&
+            pair.min === 4.5 &&
+            pair.themes.includes("light") &&
+            pair.themes.includes("dark"),
+        );
+        expect(checked, `${fg} on ${bg}`).toBe(true);
+      }
+    }
+    // The tag: secondary text on the sunken fill, and the light text on the charcoal card.
+    expect(PASSING_PAIRS.some((p) => p.fg === "text.secondary" && p.bg === "surface.sunken")).toBe(
+      true,
+    );
+  });
+
+  it("uses no violet, rose or raw colour (STYLE-GUIDE MC1)", () => {
+    const tokens = JSON.stringify(documentRoleTokens);
+    expect(tokens).not.toMatch(/violet|rose|purple|pink|series4|series5|#/);
+    for (const scene of documentScenes) {
+      const { container } = render(<Illustration scene={scene} variant="document" />);
+      expect(container.innerHTML).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
+      expect(container.innerHTML).not.toMatch(/fill="(?!none)/);
+    }
+  });
+
+  it("tilts no piece more than six degrees", () => {
+    for (const scene of documentScenes) {
+      for (const piece of documentDefinitions[scene].pieces) {
+        expect(Math.abs(piece.rotate), scene).toBeLessThanOrEqual(6);
+      }
+    }
   });
 });

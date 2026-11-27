@@ -100,8 +100,10 @@ Built in slice F4 (27 November 2026). `scripts/check-marketing-weight.ts` reads 
 | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
 | F1    | Rule changes: amend STYLE-GUIDE 8, 11 and line 113 and UX-GUIDELINES M1, M3, M5, M7 with a marketing exception; record the decisions in `docs/audit/plans/DECISIONS.md` | 1          |
 | F2    | Tokens: calm scale, orb sets, glass and paper material, the orb-only colour check                                                                                       | 2          |
-| F3    | Document card pictures, "Example" tag, glass card, carousel dots in `packages/ui`                                                                                       | 4          |
+| F3    | Document card pictures, "Example" tag, glass card, carousel dots in `packages/ui`. Done 27 November 2026                                                                | 4          |
 | F4    | Hooks, the import ban, the weight check in CI. Done 27 November 2026                                                                                                    | 3          |
+
+Built in slice F3 (27 November 2026): the `document` style of `Illustration` (`variant="document"`) with the nine picked scenes, the six features tiles and the security card as shape lists in `Illustration.documents.ts`, read by mobile as `@repo/ui/illustration-data` (STYLE-GUIDE 8.3 and IL4; CROSS-PLATFORM X2 has the one exception); the `ExampleTag` primitive; `Card`'s `material` variant (`glass` with a still hover light, `paper`); and `CarouselDots` with previous and next buttons. Nothing on any page changed. Differences from the prototype are listed in STYLE-GUIDE 8.3.
 
 ## 3. Marketing rollout
 

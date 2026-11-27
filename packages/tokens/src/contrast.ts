@@ -261,6 +261,11 @@ export const PASSING_PAIRS: Pair[] = [
       role: "text",
     },
   ]),
+  // F3 document pictures (STYLE-GUIDE 8.3, `Illustration.documents.ts`): the step numbers in
+  // primary on paper, and the light words on a picture's primary band (a calendar page's month, a
+  // question bubble), in both themes. Every other ink and surface pair a picture uses is above.
+  { fg: "primary", bg: "material.paper.fill", themes: BOTH, min: 4.5, role: "text" },
+  { fg: "primary.foreground", bg: "primary", themes: BOTH, min: 4.5, role: "text" },
   // A bubble at a band's edge may sit beside or under the edge of a line of text: text keeps
   // 4.5:1 on either bubble fill of both orb sets.
   ...TEXTS.flatMap((fg) =>

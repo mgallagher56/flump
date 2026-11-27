@@ -13,6 +13,12 @@
       "import": "./dist/index.js",
       "default": "./dist/index.js"
     },
+    "./contrast": {
+      "types": "./dist/contrast.d.ts",
+      "module": "./src/contrast.ts",
+      "import": "./dist/contrast.js",
+      "default": "./dist/contrast.js"
+    },
     "./native": {
       "types": "./dist/native.generated.d.ts",
       "module": "./src/native.generated.ts",
