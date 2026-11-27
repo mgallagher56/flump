@@ -16,6 +16,7 @@ import { fail, fakeApi, testQueryClient } from "../../data/fakeApi";
 import { CACHE_FORMAT, createOfflineCache, type OfflineCache } from "../../data/offlineCache";
 import { DEVICE_LOCK_KEY } from "../../device/storageKeys";
 import { HOMEOWNER, personaHousehold } from "../../features/accounts/accountsTestData";
+import { renterHousehold } from "../../features/budget/budgetTestData";
 import { NOW, routes } from "../../features/check-in/checkInTestData";
 import {
   AGE_CHECK_EVERY_MS,
@@ -26,6 +27,7 @@ import { type FakeApp, fakeApp } from "../../testing/fakeAppSession";
 import { ThemeProvider } from "../../theme/ThemeProvider";
 import { AccountDetail } from "../AccountDetail";
 import { Accounts } from "../Accounts";
+import { Budget } from "../Budget";
 import { OfflineReading } from "../OfflineReading";
 import { SessionGate } from "./SessionGate";
 
@@ -75,6 +77,7 @@ const offlineApi = () =>
         "GET /account-details",
         "GET /user-profile",
         "GET /snapshots/check-ins",
+        "GET /budget-entries",
       ].map((route) => [route, () => fail("unauthorised")]),
     ),
   );
@@ -505,5 +508,95 @@ describe("an account's page from saved figures", () => {
     await accountPage("signedIn");
     expect(screen.getByTestId("quick-balance-open")).toBeOnTheScreen();
     expect(screen.getByTestId("account-edit")).toBeOnTheScreen();
+  });
+});
+
+describe("the Budget from saved figures (E12 S10)", () => {
+  /** The renter's budget, sealed an hour ago, as the cache holds it. */
+  function savedBudget() {
+    const h = renterHousehold();
+    const savedAt = NOW_MS - HOUR;
+    const data = {
+      accounts: h.accounts,
+      accountDetails: h.details,
+      userProfile: h.profile,
+      checkIns: h.checkIns,
+      budgetEntries: h.budgetEntries,
+    };
+    const text = JSON.stringify({
+      format: CACHE_FORMAT,
+      seenAt: savedAt,
+      reads: Object.fromEntries(
+        Object.entries(data).map(([name, value]) => [name, { savedAt, data: value }]),
+      ),
+    });
+    const store: CacheStore = {
+      read: jest.fn(async () => text),
+      write: jest.fn(async () => {}),
+      wipe: jest.fn(async () => true),
+    };
+    return { store, h };
+  }
+
+  async function budgetPage(status: "restoredOffline" | "signedIn") {
+    const { store, h } = savedBudget();
+    const cache = createOfflineCache({ store, now: () => NOW_MS, owner: OWNER });
+    const app = fakeApp({ status }, { offlineCache: cache });
+    const api = status === "signedIn" ? fakeApi(routes(h)) : offlineApi();
+    await render(
+      <ThemeProvider scheme="light">
+        <SessionProvider app={app.app}>
+          <ApiProvider client={api.client} queryClient={testQueryClient()}>
+            <SessionGate>
+              <OfflineReading now={() => NOW_MS}>
+                <Budget
+                  onSignOut={jest.fn()}
+                  marketingOrigin="https://m.test.invalid"
+                  links={{
+                    setUp: LINKS.setUp,
+                    budget: LINKS.setUp,
+                    mortgage: LINKS.setUp,
+                    salary: LINKS.setUp,
+                  }}
+                  onOpenAccounts={jest.fn()}
+                  now={NOW}
+                />
+              </OfflineReading>
+            </SessionGate>
+          </ApiProvider>
+        </SessionProvider>
+      </ThemeProvider>,
+    );
+    // The renter by hand (plan 9.8b): 2,085 in; 1,615 + 195 + 150 = 1,960 out; 125 left over.
+    expect(await screen.findByLabelText(/^Left over each month, £125, /)).toBeOnTheScreen();
+    return api;
+  }
+
+  it("offline: the saved figures with their age, and no Edit budget, editor or switch", async () => {
+    const api = await budgetPage("restoredOffline");
+    expect(screen.getByTestId("saved-figures-notice")).toBeOnTheScreen();
+    expect(screen.getByText(/£2,085/)).toBeOnTheScreen();
+    expect(screen.getByText(/£1,960/)).toBeOnTheScreen();
+    expect(screen.queryByTestId("budget-categories-edit")).toBeNull();
+    expect(screen.queryByTestId("budget-entry-sheet")).toBeNull();
+    await fireEvent.press(screen.getByRole("button", { name: "Show what counts" }));
+    await settle();
+    for (const row of screen.getAllByRole("switch")) {
+      expect(row.props.accessibilityState).toMatchObject({ disabled: true });
+    }
+    // The what-if zone stays: it sends nothing.
+    expect(screen.getByTestId("runway")).toBeOnTheScreen();
+    expect(api.calls.some((c) => c.method !== "GET")).toBe(false);
+  });
+
+  it("online: Edit budget and the own entries' switches are there", async () => {
+    await budgetPage("signedIn");
+    expect(screen.queryByTestId("saved-figures-notice")).toBeNull();
+    expect(screen.getByTestId("budget-categories-edit")).toBeOnTheScreen();
+    await fireEvent.press(screen.getByRole("button", { name: "Show what counts" }));
+    await settle();
+    expect(
+      screen.getByRole("switch", { name: "Eating out" }).props.accessibilityState,
+    ).toMatchObject({ disabled: false });
   });
 });
