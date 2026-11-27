@@ -7,6 +7,7 @@ import { HydratedRouter } from "react-router/dom";
 
 import i18n from "./i18n";
 import { NonceProvider, readNonceFromDom } from "./security/nonce";
+import { scheduleHydration } from "./utils/scheduleHydration";
 
 type ClientEnv = { SENTRY_DSN?: string; SENTRY_ENVIRONMENT?: string; SENTRY_RELEASE?: string };
 
@@ -52,10 +53,4 @@ async function hydrate(): Promise<void> {
   });
 }
 
-if (window.requestIdleCallback) {
-  window.requestIdleCallback(hydrate);
-} else {
-  // Safari doesn't support requestIdleCallback
-  // https://caniuse.com/requestidlecallback
-  window.setTimeout(hydrate, 1);
-}
+scheduleHydration(window, () => void hydrate());
