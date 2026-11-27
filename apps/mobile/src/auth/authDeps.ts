@@ -18,8 +18,9 @@ import { type ApiClient, createAppApiClient } from "../data/apiClient";
 import { createUpdateCheck, type UpdateCheck } from "../data/clientPolicy";
 import { createDeleteAccount, DELETE_TIMEOUT_MS } from "../data/deleteAccount";
 import { createDeviceCacheStore } from "../data/deviceCache";
-import { createDeviceFiles, createShareSheet } from "../data/deviceFiles";
+import { createDeviceFiles, createShareSheet, createSweepFiles } from "../data/deviceFiles";
 import { createExportData, sweepExports } from "../data/exportData";
+import { sweepHttpCache } from "../data/httpCacheSweep";
 import { createOfflineCache, type OfflineCache } from "../data/offlineCache";
 import { createServerSignOut } from "../data/serverSignOut";
 import { createWorkosClient } from "../data/workos";
@@ -140,6 +141,7 @@ export function createAppSession(config: { api: MobileConfig; auth: AuthConfig }
     : undefined;
   const housekeeping = createDeviceHousekeeping({
     sweepExports: () => sweepExports(files),
+    sweepHttpCache: () => sweepHttpCache(createSweepFiles()),
     clearLock: async () => {
       await appLock?.clear();
     },

@@ -3234,6 +3234,13 @@ browser_storage:
       path: apps/mobile/src/device/storageKeys.ts,
       note: "mobile app (E12 S7): the random AES-256 key that seals the offline cache file; iOS Keychain when unlocked, this device only, Android Keystore-encrypted and out of Auto Backup, so a backup or copied file cannot be read; deleted on sign-out, session end, deletion, every new sign-in, a re-sign-in as someone else, a launch with no session and a reinstall",
     }
+  # Not storage keys, so not entries: the phone's HTTP caches (E12 S7). React Native's networking
+  # kept API answers, balances and names included, in plain files: on Android OkHttp's cache,
+  # http-cache/ in the app's cache folder; on iOS the shared URL cache, Cache.db (with -wal, -shm)
+  # and fsCachedData/ in the cache folder or its bundle-named folder. Since S7 nothing new lands
+  # there: the backend sends Cache-Control: no-store on every authenticated response
+  # (NoStoreInterceptor) and the app asks for it on every request (noStoreFetch.ts). What earlier
+  # builds left is removed on every launch and every wipe (apps/mobile/src/data/httpCacheSweep.ts).
   # Not a storage key, so not an entry: the mobile app's offline cache (E12 S7,
   # apps/mobile/src/data/offlineCache.ts) is one file, offline/reads.sealed in the app's cache folder
   # (out of iOS and Android backups), sealed with AES-256-GCM under flump.offline-cache-key, bound to

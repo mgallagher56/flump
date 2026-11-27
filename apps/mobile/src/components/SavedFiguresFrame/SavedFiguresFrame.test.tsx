@@ -45,13 +45,22 @@ describe("SavedFiguresFrame", () => {
   ])("says the figures are offline and how old: savedAt %d reads %j", async (savedAt, when) => {
     await frame({ savedAt });
     expect(notice()).toHaveTextContent(
-      `${SAVED_FIGURES.lastUpdated(when)}${SAVED_FIGURES.changes}`,
+      `${SAVED_FIGURES.lastUpdated(when)} ${SAVED_FIGURES.changes}`,
     );
   });
 
   it("a saved time a little ahead of the phone's clock reads as just now, never in the future", async () => {
     await frame({ savedAt: FRAME_NOW + 120_000 });
     expect(notice()).toHaveTextContent(SAVED_FIGURES.lastUpdated("just now"), { exact: false });
+  });
+
+  it("reads out as one paragraph, with no stray full stop before a comma", async () => {
+    await frame({ savedAt: FRAME_NOW - 20_000 });
+    const label = notice().props.accessibilityLabel as string;
+    expect(label).toBe(
+      "You are offline. These figures were last updated just now. Changes need a connection.",
+    );
+    expect(label).not.toContain(".,");
   });
 
   it("is an alert that screen readers announce, above the figures it explains", async () => {
@@ -82,7 +91,9 @@ describe("SavedFiguresFrame", () => {
     ["dark", dark],
   ] as const)("uses the info surface, not red, in %s", async (scheme, tokens) => {
     await frame({}, scheme);
-    const box = StyleSheet.flatten(notice().props.style) as ViewStyle;
+    const box = StyleSheet.flatten(
+      screen.getByTestId("saved-figures-box").props.style,
+    ) as ViewStyle;
     expect(box.backgroundColor).toBe(tokens.colors["status.info.bg"]);
     expect(box.borderColor).toBe(tokens.colors["status.info.border"]);
   });

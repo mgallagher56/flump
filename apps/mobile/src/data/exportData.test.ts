@@ -113,6 +113,7 @@ describe("exportData", () => {
     expect(fs.downloads[0]?.url).toBe(`${API}/v1/user-profile/export`);
     expect(fs.downloads[0]?.headers).toEqual({
       Authorization: "Bearer access_1",
+      "Cache-Control": "no-store",
       "X-Flump-Client": "mobile/1.0.0 (ios)",
     });
     expect(fs.downloads[0]?.to.startsWith(FOLDER)).toBe(true);

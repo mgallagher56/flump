@@ -136,7 +136,7 @@ describe("a cold start with no connection", () => {
     await start(fakeApp({ status: "restoredOffline" }, { offlineCache: cache }));
     expect(await screen.findByLabelText(TOTAL)).toBeOnTheScreen();
     expect(screen.getByTestId("saved-figures-notice")).toHaveTextContent(
-      `${SAVED_FIGURES.lastUpdated("2 hours ago")}${SAVED_FIGURES.changes}`,
+      `${SAVED_FIGURES.lastUpdated("2 hours ago")} ${SAVED_FIGURES.changes}`,
     );
     expect(screen.queryByText(OFFLINE_HEADING)).toBeNull();
   });

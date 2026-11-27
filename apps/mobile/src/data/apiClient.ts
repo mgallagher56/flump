@@ -8,6 +8,7 @@ import { type ApiClient, type ClientPlatform, createApiClient } from "@flump/api
 export type { ApiClient };
 
 import type { Session } from "../auth/session";
+import { noStoreFetch } from "./noStoreFetch";
 
 export interface AppApiClientOptions {
   apiBaseUrl: string;
@@ -27,7 +28,8 @@ export function createAppApiClient(options: AppApiClientOptions): ApiClient {
     getAccessToken: () => options.session.getAccessToken(),
     onUnauthorised: () => options.session.refresh(),
     client: options.client,
-    fetch: options.fetch,
+    // Never stored by the phone's HTTP cache (E12 S7, `noStoreFetch.ts`).
+    fetch: noStoreFetch(() => options.fetch ?? fetch),
     timeoutMs: options.timeoutMs,
   });
 }

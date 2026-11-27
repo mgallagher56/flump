@@ -8,16 +8,12 @@ export const createStyles = (theme: Theme) =>
       marginHorizontal: theme.spacing["page.gutter.sm"],
       marginTop: theme.spacing["3"],
       padding: theme.spacing["3"],
-      gap: theme.spacing["1"],
+      gap: theme.spacing["2"],
       borderWidth: 1,
       borderRadius: theme.radii.card,
       backgroundColor: theme.colors["status.info.bg"],
       borderColor: theme.colors["status.info.border"],
     },
-    action: {
-      marginHorizontal: theme.spacing["page.gutter.sm"],
-      marginTop: theme.spacing["2"],
-      alignItems: "flex-start",
-    },
+    action: { alignItems: "flex-start" },
     body: { flex: 1 },
   });

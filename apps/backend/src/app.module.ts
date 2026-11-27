@@ -29,6 +29,7 @@ import { SnapshotsModule } from "./modules/snapshots/snapshots.module";
 import { TaxModule } from "./modules/tax/tax.module";
 import { ObservabilityModule } from "./observability/observability.module";
 import { slowQueryOptions } from "./observability/slow-query.logger";
+import { NoStoreInterceptor } from "./security/no-store.interceptor";
 import { SecurityModule } from "./security/security.module";
 
 /**
@@ -72,6 +73,8 @@ import { SecurityModule } from "./security/security.module";
     AppService,
     // First, so every interceptor after it (the idempotency claim) and the handler run inside it:
     // their transactions take the user-data write fence (privacy finding F1).
+    // Cache-Control: no-store on every authenticated response, unless a route chooses (E12 S7).
+    { provide: APP_INTERCEPTOR, useClass: NoStoreInterceptor },
     { provide: APP_INTERCEPTOR, useClass: UserDataWriteFenceInterceptor },
     { provide: APP_INTERCEPTOR, useClass: DeprecationInterceptor },
     { provide: APP_INTERCEPTOR, useClass: ContractShadowInterceptor },

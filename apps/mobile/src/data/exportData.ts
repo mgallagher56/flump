@@ -122,7 +122,11 @@ export function createExportData(deps: ExportDataDeps): () => Promise<ExportOutc
   async function attempt(folder: string, token: string) {
     downloads += 1;
     const to = `${folder}download-${downloads}.json`;
-    const headers: Record<string, string> = { Authorization: `Bearer ${token}` };
+    // Never kept by the phone's HTTP cache (E12 S7); the server sends no-store as well.
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${token}`,
+      "Cache-Control": "no-store",
+    };
     if (deps.clientHeader) headers["X-Flump-Client"] = deps.clientHeader;
     try {
       const answer = await files.download(url, to, headers);

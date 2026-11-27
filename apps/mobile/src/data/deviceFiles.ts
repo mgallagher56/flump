@@ -15,9 +15,20 @@ import {
   makeDirectoryAsync,
   moveAsync,
   readAsStringAsync,
+  readDirectoryAsync,
 } from "expo-file-system/legacy";
 import type * as Sharing from "expo-sharing";
 import type { ExportFiles, ShareSheet } from "./exportData";
+import type { SweepFiles } from "./httpCacheSweep";
+
+/** The cache folder for the HTTP cache sweep (`httpCacheSweep.ts`, E12 S7). */
+export function createSweepFiles(): SweepFiles {
+  return {
+    cacheDirectory,
+    list: (uri) => readDirectoryAsync(uri),
+    remove: (uri) => deleteAsync(uri, { idempotent: true }),
+  };
+}
 
 export function createDeviceFiles(): ExportFiles {
   return {
