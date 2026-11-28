@@ -591,8 +591,8 @@ test.describe("marketing home: controls", () => {
               const rest =
                 Number(getComputedStyle(s).opacity) > 0.999 &&
                 (!m || (Math.abs(Number(m[2])) < 0.5 && Math.abs(Number(m[3])) < 0.5));
-              if (watch.left[i] < 0 && t !== start[i]) watch.left[i] = frame;
-              if (watch.landed[i] < 0 && rest && t !== start[i]) watch.landed[i] = frame;
+              if ((watch.left[i] ?? 0) < 0 && t !== start[i]) watch.left[i] = frame;
+              if ((watch.landed[i] ?? 0) < 0 && rest && t !== start[i]) watch.landed[i] = frame;
             });
             watch.done = sheets.every((s) => s.style.transform === "");
             if (!watch.done) requestAnimationFrame(tick);

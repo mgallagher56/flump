@@ -94,7 +94,7 @@ export const setPieceMoment =
  * sheets start as one stack on the first, each 7px lower and 20px further back in depth, the ones
  * behind at 85% opacity, then deal out into the list in turn on the calm in-out ease.
  */
-export const UNSTACK = {
+const UNSTACK = {
   /** Each sheet in the stack sits this much lower than the one before (px). */
   step: 7,
   /** Each sheet in the stack sits this much further back (px of translateZ). */
