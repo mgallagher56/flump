@@ -83,7 +83,7 @@ export function renderLogoChapter(tokens: BrandTokens): string {
       <article class="card">
         <h4 class="card-title">Favicon</h4>
         <p class="prose">
-          Both <code>apps/web/public/favicon.svg</code> and <code>apps/marketing/public/favicon.svg</code> serve the same compact K2 mark with a <code>prefers-color-scheme: dark</code> media rule and a cutout ring behind the front teal bubble.
+          Both <code>apps/web/public/favicon.svg</code> and <code>apps/marketing/public/favicon.svg</code> serve the same compact K2 mark in flat fills (candidate C) with a <code>prefers-color-scheme: dark</code> media rule and a cutout ring behind the front teal bubble.
         </p>
         <div class="logo-stage">
           <div class="theme-frame theme-light">
@@ -100,7 +100,7 @@ export function renderLogoChapter(tokens: BrandTokens): string {
       <article class="card">
         <h4 class="card-title">Mobile app icons</h4>
         <p class="prose">
-          Generated from <code>FlumpLogo.art.ts</code> in Midnight colours by <code>apps/e2e/scripts/generate-app-icons.ts</code>: <code>apps/mobile/assets/icon.png</code> (1024px square on Midnight canvas) and <code>adaptive-icon.png</code> (transparent, inside the 66 of 108 dp Android safe zone).
+          Generated from <code>FlumpLogo.art.ts</code> in Midnight colours by <code>apps/e2e/scripts/generate-app-icons.ts</code>: <code>apps/mobile/assets/icon.png</code> (1024px square on Midnight canvas) and <code>adaptive-icon.png</code> (transparent, inside the 66 of 108 dp Android safe zone). There is no splash screen yet.
         </p>
         <div class="logo-stage">
           <div>
@@ -119,12 +119,11 @@ export function renderLogoChapter(tokens: BrandTokens): string {
       <h3 class="card-title">Logo rules and what not to do</h3>
       <ul class="plain-list">
         <li>Clear space around the logo is at least half its width.</li>
-        <li>Static only: no motion on the logo.</li>
         <li>Do not recolour it, rotate it, add a wordmark in another typeface, or place it on <code>surface.hero</code> or a photograph.</li>
         <li>In a header, it links to home and takes its accessible name from the link.</li>
       </ul>
     </article>
 
-    ${renderSourceCite("STYLE-GUIDE 9, 14; FlumpLogo.art.ts; chrome-parity.laws.test.ts; generate-app-icons.ts")}
+    ${renderSourceCite("STYLE-GUIDE 2.2, 9, 14; FlumpLogo.art.ts; chrome-parity.laws.test.ts; generate-app-icons.ts")}
   </section>`;
 }

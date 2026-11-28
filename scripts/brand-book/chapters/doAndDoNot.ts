@@ -48,9 +48,9 @@ export function renderDoAndDoNotChapter(_tokens: BrandTokens): string {
     {
       topic: "Logo and illustrations (STYLE-GUIDE 8.3, 9)",
       doRule:
-        "Keep half-width clear space around the static K2 logo, store pictures as shape lists (IL4) and keep a real-text Example tag on sample cards.",
+        "Keep half-width clear space around the K2 logo, store pictures as shape lists (IL4) and keep a real-text Example tag on sample cards.",
       dontRule:
-        "Place the logo on surface.hero or photographs, animate the logo, or draw faces, coin piles or glass objects inside pictures.",
+        "Place the logo on surface.hero or photographs, recolour or rotate it, or draw faces, coin piles or glass objects inside pictures.",
     },
   ];
 

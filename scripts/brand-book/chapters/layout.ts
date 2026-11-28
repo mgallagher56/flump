@@ -6,11 +6,7 @@ export function renderLayoutChapter(tokens: BrandTokens): string {
   const { native } = tokens;
 
   const spacingRows = [
-    [
-      "spacing.page.gutter.sm",
-      `${native.spacing["page.gutter.sm"]}px`,
-      "Phone gutter (375px and up)",
-    ],
+    ["spacing.page.gutter.sm", `${native.spacing["page.gutter.sm"]}px`, "Phone gutter"],
     [
       "spacing.page.gutter.md",
       `${native.spacing["page.gutter.md"]}px`,
@@ -123,7 +119,7 @@ export function renderLayoutChapter(tokens: BrandTokens): string {
     .join("");
 
   const shadowKeys: ReadonlyArray<{ key: keyof typeof native.light.shadows; note: string }> = [
-    { key: "xs", note: "Subtle hairline lift" },
+    { key: "xs", note: "Faint lift for small parts such as the active tab thumb" },
     { key: "card", note: "Level 1: cards, KPI cards, tables (paired with 1px border)" },
     { key: "raised", note: "Level 2: card on hover or drag; sticky bars" },
     { key: "overlay", note: "Level 3: dialogs, sheets, menus, popovers, toasts" },

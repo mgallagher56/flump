@@ -240,7 +240,7 @@ export function renderTypographyChapter(tokens: BrandTokens): string {
       <ul class="plain-list">
         <li><strong>T1 to T3:</strong> All sizes come from text styles; 12px is the minimum floor; weights are 400, 500, 600 and 700 only.</li>
         <li><strong>T4:</strong> Every money amount, percentage, date, duration, table cell and slider value uses <code>tabular-nums</code> and en-GB formatting.</li>
-        <li><strong>T5 to T9:</strong> Sentence case everywhere (no uppercase eyebrows or caps tracking); one <code>h1</code> per page; body lines at most 75 characters wide; text survives 200% zoom without clipping.</li>
+        <li><strong>T5 to T9:</strong> Headline figure is the largest text after the <code>h1</code> and "Not set" is never larger than a real value; sentence case everywhere (no uppercase eyebrows or caps tracking); one <code>h1</code> per page with no skipped heading levels; body lines at most 75 characters wide; text survives 200% zoom without clipping.</li>
       </ul>
     </article>
 

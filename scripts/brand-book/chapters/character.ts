@@ -43,7 +43,7 @@ export function renderCharacterChapter(_tokens: BrandTokens): string {
     <article class="card-subtle">
       <h3 class="card-title">Guidance, not advice, and no shaming</h3>
       <p class="prose">
-        Flump gives facts and estimates, never recommendations. Every encouragement feature must pass all five E35 no-shaming tests (N1 to N5): no points, scores, grades, leagues or ranks; no comparison with other people; no loss-framed streaks; praise only the action, never the amount; and equal warmth for every starting point including debt, renting and low savings.
+        Flump gives facts and estimates, never recommendations. Every encouragement feature must pass all five E35 no-shaming tests (N1 to N5): no points, scores, grades, leagues or ranks; no comparison with other people; no loss-framed streaks; acknowledge the action, never the amount; and equal warmth for every starting point including debt, renting and low savings.
       </p>
     </article>
 
