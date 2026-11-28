@@ -1,15 +1,16 @@
 import { expect, type Page } from "@playwright/test";
 
 /*
- * Condition waits for the marketing pages' motion, shared by the page specs (the helpers PR 985
- * wrote for `marketing-home.spec.ts`): scroll inside the page, then wait until what moves has
+ * Condition waits for the marketing pages' motion, shared by `marketing-home.spec.ts` (where PR 985
+ * wrote them) and `marketing-pages.spec.ts`: scroll inside the page, then wait until what moves has
  * stopped moving, never a fixed sleep.
  */
 
 /**
  * Scrolls `by` pixels in `steps` steps `gap` ms apart, inside the page. Scroll events drive every
- * trigger, so this sets off what a wheel does, without Playwright waiting for each scroll to be
- * acknowledged.
+ * trigger, so this sets off what a wheel does; Playwright's wheel waits for each scroll to be
+ * acknowledged, about 0.4 s a step while the scene draws, so a run of wheels took most of a
+ * test's time.
  */
 export async function scrollInSteps(
   page: Page,
@@ -29,8 +30,9 @@ export async function scrollInSteps(
 }
 
 /**
- * Waits until nothing in `selector` has changed for 1.2 s: each element's opacity (times its
- * ancestors'), place on the page and visibility. A moment left running or stuck fails at `timeout`.
+ * Waits until nothing in `selector` has changed for 1.2 s (more than a changeover's beat, 0.69 s):
+ * each element's opacity (times its ancestors'), place on the page, visibility and, for a counting
+ * figure, its text. A moment left running or stuck moving fails at `timeout`.
  */
 export async function untilStill(page: Page, selector: string, timeout = 15_000): Promise<void> {
   let last = "";
@@ -45,7 +47,8 @@ export async function untilStill(page: Page, selector: string, timeout = 15_000)
               for (let node: Element | null = el; node; node = node.parentElement)
                 opacity *= Number(getComputedStyle(node).opacity);
               const r = el.getBoundingClientRect();
-              return `${opacity.toFixed(2)},${Math.round(r.left)},${Math.round(r.top + scrollY)},${getComputedStyle(el).visibility}`;
+              const text = el.hasAttribute("data-count") ? el.textContent : "";
+              return `${opacity.toFixed(2)},${Math.round(r.left)},${Math.round(r.top + scrollY)},${getComputedStyle(el).visibility},${text}`;
             })
             .join(";"),
         );
