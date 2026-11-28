@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { TicketClose } from "./TicketClose";
 
@@ -11,10 +11,13 @@ describe("TicketClose", () => {
     expect(screen.getByRole("link", { name: "Request an invite" }).getAttribute("href")).toBe(
       "/contact#beta",
     );
-    // The ticket is a picture beside the words, never their only carrier.
-    expect(
-      screen.getByTestId("feature-final-cta").querySelector("[data-close-picture]"),
-    ).not.toBeNull();
+    // Prototype 11's own ticket (owner ruling A5), a picture beside the words, never their only
+    // carrier; not the design system's onboarding picture.
+    const card = screen.getByTestId("feature-final-cta");
+    expect(within(card).getByTestId("getting-started-ticket").getAttribute("aria-hidden")).toBe(
+      "true",
+    );
+    expect(card.querySelector("[data-scene='onboarding']")).toBeNull();
   });
 
   it("takes the tone it is given", () => {
