@@ -645,6 +645,18 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
       expect(write.body.code).toBe("terms_not_accepted");
     });
 
+    it("a brand-new account on the terms screen has nothing to download, and gets no profile row", async () => {
+      const userId = ["user", "new", "terms", String(Date.now())].join("_");
+      const token = await h.tokenFor(userId);
+      // The requests the web app makes after sign-up: the root profile read (refused), the terms
+      // status, then the summary for the terms screen.
+      expect((await h.call("get", "/user-profile", token)).body.code).toBe("terms_not_accepted");
+      expect((await h.call("get", "/user-profile/terms-acceptance", token)).status).toBe(200);
+      const summary = await h.call("get", "/user-profile/export/summary", token);
+      expect(summary.body).toEqual({ hasData: false });
+      expect(await profiles().countBy({ userId })).toBe(0);
+    });
+
     it("can download both exports", async () => {
       const token = await fresh();
       const json = await h.call("get", "/user-profile/export", token).buffer(true);
