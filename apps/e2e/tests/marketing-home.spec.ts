@@ -428,8 +428,7 @@ test.describe("marketing home: the hero's start state (owner, 28 Nov 2026)", () 
         // Shifts of what the script takes over: the hero, its column, the dashboard, the pieces
         // and the bubbles, each moved by a pixel or more. The copy's text settles by a pixel as
         // the web font arrives, and the caption's text reflows in place, script or none, so
-        // neither counts. Nor does any shift while the web font is still loading: on a cold load
-        // (CI) its arrival reflows the copy and moves the stage beside or below it, script or none.
+        // neither counts.
         w.__shift = 0;
         w.__shiftSources = [] as string[];
         type Source = {
@@ -454,14 +453,15 @@ test.describe("marketing home: the hero's start state (owner, 28 Nov 2026)", () 
             hadRecentInput: boolean;
             sources: Source[];
           }[]) {
-            if (document.fonts.status !== "loaded") continue;
             if (!entry.hadRecentInput && entry.sources.some(taken)) {
               w.__shift = (w.__shift as number) + entry.value;
               for (const source of entry.sources.filter(taken)) {
                 const el =
                   source.node instanceof Element ? source.node : source.node?.parentElement;
+                const a = source.previousRect;
+                const b = source.currentRect;
                 (w.__shiftSources as string[]).push(
-                  `${el?.tagName ?? "?"}${el?.id ? `#${el.id}` : ""} ${el?.getAttribute("data-hero-piece") ?? ""}`,
+                  `${Math.round(performance.now())}ms ${el?.tagName ?? "?"}${el?.id ? `#${el.id}` : ""} ${el?.getAttribute("data-hero-piece") ?? el?.className.toString().slice(0, 40) ?? ""} ${Math.round(a.x)},${Math.round(a.y)} to ${Math.round(b.x)},${Math.round(b.y)}`,
                 );
               }
             }
