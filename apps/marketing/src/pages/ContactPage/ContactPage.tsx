@@ -15,6 +15,7 @@ import { useGsapMoment } from "../../motion/useGsapMoment";
 import { mailto, SUPPORT_EMAIL } from "../../utils/site";
 import {
   addressLine,
+  betaBand,
   card,
   cardHeading,
   link,
@@ -60,7 +61,7 @@ export const ContactPage: FC = () => {
           title="Contact Flump"
           titleId="contact-title"
         />
-        <MarketingBand id="beta" tone="card" width="narrow">
+        <MarketingBand className={betaBand} id="beta" tone="card" width="narrow">
           <div className={stack} ref={ref}>
             <TiltLight data-arrive-item="">
               <SoftCard aria-labelledby="contact-email" as="section" className={card}>

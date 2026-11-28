@@ -48,3 +48,6 @@ export const link = css({
 
 /** The band's own column gap (`SectionBand`'s 2rem), kept around the moment's wrapper. */
 export const stack = css({ display: "flex", flexDirection: "column", gap: "8" });
+
+/** The sign-up links land on this band (`/contact#beta`), below the sticky header. */
+export const betaBand = css({ scrollMarginTop: "24" });
