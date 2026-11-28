@@ -93,6 +93,61 @@ describe("BetaInvitesService.redeem", () => {
     // The member row is written for the caller, linked to the claimed invite.
     expect(inserted).toEqual([["user_new", "invite-1"]]);
   });
+
+  /** Answers a redeem whose UPDATE claims `claimed` (empty: no row). */
+  const claimAnswer =
+    (claimed: { id: string }[]): Query =>
+    async (sql) => {
+      if (sql.startsWith("SELECT pg_advisory_xact_lock")) return [];
+      if (sql.includes('FROM "beta_members"')) return [];
+      if (sql.startsWith('UPDATE "beta_invites"')) return [claimed, claimed.length];
+      if (sql.startsWith('INSERT INTO "beta_members"')) return [];
+      throw new Error(`unexpected query: ${sql}`);
+    };
+
+  it("an admin is already a member: no transaction, the link is left alone", async () => {
+    inviteOnly();
+    const { ds, transaction } = fakeDataSource(claimAnswer([{ id: "invite-1" }]));
+    await expect(
+      new BetaInvitesService(ds).redeem({ id: "user_admin" }, validToken()),
+    ).resolves.toEqual({ status: "already-member" });
+    expect(transaction).not.toHaveBeenCalled();
+  });
+
+  it("an open beta never claims a link", async () => {
+    process.env = { ...original, NODE_ENV: "test", BETA_OPEN: "true" };
+    delete process.env.BETA_ADMIN_USER_IDS;
+    const { ds, transaction } = fakeDataSource(claimAnswer([{ id: "invite-1" }]));
+    await expect(new BetaInvitesService(ds).redeem(caller, validToken())).resolves.toEqual({
+      status: "already-member",
+    });
+    expect(transaction).not.toHaveBeenCalled();
+  });
+
+  it("an allow-listed caller claims the link and joins", async () => {
+    inviteOnly();
+    process.env.BETA_ALLOWED_USER_IDS = caller.id;
+    const { ds, query } = fakeDataSource(claimAnswer([{ id: "invite-1" }]));
+    await expect(new BetaInvitesService(ds).redeem(caller, validToken())).resolves.toEqual({
+      status: "joined",
+    });
+    expect(query.mock.calls.some(([sql]) => sql.startsWith('INSERT INTO "beta_members"'))).toBe(
+      true,
+    );
+  });
+
+  it("an allow-listed caller with an unusable or malformed link keeps access: no 410", async () => {
+    inviteOnly();
+    process.env.BETA_ALLOWED_USER_IDS = caller.id;
+    const { ds } = fakeDataSource(claimAnswer([]));
+    const service = new BetaInvitesService(ds);
+    await expect(service.redeem(caller, validToken())).resolves.toEqual({
+      status: "already-member",
+    });
+    await expect(service.redeem(caller, "t".repeat(42))).resolves.toEqual({
+      status: "already-member",
+    });
+  });
 });
 
 describe("BetaInvitesService.createInvite", () => {
