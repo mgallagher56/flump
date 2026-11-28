@@ -547,7 +547,7 @@ html[data-proto-level="3"] main [data-card]:has([data-figure], [data-money], [da
 /* Home: the orb group breathes twice (under 5 seconds) and then rests. Still with reduced motion. */
 @media (prefers-reduced-motion: no-preference) {
   html[data-proto-level="3"][data-proto-area="home"] [data-proto-ornament] [data-orb] {
-    animation: proto-breathe 2400ms cubic-bezier(0.45, 0, 0.3, 1) 2 both;
+    animation: proto-breathe 2100ms cubic-bezier(0.45, 0, 0.3, 1) 2 both;
   }
   html[data-proto-level="3"][data-proto-area="home"] [data-proto-ornament] [data-orb="2"] {
     animation-delay: 300ms;
