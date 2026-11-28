@@ -291,6 +291,257 @@ test.describe("marketing home: the close's stack (owner, 28 Nov 2026)", () => {
   });
 });
 
+/**
+ * The hero as drawn: whether the six pieces show, the "Made from" rows' and the three figures'
+ * opacities, and the dashboard's transform. Runs in the page.
+ */
+function heroDrawn() {
+  const root = document.getElementById("home-hero");
+  if (!root) throw new Error("no hero");
+  const styles = (selector: string) =>
+    Array.from(root.querySelectorAll(selector)).map((el) => getComputedStyle(el));
+  const layer = styles("[data-hero-layer]")[0];
+  return {
+    pieces: layer?.display !== "none" && layer?.visibility === "visible",
+    rows: styles("[data-hero-row]").map((s) => s.opacity),
+    values: styles("[data-hero-value]").map((s) => s.opacity),
+    dash: styles("[data-hero-dash]")[0]?.transform,
+  };
+}
+
+/** The finished, still "Made from" picture: every row and figure readable, no piece over it. */
+const FILLED = {
+  pieces: false,
+  rows: ["1", "1", "1", "1", "1", "1"],
+  values: ["1", "1", "1"],
+  dash: "none",
+};
+
+/** Each piece's box on the page, rounded to the pixel. Runs in the page. */
+function pieceBoxes() {
+  return Array.from(document.querySelectorAll("[data-hero-piece]")).map((el) => {
+    const r = el.getBoundingClientRect();
+    return [r.left, r.top, r.width, r.height].map(Math.round);
+  });
+}
+
+test.describe("marketing home: the hero's start state (owner, 28 Nov 2026)", () => {
+  for (const [width, height] of [
+    [1440, 900],
+    [390, 844],
+  ] as const) {
+    test(`at ${width}px the first paint already has the pieces apart, before any script but the head's`, async ({
+      browser,
+    }) => {
+      const context = await browser.newContext({ viewport: { width, height } });
+      const page = await context.newPage();
+      // Only the inline theme script runs: the server HTML and its CSS, as first painted.
+      await page.route(/\/assets\/.*\.js(\?|$)/, (route) => route.abort());
+      await page.goto(HOME, { waitUntil: "domcontentloaded" });
+      const drawn = await page.evaluate(heroDrawn);
+      expect(drawn.pieces).toBe(true);
+      expect(drawn.rows).toEqual(["0", "0", "0", "0", "0", "0"]);
+      expect(drawn.values).toEqual(["0", "0", "0"]);
+      // From 1024px the dashboard is pushed back under the pieces; stacked it stays flat.
+      if (width >= 1024) expect(drawn.dash).not.toBe("none");
+      else expect(drawn.dash).toBe("none");
+      // Every piece is drawn apart from the others, wholly inside the window's width.
+      const boxes = await page.evaluate(pieceBoxes);
+      expect(new Set(boxes.map((b) => `${b[0]},${b[1]}`)).size).toBe(6);
+      for (const [left, , w] of boxes) {
+        expect(left).toBeGreaterThanOrEqual(0);
+        expect(left + w).toBeLessThanOrEqual(width);
+      }
+      await context.close();
+    });
+
+    test(`at ${width}px the script takes over the start state with no jump and no layout shift`, async ({
+      browser,
+    }) => {
+      const context = await browser.newContext({ viewport: { width, height } });
+      const page = await context.newPage();
+      await page.addInitScript(() => {
+        const w = window as unknown as Record<string, unknown>;
+        const boxes = () =>
+          Array.from(document.querySelectorAll("[data-hero-piece]")).map((el) => {
+            const r = el.getBoundingClientRect();
+            return [r.left, r.top, r.width, r.height].map(Math.round);
+          });
+        // Shifts of what the script takes over: the hero, its column, the dashboard, the pieces
+        // and the bubbles, each moved by a pixel or more. The copy's text settles by a pixel as
+        // the web font arrives, and the caption's text reflows in place, script or none, so
+        // neither counts.
+        w.__shift = 0;
+        type Source = {
+          node: Node | null;
+          previousRect: DOMRectReadOnly;
+          currentRect: DOMRectReadOnly;
+        };
+        const taken = ({ node, previousRect: a, currentRect: b }: Source) => {
+          const el = node instanceof Element ? node : (node?.parentElement ?? null);
+          const moved = Math.abs(a.x - b.x) >= 1 || Math.abs(a.y - b.y) >= 1;
+          return (
+            moved &&
+            Boolean(
+              el?.matches("#home-hero, [data-hero-inner]") ||
+                el?.closest("#home-hero [data-hero-stage], #home-hero [data-bubble-field]"),
+            )
+          );
+        };
+        new PerformanceObserver((list) => {
+          for (const entry of list.getEntries() as unknown as {
+            value: number;
+            hadRecentInput: boolean;
+            sources: Source[];
+          }[]) {
+            if (!entry.hadRecentInput && entry.sources.some(taken)) {
+              w.__shift = (w.__shift as number) + entry.value;
+            }
+          }
+        }).observe({ type: "layout-shift", buffered: true });
+        // Hydrated, before GSAP: what the CSS draws.
+        document.addEventListener("DOMContentLoaded", () => {
+          w.__painted = boxes();
+        });
+        // The moment GSAP has drawn its start state, before its first tick.
+        new MutationObserver((records, observer) => {
+          if (records.some((r) => (r.target as HTMLElement).dataset.heroLive === "true")) {
+            w.__taken = boxes();
+            observer.disconnect();
+          }
+        }).observe(document, {
+          attributes: true,
+          subtree: true,
+          attributeFilter: ["data-hero-live"],
+        });
+      });
+      await page.goto(HOME);
+      await expect(page.getByTestId("home-hero")).toHaveAttribute("data-hero-live", "true", {
+        timeout: 15_000,
+      });
+      const { painted, taken, shift } = await page.evaluate(() => {
+        const w = window as unknown as Record<string, unknown>;
+        return { painted: w.__painted, taken: w.__taken, shift: w.__shift };
+      });
+      expect(painted).toBeTruthy();
+      // Within a pixel of where the CSS drew each piece.
+      const near = (a: number[][], b: number[][]) =>
+        a.every((box, i) => box.every((v, j) => Math.abs(v - (b[i]?.[j] ?? Number.NaN)) <= 1));
+      expect(
+        near(painted as number[][], taken as number[][]),
+        JSON.stringify({ painted, taken }),
+      ).toBe(true);
+      expect(shift).toBe(0);
+      await context.close();
+    });
+  }
+
+  test("at 390px, where the dashboard starts past its line, the pieces assemble after load", async ({
+    browser,
+  }) => {
+    const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const page = await context.newPage();
+    await page.goto(HOME);
+    await expect(page.getByTestId("home-hero")).toHaveAttribute("data-hero-live", "true", {
+      timeout: 15_000,
+    });
+    // Scroll triggers it and time completes it (durations.marketing.hero): every row arrives.
+    await expect
+      .poll(async () => (await page.evaluate(heroDrawn)).rows, { timeout: 15_000 })
+      .toEqual(["1", "1", "1", "1", "1", "1"]);
+    await context.close();
+  });
+
+  test("with reduced motion the hero is the filled picture from the first paint, script or none", async ({
+    browser,
+  }) => {
+    for (const blockScripts of [true, false]) {
+      const context = await browser.newContext({
+        viewport: { width: 1440, height: 900 },
+        reducedMotion: "reduce",
+      });
+      const page = await context.newPage();
+      if (blockScripts) await page.route(/\/assets\/.*\.js(\?|$)/, (route) => route.abort());
+      await page.goto(HOME, { waitUntil: blockScripts ? "domcontentloaded" : "load" });
+      expect(await page.evaluate(heroDrawn)).toEqual(FILLED);
+      await context.close();
+    }
+  });
+
+  for (const [width, height] of [
+    [1440, 900],
+    [390, 844],
+  ] as const) {
+    test(`with no JavaScript at ${width}px the hero is the filled picture`, async ({ browser }) => {
+      const context = await browser.newContext({
+        viewport: { width, height },
+        javaScriptEnabled: false,
+      });
+      const page = await context.newPage();
+      await page.goto(HOME);
+      expect(await page.evaluate(heroDrawn)).toEqual(FILLED);
+      await context.close();
+    });
+  }
+});
+
+test.describe("marketing home: the hero's bubbles (owner, 28 Nov 2026)", () => {
+  /** How many bubbles show at each size: more than prototype 11's two, so the hero is not bare. */
+  for (const [width, height, least] of [
+    [2000, 1250, 6],
+    [1440, 900, 6],
+    [1000, 800, 3],
+    [390, 844, 2],
+  ] as const) {
+    test(`at ${width}x${height} every bubble keeps clear of the copy, the dashboard and its pieces`, async ({
+      browser,
+    }) => {
+      const context = await browser.newContext({ viewport: { width, height } });
+      const page = await context.newPage();
+      // The start state, when the floating pieces reach furthest.
+      await page.goto(HOME, { waitUntil: "domcontentloaded" });
+      const { bubbles, clashes } = await page.evaluate((margin) => {
+        const hero = document.getElementById("home-hero");
+        if (!hero) throw new Error("no hero");
+        const keepClear = [
+          hero.querySelector("h1"),
+          hero.querySelector("h1 + p"),
+          hero.querySelector("[data-lit-ctas]"),
+          hero.querySelector("[data-testid=hero-scroll-cue]"),
+          hero.querySelector("[data-hero-dash]"),
+          ...hero.querySelectorAll("[data-hero-piece]"),
+        ].flatMap((el) =>
+          el ? [{ name: el.textContent?.slice(0, 24), r: el.getBoundingClientRect() }] : [],
+        );
+        const shown = Array.from(hero.querySelectorAll<HTMLElement>("[data-bubble-field] > span"))
+          .map((el) => el.getBoundingClientRect())
+          // Drawn and at least partly in the window.
+          .filter((r) => r.width > 0 && r.right > 0 && r.left < window.innerWidth);
+        const clashes: string[] = [];
+        for (const b of shown) {
+          for (const { name, r } of keepClear) {
+            const apart =
+              b.right + margin <= r.left ||
+              b.left >= r.right + margin ||
+              b.bottom + margin <= r.top ||
+              b.top >= r.bottom + margin;
+            if (!apart) clashes.push(`${Math.round(b.left)},${Math.round(b.top)} on "${name}"`);
+          }
+        }
+        return { bubbles: shown.length, clashes };
+      }, 12);
+      expect(clashes).toEqual([]);
+      expect(bubbles).toBeGreaterThanOrEqual(least);
+      // Decoration only, and still with reduced motion (checked in MK1 above).
+      await expect(page.locator("#home-hero [data-bubble-field]")).toHaveAttribute(
+        "aria-hidden",
+        "true",
+      );
+      await context.close();
+    });
+  }
+});
+
 test.describe("marketing home: controls", () => {
   test("the pause control stops the ambient motion and is reachable by keyboard (MK14)", async ({
     page,

@@ -76,3 +76,22 @@ export const VioletRoseDark: Story = {
   parameters: { backgrounds: { default: "dark" } },
   play: assertField,
 };
+
+const SPOTS = [
+  { set: "skyTeal", x: "20cqw", y: "30cqh", size: "96px", show: "wide", drift: 30 },
+  { set: "violetRose", x: "80cqw", y: "70cqh", size: "64px", show: "wide", drift: 60 },
+  { set: "skyTeal", x: "50cqw", y: "80cqh", size: "48px", show: "stacked", drift: 0 },
+  { set: "violetRose", x: "50cqw", y: "20cqh", size: "40px", show: "phone", drift: 0 },
+] as const;
+
+/** The home hero's own spots (`fit="hero"`): placed by the page's table, each in its range of widths. */
+export const SpotsLight: Story = {
+  args: { fit: "hero", spots: SPOTS },
+  globals: { theme: "light" },
+  play: async ({ canvasElement }) => {
+    const field = canvasElement.querySelector("[data-bubble-field]");
+    await expect(field?.getAttribute("aria-hidden")).toBe("true");
+    await expect(field?.getAttribute("data-bubble-field")).toBe("spots");
+    await expect(field?.querySelectorAll("span").length).toBe(SPOTS.length);
+  },
+};

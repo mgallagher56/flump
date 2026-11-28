@@ -17,10 +17,12 @@ export const field = cva({
   variants: {
     fit: {
       band: {},
-      // The hero keeps two bubbles; on a narrow screen the field starts 40% down, clear of the heading.
+      // The home hero: inside its centred column, reaching out to the window's edges (the hero
+      // clips sideways overflow), and a size container for its spots.
       hero: {
-        "& > span:nth-child(3)": { display: "none" },
-        "@media (max-width: 55.99rem)": { inset: "40% 0 0" },
+        left: "calc(50% - 50vw)",
+        right: "calc(50% - 50vw)",
+        containerType: "size",
       },
       // Beside a second list, and in the close, the small upper bubble would sit on the heading.
       beside: { "& > span:nth-child(2)": { display: "none" } },
@@ -79,6 +81,30 @@ export const bubble = cva({
       first: { "@media (max-width: 55.99rem)": { scale: "0.55" } },
       second: { "@media (max-width: 55.99rem)": { display: "none" } },
       third: { "@media (max-width: 55.99rem)": { display: "none" } },
+    },
+  },
+});
+
+/**
+ * A page's own spot (`BubbleSpot`): centred on `--spot-x`, `--spot-y`, `--spot-size` across, and
+ * shown only in its range of widths. A spot sized to nothing (a gutter too narrow) draws nothing.
+ */
+export const spot = cva({
+  base: {
+    display: "none",
+    left: "var(--spot-x)",
+    top: "var(--spot-y)",
+    width: "var(--spot-size)",
+    height: "var(--spot-size)",
+    marginLeft: "calc(var(--spot-size) / -2)",
+    marginTop: "calc(var(--spot-size) / -2)",
+  },
+  variants: {
+    show: {
+      wide: { "@media (min-width: 64rem)": { display: "block" } },
+      stacked: { "@media (min-width: 40rem) and (max-width: 63.99rem)": { display: "block" } },
+      roomy: { "@media (min-width: 60rem) and (max-width: 63.99rem)": { display: "block" } },
+      phone: { "@media (max-width: 39.99rem)": { display: "block" } },
     },
   },
 });

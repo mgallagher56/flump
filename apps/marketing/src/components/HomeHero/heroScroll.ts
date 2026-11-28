@@ -1,22 +1,7 @@
 import { marketingMs } from "@repo/ui";
 import type { GsapKit } from "../../motion/loadGsapKit";
 import type { PieceKey } from "./heroData";
-
-/**
- * Where each piece floats before the picture assembles (prototype 11): a share of the stage's
- * width and height from its centre, a depth in px and a tilt in degrees.
- */
-const SCATTER: Record<
-  PieceKey,
-  { x: number; y: number; z: number; rx: number; ry: number; rz: number }
-> = {
-  card: { x: -0.26, y: -0.29, z: 60, rx: 5, ry: -6, rz: -4 },
-  payslip: { x: 0.26, y: -0.23, z: 20, rx: 3, ry: 5, rz: 3 },
-  receipt: { x: -0.24, y: 0.02, z: 80, rx: -3, ry: 4, rz: -2 },
-  statement: { x: 0.24, y: 0.06, z: -10, rx: 4, ry: -4, rz: 2 },
-  pension: { x: -0.21, y: 0.26, z: 40, rx: -2, ry: 3, rz: 1 },
-  credit: { x: 0.23, y: 0.3, z: 100, rx: 5, ry: -6, rz: 4 },
-};
+import { DASH_START_WIDE, remPx, SCATTER, startPlace, WIDE_QUERY } from "./heroStart";
 
 /** Arrival order and start of each flight, in timeline units; the whole run is `TOTAL` units. */
 const FLIGHTS: readonly (readonly [PieceKey, number])[] = [
@@ -44,9 +29,6 @@ const FIGURE_AT: Record<"room" | "left" | "net", number> = {
 
 /** The lock: one sweep of light across the finished frame, once the last piece has landed. */
 const GLINT_AT = 7.7;
-
-/** Wide (two columns) from 1024px, as the hero's layout. */
-const WIDE_QUERY = "(min-width: 1024px)";
 
 /**
  * Prototype 11's timings are its calm values times its pace (1.4); the marketing tokens are the
@@ -79,8 +61,9 @@ const header = () => document.querySelector("header")?.offsetHeight ?? 0;
  * picture follows the scroll with a soft lag: the six pieces float apart, then fly one by one into
  * the dashboard's "Made from" rows and its three figures arrive. As the receipt leaves, its "left
  * over" figure lifts off and lands on the tile's figure (Flip.fit), and once all have landed one
- * sweep of light crosses the dashboard. The page loads assembled (the server HTML) and, after a
- * pause, parts to where the scroll position says, so nothing jumps.
+ * sweep of light crosses the dashboard. The page opens with the pieces already apart (the server
+ * render draws the start state from `heroStart.ts`; owner, 28 Nov 2026), and the timeline starts
+ * from exactly that state, so nothing jumps when this takes over.
  *
  * Under 1024px nothing is pinned or scrubbed: the pieces rest in a tidy tray over the rows; once the
  * stage's top rises past 60% of the screen they assemble and finish in their own time, and parting
@@ -88,7 +71,7 @@ const header = () => document.querySelector("header")?.offsetHeight ?? 0;
  * in the tray or docked, never part-way.
  *
  * Reduced motion and no JavaScript never run this: they show the finished, still picture. A width
- * change rebuilds from the finished picture. Returns a clean-up that leaves the finished picture.
+ * change rebuilds from the start state. Returns a clean-up that hands the hero back to the CSS.
  */
 /**
  * Where to scroll once the pin is added, so a reader already below the hero keeps their place: on
@@ -110,19 +93,18 @@ export function armHeroScroll(kit: GsapKit, root: HTMLElement): () => void {
     const stage = root.querySelector<HTMLElement>("[data-hero-stage]");
     const dash = root.querySelector<HTMLElement>("[data-hero-dash]");
     const layer = root.querySelector<HTMLElement>("[data-hero-layer]");
-    const list = root.querySelector<HTMLElement>("[data-hero-list]");
-    if (!stage || !dash || !layer || !list) return;
+    if (!stage || !dash || !layer) return;
     const wide = window.matchMedia(WIDE_QUERY).matches;
 
-    // The pieces take no layout at rest; give them their boxes, still invisible, to measure them.
+    // The server render's start state (the pieces apart, drawn by CSS) steps aside: from here GSAP
+    // draws it from the same numbers, so the rects below are read with nothing transformed.
+    // Nothing paints in between.
     root.dataset.heroReady = "true";
 
     // 1. Read: every rect, before anything is written.
     const s = stage.getBoundingClientRect();
-    const spreadX = s.width < 480 ? 0.8 : 1;
-    const rows = FLIGHTS.map(([k]) => one(root, "data-hero-row", k)?.getBoundingClientRect());
-    const listRect = list.getBoundingClientRect();
-    const measured = FLIGHTS.map(([k], i) => {
+    const rem = remPx();
+    const measured = FLIGHTS.map(([k]) => {
       const piece = one(root, "data-hero-piece", k);
       const glyph = one(root, "data-hero-glyph", k);
       const row = one(root, "data-hero-row", k);
@@ -136,21 +118,6 @@ export function armHeroScroll(kit: GsapKit, root: HTMLElement): () => void {
         y: centre(gr).y - pr.top,
         scale: pr.width > 0 ? gr.width / pr.width : 1,
       };
-      // Stacked: two to a shelf over the two rows each pair will fill, so at rest no piece covers
-      // a visible figure (prototype 11's tray).
-      let tray: { x: number; y: number; scale: number } | null = null;
-      const top = rows[i - (i % 2)];
-      const bottom = rows[i - (i % 2) + 1] ?? top;
-      if (!wide && top && bottom && pr.width > 0 && pr.height > 0) {
-        const gap = 8;
-        const cellW = (listRect.width - gap) / 2;
-        const cellH = bottom.bottom - top.top - 6;
-        tray = {
-          x: listRect.left + (i % 2 ? cellW + gap : 0) + cellW / 2 - pr.left,
-          y: top.top + 3 + cellH / 2 - pr.top,
-          scale: Math.min(0.8, (cellW - 6) / pr.width, cellH / pr.height),
-        };
-      }
       return {
         k,
         piece,
@@ -158,7 +125,8 @@ export function armHeroScroll(kit: GsapKit, root: HTMLElement): () => void {
         row,
         bar: row.querySelector<HTMLElement>("[data-hero-bar]"),
         dock,
-        tray,
+        // Where it rests before it flies: in depth from 1024px, in the tray under it.
+        start: startPlace(k, s, wide, rem),
       };
     });
 
@@ -174,11 +142,8 @@ export function armHeroScroll(kit: GsapKit, root: HTMLElement): () => void {
       const gr = ghost.getBoundingClientRect();
       const fc = centre(from.getBoundingClientRect());
       const rc = centre(receipt.pr);
-      const scale = receipt.tray?.scale ?? 1;
-      const at = receipt.tray ?? {
-        x: SCATTER.receipt.x * s.width * spreadX,
-        y: SCATTER.receipt.y * s.height,
-      };
+      const scale = Number(receipt.start.scale ?? 1);
+      const at = { x: Number(receipt.start.x ?? 0), y: Number(receipt.start.y ?? 0) };
       lift = {
         x: at.x + (fc.x - rc.x) * scale - gr.width / 2,
         y: at.y + (fc.y - rc.y) * scale - gr.height / 2,
@@ -188,37 +153,14 @@ export function armHeroScroll(kit: GsapKit, root: HTMLElement): () => void {
     }
     const glint = root.querySelector<HTMLElement>("[data-hero-glint]");
 
-    // 2. Write: the scattered (or tray) state, then the run. The run's timeline is made inside the
-    // context, so a teardown (unmount or a width change) reverts and kills it with everything else.
+    // 2. Write: the start state, the same as the server render's, then the run. The run's timeline
+    // is made inside the context, so a teardown (unmount or a width change) reverts and kills it
+    // with everything else.
     ctx = gsap.context(() => {
       const tl = gsap.timeline({ paused: true, defaults: { ease: "calm" } });
       root.dataset.heroLive = "true";
-      for (const m of measured) {
-        if (!m) continue;
-        const at = SCATTER[m.k];
-        gsap.set(
-          m.piece,
-          m.tray
-            ? { xPercent: -50, yPercent: -50, ...m.tray, z: 0, rotation: 0, opacity: 1 }
-            : {
-                xPercent: -50,
-                yPercent: -50,
-                x: at.x * s.width * spreadX,
-                y: at.y * s.height,
-                z: at.z,
-                rotationX: at.rx,
-                rotationY: at.ry,
-                rotationZ: at.rz,
-                opacity: 1,
-              },
-        );
-      }
-      gsap.set(
-        dash,
-        wide
-          ? { z: -120, rotationX: 4, y: 16, transformOrigin: "50% 40%" }
-          : { y: 0, transformOrigin: "50% 40%" },
-      );
+      for (const m of measured) if (m) gsap.set(m.piece, m.start);
+      gsap.set(dash, wide ? DASH_START_WIDE : { y: 0, transformOrigin: "50% 40%" });
       gsap.set(root.querySelectorAll("[data-hero-value]"), { opacity: 0, y: 10 });
       gsap.set(root.querySelectorAll("[data-hero-slot]"), { opacity: 1 });
       gsap.set(root.querySelectorAll("[data-hero-row]"), { opacity: 0 });
@@ -314,21 +256,30 @@ export function armHeroScroll(kit: GsapKit, root: HTMLElement): () => void {
             ease: "calmInOut",
             overwrite: true,
           });
-        tl.progress(1);
-        const trigger = ScrollTrigger.create({
+        // The page opens in the tray (the server render). A stage already past the line when the
+        // page loads (a phone, where the dashboard starts high) never crosses it, so it assembles
+        // after the same short pause, once the trigger first knows where the line is.
+        tl.progress(0);
+        let placed = false;
+        ScrollTrigger.create({
           trigger: stage,
           start: "top 60%",
           onEnter: () => travel(1),
           onLeaveBack: () => travel(0),
+          onRefresh: (self) => {
+            if (placed) return;
+            placed = true;
+            if (window.scrollY >= self.start && tl.progress() === 0) {
+              intro = gsap.to(tl, {
+                progress: 1,
+                duration: ASSEMBLE_S,
+                delay: INTRO_DELAY_S,
+                ease: "calmInOut",
+                overwrite: true,
+              });
+            }
+          },
         });
-        if (!trigger.isActive && trigger.progress === 0 && window.scrollY < trigger.start) {
-          intro = gsap.to(tl, {
-            progress: 0,
-            duration: marketingMs("hero") / 2 / 1000,
-            delay: INTRO_DELAY_S,
-            ease: "calmInOut",
-          });
-        }
         return;
       }
 
@@ -336,13 +287,17 @@ export function armHeroScroll(kit: GsapKit, root: HTMLElement): () => void {
       const startY = pin.getBoundingClientRect().top + window.scrollY - header();
       const run = () => PIN_SCREENS * window.innerHeight;
       const target = gsap.utils.clamp(0, 1, (window.scrollY - startY) / run());
-      tl.progress(1);
-      intro = gsap.to(tl, {
-        progress: target,
-        duration: target < 1 ? marketingMs("hero") / 1000 : 0,
-        delay: INTRO_DELAY_S,
-        ease: "calmInOut",
-      });
+      // The page opens apart (the server render); a reader who loads part-way down the pinned run
+      // sees the picture follow on to where the scroll position says.
+      tl.progress(0);
+      if (target > 0) {
+        intro = gsap.to(tl, {
+          progress: target,
+          duration: target < 1 ? marketingMs("hero") / 1000 : 0,
+          delay: INTRO_DELAY_S,
+          ease: "calmInOut",
+        });
+      }
       let following = false;
       ScrollTrigger.create({
         trigger: pin,

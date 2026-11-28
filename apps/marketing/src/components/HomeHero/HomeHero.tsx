@@ -8,6 +8,7 @@ import {
 import { cx } from "@repo/ui/styled-system/css";
 import { ChevronDown } from "lucide-react";
 import { type FC, useEffect, useRef, useState } from "react";
+import { useStillMotion } from "../../context/StillMotionContext";
 import { useGsapMoment } from "../../motion/useGsapMoment";
 import { BubbleField } from "../BubbleField";
 import { LitCtas } from "../LitCtas";
@@ -47,7 +48,9 @@ import {
   valueSlot,
   valueText,
 } from "./HomeHero.styles";
+import { HERO_BUBBLE_DENSITY, HERO_BUBBLES } from "./heroBubbles";
 import { HERO_FIGURES as FIG, HERO_SOURCES, type PieceKey } from "./heroData";
+import { startVars } from "./heroStart";
 
 /** A dashboard figure, with the empty line it rests on before its pieces arrive (hidden at rest). */
 const Value: FC<{ k: "net" | "left" | "room"; text: string }> = ({ k, text }) => (
@@ -77,8 +80,9 @@ const glyphClass = (k: PieceKey) =>
 
 /**
  * The finished picture: the dashboard's own HeroFigure and KpiCards, then the rows it is made from.
- * This is the server render, the no-JavaScript and the reduced-motion hero, and the accessible
- * name and every figure are always here; the pieces only ever play over it.
+ * This is the no-JavaScript and the reduced-motion hero; where script runs, the CSS start state
+ * holds its rows and figures back until the pieces land. The accessible name and every figure are
+ * always in the DOM; the pieces only ever play over it.
  */
 const Dashboard: FC = () => (
   <figure aria-labelledby="home-dash-title home-dash-tag" className={dash} data-hero-dash="">
@@ -181,12 +185,17 @@ export function heroModeFrom(search: string): HeroMode {
  * into the dashboard's "Made from" rows. By default this is prototype 11's version (`heroScroll.ts`):
  * from 1024px the hero pins and the picture follows the scroll; under 1024px scroll triggers it and
  * time completes it. With `?hero=timed` in the address (read on the client after mount) it is the
- * earlier timed version (`heroAssembly.ts`): played once by time, never pinned or scrubbed. The
- * server HTML, no JavaScript and reduced motion all show the finished, still dashboard, and GSAP
- * never loads under reduced motion.
+ * earlier timed version (`heroAssembly.ts`): played once by time, never pinned or scrubbed.
+ *
+ * Both start from the start state (owner, 28 Nov 2026), which the server HTML already draws in
+ * CSS where script runs: the pieces apart over the pushed-back dashboard (`heroStart.ts`). No
+ * JavaScript and reduced motion show the finished, still dashboard instead, and GSAP never loads
+ * under reduced motion. A still page (a story's rest state) is marked done, so it shows the
+ * finished picture too.
  */
 export const HomeHero: FC = () => {
   const ref = useRef<HTMLElement>(null);
+  const still = useStillMotion();
 
   useGsapMoment(ref, (kit, root) => {
     let finish: (() => void) | undefined;
@@ -208,14 +217,16 @@ export const HomeHero: FC = () => {
     <section
       aria-labelledby="home-title"
       className={hero}
+      data-hero-done={still ? "true" : undefined}
       data-home-section=""
       data-home-section-name="One picture"
       data-testid="home-hero"
       id="home-hero"
       ref={ref}
     >
-      <BubbleField fit="hero" layout="a" />
       <div className={heroInner} data-hero-inner="">
+        {/* Inside the column the pin holds, so no bubble moves when the pin is added. */}
+        <BubbleField fit="hero" spots={HERO_BUBBLES[HERO_BUBBLE_DENSITY]} />
         <div className={heroCopy}>
           <h1 className={heroHeading} id="home-title">
             All your money. One clear picture.
@@ -233,7 +244,7 @@ export const HomeHero: FC = () => {
             <Dashboard />
             <div aria-hidden="true" className={piecesLayer} data-hero-layer="">
               {HERO_SOURCES.map(({ key }) => (
-                <div className={piece} data-hero-piece={key} key={key}>
+                <div className={piece} data-hero-piece={key} key={key} style={startVars(key)}>
                   <MoneyPiece k={key} />
                 </div>
               ))}
