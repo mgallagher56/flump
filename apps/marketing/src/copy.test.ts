@@ -43,6 +43,7 @@ const PR12_SOURCES = [
   "pages/ContactPage/ContactPage.tsx",
   "pages/NotFoundPage/NotFoundPage.tsx",
   "components/HomeHero/HomeHero.tsx",
+  "components/MoneyPieces/MoneyPieces.tsx",
   "components/PayRiseTeaser/PayRiseTeaser.tsx",
   "components/HomeFeatures/HomeFeatures.tsx",
   "components/HomeRoughFigures/HomeRoughFigures.tsx",

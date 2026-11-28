@@ -279,7 +279,6 @@ describe("Marketing HomePage (ROLLOUT-PLAN M1, prototype 11)", () => {
       "feature-ai-connection",
       "check-in",
       "security",
-      "onboarding",
     ]);
     for (const svg of scenes) expect(svg.getAttribute("aria-hidden")).toBe("true");
   });

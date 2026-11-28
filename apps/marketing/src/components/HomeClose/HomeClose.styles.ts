@@ -3,7 +3,7 @@ import { css } from "@repo/ui/styled-system/css";
 /** Prototype 11's soft card: roomier padding and a rounder corner than a plain card. */
 export const closeGlass = css({ p: "clamp(24px, 3vw, 48px)", borderRadius: "28px" });
 
-/** The ticket, the question, one line and the button, centred in one glass card. */
+/** The stack, the question, one line and the button, centred in one glass card. */
 export const closeCard = css({
   display: "flex",
   flexDirection: "column",
@@ -14,18 +14,8 @@ export const closeCard = css({
   "@media (min-width: 90rem)": { "& a": { height: "auto", py: "4", px: "9", fontSize: "lg" } },
 });
 
-/**
- * The getting started ticket, at its 280px floor or wider (STYLE-GUIDE 8.3), up to 30rem. The
- * drawing itself grows to 420px, past the document size's 400px cap, so the ticket stands as tall
- * as prototype 11's (its 14em stage at 21px).
- */
-export const closePicture = css({
-  width: "min(30rem, max(280px, 100vw - 96px))",
-  maxWidth: "full",
-  mx: "auto",
-  mb: "2",
-  "& > svg": { maxWidth: "420px", mx: "auto" },
-});
+/** The picture across the card; the stack keeps to its own box inside it (`CloseStack`). */
+export const closePicture = css({ width: "full", mb: "2" });
 
 /**
  * The question, on one line in the card from 1024px (prototype 11's `p11-close__title`, which

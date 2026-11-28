@@ -232,6 +232,60 @@ test.describe("marketing home: without JavaScript and with reduced motion (MK1)"
   });
 });
 
+/** Each close piece's key and place on the page, rounded to the pixel. */
+async function stackPlaces(page: Page): Promise<string[]> {
+  return page.locator("#get-started [data-close-piece]").evaluateAll((els) =>
+    els.map((el) => {
+      const r = el.getBoundingClientRect();
+      return `${el.getAttribute("data-close-piece")} ${Math.round(r.left)},${Math.round(r.top + scrollY)} ${Math.round(r.width)}x${Math.round(r.height)}`;
+    }),
+  );
+}
+
+test.describe("marketing home: the close's stack (owner, 28 Nov 2026)", () => {
+  test("shows prototype 10's gathered stack with real-text Example tags, still under reduced motion", async ({
+    browser,
+  }) => {
+    const page = await browser.newPage({ reducedMotion: "reduce" });
+    await page.goto(HOME);
+    const close = page.locator("#get-started");
+    await close.scrollIntoViewIfNeeded();
+    const stack = close.locator("[data-close-stack]");
+    await expect(stack).toBeVisible();
+    await expect(stack).toHaveAttribute("aria-hidden", "true");
+    await expect(stack.locator("[data-close-piece]")).toHaveCount(6);
+    await expect(stack.getByText("Example", { exact: true })).toHaveCount(6);
+    const before = await stackPlaces(page);
+    await untilStill(page, "#get-started [data-close-piece]");
+    expect(await stackPlaces(page)).toEqual(before);
+    // No script ever placed a piece: each rests where the stylesheet puts it.
+    const styled = await stack
+      .locator("[data-close-piece]")
+      .evaluateAll((els) => els.filter((el) => el.hasAttribute("style")).length);
+    expect(styled).toBe(0);
+    await page.close();
+  });
+
+  test("gathers once and comes to rest exactly where reduced motion shows it", async ({
+    browser,
+  }) => {
+    // It scrolls the journey scene on the way to the close.
+    test.setTimeout(SCENE_SCROLL_BUDGET);
+    const still = await browser.newPage({ reducedMotion: "reduce" });
+    await still.goto(HOME);
+    await still.locator("#get-started").scrollIntoViewIfNeeded();
+    const rest = await stackPlaces(still);
+    await still.close();
+    const page = await browser.newPage();
+    await page.goto(HOME);
+    await scrollThrough(page);
+    await page.locator("#get-started").scrollIntoViewIfNeeded();
+    await untilStill(page, "#get-started [data-close-piece]");
+    expect(await stackPlaces(page)).toEqual(rest);
+    await page.close();
+  });
+});
+
 test.describe("marketing home: controls", () => {
   test("the pause control stops the ambient motion and is reachable by keyboard (MK14)", async ({
     page,

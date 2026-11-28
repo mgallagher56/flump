@@ -44,6 +44,42 @@ async function openPage(
   return page;
 }
 
+/*
+ * The close on the area and AI connection pages (`TicketClose`): prototype 10's gathered stack of
+ * the home hero's pieces (owner, 28 Nov 2026), each piece tagged "Example" in real text, still
+ * under reduced motion. The features index has no close.
+ */
+for (const row of PAGES.filter((page) => page.path !== "/features")) {
+  test(`marketing ${row.name}: the close shows the gathered stack, still under reduced motion`, async ({
+    browser,
+  }) => {
+    const page = await openPage(browser, row.path, {
+      reducedMotion: "reduce",
+      viewport: { width: 1280, height: 900 },
+    });
+    const close = page.getByTestId("feature-final-cta");
+    await close.scrollIntoViewIfNeeded();
+    const stack = close.locator("[data-close-stack]");
+    await expect(stack).toBeVisible();
+    await expect(stack).toHaveAttribute("aria-hidden", "true");
+    await expect(stack.locator("[data-close-piece]")).toHaveCount(6);
+    await expect(stack.getByText("Example", { exact: true })).toHaveCount(6);
+    const places = () =>
+      stack
+        .locator("[data-close-piece]")
+        .evaluateAll((els) =>
+          els.map(
+            (el) => `${el.hasAttribute("style")} ${JSON.stringify(el.getBoundingClientRect())}`,
+          ),
+        );
+    const before = await places();
+    await untilStill(page, "[data-close-piece]");
+    expect(await places()).toEqual(before);
+    expect(before.every((place) => place.startsWith("false "))).toBe(true);
+    await page.context().close();
+  });
+}
+
 for (const row of PAGES) {
   test.describe(`marketing ${row.name}`, () => {
     test("is complete with no JavaScript: every band in reading order, nothing waiting to fade in, the still orbs in the hero (MK1, MK11)", async ({
