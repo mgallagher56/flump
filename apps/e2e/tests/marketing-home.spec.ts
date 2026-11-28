@@ -211,6 +211,8 @@ test.describe("marketing home: without JavaScript and with reduced motion (MK1)"
     });
     const page = await context.newPage();
     await page.goto(HOME);
+    // The header's Reduce motion needs script to do anything, so it is not offered without it.
+    await expect(page.getByRole("button", { name: "Reduce motion" })).toBeHidden();
     const stops = page.locator("#journey section[data-journey-stop]");
     await expect(stops).toHaveCount(6);
     // Plain sections in reading order: each stop starts below the one before it.

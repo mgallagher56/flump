@@ -103,7 +103,11 @@ const LIGHT: readonly BubbleSpot[] = [
   {
     set: "skyTeal",
     show: "phone",
-    place: css({ "--spot-x": "calc(50cqw - 8.5rem)", "--spot-y": "21rem", "--spot-size": "36px" }),
+    place: css({
+      "--spot-x": "calc(50cqw - 9.75rem)",
+      "--spot-y": "12.375rem",
+      "--spot-size": "36px",
+    }),
   },
 ];
 
@@ -144,7 +148,11 @@ const MEDIUM: readonly BubbleSpot[] = [
   {
     set: "violetRose",
     show: "phone",
-    place: css({ "--spot-x": "calc(50cqw + 8rem)", "--spot-y": "20.25rem", "--spot-size": "26px" }),
+    place: css({
+      "--spot-x": "calc(50cqw + 9rem)",
+      "--spot-y": "16.625rem",
+      "--spot-size": "26px",
+    }),
   },
 ];
 
