@@ -2,7 +2,7 @@ import { css, cva } from "@repo/ui/styled-system/css";
 
 /* From 30rem (480px), as prototype 11: the roomier control and the stop's name. */
 
-/** One frosted pill: the section nav, and anything set beside it (the motion control). */
+/** One frosted pill: the section nav. */
 const pill = {
   display: "flex",
   alignItems: "center",
@@ -41,16 +41,6 @@ export const dock = css({
   transitionProperty: "opacity, translate",
   transitionDuration: "base",
   transitionTimingFunction: "standard",
-  "& [data-motion-control]": { ...pill, px: "1" },
-  // The motion control beside the nav: a full 44px target. Under 30rem the dock has no room for
-  // its words beside the count, so it is an icon button there; its words stay in the page, out of
-  // sight, as its accessible name ("Pause animation", WCAG 4.1.2), and with no visible words
-  // there is no visible label for that name to differ from (WCAG 2.5.3).
-  "& [data-motion-control] button": { height: "11" },
-  "@media (max-width: 29.99rem)": {
-    "& [data-motion-control] button": { width: "11", px: "0", justifyContent: "center" },
-    "& [data-motion-label]": { srOnly: true },
-  },
   "&[data-scrolling]:not(:focus-within):not(:hover)": {
     opacity: 0,
     pointerEvents: "none",

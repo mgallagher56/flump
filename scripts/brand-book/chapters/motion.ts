@@ -119,7 +119,7 @@ export function renderMotionChapter(tokens: BrandTokens): string {
       <article class="card-subtle">
         <h3 class="card-title">Reduced motion and still fallbacks (M4, MK1, MK11, MK14)</h3>
         <p class="prose">
-          Under <code>prefers-reduced-motion: reduce</code>, changes are instant or a short fade; chart drawing, counting, gliding and ambient motion stop. On marketing, GSAP and three.js are not loaded, the orb is a still image and bubble fields stand still. Moving scenes lasting over 5 seconds carry a pause control ("Pause animation" / "Play animation").
+          Under <code>prefers-reduced-motion: reduce</code>, changes are instant or a short fade; chart drawing, counting, gliding and ambient motion stop. On marketing, GSAP and three.js are not loaded, the orb is a still image and bubble fields stand still. On marketing, the header's "Reduce motion" button on every page gives the same still site, remembered across pages and visits; it stops any scene that would move for more than 5 seconds.
         </p>
       </article>
     </div>
