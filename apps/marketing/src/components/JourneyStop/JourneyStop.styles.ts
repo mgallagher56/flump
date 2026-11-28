@@ -9,6 +9,9 @@ import { css, cva } from "@repo/ui/styled-system/css";
  * screen, so the stops start a span apart; each frame is a full screen, sticky under the header
  * from a beat above its section, and the arrive and leave timelines hide whichever is not its turn.
  * The section's top is where its pair has fully arrived.
+ *
+ * With `?stops=scroll` the journey also carries `data-stops="scroll"` and sets no beat: the stops
+ * follow each other, each frame holding for the rest between scrolling in and scrolling out.
  */
 
 export const stop = css({
@@ -25,6 +28,10 @@ export const stop = css({
     },
   },
   "[data-live=on] section + &": { marginTop: "calc(-1 * var(--journey-screen))" },
+  // `?stops=scroll`: the stops follow each other with no overlap, so each frame scrolls in from
+  // below, holds under the header for the rest (the journey sets no beat) and scrolls out at the
+  // top: plain sticky, nothing hidden or timed.
+  "[data-live=on][data-stops=scroll] section + &": { marginTop: "0" },
 });
 
 export const frame = css({

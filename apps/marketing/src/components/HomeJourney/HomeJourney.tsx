@@ -8,7 +8,7 @@ import { seconds } from "../../motion/moments/arrive";
 import { useGsapMoment } from "../../motion/useGsapMoment";
 import { GlassOrb, ORB_TONES, type OrbTone } from "../GlassOrb";
 import { JourneyStop } from "../JourneyStop";
-import { JOURNEY_STOPS } from "../JourneyStop/journeyStops";
+import { JOURNEY_STOPS, type StopsMode, stopsModeFrom } from "../JourneyStop/journeyStops";
 import { SceneStage, type SceneStartContext } from "../SceneStage";
 import * as s from "./HomeJourney.styles";
 
@@ -51,6 +51,11 @@ const readPalette = (stage: HTMLElement): JourneyPalette => {
  * the first stop so the scene recedes behind the stops. The scrim is decoration behind the content,
  * so tying its opacity to scroll does not break MK2's rule on content. Turning on "Reduce
  * motion" in the header (MK14) stills the scene and returns the stops to the plain list.
+ *
+ * With `?stops=scroll` in the address the journey carries `data-stops="scroll"`: live, each pair
+ * scrolls in from below with the page, holds centred under the header for a run of scroll, then
+ * scrolls out at the top, with no fade and no timed changeover. The scene's orb still travels
+ * between the holds. Still, it is the same plain list.
  */
 export const HomeJourney: FC = () => {
   const journeyRef = useRef<HTMLDivElement>(null);
@@ -62,6 +67,10 @@ export const HomeJourney: FC = () => {
   if (prefersReduced) stopped.current = true;
   const [ready, setReady] = useState(false);
   const live = ready && !prefersReduced && !still && !stopped.current;
+  // `?stops=scroll` (owner, 28 Nov 2026), read on the client after mount like `?hero=timed`, and
+  // always before the journey goes live, so the server HTML and first paint are the same either way.
+  const [mode, setMode] = useState<StopsMode>("pinned");
+  useEffect(() => setMode(stopsModeFrom(window.location.search)), []);
 
   // The pinned changeovers need GSAP: go live only once it has loaded (never under reduced motion).
   // The first render after hydration reads motion as allowed (the server's answer), so the request
@@ -141,6 +150,7 @@ export const HomeJourney: FC = () => {
       className={s.journey}
       data-journey=""
       data-live={live ? "on" : "off"}
+      data-stops={mode}
       data-testid="home-journey"
       id="journey"
       ref={journeyRef}
@@ -175,6 +185,7 @@ export const HomeJourney: FC = () => {
           index={index}
           key={stop.key}
           live={live}
+          mode={mode}
           stop={stop}
           total={JOURNEY_STOPS.length}
         />

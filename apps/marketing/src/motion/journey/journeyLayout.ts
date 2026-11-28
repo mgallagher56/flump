@@ -221,7 +221,10 @@ export interface StopMeasure {
   readonly top: number;
   /** Its frame's sticky `top`, 0 without a frame. */
   readonly stickyTop: number;
-  /** The beat before its frame holds: its frame's negative top margin, as a positive height. */
+  /**
+   * The part of its span that is not rest: pinned, its frame's negative top margin as a positive
+   * height (the beat); with `?stops=scroll`, its frame's height (the travel to the next hold).
+   */
   readonly beat: number;
 }
 

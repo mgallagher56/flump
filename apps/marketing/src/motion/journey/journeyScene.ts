@@ -544,13 +544,16 @@ export async function createJourneyScene(options: JourneySceneOptions): Promise<
 
   let anchors: number[] = [];
   const measure = () => {
+    // With `?stops=scroll` no frame is lifted: the travel between two holds is a whole frame, its
+    // pair scrolling out at the top as the next comes up from below.
+    const scrolling = journey.dataset.stops === "scroll";
     const stops = sections.map((section) => {
       const frame = section.querySelector<HTMLElement>("[data-stop-frame]");
       const style = frame ? getComputedStyle(frame) : null;
       return {
         top: section.getBoundingClientRect().top + window.scrollY,
         stickyTop: cssPixels(style?.top),
-        beat: -cssPixels(style?.marginTop),
+        beat: scrolling ? (frame?.offsetHeight ?? 0) : -cssPixels(style?.marginTop),
       };
     });
     const journeyTop = journey.getBoundingClientRect().top + window.scrollY;

@@ -211,4 +211,19 @@ describe("HomeJourney", () => {
     });
     expect(journey.getAttribute("data-live")).toBe("on");
   });
+
+  it("reads ?stops=scroll after mount, keeping the server HTML on the default pinned stops", () => {
+    expect(serverDom().querySelector("[data-journey]")?.getAttribute("data-stops")).toBe("pinned");
+    window.history.replaceState(null, "", "/?utm=x&stops=scroll");
+    const { unmount } = render(page);
+    expect(screen.getByTestId("home-journey").getAttribute("data-stops")).toBe("scroll");
+    unmount();
+    for (const search of ["/", "/?stops=SCROLL", "/?stops=pinned"]) {
+      window.history.replaceState(null, "", search);
+      const view = render(page);
+      expect(screen.getByTestId("home-journey").getAttribute("data-stops")).toBe("pinned");
+      view.unmount();
+    }
+    window.history.replaceState(null, "", "/");
+  });
 });

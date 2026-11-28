@@ -1245,6 +1245,251 @@ test.describe("marketing home: controls", () => {
   });
 });
 
+test.describe("marketing home: journey stops that scroll with the page (?stops=scroll, owner, 28 Nov 2026)", () => {
+  // The second journey mode: each stop's cards scroll in from below with the page, hold centred in
+  // the window for a set run of scroll, then scroll out at the top. No fade and no timed
+  // changeover; the default mode is unchanged.
+  const SCROLL_STOPS = `${HOME}?stops=scroll`;
+  type Where = "before" | "start" | "end" | "after" | "here";
+
+  /**
+   * Scrolls stop `k` to `where` (its section top a little below the window; the start or end of
+   * its hold; its section bottom a little above the window; or stays put), then reads where its
+   * pair is, where the header ends, how far the hold runs and where the orb rests (the scene's
+   * lane, `laneFor` in journeyLayout.ts: a band of an eighth of the height and a 38px orb on a
+   * phone, else a band of 130px held to 11% to 17% of the height and an orb of half the band, at
+   * most 66px).
+   */
+  const pairAt = (page: Page, k: number, where: Where) =>
+    page.evaluate(
+      async ({ k, where }) => {
+        const stop = document.querySelectorAll<HTMLElement>("#journey [data-journey-stop]")[k];
+        const frame = stop?.querySelector<HTMLElement>("[data-stop-frame]");
+        const pair = stop?.querySelector<HTMLElement>("[data-stop-pair]");
+        if (!stop || !frame || !pair) throw new Error(`stop ${k + 1} is missing its pair`);
+        const head = document.querySelector("header")?.offsetHeight ?? 0;
+        const top = stop.getBoundingClientRect().top + window.scrollY;
+        const hold = stop.offsetHeight - frame.offsetHeight;
+        const to = {
+          before: top - window.innerHeight - 10,
+          start: top - head + 2,
+          end: top - head + hold - 2,
+          after: top + stop.offsetHeight + 10,
+          here: undefined,
+        }[where];
+        // "here" never scrolls: a scroll of its own would stop a smooth move still on its way.
+        if (to !== undefined) window.scrollTo({ top: to, behavior: "instant" });
+        const drawn = () => new Promise((resolve) => requestAnimationFrame(resolve));
+        await drawn();
+        await drawn();
+        const r = pair.getBoundingClientRect();
+        const h = window.innerHeight;
+        const phone = window.innerWidth < 768;
+        const band = phone ? h * 0.125 : Math.min(0.17 * h, Math.max(0.11 * h, 130));
+        return {
+          top: r.top,
+          bottom: r.bottom,
+          height: r.height,
+          h,
+          header: document.querySelector("header")?.getBoundingClientRect().bottom ?? 0,
+          orbTop: h - band - (phone ? 38 : Math.min(66, band / 2)),
+          hold,
+          sectionTop: stop.getBoundingClientRect().top,
+        };
+      },
+      { k, where },
+    );
+
+  /** The pinned journey's centring rules: centred, else clear of the orb, else under the header. */
+  const expectCentred = (at: Awaited<ReturnType<typeof pairAt>>, label: string) => {
+    expect(at.top, label).toBeGreaterThanOrEqual(at.header + 11);
+    const centredTop = at.h / 2 - at.height / 2;
+    if (centredTop + at.height <= at.orbTop - 16) {
+      expect(Math.abs(at.top - centredTop), label).toBeLessThan(4);
+    } else if (at.height <= at.orbTop - 16 - at.header - 12) {
+      expect(at.bottom, label).toBeLessThanOrEqual(at.orbTop - 15);
+      expect(at.bottom, label).toBeGreaterThan(at.orbTop - 20);
+    } else {
+      expect(at.top, label).toBeLessThan(at.header + 42);
+    }
+  };
+
+  /** Every part of stop `k` shows whole: nothing faded or hidden. */
+  const expectWhole = async (page: Page, k: number) => {
+    const parts = await page
+      .locator("#journey [data-journey-stop]")
+      .nth(k)
+      .locator("h2, p, [data-stop-side], [data-stop-pair]")
+      .evaluateAll(
+        (els, shownSrc) =>
+          els.map((el) => (new Function(`return ${shownSrc}`)() as typeof shownInJourney)(el)),
+        shownInJourney.toString(),
+      );
+    expect(parts.length).toBeGreaterThan(0);
+    for (const part of parts) expect(part).toEqual({ opacity: 1, hidden: false });
+  };
+
+  /** Everything in the pairs, the samples' moving parts included: still once each moment has finished. */
+  const STILL_PARTS = "#journey :is([data-stop-pair], [data-stop-pair] *)";
+
+  for (const [width, height] of [
+    [1440, 900],
+    [390, 844],
+  ] as const) {
+    test(`at ${width} by ${height} each stop's pair comes up from below, holds centred, then leaves at the top`, async ({
+      browser,
+    }) => {
+      test.setTimeout(SCENE_SCROLL_BUDGET);
+      const page = await openPage(browser, { viewport: { width, height } });
+      await page.goto(SCROLL_STOPS);
+      await liveBeforeScroll(page);
+      const stops = page.locator("#journey [data-journey-stop]");
+      for (const k of [1, 2, 3]) {
+        const label = (where: string) => `stop ${k + 1}, ${where}`;
+        const before = await pairAt(page, k, "before");
+        expect(before.top, label("before its hold")).toBeGreaterThanOrEqual(before.h);
+        await expect(stops.nth(k)).toHaveAttribute("data-enhanced", "true", { timeout: 15_000 });
+        const start = await pairAt(page, k, "start");
+        // A hold of a real run of scroll: more than half a screen.
+        expect(start.hold, label("hold")).toBeGreaterThan(start.h * 0.5);
+        await untilStill(page, STILL_PARTS);
+        expectCentred(start, label("at the start of its hold"));
+        await expectWhole(page, k);
+        const end = await pairAt(page, k, "end");
+        expectCentred(end, label("at the end of its hold"));
+        expect(Math.abs(end.top - start.top), label("held still")).toBeLessThan(2);
+        await expectWhole(page, k);
+        const after = await pairAt(page, k, "after");
+        expect(after.bottom, label("after its hold")).toBeLessThanOrEqual(0);
+      }
+      // No frame is lifted and no section overlaps another: each starts where the last ends.
+      const joins = await stops.evaluateAll((els) =>
+        els.slice(1).map((el, i) => {
+          const prev = els[i] as HTMLElement;
+          const frame = el.querySelector<HTMLElement>("[data-stop-frame]");
+          return {
+            gap: Math.round(el.getBoundingClientRect().top - prev.getBoundingClientRect().bottom),
+            lift: frame ? getComputedStyle(frame).marginTop : "",
+          };
+        }),
+      );
+      for (const join of joins) expect(join).toEqual({ gap: 0, lift: "0px" });
+      await expect(page.locator("#journey")).toHaveAttribute("data-stops", "scroll");
+      await page.context().close();
+    });
+  }
+
+  test("the stop control's next and previous land each stop on its centred hold", async ({
+    browser,
+  }) => {
+    test.setTimeout(SCENE_SCROLL_BUDGET);
+    const page = await openPage(browser, { viewport: { width: 1440, height: 900 } });
+    await page.goto(SCROLL_STOPS);
+    await liveBeforeScroll(page);
+    const control = page.locator("[data-stop-control]");
+    const label = control.getByTestId("stop-control-label");
+    const next = control.getByRole("button", { name: /^Next section/ });
+    const previous = control.getByRole("button", { name: /^Previous section/ });
+    const names = await page
+      .locator("[data-home-section]")
+      .evaluateAll((els) => els.map((el) => el.getAttribute("data-home-section-name")));
+    const stops = page.locator("#journey [data-journey-stop]");
+    const firstStop = names.indexOf(await stops.first().getAttribute("data-home-section-name"));
+    expect(firstStop).toBeGreaterThan(0);
+    // Reach the section before the journey, letting each smooth move land before the next.
+    const sections = page.locator("[data-home-section]");
+    for (let i = 0; i < firstStop - 1; i++) {
+      await next.click();
+      await expect(label).toContainText(`${i + 2} of`);
+      await expect
+        .poll(async () => Math.round((await sections.nth(i + 1).boundingBox())?.y ?? -1), {
+          timeout: 10_000,
+        })
+        .toBeLessThan(120);
+    }
+    const head = await page.evaluate(() => document.querySelector("header")?.offsetHeight ?? 0);
+    /** Waits for the smooth move to bring stop `k`'s section top under the header: its hold. */
+    const landed = async (k: number) => {
+      await expect
+        .poll(async () => Math.abs((await pairAt(page, k, "here")).sectionTop - head), {
+          timeout: 10_000,
+        })
+        .toBeLessThan(3);
+      const heading = await stops.nth(k).getAttribute("aria-labelledby");
+      await expect(page.locator(`[id="${heading}"]`)).toBeFocused();
+      await untilStill(page, STILL_PARTS);
+      expectCentred(await pairAt(page, k, "here"), `stop ${k + 1} by the stop control`);
+      await expectWhole(page, k);
+      // The stops either side are out of the window, not waiting faded in the same place.
+      if (k > 0) expect((await pairAt(page, k - 1, "here")).bottom).toBeLessThanOrEqual(0);
+      expect((await pairAt(page, k + 1, "here")).top).toBeGreaterThanOrEqual(900);
+    };
+    for (const k of [0, 1, 2, 3]) {
+      await next.click();
+      await landed(k);
+    }
+    await previous.click();
+    await landed(2);
+    await page.context().close();
+  });
+
+  test("Tab into each stop's link scrolls the stop to its centred hold", async ({ browser }) => {
+    test.setTimeout(SCENE_SCROLL_BUDGET);
+    const page = await openPage(browser, { viewport: { width: 1440, height: 900 } });
+    await page.goto(SCROLL_STOPS);
+    const journey = page.locator("#journey");
+    await journey.locator("#journey-title").scrollIntoViewIfNeeded();
+    await expect(journey).toHaveAttribute("data-live", "on", { timeout: 15_000 });
+    await expect(journey.locator("[data-journey-stop]").first()).toHaveAttribute(
+      "data-enhanced",
+      "true",
+      { timeout: 15_000 },
+    );
+    await journey.locator("#journey-title").evaluate((heading) => {
+      heading.setAttribute("tabindex", "-1");
+      (heading as HTMLElement).focus({ preventScroll: true });
+    });
+    const head = await page.evaluate(() => document.querySelector("header")?.offsetHeight ?? 0);
+    for (const k of [0, 1, 2, 3]) {
+      await page.keyboard.press("Tab");
+      expect(
+        await page.evaluate(
+          () => document.activeElement?.closest<HTMLElement>("[data-journey-stop]")?.dataset.stop,
+        ),
+      ).toBe(String(k + 1));
+      // Anywhere in its hold: the section's top between the header and a hold above it.
+      const at = await pairAt(page, k, "here");
+      expect(at.sectionTop, `stop ${k + 1}'s hold`).toBeLessThanOrEqual(head + 2);
+      expect(at.sectionTop, `stop ${k + 1}'s hold`).toBeGreaterThanOrEqual(head - at.hold - 2);
+      await untilStill(page, STILL_PARTS);
+      expectCentred(await pairAt(page, k, "here"), `stop ${k + 1} by Tab`);
+      // The stop before has scrolled out at the top, rather than waiting faded in the same place.
+      if (k > 0) {
+        expect((await pairAt(page, k - 1, "here")).bottom, `stop ${k}`).toBeLessThanOrEqual(0);
+      }
+    }
+    await page.context().close();
+  });
+
+  test("with reduced motion the stops are the plain list, as in the default mode", async ({
+    browser,
+  }) => {
+    const page = await openPage(browser, {
+      viewport: { width: 1440, height: 900 },
+      reducedMotion: "reduce",
+    });
+    await page.goto(SCROLL_STOPS);
+    const journey = page.locator("#journey");
+    await expect(journey).toHaveAttribute("data-stops", "scroll");
+    await expect(journey).toHaveAttribute("data-live", "off");
+    const frames = await journey
+      .locator("[data-stop-frame]")
+      .evaluateAll((els) => els.map((el) => getComputedStyle(el).position));
+    expect(frames).toEqual(Array(6).fill("static"));
+    await page.context().close();
+  });
+});
+
 test.describe("marketing home: receding scene", () => {
   // The receding scene at a stop sits halfway between prototype 11's (tint 66% and 22% on Mint,
   // 50% and 14% on Midnight; blur 5px and 4px) and the sharp scene (owner, 28 Nov 2026), so the

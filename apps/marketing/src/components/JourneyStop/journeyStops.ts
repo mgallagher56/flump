@@ -95,3 +95,14 @@ export const JOURNEY_STOPS: readonly JourneyStopCopy[] = [
 
 /** The id of a stop's section, for a link into the journey. */
 export const journeyStopId = (key: JourneyStopKey) => `journey-stop-${key}`;
+
+/**
+ * How the stops play once the journey is live: `pinned` (the default) changes the pairs over in
+ * place under the header; `scroll` (`?stops=scroll`, owner, 28 Nov 2026) lets each pair scroll in
+ * with the page, hold centred for a run of scroll and scroll out.
+ */
+export type StopsMode = "pinned" | "scroll";
+
+/** Reads the stops' mode from the address on the client: `?stops=scroll`, otherwise pinned. */
+export const stopsModeFrom = (search: string): StopsMode =>
+  new URLSearchParams(search).get("stops") === "scroll" ? "scroll" : "pinned";

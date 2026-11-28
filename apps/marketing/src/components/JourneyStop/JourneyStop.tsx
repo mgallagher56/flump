@@ -1,7 +1,8 @@
 import { type FC, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { SAMPLE_MOMENTS } from "../../motion/journey/sampleMoments";
-import { leaveSeconds, pairArrive, pairLeave } from "../../motion/moments/arrive";
+import type { GsapKit } from "../../motion/loadGsapKit";
+import { leaveSeconds, pairArrive, pairLeave, sampleArrive } from "../../motion/moments/arrive";
 import { useGsapMoment } from "../../motion/useGsapMoment";
 import { settleCounts } from "../CountUpFigure/countUpMoment";
 import { settleDrawnCharts } from "../DrawnLineChart/drawChartMoment";
@@ -10,7 +11,7 @@ import { STOP_ARRIVE_EVENT } from "../HomeStopControl";
 import { JourneySample } from "../JourneySample";
 import { LitCtas } from "../LitCtas";
 import * as s from "./JourneyStop.styles";
-import { type JourneyStopCopy, journeyStopId } from "./journeyStops";
+import { type JourneyStopCopy, journeyStopId, type StopsMode } from "./journeyStops";
 
 export interface JourneyStopProps {
   stop: JourneyStopCopy;
@@ -19,12 +20,71 @@ export interface JourneyStopProps {
   total: number;
   /** The journey's pinned changeovers are on (scripts ran, motion allowed, GSAP loaded). */
   live: boolean;
+  /** How the stops play once live: changed over in place (the default), or scrolling with the page. */
+  mode?: StopsMode;
 }
 
 const headerHeight = () => document.querySelector("header")?.offsetHeight ?? 0;
 /** A frame's beat: it starts that far above its section (its negative top margin). */
 const beatOf = (frame: Element | null | undefined) =>
   frame ? -(Number.parseFloat(getComputedStyle(frame).marginTop) || 0) : 0;
+
+/**
+ * A stop in `?stops=scroll`: the pair is never hidden and travels with the page, so only its
+ * sample's moment plays, once, started as the sample's top comes into the window and finished by
+ * time (MK2). A sample already in or past the window when this is set up, a stop the stop control
+ * moves to (`STOP_ARRIVE_EVENT`) and a stop holding focus show it finished. Focus moving into a
+ * stop outside its hold scrolls it to the nearer end of its hold, where its pair rests centred.
+ */
+function setUpScrollingStop(kit: GsapKit, root: HTMLElement): () => void {
+  const frame = root.querySelector<HTMLElement>("[data-stop-frame]");
+  const sampleRoot = root.querySelector<HTMLElement>("[data-sample]");
+  const moment = sampleRoot ? SAMPLE_MOMENTS[sampleRoot.dataset.sample ?? ""] : undefined;
+  const offs: (() => void)[] = [];
+  const listen = (type: string, fn: () => void) => {
+    root.addEventListener(type, fn);
+    offs.push(() => root.removeEventListener(type, fn));
+  };
+
+  if (sampleRoot && moment) {
+    const shown = root.contains(document.activeElement);
+    const inView = sampleRoot.getBoundingClientRect().top < window.innerHeight;
+    // Built only while the sample is still below the window, since its start state draws at once.
+    if (!shown && !inView) {
+      const tl = sampleArrive(kit, { root: sampleRoot, moment });
+      kit.ScrollTrigger.create({
+        trigger: sampleRoot,
+        start: "top bottom",
+        once: true,
+        onEnter: () => {
+          tl.play();
+        },
+      });
+      const finish = () => {
+        tl.progress(1);
+      };
+      listen(STOP_ARRIVE_EVENT, finish);
+      listen("focusin", finish);
+    }
+  }
+
+  // The hold runs from the section's top at the header to the frame's foot at the section's foot.
+  listen("focusin", () => {
+    if (!frame) return;
+    const head = headerHeight();
+    const box = root.getBoundingClientRect();
+    const hold = root.offsetHeight - frame.offsetHeight;
+    if (box.top <= head + 2 && box.top >= head - hold - 2) return;
+    const top = box.top + window.scrollY - head + (box.top > head ? 0 : hold);
+    window.scrollTo({ top, behavior: "auto" });
+  });
+
+  return () => {
+    for (const off of offs) off();
+    settleCounts(root);
+    settleDrawnCharts(root);
+  };
+}
 
 /** The page's call to action, lit as the hero's (prototype 11's `LitCtas`), closing the journey. */
 const StopCtas: FC = () => (
@@ -52,8 +112,17 @@ const StopCtas: FC = () => (
  * order: when one takes focus the stop does the same and scrolls to where it rests (its section top
  * under the header), so every stop's link is reached by Tab in order and shown finished (MK2). A
  * stop that already holds focus when its motion is set up starts finished.
+ *
+ * With `mode` "scroll" (`?stops=scroll`) there is no changeover: the pair scrolls in with the page,
+ * holds centred, then scrolls out (`setUpScrollingStop`).
  */
-export const JourneyStop: FC<JourneyStopProps> = ({ stop, index, total, live }) => {
+export const JourneyStop: FC<JourneyStopProps> = ({
+  stop,
+  index,
+  total,
+  live,
+  mode = "pinned",
+}) => {
   const ref = useRef<HTMLElement>(null);
   const id = journeyStopId(stop.key);
   const titleId = `${id}-title`;
@@ -91,6 +160,7 @@ export const JourneyStop: FC<JourneyStopProps> = ({ stop, index, total, live }) 
     ref,
     (kit, root) => {
       if (!live) return undefined;
+      if (mode === "scroll") return setUpScrollingStop(kit, root);
       const { ScrollTrigger, gsap } = kit;
       const frame = root.querySelector<HTMLElement>("[data-stop-frame]");
       const pairEl = root.querySelector<HTMLElement>("[data-stop-pair]");
@@ -213,7 +283,7 @@ export const JourneyStop: FC<JourneyStopProps> = ({ stop, index, total, live }) 
         settleDrawnCharts(root);
       };
     },
-    [live, index, total],
+    [live, index, total, mode],
   );
 
   return (

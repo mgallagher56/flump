@@ -18,6 +18,10 @@ export const journey = css({
   "--journey-rest": { base: "92.4svh", md: "89.6svh" },
   "--journey-span": "calc(var(--journey-beat) + var(--journey-rest))",
   "--journey-lane": { base: "72px", md: "clamp(64px, 15svh, 150px)" },
+  // `?stops=scroll` (owner, 28 Nov 2026): the cards scroll with the page and hold centred for the
+  // rest, with no beat. A rest of 60svh keeps the page within about 50px of the pinned mode's
+  // length at 1440 by 900 and 390 by 844.
+  "&[data-stops=scroll]": { "--journey-beat": "0px", "--journey-rest": "60svh" },
 });
 
 /**
