@@ -33,8 +33,6 @@ import {
 export const USER_DATA_TABLES = [
   "transactions",
   "snapshot_checkins",
-  // E35 W5 answers after a check-in (no foreign key; one row per person per quarter).
-  "wellbeing_answers",
   "account_goals",
   "account_details",
   "import_batches",

@@ -175,7 +175,7 @@ An installed app meets backends older than itself (staging before a release) and
 - In #951:
   - The sign-in account check no longer parses the profile body at all; it needs only the status.
   - A `bad-response` on a read that parses a body is its own problem, "out of step", and the check-in's load error says so ("did not understand Flump's answer"), never "check your connection". The account check no longer parses a body, so there its only `bad-response` is a body cut off mid-stream, a dropped connection, which stays "unavailable" (independent review); the session needs no "out of step" state.
-  - The fixture has a `backend` scenario (`older`: no `wellbeingQuestions`; `newer`: an extra field), with tests and the `older-backend` flow.
+  - The fixture has a `backend` scenario (`older`: no `wellbeingQuestions`, since 28 Nov 2026 no `partnerMode` as that field was removed; `newer`: an extra field), with tests and the `older-backend` flow.
   - No per-read defaults across the data layer.
 - Proposed follow-up, before the next contract change that adds a response field:
   - A rule in `docs/api/versioning.md`: a new response field is `.optional()` or has a `.default()` on the client's read path until every backend the app can meet sends it, enforced in `check:laws` (a new required response field against the merge base fails unless allow-listed).

@@ -83,7 +83,6 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
         "household_invitations",
         "rate_limit_buckets",
         "retention_runs",
-        "wellbeing_answers",
       ]);
     });
 
@@ -298,14 +297,6 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
           [`household-hash-${n}`, `${OWNER_ID}_${n}`],
         );
       }
-      // Wellbeing answers: London today is 14 Nov 2026, so the cutoff is 14 Oct 2025. The quarter
-      // that began 1 Oct 2025 is past it; the one that began 1 Jan 2026 is inside it.
-      for (const quarter of ["2025-10-01", "2026-01-01"]) {
-        await ds.query(
-          `INSERT INTO wellbeing_answers (user_id, quarter, feeling, worse_text) VALUES ($1, $2, 'about_the_same', NULL)`,
-          [OWNER_ID, quarter],
-        );
-      }
       // The slice 9 column-drop before-image is kept 30 days: one row past it and one inside it.
       for (const [age, column] of [
         ["31 days", "monthly_savings_target"],
@@ -359,7 +350,6 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
           // Its freed invite, the old cancelled and expired links, and the old erased user's link.
           beta_invites_closed: 4,
           household_invitations_expired: 1,
-          wellbeing_answers: 1,
           account_deletion_tombstones: 1,
           liability_sign_backfill: 1,
           pension_rates_backfill: 1,
@@ -422,34 +412,8 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       expect(await count("beta_members")).toBe(2);
       expect(await count("beta_invites")).toBe(6);
       expect(await count("household_invitations")).toBe(1);
-      expect(await ds.query("SELECT quarter::text AS q FROM wellbeing_answers")).toEqual([
-        { q: "2026-01-01" },
-      ]);
       // Inactive accounts are reported, never erased by the purge.
       expect(await count("user_profiles")).toBe(2);
-    });
-
-    it("keeps a wellbeing answer 13 months from its quarter's first day, on the London clock", async () => {
-      await ds.query(
-        `INSERT INTO wellbeing_answers (user_id, quarter, feeling, worse_text) VALUES ($1, '2025-07-01', NULL, NULL)`,
-        [OWNER_ID],
-      );
-      const quarters = async () =>
-        (await ds.query("SELECT quarter::text AS q FROM wellbeing_answers")) as { q: string }[];
-      const wellbeingOnly = RETENTION_POLICIES.filter((p) => p.name === "wellbeing_answers");
-      // 1 Aug 2026 22:30 UTC is 23:30 BST: London today is 1 Aug 2026, 13 months on to the day.
-      // The cutoff is 1 Jul 2025 and the quarter is not before it, so the answer stays.
-      await runRetentionPurge(runner, new Date("2026-08-01T22:30:00Z"), wellbeingOnly);
-      expect(await quarters()).toEqual([{ q: "2025-07-01" }]);
-      // 1 Aug 2026 23:30 UTC is 00:30 BST on 2 Aug: the cutoff is 2 Jul 2025, so it goes. On the
-      // UTC date (still 1 Aug) it would have stayed.
-      const report = await runRetentionPurge(
-        runner,
-        new Date("2026-08-01T23:30:00Z"),
-        wellbeingOnly,
-      );
-      expect(report.deleted).toEqual({ wellbeing_answers: 1 });
-      expect(await quarters()).toEqual([]);
     });
 
     it("is safe to run twice: the second run deletes nothing", async () => {

@@ -12,14 +12,7 @@ import {
   ServiceUnavailableException,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import {
-  DataSource,
-  type EntityManager,
-  type EntityTarget,
-  In,
-  type ObjectLiteral,
-  Repository,
-} from "typeorm";
+import { DataSource, type EntityTarget, In, type ObjectLiteral, Repository } from "typeorm";
 import { recordAuditEvent } from "../../audit/audit-events";
 import { withdrawAllConsents } from "../../audit/consents";
 import { accountDeletedException } from "../../auth/recent-login";
@@ -29,7 +22,6 @@ import { Account } from "../../entities/account.entity";
 import { AccountDetail } from "../../entities/account-detail.entity";
 import { BankConnection } from "../../entities/bank-connection.entity";
 import { HOUSING_STATUSES, TAX_REGIONS, UserProfile } from "../../entities/user-profile.entity";
-import { WellbeingAnswer } from "../../entities/wellbeing-answer.entity";
 import { USER_IDENTITY_ADAPTER, type UserIdentityAdapter } from "../../identity/identity.adapter";
 import { BANK_CONSENT_REVOKER, type BankConsentRevoker } from "../banking/bank-consent-revoker";
 import { AccountDeletionService } from "../privacy/account-deletion.service";
@@ -183,7 +175,6 @@ export class UserProfileService implements ProfileLifecycle {
       netWorthCountsProperty: true,
       netWorthCountsStudentLoan: false,
       partnerMode: false,
-      wellbeingQuestions: true,
     });
 
     return {
@@ -254,22 +245,13 @@ export class UserProfileService implements ProfileLifecycle {
           if (!row) throw preconditionFailed();
           const onboarded = this.applyProfileUpdate(row, body);
           const written = await repository.save(row);
-          await this.deleteWellbeingAnswersIfOff(repository.manager, userId, body);
           return { profile: row, saved: written, wasOnboarded: onboarded };
         },
       ));
     } else {
       profile = await this.findOrCreateProfile(userId, PROFILE_UPDATE_DEFAULTS(userId));
       wasOnboarded = this.applyProfileUpdate(profile, body);
-      const row = profile;
-      saved =
-        body.wellbeingQuestions === false
-          ? await this.dataSource.transaction(async (manager) => {
-              const written = await manager.getRepository(UserProfile).save(row);
-              await this.deleteWellbeingAnswersIfOff(manager, userId, body);
-              return written;
-            })
-          : await this.userProfileRepository.save(row);
+      saved = await this.userProfileRepository.save(profile);
     }
 
     // E30 D8: finishing onboarding records the first monthly snapshot of the user's accounts.
@@ -304,20 +286,6 @@ export class UserProfileService implements ProfileLifecycle {
       ...this.formatProfile(saved),
       email: email || null,
     };
-  }
-
-  /**
-   * E35 W5: switching the wellbeing questions off also deletes the person's earlier answers. Runs
-   * in the transaction that saves the switch, so the two commit or roll back together. Sending
-   * false when it is already off deletes nothing new (there is nothing left to delete).
-   */
-  private async deleteWellbeingAnswersIfOff(
-    manager: EntityManager,
-    userId: string,
-    body: UpdateProfileRequest,
-  ): Promise<void> {
-    if (body.wellbeingQuestions !== false) return;
-    await manager.getRepository(WellbeingAnswer).delete({ userId });
   }
 
   /**
@@ -390,12 +358,6 @@ export class UserProfileService implements ProfileLifecycle {
     }
     if (body.birthYear !== undefined) profile.birthYear = birthYearOrNull(body.birthYear);
     if (body.checkInDay !== undefined) profile.checkInDay = checkInDayOrNull(body.checkInDay);
-    if (body.wellbeingQuestions !== undefined) {
-      if (typeof body.wellbeingQuestions !== "boolean") {
-        throw new BadRequestException("wellbeingQuestions must be true or false");
-      }
-      profile.wellbeingQuestions = body.wellbeingQuestions;
-    }
     if (body.studentLoanPlans !== undefined) {
       profile.studentLoanPlans = studentLoanPlansOrNull(body.studentLoanPlans);
     }

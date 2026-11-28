@@ -43,6 +43,7 @@ import { AddNetWorthChoices1794800000000 } from "./AddNetWorthChoices17948000000
 import { AddProfileFacts1794355723000 } from "./AddProfileFacts1794355723000";
 import { AddRateLimitBuckets1794632012000 } from "./AddRateLimitBuckets1794632012000";
 import { AddUserIdIndexes1794358100000, USER_ID_INDEXES } from "./AddUserIdIndexes1794358100000";
+import { AddWellbeingAnswers1795740000000 } from "./AddWellbeingAnswers1795740000000";
 import { AuditActionSessionSignedOut1795750000000 } from "./AuditActionSessionSignedOut1795750000000";
 import { AuditActionUserExported1795000000000 } from "./AuditActionUserExported1795000000000";
 import { AuditEventsDeleteAndTruncateGuards1795100000000 } from "./AuditEventsDeleteAndTruncateGuards1795100000000";
@@ -67,6 +68,7 @@ import {
 } from "./ClearTakeHomeSalaries1795530100000";
 import { ClearUnchosenSectionOrder1795500000000 } from "./ClearUnchosenSectionOrder1795500000000";
 import { DeleteSyncedTransactions1794355500000 } from "./DeleteSyncedTransactions1794355500000";
+import { DropWellbeingAnswers1795760000000 } from "./DropWellbeingAnswers1795760000000";
 import {
   INVOICE_TAX_RECORD_KEY,
   INVOICE_TAX_RECORD_OWNER_KEY,
@@ -2222,9 +2224,12 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
 
   describe("AddWellbeingAnswers1795740000000 (E35 W5)", () => {
     const NAME = "AddWellbeingAnswers1795740000000";
+    // DropWellbeingAnswers1795760000000 removes both again; these tests check the add on its own.
+    const toBeforeDrop = () => undoThrough("DropWellbeingAnswers1795760000000");
 
     it("defaults the switch on, refuses an unknown feeling and a second row for a quarter", async () => {
       await ds.runMigrations();
+      await toBeforeDrop();
       expect(await applied()).toContain(NAME);
       await ds.query("INSERT INTO user_profiles (user_id) VALUES ('u1')");
       expect(await ds.query("SELECT wellbeing_questions AS on FROM user_profiles")).toEqual([
@@ -2247,6 +2252,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
 
     it("refuses to revert while answers are stored or anyone switched off, then reverts", async () => {
       await ds.runMigrations();
+      await toBeforeDrop();
       await ds.query(
         "INSERT INTO user_profiles (user_id, wellbeing_questions) VALUES ('u1', false)",
       );
@@ -2264,6 +2270,87 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
           "SELECT column_name FROM information_schema.columns WHERE table_name = 'user_profiles' AND column_name = 'wellbeing_questions'",
         ),
       ).toEqual([]);
+    });
+  });
+
+  describe("DropWellbeingAnswers1795760000000 (wellbeing questions removed, 28 Nov 2026)", () => {
+    const NAME = "DropWellbeingAnswers1795760000000";
+    const switchColumn = (): Promise<unknown[]> =>
+      ds.query(
+        "SELECT column_name FROM information_schema.columns WHERE table_name = 'user_profiles' AND column_name = 'wellbeing_questions'",
+      );
+
+    it("drops the table with its stored answers and the switch column", async () => {
+      await ds.runMigrations();
+      await undoThrough(NAME);
+      await ds.query(
+        "INSERT INTO user_profiles (user_id, wellbeing_questions) VALUES ('u1', false)",
+      );
+      await ds.query(
+        "INSERT INTO wellbeing_answers (user_id, quarter, feeling, worse_text) VALUES ('u1', '2026-10-01', 'more_worried', 'Sample answer')",
+      );
+      await ds.runMigrations();
+      expect(await applied()).toContain(NAME);
+      expect(await tables()).not.toContain("wellbeing_answers");
+      expect(await switchColumn()).toEqual([]);
+      // The profile itself stays.
+      expect(await ds.query("SELECT user_id FROM user_profiles")).toEqual([{ user_id: "u1" }]);
+    });
+
+    // The table's columns and every constraint (with its definition), and the switch column with
+    // its default: what AddWellbeingAnswers made and what this migration's down() must make again.
+    const wellbeingShape = async (): Promise<unknown> => ({
+      columns: await ds.query(
+        `SELECT table_name, column_name, data_type, character_maximum_length, is_nullable, column_default
+         FROM information_schema.columns
+         WHERE table_schema = 'public'
+           AND (table_name = 'wellbeing_answers' OR (table_name = 'user_profiles' AND column_name = 'wellbeing_questions'))
+         ORDER BY table_name, column_name`,
+      ),
+      constraints: await ds.query(
+        `SELECT conname, contype, pg_get_constraintdef(oid) AS def FROM pg_constraint
+         WHERE conrelid = 'wellbeing_answers'::regclass ORDER BY conname`,
+      ),
+    });
+
+    it("down recreates the empty structure exactly as the add migration made it", async () => {
+      await ds.runMigrations();
+      // Back to before AddWellbeingAnswers (its down needs the table empty and the switch on),
+      // then its up on its own: the shape the add migration makes.
+      await undoThrough("AddWellbeingAnswers1795740000000");
+      await runUpInTransaction(new AddWellbeingAnswers1795740000000());
+      const madeByAdd = await wellbeingShape();
+      expect(JSON.stringify(madeByAdd)).toContain("CHK_wellbeing_answers_feeling");
+      await ds.query(
+        "INSERT INTO wellbeing_answers (user_id, quarter) VALUES ('u1', '2026-10-01')",
+      );
+      await runUpInTransaction(new DropWellbeingAnswers1795760000000());
+      expect(await tables()).not.toContain("wellbeing_answers");
+      await runMigrationDown(new DropWellbeingAnswers1795760000000());
+      expect(await wellbeingShape()).toEqual(madeByAdd);
+      // Nothing comes back: the answers were deleted, not set aside.
+      expect(await ds.query("SELECT count(*)::int AS n FROM wellbeing_answers")).toEqual([
+        { n: 0 },
+      ]);
+      await expect(
+        ds.query(
+          "INSERT INTO wellbeing_answers (user_id, quarter, feeling) VALUES ('u1', '2027-01-01', 'fine')",
+        ),
+      ).rejects.toThrow(/CHK_wellbeing_answers_feeling/);
+      await ds.query("INSERT INTO user_profiles (user_id) VALUES ('u2')");
+      expect(await ds.query("SELECT wellbeing_questions AS on FROM user_profiles")).toEqual([
+        { on: true },
+      ]);
+    });
+
+    it("up and down are idempotent", async () => {
+      await ds.runMigrations();
+      await runUpInTransaction(new DropWellbeingAnswers1795760000000());
+      expect(await tables()).not.toContain("wellbeing_answers");
+      await undoThrough(NAME);
+      await runMigrationDown(new DropWellbeingAnswers1795760000000());
+      expect(await tables()).toContain("wellbeing_answers");
+      expect(await switchColumn()).toEqual([{ column_name: "wellbeing_questions" }]);
     });
   });
 

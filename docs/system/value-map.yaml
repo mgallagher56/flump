@@ -1151,27 +1151,6 @@ facts:
     verdict: holds
     findings: [CH-3, CH-7, DB-10]
 
-  - id: wellbeing-answer
-    name: The answer to the two optional questions after a check-in, one per quarter
-    area: accounts
-    source_of_truth:
-      { ref: wellbeing_answers, path: apps/backend/src/entities/wellbeing-answer.entity.ts }
-    writers:
-      - {
-          surface: check-in,
-          path: apps/backend/src/modules/snapshots/wellbeing-questions.service.ts,
-          note: "POST /snapshots/wellbeing-questions; the first record of a London quarter stands, both null for a skip; switching the questions off deletes the rows (user-profile.service.ts); kept 13 months from the quarter's first day (jobs/retention.ts)",
-        }
-    readers:
-      - {
-          surface: check-in,
-          path: apps/backend/src/modules/snapshots/wellbeing-questions.service.ts,
-          note: "GET /snapshots/wellbeing-questions reads only whether the quarter has a record; the free text is read by nothing but the export and the owner's aggregate script",
-        }
-      - { surface: export, path: apps/backend/src/modules/privacy/user-data-registry.ts }
-    links: []
-    verdict: holds
-
   - id: account-goal
     name: Optional user-set goal on an account
     area: accounts
@@ -2051,30 +2030,6 @@ facts:
     verdict: broken
     findings: [AI-8]
     note: Every page honours the choices. The AI net worth projection does not.
-
-  - id: wellbeing-questions-switch
-    name: Whether to ask the two optional questions after a check-in
-    area: preferences
-    source_of_truth:
-      {
-        ref: user_profiles.wellbeing_questions,
-        path: apps/backend/src/entities/user-profile.entity.ts,
-      }
-    writers:
-      - {
-          surface: settings,
-          path: apps/backend/src/modules/profile/user-profile.service.ts,
-          note: "PATCH /user-profile wellbeingQuestions; off also deletes the person's wellbeing_answers in the same transaction",
-        }
-    readers:
-      - {
-          surface: check-in,
-          path: apps/backend/src/modules/snapshots/wellbeing-questions.service.ts,
-          note: "GET and POST /snapshots/wellbeing-questions ask and record only while it is on",
-        }
-      - { surface: export, path: apps/backend/src/modules/privacy/user-data-registry.ts }
-    links: []
-    verdict: holds
 
   - id: check-in-day
     name: Check-in day of the month

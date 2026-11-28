@@ -81,8 +81,6 @@ export const UpdateProfileRequest = z.strictObject({
   birthYear: z.number().int().min(1900).max(2100).nullish(),
   /** UX Batch E: day of the month the check-in falls on (null = the 1st). */
   checkInDay: z.number().int().min(1).max(31).nullish(),
-  /** E35 W5: the two optional questions after a check-in. Off also deletes earlier answers. */
-  wellbeingQuestions: z.boolean().optional(),
   studentLoanPlans: z
     .array(z.enum(["PLAN_1", "PLAN_2", "PLAN_4", "PLAN_5", "POSTGRAD"]))
     .max(5)
@@ -164,12 +162,6 @@ export const UserProfileDto = z.strictObject({
   taxRegion: z.enum(["ENGLAND", "WALES", "SCOTLAND", "NORTHERN_IRELAND"]).nullable(),
   birthYear: z.number().int().nullable(),
   checkInDay: z.number().int().nullable(),
-  /**
-   * Added in E35 (26 November 2026), after the v1 baseline. An older backend does not send it and
-   * asks no wellbeing questions, so a reader fills in false: what that backend really does, never
-   * a promise it cannot keep (docs/api/versioning.md). The server always sends it.
-   */
-  wellbeingQuestions: z.boolean().default(false),
   studentLoanPlans: z
     .array(z.enum(["PLAN_1", "PLAN_2", "PLAN_4", "PLAN_5", "POSTGRAD"]))
     .nullable(),
@@ -365,8 +357,6 @@ export const AccountExportProfile = z.strictObject({
   taxRegion: NullableText,
   birthYear: z.number().int().nullable(),
   checkInDay: z.number().int().nullable(),
-  /** A reader default, as on UserProfileDto: an export from before E35 has no such key. */
-  wellbeingQuestions: z.boolean().default(false),
   studentLoanPlans: TextList,
   housingStatus: NullableText,
   monthlyHousingCost: NullableNumber,
@@ -431,16 +421,6 @@ export const AccountExportAccountGoal = z.strictObject({
   label: NullableText,
   createdAt: ExportTimestamp,
   updatedAt: ExportTimestamp,
-});
-
-/**
- * `wellbeingAnswers`: the two optional questions after a check-in (E35 W5), one row per quarter
- * asked. Both answers null records a skip. `quarter` is the quarter's first day.
- */
-export const AccountExportWellbeingAnswer = z.strictObject({
-  quarter: z.string(),
-  feeling: NullableText,
-  worseText: NullableText,
 });
 
 /** `transactions`: account movements. */
@@ -705,7 +685,6 @@ export const AccountExportDocument = z.strictObject({
   accounts: z.array(AccountExportAccount),
   accountDetails: z.array(AccountExportAccountDetail),
   accountGoals: z.array(AccountExportAccountGoal).optional(),
-  wellbeingAnswers: z.array(AccountExportWellbeingAnswer).optional(),
   transactions: z.array(AccountExportTransaction),
   bankConnections: z.array(AccountExportBankConnection),
   bankOAuthStates: z.array(AccountExportBankOAuthState),
@@ -751,7 +730,6 @@ export const ACCOUNT_EXPORT_SECTIONS = {
   accounts: AccountExportAccount,
   accountDetails: AccountExportAccountDetail,
   accountGoals: AccountExportAccountGoal,
-  wellbeingAnswers: AccountExportWellbeingAnswer,
   transactions: AccountExportTransaction,
   bankConnections: AccountExportBankConnection,
   bankOAuthStates: AccountExportBankOAuthState,

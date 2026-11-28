@@ -64,16 +64,14 @@ describe("PrivacyPage", () => {
       "Security records",
       "Server logs and error reports",
       "Invites",
-      "Two questions after a check-in",
       "Messages you send us",
       "What we do not hold",
     ]);
-    // Nine groups of data, each with its own "Lawful basis:" sentence, and a second one in
-    // "Security records" for the record of which terms were agreed to (privacy notice 0.2).
-    expect((what.textContent?.match(/Lawful basis:/g) ?? []).length).toBe(10);
-    expect(what.textContent).toContain(
-      "Lawful basis: our legitimate interest in checking that Flump does people good.",
-    );
+    // Eight groups of data, each with its own "Lawful basis:" sentence, and a second one in
+    // "Security records" for the record of which terms were agreed to (privacy notice 0.2). The
+    // group for the questions after a check-in went with them (privacy notice 0.5).
+    expect((what.textContent?.match(/Lawful basis:/g) ?? []).length).toBe(9);
+    expect(what.textContent).not.toMatch(/questions after a check-in|feel worse|does people good/);
     expect(what.textContent).toContain(
       "Lawful basis: our legitimate interest in keeping a record of the agreement between us.",
     );

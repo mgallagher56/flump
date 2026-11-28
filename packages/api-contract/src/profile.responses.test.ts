@@ -44,7 +44,6 @@ const profile = {
   taxRegion: "SCOTLAND",
   birthYear: 1990,
   checkInDay: null,
-  wellbeingQuestions: true,
   studentLoanPlans: [],
   housingStatus: "mortgage",
   monthlyHousingCost: 812.5,
@@ -103,19 +102,6 @@ describe("profile response schemas", () => {
     expect(checkAgainst(UserProfileResponse, { ...profile, annualSalary: "42000.00" }).ok).toBe(
       false,
     );
-  });
-
-  it("reads a pre-E35 backend's profile, which has no wellbeingQuestions, as not asking", () => {
-    // An older backend never sent the key and asks no wellbeing questions, so a reader fills in
-    // false (what that backend does), and the profile still parses.
-    const { wellbeingQuestions: _wellbeingQuestions, ...older } = profile;
-    const parsed = UserProfileResponse.safeParse(older);
-    expect(parsed.success).toBe(true);
-    expect(parsed.data?.wellbeingQuestions).toBe(false);
-    // A newer backend's answer is kept as sent.
-    expect(
-      UserProfileResponse.parse({ ...profile, wellbeingQuestions: true }).wellbeingQuestions,
-    ).toBe(true);
   });
 
   it("rejects an absent nullable key and an extra key", () => {

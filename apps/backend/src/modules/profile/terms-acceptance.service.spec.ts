@@ -2,10 +2,11 @@ import { legalPageFromHistory } from "@flump/business-details";
 import { describe, expect, it, vi } from "vitest";
 import { AGREED_CACHE_MS, newestPair, TermsAcceptanceService } from "./terms-acceptance.service";
 
-// LEGAL_PAGES today (packages/business-details): terms 0.1 (from 2026-11-25); privacy notice 0.4
-// (from 2026-11-26), with 0.3, 0.2 and 0.1 (from 2026-11-25) before it. So on 2026-11-26 the pair
-// in force is terms 0.1 with privacy 0.4, and only privacy 0.4 satisfies the notice.
-const NOW = new Date("2026-11-26T12:00:00Z");
+// LEGAL_PAGES today (packages/business-details): terms 0.1 (from 2026-11-25); privacy notice 0.5
+// (from 2026-11-28), with 0.4 (from 2026-11-26) and 0.3, 0.2 and 0.1 (from 2026-11-25) before it.
+// So on 2026-11-28 the pair in force is terms 0.1 with privacy 0.5, and only privacy 0.5 satisfies
+// the notice.
+const NOW = new Date("2026-11-28T12:00:00Z");
 
 type Row = {
   userId: string;
@@ -67,7 +68,7 @@ const row = (userId: string, terms: string, privacy: string, at = "2026-11-25T10
 
 describe("TermsAcceptanceService.hasAgreedToTermsInForce", () => {
   it("is true for the pair in force and false with no row", async () => {
-    const { service } = serviceWith([row("u1", "0.1", "0.4")]);
+    const { service } = serviceWith([row("u1", "0.1", "0.5")]);
     expect(await service.hasAgreedToTermsInForce("u1", NOW)).toBe(true);
     expect(await service.hasAgreedToTermsInForce("u2", NOW)).toBe(false);
   });
@@ -84,7 +85,7 @@ describe("TermsAcceptanceService.hasAgreedToTermsInForce", () => {
     expect(await service.hasAgreedToTermsInForce("u1", NOW)).toBe(false);
     expect(count).toHaveBeenCalledTimes(2);
 
-    rows.push(row("u1", "0.1", "0.4"));
+    rows.push(row("u1", "0.1", "0.5"));
     expect(await service.hasAgreedToTermsInForce("u1", NOW)).toBe(true);
     // Within the time limit: answered from the cache, even after the row is gone.
     rows.length = 0;
@@ -130,7 +131,7 @@ describe("TermsAcceptanceService.status", () => {
       changed: false,
     });
     expect(status.privacyNotice).toMatchObject({
-      version: "0.4",
+      version: "0.5",
       path: "/privacy",
       changed: false,
     });
@@ -146,10 +147,10 @@ describe("TermsAcceptanceService.status", () => {
 
   it("reads the caller's latest agreement when there are several", async () => {
     const { service } = serviceWith([
-      row("u1", "0.1", "0.4", "2026-11-26T09:00:00Z"),
+      row("u1", "0.1", "0.5", "2026-11-28T09:00:00Z"),
       row("u1", "0.1", "0.1", "2026-11-20T10:00:00Z"),
       // Another user's rows never count for u1.
-      row("u2", "0.1", "0.1", "2026-11-26T11:00:00Z"),
+      row("u2", "0.1", "0.1", "2026-11-28T11:00:00Z"),
     ]);
     const status = await service.status("u1", NOW);
     expect(status).toMatchObject({ required: false, agreed: true, firstTime: false });
@@ -160,15 +161,15 @@ describe("TermsAcceptanceService.status", () => {
 describe("TermsAcceptanceService.status, agreed", () => {
   it("needs both the newest terms and the newest privacy notice", async () => {
     // Terms 0.0 is not the newest (0.1), even with the newest privacy notice.
-    const { service } = serviceWith([row("u1", "0.0", "0.4")]);
+    const { service } = serviceWith([row("u1", "0.0", "0.5")]);
     expect((await service.status("u1", NOW)).agreed).toBe(false);
   });
 
   it("orders by time when reading the latest agreement", async () => {
-    // Stored oldest first: only an ordered read finds the 0.4 row as the latest.
+    // Stored oldest first: only an ordered read finds the 0.5 row as the latest.
     const { service } = serviceWith([
       row("u1", "0.1", "0.1", "2026-11-20T10:00:00Z"),
-      row("u1", "0.1", "0.4", "2026-11-26T09:00:00Z"),
+      row("u1", "0.1", "0.5", "2026-11-28T09:00:00Z"),
     ]);
     expect((await service.status("u1", NOW)).privacyNotice.changed).toBe(false);
   });
@@ -182,7 +183,7 @@ describe("TermsAcceptanceService.accept", () => {
     expect(builder.values).toHaveBeenCalledWith({
       userId: "u1",
       termsVersionAgreed: "0.1",
-      privacyNoticeVersionShown: "0.4",
+      privacyNoticeVersionShown: "0.5",
     });
     builder.execute.mockResolvedValueOnce({ raw: [] });
     await expect(service.accept("u1", newestPair())).resolves.toEqual({ recorded: false });

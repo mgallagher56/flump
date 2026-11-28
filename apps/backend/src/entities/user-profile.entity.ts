@@ -243,13 +243,6 @@ export class UserProfile {
   checkInDay: number | null;
 
   /**
-   * E35 W5: whether to offer the two optional questions after a check-in. On by default; switching
-   * it off also deletes the person's earlier answers (wellbeing_answers) in the same transaction.
-   */
-  @Column({ name: "wellbeing_questions", type: "boolean", default: true })
-  wellbeingQuestions: boolean;
-
-  /**
    * Last authenticated request, at day precision (BE-06, ruling D4: accounts inactive for 24 months
    * are due for erasure). Written by LastActiveInterceptor; new rows start at now().
    */

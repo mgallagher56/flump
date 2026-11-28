@@ -66,7 +66,6 @@ export const EXPORT_SECTION_KIND: Record<AccountExportKey, "data" | "bookkeeping
   accounts: "data",
   accountDetails: "data",
   accountGoals: "data",
-  wellbeingAnswers: "data",
   transactions: "data",
   bankConnections: "data",
   bankOAuthStates: "bookkeeping",

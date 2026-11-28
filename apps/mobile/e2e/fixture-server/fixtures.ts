@@ -74,7 +74,6 @@ export function cannedProfile(
     taxRegion: null,
     birthYear: null,
     checkInDay: null,
-    wellbeingQuestions: true,
     studentLoanPlans: null,
     housingStatus: null,
     monthlyHousingCost: null,

@@ -213,5 +213,35 @@
     "kind": "removed-request-field",
     "where": "PATCH /v1/user-profile request body.hasSecondIncome",
     "reason": "System audit slice 9 part three: hasSecondIncome was retired in PR 827, which stopped returning it and accepted and ignored it on PATCH for one release. That release is deployed, so the request now refuses it like any unknown field. No client in this repository sends it (web app, MCP server, e2e or scripts). The stored column stays until its drop. Coordinator brief, 20 November 2026."
+  },
+  {
+    "kind": "removed-path",
+    "where": "/v1/snapshots/wellbeing-questions",
+    "reason": "Wellbeing questions removed (owner, 28 Nov 2026; coordinator guard sign-off 28 Nov 2026). Both routes on this path go: GET (whether the two questions were due) and POST (the answer). No client calls them: the web app stopped with this change and deploys with the backend, the mobile app never called them and has no released build, and no MCP tool uses them."
+  },
+  {
+    "kind": "removed-response-property",
+    "where": "GET /v1/user-profile 200 response.wellbeingQuestions",
+    "reason": "Wellbeing questions removed (owner, 28 Nov 2026; coordinator guard sign-off 28 Nov 2026). The profile field wellbeingQuestions (the Settings switch for the questions) goes with them. No client reads it: the web app stopped with this change and deploys with the backend, the mobile app never read it and has no released build, and no MCP tool or export consumer uses it."
+  },
+  {
+    "kind": "removed-response-property",
+    "where": "PATCH /v1/user-profile 200 response.wellbeingQuestions",
+    "reason": "Wellbeing questions removed (owner, 28 Nov 2026; coordinator guard sign-off 28 Nov 2026). The profile field wellbeingQuestions (the Settings switch for the questions) goes with them. No client reads it: the web app stopped with this change and deploys with the backend, the mobile app never read it and has no released build, and no MCP tool or export consumer uses it."
+  },
+  {
+    "kind": "removed-response-property",
+    "where": "PATCH /v1/user-profile/checklist 200 response.wellbeingQuestions",
+    "reason": "Wellbeing questions removed (owner, 28 Nov 2026; coordinator guard sign-off 28 Nov 2026). The profile field wellbeingQuestions (the Settings switch for the questions) goes with them. No client reads it: the web app stopped with this change and deploys with the backend, the mobile app never read it and has no released build, and no MCP tool or export consumer uses it."
+  },
+  {
+    "kind": "removed-response-property",
+    "where": "POST /v1/user-profile/reset-financial-data 200 response.profile.wellbeingQuestions",
+    "reason": "Wellbeing questions removed (owner, 28 Nov 2026; coordinator guard sign-off 28 Nov 2026). The profile field wellbeingQuestions (the Settings switch for the questions) goes with them. No client reads it: the web app stopped with this change and deploys with the backend, the mobile app never read it and has no released build, and no MCP tool or export consumer uses it."
+  },
+  {
+    "kind": "removed-request-field",
+    "where": "PATCH /v1/user-profile request body.wellbeingQuestions",
+    "reason": "Wellbeing questions removed (owner, 28 Nov 2026; coordinator guard sign-off 28 Nov 2026). The Settings switch that sent it goes with the questions. No client sends it: the web app stopped with this change and deploys with the backend, and the mobile app never sent it."
   }
 ]

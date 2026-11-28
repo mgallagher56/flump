@@ -591,8 +591,8 @@ describe("UserProfileController account deletion and export (BE-04)", () => {
 
 describe("UserProfileController terms acceptance", () => {
   const user = { id: "user-123" };
-  // The newest versions in LEGAL_PAGES (packages/business-details): terms 0.1, privacy notice 0.4.
-  const newest = { termsVersion: "0.1", privacyNoticeVersion: "0.4" };
+  // The newest versions in LEGAL_PAGES (packages/business-details): terms 0.1, privacy notice 0.5.
+  const newest = { termsVersion: "0.1", privacyNoticeVersion: "0.5" };
   const make = (terms: { accept?: unknown; status?: unknown } = {}) =>
     new UserProfileController({} as never, {} as never, {} as never, terms as never);
 

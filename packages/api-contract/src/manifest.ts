@@ -66,11 +66,7 @@ import {
   UpdateProfileRequest,
 } from "./domains/profile.js";
 import { UpsertRetirementPlanRequest } from "./domains/retirement.js";
-import {
-  AnswerWellbeingQuestionsRequest,
-  SnapshotMonthParams,
-  UpsertSnapshotRequest,
-} from "./domains/snapshots.js";
+import { SnapshotMonthParams, UpsertSnapshotRequest } from "./domains/snapshots.js";
 import {
   BulkCreateTaxRecordsRequest,
   CreateTaxRecordRequest,
@@ -85,7 +81,6 @@ import {
   AccountListResponse,
   AccountResponse,
   AddBudgetCategoryResponse,
-  AnswerWellbeingQuestionsResponse,
   BankConnectionCapabilityResponse,
   BankConnectionListResponse,
   BetaModeResponse,
@@ -131,7 +126,6 @@ import {
   UpsertSnapshotResponse,
   UserEmailResponse,
   UserProfileResponse,
-  WellbeingQuestionsStatusResponse,
   WorkLogEntryListResponse,
   WorkLogEntryResponse,
 } from "./responses.js";
@@ -385,30 +379,6 @@ export const routes = {
       group: "snapshots",
       response: UpsertSnapshotResponse,
       etag: "conditional",
-    }),
-    /** E35 W5: whether to offer the two optional questions after this check-in. */
-    wellbeingStatus: defineRoute({
-      id: "snapshots.wellbeingStatus",
-      method: "GET",
-      path: "snapshots/wellbeing-questions",
-      auth: "user",
-      ownership: "user",
-      group: "snapshots",
-      response: WellbeingQuestionsStatusResponse,
-    }),
-    /**
-     * E35 W5: records the answer (or a skip) for the current quarter. Not a create in the
-     * idempotency sense: the first record of a quarter stands and a repeat changes nothing.
-     */
-    answerWellbeing: defineRoute({
-      id: "snapshots.answerWellbeing",
-      method: "POST",
-      path: "snapshots/wellbeing-questions",
-      auth: "user",
-      ownership: "user",
-      body: AnswerWellbeingQuestionsRequest,
-      group: "snapshots",
-      response: AnswerWellbeingQuestionsResponse,
     }),
   },
   imports: {
