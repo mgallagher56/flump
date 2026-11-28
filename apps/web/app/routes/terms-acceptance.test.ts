@@ -64,6 +64,25 @@ describe("terms-acceptance loader", () => {
     );
   });
 
+  it("offers Download your data only when the account has something to export", async () => {
+    const answer = (hasData: boolean) =>
+      backendFetch.mockImplementation(async (path: string) =>
+        path === "/user-profile/export/summary" ? { hasData } : required,
+      );
+    answer(false);
+    expect((await load("http://localhost/terms-acceptance")).data).toMatchObject({
+      offerDownload: false,
+    });
+    expect(backendFetch).toHaveBeenCalledWith(
+      "/user-profile/export/summary",
+      expect.objectContaining({ accessToken: "tok" }),
+    );
+    answer(true);
+    expect((await load("http://localhost/terms-acceptance")).data).toMatchObject({
+      offerDownload: true,
+    });
+  });
+
   it("never sends the person off this site afterwards", async () => {
     backendFetch.mockResolvedValue(required);
     const res = await load("http://localhost/terms-acceptance?next=https%3A%2F%2Fevil.example");

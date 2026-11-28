@@ -180,6 +180,28 @@ describe("<TermsAcceptanceScreen />", () => {
     await waitFor(() => expect(download).toHaveBeenCalledTimes(1));
   });
 
+  it("with nothing to download, offers only deletion and the line under the button says so", async () => {
+    setup({ offerDownload: false });
+    expect(
+      await screen.findByText(
+        "If you do not agree, you cannot use Flump. You can still delete your account.",
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Download your data" })).toBeNull();
+    expect(screen.queryByText(/download your data first/)).toBeNull();
+    expect(screen.getByText("This deletes your Flump account.")).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Delete account/ })).toBeTruthy();
+  });
+
+  it("with data to download, the line names both", async () => {
+    setup({ offerDownload: true });
+    expect(
+      await screen.findByText(
+        "If you do not agree, you cannot use Flump. You can still download your data or delete your account.",
+      ),
+    ).toBeTruthy();
+  });
+
   it("lets a person who does not agree delete their account, coming back here to sign in again", async () => {
     const { deletes } = setup();
     fireEvent.click(await screen.findByTestId("delete-account-trigger"));

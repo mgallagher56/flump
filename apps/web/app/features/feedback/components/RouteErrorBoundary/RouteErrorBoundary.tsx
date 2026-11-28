@@ -65,6 +65,12 @@ function kindFromError(error: unknown): RouteErrorStateProps["kind"] {
   return error.status === 404 ? "not-found" : "unknown";
 }
 
+/** Only an explicit `false` from the server hides the download (unknown: offered). */
+function offerDownloadFrom(error: unknown): boolean {
+  if (!isRouteErrorResponse(error)) return true;
+  return (error.data as { offerDataDownload?: unknown } | null)?.offerDataDownload !== false;
+}
+
 /**
  * The status shown under the copy. A forbidden page is shown as not found, so it must not reveal
  * its real 403 either; it reports the 404 it is pretending to be.
@@ -119,7 +125,9 @@ export function RouteErrorBoundary({
         }
       />
       {/* A removed member can still download or delete their data (UK GDPR access and erasure). */}
-      {kind === "not-invited" ? <NotInvitedDataActions /> : null}
+      {kind === "not-invited" ? (
+        <NotInvitedDataActions offerDownload={offerDownloadFrom(error)} />
+      ) : null}
     </PageBody>
   );
 }

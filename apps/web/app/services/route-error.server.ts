@@ -30,14 +30,17 @@ const STATUS_BY_KIND: Record<BackendErrorKind, number> = {
  * account) redirects to the page that finishes the deletion, and a 403 `terms_not_accepted` to the
  * terms acceptance page.
  */
-export function throwRouteError(err: unknown): never {
+export function throwRouteError(
+  err: unknown,
+  extra: Pick<RouteErrorPayload, "offerDataDownload"> = {},
+): never {
   if (!(err instanceof BackendError)) throw err;
   // An erased account (410) is not an error page: send the person to finish the deletion.
   if (isAccountErased(err)) throw redirect(ACCOUNT_ERASED_PATH);
   // Not agreed to the terms in force (a version came into force while the app was open): the
   // acceptance page, not an error page.
   if (isTermsNotAccepted(err)) throw redirect(TERMS_ACCEPTANCE_REDIRECT_PATH);
-  const payload: RouteErrorPayload = { kind: err.kind, endpoint: err.endpoint };
+  const payload: RouteErrorPayload = { kind: err.kind, endpoint: err.endpoint, ...extra };
   throw data(payload, { status: STATUS_BY_KIND[err.kind] });
 }
 

@@ -9,11 +9,13 @@ vi.mock("react-router", async () => await vi.importActual("react-router"));
 
 const download = vi.fn(async () => undefined);
 
+let offerDownload = true;
 function Sections() {
-  return <NotInvitedDataActions download={download} />;
+  return <NotInvitedDataActions download={download} offerDownload={offerDownload} />;
 }
 
-function setup() {
+function setup(offer = true) {
+  offerDownload = offer;
   download.mockClear();
   const received: Array<Record<string, FormDataEntryValue>> = [];
   const Stub = createRoutesStub([
@@ -31,6 +33,13 @@ function setup() {
 }
 
 describe("<NotInvitedDataActions />", () => {
+  it("with nothing stored (never invited), offers only deletion, without mentioning a download", async () => {
+    setup(false);
+    expect(await screen.findByText("This deletes your Flump account.")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Download your data" })).toBeNull();
+    expect(screen.queryByText(/download your data/i)).toBeNull();
+  });
+
   it("downloads the person's data with the settings export", async () => {
     const { download } = setup();
     fireEvent.click(await screen.findByRole("button", { name: "Download your data" }));

@@ -224,6 +224,22 @@ describe("RouteErrorBoundary", () => {
     expect(screen.getByRole("heading", { name: "Delete your account" })).toBeDefined();
   });
 
+  it("offers only account deletion when the server says there is nothing to download", async () => {
+    const Stub = createRoutesStub([
+      {
+        path: "/",
+        loader: () => {
+          throw data({ kind: "not-invited", offerDataDownload: false }, { status: 403 });
+        },
+        Component: RouteContent,
+        ErrorBoundary: RootBoundary,
+      },
+    ]);
+    render(<Stub initialEntries={["/"]} />);
+    expect(await screen.findByRole("heading", { name: "Delete your account" })).toBeDefined();
+    expect(screen.queryByRole("heading", { name: "Download your data" })).toBeNull();
+  });
+
   it("shows no data actions on any other error", async () => {
     renderWithLoader(() => {
       throw data({ kind: "unavailable" }, { status: 503 });

@@ -352,7 +352,7 @@ Mapped pages: 58 | Sections: 312 | Excluded routes: 25
 ### terms-acceptance: Terms of use
 
 - Route: `/terms-acceptance` (auth: `required`, file: `apps/web/app/routes/terms-acceptance.tsx`)
-- Purpose: Ask a signed-in person to agree to the terms of use and show them the privacy notice before they use Flump, again when either changes, and let someone who does not agree download their data, delete their account or sign out.
+- Purpose: Ask a signed-in person to agree to the terms of use and show them the privacy notice before they use Flump, again when either changes, and let someone who does not agree download their data (only when the account has something to export), delete their account or sign out.
 
 | Section              | Component                                                                                 | Facts read | Figures |
 | -------------------- | ----------------------------------------------------------------------------------------- | ---------- | ------- |
