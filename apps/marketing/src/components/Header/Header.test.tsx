@@ -357,7 +357,11 @@ describe("Header", () => {
     // menu and never hidden at any width ("In the navbar if it fits, and in the menu otherwise").
     expect(within(drawer).queryByRole("button", { name: "Reduce motion" })).toBeNull();
     const reduce = document.querySelector("header [data-motion-toggle]");
-    expect(reduce?.className).not.toMatch(/d_none/);
-    expect(reduce?.parentElement?.className ?? "").not.toMatch(/d_none/);
+    // Hidden at no width (a bare or breakpoint `d_none`); only the no-script page hides it, through
+    // its `[html:not([data-theme])_&]:d_none` condition.
+    const hiddenByWidth = /(^|\s)([a-zA-Z]+:)?d_none(\s|$)/;
+    expect(reduce?.className).not.toMatch(hiddenByWidth);
+    expect(reduce?.className).toContain("[html:not([data-theme])_&]:d_none");
+    expect(reduce?.parentElement?.className ?? "").not.toMatch(hiddenByWidth);
   });
 });
