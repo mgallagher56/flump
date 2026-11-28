@@ -32,7 +32,6 @@ describe("UserProfileService (Deep Module)", () => {
   let mockWorkLogEntryRepo: DeleteRepo;
   let mockInvoiceRepo: DeleteRepo;
   let mockInvoicingSettingsRepo: DeleteRepo;
-  let mockWellbeingRepo: DeleteRepo;
 
   /** The service over the current doubles; `seams` replaces the default revoker or erased check. */
   const build = (seams: { bankConsentRevoker?: object; accountDeletion?: object } = {}) =>
@@ -108,9 +107,6 @@ describe("UserProfileService (Deep Module)", () => {
     mockInvoicingSettingsRepo = {
       delete: vi.fn().mockResolvedValue({ affected: 1 }),
     };
-    mockWellbeingRepo = {
-      delete: vi.fn().mockResolvedValue({ affected: 2 }),
-    };
     identityAdapter = new InMemoryIdentityAdapter();
     mockManagerQuery = vi.fn().mockResolvedValue([]);
     mockDataSource = {
@@ -135,7 +131,6 @@ describe("UserProfileService (Deep Module)", () => {
             if (entityClass.name === "WorkLogEntry") return mockWorkLogEntryRepo;
             if (entityClass.name === "Invoice") return mockInvoiceRepo;
             if (entityClass.name === "InvoicingSettings") return mockInvoicingSettingsRepo;
-            if (entityClass.name === "WellbeingAnswer") return mockWellbeingRepo;
             if (entityClass.name === "AuditEvent") return { insert: mockAuditInsert };
             if (entityClass.name === "Consent") return { update: mockConsentUpdate };
             return {};
@@ -541,29 +536,9 @@ describe("UserProfileService (Deep Module)", () => {
     });
   });
 
-  describe("wellbeing questions removed (28 Nov 2026)", () => {
-    it("the profile no longer carries the switch, even when the old column holds a value", async () => {
-      mockUserProfileRepo.findOne.mockResolvedValue({
-        id: "profile-1",
-        userId: "user-123",
-        wellbeingQuestions: false,
-      });
-      const profile = await service.getProfile("user-123");
-      expect("wellbeingQuestions" in profile).toBe(false);
-    });
-
-    it("an update never touches the stored answers", async () => {
-      mockUserProfileRepo.findOne.mockResolvedValue({ id: "profile-1", userId: "user-123" });
-      await service.updateProfile("user-123", { checkInDay: 5 });
-      expect(mockWellbeingRepo.delete).not.toHaveBeenCalled();
-      expect(mockDataSource.transaction).not.toHaveBeenCalled();
-    });
-
-    it("the financial data reset keeps the stored answers", async () => {
-      mockUserProfileRepo.findOne.mockResolvedValueOnce({ userId: "user-123" });
-      await service.resetFinancialData("user-123", "user@example.com");
-      expect(mockWellbeingRepo.delete).not.toHaveBeenCalled();
-    });
+  it("the profile does not carry the removed wellbeing questions switch (28 Nov 2026)", async () => {
+    mockUserProfileRepo.findOne.mockResolvedValue({ id: "profile-1", userId: "user-123" });
+    expect("wellbeingQuestions" in (await service.getProfile("user-123"))).toBe(false);
   });
 
   describe("lazy profile creation", () => {

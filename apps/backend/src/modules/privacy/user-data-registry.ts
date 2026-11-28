@@ -24,7 +24,6 @@ import { TaxRecord } from "../../entities/tax-record.entity";
 import { TermsAcceptance } from "../../entities/terms-acceptance.entity";
 import { Transaction } from "../../entities/transaction.entity";
 import { UserProfile } from "../../entities/user-profile.entity";
-import { WellbeingAnswer } from "../../entities/wellbeing-answer.entity";
 import { WorkLogEntry } from "../../entities/work-log-entry.entity";
 
 /**
@@ -247,31 +246,6 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
     // A row is a started check-in; completedAt (null until then) says it was finished (CH-3).
     valueMap: {
       facts: { month: "check-in-done", completedAt: "check-in-done" },
-      notFacts: { userId: OWNER },
-    },
-  }),
-  table({
-    entity: WellbeingAnswer,
-    key: "wellbeingAnswers",
-    deleteOnErasure: true,
-    export: {
-      shape: "rows",
-      columns: ["quarter", "feeling", "worseText"],
-      excluded: { userId: USER_ID_IN_ENVELOPE },
-      orderBy: ["quarter"],
-      batchSize: 500,
-    },
-    reset: {
-      kind: "keep",
-      reason:
-        "not financial data: how the person felt after a check-in; account deletion removes it (the questions were removed on 28 Nov 2026; nothing adds rows now)",
-    },
-    valueMap: {
-      facts: {
-        quarter: "wellbeing-answer",
-        feeling: "wellbeing-answer",
-        worseText: "wellbeing-answer",
-      },
       notFacts: { userId: OWNER },
     },
   }),
@@ -1004,11 +978,7 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
         "createdAt",
         "updatedAt",
       ],
-      excluded: {
-        userId: USER_ID_IN_ENVELOPE,
-        wellbeingQuestions:
-          "the removed switch for the questions after a check-in; never selected, and dropped by DropWellbeingAnswers1795760000000",
-      },
+      excluded: { userId: USER_ID_IN_ENVELOPE },
       orderBy: ["id"],
       batchSize: 1,
     },
@@ -1065,8 +1035,6 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
         lastActiveAt: "when the person last used the app, for the inactive-account policy",
         createdAt: WRITTEN_AT,
         updatedAt: WRITTEN_AT,
-        wellbeingQuestions:
-          "the removed switch for the questions after a check-in (28 Nov 2026); never selected, dropped by DropWellbeingAnswers1795760000000",
       },
     },
   }),

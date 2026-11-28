@@ -155,8 +155,6 @@ flowchart LR
   s_check_in --> f_check_in_done
   f_check_in_done -.-> s_dashboard
   f_check_in_done -.-> s_export
-  f_wellbeing_answer(["Stored answers to the two removed questions after a check-in, one per quarter"])
-  f_wellbeing_answer -.-> s_export
   f_account_goal(["Optional user-set goal on an account"])
   s_account_detail --> f_account_goal
   f_account_goal -.-> s_account_detail
@@ -433,7 +431,6 @@ flowchart LR
   f_net_worth_choices -.-> s_history
   f_net_worth_choices -.-> s_account_service
   f_net_worth_choices -.-> s_mcp_read
-  f_wellbeing_questions_switch(["The removed switch for the questions after a check-in"])
   f_check_in_day(["Check-in day of the month"])
   s_settings --> f_check_in_day
   f_check_in_day -.-> s_dashboard

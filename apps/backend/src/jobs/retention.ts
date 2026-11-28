@@ -130,14 +130,6 @@ export const RETENTION_POLICIES: readonly RetentionPolicy[] = [
       "a household invitation link works for 48 hours; once expired it is unusable and is deleted (E34 C3, G4)",
   },
   {
-    name: "wellbeing_answers",
-    table: "wellbeing_answers",
-    // `quarter` is the quarter's first day; the cutoff is today on the London clock, 13 months back.
-    where: `"quarter" < ($1::timestamptz AT TIME ZONE 'Europe/London')::date - interval '13 months'`,
-    reason:
-      "the answers after a check-in (E35 W5) are kept 13 months from the quarter's first day (fable decision, 25 Nov 2026), long enough to compare a quarter with the same one a year on",
-  },
-  {
     name: "account_deletion_tombstones",
     table: "account_deletion_tombstones",
     where: `"expires_at" < $1::timestamptz`,

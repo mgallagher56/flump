@@ -26,7 +26,6 @@ import { TaxRecord } from "../../entities/tax-record.entity";
 import { TermsAcceptance } from "../../entities/terms-acceptance.entity";
 import { Transaction } from "../../entities/transaction.entity";
 import { UserProfile } from "../../entities/user-profile.entity";
-import { WellbeingAnswer } from "../../entities/wellbeing-answer.entity";
 import { WorkLogEntry } from "../../entities/work-log-entry.entity";
 import { InMemoryIdentityAdapter } from "../../identity/identity.adapter";
 import { assertSafeTestDatabase } from "../../testing/assertSafeTestDatabase";
@@ -192,15 +191,6 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
         targetAmount: 1000,
         targetDate: "2027-06-01",
         label: "Buffer",
-      }),
-    );
-    // E35 W5: an answer after a check-in, with the free text. Exported; kept by a reset.
-    await m.save(
-      m.create(WellbeingAnswer, {
-        userId,
-        quarter: "2026-10-01",
-        feeling: "more_worried",
-        worseText: `${label} worse text`,
       }),
     );
     await m.save(
@@ -963,10 +953,8 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
     }
     expect(doc.accounts[0]).toMatchObject({ name: "A saver", balance: 1234.5 });
     expect(doc.snapshotCheckins).toEqual([{ month: "2026-11", completedAt: null }]);
-    expect(doc.wellbeingAnswers).toEqual([
-      { quarter: "2026-10-01", feeling: "more_worried", worseText: "A worse text" },
-    ]);
-    // The removed switch is never selected, so the export no longer carries it.
+    // The wellbeing questions and their table were removed on 28 Nov 2026.
+    expect("wellbeingAnswers" in doc).toBe(false);
     expect(doc.profile && "wellbeingQuestions" in doc.profile).toBe(false);
     expect(at(doc.taxRecords, 0).receiptData).toBe("data:image/png;base64,AAAA");
     expect(doc.mcpTokens[0]).toMatchObject({ name: "A Claude", tokenPrefix: "flp_abcd" });
@@ -1160,8 +1148,6 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
       terms_acceptances: 1,
       transactions: 0,
       user_profiles: 1,
-      // E35 W5: how the person felt is not financial data; a reset keeps it.
-      wellbeing_answers: 1,
       work_log_entries: 0,
     });
     const profile = await repo(UserProfile).findOneByOrFail({ userId: USER_A });

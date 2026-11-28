@@ -243,25 +243,6 @@ export class UserProfile {
   checkInDay: number | null;
 
   /**
-   * E35 W5: the switch for the two optional questions after a check-in, removed on 28 Nov 2026.
-   * Expand and contract: still mapped, so the schema matches the migrations, but never selected,
-   * inserted or updated, so no query names it and DropWellbeingAnswers1795760000000 can drop it
-   * while this release is still serving. Goes with that migration. One exception: TypeORM names
-   * every column with a default in a new profile's INSERT ... RETURNING, so a profile created on
-   * this release after the drop fails until the instance is replaced (loud and retryable). The
-   * default stays declared because a synchronize-built database needs it.
-   */
-  @Column({
-    name: "wellbeing_questions",
-    type: "boolean",
-    default: true,
-    select: false,
-    insert: false,
-    update: false,
-  })
-  wellbeingQuestions?: boolean;
-
-  /**
    * Last authenticated request, at day precision (BE-06, ruling D4: accounts inactive for 24 months
    * are due for erasure). Written by LastActiveInterceptor; new rows start at now().
    */

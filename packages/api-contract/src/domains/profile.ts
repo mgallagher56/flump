@@ -423,16 +423,6 @@ export const AccountExportAccountGoal = z.strictObject({
   updatedAt: ExportTimestamp,
 });
 
-/**
- * `wellbeingAnswers`: the two optional questions after a check-in (E35 W5), one row per quarter
- * asked. Both answers null records a skip. `quarter` is the quarter's first day.
- */
-export const AccountExportWellbeingAnswer = z.strictObject({
-  quarter: z.string(),
-  feeling: NullableText,
-  worseText: NullableText,
-});
-
 /** `transactions`: account movements. */
 export const AccountExportTransaction = z.strictObject({
   id: Uuid,
@@ -695,7 +685,6 @@ export const AccountExportDocument = z.strictObject({
   accounts: z.array(AccountExportAccount),
   accountDetails: z.array(AccountExportAccountDetail),
   accountGoals: z.array(AccountExportAccountGoal).optional(),
-  wellbeingAnswers: z.array(AccountExportWellbeingAnswer).optional(),
   transactions: z.array(AccountExportTransaction),
   bankConnections: z.array(AccountExportBankConnection),
   bankOAuthStates: z.array(AccountExportBankOAuthState),
@@ -741,7 +730,6 @@ export const ACCOUNT_EXPORT_SECTIONS = {
   accounts: AccountExportAccount,
   accountDetails: AccountExportAccountDetail,
   accountGoals: AccountExportAccountGoal,
-  wellbeingAnswers: AccountExportWellbeingAnswer,
   transactions: AccountExportTransaction,
   bankConnections: AccountExportBankConnection,
   bankOAuthStates: AccountExportBankOAuthState,

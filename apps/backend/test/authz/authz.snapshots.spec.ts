@@ -4,7 +4,6 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vites
 import { Account } from "../../src/entities/account.entity";
 import { AccountDetail } from "../../src/entities/account-detail.entity";
 import { SnapshotCheckin } from "../../src/entities/snapshot-checkin.entity";
-import { AccountDeletionService } from "../../src/modules/privacy/account-deletion.service";
 import { writeConnectedSnapshot } from "../../src/modules/snapshots/connected-write";
 import { londonDate, londonYearMonth, monthKey } from "../../src/modules/snapshots/london-date";
 import { resolveDbTestMode } from "../../src/testing/dbTestMode";
@@ -649,55 +648,6 @@ describe.skipIf(dbMode === "skip")("authz: snapshots controller (real Postgres)"
     const profile = await h.call("get", "/user-profile", h.tokens.a);
     expect(profile.status).toBe(200);
     expect("wellbeingQuestions" in profile.body).toBe(false);
-  });
-
-  it("never selects, inserts or updates the removed switch column, which the next release drops (expand and contract)", async () => {
-    // This release removes the code; the next drops user_profiles.wellbeing_questions (and the
-    // answers table, which erasure, export and retention still cover until then). An instance of
-    // this release must not read or write the column, so the drop cannot break its profile reads
-    // and updates while it is still serving. The one mention allowed is TypeORM's RETURNING list on
-    // a new profile's INSERT (user-profile.entity.ts says why).
-    const logQuery = vi.spyOn(h.dataSource.logger, "logQuery");
-    const deletion = h.app.get(AccountDeletionService);
-    try {
-      // Creates A's profile (an INSERT), then reads it back.
-      expect((await h.call("get", "/user-profile", h.tokens.a)).status).toBe(200);
-      const setupFrom = logQuery.mock.calls.length;
-      await h.dataSource.query(
-        "UPDATE user_profiles SET wellbeing_questions = false WHERE user_id = $1",
-        [USER_A],
-      );
-      const setupTo = logQuery.mock.calls.length;
-      expect((await h.call("patch", "/user-profile", h.tokens.a, { checkInDay: 5 })).status).toBe(
-        200,
-      );
-      expect((await h.call("get", "/user-profile/export", h.tokens.a).buffer(true)).status).toBe(
-        200,
-      );
-      const reset = await h.call("post", "/user-profile/reset-financial-data", h.tokens.a, {
-        confirmation: "RESET",
-      });
-      expect(reset.status).toBeLessThan(300);
-      await deletion.deleteAccount(USER_A);
-      const sql = logQuery.mock.calls
-        .filter((_, i) => i < setupFrom || i >= setupTo)
-        .map(([query]) => String(query));
-      expect(sql.some((q) => q.startsWith('INSERT INTO "user_profiles"'))).toBe(true);
-      expect(sql.some((q) => q.includes('FROM "user_profiles"'))).toBe(true);
-      const naming = sql.filter((q) => /wellbeing_questions/i.test(q));
-      // Only a profile INSERT, and only after RETURNING: never in its column list or values.
-      for (const q of naming) {
-        expect(q.startsWith('INSERT INTO "user_profiles"')).toBe(true);
-        expect(q.split("RETURNING")[0]).not.toContain("wellbeing_questions");
-      }
-      expect(sql.filter((q) => !q.startsWith("INSERT") && /wellbeing_questions/i.test(q))).toEqual(
-        [],
-      );
-    } finally {
-      logQuery.mockRestore();
-      // Later tests sign in as A again: forget the erasure this test made.
-      deletion.clearErasedCache();
-    }
   });
 
   it("reset-financial-data erases the user's history and check-ins, and only theirs", async () => {

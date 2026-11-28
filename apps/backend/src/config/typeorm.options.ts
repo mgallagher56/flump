@@ -26,7 +26,6 @@ import { TaxRecord } from "../entities/tax-record.entity";
 import { TermsAcceptance } from "../entities/terms-acceptance.entity";
 import { Transaction } from "../entities/transaction.entity";
 import { UserProfile } from "../entities/user-profile.entity";
-import { WellbeingAnswer } from "../entities/wellbeing-answer.entity";
 import { WorkLogEntry } from "../entities/work-log-entry.entity";
 import { type Env, resolveDbConfig } from "./db.config";
 
@@ -45,7 +44,6 @@ export const ENTITIES: Function[] = [
   McpToken,
   RetirementPlan,
   SnapshotCheckin,
-  WellbeingAnswer,
   ImportBatch,
   AgentAuditEvent,
   AccountDeletionTombstone,

@@ -1151,20 +1151,6 @@ facts:
     verdict: holds
     findings: [CH-3, CH-7, DB-10]
 
-  - id: wellbeing-answer
-    name: Stored answers to the two removed questions after a check-in, one per quarter
-    area: accounts
-    source_of_truth:
-      { ref: wellbeing_answers, path: apps/backend/src/entities/wellbeing-answer.entity.ts }
-    readers:
-      - {
-          surface: export,
-          path: apps/backend/src/modules/privacy/user-data-registry.ts,
-          note: "The questions were removed on 28 Nov 2026: nothing writes or shows the answers now. Earlier rows stay in the export, are erased with the account and expire under jobs/retention.ts until the table is dropped",
-        }
-    links: []
-    verdict: holds
-
   - id: account-goal
     name: Optional user-set goal on an account
     area: accounts
@@ -2044,18 +2030,6 @@ facts:
     verdict: broken
     findings: [AI-8]
     note: Every page honours the choices. The AI net worth projection does not.
-
-  - id: wellbeing-questions-switch
-    name: The removed switch for the questions after a check-in
-    area: preferences
-    source_of_truth:
-      {
-        ref: user_profiles.wellbeing_questions,
-        path: apps/backend/src/entities/user-profile.entity.ts,
-      }
-    note: "The switch was removed with the questions on 28 Nov 2026. Expand and contract: the column is still mapped (user-profile.entity.ts) but never selected, inserted, updated or exported, and DropWellbeingAnswers1795760000000 drops it in the next release"
-    links: []
-    verdict: holds
 
   - id: check-in-day
     name: Check-in day of the month
