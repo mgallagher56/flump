@@ -238,15 +238,19 @@ Page order for every app page: `PageHeader`, `HeroFigure`, `KpiStrip`, "Your det
 
 ## 5. Radius
 
-| Token            | Size | Used on                                           |
-| ---------------- | ---- | ------------------------------------------------- |
-| `xs`             | 4px  | Tags inside dense tables                          |
-| `sm`             | 6px  | Small controls                                    |
-| `control` (`md`) | 8px  | Buttons, inputs, the slider value pill            |
-| `lg`             | 12px | The selected tab thumb, icon tiles                |
-| `card` (`xl`)    | 16px | Cards, KPI cards, tables, drawers, tabs container |
-| `tray` (`2xl`)   | 24px | Dialogs, sheets, section trays, the hero block    |
-| `full`           | Pill | Badges, avatars, switches                         |
+| Token            | Size | Used on                                                                                                  |
+| ---------------- | ---- | -------------------------------------------------------------------------------------------------------- |
+| `xs`             | 4px  | Tags inside dense tables                                                                                 |
+| `sm`             | 6px  | Small controls                                                                                           |
+| `control` (`md`) | 8px  | Buttons, inputs, the slider value pill                                                                   |
+| `lg`             | 12px | The selected tab thumb, icon tiles                                                                       |
+| `card` (`xl`)    | 16px | Cards, KPI cards, tables, drawers, tabs container                                                        |
+| `panel`          | 20px | Marketing soft cards: the "What you see" fact cards, the AI connection page's cards, the home depth list |
+| `tray` (`2xl`)   | 24px | Dialogs, sheets, section trays, the hero block; marketing features groups and goal cards                 |
+| `showcase`       | 28px | The marketing close card (home, area and AI connection pages)                                            |
+| `full`           | Pill | Badges, avatars, switches                                                                                |
+
+`panel` and `showcase` (coordinator, 28 Nov 2026) are for the marketing site's soft cards only, from the approved prototypes' corners. They halve when compact (10px and 14px), as `card` and `tray` do, and reach the native theme too, though no app uses them. A card takes its corner through the `Card` primitive's `radius` variant (`SoftCard` requires one), never a caller's class, which the base card's own `card` corner would beat. Every app card stays at `card` (16px). The prototype's goal cards are 22px; with no 22px step they take `tray`, a 2px difference.
 
 - **R1.** A nested shape has a smaller radius than its container. **Review only**.
 - **R2.** No literal radius. **Enforced by** `scripts/check-style-literals.ts` where it covers radii; otherwise **Review only**.

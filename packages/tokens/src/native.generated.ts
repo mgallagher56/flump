@@ -396,6 +396,8 @@ export const radii = {
   lg: 12,
   md: 8,
   none: 0,
+  panel: 20,
+  showcase: 28,
   sm: 6,
   tray: 24,
   xl: 16,

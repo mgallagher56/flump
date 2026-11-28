@@ -73,7 +73,7 @@ export const HomeClose: FC<HomeCloseProps> = ({ picture = <CloseStack /> }) => {
       width="narrow"
     >
       <div ref={cardRef}>
-        <Card className={closeGlass} material="glass" padding="none">
+        <Card className={closeGlass} material="glass" padding="none" radius="showcase">
           <div className={closeCard} data-testid="home-final-cta">
             <div
               className={closePicture}

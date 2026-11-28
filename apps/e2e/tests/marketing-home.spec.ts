@@ -574,6 +574,22 @@ test.describe("marketing home: the hero's bubbles (owner, 28 Nov 2026)", () => {
   }
 });
 
+test("marketing home: the close card has a 28px corner and the depth list's cards 20px (radius tokens)", async ({
+  browser,
+}) => {
+  const page = await browser.newPage({ reducedMotion: "reduce" });
+  await page.goto(HOME);
+  const radius = (selector: string) =>
+    page
+      .locator(selector)
+      .evaluateAll((els) => [
+        ...new Set(els.map((el) => getComputedStyle(el).borderTopLeftRadius)),
+      ]);
+  expect(await radius("[data-testid='home-final-cta'] >> xpath=..")).toEqual(["28px"]);
+  expect(await radius("#more-detail li > *")).toEqual(["20px"]);
+  await page.close();
+});
+
 test.describe("marketing home: controls", () => {
   test("the header's Reduce motion is reached by Tab and stops all ambient motion at once (MK14)", async ({
     page,

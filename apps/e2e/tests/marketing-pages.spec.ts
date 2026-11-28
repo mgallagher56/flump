@@ -80,6 +80,53 @@ for (const row of PAGES.filter((page) => page.path !== "/features")) {
   });
 }
 
+/*
+ * The soft cards' corners, from the radius tokens (STYLE-GUIDE section 5; coordinator, 28 Nov
+ * 2026): the close card `showcase` (28px), the "What you see" and AI cards `panel` (20px), the
+ * features groups and goal cards `tray` (24px; the prototype's goal cards are 22px).
+ */
+const CORNERS: readonly { path: string; card: string; selector: string; px: number }[] = [
+  {
+    path: "/features",
+    card: "feature group",
+    selector: "section[aria-labelledby^='group-']",
+    px: 24,
+  },
+  { path: "/features", card: "goal card", selector: "#start-here [data-arrive-item] > *", px: 24 },
+  { path: "/features/pay", card: "fact card", selector: "#what-you-see li > *", px: 20 },
+  {
+    path: "/features/pay",
+    card: "close card",
+    selector: "[data-testid='feature-final-cta']",
+    px: 28,
+  },
+  { path: "/features/ai-connection", card: "fact card", selector: "#what-you-see li > *", px: 20 },
+  { path: "/features/ai-connection", card: "question card", selector: "#questions li > *", px: 20 },
+  {
+    path: "/features/ai-connection",
+    card: "close card",
+    selector: "[data-testid='feature-final-cta']",
+    px: 28,
+  },
+];
+
+for (const corner of CORNERS) {
+  test(`marketing ${corner.path}: the ${corner.card} has a ${corner.px}px corner`, async ({
+    browser,
+  }) => {
+    const page = await openPage(browser, corner.path, {
+      reducedMotion: "reduce",
+      viewport: { width: 1280, height: 900 },
+    });
+    const radii = await page
+      .locator(corner.selector)
+      .evaluateAll((els) => els.map((el) => getComputedStyle(el).borderTopLeftRadius));
+    expect(radii.length).toBeGreaterThan(0);
+    expect(new Set(radii)).toEqual(new Set([`${corner.px}px`]));
+    await page.context().close();
+  });
+}
+
 for (const row of PAGES) {
   test.describe(`marketing ${row.name}`, () => {
     test("is complete with no JavaScript: every band in reading order, nothing waiting to fade in, the still orbs in the hero (MK1, MK11)", async ({

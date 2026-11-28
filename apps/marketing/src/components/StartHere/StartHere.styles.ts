@@ -28,7 +28,6 @@ export const goalCard = css({
   pt: "4",
   px: "5",
   pb: "3",
-  borderRadius: "22px",
 });
 
 export const goal = css({ textStyle: "heading.md", margin: 0, color: "text.primary" });

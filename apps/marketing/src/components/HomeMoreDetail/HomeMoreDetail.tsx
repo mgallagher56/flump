@@ -62,7 +62,7 @@ export const HomeMoreDetail: FC = () => {
           const area = areaFor(item.area);
           return (
             <TiltLight as="li" data-deal-item="" key={item.area}>
-              <Card className={detailItem} padding="none">
+              <Card className={detailItem} padding="none" radius="panel">
                 <span className={detailText}>{item.text}</span>
                 {area && (
                   <Link className={detailLink} to={area.path}>

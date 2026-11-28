@@ -1,7 +1,7 @@
 import { css } from "@repo/ui/styled-system/css";
 
-/** Prototype 11's soft card: roomier padding and a rounder corner than a plain card. */
-export const closeGlass = css({ p: "clamp(24px, 3vw, 48px)", borderRadius: "28px" });
+/** Prototype 11's soft card: roomier padding; its corner is the `showcase` radius, on the card. */
+export const closeGlass = css({ p: "clamp(24px, 3vw, 48px)" });
 
 /** The stack, the question, one line and the button, centred in one glass card. */
 export const closeCard = css({

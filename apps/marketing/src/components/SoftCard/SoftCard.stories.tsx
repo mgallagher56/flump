@@ -4,15 +4,17 @@ import { expect, within } from "storybook/test";
 import { MarketingSection } from "../MarketingSection";
 import { SoftCard } from "./SoftCard";
 
-const pad = css({ p: "5", borderRadius: "20px", color: "text.primary" });
+const pad = css({ p: "5", color: "text.primary" });
 
 const Demo = () => (
   <>
     <MarketingSection id="on-card" title="On a card band" tone="card">
-      <SoftCard className={pad}>Enter your salary to see your take-home pay.</SoftCard>
+      <SoftCard className={pad} radius="panel">
+        Enter your salary to see your take-home pay.
+      </SoftCard>
     </MarketingSection>
     <MarketingSection id="on-canvas" title="On a canvas band" tone="canvas">
-      <SoftCard band="canvas" className={pad}>
+      <SoftCard band="canvas" className={pad} radius="panel">
         Payments on account
       </SoftCard>
     </MarketingSection>

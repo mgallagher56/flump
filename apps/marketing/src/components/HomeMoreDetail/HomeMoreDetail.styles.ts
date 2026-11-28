@@ -23,7 +23,6 @@ export const detailItem = css({
   columnGap: "4.5",
   py: "4.5",
   px: "5",
-  borderRadius: "20px",
   backgroundColor: "surface.canvas",
   _dark: { backgroundColor: "surface.overlay" },
   _systemDark: { backgroundColor: "surface.overlay" },

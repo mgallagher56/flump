@@ -127,7 +127,6 @@ export const card = css({
   alignItems: "flex-start",
   py: "4",
   px: "5",
-  borderRadius: "20px",
   color: "text.primary",
   "& p": { margin: 0 },
 });

@@ -85,7 +85,7 @@ const WhatYouSee: FC<{ feature: MoneyArea }> = ({ feature }) => {
           <ul className={facts}>
             {feature.facts.map((fact) => (
               <TiltLight as="li" data-arrive-item="" key={fact}>
-                <SoftCard className={factCard}>
+                <SoftCard className={factCard} radius="panel">
                   <p className={factText}>{fact}</p>
                 </SoftCard>
               </TiltLight>
@@ -143,6 +143,7 @@ const MoreDetail: FC<{ feature: MoneyArea; tone: MarketingSectionTone }> = ({ fe
             as="li"
             band={tone === "canvas" ? "canvas" : "card"}
             className={depthCard}
+            radius="card"
             data-deal-item=""
             key={item}
           >

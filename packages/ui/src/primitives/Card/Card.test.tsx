@@ -155,3 +155,38 @@ describe("Card material", () => {
     expect(new Set(classes).size).toBe(3);
   });
 });
+
+describe("Card radius", () => {
+  const radiusClasses = (el: Element) =>
+    el.className.split(" ").filter((name) => name.startsWith("bdr_"));
+
+  it("keeps the base card at the card radius (16px) for every app card, whatever its material", () => {
+    const { container } = render(
+      <>
+        <Card>a</Card>
+        <Card material="glass">b</Card>
+        <Card elevation="interactive" material="paper">
+          c
+        </Card>
+      </>,
+    );
+    for (const card of Array.from(container.children)) {
+      expect(radiusClasses(card)).toEqual(["bdr_card"]);
+    }
+    expect(cardRecipe.raw({}).borderRadius).toBe("card");
+  });
+
+  it("takes another step of the radius scale in place of the card radius, never beside it", () => {
+    const { container } = render(
+      <>
+        <Card radius="panel">a</Card>
+        <Card radius="tray">b</Card>
+        <Card radius="showcase">c</Card>
+      </>,
+    );
+    const [a, b, c] = Array.from(container.children).map(radiusClasses);
+    expect(a).toEqual(["bdr_panel"]);
+    expect(b).toEqual(["bdr_tray"]);
+    expect(c).toEqual(["bdr_showcase"]);
+  });
+});

@@ -182,6 +182,7 @@ export const FeatureIndex: FC<FeatureIndexProps> = ({
             as="section"
             band={band}
             className={groupCard}
+            radius="tray"
             data-deal-item=""
             key={group.key}
           >

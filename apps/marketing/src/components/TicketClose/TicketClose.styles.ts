@@ -7,7 +7,6 @@ export const closeCard = css({
   gap: "4",
   textAlign: "center",
   p: "clamp(24px, 3vw, 48px)",
-  borderRadius: "28px",
 });
 
 /** The picture across the card; the stack keeps to its own box inside it (`CloseStack`). */

@@ -73,7 +73,7 @@ const WhatYouSee: FC = () => {
         <ul className={cards({ stack: true })}>
           {AI_CONNECTION.facts.map((fact) => (
             <TiltLight as="li" data-arrive-item="" key={fact}>
-              <SoftCard className={card}>
+              <SoftCard className={card} radius="panel">
                 <p>{fact}</p>
               </SoftCard>
             </TiltLight>
@@ -96,7 +96,7 @@ const Questions: FC = () => {
       <ul className={cards()} ref={ref}>
         {EXAMPLE_QUESTIONS.map((question, i) => (
           <TiltLight as="li" data-arrive-item="" key={question}>
-            <SoftCard band="canvas" className={card}>
+            <SoftCard band="canvas" className={card} radius="panel">
               <GlassOrb
                 className={cardOrb}
                 tone={AI_HERO_TONES[i % AI_HERO_TONES.length] as OrbTone}

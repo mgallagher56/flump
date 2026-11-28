@@ -39,6 +39,7 @@ export const TicketClose: FC<TicketCloseProps> = ({
         <SoftCard
           band={tone === "canvas" ? "canvas" : "card"}
           className={closeCard}
+          radius="showcase"
           data-testid="feature-final-cta"
         >
           <div className={closePicture} data-close-picture="">

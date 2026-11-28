@@ -12,7 +12,6 @@ export const groupCard = css({
   breakInside: "avoid",
   mb: "5",
   p: "5",
-  borderRadius: "24px",
 });
 
 export const groupHead = css({ display: "flex", alignItems: "center", gap: "3", mb: "2" });
