@@ -143,6 +143,35 @@ export function chunksShared(dir: string, page: string, shared: string, marker: 
   return { holding, ok: holding.length > 0 && holding.every((rel) => theirs.has(rel)) };
 }
 
+/** Text only three.js's renderer holds: a chunk that has it is three.js, whatever it is named. */
+export const THREE_MARKER = "WebGLRenderer";
+
+/**
+ * The pages with no live scene (OTHER-PAGES-PLAN section 4: preview, pricing, security, contact
+ * and not found at scene level S0, and the four legal pages): three.js must never be reachable
+ * from them, not even later by dynamic import.
+ */
+export const NO_SCENE_PAGES = [
+  "PreviewPage",
+  "PricingPage",
+  "SecurityPage",
+  "ContactPage",
+  "NotFoundPage",
+  "PrivacyPage",
+  "TermsPage",
+  "CookiesPage",
+  "AccessibilityPage",
+] as const;
+
+/** Every script `page` may load, at once or later, that holds `marker`. Needs the build manifest. */
+export function reachableHolding(dir: string, page: string, marker: string): string[] {
+  const manifest = JSON.parse(readFileSync(join(dir, MANIFEST), "utf8")) as BuildManifest;
+  const files = [...firstLoadScripts(dir, page), ...pageLazyFiles(manifest, pageKey(page))];
+  return [...new Set(files)].filter(
+    (rel) => /\.m?js$/.test(rel) && readFileSync(join(dir, rel), "utf8").includes(marker),
+  );
+}
+
 export interface WeightRow {
   readonly measure: Measure;
   readonly measured: number;
@@ -196,6 +225,20 @@ if (import.meta.main) {
     `${setPiece.ok ? "ok  " : "FAIL"} AreaPage's set piece is in chunks home also loads: ${setPiece.holding.join(", ") || "none found"}`,
   );
   if (!setPiece.ok) over.push("AreaPage set piece not shared with home");
+  // A positive control: a scene page must reach the marker, or the check below proves nothing (a
+  // three.js upgrade or a minifier could drop the text).
+  const control = reachableHolding(resolve(dir), "HomePage", THREE_MARKER);
+  console.log(
+    `${control.length > 0 ? "ok  " : "FAIL"} HomePage reaches three.js through the marker ${THREE_MARKER}: ${control.join(", ") || "none found"}`,
+  );
+  if (control.length === 0) over.push(`the three.js marker ${THREE_MARKER} is in no chunk`);
+  for (const page of NO_SCENE_PAGES) {
+    const three = reachableHolding(resolve(dir), page, THREE_MARKER);
+    console.log(
+      `${three.length === 0 ? "ok  " : "FAIL"} ${page} reaches no three.js${three.length ? `: ${three.join(", ")}` : ""}`,
+    );
+    if (three.length > 0) over.push(`${page} reaches three.js`);
+  }
   if (process.argv.includes("--write-baseline")) {
     writeFileSync(BASELINE_FILE, `${JSON.stringify({ ...file, pages: lowered }, null, 2)}\n`);
     console.log(

@@ -11,6 +11,9 @@ import {
   firstLoadAssets,
   loweredBaseline,
   measureClientBuild,
+  NO_SCENE_PAGES,
+  reachableHolding,
+  THREE_MARKER,
   type WeightBaseline,
   type WeightFile,
 } from "./check-marketing-weight";
@@ -161,6 +164,52 @@ describe("measureClientBuild", () => {
     expect(chunksShared(own, "AreaPage", "HomePage", "not there").ok).toBe(false);
   });
 
+  it("finds three.js wherever a page can reach it, at once or later, and nowhere it cannot", () => {
+    const manifest = {
+      "index.html": {
+        file: "assets/index.js",
+        isEntry: true,
+        dynamicImports: ["src/pages/HomePage/index.ts", "src/pages/PricingPage/index.ts"],
+      },
+      "src/pages/HomePage/index.ts": { file: "assets/HomePage.js", dynamicImports: ["_scene.js"] },
+      "src/pages/PricingPage/index.ts": { file: "assets/PricingPage.js", imports: ["_Orbs.js"] },
+      "_Orbs.js": { file: "assets/Orbs.js" },
+      "_scene.js": { file: "assets/scene.js" },
+    };
+    const files = {
+      "index.html": `<script type="module" src="/assets/index.js"></script>`,
+      ".vite/manifest.json": JSON.stringify(manifest),
+      "assets/index.js": "entry",
+      "assets/HomePage.js": "home",
+      "assets/PricingPage.js": "pricing",
+      "assets/Orbs.js": "still orbs",
+      "assets/scene.js": `new ${THREE_MARKER}()`,
+    };
+    expect(reachableHolding(build(files), "HomePage", THREE_MARKER)).toEqual(["assets/scene.js"]);
+    expect(reachableHolding(build(files), "PricingPage", THREE_MARKER)).toEqual([]);
+    rmSync(dir, { recursive: true, force: true });
+    // The still orbs' chunk picks up a dynamic import of the scene: now pricing reaches it.
+    const leaked = {
+      ...manifest,
+      "_Orbs.js": { file: "assets/Orbs.js", dynamicImports: ["_scene.js"] },
+    };
+    expect(
+      reachableHolding(
+        build({ ...files, ".vite/manifest.json": JSON.stringify(leaked) }),
+        "PricingPage",
+        THREE_MARKER,
+      ),
+    ).toEqual(["assets/scene.js"]);
+  });
+
+  it("names every page with no live scene: S0 and the legal pages, none of the scene pages", () => {
+    expect([...NO_SCENE_PAGES].sort()).toEqual(
+      PAGE_NAMES.filter(
+        (page) => !["HomePage", "FeaturesIndexPage", "AreaPage", "AiConnectionPage"].includes(page),
+      ).sort(),
+    );
+  });
+
   it("refuses a build whose index.html loads no script, or loads a missing file", () => {
     expect(() => measureClientBuild(build({ "index.html": "<p>empty</p>" }))).toThrow(
       "loads no script",
@@ -229,15 +278,16 @@ describe("the committed baseline file", () => {
       expect(budget(page), page).toEqual(family(15_000, 230_000));
     // AreaPage only, signed by the coordinator on 27 Nov 2026: its set piece, the home journey's
     // sample, is server-rendered (MK1) and measured +27.3 KB over main.
-    expect(budget("AreaPage")).toEqual(family(30_000, 230_000));
-    for (const page of [
-      "PreviewPage",
-      "PricingPage",
-      "SecurityPage",
-      "ContactPage",
-      "NotFoundPage",
-    ])
+    // Raised to 32 KB, signed by the coordinator on 28 Nov 2026: 1.2 KB more from splitting the hero
+    // so the no-scene pages cannot reach three.js.
+    expect(budget("AreaPage")).toEqual(family(32_000, 230_000));
+    for (const page of ["PricingPage", "NotFoundPage"])
       expect(budget(page), page).toEqual(family(8_000, 80_000));
+    // Re-set from measurement (MP3), signed by the coordinator on 28 Nov 2026: preview +10.3 KB,
+    // security +14.8 KB (its document picture), contact +8.6 KB.
+    expect(budget("PreviewPage")).toEqual(family(11_000, 80_000));
+    expect(budget("SecurityPage")).toEqual(family(16_000, 80_000));
+    expect(budget("ContactPage")).toEqual(family(10_000, 80_000));
     for (const page of ["PrivacyPage", "TermsPage", "CookiesPage", "AccessibilityPage"])
       expect(budget(page), page).toEqual(family(2_000, 0));
   });

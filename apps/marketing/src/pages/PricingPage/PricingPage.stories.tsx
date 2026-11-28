@@ -2,12 +2,19 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { HelmetProvider } from "react-helmet-async";
 import { MemoryRouter } from "react-router-dom";
 import { expect, within } from "storybook/test";
+import { StillMotionProvider } from "../../context/StillMotionContext";
 import { PricingPage } from "./PricingPage";
 
 const meta: Meta<typeof PricingPage> = {
   title: "6. Pages/Marketing/PricingPage",
   component: PricingPage,
   decorators: [
+    // The rest state, as with reduced motion: axe checks what a reader sees once a moment ends.
+    (Story) => (
+      <StillMotionProvider>
+        <Story />
+      </StillMotionProvider>
+    ),
     (Story) => (
       <HelmetProvider>
         <MemoryRouter>

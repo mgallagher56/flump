@@ -28,4 +28,13 @@ describe("TicketClose", () => {
         .getAttribute("data-tone-band"),
     ).toBe("canvas");
   });
+  it("takes the page's own line and question id (the preview page's close)", () => {
+    render(
+      <TicketClose text="Enter a few rough numbers." titleId="preview-cta-title" tone="canvas" />,
+    );
+    const band = screen.getByRole("region", { name: "Ready to see your own figures?" });
+    expect(band.getAttribute("aria-labelledby")).toBe("preview-cta-title");
+    expect(within(band).getByText("Enter a few rough numbers.")).toBeDefined();
+    expect(screen.queryByText("Start with a few rough figures.")).toBeNull();
+  });
 });

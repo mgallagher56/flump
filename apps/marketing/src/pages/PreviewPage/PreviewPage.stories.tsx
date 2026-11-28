@@ -2,12 +2,19 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { HelmetProvider } from "react-helmet-async";
 import { MemoryRouter } from "react-router-dom";
 import { expect, userEvent, within } from "storybook/test";
+import { StillMotionProvider } from "../../context/StillMotionContext";
 import { PreviewPage } from "./PreviewPage";
 
 const meta: Meta<typeof PreviewPage> = {
   title: "6. Pages/Marketing/PreviewPage",
   component: PreviewPage,
   decorators: [
+    // The rest state, as with reduced motion: axe checks what a reader sees once a moment ends.
+    (Story) => (
+      <StillMotionProvider>
+        <Story />
+      </StillMotionProvider>
+    ),
     (Story) => (
       <HelmetProvider>
         <MemoryRouter>

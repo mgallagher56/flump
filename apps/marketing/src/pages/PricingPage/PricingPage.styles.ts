@@ -1,111 +1,85 @@
-import { cva } from "@repo/ui/styled-system/css";
+import { css } from "@repo/ui/styled-system/css";
 
-export const pageShell = cva({
-  base: {
-    minHeight: "100vh",
-    display: "flex",
-    flexDirection: "column",
-    backgroundColor: "surface.canvas",
-  },
+/*
+ * The approved pricing prototype (`others.css`, `o1-plan` and `o1-paid`): the plan as a glass card,
+ * the paid plan as one quiet line under it.
+ */
+
+export const mainContent = css({ flex: "1", _focus: { outline: "none" } });
+
+/** No bubbles behind the price under 64rem, where the card fills the width. */
+export const planBand = css({
+  "@media (max-width: 63.99rem)": { "& [data-bubble-field]": { display: "none" } },
 });
 
-export const mainContent = cva({
-  base: { flex: "1", px: "4", py: { base: "12", md: "16" }, _focus: { outline: "none" } },
+export const planCard = css({
+  display: "grid",
+  gap: "5",
+  p: "clamp(24px, 3vw, 48px)",
+  // Longhands: they come after the card's own corner in the stylesheet, so they win.
+  borderTopLeftRadius: "28px",
+  borderTopRightRadius: "28px",
+  borderBottomLeftRadius: "28px",
+  borderBottomRightRadius: "28px",
 });
 
-/** The reading width shared by pricing, security, MCP and contact (E16 PR 12 round 2). */
-export const container = cva({
-  base: { maxWidth: "3xl", mx: "auto", display: "flex", flexDirection: "column", gap: "8" },
+export const planName = css({
+  margin: 0,
+  fontWeight: "bold",
+  fontSize: "2xl",
+  lineHeight: "1.25",
+  color: "text.primary",
 });
 
-export const headerBlock = cva({
-  base: { display: "flex", flexDirection: "column", gap: "3" },
+export const featureList = css({
+  listStyle: "none",
+  margin: 0,
+  padding: 0,
+  display: "grid",
+  gap: "3",
 });
 
-export const heading = cva({
-  base: { textStyle: "heading.xl", color: "text.primary", margin: 0 },
+export const featureItem = css({
+  display: "flex",
+  gap: "2.5",
+  alignItems: "flex-start",
+  color: "text.primary",
 });
 
-export const intro = cva({
-  base: { textStyle: "body.lg", color: "text.secondary", margin: 0 },
-});
-
-export const planCard = cva({
-  base: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "5",
-    borderRadius: "xl",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: "primary.border",
-    backgroundColor: "surface.card",
-    boxShadow: "card",
-    p: { base: "6", md: "8" },
-  },
-});
-
-export const planName = cva({
-  base: { textStyle: "heading.lg", color: "text.primary", margin: 0 },
-});
-
-export const featureList = cva({
-  base: {
-    listStyle: "none",
-    margin: 0,
-    padding: 0,
-    display: "flex",
-    flexDirection: "column",
-    gap: "3",
-  },
-});
-
-export const featureItem = cva({
-  base: {
-    display: "flex",
-    alignItems: "flex-start",
-    gap: "3",
-    textStyle: "body.md",
-    color: "text.primary",
-  },
-});
-
-export const featureIcon = cva({
-  base: { color: "primary", flexShrink: 0, mt: "0.5", display: "inline-flex" },
+export const featureIcon = css({
+  flex: "none",
+  display: "inline-grid",
+  placeItems: "center",
+  mt: "0.5",
+  color: "primary",
 });
 
 /** The possible paid plan: one quiet line, no card chrome to fill (D10 b). */
-export const paidLine = cva({
-  base: {
-    display: "flex",
-    flexWrap: "wrap",
-    alignItems: "baseline",
-    columnGap: "3",
-    rowGap: "1",
-    px: { base: "4", md: "5" },
-    py: "4",
-    borderRadius: "lg",
-    backgroundColor: "surface.sunken",
-    textStyle: "body.md",
-    color: "text.secondary",
-  },
+export const paidLine = css({
+  mt: "5",
+  display: "flex",
+  flexWrap: "wrap",
+  alignItems: "baseline",
+  rowGap: "1.5",
+  columnGap: "3",
+  px: "1",
 });
 
-export const paidName = cva({
-  base: { textStyle: "heading.sm", color: "text.primary", margin: 0 },
+export const paidName = css({
+  margin: 0,
+  fontWeight: "bold",
+  fontSize: "md",
+  color: "text.primary",
 });
 
-export const paidPrice = cva({
-  base: {
-    color: "text.muted",
-    fontVariantNumeric: "tabular-nums",
-    pl: "3",
-    borderLeftWidth: "1px",
-    borderLeftStyle: "solid",
-    borderLeftColor: "border",
-  },
+export const paidPrice = css({ color: "text.secondary", fontVariantNumeric: "tabular-nums" });
+
+export const paidNote = css({
+  flexBasis: "100%",
+  margin: 0,
+  color: "text.secondary",
+  fontSize: "sm",
 });
 
-export const paidNote = cva({
-  base: { margin: 0, flexBasis: { base: "100%", md: "auto" } },
-});
+/** The band's own column gap (`SectionBand`'s 2rem), kept around the moment's wrapper. */
+export const stack = css({ display: "flex", flexDirection: "column", gap: "8" });

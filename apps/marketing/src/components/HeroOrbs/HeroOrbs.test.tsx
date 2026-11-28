@@ -1,8 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import { createRef } from "react";
 import { describe, expect, it } from "vitest";
+import { orbPlace } from "../StillHeroOrbs/StillHeroOrbs.styles";
 import { HeroOrbs } from "./HeroOrbs";
-import { orbPlace } from "./HeroOrbs.styles";
 
 describe("HeroOrbs", () => {
   it("places four still glass orbs, one per slot, in the given colours, hidden from assistive technology", () => {

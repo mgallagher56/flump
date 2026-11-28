@@ -9,11 +9,13 @@ import type { FC, ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { mailto, SUPPORT_EMAIL } from "../../utils/site";
 import { Footer } from "../Footer";
+import { GlassOrb, type OrbTone } from "../GlassOrb";
 import { Header } from "../Header";
 import { PageMeta } from "../PageMeta";
 import {
   container,
   headerBlock,
+  headerOrbs,
   heading,
   intro as introStyle,
   link,
@@ -35,6 +37,34 @@ export const hasPlaceholderDetails = (): boolean =>
 
 export const PLACEHOLDER_DETAILS_NOTE =
   "The name, address and email address on this page are placeholders until Flump's details are confirmed. The email address is not monitored yet.";
+
+/**
+ * The header band's three orb colours, biggest first. Privacy and terms are the approved
+ * prototypes'; cookies and accessibility have no prototype of their own (a listed deviation).
+ */
+export const LEGAL_ORB_TONES: Record<LegalPageKey, readonly [OrbTone, OrbTone, OrbTone]> = {
+  privacy: ["teal", "violet", "sky"],
+  terms: ["violet", "sky", "teal"],
+  cookies: ["sky", "teal", "violet"],
+  accessibility: ["teal", "sky", "violet"],
+};
+
+const ORB_SLOTS = [0, 1, 2] as const;
+
+/**
+ * Still glass orbs in the header band only (the approved privacy and terms prototypes, MP8): in
+ * the margins beside the reading column on wide screens, two small ones above the title on phones,
+ * never beside or behind the text below. CSS only: no script, so neither motion library can load.
+ */
+const HeaderOrbs: FC<{ page: LegalPageKey }> = ({ page }) => (
+  <span aria-hidden="true" className={headerOrbs} data-legal-orbs="">
+    {ORB_SLOTS.map((slot) => (
+      <span data-legal-orb={slot} key={slot}>
+        <GlassOrb tone={LEGAL_ORB_TONES[page][slot]} />
+      </span>
+    ))}
+  </span>
+);
 
 export interface LegalPageProps {
   page: LegalPageKey;
@@ -61,6 +91,7 @@ export const LegalPage: FC<LegalPageProps> = ({ page, description, intro, childr
       <main className={mainContent()} id="main" tabIndex={-1}>
         <div className={container()}>
           <div className={headerBlock()}>
+            <HeaderOrbs page={page} />
             <h1 className={heading()}>{current.title}</h1>
             <p className={introStyle()}>{intro}</p>
             <p className={versionLine()} data-testid="legal-version">

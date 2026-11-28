@@ -7,7 +7,11 @@ export const closeCard = css({
   gap: "4",
   textAlign: "center",
   p: "clamp(24px, 3vw, 48px)",
-  borderRadius: "28px",
+  // Longhands: they come after the card's own corner in the stylesheet, so they win.
+  borderTopLeftRadius: "28px",
+  borderTopRightRadius: "28px",
+  borderBottomLeftRadius: "28px",
+  borderBottomRightRadius: "28px",
 });
 
 /** The ticket fills the card's width up to its own (`GettingStartedTicket`). */
