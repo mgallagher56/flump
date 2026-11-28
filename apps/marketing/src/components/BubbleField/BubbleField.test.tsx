@@ -45,3 +45,27 @@ describe("BubbleField", () => {
     ).toEqual(["180", "80"]);
   });
 });
+
+describe("BubbleField spots", () => {
+  it("draws a page's own spots instead of the layout, each with its place class", () => {
+    const { container } = render(
+      <BubbleField
+        fit="hero"
+        spots={[
+          { set: "skyTeal", show: "wide", place: "place-a" },
+          { set: "violetRose", show: "phone", place: "place-b" },
+        ]}
+      />,
+    );
+    const field = container.querySelector("[data-bubble-field]");
+    expect(field?.getAttribute("data-bubble-field")).toBe("spots");
+    expect(field?.getAttribute("aria-hidden")).toBe("true");
+    const spots = Array.from(field?.querySelectorAll<HTMLElement>("span") ?? []);
+    expect(spots.map((s) => s.dataset.bubbleSet)).toEqual(["skyTeal", "violetRose"]);
+    expect(spots.map((s) => s.dataset.bubbleShow)).toEqual(["wide", "phone"]);
+    expect(spots[0]?.classList.contains("place-a")).toBe(true);
+    expect(spots[1]?.classList.contains("place-b")).toBe(true);
+    // No inline style: the place is in the stylesheet, so the server HTML is the still field.
+    expect(spots.some((s) => s.hasAttribute("style"))).toBe(false);
+  });
+});

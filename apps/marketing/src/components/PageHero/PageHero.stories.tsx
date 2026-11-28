@@ -1,6 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, within } from "storybook/test";
-import { AmbientMotionProvider } from "../../context/AmbientMotionContext";
 import { StillMotionProvider } from "../../context/StillMotionContext";
 import { PageHero } from "./PageHero";
 
@@ -12,9 +11,7 @@ const meta: Meta<typeof PageHero> = {
     // The still orbs, as a weak device or reduced motion shows them: no story starts three.js.
     (Story) => (
       <StillMotionProvider>
-        <AmbientMotionProvider>
-          <Story />
-        </AmbientMotionProvider>
+        <Story />
       </StillMotionProvider>
     ),
   ],
@@ -36,7 +33,8 @@ const assertHero: Story["play"] = async ({ canvasElement }) => {
   await expect(
     canvas.getByRole("heading", { level: 1, name: "Take-home pay and Self Assessment" }),
   ).toBeVisible();
-  await expect(canvas.getByRole("link", { name: "Request an invite" })).toBeVisible();
+  await expect(canvas.getByRole("link", { name: "Interactive preview" })).toBeVisible();
+  await expect(canvas.queryByRole("link", { name: /request an invite/i })).toBeNull();
 };
 
 export const Light: Story = { globals: { theme: "light" }, play: assertHero };

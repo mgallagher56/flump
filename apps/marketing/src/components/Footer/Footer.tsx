@@ -3,7 +3,7 @@ import { SiteFooter, type SiteFooterRenderLink, siteFooterLink } from "@repo/ui"
 import type { FC } from "react";
 import { Link } from "react-router-dom";
 import { FEATURES, FEATURES_INDEX } from "../../utils/featureAreas";
-import { mailto, signupCta, TAGLINE } from "../../utils/site";
+import { mailto, TAGLINE } from "../../utils/site";
 import { getAppUrl } from "../../utils/url";
 import { footerBottomRow, footerCompanyLine, footerSpacing } from "./Footer.styles";
 
@@ -16,7 +16,6 @@ const renderLink: SiteFooterRenderLink = (link, className, children) => (
 /** Marketing footer: the shared `SiteFooter` from `@repo/ui` with the marketing site's links. */
 export const Footer: FC = () => {
   const appUrl = getAppUrl();
-  const cta = signupCta();
   const currentYear = new Date().getFullYear();
 
   return (
@@ -56,7 +55,7 @@ export const Footer: FC = () => {
           links: [
             { key: "security", label: "Security and privacy", href: "/security" },
             { key: "contact", label: "Contact", href: "/contact" },
-            { key: "cta", label: cta.label, href: cta.href, external: cta.external },
+            // No invite request: invite links are shared by hand (owner, 28 Nov 2026).
             {
               key: "signin",
               label: "Sign in",

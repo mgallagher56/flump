@@ -3,7 +3,7 @@ app: marketing
 route: /contact
 title: Contact | Flump
 auth: public
-purpose: Provide the Flump support email address for beta invites, questions, feedback, privacy requests, and complaints, plus a link to security reporting.
+purpose: Provide the Flump support email address for questions, feedback, privacy requests, and complaints, plus a link to security reporting.
 route_file: apps/marketing/src/pages/ContactPage/ContactPage.tsx
 
 sections:

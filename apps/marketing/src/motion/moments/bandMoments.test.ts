@@ -2,7 +2,13 @@
 import { describe, expect, it, vi } from "vitest";
 import type { GsapKit } from "../loadGsapKit";
 import { MOMENT_END } from "./arrive";
-import { arriveMoment, dealEachMoment, dealInMoment, setPieceMoment } from "./bandMoments";
+import {
+  arriveMoment,
+  dealEachMoment,
+  dealInMoment,
+  setPieceMoment,
+  unstackMoment,
+} from "./bandMoments";
 
 // The marketing calm scale (packages/tokens motion.ts): entry 1540ms, stagger 196ms.
 
@@ -67,6 +73,103 @@ describe("dealInMoment and dealEachMoment", () => {
       "b",
       "c",
     ]);
+  });
+});
+
+describe("unstackMoment (prototype 10's cascade)", () => {
+  const sheet = (offsetTop: number, child?: unknown) =>
+    ({ offsetTop, querySelector: vi.fn(() => child ?? null) }) as unknown as HTMLElement;
+  const unstackKit = (units: number) => {
+    let complete = () => {};
+    const tl = {
+      to: vi.fn(() => tl),
+      play: vi.fn(),
+      duration: vi.fn(() => units),
+      timeScale: vi.fn(),
+      eventCallback: vi.fn((_: string, fn: () => void) => {
+        complete = fn;
+      }),
+    };
+    const gsap = { timeline: vi.fn(() => tl), set: vi.fn() };
+    const ScrollTrigger = { create: vi.fn() };
+    const kit = { gsap, ScrollTrigger } as unknown as GsapKit;
+    const trigger = () =>
+      ScrollTrigger.create.mock.calls[0]?.[0] as Record<string, unknown> & {
+        onEnter: () => void;
+        onLeave: () => void;
+        onRefresh: () => void;
+      };
+    return { kit, gsap, tl, trigger, done: () => complete() };
+  };
+
+  it("stacks the sheets on the first, 7px apart and 20px back, the rest at 85%, then deals them out in turn", () => {
+    const { kit, gsap, tl } = unstackKit(0.98);
+    const sheets = [sheet(0), sheet(80), sheet(160)];
+    unstackMoment("li")(kit, rootWith(sheets));
+    const [targets, from] = gsap.set.mock.calls[0] as unknown as [
+      unknown[],
+      Record<string, unknown>,
+    ];
+    expect(targets).toEqual(sheets);
+    const value = (key: string) => (i: number) => (from[key] as (i: number) => number)(i);
+    expect([0, 1, 2].map(value("y"))).toEqual([0, -73, -146]);
+    expect([0, 1, 2].map(value("z"))).toEqual([-0, -20, -40]);
+    expect([0, 1, 2].map(value("opacity"))).toEqual([1, 0.85, 0.85]);
+    expect(from).toMatchObject({ transformPerspective: 1200, transformOrigin: "50% 0%" });
+    expect(gsap.timeline).toHaveBeenCalledWith({ paused: true });
+    expect(tl.to).toHaveBeenCalledWith(sheets, {
+      y: 0,
+      z: 0,
+      opacity: 1,
+      duration: 0.5,
+      stagger: 0.12,
+      ease: "calmInOut",
+    });
+  });
+
+  it("plays once when the list's top reaches 85% of the window, never scrubbed", () => {
+    const { kit, tl, trigger } = unstackKit(0.98);
+    const root = rootWith([sheet(0), sheet(80)]);
+    unstackMoment("li")(kit, root);
+    expect(trigger()).toMatchObject({ trigger: root, start: "top 85%", once: true });
+    expect(trigger().scrub).toBeUndefined();
+    expect(tl.play).not.toHaveBeenCalled();
+    trigger().onEnter();
+    expect(tl.play).toHaveBeenCalledTimes(1);
+  });
+
+  it("plays when arriving from below the band, and restacks on a refresh only before it plays", () => {
+    const { kit, gsap, tl, trigger } = unstackKit(0.98);
+    unstackMoment("li")(kit, rootWith([sheet(0), sheet(80)]));
+    trigger().onRefresh();
+    expect(gsap.set).toHaveBeenCalledTimes(2);
+    trigger().onLeave();
+    expect(tl.play).toHaveBeenCalledTimes(1);
+    trigger().onRefresh();
+    expect(gsap.set).toHaveBeenCalledTimes(2);
+  });
+
+  it("plays the whole cascade in the arrive's time (1.54 × 1.6 s), however many sheets", () => {
+    const { kit, tl } = unstackKit(0.86);
+    unstackMoment("li")(kit, rootWith([sheet(0), sheet(1)]));
+    expect(tl.timeScale.mock.calls[0]?.[0]).toBeCloseTo(0.86 / 2.464, 10);
+  });
+
+  it("moves each sheet's inner card when asked, and clears everything at rest", () => {
+    const { kit, gsap, done } = unstackKit(0.5);
+    const cards = ["card a", "card b"];
+    unstackMoment("li", ":scope > *")(kit, rootWith([sheet(0, cards[0]), sheet(50, cards[1])]));
+    expect((gsap.set.mock.calls[0] as unknown as [unknown[]])[0]).toEqual(cards);
+    done();
+    expect(gsap.set).toHaveBeenLastCalledWith(cards, {
+      clearProps: "transform,transformOrigin,opacity",
+    });
+  });
+
+  it("does nothing on a list with no sheets", () => {
+    const { kit, gsap } = unstackKit(0);
+    unstackMoment("li")(kit, rootWith([]));
+    expect(gsap.timeline).not.toHaveBeenCalled();
   });
 });
 

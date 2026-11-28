@@ -40,12 +40,11 @@ describe("Footer", () => {
     expect(screen.queryAllByRole("heading", { level: 4 })).toHaveLength(0);
   });
 
-  it("links to the contact page and the shared sign-up CTA", () => {
+  it("links to the contact page, and to no invite request", () => {
     renderFooter();
     expect(screen.getByRole("link", { name: "Contact" }).getAttribute("href")).toBe("/contact");
-    expect(screen.getByRole("link", { name: "Request an invite" }).getAttribute("href")).toBe(
-      "/contact#beta",
-    );
+    expect(screen.queryByText(/request an invite/i)).toBeNull();
+    expect(document.querySelector('a[href*="#beta"]')).toBeNull();
   });
 
   it("links to no calculator page: the marketing site has none (D9)", () => {
@@ -90,13 +89,12 @@ describe("Footer", () => {
     expect(document.querySelector('a[href^="/mcp"]')).toBeNull();
   });
 
-  it("puts Security and privacy, Contact, the invite and Sign in under Company", () => {
+  it("puts Security and privacy, Contact and Sign in under Company", () => {
     renderFooter();
     const company = screen.getByRole("navigation", { name: "Company" });
     expect(Array.from(company.querySelectorAll("a")).map((a) => a.textContent)).toEqual([
       "Security and privacy",
       "Contact",
-      "Request an invite",
       expect.stringMatching(/^Sign in/),
     ]);
   });

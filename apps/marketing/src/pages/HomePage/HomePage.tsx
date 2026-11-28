@@ -12,7 +12,6 @@ import { HomeRoughFigures } from "../../components/HomeRoughFigures";
 import { HomeSecurity } from "../../components/HomeSecurity";
 import { HomeStopControl } from "../../components/HomeStopControl";
 import { MarketingPageShell } from "../../components/MarketingPageShell";
-import { MotionControl } from "../../components/MotionControl";
 import { PageMeta } from "../../components/PageMeta";
 import { SITE_TAGLINE } from "../../utils/site";
 import { mainContent, pairBands } from "./HomePage.styles";
@@ -24,11 +23,11 @@ import { mainContent, pairBands } from "./HomePage.styles";
  * More detail beside the questions; the calm close. Bands alternate `card` and `canvas` with no
  * solid band (UX-GUIDELINES 12.2). The server render is the finished, still page (MK1): every
  * motion is an enhancement loaded after first paint, and none plays with reduced motion.
- * "Request an invite" appears twice in the page body (hero and close).
+ * No invite request (owner, 28 Nov 2026): the hero, the last stop and the close offer the preview.
  *
  * Fourteen bands and stops are marked `data-home-section` (the hero, the features, the journey's six
- * stops, then each band below), and the section control at the bottom left steps through them, with
- * the pause control beside it (MK14).
+ * stops, then each band below), and the section control at the bottom left steps through them. The
+ * header's "Reduce motion" stops the ambient motion (MK14).
  */
 export const HomePage: FC = () => (
   <MarketingPageShell>
@@ -54,7 +53,7 @@ export const HomePage: FC = () => (
       <HomeClose />
     </main>
 
-    <HomeStopControl aside={<MotionControl />} />
+    <HomeStopControl />
     <Footer />
   </MarketingPageShell>
 );

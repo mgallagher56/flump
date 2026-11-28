@@ -73,6 +73,27 @@ export function pairArrive(kit: GsapKit, parts: ArriveParts): MomentTimeline {
 }
 
 /**
+ * A sample's moment on its own, paused, for a pair that is never hidden (`?stops=scroll`, where
+ * the cards scroll with the page): the same units and calm duration as in `pairArrive`, with no
+ * rise or fade of the sides. Its start state is drawn at once, so build it while the sample is
+ * still below the window. At the end every transform it left is cleared (MK3).
+ */
+export function sampleArrive(
+  kit: GsapKit,
+  sample: { readonly root: HTMLElement; readonly moment: SampleMoment },
+): MomentTimeline {
+  const { gsap } = kit;
+  const tl = gsap.timeline({ paused: true, defaults: { ease: "calm" } });
+  const moved = sample.moment(kit, tl, sample.root);
+  tl.set({}, {}, MOMENT_END);
+  tl.timeScale(tl.duration() / arriveSeconds());
+  tl.eventCallback("onComplete", () => {
+    gsap.set(moved, { clearProps: "transform" });
+  });
+  return tl;
+}
+
+/**
  * The pair's leave: it lifts a little and fades out together, on time. Paused until played. Like
  * the arrive it hides by opacity and takes no pointer once it starts, so a pair that has gone stays
  * in the Tab order (focus brings it back).

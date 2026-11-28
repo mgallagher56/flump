@@ -2,7 +2,6 @@ import { css } from "@repo/ui/styled-system/css";
 import type { Meta, StoryObj } from "@storybook/react";
 import { type FC, useRef } from "react";
 import { expect } from "storybook/test";
-import { AmbientMotionProvider } from "../../context/AmbientMotionContext";
 import { GlassOrb } from "../GlassOrb";
 import { SceneStage, type SceneStartContext } from "./SceneStage";
 
@@ -36,13 +35,7 @@ const meta: Meta<typeof Demo> = {
   title: "3. Patterns/Marketing/SceneStage",
   component: Demo,
   parameters: { layout: "fullscreen" },
-  decorators: [
-    (Story) => (
-      <AmbientMotionProvider>
-        <Story />
-      </AmbientMotionProvider>
-    ),
-  ],
+  decorators: [(Story) => <Story />],
 };
 
 export default meta;

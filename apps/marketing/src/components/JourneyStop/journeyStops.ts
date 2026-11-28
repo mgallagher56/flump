@@ -11,7 +11,7 @@ export interface JourneyStopCopy {
   readonly title: string;
   readonly lead: string;
   readonly fact: string;
-  /** The area page; the last stop has the page's two calls to action instead. */
+  /** The area page; the last stop has the page's call to action (the interactive preview) instead. */
   readonly link?: { readonly to: string; readonly label: string };
   /**
    * The orb's two colours at this stop (prototype 11's `STOP_ORB_TONES`): its own on arrival, and
@@ -69,7 +69,7 @@ const DOT: Record<JourneyStopKey, OrbTone> = {
 
 /**
  * The six stops in reading order, their copy from `featureAreas.ts` so the journey and the feature
- * pages cannot drift apart. The last stop ends on the page's two calls to action (prototype 11).
+ * pages cannot drift apart. The last stop ends on the page's call to action, the interactive preview.
  */
 export const JOURNEY_STOPS: readonly JourneyStopCopy[] = [
   ...MONEY_AREAS.map((area) => ({
@@ -95,3 +95,14 @@ export const JOURNEY_STOPS: readonly JourneyStopCopy[] = [
 
 /** The id of a stop's section, for a link into the journey. */
 export const journeyStopId = (key: JourneyStopKey) => `journey-stop-${key}`;
+
+/**
+ * How the stops play once the journey is live: `pinned` (the default) changes the pairs over in
+ * place under the header; `scroll` (`?stops=scroll`, owner, 28 Nov 2026) lets each pair scroll in
+ * with the page, hold centred for a run of scroll and scroll out.
+ */
+export type StopsMode = "pinned" | "scroll";
+
+/** Reads the stops' mode from the address on the client: `?stops=scroll`, otherwise pinned. */
+export const stopsModeFrom = (search: string): StopsMode =>
+  new URLSearchParams(search).get("stops") === "scroll" ? "scroll" : "pinned";

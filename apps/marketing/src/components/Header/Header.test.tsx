@@ -74,7 +74,7 @@ describe("Header", () => {
     expect(within(primary).queryByRole("link", { name: /Contact/ })).toBeNull();
   });
 
-  it("renders three top links (a Features menu, Preview, Pricing), 'Sign in', the invite CTA, and theme toggle when no session", () => {
+  it("renders three top links (a Features menu, Preview, Pricing), 'Sign in' as the only action, Reduce motion and the theme toggle when no session", () => {
     render(
       <HelmetProvider>
         <ThemeProvider>
@@ -119,10 +119,13 @@ describe("Header", () => {
     expect(document.querySelector('a[href^="/mcp"], a[href^="/tools"]')).toBeNull();
 
     expect(screen.getAllByText("Sign in").length).toBeGreaterThan(0);
-    // Rule B15: "Request an invite" everywhere signed out.
-    const inviteLinks = screen.getAllByText("Request an invite");
-    expect(inviteLinks.length).toBeGreaterThan(0);
-    expect(inviteLinks[0].closest("a")?.getAttribute("href")).toBe("/contact#beta");
+    // Owner, 28 Nov 2026: no call to action in the header, bar or menu; Sign in is its only action.
+    expect(screen.queryByText("Request an invite")).toBeNull();
+    expect(document.querySelector('header a[href="/contact#beta"]')).toBeNull();
+    // "Reduce motion" beside the theme switch, off until pressed (MK14).
+    expect(screen.getByRole("button", { name: "Reduce motion" }).getAttribute("aria-pressed")).toBe(
+      "false",
+    );
     expect(screen.getAllByRole("group", { name: "Colour theme" })).toHaveLength(1);
     expect(screen.queryByText("Go to dashboard")).toBeNull();
   });
@@ -221,7 +224,10 @@ describe("Header", () => {
     const mobileNav = screen.getByRole("navigation", { name: /mobile navigation/i });
     expect(mobileNav).toBeDefined();
     expect(within(mobileNav).getByRole("link", { name: /pricing/i })).toBeDefined();
-    expect(within(screen.getByRole("dialog")).getByText("Request an invite")).toBeDefined();
+    // The menu ends with Sign in alone: no call to action (owner, 28 Nov 2026).
+    const dialog = within(screen.getByRole("dialog"));
+    expect(dialog.getByRole("link", { name: "Sign in" })).toBeDefined();
+    expect(dialog.queryByText("Request an invite")).toBeNull();
 
     // Close mobile menu from the drawer's close button
     fireEvent.click(screen.getByRole("button", { name: /close navigation menu/i }));
@@ -295,7 +301,7 @@ describe("Header", () => {
     expect(screen.queryByText("FCA AISP")).toBeNull();
   });
 
-  it("on a cramped bar (a phone at large text) keeps only the logo, theme and menu buttons", () => {
+  it("on a cramped bar (a phone at large text) keeps only the logo, motion, theme and menu buttons", () => {
     render(
       <HelmetProvider>
         <ThemeProvider>
@@ -308,14 +314,13 @@ describe("Header", () => {
     // The TopBar is a container queried in rem, so a 200% root font size reaches it (phone sweep
     // 4: the invite button and menu ran to 461px on a 375px screen).
     expect(document.querySelector("header")?.className).toContain("cq-n_top-bar");
-    const invite = screen.getAllByRole("link", { name: /invite/i })[0];
-    const auth = invite?.closest("div")?.className ?? "";
+    const signIn = screen.getAllByRole("link", { name: /Sign in/ })[0];
+    const auth = signIn?.closest("div")?.className ?? "";
     expect(auth).toContain("[@container_top-bar_(max-width:_17rem)]:d_none");
-    // Sign in and the invite stay reachable in the menu.
+    // Sign in stays reachable in the menu.
     fireEvent.click(screen.getByRole("button", { name: /open navigation menu/i }));
     const drawer = document.getElementById("mobile-nav-drawer") as HTMLElement;
     expect(within(drawer).getByRole("link", { name: "Sign in" })).toBeDefined();
-    expect(within(drawer).getAllByRole("link", { name: /invite/i }).length).toBeGreaterThan(0);
   });
 
   it("below 1024px shows the menu button and no inline links, and one theme button", () => {
@@ -348,5 +353,15 @@ describe("Header", () => {
     expect(within(drawer).getByRole("link", { name: /Sign in/ })).toBeDefined();
     // The theme switch lives in the top bar at every width, so the drawer leaves it out.
     expect(within(drawer).queryByRole("group", { name: "Colour theme" })).toBeNull();
+    // So does "Reduce motion": it fits in the bar down to 320px (measured), so it is never in the
+    // menu and never hidden at any width ("In the navbar if it fits, and in the menu otherwise").
+    expect(within(drawer).queryByRole("button", { name: "Reduce motion" })).toBeNull();
+    const reduce = document.querySelector("header [data-motion-toggle]");
+    // Hidden at no width (a bare or breakpoint `d_none`); only the no-script page hides it, through
+    // its `[html:not([data-theme])_&]:d_none` condition.
+    const hiddenByWidth = /(^|\s)([a-zA-Z]+:)?d_none(\s|$)/;
+    expect(reduce?.className).not.toMatch(hiddenByWidth);
+    expect(reduce?.className).toContain("[html:not([data-theme])_&]:d_none");
+    expect(reduce?.parentElement?.className ?? "").not.toMatch(hiddenByWidth);
   });
 });

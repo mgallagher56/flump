@@ -70,6 +70,21 @@
   }
 }
 
+/* The same when the visitor pressed "Reduce motion" in the header (data-motion on <html>, set
+   before first paint by the head script; UX-GUIDELINES MK14). */
+:root[data-motion="reduce"] *,
+:root[data-motion="reduce"] *::before,
+:root[data-motion="reduce"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+:root[data-motion="reduce"] {
+  scroll-behavior: auto !important;
+}
+
 /* Global keyboard focus indicator (unlayered, so it beats Panda's layered utilities and
    silent `outline: none` removals). Design choices:
    - :where() keeps specificity at zero for the selector part.

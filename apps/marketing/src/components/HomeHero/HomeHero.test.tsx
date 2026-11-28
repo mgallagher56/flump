@@ -1,13 +1,16 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { SAMPLE_HOUSEHOLDS } from "@flump/finance-engine";
 import { act, render, screen, within } from "@testing-library/react";
 import { renderToString } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { AmbientMotionProvider } from "../../context/AmbientMotionContext";
+import { StillMotionProvider } from "../../context/StillMotionContext";
 import type { GsapKit } from "../../motion/loadGsapKit";
-import { signupCta } from "../../utils/site";
 import { HomeHero as Hero, heroModeFrom } from "./HomeHero";
+import { pieceStart } from "./HomeHero.styles";
 import { ASSEMBLY_UNITS, armHeroAssembly, FLIGHTS_START } from "./heroAssembly";
-import { HERO_FIGURES, HERO_SOURCES, heroFiguresFor } from "./heroData";
+import { HERO_BUBBLE_DENSITY, HERO_BUBBLES } from "./heroBubbles.styles";
+import { HERO_FIGURES, HERO_SOURCES, heroFiguresFor, type PieceKey } from "./heroData";
 import {
   ASSEMBLE_S,
   armHeroScroll,
@@ -18,13 +21,9 @@ import {
   placeAfterPin,
   TOTAL,
 } from "./heroScroll";
+import { SCATTER, startPlace, TRAY } from "./heroStart";
 
-const renderHero = () =>
-  render(
-    <AmbientMotionProvider>
-      <Hero />
-    </AmbientMotionProvider>,
-  );
+const renderHero = () => render(<Hero />);
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -32,7 +31,7 @@ afterEach(() => {
 });
 
 describe("HomeHero", () => {
-  it("is the labelled hero with the decided heading, lead and two calls to action", () => {
+  it("is the labelled hero with the decided heading, lead and one call to action", () => {
     renderHero();
     const section = screen.getByTestId("home-hero");
     expect(section.tagName).toBe("SECTION");
@@ -43,20 +42,18 @@ describe("HomeHero", () => {
     expect(
       screen.getByText("Accounts, budget, pay, savings, pension and debts in one place."),
     ).toBeDefined();
-    expect(screen.getByRole("link", { name: "Request an invite" }).getAttribute("href")).toBe(
-      signupCta().href,
-    );
-    expect(screen.getByRole("link", { name: "Interactive preview" }).getAttribute("href")).toBe(
-      "/preview",
-    );
+    // One primary call to action, lit (prototype 11's pointer light), and no invite request
+    // (owner, 28 Nov 2026: invite links are shared by hand).
+    const ctas = Array.from(section.querySelectorAll("[data-lit-ctas] a"));
+    expect(ctas.map((a) => a.textContent)).toEqual(["Interactive preview"]);
+    const preview = screen.getByRole("link", { name: "Interactive preview" });
+    expect(preview.getAttribute("href")).toBe("/preview");
+    expect(preview.getAttribute("data-variant")).toBe("primary");
+    expect(preview.hasAttribute("data-light")).toBe(true);
+    expect(within(section).queryByText(/request an invite/i)).toBeNull();
     expect(screen.getByRole("link", { name: "See the five areas" }).getAttribute("href")).toBe(
       "#features",
     );
-    // Every call to action in the hero carries prototype 11's pointer light.
-    for (const name of ["Request an invite", "Interactive preview"]) {
-      expect(screen.getByRole("link", { name }).hasAttribute("data-light")).toBe(true);
-    }
-    // The pause control moved beside the section control (HomeStopControl on the home page).
     expect(section.getAttribute("data-home-section-name")).toBe("One picture");
     expect(section.id).toBe("home-hero");
   });
@@ -117,17 +114,139 @@ describe("HomeHero", () => {
     ).toHaveLength(1);
   });
 
-  it("server-renders the finished, still picture: no inline styles and no live flag", () => {
-    const html = renderToString(
-      <AmbientMotionProvider>
-        <Hero />
-      </AmbientMotionProvider>,
-    );
+  it("server-renders every figure and the start state, in the stylesheet: no inline styles, no flags", () => {
+    const html = renderToString(<Hero />);
+    // The CSS draws the start state (each piece's place and each bubble's are classes).
     expect(html).not.toContain("style=");
-    expect(html).not.toMatch(/ data-hero-live="/);
+    expect(html).not.toMatch(/ data-hero-(live|ready|done)="/);
     expect(html).not.toMatch(/ data-enhanced="/);
     expect(html).toContain(HERO_FIGURES.netWorth);
     expect(html).toContain('data-testid="home-hero"');
+  });
+
+  it("gives each piece its start-place class", () => {
+    const { container } = renderHero();
+    for (const { key } of HERO_SOURCES) {
+      const el = container.querySelector<HTMLElement>(`[data-hero-piece="${key}"]`);
+      for (const name of pieceStart[key].split(" "))
+        expect(el?.classList.contains(name)).toBe(true);
+    }
+  });
+
+  it("marks a still page (a story's rest state) done, so it shows the finished picture", () => {
+    render(
+      <StillMotionProvider>
+        <Hero />
+      </StillMotionProvider>,
+    );
+    expect(screen.getByTestId("home-hero").dataset.heroDone).toBe("true");
+  });
+});
+
+describe("HomeHero after Reduce motion", () => {
+  afterEach(() => {
+    delete document.documentElement.dataset.motion;
+  });
+
+  it("stays finished when Reduce motion is turned on and then off again", async () => {
+    render(<Hero />);
+    const hero = screen.getByTestId("home-hero");
+    expect(hero.dataset.heroDone).toBeUndefined();
+    await act(async () => {
+      document.documentElement.dataset.motion = "reduce";
+    });
+    expect(hero.dataset.heroDone).toBe("true");
+    await act(async () => {
+      delete document.documentElement.dataset.motion;
+    });
+    // Its moment never replays, so the start state must not come back over the figures.
+    expect(hero.dataset.heroDone).toBe("true");
+  });
+});
+
+describe("heroStart", () => {
+  it("places a piece in depth from 1024px, by shares of the stage, as the CSS does", () => {
+    expect(startPlace("card", { width: 640, height: 700 }, true, 16)).toEqual({
+      xPercent: -50,
+      yPercent: -50,
+      x: -0.26 * 640,
+      y: -0.29 * 700,
+      z: 60,
+      rotationX: 5,
+      rotationY: -6,
+      rotationZ: -4,
+      scale: 1,
+      opacity: 1,
+    });
+  });
+
+  it("places a piece in the tray under 1024px: a quarter of the stage less 7px from its middle", () => {
+    // 25cqw − 7px across; 50cqh − 21rem down; 0.55 of its size (HomeHero.styles.ts `piece`).
+    expect(startPlace("card", { width: 358, height: 840 }, false, 16)).toMatchObject({
+      x: -(358 / 4 - 7),
+      y: 840 / 2 - 21 * 16,
+      scale: 0.55,
+      rotationX: 0,
+      z: 0,
+    });
+    expect(startPlace("credit", { width: 358, height: 840 }, false, 16)).toMatchObject({
+      x: 358 / 4 - 7,
+      y: 840 / 2 - 8 * 16,
+    });
+  });
+
+  it("is the same numbers the CSS draws the start state from (`pieceStart`)", () => {
+    // Panda reads styles statically, so `pieceStart` writes them out; read them back from source.
+    const source = readFileSync(join(__dirname, "HomeHero.styles.ts"), "utf8");
+    const block = source.slice(source.indexOf("export const pieceStart"));
+    for (const [key, s] of Object.entries(SCATTER) as [PieceKey, (typeof SCATTER)[PieceKey]][]) {
+      const t = TRAY[key];
+      const own = block.slice(block.indexOf(`${key}: css({`)).split("}),")[0] ?? "";
+      const value = (name: string) => own.match(new RegExp(`"--${name}": "([^"]+)"`))?.[1];
+      expect(
+        [
+          value("scatter-x"),
+          value("scatter-y"),
+          value("scatter-z"),
+          value("scatter-rx"),
+          value("scatter-ry"),
+          value("scatter-rz"),
+          value("tray-col"),
+          value("tray-bottom"),
+          value("tray-scale"),
+        ],
+        key,
+      ).toEqual([
+        ...[s.x, s.y, s.z, s.rx, s.ry, s.rz, t.col].map(String),
+        `${t.bottom}rem`,
+        String(t.scale),
+      ]);
+    }
+  });
+});
+
+describe("hero bubbles", () => {
+  const wide = (d: keyof typeof HERO_BUBBLES) =>
+    HERO_BUBBLES[d].filter((s) => s.show === "wide").length;
+
+  it("offers three densities, each adding to the last, and the page uses medium", () => {
+    // Prototype 11 had two in the two columns; light adds about three, medium five, fuller eight.
+    expect([wide("light"), wide("medium"), wide("fuller")]).toEqual([5, 7, 10]);
+    expect(HERO_BUBBLES.medium.slice(0, HERO_BUBBLES.light.length)).toEqual(HERO_BUBBLES.light);
+    expect(HERO_BUBBLE_DENSITY).toBe("medium");
+  });
+
+  it("draws them in the orb sets only, as still bubbles in the hero's field", () => {
+    const { container } = renderHero();
+    const field = container.querySelector("[data-bubble-field]");
+    expect(field?.getAttribute("aria-hidden")).toBe("true");
+    // In the column the pin holds, so the pin moves none of them.
+    expect(field?.parentElement?.hasAttribute("data-hero-inner")).toBe(true);
+    const sets = Array.from(field?.querySelectorAll("[data-bubble-set]") ?? []).map((b) =>
+      b.getAttribute("data-bubble-set"),
+    );
+    expect(sets).toHaveLength(HERO_BUBBLES.medium.length);
+    expect(new Set(sets)).toEqual(new Set(["skyTeal", "violetRose"]));
   });
 });
 
@@ -198,6 +317,7 @@ describe("heroAssembly", () => {
   });
 
   it("plays at once, forward, when the stage is in view, and hands back the finished picture", () => {
+    stubWidth(true);
     const { report } = stubObserver();
     const { kit, gsap, timeline, revert } = fakeKit();
     const root = mountHero();
@@ -206,9 +326,15 @@ describe("heroAssembly", () => {
     expect(gsap.timeline).toHaveBeenCalledTimes(1);
     expect(root.dataset.heroLive).toBe("true");
     expect(timeline.play).toHaveBeenCalledTimes(1);
-    // Six pieces scattered, each centred on its own middle.
-    expect(gsap.set).toHaveBeenCalledTimes(6);
-    expect(gsap.set.mock.calls[0]?.[1]).toMatchObject({ xPercent: -50, yPercent: -50, opacity: 0 });
+    // It starts from the server render's start state: six pieces already shown where they float,
+    // each centred on its own middle, and the dashboard pushed back under them.
+    const pieces = gsap.set.mock.calls.filter((c) =>
+      (c[0] as Element)?.hasAttribute?.("data-hero-piece"),
+    );
+    expect(pieces).toHaveLength(6);
+    expect(pieces[0]?.[1]).toMatchObject({ xPercent: -50, yPercent: -50, z: 60, opacity: 1 });
+    const dash = root.querySelector("[data-hero-dash]");
+    expect(gsap.set.mock.calls.find((c) => c[0] === dash)?.[1]).toMatchObject({ z: -120 });
     // The run is time-based: no scroll trigger, no scrub, no reverse.
     for (const call of timeline.to.mock.calls) {
       expect(call[1]).not.toHaveProperty("scrollTrigger");
@@ -218,6 +344,8 @@ describe("heroAssembly", () => {
     expect(revert).toHaveBeenCalledTimes(1);
     expect(timeline.kill).toHaveBeenCalledTimes(1);
     expect(root.dataset.heroLive).toBeUndefined();
+    // Done: the CSS start state stays off, so the finished picture stays.
+    expect(root.dataset.heroDone).toBe("true");
   });
 
   it("never plays when the page loads with the hero scrolled past", () => {
@@ -382,10 +510,14 @@ describe("heroScroll (prototype 11's version)", () => {
 
   it("from 1024px pins the two columns and has the picture follow the scroll", () => {
     stubWidth(true);
-    const { kit, gsap, triggers, revert } = fakeScrollKit();
+    const { kit, gsap, timeline, triggers, revert } = fakeScrollKit();
     const root = renderHero().getByTestId("home-hero");
     const finish = armHeroScroll(kit, root);
     expect(root.dataset.heroLive).toBe("true");
+    // It opens apart, as the server render does, and never shows the assembled picture first: at
+    // the top of the page nothing plays until the reader scrolls.
+    expect(timeline.progress.mock.calls).toEqual([[0]]);
+    expect(gsap.to).not.toHaveBeenCalled();
     expect(triggers).toHaveLength(1);
     const pin = triggers[0] as Record<string, unknown>;
     expect(pin.pin).toBe(root.querySelector("[data-hero-inner]"));
@@ -460,9 +592,12 @@ describe("heroScroll (prototype 11's version)", () => {
 
   it("under 1024px is never pinned or scrubbed: scroll triggers it and time completes it", () => {
     stubWidth(false);
-    const { kit, gsap, triggers } = fakeScrollKit();
+    const { kit, gsap, timeline, triggers } = fakeScrollKit();
     const root = renderHero().getByTestId("home-hero");
     armHeroScroll(kit, root);
+    // It opens in the tray, as the server render does: no assembled picture parting first.
+    expect(timeline.progress.mock.calls).toEqual([[0]]);
+    expect(gsap.to).not.toHaveBeenCalled();
     expect(triggers).toHaveLength(1);
     const trigger = triggers[0] as Record<string, unknown>;
     expect(trigger.pin).toBeUndefined();
@@ -478,6 +613,34 @@ describe("heroScroll (prototype 11's version)", () => {
       expect.anything(),
       expect.objectContaining({ progress: 0, duration: PART_S }),
     );
+  });
+
+  it("under 1024px assembles after a pause when the page loads with the stage already past its line", () => {
+    stubWidth(false);
+    const { kit, gsap, timeline, triggers } = fakeScrollKit();
+    timeline.progress.mockReturnValue(0);
+    const root = renderHero().getByTestId("home-hero");
+    armHeroScroll(kit, root);
+    const onRefresh = (triggers[0] as { onRefresh: (self: { start: number }) => void }).onRefresh;
+    // A phone: the dashboard's top is already above 60% of the screen at the top of the page.
+    onRefresh({ start: -26 });
+    expect(gsap.to).toHaveBeenLastCalledWith(
+      expect.anything(),
+      expect.objectContaining({ progress: 1, duration: ASSEMBLE_S, delay: INTRO_DELAY_S }),
+    );
+    // Only the first refresh decides; later ones (the page growing) leave it alone.
+    onRefresh({ start: -26 });
+    expect(gsap.to).toHaveBeenCalledTimes(1);
+  });
+
+  it("under 1024px waits in the tray when the stage is still below its line", () => {
+    stubWidth(false);
+    const { kit, gsap, timeline, triggers } = fakeScrollKit();
+    timeline.progress.mockReturnValue(0);
+    const root = renderHero().getByTestId("home-hero");
+    armHeroScroll(kit, root);
+    (triggers[0] as { onRefresh: (self: { start: number }) => void }).onRefresh({ start: 400 });
+    expect(gsap.to).not.toHaveBeenCalled();
   });
 });
 

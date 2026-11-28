@@ -20,8 +20,8 @@ import { type FC, useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useThemeContext } from "../../context/ThemeContext";
 import { FEATURES, FEATURES_INDEX } from "../../utils/featureAreas";
-import { signupCta } from "../../utils/site";
 import { getAppUrl } from "../../utils/url";
+import { MotionToggle } from "../MotionToggle";
 import {
   belowWide,
   drawerCta,
@@ -109,7 +109,6 @@ export const Header: FC = () => {
   const location = useLocation();
   const { preference, setPreference } = useThemeContext();
   const appUrl = getAppUrl();
-  const cta = signupCta();
 
   // Three links (E42 S4): Features (a menu), Preview, Pricing. Calculators and the AI connection
   // no longer have top links; the AI connection is in the Features menu like every other feature.
@@ -171,6 +170,10 @@ export const Header: FC = () => {
       <TopBar
         actions={
           <>
+            {/* "Reduce motion" (MK14), beside the theme switch: "In the navbar if it fits, and in
+                the menu otherwise" (owner, 28 Nov 2026). It fits down to 320px, so it is always
+                in the bar. */}
+            <MotionToggle />
             {/* One 44px button below 1024px (as in the web app); the three-way switch from there. */}
             <ThemeToggle
               className={belowWide()}
@@ -191,25 +194,18 @@ export const Header: FC = () => {
                   </a>
                 </Button>
               ) : (
-                <>
-                  {/* From 1024px only: at 768px the bar has no room for it. On tablets "Sign in"
-                      is in the footer, on phones in the menu. The wrapper owns the display swap, so
-                      it never competes with the button's own display. */}
-                  <span className={wideOnly()}>
-                    <Button asChild className={headerButton()} size="sm" variant="ghost">
-                      <a href={`${appUrl}/login`}>
-                        <span className={fullLabel()}>Sign in</span>
-                        <span className={shortLabel()}>Sign in</span>
-                      </a>
-                    </Button>
-                  </span>
-                  <Button asChild className={headerButton()} size="sm" variant="primary">
-                    <a href={cta.href}>
-                      <span className={fullLabel()}>{cta.label}</span>
-                      <span className={shortLabel()}>{cta.shortLabel}</span>
+                // The header's only action signed out: no call to action (owner, 28 Nov 2026).
+                // From 1024px only: at 768px the bar has no room for it. On tablets "Sign in" is in
+                // the footer, on phones in the menu. The wrapper owns the display swap, so it never
+                // competes with the button's own display.
+                <span className={wideOnly()}>
+                  <Button asChild className={headerButton()} size="sm" variant="ghost">
+                    <a href={`${appUrl}/login`}>
+                      <span className={fullLabel()}>Sign in</span>
+                      <span className={shortLabel()}>Sign in</span>
                     </a>
                   </Button>
-                </>
+                </span>
               )}
             </div>
           </>
@@ -236,18 +232,12 @@ export const Header: FC = () => {
                 </a>
               </Button>
             ) : (
-              <>
-                <Button asChild className={drawerCta()} size="md" variant="primary">
-                  <a href={cta.href} onClick={closeMenu}>
-                    {cta.label}
-                  </a>
-                </Button>
-                <Button asChild className={drawerCta()} size="md" variant="outline">
-                  <a href={`${appUrl}/login`} onClick={closeMenu}>
-                    Sign in
-                  </a>
-                </Button>
-              </>
+              // No call to action in the header or its menu (owner, 28 Nov 2026): Sign in only.
+              <Button asChild className={drawerCta()} size="md" variant="outline">
+                <a href={`${appUrl}/login`} onClick={closeMenu}>
+                  Sign in
+                </a>
+              </Button>
             )}
           </div>
         }

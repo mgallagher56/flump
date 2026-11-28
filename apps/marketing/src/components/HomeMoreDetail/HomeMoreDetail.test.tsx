@@ -31,15 +31,25 @@ describe("HomeMoreDetail", () => {
     ]);
   });
 
-  it("deals the items in once, in document order, by time", () => {
+  it("unstacks the cards once, in document order, by time: each card moves, not its tilting item", () => {
     renderDetail();
     const list = screen.getByRole("list");
-    const from = vi.fn();
-    moreDetailMoment({ gsap: { from } } as unknown as GsapKit, list);
-    const [targets, vars] = from.mock.calls[0] as [Element[], Record<string, unknown>];
-    expect(targets).toEqual(within(list).getAllByRole("listitem"));
-    expect(vars).toMatchObject({ y: 12, opacity: 0, duration: 1.54, stagger: 0.196 });
-    expect(vars.scrollTrigger).toMatchObject({ once: true });
-    expect((vars.scrollTrigger as Record<string, unknown>).scrub).toBeUndefined();
+    const tl = {
+      to: vi.fn(() => tl),
+      duration: vi.fn(() => 0.86),
+      timeScale: vi.fn(),
+      eventCallback: vi.fn(),
+    };
+    const set = vi.fn();
+    const create = vi.fn();
+    const kit = { gsap: { timeline: vi.fn(() => tl), set }, ScrollTrigger: { create } };
+    moreDetailMoment(kit as unknown as GsapKit, list);
+    const [targets] = set.mock.calls[0] as unknown as [Element[]];
+    const items = within(list).getAllByRole("listitem");
+    expect(targets.length).toBe(4);
+    expect(targets.every((card, i) => card.parentElement === items[i])).toBe(true);
+    const trigger = (create.mock.calls[0] as unknown as [Record<string, unknown>])[0];
+    expect(trigger).toMatchObject({ once: true });
+    expect(trigger.scrub).toBeUndefined();
   });
 });

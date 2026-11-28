@@ -107,5 +107,10 @@ export const densityRadii = {
     control: { value: { base: "8px", _compact: "6px" } },
     card: { value: { base: "16px", _compact: "8px" } },
     tray: { value: { base: "24px", _compact: "12px" } },
+    // The marketing site's soft cards (STYLE-GUIDE section 5; coordinator, 28 Nov 2026): `panel`
+    // for the fact, depth and AI cards, `showcase` for the close card. Halved when compact, as
+    // `card` and `tray` are.
+    panel: { value: { base: "20px", _compact: "10px" } },
+    showcase: { value: { base: "28px", _compact: "14px" } },
   },
 } as const;

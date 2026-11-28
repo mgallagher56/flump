@@ -13,7 +13,7 @@ import { ClosingCta } from "../../components/ClosingCta";
 import { Footer } from "../../components/Footer";
 import { Header } from "../../components/Header";
 import { PageMeta } from "../../components/PageMeta";
-import { signupCta } from "../../utils/site";
+import { signInHref } from "../../utils/site";
 import {
   container,
   ctaIllustration,
@@ -41,7 +41,8 @@ export const PREVIEW_PAGE_DESCRIPTION =
  */
 export const PreviewPage: FC = () => {
   const [household, setHousehold] = useState<SampleHouseholdKey>("renter");
-  const cta = signupCta();
+  // On the preview itself the close signs in: invite links are shared by hand (owner, 28 Nov 2026).
+  const cta = { href: signInHref(), label: "Sign in" };
 
   return (
     <div className={pageShell()}>

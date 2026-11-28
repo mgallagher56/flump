@@ -61,7 +61,7 @@ export const PayRiseTeaser: FC<PayRiseTeaserProps> = ({ link = "area", embedded 
 
   const handleStart = () => {
     seedSalaryForOnboarding(salary);
-    window.location.href = cta.href;
+    if (cta) window.location.href = cta.href;
   };
 
   const card = (
@@ -115,7 +115,7 @@ export const PayRiseTeaser: FC<PayRiseTeaserProps> = ({ link = "area", embedded 
             </p>
           )}
 
-          {cta.external ? (
+          {cta?.external ? (
             <div className={teaserActions()}>
               <Button size="md" variant="outline" onClick={handleStart}>
                 Start with this salary

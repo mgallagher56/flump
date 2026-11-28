@@ -25,7 +25,8 @@ const assertClose: Story["play"] = async ({ canvasElement }) => {
   await expect(
     canvas.getByRole("heading", { level: 2, name: "Ready to see where you stand?" }),
   ).toBeVisible();
-  await expect(canvas.getByRole("link", { name: "Request an invite" })).toBeVisible();
+  await expect(canvas.getByRole("link", { name: "Interactive preview" })).toBeVisible();
+  await expect(canvas.getByRole("link", { name: "Sign in" })).toBeVisible();
 };
 
 export const Light: Story = { globals: { theme: "light" }, play: assertClose };

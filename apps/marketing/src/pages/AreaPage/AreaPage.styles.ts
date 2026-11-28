@@ -26,7 +26,7 @@ export const facts = css({
   gap: "0.85rem",
 });
 
-export const factCard = css({ py: "1.1rem", px: "1.25rem", borderRadius: "20px" });
+export const factCard = css({ py: "1.1rem", px: "1.25rem" });
 
 export const factText = css({ margin: 0, color: "text.primary" });
 
@@ -61,7 +61,6 @@ export const depthCard = css({
   gap: "3",
   py: "4",
   px: "1.15rem",
-  borderRadius: "18px",
   color: "text.primary",
   fontWeight: "medium",
 });

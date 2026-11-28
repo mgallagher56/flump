@@ -28,9 +28,9 @@ const assertPage: Story["play"] = async ({ canvasElement }) => {
     canvas.getByRole("heading", { level: 1, name: "Contact Flump" }),
   ).toBeInTheDocument();
   await expect(
-    within(canvas.getByRole("main")).queryByRole("link", { name: "Request an invite" }),
+    within(canvas.getByRole("main")).queryByRole("link", { name: /request an invite/i }),
   ).toBeNull();
-  await expect(canvasElement.querySelector("#beta")).not.toBeNull();
+  await expect(canvasElement.querySelector("#beta")).toBeNull();
 };
 
 export const Light: Story = { globals: { theme: "light" }, play: assertPage };

@@ -2,7 +2,6 @@ import { css } from "@repo/ui/styled-system/css";
 import type { Meta, StoryObj } from "@storybook/react";
 import { type FC, useRef } from "react";
 import { expect, within } from "storybook/test";
-import { AmbientMotionProvider } from "../../context/AmbientMotionContext";
 import { StillMotionProvider } from "../../context/StillMotionContext";
 import { HeroOrbs, type HeroOrbTones } from "./HeroOrbs";
 
@@ -32,9 +31,7 @@ const meta: Meta<typeof Demo> = {
     // The still orbs, as a weak device or reduced motion shows them: no story starts three.js.
     (Story) => (
       <StillMotionProvider>
-        <AmbientMotionProvider>
-          <Story />
-        </AmbientMotionProvider>
+        <Story />
       </StillMotionProvider>
     ),
   ],

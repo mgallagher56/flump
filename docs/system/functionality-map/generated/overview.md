@@ -362,7 +362,7 @@ Mapped pages: 58 | Sections: 312 | Excluded routes: 25
 ### tool-detail: Public money calculator
 
 - Route: `/tools/:slug` (auth: `public`, file: `apps/web/app/routes/tools.$slug.tsx`)
-- Purpose: Run one of eight public UK money calculators locally without signing in, read its guide and FAQ, or request a beta invite.
+- Purpose: Run one of eight public UK money calculators locally without signing in, read its guide and FAQ, or open the interactive preview.
 
 | Section       | Component                             | Facts read | Figures |
 | ------------- | ------------------------------------- | ---------- | ------- |
@@ -420,7 +420,7 @@ Mapped pages: 58 | Sections: 312 | Excluded routes: 25
 ### contact: Contact | Flump
 
 - Route: `/contact` (auth: `public`, file: `apps/marketing/src/pages/ContactPage/ContactPage.tsx`)
-- Purpose: Provide the Flump support email address for beta invites, questions, feedback, privacy requests, and complaints, plus a link to security reporting.
+- Purpose: Provide the Flump support email address for questions, feedback, privacy requests, and complaints, plus a link to security reporting.
 
 | Section       | Component                                              | Facts read | Figures |
 | ------------- | ------------------------------------------------------ | ---------- | ------- |
@@ -481,7 +481,7 @@ Mapped pages: 58 | Sections: 312 | Excluded routes: 25
 ### home: All your money. One clear picture. | Flump
 
 - Route: `/` (auth: `public`, file: `apps/marketing/src/pages/HomePage/HomePage.tsx`)
-- Purpose: Introduce Flump's five money areas, let visitors try the pay rise tool, read the FAQ, and request an invite or open the interactive preview.
+- Purpose: Introduce Flump's five money areas, let visitors try the pay rise tool, read the FAQ, and open the interactive preview or sign in with an invite link.
 
 | Section         | Component                                                             | Facts read | Figures |
 | --------------- | --------------------------------------------------------------------- | ---------- | ------- |

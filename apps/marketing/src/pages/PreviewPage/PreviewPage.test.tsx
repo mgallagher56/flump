@@ -42,14 +42,17 @@ describe("PreviewPage", () => {
     expect(captions.length).toBe(3);
   });
 
-  it("renders the invite call to action", () => {
+  it("closes with Sign in for people with an invite link, and no invite request", () => {
     renderPage();
     expect(
       screen.getByRole("heading", { level: 2, name: "Ready to see your own figures?" }),
     ).toBeDefined();
-    expect(
-      screen.getAllByRole("link", { name: "Request an invite" }).length,
-    ).toBeGreaterThanOrEqual(1);
+    const close = screen.getByTestId("preview-cta");
+    const links = within(close).getAllByRole("link");
+    expect(links.map((a) => a.textContent)).toEqual(["Sign in"]);
+    expect(links[0]?.getAttribute("href")).toMatch(/\/login$/);
+    expect(links[0]?.getAttribute("data-variant")).toBe("primary");
+    expect(screen.getByRole("main").textContent).not.toMatch(/request an invite/i);
   });
 
   it("gives each section one visible h2, and the frames add no second heading", () => {

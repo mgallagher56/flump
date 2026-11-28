@@ -39,14 +39,16 @@ describe("pointerLightAt", () => {
 });
 
 describe("LitCtas", () => {
-  it("renders the sign-up call to action and the preview link, both lit", () => {
+  it("renders one primary, lit call to action: the interactive preview, and no invite request", () => {
     stubMotion(false);
     render(<LitCtas />);
+    const links = screen.getAllByRole("link");
+    expect(links).toHaveLength(1);
     const preview = screen.getByRole("link", { name: "Interactive preview" });
     expect(preview.getAttribute("href")).toBe("/preview");
+    expect(preview.getAttribute("data-variant")).toBe("primary");
     expect(preview.hasAttribute("data-light")).toBe(true);
-    expect(screen.getAllByRole("link")).toHaveLength(2);
-    expect(screen.getAllByRole("link").every((a) => a.hasAttribute("data-light"))).toBe(true);
+    expect(screen.queryByText(/request an invite/i)).toBeNull();
   });
 
   it("sends the preview link to the section it is given", () => {
@@ -55,13 +57,6 @@ describe("LitCtas", () => {
     expect(screen.getByRole("link", { name: "Interactive preview" }).getAttribute("href")).toBe(
       "/preview#preview-section-pay",
     );
-  });
-
-  it("leaves out the preview link when asked", () => {
-    stubMotion(false);
-    render(<LitCtas secondary={false} />);
-    expect(screen.getAllByRole("link")).toHaveLength(1);
-    expect(screen.queryByRole("link", { name: "Interactive preview" })).toBeNull();
   });
 
   it("writes the light under a mouse, once a frame, and settles the lean on leave", () => {

@@ -143,7 +143,7 @@ export const HomePayRise: FC = () => {
 
   const handleStart = () => {
     seedSalaryForOnboarding(salary);
-    window.location.href = cta.href;
+    if (cta) window.location.href = cta.href;
   };
 
   return (
@@ -239,7 +239,7 @@ export const HomePayRise: FC = () => {
               )}
 
               <div className={payActions}>
-                {cta.external ? (
+                {cta?.external ? (
                   <Button size="md" variant="outline" onClick={handleStart}>
                     Start with this salary
                   </Button>

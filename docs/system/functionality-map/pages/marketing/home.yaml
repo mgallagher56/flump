@@ -3,7 +3,7 @@ app: marketing
 route: /
 title: All your money. One clear picture. | Flump
 auth: public
-purpose: Introduce Flump's five money areas, let visitors try the pay rise tool, read the FAQ, and request an invite or open the interactive preview.
+purpose: Introduce Flump's five money areas, let visitors try the pay rise tool, read the FAQ, and open the interactive preview or sign in with an invite link.
 route_file: apps/marketing/src/pages/HomePage/HomePage.tsx
 
 sections:

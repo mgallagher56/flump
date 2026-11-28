@@ -1,6 +1,6 @@
 # Legal pages: review record
 
-Status: version 0.1 of the terms, cookies and accessibility pages and version 0.2 of the privacy notice, 25 November 2026.
+Status: version 0.1 of the terms and accessibility pages (25 November 2026), version 0.2 of the cookies page (28 November 2026, round 9), and the privacy notice at the version its latest round names.
 
 - **Written by:** Claude Fable (an AI model), from the code, the hosting settings and primary legal sources read that day.
 - **Approved by:** a separate Claude Fable reviewer that wrote none of the pages (owner decision, 25 November 2026: "use fable to write and approve the legal pages").
@@ -77,12 +77,16 @@ D5 was revised so the backend runs the retention purge itself (`docs/audit/plans
 
 E35 W5 adds two optional questions after a check-in, at most once a calendar quarter. A Fable decider chose the lawful basis (legitimate interest for the choice and the free text, no Article 9 condition relied on), the period (13 months from the quarter's first day) and the default (on; switching off deletes earlier answers), and drafted the text. A separate Fable decider, signed `fable-decider`, reviewed it against the design. It required three changes: "at most once in each quarter of the year" in place of "once every three months", "which quarter it was", and "treat you differently from anyone else" in place of "change what you see", since the stop rules can pause a feature for everyone. All three were applied verbatim, and the second look approved it, with the `ropa.md` row 14 (numbered 13 before the households row took it) and the `data-map.md` row. Not legal advice; Fable is not a solicitor. The reviewer checked against the design while the backend was being built; An independent Fable decider, signed `fable-decider`, checked the final 0.4 text against the code as built on 26 November 2026 and approved it. On rebases onto main the version became 0.4, after round 6 took 0.2 and round 7 took 0.3.
 
+### Round 9: the "Reduce motion" setting (cookies 0.2)
+
+The marketing header gained a "Reduce motion" button (owner, 28 November 2026). It stores `flump-motion` (`reduce`) in localStorage, written only when the person presses it and removed when they press it again; the script before first paint only reads it, and nothing is sent. An independent Fable decider, signed `fable-decider`, checked the cookies page wording against the code on 28 November 2026 and approved it with changes: the label quoted as on screen, a data map row, and this record. It is strictly necessary (recording a selection the person made, PECR Schedule A1 paragraph 4), so no consent or banner change is needed, and the privacy notice needs no change.
+
 ## Judgement calls the reviewer made
 
 - **Controller and processor for client details:** the user as controller and Flump as processor is the right split.
 - **Responsibility section (Consumer Rights Act 2015, Part 2):** fair and transparent in its reading; nothing found that is likely to be unenforceable. There is no cap, so a sole trader carries unlimited foreseeable loss.
 - **Acceptance of the terms:** recorded at sign-up since round 6, before onboarding and again when a version changes.
-- **No cookie banner:** correct. Sign-in, invite, theme, the opt-out record and the onboarding seed are strictly necessary (PECR Schedule A1 paragraph 4). The three optional sessionStorage keys rest on paragraph 6 and the switch is a sufficient simple, free means of objecting, on both sites.
+- **No cookie banner:** correct. Sign-in, invite, theme, "Reduce motion", the opt-out record and the onboarding seed are strictly necessary (PECR Schedule A1 paragraph 4). The three optional sessionStorage keys rest on paragraph 6 and the switch is a sufficient simple, free means of objecting, on both sites.
 - **No regulatory-status sentence in the terms:** acceptable for the beta (that wording is the owner's, E7). A launch risk the owner must decide, because users may assume complaint and compensation schemes apply.
 
 ## What could not be verified

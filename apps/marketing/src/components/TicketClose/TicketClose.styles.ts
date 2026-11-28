@@ -1,16 +1,15 @@
 import { css } from "@repo/ui/styled-system/css";
 
-/** The close: the getting started ticket, the question, one line and the button, in one card. */
+/** The close: the picture, the question, one line, the button and the sign-in line, in one card. */
 export const closeCard = css({
   display: "grid",
   justifyItems: "center",
   gap: "4",
   textAlign: "center",
   p: "clamp(24px, 3vw, 48px)",
-  borderRadius: "28px",
 });
 
-/** The ticket fills the card's width up to its own (`GettingStartedTicket`). */
+/** The picture across the card; the stack keeps to its own box inside it (`CloseStack`). */
 export const closePicture = css({ width: "full" });
 
 export const closeTitle = css({

@@ -1,7 +1,6 @@
 import { type FC, type ReactNode, useRef } from "react";
 import { HeroOrbs, type HeroOrbTones } from "../HeroOrbs";
 import { LitCtas } from "../LitCtas";
-import { MotionControl } from "../MotionControl";
 import {
   hero,
   heroCopy,
@@ -10,7 +9,6 @@ import {
   heroLabel,
   heroLead,
   heroNote,
-  heroPause,
   heroTitle,
 } from "./PageHero.styles";
 
@@ -25,7 +23,7 @@ export interface PageHeroProps {
   badge?: ReactNode;
   /** One more line under the lead (and the badge). */
   note?: string;
-  /** Where "Interactive preview" beside "Request an invite" goes; left out, no second button. */
+  /** Where the hero's one button, "Interactive preview", goes; left out, the preview's top. */
   previewHref?: string;
   /** The four orb colours, biggest first. */
   tones: HeroOrbTones;
@@ -35,9 +33,9 @@ export interface PageHeroProps {
 
 /**
  * The first band of the features and area pages (OTHER-PAGES-PLAN slice P1, from the approved
- * prototypes at `prototypes/others`): a small label, the h1, the lead, the calls to action with the
+ * prototypes at `prototypes/others`): a small label, the h1, the lead, the call to action with the
  * pointer light, and the orbs beside the copy, live at scene level S1. The scene is this page's only
- * ambient motion, so its pause control sits here, under the calls to action (MK14, WCAG 2.2.2).
+ * ambient motion; the header's "Reduce motion" stops it (MK14, WCAG 2.2.2).
  */
 export const PageHero: FC<PageHeroProps> = ({
   titleId,
@@ -66,11 +64,8 @@ export const PageHero: FC<PageHeroProps> = ({
           {note && <p className={heroNote}>{note}</p>}
           {children}
           <div className={heroCtas}>
-            <LitCtas previewHref={previewHref} secondary={Boolean(previewHref)} />
+            <LitCtas previewHref={previewHref} />
           </div>
-          <span className={heroPause}>
-            <MotionControl />
-          </span>
         </div>
       </div>
     </section>

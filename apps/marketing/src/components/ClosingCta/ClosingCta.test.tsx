@@ -5,7 +5,7 @@ import { ClosingCta } from "./ClosingCta";
 const renderCta = () =>
   render(
     <ClosingCta
-      cta={{ href: "/signup", label: "Request an invite" }}
+      cta={{ href: "/login", label: "Sign in" }}
       data-testid="closing"
       id="get-started"
       text="Start with a few rough numbers."
@@ -31,16 +31,16 @@ describe("ClosingCta", () => {
   it("holds one primary button to the call to action", () => {
     renderCta();
     const link = within(screen.getByTestId("closing")).getByRole("link", {
-      name: "Request an invite",
+      name: "Sign in",
     });
-    expect(link.getAttribute("href")).toBe("/signup");
+    expect(link.getAttribute("href")).toBe("/login");
     expect(link.getAttribute("data-variant")).toBe("primary");
   });
 
   it("draws the scene in its dark colours, since the band is charcoal in both themes", () => {
     render(
       <ClosingCta
-        cta={{ href: "/signup", label: "Request an invite" }}
+        cta={{ href: "/login", label: "Sign in" }}
         id="get-started"
         illustration={<svg data-testid="scene" />}
         text="Start with a few rough numbers."

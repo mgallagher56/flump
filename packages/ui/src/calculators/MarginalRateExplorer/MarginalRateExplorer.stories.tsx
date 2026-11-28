@@ -61,7 +61,7 @@ export const Default: Story = {
 export const Embedded: Story = {
   args: {
     embedded: true,
-    ctaText: "Request an invite",
+    ctaText: "Interactive preview",
     onSaveAndContinue: fn(),
     persistSeed: false,
   },
@@ -75,7 +75,7 @@ export const Embedded: Story = {
     ).toBeInTheDocument();
     // One tax year badge, at the top of the results.
     await expect(canvas.getAllByText(/^As at tax year/)).toHaveLength(1);
-    await userEvent.click(canvas.getByRole("button", { name: "Request an invite" }));
+    await userEvent.click(canvas.getByRole("button", { name: "Interactive preview" }));
     await expect(args.onSaveAndContinue).toHaveBeenCalledWith(
       expect.objectContaining({ annualIncome: 39_000 }),
     );

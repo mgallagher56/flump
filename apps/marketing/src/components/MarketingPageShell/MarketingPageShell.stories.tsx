@@ -2,7 +2,6 @@ import { css } from "@repo/ui/styled-system/css";
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, within } from "storybook/test";
 import { BubbleField } from "../BubbleField";
-import { MotionControl } from "../MotionControl";
 import { MarketingPageShell } from "./MarketingPageShell";
 
 const band = css({ position: "relative", minHeight: "320px", p: "8" });
@@ -16,8 +15,9 @@ const meta: Meta<typeof MarketingPageShell> = {
     <MarketingPageShell>
       <main className={band}>
         <BubbleField layout="a" />
-        <p className={text}>Any marketing page: the bubbles pause with the control.</p>
-        <MotionControl />
+        <p className={text}>
+          Any marketing page: the bubbles stop with the header's Reduce motion.
+        </p>
       </main>
     </MarketingPageShell>
   ),

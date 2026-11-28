@@ -1,7 +1,6 @@
 import { Button, usePrefersReducedMotion } from "@repo/ui";
 import { cx } from "@repo/ui/styled-system/css";
 import { type FC, useEffect, useRef } from "react";
-import { signupCta } from "../../utils/site";
 import { litButton, row } from "./LitCtas.styles";
 
 /** Where the light sits and how far the button leans, for a pointer over a button's box. */
@@ -36,25 +35,19 @@ export function pointerLightAt(
 }
 
 export interface LitCtasProps {
-  /** Show "Interactive preview" beside the sign-up call to action. Default true. */
-  secondary?: boolean;
   /** Where "Interactive preview" goes: the preview, or one section of it. */
   previewHref?: string;
   className?: string;
 }
 
 /**
- * The hero's two calls to action with prototype 11's pointer light (`p11/hero/LitCtas.tsx`): under
- * a mouse a soft light follows the pointer inside each button and the button leans a little
- * towards it, easing back on leave; a press presses it in. Touch, pen and reduced motion get the
- * plain buttons: no listeners and nothing written.
+ * The hero's call to action with prototype 11's pointer light (`p11/hero/LitCtas.tsx`): under a
+ * mouse a soft light follows the pointer inside the button and the button leans a little towards
+ * it, easing back on leave; a press presses it in. Touch, pen and reduced motion get the plain
+ * button: no listeners and nothing written. One primary button, "Interactive preview": invite
+ * links are shared by hand, so nothing asks for an invite (owner and coordinator, 28 Nov 2026).
  */
-export const LitCtas: FC<LitCtasProps> = ({
-  secondary = true,
-  previewHref = "/preview",
-  className,
-}) => {
-  const cta = signupCta();
+export const LitCtas: FC<LitCtasProps> = ({ previewHref = "/preview", className }) => {
   const ref = useRef<HTMLDivElement>(null);
   const reduced = usePrefersReducedMotion();
 
@@ -104,17 +97,10 @@ export const LitCtas: FC<LitCtasProps> = ({
   return (
     <div className={cx(row, className)} data-lit-ctas="" ref={ref}>
       <Button asChild size="lg" variant="primary">
-        <a className={litButton} data-light="" href={cta.href}>
-          {cta.label}
+        <a className={litButton} data-light="" href={previewHref}>
+          Interactive preview
         </a>
       </Button>
-      {secondary && (
-        <Button asChild size="lg" variant="outline">
-          <a className={litButton} data-light="" href={previewHref}>
-            Interactive preview
-          </a>
-        </Button>
-      )}
     </div>
   );
 };

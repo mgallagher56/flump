@@ -103,11 +103,16 @@ describe("Marketing HomePage (ROLLOUT-PLAN M1, prototype 11)", () => {
       const heading = document.getElementById(stop.getAttribute("aria-labelledby") ?? "");
       expect(heading?.tagName).toMatch(/^H[1-3]$/);
     }
-    // The section control is mounted after hydration, with the pause control beside it.
+    // The section control is mounted after hydration, alone: the header's "Reduce motion" replaced
+    // the pause control that sat beside it (MK14).
     const control = screen.getByRole("navigation", { name: "Sections" });
-    expect(
-      control.closest("[data-stop-control]")?.querySelector("[data-motion-control]"),
-    ).not.toBeNull();
+    expect(control.closest("[data-stop-control]")?.querySelectorAll("button")).toHaveLength(
+      control.querySelectorAll("button").length,
+    );
+    const reduce = within(screen.getByRole("banner")).getByRole("button", {
+      name: "Reduce motion",
+    });
+    expect(reduce.getAttribute("aria-pressed")).toBe("false");
   });
 
   it("states the tagline in the title, never in the h1", async () => {
@@ -116,20 +121,27 @@ describe("Marketing HomePage (ROLLOUT-PLAN M1, prototype 11)", () => {
     expect(screen.getByRole("heading", { level: 1 }).textContent).not.toMatch(/fog/i);
   });
 
-  // Three, following prototype 11: the hero, the journey's last stop and the close. The owner's
-  // ruling on repeated calls to action is pending.
-  it("shows 'Request an invite' exactly three times in the page body: hero, last stop and close", () => {
+  // Invite links are shared by hand (owner, 28 Nov 2026): no invite request anywhere. The hero,
+  // the journey's last stop and the close each offer the interactive preview as the primary
+  // button, and the close adds the sign-in line for people who have an invite link.
+  it("asks no one to request an invite: the preview three times, primary, and the close's sign-in line", () => {
     renderHome();
-    expect(within(main()).getAllByRole("link", { name: "Request an invite" })).toHaveLength(3);
+    expect(main().textContent).not.toMatch(/request an invite/i);
+    expect(main().querySelector('a[href*="#beta"]')).toBeNull();
+    const previews = within(main()).getAllByRole("link", { name: "Interactive preview" });
+    expect(previews.map((a) => a.getAttribute("data-variant"))).toEqual([
+      "primary",
+      "primary",
+      "primary",
+    ]);
     expect(
-      within(screen.getByTestId("home-hero")).getByRole("link", { name: "Request an invite" }),
+      within(screen.getByTestId("home-hero")).getByRole("link", { name: "Interactive preview" }),
     ).toBeDefined();
     const lastStop = screen.getByRole("region", { name: "Where you stand, on one page" });
-    expect(within(lastStop).getByRole("link", { name: "Request an invite" })).toBeDefined();
+    expect(within(lastStop).getByRole("link", { name: "Interactive preview" })).toBeDefined();
     const close = within(screen.getByTestId("home-final-cta"));
-    expect(
-      close.getByRole("link", { name: "Request an invite" }).getAttribute("data-variant"),
-    ).toBe("primary");
+    expect(close.getByRole("link", { name: "Interactive preview" })).toBeDefined();
+    expect(close.getByTestId("invite-sign-in").textContent).toBe("Have an invite link? Sign in.");
     expect(
       close.getByRole("heading", { level: 2, name: "Ready to see where you stand?" }),
     ).toBeDefined();
@@ -167,12 +179,12 @@ describe("Marketing HomePage (ROLLOUT-PLAN M1, prototype 11)", () => {
         .slice(1)
         .map((h) => h.id),
     );
-    // The first five link to their area pages; the last ends on the two calls to action.
+    // The first five link to their area pages; the last ends on the interactive preview.
     const lastStop = within(journey.getByRole("region", { name: "Where you stand, on one page" }));
     expect(lastStop.getByRole("link", { name: "Interactive preview" }).getAttribute("href")).toBe(
       "/preview",
     );
-    expect(journey.getAllByRole("link", { name: "Request an invite" })).toHaveLength(1);
+    expect(journey.getAllByRole("link", { name: "Interactive preview" })).toHaveLength(1);
   });
 
   it("starts with rough figures, then offers more detail, each linked to its area", () => {
@@ -279,7 +291,6 @@ describe("Marketing HomePage (ROLLOUT-PLAN M1, prototype 11)", () => {
       "feature-ai-connection",
       "check-in",
       "security",
-      "onboarding",
     ]);
     for (const svg of scenes) expect(svg.getAttribute("aria-hidden")).toBe("true");
   });

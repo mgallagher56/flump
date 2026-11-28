@@ -45,7 +45,7 @@ export const Dark: Story = {
 
 const assertLast: Story["play"] = async ({ canvasElement }) => {
   const canvas = within(canvasElement);
-  await expect(canvas.getByRole("link", { name: "Request an invite" })).toBeVisible();
+  await expect(canvas.queryByRole("link", { name: /request an invite/i })).toBeNull();
   await expect(canvas.getByRole("link", { name: "Interactive preview" })).toBeVisible();
 };
 

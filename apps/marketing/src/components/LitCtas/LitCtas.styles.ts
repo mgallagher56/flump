@@ -1,6 +1,6 @@
 import { css } from "@repo/ui/styled-system/css";
 
-/** The two calls to action: centred while the hero is one column, from the left beside the picture. */
+/** The call to action: centred while the hero is one column, from the left beside the picture. */
 export const row = css({
   display: "flex",
   flexWrap: "wrap",

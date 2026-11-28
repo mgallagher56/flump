@@ -64,15 +64,17 @@ test.describe("marketing site", () => {
   });
 
   test("a link to an anchor on another page lands on the anchor", async ({ page }) => {
-    await page.goto(`${MARKETING_URL}/`);
+    // Far down the terms, an in-app link opens the privacy notice at "How long". (The footer's
+    // invite link to /contact#beta went with the invite request, 28 Nov 2026.)
+    await page.goto(`${MARKETING_URL}/terms`);
     await page.locator("#root main").waitFor();
     await scrollToBottom(page);
-    const link = page.locator('footer a[href="/contact#beta"]').first();
+    const link = page.locator('main a[href="/privacy#how-long"]').first();
     await link.click();
-    await expect(page).toHaveURL(/\/contact#beta$/);
+    await expect(page).toHaveURL(/\/privacy#how-long$/);
     // The target starts near the top of the screen (its scroll margin clears the header), not
     // wherever the old page's offset happened to leave it.
-    const top = await page.locator("#beta").evaluate((el) => el.getBoundingClientRect().top);
+    const top = await page.locator("#how-long").evaluate((el) => el.getBoundingClientRect().top);
     expect(top).toBeGreaterThanOrEqual(0);
     expect(top).toBeLessThanOrEqual(160);
   });

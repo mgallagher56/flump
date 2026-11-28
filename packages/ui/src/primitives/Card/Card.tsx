@@ -18,13 +18,14 @@ export const Card = ({
   elevation,
   material,
   padding,
+  radius,
   surface,
   ...props
 }: CardProps) => {
   const Component = as as ElementType;
   return (
     <Component
-      className={cx(cardRecipe({ elevation, material, padding, surface }), className)}
+      className={cx(cardRecipe({ elevation, material, padding, radius, surface }), className)}
       {...props}
     />
   );

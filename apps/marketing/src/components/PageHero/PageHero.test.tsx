@@ -17,22 +17,25 @@ const hero = (props: Partial<Parameters<typeof PageHero>[0]> = {}) => (
 );
 
 describe("PageHero", () => {
-  it("is a band labelled by its h1, with the label, the lead and both calls to action", () => {
+  it("is a band labelled by its h1, with the label, the lead and one primary call to action", () => {
     render(hero());
     const band = screen.getByRole("region", { name: "Take-home pay and Self Assessment" });
     expect(within(band).getByText("Pay", { selector: "p" })).toBeDefined();
-    expect(within(band).getByRole("link", { name: "Request an invite" })).toBeDefined();
-    expect(
-      within(band).getByRole("link", { name: "Interactive preview" }).getAttribute("href"),
-    ).toBe("/preview#preview-section-pay");
+    const links = within(band).getAllByRole("link");
+    expect(links.map((a) => a.textContent)).toEqual(["Interactive preview"]);
+    expect(links[0]?.getAttribute("href")).toBe("/preview#preview-section-pay");
+    expect(links[0]?.getAttribute("data-variant")).toBe("primary");
+    expect(within(band).queryByText(/request an invite/i)).toBeNull();
   });
 
-  it("leaves out a label that only repeats the title, and the preview link when given none", () => {
+  it("leaves out a label that only repeats the title, and sends the preview to its top when given no section", () => {
     render(
       hero({ label: "Debt and borrowing", title: "Debt and borrowing", previewHref: undefined }),
     );
     expect(screen.queryByText("Debt and borrowing", { selector: "p" })).toBeNull();
-    expect(screen.queryByRole("link", { name: "Interactive preview" })).toBeNull();
+    expect(screen.getByRole("link", { name: "Interactive preview" }).getAttribute("href")).toBe(
+      "/preview",
+    );
   });
 
   it("server-renders four still orbs in the given colours, biggest first, behind the copy (MK1, MK11)", () => {
@@ -48,10 +51,9 @@ describe("PageHero", () => {
     expect(doc.querySelector("canvas")).toBeNull();
   });
 
-  it("carries the pause control, kept out of the tab order until there is motion to stop (MK14)", () => {
+  it("has no motion control of its own: the header's Reduce motion is the one control (MK14)", () => {
     const doc = new DOMParser().parseFromString(renderToString(hero()), "text/html");
-    const control = doc.querySelector("[data-motion-control] button");
-    expect(control?.textContent).toBe("Pause animation");
-    expect(control?.getAttribute("tabindex")).toBe("-1");
+    expect(doc.querySelectorAll("button")).toHaveLength(0);
+    expect(doc.body.textContent).not.toMatch(/(Pause|Play) animation/);
   });
 });

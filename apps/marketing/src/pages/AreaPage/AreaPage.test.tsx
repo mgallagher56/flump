@@ -21,7 +21,7 @@ const renderArea = (area: MoneyArea) =>
 const main = () => screen.getByRole("main");
 
 describe.each(MONEY_AREAS.map((area) => [area.name, area] as const))("AreaPage: %s", (_, area) => {
-  it("leads with the area name, the h1, the lead and two calls to action", () => {
+  it("leads with the area name, the h1, the lead and one call to action", () => {
     renderArea(area);
     const heroBlock = screen.getByTestId("feature-hero");
     // The area's name as a small label, left out where it would only repeat the h1 (the approved
@@ -31,11 +31,11 @@ describe.each(MONEY_AREAS.map((area) => [area.name, area] as const))("AreaPage: 
     else expect(label).not.toBeNull();
     expect(screen.getByRole("heading", { level: 1, name: area.h1 })).toBeDefined();
     expect(within(heroBlock).getByText(area.lead)).toBeDefined();
-    const invite = within(heroBlock).getByRole("link", { name: "Request an invite" });
-    expect(invite.getAttribute("href")).toBe("/contact#beta");
-    expect(
-      within(heroBlock).getByRole("link", { name: "Interactive preview" }).getAttribute("href"),
-    ).toBe(area.previewHref);
+    const ctas = Array.from(heroBlock.querySelectorAll("[data-lit-ctas] a"));
+    expect(ctas.map((a) => a.textContent)).toEqual(["Interactive preview"]);
+    expect(ctas[0]?.getAttribute("href")).toBe(area.previewHref);
+    expect(ctas[0]?.getAttribute("data-variant")).toBe("primary");
+    expect(heroBlock.textContent).not.toMatch(/request an invite/i);
     expectPageRules(heroBlock, { projectionNotices: 0 });
     expectPageRules(screen.getByTestId("feature-final-cta"), { projectionNotices: 0 });
   });

@@ -140,11 +140,12 @@ describe("JourneyStop", () => {
     );
   });
 
-  it("ends the journey on the page's two calls to action", () => {
+  it("ends the journey on the interactive preview, primary, with no invite request", () => {
     render(tree(5));
     const links = screen.getAllByRole("link");
-    expect(links.map((a) => a.textContent)).toEqual(["Request an invite", "Interactive preview"]);
-    expect(links[1]?.getAttribute("href")).toBe("/preview");
+    expect(links.map((a) => a.textContent)).toEqual(["Interactive preview"]);
+    expect(links[0]?.getAttribute("href")).toBe("/preview");
+    expect(links[0]?.getAttribute("data-variant")).toBe("primary");
   });
 
   it("puts the text before the sample in the HTML, the sample swapping sides each stop", () => {
@@ -160,7 +161,7 @@ describe("JourneyStop", () => {
     const { triggers, kit } = runSetup(1, false);
     expect(triggers).toHaveLength(0);
     expect(kit.gsap.timeline).not.toHaveBeenCalled();
-    expect(moment.deps).toEqual([false, 1, 6]);
+    expect(moment.deps).toEqual([false, 1, 6, "pinned"]);
   });
 
   it("live, hides the pair by opacity until scroll brings its turn, then plays it on time", () => {
@@ -320,5 +321,74 @@ describe("JourneyStop", () => {
     expect(fourth.style.marginBottom).toBe("");
     const lastStop = render(tree(5, true)).container.querySelector("section") as HTMLElement;
     expect(lastStop.style.marginBottom).toBe("0px");
+  });
+});
+
+describe("JourneyStop with ?stops=scroll", () => {
+  /** Sets up stop `index` in scroll mode, with every box at `top` (the window is 768px tall). */
+  const scrollSetup = (index: number, top: number) => {
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({
+      top,
+      bottom: top + 900,
+    } as DOMRect);
+    const { container } = render(
+      <MemoryRouter>
+        <JourneyStop
+          index={index}
+          live
+          mode="scroll"
+          stop={stopAt(index)}
+          total={JOURNEY_STOPS.length}
+        />
+      </MemoryRouter>,
+    );
+    const root = container.querySelector("section") as HTMLElement;
+    const fake = fakeKit();
+    const cleanup = (moment.setup as Setup)(fake.kit, root);
+    return { ...fake, root, cleanup };
+  };
+
+  it("never hides the pair: no arrive or leave, only the sample's moment, played once from below the window and never scrubbed", () => {
+    const { triggers, timelines, kit } = scrollSetup(1, 2000);
+    expect(moment.deps).toEqual([true, 1, 6, "scroll"]);
+    // One timeline, the sample's own, paused until scroll starts it; no pair fade or leave.
+    expect(timelines).toHaveLength(1);
+    expect(kit.gsap.timeline).toHaveBeenCalledWith({ paused: true, defaults: { ease: "calm" } });
+    expect(kit.gsap.fromTo).not.toHaveBeenCalled();
+    expect(triggers).toHaveLength(1);
+    const [trigger] = triggers as { start: string; once: boolean; onEnter: () => void }[];
+    expect(trigger).toMatchObject({ start: "top bottom", once: true });
+    expect((trigger as Record<string, unknown>).scrub).toBeUndefined();
+    trigger?.onEnter();
+    expect(timelines[0]?.play).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows the sample finished when it is already in the window as the stop is set up", () => {
+    const { triggers, timelines } = scrollSetup(1, 300);
+    expect(timelines).toHaveLength(0);
+    expect(triggers).toHaveLength(0);
+  });
+
+  it("sent STOP_ARRIVE_EVENT by the stop control, finishes the sample at once", () => {
+    const { root, timelines } = scrollSetup(1, 2000);
+    root.dispatchEvent(new CustomEvent(STOP_ARRIVE_EVENT));
+    expect(timelines[0]?.progress).toHaveBeenCalledWith(1);
+  });
+
+  it("when focus moves into a stop outside its hold, scrolls it to the hold; inside it, leaves the page alone", () => {
+    const scrollTo = vi.fn();
+    vi.stubGlobal("scrollTo", scrollTo);
+    const { root, cleanup } = scrollSetup(2, 2000);
+    root.querySelector("a")?.focus();
+    // scrollY 0 and no header: its section top, the start of its hold.
+    expect(scrollTo).toHaveBeenCalledWith({ top: 2000, behavior: "auto" });
+    (document.activeElement as HTMLElement | null)?.blur();
+    scrollTo.mockClear();
+    vi.spyOn(root, "getBoundingClientRect").mockReturnValue({ top: 0 } as DOMRect);
+    root.querySelector("a")?.focus();
+    expect(scrollTo).not.toHaveBeenCalled();
+    (document.activeElement as HTMLElement | null)?.blur();
+    cleanup?.();
+    vi.unstubAllGlobals();
   });
 });

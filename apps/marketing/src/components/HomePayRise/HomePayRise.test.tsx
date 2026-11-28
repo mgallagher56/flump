@@ -10,7 +10,8 @@ vi.mock("../../motion/useGsapMoment", () => ({ useGsapMoment: vi.fn() }));
 
 const { persistOnboardingSeed, cta } = vi.hoisted(() => ({
   persistOnboardingSeed: vi.fn(),
-  cta: { current: { href: "/contact#beta", label: "Request an invite", external: false } },
+  // Invite-only: there is no sign-up call to action (owner, 28 Nov 2026).
+  cta: { current: null as null | { href: string; label: string; external: boolean } },
 }));
 
 vi.mock("@flump/finance-engine", async (importOriginal) => ({
@@ -44,7 +45,7 @@ beforeEach(() => {
 afterEach(() => {
   vi.useRealTimers();
   persistOnboardingSeed.mockClear();
-  cta.current = { href: "/contact#beta", label: "Request an invite", external: false };
+  cta.current = null;
 });
 
 describe("HomePayRise: the sums and copy kept from PayRiseTeaser", () => {
@@ -80,7 +81,7 @@ describe("HomePayRise: the sums and copy kept from PayRiseTeaser", () => {
     expect(screen.getByRole("link", { name: "About pay in Flump" }).getAttribute("href")).toBe(
       "/features/pay",
     );
-    expect(screen.queryByText(/Request an invite/)).toBeNull();
+    expect(screen.queryByText(/request an invite/i)).toBeNull();
     expect(persistOnboardingSeed).not.toHaveBeenCalled();
   });
 

@@ -3,7 +3,6 @@ import { cva } from "../../../styled-system/css";
 export const cardRecipe = cva({
   base: {
     backgroundColor: "surface.card",
-    borderRadius: "card",
     borderWidth: "1px",
     borderStyle: "solid",
     borderColor: "border",
@@ -53,6 +52,17 @@ export const cardRecipe = cva({
           "repeating-linear-gradient(0deg, token(colors.material.paper.rule) 0 1px, transparent 1px 4px)",
         borderColor: "material.paper.edge",
       },
+    },
+    /**
+     * The corner, from the radius scale (STYLE-GUIDE section 5). Every app card keeps `card`
+     * (16px); the marketing site's soft cards take `panel`, `tray` or `showcase`. A variant, not a
+     * caller's class, so only one radius class is ever on the card and the caller's always wins.
+     */
+    radius: {
+      card: { borderRadius: "card" },
+      panel: { borderRadius: "panel" },
+      tray: { borderRadius: "tray" },
+      showcase: { borderRadius: "showcase" },
     },
     padding: {
       none: { p: "0" },
@@ -117,6 +127,7 @@ export const cardRecipe = cva({
     surface: "default",
     elevation: "resting",
     padding: "md",
+    radius: "card",
     // Last, so a material's fill wins over `surface`.
     material: "plain",
   },

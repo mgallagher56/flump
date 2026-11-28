@@ -186,13 +186,13 @@ describe("MarginalRateExplorer", () => {
     const onSave = vi.fn();
     render(
       <MarginalRateExplorerStandalone
-        ctaText="Request an invite →"
+        ctaText="Interactive preview →"
         initialValues={{ taxYear: "2026/27" }}
         persistSeed={false}
         onSaveAndContinue={onSave}
       />,
     );
-    const cta = screen.getByRole("button", { name: "Request an invite" });
+    const cta = screen.getByRole("button", { name: "Interactive preview" });
     const outcomes = screen.getByTestId("explorer-outcomes");
     const figure = screen.getByRole("figure", { name: CHART_TITLE });
     expect(outcomes.compareDocumentPosition(cta) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();

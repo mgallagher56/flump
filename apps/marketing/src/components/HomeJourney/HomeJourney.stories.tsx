@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { MemoryRouter } from "react-router-dom";
 import { expect, within } from "storybook/test";
-import { AmbientMotionProvider } from "../../context/AmbientMotionContext";
 import { StillMotionProvider } from "../../context/StillMotionContext";
 import { HomeJourney } from "./HomeJourney";
 
@@ -18,9 +17,7 @@ const meta: Meta<typeof HomeJourney> = {
     ),
     (Story) => (
       <MemoryRouter>
-        <AmbientMotionProvider>
-          <Story />
-        </AmbientMotionProvider>
+        <Story />
       </MemoryRouter>
     ),
   ],

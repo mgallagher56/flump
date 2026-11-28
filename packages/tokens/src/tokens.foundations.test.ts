@@ -220,6 +220,15 @@ describe("E15 radii (round 5, tied to density)", () => {
     expect(pair("control")).toEqual(pair("md"));
   });
 
+  it("adds the marketing soft cards' two steps: panel 20px and showcase 28px, halved when compact", () => {
+    expect([pair("panel").base, pair("showcase").base]).toEqual(["20px", "28px"]);
+    expect([pair("panel")._compact, pair("showcase")._compact]).toEqual(["10px", "14px"]);
+    // Between the card and tray steps, and above the tray step: the scale keeps its order.
+    expect(px(pair("panel").base)).toBeGreaterThan(px(pair("card").base));
+    expect(px(pair("panel").base)).toBeLessThan(px(pair("tray").base));
+    expect(px(pair("showcase").base)).toBeGreaterThan(px(pair("tray").base));
+  });
+
   it("ordering sm <= md <= lg <= xl <= 2xl holds (non-strictly) within each density", () => {
     const steps = ["sm", "md", "lg", "xl", "2xl"] as const;
     for (const mode of ["base", "_compact"] as const) {

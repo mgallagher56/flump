@@ -378,8 +378,8 @@ describe("DebtSnowballCalculator", () => {
   });
 
   it("shows one arrow on the sign-up button when the caller's label has its own", () => {
-    render(<DebtSnowballCalculator ctaText="Request an invite →" />);
-    expect(screen.getByRole("button", { name: "Request an invite" })).toBeDefined();
+    render(<DebtSnowballCalculator ctaText="Interactive preview →" />);
+    expect(screen.getByRole("button", { name: "Interactive preview" })).toBeDefined();
   });
 
   it("styles come from recipes, with no inline styles or alarm colours", () => {

@@ -222,8 +222,8 @@ describe("TaxTrapCalculator", () => {
   });
 
   it("shows one arrow on the sign-up button when the caller's label has its own", () => {
-    render(<TaxTrapCalculator ctaText="Request an invite →" />);
-    expect(screen.getByRole("button", { name: "Request an invite" })).toBeDefined();
+    render(<TaxTrapCalculator ctaText="Interactive preview →" />);
+    expect(screen.getByRole("button", { name: "Interactive preview" })).toBeDefined();
   });
 
   it("never leads with the £100,000 line", () => {

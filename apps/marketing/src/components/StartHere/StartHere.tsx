@@ -30,7 +30,7 @@ export const StartHere: FC = () => {
         <ul className={goalList}>
           {START_HERE.map((entry) => (
             <TiltLight as="li" className={goalItem} data-arrive-item="" key={entry.goal}>
-              <SoftCard className={goalCard}>
+              <SoftCard className={goalCard} radius="tray">
                 <p className={goal}>{entry.goal}</p>
                 <ul aria-label={entry.goal} className={goalLinks}>
                   {entry.lines.map((id) => (

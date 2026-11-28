@@ -33,7 +33,7 @@ export const ContactPage: FC = () => (
   <div className={pageShell()}>
     <PageMeta
       title="Contact | Flump"
-      description="Email Flump to ask for a beta invite, with a question or feedback, or to raise a complaint."
+      description="Email Flump with a question or feedback, or to raise a complaint."
     />
 
     <Header />
@@ -42,16 +42,10 @@ export const ContactPage: FC = () => (
       <div className={container()}>
         <div className={headerBlock()}>
           <h1 className={heading()}>Contact Flump</h1>
-          <p className={intro()}>Email us for an invite, with a question or with feedback.</p>
+          <p className={intro()}>Email us with a question or with feedback.</p>
         </div>
 
-        <Card
-          aria-labelledby="contact-email"
-          as="section"
-          className={card()}
-          id="beta"
-          padding="lg"
-        >
+        <Card aria-labelledby="contact-email" as="section" className={card()} padding="lg">
           <h2 className={cardHeading()} id="contact-email">
             Email
           </h2>
@@ -64,7 +58,7 @@ export const ContactPage: FC = () => (
             )}
           </p>
           <p className={body()}>
-            Sign-up is invite-only, so ask here. Privacy requests and complaints come here too.
+            Access is by invite link during testing. Privacy requests and complaints come here too.
             Please leave out account numbers, balances and other financial details.
           </p>
         </Card>

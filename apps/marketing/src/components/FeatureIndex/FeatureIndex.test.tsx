@@ -1,8 +1,8 @@
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { StillMotionProvider } from "../../context/StillMotionContext";
 import { ALL_FEATURE_LINES, FEATURE_GROUPS } from "../../utils/featureIndex";
-import { FeatureIndex, toggleLine } from "./FeatureIndex";
+import { FeatureIndex, openFeatureLine, toggleLine } from "./FeatureIndex";
 
 const detailsOf = (id: string) => {
   const element = document.getElementById(id);
@@ -166,5 +166,34 @@ describe("FeatureIndex", () => {
     expect(within(budget).getByRole("link").getAttribute("href")).toBe("/features/budget");
     const home = screen.getByRole("heading", { level: 3, name: "Home and setup" });
     expect(within(home).queryByRole("link")).toBeNull();
+  });
+});
+
+describe("openFeatureLine", () => {
+  afterEach(() => {
+    delete document.documentElement.dataset.motion;
+    document.body.innerHTML = "";
+  });
+
+  it("jumps without a smooth scroll when the header's Reduce motion is on", () => {
+    document.body.innerHTML =
+      '<details id="breathing-room"><summary>Breathing room</summary></details>';
+    const line = document.getElementById("breathing-room") as HTMLDetailsElement;
+    const scroll = vi.fn();
+    line.scrollIntoView = scroll;
+    document.documentElement.dataset.motion = "reduce";
+    openFeatureLine("breathing-room");
+    expect(line.open).toBe(true);
+    expect(scroll).toHaveBeenCalledWith({ block: "start", behavior: "auto" });
+  });
+
+  it("scrolls smoothly when motion is allowed", () => {
+    document.body.innerHTML =
+      '<details id="breathing-room"><summary>Breathing room</summary></details>';
+    const line = document.getElementById("breathing-room") as HTMLDetailsElement;
+    const scroll = vi.fn();
+    line.scrollIntoView = scroll;
+    openFeatureLine("breathing-room");
+    expect(scroll).toHaveBeenCalledWith({ block: "start", behavior: "smooth" });
   });
 });

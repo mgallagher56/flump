@@ -9,6 +9,9 @@ import { css, cva } from "@repo/ui/styled-system/css";
  * screen, so the stops start a span apart; each frame is a full screen, sticky under the header
  * from a beat above its section, and the arrive and leave timelines hide whichever is not its turn.
  * The section's top is where its pair has fully arrived.
+ *
+ * With `?stops=scroll` the journey also carries `data-stops="scroll"` and sets no beat: the stops
+ * follow each other, each frame holding for the rest between scrolling in and scrolling out.
  */
 
 export const stop = css({
@@ -25,6 +28,10 @@ export const stop = css({
     },
   },
   "[data-live=on] section + &": { marginTop: "calc(-1 * var(--journey-screen))" },
+  // `?stops=scroll`: the stops follow each other with no overlap, so each frame scrolls in from
+  // below, holds under the header for the rest (the journey sets no beat) and scrolls out at the
+  // top: plain sticky, nothing hidden or timed.
+  "[data-live=on][data-stops=scroll] section + &": { marginTop: "0" },
 });
 
 export const frame = css({
@@ -41,9 +48,29 @@ export const frame = css({
     top: "var(--journey-head)",
     height: "var(--journey-screen)",
     marginTop: "calc(-1 * var(--journey-beat))",
-    alignItems: "start",
-    paddingTop: { base: "12px", md: "clamp(16px, 4vh, 40px)" },
-    paddingBottom: "var(--journey-lane)",
+    // Centred in the window (owner, 28 Nov 2026), not top-aligned as the prototype's CSS has it,
+    // which left a tall window's lower part empty. The frame starts under the header, so a
+    // bottom padding of the header's height makes its content box centred on the window. The
+    // pair sits in the middle row between two spacers that share the free space equally, each
+    // held to a minimum: above, the prototype's gap under the header; below, clear of the orb
+    // resting in its band (`--journey-orb-clear`). So the pair is centred when there is room,
+    // rises just enough to stay off the orb when there is less, and starts under the header
+    // when even that is too tall.
+    "--journey-orb-clear": {
+      // The scene's lane (`laneFor` in journeyLayout.ts): on a phone a band of an eighth of the
+      // height and a 38px orb; else a band of 130px held to 11% to 17% of the height and an orb
+      // of half the band, at most 66px. Plus 16px of air.
+      base: "calc(12.5svh + 38px + 16px)",
+      md: "calc(clamp(11svh, 130px, 17svh) + min(66px, clamp(11svh, 130px, 17svh) / 2) + 16px)",
+    },
+    gridTemplateRows: {
+      base: "minmax(12px, 1fr) auto minmax(calc(var(--journey-orb-clear) - var(--journey-head)), 1fr)",
+      md: "minmax(clamp(16px, 4vh, 40px), 1fr) auto minmax(calc(var(--journey-orb-clear) - var(--journey-head)), 1fr)",
+    },
+    paddingTop: "0",
+    paddingBottom: "var(--journey-head)",
+    // The pair takes the middle row.
+    "& > *": { gridRow: "2" },
   },
   // The first frame starts at its section's top, after the journey's intro.
   "[data-live=on] section:first-of-type > &": { marginTop: "0" },
@@ -143,7 +170,7 @@ export const link = css({
   _focusVisible: { outline: "none", boxShadow: "focus" },
 });
 
-/** The last stop's two calls to action. */
+/** The last stop's call to action. */
 export const ctas = css({
   marginTop: "1",
   // Prototype 11's `p11-stop__ctas > div`: the buttons start at the left at every width.

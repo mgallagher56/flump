@@ -1,8 +1,6 @@
 import { css } from "@repo/ui/styled-system/css";
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, userEvent, waitFor, within } from "storybook/test";
-import { AmbientMotionProvider } from "../../context/AmbientMotionContext";
-import { MotionControl } from "../MotionControl";
 import { HomeStopControl } from "./HomeStopControl";
 
 const NAMES = ["One picture", "Five areas", "Rough figures"] as const;
@@ -21,7 +19,7 @@ const headingStyle = css({ textStyle: "heading.lg", color: "text.primary", margi
 
 /** Three marked sections, as the home page marks its fourteen. */
 const Demo = () => (
-  <AmbientMotionProvider>
+  <>
     {NAMES.map((name, i) => (
       <section
         aria-labelledby={`story-stop-${i}`}
@@ -35,8 +33,8 @@ const Demo = () => (
         </h2>
       </section>
     ))}
-    <HomeStopControl aside={<MotionControl />} />
-  </AmbientMotionProvider>
+    <HomeStopControl />
+  </>
 );
 
 const meta: Meta<typeof HomeStopControl> = {

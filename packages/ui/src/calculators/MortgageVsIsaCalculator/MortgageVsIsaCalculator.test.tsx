@@ -192,8 +192,8 @@ describe("MortgageVsIsaCalculator", () => {
   });
 
   it("shows one arrow on the sign-up button when the caller's label has its own", () => {
-    render(<MortgageVsIsaCalculator ctaText="Request an invite →" />);
-    expect(screen.getByRole("button", { name: "Request an invite" })).toBeDefined();
+    render(<MortgageVsIsaCalculator ctaText="Interactive preview →" />);
+    expect(screen.getByRole("button", { name: "Interactive preview" })).toBeDefined();
   });
 
   it("calls onSaveAndContinue with the seed shape", () => {

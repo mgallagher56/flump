@@ -18,6 +18,10 @@ export const journey = css({
   "--journey-rest": { base: "92.4svh", md: "89.6svh" },
   "--journey-span": "calc(var(--journey-beat) + var(--journey-rest))",
   "--journey-lane": { base: "72px", md: "clamp(64px, 15svh, 150px)" },
+  // `?stops=scroll` (owner, 28 Nov 2026): the cards scroll with the page and hold centred for the
+  // rest, with no beat. A rest of 60svh keeps the page within about 50px of the pinned mode's
+  // length at 1440 by 900 and 390 by 844.
+  "&[data-stops=scroll]": { "--journey-beat": "0px", "--journey-rest": "60svh" },
 });
 
 /**
@@ -60,8 +64,19 @@ export const swatch = cva({
 /**
  * The scrim layer (prototype 11's `p11-jscrim`): sticky like the stage, between the scene and the
  * stops, live only. Its two layers fade in over the scroll into the first stop.
+ *
+ * How far the scene recedes (STYLE-GUIDE "Receding scene"), held here once for both layers:
+ * halfway between prototype 11's settings (tint 66% and 22% on Mint, 50% and 14% on Midnight;
+ * `blur(5px) saturate(0.9)` and `blur(4px) saturate(1.5) brightness(1.15)`) and the sharp scene
+ * (owner, 28 Nov 2026), so the orbs and the bead track still read as coloured glass while the
+ * cards stay the focus.
  */
 export const scrimLayer = css({
+  "--recede-tint-strong": { base: "33%", _dark: "25%" },
+  "--recede-tint-soft": { base: "11%", _dark: "7%" },
+  "--recede-blur": { base: "2.5px", _dark: "2px" },
+  "--recede-saturate": { base: "0.95", _dark: "1.25" },
+  "--recede-brightness": { base: "1", _dark: "1.075" },
   position: "sticky",
   top: "0",
   height: "100svh",
@@ -75,17 +90,14 @@ export const scrimLayer = css({
 /**
  * The tint (`p11-scrim`): the canvas colour, strongest behind the pair and lighter in the orb's
  * lane at the foot, so the travelling orb stays bright while the rest of the scene recedes.
- * Midnight takes a lighter tint, so the coloured glass keeps its colour.
+ * Midnight takes a lighter tint, so the coloured glass keeps its colour. The strengths are the
+ * layer's `--recede-tint-*`.
  */
 export const scrim = css({
-  "--scrim-strong": {
-    base: "color-mix(in oklab, {colors.surface.canvas} 66%, transparent)",
-    _dark: "color-mix(in oklab, {colors.surface.canvas} 50%, transparent)",
-  },
-  "--scrim-soft": {
-    base: "color-mix(in oklab, {colors.surface.canvas} 22%, transparent)",
-    _dark: "color-mix(in oklab, {colors.surface.canvas} 14%, transparent)",
-  },
+  "--scrim-strong":
+    "color-mix(in oklab, {colors.surface.canvas} var(--recede-tint-strong), transparent)",
+  "--scrim-soft":
+    "color-mix(in oklab, {colors.surface.canvas} var(--recede-tint-soft), transparent)",
   "--scrim-foot": "calc(100% - var(--journey-lane) - 6svh)",
   position: "absolute",
   inset: "0",
@@ -106,10 +118,8 @@ export const scrimBlur = css({
     position: "absolute",
     inset: "0",
     opacity: "0",
-    backdropFilter: {
-      base: "blur(5px) saturate(0.9)",
-      _dark: "blur(4px) saturate(1.5) brightness(1.15)",
-    },
+    backdropFilter:
+      "blur(var(--recede-blur)) saturate(var(--recede-saturate)) brightness(var(--recede-brightness))",
     maskImage:
       "linear-gradient(to bottom, {colors.text.primary} 0, {colors.text.primary} var(--scrim-foot), transparent calc(var(--scrim-foot) + 10svh))",
   },
@@ -145,10 +155,4 @@ export const lead = css({
   color: "text.secondary",
   fontSize: "lg",
   lineHeight: "1.55",
-});
-
-/** The pause control, under the lead (MK14). */
-export const control = css({
-  display: "flex",
-  justifyContent: "flex-start",
 });

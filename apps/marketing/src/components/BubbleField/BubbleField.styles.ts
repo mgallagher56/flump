@@ -17,10 +17,12 @@ export const field = cva({
   variants: {
     fit: {
       band: {},
-      // The hero keeps two bubbles; on a narrow screen the field starts 40% down, clear of the heading.
+      // The home hero: inside its centred column, reaching out to the window's edges (the hero
+      // clips sideways overflow), and a size container for its spots.
       hero: {
-        "& > span:nth-child(3)": { display: "none" },
-        "@media (max-width: 55.99rem)": { inset: "40% 0 0" },
+        left: "calc(50% - 50vw)",
+        right: "calc(50% - 50vw)",
+        containerType: "size",
       },
       // Beside a second list, and in the close, the small upper bubble would sit on the heading.
       beside: { "& > span:nth-child(2)": { display: "none" } },
@@ -37,18 +39,37 @@ export const field = cva({
 });
 
 /**
- * One bubble: a soft sphere in one of the two orb sets (STYLE-GUIDE 2.7; violet and rose only on
- * orb-like elements, MC1). Where the browser supports scroll-driven animation, it drifts between
+ * One bubble: a still glass orb in one of the two orb sets (STYLE-GUIDE 2.7; violet and rose only
+ * on orb-like elements, MC1), lit like the journey's three.js orbs but quieter, since it sits in the
+ * background (owner, 28 Nov 2026: "the marketing side background bubbles should also be glass
+ * orbs"). Every layer is a radial gradient inside the bubble's own circle, so it scales with any
+ * size and nothing reaches past the box the clearance checks measure. No rim line and no outer
+ * shadow. Where the browser supports scroll-driven animation, it drifts between
  * `--drift-from` and `--drift-to` as its band crosses the screen (prototype 11), so it moves only
- * when the reader scrolls. Still with reduced motion and while the visitor has paused animation
+ * when the reader scrolls. Still with reduced motion, from the system or the header's "Reduce motion"
  * (MK14). On a narrow screen only the first, large bubble stays, at a little over half size and
  * pushed to its edge, so none sits behind the copy.
  */
 export const bubble = cva({
   base: {
+    // The light on the glass: the off-white in both themes.
+    "--bubble-light": "{colors.text.onContrast}",
     position: "absolute",
     borderRadius: "full",
-    opacity: 0.85,
+    opacity: { base: 0.7, _dark: 0.8, _systemDark: 0.8 },
+    // Written as joined string literals, never `[...].join()`: Panda reads styles at build time.
+    // The body's tone is `color` and the caustic's `--bubble-far`, both from the set.
+    backgroundImage:
+      // The specular highlight, top right, where the journey's light falls.
+      "radial-gradient(circle at 70% 26%, var(--bubble-light) 0 3.5%, color-mix(in oklab, var(--bubble-light) 35%, transparent) 6%, transparent 11%), " +
+      // The soft sheen across the upper half.
+      "radial-gradient(ellipse 60% 44% at 46% 28%, color-mix(in oklab, var(--bubble-light) 46%, transparent), transparent 72%), " +
+      // The Fresnel glow: lighter towards the edge and fading again before it, so no line is drawn.
+      "radial-gradient(circle at 50% 50%, transparent 0 60%, color-mix(in oklab, var(--bubble-light) 34%, transparent) 88%, color-mix(in oklab, var(--bubble-light) 12%, transparent) 100%), " +
+      // The caustic: the set's second tone gathered low on the far side.
+      "radial-gradient(circle at 56% 82%, color-mix(in oklab, var(--bubble-far) 32%, transparent), transparent 48%), " +
+      // The body: tinted glass in the set's first tone over the band, denser towards the edge.
+      "radial-gradient(circle at 46% 38%, color-mix(in oklab, currentColor 24%, transparent) 0, color-mix(in oklab, currentColor 42%, transparent) 66%, color-mix(in oklab, currentColor 64%, transparent) 100%)",
     _motionSafe: {
       "@supports (animation-timeline: view())": {
         animationName: "marketingDrift",
@@ -57,28 +78,41 @@ export const bubble = cva({
         animationTimeline: "view()",
         animationRange: "cover 0% cover 100%",
       },
-      // While the visitor has paused animation (AmbientMotionContext). Written out, not imported,
-      // because Panda extracts styles statically.
-      "html[data-ambient=paused] &": { animationName: "none" },
     },
   },
   variants: {
     set: {
-      skyTeal: {
-        background:
-          "radial-gradient(circle at 35% 30%, {colors.orb.skyTeal.bubble}, {colors.orb.skyTeal.bubbleShade} 80%)",
-        boxShadow: "inset 0 0 0 1px {colors.orb.skyTeal.rim}",
-      },
-      violetRose: {
-        background:
-          "radial-gradient(circle at 35% 30%, {colors.orb.violetRose.bubble}, {colors.orb.violetRose.bubbleShade} 80%)",
-        boxShadow: "inset 0 0 0 1px {colors.orb.violetRose.rim}",
-      },
+      skyTeal: { color: "orb.skyTeal.core", "--bubble-far": "{colors.orb.skyTeal.shade}" },
+      violetRose: { color: "orb.violetRose.core", "--bubble-far": "{colors.orb.violetRose.shade}" },
     },
     order: {
       first: { "@media (max-width: 55.99rem)": { scale: "0.55" } },
       second: { "@media (max-width: 55.99rem)": { display: "none" } },
       third: { "@media (max-width: 55.99rem)": { display: "none" } },
+    },
+  },
+});
+
+/**
+ * A page's own spot (`BubbleSpot`): centred on `--spot-x`, `--spot-y`, `--spot-size` across, and
+ * shown only in its range of widths. A spot sized to nothing (a gutter too narrow) draws nothing.
+ */
+export const spot = cva({
+  base: {
+    display: "none",
+    left: "var(--spot-x)",
+    top: "var(--spot-y)",
+    width: "var(--spot-size)",
+    height: "var(--spot-size)",
+    marginLeft: "calc(var(--spot-size) / -2)",
+    marginTop: "calc(var(--spot-size) / -2)",
+  },
+  variants: {
+    show: {
+      wide: { "@media (min-width: 64rem)": { display: "block" } },
+      stacked: { "@media (min-width: 40rem) and (max-width: 63.99rem)": { display: "block" } },
+      roomy: { "@media (min-width: 60rem) and (max-width: 63.99rem)": { display: "block" } },
+      phone: { "@media (max-width: 39.99rem)": { display: "block" } },
     },
   },
 });

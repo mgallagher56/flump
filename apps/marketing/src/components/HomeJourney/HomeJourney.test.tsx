@@ -2,7 +2,6 @@ import { act, render, screen, within } from "@testing-library/react";
 import { renderToString } from "react-dom/server";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { AmbientMotionProvider } from "../../context/AmbientMotionContext";
 import { HomeJourney } from "./HomeJourney";
 
 const loaders = vi.hoisted(() => ({ scene: vi.fn(), gsap: vi.fn(), painted: vi.fn() }));
@@ -15,9 +14,7 @@ vi.mock("../../motion/loadGsapKit", async (importOriginal) => ({
 
 const page = (
   <MemoryRouter>
-    <AmbientMotionProvider>
-      <HomeJourney />
-    </AmbientMotionProvider>
+    <HomeJourney />
   </MemoryRouter>
 );
 
@@ -110,7 +107,7 @@ describe("HomeJourney", () => {
     }
   });
 
-  it("counts the stops as 'N of 6' and ends on the page's two calls to action", () => {
+  it("counts the stops as 'N of 6' and ends on the page's call to action", () => {
     const host = serverDom();
     const kickers = Array.from(host.querySelectorAll("[data-stop-kicker]"));
     expect(kickers.map((p) => p.textContent)).toEqual([
@@ -122,8 +119,8 @@ describe("HomeJourney", () => {
       "6 of 6",
     ]);
     const links = Array.from(host.querySelectorAll('[data-stop-key="picture"] a'));
-    expect(links.map((a) => a.textContent)).toEqual(["Request an invite", "Interactive preview"]);
-    expect(links[1]?.getAttribute("href")).toBe("/preview");
+    expect(links.map((a) => a.textContent)).toEqual(["Interactive preview"]);
+    expect(links[0]?.getAttribute("href")).toBe("/preview");
   });
 
   it("puts the scene in an aria-hidden stage, still in the server render, with the pause control in the intro", () => {
@@ -137,7 +134,8 @@ describe("HomeJourney", () => {
         orb.getAttribute("data-orb-tone"),
       ),
     ).toEqual(["sky", "violet", "teal", "rose"]);
-    expect(host.querySelector("[data-journey-intro] [data-motion-control]")).not.toBeNull();
+    // No motion control of its own: the header's "Reduce motion" is the one control (MK14).
+    expect(host.querySelector("[data-journey-intro] button")).toBeNull();
     expect(
       host.querySelector("[data-journey-scrim]")?.closest("[aria-hidden=true]"),
     ).not.toBeNull();
@@ -212,5 +210,20 @@ describe("HomeJourney", () => {
       loaded(kit);
     });
     expect(journey.getAttribute("data-live")).toBe("on");
+  });
+
+  it("reads ?stops=scroll after mount, keeping the server HTML on the default pinned stops", () => {
+    expect(serverDom().querySelector("[data-journey]")?.getAttribute("data-stops")).toBe("pinned");
+    window.history.replaceState(null, "", "/?utm=x&stops=scroll");
+    const { unmount } = render(page);
+    expect(screen.getByTestId("home-journey").getAttribute("data-stops")).toBe("scroll");
+    unmount();
+    for (const search of ["/", "/?stops=SCROLL", "/?stops=pinned"]) {
+      window.history.replaceState(null, "", search);
+      const view = render(page);
+      expect(screen.getByTestId("home-journey").getAttribute("data-stops")).toBe("pinned");
+      view.unmount();
+    }
+    window.history.replaceState(null, "", "/");
   });
 });

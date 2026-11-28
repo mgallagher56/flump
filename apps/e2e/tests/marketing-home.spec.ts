@@ -5,8 +5,8 @@ import { scrollInSteps, untilStill } from "../support/marketingMotion";
 
 /*
  * The new marketing home page (ROLLOUT-PLAN slice M1; UX-GUIDELINES 12.2). These checks need a
- * real browser: layout at each width, the page with no JavaScript, reduced motion, the pause
- * control, the carousel and FAQ by keyboard, the journey's changeovers coming to rest, and axe in
+ * real browser: layout at each width, the page with no JavaScript, reduced motion, the header's
+ * "Reduce motion", the carousel and FAQ by keyboard, the journey's changeovers coming to rest, and axe in
  * both themes. The built marketing site is the one the smoke suite starts.
  */
 
@@ -27,7 +27,9 @@ const MOMENT_PARTS =
  */
 async function scrollThrough(page: Page): Promise<void> {
   const motion = !(await page.evaluate(
-    () => matchMedia("(prefers-reduced-motion: reduce)").matches,
+    () =>
+      matchMedia("(prefers-reduced-motion: reduce)").matches ||
+      document.documentElement.dataset.motion === "reduce",
   ));
   if (motion) await liveBeforeScroll(page);
   const notReady = await page.evaluate(async (motion) => {
@@ -93,6 +95,32 @@ async function openPage(
   return page;
 }
 
+/** Presses Tab from the top of the page until `selector` has focus (at most 30 presses). */
+async function tabTo(page: Page, selector: string): Promise<void> {
+  for (let i = 0; i < 30; i++) {
+    await page.keyboard.press("Tab");
+    if (await page.evaluate((sel) => document.activeElement?.matches(sel) ?? false, selector)) {
+      return;
+    }
+  }
+  throw new Error(`${selector} was not reached by Tab`);
+}
+
+/** The bubble fields' animation names, each once. */
+async function driftNames(page: Page): Promise<string[]> {
+  const names = await page
+    .locator("[data-bubble-field] span")
+    .evaluateAll((els) => els.map((el) => getComputedStyle(el).animationName));
+  expect(names.length).toBeGreaterThan(0);
+  return [...new Set(names)];
+}
+
+/** The rough figures band's steps' opacities. */
+const stepOpacities = (page: Page) =>
+  page
+    .locator("#rough-figures [data-step]")
+    .evaluateAll((els) => els.map((el) => getComputedStyle(el).opacity));
+
 /**
  * How an element shows inside the journey: its opacity times every ancestor's up to the journey
  * (computed opacity ignores the parents), and whether it is `visibility: hidden`. Runs in the page.
@@ -122,7 +150,9 @@ test.describe("marketing home: layout", () => {
         // The dashboard's title sits at its card's left, so measure the card.
         const card = await hero.locator("figure").first().boundingBox();
         const ctas = await hero.locator("[data-lit-ctas]").boundingBox();
-        const firstCta = await hero.getByRole("link", { name: "Request an invite" }).boundingBox();
+        const firstCta = await hero
+          .getByRole("link", { name: "Interactive preview" })
+          .boundingBox();
         const align = await hero
           .locator("h1")
           .locator("..")
@@ -181,6 +211,8 @@ test.describe("marketing home: without JavaScript and with reduced motion (MK1)"
     });
     const page = await context.newPage();
     await page.goto(HOME);
+    // The header's Reduce motion needs script to do anything, so it is not offered without it.
+    await expect(page.getByRole("button", { name: "Reduce motion" })).toBeHidden();
     const stops = page.locator("#journey section[data-journey-stop]");
     await expect(stops).toHaveCount(6);
     // Plain sections in reading order: each stop starts below the one before it.
@@ -226,54 +258,496 @@ test.describe("marketing home: without JavaScript and with reduced motion (MK1)"
     await expect(page.locator("canvas")).toHaveCount(0);
     await expect(page.getByTestId("journey-stage")).toHaveAttribute("data-scene", "still");
     await expect(page.locator("[data-enhanced]")).toHaveCount(0);
-    // Nothing ambient moves, so there is no control to stop it.
+    // The system setting wins: the header's "Reduce motion" shows on, disabled, and says why.
+    const reduce = page.getByRole("banner").getByRole("button", { name: "Reduce motion" });
+    await expect(reduce).toHaveAttribute("aria-pressed", "true");
+    await expect(reduce).toHaveAttribute("aria-disabled", "true");
+    await expect(reduce).toHaveAccessibleDescription("On in your device settings");
     await expect(page.getByRole("button", { name: /^(Pause|Play) animation$/ })).toHaveCount(0);
     await page.close();
   });
 });
 
+/**
+ * Each close piece's key, place in the stack's box and size, rounded to the pixel. In the box, not
+ * on the page: with motion the pinned hero makes the page longer above the close.
+ */
+async function stackPlaces(page: Page): Promise<string[]> {
+  return page.locator("#get-started [data-close-piece]").evaluateAll((els) =>
+    els.map((el) => {
+      const box = el.closest("[data-close-stack]")?.getBoundingClientRect();
+      const r = el.getBoundingClientRect();
+      return `${el.getAttribute("data-close-piece")} ${Math.round(r.left - (box?.left ?? 0))},${Math.round(r.top - (box?.top ?? 0))} ${Math.round(r.width)}x${Math.round(r.height)}`;
+    }),
+  );
+}
+
+test.describe("marketing home: the close's stack (owner, 28 Nov 2026)", () => {
+  test("offers the interactive preview and, under it, the sign-in line, with no invite request", async ({
+    browser,
+  }) => {
+    const page = await browser.newPage({ reducedMotion: "reduce" });
+    await page.goto(HOME);
+    const card = page.getByTestId("home-final-cta");
+    await card.scrollIntoViewIfNeeded();
+    await expect(card.getByRole("link")).toHaveText(["Interactive preview", "Sign in"]);
+    await expect(card.getByRole("link", { name: "Interactive preview" })).toHaveAttribute(
+      "data-variant",
+      "primary",
+    );
+    const line = card.getByTestId("invite-sign-in");
+    await expect(line).toHaveText("Have an invite link? Sign in.");
+    await expect(line.getByRole("link", { name: "Sign in" })).toHaveAttribute("href", /\/login$/);
+    const button = await card.getByRole("link", { name: "Interactive preview" }).boundingBox();
+    const under = await line.boundingBox();
+    expect(button && under && under.y >= button.y + button.height).toBe(true);
+    await expect(card.getByText(/request an invite/i)).toHaveCount(0);
+    await page.close();
+  });
+
+  test("shows prototype 10's gathered stack with real-text Example tags, still under reduced motion", async ({
+    browser,
+  }) => {
+    const page = await browser.newPage({ reducedMotion: "reduce" });
+    await page.goto(HOME);
+    const close = page.locator("#get-started");
+    await close.scrollIntoViewIfNeeded();
+    const stack = close.locator("[data-close-stack]");
+    await expect(stack).toBeVisible();
+    await expect(stack).toHaveAttribute("aria-hidden", "true");
+    await expect(stack.locator("[data-close-piece]")).toHaveCount(6);
+    await expect(stack.getByText("Example", { exact: true })).toHaveCount(6);
+    const before = await stackPlaces(page);
+    await untilStill(page, "#get-started [data-close-piece]");
+    expect(await stackPlaces(page)).toEqual(before);
+    // No script ever placed a piece: each rests where the stylesheet puts it.
+    const styled = await stack
+      .locator("[data-close-piece]")
+      .evaluateAll((els) => els.filter((el) => el.hasAttribute("style")).length);
+    expect(styled).toBe(0);
+    await page.close();
+  });
+
+  test("gathers once and comes to rest exactly where reduced motion shows it", async ({
+    browser,
+  }) => {
+    // It scrolls the journey scene on the way to the close.
+    test.setTimeout(SCENE_SCROLL_BUDGET);
+    const still = await browser.newPage({ reducedMotion: "reduce" });
+    await still.goto(HOME);
+    await still.locator("#get-started").scrollIntoViewIfNeeded();
+    const rest = await stackPlaces(still);
+    expect(rest).toHaveLength(6);
+    await still.close();
+    const page = await browser.newPage();
+    await page.goto(HOME);
+    await scrollThrough(page);
+    await page.locator("#get-started").scrollIntoViewIfNeeded();
+    await untilStill(page, "#get-started [data-close-piece]");
+    expect(await stackPlaces(page)).toEqual(rest);
+    await page.close();
+  });
+});
+
+/**
+ * The hero as drawn: whether the six pieces show, the "Made from" rows' and the three figures'
+ * opacities, and the dashboard's transform. Runs in the page.
+ */
+function heroDrawn() {
+  const root = document.getElementById("home-hero");
+  if (!root) throw new Error("no hero");
+  const styles = (selector: string) =>
+    Array.from(root.querySelectorAll(selector)).map((el) => getComputedStyle(el));
+  const layer = styles("[data-hero-layer]")[0];
+  return {
+    pieces: layer?.display !== "none" && layer?.visibility === "visible",
+    rows: styles("[data-hero-row]").map((s) => s.opacity),
+    values: styles("[data-hero-value]").map((s) => s.opacity),
+    dash: styles("[data-hero-dash]")[0]?.transform,
+  };
+}
+
+/** The finished, still "Made from" picture: every row and figure readable, no piece over it. */
+const FILLED = {
+  pieces: false,
+  rows: ["1", "1", "1", "1", "1", "1"],
+  values: ["1", "1", "1"],
+  dash: "none",
+};
+
+/** Each piece's box on the page, rounded to the pixel. Runs in the page. */
+function pieceBoxes() {
+  return Array.from(document.querySelectorAll("[data-hero-piece]")).map((el) => {
+    const r = el.getBoundingClientRect();
+    return [r.left, r.top, r.width, r.height].map(Math.round);
+  });
+}
+
+test.describe("marketing home: the hero's start state (owner, 28 Nov 2026)", () => {
+  for (const [width, height] of [
+    [1440, 900],
+    [390, 844],
+  ] as const) {
+    test(`at ${width}px the first paint already has the pieces apart, before any script but the head's`, async ({
+      browser,
+    }) => {
+      const context = await browser.newContext({ viewport: { width, height } });
+      const page = await context.newPage();
+      // Only the inline theme script runs: the server HTML and its CSS, as first painted.
+      await page.route(/\/assets\/.*\.js(\?|$)/, (route) => route.abort());
+      await page.goto(HOME, { waitUntil: "domcontentloaded" });
+      const drawn = await page.evaluate(heroDrawn);
+      expect(drawn.pieces).toBe(true);
+      expect(drawn.rows).toEqual(["0", "0", "0", "0", "0", "0"]);
+      expect(drawn.values).toEqual(["0", "0", "0"]);
+      // From 1024px the dashboard is pushed back under the pieces; stacked it stays flat.
+      if (width >= 1024) expect(drawn.dash).not.toBe("none");
+      else expect(drawn.dash).toBe("none");
+      // Every piece is drawn apart from the others, wholly inside the window's width.
+      const boxes = await page.evaluate(pieceBoxes);
+      expect(new Set(boxes.map((b) => `${b[0]},${b[1]}`)).size).toBe(6);
+      for (const [left = Number.NaN, , w = Number.NaN] of boxes) {
+        expect(left).toBeGreaterThanOrEqual(0);
+        expect(left + w).toBeLessThanOrEqual(width);
+      }
+      await context.close();
+    });
+
+    test(`at ${width}px the script takes over the start state with no jump and no layout shift`, async ({
+      browser,
+    }) => {
+      const context = await browser.newContext({ viewport: { width, height } });
+      const page = await context.newPage();
+      await page.addInitScript(() => {
+        const w = window as unknown as Record<string, unknown>;
+        const boxes = () =>
+          Array.from(document.querySelectorAll("[data-hero-piece]")).map((el) => {
+            const r = el.getBoundingClientRect();
+            return [r.left, r.top, r.width, r.height].map(Math.round);
+          });
+        // Shifts of what the script takes over: the hero, its column, the dashboard, the pieces
+        // and the bubbles, each moved by a pixel or more, from the frame before the take-over on.
+        // The copy's text settles by a pixel as the web font arrives, and the caption's text
+        // reflows in place, script or none, so neither counts. Earlier shifts are not the
+        // script's: on a machine without Inter installed (CI) the web font replaces the fallback
+        // after first paint and reflows the dashboard's text (its info button moved 6px at
+        // 358ms, the dashboard grew about 12px), with or without the hero script.
+        w.__shift = 0;
+        w.__from = Number.POSITIVE_INFINITY;
+        w.__shiftSources = [] as string[];
+        type Source = {
+          node: Node | null;
+          previousRect: DOMRectReadOnly;
+          currentRect: DOMRectReadOnly;
+        };
+        const taken = ({ node, previousRect: a, currentRect: b }: Source) => {
+          const el = node instanceof Element ? node : (node?.parentElement ?? null);
+          const moved = Math.abs(a.x - b.x) >= 1 || Math.abs(a.y - b.y) >= 1;
+          return (
+            moved &&
+            Boolean(
+              el?.matches("#home-hero, [data-hero-inner]") ||
+                el?.closest("#home-hero [data-hero-stage], #home-hero [data-bubble-field]"),
+            )
+          );
+        };
+        new PerformanceObserver((list) => {
+          for (const entry of list.getEntries() as unknown as {
+            value: number;
+            hadRecentInput: boolean;
+            sources: Source[];
+          }[]) {
+            const at = (entry as unknown as { startTime: number }).startTime;
+            if (at < (w.__from as number)) continue;
+            if (!entry.hadRecentInput && entry.sources.some(taken)) {
+              w.__shift = (w.__shift as number) + entry.value;
+              for (const source of entry.sources.filter(taken)) {
+                const el =
+                  source.node instanceof Element ? source.node : source.node?.parentElement;
+                const a = source.previousRect;
+                const b = source.currentRect;
+                (w.__shiftSources as string[]).push(
+                  `${Math.round(performance.now())}ms ${el?.tagName ?? "?"}${el?.id ? `#${el.id}` : ""} ${el?.getAttribute("data-hero-piece") ?? el?.className.toString().slice(0, 40) ?? ""} ${Math.round(a.x)},${Math.round(a.y)} to ${Math.round(b.x)},${Math.round(b.y)}`,
+                );
+              }
+            }
+          }
+        }).observe({ type: "layout-shift", buffered: true });
+        // What the CSS draws, each frame until the take-over: the last of these is the frame
+        // just before GSAP takes the pieces.
+        let watching = true;
+        const frame = () => {
+          if (!watching) return;
+          if (document.querySelector("[data-hero-piece]")) {
+            w.__painted = boxes();
+            w.__paintedAt = performance.now();
+          }
+          requestAnimationFrame(frame);
+        };
+        requestAnimationFrame(frame);
+        // The moment GSAP has drawn its start state, before its first tick.
+        new MutationObserver((records, observer) => {
+          if (records.some((r) => (r.target as HTMLElement).dataset.heroLive === "true")) {
+            w.__taken = boxes();
+            w.__from = (w.__paintedAt as number | undefined) ?? 0;
+            watching = false;
+            observer.disconnect();
+          }
+        }).observe(document, {
+          attributes: true,
+          subtree: true,
+          attributeFilter: ["data-hero-live"],
+        });
+      });
+      await page.goto(HOME);
+      await expect(page.getByTestId("home-hero")).toHaveAttribute("data-hero-live", "true", {
+        timeout: 15_000,
+      });
+      const { painted, taken, shift, sources } = await page.evaluate(() => {
+        const w = window as unknown as Record<string, unknown>;
+        return {
+          painted: w.__painted,
+          taken: w.__taken,
+          shift: w.__shift,
+          sources: w.__shiftSources,
+        };
+      });
+      expect(painted).toBeTruthy();
+      // Within a pixel of where the CSS drew each piece.
+      const near = (a: number[][], b: number[][]) =>
+        a.every((box, i) => box.every((v, j) => Math.abs(v - (b[i]?.[j] ?? Number.NaN)) <= 1));
+      expect(
+        near(painted as number[][], taken as number[][]),
+        JSON.stringify({ painted, taken }),
+      ).toBe(true);
+      expect(shift, JSON.stringify(sources)).toBe(0);
+      await context.close();
+    });
+  }
+
+  test("at 390px, where the dashboard starts past its line, the pieces assemble after load", async ({
+    browser,
+  }) => {
+    const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const page = await context.newPage();
+    await page.goto(HOME);
+    await expect(page.getByTestId("home-hero")).toHaveAttribute("data-hero-live", "true", {
+      timeout: 15_000,
+    });
+    // Scroll triggers it and time completes it (durations.marketing.hero): every row arrives.
+    await expect
+      .poll(async () => (await page.evaluate(heroDrawn)).rows, { timeout: 15_000 })
+      .toEqual(["1", "1", "1", "1", "1", "1"]);
+    await context.close();
+  });
+
+  test("with reduced motion the hero is the filled picture from the first paint, script or none", async ({
+    browser,
+  }) => {
+    for (const blockScripts of [true, false]) {
+      const context = await browser.newContext({
+        viewport: { width: 1440, height: 900 },
+        reducedMotion: "reduce",
+      });
+      const page = await context.newPage();
+      if (blockScripts) await page.route(/\/assets\/.*\.js(\?|$)/, (route) => route.abort());
+      await page.goto(HOME, { waitUntil: blockScripts ? "domcontentloaded" : "load" });
+      expect(await page.evaluate(heroDrawn)).toEqual(FILLED);
+      await context.close();
+    }
+  });
+
+  for (const [width, height] of [
+    [1440, 900],
+    [390, 844],
+  ] as const) {
+    test(`with no JavaScript at ${width}px the hero is the filled picture`, async ({ browser }) => {
+      const context = await browser.newContext({
+        viewport: { width, height },
+        javaScriptEnabled: false,
+      });
+      const page = await context.newPage();
+      await page.goto(HOME);
+      expect(await page.evaluate(heroDrawn)).toEqual(FILLED);
+      await context.close();
+    });
+  }
+});
+
+test.describe("marketing home: the hero's bubbles (owner, 28 Nov 2026)", () => {
+  /** How many bubbles show at each size: more than prototype 11's two, so the hero is not bare. */
+  for (const [width, height, least] of [
+    [2000, 1250, 6],
+    [1440, 900, 6],
+    [1000, 800, 3],
+    [390, 844, 2],
+  ] as const) {
+    test(`at ${width}x${height} every bubble keeps clear of the copy, the dashboard and its pieces`, async ({
+      browser,
+    }) => {
+      const context = await browser.newContext({ viewport: { width, height } });
+      const page = await context.newPage();
+      // The start state, when the floating pieces reach furthest.
+      await page.goto(HOME, { waitUntil: "domcontentloaded" });
+      const { bubbles, clashes } = await page.evaluate((margin) => {
+        const hero = document.getElementById("home-hero");
+        if (!hero) throw new Error("no hero");
+        const keepClear = [
+          hero.querySelector("h1"),
+          hero.querySelector("h1 + p"),
+          hero.querySelector("[data-lit-ctas]"),
+          hero.querySelector("[data-testid=hero-scroll-cue]"),
+          hero.querySelector("[data-hero-dash]"),
+          ...hero.querySelectorAll("[data-hero-piece]"),
+        ].flatMap((el) =>
+          el ? [{ name: el.textContent?.slice(0, 24), r: el.getBoundingClientRect() }] : [],
+        );
+        const shown = Array.from(hero.querySelectorAll<HTMLElement>("[data-bubble-field] > span"))
+          .map((el) => el.getBoundingClientRect())
+          // Drawn and at least partly in the window.
+          .filter((r) => r.width > 0 && r.right > 0 && r.left < window.innerWidth);
+        const clashes: string[] = [];
+        for (const b of shown) {
+          for (const { name, r } of keepClear) {
+            const apart =
+              b.right + margin <= r.left ||
+              b.left >= r.right + margin ||
+              b.bottom + margin <= r.top ||
+              b.top >= r.bottom + margin;
+            if (!apart) clashes.push(`${Math.round(b.left)},${Math.round(b.top)} on "${name}"`);
+          }
+        }
+        return { bubbles: shown.length, clashes };
+      }, 12);
+      expect(clashes).toEqual([]);
+      expect(bubbles).toBeGreaterThanOrEqual(least);
+      // Decoration only, and still with reduced motion (checked in MK1 above).
+      await expect(page.locator("#home-hero [data-bubble-field]")).toHaveAttribute(
+        "aria-hidden",
+        "true",
+      );
+      await context.close();
+    });
+  }
+});
+
+test("marketing home: the close card has a 28px corner and the depth list's cards 20px (radius tokens)", async ({
+  browser,
+}) => {
+  const page = await browser.newPage({ reducedMotion: "reduce" });
+  await page.goto(HOME);
+  const radius = (selector: string) =>
+    page
+      .locator(selector)
+      .evaluateAll((els) => [
+        ...new Set(els.map((el) => getComputedStyle(el).borderTopLeftRadius)),
+      ]);
+  expect(await radius("[data-testid='home-final-cta'] >> xpath=..")).toEqual(["28px"]);
+  expect(await radius("#more-detail li > *")).toEqual(["20px"]);
+  await page.close();
+});
+
 test.describe("marketing home: controls", () => {
-  test("the pause control stops the ambient motion and is reachable by keyboard (MK14)", async ({
+  test("the header's Reduce motion is reached by Tab and stops all ambient motion at once (MK14)", async ({
     page,
   }) => {
     await page.goto(HOME);
-    // Beside the section control at the bottom left.
-    const pause = page
-      .locator("[data-stop-control]")
-      .getByRole("button", { name: "Pause animation" });
-    await expect(pause).toBeEnabled();
-    await pause.focus();
+    const reduce = page.getByRole("banner").getByRole("button", { name: "Reduce motion" });
+    await expect(reduce).toHaveAttribute("aria-pressed", "false");
+    await tabTo(page, "[data-motion-toggle]");
     await page.keyboard.press("Enter");
-    await expect(page.locator("html")).toHaveAttribute("data-ambient", "paused");
-    // The bubbles' scroll-linked drift is switched off while paused.
-    const states = await page
-      .locator("[data-bubble-field] span")
-      .evaluateAll((els) => els.map((el) => getComputedStyle(el).animationName));
-    expect(states.length).toBeGreaterThan(0);
-    expect(new Set(states)).toEqual(new Set(["none"]));
-    // Every control on the page shows the same state.
-    await expect(page.getByRole("button", { name: "Play animation" })).toHaveCount(2);
-    // An entrance still to play shows at once: the rough figures steps are fully opaque the moment
-    // their band is in view, and stay so after "Play animation".
+    await expect(reduce).toHaveAttribute("aria-pressed", "true");
+    await expect(page.locator("html")).toHaveAttribute("data-motion", "reduce");
+    // Everything stops at once: the bubbles' drift, the scene (back to its still) and every moment.
+    expect(await driftNames(page)).toEqual(["none"]);
+    await expect(page.getByTestId("journey-stage")).toHaveAttribute("data-scene", "still");
+    await expect(page.locator("canvas")).toHaveCount(0);
+    await expect(page.locator("[data-enhanced]")).toHaveCount(0);
+    // An entrance still to play shows finished: the rough figures steps are fully opaque.
     await page.locator("#rough-figures").scrollIntoViewIfNeeded();
-    const opacities = await page
-      .locator("#rough-figures [data-step]")
-      .evaluateAll((els) => els.map((el) => getComputedStyle(el).opacity));
-    expect(opacities).toEqual(["1", "1", "1"]);
-    await page
-      .locator("[data-stop-control]")
-      .getByRole("button", { name: "Play animation" })
-      .click();
-    await expect(page.locator("html")).not.toHaveAttribute("data-ambient", "paused");
-    await page.waitForTimeout(300);
-    expect(
-      await page
-        .locator("#rough-figures [data-step]")
-        .evaluateAll((els) => els.map((el) => getComputedStyle(el).opacity)),
-    ).toEqual(["1", "1", "1"]);
+    expect(await stepOpacities(page)).toEqual(["1", "1", "1"]);
+    // The in-page pause controls are gone: the header holds the one control.
+    await expect(page.getByRole("button", { name: /^(Pause|Play) animation$/ })).toHaveCount(0);
+    // Off again: the bubbles drift again without a reload; a finished moment stays finished.
+    await reduce.focus();
+    await page.keyboard.press("Enter");
+    await expect(reduce).toHaveAttribute("aria-pressed", "false");
+    await expect(page.locator("html")).not.toHaveAttribute("data-motion", "reduce");
+    expect(await driftNames(page)).not.toContain("none");
+    expect(await stepOpacities(page)).toEqual(["1", "1", "1"]);
   });
 
-  test("on a 390px phone the dock's controls are whole 44px targets, the pause control an icon button named Pause animation", async ({
+  test("with Reduce motion on, the next load requests no motion library and the page is still and complete", async ({
+    page,
+  }) => {
+    test.setTimeout(SCENE_SCROLL_BUDGET);
+    await page.goto(HOME);
+    await page.getByRole("banner").getByRole("button", { name: "Reduce motion" }).click();
+    const scripts: string[] = [];
+    page.on("request", (request) => {
+      if (request.resourceType() === "script") scripts.push(request.url());
+    });
+    await page.reload();
+    const preloaded = await page
+      .locator('script[src], link[rel="modulepreload"]')
+      .evaluateAll((els) =>
+        els.map(
+          (el) =>
+            new URL(el.getAttribute("src") ?? el.getAttribute("href") ?? "", location.href).href,
+        ),
+      );
+    await expect(
+      page.getByRole("banner").getByRole("button", { name: "Reduce motion" }),
+    ).toHaveAttribute("aria-pressed", "true");
+    await scrollThrough(page);
+    // Only the first-load scripts: GSAP, the hero's assembly and three.js never download.
+    expect(scripts.filter((url) => !preloaded.includes(url))).toEqual([]);
+    await expect(page.locator("canvas")).toHaveCount(0);
+    await expect(page.getByTestId("journey-stage")).toHaveAttribute("data-scene", "still");
+    await expect(page.locator("[data-enhanced]")).toHaveCount(0);
+    expect(await driftNames(page)).toEqual(["none"]);
+  });
+
+  for (const width of [320, 360, 390, 768, 1000, 1440] as const) {
+    test(`at ${width}px "Reduce motion" sits in the bar beside the theme switch, a whole 44px target, never in the menu`, async ({
+      browser,
+    }) => {
+      const page = await openPage(browser, { viewport: { width, height: 800 } });
+      await expect(
+        page.getByRole("banner").getByRole("button", { name: "Reduce motion" }),
+      ).toBeVisible();
+      const fit = await page.evaluate(() => {
+        const header = document.querySelector("header");
+        const shown = (els: Iterable<Element>) =>
+          [...els].map((el) => el.getBoundingClientRect()).filter((r) => r.width > 0);
+        const motion = header?.querySelector("[data-motion-toggle]")?.getBoundingClientRect();
+        const logo = header?.querySelector("a[href='/']")?.getBoundingClientRect();
+        const theme = shown(
+          header?.querySelectorAll("#theme-toggle-compact, [aria-label='System theme']") ?? [],
+        )[0];
+        const right = Math.max(
+          ...shown(header?.querySelectorAll("a, button") ?? []).map((r) => r.right),
+        );
+        return {
+          size: motion ? `${Math.round(motion.width)}x${Math.round(motion.height)}` : "none",
+          clearOfLogo: Boolean(motion && logo && motion.left >= logo.right),
+          beforeTheme: Boolean(motion && theme && motion.right <= theme.left),
+          gutter: window.innerWidth - right >= 16,
+        };
+      });
+      expect(fit).toEqual({ size: "44x44", clearOfLogo: true, beforeTheme: true, gutter: true });
+      if (width < 1024) {
+        await page.getByRole("button", { name: "Open navigation menu" }).click();
+        await expect(page.getByRole("dialog").getByRole("link", { name: "Sign in" })).toBeVisible();
+        await expect(
+          page.getByRole("dialog").getByRole("button", { name: "Reduce motion" }),
+        ).toHaveCount(0);
+      }
+      await page.context().close();
+    });
+  }
+
+  test("on a 390px phone the dock's controls are whole 44px targets, with no motion control beside them", async ({
     browser,
   }) => {
     const page = await openPage(browser, { viewport: { width: 390, height: 844 } });
@@ -285,35 +759,27 @@ test.describe("marketing home: controls", () => {
       await next.click();
       await expect(label).toContainText(`${i + 2} of`);
     }
-    const pause = dock.getByRole("button", { name: "Pause animation" });
-    await expect(pause).toBeVisible();
     const boxes = await dock.locator("button").evaluateAll((els) =>
       els.map((el) => {
         const r = el.getBoundingClientRect();
         return { w: Math.round(r.width), h: Math.round(r.height) };
       }),
     );
+    // Previous and next only: "Reduce motion" moved to the header.
     expect(boxes).toEqual([
       { w: 44, h: 44 },
       { w: 44, h: 44 },
-      { w: 44, h: 44 },
     ]);
-    // The count is never clipped, and the two pills sit side by side without touching.
+    // The count is never clipped, and the dock stays inside the screen.
     const fit = await page.evaluate(() => {
       const count = document.querySelector<HTMLElement>("[data-testid=stop-control-label]");
-      const nav = document.querySelector("[data-stop-control] nav")?.getBoundingClientRect();
-      const motion = document
-        .querySelector("[data-stop-control] [data-motion-control]")
-        ?.getBoundingClientRect();
+      const dock = document.querySelector("[data-stop-control]")?.getBoundingClientRect();
       return {
         clipped: count ? count.scrollWidth > count.clientWidth : true,
-        apart: nav && motion ? motion.left >= nav.right || motion.top >= nav.bottom : false,
-        inside: motion ? motion.right <= window.innerWidth : false,
+        inside: dock ? dock.right <= window.innerWidth : false,
       };
     });
-    expect(fit).toEqual({ clipped: false, apart: true, inside: true });
-    // The words are gone from sight but are still the button's name and text.
-    await expect(pause).toHaveText("Pause animation");
+    expect(fit).toEqual({ clipped: false, inside: true });
     await page.context().close();
   });
 
@@ -431,6 +897,220 @@ test.describe("marketing home: controls", () => {
     }
   });
 
+  // Prototype 10's cascade on More detail and the FAQ (owner, 28 Nov 2026, on top of prototype 11;
+  // `unstackMoment` in `motion/moments/bandMoments.ts`). `untilStill` only proves a band ends
+  // still, which any entrance, or none, passes: this checks the sheets wait in one stack on the
+  // first, then leave it one after another, and rest with nothing left on them.
+  for (const [band, moving] of [
+    ["#more-detail", "[data-deal-item] > *"],
+    ["#faq", "[data-deal-item]"],
+  ] as const) {
+    for (const [width, height] of [
+      [1440, 900],
+      [390, 844],
+    ] as const) {
+      test(`${band}'s sheets unstack in turn at ${width}px, as prototype 10, and rest clear`, async ({
+        page,
+      }) => {
+        await page.setViewportSize({ width, height });
+        await page.goto(HOME);
+        const list = page.locator(`${band} ul`).first();
+        // The list's top at `share` of the window down: 1.3 is below the cascade's start (85%) but
+        // near enough for its set-up; 0.5 is past the start.
+        const place = (share: number) =>
+          list.evaluate((el, share) => {
+            const top = el.getBoundingClientRect().top + window.scrollY;
+            window.scrollTo({ top: top - window.innerHeight * share, behavior: "instant" });
+          }, share);
+        // The bands below lay out as they near, so the list is placed again on each look.
+        await expect
+          .poll(
+            async () => {
+              await place(1.3);
+              return list.getAttribute("data-enhanced");
+            },
+            { timeout: 15_000, message: "the list's moment is set up" },
+          )
+          .toBe("true");
+        await place(1.3);
+
+        /** Each sheet's inline translate and depth, its opacity and its expected place in the stack. */
+        const read = () =>
+          list.evaluate((el, moving) => {
+            const items = Array.from(el.querySelectorAll<HTMLElement>("[data-deal-item]"));
+            const sheets = Array.from(el.querySelectorAll<HTMLElement>(moving));
+            return sheets.map((sheet, i) => {
+              const t = sheet.style.transform;
+              const m = /translate3d\(([-\d.]+)px, ([-\d.]+)px, ([-\d.]+)px\)/.exec(t);
+              const y = m ? Number(m[2]) : 0;
+              const z = m ? Number(m[3]) : 0;
+              const first = items[0]?.offsetTop ?? 0;
+              return {
+                y: Math.round(y),
+                z: Math.round(z),
+                opacity: Number(getComputedStyle(sheet).opacity).toFixed(2),
+                perspective: t.includes("perspective(1200px)"),
+                stacked: Math.round(first - (items[i]?.offsetTop ?? 0) + i * 7),
+              };
+            });
+          }, moving);
+
+        // The from-state: on the first, each 7px lower and 20px further back, the rest at 85%.
+        await expect
+          .poll(
+            async () =>
+              (await read()).map((s, i) => ({
+                atStack: Math.abs(s.y - s.stacked) <= 1,
+                z: s.z === -i * 20,
+                opacity: s.opacity,
+                perspective: s.perspective,
+              })),
+            { message: "the sheets wait in one stack" },
+          )
+          .toEqual(
+            (await read()).map((_, i) => ({
+              atStack: true,
+              z: true,
+              opacity: i ? "0.85" : "1.00",
+              perspective: true,
+            })),
+          );
+        const layout = await list.evaluate((el) =>
+          Array.from(el.querySelectorAll<HTMLElement>("[data-deal-item]")).map((i) => i.offsetTop),
+        );
+
+        // Watch every frame from here: when each sheet leaves the stack and when it lands.
+        await list.evaluate((el, moving) => {
+          const sheets = Array.from(el.querySelectorAll<HTMLElement>(moving));
+          const start = sheets.map((s) => s.style.transform);
+          const watch = {
+            left: sheets.map(() => -1),
+            landed: sheets.map(() => -1),
+            done: false,
+          };
+          (window as unknown as { unstackWatch: typeof watch }).unstackWatch = watch;
+          let frame = 0;
+          const tick = () => {
+            frame++;
+            sheets.forEach((s, i) => {
+              const t = s.style.transform;
+              const m = /translate3d\(([-\d.]+)px, ([-\d.]+)px, ([-\d.]+)px\)/.exec(t);
+              const rest =
+                Number(getComputedStyle(s).opacity) > 0.999 &&
+                (!m || (Math.abs(Number(m[2])) < 0.5 && Math.abs(Number(m[3])) < 0.5));
+              if ((watch.left[i] ?? 0) < 0 && t !== start[i]) watch.left[i] = frame;
+              if ((watch.landed[i] ?? 0) < 0 && rest && t !== start[i]) watch.landed[i] = frame;
+            });
+            watch.done = sheets.every((s) => s.style.transform === "");
+            if (!watch.done) requestAnimationFrame(tick);
+          };
+          requestAnimationFrame(tick);
+        }, moving);
+        await place(0.5);
+        await expect
+          .poll(
+            () =>
+              page.evaluate(
+                () => (window as unknown as { unstackWatch: { done: boolean } }).unstackWatch.done,
+              ),
+            {
+              timeout: 15_000,
+              message: "the cascade finishes on its own, by time (MK2)",
+            },
+          )
+          .toBe(true);
+        const watch = await page.evaluate(
+          () =>
+            (window as unknown as { unstackWatch: { left: number[]; landed: number[] } })
+              .unstackWatch,
+        );
+        // The sheets behind the first leave the stack in document order, and land in it too.
+        const behindLeft = watch.left.slice(1);
+        const behindLanded = watch.landed.slice(1);
+        expect(behindLeft.every((f) => f > 0)).toBe(true);
+        for (let i = 1; i < behindLeft.length; i++) {
+          expect(behindLeft[i]).toBeGreaterThan(behindLeft[i - 1] ?? 0);
+          expect(behindLanded[i]).toBeGreaterThan(behindLanded[i - 1] ?? 0);
+        }
+
+        // At rest: nothing left on any sheet (MK3), fully opaque, and the list never moved.
+        const rest = await list.evaluate((el, moving) => {
+          const sheets = Array.from(el.querySelectorAll<HTMLElement>(moving));
+          return {
+            transforms: sheets.map((s) => s.style.transform + getComputedStyle(s).transform),
+            opacity: sheets.map((s) => getComputedStyle(s).opacity),
+            layout: Array.from(el.querySelectorAll<HTMLElement>("[data-deal-item]")).map(
+              (i) => i.offsetTop,
+            ),
+          };
+        }, moving);
+        expect(rest.transforms.every((t) => t === "none")).toBe(true);
+        expect(rest.opacity.every((o) => o === "1")).toBe(true);
+        expect(rest.layout).toEqual(layout);
+      });
+    }
+  }
+
+  // At rest each pinned stop's pair sits in the middle of the window, not under the header with
+  // the rest of the window empty (owner, 28 Nov 2026): desktop, a tall desktop window, and the
+  // stacked phone layout. A pair too tall to centre clear of the resting orb rises just enough to
+  // stay off it, and one taller than that starts under the header.
+  for (const [width, height] of [
+    [1440, 900],
+    [1440, 1300],
+    [1000, 800],
+    [560, 1267],
+    [390, 844],
+  ] as const) {
+    test(`at rest each journey stop's pair is centred in a ${width} by ${height} window`, async ({
+      browser,
+    }) => {
+      test.setTimeout(SCENE_SCROLL_BUDGET);
+      const page = await openPage(browser, { viewport: { width, height } });
+      await liveBeforeScroll(page);
+      const stops = page.locator("#journey [data-journey-stop]");
+      const count = await stops.count();
+      expect(count).toBe(6);
+      for (let k = 0; k < count; k++) {
+        const stop = stops.nth(k);
+        // A stop's section top is where its pair has fully arrived and holds still.
+        await stop.evaluate((el) => {
+          window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY + 40 });
+        });
+        await expect(stop).toHaveAttribute("data-enhanced", "true", { timeout: 15_000 });
+        await untilStill(page, "#journey :is([data-stop-side], [data-stop-pair])");
+        const at = await stop.locator("[data-stop-pair]").evaluate((el) => {
+          const r = el.getBoundingClientRect();
+          const h = window.innerHeight;
+          const header = document.querySelector("header")?.getBoundingClientRect().bottom ?? 0;
+          // Where the orb rests (the scene's lane, laneFor in journeyLayout.ts): a band of an
+          // eighth of the height and a 38px orb on a phone, else a band of 130px held to 11% to
+          // 17% of the height and an orb of half the band, at most 66px.
+          const phone = window.innerWidth < 768;
+          const band = phone ? h * 0.125 : Math.min(0.17 * h, Math.max(0.11 * h, 130));
+          const orbTop = h - band - (phone ? 38 : Math.min(66, band / 2));
+          return { top: r.top, bottom: r.bottom, height: r.height, h, header, orbTop };
+        });
+        const label = `stop ${k + 1} at ${Math.round(at.top)} to ${Math.round(at.bottom)}`;
+        // Never under the header.
+        expect(at.top, label).toBeGreaterThanOrEqual(at.header + 11);
+        const centredTop = at.h / 2 - at.height / 2;
+        if (centredTop + at.height <= at.orbTop - 16) {
+          // Room to centre it clear of the orb: centred.
+          expect(Math.abs(at.top - centredTop), label).toBeLessThan(4);
+        } else if (at.height <= at.orbTop - 16 - at.header - 12) {
+          // Room above the orb but not centred: as low as it goes, still clear of the orb.
+          expect(at.bottom, label).toBeLessThanOrEqual(at.orbTop - 15);
+          expect(at.bottom, label).toBeGreaterThan(at.orbTop - 20);
+        } else {
+          // Taller than the space: it starts just under the header.
+          expect(at.top, label).toBeLessThan(at.header + 42);
+        }
+      }
+      await page.context().close();
+    });
+  }
+
   test("journey changeovers are never left part-way, scrolling fast both ways (MK2)", async ({
     page,
   }) => {
@@ -536,7 +1216,12 @@ test.describe("marketing home: controls", () => {
     await expect(journey).toHaveAttribute("data-live", "on", { timeout: 15_000 });
     const firstStop = journey.locator("[data-journey-stop]").first();
     await expect(firstStop).toHaveAttribute("data-enhanced", "true", { timeout: 15_000 });
-    await journey.locator("[data-journey-intro] button").first().focus();
+    // Start from the intro's heading (the intro has no control of its own since "Reduce motion"
+    // moved to the header): focusable for this test only, so Tab continues from there.
+    await journey.locator("#journey-title").evaluate((heading) => {
+      heading.setAttribute("tabindex", "-1");
+      (heading as HTMLElement).focus({ preventScroll: true });
+    });
     const count = await journey.locator("[data-journey-stop]").count();
     for (let k = 1; k <= count; k++) {
       await page.keyboard.press("Tab");
@@ -558,6 +1243,288 @@ test.describe("marketing home: controls", () => {
       expect(shown).toEqual({ opacity: 1, hidden: false });
     }
   });
+});
+
+test.describe("marketing home: journey stops that scroll with the page (?stops=scroll, owner, 28 Nov 2026)", () => {
+  // The second journey mode: each stop's cards scroll in from below with the page, hold centred in
+  // the window for a set run of scroll, then scroll out at the top. No fade and no timed
+  // changeover; the default mode is unchanged.
+  const SCROLL_STOPS = `${HOME}?stops=scroll`;
+  type Where = "before" | "start" | "end" | "after" | "here";
+
+  /**
+   * Scrolls stop `k` to `where` (its section top a little below the window; the start or end of
+   * its hold; its section bottom a little above the window; or stays put), then reads where its
+   * pair is, where the header ends, how far the hold runs and where the orb rests (the scene's
+   * lane, `laneFor` in journeyLayout.ts: a band of an eighth of the height and a 38px orb on a
+   * phone, else a band of 130px held to 11% to 17% of the height and an orb of half the band, at
+   * most 66px).
+   */
+  const pairAt = (page: Page, k: number, where: Where) =>
+    page.evaluate(
+      async ({ k, where }) => {
+        const stop = document.querySelectorAll<HTMLElement>("#journey [data-journey-stop]")[k];
+        const frame = stop?.querySelector<HTMLElement>("[data-stop-frame]");
+        const pair = stop?.querySelector<HTMLElement>("[data-stop-pair]");
+        if (!stop || !frame || !pair) throw new Error(`stop ${k + 1} is missing its pair`);
+        const head = document.querySelector("header")?.offsetHeight ?? 0;
+        const top = stop.getBoundingClientRect().top + window.scrollY;
+        const hold = stop.offsetHeight - frame.offsetHeight;
+        const to = {
+          before: top - window.innerHeight - 10,
+          start: top - head + 2,
+          end: top - head + hold - 2,
+          after: top + stop.offsetHeight + 10,
+          here: undefined,
+        }[where];
+        // "here" never scrolls: a scroll of its own would stop a smooth move still on its way.
+        if (to !== undefined) window.scrollTo({ top: to, behavior: "instant" });
+        const drawn = () => new Promise((resolve) => requestAnimationFrame(resolve));
+        await drawn();
+        await drawn();
+        const r = pair.getBoundingClientRect();
+        const h = window.innerHeight;
+        const phone = window.innerWidth < 768;
+        const band = phone ? h * 0.125 : Math.min(0.17 * h, Math.max(0.11 * h, 130));
+        return {
+          top: r.top,
+          bottom: r.bottom,
+          height: r.height,
+          h,
+          header: document.querySelector("header")?.getBoundingClientRect().bottom ?? 0,
+          orbTop: h - band - (phone ? 38 : Math.min(66, band / 2)),
+          hold,
+          sectionTop: stop.getBoundingClientRect().top,
+        };
+      },
+      { k, where },
+    );
+
+  /** The pinned journey's centring rules: centred, else clear of the orb, else under the header. */
+  const expectCentred = (at: Awaited<ReturnType<typeof pairAt>>, label: string) => {
+    expect(at.top, label).toBeGreaterThanOrEqual(at.header + 11);
+    const centredTop = at.h / 2 - at.height / 2;
+    if (centredTop + at.height <= at.orbTop - 16) {
+      expect(Math.abs(at.top - centredTop), label).toBeLessThan(4);
+    } else if (at.height <= at.orbTop - 16 - at.header - 12) {
+      expect(at.bottom, label).toBeLessThanOrEqual(at.orbTop - 15);
+      expect(at.bottom, label).toBeGreaterThan(at.orbTop - 20);
+    } else {
+      expect(at.top, label).toBeLessThan(at.header + 42);
+    }
+  };
+
+  /** Every part of stop `k` shows whole: nothing faded or hidden. */
+  const expectWhole = async (page: Page, k: number) => {
+    const parts = await page
+      .locator("#journey [data-journey-stop]")
+      .nth(k)
+      .locator("h2, p, [data-stop-side], [data-stop-pair]")
+      .evaluateAll(
+        (els, shownSrc) =>
+          els.map((el) => (new Function(`return ${shownSrc}`)() as typeof shownInJourney)(el)),
+        shownInJourney.toString(),
+      );
+    expect(parts.length).toBeGreaterThan(0);
+    for (const part of parts) expect(part).toEqual({ opacity: 1, hidden: false });
+  };
+
+  /** Everything in the pairs, the samples' moving parts included: still once each moment has finished. */
+  const STILL_PARTS = "#journey :is([data-stop-pair], [data-stop-pair] *)";
+
+  for (const [width, height] of [
+    [1440, 900],
+    [390, 844],
+  ] as const) {
+    test(`at ${width} by ${height} each stop's pair comes up from below, holds centred, then leaves at the top`, async ({
+      browser,
+    }) => {
+      test.setTimeout(SCENE_SCROLL_BUDGET);
+      const page = await openPage(browser, { viewport: { width, height } });
+      await page.goto(SCROLL_STOPS);
+      await liveBeforeScroll(page);
+      const stops = page.locator("#journey [data-journey-stop]");
+      for (const k of [1, 2, 3]) {
+        const label = (where: string) => `stop ${k + 1}, ${where}`;
+        const before = await pairAt(page, k, "before");
+        expect(before.top, label("before its hold")).toBeGreaterThanOrEqual(before.h);
+        await expect(stops.nth(k)).toHaveAttribute("data-enhanced", "true", { timeout: 15_000 });
+        const start = await pairAt(page, k, "start");
+        // A hold of a real run of scroll: more than half a screen.
+        expect(start.hold, label("hold")).toBeGreaterThan(start.h * 0.5);
+        await untilStill(page, STILL_PARTS);
+        expectCentred(start, label("at the start of its hold"));
+        await expectWhole(page, k);
+        const end = await pairAt(page, k, "end");
+        expectCentred(end, label("at the end of its hold"));
+        expect(Math.abs(end.top - start.top), label("held still")).toBeLessThan(2);
+        await expectWhole(page, k);
+        const after = await pairAt(page, k, "after");
+        expect(after.bottom, label("after its hold")).toBeLessThanOrEqual(0);
+      }
+      // No frame is lifted and no section overlaps another: each starts where the last ends.
+      const joins = await stops.evaluateAll((els) =>
+        els.slice(1).map((el, i) => {
+          const prev = els[i] as HTMLElement;
+          const frame = el.querySelector<HTMLElement>("[data-stop-frame]");
+          return {
+            gap: Math.round(el.getBoundingClientRect().top - prev.getBoundingClientRect().bottom),
+            lift: frame ? getComputedStyle(frame).marginTop : "",
+          };
+        }),
+      );
+      for (const join of joins) expect(join).toEqual({ gap: 0, lift: "0px" });
+      await expect(page.locator("#journey")).toHaveAttribute("data-stops", "scroll");
+      await page.context().close();
+    });
+  }
+
+  test("the stop control's next and previous land each stop on its centred hold", async ({
+    browser,
+  }) => {
+    test.setTimeout(SCENE_SCROLL_BUDGET);
+    const page = await openPage(browser, { viewport: { width: 1440, height: 900 } });
+    await page.goto(SCROLL_STOPS);
+    await liveBeforeScroll(page);
+    const control = page.locator("[data-stop-control]");
+    const label = control.getByTestId("stop-control-label");
+    const next = control.getByRole("button", { name: /^Next section/ });
+    const previous = control.getByRole("button", { name: /^Previous section/ });
+    const names = await page
+      .locator("[data-home-section]")
+      .evaluateAll((els) => els.map((el) => el.getAttribute("data-home-section-name")));
+    const stops = page.locator("#journey [data-journey-stop]");
+    const firstStop = names.indexOf(await stops.first().getAttribute("data-home-section-name"));
+    expect(firstStop).toBeGreaterThan(0);
+    // Reach the section before the journey, letting each smooth move land before the next.
+    const sections = page.locator("[data-home-section]");
+    for (let i = 0; i < firstStop - 1; i++) {
+      await next.click();
+      await expect(label).toContainText(`${i + 2} of`);
+      await expect
+        .poll(async () => Math.round((await sections.nth(i + 1).boundingBox())?.y ?? -1), {
+          timeout: 10_000,
+        })
+        .toBeLessThan(120);
+    }
+    const head = await page.evaluate(() => document.querySelector("header")?.offsetHeight ?? 0);
+    /** Waits for the smooth move to bring stop `k`'s section top under the header: its hold. */
+    const landed = async (k: number) => {
+      await expect
+        .poll(async () => Math.abs((await pairAt(page, k, "here")).sectionTop - head), {
+          timeout: 10_000,
+        })
+        .toBeLessThan(3);
+      const heading = await stops.nth(k).getAttribute("aria-labelledby");
+      await expect(page.locator(`[id="${heading}"]`)).toBeFocused();
+      await untilStill(page, STILL_PARTS);
+      expectCentred(await pairAt(page, k, "here"), `stop ${k + 1} by the stop control`);
+      await expectWhole(page, k);
+      // The stops either side are out of the window, not waiting faded in the same place.
+      if (k > 0) expect((await pairAt(page, k - 1, "here")).bottom).toBeLessThanOrEqual(0);
+      expect((await pairAt(page, k + 1, "here")).top).toBeGreaterThanOrEqual(900);
+    };
+    for (const k of [0, 1, 2, 3]) {
+      await next.click();
+      await landed(k);
+    }
+    await previous.click();
+    await landed(2);
+    await page.context().close();
+  });
+
+  test("Tab into each stop's link scrolls the stop to its centred hold", async ({ browser }) => {
+    test.setTimeout(SCENE_SCROLL_BUDGET);
+    const page = await openPage(browser, { viewport: { width: 1440, height: 900 } });
+    await page.goto(SCROLL_STOPS);
+    const journey = page.locator("#journey");
+    await journey.locator("#journey-title").scrollIntoViewIfNeeded();
+    await expect(journey).toHaveAttribute("data-live", "on", { timeout: 15_000 });
+    await expect(journey.locator("[data-journey-stop]").first()).toHaveAttribute(
+      "data-enhanced",
+      "true",
+      { timeout: 15_000 },
+    );
+    await journey.locator("#journey-title").evaluate((heading) => {
+      heading.setAttribute("tabindex", "-1");
+      (heading as HTMLElement).focus({ preventScroll: true });
+    });
+    const head = await page.evaluate(() => document.querySelector("header")?.offsetHeight ?? 0);
+    for (const k of [0, 1, 2, 3]) {
+      await page.keyboard.press("Tab");
+      expect(
+        await page.evaluate(
+          () => document.activeElement?.closest<HTMLElement>("[data-journey-stop]")?.dataset.stop,
+        ),
+      ).toBe(String(k + 1));
+      // Anywhere in its hold: the section's top between the header and a hold above it.
+      const at = await pairAt(page, k, "here");
+      expect(at.sectionTop, `stop ${k + 1}'s hold`).toBeLessThanOrEqual(head + 2);
+      expect(at.sectionTop, `stop ${k + 1}'s hold`).toBeGreaterThanOrEqual(head - at.hold - 2);
+      await untilStill(page, STILL_PARTS);
+      expectCentred(await pairAt(page, k, "here"), `stop ${k + 1} by Tab`);
+      // The stop before has scrolled out at the top, rather than waiting faded in the same place.
+      if (k > 0) {
+        expect((await pairAt(page, k - 1, "here")).bottom, `stop ${k}`).toBeLessThanOrEqual(0);
+      }
+    }
+    await page.context().close();
+  });
+
+  test("with reduced motion the stops are the plain list, as in the default mode", async ({
+    browser,
+  }) => {
+    const page = await openPage(browser, {
+      viewport: { width: 1440, height: 900 },
+      reducedMotion: "reduce",
+    });
+    await page.goto(SCROLL_STOPS);
+    const journey = page.locator("#journey");
+    await expect(journey).toHaveAttribute("data-stops", "scroll");
+    await expect(journey).toHaveAttribute("data-live", "off");
+    const frames = await journey
+      .locator("[data-stop-frame]")
+      .evaluateAll((els) => els.map((el) => getComputedStyle(el).position));
+    expect(frames).toEqual(Array(6).fill("static"));
+    await page.context().close();
+  });
+});
+
+test.describe("marketing home: receding scene", () => {
+  // The receding scene at a stop sits halfway between prototype 11's (tint 66% and 22% on Mint,
+  // 50% and 14% on Midnight; blur 5px and 4px) and the sharp scene (owner, 28 Nov 2026), so the
+  // orbs and the bead track still read as coloured glass behind the cards.
+  const RECEDED = {
+    light: { blur: "blur(2.5px) saturate(0.95) brightness(1)", strong: 0.33, soft: 0.11 },
+    dark: { blur: "blur(2px) saturate(1.25) brightness(1.075)", strong: 0.25, soft: 0.07 },
+  } as const;
+  for (const theme of THEMES) {
+    test(`the receding scene at a stop is halfway between prototype 11's and the sharp scene, ${theme}`, async ({
+      browser,
+    }) => {
+      const page = await openPage(browser, {
+        viewport: { width: 1280, height: 900 },
+        colorScheme: theme,
+      });
+      const journey = page.locator("#journey");
+      await journey.scrollIntoViewIfNeeded();
+      await expect(journey).toHaveAttribute("data-live", "on", { timeout: 15_000 });
+      const layers = await journey.locator("[data-journey-scrim]").evaluateAll((els) =>
+        els.map((el) => {
+          const style = getComputedStyle(el);
+          const alphas = [...style.backgroundImage.matchAll(/\/ ([\d.]+)\)/g)].map((m) =>
+            Number(m[1]),
+          );
+          return { filter: style.backdropFilter, strong: alphas[0], soft: alphas[2] };
+        }),
+      );
+      const [blur, tint] = layers;
+      expect(blur?.filter).toBe(RECEDED[theme].blur);
+      expect(tint?.strong).toBeCloseTo(RECEDED[theme].strong, 3);
+      expect(tint?.soft).toBeCloseTo(RECEDED[theme].soft, 3);
+      await page.context().close();
+    });
+  }
 });
 
 test.describe("marketing home: page length (MK11)", () => {

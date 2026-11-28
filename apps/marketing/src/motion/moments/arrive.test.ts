@@ -1,7 +1,15 @@
 // @vitest-environment node
 import { describe, expect, it, vi } from "vitest";
 import type { GsapKit } from "../loadGsapKit";
-import { arriveSeconds, leaveSeconds, MOMENT_END, pairArrive, pairLeave, seconds } from "./arrive";
+import {
+  arriveSeconds,
+  leaveSeconds,
+  MOMENT_END,
+  pairArrive,
+  pairLeave,
+  sampleArrive,
+  seconds,
+} from "./arrive";
 
 // The marketing calm scale (packages/tokens motion.ts): entry 1540ms, disclosure 980ms.
 
@@ -74,6 +82,23 @@ describe("pairArrive", () => {
     const onComplete = tl.eventCallback.mock.calls[0]?.[1] as () => void;
     onComplete();
     expect(gsap.set).toHaveBeenCalledWith(["text", "title"], { clearProps: "transform" });
+  });
+});
+
+describe("sampleArrive", () => {
+  it("plays only the sample's moment, paused until scroll starts it, on the arrive's calm duration", () => {
+    const { kit, tl, gsap } = fakeKit();
+    const moment = vi.fn(() => ["card"]);
+    sampleArrive(kit, { root: {} as HTMLElement, moment });
+    expect(gsap.timeline).toHaveBeenCalledWith({ paused: true, defaults: { ease: "calm" } });
+    // No rise or fade of the sides: the cards are never hidden in this mode.
+    expect(tl.fromTo).not.toHaveBeenCalled();
+    expect(moment).toHaveBeenCalledWith(kit, tl, {});
+    expect(tl.set).toHaveBeenCalledWith({}, {}, MOMENT_END);
+    expect(tl.timeScale.mock.calls[0]?.[0]).toBeCloseTo(2.4 / 2.464, 10);
+    const onComplete = tl.eventCallback.mock.calls[0]?.[1] as () => void;
+    onComplete();
+    expect(gsap.set).toHaveBeenCalledWith(["card"], { clearProps: "transform" });
   });
 });
 

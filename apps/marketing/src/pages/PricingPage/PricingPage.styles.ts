@@ -45,6 +45,11 @@ export const planCard = cva({
   },
 });
 
+/** The plan's button, then the quiet sign-in line under it, from the card's left edge. */
+export const planActions = cva({
+  base: { display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "3" },
+});
+
 export const planName = cva({
   base: { textStyle: "heading.lg", color: "text.primary", margin: 0 },
 });

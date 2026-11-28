@@ -43,6 +43,7 @@ const PR12_SOURCES = [
   "pages/ContactPage/ContactPage.tsx",
   "pages/NotFoundPage/NotFoundPage.tsx",
   "components/HomeHero/HomeHero.tsx",
+  "components/MoneyPieces/MoneyPieces.tsx",
   "components/PayRiseTeaser/PayRiseTeaser.tsx",
   "components/HomeFeatures/HomeFeatures.tsx",
   "components/HomeRoughFigures/HomeRoughFigures.tsx",
@@ -120,6 +121,19 @@ describe("no links to old addresses (E42)", () => {
     const hits = sourceFiles(__dirname)
       .filter((file) =>
         /["'`]\/(tools|mcp)\b/.test(withoutComments(fs.readFileSync(file, "utf-8"))),
+      )
+      .map((file) => path.relative(__dirname, file));
+    expect(hits).toEqual([]);
+  });
+
+  // Invite links are shared by hand (owner, 28 Nov 2026): no page asks for an invite or links to
+  // the contact page's old invite section. Access is by invite link during testing.
+  it("no source asks for an invite or links to the old #beta section", () => {
+    const hits = sourceFiles(__dirname)
+      .filter((file) =>
+        /request an invite|ask (us )?for an? (beta )?invite|for an invite|#beta\b/i.test(
+          withoutComments(fs.readFileSync(file, "utf-8")),
+        ),
       )
       .map((file) => path.relative(__dirname, file));
     expect(hits).toEqual([]);

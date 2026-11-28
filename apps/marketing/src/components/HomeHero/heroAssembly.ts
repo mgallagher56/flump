@@ -1,31 +1,15 @@
 import { marketingMs } from "@repo/ui";
 import type { GsapKit } from "../../motion/loadGsapKit";
 import type { PieceKey } from "./heroData";
-
-/**
- * Where each piece floats before the picture assembles: a share of the stage's width and height
- * from its centre, a depth in px and a tilt in degrees. Hand-placed (prototype 11) so no two pieces
- * cover the same figure; the nearer pieces are the more tilted.
- */
-const SCATTER: Record<
-  PieceKey,
-  { x: number; y: number; z: number; rx: number; ry: number; rz: number }
-> = {
-  card: { x: -0.26, y: -0.29, z: 60, rx: 5, ry: -6, rz: -4 },
-  payslip: { x: 0.26, y: -0.23, z: 20, rx: 3, ry: 5, rz: 3 },
-  receipt: { x: -0.24, y: 0.02, z: 80, rx: -3, ry: 4, rz: -2 },
-  statement: { x: 0.24, y: 0.06, z: -10, rx: 4, ry: -4, rz: 2 },
-  pension: { x: -0.21, y: 0.26, z: 40, rx: -2, ry: 3, rz: 1 },
-  credit: { x: 0.23, y: 0.3, z: 100, rx: 5, ry: -6, rz: 4 },
-};
+import { DASH_START_WIDE, remPx, SCATTER, startPlace, WIDE_QUERY } from "./heroStart";
 
 /*
- * The run, in units: the whole run is `TOTAL` units long and lasts `durations.marketing.hero`.
- * 0 to LEAVE: the finished rows step back and the pieces appear where they float. Then each piece
- * flies to its row, one after another, and the dashboard's three figures arrive as the pieces they
- * come from land: breathing room with the savings, left over with the budget, net worth last.
+ * The run, in units: the whole run is `ASSEMBLY_UNITS` units long and lasts
+ * `durations.marketing.hero`. It starts from the server render's start state (the pieces apart,
+ * the rows and figures not yet there); after a short pause each piece flies to its row, one after
+ * another, and the dashboard's three figures arrive as the pieces they come from land: breathing
+ * room with the savings, left over with the budget, net worth last.
  */
-const LEAVE = 0.6;
 const FLIGHTS: readonly (readonly [PieceKey, number])[] = [
   ["card", 0.8],
   ["pension", 1.6],
@@ -44,7 +28,7 @@ const FIGURE_AT: Record<"room" | "left" | "net", number> = {
 /** The last figure's arrival ends the run. */
 export const ASSEMBLY_UNITS = FIGURE_AT.net + REVEAL;
 /** Where the flights begin: the state a hero below the fold waits in until it is seen. */
-export const FLIGHTS_START = FLIGHTS[0]?.[1] ?? LEAVE;
+export const FLIGHTS_START = FLIGHTS[0]?.[1] ?? 0;
 
 /** Share of the stage that must be on screen before a waiting hero plays. */
 const IN_VIEW = 0.25;
@@ -61,10 +45,12 @@ const one = (root: HTMLElement, attr: string, key: string) =>
  * forward to the end over `durations.marketing.hero` on the calm easings and is never reversed or
  * scrubbed. Scrolling away mid-run does not stop it.
  *
- * The server HTML is the finished picture, and this run ends on exactly that picture, then hands it
- * back by reverting every inline style. If the page loads with the hero scrolled past, nothing
- * plays. A width change before the end shows the finished picture at once. Set-up is one read pass
- * (every rect measured once, before any write), one write pass and one timeline.
+ * The server render draws the start state (`heroStart.ts`) and this run starts from exactly that
+ * state. It ends on the finished picture, then marks the hero done (`data-hero-done`, which turns
+ * the CSS start state off) and hands it back by reverting every inline style. If the page loads
+ * with the hero scrolled past, nothing plays and the finished picture shows. A width change before
+ * the end shows the finished picture at once. Set-up is one read pass (every rect measured once,
+ * before any write), one write pass and one timeline.
  *
  * Returns a clean-up that leaves the finished picture.
  */
@@ -85,7 +71,8 @@ export function armHeroAssembly(kit: GsapKit, root: HTMLElement): () => void {
     observer?.disconnect();
     window.removeEventListener("resize", onResize);
     tl?.kill();
-    // Reverting restores the server's inline styles: the finished, still picture.
+    // Done turns the CSS start state off; reverting then leaves the finished, still picture.
+    root.dataset.heroDone = "true";
     ctx?.revert();
     delete root.dataset.heroLive;
     delete root.dataset.heroReady;
@@ -96,16 +83,19 @@ export function armHeroAssembly(kit: GsapKit, root: HTMLElement): () => void {
     if (window.innerWidth !== startWidth) finish();
   }
 
-  /** Measures once, then sets the scattered pieces and builds the paused timeline. */
+  /** Measures once, then sets the start state and builds the paused timeline. */
   const build = (): gsap.core.Timeline => {
     const unit = marketingMs("hero") / 1000 / ASSEMBLY_UNITS;
+    const wide = window.matchMedia(WIDE_QUERY).matches;
 
-    // 0. The pieces take no layout at rest (the first paint lays out less); give them their
-    // boxes, still invisible, so they can be measured.
+    // 0. The server render's start state (drawn by CSS) steps aside: from here GSAP draws it from
+    // the same numbers, so the rects below are read with nothing transformed. Nothing paints in
+    // between.
     root.dataset.heroReady = "true";
 
     // 1. Read: every rect, before anything is written.
     const s = stage.getBoundingClientRect();
+    const rem = remPx();
     const measured = FLIGHTS.map(([k]) => {
       const piece = one(root, "data-hero-piece", k);
       const glyph = one(root, "data-hero-glyph", k);
@@ -127,50 +117,28 @@ export function armHeroAssembly(kit: GsapKit, root: HTMLElement): () => void {
         },
       };
     });
-    const narrow = s.width < 480;
-    const spreadX = narrow ? 0.8 : 1;
-    // Pieces are drawn at their full size; a narrow stage floats them smaller.
-    const restScale = gsap.utils.clamp(0.55, 1, s.width / 640);
+    const dash = root.querySelector<HTMLElement>("[data-hero-dash]");
 
-    // 2. Write: the scattered state, then the run.
+    // 2. Write: the start state, the same as the server render's, then the run.
     const t = gsap.timeline({ paused: true, defaults: { ease: "calm" }, onComplete: finish });
     ctx = gsap.context(() => {
       root.dataset.heroLive = "true";
-      const values = all(root, "data-hero-value");
-      const slots = all(root, "data-hero-slot");
-
-      for (const m of measured) {
-        if (!m) continue;
-        const at = SCATTER[m.k];
-        gsap.set(m.piece, {
-          xPercent: -50,
-          yPercent: -50,
-          x: at.x * s.width * spreadX,
-          y: at.y * s.height,
-          z: at.z,
-          rotationX: at.rx,
-          rotationY: at.ry,
-          rotationZ: at.rz,
-          scale: restScale,
-          opacity: 0,
-        });
+      for (const m of measured) if (m) gsap.set(m.piece, startPlace(m.k, s, wide, rem));
+      gsap.set(all(root, "data-hero-row"), { opacity: 0 });
+      gsap.set(all(root, "data-hero-bar"), { scaleY: 0 });
+      gsap.set(all(root, "data-hero-value"), { opacity: 0, y: 10 });
+      gsap.set(all(root, "data-hero-slot"), { opacity: 1 });
+      // From 1024px the dashboard comes forward from under the pieces as they start to fly.
+      if (dash && wide) {
+        gsap.set(dash, DASH_START_WIDE);
+        t.to(dash, { z: 0, rotationX: 0, y: 0, duration: 3.4 * unit, ease: "calmInOut" }, 0);
       }
-
-      // Leave: the rows and figures step back as the pieces appear.
-      const pieces = measured.flatMap((m) => (m ? [m.piece] : []));
-      const rows = measured.flatMap((m) => (m ? [m.row] : []));
-      const bars = measured.flatMap((m) => (m?.bar ? [m.bar] : []));
-      t.to(pieces, { opacity: 1, duration: LEAVE * unit }, 0)
-        .to(rows, { opacity: 0, duration: LEAVE * unit }, 0)
-        .to(bars, { scaleY: 0, duration: LEAVE * unit }, 0)
-        .to(values, { opacity: 0, duration: LEAVE * unit }, 0)
-        .to(slots, { opacity: 1, duration: LEAVE * unit }, 0);
 
       // Flights: travel, a gentle lift towards the viewer and back, then settle into the row.
       for (const [index, [, start]] of FLIGHTS.entries()) {
         const m = measured[index];
         if (!m) continue;
-        const peak = narrow ? 40 : SCATTER[m.k].z + 50;
+        const peak = wide ? SCATTER[m.k].z + 50 : 40;
         const at = start * unit;
         const flight = FLIGHT * unit;
         t.to(

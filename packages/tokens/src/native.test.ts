@@ -102,6 +102,9 @@ describe("native.generated.ts", () => {
     expect(native.spacing["density.gap"]).toBe(16);
     expect(native.radii.xl).toBe(16);
     expect(native.radii.full).toBe(9999);
+    expect(native.radii.card).toBe(16);
+    expect(native.radii.panel).toBe(20);
+    expect(native.radii.showcase).toBe(28);
     expect(native.sizes.touch).toBe(44);
     expect(native.sizes["density.control.md"]).toBe(40);
     expect(Object.keys(native.sizes).some((k) => k.includes("compact"))).toBe(false);
