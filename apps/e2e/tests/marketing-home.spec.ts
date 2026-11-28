@@ -620,6 +620,43 @@ test.describe("marketing home: controls", () => {
   });
 });
 
+test.describe("marketing home: receding scene", () => {
+  // The receding scene at a stop sits halfway between prototype 11's (tint 66% and 22% on Mint,
+  // 50% and 14% on Midnight; blur 5px and 4px) and the sharp scene (owner, 28 Nov 2026), so the
+  // orbs and the bead track still read as coloured glass behind the cards.
+  const RECEDED = {
+    light: { blur: "blur(2.5px) saturate(0.95) brightness(1)", strong: 0.33, soft: 0.11 },
+    dark: { blur: "blur(2px) saturate(1.25) brightness(1.075)", strong: 0.25, soft: 0.07 },
+  } as const;
+  for (const theme of THEMES) {
+    test(`the receding scene at a stop is halfway between prototype 11's and the sharp scene, ${theme}`, async ({
+      browser,
+    }) => {
+      const page = await openPage(browser, {
+        viewport: { width: 1280, height: 900 },
+        colorScheme: theme,
+      });
+      const journey = page.locator("#journey");
+      await journey.scrollIntoViewIfNeeded();
+      await expect(journey).toHaveAttribute("data-live", "on", { timeout: 15_000 });
+      const layers = await journey.locator("[data-journey-scrim]").evaluateAll((els) =>
+        els.map((el) => {
+          const style = getComputedStyle(el);
+          const alphas = [...style.backgroundImage.matchAll(/\/ ([\d.]+)\)/g)].map((m) =>
+            Number(m[1]),
+          );
+          return { filter: style.backdropFilter, strong: alphas[0], soft: alphas[2] };
+        }),
+      );
+      const [blur, tint] = layers;
+      expect(blur?.filter).toBe(RECEDED[theme].blur);
+      expect(tint?.strong).toBeCloseTo(RECEDED[theme].strong, 3);
+      expect(tint?.soft).toBeCloseTo(RECEDED[theme].soft, 3);
+      await page.context().close();
+    });
+  }
+});
+
 test.describe("marketing home: page length (MK11)", () => {
   /** The page's length after a full scroll, back at the top, with every pin and band laid out. */
   async function lengthAfterScroll(page: Page): Promise<number> {
