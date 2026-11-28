@@ -24,9 +24,11 @@ export const RedeemBetaInviteRequest = z.strictObject({
 export type RedeemBetaInviteRequest = z.infer<typeof RedeemBetaInviteRequest>;
 
 /**
- * POST /beta/invites/redeem. `joined`: the caller is now a member. `already-member`: nothing
- * changed and the link was not used up. Any unusable link (used, cancelled, expired, unknown) is
- * one 410 `invite_unusable` that does not say which.
+ * POST /beta/invites/redeem. `joined`: the caller is now a member and the link is used up.
+ * `already-member`: the caller already has access (open beta, an admin, an active member, or on an
+ * allow-list whose link could not be used) and the link was not used up by this call. For anyone
+ * else, an unusable link (used, cancelled, expired, unknown) is one 410 `invite_unusable` that does
+ * not say which.
  */
 export const RedeemBetaInviteResponse = z.strictObject({
   status: z.enum(["joined", "already-member"]),
