@@ -1,6 +1,5 @@
 import { usePrefersReducedMotion } from "@repo/ui";
 import { type FC, useCallback, useEffect, useRef, useState } from "react";
-import { useAmbientMotion } from "../../context/AmbientMotionContext";
 import { useStillMotion } from "../../context/StillMotionContext";
 import type { JourneyPalette } from "../../motion/journey/journeyScene";
 import { loadJourneyScene } from "../../motion/journey/loadJourneyScene";
@@ -10,7 +9,6 @@ import { useGsapMoment } from "../../motion/useGsapMoment";
 import { GlassOrb, ORB_TONES, type OrbTone } from "../GlassOrb";
 import { JourneyStop } from "../JourneyStop";
 import { JOURNEY_STOPS } from "../JourneyStop/journeyStops";
-import { MotionControl } from "../MotionControl";
 import { SceneStage, type SceneStartContext } from "../SceneStage";
 import * as s from "./HomeJourney.styles";
 
@@ -51,16 +49,17 @@ const readPalette = (stage: HTMLElement): JourneyPalette => {
  * (`data-live="on"`): each stop pins as a full screen under the header and the pairs change over in
  * place, triggered by scroll and completed by time (MK2), and a scrim fades in over the scroll into
  * the first stop so the scene recedes behind the stops. The scrim is decoration behind the content,
- * so tying its opacity to scroll does not break MK2's rule on content. Pausing animation (the
- * control under the intro, MK14) stops the scene and returns the stops to the plain list.
+ * so tying its opacity to scroll does not break MK2's rule on content. Turning on "Reduce
+ * motion" in the header (MK14) stills the scene and returns the stops to the plain list.
  */
 export const HomeJourney: FC = () => {
   const journeyRef = useRef<HTMLDivElement>(null);
   const prefersReduced = usePrefersReducedMotion();
   const still = useStillMotion();
-  const { paused } = useAmbientMotion();
+  // Reduced motion turned on mid-page (the header's "Reduce motion") returns the stops to the plain
+  // list for the rest of this page view; the next visit to the page has the live journey again.
   const stopped = useRef(false);
-  if (paused) stopped.current = true;
+  if (prefersReduced) stopped.current = true;
   const [ready, setReady] = useState(false);
   const live = ready && !prefersReduced && !still && !stopped.current;
 
@@ -169,9 +168,6 @@ export const HomeJourney: FC = () => {
             Five areas, one at a time: what you have, what comes in and goes out, your pay, what you
             put by and what you owe. Then the picture they make.
           </p>
-          <div className={s.control}>
-            <MotionControl />
-          </div>
         </div>
       </div>
       {JOURNEY_STOPS.map((stop, index) => (

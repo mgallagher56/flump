@@ -4,7 +4,6 @@ import { SAMPLE_HOUSEHOLDS } from "@flump/finance-engine";
 import { act, render, screen, within } from "@testing-library/react";
 import { renderToString } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { AmbientMotionProvider } from "../../context/AmbientMotionContext";
 import { StillMotionProvider } from "../../context/StillMotionContext";
 import type { GsapKit } from "../../motion/loadGsapKit";
 import { signupCta } from "../../utils/site";
@@ -25,12 +24,7 @@ import {
 } from "./heroScroll";
 import { SCATTER, startPlace, TRAY } from "./heroStart";
 
-const renderHero = () =>
-  render(
-    <AmbientMotionProvider>
-      <Hero />
-    </AmbientMotionProvider>,
-  );
+const renderHero = () => render(<Hero />);
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -62,7 +56,6 @@ describe("HomeHero", () => {
     for (const name of ["Request an invite", "Interactive preview"]) {
       expect(screen.getByRole("link", { name }).hasAttribute("data-light")).toBe(true);
     }
-    // The pause control moved beside the section control (HomeStopControl on the home page).
     expect(section.getAttribute("data-home-section-name")).toBe("One picture");
     expect(section.id).toBe("home-hero");
   });
@@ -124,11 +117,7 @@ describe("HomeHero", () => {
   });
 
   it("server-renders every figure and the start state, in the stylesheet: no inline styles, no flags", () => {
-    const html = renderToString(
-      <AmbientMotionProvider>
-        <Hero />
-      </AmbientMotionProvider>,
-    );
+    const html = renderToString(<Hero />);
     // The CSS draws the start state (each piece's place and each bubble's are classes).
     expect(html).not.toContain("style=");
     expect(html).not.toMatch(/ data-hero-(live|ready|done)="/);
@@ -149,9 +138,7 @@ describe("HomeHero", () => {
   it("marks a still page (a story's rest state) done, so it shows the finished picture", () => {
     render(
       <StillMotionProvider>
-        <AmbientMotionProvider>
-          <Hero />
-        </AmbientMotionProvider>
+        <Hero />
       </StillMotionProvider>,
     );
     expect(screen.getByTestId("home-hero").dataset.heroDone).toBe("true");

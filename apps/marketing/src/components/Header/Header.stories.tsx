@@ -39,8 +39,8 @@ export const TabletDark: Story = { ...Tablet, globals: { theme: "dark" } };
 
 /**
  * 200% text on a phone (the root font size doubled, as browser text zoom and the phone sweep do):
- * the bar keeps only the logo, the theme button and the menu button, all on screen; Sign in and
- * the invite stay in the menu (phone sweep 4). On a wide screen the bar is not cramped.
+ * the bar keeps only the logo, the motion and theme buttons and the menu button, all on screen;
+ * Sign in stays in the menu (phone sweep 4). On a wide screen the bar is not cramped.
  */
 const largeTextPlay: Story["play"] = async ({ canvasElement }) => {
   const root = document.documentElement;
@@ -49,7 +49,7 @@ const largeTextPlay: Story["play"] = async ({ canvasElement }) => {
   try {
     const canvas = within(canvasElement);
     const header = canvasElement.querySelector("header") as HTMLElement;
-    // The sign-in and sign-up group (its label depends on the site's sign-up mode).
+    // The sign-in group (or "Go to dashboard" with a session).
     const auth = header.querySelector("[class*='container_top-bar']") as HTMLElement;
     await expect(auth).toBeInTheDocument();
     const cramped = header.clientWidth / Number.parseFloat(getComputedStyle(root).fontSize) <= 17;

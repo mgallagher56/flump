@@ -23,6 +23,18 @@ export default defineConfig({
     extend: {
       // Dark from the theme script, or from the system setting with JavaScript off (D30).
       ...colorSchemeConditions,
+      // Reduced motion from the system setting or the header's "Reduce motion" button, which sets
+      // data-motion="reduce" on <html> (UX-GUIDELINES MK14). With JavaScript off only the system
+      // setting applies, as before.
+      motionReduce: {
+        "@media (prefers-reduced-motion: reduce)": "@slot",
+        ":where([data-motion=reduce]) &": "@slot",
+      },
+      motionSafe: {
+        "@media (prefers-reduced-motion: no-preference)": {
+          ":where(:root:not([data-motion=reduce])) &": "@slot",
+        },
+      },
     },
   },
   theme: {

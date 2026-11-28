@@ -8,8 +8,8 @@ import { scrollToFoot, untilStill } from "../support/marketingMotion";
  * section 5, slice P0 and P1), one row per page. Each page has the hero scene (scene level S1):
  * still glass orbs in the first band that go live with three.js where the power policy allows,
  * bubble fields at band edges and one paced moment per band. These checks follow the standing
- * rules, not any layout: the page with no JavaScript, reduced motion, the pause control, a full
- * scroll with no error at three widths, and axe in both themes once every moment has finished.
+ * rules, not any layout: the page with no JavaScript, reduced motion, the header's "Reduce
+ * motion", a full scroll with no error at three widths, and axe in both themes once every moment has finished.
  * The built marketing site is the one the smoke suite starts.
  */
 
@@ -106,7 +106,7 @@ for (const row of PAGES) {
       await page.context().close();
     });
 
-    test("with reduced motion loads no motion library and is still, with no pause control (MK12, MK14)", async ({
+    test("with reduced motion loads no motion library and is still, the header's Reduce motion shown on and disabled (MK12, MK14)", async ({
       browser,
     }) => {
       const context = await browser.newContext({
@@ -135,25 +135,42 @@ for (const row of PAGES) {
       await expect(page.locator("canvas")).toHaveCount(0);
       await expect(page.getByTestId("hero-stage")).toHaveAttribute("data-scene", "still");
       await expect(page.locator("[data-enhanced]")).toHaveCount(0);
+      // The system setting wins: the header's "Reduce motion" shows on, disabled, and says why.
+      const reduce = page.getByRole("banner").getByRole("button", { name: "Reduce motion" });
+      await expect(reduce).toHaveAttribute("aria-pressed", "true");
+      await expect(reduce).toHaveAttribute("aria-disabled", "true");
+      await expect(reduce).toHaveAccessibleDescription("On in your device settings");
+      // Pressing it changes nothing (aria-disabled keeps it reachable, so the press is dispatched).
+      await reduce.dispatchEvent("click");
+      await expect(page.locator("html")).not.toHaveAttribute("data-motion", "reduce");
+      await expect(reduce).toHaveAttribute("aria-pressed", "true");
       await expect(page.getByRole("button", { name: /^(Pause|Play) animation$/ })).toHaveCount(0);
       await page.context().close();
     });
 
-    test("the pause control in the hero stops the ambient motion and is reachable by keyboard (MK14)", async ({
+    test("the header's Reduce motion is reached by Tab and stops all ambient motion at once (MK14)", async ({
       browser,
     }) => {
       const page = await openPage(browser, row.path, { viewport: { width: 1280, height: 900 } });
-      const pause = page.getByTestId(/-hero$/).getByRole("button", { name: "Pause animation" });
-      await expect(pause).toBeEnabled();
-      await pause.focus();
+      const reduce = page.getByRole("banner").getByRole("button", { name: "Reduce motion" });
+      await expect(reduce).toHaveAttribute("aria-pressed", "false");
+      for (let i = 0; i < 30; i++) {
+        await page.keyboard.press("Tab");
+        if (await reduce.evaluate((el) => el === document.activeElement)) break;
+      }
+      await expect(reduce).toBeFocused();
       await page.keyboard.press("Enter");
-      await expect(page.locator("html")).toHaveAttribute("data-ambient", "paused");
-      await expect(page.getByRole("button", { name: "Play animation" })).toBeFocused();
+      await expect(reduce).toHaveAttribute("aria-pressed", "true");
+      await expect(page.locator("html")).toHaveAttribute("data-motion", "reduce");
       const drift = await page
         .locator("[data-bubble-field] span")
         .evaluateAll((els) => els.map((el) => getComputedStyle(el).animationName));
       expect(drift.length).toBeGreaterThan(0);
       expect(new Set(drift)).toEqual(new Set(["none"]));
+      await expect(page.getByTestId("hero-stage")).toHaveAttribute("data-scene", "still");
+      await expect(page.locator("[data-enhanced]")).toHaveCount(0);
+      // The hero's own pause control is gone: the header holds the one control.
+      await expect(page.getByRole("button", { name: /^(Pause|Play) animation$/ })).toHaveCount(0);
       await page.context().close();
     });
 
@@ -195,3 +212,99 @@ for (const row of PAGES) {
     }
   });
 }
+
+test.describe("marketing: the header's Reduce motion across pages (MK14)", () => {
+  /**
+   * A desktop page that records what <html> carries when <body> first appears: nothing can paint
+   * before then, so that is the state of the first paint. `press` uses the keyboard.
+   */
+  async function openRecorded(browser: Browser) {
+    const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+    await context.addInitScript(() => {
+      const record = new MutationObserver(() => {
+        if (!document.body) return;
+        (window as unknown as { motionAtBody: string | null }).motionAtBody =
+          document.documentElement.getAttribute("data-motion");
+        record.disconnect();
+      });
+      record.observe(document, { childList: true, subtree: true });
+    });
+    const page = await context.newPage();
+    const reduce = page.getByRole("banner").getByRole("button", { name: "Reduce motion" });
+    return {
+      context,
+      page,
+      reduce,
+      atBody: () =>
+        page.evaluate(() => (window as unknown as { motionAtBody: string | null }).motionAtBody),
+      press: async (pressed: "true" | "false") => {
+        await reduce.focus();
+        await page.keyboard.press("Enter");
+        await expect(reduce).toHaveAttribute("aria-pressed", pressed);
+      },
+    };
+  }
+
+  test("is remembered across a page change and a fresh load, applied before first paint", async ({
+    browser,
+  }) => {
+    const { context, page, reduce, atBody, press } = await openRecorded(browser);
+    await page.goto(`${MARKETING_URL}/features`);
+    expect(await atBody()).toBeNull();
+    await press("true");
+
+    // A page change inside the site keeps it.
+    const primary = page.getByRole("navigation", { name: "Primary" });
+    await primary.getByRole("button", { name: "Features" }).click();
+    await primary.getByRole("link", { name: /^Accounts/ }).click();
+    await expect(page).toHaveURL(/\/features\/accounts$/);
+    await expect(reduce).toHaveAttribute("aria-pressed", "true");
+    await expect(page.locator("html")).toHaveAttribute("data-motion", "reduce");
+
+    // A fresh load has it from the first paint.
+    await page.goto(`${MARKETING_URL}/features/pay`);
+    expect(await atBody()).toBe("reduce");
+    await expect(reduce).toHaveAttribute("aria-pressed", "true");
+
+    // Off again: the next load is back to the system setting.
+    await press("false");
+    await page.reload();
+    expect(await atBody()).toBeNull();
+    await expect(reduce).toHaveAttribute("aria-pressed", "false");
+    await context.close();
+  });
+
+  test("with it on, a fresh load requests no motion library and every band is still", async ({
+    browser,
+  }) => {
+    const { context, page, reduce, press } = await openRecorded(browser);
+    await page.goto(`${MARKETING_URL}/features/budget`);
+    await press("true");
+    const scripts: string[] = [];
+    context.on("request", (request) => {
+      if (request.resourceType() === "script") scripts.push(request.url());
+    });
+    await page.goto(`${MARKETING_URL}/features/pay`);
+    const preloaded = await page
+      .locator('script[src], link[rel="modulepreload"]')
+      .evaluateAll((els) =>
+        els.map(
+          (el) =>
+            new URL(el.getAttribute("src") ?? el.getAttribute("href") ?? "", location.href).href,
+        ),
+      );
+    await expect(reduce).toHaveAttribute("aria-pressed", "true");
+    await scrollToFoot(page);
+    await page.waitForLoadState("networkidle");
+    // Only the first-load scripts: GSAP and three.js never download.
+    expect(scripts.filter((url) => !preloaded.includes(url))).toEqual([]);
+    await expect(page.locator("canvas")).toHaveCount(0);
+    await expect(page.getByTestId("hero-stage")).toHaveAttribute("data-scene", "still");
+    await expect(page.locator("[data-enhanced]")).toHaveCount(0);
+    const faded = await page
+      .locator("main h2, main h3, main p, main li")
+      .evaluateAll((els) => els.filter((el) => Number(getComputedStyle(el).opacity) < 1).length);
+    expect(faded).toBe(0);
+    await context.close();
+  });
+});

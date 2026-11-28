@@ -5,8 +5,8 @@ import { scrollInSteps, untilStill } from "../support/marketingMotion";
 
 /*
  * The new marketing home page (ROLLOUT-PLAN slice M1; UX-GUIDELINES 12.2). These checks need a
- * real browser: layout at each width, the page with no JavaScript, reduced motion, the pause
- * control, the carousel and FAQ by keyboard, the journey's changeovers coming to rest, and axe in
+ * real browser: layout at each width, the page with no JavaScript, reduced motion, the header's
+ * "Reduce motion", the carousel and FAQ by keyboard, the journey's changeovers coming to rest, and axe in
  * both themes. The built marketing site is the one the smoke suite starts.
  */
 
@@ -27,7 +27,9 @@ const MOMENT_PARTS =
  */
 async function scrollThrough(page: Page): Promise<void> {
   const motion = !(await page.evaluate(
-    () => matchMedia("(prefers-reduced-motion: reduce)").matches,
+    () =>
+      matchMedia("(prefers-reduced-motion: reduce)").matches ||
+      document.documentElement.dataset.motion === "reduce",
   ));
   if (motion) await liveBeforeScroll(page);
   const notReady = await page.evaluate(async (motion) => {
@@ -92,6 +94,32 @@ async function openPage(
   await page.goto(HOME);
   return page;
 }
+
+/** Presses Tab from the top of the page until `selector` has focus (at most 30 presses). */
+async function tabTo(page: Page, selector: string): Promise<void> {
+  for (let i = 0; i < 30; i++) {
+    await page.keyboard.press("Tab");
+    if (await page.evaluate((sel) => document.activeElement?.matches(sel) ?? false, selector)) {
+      return;
+    }
+  }
+  throw new Error(`${selector} was not reached by Tab`);
+}
+
+/** The bubble fields' animation names, each once. */
+async function driftNames(page: Page): Promise<string[]> {
+  const names = await page
+    .locator("[data-bubble-field] span")
+    .evaluateAll((els) => els.map((el) => getComputedStyle(el).animationName));
+  expect(names.length).toBeGreaterThan(0);
+  return [...new Set(names)];
+}
+
+/** The rough figures band's steps' opacities. */
+const stepOpacities = (page: Page) =>
+  page
+    .locator("#rough-figures [data-step]")
+    .evaluateAll((els) => els.map((el) => getComputedStyle(el).opacity));
 
 /**
  * How an element shows inside the journey: its opacity times every ancestor's up to the journey
@@ -226,7 +254,11 @@ test.describe("marketing home: without JavaScript and with reduced motion (MK1)"
     await expect(page.locator("canvas")).toHaveCount(0);
     await expect(page.getByTestId("journey-stage")).toHaveAttribute("data-scene", "still");
     await expect(page.locator("[data-enhanced]")).toHaveCount(0);
-    // Nothing ambient moves, so there is no control to stop it.
+    // The system setting wins: the header's "Reduce motion" shows on, disabled, and says why.
+    const reduce = page.getByRole("banner").getByRole("button", { name: "Reduce motion" });
+    await expect(reduce).toHaveAttribute("aria-pressed", "true");
+    await expect(reduce).toHaveAttribute("aria-disabled", "true");
+    await expect(reduce).toHaveAccessibleDescription("On in your device settings");
     await expect(page.getByRole("button", { name: /^(Pause|Play) animation$/ })).toHaveCount(0);
     await page.close();
   });
@@ -543,47 +575,106 @@ test.describe("marketing home: the hero's bubbles (owner, 28 Nov 2026)", () => {
 });
 
 test.describe("marketing home: controls", () => {
-  test("the pause control stops the ambient motion and is reachable by keyboard (MK14)", async ({
+  test("the header's Reduce motion is reached by Tab and stops all ambient motion at once (MK14)", async ({
     page,
   }) => {
     await page.goto(HOME);
-    // Beside the section control at the bottom left.
-    const pause = page
-      .locator("[data-stop-control]")
-      .getByRole("button", { name: "Pause animation" });
-    await expect(pause).toBeEnabled();
-    await pause.focus();
+    const reduce = page.getByRole("banner").getByRole("button", { name: "Reduce motion" });
+    await expect(reduce).toHaveAttribute("aria-pressed", "false");
+    await tabTo(page, "[data-motion-toggle]");
     await page.keyboard.press("Enter");
-    await expect(page.locator("html")).toHaveAttribute("data-ambient", "paused");
-    // The bubbles' scroll-linked drift is switched off while paused.
-    const states = await page
-      .locator("[data-bubble-field] span")
-      .evaluateAll((els) => els.map((el) => getComputedStyle(el).animationName));
-    expect(states.length).toBeGreaterThan(0);
-    expect(new Set(states)).toEqual(new Set(["none"]));
-    // Every control on the page shows the same state.
-    await expect(page.getByRole("button", { name: "Play animation" })).toHaveCount(2);
-    // An entrance still to play shows at once: the rough figures steps are fully opaque the moment
-    // their band is in view, and stay so after "Play animation".
+    await expect(reduce).toHaveAttribute("aria-pressed", "true");
+    await expect(page.locator("html")).toHaveAttribute("data-motion", "reduce");
+    // Everything stops at once: the bubbles' drift, the scene (back to its still) and every moment.
+    expect(await driftNames(page)).toEqual(["none"]);
+    await expect(page.getByTestId("journey-stage")).toHaveAttribute("data-scene", "still");
+    await expect(page.locator("canvas")).toHaveCount(0);
+    await expect(page.locator("[data-enhanced]")).toHaveCount(0);
+    // An entrance still to play shows finished: the rough figures steps are fully opaque.
     await page.locator("#rough-figures").scrollIntoViewIfNeeded();
-    const opacities = await page
-      .locator("#rough-figures [data-step]")
-      .evaluateAll((els) => els.map((el) => getComputedStyle(el).opacity));
-    expect(opacities).toEqual(["1", "1", "1"]);
-    await page
-      .locator("[data-stop-control]")
-      .getByRole("button", { name: "Play animation" })
-      .click();
-    await expect(page.locator("html")).not.toHaveAttribute("data-ambient", "paused");
-    await page.waitForTimeout(300);
-    expect(
-      await page
-        .locator("#rough-figures [data-step]")
-        .evaluateAll((els) => els.map((el) => getComputedStyle(el).opacity)),
-    ).toEqual(["1", "1", "1"]);
+    expect(await stepOpacities(page)).toEqual(["1", "1", "1"]);
+    // The in-page pause controls are gone: the header holds the one control.
+    await expect(page.getByRole("button", { name: /^(Pause|Play) animation$/ })).toHaveCount(0);
+    // Off again: the bubbles drift again without a reload; a finished moment stays finished.
+    await reduce.focus();
+    await page.keyboard.press("Enter");
+    await expect(reduce).toHaveAttribute("aria-pressed", "false");
+    await expect(page.locator("html")).not.toHaveAttribute("data-motion", "reduce");
+    expect(await driftNames(page)).not.toContain("none");
+    expect(await stepOpacities(page)).toEqual(["1", "1", "1"]);
   });
 
-  test("on a 390px phone the dock's controls are whole 44px targets, the pause control an icon button named Pause animation", async ({
+  test("with Reduce motion on, the next load requests no motion library and the page is still and complete", async ({
+    page,
+  }) => {
+    test.setTimeout(SCENE_SCROLL_BUDGET);
+    await page.goto(HOME);
+    await page.getByRole("banner").getByRole("button", { name: "Reduce motion" }).click();
+    const scripts: string[] = [];
+    page.on("request", (request) => {
+      if (request.resourceType() === "script") scripts.push(request.url());
+    });
+    await page.reload();
+    const preloaded = await page
+      .locator('script[src], link[rel="modulepreload"]')
+      .evaluateAll((els) =>
+        els.map(
+          (el) =>
+            new URL(el.getAttribute("src") ?? el.getAttribute("href") ?? "", location.href).href,
+        ),
+      );
+    await expect(
+      page.getByRole("banner").getByRole("button", { name: "Reduce motion" }),
+    ).toHaveAttribute("aria-pressed", "true");
+    await scrollThrough(page);
+    // Only the first-load scripts: GSAP, the hero's assembly and three.js never download.
+    expect(scripts.filter((url) => !preloaded.includes(url))).toEqual([]);
+    await expect(page.locator("canvas")).toHaveCount(0);
+    await expect(page.getByTestId("journey-stage")).toHaveAttribute("data-scene", "still");
+    await expect(page.locator("[data-enhanced]")).toHaveCount(0);
+    expect(await driftNames(page)).toEqual(["none"]);
+  });
+
+  for (const width of [320, 360, 390, 768, 1000, 1440] as const) {
+    test(`at ${width}px "Reduce motion" sits in the bar beside the theme switch, a whole 44px target, never in the menu`, async ({
+      browser,
+    }) => {
+      const page = await openPage(browser, { viewport: { width, height: 800 } });
+      await expect(
+        page.getByRole("banner").getByRole("button", { name: "Reduce motion" }),
+      ).toBeVisible();
+      const fit = await page.evaluate(() => {
+        const header = document.querySelector("header");
+        const shown = (els: Iterable<Element>) =>
+          [...els].map((el) => el.getBoundingClientRect()).filter((r) => r.width > 0);
+        const motion = header?.querySelector("[data-motion-toggle]")?.getBoundingClientRect();
+        const logo = header?.querySelector("a[href='/']")?.getBoundingClientRect();
+        const theme = shown(
+          header?.querySelectorAll("#theme-toggle-compact, [aria-label='System theme']") ?? [],
+        )[0];
+        const right = Math.max(
+          ...shown(header?.querySelectorAll("a, button") ?? []).map((r) => r.right),
+        );
+        return {
+          size: motion ? `${Math.round(motion.width)}x${Math.round(motion.height)}` : "none",
+          clearOfLogo: Boolean(motion && logo && motion.left >= logo.right),
+          beforeTheme: Boolean(motion && theme && motion.right <= theme.left),
+          gutter: window.innerWidth - right >= 16,
+        };
+      });
+      expect(fit).toEqual({ size: "44x44", clearOfLogo: true, beforeTheme: true, gutter: true });
+      if (width < 1024) {
+        await page.getByRole("button", { name: "Open navigation menu" }).click();
+        await expect(page.getByRole("dialog").getByRole("link", { name: "Sign in" })).toBeVisible();
+        await expect(
+          page.getByRole("dialog").getByRole("button", { name: "Reduce motion" }),
+        ).toHaveCount(0);
+      }
+      await page.context().close();
+    });
+  }
+
+  test("on a 390px phone the dock's controls are whole 44px targets, with no motion control beside them", async ({
     browser,
   }) => {
     const page = await openPage(browser, { viewport: { width: 390, height: 844 } });
@@ -595,35 +686,27 @@ test.describe("marketing home: controls", () => {
       await next.click();
       await expect(label).toContainText(`${i + 2} of`);
     }
-    const pause = dock.getByRole("button", { name: "Pause animation" });
-    await expect(pause).toBeVisible();
     const boxes = await dock.locator("button").evaluateAll((els) =>
       els.map((el) => {
         const r = el.getBoundingClientRect();
         return { w: Math.round(r.width), h: Math.round(r.height) };
       }),
     );
+    // Previous and next only: "Reduce motion" moved to the header.
     expect(boxes).toEqual([
       { w: 44, h: 44 },
       { w: 44, h: 44 },
-      { w: 44, h: 44 },
     ]);
-    // The count is never clipped, and the two pills sit side by side without touching.
+    // The count is never clipped, and the dock stays inside the screen.
     const fit = await page.evaluate(() => {
       const count = document.querySelector<HTMLElement>("[data-testid=stop-control-label]");
-      const nav = document.querySelector("[data-stop-control] nav")?.getBoundingClientRect();
-      const motion = document
-        .querySelector("[data-stop-control] [data-motion-control]")
-        ?.getBoundingClientRect();
+      const dock = document.querySelector("[data-stop-control]")?.getBoundingClientRect();
       return {
         clipped: count ? count.scrollWidth > count.clientWidth : true,
-        apart: nav && motion ? motion.left >= nav.right || motion.top >= nav.bottom : false,
-        inside: motion ? motion.right <= window.innerWidth : false,
+        inside: dock ? dock.right <= window.innerWidth : false,
       };
     });
-    expect(fit).toEqual({ clipped: false, apart: true, inside: true });
-    // The words are gone from sight but are still the button's name and text.
-    await expect(pause).toHaveText("Pause animation");
+    expect(fit).toEqual({ clipped: false, inside: true });
     await page.context().close();
   });
 
@@ -1060,7 +1143,12 @@ test.describe("marketing home: controls", () => {
     await expect(journey).toHaveAttribute("data-live", "on", { timeout: 15_000 });
     const firstStop = journey.locator("[data-journey-stop]").first();
     await expect(firstStop).toHaveAttribute("data-enhanced", "true", { timeout: 15_000 });
-    await journey.locator("[data-journey-intro] button").first().focus();
+    // Start from the intro's heading (the intro has no control of its own since "Reduce motion"
+    // moved to the header): focusable for this test only, so Tab continues from there.
+    await journey.locator("#journey-title").evaluate((heading) => {
+      heading.setAttribute("tabindex", "-1");
+      (heading as HTMLElement).focus({ preventScroll: true });
+    });
     const count = await journey.locator("[data-journey-stop]").count();
     for (let k = 1; k <= count; k++) {
       await page.keyboard.press("Tab");

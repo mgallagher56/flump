@@ -48,10 +48,9 @@ describe("PageHero", () => {
     expect(doc.querySelector("canvas")).toBeNull();
   });
 
-  it("carries the pause control, kept out of the tab order until there is motion to stop (MK14)", () => {
+  it("has no motion control of its own: the header's Reduce motion is the one control (MK14)", () => {
     const doc = new DOMParser().parseFromString(renderToString(hero()), "text/html");
-    const control = doc.querySelector("[data-motion-control] button");
-    expect(control?.textContent).toBe("Pause animation");
-    expect(control?.getAttribute("tabindex")).toBe("-1");
+    expect(doc.querySelectorAll("button")).toHaveLength(0);
+    expect(doc.body.textContent).not.toMatch(/(Pause|Play) animation/);
   });
 });

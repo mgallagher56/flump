@@ -1,7 +1,6 @@
 import { type FC, type ReactNode, useRef } from "react";
 import { HeroOrbs, type HeroOrbTones } from "../HeroOrbs";
 import { LitCtas } from "../LitCtas";
-import { MotionControl } from "../MotionControl";
 import {
   hero,
   heroCopy,
@@ -10,7 +9,6 @@ import {
   heroLabel,
   heroLead,
   heroNote,
-  heroPause,
   heroTitle,
 } from "./PageHero.styles";
 
@@ -37,7 +35,7 @@ export interface PageHeroProps {
  * The first band of the features and area pages (OTHER-PAGES-PLAN slice P1, from the approved
  * prototypes at `prototypes/others`): a small label, the h1, the lead, the calls to action with the
  * pointer light, and the orbs beside the copy, live at scene level S1. The scene is this page's only
- * ambient motion, so its pause control sits here, under the calls to action (MK14, WCAG 2.2.2).
+ * ambient motion; the header's "Reduce motion" stops it (MK14, WCAG 2.2.2).
  */
 export const PageHero: FC<PageHeroProps> = ({
   titleId,
@@ -68,9 +66,6 @@ export const PageHero: FC<PageHeroProps> = ({
           <div className={heroCtas}>
             <LitCtas previewHref={previewHref} secondary={Boolean(previewHref)} />
           </div>
-          <span className={heroPause}>
-            <MotionControl />
-          </span>
         </div>
       </div>
     </section>

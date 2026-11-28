@@ -1,6 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, within } from "storybook/test";
-import { AmbientMotionProvider } from "../../context/AmbientMotionContext";
 import { StillMotionProvider } from "../../context/StillMotionContext";
 import { PageHero } from "./PageHero";
 
@@ -12,9 +11,7 @@ const meta: Meta<typeof PageHero> = {
     // The still orbs, as a weak device or reduced motion shows them: no story starts three.js.
     (Story) => (
       <StillMotionProvider>
-        <AmbientMotionProvider>
-          <Story />
-        </AmbientMotionProvider>
+        <Story />
       </StillMotionProvider>
     ),
   ],

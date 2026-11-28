@@ -122,7 +122,10 @@ export const LEGAL_PAGES: readonly LegalPage[] = [
     path: "/cookies",
     label: "Cookies and storage",
     title: "Cookies and browser storage",
-    history: [{ version: "0.1", updated: "25 November 2026", effectiveFrom: "2026-11-25" }],
+    history: [
+      { version: "0.2", updated: "28 November 2026", effectiveFrom: "2026-11-28" },
+      { version: "0.1", updated: "25 November 2026", effectiveFrom: "2026-11-25" },
+    ],
   }),
   withVersion({
     key: "accessibility",

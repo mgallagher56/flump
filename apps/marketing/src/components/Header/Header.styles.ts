@@ -69,7 +69,6 @@ export const drawerCta = cva({ base: { width: "100%", textDecoration: "none" } }
  */
 export const wideOnly = cva({ base: { display: "none", _navWide: { display: "inline-flex" } } });
 export const belowWide = cva({ base: { _navWide: { display: "none" } } });
-
 /** The Features group in the phone menu: its heading, then its links, set apart by a hairline. */
 export const drawerGroup = cva({
   base: {

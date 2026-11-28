@@ -1,7 +1,6 @@
-import { createFrameRateCheck, useScenePower } from "@repo/ui";
+import { createFrameRateCheck, usePrefersReducedMotion, useScenePower } from "@repo/ui";
 import { cx } from "@repo/ui/styled-system/css";
 import { type FC, type ReactNode, type RefObject, useEffect, useRef, useState } from "react";
-import { useAmbientMotion } from "../../context/AmbientMotionContext";
 import { useStillMotion } from "../../context/StillMotionContext";
 import { stage, still } from "./SceneStage.styles";
 
@@ -59,9 +58,10 @@ export interface SceneStageProps {
  * The server render, a page without JavaScript and a reduced-motion page show the still layer.
  * The scene loads after first paint, by the caller's dynamic import, only when `useScenePower()`
  * says `live` (not under reduced motion, data saver, under 4 GB or 4 cores, without WebGL or
- * under 28 fps) and the range is within a screen and a half. It is told when ambient motion is
- * paused (MotionControl), re-reads its colours on a theme change, and if it gives up (context
- * lost, too slow, download failed) the still stays for this visit.
+ * under 28 fps) and the range is within a screen and a half. It stops its frames the moment
+ * reduced motion applies (the header's "Reduce motion" too), re-reads its colours on a theme
+ * change, and if it gives up (context lost, too slow, download failed) the still stays for this
+ * visit.
  */
 export const SceneStage: FC<SceneStageProps> = ({
   start,
@@ -73,7 +73,9 @@ export const SceneStage: FC<SceneStageProps> = ({
   "data-testid": testId = "scene-stage",
 }) => {
   const power = useScenePower();
-  const { running } = useAmbientMotion();
+  // Reduced motion (the system or the header's "Reduce motion") makes the power policy still too,
+  // so the scene is let go; `running` stops its frames the moment that applies.
+  const running = !usePrefersReducedMotion();
   const stageRef = useRef<HTMLDivElement>(null);
   const handleRef = useRef<SceneHandle | null>(null);
   const runningRef = useRef(running);

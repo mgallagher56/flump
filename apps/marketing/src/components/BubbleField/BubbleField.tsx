@@ -87,8 +87,8 @@ export interface BubbleFieldProps {
  * its content. Decoration: hidden from assistive technology, and it takes no space or pointer. Put
  * it first inside a positioned band. The server render is the still field. Where the browser can
  * tie an animation to scroll, each bubble drifts a little as its band passes through the screen,
- * the far bubble least (prototype 11); with reduced motion, or while the visitor has paused
- * animation, it stays still.
+ * the far bubble least (prototype 11); with reduced motion (the system setting or the header's
+ * "Reduce motion") it stays still.
  */
 export const BubbleField: FC<BubbleFieldProps> = ({
   layout = "a",

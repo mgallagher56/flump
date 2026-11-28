@@ -2,7 +2,6 @@ import { act, render, screen, within } from "@testing-library/react";
 import { renderToString } from "react-dom/server";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { AmbientMotionProvider } from "../../context/AmbientMotionContext";
 import { HomeJourney } from "./HomeJourney";
 
 const loaders = vi.hoisted(() => ({ scene: vi.fn(), gsap: vi.fn(), painted: vi.fn() }));
@@ -15,9 +14,7 @@ vi.mock("../../motion/loadGsapKit", async (importOriginal) => ({
 
 const page = (
   <MemoryRouter>
-    <AmbientMotionProvider>
-      <HomeJourney />
-    </AmbientMotionProvider>
+    <HomeJourney />
   </MemoryRouter>
 );
 
@@ -137,7 +134,8 @@ describe("HomeJourney", () => {
         orb.getAttribute("data-orb-tone"),
       ),
     ).toEqual(["sky", "violet", "teal", "rose"]);
-    expect(host.querySelector("[data-journey-intro] [data-motion-control]")).not.toBeNull();
+    // No motion control of its own: the header's "Reduce motion" is the one control (MK14).
+    expect(host.querySelector("[data-journey-intro] button")).toBeNull();
     expect(
       host.querySelector("[data-journey-scrim]")?.closest("[aria-hidden=true]"),
     ).not.toBeNull();

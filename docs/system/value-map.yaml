@@ -3183,6 +3183,13 @@ browser_storage:
       note: "light, dark or system",
     }
   - {
+      key: flump-motion,
+      storage: localStorage,
+      user_data: false,
+      path: apps/marketing/src/motion/motionScript.ts,
+      note: "marketing site only: reduce while the header's Reduce motion is on, absent otherwise (UX-GUIDELINES MK14)",
+    }
+  - {
       key: flump-optional-storage,
       storage: localStorage,
       user_data: false,

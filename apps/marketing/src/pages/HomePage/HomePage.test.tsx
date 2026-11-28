@@ -103,11 +103,16 @@ describe("Marketing HomePage (ROLLOUT-PLAN M1, prototype 11)", () => {
       const heading = document.getElementById(stop.getAttribute("aria-labelledby") ?? "");
       expect(heading?.tagName).toMatch(/^H[1-3]$/);
     }
-    // The section control is mounted after hydration, with the pause control beside it.
+    // The section control is mounted after hydration, alone: the header's "Reduce motion" replaced
+    // the pause control that sat beside it (MK14).
     const control = screen.getByRole("navigation", { name: "Sections" });
-    expect(
-      control.closest("[data-stop-control]")?.querySelector("[data-motion-control]"),
-    ).not.toBeNull();
+    expect(control.closest("[data-stop-control]")?.querySelectorAll("button")).toHaveLength(
+      control.querySelectorAll("button").length,
+    );
+    const reduce = within(screen.getByRole("banner")).getByRole("button", {
+      name: "Reduce motion",
+    });
+    expect(reduce.getAttribute("aria-pressed")).toBe("false");
   });
 
   it("states the tagline in the title, never in the h1", async () => {

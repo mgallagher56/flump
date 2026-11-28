@@ -152,9 +152,3 @@ export const lead = css({
   fontSize: "lg",
   lineHeight: "1.55",
 });
-
-/** The pause control, under the lead (MK14). */
-export const control = css({
-  display: "flex",
-  justifyContent: "flex-start",
-});

@@ -12,7 +12,6 @@ import { HomeRoughFigures } from "../../components/HomeRoughFigures";
 import { HomeSecurity } from "../../components/HomeSecurity";
 import { HomeStopControl } from "../../components/HomeStopControl";
 import { MarketingPageShell } from "../../components/MarketingPageShell";
-import { MotionControl } from "../../components/MotionControl";
 import { PageMeta } from "../../components/PageMeta";
 import { SITE_TAGLINE } from "../../utils/site";
 import { mainContent, pairBands } from "./HomePage.styles";
@@ -27,8 +26,8 @@ import { mainContent, pairBands } from "./HomePage.styles";
  * "Request an invite" appears twice in the page body (hero and close).
  *
  * Fourteen bands and stops are marked `data-home-section` (the hero, the features, the journey's six
- * stops, then each band below), and the section control at the bottom left steps through them, with
- * the pause control beside it (MK14).
+ * stops, then each band below), and the section control at the bottom left steps through them. The
+ * header's "Reduce motion" stops the ambient motion (MK14).
  */
 export const HomePage: FC = () => (
   <MarketingPageShell>
@@ -54,7 +53,7 @@ export const HomePage: FC = () => (
       <HomeClose />
     </main>
 
-    <HomeStopControl aside={<MotionControl />} />
+    <HomeStopControl />
     <Footer />
   </MarketingPageShell>
 );

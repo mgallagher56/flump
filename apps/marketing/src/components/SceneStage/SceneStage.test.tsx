@@ -18,14 +18,8 @@ const scene = vi.hoisted(() => ({
 vi.mock("@repo/ui", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@repo/ui")>()),
   useScenePower: () => power.current,
-}));
-vi.mock("../../context/AmbientMotionContext", () => ({
-  useAmbientMotion: () => ({
-    running: ambient.running,
-    paused: !ambient.running,
-    available: true,
-    toggle: () => {},
-  }),
+  // Reduced motion (the system or the header's "Reduce motion") is what stops the scene's frames.
+  usePrefersReducedMotion: () => !ambient.running,
 }));
 
 const still = (reason: StillReason) =>
@@ -136,7 +130,7 @@ describe("SceneStage", () => {
     expect(onSceneChange).toHaveBeenLastCalledWith("live");
   });
 
-  it("pauses the scene while ambient motion is paused, and resumes it after", async () => {
+  it("stops the scene's frames while reduced motion applies, and resumes them after", async () => {
     power.current = live();
     const { rerender } = render(tree());
     await act(async () => {});

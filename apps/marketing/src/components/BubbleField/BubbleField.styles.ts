@@ -42,7 +42,7 @@ export const field = cva({
  * One bubble: a soft sphere in one of the two orb sets (STYLE-GUIDE 2.7; violet and rose only on
  * orb-like elements, MC1). Where the browser supports scroll-driven animation, it drifts between
  * `--drift-from` and `--drift-to` as its band crosses the screen (prototype 11), so it moves only
- * when the reader scrolls. Still with reduced motion and while the visitor has paused animation
+ * when the reader scrolls. Still with reduced motion, from the system or the header's "Reduce motion"
  * (MK14). On a narrow screen only the first, large bubble stays, at a little over half size and
  * pushed to its edge, so none sits behind the copy.
  */
@@ -59,9 +59,6 @@ export const bubble = cva({
         animationTimeline: "view()",
         animationRange: "cover 0% cover 100%",
       },
-      // While the visitor has paused animation (AmbientMotionContext). Written out, not imported,
-      // because Panda extracts styles statically.
-      "html[data-ambient=paused] &": { animationName: "none" },
     },
   },
   variants: {

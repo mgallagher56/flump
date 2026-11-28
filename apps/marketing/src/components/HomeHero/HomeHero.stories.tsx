@@ -1,6 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, within } from "storybook/test";
-import { AmbientMotionProvider } from "../../context/AmbientMotionContext";
 import { StillMotionProvider } from "../../context/StillMotionContext";
 import { HomeHero } from "./HomeHero";
 
@@ -15,11 +14,7 @@ const meta: Meta<typeof HomeHero> = {
         <Story />
       </StillMotionProvider>
     ),
-    (Story) => (
-      <AmbientMotionProvider>
-        <Story />
-      </AmbientMotionProvider>
-    ),
+    (Story) => <Story />,
   ],
 };
 
