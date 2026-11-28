@@ -432,13 +432,20 @@ test.describe("marketing home: controls", () => {
   });
 
   // At rest each pinned stop's pair sits in the middle of the window, not under the header with
-  // the lower two thirds empty (owner, 28 Nov 2026), on an ordinary window and a tall one.
-  for (const height of [900, 1300]) {
-    test(`at rest each journey stop's pair is centred in a 1440 by ${height} window`, async ({
+  // the rest of the window empty (owner, 28 Nov 2026): desktop, a tall desktop window, and the
+  // stacked phone layout. A pair taller than the space between the header and the orb's lane
+  // starts at the top of that space instead (safe centring), never under the header.
+  for (const [width, height] of [
+    [1440, 900],
+    [1440, 1300],
+    [560, 1267],
+    [390, 844],
+  ] as const) {
+    test(`at rest each journey stop's pair is centred in a ${width} by ${height} window`, async ({
       browser,
     }) => {
       test.setTimeout(SCENE_SCROLL_BUDGET);
-      const page = await openPage(browser, { viewport: { width: 1440, height } });
+      const page = await openPage(browser, { viewport: { width, height } });
       await liveBeforeScroll(page);
       const stops = page.locator("#journey [data-journey-stop]");
       const count = await stops.count();
@@ -451,11 +458,22 @@ test.describe("marketing home: controls", () => {
         });
         await expect(stop).toHaveAttribute("data-enhanced", "true", { timeout: 15_000 });
         await untilStill(page, "#journey :is([data-stop-side], [data-stop-pair])");
-        const offset = await stop.locator("[data-stop-pair]").evaluate((el) => {
+        const at = await stop.locator("[data-stop-pair]").evaluate((el) => {
           const r = el.getBoundingClientRect();
-          return (r.top + r.bottom) / 2 - window.innerHeight / 2;
+          const frame = el.closest<HTMLElement>("[data-stop-frame]");
+          const style = frame ? getComputedStyle(frame) : null;
+          const header = document.querySelector("header")?.getBoundingClientRect().bottom ?? 0;
+          const spaceTop = header + Number.parseFloat(style?.paddingTop ?? "0");
+          const spaceBottom = window.innerHeight - Number.parseFloat(style?.paddingBottom ?? "0");
+          return {
+            offset: (r.top + r.bottom) / 2 - window.innerHeight / 2,
+            fits: r.height <= spaceBottom - spaceTop + 1,
+            topGap: r.top - spaceTop,
+          };
         });
-        expect(Math.abs(offset), `stop ${k + 1} off centre by ${offset}px`).toBeLessThan(4);
+        if (at.fits)
+          expect(Math.abs(at.offset), `stop ${k + 1} off centre by ${at.offset}px`).toBeLessThan(4);
+        else expect(Math.abs(at.topGap), `stop ${k + 1} too tall, not at the top`).toBeLessThan(2);
       }
       await page.context().close();
     });
