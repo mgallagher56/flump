@@ -1,4 +1,4 @@
-import { renderK2LogoSvg } from "../renderHelpers";
+import { renderK2LogoSvg, renderProvenanceComment } from "../renderHelpers";
 import type { BrandTokens } from "../tokens";
 
 const CHAPTER_TOC = [
@@ -13,6 +13,7 @@ const CHAPTER_TOC = [
   { num: "09", id: "charts", title: "Charts" },
   { num: "10", id: "do-and-do-not", title: "Do and do not" },
   { num: "11", id: "evolution", title: "How the brand has evolved" },
+  { num: "Ref", id: "reference", title: "Reference" },
 ] as const;
 
 export function renderSidebarToc(): string {
@@ -45,10 +46,10 @@ export function renderCover(tokens: BrandTokens): string {
       </div>
     </div>
     <p class="cover-lead">
-      A single visual and verbal reference for Flump across the web app, marketing site and mobile app. Every colour, size, radius, shadow, type style and motion value on this page is read directly from the token source in <code>packages/tokens/src</code>.
+      Flump helps everyday UK households see their accounts, budget, pay, savings, pension and debts in one place. People type in their own figures, so no bank login is needed, and Flump never moves money or gives financial advice.
     </p>
     <p class="prose">
-      The standing specification documents in <code>docs/ux/</code> (<code>STYLE-GUIDE.md</code>, <code>UX-GUIDELINES.md</code> and <code>CROSS-PLATFORM.md</code>) and <code>docs/copy/COPY-GUIDE.md</code> remain the binding rules and take precedence over any summary here.
+      This book presents the visual and verbal identity shared across the Flump marketing site, web app and mobile app. Each chapter starts with why the design works this way, shows the finished result and sets out the core rules, followed by a complete reference appendix at the end.
     </p>
     <nav aria-label="Cover contents">
       <h2 class="sub-title">In this book</h2>
@@ -56,5 +57,6 @@ export function renderCover(tokens: BrandTokens): string {
         ${tocLinks}
       </ol>
     </nav>
+    ${renderProvenanceComment("apps/marketing/src/utils/featureAreas.ts, HomeSecurity.tsx, STYLE-GUIDE 1, COPY-GUIDE 1 and 2.1")}
   </header>`;
 }

@@ -1,56 +1,56 @@
-import { renderSourceCite } from "../renderHelpers";
+import { renderProvenanceComment } from "../renderHelpers";
 import type { BrandTokens } from "../tokens";
 
 export function renderDoAndDoNotChapter(_tokens: BrandTokens): string {
   const pairs: ReadonlyArray<{ topic: string; doRule: string; dontRule: string }> = [
     {
-      topic: "Tokens and colours (C1, C2, C9)",
+      topic: "Colours and judgement",
       doRule:
-        "Use semantic tokens only, keep debt in apricot (chart.debt) and negative balances in text.primary, and use mint as a fill in light.",
+        "Use semantic surface, ink and area colours, keep debt in warm apricot and negative balances in standard ink, and use bright mint only as a fill in light mode.",
       dontRule:
-        "Hardcode hex or rgb values, use red or warning badges on ordinary debt, or use mint as text on a light background.",
+        "Hardcode raw colours, put red or warning badges on ordinary debt, or set body text or links in bright mint on a pale background.",
     },
     {
-      topic: "Orb palette discipline (MC1, MC2)",
+      topic: "Orb palette discipline",
       doRule:
-        "Keep violet and rose tokens on orb-like elements, the allow-listed home page marks and the area map tiles.",
+        "Keep violet and rose on glass orbs, the three-bubble logo, small area markers and assigned chart series.",
       dontRule:
-        "Use violet or rose as a band background, tint or card material, or pair an orb colour with debt, gain or loss.",
+        "Use violet or rose as a full band background, card material or tint, or pair an orb colour with debt, gain or loss.",
     },
     {
-      topic: "Voice and copy (COPY-GUIDE 2.3, 5.1, 5.4)",
+      topic: "Voice and copy",
       doRule:
-        "Write plain en-GB in sentence case, keep sentences under 25 words, label estimates clearly and tag illustrative figures as Example.",
+        "Write plain UK English in sentence case, keep sentences short, label estimates clearly and tag sample figures as Example.",
       dontRule:
         "Use em dashes, exclamation marks, ampersands in prose, hype words, judgements or target figures chosen for the reader.",
     },
     {
-      topic: "Saved figures vs scenarios (S1 to S8)",
+      topic: "Saved figures and scenarios",
       doRule:
-        "Keep headline figures and KpiStrips driven by saved data, and isolate what-if controls inside ScenarioZone labelled Illustration, not saved.",
+        "Keep headline figures and summary strips driven by saved details, and isolate what-if sliders inside dashed zones labelled Illustration, not saved.",
       dontRule:
-        "Mix scenario values into saved KPIs, put sliders outside ScenarioZone, or offer an Apply button that overwrites saved data.",
+        "Mix hypothetical inputs into saved totals, place sliders outside a modelling zone, or offer an Apply button that silently overwrites saved data.",
     },
     {
-      topic: "Typography and numbers (T1 to T4)",
+      topic: "Typography and numbers",
       doRule:
-        "Use Plus Jakarta Sans for headings, Inter for body and tabular-nums with en-GB formatting on every figure.",
+        "Use Plus Jakarta Sans for headings, Inter for body text and fixed-width UK formatting on every financial figure.",
       dontRule:
-        'Go below 12px, use weights above 700, use uppercase eyebrows, or use type="number" on money and percentage fields (F2).',
+        "Drop below 12 pixels, use weights above 700, style uppercase eyebrows, or use browser number spinners on money and percentage fields.",
     },
     {
-      topic: "Motion and platforms (AT1 to AT4, MK1, M4)",
+      topic: "Motion across platforms",
       doRule:
-        "Swap or cross-fade real figures in the apps, keep GSAP and three.js inside apps/marketing, and honour prefers-reduced-motion everywhere.",
+        "Keep transitions brief inside the apps, reserve scroll scenes and glass orbs for the marketing site, and honour reduced-motion settings everywhere.",
       dontRule:
-        "Count up or roll real balances, put WebGL or parallax in the apps, or hide content until JavaScript runs.",
+        "Count up or roll real balances, put 3D graphics or parallax in the apps, or hide page content until scripts load.",
     },
     {
-      topic: "Logo and illustrations (STYLE-GUIDE 8.3, 9)",
+      topic: "Logo and illustrations",
       doRule:
-        "Keep half-width clear space around the K2 logo, store pictures as shape lists (IL4) and keep a real-text Example tag on sample cards.",
+        "Keep half-width clear space around the three-bubble mark, draw pictures from shared shape lists and keep a real-text Example tag on sample cards.",
       dontRule:
-        "Place the logo on surface.hero or photographs, recolour or rotate it, or draw faces, coin piles or glass objects inside pictures.",
+        "Place the logo on bright mint hero panels or photographs, recolour or rotate it, or draw faces, coin piles or upward arrows inside pictures.",
     },
   ];
 
@@ -79,11 +79,11 @@ export function renderDoAndDoNotChapter(_tokens: BrandTokens): string {
     </div>
 
     <p class="prose">
-      A quick checklist drawn directly from the standing rules in earlier chapters.
+      A quick reference checklist bringing together the core rules from earlier chapters.
     </p>
 
     ${cards}
 
-    ${renderSourceCite("STYLE-GUIDE; UX-GUIDELINES; COPY-GUIDE")}
+    ${renderProvenanceComment("STYLE-GUIDE; UX-GUIDELINES; COPY-GUIDE")}
   </section>`;
 }

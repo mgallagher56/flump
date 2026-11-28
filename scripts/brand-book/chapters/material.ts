@@ -1,38 +1,9 @@
 import { renderCardMaterialLayersDiagram } from "../diagrams/cardMaterialLayers";
 import { renderGlassOrbLightingDiagram } from "../diagrams/glassOrbLighting";
-import {
-  renderColorSwatch,
-  renderExampleTag,
-  renderShadowSpecimen,
-  renderSourceCite,
-} from "../renderHelpers";
+import { renderExampleTag, renderProvenanceComment } from "../renderHelpers";
 import type { BrandTokens } from "../tokens";
 
 export function renderMaterialChapter(tokens: BrandTokens): string {
-  const materialTokens: Array<{
-    key:
-      | "material.glass.fill"
-      | "material.glass.border"
-      | "material.glass.light"
-      | "material.glass.sheen"
-      | "material.paper.fill"
-      | "material.paper.edge"
-      | "material.paper.rule";
-    note: string;
-  }> = [
-    { key: "material.glass.fill", note: "Glass card base fill" },
-    { key: "material.glass.border", note: "Glass card edge" },
-    { key: "material.glass.light", note: "Inner top highlight" },
-    { key: "material.glass.sheen", note: "Faint 155 degree diagonal sheen" },
-    { key: "material.paper.fill", note: "Paper document base fill" },
-    { key: "material.paper.edge", note: "Paper document 1px edge" },
-    { key: "material.paper.rule", note: "Faint 4px horizontal ruling (2.5% text ink)" },
-  ];
-
-  const swatches = materialTokens
-    .map((item) => renderColorSwatch(tokens, item.key, item.note))
-    .join("");
-
   return `<section class="chapter" id="material">
     <div class="chapter-head">
       <span class="chapter-kicker">Chapter 05</span>
@@ -40,46 +11,46 @@ export function renderMaterialChapter(tokens: BrandTokens): string {
     </div>
 
     <p class="prose">
-      Introduced on 27 November 2026 (design rollout slices F2 and F3, PRs 963 and 968), Flump pairs neutral card materials with lit glass orbs. Card materials stay completely neutral (no violet or rose) and never obscure contrast: text on glass and paper clears 4.5:1 in both themes.
+      Flump pairs crisp, neutral card surfaces with soft lit glass orbs. Card materials never carry decorative violet or rose tints, so text on both glass and ruled paper cards meets strict contrast standards in both light and dark themes.
     </p>
-
-    ${renderGlassOrbLightingDiagram(tokens)}
-
-    ${renderCardMaterialLayersDiagram(tokens)}
 
     <h3 class="sub-title">Live material specimens</h3>
     <div class="grid-2">
       <article class="card-glass">
         <div class="badge-row">
           <h4 class="card-title">Soft glass card</h4>
-          <span class="pill">Non-data cards in apps (tier A)</span>
+          <span class="pill">Feature tiles and marketing cards</span>
         </div>
         <p class="prose">
-          Uses <code>material.glass.fill</code>, <code>material.glass.border</code>, a 155 degree diagonal <code>material.glass.sheen</code> and <code>shadows.glass</code>. Interactive glass cards add a still radial hover light across the top, never a top-only border or a tilt in the apps.
+          A neutral translucent fill with a crisp hairline edge, a soft top inner highlight and a subtle diagonal sheen. Interactive glass cards catch a gentle hover light without tilting or shifting figures in the apps.
         </p>
       </article>
 
       <article class="card-paper">
         <div class="badge-row" style="justify-content:space-between">
-          <h4 class="card-title">Cash and savings</h4>
+          <h4 class="card-title">Paper document card</h4>
           ${renderExampleTag()}
         </div>
         <p class="prose num"><strong>£21,000</strong> at <strong>3.5% AER</strong></p>
         <p class="swatch-note">
-          Uses <code>material.paper.fill</code>, faint 4px <code>material.paper.rule</code> lines, <code>material.paper.edge</code> and <code>shadows.paper</code>. Every document card showing sample figures carries a real-text "Example" tag.
+          Faint horizontal ruling, a 1 pixel paper edge and a soft drop shadow. Every document card that displays illustrative amounts carries a real-text "Example" tag.
         </p>
       </article>
     </div>
 
-    <h3 class="sub-title">Material colour and shadow tokens</h3>
-    <div class="swatch-grid">
-      ${swatches}
-    </div>
-    <div class="grid-2">
-      ${renderShadowSpecimen(tokens, "glass", "Inner top light over card elevation")}
-      ${renderShadowSpecimen(tokens, "paper", "1px inset edge and soft drop below the sheet")}
-    </div>
+    ${renderGlassOrbLightingDiagram(tokens)}
 
-    ${renderSourceCite("STYLE-GUIDE 2.7, 8.3, 14; UX-GUIDELINES 12.1; Card.styles.ts; GlassOrb.styles.ts; Illustration.documents.ts")}
+    ${renderCardMaterialLayersDiagram(tokens)}
+
+    <article class="card-subtle">
+      <h3 class="card-title">Material rules</h3>
+      <ul class="plain-list">
+        <li>Glass cards are used for navigation features and non-data marketing blocks; data tables and saved figures sit on solid flat cards.</li>
+        <li>Paper styling is used only for illustrative document pictures such as payslips, statements and monthly check-in slips.</li>
+        <li>Both materials stay neutral in light and dark mode so text always remains sharp.</li>
+      </ul>
+    </article>
+
+    ${renderProvenanceComment("STYLE-GUIDE 2.7, 8.3, 14; UX-GUIDELINES 12.1; PRs 963, 968; Card.styles.ts; GlassOrb.styles.ts")}
   </section>`;
 }

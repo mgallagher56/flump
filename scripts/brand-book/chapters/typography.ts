@@ -1,196 +1,125 @@
 import { renderTypeLadderDiagram } from "../diagrams/typeLadder";
-import { renderExampleTag, renderSourceCite } from "../renderHelpers";
+import { renderExampleTag, renderProvenanceComment } from "../renderHelpers";
 import { type BrandTokens, colorVar } from "../tokens";
 
 export function renderTypographyChapter(tokens: BrandTokens): string {
   const { native, authored } = tokens;
 
   const samples: Array<{
-    name: string;
+    role: string;
     family: "heading" | "body";
     fontSizeCss: string;
     sizeLabel: string;
     weight: string;
     lineHeight: string;
     tabular?: boolean;
+    muted?: boolean;
     use: string;
     sampleText: string;
   }> = [
     {
-      name: "display",
+      role: "Display headline",
       family: "heading",
       fontSizeCss: authored.webTextStyles.display.value.fontSize,
       sizeLabel: `${native.textStyles.display.fontSize.min} to ${native.textStyles.display.fontSize.max}px`,
       weight: authored.webTextStyles.display.value.fontWeight,
       lineHeight: authored.webTextStyles.display.value.lineHeight,
-      use: "Marketing hero headline only",
+      use: "Marketing home headline",
       sampleText: "All your money. One clear picture.",
     },
     {
-      name: "numeric.hero",
+      role: "Headline figure",
       family: "body",
       fontSizeCss: authored.webTextStyles.numeric.hero.value.fontSize,
       sizeLabel: `${native.textStyles["numeric.hero"].fontSize.min} to ${native.textStyles["numeric.hero"].fontSize.max}px`,
       weight: authored.webTextStyles.numeric.hero.value.fontWeight,
       lineHeight: authored.webTextStyles.numeric.hero.value.lineHeight,
       tabular: true,
-      use: "The one headline figure on a page",
+      use: "The single headline figure on a page",
       sampleText: "£96,000",
     },
     {
-      name: "numeric.result",
+      role: "Result figure",
       family: "body",
       fontSizeCss: authored.webTextStyles.numeric.result.value.fontSize,
       sizeLabel: `${native.textStyles["numeric.result"].fontSize}px`,
       weight: authored.webTextStyles.numeric.result.value.fontWeight,
       lineHeight: authored.webTextStyles.numeric.result.value.lineHeight,
       tabular: true,
-      use: "Key figure inside a ResultBlock",
+      use: "Key figure inside a result block",
       sampleText: "£21,000",
     },
     {
-      name: "heading.xl",
+      role: "Page title",
       family: "heading",
       fontSizeCss: authored.webTextStyles.heading.xl.value.fontSize,
       sizeLabel: `${native.textStyles["heading.xl"].fontSize.min} to ${native.textStyles["heading.xl"].fontSize.max}px`,
       weight: authored.webTextStyles.heading.xl.value.fontWeight,
       lineHeight: authored.webTextStyles.heading.xl.value.lineHeight,
-      use: "Page title (h1)",
+      use: "Main page heading",
       sampleText: "Your mortgage",
     },
     {
-      name: "numeric.kpi",
+      role: "Summary card figure",
       family: "body",
       fontSizeCss: authored.webTextStyles.numeric.kpi.value.fontSize,
       sizeLabel: `${native.textStyles["numeric.kpi"].fontSize}px`,
       weight: authored.webTextStyles.numeric.kpi.value.fontWeight,
       lineHeight: authored.webTextStyles.numeric.kpi.value.lineHeight,
       tabular: true,
-      use: "KPI card values",
+      use: "Summary strip values",
       sampleText: "£1,800",
     },
     {
-      name: "heading.lg",
+      role: "Section title",
       family: "heading",
       fontSizeCss: authored.webTextStyles.heading.lg.value.fontSize,
       sizeLabel: `${native.textStyles["heading.lg"].fontSize}px`,
       weight: authored.webTextStyles.heading.lg.value.fontWeight,
       lineHeight: authored.webTextStyles.heading.lg.value.lineHeight,
-      use: "Section title",
+      use: "Major section heading",
       sampleText: "Cash and savings",
     },
     {
-      name: "numeric.lg",
-      family: "body",
-      fontSizeCss: authored.webTextStyles.numeric.lg.value.fontSize,
-      sizeLabel: `${native.textStyles["numeric.lg"].fontSize}px`,
-      weight: authored.webTextStyles.numeric.lg.value.fontWeight,
-      lineHeight: authored.webTextStyles.numeric.lg.value.lineHeight,
-      tabular: true,
-      use: "Larger figures inside cards",
-      sampleText: "£8,420",
-    },
-    {
-      name: "heading.md",
-      family: "heading",
-      fontSizeCss: authored.webTextStyles.heading.md.value.fontSize,
-      sizeLabel: `${native.textStyles["heading.md"].fontSize}px`,
-      weight: authored.webTextStyles.heading.md.value.fontWeight,
-      lineHeight: authored.webTextStyles.heading.md.value.lineHeight,
-      use: "Card title",
-      sampleText: "Your details",
-    },
-    {
-      name: "body.lg",
+      role: "Lead paragraph",
       family: "body",
       fontSizeCss: authored.webTextStyles.body.lg.value.fontSize,
       sizeLabel: `${native.textStyles["body.lg"].fontSize}px`,
       weight: authored.webTextStyles.body.lg.value.fontWeight,
       lineHeight: authored.webTextStyles.body.lg.value.lineHeight,
-      use: "Marketing lead paragraph",
+      use: "Opening summary line",
       sampleText: "Accounts, budget, pay, savings, pension and debts in one place.",
     },
     {
-      name: "heading.sm",
-      family: "heading",
-      fontSizeCss: authored.webTextStyles.heading.sm.value.fontSize,
-      sizeLabel: `${native.textStyles["heading.sm"].fontSize}px`,
-      weight: authored.webTextStyles.heading.sm.value.fontWeight,
-      lineHeight: authored.webTextStyles.heading.sm.value.lineHeight,
-      use: "Group title inside a card",
-      sampleText: "Credit card",
-    },
-    {
-      name: "body.md",
+      role: "Body text",
       family: "body",
       fontSizeCss: authored.webTextStyles.body.md.value.fontSize,
       sizeLabel: `${native.textStyles["body.md"].fontSize}px`,
       weight: authored.webTextStyles.body.md.value.fontWeight,
       lineHeight: authored.webTextStyles.body.md.value.lineHeight,
-      use: "Default text",
+      use: "Default reading copy",
       sampleText: "Add your first account to see your monthly picture.",
     },
     {
-      name: "numeric.md",
-      family: "body",
-      fontSizeCss: authored.webTextStyles.numeric.md.value.fontSize,
-      sizeLabel: `${native.textStyles["numeric.md"].fontSize}px`,
-      weight: authored.webTextStyles.numeric.md.value.fontWeight,
-      lineHeight: authored.webTextStyles.numeric.md.value.lineHeight,
-      tabular: true,
-      use: "Row and table figures",
-      sampleText: "3.5% AER",
-    },
-    {
-      name: "numeric.unset",
+      role: "Unset figure state",
       family: "body",
       fontSizeCss: authored.webTextStyles.numeric.unset.value.fontSize,
       sizeLabel: `${native.textStyles["numeric.unset"].fontSize}px`,
       weight: authored.webTextStyles.numeric.unset.value.fontWeight,
       lineHeight: authored.webTextStyles.numeric.unset.value.lineHeight,
       tabular: true,
-      use: '"Not set" state in text.muted',
+      muted: true,
+      use: "Quiet placeholder when no figure is entered",
       sampleText: "Not set",
     },
     {
-      name: "body.sm",
-      family: "body",
-      fontSizeCss: authored.webTextStyles.body.sm.value.fontSize,
-      sizeLabel: `${native.textStyles["body.sm"].fontSize}px`,
-      weight: authored.webTextStyles.body.sm.value.fontWeight,
-      lineHeight: authored.webTextStyles.body.sm.value.lineHeight,
-      use: "Supporting text and notices",
-      sampleText: "Assumes 5% growth a year and contributions of £200 a month.",
-    },
-    {
-      name: "label.md",
-      family: "body",
-      fontSizeCss: authored.webTextStyles.label.md.value.fontSize,
-      sizeLabel: `${native.textStyles["label.md"].fontSize}px`,
-      weight: authored.webTextStyles.label.md.value.fontWeight,
-      lineHeight: authored.webTextStyles.label.md.value.lineHeight,
-      use: "Form labels and buttons",
-      sampleText: "Yearly salary before tax",
-    },
-    {
-      name: "numeric.sm",
-      family: "body",
-      fontSizeCss: authored.webTextStyles.numeric.sm.value.fontSize,
-      sizeLabel: `${native.textStyles["numeric.sm"].fontSize}px`,
-      weight: authored.webTextStyles.numeric.sm.value.fontWeight,
-      lineHeight: authored.webTextStyles.numeric.sm.value.lineHeight,
-      tabular: true,
-      use: "Axis ticks and tooltips",
-      sampleText: "22.9% APR",
-    },
-    {
-      name: "label.sm",
+      role: "Small label",
       family: "body",
       fontSizeCss: authored.webTextStyles.label.sm.value.fontSize,
       sizeLabel: `${native.textStyles["label.sm"].fontSize}px`,
       weight: authored.webTextStyles.label.sm.value.fontWeight,
       lineHeight: authored.webTextStyles.label.sm.value.lineHeight,
-      use: "KPI labels, table headers (12px floor)",
+      use: "Card labels and table headers (12px minimum)",
       sampleText: "Breathing room",
     },
   ];
@@ -203,11 +132,11 @@ export function renderTypographyChapter(tokens: BrandTokens): string {
           ? `word-spacing:${authored.webTextStyles.display.value.wordSpacing};`
           : "";
       const fvn = item.tabular ? "font-variant-numeric:tabular-nums;" : "";
-      const col = item.name === "numeric.unset" ? colorVar("text.muted") : colorVar("text.primary");
-      const tag = item.tabular ? ` ${renderExampleTag()}` : "";
+      const col = item.muted ? colorVar("text.muted") : colorVar("text.primary");
+      const tag = item.tabular && !item.muted ? ` ${renderExampleTag()}` : "";
       return `<div class="type-sample-row">
         <div class="type-meta">
-          <code>${item.name}</code>
+          <strong>${item.role}</strong>
           <span class="num">${item.sizeLabel}</span>
           <span class="num">weight ${item.weight}</span>
           <span class="num">line height ${item.lineHeight}</span>
@@ -225,12 +154,12 @@ export function renderTypographyChapter(tokens: BrandTokens): string {
     </div>
 
     <p class="prose">
-      Flump bundles two self-hosted variable typefaces through <code>@repo/ui/fonts.css</code>: <strong>Plus Jakarta Sans</strong> for headings and display, and <strong>Inter</strong> for body text, labels and tabular figures. No third typeface is used; system monospace is for code samples only. Headings widen word spacing by <code>0.12em</code> on web because Plus Jakarta Sans has a narrow space at weights 600 and 700.
+      Flump uses two self-hosted variable typefaces: <strong>Plus Jakarta Sans</strong> for headings and display lines, and <strong>Inter</strong> for body copy, controls and financial figures. Headings use slightly wider word spacing on the web so bold words remain easy to scan, and every number uses fixed-width columns so balances line up cleanly.
     </p>
 
     ${renderTypeLadderDiagram(tokens)}
 
-    <h3 class="sub-title">Live type scale</h3>
+    <h3 class="sub-title">Live type samples</h3>
     <div class="card" style="padding:0">
       ${rowsHtml}
     </div>
@@ -238,12 +167,12 @@ export function renderTypographyChapter(tokens: BrandTokens): string {
     <article class="card-subtle">
       <h3 class="card-title">Typography rules</h3>
       <ul class="plain-list">
-        <li><strong>T1 to T3:</strong> All sizes come from text styles; 12px is the minimum floor; weights are 400, 500, 600 and 700 only.</li>
-        <li><strong>T4:</strong> Every money amount, percentage, date, duration, table cell and slider value uses <code>tabular-nums</code> and en-GB formatting.</li>
-        <li><strong>T5 to T9:</strong> Headline figure is the largest text after the <code>h1</code> and "Not set" is never larger than a real value; sentence case everywhere (no uppercase eyebrows or caps tracking); one <code>h1</code> per page with no skipped heading levels; body lines at most 75 characters wide; text survives 200% zoom without clipping.</li>
+        <li><strong>Two typefaces, four weights:</strong> only Plus Jakarta Sans and Inter at weights 400, 500, 600 and 700, never below 12 pixels.</li>
+        <li><strong>Tabular UK figures everywhere:</strong> money amounts, percentages, dates, table cells and slider readouts use fixed-width numerals and UK formatting.</li>
+        <li><strong>Calm hierarchy:</strong> sentence case everywhere with no uppercase eyebrows, one main heading per page, body lines capped at 75 characters, and text that scales cleanly up to 200% browser zoom.</li>
       </ul>
     </article>
 
-    ${renderSourceCite("STYLE-GUIDE 3.1 to 3.3; packages/tokens/src/typography.ts; packages/ui/src/fonts/fonts.css")}
+    ${renderProvenanceComment("STYLE-GUIDE 3.1 to 3.3; packages/tokens/src/typography.ts; packages/ui/src/fonts/fonts.css")}
   </section>`;
 }

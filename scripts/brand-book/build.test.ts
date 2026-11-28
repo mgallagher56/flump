@@ -282,6 +282,8 @@ describe("Flump brand book", () => {
       /packages\/tokens/,
       /docs\/ux\//,
       /\b(?:gsap|three\.js|WebGL)\b/i,
+      /\bseamless\w*\b/i,
+      /\brollout\b/i,
     ];
     for (const pattern of forbiddenLabels) {
       expect(visibleChaptersText).not.toMatch(pattern);

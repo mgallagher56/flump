@@ -1,120 +1,16 @@
-import type { ColorKey } from "../../../packages/tokens/src/native.generated";
 import { renderOrbTonesDiagram } from "../diagrams/orbTones";
-import { renderColorSwatch, renderSourceCite } from "../renderHelpers";
+import { renderProvenanceComment } from "../renderHelpers";
 import type { BrandTokens } from "../tokens";
 
-function renderSwatchSection(
-  tokens: BrandTokens,
-  heading: string,
-  entries: ReadonlyArray<readonly [ColorKey, string]>,
-): string {
-  return `
-    <h3 class="sub-title">${heading}</h3>
-    <div class="swatch-grid">
-      ${entries.map(([key, note]) => renderColorSwatch(tokens, key, note)).join("")}
-    </div>
-  `;
-}
-
 export function renderColourChapter(tokens: BrandTokens): string {
-  const surfaceEntries: ReadonlyArray<readonly [ColorKey, string]> = [
-    ["surface.canvas", "Page background (Mint light, Midnight charcoal dark)"],
-    ["surface.card", "Cards, tables, drawers, marketing bands (never pure white in light)"],
-    ["surface.subtle", "Hover fills"],
-    ["surface.sunken", "Wells, input tracks"],
-    ["surface.overlay", "Dialogs, sheets, menus, popovers"],
-    ["surface.contrast", "Charcoal: footer and small numbered markers; never a marketing band"],
-    ["surface.hero", "The one headline block on a page: solid mint in light, edged card in dark"],
-    ["surface.scrim", "Backdrop behind dialogs and sheets; never behind text"],
-  ];
-
-  const tintEntries: ReadonlyArray<readonly [ColorKey, string]> = [
-    ["surface.tint.teal", "Net worth and mortgage icon tiles"],
-    ["surface.tint.sage", "Savings icon tiles"],
-    ["surface.tint.apricot", "Debt icon tiles"],
-    ["surface.tint.sky", "Pension icon tiles"],
-    ["surface.tint.violet", "Self Assessment and tax icon tiles (MC1 allow-listed)"],
-    ["surface.tint.rose", "Budget and pay icon tiles (MC1 allow-listed)"],
-  ];
-
-  const textEntries: ReadonlyArray<readonly [ColorKey, string]> = [
-    ["text.primary", "Body copy and primary headings"],
-    ["text.secondary", "Supporting text and secondary labels"],
-    ["text.muted", 'Quiet text, hints and "Not set" figures'],
-    ["text.onContrast", "Text on surface.contrast only"],
-    ["text.onHero", "Labels and lines on surface.hero"],
-    ["text.heroFigure", "Headline figure on surface.hero"],
-  ];
-
-  const primaryAccentEntries: ReadonlyArray<readonly [ColorKey, string]> = [
-    ["primary", "Links, outline buttons, focus ring, selected state, icons"],
-    ["primary.emphasis", "Link and outline button hover"],
-    ["primary.solid", "Primary button fill behind primary.foreground"],
-    ["primary.hover", "Primary solid button hover fill"],
-    ["primary.foreground", "Text on primary.solid"],
-    [
-      "primary.mark",
-      "Brand mark lit from above by primary.markLit (the home hero statement letterhead; not the logo)",
-    ],
-    ["primary.markLit", "Top highlight for primary.mark"],
-    ["primary.subtle", "Selected nav item, quiet accent fills, mint document card"],
-    ["primary.border", "Selected or hovered edge on primary.subtle"],
-    ["accent", "Icons, shapes, lines and text on card, canvas and accent.subtle"],
-    ["accent.subtle", "The one tinted card or section on a page"],
-    ["accent.border", "Decorative edge of accent.subtle"],
-    ["accent.onHero", "One sun shape on surface.hero; never text"],
-  ];
-
-  const borderEntries: ReadonlyArray<readonly [ColorKey, string]> = [
-    ["border", "Default card hairline (1.3:1 on card and canvas)"],
-    ["border.subtle", "Quiet dividers"],
-    ["border.strong", "Control boundaries and outline buttons (3:1)"],
-    ["border.input", "Form inputs and ScenarioZone dashed edge (3:1)"],
-    ["border.focusRing", "2px keyboard focus outline with 2px offset"],
-    ["border.hero", "Edge of surface.hero"],
-    ["border.section", "Dark rule under an app section title"],
-  ];
-
-  const statusEntries: ReadonlyArray<readonly [ColorKey, string]> = [
-    ["status.positive.text", "Positive badge text (leaf green, distinct from teal)"],
-    ["status.positive.bg", "Positive badge fill"],
-    ["status.positive.border", "Positive badge edge"],
-    ["status.positive.solid", "Positive solid fill (primary.foreground passes in both themes)"],
-    ["status.warning.text", "Warning badge text (amber, deadlines and unverified tax)"],
-    ["status.warning.bg", "Warning badge fill"],
-    ["status.warning.border", "Warning badge edge"],
-    [
-      "status.warning.solid",
-      "Warning solid fill (primary.foreground in dark only; never in light)",
-    ],
-    ["status.danger.text", "Error and destructive text (never for debt)"],
-    ["status.danger.bg", "Error and destructive fill"],
-    ["status.danger.border", "Error and destructive edge"],
-    [
-      "status.danger.solid",
-      "Destructive confirm button fill (text.onContrast in both themes; primary.foreground in light only)",
-    ],
-    ["status.info.text", "Actionable info text"],
-    ["status.info.bg", "Info fill"],
-    ["status.info.border", "Info edge"],
-    ["status.info.solid", "Info solid fill (primary.foreground passes in both themes)"],
-    ["status.neutral.text", "Neutral label text (Saved, Illustration)"],
-    ["status.neutral.bg", "Neutral label fill"],
-    ["status.neutral.border", "Neutral label edge"],
-    ["status.neutral.solid", "Neutral solid fill (primary.foreground passes in both themes)"],
-  ];
-
-  const orbEntries: ReadonlyArray<readonly [ColorKey, string]> = [
-    ["orb.skyTeal.core", "Set A orb first tone (sky)"],
-    ["orb.skyTeal.shade", "Set A orb second tone (teal); beads alternate core and shade"],
-    ["orb.skyTeal.bubble", "Set A bubble lit fill"],
-    ["orb.skyTeal.bubbleShade", "Set A bubble far fill"],
-    ["orb.skyTeal.rim", "Set A bubble translucent edge"],
-    ["orb.violetRose.core", "Set B orb first tone (violet)"],
-    ["orb.violetRose.shade", "Set B orb second tone (rose)"],
-    ["orb.violetRose.bubble", "Set B bubble lit fill"],
-    ["orb.violetRose.bubbleShade", "Set B bubble far fill"],
-    ["orb.violetRose.rim", "Set B bubble translucent edge"],
+  const areaRows: ReadonlyArray<readonly [string, string, string]> = [
+    ["Net worth and mortgage", "Teal", "Primary headline and home equity figures"],
+    ["Savings", "Sage", "Cash savings and growth pots"],
+    ["Debt and borrowing", "Apricot", "Credit cards, loans and overdrafts, never red"],
+    ["Pension", "Sky", "Workplace and personal retirement pots"],
+    ["Pay and Self Assessment", "Violet", "Tax and income records"],
+    ["Budget", "Rose", "Monthly income, bills and breathing room"],
+    ["Accounts", "Blue-teal (light) / soft pink (dark)", "Account lists and general highlights"],
   ];
 
   return `<section class="chapter" id="colour">
@@ -124,60 +20,60 @@ export function renderColourChapter(tokens: BrandTokens): string {
     </div>
 
     <p class="prose">
-      Three layers structure every colour: raw primitives, semantic tokens with a light and dark value, and component recipes. Components use only semantic tokens (Rule C1: no hex, rgb or primitive scale name in component or page code).
+      Colour in Flump separates surfaces cleanly and identifies each area of a household's money without judging good or bad outcomes. Light mode uses about 60% pale mint canvas, 30% off-white cards and 10% teal, charcoal and domain accents; dark mode steps cool charcoal surfaces lighter as they rise toward the viewer.
     </p>
 
     <div class="grid-2">
       <div class="theme-frame theme-light">
-        <h3 class="card-title">Light theme: Mint</h3>
-        <p class="prose">About 60% mint canvas, 30% off-white cards and bands, 10% accent: solid mint hero, teal links and outline buttons, apricot for debt.</p>
+        <h3 class="card-title">Mint (light theme)</h3>
+        <p class="prose">Pale mint canvas with off-white cards, a solid mint headline panel in deep-green ink, charcoal primary buttons and teal links.</p>
         <div class="hero-panel">
           <span class="swatch-note" style="color:var(--color-text-on-hero)">Cash and savings <span class="example-tag">Example</span></span>
           <p class="hero-figure">£21,000</p>
+        </div>
+        <div class="demo-actions">
+          <span class="demo-btn">Request an invite</span>
+          <span class="demo-btn-outline">Interactive preview</span>
+          <span style="color:var(--color-chart-debt);font-weight:600" class="num">£1,800 card balance</span>
         </div>
       </div>
 
       <div class="theme-frame theme-dark">
-        <h3 class="card-title">Dark theme: Midnight</h3>
-        <p class="prose">Cool charcoal surfaces step lighter as they rise (sunken, canvas, card, subtle, overlay). Mint is the headline figure and primary button fill; soft pink is the small accent.</p>
+        <h3 class="card-title">Midnight (dark theme)</h3>
+        <p class="prose">Cool charcoal surfaces with crisp warm-white text, mint headline figures and primary buttons, and soft apricot for debt.</p>
         <div class="hero-panel">
           <span class="swatch-note" style="color:var(--color-text-on-hero)">Cash and savings <span class="example-tag">Example</span></span>
           <p class="hero-figure">£21,000</p>
         </div>
+        <div class="demo-actions">
+          <span class="demo-btn">Request an invite</span>
+          <span class="demo-btn-outline">Interactive preview</span>
+          <span style="color:var(--color-chart-debt);font-weight:600" class="num">£1,800 card balance</span>
+        </div>
       </div>
     </div>
 
-    <blockquote class="quote-box">
-      <p class="prose"><strong>STYLE-GUIDE Rule C2:</strong> "Colour never judges a person's finances. Negative amounts are text.primary with a minus sign. Debt is apricot (chart.debt), never red. status.danger is for errors and destructive actions only; status.warning is not used on ordinary financial situations."</p>
-      <p class="prose"><strong>STYLE-GUIDE Rule C9:</strong> "Mint is a fill in light, never text."</p>
-      <p class="prose"><strong>STYLE-GUIDE Rule MC2:</strong> "Debt is never rose, and no orb colour is paired with a gain, a loss, a debt or a target."</p>
-    </blockquote>
-
     ${renderOrbTonesDiagram(tokens)}
 
-    ${renderSwatchSection(tokens, "Marketing orb colour sets (MC1: orb-like elements only)", orbEntries)}
-    ${renderSwatchSection(tokens, "Surfaces", surfaceEntries)}
-    ${renderSwatchSection(tokens, "Domain surface tints", tintEntries)}
-    ${renderSwatchSection(tokens, "Text", textEntries)}
-    ${renderSwatchSection(tokens, "Primary and accent", primaryAccentEntries)}
-    ${renderSwatchSection(tokens, "Borders", borderEntries)}
-    ${renderSwatchSection(tokens, "Status (never colour alone: Rule C3)", statusEntries)}
+    <article class="card-subtle">
+      <h3 class="card-title">Core colour rules</h3>
+      <ul class="plain-list">
+        <li><strong>Never judge finances with colour:</strong> negative balances use standard text ink with a minus sign, and debt is always warm apricot rather than red. Red and amber are reserved strictly for errors, destructive confirmations, deadlines and unverified estimates.</li>
+        <li><strong>Mint is a fill in light mode, never text:</strong> bright mint fails contrast on pale backgrounds, so links, focus rings and outline buttons use deep teal in light mode and mint in dark mode.</li>
+        <li><strong>Keep violet and rose contained:</strong> violet and rose stay on glass orbs, the three-bubble logo, small area markers and chart series, never as page backgrounds or card tints.</li>
+        <li><strong>Never rely on colour alone:</strong> every status badge, chart line and alert pairs colour with an icon, pattern or clear label.</li>
+      </ul>
+    </article>
 
-    <h3 class="sub-title">App area colour map and contrast</h3>
+    <h3 class="sub-title">Area colours and contrast minimums</h3>
     <div class="grid-2">
       <div class="table-wrap">
         <table>
           <thead>
-            <tr><th scope="col">Area</th><th scope="col">Colour</th><th scope="col">Tokens</th></tr>
+            <tr><th scope="col">Product area</th><th scope="col">Assigned colour</th><th scope="col">Scope</th></tr>
           </thead>
           <tbody>
-            <tr><td>Net worth, mortgage</td><td>Teal</td><td><code>chart.series1</code>, <code>surface.tint.teal</code></td></tr>
-            <tr><td>Savings</td><td>Sage</td><td><code>chart.series2</code>, <code>surface.tint.sage</code></td></tr>
-            <tr><td>Debt</td><td>Apricot</td><td><code>chart.series3</code>, <code>surface.tint.apricot</code></td></tr>
-            <tr><td>Pension</td><td>Sky</td><td><code>chart.series6</code>, <code>surface.tint.sky</code></td></tr>
-            <tr><td>Self Assessment, tax</td><td>Violet</td><td><code>chart.series4</code>, <code>surface.tint.violet</code></td></tr>
-            <tr><td>Budget and pay</td><td>Rose</td><td><code>chart.series5</code>, <code>surface.tint.rose</code></td></tr>
-            <tr><td>Accounts</td><td>Accent</td><td><code>accent</code>, <code>accent.subtle</code></td></tr>
+            ${areaRows.map(([area, col, scope]) => `<tr><td><strong>${area}</strong></td><td>${col}</td><td>${scope}</td></tr>`).join("")}
           </tbody>
         </table>
       </div>
@@ -185,18 +81,18 @@ export function renderColourChapter(tokens: BrandTokens): string {
       <div class="table-wrap">
         <table>
           <thead>
-            <tr><th scope="col">Pair</th><th scope="col">Minimum</th></tr>
+            <tr><th scope="col">Contrast pair</th><th scope="col">Minimum ratio</th></tr>
           </thead>
           <tbody>
-            <tr><td>Text on its surface</td><td class="num">4.5:1 (3:1 at 24px or larger, or 18.66px bold)</td></tr>
-            <tr><td>Control borders, focus ring, chart marks, icons</td><td class="num">3:1 against adjacent surface</td></tr>
-            <tr><td>Card edge against canvas</td><td class="num">1.3:1</td></tr>
-            <tr><td>Any two page surfaces</td><td class="num">2.0 deltaE</td></tr>
+            <tr><td>Body text on its surface</td><td class="num">4.5:1 (3:1 at 24px or 18.66px bold)</td></tr>
+            <tr><td>Input borders, focus rings, icons and chart marks</td><td class="num">3:1 against adjacent surface</td></tr>
+            <tr><td>Card hairline border against canvas</td><td class="num">1.3:1</td></tr>
+            <tr><td>Stepped surfaces (canvas to card)</td><td class="num">2.0 deltaE</td></tr>
           </tbody>
         </table>
       </div>
     </div>
 
-    ${renderSourceCite("STYLE-GUIDE 2.1 to 2.7, 14; UX-GUIDELINES 10, 11, 12.2; packages/tokens/src/index.ts")}
+    ${renderProvenanceComment("STYLE-GUIDE 2.1 to 2.7, 14; UX-GUIDELINES 10, 11, 12.2; packages/tokens/src/index.ts; PRs 901, 963, 981")}
   </section>`;
 }
