@@ -431,6 +431,36 @@ test.describe("marketing home: controls", () => {
     }
   });
 
+  // At rest each pinned stop's pair sits in the middle of the window, not under the header with
+  // the lower two thirds empty (owner, 28 Nov 2026), on an ordinary window and a tall one.
+  for (const height of [900, 1300]) {
+    test(`at rest each journey stop's pair is centred in a 1440 by ${height} window`, async ({
+      browser,
+    }) => {
+      test.setTimeout(SCENE_SCROLL_BUDGET);
+      const page = await openPage(browser, { viewport: { width: 1440, height } });
+      await liveBeforeScroll(page);
+      const stops = page.locator("#journey [data-journey-stop]");
+      const count = await stops.count();
+      expect(count).toBe(6);
+      for (let k = 0; k < count; k++) {
+        const stop = stops.nth(k);
+        // A stop's section top is where its pair has fully arrived and holds still.
+        await stop.evaluate((el) => {
+          window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY + 40 });
+        });
+        await expect(stop).toHaveAttribute("data-enhanced", "true", { timeout: 15_000 });
+        await untilStill(page, "#journey :is([data-stop-side], [data-stop-pair])");
+        const offset = await stop.locator("[data-stop-pair]").evaluate((el) => {
+          const r = el.getBoundingClientRect();
+          return (r.top + r.bottom) / 2 - window.innerHeight / 2;
+        });
+        expect(Math.abs(offset), `stop ${k + 1} off centre by ${offset}px`).toBeLessThan(4);
+      }
+      await page.context().close();
+    });
+  }
+
   test("journey changeovers are never left part-way, scrolling fast both ways (MK2)", async ({
     page,
   }) => {

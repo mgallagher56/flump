@@ -41,9 +41,18 @@ export const frame = css({
     top: "var(--journey-head)",
     height: "var(--journey-screen)",
     marginTop: "calc(-1 * var(--journey-beat))",
-    alignItems: "start",
-    paddingTop: { base: "12px", md: "clamp(16px, 4vh, 40px)" },
-    paddingBottom: "var(--journey-lane)",
+    // Centred in the window (owner, 28 Nov 2026), not top-aligned as the prototype's CSS has it,
+    // which left a tall window's lower two thirds empty. The frame starts under the header, so
+    // the inset above the pair (header plus top padding) is made equal to the one below it (the
+    // orb's lane, or more): the pair's centre is then the window's. `safe` puts a pair taller
+    // than the space back at the top rather than above the header.
+    "--frame-inset": {
+      base: "max(var(--journey-lane), calc(var(--journey-head) + 12px))",
+      md: "max(var(--journey-lane), calc(var(--journey-head) + clamp(16px, 4vh, 40px)))",
+    },
+    alignItems: "safe center",
+    paddingTop: "calc(var(--frame-inset) - var(--journey-head))",
+    paddingBottom: "var(--frame-inset)",
   },
   // The first frame starts at its section's top, after the journey's intro.
   "[data-live=on] section:first-of-type > &": { marginTop: "0" },
