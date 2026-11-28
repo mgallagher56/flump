@@ -180,12 +180,12 @@ describe("response shape check", () => {
     respond(profile, getProfile);
     expect(warn).not.toHaveBeenCalled();
 
-    const { wellbeingQuestions: _left, ...withoutField } = profile;
+    const { partnerMode: _left, ...withoutField } = profile;
     respond(withoutField, getProfile);
     expect(at(warnings(warn), 0)).toMatchObject({
       event: "contract_response_violation",
       routeId: "profile.get",
-      issues: [{ path: "wellbeingQuestions", code: "missing_field" }],
+      issues: [{ path: "partnerMode", code: "missing_field" }],
     });
   });
 

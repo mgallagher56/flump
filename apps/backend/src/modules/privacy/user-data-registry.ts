@@ -264,7 +264,7 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
     reset: {
       kind: "keep",
       reason:
-        "not financial data: how the person felt after a check-in; account deletion removes it, and switching the questions off deletes it",
+        "not financial data: how the person felt after a check-in; account deletion removes it (the questions were removed on 28 Nov 2026; nothing adds rows now)",
     },
     valueMap: {
       facts: {
@@ -993,7 +993,6 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
         "taxRegion",
         "birthYear",
         "checkInDay",
-        "wellbeingQuestions",
         "studentLoanPlans",
         "housingStatus",
         "monthlyHousingCost",
@@ -1005,7 +1004,11 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
         "createdAt",
         "updatedAt",
       ],
-      excluded: { userId: USER_ID_IN_ENVELOPE },
+      excluded: {
+        userId: USER_ID_IN_ENVELOPE,
+        wellbeingQuestions:
+          "the removed switch for the questions after a check-in; never selected, and dropped by DropWellbeingAnswers1795760000000",
+      },
       orderBy: ["id"],
       batchSize: 1,
     },
@@ -1052,7 +1055,6 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
         netWorthCountsProperty: "net-worth-choices",
         netWorthCountsStudentLoan: "net-worth-choices",
         partnerMode: "partner-mode",
-        wellbeingQuestions: "wellbeing-questions-switch",
       },
       notFacts: {
         id: ROW_ID,
@@ -1063,6 +1065,8 @@ export const USER_DATA_REGISTRY: readonly UserDataTable[] = [
         lastActiveAt: "when the person last used the app, for the inactive-account policy",
         createdAt: WRITTEN_AT,
         updatedAt: WRITTEN_AT,
+        wellbeingQuestions:
+          "the removed switch for the questions after a check-in (28 Nov 2026); never selected, dropped by DropWellbeingAnswers1795760000000",
       },
     },
   }),

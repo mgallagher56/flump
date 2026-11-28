@@ -5,7 +5,7 @@ import { Check, Column, Entity, PrimaryColumn } from "typeorm";
  * per calendar quarter (Europe/London). Both answers null records a skip. Kept as small as it can
  * be: no id and no timestamps. `worse_text` is free text that may be sensitive: it is never logged,
  * never sent to Sentry and never read by an MCP tool. Rows go 13 months after the quarter's first
- * day (jobs/retention.ts), and all of a person's rows go when they switch the questions off.
+ * day (jobs/retention.ts). The questions were removed on 28 Nov 2026: nothing adds rows now.
  */
 @Entity("wellbeing_answers")
 @Check(

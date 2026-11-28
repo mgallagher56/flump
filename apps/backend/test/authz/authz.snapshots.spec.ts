@@ -4,14 +4,9 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vites
 import { Account } from "../../src/entities/account.entity";
 import { AccountDetail } from "../../src/entities/account-detail.entity";
 import { SnapshotCheckin } from "../../src/entities/snapshot-checkin.entity";
-import { WellbeingAnswer } from "../../src/entities/wellbeing-answer.entity";
+import { AccountDeletionService } from "../../src/modules/privacy/account-deletion.service";
 import { writeConnectedSnapshot } from "../../src/modules/snapshots/connected-write";
-import {
-  londonDate,
-  londonQuarterStart,
-  londonYearMonth,
-  monthKey,
-} from "../../src/modules/snapshots/london-date";
+import { londonDate, londonYearMonth, monthKey } from "../../src/modules/snapshots/london-date";
 import { resolveDbTestMode } from "../../src/testing/dbTestMode";
 import { ROUTE_MATRIX } from "./matrix";
 import {
@@ -640,132 +635,69 @@ describe.skipIf(dbMode === "skip")("authz: snapshots controller (real Postgres)"
     expect(await rowsFor(accountB)).toHaveLength(0);
   });
 
-  describe("wellbeing questions (E35 W5)", () => {
-    const answers = () =>
-      h.dataSource.getRepository(WellbeingAnswer).find({ order: { userId: "ASC" } });
-    const status = (token: string | undefined) =>
-      h.call("get", "/snapshots/wellbeing-questions", token);
-    const answer = (token: string | undefined, body: object) =>
-      h.call("post", "/snapshots/wellbeing-questions", token, body);
-
-    it("GET and POST: no, expired and dev-bypass tokens get 401 and nothing is written", async () => {
-      exercised.add("GET /snapshots/wellbeing-questions");
-      exercised.add("POST /snapshots/wellbeing-questions");
-      for (const token of [undefined, h.tokens.expired, h.tokens.dev]) {
-        expect((await status(token)).status).toBe(401);
-        expect((await answer(token, { feeling: "about_the_same", worseText: null })).status).toBe(
-          401,
-        );
-      }
-      expect(await answers()).toEqual([]);
-    });
-
-    it("records the first answer of the quarter for the caller only; a repeat changes nothing", async () => {
-      expect((await status(h.tokens.a)).body).toEqual({ due: true });
-      const first = await answer(h.tokens.a, {
-        feeling: "more_worried",
-        worseText: "  The pension page.  ",
+  it("the removed wellbeing questions routes answer 404 (removed 28 Nov 2026)", async () => {
+    for (const method of ["get", "post"] as const) {
+      const res = await h.call(method, "/snapshots/wellbeing-questions", h.tokens.a, {
+        feeling: "about_the_same",
+        worseText: "x",
       });
-      expect(first.status).toBe(200);
-      expect(first.body).toEqual({ recorded: true });
-      const again = await answer(h.tokens.a, { feeling: "more_in_control", worseText: null });
-      expect(again.status).toBe(200);
-      expect(again.body).toEqual({ recorded: false });
-      expect(await answers()).toEqual([
-        {
-          userId: USER_A,
-          quarter: londonQuarterStart(),
-          feeling: "more_worried",
-          worseText: "The pension page.",
-        },
-      ]);
-      expect((await status(h.tokens.a)).body).toEqual({ due: false });
-      // B's quarter is untouched by A's answer.
-      expect((await status(h.tokens.b)).body).toEqual({ due: true });
-    });
+      expect(res.status).toBe(404);
+    }
+    // The profile no longer takes or returns the removed switch.
+    const patch = await h.call("patch", "/user-profile", h.tokens.a, { wellbeingQuestions: false });
+    expect(patch.status).toBe(400);
+    const profile = await h.call("get", "/user-profile", h.tokens.a);
+    expect(profile.status).toBe(200);
+    expect("wellbeingQuestions" in profile.body).toBe(false);
+  });
 
-    it("a skip records both answers as null, and an all-space answer is stored as null", async () => {
-      expect((await answer(h.tokens.a, { feeling: null, worseText: null })).body).toEqual({
-        recorded: true,
-      });
-      expect(
-        (await answer(h.tokens.b, { feeling: "about_the_same", worseText: "   " })).body,
-      ).toEqual({ recorded: true });
-      expect((await answers()).map((r) => [r.userId, r.feeling, r.worseText])).toEqual([
-        [USER_A, null, null],
-        [USER_B, "about_the_same", null],
-      ]);
-      expect((await status(h.tokens.a)).body).toEqual({ due: false });
-    });
-
-    it("rejects an unknown feeling, text over 1000 characters and smuggled keys with 400", async () => {
-      for (const body of [
-        { feeling: "fine", worseText: null },
-        { feeling: null, worseText: "x".repeat(1001) },
-        { feeling: null, worseText: null, userId: USER_B },
-        { feeling: null, worseText: null, quarter: "2001-01-01" },
-        {},
-      ]) {
-        expect((await answer(h.tokens.a, body)).status, JSON.stringify(body).slice(0, 80)).toBe(
-          400,
-        );
-      }
-      expect(await answers()).toEqual([]);
-      // 1000 characters exactly is accepted.
-      expect(
-        (await answer(h.tokens.a, { feeling: null, worseText: "y".repeat(1000) })).body,
-      ).toEqual({ recorded: true });
-    });
-
-    it("switching off deletes the caller's answers in the same save and stops asking", async () => {
-      await answer(h.tokens.a, { feeling: "more_worried", worseText: "Too many numbers." });
-      await answer(h.tokens.b, { feeling: "about_the_same", worseText: null });
-      const off = await h.call("patch", "/user-profile", h.tokens.a, { wellbeingQuestions: false });
-      expect(off.status).toBe(200);
-      expect(off.body.wellbeingQuestions).toBe(false);
-      expect((await answers()).map((r) => r.userId)).toEqual([USER_B]);
-      expect((await status(h.tokens.a)).body).toEqual({ due: false });
-      expect((await answer(h.tokens.a, { feeling: null, worseText: null })).body).toEqual({
-        recorded: false,
-      });
-      expect((await answers()).map((r) => r.userId)).toEqual([USER_B]);
-
-      // Switching back on asks again this quarter, since the earlier answer is gone.
-      const on = await h.call("patch", "/user-profile", h.tokens.a, { wellbeingQuestions: true });
-      expect(on.body.wellbeingQuestions).toBe(true);
-      expect((await status(h.tokens.a)).body).toEqual({ due: true });
-    });
-
-    it("paused for everyone: not due and nothing recorded, then back when unpaused", async () => {
-      process.env.WELLBEING_QUESTIONS_PAUSED = "true";
-      try {
-        expect((await status(h.tokens.a)).body).toEqual({ due: false });
-        expect((await answer(h.tokens.a, { feeling: null, worseText: null })).body).toEqual({
-          recorded: false,
-        });
-        expect(await answers()).toEqual([]);
-      } finally {
-        delete process.env.WELLBEING_QUESTIONS_PAUSED;
-      }
-      expect((await status(h.tokens.a)).body).toEqual({ due: true });
-    });
-
-    it("reset-financial-data leaves the answers and the switch alone", async () => {
-      await answer(h.tokens.a, { feeling: "more_in_control", worseText: null });
-      await h.call("patch", "/user-profile", h.tokens.b, { wellbeingQuestions: false });
-      for (const token of [h.tokens.a, h.tokens.b]) {
-        const res = await h.call("post", "/user-profile/reset-financial-data", token, {
-          confirmation: "RESET",
-        });
-        expect(res.status).toBeLessThan(300);
-      }
-      expect((await answers()).map((r) => [r.userId, r.feeling])).toEqual([
-        [USER_A, "more_in_control"],
-      ]);
-      expect((await h.call("get", "/user-profile", h.tokens.b)).body.wellbeingQuestions).toBe(
-        false,
+  it("never selects, inserts or updates the removed switch column, which the next release drops (expand and contract)", async () => {
+    // This release removes the code; the next drops user_profiles.wellbeing_questions (and the
+    // answers table, which erasure, export and retention still cover until then). An instance of
+    // this release must not read or write the column, so the drop cannot break its profile reads
+    // and updates while it is still serving. The one mention allowed is TypeORM's RETURNING list on
+    // a new profile's INSERT (user-profile.entity.ts says why).
+    const logQuery = vi.spyOn(h.dataSource.logger, "logQuery");
+    const deletion = h.app.get(AccountDeletionService);
+    try {
+      // Creates A's profile (an INSERT), then reads it back.
+      expect((await h.call("get", "/user-profile", h.tokens.a)).status).toBe(200);
+      const setupFrom = logQuery.mock.calls.length;
+      await h.dataSource.query(
+        "UPDATE user_profiles SET wellbeing_questions = false WHERE user_id = $1",
+        [USER_A],
       );
-    });
+      const setupTo = logQuery.mock.calls.length;
+      expect((await h.call("patch", "/user-profile", h.tokens.a, { checkInDay: 5 })).status).toBe(
+        200,
+      );
+      expect((await h.call("get", "/user-profile/export", h.tokens.a).buffer(true)).status).toBe(
+        200,
+      );
+      const reset = await h.call("post", "/user-profile/reset-financial-data", h.tokens.a, {
+        confirmation: "RESET",
+      });
+      expect(reset.status).toBeLessThan(300);
+      await deletion.deleteAccount(USER_A);
+      const sql = logQuery.mock.calls
+        .filter((_, i) => i < setupFrom || i >= setupTo)
+        .map(([query]) => String(query));
+      expect(sql.some((q) => q.startsWith('INSERT INTO "user_profiles"'))).toBe(true);
+      expect(sql.some((q) => q.includes('FROM "user_profiles"'))).toBe(true);
+      const naming = sql.filter((q) => /wellbeing_questions/i.test(q));
+      // Only a profile INSERT, and only after RETURNING: never in its column list or values.
+      for (const q of naming) {
+        expect(q.startsWith('INSERT INTO "user_profiles"')).toBe(true);
+        expect(q.split("RETURNING")[0]).not.toContain("wellbeing_questions");
+      }
+      expect(sql.filter((q) => !q.startsWith("INSERT") && /wellbeing_questions/i.test(q))).toEqual(
+        [],
+      );
+    } finally {
+      logQuery.mockRestore();
+      // Later tests sign in as A again: forget the erasure this test made.
+      deletion.clearErasedCache();
+    }
   });
 
   it("reset-financial-data erases the user's history and check-ins, and only theirs", async () => {

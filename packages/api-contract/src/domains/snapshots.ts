@@ -78,37 +78,3 @@ export type SnapshotCheckInsResponse = z.infer<typeof SnapshotCheckInsResponse>;
 // Parsed request types (z.output: what a handler receives in enforce mode).
 export type UpsertSnapshotRequest = z.infer<typeof UpsertSnapshotRequest>;
 export type SnapshotMonthParams = z.infer<typeof SnapshotMonthParams>;
-
-// --- E35 W5: the two optional questions after a check-in (plan section 7) ---
-
-/** The three answers to "After this check-in, how do you feel about your money?". */
-export const WELLBEING_FEELINGS = ["more_in_control", "about_the_same", "more_worried"] as const;
-export const WellbeingFeeling = z.enum(WELLBEING_FEELINGS);
-export type WellbeingFeeling = z.infer<typeof WellbeingFeeling>;
-
-/** Longest answer to "Did anything here make you feel worse? Tell us what." */
-export const WELLBEING_TEXT_MAX_LENGTH = 1000;
-
-/**
- * GET /snapshots/wellbeing-questions: whether to offer the two questions after this check-in.
- * True only when they are not paused for everyone, the person has them switched on, and nothing
- * (an answer or a skip) is recorded for the current quarter (Europe/London).
- */
-export const WellbeingQuestionsStatusResponse = z.strictObject({ due: z.boolean() });
-export type WellbeingQuestionsStatusResponse = z.infer<typeof WellbeingQuestionsStatusResponse>;
-
-/**
- * POST /snapshots/wellbeing-questions: the answer for the current quarter, which the server
- * works out. Both null records a skip. The first record of a quarter stands; a repeat changes
- * nothing. The text is personal data that may be sensitive: never logged or sent anywhere else.
- */
-export const AnswerWellbeingQuestionsRequest = z.strictObject({
-  feeling: WellbeingFeeling.nullable(),
-  /** Trimmed; an empty answer is stored as null. */
-  worseText: z.string().trim().max(WELLBEING_TEXT_MAX_LENGTH).nullable(),
-});
-export type AnswerWellbeingQuestionsRequest = z.infer<typeof AnswerWellbeingQuestionsRequest>;
-
-/** `recorded`: false when the quarter already had a record, or the questions are off or paused. */
-export const AnswerWellbeingQuestionsResponse = z.strictObject({ recorded: z.boolean() });
-export type AnswerWellbeingQuestionsResponse = z.infer<typeof AnswerWellbeingQuestionsResponse>;

@@ -9,8 +9,8 @@ import {
 import { checkAgainst } from "./validate.js";
 
 describe("route manifest", () => {
-  it("has 96 routes (64 before the 15 invoicing, 3 account-goal routes, the terms status route, 8 household routes, 2 wellbeing-question routes, the session sign-out, the profile email route and the export summary) with unique ids and unique method+path pairs", () => {
-    expect(allRoutes).toHaveLength(96);
+  it("has 94 routes (64 before the 15 invoicing, 3 account-goal routes, the terms status route, 8 household routes, the session sign-out, the profile email route and the export summary; the 2 wellbeing-question routes were removed on 28 Nov 2026) with unique ids and unique method+path pairs", () => {
+    expect(allRoutes).toHaveLength(94);
     expect(new Set(allRoutes.map((r) => r.id)).size).toBe(allRoutes.length);
     expect(new Set(allRoutes.map((r) => `${r.method} ${r.path}`)).size).toBe(allRoutes.length);
   });

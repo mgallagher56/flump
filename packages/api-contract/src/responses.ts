@@ -64,10 +64,8 @@ export {
 } from "./domains/profile.js";
 export { RetirementPlanResponse } from "./domains/retirement.js";
 export {
-  AnswerWellbeingQuestionsResponse,
   SnapshotCheckInsResponse,
   UpsertSnapshotResponse,
-  WellbeingQuestionsStatusResponse,
 } from "./domains/snapshots.js";
 export {
   DeleteTaxRecordResponse,

@@ -1,7 +1,6 @@
 import "reflect-metadata";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { BudgetEntry } from "../../src/entities/budget-entry.entity";
-import { WellbeingAnswer } from "../../src/entities/wellbeing-answer.entity";
 import { AccountDeletionService } from "../../src/modules/privacy/account-deletion.service";
 import { resolveDbTestMode } from "../../src/testing/dbTestMode";
 import { type AuthzHarness, bootAuthzHarness, truncateAll, USER_A } from "./support";
@@ -39,29 +38,6 @@ describe.skipIf(dbMode === "skip")("erasure write fence end to end (real Postgre
 
   const deletion = () => h.app.get(AccountDeletionService);
   const budgetRows = () => h.dataSource.getRepository(BudgetEntry).countBy({ userId: USER_A });
-  const wellbeingRows = () =>
-    h.dataSource.getRepository(WellbeingAnswer).countBy({ userId: USER_A });
-
-  /** Holds A's shared user-data lock in a transaction, as a fenced write in flight does. */
-  const holdUserDataLock = async () => {
-    let release!: () => void;
-    const released = new Promise<void>((r) => {
-      release = r;
-    });
-    let holding!: () => void;
-    const held = new Promise<void>((r) => {
-      holding = r;
-    });
-    const done = h.dataSource.transaction(async (m) => {
-      await m.query("SELECT pg_advisory_xact_lock_shared(hashtextextended($1, 0))", [
-        `user-data:${USER_A}`,
-      ]);
-      holding();
-      await released;
-    });
-    await held;
-    return { release, done };
-  };
 
   /** Resolves once `n` backends of this database wait for an advisory lock. */
   const lockWaiters = async (n: number) => {
@@ -131,25 +107,5 @@ describe.skipIf(dbMode === "skip")("erasure write fence end to end (real Postgre
     });
     expect(retry.status).toBe(410);
     expect(await budgetRows()).toBe(0);
-  });
-
-  it("refuses a wellbeing answer racing an erasure, then its retry, and leaves no row (E35 W5)", async () => {
-    // The route's insert runs in dataSource.transaction inside a signed-in request, so the
-    // global fence (UserDataWriteFenceInterceptor and its subscriber) applies with no call of its own.
-    const answer = { feeling: "more_worried", worseText: "Sample text for the race test." };
-    const inFlight = await holdUserDataLock();
-    const erasure = deletion().deleteAccount(USER_A);
-    await lockWaiters(1);
-
-    const racing = await h.call("post", "/snapshots/wellbeing-questions", h.tokens.a, answer);
-    expect(racing.status).toBe(503);
-    expect(racing.body).toMatchObject({ code: "service_unavailable" });
-
-    inFlight.release();
-    await inFlight.done;
-    await expect(erasure).resolves.toEqual({ status: "identity_pending" });
-    const retry = await h.call("post", "/snapshots/wellbeing-questions", h.tokens.a, answer);
-    expect(retry.status).toBe(410);
-    expect(await wellbeingRows()).toBe(0);
   });
 });

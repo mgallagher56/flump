@@ -1,5 +1,5 @@
 # PR #951: an installed app meets backends older than itself (staging before a release). A profile
-# without a field added since (E35's `wellbeingQuestions`) must still sign in, and never show the
+# without a field added since (`partnerMode`) must still sign in, and never show the
 # offline screen.
 appId: app.flump.mobile
 ---

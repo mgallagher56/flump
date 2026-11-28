@@ -65,7 +65,6 @@ describe("allow-list", () => {
         "GET,POST /accounts",
         "PATCH /accounts/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}",
         "PUT /snapshots/\\d{4}-(0[1-9]|1[0-2])",
-        "GET,POST /snapshots/wellbeing-questions",
         "GET,POST /mcp-tokens",
         "DELETE /mcp-tokens/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}",
         "GET /mcp-tokens/context-pack",

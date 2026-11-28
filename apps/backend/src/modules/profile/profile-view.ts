@@ -82,11 +82,13 @@ export function formatProfileRow(profile: UserProfile) {
   // last_active_at is retention bookkeeping (BE-06), not part of the profile contract.
   // displayName and hasSecondIncome (system audit slice 9 part three): their only reader was the
   // deleted mobile app. The columns stay (and stay in the export) until the column-drop PR; the
-  // API no longer returns them.
+  // API no longer returns them. wellbeingQuestions: the switch for the questions after a check-in,
+  // removed on 28 Nov 2026; its column stays only until the drop migration.
   const {
     lastActiveAt: _lastActiveAt,
     displayName: _displayName,
     hasSecondIncome: _hasSecondIncome,
+    wellbeingQuestions: _wellbeingQuestions,
     ...rest
   } = profile;
   return {
@@ -108,7 +110,6 @@ export function formatProfileRow(profile: UserProfile) {
     netWorthCountsProperty: profile.netWorthCountsProperty ?? true,
     netWorthCountsStudentLoan: profile.netWorthCountsStudentLoan ?? false,
     partnerMode: profile.partnerMode ?? false,
-    wellbeingQuestions: profile.wellbeingQuestions ?? true,
     annualSalary:
       profile.annualSalary !== null && profile.annualSalary !== undefined
         ? Number(profile.annualSalary)
@@ -260,5 +261,4 @@ export const PROFILE_UPDATE_DEFAULTS = (userId: string): Partial<UserProfile> =>
   netWorthCountsProperty: true,
   netWorthCountsStudentLoan: false,
   partnerMode: false,
-  wellbeingQuestions: true,
 });

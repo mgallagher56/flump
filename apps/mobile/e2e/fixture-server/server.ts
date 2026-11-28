@@ -59,8 +59,8 @@
  *                                           Scotland (refused once the device's date is in
  *                                           2027/28, which has no Scottish rates); no budget; and
  *                                           no debts (the credit card and student loan left out)
- *   backend  current | older | newer        the profile as a backend from before E35 sends it (no
- *                                           `wellbeingQuestions`), or with a field from a later one
+ *   backend  current | older | newer        the profile as an older backend sends it (no
+ *                                           `partnerMode`), or with a field from a later one
  *   terms    agreed | required              required: authenticated /v1 answers 403
  *                                           terms_not_accepted (PR #939), after not_invited
  *   profile  set-up | not-set-up | none     not-set-up: onboardingCompleted false; none: the
@@ -214,8 +214,8 @@ interface Scenario {
   /** `required`: authenticated `/v1` answers 403 terms_not_accepted until the terms are agreed. */
   terms: "agreed" | "required";
   /**
-   * Version skew (PR #951): `older` leaves out `wellbeingQuestions`, which a backend from before
-   * E35 W5 does not send; `newer` adds a field the app has never heard of.
+   * Version skew (PR #951): `older` leaves out `partnerMode`, which a backend from before it was
+   * added does not send; `newer` adds a field the app has never heard of.
    */
   backend: "current" | "older" | "newer";
   /** A person who has not finished setup on the website, or has no profile at all yet. */
@@ -633,7 +633,7 @@ export async function startFixtureServer(options: FixtureServerOptions): Promise
         ...profileEdits,
         updatedAt: profileUpdatedAt,
       };
-      if (scenario.backend === "older") delete profile.wellbeingQuestions;
+      if (scenario.backend === "older") delete profile.partnerMode;
       if (scenario.backend === "newer") profile.fieldFromALaterBackend = "something new";
       if (scenario.profile === "none") return void res.writeHead(200).end();
       if (scenario.profile === "not-set-up") profile.onboardingCompleted = false;
