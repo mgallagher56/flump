@@ -428,8 +428,10 @@ test.describe("marketing home: the hero's start state (owner, 28 Nov 2026)", () 
         // Shifts of what the script takes over: the hero, its column, the dashboard, the pieces
         // and the bubbles, each moved by a pixel or more. The copy's text settles by a pixel as
         // the web font arrives, and the caption's text reflows in place, script or none, so
-        // neither counts.
+        // neither counts. Nor does any shift while the web font is still loading: on a cold load
+        // (CI) its arrival reflows the copy and moves the stage beside or below it, script or none.
         w.__shift = 0;
+        w.__shiftSources = [] as string[];
         type Source = {
           node: Node | null;
           previousRect: DOMRectReadOnly;
@@ -452,8 +454,16 @@ test.describe("marketing home: the hero's start state (owner, 28 Nov 2026)", () 
             hadRecentInput: boolean;
             sources: Source[];
           }[]) {
+            if (document.fonts.status !== "loaded") continue;
             if (!entry.hadRecentInput && entry.sources.some(taken)) {
               w.__shift = (w.__shift as number) + entry.value;
+              for (const source of entry.sources.filter(taken)) {
+                const el =
+                  source.node instanceof Element ? source.node : source.node?.parentElement;
+                (w.__shiftSources as string[]).push(
+                  `${el?.tagName ?? "?"}${el?.id ? `#${el.id}` : ""} ${el?.getAttribute("data-hero-piece") ?? ""}`,
+                );
+              }
             }
           }
         }).observe({ type: "layout-shift", buffered: true });
@@ -477,9 +487,14 @@ test.describe("marketing home: the hero's start state (owner, 28 Nov 2026)", () 
       await expect(page.getByTestId("home-hero")).toHaveAttribute("data-hero-live", "true", {
         timeout: 15_000,
       });
-      const { painted, taken, shift } = await page.evaluate(() => {
+      const { painted, taken, shift, sources } = await page.evaluate(() => {
         const w = window as unknown as Record<string, unknown>;
-        return { painted: w.__painted, taken: w.__taken, shift: w.__shift };
+        return {
+          painted: w.__painted,
+          taken: w.__taken,
+          shift: w.__shift,
+          sources: w.__shiftSources,
+        };
       });
       expect(painted).toBeTruthy();
       // Within a pixel of where the CSS drew each piece.
@@ -489,7 +504,7 @@ test.describe("marketing home: the hero's start state (owner, 28 Nov 2026)", () 
         near(painted as number[][], taken as number[][]),
         JSON.stringify({ painted, taken }),
       ).toBe(true);
-      expect(shift).toBe(0);
+      expect(shift, JSON.stringify(sources)).toBe(0);
       await context.close();
     });
   }
