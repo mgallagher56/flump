@@ -4,6 +4,7 @@ import {
   ExampleTag,
   HeroFigure,
   KpiCard,
+  usePrefersReducedMotion,
 } from "@repo/ui";
 import { cx } from "@repo/ui/styled-system/css";
 import { ChevronDown } from "lucide-react";
@@ -196,6 +197,11 @@ export function heroModeFrom(search: string): HeroMode {
 export const HomeHero: FC = () => {
   const ref = useRef<HTMLElement>(null);
   const still = useStillMotion();
+  // Once reduced motion has applied on this page (the header's Reduce motion, or the system), the
+  // hero stays finished even if it goes off again: its moment never replays (useGsapMoment), so
+  // without the done flag the CSS start state would hide the figures again.
+  const stopped = useRef(false);
+  if (usePrefersReducedMotion()) stopped.current = true;
 
   useGsapMoment(ref, (kit, root) => {
     let finish: (() => void) | undefined;
@@ -204,9 +210,15 @@ export const HomeHero: FC = () => {
       heroModeFrom(window.location.search) === "timed"
         ? import("./heroAssembly").then((m) => m.armHeroAssembly)
         : import("./heroScroll").then((m) => m.armHeroScroll);
-    arm.then((start) => {
-      if (!cancelled) finish = start(kit, root);
-    });
+    arm.then(
+      (start) => {
+        if (!cancelled) finish = start(kit, root);
+      },
+      // The assembly failed to load: show the finished picture rather than the hidden start state.
+      () => {
+        root.dataset.heroDone = "true";
+      },
+    );
     return () => {
       cancelled = true;
       finish?.();
@@ -217,7 +229,7 @@ export const HomeHero: FC = () => {
     <section
       aria-labelledby="home-title"
       className={hero}
-      data-hero-done={still ? "true" : undefined}
+      data-hero-done={still || stopped.current ? "true" : undefined}
       data-home-section=""
       data-home-section-name="One picture"
       data-testid="home-hero"

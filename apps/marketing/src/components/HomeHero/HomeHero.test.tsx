@@ -143,6 +143,27 @@ describe("HomeHero", () => {
   });
 });
 
+describe("HomeHero after Reduce motion", () => {
+  afterEach(() => {
+    delete document.documentElement.dataset.motion;
+  });
+
+  it("stays finished when Reduce motion is turned on and then off again", async () => {
+    render(<Hero />);
+    const hero = screen.getByTestId("home-hero");
+    expect(hero.dataset.heroDone).toBeUndefined();
+    await act(async () => {
+      document.documentElement.dataset.motion = "reduce";
+    });
+    expect(hero.dataset.heroDone).toBe("true");
+    await act(async () => {
+      delete document.documentElement.dataset.motion;
+    });
+    // Its moment never replays, so the start state must not come back over the figures.
+    expect(hero.dataset.heroDone).toBe("true");
+  });
+});
+
 describe("heroStart", () => {
   it("places a piece in depth from 1024px, by shares of the stage, as the CSS does", () => {
     expect(startPlace("card", { width: 640, height: 700 }, true, 16)).toEqual({

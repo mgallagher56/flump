@@ -22,6 +22,9 @@ export const motionToggleButton = cva({
     backgroundColor: "transparent",
     color: "text.secondary",
     cursor: "pointer",
+    // Without JavaScript the button could do nothing, so it shows only where the head script has
+    // run (it marks <html data-theme> before first paint, so script users see no shift).
+    "html:not([data-theme]) &": { display: "none" },
     _motionSafe: {
       transitionProperty: "background-color, border-color, color",
       transitionDuration: "fast",

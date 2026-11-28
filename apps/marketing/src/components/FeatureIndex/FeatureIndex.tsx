@@ -1,4 +1,4 @@
-import { Icon, marketingMs, StatusBadge, usePrefersReducedMotion } from "@repo/ui";
+import { Icon, isReducedMotion, marketingMs, StatusBadge, usePrefersReducedMotion } from "@repo/ui";
 import { ArrowRight, ChevronDown } from "lucide-react";
 import { type FC, useEffect, useRef } from "react";
 import { useStillMotion } from "../../context/StillMotionContext";
@@ -44,7 +44,7 @@ export const openFeatureLine = (id: string) => {
   const target = document.getElementById(id);
   if (!(target instanceof HTMLDetailsElement)) return;
   target.open = true;
-  const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+  const reduceMotion = isReducedMotion();
   target.scrollIntoView?.({ block: "start", behavior: reduceMotion ? "auto" : "smooth" });
   target.querySelector("summary")?.focus({ preventScroll: true });
 };
