@@ -5,7 +5,8 @@ import { cva } from "@repo/ui/styled-system/css";
  * (`content-visibility: auto`), so the first paint lays out the hero alone: the whole page's first
  * layout was the longest main-thread task on a throttled phone (ROLLOUT-PLAN M1 notes). Each band
  * reserves its own height at each width, measured on the production build with reduced motion at
- * 390, 768, 1000, 1100, 1280 and 1440px (27 Nov 2026, prototype 11 rebuild), in non-overlapping
+ * 390, 768, 1000, 1100, 1280 and 1440px (27 Nov 2026, prototype 11 rebuild; the close re-measured
+ * on 28 Nov 2026 for its card stack, 64 to 90rem taking the middle of 1100 and 1280), in non-overlapping
  * ranges cut at the bands' own layout changes (48, 60, 64, 75 and 90rem), and `auto` keeps the real
  * size once seen, so nothing shifts. The reserve is the band's content box: its padding adds to it,
  * so each value is the band's height less its own vertical padding (a border-box value made every
@@ -68,11 +69,11 @@ export const mainContent = cva({
       "@media (min-width: 90rem)": { containIntrinsicSize: "auto 821px" },
     },
     "& > :nth-child(8)": {
-      "@media (max-width: 47.99rem)": { containIntrinsicSize: "auto 474px" },
-      "@media (min-width: 48rem) and (max-width: 59.99rem)": { containIntrinsicSize: "auto 527px" },
-      "@media (min-width: 60rem) and (max-width: 63.99rem)": { containIntrinsicSize: "auto 539px" },
-      "@media (min-width: 64rem) and (max-width: 89.99rem)": { containIntrinsicSize: "auto 559px" },
-      "@media (min-width: 90rem)": { containIntrinsicSize: "auto 576px" },
+      "@media (max-width: 47.99rem)": { containIntrinsicSize: "auto 412px" },
+      "@media (min-width: 48rem) and (max-width: 59.99rem)": { containIntrinsicSize: "auto 425px" },
+      "@media (min-width: 60rem) and (max-width: 63.99rem)": { containIntrinsicSize: "auto 437px" },
+      "@media (min-width: 64rem) and (max-width: 89.99rem)": { containIntrinsicSize: "auto 457px" },
+      "@media (min-width: 90rem)": { containIntrinsicSize: "auto 474px" },
     },
   },
 });
