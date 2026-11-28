@@ -70,6 +70,50 @@ describe("inviteGateMiddleware", () => {
     }
   });
 
+  describe("whether the not-invited page offers Download your data", () => {
+    /** The profile read answers not invited; the summary read answers as given. */
+    const notInvitedThen = (summary: Response | Error) => {
+      globalThis.fetch = vi
+        .fn()
+        .mockResolvedValueOnce(
+          new Response(JSON.stringify({ error: "not_invited" }), {
+            status: 403,
+            headers: { "Content-Type": "application/json" },
+          }),
+        )
+        .mockImplementationOnce(async () => {
+          if (summary instanceof Error) throw summary;
+          return summary;
+        }) as unknown as typeof fetch;
+    };
+    const json = (body: unknown) =>
+      new Response(JSON.stringify(body), { headers: { "Content-Type": "application/json" } });
+    const offered = async () => {
+      const thrown = (await runGate("/app").result.catch((e: unknown) => e)) as {
+        data: { kind: string; offerDataDownload?: boolean };
+      };
+      expect(thrown.data.kind).toBe("not-invited");
+      return thrown.data.offerDataDownload;
+    };
+
+    it("not when the account has nothing to export (never invited)", async () => {
+      notInvitedThen(json({ hasData: false }));
+      expect(await offered()).toBe(false);
+      const [url] = vi.mocked(globalThis.fetch).mock.calls[1] as [string];
+      expect(String(url)).toMatch(/\/v1\/user-profile\/export\/summary$/);
+    });
+
+    it("yes when the account holds data (a removed member)", async () => {
+      notInvitedThen(json({ hasData: true }));
+      expect(await offered()).toBe(true);
+    });
+
+    it("yes when the answer cannot be had, so a data right is never hidden by a fault", async () => {
+      notInvitedThen(new TypeError("fetch failed"));
+      expect(await offered()).toBe(true);
+    });
+  });
+
   it("lets an invited page load through and shares the profile read with the root loader", async () => {
     backendAnswers(200, { id: "p" });
     const { result, loaderRan, context } = runGate("/app");

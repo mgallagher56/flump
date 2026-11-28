@@ -167,23 +167,19 @@ export class AccountExportService {
   /**
    * Whether the caller has any row in a "data" section (EXPORT_SECTION_KIND), read from the same
    * registry tables the export walks. Every data section is checked, without stopping at the first
-   * hit, so the time taken says nothing about which section holds data. Read only, no audit row
-   * (nothing is exported), and only the caller's own rows.
+   * hit, so the time taken says nothing about which section holds data. No audit row (nothing is
+   * exported), and only the caller's own rows.
    */
   async hasExportableData(userId: string): Promise<boolean> {
     const tables = USER_DATA_REGISTRY.filter((t) => EXPORT_SECTION_KIND[t.key] === "data");
-    return withoutWriteFence(() =>
-      this.dataSource.transaction("REPEATABLE READ", async (manager) => {
-        await manager.query("SET TRANSACTION READ ONLY");
-        await manager.query(`SET LOCAL statement_timeout = ${EXPORT_STATEMENT_TIMEOUT_MS}`);
-        let found = false;
-        for (const table of tables) {
-          const repo = manager.getRepository(table.entity);
-          if (await repo.exists({ where: { userId } as never })) found = true;
-        }
-        return found;
-      }),
-    );
+    // Plain reads by user id, one at a time so a page load holds one pool connection, and no
+    // transaction: a yes or no needs no consistent snapshot, and nothing here can write.
+    let found = false;
+    for (const table of tables) {
+      const repo = this.dataSource.getRepository(table.entity);
+      if (await repo.exists({ where: { userId } as never })) found = true;
+    }
+    return found;
   }
 
   private registryByKey(): Map<AccountExportKey, UserDataTable> {

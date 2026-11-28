@@ -27,6 +27,8 @@ export interface DeleteAccountSectionProps {
   onConfirm: () => void;
   /** Where "Sign in again" comes back to. Defaults to the settings Data tab. */
   reauthReturnPath?: AllowedReturnPath;
+  /** False where "Download your data" is not offered, so the description does not mention it. */
+  offerDownload?: boolean;
 }
 
 /**
@@ -37,6 +39,7 @@ export const DeleteAccountSection: FC<DeleteAccountSectionProps> = ({
   status,
   onConfirm,
   reauthReturnPath,
+  offerDownload = true,
 }) => {
   const [open, setOpen] = useState(false);
   // Failures from an earlier attempt are not shown again when the dialog is reopened.
@@ -65,7 +68,11 @@ export const DeleteAccountSection: FC<DeleteAccountSectionProps> = ({
 
   return (
     <PageSection
-      description="This deletes your Flump account and all your data. To keep a copy, download your data first."
+      description={
+        offerDownload
+          ? "This deletes your Flump account and all your data. To keep a copy, download your data first."
+          : "This deletes your Flump account."
+      }
       headingId="delete-account-heading"
       icon={UserX}
       id="delete-account-section"

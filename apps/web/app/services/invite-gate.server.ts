@@ -2,6 +2,7 @@ import type { LoaderFunctionArgs, MiddlewareFunction } from "react-router";
 import { redirect } from "react-router";
 import { clearInviteCookie, readInviteCookie } from "~/features/invites/invite-cookie.server";
 import { redeemInvite } from "~/features/invites/redeem-invite.server";
+import { offerDataDownload } from "~/features/settings/exportSummary.server";
 import { getAuthSession } from "~/utils/auth.server";
 import { BackendError } from "./backend-error";
 import { isInviteOnly } from "./beta-mode.server";
@@ -83,7 +84,10 @@ export const inviteGateMiddleware: MiddlewareFunction<Response> = async (args, n
         headers: { "Set-Cookie": clearInviteCookie(request), "Cache-Control": "no-store" },
       });
     }
-    throwRouteError(error);
+    // The not-invited page offers "Download your data" only when there is something to download.
+    throwRouteError(error, {
+      offerDataDownload: await offerDataDownload(session.accessToken, request.signal),
+    });
   }
   return next();
 };

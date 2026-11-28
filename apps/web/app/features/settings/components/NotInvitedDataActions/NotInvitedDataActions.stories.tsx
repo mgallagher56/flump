@@ -6,12 +6,11 @@ import { NotInvitedDataActions } from "./NotInvitedDataActions";
 const download = fn(async () => undefined);
 const deleteAction = fn(async () => ({ outcome: "recent_login_required" }));
 
-function Sections() {
-  return <NotInvitedDataActions download={download} />;
-}
-
 /** A router around the sections, so the delete request has the settings action to post to. */
-const withRouter = (): React.ReactElement => {
+const withRouter = (args: { offerDownload?: boolean }): React.ReactElement => {
+  const Sections = () => (
+    <NotInvitedDataActions download={download} offerDownload={args.offerDownload} />
+  );
   const Stub = createRoutesStub([
     { path: "/", Component: Sections },
     { path: "/app/profile", action: deleteAction },
@@ -49,5 +48,16 @@ export const DownloadStarted: Story = {
     await expect(download).toHaveBeenCalledTimes(1);
     const [status] = await canvas.findAllByText("Your download has started.");
     await expect(status).toBeDefined();
+  },
+};
+
+/** Never invited, nothing stored: only "Delete your account", with no mention of a download. */
+export const NothingToDownload: Story = {
+  args: { offerDownload: false },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.queryByRole("button", { name: "Download your data" })).toBeNull();
+    const [line] = await canvas.findAllByText("This deletes your Flump account.");
+    await expect(line).toBeDefined();
   },
 };

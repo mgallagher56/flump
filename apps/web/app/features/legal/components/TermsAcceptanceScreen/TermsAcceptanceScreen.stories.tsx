@@ -83,3 +83,8 @@ export const ChangeComingUp: Story = {
 export const ChangedWhileReading: Story = {
   args: { error: "changed" },
 };
+
+/** A brand-new account has nothing to download: the line and the sections offer deletion only. */
+export const NothingToDownload: Story = {
+  args: { offerDownload: false },
+};

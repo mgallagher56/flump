@@ -8,6 +8,7 @@ import {
 } from "~/features/legal/components/TermsAcceptanceScreen";
 import { safeNext } from "~/features/legal/terms";
 import { FOCUSED_SHELL_HANDLE } from "~/features/onboarding/focusedShell";
+import { offerDataDownload } from "~/features/settings/exportSummary.server";
 import { backendFetch } from "~/services/backend-client.server";
 import { ACCOUNT_ERASED_PATH, BackendError, isAccountErased } from "~/services/backend-error";
 import { throwRouteError } from "~/services/route-error.server";
@@ -26,6 +27,8 @@ export const loader = async (args: LoaderFunctionArgs) => {
   const token = requireAccessToken(await getAuthSession(args, { ensureSignedIn: true }));
   const next = safeNext(new URL(args.request.url).searchParams.get("next"));
   let status: TermsStatusResponse;
+  // Read alongside: whether "Download your data" is offered (a brand-new account has nothing).
+  const offerDownload = offerDataDownload(token, args.request.signal);
   try {
     status = await backendFetch("/user-profile/terms-acceptance", {
       accessToken: token,
@@ -39,7 +42,12 @@ export const loader = async (args: LoaderFunctionArgs) => {
   // Nothing to show: the newest versions are already recorded.
   if (status.agreed) throw redirect(next, { headers: NO_STORE });
   return data(
-    { status, next, marketingUrl: getMarketingUrl(args.request.url) },
+    {
+      status,
+      next,
+      marketingUrl: getMarketingUrl(args.request.url),
+      offerDownload: await offerDownload,
+    },
     { headers: NO_STORE },
   );
 };
@@ -77,13 +85,14 @@ export const meta: MetaFunction = () => [
 ];
 
 const TermsAcceptanceRoute = (): ReactElement => {
-  const { status, next, marketingUrl } = useLoaderData<typeof loader>();
+  const { status, next, marketingUrl, offerDownload } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   return (
     <TermsAcceptanceScreen
       status={status}
       marketingOrigin={marketingUrl}
+      offerDownload={offerDownload}
       next={next}
       error={actionData?.error ?? null}
       submitting={navigation.state !== "idle" && navigation.formMethod === "POST"}

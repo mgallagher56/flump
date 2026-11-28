@@ -12,6 +12,8 @@ export {
 export interface RouteErrorPayload {
   kind: BackendErrorKind;
   endpoint?: string;
+  /** Not invited only: whether the page offers "Download your data" (false hides it). */
+  offerDataDownload?: boolean;
 }
 
 /**

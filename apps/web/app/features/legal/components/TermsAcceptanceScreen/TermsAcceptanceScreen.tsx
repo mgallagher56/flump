@@ -42,6 +42,11 @@ export interface TermsAcceptanceScreenProps {
   submitting?: boolean;
   /** Injected for tests and stories; defaults to the real download. */
   download?: () => Promise<void>;
+  /**
+   * Whether the account has anything to download (the server's answer). A brand-new account has
+   * nothing, so only "Delete your account" is offered and the line under the button says so.
+   */
+  offerDownload?: boolean;
 }
 
 /** A legal page on the marketing site, opening in a new tab so this page keeps its place. */
@@ -53,15 +58,19 @@ const LegalLink: FC<{ href: string; children: ReactNode }> = ({ href, children }
 );
 
 /** Download and delete, for a person who does not agree. Deletion comes back here after a re-sign-in. */
-const DataActions: FC<{ download?: () => Promise<void> }> = ({ download }) => {
+const DataActions: FC<{ download?: () => Promise<void>; offerDownload: boolean }> = ({
+  download,
+  offerDownload,
+}) => {
   const { status, submit } = useDeleteAccount();
   return (
     <div className={dataStack()} data-testid="terms-data-actions">
-      <DataExportSection download={download} />
+      {offerDownload ? <DataExportSection download={download} /> : null}
       <DeleteAccountSection
         status={status}
         onConfirm={submit}
         reauthReturnPath={TERMS_ACCEPTANCE_PATH}
+        offerDownload={offerDownload}
       />
     </div>
   );
@@ -72,7 +81,7 @@ const DataActions: FC<{ download?: () => Promise<void> }> = ({ download }) => {
  * when a version of the terms or the privacy notice changes. The terms of use are a contract the
  * person agrees to; the privacy notice is information they are shown, never agreed or consented
  * to. One clear action, no checkbox, nothing pre-ticked, no marketing consent. A person who does
- * not agree can still download their data, delete their account or sign out.
+ * not agree can still download their data (when there is any), delete their account or sign out.
  */
 export const TermsAcceptanceScreen: FC<TermsAcceptanceScreenProps> = ({
   status,
@@ -81,6 +90,7 @@ export const TermsAcceptanceScreen: FC<TermsAcceptanceScreenProps> = ({
   error = null,
   submitting = false,
   download,
+  offerDownload = true,
 }) => {
   const origin = marketingOrigin.replace(/\/+$/, "");
   const termsHref = `${origin}${status.terms.path}`;
@@ -144,12 +154,18 @@ export const TermsAcceptanceScreen: FC<TermsAcceptanceScreenProps> = ({
           ) : (
             <p className={copy()}>
               {ask === "agree"
-                ? "If you do not agree, you cannot use Flump. You can still download your data or delete your account."
-                : "If you would rather not continue, you can still download your data or delete your account."}
+                ? `If you do not agree, you cannot use Flump. ${
+                    offerDownload
+                      ? "You can still download your data or delete your account."
+                      : "You can still delete your account."
+                  }`
+                : offerDownload
+                  ? "If you would rather not continue, you can still download your data or delete your account."
+                  : "If you would rather not continue, you can still delete your account."}
             </p>
           )}
         </Card>
-        {upcoming ? null : <DataActions download={download} />}
+        {upcoming ? null : <DataActions download={download} offerDownload={offerDownload} />}
         {upcoming ? null : (
           // The page has no account menu, so the way out is here (root.tsx clears this browser's
           // storage for any form posting to /logout).
