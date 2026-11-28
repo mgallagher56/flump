@@ -232,12 +232,16 @@ test.describe("marketing home: without JavaScript and with reduced motion (MK1)"
   });
 });
 
-/** Each close piece's key and place on the page, rounded to the pixel. */
+/**
+ * Each close piece's key, place in the stack's box and size, rounded to the pixel. In the box, not
+ * on the page: with motion the pinned hero makes the page longer above the close.
+ */
 async function stackPlaces(page: Page): Promise<string[]> {
   return page.locator("#get-started [data-close-piece]").evaluateAll((els) =>
     els.map((el) => {
+      const box = el.closest("[data-close-stack]")?.getBoundingClientRect();
       const r = el.getBoundingClientRect();
-      return `${el.getAttribute("data-close-piece")} ${Math.round(r.left)},${Math.round(r.top + scrollY)} ${Math.round(r.width)}x${Math.round(r.height)}`;
+      return `${el.getAttribute("data-close-piece")} ${Math.round(r.left - (box?.left ?? 0))},${Math.round(r.top - (box?.top ?? 0))} ${Math.round(r.width)}x${Math.round(r.height)}`;
     }),
   );
 }
@@ -275,6 +279,7 @@ test.describe("marketing home: the close's stack (owner, 28 Nov 2026)", () => {
     await still.goto(HOME);
     await still.locator("#get-started").scrollIntoViewIfNeeded();
     const rest = await stackPlaces(still);
+    expect(rest).toHaveLength(6);
     await still.close();
     const page = await browser.newPage();
     await page.goto(HOME);
