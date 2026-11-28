@@ -1,5 +1,16 @@
 import { createElement, type FC, type ReactNode } from "react";
+import { Illustration } from "../../primitives/Illustration/Illustration";
+import type { DocumentScene } from "../../primitives/Illustration/Illustration.documents";
 import { emptyStateRecipe } from "./EmptyState.styles";
+
+const PROTO_EMPTY_SCENES: readonly DocumentScene[] = [
+  "empty-accounts",
+  "empty-goals",
+  "empty-savings",
+  "empty-debt",
+  "empty-pension",
+  "onboarding",
+];
 
 export interface EmptyStateProps {
   title: string;
@@ -46,7 +57,22 @@ export const EmptyState: FC<EmptyStateProps> = ({
         >
           {illustration}
         </div>
-      ) : null}
+      ) : (
+        // PROTOTYPE ONLY (app design prototypes branch, never merged): the page's document picture,
+        // chosen by the prototype CSS from the page's area, shown only at levels 1 to 3.
+        <div
+          aria-hidden="true"
+          className={classes.illustration}
+          data-proto-empty-art=""
+          style={{ display: "none" }}
+        >
+          {PROTO_EMPTY_SCENES.map((scene) => (
+            <span data-proto-scene={scene} key={scene}>
+              <Illustration scene={scene} size="md" variant="document" />
+            </span>
+          ))}
+        </div>
+      )}
       {icon ? (
         <div
           id={`${id}-icon`}

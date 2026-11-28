@@ -1,0 +1,961 @@
+/* biome-ignore-all lint: a throwaway prototype sketch (never merged), raw and !important on purpose. */
+/*
+ * PROTOTYPE ONLY (app design prototypes branch, never merged).
+ *
+ * The three design levels, read from <html data-proto-level="1|2|3">, set by PrototypeLayer.
+ * Plain CSS with raw values on purpose: this is a throwaway sketch, not production styling. Colours
+ * still come from the app's own token variables, so contrast follows the real themes.
+ *
+ *   Level 1  material only: card material, type, spacing, document pictures. (Plan tier A.)
+ *   Level 2  level 1 plus still ornament where there is no data: still orbs in page headers,
+ *            bubbles beside empty states, onboarding and check-in, the tier B moments.
+ *   Level 3  level 2 plus area colour in headers, a soft sheen on figure cards, and a short
+ *            breathing orb group on Home that comes to rest. Goes beyond the plan's tiers.
+ *
+ * Hard rules kept at every level: nothing behind or beside a figure, table, chart or form control;
+ * no motion on money; reduced motion is fully still; error states still.
+ */
+
+/* ------------------------------------------------------------------ */
+/* The control and the defaults                                        */
+/* ------------------------------------------------------------------ */
+
+.proto-control {
+  position: fixed;
+  z-index: 60;
+  left: 12px;
+  bottom: calc(var(--app-bottom-bar-offset, 0px) + 12px);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  max-width: calc(100vw - 24px);
+  padding: 6px 8px;
+  border-radius: 14px;
+  border: 1px solid var(--colors-border-strong);
+  background: var(--colors-surface-card);
+  box-shadow: var(--shadows-floating);
+  font: 500 12px / 1.2 var(--fonts-body);
+  color: var(--colors-text-primary);
+}
+.proto-control__label {
+  font-weight: 700;
+  padding: 0 4px;
+  color: var(--colors-text-secondary);
+}
+.proto-control__group {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.proto-control__button,
+.proto-control__link {
+  min-height: 32px;
+  padding: 0 10px;
+  border-radius: 9px;
+  border: 1px solid var(--colors-border);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+.proto-control__button[aria-pressed="true"] {
+  background: var(--colors-primary-solid);
+  border-color: var(--colors-primary-solid);
+  color: var(--colors-primary-foreground);
+}
+.proto-control__button:focus-visible,
+.proto-control__link:focus-visible {
+  outline: 2px solid var(--colors-border-focus-ring);
+  outline-offset: 2px;
+}
+
+/* Level 1 and up: document pictures replace the flat scenes (AT5, D4). */
+html[data-proto-level] [data-proto-flat] {
+  display: none !important;
+}
+html[data-proto-level] [data-proto-doc] {
+  display: contents !important;
+}
+
+/* Orb tones per area. Debt is never rose (MC2): violet, teal and sky, as its approved page. */
+html {
+  --proto-orb-light: var(--colors-surface-card);
+  --proto-sky: var(--colors-orb-sky-teal-core);
+  --proto-teal: var(--colors-orb-sky-teal-shade);
+  --proto-violet: var(--colors-orb-violet-rose-core);
+  --proto-rose: var(--colors-orb-violet-rose-shade);
+  --proto-t1: var(--proto-sky);
+  --proto-t2: var(--proto-violet);
+  --proto-t3: var(--proto-teal);
+  --proto-t4: var(--proto-rose);
+  --proto-area: var(--colors-chart-series1);
+  --proto-area-tint: var(--colors-surface-tint-teal);
+}
+html.dark {
+  --proto-orb-light: var(--colors-text-on-contrast);
+}
+html[data-proto-area="accounts"] {
+  --proto-t1: var(--proto-teal);
+  --proto-t2: var(--proto-sky);
+  --proto-t3: var(--proto-violet);
+  --proto-t4: var(--proto-sky);
+  --proto-area: var(--colors-accent);
+  --proto-area-tint: var(--colors-accent-subtle);
+}
+html[data-proto-area="budget"] {
+  --proto-t1: var(--proto-rose);
+  --proto-t2: var(--proto-sky);
+  --proto-t3: var(--proto-teal);
+  --proto-t4: var(--proto-violet);
+  --proto-area: var(--colors-chart-series5);
+  --proto-area-tint: var(--colors-surface-tint-rose);
+}
+html[data-proto-area="pay"] {
+  --proto-t1: var(--proto-sky);
+  --proto-t2: var(--proto-rose);
+  --proto-t3: var(--proto-teal);
+  --proto-t4: var(--proto-violet);
+  --proto-area: var(--colors-chart-series5);
+  --proto-area-tint: var(--colors-surface-tint-rose);
+}
+html[data-proto-area="debt"] {
+  --proto-t1: var(--proto-violet);
+  --proto-t2: var(--proto-teal);
+  --proto-t3: var(--proto-sky);
+  --proto-t4: var(--proto-teal);
+  --proto-area: var(--colors-chart-series3);
+  --proto-area-tint: var(--colors-surface-tint-apricot);
+}
+html[data-proto-area="mortgage"] {
+  --proto-t1: var(--proto-teal);
+  --proto-t2: var(--proto-violet);
+  --proto-t3: var(--proto-sky);
+  --proto-t4: var(--proto-teal);
+}
+html[data-proto-area="savings"] {
+  --proto-t1: var(--proto-teal);
+  --proto-t2: var(--proto-sky);
+  --proto-t3: var(--proto-violet);
+  --proto-t4: var(--proto-teal);
+  --proto-area: var(--colors-chart-series2);
+  --proto-area-tint: var(--colors-surface-tint-sage);
+}
+html[data-proto-area="pension"] {
+  --proto-t1: var(--proto-sky);
+  --proto-t2: var(--proto-violet);
+  --proto-t3: var(--proto-teal);
+  --proto-t4: var(--proto-sky);
+  --proto-area: var(--colors-chart-series6);
+  --proto-area-tint: var(--colors-surface-tint-sky);
+}
+
+/* ------------------------------------------------------------------ */
+/* Level 1: material, type, spacing                                    */
+/* ------------------------------------------------------------------ */
+
+/* Page header: the marketing hero's type (48px display, 18px lead), no flat icon. */
+html[data-proto-level] [data-proto-header] {
+  position: relative;
+  margin-bottom: clamp(24px, 3vw, 40px);
+}
+html[data-proto-level] [data-proto-header] h1 {
+  font-size: clamp(2rem, 1.45rem + 1.8vw, 3rem);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  font-weight: 700;
+  text-wrap: balance;
+}
+html[data-proto-level] [data-proto-header] h1 + p {
+  font-size: 1.125rem;
+  line-height: 1.6;
+  color: var(--colors-text-secondary);
+  max-width: 44ch;
+}
+html[data-proto-level] [data-testid="page-header-illustration"] {
+  display: none;
+}
+
+/* Section titles: larger, quieter, more air above (the marketing h2 rhythm, scaled for the app). */
+html[data-proto-level] main h2 {
+  letter-spacing: -0.01em;
+}
+html[data-proto-level] main section > h2,
+html[data-proto-level] main [id$="-header"] h2,
+html[data-proto-level] main [data-section-title] {
+  font-size: clamp(1.25rem, 1.1rem + 0.5vw, 1.5rem);
+}
+
+/* Every card: the soft card's radius, edge and shadow. */
+html[data-proto-level] main [data-card],
+html[data-proto-level] main [data-kpi-card],
+html[data-proto-level] main [data-section-card],
+html[data-proto-level] [role="dialog"] [data-card] {
+  border-radius: 20px;
+  border-left-color: var(--colors-border);
+  border-right-color: var(--colors-border);
+  border-bottom-color: var(--colors-border);
+  box-shadow: var(--shadows-card);
+}
+html[data-proto-level] main [data-card]:not([data-section-card]),
+html[data-proto-level] main [data-kpi-card] {
+  border-top-color: var(--colors-border);
+}
+/* Midnight: cards one step lighter than the canvas, as the marketing soft card (no sheen yet). */
+html.dark[data-proto-level] main [data-card],
+html.dark[data-proto-level] main [data-kpi-card],
+html.dark[data-proto-level] main [data-section-card] {
+  background-color: var(--colors-surface-overlay);
+}
+/* The headline figure frame: the marketing figure frame's 24px radius. Solid mint stays. */
+html[data-proto-level] main [data-tone="hero"] {
+  border-radius: 24px;
+}
+/* Cards holding no figure take the glass material (tier A allows light on non-figure cards). */
+html[data-proto-level]
+  main
+  [data-card]:not(
+    :has(
+      [data-figure],
+      [data-money],
+      [data-kpi-value],
+      table,
+      svg[role="img"],
+      input,
+      select,
+      textarea
+    )
+  ),
+html[data-proto-level] main #monthly-check-in-card {
+  background-color: var(--colors-material-glass-fill);
+  background-image: linear-gradient(155deg, var(--colors-material-glass-sheen), transparent 42%);
+  border-color: var(--colors-material-glass-border);
+  box-shadow: var(--shadows-glass);
+}
+
+/* More air between the page's blocks. */
+html[data-proto-level] main [data-page-body],
+html[data-proto-level] main > div > [data-page-body] {
+  row-gap: 32px;
+}
+
+/* Empty states: the document picture, a little larger and with room around it. */
+html[data-proto-level]
+  main
+  section:is(:has(> [data-testid$="-illustration"]), :has(> [data-proto-empty-art])) {
+  padding-block: 40px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Level 2: still ornament where there is no data                      */
+/* ------------------------------------------------------------------ */
+
+/* The orb group in the page header, top right, beside the title only. */
+html[data-proto-level="2"]:not([data-proto-area="settings"]) [data-proto-ornament],
+html[data-proto-level="3"]:not([data-proto-area="settings"]) [data-proto-ornament] {
+  display: block !important;
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 112px;
+  height: 56px;
+  pointer-events: none;
+}
+/* Room for the orbs: the h1 stops short of them on a phone; the header from md. */
+html[data-proto-level="2"]:not([data-proto-area="settings"]) [data-proto-header] h1,
+html[data-proto-level="3"]:not([data-proto-area="settings"]) [data-proto-header] h1 {
+  padding-right: 112px;
+}
+@media (min-width: 48rem) {
+  html[data-proto-level="2"]:not([data-proto-area="settings"]) [data-proto-header],
+  html[data-proto-level="3"]:not([data-proto-area="settings"]) [data-proto-header] {
+    padding-right: 240px;
+    min-height: 128px;
+  }
+  html[data-proto-level="2"]:not([data-proto-area="settings"]) [data-proto-header] h1,
+  html[data-proto-level="3"]:not([data-proto-area="settings"]) [data-proto-header] h1 {
+    padding-right: 0;
+  }
+  html[data-proto-level="2"]:not([data-proto-area="settings"]) [data-proto-ornament],
+  html[data-proto-level="3"]:not([data-proto-area="settings"]) [data-proto-ornament] {
+    width: 220px;
+    height: 128px;
+    top: 50%;
+    translate: 0 -50%;
+  }
+  /* Actions drop under the description, so the orbs sit beside text only, never a control. */
+  html[data-proto-level="2"] [data-proto-header="actions"] > :last-child,
+  html[data-proto-level="3"] [data-proto-header="actions"] > :last-child {
+    flex-basis: 100%;
+    justify-content: flex-start;
+  }
+}
+
+/* One glass orb in CSS: the marketing GlassOrb's gradients, coloured by currentColor. */
+[data-proto-ornament] [data-orb] {
+  position: absolute;
+  border-radius: 9999px;
+  width: var(--s);
+  aspect-ratio: 1;
+  background:
+    radial-gradient(
+      circle at 31% 24%,
+      color-mix(in oklab, var(--proto-orb-light) 92%, transparent) 0 4%,
+      color-mix(in oklab, var(--proto-orb-light) 30%, transparent) 9%,
+      transparent 20%
+    ),
+    radial-gradient(
+      circle at 66% 78%,
+      color-mix(in oklab, currentColor 46%, transparent) 0,
+      transparent 42%
+    ),
+    radial-gradient(
+      circle at 50% 50%,
+      color-mix(in oklab, currentColor 6%, transparent) 0 46%,
+      color-mix(in oklab, currentColor 26%, transparent) 78%,
+      color-mix(in oklab, currentColor 58%, transparent) 100%
+    );
+  box-shadow:
+    inset 0 0 0 1px color-mix(in oklab, currentColor 55%, transparent),
+    inset 0 calc(var(--s) * 0.08) calc(var(--s) * 0.1)
+    color-mix(in oklab, var(--proto-orb-light) 28%, transparent),
+    inset 0 calc(var(--s) * -0.1) calc(var(--s) * 0.18)
+    color-mix(in oklab, currentColor 34%, transparent),
+    0 calc(var(--s) * 0.22) calc(var(--s) * 0.3) calc(var(--s) * -0.16)
+    color-mix(in oklab, currentColor 55%, transparent);
+}
+[data-proto-ornament] [data-orb="1"] {
+  --s: 48px;
+  right: 22px;
+  top: 0;
+  color: var(--proto-t1);
+}
+[data-proto-ornament] [data-orb="2"] {
+  --s: 24px;
+  right: 0;
+  top: 30px;
+  color: var(--proto-t2);
+}
+[data-proto-ornament] [data-orb="3"] {
+  --s: 16px;
+  right: 80px;
+  top: 34px;
+  color: var(--proto-t3);
+}
+[data-proto-ornament] [data-orb="4"] {
+  display: none;
+  color: var(--proto-t4);
+}
+@media (min-width: 48rem) {
+  [data-proto-ornament] [data-orb="1"] {
+    --s: 92px;
+    right: 44px;
+    top: 8px;
+  }
+  [data-proto-ornament] [data-orb="2"] {
+    --s: 40px;
+    right: 0;
+    top: 78px;
+  }
+  [data-proto-ornament] [data-orb="3"] {
+    --s: 26px;
+    right: 160px;
+    top: 74px;
+  }
+  [data-proto-ornament] [data-orb="4"] {
+    display: block;
+    --s: 16px;
+    right: 150px;
+    top: 14px;
+  }
+}
+
+/* A soft bubble pair beside an empty state: at its corners, clear of the words and the button. */
+html[data-proto-level="2"]
+  main
+  section:is(:has(> [data-testid$="-illustration"]), :has(> [data-proto-empty-art])),
+html[data-proto-level="3"]
+  main
+  section:is(:has(> [data-testid$="-illustration"]), :has(> [data-proto-empty-art])) {
+  position: relative;
+  isolation: isolate;
+}
+html[data-proto-level="2"]
+  main
+  section:is(:has(> [data-testid$="-illustration"]), :has(> [data-proto-empty-art]))::before,
+html[data-proto-level="3"]
+  main
+  section:is(:has(> [data-testid$="-illustration"]), :has(> [data-proto-empty-art]))::before,
+html[data-proto-level="2"]
+  main
+  section:is(:has(> [data-testid$="-illustration"]), :has(> [data-proto-empty-art]))::after,
+html[data-proto-level="3"]
+  main
+  section:is(:has(> [data-testid$="-illustration"]), :has(> [data-proto-empty-art]))::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  border-radius: 9999px;
+  pointer-events: none;
+  opacity: 0.85;
+}
+html[data-proto-level="2"]
+  main
+  section:is(:has(> [data-testid$="-illustration"]), :has(> [data-proto-empty-art]))::before,
+html[data-proto-level="3"]
+  main
+  section:is(:has(> [data-testid$="-illustration"]), :has(> [data-proto-empty-art]))::before {
+  width: 132px;
+  height: 132px;
+  top: 12px;
+  right: 4%;
+  background: radial-gradient(
+    circle at 35% 30%,
+    var(--colors-orb-sky-teal-bubble),
+    var(--colors-orb-sky-teal-bubble-shade) 80%
+  );
+  box-shadow: inset 0 0 0 1px var(--colors-orb-sky-teal-rim);
+}
+html[data-proto-level="2"]
+  main
+  section:is(:has(> [data-testid$="-illustration"]), :has(> [data-proto-empty-art]))::after,
+html[data-proto-level="3"]
+  main
+  section:is(:has(> [data-testid$="-illustration"]), :has(> [data-proto-empty-art]))::after {
+  width: 64px;
+  height: 64px;
+  bottom: 20px;
+  left: 6%;
+  background: radial-gradient(
+    circle at 35% 30%,
+    var(--colors-orb-violet-rose-bubble),
+    var(--colors-orb-violet-rose-bubble-shade) 80%
+  );
+  box-shadow: inset 0 0 0 1px var(--colors-orb-violet-rose-rim);
+}
+@media (max-width: 47.99rem) {
+  html[data-proto-level="2"]
+    main
+    section:is(:has(> [data-testid$="-illustration"]), :has(> [data-proto-empty-art]))::before,
+  html[data-proto-level="3"]
+    main
+    section:is(:has(> [data-testid$="-illustration"]), :has(> [data-proto-empty-art]))::before {
+    width: 72px;
+    height: 72px;
+    top: 4px;
+    right: 0;
+  }
+  html[data-proto-level="2"]
+    main
+    section:is(:has(> [data-testid$="-illustration"]), :has(> [data-proto-empty-art]))::after,
+  html[data-proto-level="3"]
+    main
+    section:is(:has(> [data-testid$="-illustration"]), :has(> [data-proto-empty-art]))::after {
+    display: none;
+  }
+}
+
+/* Tier B: the document picture settles once (scene duration), never on an error page. */
+@media (prefers-reduced-motion: no-preference) {
+  html[data-proto-level="2"]
+    main
+    section:is(:has(> [data-testid$="-illustration"]), :has(> [data-proto-empty-art]))
+    [data-proto-doc]
+    svg,
+  html[data-proto-level="3"]
+    main
+    section:is(:has(> [data-testid$="-illustration"]), :has(> [data-proto-empty-art]))
+    [data-proto-doc]
+    svg {
+    animation: proto-settle var(--durations-scene, 900ms) var(--easings-settle, ease-out) both;
+  }
+  html[data-proto-level] [data-proto-error] [data-proto-doc] svg {
+    animation: none !important;
+  }
+}
+@keyframes proto-settle {
+  from {
+    opacity: 0;
+    translate: 0 8px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Level 3: area colour, sheen on figure cards, a breathing Home group */
+/* ------------------------------------------------------------------ */
+
+/* The page header becomes a band in the area's tint (one tinted section per page, C7). */
+html[data-proto-level="3"]:not([data-proto-area="settings"]):not([data-proto-area="other"])
+  [data-proto-header] {
+  background: var(--proto-area-tint);
+  border-radius: 24px;
+  padding: 20px 20px 22px;
+  border: 1px solid color-mix(in oklab, var(--proto-area) 22%, transparent);
+}
+html[data-proto-level="3"]:not([data-proto-area="settings"]):not([data-proto-area="other"])
+  [data-proto-ornament] {
+  top: 14px;
+  right: 14px;
+}
+@media (min-width: 48rem) {
+  html[data-proto-level="3"]:not([data-proto-area="settings"]):not([data-proto-area="other"])
+    [data-proto-header] {
+    padding: 36px 260px 36px 36px;
+    min-height: 176px;
+  }
+  html[data-proto-level="3"]:not([data-proto-area="settings"]):not([data-proto-area="other"])
+    [data-proto-ornament] {
+    top: 50%;
+    right: 28px;
+  }
+}
+
+/* Section titles carry the area colour as a short bar before the words. */
+html[data-proto-level="3"] main section > h2::before,
+html[data-proto-level="3"] main [id$="-header"] h2::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 0.9em;
+  margin-right: 10px;
+  border-radius: 3px;
+  vertical-align: -0.08em;
+  background: var(--proto-area);
+}
+
+/* Figure cards take the marketing soft card's faint sheen too (goes beyond rule C6). */
+html[data-proto-level="3"] main [data-kpi-card],
+html[data-proto-level="3"] main [data-section-card],
+html[data-proto-level="3"] main [data-card]:has([data-figure], [data-money], [data-kpi-value]) {
+  background-image: linear-gradient(
+    155deg,
+    color-mix(in oklab, var(--colors-text-on-contrast) 7%, transparent),
+    transparent 45%
+  );
+}
+
+/* Home: the orb group breathes twice (under 5 seconds) and then rests. Still with reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  html[data-proto-level="3"][data-proto-area="home"] [data-proto-ornament] [data-orb] {
+    animation: proto-breathe 2400ms cubic-bezier(0.45, 0, 0.3, 1) 2 both;
+  }
+  html[data-proto-level="3"][data-proto-area="home"] [data-proto-ornament] [data-orb="2"] {
+    animation-delay: 300ms;
+  }
+  html[data-proto-level="3"][data-proto-area="home"] [data-proto-ornament] [data-orb="3"] {
+    animation-delay: 600ms;
+  }
+  html[data-proto-level="3"][data-proto-area="home"] [data-proto-ornament] [data-orb="4"] {
+    animation-delay: 150ms;
+  }
+}
+@keyframes proto-breathe {
+  0%,
+  100% {
+    translate: 0 0;
+    scale: 1;
+  }
+  50% {
+    translate: 0 -6px;
+    scale: 1.05;
+  }
+}
+
+/* Screenshots: no control, no caret. */
+html[data-proto-capture] * {
+  caret-color: transparent;
+}
+
+/* ------------------------------------------------------------------ */
+/* The index page                                                      */
+/* ------------------------------------------------------------------ */
+.proto-index {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 8px 0 64px;
+  display: grid;
+  gap: 20px;
+}
+.proto-index h1 {
+  font: 700 clamp(2rem, 1.45rem + 1.8vw, 3rem) / 1.15 var(--fonts-heading);
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+.proto-index__lead {
+  font-size: 1.125rem;
+  line-height: 1.6;
+  color: var(--colors-text-secondary);
+  margin: 0;
+  max-width: 60ch;
+}
+.proto-index__controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.proto-index fieldset {
+  border: 1px solid var(--colors-border);
+  border-radius: 16px;
+  padding: 12px 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin: 0;
+  background: var(--colors-surface-card);
+}
+.proto-index legend {
+  font-weight: 700;
+  padding: 0 6px;
+}
+.proto-index label {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  min-height: 32px;
+}
+.proto-index__note {
+  color: var(--colors-text-secondary);
+  margin: 0;
+}
+.proto-index__screens {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.proto-index__screens li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  padding: 12px 16px;
+  border: 1px solid var(--colors-border);
+  border-radius: 16px;
+  background: var(--colors-surface-card);
+}
+.proto-index__name {
+  font-weight: 600;
+}
+.proto-index__opens {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.proto-index__opens button,
+.proto-index__opens a {
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid var(--colors-border-strong);
+  background: transparent;
+  color: var(--colors-primary);
+  font: 500 14px / 1 var(--fonts-body);
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.proto-control__legend {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------------ */
+/* Additions: empty-state pictures, header alignment, onboarding,      */
+/* check-in, error state                                               */
+/* ------------------------------------------------------------------ */
+
+/* Empty states: the page's document picture (the header icon is gone from level 1). */
+html[data-proto-level] [data-proto-empty-art] {
+  display: flex !important;
+  justify-content: center;
+}
+html[data-proto-level] [data-proto-empty-art] > span {
+  display: none;
+}
+html[data-proto-level] [data-proto-empty-art] > [data-proto-scene="empty-accounts"],
+html[data-proto-level][data-proto-area="home"]
+  [data-proto-empty-art]
+  > [data-proto-scene="empty-goals"],
+html[data-proto-level][data-proto-area="savings"]
+  [data-proto-empty-art]
+  > [data-proto-scene="empty-savings"],
+html[data-proto-level][data-proto-area="debt"]
+  [data-proto-empty-art]
+  > [data-proto-scene="empty-debt"],
+html[data-proto-level][data-proto-area="pension"]
+  [data-proto-empty-art]
+  > [data-proto-scene="empty-pension"],
+html[data-proto-level][data-proto-area="budget"]
+  [data-proto-empty-art]
+  > [data-proto-scene="onboarding"] {
+  display: block;
+}
+html[data-proto-level]:is(
+    [data-proto-area="home"],
+    [data-proto-area="savings"],
+    [data-proto-area="debt"],
+    [data-proto-area="pension"],
+    [data-proto-area="budget"]
+  )
+  [data-proto-empty-art]
+  > [data-proto-scene="empty-accounts"] {
+  display: none;
+}
+/* An empty state that already shows an icon keeps the icon, no picture. */
+html[data-proto-level] section:has(> [data-testid$="-icon"]) > [data-proto-empty-art] {
+  display: none !important;
+}
+
+@media (min-width: 48rem) {
+  html[data-proto-level="2"] [data-proto-header],
+  html[data-proto-level="3"] [data-proto-header] {
+    align-items: center;
+    align-content: center;
+  }
+}
+
+/* Onboarding. Level 2: a soft bubble field in the side margins, never behind the form. */
+html[data-proto-level="2"] [data-proto-onboarding],
+html[data-proto-level="3"] [data-proto-onboarding] {
+  position: relative;
+  isolation: isolate;
+  overflow-x: clip;
+}
+@media (min-width: 62rem) {
+  html[data-proto-level="2"] [data-proto-onboarding-art],
+  html[data-proto-level="3"] [data-proto-onboarding-art] {
+    display: block !important;
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+  }
+  [data-proto-onboarding-art] [data-proto-bubble] {
+    position: absolute;
+    border-radius: 9999px;
+    opacity: 0.85;
+  }
+  [data-proto-onboarding-art] [data-proto-bubble="1"] {
+    width: 260px;
+    height: 260px;
+    left: -110px;
+    top: 220px;
+    background: radial-gradient(
+      circle at 35% 30%,
+      var(--colors-orb-sky-teal-bubble),
+      var(--colors-orb-sky-teal-bubble-shade) 80%
+    );
+    box-shadow: inset 0 0 0 1px var(--colors-orb-sky-teal-rim);
+  }
+  [data-proto-onboarding-art] [data-proto-bubble="2"] {
+    width: 96px;
+    height: 96px;
+    right: 3%;
+    top: 140px;
+    background: radial-gradient(
+      circle at 35% 30%,
+      var(--colors-orb-violet-rose-bubble),
+      var(--colors-orb-violet-rose-bubble-shade) 80%
+    );
+    box-shadow: inset 0 0 0 1px var(--colors-orb-violet-rose-rim);
+  }
+  [data-proto-onboarding-art] [data-proto-bubble="3"] {
+    width: 54px;
+    height: 54px;
+    right: 9%;
+    top: 560px;
+    background: radial-gradient(
+      circle at 35% 30%,
+      var(--colors-orb-sky-teal-bubble),
+      var(--colors-orb-sky-teal-bubble-shade) 80%
+    );
+    box-shadow: inset 0 0 0 1px var(--colors-orb-sky-teal-rim);
+  }
+  [data-proto-onboarding-art] [data-proto-step-picture] {
+    display: none;
+  }
+}
+/* Level 3: the step's own document picture in the right margin, where it fits (1200px and up). */
+@media (min-width: 75rem) {
+  html[data-proto-level="3"] [data-proto-onboarding-art] [data-proto-step-picture] {
+    display: block;
+    position: absolute;
+    right: max(16px, calc((100% - 800px) / 2 - 300px));
+    top: 300px;
+    width: 280px;
+    rotate: 3deg;
+  }
+  html[data-proto-level="3"] [data-proto-onboarding-art] [data-proto-bubble="2"] {
+    top: 230px;
+    right: max(8px, calc((100% - 800px) / 2 - 330px));
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  html[data-proto-level="3"] [data-proto-onboarding-art] [data-proto-step-picture] {
+    animation: proto-settle 280ms ease-out both;
+  }
+}
+
+/* Check-in: still orbs either side of its picture (a step and the finished state). */
+html[data-proto-level="2"] [role="dialog"] :is(div, span):has(> [data-proto-art]),
+html[data-proto-level="3"] [role="dialog"] :is(div, span):has(> [data-proto-art]) {
+  position: relative;
+}
+html[data-proto-level="2"] [role="dialog"] :is(div, span):has(> [data-proto-art])::before,
+html[data-proto-level="3"] [role="dialog"] :is(div, span):has(> [data-proto-art])::before,
+html[data-proto-level="2"] [role="dialog"] :is(div, span):has(> [data-proto-art])::after,
+html[data-proto-level="3"] [role="dialog"] :is(div, span):has(> [data-proto-art])::after {
+  content: "";
+  position: absolute;
+  border-radius: 9999px;
+  pointer-events: none;
+  opacity: 0.85;
+}
+html[data-proto-level="2"] [role="dialog"] :is(div, span):has(> [data-proto-art])::before,
+html[data-proto-level="3"] [role="dialog"] :is(div, span):has(> [data-proto-art])::before {
+  width: 56px;
+  height: 56px;
+  left: 2%;
+  top: 18%;
+  background: radial-gradient(
+    circle at 35% 30%,
+    var(--colors-orb-sky-teal-bubble),
+    var(--colors-orb-sky-teal-bubble-shade) 80%
+  );
+  box-shadow: inset 0 0 0 1px var(--colors-orb-sky-teal-rim);
+}
+html[data-proto-level="2"] [role="dialog"] :is(div, span):has(> [data-proto-art])::after,
+html[data-proto-level="3"] [role="dialog"] :is(div, span):has(> [data-proto-art])::after {
+  width: 28px;
+  height: 28px;
+  right: 6%;
+  bottom: 14%;
+  background: radial-gradient(
+    circle at 35% 30%,
+    var(--colors-orb-violet-rose-bubble),
+    var(--colors-orb-violet-rose-bubble-shade) 80%
+  );
+  box-shadow: inset 0 0 0 1px var(--colors-orb-violet-rose-rim);
+}
+/* Tier B: the finished picture settles once. */
+@media (prefers-reduced-motion: no-preference) {
+  html[data-proto-level="2"] #checkin-summary [data-proto-doc] svg,
+  html[data-proto-level="3"] #checkin-summary [data-proto-doc] svg {
+    animation: proto-settle var(--durations-scene, 900ms) var(--easings-settle, ease-out) both;
+  }
+}
+/* The dialog and sheet take the card material's radius. */
+html[data-proto-level] [role="dialog"] {
+  border-radius: 24px;
+}
+
+/* Tighter header rhythm (review of the first captures). */
+html[data-proto-level="2"] [data-proto-header],
+html[data-proto-level="3"] [data-proto-header] {
+  margin-bottom: 20px;
+}
+@media (min-width: 48rem) {
+  html[data-proto-level="2"] [data-proto-header] {
+    min-height: 112px;
+  }
+  html[data-proto-level="2"] [data-proto-ornament] {
+    height: 112px;
+  }
+  html[data-proto-level="3"]:not([data-proto-area="settings"]):not([data-proto-area="other"])
+    [data-proto-header] {
+    min-height: 160px;
+  }
+}
+/* Level 3: a section header with an icon tile takes the area colour on the tile, not a bar. */
+html[data-proto-level="3"]
+  main
+  :is(section, [id$="-header"]):has([data-tile-tone="neutral"])
+  h2::before {
+  display: none;
+}
+html[data-proto-level="3"] main [data-tile-tone="neutral"] {
+  background: var(--proto-area-tint);
+  color: var(--proto-area);
+  border-color: color-mix(in oklab, var(--proto-area) 30%, transparent);
+}
+/* Phones: no bubble beside an empty state's picture, the header orbs are enough. */
+@media (max-width: 47.99rem) {
+  html[data-proto-level]
+    main
+    section:is(:has(> [data-testid$="-illustration"]), :has(> [data-proto-empty-art]))::before {
+    display: none;
+  }
+}
+
+/* Check-in bubbles sit in the corners, clear of the picture. */
+html[data-proto-level] [role="dialog"] :is(div, span):has(> [data-proto-art])::before {
+  width: 40px;
+  height: 40px;
+  left: 0;
+  top: 4px;
+}
+html[data-proto-level] [role="dialog"] :is(div, span):has(> [data-proto-art])::after {
+  width: 24px;
+  height: 24px;
+  right: 0;
+  bottom: 4px;
+}
+
+/* Error state: still at every level (no settle). Levels 2 and 3 add one small still orb in the
+   card's top corner, as the marketing not-found page. */
+html[data-proto-level] #route-error-state {
+  position: relative;
+  border-radius: 24px;
+}
+html[data-proto-level] #route-error-state [data-proto-doc] svg {
+  animation: none !important;
+}
+html[data-proto-level="2"] #route-error-state::after,
+html[data-proto-level="3"] #route-error-state::after {
+  content: "";
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  width: 44px;
+  height: 44px;
+  border-radius: 9999px;
+  pointer-events: none;
+  color: var(--proto-sky);
+  background:
+    radial-gradient(
+      circle at 31% 24%,
+      color-mix(in oklab, var(--proto-orb-light) 92%, transparent) 0 4%,
+      color-mix(in oklab, var(--proto-orb-light) 30%, transparent) 9%,
+      transparent 20%
+    ),
+    radial-gradient(
+      circle at 50% 50%,
+      color-mix(in oklab, currentColor 6%, transparent) 0 46%,
+      color-mix(in oklab, currentColor 58%, transparent) 100%
+    );
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, currentColor 55%, transparent);
+}
+@media (min-width: 75rem) {
+  html[data-proto-level="3"] [data-proto-onboarding-art] [data-proto-bubble="2"] {
+    top: 170px;
+  }
+}

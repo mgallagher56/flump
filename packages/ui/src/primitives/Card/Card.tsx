@@ -25,6 +25,8 @@ export const Card = ({
   return (
     <Component
       className={cx(cardRecipe({ elevation, material, padding, surface }), className)}
+      // PROTOTYPE ONLY (app design prototypes branch, never merged): a hook for the level CSS.
+      data-card={material ?? "plain"}
       {...props}
     />
   );

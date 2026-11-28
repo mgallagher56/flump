@@ -1,5 +1,5 @@
 import { getUkTaxYearContext } from "@flump/finance-engine";
-import { Card, Icon, Stepper, TaxRatesStatusBanner } from "@repo/ui";
+import { Card, Icon, Illustration, Stepper, TaxRatesStatusBanner } from "@repo/ui";
 import { TriangleAlert } from "lucide-react";
 import { type FC, useEffect, useMemo, useState } from "react";
 import type { UserProfile } from "~/hooks/useUserProfile";
@@ -18,6 +18,18 @@ import { LiveSummaryBar } from "../LiveSummaryBar";
 import { OnboardingHeader } from "../OnboardingHeader";
 import { SavingsDebtStep } from "../SavingsDebtStep";
 import { SeedBanner } from "../SeedBanner";
+
+/** PROTOTYPE ONLY: the document picture beside each setup step at level 3. */
+const PROTO_STEP_SCENES: Record<
+  number,
+  "feature-pay" | "feature-budget" | "feature-savings-pension" | "onboarding"
+> = {
+  1: "feature-pay",
+  2: "feature-budget",
+  3: "feature-savings-pension",
+  4: "onboarding",
+};
+
 import { onboardingFlowRecipe } from "./OnboardingFlow.styles";
 
 export interface OnboardingFlowProps {
@@ -88,7 +100,21 @@ export const OnboardingFlow: FC<OnboardingFlowProps> = ({
   };
 
   return (
-    <div className={classes.page}>
+    <div className={classes.page} data-proto-onboarding="">
+      {/* PROTOTYPE ONLY (app design prototypes branch, never merged): margin ornament and the
+          step's document picture, shown only by the prototype CSS at levels 2 and 3. */}
+      <div aria-hidden="true" data-proto-onboarding-art="" style={{ display: "none" }}>
+        <span data-proto-bubble="1" />
+        <span data-proto-bubble="2" />
+        <span data-proto-bubble="3" />
+        <span data-proto-step-picture="">
+          <Illustration
+            scene={PROTO_STEP_SCENES[step] ?? "onboarding"}
+            size="sm"
+            variant="document"
+          />
+        </span>
+      </div>
       <div className={classes.inner}>
         <OnboardingHeader isSaving={exit.isSaving} onSaveAndExit={exit.saveAndExit} />
         <Stepper

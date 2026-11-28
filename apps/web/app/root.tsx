@@ -31,6 +31,8 @@ import i18n from "./i18n";
 import { registerSavedDataReload, revalidateRootData } from "./services/conflict";
 import { scrollRestorationKey } from "./utils/scrollRestorationKey";
 import "@repo/ui/fonts.css";
+// PROTOTYPE ONLY (app design prototypes branch, never merged).
+import "./prototype/prototype.css";
 import { TermsStatusResponse } from "@flump/api-contract";
 import { hasUpcomingAcceptanceChange } from "@flump/business-details";
 import { TermsChangeNotice } from "~/features/legal/components/TermsChangeNotice";
@@ -39,6 +41,7 @@ import { backendFetch } from "~/services/backend-client.server";
 import { getMarketingUrl } from "~/utils/marketingUrl";
 import styles from "./index.css?url";
 import { sentryPublicEnv } from "./observability/env";
+import { PrototypeLayer } from "./prototype/PrototypeLayer";
 import { securityMiddleware } from "./security/middleware.server";
 import { useNonce } from "./security/nonce";
 import { ACCOUNT_ERASED_PATH, BackendError, isAccountErased } from "./services/backend-error";
@@ -214,6 +217,7 @@ function AppShell({ user, focused = false, children }: AppShellProps) {
         Skip to content
       </VisuallyHidden>
       <NavigationProgress />
+      <PrototypeLayer />
       {/* Layout offsets other components read: the mobile bottom bar height (the toast viewport
           adds the safe-area inset itself) and the sticky header height (SimulatorSplitLayout's
           sticky parts sit below it). */}

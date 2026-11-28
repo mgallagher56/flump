@@ -108,7 +108,20 @@ export const Illustration: FC<IllustrationProps> = (props) =>
   props.variant === "document" ? (
     <DocumentIllustration {...props} />
   ) : (
-    <FlatIllustration {...props} />
+    // PROTOTYPE ONLY (app design prototypes branch, never merged): the flat scene and its document
+    // picture side by side; the level CSS shows one (`data-proto-art`).
+    <span data-proto-art="" style={{ display: "contents" }}>
+      <span data-proto-flat="" style={{ display: "contents" }}>
+        <FlatIllustration {...props} />
+      </span>
+      <span data-proto-doc="" style={{ display: "none" }}>
+        <DocumentIllustration
+          variant="document"
+          scene={props.scene}
+          size={props.size === "sm" ? "sm" : "md"}
+        />
+      </span>
+    </span>
   );
 
 export default Illustration;

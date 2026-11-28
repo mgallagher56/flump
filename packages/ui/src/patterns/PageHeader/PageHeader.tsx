@@ -44,6 +44,8 @@ export interface PageHeaderProps {
  * `ProjectionNotice` sits at the foot of the first projection region, never above or beside the h1
  * (E16 P4.1). Nothing but the app header sits above it.
  */
+const withActions = (badge: ReactNode, actions: ReactNode) => Boolean(badge || actions);
+
 export const PageHeader: FC<PageHeaderProps> = ({
   title,
   description,
@@ -57,7 +59,19 @@ export const PageHeader: FC<PageHeaderProps> = ({
   const withIcon = Boolean(illustration);
   const withText = Boolean(text);
   return (
-    <header className={cx(pageHeaderContainer({ iconRow: withIcon && withText }), className)}>
+    <header
+      className={cx(pageHeaderContainer({ iconRow: withIcon && withText }), className)}
+      // PROTOTYPE ONLY (app design prototypes branch, never merged): hooks for the level CSS.
+      data-proto-header={withActions(badge, actions) ? "actions" : ""}
+    >
+      {/* PROTOTYPE ONLY: the still orb group of levels 2 and 3, hidden from assistive technology
+          and shown only by the prototype CSS. It holds no content and sits in no reading order. */}
+      <span aria-hidden="true" data-proto-ornament="" style={{ display: "none" }}>
+        <span data-orb="1" />
+        <span data-orb="2" />
+        <span data-orb="3" />
+        <span data-orb="4" />
+      </span>
       {illustration ? (
         <div className={pageHeaderIcon({ withText })} data-testid="page-header-illustration">
           <Illustration scene={illustration} settle={false} size="sm" />
