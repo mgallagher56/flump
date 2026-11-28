@@ -121,24 +121,20 @@ for (const row of PAGES) {
       await page.context().close();
     });
 
-    test("a full scroll at 390, 1000 and 1440px throws nothing and logs no error", async ({
-      browser,
-    }) => {
-      const page = await openPage(browser, row.path, { viewport: { width: 390, height: 844 } });
-      const problems: string[] = [];
-      page.on("pageerror", (error) => problems.push(`pageerror: ${error.message}`));
-      page.on("console", (message) => {
-        if (message.type() === "error") problems.push(`console: ${message.text()}`);
-      });
-      for (const width of [390, 1000, 1440]) {
-        await page.setViewportSize({ width, height: 900 });
-        await page.evaluate(() => window.scrollTo(0, 0));
+    for (const width of [390, 1000, 1440] as const) {
+      test(`a full scroll at ${width}px throws nothing and logs no error`, async ({ browser }) => {
+        const page = await openPage(browser, row.path, { viewport: { width, height: 900 } });
+        const problems: string[] = [];
+        page.on("pageerror", (error) => problems.push(`pageerror: ${error.message}`));
+        page.on("console", (message) => {
+          if (message.type() === "error") problems.push(`console: ${message.text()}`);
+        });
         await scrollToFoot(page);
         await page.waitForLoadState("networkidle");
-      }
-      expect(problems).toEqual([]);
-      await page.context().close();
-    });
+        expect(problems).toEqual([]);
+        await page.context().close();
+      });
+    }
 
     for (const theme of ["light", "dark"] as const) {
       test(`axe finds no violation once every moment has finished, ${theme}`, async ({
