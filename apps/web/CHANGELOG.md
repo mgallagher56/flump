@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.56.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.55.0...flump/web-v1.56.0) (2026-11-28)
+
+
+### Features ✨
+
+* **web,marketing:** the favicon is the small K2 mark, the three bubbles in flat fills, light and dark ([9861ecb](https://github.com/mgallagher56/flump/commit/9861ecb37053ecc43ffd4e856f693beef746a8a9))
+
 ## [1.55.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.54.0...flump/web-v1.55.0) (2026-11-27)
 
 
