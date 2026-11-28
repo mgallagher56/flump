@@ -201,8 +201,15 @@ describe("HomeJourney", () => {
     render(page);
     const journey = screen.getByTestId("home-journey");
     expect(journey.getAttribute("data-live")).toBe("off");
+    // A kit that sets nothing up: the stops' moments may be queued before this test unmounts, and an
+    // empty object made a queued set-up throw on `kit.gsap` after the test had passed (an
+    // unhandled error that failed the run now and then).
+    const kit = {
+      gsap: { context: () => ({ revert: () => {} }) },
+      ScrollTrigger: { refresh: () => {} },
+    };
     await act(async () => {
-      loaded({});
+      loaded(kit);
     });
     expect(journey.getAttribute("data-live")).toBe("on");
   });
