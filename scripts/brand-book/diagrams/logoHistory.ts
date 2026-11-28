@@ -43,7 +43,7 @@ function renderCandidateCFaviconSvg(label: string): string {
   return `<svg width="32" height="32" viewBox="32 32 140 140" role="img" aria-label="${label}">
     <circle cx="108" cy="54" r="20" fill="var(--color-logo-violet)"/>
     <circle cx="140" cy="92" r="28" fill="var(--color-logo-sky)"/>
-    <circle cx="84" cy="122" r="52" fill="var(--color-surface-canvas)"/>
+    <circle cx="84" cy="122" r="52" fill="var(--color-logo-backing)"/>
     <circle cx="84" cy="122" r="48" fill="var(--color-logo-teal)"/>
     <ellipse cx="66" cy="98" rx="11" ry="6" transform="rotate(-32 66 98)" fill="var(--color-logo-glint)" opacity="0.9"/>
   </svg>`;

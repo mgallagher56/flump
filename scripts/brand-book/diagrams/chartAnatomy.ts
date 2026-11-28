@@ -26,34 +26,34 @@ export function renderChartAnatomyDiagram(_tokens: BrandTokens): string {
       <text x="66" y="186" text-anchor="end" fill="${colorVar("text.muted")}" font-family="var(--font-body)" font-size="11" style="font-variant-numeric:tabular-nums">£0</text>
 
       <!-- Confidence band (chart.band) -->
-      <polygon points="360,118 450,94 540,68 540,110 450,124 360,132" fill="${colorVar("chart.band")}"/>
+      <polygon points="354,118 447,94 540,68 540,110 447,124 354,132" fill="${colorVar("chart.band")}"/>
 
       <!-- Primary line (chart.primary) -->
-      <polyline points="76,154 170,144 265,134 360,124" fill="none" stroke="${colorVar("chart.primary")}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-      <circle cx="360" cy="124" r="4" fill="${colorVar("chart.primary")}"/>
+      <polyline points="76,154 169,144 262,134 354,124" fill="none" stroke="${colorVar("chart.primary")}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="354" cy="124" r="4" fill="${colorVar("chart.primary")}"/>
 
       <!-- Dashed projection line (chart.projection) -->
-      <polyline points="360,124 450,108 540,90" fill="none" stroke="${colorVar("chart.projection")}" stroke-width="2.5" stroke-dasharray="6 4" stroke-linecap="round"/>
+      <polyline points="354,124 447,108 540,90" fill="none" stroke="${colorVar("chart.projection")}" stroke-width="2.5" stroke-dasharray="6 4" stroke-linecap="round"/>
       <circle cx="540" cy="90" r="4" fill="${colorVar("chart.projection")}"/>
 
       <!-- Debt line in apricot (chart.debt) -->
-      <polyline points="76,170 170,172 265,175 360,177 450,179 540,180" fill="none" stroke="${colorVar("chart.debt")}" stroke-width="2.5" stroke-linecap="round"/>
+      <polyline points="76,170 169,172 262,175 354,177 447,179 540,180" fill="none" stroke="${colorVar("chart.debt")}" stroke-width="2.5" stroke-linecap="round"/>
       <rect x="536" y="176" width="8" height="8" rx="1.5" fill="${colorVar("chart.debt")}"/>
 
       <!-- Direct end labels -->
       <text x="550" y="94" fill="${colorVar("chart.projection")}" font-family="var(--font-body)" font-size="11" font-weight="600">Estimate (dashed)</text>
       <text x="550" y="75" fill="${colorVar("primary")}" font-family="var(--font-body)" font-size="10">Range (chart.band)</text>
-      <text x="366" y="114" fill="${colorVar("chart.primary")}" font-family="var(--font-body)" font-size="11" font-weight="600">Net worth</text>
+      <text x="360" y="114" fill="${colorVar("chart.primary")}" font-family="var(--font-body)" font-size="11" font-weight="600">Net worth</text>
       <text x="550" y="184" fill="${colorVar("chart.debt")}" font-family="var(--font-body)" font-size="11" font-weight="600">Debt (apricot)</text>
       <text x="550" y="200" fill="${colorVar("text.muted")}" font-family="var(--font-mono)" font-size="10">chart.baseline (£0)</text>
 
       <!-- X axis ticks: 3-letter months (Sep, not Sept) -->
       <text x="76" y="232" text-anchor="middle" fill="${colorVar("text.muted")}" font-family="var(--font-body)" font-size="11">Sep</text>
-      <text x="170" y="232" text-anchor="middle" fill="${colorVar("text.muted")}" font-family="var(--font-body)" font-size="11">Oct</text>
-      <text x="265" y="232" text-anchor="middle" fill="${colorVar("text.muted")}" font-family="var(--font-body)" font-size="11">Nov</text>
-      <text x="360" y="232" text-anchor="middle" fill="${colorVar("text.muted")}" font-family="var(--font-body)" font-size="11">Dec</text>
-      <text x="450" y="232" text-anchor="middle" fill="${colorVar("text.muted")}" font-family="var(--font-body)" font-size="11">2027</text>
-      <text x="540" y="232" text-anchor="middle" fill="${colorVar("text.muted")}" font-family="var(--font-body)" font-size="11">2028</text>
+      <text x="169" y="232" text-anchor="middle" fill="${colorVar("text.muted")}" font-family="var(--font-body)" font-size="11">Oct</text>
+      <text x="262" y="232" text-anchor="middle" fill="${colorVar("text.muted")}" font-family="var(--font-body)" font-size="11">Nov</text>
+      <text x="354" y="232" text-anchor="middle" fill="${colorVar("text.muted")}" font-family="var(--font-body)" font-size="11">Dec</text>
+      <text x="447" y="232" text-anchor="middle" fill="${colorVar("text.muted")}" font-family="var(--font-body)" font-size="11">Jan</text>
+      <text x="540" y="232" text-anchor="middle" fill="${colorVar("text.muted")}" font-family="var(--font-body)" font-size="11">Feb</text>
 
       <text x="24" y="254" fill="${colorVar("text.muted")}" font-family="var(--font-body)" font-size="11">Assumes 5% annual growth. Figures are illustrative.</text>
     </svg>

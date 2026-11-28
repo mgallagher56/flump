@@ -73,7 +73,7 @@ const PROTOTYPE_THUMBS: ReadonlyArray<PrototypeThumb> = [
     id: "p8",
     file: "proto-p8.jpg",
     title: "8. Assembled",
-    round: "Round 3 (6f3f0922d / e82a4bf0f)",
+    round: "Round 3 (e82a4bf0f)",
     date: "26 Nov 2026",
   },
   {
@@ -167,14 +167,14 @@ export function renderEvolutionChapter(tokens: BrandTokens): string {
           <h3 class="card-title">Direction C as shipped, and E17 warmth and life</h3>
         </div>
         <div class="grid-2">
-          ${renderHistoryImg("baseline-2026-11-14-home-light.jpg", "Marketing home page visual baseline on 14 November 2026 in Direction C light theme", 960, 675, "14 Nov 2026 marketing home baseline (fd845e44f): cream canvas and deep teal-green hero.")}
+          ${renderHistoryImg("baseline-2026-11-14-home-light.jpg", "Marketing home page visual baseline on 14 November 2026 in Direction C light theme", 960, 675, '14 Nov 2026 marketing home baseline (fd845e44f): cream page with dark heading ("See where you stand each month."), teal "Request an invite" button and "Example monthly picture" strip with four figures.')}
           ${renderHistoryImg("baseline-2026-11-14-dash-light.jpg", "Web dashboard visual baseline on 14 November 2026 in Direction C light theme", 960, 675, "14 Nov 2026 web dashboard baseline (fd845e44f): sand neutrals and warm card surfaces.")}
           ${renderHistoryImg("e17-options.jpg", "E17 options sheet showing accent, setup progress, illustrations and section headers rendered without its web font", 960, 675, "15 Nov 2026 E17 options sheet (rendered without its web font).")}
-          ${renderHistoryImg("baseline-2026-11-20-home-light.jpg", "Marketing home page visual baseline on 20 November 2026 in light theme", 960, 675, "20 Nov 2026 marketing home light baseline (f80ed2fc6): alternating canvas and teal-tint bands.")}
+          ${renderHistoryImg("baseline-2026-11-20-home-light.jpg", "Marketing home page visual baseline on 20 November 2026 in light theme", 960, 675, '20 Nov 2026 marketing home light baseline (f80ed2fc6): cream canvas, "All your money. One clear picture." heading and a hero card with a deep teal-green net worth panel, off-white figures and an Example tag.')}
         </div>
         ${renderHistoryImg("baseline-2026-11-20-home-dark.jpg", "Marketing home page visual baseline on 20 November 2026 in Direction C dark theme", 960, 675, "20 Nov 2026 marketing home dark baseline (f80ed2fc6), the last baseline before Midnight and Mint.")}
         <p class="history-caption">
-          Real visual baselines show Direction C in production: cream canvas, deep teal-green hero and sand neutrals on 14 November (<code>fd845e44f</code>), then alternating teal-tint marketing bands on 20 November (<code>f80ed2fc6</code>). In between, E17 on 15 November added the Damson accent, the flat illustration style sheet, the setup progress ring, section headers and the name "Breathing room" (<code>c9bf34005</code>, <code>9e385a3dc</code>). Source: <code>docs/design/e17-options/README.md</code>, <code>STYLE-GUIDE.md</code> section 14 and visual baseline commits <code>fd845e44f</code> and <code>f80ed2fc6</code>.
+          Real visual baselines show Direction C in production: cream canvas, sand neutrals and deep teal-green on the primary button and figures on 14 November (<code>fd845e44f</code>), then a deep teal-green net worth panel on the hero card on 20 November (<code>f80ed2fc6</code>). In between, E17 on 15 November added the Damson accent, the flat illustration style sheet, the setup progress ring, section headers and the name "Breathing room" (<code>c9bf34005</code>, <code>9e385a3dc</code>). Source: <code>docs/design/e17-options/README.md</code>, <code>STYLE-GUIDE.md</code> section 14 and visual baseline commits <code>fd845e44f</code> and <code>f80ed2fc6</code>.
         </p>
       </article>
 
@@ -248,12 +248,12 @@ export function renderEvolutionChapter(tokens: BrandTokens): string {
           <h3 class="card-title">The home page before and after</h3>
         </div>
         <div class="grid-2">
-          ${renderHistoryImg("baseline-2026-11-25-home-light.jpg", "Marketing home page before rebuild on 25 November 2026 in light theme", 960, 675, "Before (25 Nov 2026, 79e77ba59): solid mint hero band and flat illustration.")}
-          ${renderHistoryImg("baseline-2026-11-28-home-light.jpg", "Marketing home page after prototype 11 rebuild on 28 November 2026 in light theme", 960, 675, "After (28 Nov 2026, 2949ac139): assembling document hero on canvas band with K2 logo.")}
+          ${renderHistoryImg("baseline-2026-11-25-home-light.jpg", "Marketing home page before rebuild on 25 November 2026 in light theme", 960, 675, 'Before (25 Nov 2026, 79e77ba59): pale mint canvas, charcoal "Request an invite" button and a hero card with a solid mint net worth panel in dark ink, tagged Example.')}
+          ${renderHistoryImg("baseline-2026-11-28-home-light.jpg", "Marketing home page after prototype 11 rebuild on 28 November 2026 in light theme", 960, 675, "After (28 Nov 2026, 2949ac139): prototype 11 hero with heading on the left, monthly picture card on the right and K2 logo top left.")}
           ${renderHistoryImg("baseline-2026-11-25-home-dark.jpg", "Marketing home page before rebuild on 25 November 2026 in dark theme", 960, 675, "Before (25 Nov 2026, 79e77ba59): dark theme before the marketing rollout.")}
           ${renderHistoryImg("baseline-2026-11-28-home-dark.jpg", "Marketing home page after prototype 11 rebuild on 28 November 2026 in dark theme", 960, 675, "After (28 Nov 2026, 2949ac139): dark theme with assembling cards, glass orb and K2 mark.")}
         </div>
-        ${renderHistoryImg("baseline-2026-11-27-home-light.jpg", "Marketing home page M1 intermediate build on 27 November 2026 in light theme", 960, 675, "Intermediate M1 build (27 Nov 2026, 1a4eca1df, PR 975) before PR 980 rebuilt the home page directly to prototype 11.")}
+        ${renderHistoryImg("baseline-2026-11-27-home-light.jpg", "Marketing home page M1 intermediate build on 27 November 2026 in light theme", 960, 675, 'Intermediate M1 build (27 Nov 2026, 1a4eca1df, PR 975): same heading with the mint net worth panel and a "Made from" list below it, before PR 980 rebuilt the home page to prototype 11.')}
         <p class="history-caption">
           Real 1280px visual baselines capture the home page transition: slice M1 (PR 975, <code>1a4eca1df</code>) first split page chunks and removed solid colour bands, then PR 980 (<code>93b0bae97</code>, 27 November 2026) rebuilt the home page directly to prototype 11 with the scroll-pinned hero and three.js journey. On 28 November 2026, PR 986 (<code>2949ac139</code>) shipped the matching features index, five area pages and AI connection page. Source: visual baselines <code>79e77ba59</code>, <code>1a4eca1df</code> and <code>2949ac139</code>, plus PRs 975, 980 and 986.
         </p>
@@ -271,7 +271,7 @@ export function renderEvolutionChapter(tokens: BrandTokens): string {
           ${renderHistoryImg("logo-round-3.jpg", "Logo options round three sheet showing C1 to C3 and K1 to K3 with K2 marked chosen", 880, 2417, "Logo options round 3: C and K refinements, with K2 marked chosen.")}
         </div>
         <p class="history-caption">
-          The logo moved from the Direction C teal blob (12 and 14 November) through Midnight and Mint's charcoal blob (24 November) and the teal fix (25 November) to three rounds of glass bubble studies. In round 3 the owner chose K2 (three climbing bubbles sharing one floor shadow), shipped on 27 November 2026 in PR 981 (<code>5bf009a04</code>) alongside flat-fill favicon candidate C and the mobile app icons on Midnight canvas. Source: <code>FlumpLogo</code> and <code>favicon.svg</code> git history, <code>.brand-inputs/logo-options/</code>, <code>STYLE-GUIDE.md</code> sections 9 and 14, and PR 981.
+          The logo moved from the Direction C teal blob (12 and 14 November) through Midnight and Mint's charcoal blob (24 November) and the teal fix (25 November) to three rounds of glass bubble studies. In round 3 the owner chose K2 (three climbing bubbles sharing one floor shadow), shipped on 27 November 2026 in PR 981 (<code>5bf009a04</code>) alongside flat-fill favicon candidate C and the mobile app icons on Midnight canvas. The three logo option sheets were working files from the design rounds, not committed; the K2 choice is recorded in PR 981 and <code>STYLE-GUIDE.md</code> section 14 (27 November 2026). Source: <code>FlumpLogo</code> and <code>favicon.svg</code> git history, <code>STYLE-GUIDE.md</code> sections 9 and 14, and PR 981.
         </p>
       </article>
     </div>
