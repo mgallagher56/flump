@@ -390,6 +390,25 @@ describe("root loader", () => {
     expect(thrown).toMatchObject({ init: { status: 403 }, data: { kind: "not-invited" } });
   });
 
+  it("on a client navigation, the not-invited page offers the download only when there is data", async () => {
+    // The profile read is refused; the export summary says whether there is anything to download.
+    const answer = (hasData: boolean) => {
+      globalThis.fetch = vi.fn(async (url: RequestInfo | URL) =>
+        String(url).endsWith("/user-profile/export/summary")
+          ? new Response(JSON.stringify({ hasData }), {
+              headers: { "Content-Type": "application/json" },
+            })
+          : new Response('{"error":"not_invited"}', { status: 403 }),
+      ) as typeof fetch;
+    };
+    answer(false);
+    const nothing = await loader({ ...args, context: {} }).catch((e: unknown) => e);
+    expect(nothing).toMatchObject({ data: { kind: "not-invited", offerDataDownload: false } });
+    answer(true);
+    const some = await loader({ ...args, context: {} }).catch((e: unknown) => e);
+    expect(some).toMatchObject({ data: { kind: "not-invited", offerDataDownload: true } });
+  });
+
   it("keeps the shell up with a null profile when the backend is 503", async () => {
     globalThis.fetch = vi.fn().mockRejectedValue(new Error("down"));
     const result = await loader(args);

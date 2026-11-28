@@ -37,6 +37,7 @@ import { TermsChangeNotice } from "~/features/legal/components/TermsChangeNotice
 import { isUpcoming } from "~/features/legal/terms";
 import { backendFetch } from "~/services/backend-client.server";
 import { getMarketingUrl } from "~/utils/marketingUrl";
+import { offerDataDownload } from "./features/settings/exportSummary.server";
 import styles from "./index.css?url";
 import { sentryPublicEnv } from "./observability/env";
 import { securityMiddleware } from "./security/middleware.server";
@@ -97,7 +98,13 @@ export const loader = async (args: LoaderFunctionArgs) => {
       // is the exception: it is how an uninvited person joins, so it renders its own outcome in a
       // shell with no header or nav.
       if (error instanceof BackendError && error.kind === "not-invited") {
-        if (!isInvitePath(new URL(args.request.url).pathname)) throwRouteError(error);
+        // A client navigation lands here rather than in the invite gate: the page offers
+        // "Download your data" only when there is something to download, as the gate's does.
+        if (!isInvitePath(new URL(args.request.url).pathname)) {
+          throwRouteError(error, {
+            offerDataDownload: await offerDataDownload(accessToken, args.request.signal),
+          });
+        }
         notInvited = true;
       }
       // Not yet agreed to the terms in force: the acceptance page, unless already on a page that
