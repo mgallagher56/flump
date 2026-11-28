@@ -3,6 +3,7 @@ import { Button, ConfirmDialog, VisuallyHidden } from "@repo/ui";
 import { type FC, useEffect, useState } from "react";
 import { formatInviteDate } from "../../inviteFormat";
 import {
+  memberListContact,
   memberListEmpty,
   memberListMain,
   memberListMeta,
@@ -21,9 +22,21 @@ export interface MemberListProps {
   error?: string | null;
 }
 
-const nameOf = (member: BetaMemberDto) => member.label ?? "No label";
+/** The person's name, else their email address, else the link's label. */
+const nameOf = (member: BetaMemberDto) => member.name ?? member.email ?? member.label ?? "No label";
 
-/** Everyone who joined through an invite link, with "Remove access" behind a confirmation. */
+/** "Joined <date>", and which link when the label is not already the row's title. */
+function joinedLine(member: BetaMemberDto): string {
+  const joined = `Joined ${formatInviteDate(member.addedAt)}`;
+  const titledByLabel = !member.name && !member.email;
+  return member.label && !titledByLabel ? `${joined} with the link ${member.label}` : joined;
+}
+
+/**
+ * Everyone who joined through an invite link, by name and email address (read from the sign-in
+ * provider; the admin is the only one who sees this list), with "Remove access" behind a
+ * confirmation.
+ */
 export const MemberList: FC<MemberListProps> = ({
   members,
   onRemove,
@@ -45,7 +58,10 @@ export const MemberList: FC<MemberListProps> = ({
           <li className={memberListRow()} key={member.userId}>
             <div className={memberListMain()}>
               <span className={memberListName()}>{nameOf(member)}</span>
-              <span className={memberListMeta()}>Joined {formatInviteDate(member.addedAt)}</span>
+              {member.email && member.name ? (
+                <span className={memberListContact()}>{member.email}</span>
+              ) : null}
+              <span className={memberListMeta()}>{joinedLine(member)}</span>
             </div>
             <Button size="sm" type="button" variant="outline" onClick={() => setRemoving(member)}>
               Remove access

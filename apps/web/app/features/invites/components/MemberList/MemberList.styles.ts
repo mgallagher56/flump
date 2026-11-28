@@ -24,7 +24,12 @@ export const memberListMain = cva({
 });
 
 export const memberListName = cva({
-  base: { color: "text.primary", fontWeight: "medium" },
+  base: { color: "text.primary", fontWeight: "medium", overflowWrap: "anywhere" },
+});
+
+/** An email address: long ones wrap anywhere rather than push the row wider than the screen. */
+export const memberListContact = cva({
+  base: { textStyle: "body.sm", color: "text.primary", overflowWrap: "anywhere" },
 });
 
 export const memberListMeta = cva({

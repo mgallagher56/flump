@@ -9,6 +9,7 @@ import {
   inviteListRoot,
   inviteListRow,
   inviteListTitle,
+  inviteListUsedBy,
 } from "./InviteList.styles";
 
 const STATUS_LABEL: Record<BetaInviteStatus, string> = {
@@ -24,6 +25,13 @@ export interface InviteListProps {
   onCancel: (id: string) => void;
   /** The invite being cancelled, if any. */
   pendingId?: string | null;
+}
+
+/** "Used by <name>, <email>" for a used link whose person is known; null otherwise. */
+function usedByLine(invite: BetaInviteDto): string | null {
+  if (invite.status !== "used") return null;
+  const who = [invite.usedByName, invite.usedByEmail].filter(Boolean).join(", ");
+  return who ? `Used by ${who}` : null;
 }
 
 function metaLine(invite: BetaInviteDto): string {
@@ -52,6 +60,9 @@ export const InviteList: FC<InviteListProps> = ({ invites, onCancel, pendingId =
                   {STATUS_LABEL[invite.status]}
                 </StatusBadge>
               </span>
+              {usedByLine(invite) ? (
+                <span className={inviteListUsedBy()}>{usedByLine(invite)}</span>
+              ) : null}
               <span className={inviteListMeta()}>{metaLine(invite)}</span>
             </div>
             {invite.status === "unused" ? (

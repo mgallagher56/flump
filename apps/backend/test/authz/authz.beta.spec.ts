@@ -1,5 +1,6 @@
 import "reflect-metadata";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { BetaPeopleService } from "../../src/beta/beta-people.service";
 import { resolveDbTestMode } from "../../src/testing/dbTestMode";
 import { ROUTE_MATRIX } from "./matrix";
 import {
@@ -186,9 +187,22 @@ describe.skipIf(dbMode === "skip")("authz: beta invite links (real Postgres)", (
     const members = await h.call("get", "/beta/admin/members", h.tokens.a);
     expect(members.status).toBe(200);
     expect(members.body.members).toEqual([
-      { userId: USER_B, label: "First", addedAt: expect.any(String) },
+      { userId: USER_B, label: "First", addedAt: expect.any(String), name: null, email: null },
     ]);
     ran("GET /beta/admin/members");
+
+    // With an email to show: the admin sees it, a member asking for the list gets the bare 404.
+    const sample = `b@${["example", "com"].join(".")}`;
+    const people = h.app.get(BetaPeopleService);
+    const lookup = vi
+      .spyOn(people, "contactsFor")
+      .mockResolvedValue(new Map([[USER_B, { email: sample, name: "Person B" }]]));
+    const shown = await h.call("get", "/beta/admin/members", h.tokens.a);
+    expect(shown.body.members[0]).toMatchObject({ name: "Person B", email: sample });
+    const refused = await h.call("get", "/beta/admin/members", h.tokens.b);
+    expect(refused.status).toBe(404);
+    expect(JSON.stringify(refused.body)).not.toContain(sample);
+    lookup.mockRestore();
 
     expect((await h.call("delete", `/beta/admin/members/${USER_B}`, h.tokens.a)).body).toEqual({
       success: true,
@@ -206,7 +220,7 @@ describe.skipIf(dbMode === "skip")("authz: beta invite links (real Postgres)", (
     expect(await bCanUseTheApp()).toBe(200);
     const again = await h.call("get", "/beta/admin/members", h.tokens.a);
     expect(again.body.members).toEqual([
-      { userId: USER_B, label: "Second", addedAt: expect.any(String) },
+      { userId: USER_B, label: "Second", addedAt: expect.any(String), name: null, email: null },
     ]);
     ran("DELETE /beta/admin/members/:userId");
   });
@@ -262,7 +276,16 @@ describe.skipIf(dbMode === "skip")("authz: beta invite links (real Postgres)", (
     expect(list.body.invites.map((i: { id: string }) => i.id)).toEqual([plain.id, labelled.id]);
     expect(JSON.stringify(list.body)).not.toContain(labelled.token);
     expect(Object.keys(list.body.invites[0]).sort()).toEqual(
-      ["createdAt", "expiresAt", "id", "label", "status", "usedAt"].sort(),
+      [
+        "createdAt",
+        "expiresAt",
+        "id",
+        "label",
+        "status",
+        "usedAt",
+        "usedByEmail",
+        "usedByName",
+      ].sort(),
     );
     ran("GET /beta/admin/invites");
 

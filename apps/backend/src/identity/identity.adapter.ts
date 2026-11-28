@@ -10,6 +10,12 @@ export interface UserIdentityAdapter {
   updateName(userId: string, firstName?: string, lastName?: string): Promise<void>;
   /** Returns the user's own email from the identity provider, or null if unknown. */
   getUserEmail(userId: string): Promise<string | null>;
+  /**
+   * The user's email and name (first and last joined, null when neither is set) from the identity
+   * provider, or null when the user is unknown (404) or no client is configured. Throws on any
+   * other failure.
+   */
+  getUserContact(userId: string): Promise<UserContact | null>;
   sendPasswordReset(email: string): Promise<void>;
   /**
    * Permanently deletes the login (BE-04). Resolves when the user is gone, including when the
@@ -35,6 +41,21 @@ function isIdentityNotFound(err: unknown): boolean {
 }
 
 export const USER_IDENTITY_ADAPTER = "USER_IDENTITY_ADAPTER";
+
+/** A person's contact details as the identity provider holds them. Personal data: never logged. */
+export interface UserContact {
+  email: string;
+  name: string | null;
+}
+
+/** First and last name joined with a space; null when both are blank. */
+export function joinName(first?: string | null, last?: string | null): string | null {
+  const name = [first, last]
+    .map((part) => part?.trim() ?? "")
+    .filter(Boolean)
+    .join(" ");
+  return name || null;
+}
 
 /**
  * Production adapter communicating with WorkOS.
@@ -69,6 +90,18 @@ export class WorkOSIdentityAdapter implements UserIdentityAdapter {
     try {
       const user = await this.client.userManagement.getUser(userId);
       return user?.email ?? null;
+    } catch (err: unknown) {
+      if (isIdentityNotFound(err)) return null;
+      throw err;
+    }
+  }
+
+  async getUserContact(userId: string): Promise<UserContact | null> {
+    if (!this.client) return null;
+    try {
+      const user = await this.client.userManagement.getUser(userId);
+      if (!user?.email) return null;
+      return { email: user.email, name: joinName(user.firstName, user.lastName) };
     } catch (err: unknown) {
       if (isIdentityNotFound(err)) return null;
       throw err;
@@ -133,6 +166,14 @@ export class InMemoryIdentityAdapter implements UserIdentityAdapter {
 
   async getUserEmail(userId: string): Promise<string | null> {
     return this.emails.get(userId) ?? null;
+  }
+
+  /** Names by user id, read with `emails` by getUserContact. */
+  public names = new Map<string, string>();
+
+  async getUserContact(userId: string): Promise<UserContact | null> {
+    const email = this.emails.get(userId);
+    return email ? { email, name: this.names.get(userId) ?? null } : null;
   }
 
   async sendPasswordReset(email: string): Promise<void> {

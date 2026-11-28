@@ -4,6 +4,7 @@ import { DataSource, type DataSourceOptions } from "typeorm";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { typeOrmOptionsFromEnv } from "../config/typeorm.options";
 import { BetaMember } from "../entities/beta-member.entity";
+import { InMemoryIdentityAdapter } from "../identity/identity.adapter";
 import { AddBetaInvitesAndMembers1795590000000 } from "../migrations/AddBetaInvitesAndMembers1795590000000";
 import { assertSafeTestDatabase } from "../testing/assertSafeTestDatabase";
 import { resolveDbTestMode } from "../testing/dbTestMode";
@@ -11,6 +12,7 @@ import { discoverMigrations } from "../testing/discoverMigrations";
 import { emptyEntityTables } from "../testing/emptyTables";
 import { BetaInvitesService } from "./beta-invites.service";
 import { BetaMembershipService } from "./beta-membership.service";
+import { BetaPeopleService } from "./beta-people.service";
 
 // Invite links on real Postgres: the single-use claim under a race, and every redeem outcome.
 // Drops the public schema, so a throwaway database only:
@@ -197,8 +199,35 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("beta invites (real P
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({ userId: USER_1, inviteId: again.id, removedAt: null });
     expect((await invites.listMembers()).members).toEqual([
-      { userId: USER_1, label: "Again", addedAt: expect.any(String) },
+      { userId: USER_1, label: "Again", addedAt: expect.any(String), name: null, email: null },
     ]);
+  });
+
+  it("shows the admin who used each link and who has access, read from the provider", async () => {
+    const identity = new InMemoryIdentityAdapter();
+    const sample = `ada@${["example", "com"].join(".")}`;
+    identity.emails.set(USER_1, sample);
+    identity.names.set(USER_1, "Ada Lovelace");
+    const withPeople = new BetaInvitesService(ds, new BetaPeopleService(identity));
+    const used = await withPeople.createInvite(ADMIN, "Ada");
+    const unused = await withPeople.createInvite(ADMIN);
+    await withPeople.redeem(user(USER_1), used.token);
+    await withPeople.redeem(user(USER_2), (await withPeople.createInvite(ADMIN)).token);
+
+    const byId = Object.fromEntries((await withPeople.listInvites()).invites.map((i) => [i.id, i]));
+    expect(byId[used.id]).toMatchObject({ usedByName: "Ada Lovelace", usedByEmail: sample });
+    expect(byId[unused.id]).toMatchObject({ usedByName: null, usedByEmail: null });
+    const members = (await withPeople.listMembers()).members;
+    expect(members.find((m) => m.userId === USER_1)).toMatchObject({
+      name: "Ada Lovelace",
+      email: sample,
+    });
+    // The provider does not know USER_2 (as for an erased account): blank, not an error.
+    expect(members.find((m) => m.userId === USER_2)).toMatchObject({ name: null, email: null });
+
+    // Remove access: the row goes from the list.
+    await withPeople.removeMember(USER_1);
+    expect((await withPeople.listMembers()).members.map((m) => m.userId)).toEqual([USER_2]);
   });
 
   it("lists closed links for 30 days only, newest first, with the derived status", async () => {
