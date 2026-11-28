@@ -88,7 +88,7 @@ Each status has `text`, `bg`, `border` and `solid`. Values are in `tokens.md`.
 
 **Rule C3. Status is never colour alone.** Every status carries an icon or a word (`StatusBadge` and `InlineAlert` add both). **Enforced by** the `StatusBadge` and `InlineAlert` component tests; **Review only** elsewhere.
 
-**Rule C4. Light text on a status fill only where it passes.** `status.danger.solid` carries `text.onContrast` in both themes. `primary.foreground` may sit on the `positive`, `info` and `neutral` solids in both themes, on `danger.solid` in light only and on `warning.solid` in dark only. Use `status.*.bg` with `status.*.text` for labelled badges. **Enforced by** `tokens.a11y.test.ts`.
+**Rule C4. Foreground text on a status fill only where it passes.** `status.danger.solid` carries `text.onContrast` in both themes. `primary.foreground` may sit on the `positive`, `info` and `neutral` solids in both themes, on `danger.solid` in light only and on `warning.solid` in dark only. Use `status.*.bg` with `status.*.text` for labelled badges. **Enforced by** `tokens.a11y.test.ts`.
 
 ### 2.4 How much colour (light and dark)
 
