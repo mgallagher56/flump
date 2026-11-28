@@ -1276,6 +1276,138 @@ tr:last-child td {
   }
 }
 
+.timeline {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.timeline-entry {
+  background-color: var(--color-surface-card);
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-primary);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-density-card-pad);
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.timeline-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+
+.history-grid-3 {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+}
+
+@media (min-width: 1024px) {
+  .history-grid-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.history-figure {
+  margin: 0;
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.history-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: var(--radius-control);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface-sunken);
+}
+
+.history-caption {
+  font-size: var(--text-body-sm-size);
+  line-height: var(--text-body-sm-lh);
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.contact-sheet {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+@media (min-width: 768px) {
+  .contact-sheet {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .contact-sheet {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.contact-tile {
+  margin: 0;
+  background-color: var(--color-surface-subtle);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-2);
+  display: grid;
+  gap: var(--space-2);
+  align-content: start;
+  min-width: 0;
+}
+
+.contact-tile-chosen {
+  border: 2px solid var(--color-primary);
+  background-color: var(--color-primary-subtle);
+}
+
+.contact-tile-meta {
+  display: grid;
+  gap: 2px;
+  font-size: var(--text-label-sm-size);
+  line-height: var(--text-label-sm-lh);
+}
+
+.contact-tile-title {
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.contact-tile-date {
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.logo-stage-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.logo-mini-ground {
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  padding: var(--space-3);
+  display: grid;
+  gap: var(--space-2);
+  justify-items: center;
+}
+
+.logo-mini-icons {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
 .book-footer {
   border-top: 1px solid var(--color-border);
   padding-top: var(--space-5);
@@ -1447,7 +1579,7 @@ tr:last-child td {
     <article class="card-subtle">
       <h3 class="card-title">Guidance, not advice, and no shaming</h3>
       <p class="prose">
-        Flump gives facts and estimates, never recommendations. Every encouragement feature must pass all five E35 no-shaming tests (N1 to N5): no points, scores, grades, leagues or ranks; no comparison with other people; no loss-framed streaks; praise only the action, never the amount; and equal warmth for every starting point including debt, renting and low savings.
+        Flump gives facts and estimates, never recommendations. Every encouragement feature must pass all five E35 no-shaming tests (N1 to N5): no points, scores, grades, leagues or ranks; no comparison with other people; no loss-framed streaks; acknowledge the action, never the amount; and equal warmth for every starting point including debt, renting and low savings.
       </p>
     </article>
 
@@ -2115,7 +2247,7 @@ tr:last-child td {
       <article class="card">
         <h4 class="card-title">Favicon</h4>
         <p class="prose">
-          Both <code>apps/web/public/favicon.svg</code> and <code>apps/marketing/public/favicon.svg</code> serve the same compact K2 mark with a <code>prefers-color-scheme: dark</code> media rule and a cutout ring behind the front teal bubble.
+          Both <code>apps/web/public/favicon.svg</code> and <code>apps/marketing/public/favicon.svg</code> serve the same compact K2 mark in flat fills (candidate C) with a <code>prefers-color-scheme: dark</code> media rule and a cutout ring behind the front teal bubble.
         </p>
         <div class="logo-stage">
           <div class="theme-frame theme-light">
@@ -2146,7 +2278,7 @@ tr:last-child td {
       <article class="card">
         <h4 class="card-title">Mobile app icons</h4>
         <p class="prose">
-          Generated from <code>FlumpLogo.art.ts</code> in Midnight colours by <code>apps/e2e/scripts/generate-app-icons.ts</code>: <code>apps/mobile/assets/icon.png</code> (1024px square on Midnight canvas) and <code>adaptive-icon.png</code> (transparent, inside the 66 of 108 dp Android safe zone).
+          Generated from <code>FlumpLogo.art.ts</code> in Midnight colours by <code>apps/e2e/scripts/generate-app-icons.ts</code>: <code>apps/mobile/assets/icon.png</code> (1024px square on Midnight canvas) and <code>adaptive-icon.png</code> (transparent, inside the 66 of 108 dp Android safe zone). There is no splash screen yet.
         </p>
         <div class="logo-stage">
           <div>
@@ -2165,13 +2297,12 @@ tr:last-child td {
       <h3 class="card-title">Logo rules and what not to do</h3>
       <ul class="plain-list">
         <li>Clear space around the logo is at least half its width.</li>
-        <li>Static only: no motion on the logo.</li>
         <li>Do not recolour it, rotate it, add a wordmark in another typeface, or place it on <code>surface.hero</code> or a photograph.</li>
         <li>In a header, it links to home and takes its accessible name from the link.</li>
       </ul>
     </article>
 
-    <p class="source-cite">Sources: STYLE-GUIDE 9, 14; FlumpLogo.art.ts; chrome-parity.laws.test.ts; generate-app-icons.ts</p>
+    <p class="source-cite">Sources: STYLE-GUIDE 2.2, 9, 14; FlumpLogo.art.ts; chrome-parity.laws.test.ts; generate-app-icons.ts</p>
   </section>
 <section class="chapter" id="colour">
     <div class="chapter-head">
@@ -2463,7 +2594,7 @@ tr:last-child td {
         <span class="swatch-val">Light: <strong>#e7f2ee</strong></span>
         <span class="swatch-val">Dark: <strong>#262b33</strong></span>
       </div>
-      <p class="swatch-note">Hover fills, the scenario zone</p>
+      <p class="swatch-note">Hover fills</p>
     </div>
   </div><div class="swatch-card" data-path="surface.sunken" data-light="#dfeee9" data-dark="#0f1216">
     <div class="swatch-chip" style="background:var(--color-surface-sunken)" aria-hidden="true"></div>
@@ -2473,7 +2604,7 @@ tr:last-child td {
         <span class="swatch-val">Light: <strong>#dfeee9</strong></span>
         <span class="swatch-val">Dark: <strong>#0f1216</strong></span>
       </div>
-      <p class="swatch-note">Wells, input tracks, Example tag pill</p>
+      <p class="swatch-note">Wells, input tracks</p>
     </div>
   </div><div class="swatch-card" data-path="surface.overlay" data-light="#f6f7f7" data-dark="#2a3039">
     <div class="swatch-chip" style="background:var(--color-surface-overlay)" aria-hidden="true"></div>
@@ -2703,6 +2834,26 @@ tr:last-child td {
       </div>
       <p class="swatch-note">Text on primary.solid</p>
     </div>
+  </div><div class="swatch-card" data-path="primary.mark" data-light="#084f45" data-dark="#6fd0ba">
+    <div class="swatch-chip" style="background:var(--color-primary-mark)" aria-hidden="true"></div>
+    <div class="swatch-meta">
+      <div><code>primary.mark</code></div>
+      <div class="swatch-values">
+        <span class="swatch-val">Light: <strong>#084f45</strong></span>
+        <span class="swatch-val">Dark: <strong>#6fd0ba</strong></span>
+      </div>
+      <p class="swatch-note">Brand mark lit from above by primary.markLit (the home hero statement letterhead; not the logo)</p>
+    </div>
+  </div><div class="swatch-card" data-path="primary.markLit" data-light="#0b6b5d" data-dark="#9be3d2">
+    <div class="swatch-chip" style="background:var(--color-primary-mark-lit)" aria-hidden="true"></div>
+    <div class="swatch-meta">
+      <div><code>primary.markLit</code></div>
+      <div class="swatch-values">
+        <span class="swatch-val">Light: <strong>#0b6b5d</strong></span>
+        <span class="swatch-val">Dark: <strong>#9be3d2</strong></span>
+      </div>
+      <p class="swatch-note">Top highlight for primary.mark</p>
+    </div>
   </div><div class="swatch-card" data-path="primary.subtle" data-light="#cfe9e2" data-dark="#1f3532">
     <div class="swatch-chip" style="background:var(--color-primary-subtle)" aria-hidden="true"></div>
     <div class="swatch-meta">
@@ -2883,7 +3034,7 @@ tr:last-child td {
         <span class="swatch-val">Light: <strong>#3a5c08</strong></span>
         <span class="swatch-val">Dark: <strong>#c5de4c</strong></span>
       </div>
-      <p class="swatch-note">Positive solid fill (light text passes in light only)</p>
+      <p class="swatch-note">Positive solid fill (primary.foreground passes in both themes)</p>
     </div>
   </div><div class="swatch-card" data-path="status.warning.text" data-light="#8a4a08" data-dark="#f2b873">
     <div class="swatch-chip" style="background:var(--color-status-warning-text)" aria-hidden="true"></div>
@@ -2923,7 +3074,7 @@ tr:last-child td {
         <span class="swatch-val">Light: <strong>#b06a10</strong></span>
         <span class="swatch-val">Dark: <strong>#e0a04a</strong></span>
       </div>
-      <p class="swatch-note">Warning solid fill (never white text)</p>
+      <p class="swatch-note">Warning solid fill (primary.foreground in dark only; never in light)</p>
     </div>
   </div><div class="swatch-card" data-path="status.danger.text" data-light="#a13a2b" data-dark="#f4a593">
     <div class="swatch-chip" style="background:var(--color-status-danger-text)" aria-hidden="true"></div>
@@ -2963,7 +3114,7 @@ tr:last-child td {
         <span class="swatch-val">Light: <strong>#b64030</strong></span>
         <span class="swatch-val">Dark: <strong>#be5337</strong></span>
       </div>
-      <p class="swatch-note">Destructive confirm button fill (white text passes in both)</p>
+      <p class="swatch-note">Destructive confirm button fill (text.onContrast in both themes; primary.foreground in light only)</p>
     </div>
   </div><div class="swatch-card" data-path="status.info.text" data-light="#3730a3" data-dark="#a5a8ff">
     <div class="swatch-chip" style="background:var(--color-status-info-text)" aria-hidden="true"></div>
@@ -3003,7 +3154,7 @@ tr:last-child td {
         <span class="swatch-val">Light: <strong>#4f46e5</strong></span>
         <span class="swatch-val">Dark: <strong>#8f92ff</strong></span>
       </div>
-      <p class="swatch-note">Info solid fill</p>
+      <p class="swatch-note">Info solid fill (primary.foreground passes in both themes)</p>
     </div>
   </div><div class="swatch-card" data-path="status.neutral.text" data-light="#2f4a4a" data-dark="#cdd1d7">
     <div class="swatch-chip" style="background:var(--color-status-neutral-text)" aria-hidden="true"></div>
@@ -3043,7 +3194,7 @@ tr:last-child td {
         <span class="swatch-val">Light: <strong>#5a716d</strong></span>
         <span class="swatch-val">Dark: <strong>#a9afb9</strong></span>
       </div>
-      <p class="swatch-note">Neutral solid fill</p>
+      <p class="swatch-note">Neutral solid fill (primary.foreground passes in both themes)</p>
     </div>
   </div>
     </div>
@@ -3349,7 +3500,7 @@ tr:last-child td {
       <ul class="plain-list">
         <li><strong>T1 to T3:</strong> All sizes come from text styles; 12px is the minimum floor; weights are 400, 500, 600 and 700 only.</li>
         <li><strong>T4:</strong> Every money amount, percentage, date, duration, table cell and slider value uses <code>tabular-nums</code> and en-GB formatting.</li>
-        <li><strong>T5 to T9:</strong> Sentence case everywhere (no uppercase eyebrows or caps tracking); one <code>h1</code> per page; body lines at most 75 characters wide; text survives 200% zoom without clipping.</li>
+        <li><strong>T5 to T9:</strong> Headline figure is the largest text after the <code>h1</code> and "Not set" is never larger than a real value; sentence case everywhere (no uppercase eyebrows or caps tracking); one <code>h1</code> per page with no skipped heading levels; body lines at most 75 characters wide; text survives 200% zoom without clipping.</li>
       </ul>
     </article>
 
@@ -3362,7 +3513,7 @@ tr:last-child td {
     </div>
 
     <p class="prose">
-      Introduced on 27 November 2026 (design rollout slice F3, PR 968), Flump pairs neutral card materials with lit glass orbs. Card materials stay completely neutral (no violet or rose) and never obscure contrast: text on glass and paper clears 4.5:1 in both themes.
+      Introduced on 27 November 2026 (design rollout slices F2 and F3, PRs 963 and 968), Flump pairs neutral card materials with lit glass orbs. Card materials stay completely neutral (no violet or rose) and never obscure contrast: text on glass and paper clears 4.5:1 in both themes.
     </p>
 
     <figure class="diagram-figure">
@@ -3747,7 +3898,7 @@ tr:last-child td {
           <tr>
     <td><code>spacing.page.gutter.sm</code></td>
     <td class="num" data-path="spacing.page.gutter.sm" data-value="16px"><strong>16px</strong></td>
-    <td>Phone gutter (375px and up)</td>
+    <td>Phone gutter</td>
   </tr><tr>
     <td><code>spacing.page.gutter.md</code></td>
     <td class="num" data-path="spacing.page.gutter.md" data-value="24px"><strong>24px</strong></td>
@@ -3879,7 +4030,7 @@ tr:last-child td {
     <div class="grid-2">
       <div class="shadow-demo" style="box-shadow:var(--shadow-xs)" data-path="shadows.xs" data-light="0 1px 2px rgba(15, 42, 42, 0.07)" data-dark="inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 0 0 1px rgba(255, 255, 255, 0.05)">
     <div><code>shadows.xs</code></div>
-    <p class="swatch-note">Subtle hairline lift</p>
+    <p class="swatch-note">Faint lift for small parts such as the active tab thumb</p>
     <div class="swatch-values">
       <span class="swatch-val">Light: <code>0 1px 2px rgba(15, 42, 42, 0.07)</code></span>
     </div>
@@ -4036,7 +4187,7 @@ tr:last-child td {
       <article class="card">
         <h3 class="card-title">App palette and opt-in orb look</h3>
         <p class="prose">
-          By default (<code>palette="app"</code>), credit cards stay mint (<code>primary.subtle</code>) and never rose or red. The marketing home page may opt into <code>palette="orb"</code> for its allow-listed marks under rule MC1.
+          By default (<code>palette="app"</code>), credit cards stay mint (<code>primary.subtle</code>) and never rose or red. The marketing home page and the AI connection page's "What you see" picture may opt into <code>palette="orb"</code> under rule MC1.
         </p>
         <div class="doc-svg-wrap">
     <svg viewBox="0 0 300 200" role="img" aria-labelledby="doc-pic-feature-debt">
@@ -4055,7 +4206,7 @@ tr:last-child td {
       <article class="card-subtle">
         <h3 class="card-title">Flat scenes (E17)</h3>
         <p class="prose">
-          Apps keep flat scenes on a 240 by 170 grid (ground line at 152, 20 clear at the sides, 10 at the top) until the switch to document cards (decision D4). Each scene uses one sun, one dotted arc, at most one leaf or sprout and three to five rounded solid forms (14px corners, no outlines).
+          Apps keep flat scenes on a 240 by 180 grid (ground line at 152, 20 clear at the sides, 10 at the top) until the switch to document cards (decision D4). Each scene uses one sun, one dotted arc, at most one leaf or sprout and three to five rounded solid forms (14px corners, no outlines).
         </p>
       </article>
 
@@ -4239,7 +4390,7 @@ tr:last-child td {
     </div>
 
     <p class="prose">
-      Chart colours come only from <code>chart.*</code> via <code>chartColor()</code> and <code>seriesColor()</code> (Rule CH1). Colour identifies an entity, never an outcome (CH2): an account keeps its assigned colour across views, and liabilities use apricot (<code>chart.debt</code>), never red.
+      Chart colours come only from <code>chart.*</code> via <code>chartColor()</code> and <code>seriesColor()</code> (Rule CH1). Colour identifies an entity, never an outcome (CH2): an account keeps its assigned colour across views, and debts use apricot (<code>chart.debt</code>), never red.
     </p>
 
     <figure class="diagram-figure">
@@ -4496,7 +4647,7 @@ tr:last-child td {
         <span class="swatch-val">Light: <strong>rgba(11, 107, 93, 0.14)</strong></span>
         <span class="swatch-val">Dark: <strong>rgba(111, 208, 186, 0.15)</strong></span>
       </div>
-      <p class="swatch-note">Confidence range fill behind forecast lines (never a line)</p>
+      <p class="swatch-note">Range fill behind a forecast line (never a line)</p>
     </div>
   </div><div class="swatch-card" data-path="chart.baseline" data-light="#5e837a" data-dark="#737c88">
     <div class="swatch-chip" style="background:var(--color-chart-baseline)" aria-hidden="true"></div>
@@ -4610,18 +4761,862 @@ tr:last-child td {
         <div class="do-dont-grid">
           <div class="card-subtle" style="border-left:3px solid var(--color-status-positive-text)">
             <span class="swatch-note" style="color:var(--color-status-positive-text);font-weight:600">Do</span>
-            <p class="prose">Keep half-width clear space around the static K2 logo, store pictures as shape lists (IL4) and keep a real-text Example tag on sample cards.</p>
+            <p class="prose">Keep half-width clear space around the K2 logo, store pictures as shape lists (IL4) and keep a real-text Example tag on sample cards.</p>
           </div>
           <div class="card-subtle" style="border-left:3px solid var(--color-status-danger-text)">
             <span class="swatch-note" style="color:var(--color-status-danger-text);font-weight:600">Do not</span>
-            <p class="prose">Place the logo on surface.hero or photographs, animate the logo, or draw faces, coin piles or glass objects inside pictures.</p>
+            <p class="prose">Place the logo on surface.hero or photographs, recolour or rotate it, or draw faces, coin piles or glass objects inside pictures.</p>
           </div>
         </div>
       </article>
 
     <p class="source-cite">Sources: STYLE-GUIDE; UX-GUIDELINES; COPY-GUIDE</p>
   </section>
-<section id="evolution"><!-- EVOLUTION CHAPTER: filled by a later run --></section>
+<section class="chapter" id="evolution">
+    <div class="chapter-head">
+      <span class="chapter-kicker">Chapter 11</span>
+      <h2 class="chapter-title">How the brand has evolved</h2>
+    </div>
+
+    <p class="prose">
+      Every visual turn in Flump is recorded in git history, visual regression baselines and owner decision logs from November 2026. The timeline below traces the path from three early design directions through Midnight and Mint, the marketing motion prototypes and the K2 mark.
+    </p>
+
+    <div class="timeline">
+      <article class="timeline-entry">
+        <div class="timeline-head">
+          <span class="pill num">12 November 2026</span>
+          <h3 class="card-title">E15 visual directions and the round 5 choice</h3>
+        </div>
+        <div class="history-grid-3">
+          <figure class="history-figure">
+    <img class="history-img" src="assets/history/e15-direction-a.jpg" alt="E15 Direction A Calm Ledger mock-up rendered without its web font" width="800" height="562" loading="lazy"/>
+    <figcaption class="swatch-note">Direction A: Calm Ledger (rendered without its web font).</figcaption>
+  </figure>
+          <figure class="history-figure">
+    <img class="history-img" src="assets/history/e15-direction-b.jpg" alt="E15 Direction B Instrument Panel mock-up rendered without its web font" width="800" height="562" loading="lazy"/>
+    <figcaption class="swatch-note">Direction B: Instrument Panel (rendered without its web font).</figcaption>
+  </figure>
+          <figure class="history-figure">
+    <img class="history-img" src="assets/history/e15-direction-c.jpg" alt="E15 Direction C Warm Guide mock-up rendered without its web font" width="800" height="562" loading="lazy"/>
+    <figcaption class="swatch-note">Direction C: Warm Guide (rendered without its web font).</figcaption>
+  </figure>
+        </div>
+        <p class="history-caption">
+          Three standalone mock-ups explored Flump's character: Calm Ledger (A), Instrument Panel (B) and Warm Guide (C), all rendered here without their external web fonts. In decision round 5, the owner chose Direction C's warm teal-green palette and soft shapes on Direction A's calm-ledger structure, keeping Plus Jakarta Sans and Inter (no serif). Source: <code>DECISIONS.md</code> (round 5, 12 November 2026), commit <code>f9e258b65</code> and <code>docs/design/e15/directions/</code>.
+        </p>
+      </article>
+
+      <article class="timeline-entry">
+        <div class="timeline-head">
+          <span class="pill num">14 to 20 November 2026</span>
+          <h3 class="card-title">Direction C as shipped, and E17 warmth and life</h3>
+        </div>
+        <div class="grid-2">
+          <figure class="history-figure">
+    <img class="history-img" src="assets/history/baseline-2026-11-14-home-light.jpg" alt="Marketing home page visual baseline on 14 November 2026 in Direction C light theme" width="960" height="675" loading="lazy"/>
+    <figcaption class="swatch-note">14 Nov 2026 marketing home baseline (fd845e44f): cream canvas and deep teal-green hero.</figcaption>
+  </figure>
+          <figure class="history-figure">
+    <img class="history-img" src="assets/history/baseline-2026-11-14-dash-light.jpg" alt="Web dashboard visual baseline on 14 November 2026 in Direction C light theme" width="960" height="675" loading="lazy"/>
+    <figcaption class="swatch-note">14 Nov 2026 web dashboard baseline (fd845e44f): sand neutrals and warm card surfaces.</figcaption>
+  </figure>
+          <figure class="history-figure">
+    <img class="history-img" src="assets/history/e17-options.jpg" alt="E17 options sheet showing accent, setup progress, illustrations and section headers rendered without its web font" width="960" height="675" loading="lazy"/>
+    <figcaption class="swatch-note">15 Nov 2026 E17 options sheet (rendered without its web font).</figcaption>
+  </figure>
+          <figure class="history-figure">
+    <img class="history-img" src="assets/history/baseline-2026-11-20-home-light.jpg" alt="Marketing home page visual baseline on 20 November 2026 in light theme" width="960" height="675" loading="lazy"/>
+    <figcaption class="swatch-note">20 Nov 2026 marketing home light baseline (f80ed2fc6): alternating canvas and teal-tint bands.</figcaption>
+  </figure>
+        </div>
+        <figure class="history-figure">
+    <img class="history-img" src="assets/history/baseline-2026-11-20-home-dark.jpg" alt="Marketing home page visual baseline on 20 November 2026 in Direction C dark theme" width="960" height="675" loading="lazy"/>
+    <figcaption class="swatch-note">20 Nov 2026 marketing home dark baseline (f80ed2fc6), the last baseline before Midnight and Mint.</figcaption>
+  </figure>
+        <p class="history-caption">
+          Real visual baselines show Direction C in production: cream canvas, deep teal-green hero and sand neutrals on 14 November (<code>fd845e44f</code>), then alternating teal-tint marketing bands on 20 November (<code>f80ed2fc6</code>). In between, E17 on 15 November added the Damson accent, the flat illustration style sheet, the setup progress ring, section headers and the name "Breathing room" (<code>c9bf34005</code>, <code>9e385a3dc</code>). Source: <code>docs/design/e17-options/README.md</code>, <code>STYLE-GUIDE.md</code> section 14 and visual baseline commits <code>fd845e44f</code> and <code>f80ed2fc6</code>.
+        </p>
+      </article>
+
+      <article class="timeline-entry">
+        <div class="timeline-head">
+          <span class="pill num">24 November 2026</span>
+          <h3 class="card-title">Midnight and Mint replace Direction C</h3>
+        </div>
+        <div class="grid-2">
+          <figure class="history-figure">
+    <img class="history-img" src="assets/history/midnight-mint-light.jpg" alt="Light Mint design mock-up rendered without its web font" width="960" height="675" loading="lazy"/>
+    <figcaption class="swatch-note">Light Mint mock-up (rendered without its web font).</figcaption>
+  </figure>
+          <figure class="history-figure">
+    <img class="history-img" src="assets/history/midnight-mint-dark.jpg" alt="Midnight dark design mock-up rendered without its web font" width="960" height="675" loading="lazy"/>
+    <figcaption class="swatch-note">Midnight dark mock-up (rendered without its web font).</figcaption>
+  </figure>
+          <figure class="history-figure">
+    <img class="history-img" src="assets/history/baseline-2026-11-25-dash-light.jpg" alt="Web dashboard visual baseline after Midnight and Mint on 25 November 2026 in light theme" width="960" height="675" loading="lazy"/>
+    <figcaption class="swatch-note">Shipped Mint dashboard (79e77ba59, 25 Nov 2026): pale mint canvas and solid mint hero.</figcaption>
+  </figure>
+          <figure class="history-figure">
+    <img class="history-img" src="assets/history/baseline-2026-11-25-dash-dark.jpg" alt="Web dashboard visual baseline after Midnight and Mint on 25 November 2026 in dark theme" width="960" height="675" loading="lazy"/>
+    <figcaption class="swatch-note">Shipped Midnight dashboard (79e77ba59, 25 Nov 2026): cool charcoal surfaces and mint figures.</figcaption>
+  </figure>
+        </div>
+        <figure class="diagram-figure">
+    <svg viewBox="0 0 680 382" role="img" aria-labelledby="diag-pal-evol-title diag-pal-evol-desc">
+      <title id="diag-pal-evol-title">Then and now: Direction C compared with Midnight and Mint</title>
+      <desc id="diag-pal-evol-desc">Comparison of nine core colour tokens in light and dark mode between Direction C at commit f80ed2fc6 and Midnight and Mint in packages/tokens/src.</desc>
+      <rect x="1" y="1" width="678" height="380" rx="14" fill="var(--color-surface-card)" stroke="var(--color-border)"/>
+      <text x="20" y="26" fill="var(--color-text-primary)" font-family="var(--font-heading)" font-size="12" font-weight="700">Token</text>
+      <text x="148" y="26" fill="var(--color-text-secondary)" font-family="var(--font-heading)" font-size="12" font-weight="700">Then: Direction C (f80ed2fc6)</text>
+      <text x="412" y="26" fill="var(--color-primary)" font-family="var(--font-heading)" font-size="12" font-weight="700">Now: Midnight and Mint</text>
+      <text x="148" y="42" fill="var(--color-text-muted)" font-family="var(--font-body)" font-size="10">20 Nov 2026 (L light, D dark)</text>
+      <text x="412" y="42" fill="var(--color-text-muted)" font-family="var(--font-body)" font-size="10">Live values from packages/tokens/src</text>
+      
+      <g>
+        <line x1="16" y1="52" x2="664" y2="52" stroke="var(--color-border-subtle)" stroke-width="1"/>
+        <text x="20" y="71" fill="var(--color-text-primary)" font-family="var(--font-mono)" font-size="10.5">surface.canvas</text>
+
+        <rect x="148" y="58" width="18" height="18" rx="4" fill="#f5f1ea" stroke="var(--color-border-strong)" stroke-width="1"/>
+        <text x="172" y="71" fill="var(--color-text-secondary)" font-family="var(--font-mono)" font-size="10" style="font-variant-numeric:tabular-nums">L #f5f1ea</text>
+
+        <rect x="254" y="58" width="18" height="18" rx="4" fill="#1d1a17" stroke="var(--color-border-strong)" stroke-width="1"/>
+        <text x="278" y="71" fill="var(--color-text-secondary)" font-family="var(--font-mono)" font-size="10" style="font-variant-numeric:tabular-nums">D #1d1a17</text>
+
+        <line x1="368" y1="67" x2="392" y2="67" stroke="var(--color-border-strong)" stroke-width="1.25"/>
+        <polyline points="387,7 393,11 387,15" fill="none" stroke="var(--color-border-strong)" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+
+        <rect x="412" y="58" width="18" height="18" rx="4" fill="#eef6f3" stroke="var(--color-border-strong)" stroke-width="1"/>
+        <text x="436" y="71" fill="var(--color-text-primary)" font-family="var(--font-mono)" font-size="10" font-weight="600" style="font-variant-numeric:tabular-nums">L #eef6f3</text>
+
+        <rect x="520" y="58" width="18" height="18" rx="4" fill="#14171c" stroke="var(--color-border-strong)" stroke-width="1"/>
+        <text x="544" y="71" fill="var(--color-text-primary)" font-family="var(--font-mono)" font-size="10" font-weight="600" style="font-variant-numeric:tabular-nums">D #14171c</text>
+      </g>
+      <g>
+        <line x1="16" y1="86" x2="664" y2="86" stroke="var(--color-border-subtle)" stroke-width="1"/>
+        <text x="20" y="105" fill="var(--color-text-primary)" font-family="var(--font-mono)" font-size="10.5">surface.card</text>
+
+        <rect x="148" y="92" width="18" height="18" rx="4" fill="#fffdf9" stroke="var(--color-border-strong)" stroke-width="1"/>
+        <text x="172" y="105" fill="var(--color-text-secondary)" font-family="var(--font-mono)" font-size="10" style="font-variant-numeric:tabular-nums">L #fffdf9</text>
+
+        <rect x="254" y="92" width="18" height="18" rx="4" fill="#272320" stroke="var(--color-border-strong)" stroke-width="1"/>
+        <text x="278" y="105" fill="var(--color-text-secondary)" font-family="var(--font-mono)" font-size="10" style="font-variant-numeric:tabular-nums">D #272320</text>
+
+        <line x1="368" y1="101" x2="392" y2="101" stroke="var(--color-border-strong)" stroke-width="1.25"/>
+        <polyline points="387,7 393,11 387,15" fill="none" stroke="var(--color-border-strong)" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+
+        <rect x="412" y="92" width="18" height="18" rx="4" fill="#f8fcfa" stroke="var(--color-border-strong)" stroke-width="1"/>
+        <text x="436" y="105" fill="var(--color-text-primary)" font-family="var(--font-mono)" font-size="10" font-weight="600" style="font-variant-numeric:tabular-nums">L #f8fcfa</text>
+
+        <rect x="520" y="92" width="18" height="18" rx="4" fill="#1d2128" stroke="var(--color-border-strong)" stroke-width="1"/>
+        <text x="544" y="105" fill="var(--color-text-primary)" font-family="var(--font-mono)" font-size="10" font-weight="600" style="font-variant-numeric:tabular-nums">D #1d2128</text>
+      </g>
+      <g>
+        <line x1="16" y1="120" x2="664" y2="120" stroke="var(--color-border-subtle)" stroke-width="1"/>
+        <text x="20" y="139" fill="var(--color-text-primary)" font-family="var(--font-mono)" font-size="10.5">surface.hero</text>
+
+        <rect x="148" y="126" width="18" height="18" rx="4" fill="#12483f" stroke="var(--color-border-strong)" stroke-width="1"/>
+        <text x="172" y="139" fill="var(--color-text-secondary)" font-family="var(--font-mono)" font-size="10" style="font-variant-numeric:tabular-nums">L #12483f</text>
+
+        <rect x="254" y="126" width="18" height="18" rx="4" fill="#1b5448" stroke="var(--color-border-strong)" stroke-width="1"/>
+        <text x="278" y="139" fill="var(--color-text-secondary)" font-family="var(--font-mono)" font-size="10" style="font-variant-numeric:tabular-nums">D #1b5448</text>
+
+        <line x1="368" y1="135" x2="392" y2="135" stroke="var(--color-border-strong)" stroke-width="1.25"/>
+        <polyline points="387,7 393,11 387,15" fill="none" stroke="var(--color-border-strong)" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+
+        <rect x="412" y="126" width="18" height="18" rx="4" fill="#6fd0ba" stroke="var(--color-border-strong)" stroke-width="1"/>
+        <text x="436" y="139" fill="var(--color-text-primary)" font-family="var(--font-mono)" font-size="10" font-weight="600" style="font-variant-numeric:tabular-nums">L #6fd0ba</text>
+
+        <rect x="520" y="126" width="18" height="18" rx="4" fill="#1d2128" stroke="var(--color-border-strong)" stroke-width="1"/>
+        <text x="544" y="139" fill="var(--color-text-primary)" font-family="var(--font-mono)" font-size="10" font-weight="600" style="font-variant-numeric:tabular-nums">D #1d2128</text>
+      </g>
+      <g>
+        <line x1="16" y1="154" x2="664" y2="154" stroke="var(--color-border-subtle)" stroke-width="1"/>
+        <text x="20" y="173" fill="var(--color-text-primary)" font-family="var(--font-mono)" font-size="10.5">surface.contrast</text>
+
+        <rect x="148" y="160" width="18" height="18" rx="4" fill="#22302c" stroke="var(--color-border-strong)" stroke-width="1"/>
+        <text x="172" y="173" fill="var(--color-text-secondary)" font-family="var(--font-mono)" font-size="10" style="font-variant-numeric:tabular-nums">L #22302c</text>
+
+        <rect x="254" y="160" width="18" height="18" rx="4" fill="#3a352f" stroke="var(--color-border-strong)" stroke-width="1"/>
+        <text x="278" y="173" fill="var(--color-text-secondary)" font-family="var(--font-mono)" font-size="10" style="font-variant-numeric:tabular-nums">D #3a352f</text>
+
+        <line x1="368" y1="169" x2="392" y2="169" stroke="var(--color-border-strong)" stroke-width="1.25"/>
+        <polyline points="387,7 393,11 387,15" fill="none" stroke="var(--color-border-strong)" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+
+        <rect x="412" y="160" width="18" height="18" rx="4" fill="#14171c" stroke="var(--color-border-strong)" stroke-width="1"/>
+        <text x="436" y="173" fill="var(--color-text-primary)" font-family="var(--font-mono)" font-size="10" font-weight="600" style="font-variant-numeric:tabular-nums">L #14171c</text>
+
+        <rect x="520" y="160" width="18" height="18" rx="4" fill="#0f1216" stroke="var(--color-border-strong)" stroke-width="1"/>
+        <text x="544" y="173" fill="var(--color-text-primary)" font-family="var(--font-mono)" font-size="10" font-weight="600" style="font-variant-numeric:tabular-nums">D #0f1216</text>
+      </g>
+      <g>
+        <line x1="16" y1="188" x2="664" y2="188" stroke="var(--color-border-subtle)" stroke-width="1"/>
+        <text x="20" y="207" fill="var(--color-text-primary)" font-family="var(--font-mono)" font-size="10.5">text.primary</text>
+
+        <rect x="148" y="194" width="18" height="18" rx="4" fill="#2b2620" stroke="var(--color-border-strong)" stroke-width="1"/>
+        <text x="172" y="207" fill="var(--color-text-secondary)" font-family="var(--font-mono)" font-size="10" style="font-variant-numeric:tabular-nums">L #2b2620</text>
+
+        <rect x="254" y="194" width="18" height="18" rx="4" fill="#f4efe7" stroke="var(--color-border-strong)" stroke-width="1"/>
+        <text x="278" y="207" fill="var(--color-text-secondary)" font-family="var(--font-mono)" font-size="10" style="font-variant-numeric:tabular-nums">D #f4efe7</text>
+
+        <line x1="368" y1="203" x2="392" y2="203" stroke="var(--color-border-strong)" stroke-width="1.25"/>
+        <polyline points="387,7 393,11 387,15" fill="none" stroke="var(--color-border-strong)" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+
+        <rect x="412" y="194" width="18" height="18" rx="4" fill="#0f2a2a" stroke="var(--color-border-strong)" stroke-width="1"/>
+        <text x="436" y="207" fill="var(--color-text-primary)" font-family="var(--font-mono)" font-size="10" font-weight="600" style="font-variant-numeric:tabular-nums">L #0f2a2a</text>
+
+        <rect x="520" y="194" width="18" height="18" rx="4" fill="#f1eee8" stroke="var(--color-border-strong)" stroke-width="1"/>
+        <text x="544" y="207" fill="var(--color-text-primary)" font-family="var(--font-mono)" font-size="10" font-weight="600" style="font-variant-numeric:tabular-nums">D #f1eee8</text>
+      </g>
+      <g>
+        <line x1="16" y1="222" x2="664" y2="222" stroke="var(--color-border-subtle)" stroke-width="1"/>
+        <text x="20" y="241" fill="var(--color-text-primary)" font-family="var(--font-mono)" font-size="10.5">primary</text>
+
+        <rect x="148" y="228" width="18" height="18" rx="4" fill="#0f6b5e" stroke="var(--color-border-strong)" stroke-width="1"/>
+        <text x="172" y="241" fill="var(--color-text-secondary)" font-family="var(--font-mono)" font-size="10" style="font-variant-numeric:tabular-nums">L #0f6b5e</text>
+
+        <rect x="254" y="228" width="18" height="18" rx="4" fill="#6fd0ba" stroke="var(--color-border-strong)" stroke-width="1"/>
+        <text x="278" y="241" fill="var(--color-text-secondary)" font-family="var(--font-mono)" font-size="10" style="font-variant-numeric:tabular-nums">D #6fd0ba</text>
+
+        <line x1="368" y1="237" x2="392" y2="237" stroke="var(--color-border-strong)" stroke-width="1.25"/>
+        <polyline points="387,7 393,11 387,15" fill="none" stroke="var(--color-border-strong)" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+
+        <rect x="412" y="228" width="18" height="18" rx="4" fill="#0b6b5d" stroke="var(--color-border-strong)" stroke-width="1"/>
+        <text x="436" y="241" fill="var(--color-text-primary)" font-family="var(--font-mono)" font-size="10" font-weight="600" style="font-variant-numeric:tabular-nums">L #0b6b5d</text>
+
+        <rect x="520" y="228" width="18" height="18" rx="4" fill="#6fd0ba" stroke="var(--color-border-strong)" stroke-width="1"/>
+        <text x="544" y="241" fill="var(--color-text-primary)" font-family="var(--font-mono)" font-size="10" font-weight="600" style="font-variant-numeric:tabular-nums">D #6fd0ba</text>
+      </g>
+      <g>
+        <line x1="16" y1="256" x2="664" y2="256" stroke="var(--color-border-subtle)" stroke-width="1"/>
+        <text x="20" y="275" fill="var(--color-text-primary)" font-family="var(--font-mono)" font-size="10.5">primary.solid</text>
+
+        <rect x="148" y="262" width="18" height="18" rx="4" fill="#0f6b5e" stroke="var(--color-border-strong)" stroke-width="1"/>
+        <text x="172" y="275" fill="var(--color-text-secondary)" font-family="var(--font-mono)" font-size="10" style="font-variant-numeric:tabular-nums">L #0f6b5e</text>
+
+        <rect x="254" y="262" width="18" height="18" rx="4" fill="#0f6b5e" stroke="var(--color-border-strong)" stroke-width="1"/>
+        <text x="278" y="275" fill="var(--color-text-secondary)" font-family="var(--font-mono)" font-size="10" style="font-variant-numeric:tabular-nums">D #0f6b5e</text>
+
+        <line x1="368" y1="271" x2="392" y2="271" stroke="var(--color-border-strong)" stroke-width="1.25"/>
+        <polyline points="387,7 393,11 387,15" fill="none" stroke="var(--color-border-strong)" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+
+        <rect x="412" y="262" width="18" height="18" rx="4" fill="#14171c" stroke="var(--color-border-strong)" stroke-width="1"/>
+        <text x="436" y="275" fill="var(--color-text-primary)" font-family="var(--font-mono)" font-size="10" font-weight="600" style="font-variant-numeric:tabular-nums">L #14171c</text>
+
+        <rect x="520" y="262" width="18" height="18" rx="4" fill="#6fd0ba" stroke="var(--color-border-strong)" stroke-width="1"/>
+        <text x="544" y="275" fill="var(--color-text-primary)" font-family="var(--font-mono)" font-size="10" font-weight="600" style="font-variant-numeric:tabular-nums">D #6fd0ba</text>
+      </g>
+      <g>
+        <line x1="16" y1="290" x2="664" y2="290" stroke="var(--color-border-subtle)" stroke-width="1"/>
+        <text x="20" y="309" fill="var(--color-text-primary)" font-family="var(--font-mono)" font-size="10.5">accent</text>
+
+        <rect x="148" y="296" width="18" height="18" rx="4" fill="#7a3f66" stroke="var(--color-border-strong)" stroke-width="1"/>
+        <text x="172" y="309" fill="var(--color-text-secondary)" font-family="var(--font-mono)" font-size="10" style="font-variant-numeric:tabular-nums">L #7a3f66</text>
+
+        <rect x="254" y="296" width="18" height="18" rx="4" fill="#dba6c9" stroke="var(--color-border-strong)" stroke-width="1"/>
+        <text x="278" y="309" fill="var(--color-text-secondary)" font-family="var(--font-mono)" font-size="10" style="font-variant-numeric:tabular-nums">D #dba6c9</text>
+
+        <line x1="368" y1="305" x2="392" y2="305" stroke="var(--color-border-strong)" stroke-width="1.25"/>
+        <polyline points="387,7 393,11 387,15" fill="none" stroke="var(--color-border-strong)" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+
+        <rect x="412" y="296" width="18" height="18" rx="4" fill="#1d5f73" stroke="var(--color-border-strong)" stroke-width="1"/>
+        <text x="436" y="309" fill="var(--color-text-primary)" font-family="var(--font-mono)" font-size="10" font-weight="600" style="font-variant-numeric:tabular-nums">L #1d5f73</text>
+
+        <rect x="520" y="296" width="18" height="18" rx="4" fill="#e3b5d1" stroke="var(--color-border-strong)" stroke-width="1"/>
+        <text x="544" y="309" fill="var(--color-text-primary)" font-family="var(--font-mono)" font-size="10" font-weight="600" style="font-variant-numeric:tabular-nums">D #e3b5d1</text>
+      </g>
+      <g>
+        <line x1="16" y1="324" x2="664" y2="324" stroke="var(--color-border-subtle)" stroke-width="1"/>
+        <text x="20" y="343" fill="var(--color-text-primary)" font-family="var(--font-mono)" font-size="10.5">border</text>
+
+        <rect x="148" y="330" width="18" height="18" rx="4" fill="#dcd4c8" stroke="var(--color-border-strong)" stroke-width="1"/>
+        <text x="172" y="343" fill="var(--color-text-secondary)" font-family="var(--font-mono)" font-size="10" style="font-variant-numeric:tabular-nums">L #dcd4c8</text>
+
+        <rect x="254" y="330" width="18" height="18" rx="4" fill="#3b362f" stroke="var(--color-border-strong)" stroke-width="1"/>
+        <text x="278" y="343" fill="var(--color-text-secondary)" font-family="var(--font-mono)" font-size="10" style="font-variant-numeric:tabular-nums">D #3b362f</text>
+
+        <line x1="368" y1="339" x2="392" y2="339" stroke="var(--color-border-strong)" stroke-width="1.25"/>
+        <polyline points="387,7 393,11 387,15" fill="none" stroke="var(--color-border-strong)" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+
+        <rect x="412" y="330" width="18" height="18" rx="4" fill="#c8dcd5" stroke="var(--color-border-strong)" stroke-width="1"/>
+        <text x="436" y="343" fill="var(--color-text-primary)" font-family="var(--font-mono)" font-size="10" font-weight="600" style="font-variant-numeric:tabular-nums">L #c8dcd5</text>
+
+        <rect x="520" y="330" width="18" height="18" rx="4" fill="#303740" stroke="var(--color-border-strong)" stroke-width="1"/>
+        <text x="544" y="343" fill="var(--color-text-primary)" font-family="var(--font-mono)" font-size="10" font-weight="600" style="font-variant-numeric:tabular-nums">D #303740</text>
+      </g>
+    </svg>
+    <figcaption class="diagram-caption">
+      Palette comparison between Direction C (commit <code>f80ed2fc6</code>, 20 November 2026) and the current Midnight and Mint tokens. Cream and warm-charcoal grounds shifted to pale mint and cool charcoal; <code>surface.hero</code> in light moved from deep teal-green to solid mint; <code>primary.solid</code> in light moved from teal to charcoal; and light <code>accent</code> moved from Damson to blue-teal.
+    </figcaption>
+  </figure>
+        <p class="history-caption">
+          The owner replaced Direction C because the cream and deep teal-green look closely resembled another company's site; no copying was found, and the owner wanted Flump to look distinct. Midnight (cool charcoal dark theme) and Mint (pale mint canvas, solid mint light hero and charcoal primary buttons) shipped in PR 901 (<code>8734d8a21</code>, <code>620b7b533</code>) and were checked across all routes in PR 913 (<code>05c41aef2</code>). Source: <code>STYLE-GUIDE.md</code> section 14, <code>DECISIONS.md</code> (24 November 2026) and <code>docs/design/midnight-mint/README.md</code>.
+        </p>
+      </article>
+
+      <article class="timeline-entry">
+        <div class="timeline-head">
+          <span class="pill num">25 November 2026</span>
+          <h3 class="card-title">The light logo turns teal</h3>
+        </div>
+        <p class="history-caption">
+          Midnight and Mint mock-ups drew the light logo as charcoal, and PR 901 painted <code>FlumpLogo</code> with the charcoal button fill tokens (<code>primary.solid</code> and <code>primary.hover</code>). After the owner reported the light logo as black, PR 937 (commits <code>515cbcb92</code> and <code>a713ff025</code>) introduced dedicated <code>primary.mark</code> and <code>primary.markLit</code> tokens so the light mark and favicon returned to teal while dark stayed mint. Source: <code>STYLE-GUIDE.md</code> section 14, <code>DECISIONS.md</code> (25 November 2026) and PR 937.
+        </p>
+      </article>
+
+      <article class="timeline-entry">
+        <div class="timeline-head">
+          <span class="pill num">26 and 27 November 2026</span>
+          <h3 class="card-title">Marketing motion prototypes 1 to 11</h3>
+        </div>
+        <div class="contact-sheet">
+          <figure class="contact-tile">
+      <img class="history-img" src="assets/history/proto-p1.jpg" alt="Marketing motion prototype 1. Micro-interactions at 1280px dark first frame" width="560" height="350" loading="lazy"/>
+      <figcaption class="contact-tile-meta">
+        <span class="contact-tile-title">1. Micro-interactions</span>
+        <span class="contact-tile-date">26 Nov 2026</span>
+        <span class="swatch-note">Round 1 (35544df46)</span>
+      </figcaption>
+    </figure><figure class="contact-tile">
+      <img class="history-img" src="assets/history/proto-p2.jpg" alt="Marketing motion prototype 2. Scroll story at 1280px dark first frame" width="560" height="350" loading="lazy"/>
+      <figcaption class="contact-tile-meta">
+        <span class="contact-tile-title">2. Scroll story</span>
+        <span class="contact-tile-date">26 Nov 2026</span>
+        <span class="swatch-note">Round 1 (35544df46)</span>
+      </figcaption>
+    </figure><figure class="contact-tile">
+      <img class="history-img" src="assets/history/proto-p3.jpg" alt="Marketing motion prototype 3. 3D hero at 1280px dark first frame" width="560" height="350" loading="lazy"/>
+      <figcaption class="contact-tile-meta">
+        <span class="contact-tile-title">3. 3D hero</span>
+        <span class="contact-tile-date">26 Nov 2026</span>
+        <span class="swatch-note">Round 1 (35544df46)</span>
+      </figcaption>
+    </figure><figure class="contact-tile">
+      <img class="history-img" src="assets/history/proto-p1b.jpg" alt="Marketing motion prototype 1b. Micro-interactions, extended at 1280px dark first frame" width="560" height="350" loading="lazy"/>
+      <figcaption class="contact-tile-meta">
+        <span class="contact-tile-title">1b. Micro-interactions, extended</span>
+        <span class="contact-tile-date">26 Nov 2026</span>
+        <span class="swatch-note">Round 2 (e82a4bf0f)</span>
+      </figcaption>
+    </figure><figure class="contact-tile">
+      <img class="history-img" src="assets/history/proto-p4.jpg" alt="Marketing motion prototype 4. The dashboard assembles at 1280px dark first frame" width="560" height="350" loading="lazy"/>
+      <figcaption class="contact-tile-meta">
+        <span class="contact-tile-title">4. The picture assembles</span>
+        <span class="contact-tile-date">26 Nov 2026</span>
+        <span class="swatch-note">Round 2 (e82a4bf0f)</span>
+      </figcaption>
+    </figure><figure class="contact-tile">
+      <img class="history-img" src="assets/history/proto-p5.jpg" alt="Marketing motion prototype 5. Five scenes at 1280px dark first frame" width="560" height="350" loading="lazy"/>
+      <figcaption class="contact-tile-meta">
+        <span class="contact-tile-title">5. Five scenes</span>
+        <span class="contact-tile-date">26 Nov 2026</span>
+        <span class="swatch-note">Round 2 (e82a4bf0f)</span>
+      </figcaption>
+    </figure><figure class="contact-tile">
+      <img class="history-img" src="assets/history/proto-p6.jpg" alt="Marketing motion prototype 6. The orb as a guide at 1280px dark first frame" width="560" height="350" loading="lazy"/>
+      <figcaption class="contact-tile-meta">
+        <span class="contact-tile-title">6. The orb as a guide</span>
+        <span class="contact-tile-date">26 Nov 2026</span>
+        <span class="swatch-note">Round 2 (e82a4bf0f)</span>
+      </figcaption>
+    </figure><figure class="contact-tile">
+      <img class="history-img" src="assets/history/proto-p7.jpg" alt="Marketing motion prototype 7. Fly-through at 1280px dark first frame" width="560" height="350" loading="lazy"/>
+      <figcaption class="contact-tile-meta">
+        <span class="contact-tile-title">7. Fly-through</span>
+        <span class="contact-tile-date">26 Nov 2026</span>
+        <span class="swatch-note">Round 2 (e82a4bf0f)</span>
+      </figcaption>
+    </figure><figure class="contact-tile">
+      <img class="history-img" src="assets/history/proto-p8.jpg" alt="Marketing motion prototype 8. Assembled at 1280px dark first frame" width="560" height="350" loading="lazy"/>
+      <figcaption class="contact-tile-meta">
+        <span class="contact-tile-title">8. Assembled</span>
+        <span class="contact-tile-date">26 Nov 2026</span>
+        <span class="swatch-note">Round 3 (6f3f0922d / e82a4bf0f)</span>
+      </figcaption>
+    </figure><figure class="contact-tile">
+      <img class="history-img" src="assets/history/proto-p9.jpg" alt="Marketing motion prototype 9. The journey at 1280px dark first frame" width="560" height="350" loading="lazy"/>
+      <figcaption class="contact-tile-meta">
+        <span class="contact-tile-title">9. The journey</span>
+        <span class="contact-tile-date">26 Nov 2026</span>
+        <span class="swatch-note">Round 3 (e82a4bf0f)</span>
+      </figcaption>
+    </figure><figure class="contact-tile">
+      <img class="history-img" src="assets/history/proto-p10.jpg" alt="Marketing motion prototype 10. Both at 1280px dark first frame" width="560" height="350" loading="lazy"/>
+      <figcaption class="contact-tile-meta">
+        <span class="contact-tile-title">10. Both</span>
+        <span class="contact-tile-date">26 Nov 2026</span>
+        <span class="swatch-note">Round 3 (e82a4bf0f)</span>
+      </figcaption>
+    </figure><figure class="contact-tile">
+      <img class="history-img" src="assets/history/proto-p11b.jpg" alt="Marketing motion prototype 11b. Both, reworked, no three.js at 1280px dark first frame" width="560" height="350" loading="lazy"/>
+      <figcaption class="contact-tile-meta">
+        <span class="contact-tile-title">11b. Both, reworked, no three.js</span>
+        <span class="contact-tile-date">26 Nov 2026</span>
+        <span class="swatch-note">Round 4 (6f3f0922d)</span>
+      </figcaption>
+    </figure><figure class="contact-tile contact-tile-chosen">
+      <img class="history-img" src="assets/history/proto-p11.jpg" alt="Marketing motion prototype 11. Both, reworked (chosen) at 1280px dark first frame" width="560" height="350" loading="lazy"/>
+      <figcaption class="contact-tile-meta">
+        <span class="contact-tile-title">11. Both, reworked (chosen)</span>
+        <span class="contact-tile-date">26 to 27 Nov 2026</span>
+        <span class="swatch-note">Rounds 4 to 5 (6f3f0922d, 015481a1d)</span>
+      </figcaption>
+    </figure>
+        </div>
+        <p class="history-caption">
+          Thirteen throwaway prototypes on branch <code>origin/claude/marketing-motion-prototypes-66c08d</code> tested how Flump's calm marketing language should move: micro-interactions and fog in round 1 (26 November), five area scenes, a travelling orb and assembling cards in round 2, combined journeys in round 3 and the reworked prototype 11 in rounds 4 and 5 (26 and 27 November). On 27 November 2026 the owner chose prototype 11 and accepted all six recommendations in <code>ROLLOUT-PLAN.md</code> (D1 to D6) plus the pay rise glide (D7). Source: <code>origin/claude/marketing-motion-prototypes-66c08d</code>, <code>docs/design/motion/ROLLOUT-PLAN.md</code> and <code>DECISIONS.md</code>.
+        </p>
+      </article>
+
+      <article class="timeline-entry">
+        <div class="timeline-head">
+          <span class="pill num">27 November 2026</span>
+          <h3 class="card-title">Design language rollout F1 to F4 and document pictures</h3>
+        </div>
+        <figure class="history-figure">
+    <img class="history-img" src="assets/history/p11-images-r6-light.jpg" alt="Prototype 11 round 6 tilted paper document cards with Example tags in light mode" width="960" height="825" loading="lazy"/>
+    <figcaption class="swatch-note">Prototype 11 picture round 6: paper cards and documents tagged Example before slice F3 mapped them to semantic tokens.</figcaption>
+  </figure>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th scope="col">Slice</th><th scope="col">PR and commit</th><th scope="col">What landed</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>F1</strong></td><td>PR 959 (<code>907ceaf3f</code>)</td><td>Amended STYLE-GUIDE and UX-GUIDELINES for the marketing design language, tiers A to C and D1 to D6.</td></tr>
+              <tr><td><strong>F2</strong></td><td>PR 963 (<code>cf15c90aa</code>)</td><td>Added calm scale tokens, <code>orb.*</code> sets, <code>material.glass.*</code> and <code>material.paper.*</code>, and <code>check-orb-colours</code>.</td></tr>
+              <tr><td><strong>F3</strong></td><td>PR 968 (<code>cac6aab93</code>)</td><td>Built <code>Illustration variant="document"</code> shape lists (including mobile <code>@repo/ui/illustration-data</code>), real-text <code>ExampleTag</code>, glass and paper <code>Card</code>, and <code>CarouselDots</code>.</td></tr>
+              <tr><td><strong>F4</strong></td><td>PR 966 (<code>04f639aad</code>)</td><td>Added motion hooks, the GSAP and three.js import ban (AT4) and the marketing page-weight ratchet (MK12).</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="history-caption">
+          Four foundation slices moved prototype 11's building blocks into the design system on 27 November 2026. PR 968 introduced tilted paper cards and documents with a real-text "Example" tag for any sample figure, keeping default cards in neutral and mint tokens so violet and rose stay off general UI. Source: <code>ROLLOUT-PLAN.md</code>, <code>STYLE-GUIDE.md</code> sections 2.7 and 8.3, and PRs 959, 963, 966 and 968.
+        </p>
+      </article>
+
+      <article class="timeline-entry">
+        <div class="timeline-head">
+          <span class="pill num">25 November versus 27 and 28 November 2026</span>
+          <h3 class="card-title">The home page before and after</h3>
+        </div>
+        <div class="grid-2">
+          <figure class="history-figure">
+    <img class="history-img" src="assets/history/baseline-2026-11-25-home-light.jpg" alt="Marketing home page before rebuild on 25 November 2026 in light theme" width="960" height="675" loading="lazy"/>
+    <figcaption class="swatch-note">Before (25 Nov 2026, 79e77ba59): solid mint hero band and flat illustration.</figcaption>
+  </figure>
+          <figure class="history-figure">
+    <img class="history-img" src="assets/history/baseline-2026-11-28-home-light.jpg" alt="Marketing home page after prototype 11 rebuild on 28 November 2026 in light theme" width="960" height="675" loading="lazy"/>
+    <figcaption class="swatch-note">After (28 Nov 2026, 2949ac139): assembling document hero on canvas band with K2 logo.</figcaption>
+  </figure>
+          <figure class="history-figure">
+    <img class="history-img" src="assets/history/baseline-2026-11-25-home-dark.jpg" alt="Marketing home page before rebuild on 25 November 2026 in dark theme" width="960" height="675" loading="lazy"/>
+    <figcaption class="swatch-note">Before (25 Nov 2026, 79e77ba59): dark theme before the marketing rollout.</figcaption>
+  </figure>
+          <figure class="history-figure">
+    <img class="history-img" src="assets/history/baseline-2026-11-28-home-dark.jpg" alt="Marketing home page after prototype 11 rebuild on 28 November 2026 in dark theme" width="960" height="675" loading="lazy"/>
+    <figcaption class="swatch-note">After (28 Nov 2026, 2949ac139): dark theme with assembling cards, glass orb and K2 mark.</figcaption>
+  </figure>
+        </div>
+        <figure class="history-figure">
+    <img class="history-img" src="assets/history/baseline-2026-11-27-home-light.jpg" alt="Marketing home page M1 intermediate build on 27 November 2026 in light theme" width="960" height="675" loading="lazy"/>
+    <figcaption class="swatch-note">Intermediate M1 build (27 Nov 2026, 1a4eca1df, PR 975) before PR 980 rebuilt the home page directly to prototype 11.</figcaption>
+  </figure>
+        <p class="history-caption">
+          Real 1280px visual baselines capture the home page transition: slice M1 (PR 975, <code>1a4eca1df</code>) first split page chunks and removed solid colour bands, then PR 980 (<code>93b0bae97</code>, 27 November 2026) rebuilt the home page directly to prototype 11 with the scroll-pinned hero and three.js journey. On 28 November 2026, PR 986 (<code>2949ac139</code>) shipped the matching features index, five area pages and AI connection page. Source: visual baselines <code>79e77ba59</code>, <code>1a4eca1df</code> and <code>2949ac139</code>, plus PRs 975, 980 and 986.
+        </p>
+      </article>
+
+      <article class="timeline-entry">
+        <div class="timeline-head">
+          <span class="pill num">12 to 27 November 2026</span>
+          <h3 class="card-title">The logo's history to K2</h3>
+        </div>
+        <div class="grid-2"><article class="card">
+        <div class="badge-row" style="justify-content:space-between">
+          <span class="pill num">12 and 14 Nov 2026</span>
+          <code>14f119be6, c79bbaf67, c2105f10d</code>
+        </div>
+        <h4 class="card-title">Direction C teal blob</h4>
+        <div class="logo-stage-pair">
+          <div class="logo-mini-ground " style="background:#f5f1ea;color:#2b2620">
+            <span class="swatch-note" style="color:#2b2620">Light</span>
+            <div class="logo-mini-icons">
+              <svg width="64" height="64" viewBox="0 0 200 200" role="img" aria-label="Direction C light teal blob logo">
+    <defs>
+      <radialGradient cx="42%" cy="30%" id="hist-blob-c-light" r="75%">
+        <stop offset="0" stop-color="#0f6b5e"/>
+        <stop offset="1" stop-color="#0a564b"/>
+      </radialGradient>
+    </defs>
+    <ellipse cx="100" cy="168" rx="62" ry="9" fill="#2b2620" opacity="0.18"/>
+    <path d="M100 38c36 0 64 30 64 66 0 36-20 62-64 62s-64-26-64-62c0-36 28-66 64-66z" fill="url(#hist-blob-c-light)"/>
+    <path fill="#f6f1e8" d="M78 52c14-9 38-9 50 3-14-3-34-1-50-3z" opacity="0.6"/>
+    <path fill="#f6f1e8" d="M52 92c4-16 16-28 28-34-8 12-8 22-12 34 2 14 8 24 6 32-12-8-26-18-22-32z" opacity="0.4"/>
+    <path fill="#f6f1e8" d="M146 82c8 10 12 24 8 40-6-8-10-20-8-40z" opacity="0.25"/>
+  </svg>
+              <svg width="32" height="32" viewBox="0 0 32 32" role="img" aria-label="Direction C light favicon">
+    <rect fill="#0f6b5e" width="32" height="32" rx="8"/>
+    <path fill="#ffffff" d="M10 8h13v4h-8.5v3H21v4h-6.5v5H10z"/>
+  </svg>
+            </div>
+          </div>
+          <div class="logo-mini-ground " style="background:#1d1a17;color:#f4efe7">
+            <span class="swatch-note" style="color:#f4efe7">Dark</span>
+            <div class="logo-mini-icons">
+              <svg width="64" height="64" viewBox="0 0 200 200" role="img" aria-label="Direction C dark mint blob logo">
+    <defs>
+      <radialGradient cx="42%" cy="30%" id="hist-blob-c-dark" r="75%">
+        <stop offset="0" stop-color="#6fd0ba"/>
+        <stop offset="1" stop-color="#0a564b"/>
+      </radialGradient>
+    </defs>
+    <ellipse cx="100" cy="168" rx="62" ry="9" fill="#f4efe7" opacity="0.18"/>
+    <path d="M100 38c36 0 64 30 64 66 0 36-20 62-64 62s-64-26-64-62c0-36 28-66 64-66z" fill="url(#hist-blob-c-dark)"/>
+    <path fill="#fffdf9" d="M78 52c14-9 38-9 50 3-14-3-34-1-50-3z" opacity="0.6"/>
+    <path fill="#fffdf9" d="M52 92c4-16 16-28 28-34-8 12-8 22-12 34 2 14 8 24 6 32-12-8-26-18-22-32z" opacity="0.4"/>
+    <path fill="#fffdf9" d="M146 82c8 10 12 24 8 40-6-8-10-20-8-40z" opacity="0.25"/>
+  </svg>
+              <svg width="32" height="32" viewBox="0 0 32 32" role="img" aria-label="Direction C dark favicon">
+    <rect fill="#6fd0ba" width="32" height="32" rx="8"/>
+    <path fill="#1d1a17" d="M10 8h13v4h-8.5v3H21v4h-6.5v5H10z"/>
+  </svg>
+            </div>
+          </div>
+        </div>
+        <p class="swatch-note">The teal blob first landed on 12 Nov (14f119be6), where bare stopColor tokens fell back to black until c79bbaf67 fixed them on 14 Nov. Favicon c2105f10d paired a teal or mint tile with a white or dark F.</p>
+      </article><article class="card">
+        <div class="badge-row" style="justify-content:space-between">
+          <span class="pill num">24 Nov 2026</span>
+          <code>1511013dd (PR 901)</code>
+        </div>
+        <h4 class="card-title">Midnight and Mint charcoal blob</h4>
+        <div class="logo-stage-pair">
+          <div class="logo-mini-ground " style="background:#eef6f3;color:#0f2a2a">
+            <span class="swatch-note" style="color:#0f2a2a">Light</span>
+            <div class="logo-mini-icons">
+              <svg width="64" height="64" viewBox="0 0 200 200" role="img" aria-label="24 Nov charcoal light blob logo">
+    <defs>
+      <radialGradient cx="42%" cy="30%" id="hist-blob-mm-light" r="75%">
+        <stop offset="0" stop-color="#2c323b"/>
+        <stop offset="1" stop-color="#14171c"/>
+      </radialGradient>
+    </defs>
+    <ellipse cx="100" cy="168" rx="62" ry="9" fill="#0f2a2a" opacity="0.18"/>
+    <path d="M100 38c36 0 64 30 64 66 0 36-20 62-64 62s-64-26-64-62c0-36 28-66 64-66z" fill="url(#hist-blob-mm-light)"/>
+    <path fill="#f8fcfa" d="M78 52c14-9 38-9 50 3-14-3-34-1-50-3z" opacity="0.6"/>
+    <path fill="#f8fcfa" d="M52 92c4-16 16-28 28-34-8 12-8 22-12 34 2 14 8 24 6 32-12-8-26-18-22-32z" opacity="0.4"/>
+    <path fill="#f8fcfa" d="M146 82c8 10 12 24 8 40-6-8-10-20-8-40z" opacity="0.25"/>
+  </svg>
+              <svg width="32" height="32" viewBox="0 0 32 32" role="img" aria-label="24 Nov charcoal light favicon">
+    <rect fill="#14171c" width="32" height="32" rx="8"/>
+    <path fill="#f8fcfa" d="M10 8h13v4h-8.5v3H21v4h-6.5v5H10z"/>
+  </svg>
+            </div>
+          </div>
+          <div class="logo-mini-ground " style="background:#14171c;color:#f1eee8">
+            <span class="swatch-note" style="color:#f1eee8">Dark</span>
+            <div class="logo-mini-icons">
+              <svg width="64" height="64" viewBox="0 0 200 200" role="img" aria-label="24 Nov mint dark blob logo">
+    <defs>
+      <radialGradient cx="42%" cy="30%" id="hist-blob-mm-dark" r="75%">
+        <stop offset="0" stop-color="#9be3d2"/>
+        <stop offset="1" stop-color="#6fd0ba"/>
+      </radialGradient>
+    </defs>
+    <ellipse cx="100" cy="168" rx="62" ry="9" fill="#f1eee8" opacity="0.18"/>
+    <path d="M100 38c36 0 64 30 64 66 0 36-20 62-64 62s-64-26-64-62c0-36 28-66 64-66z" fill="url(#hist-blob-mm-dark)"/>
+    <path fill="#0e1a17" d="M78 52c14-9 38-9 50 3-14-3-34-1-50-3z" opacity="0.6"/>
+    <path fill="#0e1a17" d="M52 92c4-16 16-28 28-34-8 12-8 22-12 34 2 14 8 24 6 32-12-8-26-18-22-32z" opacity="0.4"/>
+    <path fill="#0e1a17" d="M146 82c8 10 12 24 8 40-6-8-10-20-8-40z" opacity="0.25"/>
+  </svg>
+              <svg width="32" height="32" viewBox="0 0 32 32" role="img" aria-label="24 Nov mint dark favicon">
+    <rect fill="#6fd0ba" width="32" height="32" rx="8"/>
+    <path fill="#14171c" d="M10 8h13v4h-8.5v3H21v4h-6.5v5H10z"/>
+  </svg>
+            </div>
+          </div>
+        </div>
+        <p class="swatch-note">PR 901 painted the mark with the button fill tokens (primary.solid and primary.hover) to match the Midnight and Mint mock-ups, turning the light logo and favicon charcoal.</p>
+      </article><article class="card">
+        <div class="badge-row" style="justify-content:space-between">
+          <span class="pill num">25 Nov 2026</span>
+          <code>515cbcb92, a713ff025 (PR 937)</code>
+        </div>
+        <h4 class="card-title">Light logo turns teal</h4>
+        <div class="logo-stage-pair">
+          <div class="logo-mini-ground " style="background:#eef6f3;color:#0f2a2a">
+            <span class="swatch-note" style="color:#0f2a2a">Light</span>
+            <div class="logo-mini-icons">
+              <svg width="64" height="64" viewBox="0 0 200 200" role="img" aria-label="25 Nov teal light blob logo">
+    <defs>
+      <radialGradient cx="42%" cy="30%" id="hist-blob-teal-light" r="75%">
+        <stop offset="0" stop-color="#0b6b5d"/>
+        <stop offset="1" stop-color="#084f45"/>
+      </radialGradient>
+    </defs>
+    <ellipse cx="100" cy="168" rx="62" ry="9" fill="#0f2a2a" opacity="0.18"/>
+    <path d="M100 38c36 0 64 30 64 66 0 36-20 62-64 62s-64-26-64-62c0-36 28-66 64-66z" fill="url(#hist-blob-teal-light)"/>
+    <path fill="#f8fcfa" d="M78 52c14-9 38-9 50 3-14-3-34-1-50-3z" opacity="0.6"/>
+    <path fill="#f8fcfa" d="M52 92c4-16 16-28 28-34-8 12-8 22-12 34 2 14 8 24 6 32-12-8-26-18-22-32z" opacity="0.4"/>
+    <path fill="#f8fcfa" d="M146 82c8 10 12 24 8 40-6-8-10-20-8-40z" opacity="0.25"/>
+  </svg>
+              <svg width="32" height="32" viewBox="0 0 32 32" role="img" aria-label="25 Nov teal light favicon">
+    <rect fill="#084f45" width="32" height="32" rx="8"/>
+    <path fill="#f8fcfa" d="M10 8h13v4h-8.5v3H21v4h-6.5v5H10z"/>
+  </svg>
+            </div>
+          </div>
+          <div class="logo-mini-ground " style="background:#14171c;color:#f1eee8">
+            <span class="swatch-note" style="color:#f1eee8">Dark</span>
+            <div class="logo-mini-icons">
+              <svg width="64" height="64" viewBox="0 0 200 200" role="img" aria-label="25 Nov mint dark blob logo">
+    <defs>
+      <radialGradient cx="42%" cy="30%" id="hist-blob-teal-dark" r="75%">
+        <stop offset="0" stop-color="#9be3d2"/>
+        <stop offset="1" stop-color="#6fd0ba"/>
+      </radialGradient>
+    </defs>
+    <ellipse cx="100" cy="168" rx="62" ry="9" fill="#f1eee8" opacity="0.18"/>
+    <path d="M100 38c36 0 64 30 64 66 0 36-20 62-64 62s-64-26-64-62c0-36 28-66 64-66z" fill="url(#hist-blob-teal-dark)"/>
+    <path fill="#0e1a17" d="M78 52c14-9 38-9 50 3-14-3-34-1-50-3z" opacity="0.6"/>
+    <path fill="#0e1a17" d="M52 92c4-16 16-28 28-34-8 12-8 22-12 34 2 14 8 24 6 32-12-8-26-18-22-32z" opacity="0.4"/>
+    <path fill="#0e1a17" d="M146 82c8 10 12 24 8 40-6-8-10-20-8-40z" opacity="0.25"/>
+  </svg>
+              <svg width="32" height="32" viewBox="0 0 32 32" role="img" aria-label="25 Nov mint dark favicon">
+    <rect fill="#6fd0ba" width="32" height="32" rx="8"/>
+    <path fill="#14171c" d="M10 8h13v4h-8.5v3H21v4h-6.5v5H10z"/>
+  </svg>
+            </div>
+          </div>
+        </div>
+        <p class="swatch-note">After the owner reported the light logo as black, PR 937 added primary.mark and primary.markLit so the light mark and favicon returned to teal while dark stayed mint.</p>
+      </article><article class="card">
+        <div class="badge-row" style="justify-content:space-between">
+          <span class="pill num">27 Nov 2026</span>
+          <code>37bc21245, 9861ecb37 (PR 981)</code>
+        </div>
+        <h4 class="card-title">K2 glass bubbles and candidate C</h4>
+        <div class="logo-stage-pair">
+          <div class="logo-mini-ground theme-light" style="background:#eef6f3;color:#0f2a2a">
+            <span class="swatch-note" style="color:#0f2a2a">Light</span>
+            <div class="logo-mini-icons">
+              <svg width="64" height="64" viewBox="0 0 200 200" role="img" aria-label="K2 logo in light theme" focusable="false">
+    <title>K2 logo in light theme</title>
+    <defs>
+      <radialGradient id="hist-k2-light-contact">
+        <stop offset="0" stop-color="var(--color-logo-shadow)" stop-opacity="0.75"/>
+        <stop offset="0.6" stop-color="var(--color-logo-shadow)" stop-opacity="0.4"/>
+        <stop offset="1" stop-color="var(--color-logo-shadow)" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="hist-k2-light-pool">
+        <stop offset="0" stop-color="var(--color-logo-teal)" stop-opacity="0.5"/>
+        <stop offset="0.45" stop-color="var(--color-logo-teal)" stop-opacity="0.2"/>
+        <stop offset="1" stop-color="var(--color-logo-teal)" stop-opacity="0"/>
+      </radialGradient>
+      
+      <radialGradient id="hist-k2-light-0-body" gradientUnits="userSpaceOnUse" cx="105.6" cy="50.4" r="22.400000000000002">
+        <stop offset="0" stop-color="var(--color-logo-violet)" style="stop-opacity:var(--logo-op-core)"/>
+        <stop offset="0.62" stop-color="var(--color-logo-violet)" style="stop-opacity:var(--logo-op-mid)"/>
+        <stop offset="1" stop-color="var(--color-logo-violet)" stop-opacity="1"/>
+      </radialGradient>
+      <radialGradient id="hist-k2-light-0-rim" gradientUnits="userSpaceOnUse" cx="120.4" cy="67.2" r="21">
+        <stop offset="0" stop-color="var(--color-logo-rose)" stop-opacity="0.95"/>
+        <stop offset="0.55" stop-color="var(--color-logo-rose)" stop-opacity="0.35"/>
+        <stop offset="1" stop-color="var(--color-logo-rose)" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="hist-k2-light-0-sheen" gradientUnits="userSpaceOnUse" cx="102" cy="43" r="17">
+        <stop offset="0" stop-color="var(--color-logo-glint)" style="stop-opacity:var(--logo-op-sheen)"/>
+        <stop offset="1" stop-color="var(--color-logo-glint)" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="hist-k2-light-1-body" gradientUnits="userSpaceOnUse" cx="136.64" cy="86.96" r="31.360000000000003">
+        <stop offset="0" stop-color="var(--color-logo-sky)" style="stop-opacity:var(--logo-op-core)"/>
+        <stop offset="0.62" stop-color="var(--color-logo-sky)" style="stop-opacity:var(--logo-op-mid)"/>
+        <stop offset="1" stop-color="var(--color-logo-sky)" stop-opacity="1"/>
+      </radialGradient>
+      <radialGradient id="hist-k2-light-1-rim" gradientUnits="userSpaceOnUse" cx="157.36" cy="110.48" r="29.400000000000002">
+        <stop offset="0" stop-color="var(--color-logo-violet)" stop-opacity="0.95"/>
+        <stop offset="0.55" stop-color="var(--color-logo-violet)" stop-opacity="0.35"/>
+        <stop offset="1" stop-color="var(--color-logo-violet)" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="hist-k2-light-1-sheen" gradientUnits="userSpaceOnUse" cx="131.6" cy="76.6" r="23.8">
+        <stop offset="0" stop-color="var(--color-logo-glint)" style="stop-opacity:var(--logo-op-sheen)"/>
+        <stop offset="1" stop-color="var(--color-logo-glint)" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="hist-k2-light-2-body" gradientUnits="userSpaceOnUse" cx="78.24" cy="113.36" r="53.760000000000005">
+        <stop offset="0" stop-color="var(--color-logo-teal)" style="stop-opacity:var(--logo-op-core)"/>
+        <stop offset="0.62" stop-color="var(--color-logo-teal)" style="stop-opacity:var(--logo-op-mid)"/>
+        <stop offset="1" stop-color="var(--color-logo-teal)" stop-opacity="1"/>
+      </radialGradient>
+      <radialGradient id="hist-k2-light-2-rim" gradientUnits="userSpaceOnUse" cx="113.75999999999999" cy="153.68" r="50.400000000000006">
+        <stop offset="0" stop-color="var(--color-logo-violet)" stop-opacity="0.95"/>
+        <stop offset="0.55" stop-color="var(--color-logo-violet)" stop-opacity="0.35"/>
+        <stop offset="1" stop-color="var(--color-logo-violet)" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="hist-k2-light-2-sheen" gradientUnits="userSpaceOnUse" cx="69.6" cy="95.6" r="40.8">
+        <stop offset="0" stop-color="var(--color-logo-glint)" style="stop-opacity:var(--logo-op-sheen)"/>
+        <stop offset="1" stop-color="var(--color-logo-glint)" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <ellipse class="logo-floor-light" cx="99" cy="177" rx="53" ry="6.890000000000001" fill="var(--color-logo-shadow)" opacity="0.16"/>
+    <g class="logo-floor-dark">
+      <ellipse cx="99" cy="177" rx="68.9" ry="11.924999999999999" fill="url(#hist-k2-light-contact)"/>
+      <ellipse cx="105.36" cy="177" rx="55.650000000000006" ry="8.745" fill="url(#hist-k2-light-pool)"/>
+    </g>
+    
+      <g data-tone="violet">
+        <circle cx="108" cy="54" r="20" fill="var(--color-logo-backing)" style="opacity:var(--logo-op-backing)"/>
+        <circle cx="108" cy="54" r="20" fill="url(#hist-k2-light-0-body)"/>
+        <circle cx="108" cy="54" r="20" fill="url(#hist-k2-light-0-rim)"/>
+        <circle cx="108" cy="54" r="20" fill="url(#hist-k2-light-0-sheen)"/>
+        
+      </g>
+      <g data-tone="sky">
+        <circle cx="140" cy="92" r="28" fill="var(--color-logo-backing)" style="opacity:var(--logo-op-backing)"/>
+        <circle cx="140" cy="92" r="28" fill="url(#hist-k2-light-1-body)"/>
+        <circle cx="140" cy="92" r="28" fill="url(#hist-k2-light-1-rim)"/>
+        <circle cx="140" cy="92" r="28" fill="url(#hist-k2-light-1-sheen)"/>
+        <ellipse cx="129.92" cy="78" rx="5.6000000000000005" ry="3.08" transform="rotate(-32 129.92 78)" fill="var(--color-logo-glint)" style="opacity:var(--logo-op-glint)"/>
+      </g>
+      <g data-tone="teal">
+        <circle cx="84" cy="122" r="48" fill="var(--color-logo-backing)" style="opacity:var(--logo-op-backing)"/>
+        <circle cx="84" cy="122" r="48" fill="url(#hist-k2-light-2-body)"/>
+        <circle cx="84" cy="122" r="48" fill="url(#hist-k2-light-2-rim)"/>
+        <circle cx="84" cy="122" r="48" fill="url(#hist-k2-light-2-sheen)"/>
+        <ellipse cx="66.72" cy="98" rx="9.600000000000001" ry="5.28" transform="rotate(-32 66.72 98)" fill="var(--color-logo-glint)" style="opacity:var(--logo-op-glint)"/>
+      </g>
+  </svg>
+              <svg width="32" height="32" viewBox="32 32 140 140" role="img" aria-label="Candidate C favicon in light theme">
+    <circle cx="108" cy="54" r="20" fill="var(--color-logo-violet)"/>
+    <circle cx="140" cy="92" r="28" fill="var(--color-logo-sky)"/>
+    <circle cx="84" cy="122" r="52" fill="var(--color-surface-canvas)"/>
+    <circle cx="84" cy="122" r="48" fill="var(--color-logo-teal)"/>
+    <ellipse cx="66" cy="98" rx="11" ry="6" transform="rotate(-32 66 98)" fill="var(--color-logo-glint)" opacity="0.9"/>
+  </svg>
+            </div>
+          </div>
+          <div class="logo-mini-ground theme-dark" style="background:#14171c;color:#f1eee8">
+            <span class="swatch-note" style="color:#f1eee8">Dark</span>
+            <div class="logo-mini-icons">
+              <svg width="64" height="64" viewBox="0 0 200 200" role="img" aria-label="K2 logo in dark theme" focusable="false">
+    <title>K2 logo in dark theme</title>
+    <defs>
+      <radialGradient id="hist-k2-dark-contact">
+        <stop offset="0" stop-color="var(--color-logo-shadow)" stop-opacity="0.75"/>
+        <stop offset="0.6" stop-color="var(--color-logo-shadow)" stop-opacity="0.4"/>
+        <stop offset="1" stop-color="var(--color-logo-shadow)" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="hist-k2-dark-pool">
+        <stop offset="0" stop-color="var(--color-logo-teal)" stop-opacity="0.5"/>
+        <stop offset="0.45" stop-color="var(--color-logo-teal)" stop-opacity="0.2"/>
+        <stop offset="1" stop-color="var(--color-logo-teal)" stop-opacity="0"/>
+      </radialGradient>
+      
+      <radialGradient id="hist-k2-dark-0-body" gradientUnits="userSpaceOnUse" cx="105.6" cy="50.4" r="22.400000000000002">
+        <stop offset="0" stop-color="var(--color-logo-violet)" style="stop-opacity:var(--logo-op-core)"/>
+        <stop offset="0.62" stop-color="var(--color-logo-violet)" style="stop-opacity:var(--logo-op-mid)"/>
+        <stop offset="1" stop-color="var(--color-logo-violet)" stop-opacity="1"/>
+      </radialGradient>
+      <radialGradient id="hist-k2-dark-0-rim" gradientUnits="userSpaceOnUse" cx="120.4" cy="67.2" r="21">
+        <stop offset="0" stop-color="var(--color-logo-rose)" stop-opacity="0.95"/>
+        <stop offset="0.55" stop-color="var(--color-logo-rose)" stop-opacity="0.35"/>
+        <stop offset="1" stop-color="var(--color-logo-rose)" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="hist-k2-dark-0-sheen" gradientUnits="userSpaceOnUse" cx="102" cy="43" r="17">
+        <stop offset="0" stop-color="var(--color-logo-glint)" style="stop-opacity:var(--logo-op-sheen)"/>
+        <stop offset="1" stop-color="var(--color-logo-glint)" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="hist-k2-dark-1-body" gradientUnits="userSpaceOnUse" cx="136.64" cy="86.96" r="31.360000000000003">
+        <stop offset="0" stop-color="var(--color-logo-sky)" style="stop-opacity:var(--logo-op-core)"/>
+        <stop offset="0.62" stop-color="var(--color-logo-sky)" style="stop-opacity:var(--logo-op-mid)"/>
+        <stop offset="1" stop-color="var(--color-logo-sky)" stop-opacity="1"/>
+      </radialGradient>
+      <radialGradient id="hist-k2-dark-1-rim" gradientUnits="userSpaceOnUse" cx="157.36" cy="110.48" r="29.400000000000002">
+        <stop offset="0" stop-color="var(--color-logo-violet)" stop-opacity="0.95"/>
+        <stop offset="0.55" stop-color="var(--color-logo-violet)" stop-opacity="0.35"/>
+        <stop offset="1" stop-color="var(--color-logo-violet)" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="hist-k2-dark-1-sheen" gradientUnits="userSpaceOnUse" cx="131.6" cy="76.6" r="23.8">
+        <stop offset="0" stop-color="var(--color-logo-glint)" style="stop-opacity:var(--logo-op-sheen)"/>
+        <stop offset="1" stop-color="var(--color-logo-glint)" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="hist-k2-dark-2-body" gradientUnits="userSpaceOnUse" cx="78.24" cy="113.36" r="53.760000000000005">
+        <stop offset="0" stop-color="var(--color-logo-teal)" style="stop-opacity:var(--logo-op-core)"/>
+        <stop offset="0.62" stop-color="var(--color-logo-teal)" style="stop-opacity:var(--logo-op-mid)"/>
+        <stop offset="1" stop-color="var(--color-logo-teal)" stop-opacity="1"/>
+      </radialGradient>
+      <radialGradient id="hist-k2-dark-2-rim" gradientUnits="userSpaceOnUse" cx="113.75999999999999" cy="153.68" r="50.400000000000006">
+        <stop offset="0" stop-color="var(--color-logo-violet)" stop-opacity="0.95"/>
+        <stop offset="0.55" stop-color="var(--color-logo-violet)" stop-opacity="0.35"/>
+        <stop offset="1" stop-color="var(--color-logo-violet)" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="hist-k2-dark-2-sheen" gradientUnits="userSpaceOnUse" cx="69.6" cy="95.6" r="40.8">
+        <stop offset="0" stop-color="var(--color-logo-glint)" style="stop-opacity:var(--logo-op-sheen)"/>
+        <stop offset="1" stop-color="var(--color-logo-glint)" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <ellipse class="logo-floor-light" cx="99" cy="177" rx="53" ry="6.890000000000001" fill="var(--color-logo-shadow)" opacity="0.16"/>
+    <g class="logo-floor-dark">
+      <ellipse cx="99" cy="177" rx="68.9" ry="11.924999999999999" fill="url(#hist-k2-dark-contact)"/>
+      <ellipse cx="105.36" cy="177" rx="55.650000000000006" ry="8.745" fill="url(#hist-k2-dark-pool)"/>
+    </g>
+    
+      <g data-tone="violet">
+        <circle cx="108" cy="54" r="20" fill="var(--color-logo-backing)" style="opacity:var(--logo-op-backing)"/>
+        <circle cx="108" cy="54" r="20" fill="url(#hist-k2-dark-0-body)"/>
+        <circle cx="108" cy="54" r="20" fill="url(#hist-k2-dark-0-rim)"/>
+        <circle cx="108" cy="54" r="20" fill="url(#hist-k2-dark-0-sheen)"/>
+        
+      </g>
+      <g data-tone="sky">
+        <circle cx="140" cy="92" r="28" fill="var(--color-logo-backing)" style="opacity:var(--logo-op-backing)"/>
+        <circle cx="140" cy="92" r="28" fill="url(#hist-k2-dark-1-body)"/>
+        <circle cx="140" cy="92" r="28" fill="url(#hist-k2-dark-1-rim)"/>
+        <circle cx="140" cy="92" r="28" fill="url(#hist-k2-dark-1-sheen)"/>
+        <ellipse cx="129.92" cy="78" rx="5.6000000000000005" ry="3.08" transform="rotate(-32 129.92 78)" fill="var(--color-logo-glint)" style="opacity:var(--logo-op-glint)"/>
+      </g>
+      <g data-tone="teal">
+        <circle cx="84" cy="122" r="48" fill="var(--color-logo-backing)" style="opacity:var(--logo-op-backing)"/>
+        <circle cx="84" cy="122" r="48" fill="url(#hist-k2-dark-2-body)"/>
+        <circle cx="84" cy="122" r="48" fill="url(#hist-k2-dark-2-rim)"/>
+        <circle cx="84" cy="122" r="48" fill="url(#hist-k2-dark-2-sheen)"/>
+        <ellipse cx="66.72" cy="98" rx="9.600000000000001" ry="5.28" transform="rotate(-32 66.72 98)" fill="var(--color-logo-glint)" style="opacity:var(--logo-op-glint)"/>
+      </g>
+  </svg>
+              <svg width="32" height="32" viewBox="32 32 140 140" role="img" aria-label="Candidate C favicon in dark theme">
+    <circle cx="108" cy="54" r="20" fill="var(--color-logo-violet)"/>
+    <circle cx="140" cy="92" r="28" fill="var(--color-logo-sky)"/>
+    <circle cx="84" cy="122" r="52" fill="var(--color-surface-canvas)"/>
+    <circle cx="84" cy="122" r="48" fill="var(--color-logo-teal)"/>
+    <ellipse cx="66" cy="98" rx="11" ry="6" transform="rotate(-32 66 98)" fill="var(--color-logo-glint)" opacity="0.9"/>
+  </svg>
+            </div>
+          </div>
+        </div>
+        <p class="swatch-note">Chosen from three option rounds: three climbing glass bubbles in the logo.* tokens across web, marketing and mobile, with flat-fill favicon candidate C and new mobile app icons.</p>
+      </article></div>
+        <div class="history-grid-3">
+          <figure class="history-figure">
+    <img class="history-img" src="assets/history/logo-round-1.jpg" alt="Logo options round one sheet comparing today's blob with options A to F in light and dark" width="880" height="2283" loading="lazy"/>
+    <figcaption class="swatch-note">Logo options round 1: today's blob beside six glass drafts (A to F).</figcaption>
+  </figure>
+          <figure class="history-figure">
+    <img class="history-img" src="assets/history/logo-round-2.jpg" alt="Logo options round two sheet exploring families B, C and D with options G, H, I, J, K, L and M" width="880" height="3062" loading="lazy"/>
+    <figcaption class="swatch-note">Logo options round 2: deeper exploration of sphere, rising bubble and bead-path families.</figcaption>
+  </figure>
+          <figure class="history-figure">
+    <img class="history-img" src="assets/history/logo-round-3.jpg" alt="Logo options round three sheet showing C1 to C3 and K1 to K3 with K2 marked chosen" width="880" height="2417" loading="lazy"/>
+    <figcaption class="swatch-note">Logo options round 3: C and K refinements, with K2 marked chosen.</figcaption>
+  </figure>
+        </div>
+        <p class="history-caption">
+          The logo moved from the Direction C teal blob (12 and 14 November) through Midnight and Mint's charcoal blob (24 November) and the teal fix (25 November) to three rounds of glass bubble studies. In round 3 the owner chose K2 (three climbing bubbles sharing one floor shadow), shipped on 27 November 2026 in PR 981 (<code>5bf009a04</code>) alongside flat-fill favicon candidate C and the mobile app icons on Midnight canvas. Source: <code>FlumpLogo</code> and <code>favicon.svg</code> git history, <code>.brand-inputs/logo-options/</code>, <code>STYLE-GUIDE.md</code> sections 9 and 14, and PR 981.
+        </p>
+      </article>
+    </div>
+
+    <p class="source-cite">Sources: STYLE-GUIDE 2.2, 2.7, 8.3, 9, 14; DECISIONS.md; ROLLOUT-PLAN.md; git history; visual baselines; PRs 901 to 986</p>
+  </section>
       <footer class="book-footer">
         <span>Flump: finance without the fog</span>
         <span>Generated from <code>packages/tokens/src</code></span>

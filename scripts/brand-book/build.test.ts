@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { resolve } from "node:path";
 import {
   marketingDurations,
@@ -220,22 +220,53 @@ describe("Flump brand book", () => {
 
     expect(committedHtml).not.toContain("—");
     expect(readFileSync(README_PATH, "utf8")).not.toContain("—");
+    const mainIdx = committedHtml.indexOf("<main");
+    expect(mainIdx).toBeGreaterThan(-1);
+    expect(stripTags(committedHtml.slice(mainIdx))).not.toContain("!");
 
     expect(committedHtml).toContain('href="#evolution"');
-    expect(committedHtml).toContain(
-      '<section id="evolution"><!-- EVOLUTION CHAPTER: filled by a later run --></section>',
-    );
+    expect(committedHtml).toContain('<section class="chapter" id="evolution">');
+    expect(committedHtml).not.toContain("<!-- EVOLUTION CHAPTER: filled by a later run -->");
   });
 
-  it("(d) every referenced image file exists under docs/brand/", () => {
-    const imgSrcs = [...committedHtml.matchAll(/<img\b[^>]*\bsrc="([^"]+)"/gi)].map((m) => m[1]);
-    expect(imgSrcs.length).toBeGreaterThanOrEqual(2);
+  it("(d) every referenced image exists with alt and dimensions, and history assets stay under 4 MB", () => {
+    const imgTags = [...committedHtml.matchAll(/<img\b([^>]*)>/gi)];
+    expect(imgTags.length).toBeGreaterThanOrEqual(2);
 
-    for (const src of imgSrcs) {
+    const referencedHistory = new Set<string>();
+    for (const match of imgTags) {
+      const attrs = match[1] ?? "";
+      const src = attrs.match(/\bsrc="([^"]+)"/i)?.[1];
+      const alt = attrs.match(/\balt="([^"]*)"/i)?.[1];
+      const width = attrs.match(/\bwidth="(\d+)"/i)?.[1];
+      const height = attrs.match(/\bheight="(\d+)"/i)?.[1];
+
       expect(src).toBeDefined();
+      expect(alt).toBeDefined();
+      expect((alt ?? "").trim().length).toBeGreaterThan(0);
+      expect(Number(width)).toBeGreaterThan(0);
+      expect(Number(height)).toBeGreaterThan(0);
+
       const target = resolve(BRAND_DIR, src as string);
       expect(target.startsWith(`${BRAND_DIR}/`)).toBe(true);
       expect(existsSync(target)).toBe(true);
+
+      if ((src as string).startsWith("assets/history/")) {
+        referencedHistory.add((src as string).slice("assets/history/".length));
+      }
     }
+
+    expect(referencedHistory.size).toBeGreaterThanOrEqual(15);
+
+    const historyDir = resolve(BRAND_DIR, "assets/history");
+    const historyFiles = readdirSync(historyDir);
+    expect(historyFiles.length).toBe(referencedHistory.size);
+
+    let totalBytes = 0;
+    for (const file of historyFiles) {
+      expect(referencedHistory.has(file)).toBe(true);
+      totalBytes += statSync(resolve(historyDir, file)).size;
+    }
+    expect(totalBytes).toBeLessThan(4 * 1024 * 1024);
   });
 });
