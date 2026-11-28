@@ -54,6 +54,38 @@ export function isAccountExportKey(value: string): value is AccountExportKey {
 }
 
 /**
+ * Each export section is either data the person gave or that Flump holds about their money, or
+ * bookkeeping Flump keeps about the account itself (the audit trail, idempotency keys, consent
+ * and terms records, a bank sign-in in progress). Only data counts as "something to
+ * export" for the not-invited page and the terms screen; the export itself still writes every
+ * section. A `Record` over every key, so a new section does not compile until it is classified.
+ */
+export const EXPORT_SECTION_KIND: Record<AccountExportKey, "data" | "bookkeeping"> = {
+  profile: "data",
+  retirementPlan: "data",
+  accounts: "data",
+  accountDetails: "data",
+  accountGoals: "data",
+  wellbeingAnswers: "data",
+  transactions: "data",
+  bankConnections: "data",
+  bankOAuthStates: "bookkeeping",
+  budgetEntries: "data",
+  taxRecords: "data",
+  snapshotCheckins: "data",
+  importBatches: "data",
+  mcpTokens: "data",
+  agentAuditEvents: "data",
+  idempotencyKeys: "bookkeeping",
+  auditEvents: "bookkeeping",
+  consents: "bookkeeping",
+  termsAcceptances: "bookkeeping",
+  invoicingSettings: "data",
+  workLogEntries: "data",
+  invoices: "data",
+};
+
+/**
  * Writes the caller's data export (BE-04, finding H9) as one JSON document, streamed: the envelope
  * first, then each table a page at a time, so no table is ever held in memory whole. Only the
  * caller's rows, and only each table's allow-listed columns (see the registry), are read.
@@ -130,6 +162,28 @@ export class AccountExportService {
         await this.writeCsvSection(manager, table, userId, write);
       }
     });
+  }
+
+  /**
+   * Whether the caller has any row in a "data" section (EXPORT_SECTION_KIND), read from the same
+   * registry tables the export walks. Every data section is checked, without stopping at the first
+   * hit, so the time taken says nothing about which section holds data. Read only, no audit row
+   * (nothing is exported), and only the caller's own rows.
+   */
+  async hasExportableData(userId: string): Promise<boolean> {
+    const tables = USER_DATA_REGISTRY.filter((t) => EXPORT_SECTION_KIND[t.key] === "data");
+    return withoutWriteFence(() =>
+      this.dataSource.transaction("REPEATABLE READ", async (manager) => {
+        await manager.query("SET TRANSACTION READ ONLY");
+        await manager.query(`SET LOCAL statement_timeout = ${EXPORT_STATEMENT_TIMEOUT_MS}`);
+        let found = false;
+        for (const table of tables) {
+          const repo = manager.getRepository(table.entity);
+          if (await repo.exists({ where: { userId } as never })) found = true;
+        }
+        return found;
+      }),
+    );
   }
 
   private registryByKey(): Map<AccountExportKey, UserDataTable> {

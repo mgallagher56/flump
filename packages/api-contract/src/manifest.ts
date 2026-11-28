@@ -59,6 +59,7 @@ import {
 import { CreateMcpTokenRequest } from "./domains/mcp-tokens.js";
 import {
   AcceptTermsRequest,
+  AccountExportSummaryResponse,
   DeleteUserRequest,
   ResetFinancialDataRequest,
   UpdateChecklistRequest,
@@ -942,6 +943,15 @@ export const routes = {
       auth: "user",
       ownership: "user",
       group: "profile",
+    }),
+    exportSummary: defineRoute({
+      id: "profile.exportSummary",
+      method: "GET",
+      path: "user-profile/export/summary",
+      auth: "user",
+      ownership: "user",
+      group: "profile",
+      response: AccountExportSummaryResponse,
     }),
     exportCsv: defineRoute({
       id: "profile.exportCsv",

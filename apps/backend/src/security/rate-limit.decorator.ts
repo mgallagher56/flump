@@ -22,6 +22,12 @@ export const RATE_LIMIT_POLICIES = {
   read: [{ limit: 600, windowMs: MINUTE }],
   /** The full data export (BE-04) reads every table the user has: 10 an hour per user. */
   dataExport: [{ limit: 10, windowMs: HOUR }],
+  /**
+   * Whether the caller has anything to export (GET /user-profile/export/summary), read on each load
+   * of the not-invited page and the terms screen: its own budget, so page loads never use up the
+   * export's ten an hour. Shared like the export, so replicas cannot multiply it.
+   */
+  dataExportSummary: [{ limit: 120, windowMs: HOUR }],
   /** Receipt downloads move up to 5 MB each, so they get a tighter read class. */
   receiptRead: [{ limit: 30, windowMs: MINUTE }],
   /** Account email lookups may reach WorkOS, so they get a tighter per-user read class. */
@@ -68,6 +74,7 @@ export const SHARED_RATE_LIMIT_CLASSES: ReadonlySet<RateLimitClass> = new Set<Ra
   "bank",
   "bulkWrite",
   "dataExport",
+  "dataExportSummary",
   "inviteRedeem",
   "householdInviteAccept",
   "householdInviteCreate",

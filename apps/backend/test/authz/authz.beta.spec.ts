@@ -112,6 +112,10 @@ describe.skipIf(dbMode === "skip")("authz: beta invite links (real Postgres)", (
   it("an uninvited caller is refused everywhere but redeem; joining lets them in", async () => {
     const invite = await createInvite("For B");
     expect(invite.token).toMatch(/^[A-Za-z0-9_-]{43}$/);
+    // Outside the gate: whether B has anything to download (nothing yet), for the not-invited page.
+    const summary = await h.call("get", "/user-profile/export/summary", h.tokens.b);
+    expect(summary.status).toBe(200);
+    expect(summary.body).toEqual({ hasData: false });
     const refused = await h.call("get", "/mcp-tokens", h.tokens.b);
     expect(refused.status).toBe(403);
     expect(refused.body.code ?? refused.body.error).toBe("not_invited");
