@@ -78,7 +78,8 @@ export const inviteGateMiddleware: MiddlewareFunction<Response> = async (args, n
       const outcome = await redeemInvite(session.accessToken, token, request.signal).catch(
         () => "busy" as const,
       );
-      throw redirect(outcome === "joined" ? "/app" : samePage(request), {
+      const hasAccess = outcome === "joined" || outcome === "already-member";
+      throw redirect(hasAccess ? "/app" : samePage(request), {
         headers: { "Set-Cookie": clearInviteCookie(request), "Cache-Control": "no-store" },
       });
     }

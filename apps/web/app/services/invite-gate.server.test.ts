@@ -236,6 +236,14 @@ describe("inviteGateMiddleware", () => {
       expect(JSON.parse(String(init.body))).toEqual({ token });
     });
 
+    it("opens the app when the backend says the person already had access", async () => {
+      answers(200, { status: "already-member" });
+      const { result } = runGate("/app/budget", "GET", cookie);
+      const thrown = (await result.catch((e: unknown) => e)) as Response;
+      expect(thrown.headers.get("Location")).toBe("/app");
+      expect(thrown.headers.get("Set-Cookie")).toContain("Max-Age=0");
+    });
+
     it("drops an unusable one and loads the page again, which then shows not invited", async () => {
       answers(410, { code: "invite_unusable", message: "This invite link cannot be used." });
       const { result } = runGate("/app?x=1", "GET", cookie);

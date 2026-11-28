@@ -10,14 +10,16 @@ import { isDevSessionEnabled } from "~/utils/devSession.server";
 
 export const meta: MetaFunction = () => [{ title: "Invite | Flump" }];
 
-type InviteOutcome = "unusable" | "busy";
+type InviteOutcome = "already-member" | "unusable" | "busy";
 
 /**
  * Where an invite link lands once its token is in the cookie (`invite.$token.tsx`).
  * - Signed out: off to sign-up (the one way to sign-up while the beta is invite-only), coming back
  *   here once signed in. Someone with an account can switch to sign-in on that screen.
  * - Signed in: the backend redeems the invite as this person, the cookie is cleared, and the app
- *   opens. A link that cannot be used (used, cancelled, expired) gets one plain page.
+ *   opens. Someone who already had access is told the link was not used, so whoever sent it knows
+ *   it still works for someone else. A link that cannot be used (used, cancelled, expired) gets
+ *   one plain page.
  */
 export const loader = async (args: LoaderFunctionArgs) => {
   const { request } = args;
@@ -53,6 +55,11 @@ export const loader = async (args: LoaderFunctionArgs) => {
 };
 
 const COPY: Record<InviteOutcome, { title: string; description: string }> = {
+  "already-member": {
+    title: "You already have access",
+    description:
+      "This invite link was not used, so it still works for someone else. Let the person who sent it know.",
+  },
   unusable: {
     title: "This invite link cannot be used",
     description:
@@ -71,9 +78,15 @@ export default function InviteRoute() {
     <PageBody>
       <EmptyState
         action={
-          <Button asChild variant="outline">
-            <Link to="/">Go to the home page</Link>
-          </Button>
+          outcome === "already-member" ? (
+            <Button asChild>
+              <Link to="/app">Go to the app</Link>
+            </Button>
+          ) : (
+            <Button asChild variant="outline">
+              <Link to="/">Go to the home page</Link>
+            </Button>
+          )
         }
         description={copy.description}
         headingLevel="h1"

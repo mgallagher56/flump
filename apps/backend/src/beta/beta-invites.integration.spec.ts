@@ -104,10 +104,55 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("beta invites (real P
     expect(await invites.redeem(user(USER_2), second.token)).toEqual({ status: "joined" });
   });
 
-  it("admins and env-listed callers are already members and never use a link up", async () => {
+  it("an admin is already a member and never uses a link up", async () => {
     const link = await invites.createInvite(ADMIN);
     expect(await invites.redeem(user(ADMIN), link.token)).toEqual({ status: "already-member" });
+    const [row] = await ds.query(`SELECT redeemed_at FROM beta_invites WHERE id = $1`, [link.id]);
+    expect(row.redeemed_at).toBeNull();
+    expect((await invites.listMembers()).members).toEqual([]);
+  });
+
+  // The owner's report (28 Nov 2026): someone on an env allow-list signed up through a link, got
+  // in, and the link stayed "Not used yet" with nobody under "People with access".
+  it("an allow-listed caller uses the link and is recorded as a member", async () => {
+    const link = await invites.createInvite(ADMIN, "Test User");
     process.env.BETA_ALLOWED_USER_IDS = USER_1;
+    expect(await invites.redeem(user(USER_1), link.token)).toEqual({ status: "joined" });
+    const [listed] = (await invites.listInvites()).invites;
+    expect(listed?.status).toBe("used");
+    expect((await invites.listMembers()).members).toEqual([
+      expect.objectContaining({ userId: USER_1, label: "Test User" }),
+    ]);
+    // Used once: the same link refuses anyone else.
+    expect(await redeemStatus(USER_2, link.token)).toBe(410);
+  });
+
+  it("an allow-listed caller by email uses the link too", async () => {
+    const link = await invites.createInvite(ADMIN);
+    process.env.BETA_ALLOWED_EMAILS = "listed@example.com";
+    delete process.env.BETA_ALLOWED_USER_IDS;
+    expect(await invites.redeem({ id: USER_1, email: "Listed@Example.com" }, link.token)).toEqual({
+      status: "joined",
+    });
+    await expect(membership.isActiveMember(USER_1)).resolves.toBe(true);
+  });
+
+  it("an allow-listed caller with a used link keeps their access and the link stays theirs", async () => {
+    const link = await invites.createInvite(ADMIN);
+    await invites.redeem(user(USER_2), link.token);
+    process.env.BETA_ALLOWED_USER_IDS = USER_1;
+    expect(await invites.redeem(user(USER_1), link.token)).toEqual({ status: "already-member" });
+    const [row] = await ds.query(`SELECT redeemed_by_user_id FROM beta_invites WHERE id = $1`, [
+      link.id,
+    ]);
+    expect(row.redeemed_by_user_id).toBe(USER_2);
+    await expect(membership.isActiveMember(USER_1)).resolves.toBe(false);
+  });
+
+  it("an open beta never uses a link up", async () => {
+    const link = await invites.createInvite(ADMIN);
+    delete process.env.BETA_ADMIN_USER_IDS;
+    process.env.BETA_OPEN = "true";
     expect(await invites.redeem(user(USER_1), link.token)).toEqual({ status: "already-member" });
     const [row] = await ds.query(`SELECT redeemed_at FROM beta_invites WHERE id = $1`, [link.id]);
     expect(row.redeemed_at).toBeNull();
