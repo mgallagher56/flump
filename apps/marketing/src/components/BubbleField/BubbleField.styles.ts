@@ -39,8 +39,12 @@ export const field = cva({
 });
 
 /**
- * One bubble: a soft sphere in one of the two orb sets (STYLE-GUIDE 2.7; violet and rose only on
- * orb-like elements, MC1). Where the browser supports scroll-driven animation, it drifts between
+ * One bubble: a still glass orb in one of the two orb sets (STYLE-GUIDE 2.7; violet and rose only
+ * on orb-like elements, MC1), lit like the journey's three.js orbs but quieter, since it sits in the
+ * background (owner, 28 Nov 2026: "the marketing side background bubbles should also be glass
+ * orbs"). Every layer is a radial gradient inside the bubble's own circle, so it scales with any
+ * size and nothing reaches past the box the clearance checks measure. No rim line and no outer
+ * shadow. Where the browser supports scroll-driven animation, it drifts between
  * `--drift-from` and `--drift-to` as its band crosses the screen (prototype 11), so it moves only
  * when the reader scrolls. Still with reduced motion, from the system or the header's "Reduce motion"
  * (MK14). On a narrow screen only the first, large bubble stays, at a little over half size and
@@ -48,9 +52,24 @@ export const field = cva({
  */
 export const bubble = cva({
   base: {
+    // The light on the glass: the off-white in both themes.
+    "--bubble-light": "{colors.text.onContrast}",
     position: "absolute",
     borderRadius: "full",
-    opacity: 0.85,
+    opacity: { base: 0.7, _dark: 0.8, _systemDark: 0.8 },
+    // Written as joined string literals, never `[...].join()`: Panda reads styles at build time.
+    // The body's tone is `color` and the caustic's `--bubble-far`, both from the set.
+    backgroundImage:
+      // The specular highlight, top right, where the journey's light falls.
+      "radial-gradient(circle at 70% 26%, var(--bubble-light) 0 3.5%, color-mix(in oklab, var(--bubble-light) 35%, transparent) 6%, transparent 11%), " +
+      // The soft sheen across the upper half.
+      "radial-gradient(ellipse 60% 44% at 46% 28%, color-mix(in oklab, var(--bubble-light) 46%, transparent), transparent 72%), " +
+      // The Fresnel glow: lighter towards the edge and fading again before it, so no line is drawn.
+      "radial-gradient(circle at 50% 50%, transparent 0 60%, color-mix(in oklab, var(--bubble-light) 34%, transparent) 88%, color-mix(in oklab, var(--bubble-light) 12%, transparent) 100%), " +
+      // The caustic: the set's second tone gathered low on the far side.
+      "radial-gradient(circle at 56% 82%, color-mix(in oklab, var(--bubble-far) 32%, transparent), transparent 48%), " +
+      // The body: tinted glass in the set's first tone over the band, denser towards the edge.
+      "radial-gradient(circle at 46% 38%, color-mix(in oklab, currentColor 24%, transparent) 0, color-mix(in oklab, currentColor 42%, transparent) 66%, color-mix(in oklab, currentColor 64%, transparent) 100%)",
     _motionSafe: {
       "@supports (animation-timeline: view())": {
         animationName: "marketingDrift",
@@ -63,16 +82,8 @@ export const bubble = cva({
   },
   variants: {
     set: {
-      skyTeal: {
-        background:
-          "radial-gradient(circle at 35% 30%, {colors.orb.skyTeal.bubble}, {colors.orb.skyTeal.bubbleShade} 80%)",
-        boxShadow: "inset 0 0 0 1px {colors.orb.skyTeal.rim}",
-      },
-      violetRose: {
-        background:
-          "radial-gradient(circle at 35% 30%, {colors.orb.violetRose.bubble}, {colors.orb.violetRose.bubbleShade} 80%)",
-        boxShadow: "inset 0 0 0 1px {colors.orb.violetRose.rim}",
-      },
+      skyTeal: { color: "orb.skyTeal.core", "--bubble-far": "{colors.orb.skyTeal.shade}" },
+      violetRose: { color: "orb.violetRose.core", "--bubble-far": "{colors.orb.violetRose.shade}" },
     },
     order: {
       first: { "@media (max-width: 55.99rem)": { scale: "0.55" } },

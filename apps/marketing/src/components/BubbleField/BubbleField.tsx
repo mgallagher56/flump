@@ -83,7 +83,7 @@ export interface BubbleFieldProps {
 }
 
 /**
- * The bubble field (STYLE-GUIDE 2.7): soft spheres in the orb colour sets at a band's edges, behind
+ * The bubble field (STYLE-GUIDE 2.7): still glass orbs in the orb colour sets at a band's edges, behind
  * its content. Decoration: hidden from assistive technology, and it takes no space or pointer. Put
  * it first inside a positioned band. The server render is the still field. Where the browser can
  * tie an animation to scroll, each bubble drifts a little as its band passes through the screen,

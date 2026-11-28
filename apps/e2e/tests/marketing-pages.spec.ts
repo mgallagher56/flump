@@ -162,6 +162,41 @@ for (const path of OTHER_PATHS) {
   });
 }
 
+/*
+ * The background bubbles are glass orbs like the journey's, not flat circles with a rim line
+ * (owner, 28 Nov 2026): every bubble on the home page, an area page and the AI connection page
+ * draws its glass layers (highlight, sheen, caustic and body, one radial gradient each) and no
+ * 1px inset ring, in both themes.
+ */
+for (const theme of ["light", "dark"] as const) {
+  test(`marketing bubble fields in ${theme}: glass layers and no rim line`, async ({ browser }) => {
+    const context = await browser.newContext({
+      colorScheme: theme,
+      reducedMotion: "reduce",
+      viewport: { width: 1440, height: 900 },
+    });
+    const page = await context.newPage();
+    for (const path of ["/", "/features/pay", "/features/ai-connection"]) {
+      await page.goto(`${MARKETING_URL}${path}`);
+      const looks = await page.locator("[data-bubble-field] span").evaluateAll((els) =>
+        els.map((el) => {
+          const style = getComputedStyle(el);
+          return {
+            layers: style.backgroundImage.split("radial-gradient(").length - 1,
+            ring: /0px 0px 0px 1px inset|inset 0px 0px 0px 1px/.test(style.boxShadow),
+          };
+        }),
+      );
+      expect(looks.length, path).toBeGreaterThan(2);
+      expect(
+        looks.filter((look) => look.ring || look.layers < 4),
+        path,
+      ).toEqual([]);
+    }
+    await context.close();
+  });
+}
+
 for (const row of PAGES) {
   test.describe(`marketing ${row.name}`, () => {
     test("asks no one to request an invite: the hero's one primary Interactive preview, and the close's preview and sign-in line", async ({
