@@ -55,8 +55,9 @@ describe("authz route coverage", () => {
 
   it("lets an uninvited caller through only to join, to sign out and to their own data rights", () => {
     // Redeeming an invite is how they join; a removed member must still be able to export their
-    // data and delete their account, and the mobile app's Not invited screen offers Sign out (E12
-    // S2b). Nothing else may skip the beta refusal.
+    // data and delete their account (and learn whether they have any, so the page offers the
+    // download only then; coordinator sign-off 28 Nov 2026), and the mobile app's Not invited
+    // screen offers Sign out (E12 S2b). Nothing else may skip the beta refusal.
     expect(
       routes
         .filter((r) => r.allowUninvited)
@@ -66,6 +67,7 @@ describe("authz route coverage", () => {
       "DELETE /user-profile",
       "GET /user-profile/export",
       "GET /user-profile/export/csv",
+      "GET /user-profile/export/summary",
       "POST /beta/invites/redeem",
       "POST /session/sign-out",
     ]);
@@ -83,6 +85,7 @@ describe("authz route coverage", () => {
       "DELETE /user-profile",
       "GET /user-profile/export",
       "GET /user-profile/export/csv",
+      "GET /user-profile/export/summary",
       "GET /user-profile/terms-acceptance",
       "POST /beta/invites/redeem",
       "POST /session/sign-out",

@@ -2,6 +2,7 @@ import {
   AcceptTermsRequest,
   type AcceptTermsResponse,
   type AccountExportKey,
+  type AccountExportSummaryResponse,
   DeleteUserRequest,
   type DeleteUserResponse,
   ResetFinancialDataRequest,
@@ -186,6 +187,23 @@ export class UserProfileController {
     await this.streamExport(res, "application/json; charset=utf-8", exportFileName(now), (write) =>
       this.accountExport.writeExport(req.user.id, write, now),
     );
+  }
+
+  /**
+   * Whether the caller has anything to export beyond the bare account record: the not-invited page
+   * and the terms screen offer "Download your data" only then (a removed member keeps their data,
+   * a never-invited account has none). Outside the invite and terms gates like the export itself;
+   * a signed-in session is still required. Only the caller's own rows, a bare boolean.
+   */
+  @Get("user-profile/export/summary")
+  @AllowUninvited()
+  @AllowWithoutTerms(
+    "a person who does not agree to the terms is offered a copy of their data only when there is one",
+  )
+  @RateLimit("dataExportSummary")
+  @HttpCode(200)
+  async exportSummary(@Req() req: AuthenticatedRequest): Promise<AccountExportSummaryResponse> {
+    return { hasData: await this.accountExport.hasExportableData(req.user.id) };
   }
 
   /**

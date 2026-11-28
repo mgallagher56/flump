@@ -49,6 +49,13 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
   const profiles = () => h.dataSource.getRepository(UserProfile);
   const accounts = () => h.dataSource.getRepository(Account);
   const budget = () => h.dataSource.getRepository(BudgetEntry);
+  const auditRowsFor = async (userId: string): Promise<number> => {
+    const [row] = await h.dataSource.query(
+      `SELECT count(*)::int AS n FROM audit_events WHERE user_id = $1`,
+      [userId],
+    );
+    return row.n;
+  };
   const tax = () => h.dataSource.getRepository(TaxRecord);
 
   // The WorkOS adapter has no client in the test env, so its two reads/writes are replaced.
@@ -190,6 +197,11 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
       },
       { key: "GET /user-profile/export", method: "get", path: "/user-profile/export" },
       { key: "GET /user-profile/export/csv", method: "get", path: "/user-profile/export/csv" },
+      {
+        key: "GET /user-profile/export/summary",
+        method: "get",
+        path: "/user-profile/export/summary",
+      },
       {
         key: "GET /user-profile/terms-acceptance",
         method: "get",
@@ -477,6 +489,38 @@ describe.skipIf(dbMode === "skip")("authz: user-profile controller (real Postgre
     expect(res.status).toBe(403);
     expect(res.body.code).toBe("recent_login_required");
     expect(await budget().countBy({ userId: USER_B })).toBeGreaterThan(0);
+  });
+
+  it("GET /user-profile/export/summary: a bare yes or no about the caller's own data only", async () => {
+    const summary = async (token: string) => {
+      const res = await h.call("get", "/user-profile/export/summary", token);
+      expect(res.status).toBe(200);
+      expect(res.headers["cache-control"]).toBe("no-store");
+      return res.body;
+    };
+    // Nothing stored for either.
+    expect(await summary(h.tokens.b)).toEqual({ hasData: false });
+    // A's data says nothing about B.
+    await seedFinancialData(h.tokens.a, "A");
+    expect(await summary(h.tokens.a)).toEqual({ hasData: true });
+    expect(await summary(h.tokens.b)).toEqual({ hasData: false });
+    // Bookkeeping alone (the audit row an export writes) is not something to export.
+    expect((await h.call("get", "/user-profile/export", h.tokens.b).buffer(true)).status).toBe(200);
+    expect(await auditRowsFor(USER_B)).toBeGreaterThan(0);
+    expect(await summary(h.tokens.b)).toEqual({ hasData: false });
+    // Once B has data of their own, yes.
+    await seedFinancialData(h.tokens.b, "B");
+    expect(await summary(h.tokens.b)).toEqual({ hasData: true });
+    // An erased account gets the same refusal the export gives.
+    expect(
+      (await h.call("delete", "/user-profile", h.tokens.b, { confirmation: "DELETE" })).status,
+    ).toBe(200);
+    const erasedSummary = await h.call("get", "/user-profile/export/summary", h.tokens.b);
+    const erasedExport = await h.call("get", "/user-profile/export", h.tokens.b);
+    expect(erasedSummary.status).toBe(410);
+    expect(erasedSummary.status).toBe(erasedExport.status);
+    expect(erasedSummary.body.code).toBe(erasedExport.body.code);
+    ran("GET /user-profile/export/summary");
   });
 
   it("GET /user-profile/export: each caller downloads only their own data, as an uncached attachment", async () => {

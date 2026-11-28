@@ -725,6 +725,16 @@ export const AccountExportDocument = z.strictObject({
 });
 export type AccountExportDocument = z.infer<typeof AccountExportDocument>;
 
+/**
+ * GET /user-profile/export/summary: whether the caller has anything to export beyond the bare
+ * account record (the not-invited page and the terms screen offer "Download your data" only then).
+ * A bare boolean: no counts and no section names.
+ */
+export const AccountExportSummaryResponse = z.strictObject({
+  hasData: z.boolean(),
+});
+export type AccountExportSummaryResponse = z.infer<typeof AccountExportSummaryResponse>;
+
 /** Keys of the export document that hold stored data (one per table). */
 export type AccountExportKey = Exclude<
   keyof AccountExportDocument,
