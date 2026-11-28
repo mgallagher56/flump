@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 import { renderCharacterChapter } from "./chapters/character";
 import { renderChartsChapter } from "./chapters/charts";
 import { renderColourChapter } from "./chapters/colour";
-import { renderCover, renderSidebarToc } from "./chapters/cover";
+import { renderCover, renderTopBar } from "./chapters/cover";
 import { renderDoAndDoNotChapter } from "./chapters/doAndDoNot";
 import { renderEvolutionChapter } from "./chapters/evolution";
 import { renderIllustrationChapter } from "./chapters/illustration";
@@ -18,22 +18,22 @@ import { loadBrandTokens, REPO_ROOT } from "./tokens";
 
 function renderPageControls(): string {
   const monitorIcon =
-    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>';
+    '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>';
   const sunIcon =
-    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>';
+    '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>';
   const moonIcon =
-    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>';
+    '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>';
   const motionIcon =
-    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><line x1="10" y1="9" x2="10" y2="15"/><line x1="14" y1="9" x2="14" y2="15"/></svg>';
+    '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><line x1="10" y1="9" x2="10" y2="15"/><line x1="14" y1="9" x2="14" y2="15"/></svg>';
 
-  return `<section class="page-controls" aria-label="Display controls">
+  return `<div class="page-controls" role="region" aria-label="Display controls">
     <fieldset class="theme-switch" aria-label="Colour theme">
       <button type="button" class="theme-btn" data-theme-choice="system" aria-pressed="true">${monitorIcon}<span>System</span></button>
       <button type="button" class="theme-btn" data-theme-choice="light" aria-pressed="false">${sunIcon}<span>Light</span></button>
       <button type="button" class="theme-btn" data-theme-choice="dark" aria-pressed="false">${moonIcon}<span>Dark</span></button>
     </fieldset>
     <button type="button" class="motion-toggle" id="motion-toggle" data-motion-toggle="" aria-pressed="false">${motionIcon}<span>Reduce motion</span></button>
-  </section>`;
+  </div>`;
 }
 
 export function buildBrandBook(): string {
@@ -82,19 +82,16 @@ ${css}
 </head>
 <body>
 <a class="skip-link" href="#main-content">Skip to contents</a>
-<div class="page-shell">
-  ${renderPageControls()}
-  <div class="book-layout">
-    ${renderSidebarToc()}
-    <main class="book-main" id="main-content">
-      ${sections}
-      <footer class="book-footer">
-        <span>Flump: finance without the fog</span>
-        <span>Flump brand book</span>
-      </footer>
-    </main>
+${renderTopBar(tokens, renderPageControls())}
+<main class="book-main" id="main-content">
+  ${sections}
+</main>
+<footer class="book-footer">
+  <div class="spread-inner book-footer-inner">
+    <span>Flump: finance without the fog</span>
+    <span>Flump brand book</span>
   </div>
-</div>
+</footer>
 <script>
 (() => {
   const THEME_KEY = "flump-brand-book-theme";
@@ -102,6 +99,7 @@ ${css}
   const root = document.documentElement;
   const themeButtons = document.querySelectorAll("[data-theme-choice]");
   const motionButton = document.querySelector("[data-motion-toggle]");
+  const tocDrawer = document.querySelector(".toc-drawer");
 
   function readStorage(key) {
     try {
@@ -164,6 +162,20 @@ ${css}
       const next = root.getAttribute("data-motion") !== "reduce";
       writeStorage(MOTION_KEY, next ? "reduce" : null);
       syncMotion(next);
+    });
+  }
+
+  if (tocDrawer) {
+    const links = tocDrawer.querySelectorAll("a");
+    for (let i = 0; i < links.length; i += 1) {
+      links[i].addEventListener("click", () => {
+        tocDrawer.removeAttribute("open");
+      });
+    }
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && tocDrawer.hasAttribute("open")) {
+        tocDrawer.removeAttribute("open");
+      }
     });
   }
 })();

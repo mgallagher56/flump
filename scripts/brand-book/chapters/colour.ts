@@ -1,95 +1,228 @@
 import { renderOrbTonesDiagram } from "../diagrams/orbTones";
-import { renderProvenanceComment } from "../renderHelpers";
+import {
+  renderChapterOpener,
+  renderColorField,
+  renderProvenanceComment,
+  renderScreenPair,
+} from "../renderHelpers";
 import type { BrandTokens } from "../tokens";
+import {
+  renderUiButtonsSpecimen,
+  renderUiDomainTilesSpecimen,
+  renderUiExampleTagSpecimen,
+  renderUiStatusBadgesSpecimen,
+} from "../uiSpecimens";
 
 export function renderColourChapter(tokens: BrandTokens): string {
-  const areaRows: ReadonlyArray<readonly [string, string, string]> = [
-    ["Net worth and mortgage", "Teal", "Primary headline and home equity figures"],
-    ["Savings", "Sage", "Cash savings and growth pots"],
-    ["Debt and borrowing", "Apricot", "Credit cards, loans and overdrafts, never red"],
-    ["Pension", "Sky", "Workplace and personal retirement pots"],
-    ["Pay and Self Assessment", "Violet", "Tax and income records"],
-    ["Budget", "Rose", "Monthly income, bills and breathing room"],
-    ["Accounts", "Blue-teal (light) / soft pink (dark)", "Account lists and general highlights"],
-  ];
+  const openerVisual = `<div class="opener-visual-plate">
+    <div class="color-field-grid" style="grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">
+      <div style="height:64px;border-radius:var(--radius-control);background:var(--color-surface-canvas);border:1px solid var(--color-border)"></div>
+      <div style="height:64px;border-radius:var(--radius-control);background:var(--color-surface-hero);border:1px solid var(--color-border-hero)"></div>
+      <div style="height:64px;border-radius:var(--radius-control);background:var(--color-primary-solid)"></div>
+      <div style="height:64px;border-radius:var(--radius-control);background:var(--color-chart-debt)"></div>
+    </div>
+    <p class="swatch-note">Canvas, headline panel, primary action and apricot debt tone, adapting together across Mint and Midnight.</p>
+  </div>`;
+
+  const coreFields = [
+    renderColorField(tokens, {
+      key: "surface.canvas",
+      name: "Canvas",
+      role: "About 60% of light mode in pale mint; deep cool charcoal in dark mode.",
+    }),
+    renderColorField(tokens, {
+      key: "surface.card",
+      name: "Card surface",
+      role: "About 30% of every view: clean off-white in light, stepped charcoal in dark.",
+    }),
+    renderColorField(tokens, {
+      key: "surface.hero",
+      name: "Headline panel",
+      role: "Solid mint fill for the one main figure in light; subtly edged card in dark.",
+    }),
+    renderColorField(tokens, {
+      key: "text.primary",
+      name: "Primary ink",
+      role: "Deep forest-charcoal in light mode and crisp warm off-white in dark mode.",
+    }),
+    renderColorField(tokens, {
+      key: "primary",
+      name: "Interactive primary",
+      role: "Deep teal in light and bright mint in dark for links, focus rings and outlines.",
+    }),
+    renderColorField(tokens, {
+      key: "primary.solid",
+      name: "Primary button fill",
+      role: "Charcoal button with white text in light; bright mint button with dark ink in dark.",
+    }),
+    renderColorField(tokens, {
+      key: "chart.debt",
+      name: "Debt apricot",
+      role: "Borrowing, credit cards and loans always appear in warm apricot, never red.",
+    }),
+    renderColorField(tokens, {
+      key: "chart.wealth",
+      name: "Savings sage",
+      role: "Cash savings and growth pots across cards, icon tiles and charts.",
+    }),
+  ].join("");
+
+  const orbFields = [
+    renderColorField(tokens, {
+      key: "orb.skyTeal.core",
+      name: "Sky orb",
+      role: "Primary lit glass orb tone and pension area marker.",
+    }),
+    renderColorField(tokens, {
+      key: "orb.skyTeal.shade",
+      name: "Teal orb",
+      role: "Alternating orb tone, net worth and mortgage highlights.",
+    }),
+    renderColorField(tokens, {
+      key: "orb.violetRose.core",
+      name: "Violet orb",
+      role: "Contained strictly to orbs, the logo, small markers and tax charts.",
+    }),
+    renderColorField(tokens, {
+      key: "orb.violetRose.shade",
+      name: "Rose orb",
+      role: "Warm orb rim light and budget area highlights, never a card tint.",
+    }),
+  ].join("");
 
   return `<section class="chapter" id="colour">
-    <div class="chapter-head">
-      <span class="chapter-kicker">Chapter 03</span>
-      <h2 class="chapter-title">Colour</h2>
-    </div>
+    ${renderChapterOpener({
+      num: "03",
+      title: "Colour",
+      lead: "Colour separates surfaces cleanly and identifies each area of household money without ever grading an outcome as good or bad.",
+      visualHtml: openerVisual,
+      surface: "subtle",
+      hook: "chapter-03",
+    })}
 
-    <p class="prose">
-      Colour in Flump separates surfaces cleanly and identifies each area of a household's money without judging good or bad outcomes. Light mode uses about 60% pale mint canvas, 30% off-white cards and 10% teal, charcoal and domain accents; dark mode steps cool charcoal surfaces lighter as they rise toward the viewer.
-    </p>
-
-    <div class="grid-2">
-      <div class="theme-frame theme-light">
-        <h3 class="card-title">Mint (light theme)</h3>
-        <p class="prose">Pale mint canvas with off-white cards, a solid mint headline panel in deep-green ink, charcoal primary buttons and teal links.</p>
-        <div class="hero-panel">
-          <span class="swatch-note" style="color:var(--color-text-on-hero)">Cash and savings <span class="example-tag">Example</span></span>
-          <p class="hero-figure">£21,000</p>
+    <div class="spread">
+      <div class="spread-inner">
+        <div class="editorial-copy">
+          <h3 class="sub-title">Core system palette</h3>
+          <p class="prose">
+            Every token resolves to a paired light and dark value so Mint and Midnight keep their proportions without custom per-page overrides.
+          </p>
         </div>
-        <div class="demo-actions">
-          <span class="demo-btn">Request an invite</span>
-          <span class="demo-btn-outline">Interactive preview</span>
-          <span style="color:var(--color-chart-debt);font-weight:600" class="num">£1,800 card balance</span>
-        </div>
-      </div>
-
-      <div class="theme-frame theme-dark">
-        <h3 class="card-title">Midnight (dark theme)</h3>
-        <p class="prose">Cool charcoal surfaces with crisp warm-white text, mint headline figures and primary buttons, and soft apricot for debt.</p>
-        <div class="hero-panel">
-          <span class="swatch-note" style="color:var(--color-text-on-hero)">Cash and savings <span class="example-tag">Example</span></span>
-          <p class="hero-figure">£21,000</p>
-        </div>
-        <div class="demo-actions">
-          <span class="demo-btn">Request an invite</span>
-          <span class="demo-btn-outline">Interactive preview</span>
-          <span style="color:var(--color-chart-debt);font-weight:600" class="num">£1,800 card balance</span>
+        <div class="color-field-grid">
+          ${coreFields}
         </div>
       </div>
     </div>
 
-    ${renderOrbTonesDiagram(tokens)}
-
-    <article class="card-subtle">
-      <h3 class="card-title">Core colour rules</h3>
-      <ul class="plain-list">
-        <li><strong>Never judge finances with colour:</strong> negative balances use standard text ink with a minus sign, and debt is always warm apricot rather than red. Red and amber are reserved strictly for errors, destructive confirmations, deadlines and unverified estimates.</li>
-        <li><strong>Mint is a fill in light mode, never text:</strong> bright mint fails contrast on pale backgrounds, so links, focus rings and outline buttons use deep teal in light mode and mint in dark mode.</li>
-        <li><strong>Keep violet and rose contained:</strong> violet and rose stay on glass orbs, the three-bubble logo, small area markers and chart series, never as page backgrounds or card tints.</li>
-        <li><strong>Never rely on colour alone:</strong> every status badge, chart line and alert pairs colour with an icon, pattern or clear label.</li>
-      </ul>
-    </article>
-
-    <h3 class="sub-title">Area colours and contrast minimums</h3>
-    <div class="grid-2">
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr><th scope="col">Product area</th><th scope="col">Assigned colour</th><th scope="col">Scope</th></tr>
-          </thead>
-          <tbody>
-            ${areaRows.map(([area, col, scope]) => `<tr><td><strong>${area}</strong></td><td>${col}</td><td>${scope}</td></tr>`).join("")}
-          </tbody>
-        </table>
+    <div class="spread spread-subtle">
+      <div class="spread-inner">
+        <div class="editorial-copy">
+          <h3 class="sub-title">The four orb tones</h3>
+          <p class="prose">
+            Violet and rose give the marketing site and logo depth while staying off page bands and card backgrounds.
+          </p>
+        </div>
+        <div class="color-field-grid">
+          ${orbFields}
+        </div>
+        ${renderOrbTonesDiagram(tokens)}
       </div>
+    </div>
 
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr><th scope="col">Contrast pair</th><th scope="col">Minimum ratio</th></tr>
-          </thead>
-          <tbody>
-            <tr><td>Body text on its surface</td><td class="num">4.5:1 (3:1 at 24px or 18.66px bold)</td></tr>
-            <tr><td>Input borders, focus rings, icons and chart marks</td><td class="num">3:1 against adjacent surface</td></tr>
-            <tr><td>Card hairline border against canvas</td><td class="num">1.3:1</td></tr>
-            <tr><td>Stepped surfaces (canvas to card)</td><td class="num">2.0 deltaE</td></tr>
-          </tbody>
-        </table>
+    <div class="spread">
+      <div class="spread-inner">
+        <div class="editorial-copy">
+          <h3 class="sub-title">Real controls in Mint and Midnight</h3>
+          <p class="prose">
+            Rendered directly from Flump's UI components: primary buttons invert cleanly between themes, bright mint stays a fill rather than light-mode text, and every status badge pairs colour with a shape or icon.
+          </p>
+        </div>
+        <div class="grid-2">
+          <div class="theme-frame theme-light">
+            <h4 class="card-title">Mint (light theme)</h4>
+            <div class="hero-panel">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+                <span class="swatch-note" style="color:var(--color-text-on-hero)">Cash and savings</span>
+                ${renderUiExampleTagSpecimen("paper")}
+              </div>
+              <p class="hero-figure">£21,000</p>
+            </div>
+            ${renderUiButtonsSpecimen()}
+            ${renderUiStatusBadgesSpecimen()}
+          </div>
+
+          <div class="theme-frame theme-dark" data-theme="dark">
+            <h4 class="card-title">Midnight (dark theme)</h4>
+            <div class="hero-panel">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+                <span class="swatch-note" style="color:var(--color-text-on-hero)">Cash and savings</span>
+                ${renderUiExampleTagSpecimen("paper")}
+              </div>
+              <p class="hero-figure">£21,000</p>
+            </div>
+            ${renderUiButtonsSpecimen()}
+            ${renderUiStatusBadgesSpecimen()}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="spread spread-subtle">
+      <div class="spread-inner">
+        <div class="editorial-copy">
+          <h3 class="sub-title">Product area colours</h3>
+          <p class="prose">
+            Each area of household money keeps one assigned colour across icon tiles, section headers and charts. Rendered below from the real icon tile component.
+          </p>
+        </div>
+        ${renderUiDomainTilesSpecimen()}
+      </div>
+    </div>
+
+    <div class="spread">
+      <div class="spread-inner">
+        ${renderScreenPair({
+          baseName: "web-dashboard",
+          title: "Colour in the web app",
+          copy: "One solid headline figure sits above quiet white or charcoal summary cards. Card accents use only a thin top bar and a 40 pixel domain tile.",
+          desktopAlt: "Flump web dashboard showing net worth, summary cards and area sections",
+          phoneAlt: "Flump web dashboard at phone width",
+          caption:
+            "Web dashboard at 1280px and 375px. Notice how debt appears in neutral ink and apricot accents rather than red.",
+        })}
+      </div>
+    </div>
+
+    <div class="spread spread-subtle">
+      <div class="spread-inner">
+        <div class="editorial-copy">
+          <h3 class="sub-title">Contrast minimums</h3>
+          <p class="prose">
+            Legibility is enforced automatically across both themes. Never rely on colour alone to carry meaning.
+          </p>
+        </div>
+        <div class="contrast-strip">
+          <div class="contrast-stat">
+            <span class="contrast-ratio">4.5:1</span>
+            <strong>Body text on its surface</strong>
+            <span class="swatch-note num">3:1 at 24px or 18.66px bold</span>
+          </div>
+          <div class="contrast-stat">
+            <span class="contrast-ratio">3:1</span>
+            <strong>Controls, focus rings and marks</strong>
+            <span class="swatch-note">Input borders, icons and chart lines</span>
+          </div>
+          <div class="contrast-stat">
+            <span class="contrast-ratio">1.3:1</span>
+            <strong>Card edge against canvas</strong>
+            <span class="swatch-note">Hairline separation without visual clutter</span>
+          </div>
+          <div class="contrast-stat">
+            <span class="contrast-ratio">2.0 deltaE</span>
+            <strong>Stepped background surfaces</strong>
+            <span class="swatch-note">Distinct depth from canvas to card</span>
+          </div>
+        </div>
       </div>
     </div>
 

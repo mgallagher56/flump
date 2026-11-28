@@ -1,4 +1,4 @@
-import { renderK2LogoSvg, renderProvenanceComment } from "../renderHelpers";
+import { renderCoverGlassOrbs, renderK2LogoSvg, renderProvenanceComment } from "../renderHelpers";
 import type { BrandTokens } from "../tokens";
 
 const CHAPTER_TOC = [
@@ -16,19 +16,31 @@ const CHAPTER_TOC = [
   { num: "Ref", id: "reference", title: "Reference" },
 ] as const;
 
-export function renderSidebarToc(): string {
+export function renderTopBar(tokens: BrandTokens, controlsHtml: string): string {
   const items = CHAPTER_TOC.map(
     (ch) =>
       `<li><a href="#${ch.id}"><span class="toc-num">${ch.num}</span><span>${ch.title}</span></a></li>`,
   ).join("");
-  return `<aside class="toc-sidebar" aria-label="Brand book contents">
-    <h2 class="toc-title">Contents</h2>
-    <nav aria-label="Contents">
-      <ol class="toc-list">
-        ${items}
-      </ol>
-    </nav>
-  </aside>`;
+
+  return `<header class="book-bar">
+    <div class="book-bar-inner">
+      <div class="book-bar-left">
+        <a class="book-brand" href="#cover">
+          ${renderK2LogoSvg(tokens, { idPrefix: "bar-k2", sizePx: 28 })}
+          <span>Flump</span>
+        </a>
+        <details class="toc-drawer">
+          <summary class="toc-trigger">Contents</summary>
+          <nav class="toc-panel" aria-label="Brand book contents">
+            <ol class="toc-list">
+              ${items}
+            </ol>
+          </nav>
+        </details>
+      </div>
+      ${controlsHtml}
+    </div>
+  </header>`;
 }
 
 export function renderCover(tokens: BrandTokens): string {
@@ -37,26 +49,28 @@ export function renderCover(tokens: BrandTokens): string {
       `<li><a href="#${ch.id}"><span class="toc-num">${ch.num}</span><span>${ch.title}</span></a></li>`,
   ).join("");
 
-  return `<header class="cover-card">
-    <div class="cover-header">
-      ${renderK2LogoSvg(tokens, { idPrefix: "cover-k2", sizePx: 72, title: "Flump logo" })}
-      <div>
-        <p class="chapter-kicker">Flump: finance without the fog</p>
-        <h1 class="cover-title">Flump brand book</h1>
+  return `<section class="cover-spread" id="cover" aria-label="Flump brand book cover">
+    ${renderCoverGlassOrbs()}
+    <div class="spread-inner cover-content">
+      <div class="cover-mark-wrap">
+        ${renderK2LogoSvg(tokens, { idPrefix: "cover-k2", sizePx: 200, title: "Flump three-bubble logo" })}
       </div>
+      <div style="display:grid;gap:var(--space-3);justify-items:center">
+        <p class="cover-kicker">Flump: finance without the fog</p>
+        <h1 class="cover-title">Flump brand book</h1>
+        <p class="cover-lead">
+          Flump helps everyday UK households see their accounts, budget, pay, savings, pension and debts in one place without bank logins, clutter or financial advice.
+        </p>
+        <p class="cover-meta-line">
+          Visual and verbal identity across the website, web app and mobile app.
+        </p>
+      </div>
+      <nav class="cover-index" aria-label="Chapters in this book">
+        <ol class="cover-index-grid">
+          ${tocLinks}
+        </ol>
+      </nav>
     </div>
-    <p class="cover-lead">
-      Flump helps everyday UK households see their accounts, budget, pay, savings, pension and debts in one place. People type in their own figures, so no bank login is needed, and Flump never moves money or gives financial advice.
-    </p>
-    <p class="prose">
-      This book presents the visual and verbal identity shared across the Flump marketing site, web app and mobile app. Each chapter starts with why the design works this way, shows the finished result and sets out the core rules, followed by a complete reference appendix at the end.
-    </p>
-    <nav aria-label="Cover contents">
-      <h2 class="sub-title">In this book</h2>
-      <ol class="toc-list">
-        ${tocLinks}
-      </ol>
-    </nav>
     ${renderProvenanceComment("apps/marketing/src/utils/featureAreas.ts, HomeSecurity.tsx, STYLE-GUIDE 1, COPY-GUIDE 1 and 2.1")}
-  </header>`;
+  </section>`;
 }

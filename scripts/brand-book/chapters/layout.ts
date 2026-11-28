@@ -1,18 +1,46 @@
 import { renderSpacingBlocksDiagram } from "../diagrams/spacingBlocks";
-import { renderProvenanceComment } from "../renderHelpers";
+import { renderChapterOpener, renderProvenanceComment, renderScreenPair } from "../renderHelpers";
 import { type BrandTokens, shadowVar } from "../tokens";
 
 export function renderLayoutChapter(tokens: BrandTokens): string {
   const { native } = tokens;
 
   const readingOrder = [
-    "Page header",
-    "Headline figure",
-    "Summary strip",
-    "Your saved details",
-    "What-if modelling",
-    "Further details",
+    { label: "Page header", note: "Title and one plain sentence", dashed: false },
+    { label: "Headline figure", note: "One saved fact, never an estimate", dashed: false },
+    { label: "Summary strip", note: "Supporting figures from saved records", dashed: false },
+    {
+      label: "Your saved details",
+      note: "Editable inputs separated from scenarios",
+      dashed: false,
+    },
+    {
+      label: "What-if modelling",
+      note: "Dashed zone tagged Illustration, not saved",
+      dashed: true,
+    },
+    { label: "Further details", note: "Collapsed behind Show details", dashed: false },
   ];
+
+  const openerVisual = `<div class="opener-visual-plate">
+    <p class="chapter-kicker">One reading order on every page</p>
+    <ol class="reading-order-list">
+      ${readingOrder
+        .map(
+          (
+            step,
+            i,
+          ) => `<li class="reading-order-step${step.dashed ? " reading-order-step-dashed" : ""}">
+            <span class="reading-step-num num">${i + 1}</span>
+            <div>
+              <strong style="display:block;font-size:var(--text-body-sm-size)">${step.label}</strong>
+              <span class="swatch-note">${step.note}</span>
+            </div>
+          </li>`,
+        )
+        .join("")}
+    </ol>
+  </div>`;
 
   const radiusItems: ReadonlyArray<{
     key: keyof typeof native.radii;
@@ -62,49 +90,76 @@ export function renderLayoutChapter(tokens: BrandTokens): string {
     .join("");
 
   return `<section class="chapter" id="layout-radius-elevation">
-    <div class="chapter-head">
-      <span class="chapter-kicker">Chapter 06</span>
-      <h2 class="chapter-title">Layout, radius and elevation</h2>
-    </div>
+    ${renderChapterOpener({
+      num: "06",
+      title: "Layout, radius and elevation",
+      lead: "Saved facts always lead the page, what-if sliders stay inside dashed zones, and softer inner corners nest inside larger frames.",
+      visualHtml: openerVisual,
+      surface: "card",
+      hook: "chapter-06",
+    })}
 
-    <p class="prose">
-      Consistent rhythm keeps financial figures scannable. Every page uses a 4 pixel spacing scale, follows one predictable reading order from saved facts at the top to optional modelling below, and nests softer inner corners inside larger outer containers.
-    </p>
-
-    <article class="card">
-      <h3 class="card-title">One page reading order</h3>
-      <p class="prose">
-        Saved facts always come first. What-if controls stay separated in a dashed modelling zone labelled "Illustration, not saved" so estimates never overwrite real balances.
-      </p>
-      <div class="reading-order-strip">
-        ${readingOrder.map((step, i) => `<span class="pill num">${i + 1}. ${step}</span>`).join("")}
+    <div class="spread">
+      <div class="spread-inner">
+        ${renderScreenPair({
+          baseName: "web-budget",
+          title: "Progressive disclosure in practice",
+          copy: "Your budget opens with the single left-over figure, followed by money in and money out, keeping detailed adjustments tucked cleanly underneath.",
+          desktopAlt:
+            "Your budget page at 1280px showing left over figure above income and outgoing cards",
+          phoneAlt: "Your budget page at 375px phone width",
+          caption:
+            "Your budget at 1280px and 375px. Every interactive target keeps at least 44 by 44 pixels on touch screens.",
+        })}
       </div>
-    </article>
-
-    ${renderSpacingBlocksDiagram(tokens)}
-
-    <h3 class="sub-title">Corner radii</h3>
-    <p class="prose">A nested shape always uses a smaller corner radius than the container around it.</p>
-    <div class="grid-3">
-      ${radiusCards}
     </div>
 
-    <h3 class="sub-title">Elevation and shadows</h3>
-    <p class="prose">
-      Light mode shadows use a faint deep-green ink tint rather than cold grey-blue. Dark mode separates layers through stepped charcoal surfaces, a crisp border and a subtle top highlight.
-    </p>
-    <div class="grid-2">
-      ${shadowDemos}
+    <div class="spread spread-subtle">
+      <div class="spread-inner">
+        <div class="editorial-split">
+          ${renderSpacingBlocksDiagram(tokens)}
+          <div class="editorial-copy">
+            <h3 class="sub-title">Spacing and responsive steps</h3>
+            <p class="prose">
+              A 4 pixel spacing scale keeps cards, gutters and sections aligned from a 375 pixel phone up to a 1440 pixel desktop.
+            </p>
+            <ul class="plain-list">
+              <li>Phone navigation switches to a compact top bar at 768 pixels and expands to the full navigation bar at 1024 pixels.</li>
+              <li>Interactive buttons and links preserve a 44 by 44 pixel minimum tap target even in compact density.</li>
+              <li>What-if modelling zones use a dashed border with no background fill so estimates never look like saved balances.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <article class="card-subtle">
-      <h3 class="card-title">Layout rules</h3>
-      <ul class="plain-list">
-        <li>Every interactive button and link keeps at least a 44 by 44 pixel tap target across compact and phone layouts.</li>
-        <li>Phone navigation switches to a compact top bar and slide-out drawer at 768 pixels, expanding to the full top bar at 1024 pixels.</li>
-        <li>What-if modelling zones use a dashed border with no background fill so they stay visually lighter than saved cards.</li>
-      </ul>
-    </article>
+    <div class="spread">
+      <div class="spread-inner">
+        <div class="editorial-copy">
+          <h3 class="sub-title">Corner radii</h3>
+          <p class="prose">A nested shape always uses a smaller corner radius than the container around it.</p>
+        </div>
+        <div class="grid-4">
+          ${radiusCards}
+        </div>
+      </div>
+    </div>
+
+    <div class="spread spread-subtle">
+      <div class="spread-inner">
+        <div class="editorial-copy">
+          <h3 class="sub-title">Elevation and shadows</h3>
+          <p class="prose">
+            Light mode shadows use a faint deep-green ink tint rather than cold grey-blue. Dark mode separates layers through stepped charcoal surfaces, crisp edges and subtle top highlights.
+          </p>
+        </div>
+        <div class="shadow-tray">
+          <div class="grid-2">
+            ${shadowDemos}
+          </div>
+        </div>
+      </div>
+    </div>
 
     ${renderProvenanceComment("STYLE-GUIDE 4, 5, 6; packages/tokens/src/index.ts, layout.ts, elevation.ts, breakpoints.ts")}
   </section>`;

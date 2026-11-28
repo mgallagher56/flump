@@ -138,6 +138,83 @@ export function renderTokenRow(path: string, value: string, note: string): strin
   </tr>`;
 }
 
+export function renderRulerTokenItem(
+  path: string,
+  value: string,
+  note: string,
+  barPct: number,
+): string {
+  const clamped = Math.max(2, Math.min(100, Math.round(barPct)));
+  return `<div class="ref-scale-row">
+    <div class="ref-scale-head">
+      <code>${escapeHtml(path)}</code>
+      <span class="num ref-scale-val" data-path="${escapeHtml(path)}" data-value="${escapeHtml(value)}"><strong>${escapeHtml(value)}</strong></span>
+    </div>
+    <div class="ref-ruler-track" aria-hidden="true">
+      <div class="ref-ruler-fill" style="width:${clamped}%"></div>
+    </div>
+    <p class="swatch-note">${escapeHtml(note)}</p>
+  </div>`;
+}
+
+export function renderRadiusTokenItem(
+  path: string,
+  value: string,
+  note: string,
+  cssRadius: string,
+): string {
+  return `<div class="ref-radius-card">
+    <div class="ref-radius-shape" style="border-radius:${escapeHtml(cssRadius)}" aria-hidden="true"></div>
+    <div class="ref-radius-meta">
+      <div class="ref-scale-head">
+        <code>${escapeHtml(path)}</code>
+        <span class="num ref-scale-val" data-path="${escapeHtml(path)}" data-value="${escapeHtml(value)}"><strong>${escapeHtml(value)}</strong></span>
+      </div>
+      <p class="swatch-note">${escapeHtml(note)}</p>
+    </div>
+  </div>`;
+}
+
+export function renderZIndexTokenItem(
+  path: string,
+  value: string,
+  note: string,
+  stepIndex: number,
+  totalSteps: number,
+): string {
+  const pct = Math.max(8, Math.round(((stepIndex + 1) / Math.max(1, totalSteps)) * 100));
+  return `<div class="ref-scale-row">
+    <div class="ref-scale-head">
+      <code>${escapeHtml(path)}</code>
+      <span class="num ref-scale-val" data-path="${escapeHtml(path)}" data-value="${escapeHtml(value)}"><strong>${escapeHtml(value)}</strong></span>
+    </div>
+    <div class="ref-ruler-track" aria-hidden="true">
+      <div class="ref-ruler-fill ref-ruler-layer" style="width:${pct}%"></div>
+    </div>
+    <p class="swatch-note">${escapeHtml(note)}</p>
+  </div>`;
+}
+
+export function renderMotionTokenItem(
+  path: string,
+  value: string,
+  note: string,
+  barPct?: number,
+): string {
+  const track =
+    barPct !== undefined
+      ? `<div class="ref-ruler-track" aria-hidden="true"><div class="ref-ruler-fill" style="width:${Math.max(3, Math.min(100, Math.round(barPct)))}%"></div></div>`
+      : "";
+  return `<div class="ref-scale-row">
+    <div class="ref-scale-head">
+      <code>${escapeHtml(path)}</code>
+      <span class="num ref-scale-val" data-path="${escapeHtml(path)}" data-value="${escapeHtml(value)}"><strong>${escapeHtml(value)}</strong></span>
+    </div>
+    ${track}
+    <p class="swatch-note">${escapeHtml(note)}</p>
+  </div>`;
+}
+
 export function renderProvenanceComment(sources: string): string {
   const safe = sources.replace(/—/g, "-").replace(/--+/g, "-");
   return `<!-- Provenance: ${safe} -->`;
@@ -145,6 +222,124 @@ export function renderProvenanceComment(sources: string): string {
 
 export function renderExampleTag(): string {
   return `<span class="example-tag">Example</span>`;
+}
+
+export interface ChapterOpenerOptions {
+  num: string;
+  title: string;
+  lead: string;
+  visualHtml: string;
+  surface?: "canvas" | "card" | "subtle";
+  hook?: string;
+}
+
+export function renderChapterOpener(options: ChapterOpenerOptions): string {
+  const { num, title, lead, visualHtml, surface = "subtle", hook } = options;
+  const hookAttr = hook ? ` data-motion-hook="${escapeHtml(hook)}"` : "";
+  return `<header class="chapter-opener chapter-opener-${surface}"${hookAttr}>
+    <div class="spread-inner chapter-opener-grid">
+      <div class="chapter-opener-copy">
+        <span class="chapter-num num">${escapeHtml(num)}</span>
+        <h2 class="chapter-display-title">${escapeHtml(title)}</h2>
+        <p class="chapter-lead">${escapeHtml(lead)}</p>
+      </div>
+      <div class="chapter-opener-visual">
+        ${visualHtml}
+      </div>
+    </div>
+  </header>`;
+}
+
+export interface ScreenFrameOptions {
+  baseName: string;
+  variant: "desktop" | "phone";
+  alt: string;
+  caption?: string;
+}
+
+export function renderScreenFrame(options: ScreenFrameOptions): string {
+  const { baseName, variant, alt, caption } = options;
+  const widthSuffix = variant === "desktop" ? "1280" : "375";
+  const width = variant === "desktop" ? 960 : 750;
+  const height = variant === "desktop" ? 600 : 1520;
+  const lightFile = `${baseName}-${widthSuffix}-light.jpg`;
+  const darkFile = `${baseName}-${widthSuffix}-dark.jpg`;
+  const safeAlt = escapeHtml(alt);
+  const cap = caption
+    ? `<figcaption class="screen-caption">${escapeHtml(caption)}</figcaption>`
+    : "";
+  return `<figure class="screen-frame screen-frame-${variant}">
+    <div class="screen-viewport">
+      <img class="screen-img themed-img-light" src="assets/screens/${escapeHtml(lightFile)}" alt="${safeAlt} (light theme)" width="${width}" height="${height}" loading="lazy"/>
+      <img class="screen-img themed-img-dark" src="assets/screens/${escapeHtml(darkFile)}" alt="${safeAlt} (dark theme)" width="${width}" height="${height}" loading="lazy"/>
+    </div>
+    ${cap}
+  </figure>`;
+}
+
+export interface ScreenPairOptions {
+  baseName: string;
+  title: string;
+  copy: string;
+  desktopAlt: string;
+  phoneAlt: string;
+  caption: string;
+}
+
+export function renderScreenPair(options: ScreenPairOptions): string {
+  const { baseName, title, copy, desktopAlt, phoneAlt, caption } = options;
+  return `<div class="screen-spread" data-motion-hook="screen-pair">
+    <div class="screen-spread-head">
+      <h3 class="sub-title">${escapeHtml(title)}</h3>
+      <p class="prose">${escapeHtml(copy)}</p>
+    </div>
+    <div class="screen-pair">
+      ${renderScreenFrame({ baseName, variant: "desktop", alt: desktopAlt })}
+      ${renderScreenFrame({ baseName, variant: "phone", alt: phoneAlt })}
+    </div>
+    <p class="screen-pair-caption">${escapeHtml(caption)}</p>
+  </div>`;
+}
+
+export function renderCoverGlassOrbs(): string {
+  const orbs: ReadonlyArray<{ cls: string; tone: "sky" | "teal" | "violet" | "rose" }> = [
+    { cls: "cover-orb cover-orb-1", tone: "sky" },
+    { cls: "cover-orb cover-orb-2", tone: "violet" },
+    { cls: "cover-orb cover-orb-3", tone: "teal" },
+    { cls: "cover-orb cover-orb-4", tone: "rose" },
+  ];
+  return `<div class="cover-orbs" aria-hidden="true">${orbs
+    .map(
+      (orb) =>
+        `<span class="${orb.cls} glass-orb glass-orb-${orb.tone}" data-motion-hook="cover-orb"></span>`,
+    )
+    .join("")}</div>`;
+}
+
+export interface ColorFieldOptions {
+  key: ColorKey;
+  name: string;
+  role: string;
+}
+
+export function renderColorField(tokens: BrandTokens, options: ColorFieldOptions): string {
+  const { key, name, role } = options;
+  const lightVal = tokens.native.light.colors[key];
+  const darkVal = tokens.native.dark.colors[key];
+  return `<article class="color-field-card">
+    <div class="color-field-fill" style="background:${colorVar(key)}" aria-hidden="true"></div>
+    <div class="color-field-meta">
+      <div class="color-field-title">
+        <strong>${escapeHtml(name)}</strong>
+        <code>${escapeHtml(key)}</code>
+      </div>
+      <p class="swatch-note">${escapeHtml(role)}</p>
+      <div class="swatch-values num">
+        <span class="swatch-val">Light: <strong>${escapeHtml(lightVal)}</strong></span>
+        <span class="swatch-val">Dark: <strong>${escapeHtml(darkVal)}</strong></span>
+      </div>
+    </div>
+  </article>`;
 }
 
 export interface ThemedImageOptions {

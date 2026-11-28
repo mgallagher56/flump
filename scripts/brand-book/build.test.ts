@@ -268,7 +268,27 @@ describe("Flump brand book", () => {
 
     const refIdx = committedHtml.indexOf('<section class="chapter" id="reference">');
     expect(refIdx).toBeGreaterThan(mainIdx);
-    const visibleChaptersText = stripTags(committedHtml.slice(mainIdx, refIdx));
+    const visibleChaptersHtml = committedHtml.slice(mainIdx, refIdx);
+    expect(visibleChaptersHtml).not.toMatch(/<table\b/i);
+
+    for (const marker of [
+      'data-ui-specimen="button"',
+      'data-ui-specimen="card"',
+      'data-ui-specimen="example-tag"',
+      'data-ui-specimen="status-badge"',
+      'data-ui-specimen="icon-tile"',
+    ]) {
+      expect(visibleChaptersHtml).toContain(marker);
+    }
+
+    const refHtml = committedHtml.slice(refIdx);
+    const refDetails = [...refHtml.matchAll(/<details\b([^>]*)class="ref-section"([^>]*)>/gi)];
+    expect(refDetails.length).toBeGreaterThanOrEqual(10);
+    for (const d of refDetails) {
+      expect(`${d[1] ?? ""} ${d[2] ?? ""}`).not.toMatch(/\bopen\b/i);
+    }
+
+    const visibleChaptersText = stripTags(visibleChaptersHtml);
     const forbiddenLabels = [
       /\bDirection [ABC]\b/i,
       /\bE(?:15|17|35|42)\b/,
@@ -295,6 +315,7 @@ describe("Flump brand book", () => {
     expect(imgTags.length).toBeGreaterThanOrEqual(2);
 
     const referencedHistory = new Set<string>();
+    const referencedScreens = new Set<string>();
     for (const match of imgTags) {
       const attrs = match[1] ?? "";
       const src = attrs.match(/\bsrc="([^"]+)"/i)?.[1];
@@ -314,10 +335,13 @@ describe("Flump brand book", () => {
 
       if ((src as string).startsWith("assets/history/")) {
         referencedHistory.add((src as string).slice("assets/history/".length));
+      } else if ((src as string).startsWith("assets/screens/")) {
+        referencedScreens.add((src as string).slice("assets/screens/".length));
       }
     }
 
     expect(referencedHistory.size).toBeGreaterThanOrEqual(15);
+    expect(referencedScreens.size).toBe(28);
 
     const historyDir = resolve(BRAND_DIR, "assets/history");
     const historyFiles = readdirSync(historyDir);
@@ -329,6 +353,17 @@ describe("Flump brand book", () => {
       totalHistoryBytes += statSync(resolve(historyDir, file)).size;
     }
     expect(totalHistoryBytes).toBeLessThan(4 * 1024 * 1024);
+
+    const screensDir = resolve(BRAND_DIR, "assets/screens");
+    const screenFiles = readdirSync(screensDir);
+    expect(screenFiles.length).toBe(referencedScreens.size);
+
+    let totalScreenBytes = 0;
+    for (const file of screenFiles) {
+      expect(referencedScreens.has(file)).toBe(true);
+      totalScreenBytes += statSync(resolve(screensDir, file)).size;
+    }
+    expect(totalScreenBytes).toBeLessThan(4 * 1024 * 1024);
 
     const videoTags = [...committedHtml.matchAll(/<video\b([^>]*)>([\s\S]*?)<\/video>/gi)];
     expect(videoTags.length).toBe(2);
@@ -369,5 +404,13 @@ describe("Flump brand book", () => {
       totalVideoBytes += statSync(resolve(videoDir, file)).size;
     }
     expect(totalVideoBytes).toBeLessThan(4 * 1024 * 1024);
+
+    const htmlBytes = statSync(HTML_PATH).size;
+    const iconBytes =
+      statSync(resolve(BRAND_DIR, "assets/icon.png")).size +
+      statSync(resolve(BRAND_DIR, "assets/adaptive-icon.png")).size;
+    const totalBookBytes =
+      htmlBytes + iconBytes + totalHistoryBytes + totalScreenBytes + totalVideoBytes;
+    expect(totalBookBytes).toBeLessThan(12 * 1024 * 1024);
   });
 });

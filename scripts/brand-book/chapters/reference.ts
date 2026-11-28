@@ -1,23 +1,50 @@
 import type { ColorKey, ShadowKey } from "../../../packages/tokens/src/native.generated";
 import {
+  renderChapterOpener,
   renderColorSwatch,
+  renderMotionTokenItem,
   renderProvenanceComment,
+  renderRadiusTokenItem,
+  renderRulerTokenItem,
   renderShadowSpecimen,
-  renderTokenRow,
+  renderZIndexTokenItem,
 } from "../renderHelpers";
 import type { BrandTokens } from "../tokens";
 
-function renderSwatchGroup(
+function renderRefSection(title: string, summaryMeta: string, bodyHtml: string): string {
+  return `<details class="ref-section">
+    <summary class="ref-summary">
+      <span>${title}</span>
+      <span class="ref-summary-meta">${summaryMeta}</span>
+    </summary>
+    <div class="ref-body">
+      ${bodyHtml}
+    </div>
+  </details>`;
+}
+
+function renderSwatchSection(
   tokens: BrandTokens,
   heading: string,
   entries: ReadonlyArray<readonly [ColorKey, string]>,
 ): string {
-  return `<div class="reference-group">
-    <h3 class="sub-title">${heading}</h3>
-    <div class="swatch-grid">
-      ${entries.map(([key, note]) => renderColorSwatch(tokens, key, note)).join("")}
-    </div>
-  </div>`;
+  const chips = entries.map(([key, note]) => renderColorSwatch(tokens, key, note)).join("");
+  return renderRefSection(
+    heading,
+    `${entries.length} tokens`,
+    `<div class="swatch-grid">${chips}</div>`,
+  );
+}
+
+function parsePx(val: string): number {
+  const num = Number.parseFloat(val);
+  return Number.isFinite(num) ? num : 0;
+}
+
+function parseMs(val: string): number {
+  if (val.endsWith("ms")) return Number.parseFloat(val);
+  if (val.endsWith("s")) return Number.parseFloat(val) * 1000;
+  return 0;
 }
 
 export function renderReferenceAppendix(tokens: BrandTokens): string {
@@ -156,143 +183,212 @@ export function renderReferenceAppendix(tokens: BrandTokens): string {
     ["chart.grid", "Gridlines"],
   ];
 
-  const typeRows: ReadonlyArray<readonly [string, string, string, string, string, string]> = [
-    [
-      "display",
-      "Plus Jakarta Sans",
-      `${native.textStyles.display.fontSize.min} to ${native.textStyles.display.fontSize.max}px`,
-      authored.webTextStyles.display.value.fontWeight,
-      authored.webTextStyles.display.value.lineHeight,
-      "Marketing hero headline",
-    ],
-    [
-      "numeric.hero",
-      "Inter (tabular)",
-      `${native.textStyles["numeric.hero"].fontSize.min} to ${native.textStyles["numeric.hero"].fontSize.max}px`,
-      authored.webTextStyles.numeric.hero.value.fontWeight,
-      authored.webTextStyles.numeric.hero.value.lineHeight,
-      "Headline figure",
-    ],
-    [
-      "numeric.result",
-      "Inter (tabular)",
-      `${native.textStyles["numeric.result"].fontSize}px`,
-      authored.webTextStyles.numeric.result.value.fontWeight,
-      authored.webTextStyles.numeric.result.value.lineHeight,
-      "Result block figure",
-    ],
-    [
-      "heading.xl",
-      "Plus Jakarta Sans",
-      `${native.textStyles["heading.xl"].fontSize.min} to ${native.textStyles["heading.xl"].fontSize.max}px`,
-      authored.webTextStyles.heading.xl.value.fontWeight,
-      authored.webTextStyles.heading.xl.value.lineHeight,
-      "Page title",
-    ],
-    [
-      "numeric.kpi",
-      "Inter (tabular)",
-      `${native.textStyles["numeric.kpi"].fontSize}px`,
-      authored.webTextStyles.numeric.kpi.value.fontWeight,
-      authored.webTextStyles.numeric.kpi.value.lineHeight,
-      "KPI card values",
-    ],
-    [
-      "heading.lg",
-      "Plus Jakarta Sans",
-      `${native.textStyles["heading.lg"].fontSize}px`,
-      authored.webTextStyles.heading.lg.value.fontWeight,
-      authored.webTextStyles.heading.lg.value.lineHeight,
-      "Section title",
-    ],
-    [
-      "numeric.lg",
-      "Inter (tabular)",
-      `${native.textStyles["numeric.lg"].fontSize}px`,
-      authored.webTextStyles.numeric.lg.value.fontWeight,
-      authored.webTextStyles.numeric.lg.value.lineHeight,
-      "Larger card figures",
-    ],
-    [
-      "heading.md",
-      "Plus Jakarta Sans",
-      `${native.textStyles["heading.md"].fontSize}px`,
-      authored.webTextStyles.heading.md.value.fontWeight,
-      authored.webTextStyles.heading.md.value.lineHeight,
-      "Card title",
-    ],
-    [
-      "body.lg",
-      "Inter",
-      `${native.textStyles["body.lg"].fontSize}px`,
-      authored.webTextStyles.body.lg.value.fontWeight,
-      authored.webTextStyles.body.lg.value.lineHeight,
-      "Lead paragraph",
-    ],
-    [
-      "heading.sm",
-      "Plus Jakarta Sans",
-      `${native.textStyles["heading.sm"].fontSize}px`,
-      authored.webTextStyles.heading.sm.value.fontWeight,
-      authored.webTextStyles.heading.sm.value.lineHeight,
-      "Group title inside a card",
-    ],
-    [
-      "body.md",
-      "Inter",
-      `${native.textStyles["body.md"].fontSize}px`,
-      authored.webTextStyles.body.md.value.fontWeight,
-      authored.webTextStyles.body.md.value.lineHeight,
-      "Default body text",
-    ],
-    [
-      "numeric.md",
-      "Inter (tabular)",
-      `${native.textStyles["numeric.md"].fontSize}px`,
-      authored.webTextStyles.numeric.md.value.fontWeight,
-      authored.webTextStyles.numeric.md.value.lineHeight,
-      "Row and table figures",
-    ],
-    [
-      "numeric.unset",
-      "Inter (tabular)",
-      `${native.textStyles["numeric.unset"].fontSize}px`,
-      authored.webTextStyles.numeric.unset.value.fontWeight,
-      authored.webTextStyles.numeric.unset.value.lineHeight,
-      '"Not set" state',
-    ],
-    [
-      "body.sm",
-      "Inter",
-      `${native.textStyles["body.sm"].fontSize}px`,
-      authored.webTextStyles.body.sm.value.fontWeight,
-      authored.webTextStyles.body.sm.value.lineHeight,
-      "Supporting text and notices",
-    ],
-    [
-      "label.md",
-      "Inter",
-      `${native.textStyles["label.md"].fontSize}px`,
-      authored.webTextStyles.label.md.value.fontWeight,
-      authored.webTextStyles.label.md.value.lineHeight,
-      "Form labels and buttons",
-    ],
-    [
-      "numeric.sm",
-      "Inter (tabular)",
-      `${native.textStyles["numeric.sm"].fontSize}px`,
-      authored.webTextStyles.numeric.sm.value.fontWeight,
-      authored.webTextStyles.numeric.sm.value.lineHeight,
-      "Axis ticks and tooltips",
-    ],
-    [
-      "label.sm",
-      "Inter",
-      `${native.textStyles["label.sm"].fontSize}px`,
-      authored.webTextStyles.label.sm.value.fontWeight,
-      authored.webTextStyles.label.sm.value.lineHeight,
-      "KPI labels and table headers (12px floor)",
-    ],
+  const typeRows: ReadonlyArray<{
+    token: string;
+    family: string;
+    fontCss: string;
+    sizeCss: string;
+    sizeLabel: string;
+    weight: string;
+    lh: string;
+    use: string;
+    sample: string;
+    tabular?: boolean;
+  }> = [
+    {
+      token: "display",
+      family: "Plus Jakarta Sans",
+      fontCss: "var(--font-heading)",
+      sizeCss: authored.webTextStyles.display.value.fontSize,
+      sizeLabel: `${native.textStyles.display.fontSize.min} to ${native.textStyles.display.fontSize.max}px`,
+      weight: authored.webTextStyles.display.value.fontWeight,
+      lh: authored.webTextStyles.display.value.lineHeight,
+      use: "Marketing hero headline",
+      sample: "All your money. One clear picture.",
+    },
+    {
+      token: "numeric.hero",
+      family: "Inter (tabular)",
+      fontCss: "var(--font-body)",
+      sizeCss: authored.webTextStyles.numeric.hero.value.fontSize,
+      sizeLabel: `${native.textStyles["numeric.hero"].fontSize.min} to ${native.textStyles["numeric.hero"].fontSize.max}px`,
+      weight: authored.webTextStyles.numeric.hero.value.fontWeight,
+      lh: authored.webTextStyles.numeric.hero.value.lineHeight,
+      use: "Headline figure",
+      sample: "£231,400",
+      tabular: true,
+    },
+    {
+      token: "numeric.result",
+      family: "Inter (tabular)",
+      fontCss: "var(--font-body)",
+      sizeCss: authored.webTextStyles.numeric.result.value.fontSize,
+      sizeLabel: `${native.textStyles["numeric.result"].fontSize}px`,
+      weight: authored.webTextStyles.numeric.result.value.fontWeight,
+      lh: authored.webTextStyles.numeric.result.value.lineHeight,
+      use: "Result block figure",
+      sample: "£21,000",
+      tabular: true,
+    },
+    {
+      token: "heading.xl",
+      family: "Plus Jakarta Sans",
+      fontCss: "var(--font-heading)",
+      sizeCss: authored.webTextStyles.heading.xl.value.fontSize,
+      sizeLabel: `${native.textStyles["heading.xl"].fontSize.min} to ${native.textStyles["heading.xl"].fontSize.max}px`,
+      weight: authored.webTextStyles.heading.xl.value.fontWeight,
+      lh: authored.webTextStyles.heading.xl.value.lineHeight,
+      use: "Page title",
+      sample: "Your mortgage",
+    },
+    {
+      token: "numeric.kpi",
+      family: "Inter (tabular)",
+      fontCss: "var(--font-body)",
+      sizeCss: authored.webTextStyles.numeric.kpi.value.fontSize,
+      sizeLabel: `${native.textStyles["numeric.kpi"].fontSize}px`,
+      weight: authored.webTextStyles.numeric.kpi.value.fontWeight,
+      lh: authored.webTextStyles.numeric.kpi.value.lineHeight,
+      use: "KPI card values",
+      sample: "£9,600",
+      tabular: true,
+    },
+    {
+      token: "heading.lg",
+      family: "Plus Jakarta Sans",
+      fontCss: "var(--font-heading)",
+      sizeCss: authored.webTextStyles.heading.lg.value.fontSize,
+      sizeLabel: `${native.textStyles["heading.lg"].fontSize}px`,
+      weight: authored.webTextStyles.heading.lg.value.fontWeight,
+      lh: authored.webTextStyles.heading.lg.value.lineHeight,
+      use: "Section title",
+      sample: "Cash and savings",
+    },
+    {
+      token: "numeric.lg",
+      family: "Inter (tabular)",
+      fontCss: "var(--font-body)",
+      sizeCss: authored.webTextStyles.numeric.lg.value.fontSize,
+      sizeLabel: `${native.textStyles["numeric.lg"].fontSize}px`,
+      weight: authored.webTextStyles.numeric.lg.value.fontWeight,
+      lh: authored.webTextStyles.numeric.lg.value.lineHeight,
+      use: "Larger card figures",
+      sample: "£3,450",
+      tabular: true,
+    },
+    {
+      token: "heading.md",
+      family: "Plus Jakarta Sans",
+      fontCss: "var(--font-heading)",
+      sizeCss: authored.webTextStyles.heading.md.value.fontSize,
+      sizeLabel: `${native.textStyles["heading.md"].fontSize}px`,
+      weight: authored.webTextStyles.heading.md.value.fontWeight,
+      lh: authored.webTextStyles.heading.md.value.lineHeight,
+      use: "Card title",
+      sample: "Workplace pension",
+    },
+    {
+      token: "body.lg",
+      family: "Inter",
+      fontCss: "var(--font-body)",
+      sizeCss: authored.webTextStyles.body.lg.value.fontSize,
+      sizeLabel: `${native.textStyles["body.lg"].fontSize}px`,
+      weight: authored.webTextStyles.body.lg.value.fontWeight,
+      lh: authored.webTextStyles.body.lg.value.lineHeight,
+      use: "Lead paragraph",
+      sample: "Accounts, budget, pay, savings, pension and debts in one place.",
+    },
+    {
+      token: "heading.sm",
+      family: "Plus Jakarta Sans",
+      fontCss: "var(--font-heading)",
+      sizeCss: authored.webTextStyles.heading.sm.value.fontSize,
+      sizeLabel: `${native.textStyles["heading.sm"].fontSize}px`,
+      weight: authored.webTextStyles.heading.sm.value.fontWeight,
+      lh: authored.webTextStyles.heading.sm.value.lineHeight,
+      use: "Group title inside a card",
+      sample: "Monthly bills",
+    },
+    {
+      token: "body.md",
+      family: "Inter",
+      fontCss: "var(--font-body)",
+      sizeCss: authored.webTextStyles.body.md.value.fontSize,
+      sizeLabel: `${native.textStyles["body.md"].fontSize}px`,
+      weight: authored.webTextStyles.body.md.value.fontWeight,
+      lh: authored.webTextStyles.body.md.value.lineHeight,
+      use: "Default body text",
+      sample: "Add your first account to see your monthly picture.",
+    },
+    {
+      token: "numeric.md",
+      family: "Inter (tabular)",
+      fontCss: "var(--font-body)",
+      sizeCss: authored.webTextStyles.numeric.md.value.fontSize,
+      sizeLabel: `${native.textStyles["numeric.md"].fontSize}px`,
+      weight: authored.webTextStyles.numeric.md.value.fontWeight,
+      lh: authored.webTextStyles.numeric.md.value.lineHeight,
+      use: "Row and table figures",
+      sample: "£628",
+      tabular: true,
+    },
+    {
+      token: "numeric.unset",
+      family: "Inter (tabular)",
+      fontCss: "var(--font-body)",
+      sizeCss: authored.webTextStyles.numeric.unset.value.fontSize,
+      sizeLabel: `${native.textStyles["numeric.unset"].fontSize}px`,
+      weight: authored.webTextStyles.numeric.unset.value.fontWeight,
+      lh: authored.webTextStyles.numeric.unset.value.lineHeight,
+      use: '"Not set" state',
+      sample: "Not set",
+      tabular: true,
+    },
+    {
+      token: "body.sm",
+      family: "Inter",
+      fontCss: "var(--font-body)",
+      sizeCss: authored.webTextStyles.body.sm.value.fontSize,
+      sizeLabel: `${native.textStyles["body.sm"].fontSize}px`,
+      weight: authored.webTextStyles.body.sm.value.fontWeight,
+      lh: authored.webTextStyles.body.sm.value.lineHeight,
+      use: "Supporting text and notices",
+      sample: "Last check-in: October 2026.",
+    },
+    {
+      token: "label.md",
+      family: "Inter",
+      fontCss: "var(--font-body)",
+      sizeCss: authored.webTextStyles.label.md.value.fontSize,
+      sizeLabel: `${native.textStyles["label.md"].fontSize}px`,
+      weight: authored.webTextStyles.label.md.value.fontWeight,
+      lh: authored.webTextStyles.label.md.value.lineHeight,
+      use: "Form labels and buttons",
+      sample: "Yearly salary before tax",
+    },
+    {
+      token: "numeric.sm",
+      family: "Inter (tabular)",
+      fontCss: "var(--font-body)",
+      sizeCss: authored.webTextStyles.numeric.sm.value.fontSize,
+      sizeLabel: `${native.textStyles["numeric.sm"].fontSize}px`,
+      weight: authored.webTextStyles.numeric.sm.value.fontWeight,
+      lh: authored.webTextStyles.numeric.sm.value.lineHeight,
+      use: "Axis ticks and tooltips",
+      sample: "3.5% AER",
+      tabular: true,
+    },
+    {
+      token: "label.sm",
+      family: "Inter",
+      fontCss: "var(--font-body)",
+      sizeCss: authored.webTextStyles.label.sm.value.fontSize,
+      sizeLabel: `${native.textStyles["label.sm"].fontSize}px`,
+      weight: authored.webTextStyles.label.sm.value.fontWeight,
+      lh: authored.webTextStyles.label.sm.value.lineHeight,
+      use: "KPI labels and table headers (12px floor)",
+      sample: "Breathing room",
+    },
   ];
 
   const spacingRows = [
@@ -359,6 +455,15 @@ export function renderReferenceAppendix(tokens: BrandTokens): string {
     ["breakpoints.2xl", `${native.breakpoints["2xl"]}px`, "Wide desktop"],
   ] as const;
 
+  const spacingScaleHtml = spacingRows
+    .map(([k, v, n]) => {
+      const px = parsePx(v);
+      const maxForKind = k.startsWith("breakpoints.") ? 1536 : k === "sizes.page.max" ? 1280 : 64;
+      const pct = Math.min(100, (px / maxForKind) * 100);
+      return renderRulerTokenItem(k, v, n, pct);
+    })
+    .join("");
+
   const radiusRows: ReadonlyArray<readonly [string, string, string]> = [
     ["radii.none", `${native.radii.none}px`, "Square edges"],
     ["radii.xs", `${native.radii.xs}px`, "Tags inside dense tables"],
@@ -378,6 +483,17 @@ export function renderReferenceAppendix(tokens: BrandTokens): string {
     ["radii.full", `${native.radii.full}px`, "Badges, avatars and switches (pill)"],
   ];
 
+  const radiusVisualHtml = radiusRows
+    .map(([k, v, n]) => renderRadiusTokenItem(k, v, n, k === "radii.full" ? "9999px" : v))
+    .join("");
+
+  const zEntries = Object.entries(native.zIndex);
+  const zScaleHtml = zEntries
+    .map(([key, val], idx) =>
+      renderZIndexTokenItem(`zIndex.${key}`, String(val), "Stacking layer", idx, zEntries.length),
+    )
+    .join("");
+
   const shadowKeys: ReadonlyArray<{ key: ShadowKey; note: string }> = [
     { key: "xs", note: "Faint lift for small parts such as the active tab thumb" },
     { key: "card", note: "Level 1: cards, KPI cards and tables (paired with 1px border)" },
@@ -387,10 +503,6 @@ export function renderReferenceAppendix(tokens: BrandTokens): string {
     { key: "glass", note: "Glass card material elevation" },
     { key: "paper", note: "Paper document material elevation" },
   ];
-
-  const zRows = Object.entries(native.zIndex).map(([key, val]) =>
-    renderTokenRow(`zIndex.${key}`, String(val), "Stacking layer"),
-  );
 
   const appDurationNotes: Record<string, string> = {
     instant: "Immediate state swap (reduced motion)",
@@ -428,22 +540,31 @@ export function renderReferenceAppendix(tokens: BrandTokens): string {
     calmInOut: "Travel and disclosure height (no overshoot)",
   };
 
-  const motionRows = [
+  const durationItems = [
     ...Object.entries(authored.primitiveDurations).map(([key, token]) =>
-      renderTokenRow(`durations.${key}`, token.value, appDurationNotes[key] ?? "App timing"),
-    ),
-    ...Object.entries(authored.primitiveEasings).map(([key, token]) =>
-      renderTokenRow(`easings.${key}`, token.value, appEasingNotes[key] ?? "App easing"),
+      renderMotionTokenItem(
+        `durations.${key}`,
+        token.value,
+        appDurationNotes[key] ?? "App timing",
+        (parseMs(token.value) / 2400) * 100,
+      ),
     ),
     ...Object.entries(authored.marketingDurations).map(([key, token]) =>
-      renderTokenRow(
+      renderMotionTokenItem(
         `durations.marketing.${key}`,
         token.value,
         marketingDurationNotes[key] ?? "Marketing calm scale",
+        (parseMs(token.value) / 2400) * 100,
       ),
     ),
+  ];
+
+  const easingItems = [
+    ...Object.entries(authored.primitiveEasings).map(([key, token]) =>
+      renderMotionTokenItem(`easings.${key}`, token.value, appEasingNotes[key] ?? "App easing"),
+    ),
     ...Object.entries(authored.marketingEasings).map(([key, token]) =>
-      renderTokenRow(
+      renderMotionTokenItem(
         `easings.marketing.${key}`,
         token.value,
         marketingEasingNotes[key] ?? "Marketing easing",
@@ -451,103 +572,60 @@ export function renderReferenceAppendix(tokens: BrandTokens): string {
     ),
   ];
 
-  return `<section class="chapter" id="reference">
-    <div class="chapter-head">
-      <span class="chapter-kicker">Appendix</span>
-      <h2 class="chapter-title">Reference</h2>
-    </div>
+  const typeVisualHtml = `<div class="ref-type-list">
+    ${typeRows
+      .map(
+        (item) => `<div class="ref-type-row">
+          <div class="type-meta">
+            <code>${item.token}</code>
+            <span>${item.family}</span>
+            <span class="num">${item.sizeLabel}</span>
+            <span class="num">weight ${item.weight}</span>
+            <span class="num">line height ${item.lh}</span>
+            <span>${item.use}</span>
+          </div>
+          <div style="font-family:${item.fontCss};font-size:${item.sizeCss};font-weight:${item.weight};line-height:${item.lh};color:var(--color-text-primary);${item.tabular ? "font-variant-numeric:tabular-nums;" : ""}">${item.sample}</div>
+        </div>`,
+      )
+      .join("")}
+  </div>`;
 
+  const openerVisual = `<div class="opener-visual-plate">
+    <p class="chapter-kicker">Token specification</p>
     <p class="prose">
-      Complete design token names and resolved light and dark values read from the system token definitions, grouped by topic for engineers and designers implementing Flump screens.
+      Every colour, size, radius, shadow and timing below is read straight from the system token sources. Open any group to inspect exact values for light and dark themes.
     </p>
+  </div>`;
 
-    ${renderSwatchGroup(tokens, "Logo colour tokens", logoEntries)}
-    ${renderSwatchGroup(tokens, "Marketing orb colour tokens", orbEntries)}
-    ${renderSwatchGroup(tokens, "Surface colour tokens", surfaceEntries)}
-    ${renderSwatchGroup(tokens, "Domain surface tint tokens", tintEntries)}
-    ${renderSwatchGroup(tokens, "Text colour tokens", textEntries)}
-    ${renderSwatchGroup(tokens, "Primary and accent colour tokens", primaryAccentEntries)}
-    ${renderSwatchGroup(tokens, "Border colour tokens", borderEntries)}
-    ${renderSwatchGroup(tokens, "Status colour tokens", statusEntries)}
-    ${renderSwatchGroup(tokens, "Material colour tokens", materialEntries)}
-    ${renderSwatchGroup(tokens, "Chart colour tokens", chartEntries)}
+  return `<section class="chapter" id="reference">
+    ${renderChapterOpener({
+      num: "Ref",
+      title: "Reference",
+      lead: "Complete design token names and resolved light and dark values, collapsed by topic with visual scales.",
+      visualHtml: openerVisual,
+      surface: "card",
+    })}
 
-    <div class="reference-group">
-      <h3 class="sub-title">Type scale</h3>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th scope="col">Token</th>
-              <th scope="col">Typeface</th>
-              <th scope="col">Size</th>
-              <th scope="col">Weight</th>
-              <th scope="col">Line height</th>
-              <th scope="col">Use</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${typeRows
-              .map(
-                ([tok, fam, sz, wt, lh, use]) =>
-                  `<tr><td><code>${tok}</code></td><td>${fam}</td><td class="num">${sz}</td><td class="num">${wt}</td><td class="num">${lh}</td><td>${use}</td></tr>`,
-              )
-              .join("")}
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <div class="reference-group">
-      <h3 class="sub-title">Spacing, sizes and breakpoints</h3>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th scope="col">Token</th><th scope="col">Value</th><th scope="col">Role</th></tr></thead>
-          <tbody>
-            ${spacingRows.map(([k, v, n]) => renderTokenRow(k, v, n)).join("")}
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <div class="reference-group">
-      <h3 class="sub-title">Corner radii and stacking order</h3>
-      <div class="grid-2">
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th scope="col">Token</th><th scope="col">Value</th><th scope="col">Role</th></tr></thead>
-            <tbody>
-              ${radiusRows.map(([k, v, n]) => renderTokenRow(k, v, n)).join("")}
-            </tbody>
-          </table>
+    <div class="spread">
+      <div class="spread-inner">
+        <div class="ref-stack">
+          ${renderSwatchSection(tokens, "Logo colour tokens", logoEntries)}
+          ${renderSwatchSection(tokens, "Marketing orb colour tokens", orbEntries)}
+          ${renderSwatchSection(tokens, "Surface colour tokens", surfaceEntries)}
+          ${renderSwatchSection(tokens, "Domain surface tint tokens", tintEntries)}
+          ${renderSwatchSection(tokens, "Text colour tokens", textEntries)}
+          ${renderSwatchSection(tokens, "Primary and accent colour tokens", primaryAccentEntries)}
+          ${renderSwatchSection(tokens, "Border colour tokens", borderEntries)}
+          ${renderSwatchSection(tokens, "Status colour tokens", statusEntries)}
+          ${renderSwatchSection(tokens, "Material colour tokens", materialEntries)}
+          ${renderSwatchSection(tokens, "Chart colour tokens", chartEntries)}
+          ${renderRefSection("Type scale", `${typeRows.length} styles`, typeVisualHtml)}
+          ${renderRefSection("Spacing, sizes and breakpoints", `${spacingRows.length} tokens`, `<div class="ref-scale-grid">${spacingScaleHtml}</div>`)}
+          ${renderRefSection("Corner radii", `${radiusRows.length} radii`, `<div class="ref-scale-grid">${radiusVisualHtml}</div>`)}
+          ${renderRefSection("Stacking order", `${zEntries.length} layers`, `<div class="ref-scale-grid">${zScaleHtml}</div>`)}
+          ${renderRefSection("Elevation and shadows", `${shadowKeys.length} shadows`, `<div class="grid-2">${shadowKeys.map((item) => renderShadowSpecimen(tokens, item.key, item.note)).join("")}</div>`)}
+          ${renderRefSection("Motion durations and easings", `${durationItems.length + easingItems.length} tokens`, `<div class="ref-scale-grid">${durationItems.join("")}${easingItems.join("")}</div>`)}
         </div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th scope="col">Token</th><th scope="col">Value</th><th scope="col">Layer</th></tr></thead>
-            <tbody>
-              ${zRows.join("")}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <div class="reference-group">
-      <h3 class="sub-title">Elevation and shadows</h3>
-      <div class="grid-2">
-        ${shadowKeys.map((item) => renderShadowSpecimen(tokens, item.key, item.note)).join("")}
-      </div>
-    </div>
-
-    <div class="reference-group">
-      <h3 class="sub-title">Motion durations and easings</h3>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th scope="col">Token</th><th scope="col">Value</th><th scope="col">Use</th></tr></thead>
-          <tbody>
-            ${motionRows.join("")}
-          </tbody>
-        </table>
       </div>
     </div>
 

@@ -1,7 +1,20 @@
-import { renderProvenanceComment } from "../renderHelpers";
+import { renderChapterOpener, renderProvenanceComment } from "../renderHelpers";
 import type { BrandTokens } from "../tokens";
 
 export function renderDoAndDoNotChapter(_tokens: BrandTokens): string {
+  const openerVisual = `<div class="opener-visual-plate">
+    <div class="do-dont-grid">
+      <div class="card-subtle" style="border-left:3px solid var(--color-status-positive-text)">
+        <span class="swatch-note" style="color:var(--color-status-positive-text);font-weight:700">Do</span>
+        <p class="prose">Facts, plain UK English, neutral cards and apricot for debt.</p>
+      </div>
+      <div class="card-subtle" style="border-left:3px solid var(--color-status-danger-text)">
+        <span class="swatch-note" style="color:var(--color-status-danger-text);font-weight:700">Do not</span>
+        <p class="prose">Judgements, red debt badges, animated money or mixed scenario totals.</p>
+      </div>
+    </div>
+  </div>`;
+
   const pairs: ReadonlyArray<{ topic: string; doRule: string; dontRule: string }> = [
     {
       topic: "Colours and judgement",
@@ -73,16 +86,20 @@ export function renderDoAndDoNotChapter(_tokens: BrandTokens): string {
     .join("");
 
   return `<section class="chapter" id="do-and-do-not">
-    <div class="chapter-head">
-      <span class="chapter-kicker">Chapter 10</span>
-      <h2 class="chapter-title">Do and do not</h2>
+    ${renderChapterOpener({
+      num: "10",
+      title: "Do and do not",
+      lead: "A quick side-by-side checklist of the non-negotiable standards across copy, colour, layout and motion.",
+      visualHtml: openerVisual,
+      surface: "card",
+      hook: "chapter-10",
+    })}
+
+    <div class="spread">
+      <div class="spread-inner">
+        ${cards}
+      </div>
     </div>
-
-    <p class="prose">
-      A quick reference checklist bringing together the core rules from earlier chapters.
-    </p>
-
-    ${cards}
 
     ${renderProvenanceComment("STYLE-GUIDE; UX-GUIDELINES; COPY-GUIDE")}
   </section>`;

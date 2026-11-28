@@ -1,9 +1,16 @@
 import { renderTypeLadderDiagram } from "../diagrams/typeLadder";
-import { renderExampleTag, renderProvenanceComment } from "../renderHelpers";
+import { renderChapterOpener, renderProvenanceComment, renderScreenPair } from "../renderHelpers";
 import { type BrandTokens, colorVar } from "../tokens";
+import { renderUiExampleTagSpecimen } from "../uiSpecimens";
 
 export function renderTypographyChapter(tokens: BrandTokens): string {
   const { native, authored } = tokens;
+
+  const openerVisual = `<div class="opener-visual-plate">
+    <div class="specimen-glyph" style="font-family:var(--font-heading)">Aa</div>
+    <p class="hero-figure" style="color:var(--color-primary)">£96,000</p>
+    <p class="swatch-note">Plus Jakarta Sans for headings paired with Inter in tabular numerals for every figure.</p>
+  </div>`;
 
   const samples: Array<{
     role: string;
@@ -133,7 +140,7 @@ export function renderTypographyChapter(tokens: BrandTokens): string {
           : "";
       const fvn = item.tabular ? "font-variant-numeric:tabular-nums;" : "";
       const col = item.muted ? colorVar("text.muted") : colorVar("text.primary");
-      const tag = item.tabular && !item.muted ? ` ${renderExampleTag()}` : "";
+      const tag = item.tabular && !item.muted ? ` ${renderUiExampleTagSpecimen("paper")}` : "";
       return `<div class="type-sample-row">
         <div class="type-meta">
           <strong>${item.role}</strong>
@@ -148,30 +155,73 @@ export function renderTypographyChapter(tokens: BrandTokens): string {
     .join("");
 
   return `<section class="chapter" id="typography">
-    <div class="chapter-head">
-      <span class="chapter-kicker">Chapter 04</span>
-      <h2 class="chapter-title">Typography</h2>
+    ${renderChapterOpener({
+      num: "04",
+      title: "Typography",
+      lead: "Two self-hosted variable typefaces keep headings warm and approachable while figures align cleanly down every column.",
+      visualHtml: openerVisual,
+      surface: "card",
+      hook: "chapter-04",
+    })}
+
+    <div class="spread">
+      <div class="spread-inner">
+        <div class="grid-2">
+          <article class="specimen-sheet">
+            <span class="chapter-kicker">Display and headings</span>
+            <div class="specimen-glyph" style="font-family:var(--font-heading)">Plus Jakarta Sans</div>
+            <p class="prose" style="font-family:var(--font-heading);font-size:1.25rem;line-height:1.45;word-spacing:0.06em">
+              ABCDEFGHIJKLMNOPQRSTUVWXYZ<br>abcdefghijklmnopqrstuvwxyz<br>0123456789 £ % . ,
+            </p>
+            <p class="swatch-note">
+              Weights 600 and 700, sentence case everywhere, with slight extra word spacing on web headings so bold words stay open and scannable.
+            </p>
+          </article>
+
+          <article class="specimen-sheet">
+            <span class="chapter-kicker">Body copy and tabular figures</span>
+            <div class="specimen-glyph" style="font-family:var(--font-body)">Inter</div>
+            <div class="tabular-demo-ledger">
+              <div class="tabular-demo-row"><span>Cash and savings</span><span class="tabular-demo-fig">£21,000</span></div>
+              <div class="tabular-demo-row"><span>Workplace pension</span><span class="tabular-demo-fig">£96,000</span></div>
+              <div class="tabular-demo-row"><span>Credit card (22.9% APR)</span><span class="tabular-demo-fig">£1,800</span></div>
+              <div class="tabular-demo-row"><span>Left over each month</span><span class="tabular-demo-fig">£639</span></div>
+            </div>
+            <p class="swatch-note">
+              Fixed-width tabular numerals and UK formatting keep every pound sign, comma and decimal aligned without jitter.
+            </p>
+          </article>
+        </div>
+      </div>
     </div>
 
-    <p class="prose">
-      Flump uses two self-hosted variable typefaces: <strong>Plus Jakarta Sans</strong> for headings and display lines, and <strong>Inter</strong> for body copy, controls and financial figures. Headings use slightly wider word spacing on the web so bold words remain easy to scan, and every number uses fixed-width columns so balances line up cleanly.
-    </p>
-
-    ${renderTypeLadderDiagram(tokens)}
-
-    <h3 class="sub-title">Live type samples</h3>
-    <div class="card" style="padding:0">
-      ${rowsHtml}
+    <div class="spread spread-subtle">
+      <div class="spread-inner">
+        <div class="editorial-copy">
+          <h3 class="sub-title">Type specimen sheet</h3>
+          <p class="prose">Every text role set at its real scale, weight and line height, with a 12 pixel floor across all interfaces.</p>
+        </div>
+        <div class="card">
+          ${rowsHtml}
+        </div>
+        ${renderTypeLadderDiagram(tokens)}
+      </div>
     </div>
 
-    <article class="card-subtle">
-      <h3 class="card-title">Typography rules</h3>
-      <ul class="plain-list">
-        <li><strong>Two typefaces, four weights:</strong> only Plus Jakarta Sans and Inter at weights 400, 500, 600 and 700, never below 12 pixels.</li>
-        <li><strong>Tabular UK figures everywhere:</strong> money amounts, percentages, dates, table cells and slider readouts use fixed-width numerals and UK formatting.</li>
-        <li><strong>Calm hierarchy:</strong> sentence case everywhere with no uppercase eyebrows, one main heading per page, body lines capped at 75 characters, and text that scales cleanly up to 200% browser zoom.</li>
-      </ul>
-    </article>
+    <div class="spread">
+      <div class="spread-inner">
+        ${renderScreenPair({
+          baseName: "web-pension",
+          title: "Hierarchy in practice",
+          copy: "One page title, one headline total in tabular figures, one supporting figure below and plain details underneath.",
+          desktopAlt:
+            "Your pension page at 1280px width showing total pot figure and monthly contributions",
+          phoneAlt: "Your pension page at 375px phone width",
+          caption:
+            "Your pension at 1280px and 375px. Body lines stay under 75 characters and scale cleanly up to 200% zoom.",
+        })}
+      </div>
+    </div>
 
     ${renderProvenanceComment("STYLE-GUIDE 3.1 to 3.3; packages/tokens/src/typography.ts; packages/ui/src/fonts/fonts.css")}
   </section>`;
