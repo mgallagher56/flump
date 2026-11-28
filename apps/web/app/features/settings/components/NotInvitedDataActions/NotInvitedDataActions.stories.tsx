@@ -6,11 +6,16 @@ import { NotInvitedDataActions } from "./NotInvitedDataActions";
 const download = fn(async () => undefined);
 const deleteAction = fn(async () => ({ outcome: "recent_login_required" }));
 
+/** The story's `offerDownload`, read by the routed component (route components take no props). */
+let offerDownload: boolean | undefined;
+
+function Sections() {
+  return <NotInvitedDataActions download={download} offerDownload={offerDownload} />;
+}
+
 /** A router around the sections, so the delete request has the settings action to post to. */
 const withRouter = (args: { offerDownload?: boolean }): React.ReactElement => {
-  const Sections = () => (
-    <NotInvitedDataActions download={download} offerDownload={args.offerDownload} />
-  );
+  offerDownload = args.offerDownload;
   const Stub = createRoutesStub([
     { path: "/", Component: Sections },
     { path: "/app/profile", action: deleteAction },
