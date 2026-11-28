@@ -1,5 +1,31 @@
 # Changelog
 
+## [1.43.0](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.42.0...flump/marketing-v1.43.0) (2026-11-28)
+
+
+### Features ✨
+
+* **marketing:** AI connection page built to its approved prototype (8763cade2): hero scene with the Preview label, facts beside the home tile picture, question cards with orbs, still setup and technical bands, pills and the ticket close; FeaturePage and AreaStrip removed ([4087695](https://github.com/mgallagher56/flump/commit/4087695c5ee29132efcf8a2df38659e3009d47e0))
+* **marketing:** features index and area pages built to the approved prototypes (OTHER-PAGES-PLAN P0 and P1) ([b9301a5](https://github.com/mgallagher56/flump/commit/b9301a5568a4561b18b49d529fc68737b05c4f51))
+* **marketing:** owner rulings A5 and A8: prototype 11's own Getting started ticket in the close, and the set piece sized as the area prototypes (a setPiece variant; the home journey unchanged) ([36a8100](https://github.com/mgallagher56/flump/commit/36a81009663c3e9ec8e3afc8fd855ab0d85b1d99))
+* **marketing:** rebuild the home page to prototype 11, the three.js page the owner approved ([acb211b](https://github.com/mgallagher56/flump/commit/acb211bc56ed296c2fec7f6cc23ca28e06285e74))
+* **web,marketing:** the favicon is the small K2 mark, the three bubbles in flat fills, light and dark ([9861ecb](https://github.com/mgallagher56/flump/commit/9861ecb37053ecc43ffd4e856f693beef746a8a9))
+
+
+### Bug Fixes 🪲
+
+* CI: a full scroll per width in its own test (inside the 30 s limit), and HomeJourney's GSAP stub a working kit so a queued set-up never throws after the test ([698c1e1](https://github.com/mgallagher56/flump/commit/698c1e1124a4e8e581704246c6334e058f1d8f34))
+* **marketing:** CI fixes: stories show the rest state (the scene never starts and a line opens at once on a still page), and the hero scene's lifecycle is tested with three.js stood in, restoring marketing coverage ([d749f22](https://github.com/mgallagher56/flump/commit/d749f227bbe8a11e9de6e19e9139f0943cb90d7d))
+* **marketing:** frame-rate check ignores hidden and resumed frames, still orbs painted behind every stop, hero pin and rough-figures runs at the prototype's length, band reserves without padding, closing heading on one line, 44px dock with an icon pause on phones, calendar at the prototype's size ([cdc0935](https://github.com/mgallagher56/flump/commit/cdc09355bab16a00ee60bf93943399a4f6fc1b5b))
+* **marketing:** review fixes: the index groups under their own band heading, a line reopens when clicked while closing, the reduced-motion e2e check listens before the page loads ([15ab1cc](https://github.com/mgallagher56/flump/commit/15ab1cc9aff4bd175604b9969b769e8b800f193e))
+* **marketing:** seeded randomness in the journey scene, scene logic in tested modules, useGsapMoment queue teardown, stop control keeps its move through a ScrollTrigger refresh and stays clickable while hovered, hero keeps a reader's place ([bd22e46](https://github.com/mgallagher56/flump/commit/bd22e4659bbb807ebe987fe46c7c1ca5c37e6073))
+* **marketing:** the ticket's sheen starts from a resolved colour (a bare token in stopColor computed to black; the visual check caught it) ([239973d](https://github.com/mgallagher56/flump/commit/239973d39e7cf2a15909fd362dd122625481d5bd))
+
+
+### Tests 🧪
+
+* the home spec reuses the shared condition waits (PR 985's, now in support/marketingMotion.ts), and the close's test pins prototype 11's ticket (review) ([b5f9a7b](https://github.com/mgallagher56/flump/commit/b5f9a7b425753f06f02b560aaacb9d491c9bd6a9))
+
 ## [1.42.0](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.41.0...flump/marketing-v1.42.0) (2026-11-27)
 
 
