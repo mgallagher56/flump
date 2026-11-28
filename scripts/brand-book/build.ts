@@ -31,7 +31,7 @@ export function buildBrandBook(): string {
     renderMotionChapter(tokens),
     renderChartsChapter(tokens),
     renderDoAndDoNotChapter(tokens),
-    renderEvolutionChapter(),
+    renderEvolutionChapter(tokens),
   ].join("\n");
 
   return `<!DOCTYPE html>
