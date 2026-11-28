@@ -14,6 +14,7 @@
   },
   "scripts": {
     "build": "turbo run build",
+    "brand-book": "bun scripts/brand-book/build.ts",
     "dev": "turbo run dev",
     "lint": "biome ci .",
     "knip": "knip --no-progress",
