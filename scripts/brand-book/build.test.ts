@@ -37,6 +37,9 @@ function decodeHtmlEntities(text: string): string {
 function stripTags(html: string): string {
   return decodeHtmlEntities(
     html
+      .replace(/<!--[\s\S]*?-->/g, " ")
+      .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, " ")
+      .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, " ")
       .replace(/<[^>]+>/g, " ")
       .replace(/\s+/g, " ")
       .trim(),
@@ -163,13 +166,21 @@ describe("Flump brand book", () => {
     const css = styleMatch?.[1] ?? "";
 
     const rootBlockMatch = css.match(/:root\s*\{([\s\S]*?)\n\}/);
-    const darkBlockMatch = css.match(
-      /@media\s*\(prefers-color-scheme:\s*dark\)\s*\{\s*:root\s*\{([\s\S]*?)\n\s*\}/,
+    const systemDarkBlockMatch = css.match(
+      /@media\s*\(prefers-color-scheme:\s*dark\)\s*\{\s*:root:not\(\[data-theme="light"\]\)\s*\{([\s\S]*?)\n\s*\}/,
     );
+    const explicitDarkBlockMatch = css.match(/:root\[data-theme="dark"\]\s*\{([\s\S]*?)\n\}/);
+    const explicitLightBlockMatch = css.match(/:root\[data-theme="light"\]\s*\{([\s\S]*?)\n\}/);
+
     expect(rootBlockMatch).not.toBeNull();
-    expect(darkBlockMatch).not.toBeNull();
+    expect(systemDarkBlockMatch).not.toBeNull();
+    expect(explicitDarkBlockMatch).not.toBeNull();
+    expect(explicitLightBlockMatch).not.toBeNull();
+
     const lightRootCss = rootBlockMatch?.[1] ?? "";
-    const darkRootCss = darkBlockMatch?.[1] ?? "";
+    const systemDarkCss = systemDarkBlockMatch?.[1] ?? "";
+    const explicitDarkCss = explicitDarkBlockMatch?.[1] ?? "";
+    const explicitLightCss = explicitLightBlockMatch?.[1] ?? "";
 
     for (const el of elements) {
       if (el.token in light.colors) {
@@ -183,7 +194,9 @@ describe("Flump brand book", () => {
 
         const cssProp = `--color-${toCssIdent(key)}`;
         expect(lightRootCss).toContain(`${cssProp}: ${expectedLight};`);
-        expect(darkRootCss).toContain(`${cssProp}: ${expectedDark};`);
+        expect(explicitLightCss).toContain(`${cssProp}: ${expectedLight};`);
+        expect(systemDarkCss).toContain(`${cssProp}: ${expectedDark};`);
+        expect(explicitDarkCss).toContain(`${cssProp}: ${expectedDark};`);
       } else if (el.token.startsWith("shadows.")) {
         const key = el.token.slice("shadows.".length) as ShadowKey;
         expect(key in light.shadows).toBe(true);
@@ -196,7 +209,9 @@ describe("Flump brand book", () => {
 
         const cssProp = `--shadow-${toCssIdent(key)}`;
         expect(lightRootCss).toContain(`${cssProp}: ${expectedLight};`);
-        expect(darkRootCss).toContain(`${cssProp}: ${expectedDark};`);
+        expect(explicitLightCss).toContain(`${cssProp}: ${expectedLight};`);
+        expect(systemDarkCss).toContain(`${cssProp}: ${expectedDark};`);
+        expect(explicitDarkCss).toContain(`${cssProp}: ${expectedDark};`);
       } else {
         const expected = resolveIndependentSingleValue(el.token);
         expect(expected).not.toBeNull();
@@ -206,13 +221,35 @@ describe("Flump brand book", () => {
     }
   });
 
-  it("(c) is self-contained with no scripts, external URLs, stylesheet links or em dashes", () => {
-    expect(committedHtml.toLowerCase()).not.toContain("<script");
+  it("(c) allows only short inline scripts with zero external requests, external assets, em dashes or internal jargon", () => {
     expect(committedHtml.toLowerCase()).not.toContain("<link");
-    expect(committedHtml).not.toMatch(/(?:src|href)\s*=\s*["']https?:\/\//i);
-    expect(committedHtml).not.toMatch(/url\(\s*["']?https?:\/\//i);
-    expect(committedHtml).not.toMatch(/@import\s+[^;]*https?:\/\//i);
+    expect(committedHtml).not.toMatch(/<script\b[^>]*\bsrc\s*=/i);
+    expect(committedHtml).not.toMatch(/(?:src|href)\s*=\s*["'](?:https?:)?\/\//i);
+    expect(committedHtml).not.toMatch(/url\(\s*["']?(?:https?:)?\/\//i);
+    expect(committedHtml).not.toMatch(/@import\s+[^;]*(?:https?:)?\/\//i);
     expect(committedHtml).not.toMatch(/https?:\/\//i);
+
+    const scriptBlocks = [...committedHtml.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)];
+    expect(scriptBlocks.length).toBeGreaterThanOrEqual(1);
+    for (const match of scriptBlocks) {
+      const code = match[1] ?? "";
+      expect(code.trim().length).toBeGreaterThan(0);
+      expect(code.length).toBeLessThan(4000);
+      for (const line of code.split("\n")) {
+        expect(line.length).toBeLessThan(220);
+      }
+      expect(code).not.toMatch(/\b(?:fetch|XMLHttpRequest|WebSocket)\b/);
+      expect(code).not.toMatch(/\bimport\s*\(/);
+      expect(code).not.toMatch(/\/\*!/);
+      expect(code).not.toMatch(/\b(?:gsap|THREE|jQuery|webpack)\b/);
+      expect(code).not.toContain("//");
+    }
+
+    expect(committedHtml).toContain('data-theme-choice="system"');
+    expect(committedHtml).toContain('data-theme-choice="light"');
+    expect(committedHtml).toContain('data-theme-choice="dark"');
+    expect(committedHtml).toContain("data-motion-toggle");
+    expect(committedHtml).toContain(':root[data-motion="reduce"]');
 
     expect(committedHtml).toContain("font-family: 'Plus Jakarta Sans Variable'");
     expect(committedHtml).toContain("font-family: 'Inter Variable'");
@@ -226,10 +263,32 @@ describe("Flump brand book", () => {
 
     expect(committedHtml).toContain('href="#evolution"');
     expect(committedHtml).toContain('<section class="chapter" id="evolution">');
-    expect(committedHtml).not.toContain("<!-- EVOLUTION CHAPTER: filled by a later run -->");
+    expect(committedHtml).toContain('href="#reference"');
+    expect(committedHtml).toContain('<section class="chapter" id="reference">');
+
+    const refIdx = committedHtml.indexOf('<section class="chapter" id="reference">');
+    expect(refIdx).toBeGreaterThan(mainIdx);
+    const visibleChaptersText = stripTags(committedHtml.slice(mainIdx, refIdx));
+    const forbiddenLabels = [
+      /\bDirection [ABC]\b/i,
+      /\bE(?:15|17|35|42)\b/,
+      /\bPrototype 11\b/i,
+      /\bp11b?\b/i,
+      /\bPR \d+\b/i,
+      /\b(?:STYLE-GUIDE|UX-GUIDELINES|COPY-GUIDE|ROLLOUT-PLAN|DECISIONS\.md)\b/,
+      /\b(?:FlumpLogo|HomeLogo|HeroFigure|KpiStrip|PageBody|PageHeader|ScenarioZone|ResultBlock|ChartFigure|ChartTooltipContent|GlassOrb|ExampleTag|CarouselDots|useChartAnimation)\b/,
+      /\bRule (?:C\d+|MC\d+|MK\d+|T\d+|CH\d+|L\d+|R\d+|S\d+|AT\d+|IL\d+)\b/,
+      /\bSources:/,
+      /packages\/tokens/,
+      /docs\/ux\//,
+      /\b(?:gsap|three\.js|WebGL)\b/i,
+    ];
+    for (const pattern of forbiddenLabels) {
+      expect(visibleChaptersText).not.toMatch(pattern);
+    }
   });
 
-  it("(d) every referenced image exists with alt and dimensions, and history assets stay under 4 MB", () => {
+  it("(d) every referenced image and video exists with required attributes and stays under 4 MB per folder", () => {
     const imgTags = [...committedHtml.matchAll(/<img\b([^>]*)>/gi)];
     expect(imgTags.length).toBeGreaterThanOrEqual(2);
 
@@ -262,11 +321,51 @@ describe("Flump brand book", () => {
     const historyFiles = readdirSync(historyDir);
     expect(historyFiles.length).toBe(referencedHistory.size);
 
-    let totalBytes = 0;
+    let totalHistoryBytes = 0;
     for (const file of historyFiles) {
       expect(referencedHistory.has(file)).toBe(true);
-      totalBytes += statSync(resolve(historyDir, file)).size;
+      totalHistoryBytes += statSync(resolve(historyDir, file)).size;
     }
-    expect(totalBytes).toBeLessThan(4 * 1024 * 1024);
+    expect(totalHistoryBytes).toBeLessThan(4 * 1024 * 1024);
+
+    const videoTags = [...committedHtml.matchAll(/<video\b([^>]*)>([\s\S]*?)<\/video>/gi)];
+    expect(videoTags.length).toBe(2);
+
+    const referencedVideos = new Set<string>();
+    for (const match of videoTags) {
+      const attrs = match[1] ?? "";
+      const body = match[2] ?? "";
+      expect(attrs).toMatch(/\bcontrols\b/i);
+      expect(attrs).toMatch(/\bmuted\b/i);
+      expect(attrs).toMatch(/\bloop\b/i);
+      expect(attrs).toMatch(/\bplaysinline\b/i);
+      expect(attrs).toMatch(/\bpreload="metadata"/i);
+      expect(attrs).not.toMatch(/\bautoplay\b/i);
+
+      const poster = attrs.match(/\bposter="([^"]+)"/i)?.[1];
+      expect(poster).toBeDefined();
+      const posterTarget = resolve(BRAND_DIR, poster as string);
+      expect(posterTarget.startsWith(`${BRAND_DIR}/`)).toBe(true);
+      expect(existsSync(posterTarget)).toBe(true);
+
+      const sourceSrc = body.match(/<source\b[^>]*\bsrc="([^"]+)"/i)?.[1];
+      expect(sourceSrc).toBeDefined();
+      expect((sourceSrc as string).startsWith("assets/video/")).toBe(true);
+      const videoTarget = resolve(BRAND_DIR, sourceSrc as string);
+      expect(videoTarget.startsWith(`${BRAND_DIR}/`)).toBe(true);
+      expect(existsSync(videoTarget)).toBe(true);
+      referencedVideos.add((sourceSrc as string).slice("assets/video/".length));
+    }
+
+    const videoDir = resolve(BRAND_DIR, "assets/video");
+    const videoFiles = readdirSync(videoDir);
+    expect(videoFiles.length).toBe(referencedVideos.size);
+
+    let totalVideoBytes = 0;
+    for (const file of videoFiles) {
+      expect(referencedVideos.has(file)).toBe(true);
+      totalVideoBytes += statSync(resolve(videoDir, file)).size;
+    }
+    expect(totalVideoBytes).toBeLessThan(4 * 1024 * 1024);
   });
 });

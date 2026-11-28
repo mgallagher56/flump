@@ -66,6 +66,7 @@ import {
   EXAMPLE_TAG,
   tornEdgePath,
 } from "../../packages/ui/src/primitives/Illustration/Illustration.documents";
+import { sceneDefinitions } from "../../packages/ui/src/primitives/Illustration/Illustration.scenes";
 
 export const REPO_ROOT = fileURLToPath(new URL("../..", import.meta.url)).replace(/\/$/, "");
 
@@ -140,6 +141,7 @@ export interface BrandTokens {
     minText: typeof DOCUMENT_MIN_TEXT;
     exampleTag: typeof EXAMPLE_TAG;
     definitions: typeof documentDefinitions;
+    scenes: typeof sceneDefinitions;
     roleTokens: typeof documentRoleTokens;
     effects: typeof documentEffects;
     tornEdgePath: typeof tornEdgePath;
@@ -208,6 +210,7 @@ export function loadBrandTokens(): BrandTokens {
       minText: DOCUMENT_MIN_TEXT,
       exampleTag: EXAMPLE_TAG,
       definitions: documentDefinitions,
+      scenes: sceneDefinitions,
       roleTokens: documentRoleTokens,
       effects: documentEffects,
       tornEdgePath,

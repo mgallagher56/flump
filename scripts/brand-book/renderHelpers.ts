@@ -1,4 +1,18 @@
 import type { ColorKey, ShadowKey } from "../../packages/tokens/src/native.generated";
+import type {
+  DocumentFill,
+  DocumentInk,
+  DocumentOrbAccent,
+  DocumentPalette,
+  DocumentPicture,
+  DocumentShape,
+  DocumentStroke,
+  DocumentSurface,
+} from "../../packages/ui/src/primitives/Illustration/Illustration.documents";
+import type {
+  SceneColorRole,
+  SceneShape,
+} from "../../packages/ui/src/primitives/Illustration/Illustration.scenes";
 import { type BrandTokens, colorVar, escapeHtml, shadowVar } from "./tokens";
 
 export interface LogoRenderOptions {
@@ -124,10 +138,237 @@ export function renderTokenRow(path: string, value: string, note: string): strin
   </tr>`;
 }
 
-export function renderSourceCite(sources: string): string {
-  return `<p class="source-cite">Sources: ${escapeHtml(sources)}</p>`;
+export function renderProvenanceComment(sources: string): string {
+  const safe = sources.replace(/—/g, "-").replace(/--+/g, "-");
+  return `<!-- Provenance: ${safe} -->`;
 }
 
 export function renderExampleTag(): string {
   return `<span class="example-tag">Example</span>`;
+}
+
+export interface ThemedImageOptions {
+  lightFile: string;
+  darkFile: string;
+  alt: string;
+  width: number;
+  height: number;
+  caption?: string;
+}
+
+export function renderThemedImage(options: ThemedImageOptions): string {
+  const { lightFile, darkFile, alt, width, height, caption } = options;
+  const safeAlt = escapeHtml(alt);
+  const cap = caption ? `<figcaption class="swatch-note">${escapeHtml(caption)}</figcaption>` : "";
+  return `<figure class="history-figure">
+    <img class="history-img themed-img-light" src="assets/history/${escapeHtml(lightFile)}" alt="${safeAlt} (light theme)" width="${width}" height="${height}" loading="lazy"/>
+    <img class="history-img themed-img-dark" src="assets/history/${escapeHtml(darkFile)}" alt="${safeAlt} (dark theme)" width="${width}" height="${height}" loading="lazy"/>
+    ${cap}
+  </figure>`;
+}
+
+const ORB_ACCENT_COLOR: Record<DocumentOrbAccent, ColorKey> = {
+  violet: "orb.violetRose.core",
+  rose: "orb.violetRose.shade",
+  teal: "orb.skyTeal.shade",
+  violetTint: "orb.violetRose.bubble",
+  tealTint: "orb.skyTeal.bubbleShade",
+};
+
+function resolveOrbAccent(
+  accent: DocumentOrbAccent | undefined,
+  palette: DocumentPalette,
+): string | undefined {
+  if (palette !== "orb" || !accent) return undefined;
+  return colorVar(ORB_ACCENT_COLOR[accent]);
+}
+
+function resolveDocSurfaceColor(tokens: BrandTokens, surface: DocumentSurface): string {
+  return colorVar(tokens.illustration.roleTokens.surface[surface] as ColorKey);
+}
+
+function resolveDocFillColor(tokens: BrandTokens, fill: DocumentFill): string {
+  return colorVar(tokens.illustration.roleTokens.fill[fill] as ColorKey);
+}
+
+function resolveDocInkColor(tokens: BrandTokens, ink: DocumentInk): string {
+  return colorVar(tokens.illustration.roleTokens.ink[ink] as ColorKey);
+}
+
+function resolveDocStrokeColor(tokens: BrandTokens, stroke: DocumentStroke): string {
+  return colorVar(tokens.illustration.roleTokens.stroke[stroke] as ColorKey);
+}
+
+function renderDocumentShape(
+  tokens: BrandTokens,
+  shape: DocumentShape,
+  pieceSurface: DocumentSurface,
+  palette: DocumentPalette,
+): string {
+  switch (shape.kind) {
+    case "rect": {
+      const orbFill = resolveOrbAccent(shape.orb, palette);
+      const fill = shape.fill ? (orbFill ?? resolveDocFillColor(tokens, shape.fill)) : "none";
+      const stroke = shape.stroke
+        ? (orbFill ?? resolveDocStrokeColor(tokens, shape.stroke))
+        : "none";
+      const dash = shape.dashed
+        ? ` stroke-dasharray="${tokens.illustration.effects.dash.join(" ")}"`
+        : "";
+      const op = shape.opacity !== undefined ? ` opacity="${shape.opacity}"` : "";
+      const rx = shape.rx !== undefined ? ` rx="${shape.rx}"` : "";
+      return `<rect x="${shape.x}" y="${shape.y}" width="${shape.width}" height="${shape.height}"${rx} fill="${fill}" stroke="${stroke}"${dash}${op}/>`;
+    }
+    case "circle": {
+      const orbFill = resolveOrbAccent(shape.orb, palette);
+      const fill = orbFill ?? resolveDocFillColor(tokens, shape.fill);
+      const op = shape.opacity !== undefined ? ` opacity="${shape.opacity}"` : "";
+      return `<circle cx="${shape.cx}" cy="${shape.cy}" r="${shape.r}" fill="${fill}"${op}/>`;
+    }
+    case "path": {
+      const orbAccent = resolveOrbAccent(shape.orb, palette);
+      const fill = shape.fill ? (orbAccent ?? resolveDocFillColor(tokens, shape.fill)) : "none";
+      const stroke = shape.stroke
+        ? (orbAccent ?? resolveDocStrokeColor(tokens, shape.stroke))
+        : "none";
+      const sw = shape.strokeWidth ?? 1;
+      const dash = shape.dashed
+        ? ` stroke-dasharray="${tokens.illustration.effects.dash.join(" ")}"`
+        : "";
+      const op =
+        shape.opacity !== undefined
+          ? shape.opacity
+          : shape.stroke === "onCharcoal"
+            ? tokens.illustration.effects.onCharcoalStrokeOpacity
+            : undefined;
+      const opAttr = op !== undefined ? ` opacity="${op}"` : "";
+      return `<path d="${escapeHtml(shape.d)}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round"${dash}${opAttr}/>`;
+    }
+    case "tag": {
+      const tag = tokens.illustration.exampleTag;
+      const x = shape.anchor === "end" ? shape.x - tag.width : shape.x;
+      const y = shape.y;
+      const isCharcoal = shape.tone === "onCharcoal" || pieceSurface === "charcoal";
+      const fill = isCharcoal ? "none" : colorVar("surface.sunken");
+      const stroke = isCharcoal ? colorVar("text.onContrast") : colorVar("border");
+      const strokeOp = isCharcoal
+        ? ` stroke-opacity="${tokens.illustration.effects.tag.onCharcoalEdgeOpacity}"`
+        : "";
+      const textCol = isCharcoal ? colorVar("text.onContrast") : colorVar("text.secondary");
+      return `<g>
+        <rect x="${x}" y="${y}" width="${tag.width}" height="${tag.height}" rx="${tag.height / 2}" fill="${fill}" stroke="${stroke}" stroke-width="1"${strokeOp}/>
+        <text x="${x + tag.width / 2}" y="${y + tag.height / 2 + tag.size * 0.35}" text-anchor="middle" fill="${textCol}" font-family="var(--font-body)" font-size="${tag.size}" font-weight="600">${tag.text}</text>
+      </g>`;
+    }
+    case "text": {
+      const fill = resolveDocInkColor(tokens, shape.ink);
+      const font = shape.font === "display" ? "var(--font-heading)" : "var(--font-body)";
+      const weight = shape.weight ?? 400;
+      const anchor = shape.anchor ?? "start";
+      const lh = shape.lineHeight ?? Math.round(shape.size * 1.25);
+      const fvn = shape.numeric ? ' style="font-variant-numeric:tabular-nums"' : "";
+      return shape.lines
+        .map(
+          (line, idx) =>
+            `<text x="${shape.x}" y="${shape.y + idx * lh}" text-anchor="${anchor}" fill="${fill}" font-family="${font}" font-size="${shape.size}" font-weight="${weight}"${fvn}>${escapeHtml(line)}</text>`,
+        )
+        .join("");
+    }
+    case "piece":
+      return renderDocumentPiece(tokens, shape, palette);
+  }
+}
+
+function renderDocumentPiece(
+  tokens: BrandTokens,
+  piece: DocumentPicture["pieces"][number],
+  palette: DocumentPalette,
+): string {
+  const transform =
+    piece.rotate !== 0
+      ? `translate(${piece.x} ${piece.y}) rotate(${piece.rotate} ${piece.width / 2} ${piece.height / 2})`
+      : `translate(${piece.x} ${piece.y})`;
+  const rx = piece.rx ?? 6;
+  const fill =
+    resolveOrbAccent(piece.orb, palette) ?? resolveDocSurfaceColor(tokens, piece.surface);
+
+  const shadowEl =
+    piece.shadow && !piece.bare
+      ? `<rect class="doc-shadow" x="${tokens.illustration.effects.shadow.inset}" y="${tokens.illustration.effects.shadow.offsetY}" width="${piece.width - tokens.illustration.effects.shadow.inset * 2}" height="${piece.height}" rx="${rx}" fill="${colorVar("surface.contrast")}"/>`
+      : "";
+
+  const bodyEl = piece.bare
+    ? ""
+    : piece.torn
+      ? `<path d="${tokens.illustration.tornEdgePath(piece.width, piece.height)}" fill="${fill}" stroke="${piece.edge ? colorVar("material.paper.edge") : "none"}"/><rect x="0" y="0" width="${piece.width}" height="${piece.height}" rx="${rx}" fill="${fill}"/>`
+      : `<rect x="0" y="0" width="${piece.width}" height="${piece.height}" rx="${rx}" fill="${fill}"${piece.edge ? ` stroke="${colorVar("material.paper.edge")}" stroke-width="1"` : ""}/>`;
+
+  const inner = piece.shapes
+    .map((s) => renderDocumentShape(tokens, s, piece.surface, palette))
+    .join("");
+  return `<g transform="${transform}">${shadowEl}${bodyEl}${inner}</g>`;
+}
+
+export function renderDocumentPictureSvg(
+  tokens: BrandTokens,
+  picture: DocumentPicture,
+  idSuffix: string,
+  palette: DocumentPalette = "app",
+): string {
+  const w = tokens.illustration.gridWidth;
+  const h = picture.height;
+  const pieces = picture.pieces.map((p) => renderDocumentPiece(tokens, p, palette)).join("");
+  return `<div class="doc-svg-wrap">
+    <svg viewBox="0 0 ${w} ${h}" role="img" aria-labelledby="doc-pic-${escapeHtml(idSuffix)}">
+      <title id="doc-pic-${escapeHtml(idSuffix)}">${escapeHtml(picture.subject)}</title>
+      ${pieces}
+    </svg>
+  </div>`;
+}
+
+const SCENE_CLASS_BY_ROLE: Record<SceneColorRole, string> = {
+  ground: "scene-ground",
+  apricot: "scene-apricot",
+  sage: "scene-sage",
+  tealSoft: "scene-teal-soft",
+  teal: "scene-teal",
+  leaf: "scene-leaf",
+  paper: "scene-paper",
+  accent: "scene-accent",
+  dots: "scene-dots",
+  stem: "scene-stem",
+  pole: "scene-pole",
+  tick: "scene-tick",
+};
+
+function renderFlatSceneShape(shape: SceneShape): string {
+  const cls = SCENE_CLASS_BY_ROLE[shape.role];
+  const op = shape.opacity !== undefined ? ` opacity="${shape.opacity}"` : "";
+  switch (shape.kind) {
+    case "ellipse":
+      return `<ellipse class="${cls}" cx="${shape.cx}" cy="${shape.cy}" rx="${shape.rx}" ry="${shape.ry}"${op}/>`;
+    case "circle":
+      return `<circle class="${cls}" cx="${shape.cx}" cy="${shape.cy}" r="${shape.r}"${op}/>`;
+    case "rect": {
+      const rx = shape.rx !== undefined ? ` rx="${shape.rx}"` : "";
+      const tr = shape.transform ? ` transform="${escapeHtml(shape.transform)}"` : "";
+      return `<rect class="${cls}" x="${shape.x}" y="${shape.y}" width="${shape.width}" height="${shape.height}"${rx}${tr}${op}/>`;
+    }
+    case "path":
+      return `<path class="${cls}" d="${escapeHtml(shape.d)}"${op}/>`;
+  }
+}
+
+export function renderFlatSceneSvg(
+  shapes: readonly SceneShape[],
+  title: string,
+  idSuffix: string,
+): string {
+  const body = shapes.map(renderFlatSceneShape).join("");
+  return `<div class="doc-svg-wrap flat-scene-wrap">
+    <svg viewBox="0 0 240 180" role="img" aria-labelledby="flat-pic-${escapeHtml(idSuffix)}">
+      <title id="flat-pic-${escapeHtml(idSuffix)}">${escapeHtml(title)}</title>
+      ${body}
+    </svg>
+  </div>`;
 }
