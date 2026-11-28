@@ -16,10 +16,12 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  Optional,
 } from "@nestjs/common";
 import { DataSource } from "typeorm";
 import { isBetaAdmin, isBetaInviteOnly, isBetaUserAllowedByEnv } from "../auth/beta-access";
 import type { AuthenticatedUser } from "../auth/token-verifier";
+import { BetaPeopleService } from "./beta-people.service";
 import { hashInviteToken, newInviteToken } from "./invite-token";
 
 /** How long a closed invite (used, expired or cancelled) stays in the admin list and the table. */
@@ -54,7 +56,19 @@ const iso = (value: Date | string): string => new Date(value).toISOString();
 export class BetaInvitesService {
   private readonly logger = new Logger(BetaInvitesService.name);
 
-  constructor(private readonly dataSource: DataSource) {}
+  /**
+   * `people` fills in names and email addresses on the admin lists; without it (tests that only
+   * check the SQL) they are null.
+   */
+  constructor(
+    private readonly dataSource: DataSource,
+    @Optional() private readonly people?: BetaPeopleService,
+  ) {}
+
+  private async contactsFor(userIds: (string | null)[]) {
+    const ids = userIds.filter((id): id is string => !!id);
+    return this.people && ids.length > 0 ? this.people.contactsFor(ids) : new Map();
+  }
 
   /**
    * Redeems a link for the caller. Open beta, an admin or an active member: `already-member` and
@@ -163,7 +177,8 @@ export class BetaInvitesService {
 
   /**
    * Unused links and those closed (used, expired or cancelled) in the last 30 days, newest first.
-   * A link's closing time is when it was cancelled, used or expired, whichever applies.
+   * A link's closing time is when it was cancelled, used or expired, whichever applies. A used
+   * link carries the name and email address of who used it, read from the provider.
    */
   async listInvites(): Promise<BetaInviteListResponse> {
     const rows = rowsOf<{
@@ -173,9 +188,10 @@ export class BetaInvitesService {
       created_at: Date;
       expires_at: Date;
       redeemed_at: Date | null;
+      redeemed_by_user_id: string | null;
     }>(
       await this.dataSource.query(
-        `SELECT "id", "label", "created_at", "expires_at", "redeemed_at",
+        `SELECT "id", "label", "created_at", "expires_at", "redeemed_at", "redeemed_by_user_id",
                 CASE WHEN "revoked_at" IS NOT NULL THEN 'cancelled'
                      WHEN "redeemed_at" IS NOT NULL THEN 'used'
                      WHEN "expires_at" <= now() THEN 'expired'
@@ -187,14 +203,23 @@ export class BetaInvitesService {
         [BETA_INVITE_CLOSED_DAYS],
       ),
     );
-    const invites: BetaInviteDto[] = rows.map((r) => ({
-      id: r.id,
-      label: r.label,
-      status: r.status,
-      createdAt: iso(r.created_at),
-      expiresAt: iso(r.expires_at),
-      usedAt: r.redeemed_at ? iso(r.redeemed_at) : null,
-    }));
+    const contacts = await this.contactsFor(
+      rows.map((r) => (r.status === "used" ? r.redeemed_by_user_id : null)),
+    );
+    const invites: BetaInviteDto[] = rows.map((r) => {
+      const usedBy =
+        r.status === "used" && r.redeemed_by_user_id ? contacts.get(r.redeemed_by_user_id) : null;
+      return {
+        id: r.id,
+        label: r.label,
+        status: r.status,
+        createdAt: iso(r.created_at),
+        expiresAt: iso(r.expires_at),
+        usedAt: r.redeemed_at ? iso(r.redeemed_at) : null,
+        usedByName: usedBy?.name ?? null,
+        usedByEmail: usedBy?.email ?? null,
+      };
+    });
     return { invites };
   }
 
@@ -214,7 +239,7 @@ export class BetaInvitesService {
     return { success: true };
   }
 
-  /** Active members, newest first, with the label of the link they used. */
+  /** Active members, newest first, with the label of the link they used and their contact. */
   async listMembers(): Promise<BetaMemberListResponse> {
     const rows = rowsOf<{ user_id: string; label: string | null; added_at: Date }>(
       await this.dataSource.query(
@@ -224,8 +249,15 @@ export class BetaInvitesService {
          ORDER BY m."added_at" DESC, m."user_id" ASC`,
       ),
     );
+    const contacts = await this.contactsFor(rows.map((r) => r.user_id));
     return {
-      members: rows.map((r) => ({ userId: r.user_id, label: r.label, addedAt: iso(r.added_at) })),
+      members: rows.map((r) => ({
+        userId: r.user_id,
+        label: r.label,
+        addedAt: iso(r.added_at),
+        name: contacts.get(r.user_id)?.name ?? null,
+        email: contacts.get(r.user_id)?.email ?? null,
+      })),
     };
   }
 

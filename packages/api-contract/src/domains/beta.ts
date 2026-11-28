@@ -54,7 +54,17 @@ export type CreateBetaInviteResponse = z.infer<typeof CreateBetaInviteResponse>;
 export const BetaInviteStatus = z.enum(["unused", "used", "expired", "cancelled"]);
 export type BetaInviteStatus = z.infer<typeof BetaInviteStatus>;
 
-/** One invite in the admin list. Never the token or its hash, never who used it. */
+/**
+ * The name and email address of a person, read from the sign-in provider (WorkOS) at request time
+ * for the admin only, never stored by Flump. Null when the provider has none or could not answer.
+ */
+const PersonName = z.string().nullable().default(null);
+const PersonEmail = z.string().nullable().default(null);
+
+/**
+ * One invite in the admin list. Never the token or its hash. For a used link, the name and email
+ * address of the person who used it (null against an older backend, or when unknown).
+ */
 export const BetaInviteDto = z.strictObject({
   id: Uuid,
   label: z.string().nullable(),
@@ -62,6 +72,8 @@ export const BetaInviteDto = z.strictObject({
   createdAt: IsoDateTime,
   expiresAt: IsoDateTime,
   usedAt: IsoDateTime.nullable(),
+  usedByName: PersonName,
+  usedByEmail: PersonEmail,
 });
 export type BetaInviteDto = z.infer<typeof BetaInviteDto>;
 
@@ -74,12 +86,15 @@ export const BetaInviteListResponse = z.strictObject({
 });
 export type BetaInviteListResponse = z.infer<typeof BetaInviteListResponse>;
 
-/** One person with access through an invite. Never an email. */
+/** One person with access through an invite, for the admin only. */
 export const BetaMemberDto = z.strictObject({
   userId: z.string().min(1),
   /** The label of the invite they used, if it had one. */
   label: z.string().nullable(),
   addedAt: IsoDateTime,
+  /** Their name and email address from the sign-in provider, read at request time. */
+  name: PersonName,
+  email: PersonEmail,
 });
 export type BetaMemberDto = z.infer<typeof BetaMemberDto>;
 

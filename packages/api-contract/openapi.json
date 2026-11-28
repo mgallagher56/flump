@@ -4795,9 +4795,26 @@
                           },
                           "usedAt": {
                             "type": ["string", "null"]
+                          },
+                          "usedByEmail": {
+                            "default": null,
+                            "type": ["string", "null"]
+                          },
+                          "usedByName": {
+                            "default": null,
+                            "type": ["string", "null"]
                           }
                         },
-                        "required": ["id", "label", "status", "createdAt", "expiresAt", "usedAt"],
+                        "required": [
+                          "id",
+                          "label",
+                          "status",
+                          "createdAt",
+                          "expiresAt",
+                          "usedAt",
+                          "usedByName",
+                          "usedByEmail"
+                        ],
                         "type": "object"
                       },
                       "type": "array"
@@ -5139,7 +5156,15 @@
                           "addedAt": {
                             "type": "string"
                           },
+                          "email": {
+                            "default": null,
+                            "type": ["string", "null"]
+                          },
                           "label": {
+                            "type": ["string", "null"]
+                          },
+                          "name": {
+                            "default": null,
                             "type": ["string", "null"]
                           },
                           "userId": {
@@ -5147,7 +5172,7 @@
                             "type": "string"
                           }
                         },
-                        "required": ["userId", "label", "addedAt"],
+                        "required": ["userId", "label", "addedAt", "name", "email"],
                         "type": "object"
                       },
                       "type": "array"

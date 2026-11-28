@@ -33,6 +33,11 @@ export const inviteListTitle = cva({
   },
 });
 
+/** Who used the link: a long email address wraps anywhere rather than widen the row. */
+export const inviteListUsedBy = cva({
+  base: { textStyle: "body.sm", color: "text.primary", overflowWrap: "anywhere" },
+});
+
 export const inviteListMeta = cva({
   base: { textStyle: "body.sm", color: "text.secondary", fontVariantNumeric: "tabular-nums" },
 });

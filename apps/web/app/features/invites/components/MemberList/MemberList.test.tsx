@@ -4,8 +4,14 @@ import { describe, expect, it, vi } from "vitest";
 import { MemberList } from "./MemberList";
 
 const MEMBERS: BetaMemberDto[] = [
-  { userId: "user_sam", label: "Sam", addedAt: "2026-11-21T09:00:00.000Z" },
-  { userId: "user_x", label: null, addedAt: "2026-11-22T09:00:00.000Z" },
+  {
+    userId: "user_sam",
+    label: "Sam",
+    addedAt: "2026-11-21T09:00:00.000Z",
+    name: null,
+    email: null,
+  },
+  { userId: "user_x", label: null, addedAt: "2026-11-22T09:00:00.000Z", name: null, email: null },
 ];
 
 describe("<MemberList />", () => {
@@ -44,6 +50,29 @@ describe("<MemberList />", () => {
     rerender(<MemberList members={MEMBERS.slice(1)} onRemove={vi.fn()} />);
     await act(async () => {});
     expect(screen.queryByRole("alertdialog")).toBeNull();
+  });
+
+  it("shows the person's name and email address, and the link's label under them", () => {
+    const email = `ada@${["example", "com"].join(".")}`;
+    render(
+      <MemberList
+        members={[{ ...MEMBERS[0], name: "Ada Lovelace", email } as BetaMemberDto]}
+        onRemove={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("Ada Lovelace")).toBeDefined();
+    expect(screen.getByText(email)).toBeDefined();
+    expect(screen.getByText("Joined 21 Nov 2026 with the link Sam")).toBeDefined();
+    expect(screen.getByRole("button", { name: "Remove access for Ada Lovelace" })).toBeDefined();
+  });
+
+  it("falls back to the email address when there is no name", () => {
+    const email = `bo@${["example", "com"].join(".")}`;
+    render(<MemberList members={[{ ...MEMBERS[1], email } as BetaMemberDto]} onRemove={vi.fn()} />);
+    // The address is the title, shown once.
+    expect(screen.getAllByText(email)).toHaveLength(1);
+    expect(screen.getByText("Joined 22 Nov 2026")).toBeDefined();
+    expect(screen.getByRole("button", { name: `Remove access for ${email}` })).toBeDefined();
   });
 
   it("says when nobody has joined", () => {

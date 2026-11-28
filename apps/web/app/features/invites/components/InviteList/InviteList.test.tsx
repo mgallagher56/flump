@@ -7,6 +7,8 @@ const base = {
   createdAt: "2026-11-20T09:00:00.000Z",
   expiresAt: "2026-12-04T09:00:00.000Z",
   usedAt: null,
+  usedByName: null,
+  usedByEmail: null,
 };
 const INVITES: BetaInviteDto[] = [
   { ...base, id: "00000000-0000-4000-8000-000000000001", label: "Sam", status: "unused" },
@@ -45,6 +47,18 @@ describe("<InviteList />", () => {
     expect(
       (screen.getByRole("button", { name: "Cancelling for Sam" }) as HTMLButtonElement).disabled,
     ).toBe(true);
+  });
+
+  it("names who used a used link, by name and email address", () => {
+    const email = `ada@${["example", "com"].join(".")}`;
+    const used = { ...INVITES[1], usedByName: "Ada Lovelace", usedByEmail: email };
+    const { rerender } = render(<InviteList invites={[used]} onCancel={vi.fn()} />);
+    expect(screen.getByText(`Used by Ada Lovelace, ${email}`)).toBeDefined();
+    rerender(<InviteList invites={[{ ...used, usedByName: null }]} onCancel={vi.fn()} />);
+    expect(screen.getByText(`Used by ${email}`)).toBeDefined();
+    // Unknown (an erased account, or the provider could not answer): no line at all.
+    rerender(<InviteList invites={[INVITES[1]]} onCancel={vi.fn()} />);
+    expect(screen.queryByText(/Used by/)).toBeNull();
   });
 
   it("says when there are no links", () => {
