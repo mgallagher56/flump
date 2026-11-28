@@ -14,17 +14,26 @@ import { applyReducedMotion, readReducedMotion } from "../motion";
 
 // Round two: a new key, so the revised level 2 is the default even where round one stored a level.
 const LEVEL_KEY = "flump-proto-level-r2";
-const TEXTURE_KEY = "flump-proto-texture";
-const ICONS_KEY = "flump-proto-icons-r3";
-export const PROTO_TEXTURES = ["1", "2", "3"] as const;
-export const PROTO_ICONS = ["paper", "tab", "cut", "seal", "mini"] as const;
-const TEXTURE_NAMES: Record<string, string> = { "1": "Fine", "2": "Paper", "3": "Heavy" };
+const TEXTURE_KEY = "flump-proto-texture-r4";
+const ICONS_KEY = "flump-proto-icons-r4";
+export const PROTO_TEXTURES = ["grain", "relief", "fibre", "emboss", "bands", "falloff"] as const;
+export const PROTO_ICONS = ["orb", "cluster", "docs", "stamp", "clay", "hand", "dots"] as const;
+const TEXTURE_NAMES: Record<string, string> = {
+  grain: "Grain",
+  relief: "Relief",
+  fibre: "Fibre",
+  emboss: "Emboss",
+  bands: "Bands only",
+  falloff: "Light falloff",
+};
 const ICON_NAMES: Record<string, string> = {
-  paper: "Paper",
-  tab: "Tab",
-  cut: "Cut paper",
-  seal: "Seal",
-  mini: "Mini documents",
+  orb: "Glass orb",
+  cluster: "Orb cluster",
+  docs: "Paper document",
+  stamp: "Stamp",
+  clay: "Clay",
+  hand: "Hand line",
+  dots: "No icon",
 };
 
 /** The larger clickable cards that take the pointer light (round three: no rows). */
@@ -89,9 +98,9 @@ export const PrototypeLayer: FC = () => {
   const { theme, setPreference } = useThemeContext();
   const [level, setLevel] = useState<ProtoLevel | null>(null);
   const [capture, setCapture] = useState(false);
-  const [texture, setTexture] = useState<(typeof PROTO_TEXTURES)[number]>("2");
+  const [texture, setTexture] = useState<(typeof PROTO_TEXTURES)[number]>("grain");
   const [budget, setBudget] = useState<"a" | "b">("a");
-  const [icons, setIcons] = useState<(typeof PROTO_ICONS)[number]>("paper");
+  const [icons, setIcons] = useState<(typeof PROTO_ICONS)[number]>("orb");
 
   // Read the query once per navigation: a level or theme in the link wins and is remembered.
   useEffect(() => {
@@ -110,13 +119,13 @@ export const PrototypeLayer: FC = () => {
     setTexture(
       textureParam && (PROTO_TEXTURES as readonly string[]).includes(textureParam)
         ? (textureParam as (typeof PROTO_TEXTURES)[number])
-        : readChoice(TEXTURE_KEY, PROTO_TEXTURES, "2"),
+        : readChoice(TEXTURE_KEY, PROTO_TEXTURES, "grain"),
     );
     const iconsParam = params.get("icons");
     setIcons(
       iconsParam && (PROTO_ICONS as readonly string[]).includes(iconsParam)
         ? (iconsParam as (typeof PROTO_ICONS)[number])
-        : readChoice(ICONS_KEY, PROTO_ICONS, "paper"),
+        : readChoice(ICONS_KEY, PROTO_ICONS, "orb"),
     );
     applyReducedMotion(readReducedMotion());
   }, [location.search, setPreference]);
@@ -244,10 +253,20 @@ export const PrototypeLayer: FC = () => {
     if (capture) document.documentElement.dataset.protoCapture = "";
   }, [capture]);
 
-  if (level === null || capture || location.pathname.startsWith("/prototype")) return null;
+  // The hand-drawn line option's filter: a slight wobble on each glyph's stroke.
+  const defs = (
+    <svg aria-hidden="true" height="0" style={{ position: "absolute" }} width="0">
+      <filter id="proto-hand-line">
+        <feTurbulence baseFrequency="0.06" numOctaves="2" seed="4" type="fractalNoise" />
+        <feDisplacementMap in="SourceGraphic" scale="1.4" />
+      </filter>
+    </svg>
+  );
+  if (level === null || capture || location.pathname.startsWith("/prototype")) return defs;
 
   return (
     <section aria-label="Prototype controls" className="proto-control">
+      {defs}
       <span className="proto-control__label">Prototype</span>
       <fieldset className="proto-control__group">
         <legend className="proto-control__legend">Design level</legend>
@@ -285,6 +304,24 @@ export const PrototypeLayer: FC = () => {
               ))}
             </fieldset>
           ) : null}
+          <fieldset className="proto-control__group">
+            <legend className="proto-control__legend">Texture</legend>
+            <span aria-hidden="true" className="proto-control__label">
+              Texture
+            </span>
+            {PROTO_TEXTURES.map((value) => (
+              <button
+                aria-label={`Texture ${TEXTURE_NAMES[value]}`}
+                aria-pressed={texture === value}
+                className="proto-control__button"
+                key={value}
+                onClick={() => setTexture(value)}
+                type="button"
+              >
+                {TEXTURE_NAMES[value]}
+              </button>
+            ))}
+          </fieldset>
           <fieldset className="proto-control__group">
             <legend className="proto-control__legend">Icons</legend>
             <span aria-hidden="true" className="proto-control__label">

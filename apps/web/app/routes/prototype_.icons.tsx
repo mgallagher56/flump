@@ -6,6 +6,7 @@ import {
   ChartLine,
   CreditCard,
   HandCoins,
+  House as HomeIcon,
   House,
   Landmark,
   LayoutGrid,
@@ -28,6 +29,7 @@ const GLYPHS: ReadonlyArray<{ icon: LucideIcon; tone: string; name: string }> = 
   { icon: HandCoins, tone: "apricot", name: "Loan" },
   { icon: Landmark, tone: "accent", name: "Accounts (navigation)" },
   { icon: LayoutGrid, tone: "teal", name: "Your sections (header)" },
+  { icon: HomeIcon, tone: "teal", name: "Home (navigation)" },
 ];
 
 const SIZES = [16, 20, 24, 40] as const;
@@ -40,35 +42,46 @@ const OPTIONS = [
     drawings: "None (library)",
   },
   {
-    id: "paper",
-    name: "1. Paper",
-    note: "A ruled paper tile with a crisp edge and a top rule in the area's colour; the library glyph in the area's ink.",
-    drawings: "None: the Lucide glyphs on a CSS tile",
+    id: "orb",
+    name: "1. Glass orb",
+    note: "A tiny glass orb, our own pre-rendered three.js sprite in the area's tone, carrying the library glyph in white.",
+    drawings: "None new: four orb sprites (already made) plus the Lucide glyphs",
   },
   {
-    id: "tab",
-    name: "2. Tab",
-    note: "The “Check-in day” label: flat paper with a coloured left edge; the glyph in plain ink.",
-    drawings: "None: the Lucide glyphs on a CSS tile",
+    id: "cluster",
+    name: "2. Orb cluster",
+    note: "No glyph: one to three small glass beads arranged to mean the section, like the logo's three bubbles (coins in a row, a climbing stack, a large bead with a small one in orbit, two apart).",
+    drawings: "One arrangement per section, about 10, drawn in CSS here; no icon set",
   },
   {
-    id: "cut",
-    name: "3. Cut paper",
-    note: "A solid flat tile in the pictures' mint (Midnight in dark) with a round seal in the area's colour stuck on its corner.",
-    drawings: "None: the Lucide glyphs on a CSS tile",
+    id: "docs",
+    name: "3. Paper document",
+    note: "The icon is a miniature paper document: a card, a passbook, a statement with its round mark, a slip.",
+    drawings: "Six to eight bespoke miniatures (SVG); a paper tile with the glyph for the rest",
   },
   {
-    id: "seal",
-    name: "4. Seal",
-    note: "No box: the statements' round mark in the area's tint behind the glyph, two-tone and flat.",
-    drawings: "None: the Lucide glyphs over a CSS circle",
+    id: "stamp",
+    name: "4. Stamp",
+    note: "An embossed paper seal with a ring, the glyph pressed into it.",
+    drawings: "None new: a CSS seal and the Lucide glyphs; a bespoke deboss set would be about 40",
   },
   {
-    id: "mini",
-    name: "5. Mini documents",
-    note: "Each account type as a tiny version of its picture: card, mint credit card, passbook, statement with a line, statement with the round mark, loan slip. Others fall back to option 1.",
-    drawings:
-      "Six bespoke drawings (drawn in CSS here; SVG in production), plus option 1 for the rest",
+    id: "clay",
+    name: "5. Clay",
+    note: "A soft hand-pressed pebble in the area's tint with a thicker glyph.",
+    drawings: "None new; production would want one hand-modelled shape per area (about 9)",
+  },
+  {
+    id: "hand",
+    name: "6. Hand line",
+    note: "A single-weight hand-drawn line. Approximated here by wobbling the library glyphs; the real thing is a drawn set.",
+    drawings: "A full bespoke set, about 40 glyphs, drawn by hand",
+  },
+  {
+    id: "dots",
+    name: "7. No icon",
+    note: "A dot in the area's colour; the words do the work. Calmest, smallest, works at every size.",
+    drawings: "None",
   },
 ] as const;
 
@@ -118,9 +131,9 @@ export default function PrototypeIcons() {
     <div className="proto-sheet">
       <h1>Icon options</h1>
       <p className="proto-index__lead">
-        Five flat options drawn from the document pictures, at the sizes the app uses. Colour names
-        the area only: debt is apricot, never rose. Choose an option on any screen with the Icons
-        switch in the prototype control.
+        Seven directions from the site's own objects, at the sizes the app uses. Colour names the
+        area only: debt is apricot (violet for an orb), never rose. Choose one on any screen with
+        the Icons switch in the prototype control.
       </p>
       {OPTIONS.map((o) => (
         <section aria-labelledby={`opt-${o.id}`} className="proto-sheet__option" key={o.id}>

@@ -35,6 +35,8 @@ import "@repo/ui/fonts.css";
 import "./prototype/prototype.css";
 import "./prototype/prototype-r2.css";
 import "./prototype/prototype-r4.css";
+import "./prototype/prototype-r4-texture.css";
+import "./prototype/prototype-r4-icons.css";
 import { TermsStatusResponse } from "@flump/api-contract";
 import { hasUpcomingAcceptanceChange } from "@flump/business-details";
 import { TermsChangeNotice } from "~/features/legal/components/TermsChangeNotice";

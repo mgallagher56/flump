@@ -19,8 +19,8 @@ const LEVELS = [
   },
   {
     value: 2,
-    name: "Level 2, revised (round three)",
-    note: "The owner's pick, revised: medium depth with a choice of paper texture, a pointer light on the larger clickable cards, header orbs that drift in and out (stop them in Settings or with Pause motion in the header), a choice of icon style, and an info button on each calculated headline figure that shows its working.",
+    name: "Level 2, revised (round four)",
+    note: "The owner's pick, revised: medium depth with six texture ideas to choose from, glass orbs from our own three.js scene drifting slowly, a softer pointer light on the larger clickable cards, a redesigned drawer, terms screen and onboarding (stop them in Settings or with Pause motion in the header), a choice of icon style, and an info button on each calculated headline figure that shows its working.",
   },
   {
     value: 3,
@@ -33,8 +33,8 @@ export default function PrototypeIndex() {
   const [origins, setOrigins] = useState<Origins>({});
   const [firstAccount, setFirstAccount] = useState<string | null>(null);
   const [level, setLevel] = useState(2);
-  const [texture, setTexture] = useState("2");
-  const [icons, setIcons] = useState("paper");
+  const [texture, setTexture] = useState("grain");
+  const [icons, setIcons] = useState("orb");
   const [theme, setTheme] = useState<"light" | "dark">("light");
 
   useEffect(() => {
@@ -91,9 +91,12 @@ export default function PrototypeIndex() {
             <fieldset>
               <legend>Texture</legend>
               {[
-                ["1", "Fine"],
-                ["2", "Paper"],
-                ["3", "Heavy"],
+                ["grain", "Grain"],
+                ["relief", "Relief"],
+                ["fibre", "Fibre"],
+                ["emboss", "Emboss"],
+                ["bands", "Bands only"],
+                ["falloff", "Light falloff"],
               ].map(([v, n]) => (
                 <label key={v}>
                   <input
@@ -109,11 +112,13 @@ export default function PrototypeIndex() {
             <fieldset>
               <legend>Icons</legend>
               {[
-                ["paper", "Paper"],
-                ["tab", "Tab"],
-                ["cut", "Cut paper"],
-                ["seal", "Seal"],
-                ["mini", "Mini documents"],
+                ["orb", "Glass orb"],
+                ["cluster", "Orb cluster"],
+                ["docs", "Paper document"],
+                ["stamp", "Stamp"],
+                ["clay", "Clay"],
+                ["hand", "Hand line"],
+                ["dots", "No icon"],
               ].map(([v, n]) => (
                 <label key={v}>
                   <input

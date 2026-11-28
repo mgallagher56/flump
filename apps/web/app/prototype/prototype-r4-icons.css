@@ -1,0 +1,374 @@
+/* biome-ignore-all lint: a throwaway prototype sketch (never merged), raw and !important on purpose. */
+/*
+ * PROTOTYPE ONLY (app design prototypes branch, never merged). Round four, part 2: icons from
+ * scratch, from the site's own objects. Chosen with the Icons switch (html[data-proto-icons]) and
+ * shown side by side on /prototype/icons ([data-proto-icons-scope]).
+ *
+ *   orb      a tiny glass orb (our own pre-rendered sprites) carrying the glyph in white
+ *   cluster  no glyph: one to three small glass beads arranged to mean the section, like the logo
+ *   docs     the icon is a miniature paper document (card, passbook, statement, slip)
+ *   stamp    an embossed paper seal with the glyph pressed into it
+ *   clay     a soft hand-pressed clay pebble in the area's tint, a thicker glyph
+ *   hand     the glyph redrawn as a single-weight hand-drawn line (approximated here)
+ *   dots     no icon: a dot in the area's colour, the words do the work
+ *
+ * Colour names the area only: debt is apricot (violet for an orb), never rose.
+ */
+
+/* Which orb sprite each area's tile uses (orbs come in sky, teal, violet and rose only). */
+[data-tile-tone] {
+  --t-orb: var(--o-sky);
+}
+[data-tile-tone="teal"],
+[data-tile-tone="sage"] {
+  --t-orb: var(--o-teal);
+}
+[data-tile-tone="sky"],
+[data-tile-tone="accent"] {
+  --t-orb: var(--o-sky);
+}
+[data-tile-tone="apricot"],
+[data-tile-tone="violet"] {
+  --t-orb: var(--o-violet);
+}
+[data-tile-tone="rose"] {
+  --t-orb: var(--o-rose);
+}
+[data-tile-tone="neutral"] {
+  --t-orb: var(--proto-i1);
+}
+
+/* The drawer's icons are bare glyphs: give them the same box so every option reaches them. */
+html[data-proto-level="2"]:is(
+    [data-proto-icons="orb"],
+    [data-proto-icons="stamp"],
+    [data-proto-icons="clay"],
+    [data-proto-icons="dots"],
+    [data-proto-icons="cluster"],
+    [data-proto-icons="docs"]
+  )
+  [data-testid="mobile-nav-drawer"]
+  :is(a, button)
+  > svg {
+  --t-tint: var(--colors-surface-tint-teal);
+  --t-ink: var(--colors-primary);
+  --t-orb: var(--o-teal);
+  box-sizing: content-box;
+  width: 18px;
+  height: 18px;
+  padding: 6px;
+  border-radius: 10px;
+}
+
+/* ---- orb ---------------------------------------------------------- */
+:is(html[data-proto-level="2"][data-proto-icons="orb"], [data-proto-icons-scope="orb"])
+  [data-tile-tone],
+html[data-proto-level="2"][data-proto-icons="orb"]
+  [data-testid="mobile-nav-drawer"]
+  :is(a, button)
+  > svg {
+  border: 0 !important;
+  border-radius: 9999px !important;
+  background: var(--t-orb) center / 140% no-repeat !important;
+  -webkit-mask: none;
+  box-shadow: 0 2px 4px -2px rgb(15 42 42 / 0.35) !important;
+}
+:is(html[data-proto-level="2"][data-proto-icons="orb"], [data-proto-icons-scope="orb"])
+  [data-tile-tone]
+  svg,
+html[data-proto-level="2"][data-proto-icons="orb"]
+  [data-testid="mobile-nav-drawer"]
+  :is(a, button)
+  > svg {
+  color: #fff !important;
+  filter: drop-shadow(0 1px 1px rgb(0 0 0 / 0.45));
+  stroke-width: 2.25;
+}
+
+/* ---- cluster ------------------------------------------------------ */
+:is(html[data-proto-level="2"][data-proto-icons="cluster"], [data-proto-icons-scope="cluster"])
+  [data-tile-tone] {
+  --bead: radial-gradient(
+    circle closest-side,
+    color-mix(in oklab, var(--t-ink) 30%, #fff) 0%,
+    color-mix(in oklab, var(--t-ink) 70%, #fff) 30%,
+    var(--t-ink) 66%,
+    color-mix(in oklab, var(--t-ink) 72%, #000) 92%,
+    transparent 100%
+  );
+  border: 0 !important;
+  box-shadow: none !important;
+  background-color: transparent !important;
+  background-repeat: no-repeat !important;
+  background-image: var(--bead), var(--bead), var(--bead) !important;
+  /* Default arrangement: the logo's trio (a large bead and two smaller above it). */
+  background-size:
+    64% 64%,
+    40% 40%,
+    34% 34% !important;
+  background-position:
+    10% 92%,
+    86% 20%,
+    50% 4% !important;
+}
+:is(html[data-proto-level="2"][data-proto-icons="cluster"], [data-proto-icons-scope="cluster"])
+  [data-tile-tone]
+  > svg {
+  visibility: hidden;
+}
+/* Current account: three in a row, like coins on a counter. */
+:is(html[data-proto-level="2"][data-proto-icons="cluster"], [data-proto-icons-scope="cluster"])
+  [data-tile-tone]:has(> svg.lucide-wallet) {
+  background-size:
+    38% 38%,
+    38% 38%,
+    38% 38% !important;
+  background-position:
+    0% 55%,
+    50% 55%,
+    100% 55% !important;
+}
+/* Savings: a small, a middle and a large bead climbing. */
+:is(html[data-proto-level="2"][data-proto-icons="cluster"], [data-proto-icons-scope="cluster"])
+  [data-tile-tone]:has(> svg.lucide-piggy-bank) {
+  background-size:
+    30% 30%,
+    42% 42%,
+    56% 56% !important;
+  background-position:
+    0% 96%,
+    36% 70%,
+    100% 10% !important;
+}
+/* Investments: three equal beads rising on a line. */
+:is(html[data-proto-level="2"][data-proto-icons="cluster"], [data-proto-icons-scope="cluster"])
+  [data-tile-tone]:has(> svg.lucide-chart-line) {
+  background-size:
+    34% 34%,
+    34% 34%,
+    34% 34% !important;
+  background-position:
+    0% 92%,
+    50% 52%,
+    100% 8% !important;
+}
+/* Pension: one large bead with a small one in orbit. */
+:is(html[data-proto-level="2"][data-proto-icons="cluster"], [data-proto-icons-scope="cluster"])
+  [data-tile-tone]:has(> svg.lucide-shield-check) {
+  background-image: var(--bead), var(--bead) !important;
+  background-size:
+    72% 72%,
+    30% 30% !important;
+  background-position:
+    20% 80%,
+    100% 0% !important;
+}
+/* Mortgage: two beads side by side under one (a roof). */
+:is(html[data-proto-level="2"][data-proto-icons="cluster"], [data-proto-icons-scope="cluster"])
+  [data-tile-tone]:has(> svg.lucide-house) {
+  background-size:
+    44% 44%,
+    44% 44%,
+    44% 44% !important;
+  background-position:
+    50% 0%,
+    4% 96%,
+    96% 96% !important;
+}
+/* Credit card: two overlapping beads, the card's own mark. */
+:is(html[data-proto-level="2"][data-proto-icons="cluster"], [data-proto-icons-scope="cluster"])
+  [data-tile-tone]:has(> svg.lucide-credit-card) {
+  background-image: var(--bead), var(--bead) !important;
+  background-size:
+    58% 58%,
+    58% 58% !important;
+  background-position:
+    8% 50%,
+    92% 50% !important;
+}
+/* Loan: two beads apart, a gap closing over time. */
+:is(html[data-proto-level="2"][data-proto-icons="cluster"], [data-proto-icons-scope="cluster"])
+  [data-tile-tone]:has(> svg.lucide-hand-coins) {
+  background-image: var(--bead), var(--bead) !important;
+  background-size:
+    46% 46%,
+    30% 30% !important;
+  background-position:
+    0% 70%,
+    100% 30% !important;
+}
+/* Sections and grids: four small beads. */
+:is(html[data-proto-level="2"][data-proto-icons="cluster"], [data-proto-icons-scope="cluster"])
+  [data-tile-tone]:has(> svg.lucide-layout-grid) {
+  background-image: var(--bead), var(--bead), var(--bead), var(--bead) !important;
+  background-size:
+    44% 44%,
+    44% 44%,
+    44% 44%,
+    44% 44% !important;
+  background-position:
+    0 0,
+    100% 0,
+    0 100%,
+    100% 100% !important;
+}
+
+/* ---- docs (miniature paper documents) ------------------------------ */
+/* Reuses round three's six document drawings with more air, and a paper tile for the rest. */
+:is(html[data-proto-level="2"][data-proto-icons="docs"], [data-proto-icons-scope="docs"])
+  [data-tile-tone] {
+  border-radius: 22%;
+  border: 1px solid var(--colors-material-paper-edge);
+  background:
+    linear-gradient(var(--t-ink), var(--t-ink)) top / 100% 2px no-repeat,
+    var(--colors-material-paper-fill);
+}
+
+/* ---- stamp -------------------------------------------------------- */
+:is(html[data-proto-level="2"][data-proto-icons="stamp"], [data-proto-icons-scope="stamp"])
+  [data-tile-tone],
+html[data-proto-level="2"][data-proto-icons="stamp"]
+  [data-testid="mobile-nav-drawer"]
+  :is(a, button)
+  > svg {
+  border: 0 !important;
+  border-radius: 9999px !important;
+  background:
+    radial-gradient(
+      circle,
+      transparent 0 60%,
+      color-mix(in oklab, var(--t-ink) 40%, transparent) 61% 63%,
+      transparent 64%
+    ),
+    radial-gradient(
+      circle at 40% 30%,
+      color-mix(in oklab, var(--colors-material-paper-fill) 85%, #fff),
+      var(--colors-material-paper-fill) 70%
+    ) !important;
+  box-shadow:
+    inset 0 1px 0 0 rgb(255 255 255 / 0.8),
+    inset 0 -2px 3px 0 rgb(15 42 42 / 0.16),
+    0 1px 2px 0 rgb(15 42 42 / 0.18) !important;
+}
+:is(html[data-proto-level="2"][data-proto-icons="stamp"], [data-proto-icons-scope="stamp"])
+  [data-tile-tone]
+  svg,
+html[data-proto-level="2"][data-proto-icons="stamp"]
+  [data-testid="mobile-nav-drawer"]
+  :is(a, button)
+  > svg {
+  color: var(--t-ink) !important;
+  scale: 0.82;
+  filter: drop-shadow(0 1px 0 rgb(255 255 255 / 0.85)) drop-shadow(0 -0.5px 0 rgb(15 42 42 / 0.25));
+}
+:is(
+    html.dark[data-proto-level="2"][data-proto-icons="stamp"],
+    .dark[data-proto-icons-scope="stamp"]
+  )
+  [data-tile-tone] {
+  background:
+    radial-gradient(
+      circle,
+      transparent 0 60%,
+      color-mix(in oklab, var(--t-ink) 50%, transparent) 61% 63%,
+      transparent 64%
+    ),
+    radial-gradient(circle at 40% 30%, #3a414b, #2a3038 70%) !important;
+  box-shadow:
+    inset 0 1px 0 0 rgb(255 255 255 / 0.12),
+    inset 0 -2px 3px 0 rgb(0 0 0 / 0.4),
+    0 1px 2px 0 rgb(0 0 0 / 0.4) !important;
+}
+
+/* ---- clay --------------------------------------------------------- */
+:is(html[data-proto-level="2"][data-proto-icons="clay"], [data-proto-icons-scope="clay"])
+  [data-tile-tone],
+html[data-proto-level="2"][data-proto-icons="clay"]
+  [data-testid="mobile-nav-drawer"]
+  :is(a, button)
+  > svg {
+  border: 0 !important;
+  border-radius: 46% 54% 52% 48% / 52% 46% 54% 48% !important;
+  background: var(--t-tint) !important;
+  box-shadow:
+    inset 2px 3px 4px 0 rgb(255 255 255 / 0.65),
+    inset -3px -4px 6px 0 color-mix(in oklab, var(--t-ink) 22%, transparent),
+    0 4px 8px -4px color-mix(in oklab, var(--t-ink) 45%, transparent) !important;
+}
+:is(html[data-proto-level="2"][data-proto-icons="clay"], [data-proto-icons-scope="clay"])
+  [data-tile-tone]
+  svg {
+  color: var(--t-ink) !important;
+  stroke-width: 2.4;
+}
+:is(html.dark[data-proto-level="2"][data-proto-icons="clay"], .dark[data-proto-icons-scope="clay"])
+  [data-tile-tone] {
+  box-shadow:
+    inset 2px 3px 4px 0 rgb(255 255 255 / 0.12),
+    inset -3px -4px 6px 0 rgb(0 0 0 / 0.35),
+    0 4px 8px -4px rgb(0 0 0 / 0.5) !important;
+}
+
+/* ---- hand --------------------------------------------------------- */
+:is(html[data-proto-level="2"][data-proto-icons="hand"], [data-proto-icons-scope="hand"])
+  [data-tile-tone] {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+:is(html[data-proto-level="2"][data-proto-icons="hand"], [data-proto-icons-scope="hand"])
+  [data-tile-tone]
+  svg,
+html[data-proto-level="2"][data-proto-icons="hand"]
+  [data-testid="mobile-nav-drawer"]
+  :is(a, button)
+  > svg {
+  color: var(--t-ink) !important;
+  stroke-width: 1.6;
+  filter: url(#proto-hand-line);
+  overflow: visible;
+}
+
+/* ---- dots --------------------------------------------------------- */
+:is(html[data-proto-level="2"][data-proto-icons="dots"], [data-proto-icons-scope="dots"])
+  [data-tile-tone],
+html[data-proto-level="2"][data-proto-icons="dots"]
+  [data-testid="mobile-nav-drawer"]
+  :is(a, button)
+  > svg {
+  border: 0 !important;
+  box-shadow: none !important;
+  background:
+    radial-gradient(circle, var(--t-ink) 0 27%, transparent 30%) center / 100% 100% no-repeat !important;
+  width: 14px !important;
+  min-width: 14px !important;
+}
+:is(html[data-proto-level="2"][data-proto-icons="dots"], [data-proto-icons-scope="dots"])
+  [data-tile-tone]
+  > svg {
+  visibility: hidden;
+}
+html[data-proto-level="2"][data-proto-icons="dots"]
+  [data-testid="mobile-nav-drawer"]
+  :is(a, button)
+  > svg {
+  color: transparent !important;
+}
+/* Cluster and docs have no drawer form of their own: the drawer shows dots there. */
+html[data-proto-level="2"]:is([data-proto-icons="cluster"], [data-proto-icons="docs"])
+  [data-testid="mobile-nav-drawer"]
+  :is(a, button)
+  > svg {
+  color: transparent !important;
+  background:
+    radial-gradient(circle, var(--t-ink) 0 22%, transparent 25%) center / 100% 100% no-repeat !important;
+}
+
+/* The icon sheet's dark panels use the dark sprites. */
+.dark[data-proto-icons-scope] {
+  --o-sky: url("/prototype-orbs/sky-dark.webp");
+  --o-teal: url("/prototype-orbs/teal-dark.webp");
+  --o-violet: url("/prototype-orbs/violet-dark.webp");
+  --o-rose: url("/prototype-orbs/rose-dark.webp");
+  --proto-i1: var(--o-sky);
+}

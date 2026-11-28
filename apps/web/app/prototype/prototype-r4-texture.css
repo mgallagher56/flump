@@ -1,0 +1,122 @@
+/* biome-ignore-all lint: a throwaway prototype sketch (never merged), raw and !important on purpose. */
+/*
+ * PROTOTYPE ONLY (app design prototypes branch, never merged). Round four, part 2: the texture
+ * gallery. Six generated textures (SVG feTurbulence, no third-party images), chosen with the
+ * Texture switch (html[data-proto-texture]). The ruled lines are gone. Each is a static tile the
+ * browser rasterises once; nothing animates, so there is no per-frame cost.
+ *
+ *   grain    fine photographic grain on the canvas and cards
+ *   relief   soft paper relief in the canvas behind content (lit turbulence), cards clean
+ *   fibre    long paper fibres on cards and bands
+ *   emboss   a lit embossed edge, grain only in the lower shadow of each card
+ *   bands    grain on the headline bands only; cards and canvas clean
+ *   falloff  soft light falloff across the canvas, faint grain, cards clean
+ */
+
+html[data-proto-level="2"]:is(
+  [data-proto-texture="grain"],
+  [data-proto-texture="relief"],
+  [data-proto-texture="fibre"],
+  [data-proto-texture="emboss"],
+  [data-proto-texture="bands"],
+  [data-proto-texture="falloff"]
+) {
+  --p-grain: none;
+}
+
+/* Grain: canvas and cards. */
+html[data-proto-level="2"][data-proto-texture="grain"] {
+  --p-grain: url("/prototype-textures/grain-soft.svg");
+}
+html[data-proto-level="2"][data-proto-texture="grain"] body {
+  background-image: url("/prototype-textures/grain-soft.svg") !important;
+  background-repeat: repeat !important;
+}
+
+/* Relief: the canvas carries a soft lit relief (soft-light blend over the canvas colour). */
+html[data-proto-level="2"][data-proto-texture="relief"] body {
+  background-image: url("/prototype-textures/relief.svg") !important;
+  background-size: 900px 900px !important;
+  background-repeat: repeat !important;
+  background-blend-mode: soft-light;
+}
+html.dark[data-proto-level="2"][data-proto-texture="relief"] body {
+  background-blend-mode: overlay;
+}
+
+/* Fibre: cards and bands. */
+html[data-proto-level="2"][data-proto-texture="fibre"] {
+  --p-grain: url("/prototype-textures/fibre-soft.svg");
+}
+html[data-proto-level="2"][data-proto-texture="fibre"] body {
+  background-image: url("/prototype-textures/fibre-soft.svg") !important;
+  background-repeat: repeat !important;
+}
+
+/* Emboss: a lit top edge, a soft inner shadow at the foot, grain only inside that shadow. */
+html[data-proto-level="2"][data-proto-texture="emboss"]
+  main
+  :is([data-card], [data-kpi-card], [data-section-card]) {
+  background-image:
+    var(--p-hover), url("/prototype-textures/grain-soft.svg"),
+    linear-gradient(0deg, rgb(var(--p-ink) / 0.05), transparent 38%) !important;
+  background-size:
+    auto,
+    220px 38%,
+    auto !important;
+  background-position:
+    0 0,
+    bottom left,
+    0 0 !important;
+  background-repeat: no-repeat, repeat-x, no-repeat !important;
+  box-shadow:
+    inset 0 1px 0 0 rgb(var(--p-hi) / calc(var(--p-edge-a) * 1.3)),
+    inset 0 -10px 18px -14px rgb(var(--p-ink) / 0.22),
+    0 1px 2px 0 rgb(var(--p-ink) / 0.06),
+    0 8px 20px -10px rgb(var(--p-ink) / 0.18) !important;
+}
+
+/* Bands only: the headline bands get grain; nothing else. */
+html[data-proto-level="2"][data-proto-texture="bands"] main [data-tone="hero"] {
+  background-image:
+    var(--p-hover), url("/prototype-textures/grain-soft.svg"),
+    url("/prototype-textures/grain-soft.svg"),
+    radial-gradient(
+      120% 160% at 0% 0%,
+      color-mix(in oklab, var(--colors-surface-card) 30%, transparent),
+      transparent 55%
+    ) !important;
+  background-position:
+    0 0,
+    0 0,
+    110px 70px,
+    0 0 !important;
+}
+
+/* Falloff: light gathers at the top of the canvas and falls away towards the edges. */
+html[data-proto-level="2"][data-proto-texture="falloff"] body {
+  background-image:
+    url("/prototype-textures/grain-soft.svg"),
+    radial-gradient(
+      1600px 900px at 50% -200px,
+      color-mix(in oklab, var(--colors-surface-card) 70%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      1400px 1200px at 50% 40%,
+      transparent 40%,
+      color-mix(in oklab, var(--colors-text-primary) 5%, transparent) 100%
+    ) !important;
+  background-attachment: fixed !important;
+  background-repeat: repeat, no-repeat, no-repeat !important;
+}
+html.dark[data-proto-level="2"][data-proto-texture="falloff"] body {
+  background-image:
+    url("/prototype-textures/grain-soft.svg"),
+    radial-gradient(
+      1600px 900px at 50% -200px,
+      color-mix(in oklab, var(--colors-primary) 9%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(1400px 1200px at 50% 40%, transparent 40%, rgb(0 0 0 / 0.35) 100%) !important;
+}
