@@ -173,7 +173,7 @@ export function renderIllustrationChapter(tokens: BrandTokens): string {
       <article class="card">
         <h3 class="card-title">App palette and opt-in orb look</h3>
         <p class="prose">
-          By default (<code>palette="app"</code>), credit cards stay mint (<code>primary.subtle</code>) and never rose or red. The marketing home page may opt into <code>palette="orb"</code> for its allow-listed marks under rule MC1.
+          By default (<code>palette="app"</code>), credit cards stay mint (<code>primary.subtle</code>) and never rose or red. The marketing home page and the AI connection page's "What you see" picture may opt into <code>palette="orb"</code> under rule MC1.
         </p>
         ${renderDocumentPictureSvg(tokens, debtPic, "feature-debt")}
         <p class="swatch-note">Rendered directly from <code>documentDefinitions["feature-debt"]</code> in <code>Illustration.documents.ts</code>.</p>
@@ -184,7 +184,7 @@ export function renderIllustrationChapter(tokens: BrandTokens): string {
       <article class="card-subtle">
         <h3 class="card-title">Flat scenes (E17)</h3>
         <p class="prose">
-          Apps keep flat scenes on a 240 by 170 grid (ground line at 152, 20 clear at the sides, 10 at the top) until the switch to document cards (decision D4). Each scene uses one sun, one dotted arc, at most one leaf or sprout and three to five rounded solid forms (14px corners, no outlines).
+          Apps keep flat scenes on a 240 by 180 grid (ground line at 152, 20 clear at the sides, 10 at the top) until the switch to document cards (decision D4). Each scene uses one sun, one dotted arc, at most one leaf or sprout and three to five rounded solid forms (14px corners, no outlines).
         </p>
       </article>
 

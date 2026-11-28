@@ -40,7 +40,7 @@ export function renderMaterialChapter(tokens: BrandTokens): string {
     </div>
 
     <p class="prose">
-      Introduced on 27 November 2026 (design rollout slice F3, PR 968), Flump pairs neutral card materials with lit glass orbs. Card materials stay completely neutral (no violet or rose) and never obscure contrast: text on glass and paper clears 4.5:1 in both themes.
+      Introduced on 27 November 2026 (design rollout slices F2 and F3, PRs 963 and 968), Flump pairs neutral card materials with lit glass orbs. Card materials stay completely neutral (no violet or rose) and never obscure contrast: text on glass and paper clears 4.5:1 in both themes.
     </p>
 
     ${renderGlassOrbLightingDiagram(tokens)}

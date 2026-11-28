@@ -21,7 +21,7 @@ export function renderChartsChapter(tokens: BrandTokens): string {
     ["chart.series7", "Entity series 7 (olive-gold)"],
     ["chart.series8", "Entity series 8 (slate-grey)"],
     ["chart.projection", "Forecast lines (always dashed)"],
-    ["chart.band", "Confidence range fill behind forecast lines (never a line)"],
+    ["chart.band", "Range fill behind a forecast line (never a line)"],
     ["chart.baseline", "Zero line, targets, reference lines"],
     ["chart.grid", "Gridlines (8% ink in light, 8% paper in dark)"],
   ];
@@ -33,7 +33,7 @@ export function renderChartsChapter(tokens: BrandTokens): string {
     </div>
 
     <p class="prose">
-      Chart colours come only from <code>chart.*</code> via <code>chartColor()</code> and <code>seriesColor()</code> (Rule CH1). Colour identifies an entity, never an outcome (CH2): an account keeps its assigned colour across views, and liabilities use apricot (<code>chart.debt</code>), never red.
+      Chart colours come only from <code>chart.*</code> via <code>chartColor()</code> and <code>seriesColor()</code> (Rule CH1). Colour identifies an entity, never an outcome (CH2): an account keeps its assigned colour across views, and debts use apricot (<code>chart.debt</code>), never red.
     </p>
 
     ${renderChartAnatomyDiagram(tokens)}
