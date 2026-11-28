@@ -8,3 +8,5 @@ Throwaway prototypes of the web app in the marketing site's look, at three level
 - `public/prototype-origins.json` names the four local stacks (seeded data, empty, new user, finished check-in).
 
 Hooks added to shared components, each marked `PROTOTYPE ONLY`: `data-card` on `Card`; an orb group and `data-proto-header` in `PageHeader`; the document picture beside each flat scene in `Illustration`; a hidden document picture in `EmptyState`; margin art in `OnboardingFlow`.
+
+Rounds two and three (level 2 revised, 28 Nov 2026): `prototype-r2.css` (depth, texture strengths, pointer light, drifting orbs, icon options), `explain.ts` (info buttons with each headline figure's working, read from the page and shown only when the sum matches), `motion.ts` and `ProtoMotionControls/` (the Reduce motion setting in Settings and the header's Pause motion), and `routes/prototype_.icons.tsx` (the icon sheet). More hooks marked `PROTOTYPE ONLY`: `MobileBottomBar` (an icon box), `Header` (the pause button), `SettingsPage` (the Motion card).
