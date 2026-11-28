@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { SAMPLE_HOUSEHOLDS } from "@flump/finance-engine";
 import { act, render, screen, within } from "@testing-library/react";
 import { renderToString } from "react-dom/server";
@@ -7,9 +9,10 @@ import { StillMotionProvider } from "../../context/StillMotionContext";
 import type { GsapKit } from "../../motion/loadGsapKit";
 import { signupCta } from "../../utils/site";
 import { HomeHero as Hero, heroModeFrom } from "./HomeHero";
+import { pieceStart } from "./HomeHero.styles";
 import { ASSEMBLY_UNITS, armHeroAssembly, FLIGHTS_START } from "./heroAssembly";
-import { HERO_BUBBLE_DENSITY, HERO_BUBBLES } from "./heroBubbles";
-import { HERO_FIGURES, HERO_SOURCES, heroFiguresFor } from "./heroData";
+import { HERO_BUBBLE_DENSITY, HERO_BUBBLES } from "./heroBubbles.styles";
+import { HERO_FIGURES, HERO_SOURCES, heroFiguresFor, type PieceKey } from "./heroData";
 import {
   ASSEMBLE_S,
   armHeroScroll,
@@ -20,7 +23,7 @@ import {
   placeAfterPin,
   TOTAL,
 } from "./heroScroll";
-import { SCATTER, startPlace, startVars, TRAY } from "./heroStart";
+import { SCATTER, startPlace, TRAY } from "./heroStart";
 
 const renderHero = () =>
   render(
@@ -120,34 +123,27 @@ describe("HomeHero", () => {
     ).toHaveLength(1);
   });
 
-  it("server-renders every figure and the start state's places, as custom properties only", () => {
+  it("server-renders every figure and the start state, in the stylesheet: no inline styles, no flags", () => {
     const html = renderToString(
       <AmbientMotionProvider>
         <Hero />
       </AmbientMotionProvider>,
     );
-    // The CSS draws the start state from these: each piece's place, and each bubble's. No inline
-    // style sets anything else, so nothing is drawn by the server but through the CSS.
-    const styles = [...html.matchAll(/ style="([^"]*)"/g)].map((m) => m[1] ?? "");
-    expect(styles).toHaveLength(6 + HERO_BUBBLES[HERO_BUBBLE_DENSITY].length);
-    for (const style of styles) {
-      for (const declaration of style.split(";").filter(Boolean)) {
-        expect(declaration.trim()).toMatch(/^--[a-z-]+:/);
-      }
-    }
+    // The CSS draws the start state (each piece's place and each bubble's are classes).
+    expect(html).not.toContain("style=");
     expect(html).not.toMatch(/ data-hero-(live|ready|done)="/);
     expect(html).not.toMatch(/ data-enhanced="/);
     expect(html).toContain(HERO_FIGURES.netWorth);
     expect(html).toContain('data-testid="home-hero"');
   });
 
-  it("gives each piece its start place from the one table the assembly reads", () => {
+  it("gives each piece its start-place class", () => {
     const { container } = renderHero();
-    const card = container.querySelector<HTMLElement>('[data-hero-piece="card"]');
-    expect(card?.style.getPropertyValue("--scatter-x")).toBe(String(SCATTER.card.x));
-    expect(card?.style.getPropertyValue("--scatter-z")).toBe(String(SCATTER.card.z));
-    expect(card?.style.getPropertyValue("--tray-bottom")).toBe(`${TRAY.card.bottom}rem`);
-    expect(card?.style.getPropertyValue("--tray-scale")).toBe(String(TRAY.card.scale));
+    for (const { key } of HERO_SOURCES) {
+      const el = container.querySelector<HTMLElement>(`[data-hero-piece="${key}"]`);
+      for (const name of pieceStart[key].split(" "))
+        expect(el?.classList.contains(name)).toBe(true);
+    }
   });
 
   it("marks a still page (a story's rest state) done, so it shows the finished picture", () => {
@@ -193,18 +189,33 @@ describe("heroStart", () => {
     });
   });
 
-  it("writes every piece's custom properties for the CSS", () => {
-    expect(startVars("receipt")).toEqual({
-      "--scatter-x": -0.24,
-      "--scatter-y": 0.02,
-      "--scatter-z": 80,
-      "--scatter-rx": -3,
-      "--scatter-ry": 4,
-      "--scatter-rz": -2,
-      "--tray-col": 1,
-      "--tray-bottom": "14.5rem",
-      "--tray-scale": 0.6,
-    });
+  it("is the same numbers the CSS draws the start state from (`pieceStart`)", () => {
+    // Panda reads styles statically, so `pieceStart` writes them out; read them back from source.
+    const source = readFileSync(join(__dirname, "HomeHero.styles.ts"), "utf8");
+    const block = source.slice(source.indexOf("export const pieceStart"));
+    for (const [key, s] of Object.entries(SCATTER) as [PieceKey, (typeof SCATTER)[PieceKey]][]) {
+      const t = TRAY[key];
+      const own = block.slice(block.indexOf(`${key}: css({`)).split("}),")[0] ?? "";
+      const value = (name: string) => own.match(new RegExp(`"--${name}": "([^"]+)"`))?.[1];
+      expect(
+        [
+          value("scatter-x"),
+          value("scatter-y"),
+          value("scatter-z"),
+          value("scatter-rx"),
+          value("scatter-ry"),
+          value("scatter-rz"),
+          value("tray-col"),
+          value("tray-bottom"),
+          value("tray-scale"),
+        ],
+        key,
+      ).toEqual([
+        ...[s.x, s.y, s.z, s.rx, s.ry, s.rz, t.col].map(String),
+        `${t.bottom}rem`,
+        String(t.scale),
+      ]);
+    }
   });
 });
 

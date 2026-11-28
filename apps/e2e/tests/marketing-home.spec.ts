@@ -348,7 +348,7 @@ test.describe("marketing home: the hero's start state (owner, 28 Nov 2026)", () 
       // Every piece is drawn apart from the others, wholly inside the window's width.
       const boxes = await page.evaluate(pieceBoxes);
       expect(new Set(boxes.map((b) => `${b[0]},${b[1]}`)).size).toBe(6);
-      for (const [left, , w] of boxes) {
+      for (const [left = Number.NaN, , w = Number.NaN] of boxes) {
         expect(left).toBeGreaterThanOrEqual(0);
         expect(left + w).toBeLessThanOrEqual(width);
       }

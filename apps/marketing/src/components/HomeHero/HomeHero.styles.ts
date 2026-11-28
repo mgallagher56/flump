@@ -1,4 +1,5 @@
 import { css, cva } from "@repo/ui/styled-system/css";
+import type { PieceKey } from "./heroData";
 
 /**
  * The start state (owner, 28 Nov 2026): the hero opens with the pieces already apart over the
@@ -332,9 +333,8 @@ export const ghost = css({
 
 /**
  * A piece: its top-left on the stage's centre until it is centred. In the start state it rests
- * where `heroStart.ts` says, from the custom properties it carries: in the tray under 1024px, in
- * depth from 1024px, written in the order GSAP writes the same transform, so nothing moves when GSAP
- * takes over.
+ * where its `pieceStart` custom properties say: in the tray under 1024px, in depth from 1024px,
+ * written in the order GSAP writes the same transform, so nothing moves when GSAP takes over.
  */
 export const piece = css({
   position: "absolute",
@@ -353,6 +353,80 @@ export const piece = css({
     },
   },
 });
+
+/**
+ * Each piece's start place, the CSS copy of `SCATTER` and `TRAY` in `heroStart.ts`, which the
+ * assembly starts from (a unit test holds the two to the same numbers). Written out: Panda reads
+ * styles statically.
+ */
+export const pieceStart: Record<PieceKey, string> = {
+  card: css({
+    "--scatter-x": "-0.26",
+    "--scatter-y": "-0.29",
+    "--scatter-z": "60",
+    "--scatter-rx": "5",
+    "--scatter-ry": "-6",
+    "--scatter-rz": "-4",
+    "--tray-col": "-1",
+    "--tray-bottom": "21rem",
+    "--tray-scale": "0.55",
+  }),
+  pension: css({
+    "--scatter-x": "-0.21",
+    "--scatter-y": "0.26",
+    "--scatter-z": "40",
+    "--scatter-rx": "-2",
+    "--scatter-ry": "3",
+    "--scatter-rz": "1",
+    "--tray-col": "1",
+    "--tray-bottom": "21rem",
+    "--tray-scale": "0.58",
+  }),
+  payslip: css({
+    "--scatter-x": "0.26",
+    "--scatter-y": "-0.23",
+    "--scatter-z": "20",
+    "--scatter-rx": "3",
+    "--scatter-ry": "5",
+    "--scatter-rz": "3",
+    "--tray-col": "-1",
+    "--tray-bottom": "14.5rem",
+    "--tray-scale": "0.6",
+  }),
+  receipt: css({
+    "--scatter-x": "-0.24",
+    "--scatter-y": "0.02",
+    "--scatter-z": "80",
+    "--scatter-rx": "-3",
+    "--scatter-ry": "4",
+    "--scatter-rz": "-2",
+    "--tray-col": "1",
+    "--tray-bottom": "14.5rem",
+    "--tray-scale": "0.6",
+  }),
+  statement: css({
+    "--scatter-x": "0.24",
+    "--scatter-y": "0.06",
+    "--scatter-z": "-10",
+    "--scatter-rx": "4",
+    "--scatter-ry": "-4",
+    "--scatter-rz": "2",
+    "--tray-col": "-1",
+    "--tray-bottom": "8rem",
+    "--tray-scale": "0.5",
+  }),
+  credit: css({
+    "--scatter-x": "0.23",
+    "--scatter-y": "0.3",
+    "--scatter-z": "100",
+    "--scatter-rx": "5",
+    "--scatter-ry": "-6",
+    "--scatter-rz": "4",
+    "--tray-col": "1",
+    "--tray-bottom": "8rem",
+    "--tray-scale": "0.55",
+  }),
+};
 
 /* ---------- Glyphs: the pieces' small forms in the "Made from" rows ---------- */
 

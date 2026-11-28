@@ -1,5 +1,5 @@
 import { cx } from "@repo/ui/styled-system/css";
-import type { CSSProperties, FC } from "react";
+import type { FC } from "react";
 import { BUBBLE_PLACES, bubble, field, spot } from "./BubbleField.styles";
 
 export type BubbleLayout = "a" | "b" | "c";
@@ -58,20 +58,20 @@ const setFor = (sets: BubbleSets, index: number) =>
 
 /**
  * A bubble placed by a page's own table rather than a prototype layout (the home hero; owner,
- * 28 Nov 2026). Its centre and diameter are CSS lengths, and it shows at one range of widths.
+ * 28 Nov 2026). It shows at one range of widths, where its place puts it.
  */
 export interface BubbleSpot {
   readonly set: "skyTeal" | "violetRose";
-  readonly x: string;
-  readonly y: string;
-  readonly size: string;
   /**
    * `wide`: from 64rem (two columns); `stacked`: 40 to 64rem; `roomy`: 60 to 64rem, where there is
    * room beside the stacked dashboard; `phone`: under 40rem.
    */
   readonly show: "wide" | "stacked" | "roomy" | "phone";
-  /** How far it drifts each way as the band scrolls through the screen, in px. */
-  readonly drift: number;
+  /**
+   * A Panda class setting `--spot-x` and `--spot-y` (its centre), `--spot-size` (its diameter) and
+   * optionally `--drift-from` and `--drift-to`, all CSS lengths.
+   */
+  readonly place: string;
 }
 
 export interface BubbleFieldProps {
@@ -81,15 +81,6 @@ export interface BubbleFieldProps {
   /** Bubbles placed by the page instead of the layout (with `fit="hero"`). */
   spots?: readonly BubbleSpot[];
 }
-
-const spotVars = (s: BubbleSpot): CSSProperties =>
-  ({
-    "--spot-x": s.x,
-    "--spot-y": s.y,
-    "--spot-size": s.size,
-    "--drift-from": `${s.drift}px`,
-    "--drift-to": `${-s.drift}px`,
-  }) as CSSProperties;
 
 /**
  * The bubble field (STYLE-GUIDE 2.7): soft spheres in the orb colour sets at a band's edges, behind
@@ -108,11 +99,10 @@ export const BubbleField: FC<BubbleFieldProps> = ({
   <div aria-hidden="true" className={field({ fit })} data-bubble-field={spots ? "spots" : layout}>
     {spots?.map((s) => (
       <span
-        className={cx(bubble({ set: s.set }), spot({ show: s.show }))}
+        className={cx(bubble({ set: s.set }), spot({ show: s.show }), s.place)}
         data-bubble-set={s.set}
         data-bubble-show={s.show}
-        key={`${s.show}-${s.x}-${s.y}`}
-        style={spotVars(s)}
+        key={s.place}
       />
     ))}
     {spots

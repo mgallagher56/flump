@@ -1,12 +1,11 @@
-import type { CSSProperties } from "react";
 import type { PieceKey } from "./heroData";
 
 /*
  * Where the six pieces rest before the picture assembles: the hero's start state (owner,
- * 28 Nov 2026: the page opens with the pieces already apart, never assembled first). One table
- * drives both the server render, through custom properties on each piece that the CSS reads, and
- * the assembly, which starts its timeline from the same numbers, so nothing moves when the script
- * takes over.
+ * 28 Nov 2026: the page opens with the pieces already apart, never assembled first). The server
+ * render draws it in CSS (`pieceStart` in `HomeHero.styles.ts`, the same numbers written out, which
+ * a unit test holds to these), and the assembly starts its timeline from these, so nothing moves
+ * when the script takes over.
  */
 
 /**
@@ -40,24 +39,7 @@ export const TRAY: Record<PieceKey, { col: -1 | 1; bottom: number; scale: number
 };
 
 /** A tray cell's centre is a quarter of the stage from its middle, less this, in px. */
-export const TRAY_INSET_PX = 7;
-
-/** The custom properties a piece carries in the server render; `HomeHero.styles.ts` reads them. */
-export function startVars(key: PieceKey): CSSProperties {
-  const s = SCATTER[key];
-  const t = TRAY[key];
-  return {
-    "--scatter-x": s.x,
-    "--scatter-y": s.y,
-    "--scatter-z": s.z,
-    "--scatter-rx": s.rx,
-    "--scatter-ry": s.ry,
-    "--scatter-rz": s.rz,
-    "--tray-col": t.col,
-    "--tray-bottom": `${t.bottom}rem`,
-    "--tray-scale": t.scale,
-  } as CSSProperties;
-}
+const TRAY_INSET_PX = 7;
 
 /** A piece's start as GSAP values: the same place the CSS draws, for a stage of this size. */
 export function startPlace(

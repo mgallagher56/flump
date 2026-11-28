@@ -47,13 +47,13 @@ describe("BubbleField", () => {
 });
 
 describe("BubbleField spots", () => {
-  it("draws a page's own spots instead of the layout, placed by custom properties only", () => {
+  it("draws a page's own spots instead of the layout, each with its place class", () => {
     const { container } = render(
       <BubbleField
         fit="hero"
         spots={[
-          { set: "skyTeal", x: "10cqw", y: "20cqh", size: "72px", show: "wide", drift: 30 },
-          { set: "violetRose", x: "50cqw", y: "11rem", size: "44px", show: "phone", drift: 0 },
+          { set: "skyTeal", show: "wide", place: "place-a" },
+          { set: "violetRose", show: "phone", place: "place-b" },
         ]}
       />,
     );
@@ -63,9 +63,9 @@ describe("BubbleField spots", () => {
     const spots = Array.from(field?.querySelectorAll<HTMLElement>("span") ?? []);
     expect(spots.map((s) => s.dataset.bubbleSet)).toEqual(["skyTeal", "violetRose"]);
     expect(spots.map((s) => s.dataset.bubbleShow)).toEqual(["wide", "phone"]);
-    expect(spots[0]?.style.getPropertyValue("--spot-x")).toBe("10cqw");
-    expect(spots[0]?.style.getPropertyValue("--spot-size")).toBe("72px");
-    expect(spots[0]?.style.getPropertyValue("--drift-from")).toBe("30px");
-    expect(spots[0]?.style.getPropertyValue("--drift-to")).toBe("-30px");
+    expect(spots[0]?.classList.contains("place-a")).toBe(true);
+    expect(spots[1]?.classList.contains("place-b")).toBe(true);
+    // No inline style: the place is in the stylesheet, so the server HTML is the still field.
+    expect(spots.some((s) => s.hasAttribute("style"))).toBe(false);
   });
 });

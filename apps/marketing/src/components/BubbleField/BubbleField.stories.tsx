@@ -78,10 +78,26 @@ export const VioletRoseDark: Story = {
 };
 
 const SPOTS = [
-  { set: "skyTeal", x: "20cqw", y: "30cqh", size: "96px", show: "wide", drift: 30 },
-  { set: "violetRose", x: "80cqw", y: "70cqh", size: "64px", show: "wide", drift: 60 },
-  { set: "skyTeal", x: "50cqw", y: "80cqh", size: "48px", show: "stacked", drift: 0 },
-  { set: "violetRose", x: "50cqw", y: "20cqh", size: "40px", show: "phone", drift: 0 },
+  {
+    set: "skyTeal",
+    show: "wide",
+    place: css({ "--spot-x": "20cqw", "--spot-y": "30cqh", "--spot-size": "96px" }),
+  },
+  {
+    set: "violetRose",
+    show: "wide",
+    place: css({ "--spot-x": "80cqw", "--spot-y": "70cqh", "--spot-size": "64px" }),
+  },
+  {
+    set: "skyTeal",
+    show: "stacked",
+    place: css({ "--spot-x": "50cqw", "--spot-y": "80cqh", "--spot-size": "48px" }),
+  },
+  {
+    set: "violetRose",
+    show: "phone",
+    place: css({ "--spot-x": "50cqw", "--spot-y": "20cqh", "--spot-size": "40px" }),
+  },
 ] as const;
 
 /** The home hero's own spots (`fit="hero"`): placed by the page's table, each in its range of widths. */

@@ -40,6 +40,7 @@ import {
   madeText,
   madeTitle,
   piece,
+  pieceStart,
   piecesLayer,
   scene,
   scrollCue,
@@ -48,9 +49,8 @@ import {
   valueSlot,
   valueText,
 } from "./HomeHero.styles";
-import { HERO_BUBBLE_DENSITY, HERO_BUBBLES } from "./heroBubbles";
+import { HERO_BUBBLE_DENSITY, HERO_BUBBLES } from "./heroBubbles.styles";
 import { HERO_FIGURES as FIG, HERO_SOURCES, type PieceKey } from "./heroData";
-import { startVars } from "./heroStart";
 
 /** A dashboard figure, with the empty line it rests on before its pieces arrive (hidden at rest). */
 const Value: FC<{ k: "net" | "left" | "room"; text: string }> = ({ k, text }) => (
@@ -244,7 +244,7 @@ export const HomeHero: FC = () => {
             <Dashboard />
             <div aria-hidden="true" className={piecesLayer} data-hero-layer="">
               {HERO_SOURCES.map(({ key }) => (
-                <div className={piece} data-hero-piece={key} key={key} style={startVars(key)}>
+                <div className={cx(piece, pieceStart[key])} data-hero-piece={key} key={key}>
                   <MoneyPiece k={key} />
                 </div>
               ))}
