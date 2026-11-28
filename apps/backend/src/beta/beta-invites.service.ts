@@ -18,7 +18,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { DataSource } from "typeorm";
-import { isBetaInviteOnly, isBetaUserAllowedByEnv } from "../auth/beta-access";
+import { isBetaAdmin, isBetaInviteOnly, isBetaUserAllowedByEnv } from "../auth/beta-access";
 import type { AuthenticatedUser } from "../auth/token-verifier";
 import { hashInviteToken, newInviteToken } from "./invite-token";
 
@@ -57,22 +57,48 @@ export class BetaInvitesService {
   constructor(private readonly dataSource: DataSource) {}
 
   /**
-   * Redeems a link for the caller. Already allowed (open beta, admin, env-listed or an active
-   * member): `already-member` and the link is left unused. Otherwise, in one transaction, the link
-   * is claimed by a single conditional UPDATE (so two people racing for one link cannot both win)
-   * and the caller's member row is written or re-activated.
+   * Redeems a link for the caller. Open beta, an admin or an active member: `already-member` and
+   * the link is left unused, so it still works for someone else. Otherwise, in one transaction, the
+   * link is claimed by a single conditional UPDATE (so two people racing for one link cannot both
+   * win) and the caller's member row is written or re-activated.
+   *
+   * Someone on an env allow-list who opens a link uses it like anyone else, so the link reads as
+   * used and they appear in the member list (the owner's report, 28 Nov 2026: such a person got
+   * in and the link stayed "Not used yet"). If that link cannot be used they still have access
+   * through the list, so they get `already-member`, not the 410.
    */
   async redeem(user: AuthenticatedUser, token: string): Promise<RedeemBetaInviteResponse> {
-    if (!isBetaInviteOnly(process.env) || isBetaUserAllowedByEnv(process.env, user)) {
+    if (!isBetaInviteOnly(process.env) || isBetaAdmin(process.env, user.id)) {
+      this.logger.log("beta_invite_redeem_skipped reason=already-allowed");
       return { status: "already-member" };
     }
-    // The contract already checks the shape; an odd token is simply one no link has.
-    if (!BetaInviteToken.safeParse(token).success) {
-      this.logger.warn("beta_invite_redeem_refused reason=unusable");
-      throw inviteUnusableException();
+    const allowListed = isBetaUserAllowedByEnv(process.env, user);
+    const outcome = await this.claim(user, token);
+    if (outcome.status === "joined") {
+      this.logger.log(`beta_invite_redeemed inviteId=${outcome.inviteId}`);
+      return { status: "joined" };
     }
+    if (outcome.status === "already-member") {
+      this.logger.log("beta_invite_redeem_skipped reason=already-member");
+      return { status: "already-member" };
+    }
+    if (allowListed) {
+      this.logger.log("beta_invite_redeem_skipped reason=allow-listed-unusable");
+      return { status: "already-member" };
+    }
+    this.logger.warn("beta_invite_redeem_refused reason=unusable");
+    throw inviteUnusableException();
+  }
+
+  /** The claim and the member row, in one transaction under a per-user advisory lock. */
+  private async claim(
+    user: AuthenticatedUser,
+    token: string,
+  ): Promise<{ status: "joined"; inviteId: string } | { status: "already-member" | "unusable" }> {
+    // The contract already checks the shape; an odd token is simply one no link has.
+    if (!BetaInviteToken.safeParse(token).success) return { status: "unusable" };
     const tokenHash = hashInviteToken(token);
-    const outcome = await this.dataSource.transaction(async (m) => {
+    return this.dataSource.transaction(async (m) => {
       await m.query("SELECT pg_advisory_xact_lock($1, hashtext($2))", [
         REDEEM_LOCK_NAMESPACE,
         user.id,
@@ -106,15 +132,6 @@ export class BetaInvitesService {
       );
       return { status: "joined" as const, inviteId };
     });
-    if (outcome.status === "unusable") {
-      this.logger.warn("beta_invite_redeem_refused reason=unusable");
-      throw inviteUnusableException();
-    }
-    if (outcome.status === "joined") {
-      this.logger.log(`beta_invite_redeemed inviteId=${outcome.inviteId}`);
-      return { status: "joined" };
-    }
-    return { status: "already-member" };
   }
 
   /** A new link: the raw token is returned here once and never stored. */

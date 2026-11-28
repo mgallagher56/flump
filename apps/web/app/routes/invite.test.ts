@@ -108,6 +108,16 @@ describe("/invite", () => {
     expect(new Headers(init.headers).get("Authorization")).toBe("Bearer tok");
   });
 
+  it("someone who already has access is told the link was not used, not sent on silently", async () => {
+    backendAnswers(200, { status: "already-member" });
+    const result = (await callInvite(`flump_invite=${TOKEN}`)) as {
+      data: { outcome: string };
+      init: { headers: Record<string, string> };
+    };
+    expect(result.data.outcome).toBe("already-member");
+    expect(result.init.headers["Set-Cookie"]).toContain("Max-Age=0");
+  });
+
   it("a used, cancelled or expired link gets one plain page and the cookie is cleared", async () => {
     backendAnswers(410, { code: "invite_unusable", message: "This invite link cannot be used." });
     const result = (await callInvite(`flump_invite=${TOKEN}`)) as {
