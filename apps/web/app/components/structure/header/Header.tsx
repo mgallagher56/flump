@@ -11,6 +11,7 @@ import UserLogin from "~/components/navigation/UserLogin";
 import { useResponsive } from "~/context/ResponsiveContext";
 import { useRootUser } from "~/hooks/useRootUser";
 import { useUserProfile } from "~/hooks/useUserProfile";
+import { ProtoMotionQuickToggle } from "~/prototype/ProtoMotionControls";
 import { useThemeContext } from "~/ThemeContext";
 import { isPageEnabled } from "~/utils/pageConfig";
 
@@ -70,6 +71,8 @@ const Header: FC<HeaderProps> = (): ReactElement<FC> => {
       <TopBar
         actions={
           <>
+            {/* PROTOTYPE ONLY: the quick pause for the level 2 header orbs. */}
+            <ProtoMotionQuickToggle />
             {/* Phones and tablets: one 44px button. From navWide the three-way switch shows. */}
             <ThemeToggle
               className={compactOnly()}

@@ -13,6 +13,7 @@ import {
   settingsTabItems,
 } from "~/features/settings/settings-tabs";
 import { type UserProfile, useUserProfile } from "~/hooks/useUserProfile";
+import { ProtoMotionSetting } from "~/prototype/ProtoMotionControls";
 import { headerAndTabs } from "./SettingsPage.styles";
 
 export interface SettingsPageProps {
@@ -96,6 +97,8 @@ export const SettingsPage: FC<SettingsPageProps> = ({
           onValueChange={(value) => setActiveTab(value as SettingsTab)}
         >
           <Tabs.Panel value="profile">
+            {/* PROTOTYPE ONLY: where "Reduce motion" would live. */}
+            <ProtoMotionSetting />
             <ProfileTab
               key={effectiveProfile.id}
               netWorthChoices={netWorthChoices}
