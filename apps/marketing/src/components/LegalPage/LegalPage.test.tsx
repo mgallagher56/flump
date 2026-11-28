@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 import {
   ContactEmail,
   hasPlaceholderDetails,
+  LEGAL_ORB_TONES,
   LegalPage,
   LegalSection,
   PLACEHOLDER_DETAILS_NOTE,
@@ -82,5 +83,20 @@ describe("LegalPage", () => {
     const main = screen.getByRole("main");
     expect(main.id).toBe("main");
     expect(main.getAttribute("tabindex")).toBe("-1");
+  });
+  it("puts still glass orbs in the header band only, hidden, in the page's colours, and none in the text (MP8)", () => {
+    const { container } = renderPage();
+    const layers = container.querySelectorAll("[data-legal-orbs]");
+    expect(layers).toHaveLength(1);
+    const layer = layers[0] as HTMLElement;
+    expect(layer.getAttribute("aria-hidden")).toBe("true");
+    expect(
+      [...layer.querySelectorAll("[data-glass-orb]")].map((o) => o.getAttribute("data-orb-tone")),
+    ).toEqual([...LEGAL_ORB_TONES.terms]);
+    // In the title block, never in a section of the text.
+    const h1 = screen.getByRole("heading", { level: 1 });
+    expect(layer.parentElement).toBe(h1.parentElement);
+    expect(container.querySelectorAll("section [data-glass-orb]")).toHaveLength(0);
+    expect(container.querySelectorAll("[data-glass-orb]")).toHaveLength(3);
   });
 });

@@ -1,63 +1,50 @@
-import { cva } from "@repo/ui/styled-system/css";
+import { css } from "@repo/ui/styled-system/css";
 
-export const pageShell = cva({
-  base: {
-    minHeight: "100vh",
-    display: "flex",
-    flexDirection: "column",
-    backgroundColor: "surface.canvas",
-  },
+/* The approved contact prototype (`others2.css`, `o2-contact`): the email card, then one line. */
+
+export const mainContent = css({ flex: "1", _focus: { outline: "none" } });
+
+export const card = css({
+  display: "grid",
+  gap: "3",
+  p: "clamp(24px, 3vw, 48px)",
+  // Longhands: they come after the card's own corner in the stylesheet, so they win.
+  borderTopLeftRadius: "28px",
+  borderTopRightRadius: "28px",
+  borderBottomLeftRadius: "28px",
+  borderBottomRightRadius: "28px",
 });
 
-export const mainContent = cva({
-  base: { flex: "1", px: "4", py: { base: "12", md: "16" }, _focus: { outline: "none" } },
+/** The prototype names the card with the plan card's heading (`o1-plan__name`). */
+export const cardHeading = css({
+  margin: 0,
+  fontWeight: "bold",
+  fontSize: "2xl",
+  lineHeight: "1.25",
+  color: "text.primary",
 });
 
-export const container = cva({
-  base: { maxWidth: "3xl", mx: "auto", display: "flex", flexDirection: "column", gap: "8" },
+export const addressLine = css({
+  margin: 0,
+  display: "flex",
+  flexWrap: "wrap",
+  alignItems: "baseline",
+  rowGap: "2",
+  columnGap: "3",
 });
 
-export const headerBlock = cva({
-  base: { display: "flex", flexDirection: "column", gap: "3" },
+export const placeholderNote = css({ color: "text.secondary" });
+
+export const prose = css({ margin: 0, maxWidth: "46rem", color: "text.primary" });
+
+export const link = css({
+  color: "primary",
+  fontWeight: "semibold",
+  overflowWrap: "anywhere",
+  textUnderlineOffset: "3px",
+  _hover: { color: "primary.emphasis" },
+  _focusVisible: { outline: "2px solid", outlineColor: "border.focusRing", outlineOffset: "2px" },
 });
 
-export const heading = cva({
-  base: { textStyle: "heading.xl", color: "text.primary", margin: 0 },
-});
-
-export const intro = cva({
-  base: { textStyle: "body.lg", color: "text.secondary", margin: 0 },
-});
-
-/** Quiet second line under the address while the mailbox is a placeholder (owner item, E7 D4). */
-export const placeholderNote = cva({
-  base: { display: "block", textStyle: "body.sm", color: "text.muted", mt: "1" },
-});
-
-export const card = cva({
-  base: { display: "flex", flexDirection: "column", gap: "3", scrollMarginTop: "24" },
-});
-
-export const addressLine = cva({
-  base: { textStyle: "body.lg", color: "text.primary", margin: 0 },
-});
-
-export const cardHeading = cva({
-  base: { textStyle: "heading.md", color: "text.primary", margin: 0 },
-});
-
-export const body = cva({
-  base: { textStyle: "body.md", color: "text.secondary", margin: 0 },
-});
-
-// Links are teal in light and mint in dark (Midnight and Mint).
-export const link = cva({
-  base: {
-    color: "primary",
-    fontWeight: "semibold",
-    textDecoration: "underline",
-    textUnderlineOffset: "3px",
-    overflowWrap: "anywhere",
-    _hover: { color: "primary.emphasis" },
-  },
-});
+/** The band's own column gap (`SectionBand`'s 2rem), kept around the moment's wrapper. */
+export const stack = css({ display: "flex", flexDirection: "column", gap: "8" });

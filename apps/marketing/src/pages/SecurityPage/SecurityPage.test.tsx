@@ -86,4 +86,19 @@ describe("SecurityPage (E16 PR 12)", () => {
     expect(link.closest("p")?.textContent?.startsWith("Email ")).toBe(true);
     expect(/not monitored yet/i.test(document.body.textContent ?? "")).toBe(isPlaceholder);
   });
+
+  it("marks each fact with one small orb, puts the security document beside them, and has no bubble field (the approved prototype)", () => {
+    const { container } = renderPage();
+    const facts = within(screen.getByRole("list", { name: "Security facts" })).getAllByRole(
+      "listitem",
+    );
+    expect(
+      facts.map((li) => li.querySelectorAll("[data-glass-orb]")[0]?.getAttribute("data-orb-tone")),
+    ).toEqual(["sky", "teal", "violet", "sky", "teal", "rose"]);
+    for (const li of facts) expect(li.querySelectorAll("[data-glass-orb]")).toHaveLength(1);
+    expect(container.querySelectorAll('svg[data-scene="security"]')).toHaveLength(1);
+    // Never a bubble behind text here; the orbs stay in the hero and beside the facts.
+    expect(container.querySelector("[data-bubble-field]")).toBeNull();
+    expect(container.querySelector("canvas")).toBeNull();
+  });
 });

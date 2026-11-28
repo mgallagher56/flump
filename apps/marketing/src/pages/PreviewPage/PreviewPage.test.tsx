@@ -20,13 +20,19 @@ describe("PreviewPage", () => {
     expect(screen.getAllByText(PREVIEW_PAGE_DESCRIPTION).length).toBeGreaterThanOrEqual(1);
   });
 
-  it("puts the section gap between the moments only, not under the page header (P73)", () => {
+  it("puts the hero, the three moments and the close in that order, each a band of its own (the approved prototype)", () => {
     renderPage();
-    const dashboard = screen.getByTestId("preview-moment-dashboard");
-    const header = screen.getByRole("heading", { level: 1, name: PREVIEW_PAGE_TITLE });
-    // The header is not a sibling inside the gapped column, so no gap stacks on its own margin.
-    expect(dashboard.parentElement?.contains(header)).toBe(false);
-    expect(dashboard.parentElement?.className).toContain("gap_10");
+    const bands = Array.from(screen.getByRole("main").children);
+    expect(bands.map((band) => band.getAttribute("data-testid") ?? band.id)).toEqual([
+      "preview-hero",
+      "preview-moment-dashboard",
+      "preview-moment-checkin",
+      "preview-moment-breathing-room",
+      "get-started",
+    ]);
+    expect(
+      within(bands[0] as HTMLElement).getByRole("heading", { level: 1, name: PREVIEW_PAGE_TITLE }),
+    ).toBeDefined();
   });
 
   it("renders all three preview moments", () => {
@@ -64,7 +70,6 @@ describe("PreviewPage", () => {
       const h2 = screen.getByRole("heading", { level: 2, name: heading });
       expect(section.contains(h2)).toBe(true);
       expect(h2.className).not.toMatch(/sr-only/);
-      expect(h2.className).toMatch(/textStyle_heading\.md/);
       // Heading, then description, then the frame.
       const frame = section.querySelector("figure");
       expect(frame).not.toBeNull();
@@ -76,12 +81,20 @@ describe("PreviewPage", () => {
     expect(screen.queryByRole("heading", { name: "Check-in" })).toBeNull();
   });
 
-  it("shows illustrations, with only the call to action's visible on a phone", () => {
-    const { container } = renderPage();
-    const scenes = container.querySelectorAll("svg[data-scene]");
-    expect(scenes).toHaveLength(2);
-    expect(screen.getByTestId("preview-illustration-checkin").className).toMatch(/d_none/);
-    expect(screen.getByTestId("preview-illustration-cta").className).not.toMatch(/d_none/);
+  it("shows two document pictures, with only the close's ticket visible on a phone", () => {
+    renderPage();
+    const checkIn = screen.getByTestId("preview-illustration-checkin");
+    expect(checkIn.querySelector('svg[data-scene="check-in"]')).not.toBeNull();
+    // Wide screens only: on a phone the picture would push the figures below it down (B10).
+    expect(checkIn.className).toMatch(/d_none/);
+    const close = screen.getByTestId("feature-final-cta");
+    expect(close.querySelector("[data-close-picture] svg")).not.toBeNull();
+    expect(close.querySelector("[data-close-picture]")?.className).not.toMatch(/d_none/);
+    expect(
+      within(close).getByText(
+        "Flump is free during the beta. Enter a few rough numbers to see where you stand.",
+      ),
+    ).toBeDefined();
   });
 
   it("links each sample to the feature page that explains it, named for where it goes (E42 S6)", () => {

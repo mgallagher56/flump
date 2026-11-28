@@ -5,9 +5,11 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import { HelmetProvider } from "react-helmet-async";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { tiltLight } from "../../components/TiltLight/TiltLight.styles";
 import { PRICE_NOT_SET } from "../../utils/pricing";
 import { signupCta } from "../../utils/site";
 import { BETA_FEATURES, BETA_STATEMENT, PricingPage } from "./PricingPage";
+import { planBand } from "./PricingPage.styles";
 
 const renderPage = () =>
   render(
@@ -105,5 +107,24 @@ describe("PricingPage (D10 b)", () => {
       expect(screen.getByRole("heading", { name: "Free during the beta" })).toBeDefined();
       expect(within(screen.getByRole("main")).getByText("Request an invite")).toBeDefined();
     });
+  });
+
+  it("puts no picture, tilt or counting figure near the price, and keeps the bubbles to the band's edges (the approved prototype)", () => {
+    const { container } = renderPage();
+    const band = container.querySelector("#plans") as HTMLElement;
+    expect(band.querySelector("svg[data-scene], img, figure")).toBeNull();
+    expect(band.querySelector("[data-count]")).toBeNull();
+    // The tilt's own transform class, which only a tilting card carries.
+    const tiltClass = tiltLight.split(" ").find((c) => c.startsWith("trf_perspective")) as string;
+    expect(tiltClass).toBeDefined();
+    const tilting = [...band.querySelectorAll("*")].filter((el) =>
+      (el.getAttribute("class") ?? "").split(" ").includes(tiltClass),
+    );
+    expect(tilting).toHaveLength(0);
+    // One field, layout c, hidden under 64rem where the card fills the width.
+    const fields = band.querySelectorAll("[data-bubble-field]");
+    expect([...fields].map((f) => f.getAttribute("data-bubble-field"))).toEqual(["c"]);
+    expect(band.className).toContain(planBand);
+    expect(container.querySelector("canvas")).toBeNull();
   });
 });

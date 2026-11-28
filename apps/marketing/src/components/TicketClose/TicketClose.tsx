@@ -11,6 +11,10 @@ import { closeCard, closePicture, closeText, closeTitle } from "./TicketClose.st
 
 export interface TicketCloseProps {
   tone: MarketingSectionTone;
+  /** The line under the question; the area pages' own by default. */
+  text?: string;
+  /** The question's id, which labels the band. */
+  titleId?: string;
 }
 
 /**
@@ -18,18 +22,16 @@ export interface TicketCloseProps {
  * ticket, the question, one line and "Request an invite" in one card, in production's words. The
  * card rises, then the ticket, once, on time.
  */
-export const TicketClose: FC<TicketCloseProps> = ({ tone }) => {
+export const TicketClose: FC<TicketCloseProps> = ({
+  tone,
+  text = "Start with a few rough figures.",
+  titleId = "feature-cta-title",
+}) => {
   const cta = signupCta();
   const ref = useRef<HTMLDivElement>(null);
   useGsapMoment(ref, closeMoment);
   return (
-    <MarketingBand
-      bubbles="b"
-      id="get-started"
-      labelledBy="feature-cta-title"
-      tone={tone}
-      width="narrow"
-    >
+    <MarketingBand bubbles="b" id="get-started" labelledBy={titleId} tone={tone} width="narrow">
       <div ref={ref}>
         <SoftCard
           band={tone === "canvas" ? "canvas" : "card"}
@@ -39,10 +41,10 @@ export const TicketClose: FC<TicketCloseProps> = ({ tone }) => {
           <div className={closePicture} data-close-picture="">
             <GettingStartedTicket />
           </div>
-          <h2 className={closeTitle} id="feature-cta-title">
+          <h2 className={closeTitle} id={titleId}>
             Ready to see your own figures?
           </h2>
-          <p className={closeText}>Start with a few rough figures.</p>
+          <p className={closeText}>{text}</p>
           <Button asChild size="lg" variant="primary">
             <a href={cta.href}>{cta.label}</a>
           </Button>

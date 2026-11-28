@@ -1,5 +1,5 @@
 {
-  "$comment": "The marketing page weight ratchet, one entry per page (scripts/check-marketing-weight.ts; ROLLOUT-PLAN section 2; OTHER-PAGES-PLAN section 4; UX-GUIDELINES MK12). Bytes, gzipped (1 KB = 1000 bytes). baseline: main before the page's new design. HomePage: measured on 27 Nov 2026 at commit 0b291c6ec. The other pages: measured on 27 Nov 2026 at commit 001d2adb2 (AreaPage from the area pages' chunk, then FeaturePage); their CSS baseline is home's, since the site has one stylesheet. budget: the plan's extra weight for the new blocks, by family: features, areas and AI connection 15 KB script and 230 KB lazy; preview, pricing, security, contact and not found 8 KB and 80 KB; the four legal pages 2 KB and none lazy; CSS 25 KB everywhere. AreaPage only: 30 KB script, not 15 KB (coordinator, 27 Nov 2026): the plan's budgets were estimates to be re-set from measurement (MP3), and the area pages measured +27.3 KB over main, mostly the server-rendered set piece the approved prototype shows (the home journey's samples), in chunks home also loads. Each ceiling is baseline plus budget. Raising a baseline or a budget is a guard change (AGENTS.md section 15): a hand edit, signed off and listed in the PR. --write-baseline only lowers.",
+  "$comment": "The marketing page weight ratchet, one entry per page (scripts/check-marketing-weight.ts; ROLLOUT-PLAN section 2; OTHER-PAGES-PLAN section 4; UX-GUIDELINES MK12). Bytes, gzipped (1 KB = 1000 bytes). baseline: main before the page's new design. HomePage: measured on 27 Nov 2026 at commit 0b291c6ec. The other pages: measured on 27 Nov 2026 at commit 001d2adb2 (AreaPage from the area pages' chunk, then FeaturePage); their CSS baseline is home's, since the site has one stylesheet. budget: the plan's extra weight for the new blocks, by family: features, areas and AI connection 15 KB script and 230 KB lazy; preview, pricing, security, contact and not found 8 KB and 80 KB; the four legal pages 2 KB and none lazy; CSS 25 KB everywhere. AreaPage only: 30 KB script, not 15 KB (coordinator, 27 Nov 2026): the plan's budgets were estimates to be re-set from measurement (MP3), and the area pages measured +27.3 KB over main, mostly the server-rendered set piece the approved prototype shows (the home journey's samples), in chunks home also loads. Re-set from measurement (MP3), signed by the coordinator on 28 Nov 2026: AreaPage 32 KB (+1.2 KB from splitting the hero so the no-scene pages cannot reach three.js), PreviewPage 11 KB, SecurityPage 16 KB (its document picture) and ContactPage 10 KB (the shared band, soft card, entrance and still-orb chunks, about 7 KB on every no-scene page). Each ceiling is baseline plus budget. Raising a baseline or a budget is a guard change (AGENTS.md section 15): a hand edit, signed off and listed in the PR. --write-baseline only lowers.",
   "pages": {
     "HomePage": {
       "baseline": {
@@ -32,7 +32,7 @@
         "lazyJsGzip": 0
       },
       "budget": {
-        "firstLoadJsGzip": 30000,
+        "firstLoadJsGzip": 32000,
         "cssGzip": 25000,
         "lazyJsGzip": 230000
       }
@@ -56,7 +56,7 @@
         "lazyJsGzip": 0
       },
       "budget": {
-        "firstLoadJsGzip": 8000,
+        "firstLoadJsGzip": 11000,
         "cssGzip": 25000,
         "lazyJsGzip": 80000
       }
@@ -80,7 +80,7 @@
         "lazyJsGzip": 0
       },
       "budget": {
-        "firstLoadJsGzip": 8000,
+        "firstLoadJsGzip": 16000,
         "cssGzip": 25000,
         "lazyJsGzip": 80000
       }
@@ -92,7 +92,7 @@
         "lazyJsGzip": 0
       },
       "budget": {
-        "firstLoadJsGzip": 8000,
+        "firstLoadJsGzip": 10000,
         "cssGzip": 25000,
         "lazyJsGzip": 80000
       }

@@ -5,10 +5,6 @@ export const disclosureSection = cva({
     display: "flex",
     flexDirection: "column",
     gap: "3",
-    pt: "8",
-    borderTopWidth: "1px",
-    borderTopStyle: "solid",
-    borderTopColor: "border.subtle",
   },
 });
 

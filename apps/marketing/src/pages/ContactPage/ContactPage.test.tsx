@@ -25,7 +25,12 @@ describe("ContactPage", () => {
         .getAllByRole("heading", { level: 2 })
         .map((h) => h.textContent),
     ).toEqual(["Email"]);
-    expect(within(main).getAllByRole("region")).toHaveLength(1);
+    // The hero, labelled by the h1, and the one email card, labelled by its heading.
+    expect(
+      within(main)
+        .getAllByRole("region")
+        .map((r) => r.getAttribute("aria-labelledby")),
+    ).toEqual(["contact-title", "contact-email"]);
     expectPageRules(main, { projectionNotices: 0 });
   });
 

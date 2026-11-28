@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { HelmetProvider } from "react-helmet-async";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
@@ -47,7 +47,7 @@ describe("NotFoundPage", () => {
     expect(main.querySelectorAll("a")).toHaveLength(1);
   });
 
-  it("uses the same gutters and page top as the other marketing pages (P73, P76)", () => {
+  it("puts the heading in one glass card beside one still orb, hidden from assistive technology (the approved prototype)", () => {
     render(
       <HelmetProvider>
         <MemoryRouter>
@@ -55,8 +55,17 @@ describe("NotFoundPage", () => {
         </MemoryRouter>
       </HelmetProvider>,
     );
-    const main = screen.getByRole("main");
-    for (const cls of ["px_4", "py_12", "md:py_16"]) expect(main.className).toContain(cls);
+    const card = screen.getByRole("region", { name: "We cannot find that page" });
+    expect(card.querySelector('svg[data-scene="not-found"]')).not.toBeNull();
+    expect(
+      within(card).getByRole("link", { name: "Go to the home page" }).getAttribute("href"),
+    ).toBe("/");
+    const orb = screen.getByTestId("not-found-orb");
+    expect(orb.getAttribute("aria-hidden")).toBe("true");
+    expect(
+      [...orb.querySelectorAll("[data-glass-orb]")].map((o) => o.getAttribute("data-orb-tone")),
+    ).toEqual(["violet"]);
+    expect(card.contains(orb)).toBe(false);
   });
 
   it.each(["/nope", "/tools/not-a-real-tool"])("App renders it for %s", (path) => {

@@ -1,123 +1,47 @@
-import { cva } from "@repo/ui/styled-system/css";
+import { css, cva } from "@repo/ui/styled-system/css";
 
-export const pageShell = cva({
-  base: {
-    minHeight: "100vh",
-    display: "flex",
-    flexDirection: "column",
-    backgroundColor: "surface.canvas",
-    color: "text.primary",
-  },
-});
-
-export const mainContent = cva({
-  base: {
-    flex: 1,
-    display: "flex",
-    flexDirection: "column",
-    outline: "none",
-  },
-});
-
-export const container = cva({
-  base: {
-    width: "100%",
-    maxWidth: "4xl",
-    mx: "auto",
-    px: { base: "4", md: "6", lg: "8" },
-    // The marketing page top, shared with pricing, security, contact and the tools index (P73).
-    py: { base: "12", md: "16" },
-  },
-});
-
-/**
- * The three moments and the closing call to action. The gap sits between them only: the page
- * header keeps its own space below, so "Dashboard picture" is not pushed down twice (P73).
+/*
+ * The approved preview prototype (`others2.css`, `o2-moment`): each moment's intro (with the
+ * check-in's picture beside it on wide screens), its frame and its link.
  */
-export const sections = cva({
-  base: { display: "flex", flexDirection: "column", gap: { base: "10", md: "14" } },
-});
 
-export const previewSection = cva({
-  base: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "3",
+export const mainContent = css({ flex: "1", _focus: { outline: "none" } });
+
+export const moment = css({ display: "grid", gap: "5" });
+
+export const momentHead = cva({
+  base: { display: "grid", gap: "5", alignItems: "start" },
+  variants: {
+    picture: {
+      true: { "@media (min-width: 64rem)": { gridTemplateColumns: "minmax(0, 1fr) 18rem" } },
+      false: {},
+    },
   },
+  defaultVariants: { picture: false },
 });
 
-export const sectionDescription = cva({
-  base: {
-    textStyle: "body.md",
-    color: "text.secondary",
-    margin: 0,
-    maxWidth: "2xl",
-  },
+export const momentIntro = css({
+  display: "grid",
+  gap: "2",
+  maxWidth: "46rem",
+  "& p": { margin: 0, color: "text.secondary" },
 });
 
-/** The heading and description above a preview frame: heading, description, then the frame. */
-export const sectionIntro = cva({
-  base: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "2",
-    minWidth: "0",
-  },
+/** Wide screens only: on a phone the picture would push the figures below it down (B10). */
+export const momentPicture = css({
+  display: "none",
+  "@media (min-width: 64rem)": { display: "block" },
 });
 
-export const sectionHeading = cva({
-  base: {
-    textStyle: "heading.md",
-    color: "text.primary",
-    margin: 0,
-  },
-});
+/** The frame keeps its own width: a still box, nothing moves inside it. */
+export const momentFrame = css({ minWidth: 0 });
 
-/** Intro beside an illustration on large screens; the illustration is hidden below `lg`. */
-export const sectionHeader = cva({
-  base: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: "6",
-  },
-});
+export const momentLinkRow = css({ margin: 0 });
 
-export const sectionIllustration = cva({
-  base: {
-    display: { base: "none", lg: "block" },
-    flexShrink: 0,
-    // 256px beside the intro (was 144px), matching the home page's larger scenes.
-    width: "64",
-  },
-});
-
-/**
- * The page's one phone-width illustration: above the closing call to action, with no figures.
- * 160px on a phone, 320px from `md` (was 140px), as on the home page.
- */
-export const ctaIllustration = cva({
-  base: {
-    display: "flex",
-    justifyContent: "center",
-    width: "full",
-    maxWidth: { base: "40", md: "xs" },
-    mx: "auto",
-  },
-});
-
-/** Under each sample: one link to the feature page that explains it (E42 S6; never "Read more"). */
-export const sectionLinkRow = cva({
-  base: { textStyle: "body.md", margin: 0 },
-});
-
-export const sectionLink = cva({
-  base: {
-    color: "primary",
-    fontWeight: "semibold",
-    textDecoration: "underline",
-    textUnderlineOffset: "3px",
-    _hover: { color: "primary.emphasis" },
-    _focusVisible: { outline: "2px solid", outlineColor: "border.focusRing", outlineOffset: "2px" },
-  },
+export const momentLink = css({
+  color: "primary",
+  fontWeight: "semibold",
+  textUnderlineOffset: "3px",
+  _hover: { color: "primary.emphasis" },
+  _focusVisible: { outline: "2px solid", outlineColor: "border.focusRing", outlineOffset: "2px" },
 });

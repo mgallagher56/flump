@@ -6,6 +6,7 @@
  * prototype and once against the production build, then open the two folders side by side.
  *
  *   bun apps/e2e/scripts/capture-marketing-pages.ts <base> <out-dir> <name=path> [name=path ...]
+ *   CAPTURE_WIDTHS=920,960 bun apps/e2e/scripts/capture-marketing-pages.ts ...  (other widths)
  *
  * The browser starts with the GPU on (Metal through ANGLE on a Mac). Plain headless Chromium draws
  * WebGL in software, so a live scene falls back to its still orbs; `manifest.json` records which
@@ -28,7 +29,10 @@ const routes = routeArgs.map((arg) => {
   return { name, route };
 });
 
-const WIDTHS = [390, 1000, 1440] as const;
+/** The plan's three widths; `CAPTURE_WIDTHS=920,960` captures others (a ruling between them). */
+const WIDTHS = process.env.CAPTURE_WIDTHS
+  ? process.env.CAPTURE_WIDTHS.split(",").map(Number)
+  : [390, 1000, 1440];
 const THEMES = ["light", "dark"] as const;
 /** The prototype's dev panel is not part of the page. */
 const HIDE = ".proto-panel { display: none !important; }";
