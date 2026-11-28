@@ -122,34 +122,44 @@ describe("HomeFAQ: the band and the answers opening in place (MK9)", () => {
   });
 });
 
-describe("HomeFAQ: dealing in (MK2)", () => {
-  it("deals the questions in once, in document order, by time and never by scroll", () => {
+const fakeKit = () => {
+  const tl = {
+    to: vi.fn(() => tl),
+    duration: vi.fn(() => 0.98),
+    timeScale: vi.fn(),
+    eventCallback: vi.fn(),
+  };
+  const set = vi.fn();
+  const create = vi.fn();
+  const kit = { gsap: { timeline: vi.fn(() => tl), set }, ScrollTrigger: { create } };
+  return { kit: kit as unknown as GsapKit, set, create, tl };
+};
+
+describe("HomeFAQ: prototype 10's cascade (MK2)", () => {
+  it("unstacks the questions once, in document order, started by scroll and finished by time", () => {
     const { container } = renderFaq();
     // Plain selectors: role queries over the whole band are slow in happy-dom.
     const list = container.querySelector("ul") as HTMLElement;
-    const from = vi.fn();
-    faqMoment({ gsap: { from } } as unknown as GsapKit, list);
-    expect(from).toHaveBeenCalledTimes(1);
-    const [targets, vars] = from.mock.calls[0] as [Element[], Record<string, unknown>];
+    const { kit, set, create, tl } = fakeKit();
+    faqMoment(kit, list);
+    const [targets] = set.mock.calls[0] as unknown as [Element[]];
     // Compared by identity: a failed deep comparison of DOM nodes prints the whole tree.
     const items = [...list.querySelectorAll(":scope > li")];
     expect(targets.length).toBe(items.length);
     expect(targets.every((target, i) => target === items[i])).toBe(true);
-    // durations.marketing.entry 1,540 ms and stagger 196 ms, in seconds; the calm ease.
-    expect(vars).toMatchObject({ y: 12, opacity: 0, duration: 1.54, stagger: 0.196, ease: "calm" });
-    // Cleared afterwards, so an opening answer pushes the next question down.
-    expect(vars.clearProps).toBe("transform,opacity");
+    expect((tl.to.mock.calls[0] as unknown as [Element[]])[0]).toBe(targets);
     // The trigger by identity: a deep comparison of a DOM node never finishes in happy-dom.
-    const trigger = vars.scrollTrigger as Record<string, unknown>;
+    const trigger = (create.mock.calls[0] as unknown as [Record<string, unknown>])[0];
     expect(trigger.trigger === list).toBe(true);
     expect(trigger.once).toBe(true);
-    expect((vars.scrollTrigger as Record<string, unknown>).scrub).toBeUndefined();
+    expect(trigger.scrub).toBeUndefined();
   });
 
   it("does nothing on a list with no items", () => {
-    const from = vi.fn();
-    faqMoment({ gsap: { from } } as unknown as GsapKit, document.createElement("ul"));
-    expect(from).not.toHaveBeenCalled();
+    const { kit, set, create } = fakeKit();
+    faqMoment(kit, document.createElement("ul"));
+    expect(set).not.toHaveBeenCalled();
+    expect(create).not.toHaveBeenCalled();
   });
 });
 

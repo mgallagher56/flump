@@ -1,8 +1,8 @@
-import { Icon, marketingMs } from "@repo/ui";
+import { Icon } from "@repo/ui";
 import { ChevronDown } from "lucide-react";
 import { type FC, type ReactNode, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import type { GsapKit } from "../../motion/loadGsapKit";
+import { unstackMoment } from "../../motion/moments/bandMoments";
 import { useGsapMoment } from "../../motion/useGsapMoment";
 import { MarketingBand } from "../MarketingBand";
 import {
@@ -65,23 +65,11 @@ export const HOME_FAQS: HomeFaqEntry[] = [
 ];
 
 /**
- * The questions deal in, in document order: a small rise and a fade, staggered, played once when
- * the list nears the viewport and finished by time, never tied to scroll (MK2). Transforms are
- * cleared afterwards, so an opening answer always pushes the next question down.
+ * Prototype 10's cascade (owner, 28 Nov 2026): the questions start as one stack on the first and
+ * deal out into the list in turn, once, started by scroll and finished by time (MK2). Transforms
+ * are cleared afterwards, so an opening answer always pushes the next question down.
  */
-export function faqMoment({ gsap }: GsapKit, root: HTMLElement): undefined {
-  const items = Array.from(root.querySelectorAll("[data-deal-item]"));
-  if (items.length === 0) return;
-  gsap.from(items, {
-    y: 12,
-    opacity: 0,
-    duration: marketingMs("entry") / 1000,
-    stagger: marketingMs("stagger") / 1000,
-    ease: "calm",
-    clearProps: "transform,opacity",
-    scrollTrigger: { trigger: root, start: "top 90%", once: true },
-  });
-}
+export const faqMoment = unstackMoment("[data-deal-item]");
 
 /**
  * "Frequently asked questions" (ROLLOUT-PLAN M1, from prototype 11), beside More detail on wide

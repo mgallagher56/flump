@@ -490,6 +490,160 @@ test.describe("marketing home: controls", () => {
     }
   });
 
+  // Prototype 10's cascade on More detail and the FAQ (owner, 28 Nov 2026, on top of prototype 11;
+  // `unstackMoment` in `motion/moments/bandMoments.ts`). `untilStill` only proves a band ends
+  // still, which any entrance, or none, passes: this checks the sheets wait in one stack on the
+  // first, then leave it one after another, and rest with nothing left on them.
+  for (const [band, moving] of [
+    ["#more-detail", "[data-deal-item] > *"],
+    ["#faq", "[data-deal-item]"],
+  ] as const) {
+    for (const [width, height] of [
+      [1440, 900],
+      [390, 844],
+    ] as const) {
+      test(`${band}'s sheets unstack in turn at ${width}px, as prototype 10, and rest clear`, async ({
+        page,
+      }) => {
+        await page.setViewportSize({ width, height });
+        await page.goto(HOME);
+        const list = page.locator(`${band} ul`).first();
+        // The list's top at `share` of the window down: 1.3 is below the cascade's start (85%) but
+        // near enough for its set-up; 0.5 is past the start.
+        const place = (share: number) =>
+          list.evaluate((el, share) => {
+            const top = el.getBoundingClientRect().top + window.scrollY;
+            window.scrollTo({ top: top - window.innerHeight * share, behavior: "instant" });
+          }, share);
+        // The bands below lay out as they near, so the list is placed again on each look.
+        await expect
+          .poll(
+            async () => {
+              await place(1.3);
+              return list.getAttribute("data-enhanced");
+            },
+            { timeout: 15_000, message: "the list's moment is set up" },
+          )
+          .toBe("true");
+        await place(1.3);
+
+        /** Each sheet's inline translate and depth, its opacity and its expected place in the stack. */
+        const read = () =>
+          list.evaluate((el, moving) => {
+            const items = Array.from(el.querySelectorAll<HTMLElement>("[data-deal-item]"));
+            const sheets = Array.from(el.querySelectorAll<HTMLElement>(moving));
+            return sheets.map((sheet, i) => {
+              const t = sheet.style.transform;
+              const m = /translate3d\(([-\d.]+)px, ([-\d.]+)px, ([-\d.]+)px\)/.exec(t);
+              const y = m ? Number(m[2]) : 0;
+              const z = m ? Number(m[3]) : 0;
+              const first = items[0]?.offsetTop ?? 0;
+              return {
+                y: Math.round(y),
+                z: Math.round(z),
+                opacity: Number(getComputedStyle(sheet).opacity).toFixed(2),
+                perspective: t.includes("perspective(1200px)"),
+                stacked: Math.round(first - (items[i]?.offsetTop ?? 0) + i * 7),
+              };
+            });
+          }, moving);
+
+        // The from-state: on the first, each 7px lower and 20px further back, the rest at 85%.
+        await expect
+          .poll(
+            async () =>
+              (await read()).map((s, i) => ({
+                atStack: Math.abs(s.y - s.stacked) <= 1,
+                z: s.z === -i * 20,
+                opacity: s.opacity,
+                perspective: s.perspective,
+              })),
+            { message: "the sheets wait in one stack" },
+          )
+          .toEqual(
+            (await read()).map((_, i) => ({
+              atStack: true,
+              z: true,
+              opacity: i ? "0.85" : "1.00",
+              perspective: true,
+            })),
+          );
+        const layout = await list.evaluate((el) =>
+          Array.from(el.querySelectorAll<HTMLElement>("[data-deal-item]")).map((i) => i.offsetTop),
+        );
+
+        // Watch every frame from here: when each sheet leaves the stack and when it lands.
+        await list.evaluate((el, moving) => {
+          const sheets = Array.from(el.querySelectorAll<HTMLElement>(moving));
+          const start = sheets.map((s) => s.style.transform);
+          const watch = {
+            left: sheets.map(() => -1),
+            landed: sheets.map(() => -1),
+            done: false,
+          };
+          (window as unknown as { unstackWatch: typeof watch }).unstackWatch = watch;
+          let frame = 0;
+          const tick = () => {
+            frame++;
+            sheets.forEach((s, i) => {
+              const t = s.style.transform;
+              const m = /translate3d\(([-\d.]+)px, ([-\d.]+)px, ([-\d.]+)px\)/.exec(t);
+              const rest =
+                Number(getComputedStyle(s).opacity) > 0.999 &&
+                (!m || (Math.abs(Number(m[2])) < 0.5 && Math.abs(Number(m[3])) < 0.5));
+              if (watch.left[i] < 0 && t !== start[i]) watch.left[i] = frame;
+              if (watch.landed[i] < 0 && rest && t !== start[i]) watch.landed[i] = frame;
+            });
+            watch.done = sheets.every((s) => s.style.transform === "");
+            if (!watch.done) requestAnimationFrame(tick);
+          };
+          requestAnimationFrame(tick);
+        }, moving);
+        await place(0.5);
+        await expect
+          .poll(
+            () =>
+              page.evaluate(
+                () => (window as unknown as { unstackWatch: { done: boolean } }).unstackWatch.done,
+              ),
+            {
+              timeout: 15_000,
+              message: "the cascade finishes on its own, by time (MK2)",
+            },
+          )
+          .toBe(true);
+        const watch = await page.evaluate(
+          () =>
+            (window as unknown as { unstackWatch: { left: number[]; landed: number[] } })
+              .unstackWatch,
+        );
+        // The sheets behind the first leave the stack in document order, and land in it too.
+        const behindLeft = watch.left.slice(1);
+        const behindLanded = watch.landed.slice(1);
+        expect(behindLeft.every((f) => f > 0)).toBe(true);
+        for (let i = 1; i < behindLeft.length; i++) {
+          expect(behindLeft[i]).toBeGreaterThan(behindLeft[i - 1] ?? 0);
+          expect(behindLanded[i]).toBeGreaterThan(behindLanded[i - 1] ?? 0);
+        }
+
+        // At rest: nothing left on any sheet (MK3), fully opaque, and the list never moved.
+        const rest = await list.evaluate((el, moving) => {
+          const sheets = Array.from(el.querySelectorAll<HTMLElement>(moving));
+          return {
+            transforms: sheets.map((s) => s.style.transform + getComputedStyle(s).transform),
+            opacity: sheets.map((s) => getComputedStyle(s).opacity),
+            layout: Array.from(el.querySelectorAll<HTMLElement>("[data-deal-item]")).map(
+              (i) => i.offsetTop,
+            ),
+          };
+        }, moving);
+        expect(rest.transforms.every((t) => t === "none")).toBe(true);
+        expect(rest.opacity.every((o) => o === "1")).toBe(true);
+        expect(rest.layout).toEqual(layout);
+      });
+    }
+  }
+
   // At rest each pinned stop's pair sits in the middle of the window, not under the header with
   // the rest of the window empty (owner, 28 Nov 2026): desktop, a tall desktop window, and the
   // stacked phone layout. A pair too tall to centre clear of the resting orb rises just enough to

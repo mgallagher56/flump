@@ -1,7 +1,7 @@
-import { Card, marketingMs } from "@repo/ui";
+import { Card } from "@repo/ui";
 import { type FC, useRef } from "react";
 import { Link } from "react-router-dom";
-import type { GsapKit } from "../../motion/loadGsapKit";
+import { unstackMoment } from "../../motion/moments/bandMoments";
 import { useGsapMoment } from "../../motion/useGsapMoment";
 import { MONEY_AREAS, type MoneyAreaKey } from "../../utils/featureAreas";
 import { MarketingBand } from "../MarketingBand";
@@ -31,23 +31,12 @@ export const HOME_DEPTH: readonly { area: MoneyAreaKey; text: string }[] = [
 const areaFor = (key: MoneyAreaKey) => MONEY_AREAS.find((area) => area.key === key);
 
 /**
- * The items deal in, in document order: a small rise and a fade, staggered, played once when the
- * list nears the viewport and finished by time, never tied to scroll (MK2). Transforms are cleared
- * afterwards, so nothing rests half dealt or overlapping.
+ * Prototype 10's cascade (owner, 28 Nov 2026): the sheets start as one stack on the first and deal
+ * out into the list in turn, once, started by scroll and finished by time (MK2). The card inside
+ * each item moves, not the item, whose tilt has a transform transition of its own. Transforms are
+ * cleared afterwards, so nothing rests half dealt or overlapping.
  */
-export function moreDetailMoment({ gsap }: GsapKit, root: HTMLElement): undefined {
-  const items = Array.from(root.querySelectorAll("[data-deal-item]"));
-  if (items.length === 0) return;
-  gsap.from(items, {
-    y: 12,
-    opacity: 0,
-    duration: marketingMs("entry") / 1000,
-    stagger: marketingMs("stagger") / 1000,
-    ease: "calm",
-    clearProps: "transform,opacity",
-    scrollTrigger: { trigger: root, start: "top 90%", once: true },
-  });
-}
+export const moreDetailMoment = unstackMoment("[data-deal-item]", ":scope > *");
 
 /**
  * "More detail when you want it" (ROLLOUT-PLAN M1, from prototype 11): beside the questions from
