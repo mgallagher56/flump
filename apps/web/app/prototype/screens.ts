@@ -4,7 +4,7 @@
  * a household that finished setup with nothing else saved, `new` a user who has not started setup
  * and `checkin` a household whose monthly check-in is finished.
  */
-export type ProtoStack = "data" | "empty" | "new" | "checkin";
+export type ProtoStack = "data" | "empty" | "new" | "checkin" | "terms";
 
 export interface ProtoScreen {
   id: string;
@@ -41,6 +41,12 @@ export const PROTO_SCREENS: readonly ProtoScreen[] = [
     name: "Monthly check-in, finished",
     path: "/app/accounts/history?checkIn=1",
     stack: "checkin",
+  },
+  {
+    id: "terms",
+    name: "The screen after sign-up (terms)",
+    path: "/terms-acceptance",
+    stack: "terms",
   },
   { id: "onboarding", name: "Onboarding, first step", path: "/app/onboarding", stack: "new" },
   { id: "settings", name: "Settings", path: "/app/profile", stack: "data" },

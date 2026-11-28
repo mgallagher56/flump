@@ -19,6 +19,14 @@ import { OnboardingHeader } from "../OnboardingHeader";
 import { SavingsDebtStep } from "../SavingsDebtStep";
 import { SeedBanner } from "../SeedBanner";
 
+/** PROTOTYPE ONLY: the art panel's caption for each step (decorative; the stepper names the step). */
+const PROTO_STEP_TITLES: Record<number, string> = {
+  1: "Start with your income",
+  2: "Where you live and spend",
+  3: "Savings and debt, if you like",
+  4: "Your first picture",
+};
+
 /** PROTOTYPE ONLY: the document picture beside each setup step at level 3. */
 const PROTO_STEP_SCENES: Record<
   number,
@@ -107,7 +115,11 @@ export const OnboardingFlow: FC<OnboardingFlowProps> = ({
         <span data-proto-bubble="1" />
         <span data-proto-bubble="2" />
         <span data-proto-bubble="3" />
-        <span data-proto-step-picture="">
+        <span data-proto-step-caption="" key={`caption-${step}`}>
+          <span>Step {Math.min(step, 4)} of 4</span>
+          <span>{PROTO_STEP_TITLES[step] ?? "Your first picture"}</span>
+        </span>
+        <span data-proto-step-picture="" key={step}>
           <Illustration
             scene={PROTO_STEP_SCENES[step] ?? "onboarding"}
             size="sm"

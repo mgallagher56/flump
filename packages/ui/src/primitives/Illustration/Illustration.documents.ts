@@ -443,6 +443,7 @@ export type DocumentScene =
   | "check-in-done"
   | "onboarding"
   | "not-found"
+  | "not-found-app"
   | "feature-accounts"
   | "feature-budget"
   | "feature-pay"
@@ -460,7 +461,7 @@ const CHECK_ROWS = [
 export const documentDefinitions: Record<DocumentScene, DocumentPicture> = {
   /** A: stacked cards, nothing linked yet, a space for the next one. */
   "empty-accounts": {
-    height: 230,
+    height: 262,
     subject: "Stacked cards, nothing linked yet",
     pieces: [
       piece(
@@ -484,11 +485,11 @@ export const documentDefinitions: Record<DocumentScene, DocumentPicture> = {
         ],
         { bare: true },
       ),
-      creditCard(74, 20, 222, 126, 4, { figure: false }),
-      savingsCard(6, 82, 222, 128, -3),
+      creditCard(96, 14, 200, 116, 4, { figure: false }),
+      savingsCard(2, 108, 214, 124, -3),
       piece(
         196,
-        196,
+        228,
         100,
         26,
         0,
@@ -543,14 +544,14 @@ export const documentDefinitions: Record<DocumentScene, DocumentPicture> = {
 
   /** A: the credit card with a "Paying off" slip. */
   "empty-debt": {
-    height: 230,
+    height: 262,
     subject: "The credit card with a paying-off slip",
     pieces: [
-      creditCard(6, 12, 196, 124, -4),
+      creditCard(0, 6, 196, 124, -4),
       piece(
-        126,
-        62,
-        168,
+        132,
+        110,
+        164,
         146,
         3,
         "paper",
@@ -731,6 +732,44 @@ export const documentDefinitions: Record<DocumentScene, DocumentPicture> = {
         "soft",
         [
           text(14, 23, "Home page", 14, "ink", { weight: 700, font: "display" }),
+          { kind: "path", d: "M100 18H112M107 12l6 6-6 6", stroke: "primary", strokeWidth: 2 },
+        ],
+        { rx: 7, orb: "tealTint" },
+      ),
+    ],
+  },
+
+  "not-found-app": {
+    height: 226,
+    subject: "A card with two direction tabs named after app pages",
+    pieces: [
+      piece(70, 10, 180, 136, -2, "paper", [
+        title(18, 36, "Where next?", 16),
+        { kind: "rect", x: 18, y: 54, width: 144, height: 7, rx: 3.5, fill: "line" },
+        { kind: "rect", x: 18, y: 70, width: 112, height: 7, rx: 3.5, fill: "line" },
+      ]),
+      piece(
+        10,
+        160,
+        104,
+        36,
+        -4,
+        "soft",
+        [
+          { kind: "path", d: "M26 18H14M19 12l-6 6 6 6", stroke: "primary", strokeWidth: 2 },
+          text(36, 23, "Home", 14, "ink", { weight: 700, font: "display" }),
+        ],
+        { rx: 7, orb: "violetTint" },
+      ),
+      piece(
+        162,
+        150,
+        130,
+        36,
+        4,
+        "soft",
+        [
+          text(14, 23, "Accounts", 14, "ink", { weight: 700, font: "display" }),
           { kind: "path", d: "M100 18H112M107 12l6 6-6 6", stroke: "primary", strokeWidth: 2 },
         ],
         { rx: 7, orb: "tealTint" },

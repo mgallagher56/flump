@@ -34,6 +34,7 @@ import "@repo/ui/fonts.css";
 // PROTOTYPE ONLY (app design prototypes branch, never merged).
 import "./prototype/prototype.css";
 import "./prototype/prototype-r2.css";
+import "./prototype/prototype-r4.css";
 import { TermsStatusResponse } from "@flump/api-contract";
 import { hasUpcomingAcceptanceChange } from "@flump/business-details";
 import { TermsChangeNotice } from "~/features/legal/components/TermsChangeNotice";

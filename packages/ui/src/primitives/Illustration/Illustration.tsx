@@ -117,7 +117,7 @@ export const Illustration: FC<IllustrationProps> = (props) =>
       <span data-proto-doc="" style={{ display: "none" }}>
         <DocumentIllustration
           variant="document"
-          scene={props.scene}
+          scene={props.scene === "not-found" ? "not-found-app" : props.scene}
           size={props.size === "sm" ? "sm" : "md"}
         />
       </span>

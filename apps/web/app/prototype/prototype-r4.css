@@ -1,0 +1,964 @@
+/* biome-ignore-all lint: a throwaway prototype sketch (never merged), raw and !important on purpose. */
+/*
+ * PROTOTYPE ONLY (app design prototypes branch, never merged). Round four of level 2 (owner,
+ * 28 Nov 2026), part 1: glass orbs from our own three.js scene, a smooth slow float, the fixes,
+ * the drawer, the terms screen and the onboarding flow.
+ */
+
+/* ------------------------------------------------------------------ */
+/* Orbs: the marketing scene's own glass, pre-rendered (no three.js)   */
+/* ------------------------------------------------------------------ */
+
+/* Sprites rendered from apps/marketing's three.js hero scene, one per tone and theme, on the theme's
+   canvas colour, cropped so the orb fills 1/1.4 of the image. 256px WebP, about 2.5 to 3 KB each. */
+html {
+  --o-sky: url("/prototype-orbs/sky-light.webp");
+  --o-teal: url("/prototype-orbs/teal-light.webp");
+  --o-violet: url("/prototype-orbs/violet-light.webp");
+  --o-rose: url("/prototype-orbs/rose-light.webp");
+  --proto-i1: var(--o-sky);
+  --proto-i2: var(--o-violet);
+  --proto-i3: var(--o-teal);
+  --proto-i4: var(--o-rose);
+}
+html.dark {
+  --o-sky: url("/prototype-orbs/sky-dark.webp");
+  --o-teal: url("/prototype-orbs/teal-dark.webp");
+  --o-violet: url("/prototype-orbs/violet-dark.webp");
+  --o-rose: url("/prototype-orbs/rose-dark.webp");
+}
+/* Tones per area, as before. Debt is violet, teal and sky, never rose. */
+html[data-proto-area="accounts"] {
+  --proto-i1: var(--o-teal);
+  --proto-i2: var(--o-sky);
+  --proto-i3: var(--o-violet);
+  --proto-i4: var(--o-sky);
+}
+html[data-proto-area="budget"] {
+  --proto-i1: var(--o-rose);
+  --proto-i2: var(--o-sky);
+  --proto-i3: var(--o-teal);
+  --proto-i4: var(--o-violet);
+}
+html[data-proto-area="pay"] {
+  --proto-i1: var(--o-sky);
+  --proto-i2: var(--o-rose);
+  --proto-i3: var(--o-teal);
+  --proto-i4: var(--o-violet);
+}
+html[data-proto-area="debt"] {
+  --proto-i1: var(--o-violet);
+  --proto-i2: var(--o-teal);
+  --proto-i3: var(--o-sky);
+  --proto-i4: var(--o-teal);
+}
+html[data-proto-area="mortgage"],
+html[data-proto-area="savings"] {
+  --proto-i1: var(--o-teal);
+  --proto-i2: var(--o-sky);
+  --proto-i3: var(--o-violet);
+  --proto-i4: var(--o-teal);
+}
+html[data-proto-area="pension"] {
+  --proto-i1: var(--o-sky);
+  --proto-i2: var(--o-violet);
+  --proto-i3: var(--o-teal);
+  --proto-i4: var(--o-sky);
+}
+
+/* Every orb: the sprite, masked to its disc. No rim line, no CSS gradients, no box shadow. */
+[data-proto-ornament] [data-orb] {
+  background: var(--o-img) center / 140% no-repeat !important;
+  box-shadow: none !important;
+  -webkit-mask: radial-gradient(closest-side, #000 96%, transparent 100%);
+  mask: radial-gradient(closest-side, #000 96%, transparent 100%);
+  /* Its own compositor layer, so sub-pixel movement is drawn smoothly (see the README). */
+  will-change: transform;
+  backface-visibility: hidden;
+}
+[data-proto-ornament] [data-orb="1"] {
+  --o-img: var(--proto-i1);
+}
+[data-proto-ornament] [data-orb="2"] {
+  --o-img: var(--proto-i2);
+}
+[data-proto-ornament] [data-orb="3"] {
+  --o-img: var(--proto-i3);
+}
+[data-proto-ornament] [data-orb="4"] {
+  --o-img: var(--proto-i4);
+}
+
+/* The float: transform only (one composited property), slow, in and out, with a very slight size
+   change. Each orb keeps its own phase so the group gathers and loosens. */
+@keyframes proto-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(var(--dx, 0), var(--dy, 0), 0) scale(var(--ds, 1.03));
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  html[data-proto-level="2"]:not([data-proto-motion="reduced"]) [data-proto-ornament] [data-orb] {
+    animation: proto-float 16s cubic-bezier(0.37, 0, 0.63, 1) infinite both !important;
+  }
+  html[data-proto-level="2"] [data-proto-ornament] [data-orb="2"] {
+    animation-delay: -1.2s !important;
+  }
+  html[data-proto-level="2"] [data-proto-ornament] [data-orb="3"] {
+    animation-delay: -2.1s !important;
+  }
+  html[data-proto-level="2"] [data-proto-ornament] [data-orb="4"] {
+    animation-delay: -0.6s !important;
+  }
+}
+[data-proto-ornament] [data-orb="1"] {
+  --ds: 1.025;
+}
+[data-proto-ornament] [data-orb="2"] {
+  --ds: 1.04;
+}
+[data-proto-ornament] [data-orb="3"] {
+  --ds: 1.05;
+}
+[data-proto-ornament] [data-orb="4"] {
+  --ds: 1.04;
+}
+
+/* Background orbs (beside empty states, in the onboarding margins, around the check-in picture,
+   on the error card): the same glass, quieter. */
+html[data-proto-level]
+  main
+  section:is(:has(> [data-testid$="-illustration"]), :has(> [data-proto-empty-art]))::before,
+html[data-proto-level]
+  main
+  section:is(:has(> [data-testid$="-illustration"]), :has(> [data-proto-empty-art]))::after,
+html[data-proto-level] [role="dialog"] :is(div, span):has(> [data-proto-art])::before,
+html[data-proto-level] [role="dialog"] :is(div, span):has(> [data-proto-art])::after,
+html[data-proto-level] #route-error-state::after,
+[data-proto-onboarding-art] [data-proto-bubble] {
+  background: var(--o-img, var(--o-sky)) center / 140% no-repeat !important;
+  box-shadow: none !important;
+  -webkit-mask: radial-gradient(closest-side, #000 96%, transparent 100%);
+  mask: radial-gradient(closest-side, #000 96%, transparent 100%);
+  opacity: 0.6;
+}
+html[data-proto-level]
+  main
+  section:is(:has(> [data-testid$="-illustration"]), :has(> [data-proto-empty-art]))::after,
+html[data-proto-level] [role="dialog"] :is(div, span):has(> [data-proto-art])::after,
+[data-proto-onboarding-art] [data-proto-bubble="2"] {
+  --o-img: var(--o-violet);
+}
+[data-proto-onboarding-art] [data-proto-bubble="3"] {
+  --o-img: var(--o-teal);
+}
+html[data-proto-level] #route-error-state::after {
+  opacity: 0.85;
+}
+
+/* ------------------------------------------------------------------ */
+/* Texture for part 1: grain only. The ruled lines are gone.           */
+/* ------------------------------------------------------------------ */
+
+html[data-proto-level="2"][data-proto-texture] {
+  --p-grain: var(--p-grain-10);
+}
+
+/* ------------------------------------------------------------------ */
+/* 5. The card light, more subtle                                      */
+/* ------------------------------------------------------------------ */
+
+html[data-proto-level="2"] {
+  --p-hover-a: 8%;
+  --p-hover-b: 3%;
+}
+html.dark[data-proto-level="2"] {
+  --p-hover-a: 7%;
+  --p-hover-b: 2.5%;
+}
+
+/* ------------------------------------------------------------------ */
+/* 6. Nav: hover is a lighter version of the current pill              */
+/* ------------------------------------------------------------------ */
+
+html[data-proto-level="2"] header[data-sticky-header] nav a:not([aria-current="page"]):hover,
+html[data-proto-level="2"] header[data-sticky-header] nav button[aria-expanded]:hover {
+  background-color: color-mix(in oklab, var(--colors-primary-subtle) 55%, transparent);
+  background-image: linear-gradient(
+    180deg,
+    rgb(var(--p-hi) / calc(var(--p-edge-a) * 0.25)),
+    transparent
+  );
+  box-shadow:
+    inset 0 1px 0 0 rgb(var(--p-hi) / calc(var(--p-edge-a) * 0.6)),
+    inset 0 0 0 1px color-mix(in oklab, var(--colors-primary) 10%, transparent),
+    0 1px 3px -1px rgb(var(--p-ink) / 0.1);
+}
+
+/* ------------------------------------------------------------------ */
+/* 8. Check-in buttons: no heavy black hover; disabled cannot pass     */
+/*    for hovered                                                      */
+/* ------------------------------------------------------------------ */
+
+html[data-proto-level="2"] [role="dialog"] [data-testid^="checkin-update-"],
+html[data-proto-level="2"] [role="dialog"] [data-testid^="checkin-same-"] {
+  background: var(--colors-surface-card);
+  background-image: none;
+  color: var(--colors-primary);
+  border: 1px solid var(--colors-primary);
+  box-shadow:
+    inset 0 1px 0 0 rgb(var(--p-hi) / var(--p-edge-a)),
+    0 1px 2px 0 rgb(var(--p-ink) / 0.08);
+}
+html[data-proto-level="2"] [role="dialog"] [data-testid^="checkin-update-"]:not(:disabled) {
+  background: var(--colors-primary-subtle);
+  font-weight: 700;
+}
+html[data-proto-level="2"]
+  [role="dialog"]
+  :is([data-testid^="checkin-update-"], [data-testid^="checkin-same-"]):not(:disabled):hover {
+  background: color-mix(in oklab, var(--colors-primary-subtle) 70%, var(--colors-primary) 12%);
+  color: var(--colors-primary);
+}
+html[data-proto-level="2"] [role="dialog"] [data-testid^="checkin-update-"]:disabled {
+  background: transparent;
+  border: 1px dashed var(--colors-border-strong);
+  color: var(--colors-text-secondary);
+  box-shadow: none;
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+/* ------------------------------------------------------------------ */
+/* 9. Check-in finished: no optional questions; a state worth arriving */
+/* ------------------------------------------------------------------ */
+
+html[data-proto-level="2"] #wellbeing-questions,
+html[data-proto-level="2"] #wellbeing-thanks {
+  display: none !important;
+}
+html[data-proto-level="2"] #checkin-summary {
+  display: grid;
+  gap: 18px;
+  text-align: center;
+  justify-items: center;
+  padding-block: 8px 4px;
+}
+html[data-proto-level="2"] #checkin-summary > div:first-child {
+  padding: 18px 40px 6px;
+}
+html[data-proto-level="2"] #checkin-summary > div:first-child [data-proto-doc] svg {
+  width: min(320px, 78vw);
+  max-width: none;
+}
+html[data-proto-level="2"] #checkin-summary h3 {
+  font: 700 clamp(1.5rem, 1.2rem + 1vw, 1.875rem) / 1.2 var(--fonts-heading);
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+html[data-proto-level="2"] #checkin-month-in-brief {
+  width: 100%;
+  text-align: left;
+  border-radius: 16px;
+  border: 1px solid var(--colors-material-paper-edge);
+  background: var(--colors-material-paper-fill);
+  box-shadow: var(--p-shadow);
+  padding: 16px 18px;
+}
+html[data-proto-level="2"] #checkin-net-worth {
+  width: 100%;
+  text-align: left;
+  border-radius: 16px;
+  padding: 16px 18px;
+  background: var(--colors-surface-hero);
+  color: var(--colors-text-on-hero);
+  box-shadow: var(--p-shadow);
+}
+html.dark[data-proto-level="2"] #checkin-net-worth {
+  background: var(--colors-surface-overlay);
+  color: var(--colors-text-primary);
+}
+html[data-proto-level="2"] #checkin-net-worth p:nth-child(2) {
+  font: 700 2rem / 1.15 var(--fonts-heading);
+  font-variant-numeric: tabular-nums;
+}
+html[data-proto-level="2"] #checkin-summary > div:has(#checkin-done) {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* ------------------------------------------------------------------ */
+/* 10. Settings: compact, short controls sized to their content        */
+/* ------------------------------------------------------------------ */
+
+html[data-proto-level="2"] .proto-motion-setting {
+  display: inline-grid !important;
+  grid-template-columns: auto auto;
+  align-items: center;
+  column-gap: 24px;
+  width: auto;
+  max-width: 640px;
+  padding: 14px 18px;
+}
+html[data-proto-level="2"] .proto-motion-setting__title {
+  font-size: 1rem;
+}
+@media (min-width: 62rem) {
+  html[data-proto-level="2"] #settings-data-tab {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "export privacy"
+      "reset delete";
+    gap: 20px 24px;
+    align-items: start;
+  }
+  html[data-proto-level="2"] #export-data-section {
+    grid-area: export;
+  }
+  html[data-proto-level="2"] #settings-privacy-choices {
+    grid-area: privacy;
+  }
+  html[data-proto-level="2"] #settings-reset-data {
+    grid-area: reset;
+  }
+  html[data-proto-level="2"] #delete-account-section {
+    grid-area: delete;
+  }
+}
+html[data-proto-level="2"] #settings-data-tab > section {
+  margin: 0;
+}
+html[data-proto-level="2"] #settings-data-tab > section > [id$="-header"],
+html[data-proto-level="2"] #settings-data-tab > section > [id$="-heade"],
+html[data-proto-level="2"] #settings-data-tab > section > [id$="-hea"] {
+  border-bottom: 0 !important;
+  padding-bottom: 6px !important;
+  margin-bottom: 0 !important;
+}
+html[data-proto-level="2"] #settings-data-tab > section [data-tile-tone] {
+  display: none;
+}
+html[data-proto-level="2"] #settings-data-tab > section h2 {
+  font-size: 1.125rem !important;
+}
+html[data-proto-level="2"] #settings-data-tab > section [data-card] {
+  padding: 14px 16px;
+}
+html[data-proto-level="2"]
+  #settings-data-tab
+  > section:is(#export-data-section, #settings-reset-data, #delete-account-section)
+  [data-card] {
+  width: fit-content;
+}
+/* Destructive actions sit together on their own row, below a clear divider. */
+html[data-proto-level="2"]
+  #settings-data-tab
+  > section:is(#settings-reset-data, #delete-account-section) {
+  padding-top: 18px;
+  border-top: 1px solid var(--colors-border-strong);
+}
+
+/* ------------------------------------------------------------------ */
+/* 2. The slide-out menu                                               */
+/* ------------------------------------------------------------------ */
+
+html[data-proto-level="2"] [data-testid="mobile-nav-drawer"] {
+  background-color: var(--colors-surface-card);
+  background-image:
+    var(--p-grain),
+    linear-gradient(
+      170deg,
+      color-mix(in oklab, var(--colors-primary) 6%, transparent),
+      transparent 40%
+    );
+  border-top-left-radius: 24px;
+  border-bottom-left-radius: 24px;
+  box-shadow:
+    inset 1px 0 0 0 rgb(var(--p-hi) / var(--p-edge-a)),
+    -24px 0 48px -24px rgb(var(--p-ink) / 0.35);
+  padding-inline: 14px;
+}
+html[data-proto-level="2"] [data-testid="mobile-nav-drawer"] a,
+html[data-proto-level="2"] [data-testid="mobile-nav-drawer"] button:not([aria-label]) {
+  border-radius: 12px;
+  min-height: 46px;
+  padding-inline: 12px;
+}
+html[data-proto-level="2"] [data-testid="mobile-nav-drawer"] a[aria-current="page"] {
+  background-color: var(--colors-primary-subtle);
+  background-image: linear-gradient(
+    180deg,
+    rgb(var(--p-hi) / calc(var(--p-edge-a) * 0.45)),
+    transparent
+  );
+  box-shadow:
+    inset 0 1px 0 0 rgb(var(--p-hi) / var(--p-edge-a)),
+    inset 0 0 0 1px color-mix(in oklab, var(--colors-primary) 18%, transparent),
+    0 2px 6px -2px rgb(var(--p-ink) / 0.18);
+  color: var(--colors-primary);
+  font-weight: 700;
+}
+html[data-proto-level="2"]
+  [data-testid="mobile-nav-drawer"]
+  :is(a, button):not([aria-current="page"]):hover {
+  background-color: color-mix(in oklab, var(--colors-primary-subtle) 55%, transparent);
+}
+/* Groups ("Savings and pension", "Debt and borrowing") read as soft paper cards. */
+html[data-proto-level="2"]
+  [data-testid="mobile-nav-drawer"]
+  nav
+  :is(details, [data-nav-group], li:has(> ul)) {
+  border-radius: 16px;
+  border: 1px solid var(--colors-border);
+  background: color-mix(in oklab, var(--colors-surface-canvas) 70%, transparent);
+  margin-block: 8px;
+  padding: 4px;
+}
+/* The foot: Settings, Connect AI and Calculators as a compact two-column set; Sign out apart. */
+html[data-proto-level="2"] [data-testid="mobile-nav-drawer"] > div:last-child {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-content: start;
+  gap: 6px;
+  padding-top: 12px;
+  border-top: 1px solid var(--colors-border);
+}
+html[data-proto-level="2"] [data-testid="mobile-nav-drawer"] > div:last-child > a {
+  height: auto;
+  min-height: 44px;
+  font-size: 0.9375rem;
+  border: 1px solid var(--colors-border);
+  background: var(--colors-surface-canvas);
+}
+html[data-proto-level="2"] [data-testid="mobile-nav-drawer"] > div:last-child > form {
+  grid-column: 1 / -1;
+  margin-top: 4px;
+}
+html[data-proto-level="2"] [data-testid="mobile-nav-drawer"] > div:first-child a {
+  min-height: 48px;
+  font-size: 1.0625rem;
+}
+
+/* ------------------------------------------------------------------ */
+/* 7. "Where your money goes": two layouts (data-proto-budget a or b)  */
+/* ------------------------------------------------------------------ */
+
+/* Shared: an amounts column with tabular figures, more air per row, the icon on a small tile. */
+html[data-proto-level="2"] #budget-categories li[data-list-row] > :is(button, a) {
+  min-height: 64px;
+  padding-block: 10px;
+}
+html[data-proto-level="2"]
+  #budget-categories
+  li[data-list-row]
+  > :is(button, a)
+  > span
+  > span:first-child
+  > span:first-child {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: var(--colors-surface-tint-rose);
+  color: var(--colors-chart-series5);
+  flex: none;
+}
+html[data-proto-level="2"]
+  #budget-categories
+  li[data-list-row]
+  > :is(button, a)
+  > span
+  > span:last-child
+  > span:first-child {
+  font: 700 1.125rem / 1 var(--fonts-heading);
+  font-variant-numeric: tabular-nums;
+  min-width: 6ch;
+  text-align: right;
+}
+/* The linked-account suggestion: an inset paper slip under its row, text and actions on one line. */
+html[data-proto-level="2"] #budget-categories li[data-list-row] > [role="note"] {
+  margin: 0 0 14px 48px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--colors-material-paper-edge);
+  background: var(--colors-material-paper-fill);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  column-gap: 16px;
+  row-gap: 2px;
+  align-items: center;
+}
+html[data-proto-level="2"] #budget-categories li[data-list-row] > [role="note"] > p:first-child {
+  grid-column: 1;
+  margin: 0;
+  font-weight: 700;
+}
+html[data-proto-level="2"] #budget-categories li[data-list-row] > [role="note"] > p:nth-child(2) {
+  grid-column: 1;
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--colors-text-secondary);
+}
+html[data-proto-level="2"] #budget-categories li[data-list-row] > [role="note"] > div {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  display: flex;
+  gap: 8px;
+  margin: 0;
+}
+html[data-proto-level="2"] #budget-categories li[data-list-row] > [role="note"] > div > button {
+  min-height: 34px;
+  padding-inline: 12px;
+  font-size: 0.875rem;
+}
+html[data-proto-level="2"]
+  #budget-categories
+  li[data-list-row]
+  > [role="note"]
+  > div
+  > button:last-child {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
+@media (max-width: 47.99rem) {
+  html[data-proto-level="2"] #budget-categories li[data-list-row] > [role="note"] {
+    margin-left: 0;
+    grid-template-columns: 1fr;
+  }
+  html[data-proto-level="2"] #budget-categories li[data-list-row] > [role="note"] > div {
+    grid-column: 1;
+    grid-row: auto;
+    margin-top: 8px;
+  }
+}
+/* Layout B: categories as a grid of tiles, the amount large; a suggestion runs full width. */
+@media (min-width: 48rem) {
+  html[data-proto-level="2"][data-proto-budget="b"] #budget-categories [data-card] > ul {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  html[data-proto-level="2"][data-proto-budget="b"] #budget-categories [data-card] {
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+  html[data-proto-level="2"][data-proto-budget="b"] #budget-categories li[data-list-row] {
+    border: 1px solid var(--colors-border) !important;
+    border-radius: 18px;
+    background-color: var(--colors-surface-card);
+    background-image: var(--p-grain);
+    box-shadow: var(--p-shadow);
+    padding: 6px 14px;
+  }
+  html[data-proto-level="2"][data-proto-budget="b"]
+    #budget-categories
+    li[data-list-row]:has([role="note"]) {
+    grid-column: 1 / -1;
+  }
+  html[data-proto-level="2"][data-proto-budget="b"]
+    #budget-categories
+    li[data-list-row]
+    > :is(button, a)
+    > span
+    > span:last-child
+    > span:first-child {
+    font-size: 1.5rem;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* 1a. The screen after sign-up (terms): same words and form, warmer   */
+/* ------------------------------------------------------------------ */
+
+[data-proto-welcome] {
+  display: none;
+}
+@media (min-width: 62rem) {
+  html[data-proto-level="2"] #terms-acceptance {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 560px);
+    grid-template-areas:
+      "art card"
+      "art data"
+      "art out";
+    column-gap: 56px;
+    row-gap: 16px;
+    align-items: start;
+    max-width: 1120px;
+    margin: 24px auto 64px;
+  }
+  html[data-proto-level="2"] #terms-acceptance > [data-proto-welcome] {
+    grid-area: art;
+  }
+  html[data-proto-level="2"] #terms-acceptance > section {
+    grid-area: card;
+  }
+  html[data-proto-level="2"] #terms-acceptance > :not([data-proto-welcome]):not(section):not(form) {
+    grid-area: data;
+  }
+  html[data-proto-level="2"] #terms-acceptance > form {
+    grid-area: out;
+  }
+}
+html[data-proto-level="2"] [data-proto-welcome] {
+  display: grid;
+  position: relative;
+  min-height: 360px;
+  padding: 40px 32px;
+  border-radius: 28px;
+  isolation: isolate;
+  background:
+    var(--p-grain),
+    radial-gradient(
+      120% 120% at 0% 0%,
+      color-mix(in oklab, var(--colors-primary) 14%, transparent),
+      transparent 60%
+    ),
+    var(--colors-surface-canvas);
+  align-content: center;
+  justify-items: start;
+  gap: 18px;
+}
+html[data-proto-level="2"] [data-proto-welcome] .proto-welcome__kicker {
+  font: 700 clamp(2rem, 1.4rem + 2vw, 3rem) / 1.1 var(--fonts-heading);
+  letter-spacing: -0.02em;
+  margin: 0;
+  max-width: 14ch;
+  color: var(--colors-text-primary);
+}
+html[data-proto-level="2"] [data-proto-welcome] .proto-welcome__lead {
+  margin: 0;
+  max-width: 34ch;
+  font-size: 1.125rem;
+  line-height: 1.6;
+  color: var(--colors-text-secondary);
+}
+html[data-proto-level="2"] [data-proto-welcome] .proto-welcome__picture {
+  width: min(280px, 60%);
+  rotate: -2deg;
+  margin-top: 8px;
+}
+html[data-proto-level="2"] [data-proto-welcome] [data-proto-ornament] {
+  display: block !important;
+  position: absolute;
+  top: auto;
+  translate: none;
+  bottom: 36px;
+  right: 28px;
+  scale: 0.72;
+  transform-origin: 100% 100%;
+  width: 220px;
+  height: 128px;
+  z-index: -1;
+}
+@media (max-width: 61.99rem) {
+  html[data-proto-level="2"] [data-proto-welcome] {
+    min-height: 0;
+    padding: 24px 20px;
+    margin-bottom: 16px;
+  }
+  html[data-proto-level="2"] [data-proto-welcome] .proto-welcome__picture {
+    display: none;
+  }
+  html[data-proto-level="2"] [data-proto-welcome] [data-proto-ornament] {
+    width: 112px;
+    height: 56px;
+    top: 14px;
+    right: 14px;
+  }
+}
+html[data-proto-level="2"] #terms-acceptance > section {
+  border-radius: 24px;
+  padding: 28px;
+}
+html[data-proto-level="2"] #terms-acceptance > section h1 {
+  font: 700 1.75rem / 1.2 var(--fonts-heading);
+  letter-spacing: -0.01em;
+}
+
+/* ------------------------------------------------------------------ */
+/* 1b. Onboarding: the showpiece                                       */
+/* ------------------------------------------------------------------ */
+
+html[data-proto-level="2"] [data-proto-onboarding] {
+  background:
+    radial-gradient(
+      1200px 520px at 20% -120px,
+      color-mix(in oklab, var(--colors-primary) 10%, transparent),
+      transparent 70%
+    ),
+    var(--colors-surface-canvas);
+}
+/* The art column: the step's own document picture, glass orbs, the step named in big type. */
+html[data-proto-level="2"] [data-proto-onboarding-art] {
+  display: block !important;
+  position: relative;
+  pointer-events: none;
+}
+html[data-proto-level="2"] [data-proto-onboarding-art] [data-proto-bubble] {
+  position: absolute;
+  border-radius: 9999px;
+}
+html[data-proto-level="2"] [data-proto-onboarding-art] [data-proto-step-picture] {
+  display: block !important;
+  position: relative;
+  width: min(300px, 70vw);
+  rotate: -2deg;
+}
+@media (min-width: 70rem) {
+  html[data-proto-level="2"] [data-proto-onboarding] {
+    display: grid;
+    grid-template-columns: minmax(320px, 440px) minmax(0, 760px);
+    justify-content: center;
+    column-gap: 56px;
+    padding-inline: 32px;
+    overflow-x: visible;
+  }
+  html[data-proto-level="2"] [data-proto-onboarding-art] {
+    position: sticky;
+    top: 48px;
+    align-self: start;
+    height: 560px;
+    margin-top: 132px;
+    border-radius: 28px;
+    background:
+      var(--p-grain),
+      radial-gradient(
+        110% 110% at 10% 0%,
+        color-mix(in oklab, var(--colors-primary) 16%, transparent),
+        transparent 62%
+      ),
+      color-mix(in oklab, var(--colors-surface-card) 60%, transparent);
+    box-shadow:
+      inset 0 1px 0 0 rgb(var(--p-hi) / var(--p-edge-a)),
+      0 24px 48px -32px rgb(var(--p-ink) / 0.4);
+  }
+  html[data-proto-level="2"] [data-proto-onboarding-art] [data-proto-step-picture] {
+    position: absolute;
+    left: 50%;
+    top: 52%;
+    translate: -50% -50%;
+  }
+  html[data-proto-level="2"] [data-proto-onboarding-art] [data-proto-bubble="1"] {
+    width: 150px;
+    height: 150px;
+    left: -36px;
+    top: -30px;
+  }
+  html[data-proto-level="2"] [data-proto-onboarding-art] [data-proto-bubble="2"] {
+    width: 70px;
+    height: 70px;
+    right: 26px;
+    top: 36px;
+  }
+  html[data-proto-level="2"] [data-proto-onboarding-art] [data-proto-bubble="3"] {
+    width: 46px;
+    height: 46px;
+    right: 56px;
+    bottom: 34px;
+  }
+}
+@media (max-width: 69.99rem) {
+  html[data-proto-level="2"] [data-proto-onboarding-art] {
+    height: 150px;
+    margin: 0 16px 8px;
+    border-radius: 22px;
+    overflow: hidden;
+    background:
+      var(--p-grain),
+      radial-gradient(
+        110% 110% at 10% 0%,
+        color-mix(in oklab, var(--colors-primary) 16%, transparent),
+        transparent 62%
+      ),
+      color-mix(in oklab, var(--colors-surface-card) 60%, transparent);
+  }
+  html[data-proto-level="2"] [data-proto-onboarding-art] [data-proto-step-picture] {
+    position: absolute;
+    right: 14px;
+    top: 14px;
+    width: 220px;
+  }
+  html[data-proto-level="2"] [data-proto-onboarding-art] [data-proto-bubble="1"] {
+    width: 96px;
+    height: 96px;
+    left: 18px;
+    top: 26px;
+  }
+  html[data-proto-level="2"] [data-proto-onboarding-art] [data-proto-bubble="2"] {
+    width: 44px;
+    height: 44px;
+    left: 110px;
+    top: 18px;
+  }
+  html[data-proto-level="2"] [data-proto-onboarding-art] [data-proto-bubble="3"] {
+    width: 30px;
+    height: 30px;
+    left: 100px;
+    bottom: 22px;
+  }
+}
+/* The header: a warmer, larger welcome. */
+html[data-proto-level="2"] [data-proto-onboarding] header h1 {
+  font: 700 clamp(1.25rem, 0.6rem + 2.4vw, 2.5rem) / 1.15 var(--fonts-heading) !important;
+  letter-spacing: -0.02em;
+}
+html[data-proto-level="2"] [data-proto-onboarding] header h1 + p {
+  font-size: 1.0625rem !important;
+}
+/* The progress: a soft track with raised markers; the current step lit in mint. */
+html[data-proto-level="2"] [data-proto-onboarding] [aria-label="Setup progress"] {
+  padding: 14px 16px;
+  border-radius: 18px;
+  background-color: var(--colors-surface-card);
+  background-image: var(--p-grain);
+  box-shadow: var(--p-shadow);
+  margin-block: 8px 16px;
+}
+/* The step card: generous, one thing at a time, entering under 320ms. */
+html[data-proto-level="2"] [data-proto-onboarding] section[data-card],
+html[data-proto-level="2"] [data-proto-onboarding] [data-card] {
+  border-radius: 28px !important;
+  padding: clamp(20px, 3vw, 36px) !important;
+}
+html[data-proto-level="2"] [data-proto-onboarding] [data-testid^="onboarding-step-"] h2 {
+  font: 700 clamp(1.5rem, 1.2rem + 1vw, 2rem) / 1.2 var(--fonts-heading) !important;
+  letter-spacing: -0.01em;
+}
+@media (prefers-reduced-motion: no-preference) {
+  html[data-proto-level="2"] [data-proto-onboarding] [data-testid^="onboarding-step-"] {
+    animation: proto-step-in 280ms cubic-bezier(0.25, 0.1, 0.2, 1) both;
+  }
+  html[data-proto-level="2"] [data-proto-onboarding-art] [data-proto-step-picture] {
+    animation: proto-step-in 280ms cubic-bezier(0.25, 0.1, 0.2, 1) both;
+  }
+}
+@keyframes proto-step-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* The terms screen's data actions: compact, quiet, under the card. */
+html[data-proto-level="2"]
+  #terms-acceptance
+  section:not([aria-labelledby="terms-acceptance-heading"])
+  > [id$="-header"],
+html[data-proto-level="2"]
+  #terms-acceptance
+  section:not([aria-labelledby="terms-acceptance-heading"])
+  > [id$="-heade"] {
+  border-bottom: 0 !important;
+  padding-bottom: 4px !important;
+}
+html[data-proto-level="2"]
+  #terms-acceptance
+  section:not([aria-labelledby="terms-acceptance-heading"])
+  [data-tile-tone] {
+  display: none;
+}
+html[data-proto-level="2"]
+  #terms-acceptance
+  section:not([aria-labelledby="terms-acceptance-heading"])
+  h2 {
+  font-size: 1rem !important;
+}
+html[data-proto-level="2"]
+  #terms-acceptance
+  section:not([aria-labelledby="terms-acceptance-heading"])
+  [data-card] {
+  width: fit-content;
+  padding: 10px 12px;
+}
+
+/* The finished check-in stays inside its dialog at every width. */
+html[data-proto-level="2"] #checkin-summary,
+html[data-proto-level="2"] #checkin-summary > * {
+  box-sizing: border-box;
+  max-width: 100%;
+  min-width: 0;
+}
+html[data-proto-level="2"] #checkin-summary {
+  width: 100%;
+}
+html[data-proto-level="2"] #checkin-summary > div:first-child {
+  padding: 12px 24px 0;
+}
+html[data-proto-level="2"] #checkin-summary > div:first-child [data-proto-doc] svg {
+  width: min(280px, 100%);
+}
+
+/* Under 70rem the page stacks: the art band above the steps, full width. */
+@media (max-width: 69.99rem) {
+  html[data-proto-level="2"] [data-proto-onboarding] {
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+  }
+  html[data-proto-level="2"] [data-proto-onboarding-art] {
+    margin: 0 0 12px;
+    flex: none;
+  }
+  html[data-proto-level="2"] [data-proto-onboarding] > div:last-child {
+    align-self: center;
+    width: 100%;
+    max-width: 760px;
+  }
+}
+
+/* The art panel's caption: the step named in big, friendly type (decorative). */
+[data-proto-step-caption] {
+  display: none;
+}
+@media (min-width: 70rem) {
+  html[data-proto-level="2"] [data-proto-step-caption] {
+    display: grid;
+    gap: 6px;
+    position: absolute;
+    left: 36px;
+    right: 36px;
+    bottom: 36px;
+  }
+  html[data-proto-level="2"] [data-proto-step-caption] > span:first-child {
+    font: 600 0.9375rem / 1.2 var(--fonts-body);
+    color: var(--colors-text-secondary);
+  }
+  html[data-proto-level="2"] [data-proto-step-caption] > span:last-child {
+    font: 700 1.75rem / 1.15 var(--fonts-heading);
+    letter-spacing: -0.01em;
+    color: var(--colors-text-primary);
+    max-width: 14ch;
+  }
+  html[data-proto-level="2"] [data-proto-onboarding-art] [data-proto-step-picture] {
+    width: 340px;
+    top: 40%;
+  }
+}
+@media (max-width: 69.99rem) {
+  html[data-proto-level="2"] [data-proto-onboarding-art] [data-proto-step-picture] {
+    width: 190px;
+    right: 16px;
+    top: 16px;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  html[data-proto-level="2"] [data-proto-step-caption] {
+    animation: proto-step-in 280ms cubic-bezier(0.25, 0.1, 0.2, 1) both;
+  }
+}

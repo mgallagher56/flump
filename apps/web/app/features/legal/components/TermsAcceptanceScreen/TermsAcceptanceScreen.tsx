@@ -1,4 +1,4 @@
-import { Button, ButtonLink, Card, InlineAlert, PageBody } from "@repo/ui";
+import { Button, ButtonLink, Card, Illustration, InlineAlert, PageBody } from "@repo/ui";
 import type { FC, ReactNode } from "react";
 import { Form } from "react-router";
 import {
@@ -95,6 +95,23 @@ export const TermsAcceptanceScreen: FC<TermsAcceptanceScreenProps> = ({
   return (
     <PageBody>
       <div className={screenWrap()} id="terms-acceptance" data-testid="terms-acceptance">
+        {/* PROTOTYPE ONLY: a decorative welcome beside the unchanged terms card (hidden from
+            assistive technology; the card's own heading names the task). */}
+        <div aria-hidden="true" data-proto-welcome="">
+          <span data-proto-ornament="">
+            <span data-orb="1" />
+            <span data-orb="2" />
+            <span data-orb="3" />
+            <span data-orb="4" />
+          </span>
+          <p className="proto-welcome__kicker">Welcome to Flump</p>
+          <p className="proto-welcome__lead">
+            Your money, in one clear picture. First the agreement, then four short steps.
+          </p>
+          <span className="proto-welcome__picture">
+            <Illustration scene="onboarding" size="md" variant="document" />
+          </span>
+        </div>
         <Card as="section" aria-labelledby="terms-acceptance-heading" className={screenCard()}>
           <h1 className={heading()} id="terms-acceptance-heading">
             {termsHeading(status)}

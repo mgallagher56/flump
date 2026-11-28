@@ -1,1 +1,7 @@
-{"data":"http://localhost:5180","empty":"http://localhost:5181","new":"http://localhost:5182","checkin":"http://localhost:5183"}
+{
+  "data": "http://localhost:5180",
+  "empty": "http://localhost:5181",
+  "new": "http://localhost:5182",
+  "checkin": "http://localhost:5183",
+  "terms": "http://localhost:5184"
+}

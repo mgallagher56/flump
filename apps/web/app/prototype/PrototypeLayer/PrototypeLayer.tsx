@@ -90,6 +90,7 @@ export const PrototypeLayer: FC = () => {
   const [level, setLevel] = useState<ProtoLevel | null>(null);
   const [capture, setCapture] = useState(false);
   const [texture, setTexture] = useState<(typeof PROTO_TEXTURES)[number]>("2");
+  const [budget, setBudget] = useState<"a" | "b">("a");
   const [icons, setIcons] = useState<(typeof PROTO_ICONS)[number]>("paper");
 
   // Read the query once per navigation: a level or theme in the link wins and is remembered.
@@ -104,6 +105,7 @@ export const PrototypeLayer: FC = () => {
     const themeParam = params.get("theme");
     if (themeParam === "light" || themeParam === "dark") setPreference(themeParam);
     if (params.get("capture") === "1") setCapture(true);
+    setBudget(params.get("budget") === "b" ? "b" : "a");
     const textureParam = params.get("texture");
     setTexture(
       textureParam && (PROTO_TEXTURES as readonly string[]).includes(textureParam)
@@ -118,6 +120,10 @@ export const PrototypeLayer: FC = () => {
     );
     applyReducedMotion(readReducedMotion());
   }, [location.search, setPreference]);
+
+  useEffect(() => {
+    document.documentElement.dataset.protoBudget = budget;
+  }, [budget]);
 
   // Round three: medium depth is the depth; texture is the choice.
   useEffect(() => {
@@ -259,24 +265,26 @@ export const PrototypeLayer: FC = () => {
       </fieldset>
       {level === 2 ? (
         <>
-          <fieldset className="proto-control__group">
-            <legend className="proto-control__legend">Texture</legend>
-            <span aria-hidden="true" className="proto-control__label">
-              Texture
-            </span>
-            {PROTO_TEXTURES.map((value) => (
-              <button
-                aria-label={`Texture ${TEXTURE_NAMES[value]}`}
-                aria-pressed={texture === value}
-                className="proto-control__button"
-                key={value}
-                onClick={() => setTexture(value)}
-                type="button"
-              >
-                {TEXTURE_NAMES[value]}
-              </button>
-            ))}
-          </fieldset>
+          {location.pathname === "/app/budget" ? (
+            <fieldset className="proto-control__group">
+              <legend className="proto-control__legend">Budget list layout</legend>
+              <span aria-hidden="true" className="proto-control__label">
+                Budget list
+              </span>
+              {(["a", "b"] as const).map((value) => (
+                <button
+                  aria-label={`Budget list layout ${value.toUpperCase()}`}
+                  aria-pressed={budget === value}
+                  className="proto-control__button"
+                  key={value}
+                  onClick={() => setBudget(value)}
+                  type="button"
+                >
+                  {value === "a" ? "A Ledger" : "B Tiles"}
+                </button>
+              ))}
+            </fieldset>
+          ) : null}
           <fieldset className="proto-control__group">
             <legend className="proto-control__legend">Icons</legend>
             <span aria-hidden="true" className="proto-control__label">
