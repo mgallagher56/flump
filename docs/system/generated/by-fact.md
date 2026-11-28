@@ -19,7 +19,7 @@ Where each value is stored, entered and used. One entry per stored fact, then on
 | [Account balance today](#account-balance)                                                                                                | fact   | accounts    | Holds                                     |
 | [Balance for each past month](#balance-history)                                                                                          | fact   | accounts    | Broken                                    |
 | [Whether a month's check-in was started or finished](#check-in-done)                                                                     | fact   | accounts    | Holds                                     |
-| [The answer to the two optional questions after a check-in, one per quarter](#wellbeing-answer)                                          | fact   | accounts    | Holds                                     |
+| [Stored answers to the two removed questions after a check-in, one per quarter](#wellbeing-answer)                                       | fact   | accounts    | Holds                                     |
 | [Optional user-set goal on an account](#account-goal)                                                                                    | fact   | accounts    | Holds                                     |
 | [Joint ownership and the user's share of an account](#ownership-share)                                                                   | fact   | accounts    | Broken                                    |
 | [Interest rate on an account](#account-rate)                                                                                             | fact   | accounts    | Holds with a manual step or a delay       |
@@ -50,7 +50,7 @@ Where each value is stored, entered and used. One entry per stored fact, then on
 | [Retirement plan (ages, target, State Pension inputs, growth cases, excluded accounts)](#retirement-plan)                                | fact   | retirement  | Holds                                     |
 | [Partner mode toggle](#partner-mode)                                                                                                     | fact   | preferences | Holds                                     |
 | [Net worth choices (count the home, count the student loan)](#net-worth-choices)                                                         | fact   | preferences | Broken                                    |
-| [Whether to ask the two optional questions after a check-in](#wellbeing-questions-switch)                                                | fact   | preferences | Holds                                     |
+| [The removed switch for the questions after a check-in](#wellbeing-questions-switch)                                                     | fact   | preferences | Holds                                     |
 | [Check-in day of the month](#check-in-day)                                                                                               | fact   | preferences | Holds                                     |
 | [Enabled pages and dashboard widgets](#enabled-pages-and-widgets)                                                                        | fact   | preferences | Holds                                     |
 | [Setup checklist progress](#setup-checklist)                                                                                             | fact   | preferences | Holds                                     |
@@ -438,7 +438,7 @@ Read by:
 - Dashboard: `apps/backend/src/modules/snapshots/snapshots.controller.ts` (GET /snapshots/check-ins, read by the reminder on the Dashboard and History, and by selectCheckInPartDone for Continue check-in)
 - Data export and erasure: `apps/backend/src/modules/privacy/user-data-registry.ts`
 
-### The answer to the two optional questions after a check-in, one per quarter
+### Stored answers to the two removed questions after a check-in, one per quarter
 
 <a id="wellbeing-answer"></a>
 
@@ -452,12 +452,11 @@ Other stores:
 
 Entered or changed by:
 
-- Monthly check-in: `apps/backend/src/modules/snapshots/wellbeing-questions.service.ts` (POST /snapshots/wellbeing-questions; the first record of a London quarter stands, both null for a skip; switching the questions off deletes the rows (user-profile.service.ts); kept 13 months from the quarter's first day (jobs/retention.ts))
+- none
 
 Read by:
 
-- Monthly check-in: `apps/backend/src/modules/snapshots/wellbeing-questions.service.ts` (GET /snapshots/wellbeing-questions reads only whether the quarter has a record; the free text is read by nothing but the export and the owner's aggregate script)
-- Data export and erasure: `apps/backend/src/modules/privacy/user-data-registry.ts`
+- Data export and erasure: `apps/backend/src/modules/privacy/user-data-registry.ts` (The questions were removed on 28 Nov 2026: nothing writes or shows the answers now. Earlier rows stay in the export, are erased with the account and expire under jobs/retention.ts until the table is dropped)
 
 ### Optional user-set goal on an account
 
@@ -1286,13 +1285,14 @@ Read by:
 - Backend account service: `apps/backend/src/modules/finance/account-intake.service.ts`
 - AI read tools: `packages/mcp/src/tools/read/common.ts`
 
-### Whether to ask the two optional questions after a check-in
+### The removed switch for the questions after a check-in
 
 <a id="wellbeing-questions-switch"></a>
 
 - Id: `wellbeing-questions-switch` (stored fact)
 - Verdict: Holds. Findings: none. Links: none.
 - Source of truth: `user_profiles.wellbeing_questions` in `apps/backend/src/entities/user-profile.entity.ts`
+- Note: The switch was removed with the questions on 28 Nov 2026. Expand and contract: the column is still mapped (user-profile.entity.ts) but never selected, inserted, updated or exported, and DropWellbeingAnswers1795760000000 drops it in the next release
 
 Other stores:
 
@@ -1300,12 +1300,11 @@ Other stores:
 
 Entered or changed by:
 
-- Settings: `apps/backend/src/modules/profile/user-profile.service.ts` (PATCH /user-profile wellbeingQuestions; off also deletes the person's wellbeing_answers in the same transaction)
+- none
 
 Read by:
 
-- Monthly check-in: `apps/backend/src/modules/snapshots/wellbeing-questions.service.ts` (GET and POST /snapshots/wellbeing-questions ask and record only while it is on)
-- Data export and erasure: `apps/backend/src/modules/privacy/user-data-registry.ts`
+- none
 
 ### Check-in day of the month
 

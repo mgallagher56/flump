@@ -966,7 +966,8 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("user data (real Post
     expect(doc.wellbeingAnswers).toEqual([
       { quarter: "2026-10-01", feeling: "more_worried", worseText: "A worse text" },
     ]);
-    expect(doc.profile?.wellbeingQuestions).toBe(true);
+    // The removed switch is never selected, so the export no longer carries it.
+    expect(doc.profile && "wellbeingQuestions" in doc.profile).toBe(false);
     expect(at(doc.taxRecords, 0).receiptData).toBe("data:image/png;base64,AAAA");
     expect(doc.mcpTokens[0]).toMatchObject({ name: "A Claude", tokenPrefix: "flp_abcd" });
     // Beta access is in the notes: joined, and the invite used with its label.

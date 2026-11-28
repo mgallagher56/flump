@@ -1,4 +1,4 @@
-// wellbeing-measures.ts: the owner's aggregate reading of E35 W5 and the section 7 W9 measures
+// wellbeing-measures.ts: the owner's aggregate reading of the E35 section 7 W9 measures
 // (docs/audit/plans/E35-encouragement-and-wellbeing.md, section 7). Read-only.
 //
 // Usage (bun, from the repo root; the owner runs it against the database to read):
@@ -10,13 +10,10 @@
 // Limits to keep in mind when reading: `accounts_with_figure` counts accounts that exist today, so
 // a deleted account drops out of past months and earlier totals can shift between readings.
 // `debts_with_goal` takes "owed now" from the account's current balance, not its latest monthly
-// figure. Someone who switches the questions off and on again in one quarter can be asked twice
-// that quarter, because switching off deletes their answers.
+// figure. The W5 questions after a check-in were removed on 28 Nov 2026, so their answers are no
+// longer read here.
 //
 // What it prints, as `label|value|...` lines, aggregate only:
-//   - per quarter: how many answered "More in control", "About the same" and "More worried", how
-//     many gave no feeling but wrote something, how many skipped both, and how many wrote text
-//   - the number of profiles with the questions switched off, out of all profiles
 //   - check-ins completed per month (snapshot_checkins), the last 13 months
 //   - per month, the last 12: accounts that existed, and how many of them have a figure entered or
 //     confirmed for the month (account_details, any source but `backfill`)
@@ -27,31 +24,10 @@
 //     date to judge by, and how many of those were reached (a debt owing no more than the amount,
 //     anything else holding at least the amount; the same rule as the account page)
 //
-// Never printed: a user id, an account id, any row for one person, or the free text. Everything
-// runs in one READ ONLY transaction that is rolled back. Small counts can still point at a person
-// in a small beta: read them with that in mind, and never share them outside the owner.
-//
-// ---------------------------------------------------------------------------------------------
-// Reading the free text (separate, on purpose: the answers are personal data that may be
-// sensitive). The one query, which selects the quarter and the text only, never a user id, and
-// sorts by the text so the order says nothing about who wrote first:
-//
-//   SELECT quarter, worse_text FROM wellbeing_answers
-//   WHERE worse_text IS NOT NULL ORDER BY quarter, worse_text;
-//
-// ---------------------------------------------------------------------------------------------
-// THE ONE WRITE. Not run by this script. Run it by hand, deliberately, and only to remove one
-// free-text answer that holds health details (or other special category data). It blanks the text
-// and keeps the feeling, without the owner ever seeing whose answer it was. Copy the quarter and
-// the text exactly as the query above printed them; psql quotes both. Every answer in that
-// quarter with exactly that text is blanked, and psql prints the count changed (`UPDATE n`):
-//
-//   psql "$PGURL" -v quarter='2026-10-01' -v exact_text='<the answer, exactly>' <<'SQL'
-//   UPDATE wellbeing_answers SET worse_text = NULL
-//   WHERE quarter = :'quarter'::date AND worse_text = :'exact_text';
-//   SQL
-//
-// `UPDATE 0` means nothing matched (check the text was copied exactly). Nothing else here writes.
+// Never printed: a user id, an account id or any row for one person. Everything runs in one READ
+// ONLY transaction that is rolled back. Small counts can still point at a person in a small beta:
+// read them with that in mind, and never share them outside the owner.
+
 // ---------------------------------------------------------------------------------------------
 /** Minimal client surface, so tests can pass a pg Client. */
 export interface Queryable {
@@ -64,37 +40,8 @@ const TODAY = `COALESCE($1::date, (now() AT TIME ZONE 'Europe/London')::date)`;
 /** The account types that are debts (stored negative), as in apps/web isLiabilityType. */
 const LIABILITY_TYPES = `('Mortgage', 'Loan', 'Credit Card', 'Overdraft', 'Student Loan')`;
 
-/** Each measure: a label for its lines and one aggregate query. No query selects an id or text. */
+/** Each measure: a label for its lines and one aggregate query. No query selects an id. */
 export const MEASURES: ReadonlyArray<{ label: string; columns: readonly string[]; sql: string }> = [
-  {
-    label: "answers_by_quarter",
-    columns: [
-      "quarter",
-      "more_in_control",
-      "about_the_same",
-      "more_worried",
-      "no_feeling_with_text",
-      "skipped",
-      "with_text",
-    ],
-    sql: `SELECT quarter::text AS quarter,
-            count(*) FILTER (WHERE feeling = 'more_in_control')::int AS more_in_control,
-            count(*) FILTER (WHERE feeling = 'about_the_same')::int AS about_the_same,
-            count(*) FILTER (WHERE feeling = 'more_worried')::int AS more_worried,
-            count(*) FILTER (WHERE feeling IS NULL AND worse_text IS NOT NULL)::int
-              AS no_feeling_with_text,
-            count(*) FILTER (WHERE feeling IS NULL AND worse_text IS NULL)::int AS skipped,
-            count(*) FILTER (WHERE worse_text IS NOT NULL)::int AS with_text
-          FROM wellbeing_answers
-          GROUP BY quarter ORDER BY quarter`,
-  },
-  {
-    label: "switched_off",
-    columns: ["switched_off", "profiles"],
-    sql: `SELECT count(*) FILTER (WHERE NOT wellbeing_questions)::int AS switched_off,
-            count(*)::int AS profiles
-          FROM user_profiles`,
-  },
   {
     label: "check_ins_completed",
     columns: ["month", "completed"],

@@ -6,29 +6,20 @@ import { DB_TESTS_ENABLED, resetSchema, runInTransaction, withClient } from "./d
 import { MEASURES, parseToday, type Queryable, readWellbeingMeasures } from "./wellbeing-measures";
 
 const SOURCE = readFileSync(resolve(import.meta.dir, "wellbeing-measures.ts"), "utf8");
-/** The source without its comment lines: the header documents the one write, the code has none. */
+/** The source without its comment lines. */
 const CODE = SOURCE.split("\n")
   .filter((line) => !line.trimStart().startsWith("//"))
   .join("\n");
 
 describe("wellbeing-measures (static)", () => {
-  test("the code holds no write; the one documented write lives in the header comment only", () => {
+  test("holds no write and reads nothing of the removed wellbeing questions (removed 28 Nov 2026)", () => {
     expect(CODE).not.toMatch(/\b(UPDATE|DELETE|INSERT|DROP|TRUNCATE|ALTER|CREATE)\s/);
-    expect(SOURCE).toContain("// THE ONE WRITE. Not run by this script.");
-    expect(SOURCE).toMatch(
-      /\/\/ {3}UPDATE wellbeing_answers SET worse_text = NULL\n\/\/ {3}WHERE quarter = :'quarter'::date AND worse_text = :'exact_text';/,
-    );
+    expect(SOURCE).not.toMatch(/wellbeing_answers|worse_text|wellbeing_questions/);
   });
 
-  test("the documented free-text query selects the quarter and the text, never a user id", () => {
-    expect(SOURCE).toContain(
-      "//   SELECT quarter, worse_text FROM wellbeing_answers\n//   WHERE worse_text IS NOT NULL ORDER BY quarter, worse_text;",
-    );
-  });
-
-  test("no measure prints an id or the text", () => {
+  test("no measure prints an id", () => {
     for (const { columns } of MEASURES) {
-      const banned = ["id", "user_id", "account_id", "worse_text", "label", "value"];
+      const banned = ["id", "user_id", "account_id", "label", "value"];
       expect(columns.filter((c) => banned.includes(c))).toEqual([]);
     }
   });
@@ -57,7 +48,6 @@ describe("wellbeing-measures (static)", () => {
 });
 
 describe.skipIf(!DB_TESTS_ENABLED)("wellbeing-measures (real Postgres, all migrations)", () => {
-  const SENTINEL_TEXT = "SENTINEL worse text";
   const ids: string[] = [];
 
   beforeAll(async () => {
@@ -67,27 +57,8 @@ describe.skipIf(!DB_TESTS_ENABLED)("wellbeing-measures (real Postgres, all migra
         await runInTransaction(client, new (Migration as new () => never)());
       }
       const q = (sql: string, params: unknown[] = []) => client.query(sql, params);
-      for (const [user, on] of [
-        ["user_w1", true],
-        ["user_w2", false],
-        ["user_w3", true],
-      ] as const) {
-        await q("INSERT INTO user_profiles (user_id, wellbeing_questions) VALUES ($1, $2)", [
-          user,
-          on,
-        ]);
-      }
-      for (const [user, quarter, feeling, text] of [
-        ["user_w1", "2026-07-01", "more_in_control", null],
-        ["user_w2", "2026-07-01", null, null],
-        ["user_w1", "2026-10-01", "more_worried", SENTINEL_TEXT],
-        ["user_w3", "2026-10-01", null, "other words"],
-        ["user_w2", "2026-10-01", "about_the_same", null],
-      ]) {
-        await q(
-          "INSERT INTO wellbeing_answers (user_id, quarter, feeling, worse_text) VALUES ($1, $2, $3, $4)",
-          [user, quarter, feeling, text],
-        );
+      for (const user of ["user_w1", "user_w2", "user_w3"]) {
+        await q("INSERT INTO user_profiles (user_id) VALUES ($1)", [user]);
       }
       for (const [user, month, done] of [
         ["user_w1", "2026-10", true],
@@ -167,13 +138,6 @@ describe.skipIf(!DB_TESTS_ENABLED)("wellbeing-measures (real Postgres, all migra
     const lines = await withClient((client) => readWellbeingMeasures(client, "2026-11-25"));
     const of = (label: string) => lines.filter((l) => l.startsWith(`${label}|`));
 
-    // Q3: user_w1 in control, user_w2 skipped. Q4: user_w1 worried with text, user_w3 text only,
-    // user_w2 about the same.
-    expect(of("answers_by_quarter")).toEqual([
-      "answers_by_quarter|2026-07-01|1|0|0|0|1|0",
-      "answers_by_quarter|2026-10-01|0|1|1|1|0|2",
-    ]);
-    expect(of("switched_off")).toEqual(["switched_off|1|3"]);
     // 13 months back from Nov 2026 starts at Nov 2025: Oct 2025 and the unfinished Nov 2026 drop.
     expect(of("check_ins_completed")).toEqual([
       "check_ins_completed|2025-11|1",
@@ -201,8 +165,6 @@ describe.skipIf(!DB_TESTS_ENABLED)("wellbeing-measures (real Postgres, all migra
 
     const text = lines.join("\n");
     expect(text).not.toContain("user_w");
-    expect(text).not.toContain("SENTINEL");
-    expect(text).not.toContain("other words");
     for (const id of ids) expect(text).not.toContain(id);
   });
 

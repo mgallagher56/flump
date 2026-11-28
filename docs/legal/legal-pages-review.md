@@ -128,7 +128,7 @@ The stand-in name ends in "Ltd" and comes with a company number, while the tradi
 5. Decide the regulatory-status wording for the terms before a public launch.
 6. Decide whether to move hosting to EU West (`docs/runbooks/region-move.md`). The privacy notice and `ropa.md` change with it.
 7. Delete the `TERMS_VERSION` variable from the Railway backend service if it is set. The backend no longer reads it (terms versions come from `LEGAL_PAGES`) and logs one warning at boot while it is there.
-8. Before the first question after a check-in is shown to a real person: write a short legitimate interests assessment for it, and read the free-text answers regularly (monthly is safer than quarterly), removing any that hold health details (`scripts/ops/wellbeing-measures`).
+8. Withdrawn on 28 Nov 2026: the questions after a check-in were removed from the app, so no assessment or reading of answers is needed.
 9. Email testers when the terms change by more than a wording fix, and 30 days before ending an account or the test phase. The terms promise both, and nothing in the app sends email.
 10. Answer privacy requests within one month and acknowledge complaints within 30 days.
 

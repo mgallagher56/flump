@@ -69,8 +69,6 @@ export interface UserProfile {
   netWorthCountsStudentLoan?: boolean;
   /** Preference: show sole/joint ownership and share controls across accounts, debts and budget. */
   partnerMode?: boolean;
-  /** E35 W5: ask the two optional questions after a check-in (on unless switched off). */
-  wellbeingQuestions?: boolean;
   hasResetFinancialData?: boolean;
   onboardingCompleted?: boolean;
   createdAt: string;

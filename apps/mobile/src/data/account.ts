@@ -4,8 +4,8 @@
  * who has not agreed to the terms in force gets 403 `terms_not_accepted`.
  *
  * Only the status matters, so the body is not parsed (Fable decider, PR #951): the app meets older
- * and newer backends, and a field added to the profile since (E35's `wellbeingQuestions`, missing
- * on a backend that predates it) must never stop anyone signing in.
+ * and newer backends, and a field added to the profile since (such as `partnerMode`, missing on a
+ * backend that predates it) must never stop anyone signing in.
  */
 import { type ApiClient, BackendError, createApiClient } from "@flump/api-client";
 import type { AccountCheck } from "../auth/session";

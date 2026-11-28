@@ -13,10 +13,7 @@ const changes = (n: number): Summary["changed"] =>
     calculated: i === 0,
   }));
 
-// The questions are not due here: their own tests cover them, and no test reaches the network.
-const notDue = { loadStatus: async () => false, send: async () => {} };
-
-const setup = (summary: Partial<Summary> = {}, wellbeing = notDue) => {
+const setup = (summary: Partial<Summary> = {}) => {
   const onDone = vi.fn();
   const onChangeBalance = vi.fn();
   render(
@@ -31,7 +28,6 @@ const setup = (summary: Partial<Summary> = {}, wellbeing = notDue) => {
         previousMonth: "2026-10",
         ...summary,
       }}
-      wellbeing={wellbeing}
     />,
   );
   return { onDone, onChangeBalance };
@@ -124,21 +120,22 @@ describe("CheckInSummary", () => {
     );
   });
 
-  it("shows the summary before the questions' status arrives, and the questions below Done", async () => {
-    let answer: (due: boolean) => void = () => {};
-    const send = vi.fn(async () => {});
-    setup({}, { loadStatus: () => new Promise<boolean>((r) => (answer = r)), send });
-    // Status still loading: the summary is all there, and no questions.
-    expect(screen.getByRole("heading", { name: "November is checked in." })).toBeDefined();
-    expect(screen.queryByRole("heading", { name: "Two optional questions" })).toBeNull();
-    answer(true);
-    const questions = await screen.findByTestId("wellbeing-questions");
-    const done = screen.getByRole("button", { name: "Done" });
-    expect(done.compareDocumentPosition(questions) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    // Skip removes the card and hands the focus back to Done.
-    await userEvent.click(screen.getByRole("button", { name: "Skip" }));
-    expect(send).toHaveBeenCalledWith({ feeling: null, worseText: null });
+  it("asks no questions after the summary and calls no API (wellbeing questions removed, 28 Nov 2026)", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    const { onDone } = setup();
+    // Let any effect that would have loaded the questions run.
+    await new Promise((r) => setTimeout(r, 0));
     expect(screen.queryByTestId("wellbeing-questions")).toBeNull();
-    expect(document.activeElement).toBe(done);
+    expect(screen.queryByRole("group")).toBeNull();
+    expect(screen.queryByRole("textbox")).toBeNull();
+    expect(screen.queryByRole("radio")).toBeNull();
+    expect(screen.queryByText(/optional questions|feel worse|feel about your money/i)).toBeNull();
+    expect(fetchSpy).not.toHaveBeenCalled();
+    // The last control is still Done, the way onward.
+    const buttons = screen.getAllByRole("button");
+    expect(buttons.at(-1)?.textContent).toBe("Done");
+    await userEvent.click(buttons.at(-1) as HTMLElement);
+    expect(onDone).toHaveBeenCalledTimes(1);
+    fetchSpy.mockRestore();
   });
 });
