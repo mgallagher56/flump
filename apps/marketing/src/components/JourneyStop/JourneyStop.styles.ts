@@ -42,18 +42,28 @@ export const frame = css({
     height: "var(--journey-screen)",
     marginTop: "calc(-1 * var(--journey-beat))",
     // Centred in the window (owner, 28 Nov 2026), not top-aligned as the prototype's CSS has it,
-    // which left a tall window's lower two thirds empty. The frame starts under the header, so
-    // the inset above the pair (header plus top padding) is made equal to the one below it (the
-    // orb's lane, or more): the pair's centre is then the window's. `safe` puts a pair taller
-    // than the space back at the top rather than above the header.
-    "--frame-inset": {
-      base: "max(var(--journey-lane), calc(var(--journey-head) + 12px))",
-      md: "max(var(--journey-lane), calc(var(--journey-head) + clamp(16px, 4vh, 40px)))",
+    // which left a tall window's lower part empty. The frame starts under the header, so a
+    // bottom padding of the header's height makes its content box centred on the window. The
+    // pair sits in the middle row between two spacers that share the free space equally, each
+    // held to a minimum: above, the prototype's gap under the header; below, clear of the orb
+    // resting in its band (`--journey-orb-clear`). So the pair is centred when there is room,
+    // rises just enough to stay off the orb when there is less, and starts under the header
+    // when even that is too tall.
+    "--journey-orb-clear": {
+      // The scene's lane (`laneFor` in journeyLayout.ts): on a phone a band of an eighth of the
+      // height and a 38px orb; else a band of 130px held to 11% to 17% of the height and an orb
+      // of half the band, at most 66px. Plus 16px of air.
+      base: "calc(12.5svh + 38px + 16px)",
+      md: "calc(clamp(11svh, 130px, 17svh) + min(66px, clamp(11svh, 130px, 17svh) / 2) + 16px)",
     },
-    alignItems: "safe center",
-    paddingTop: "calc(var(--frame-inset) - var(--journey-head))",
-    paddingBottom: "var(--frame-inset)",
+    gridTemplateRows: {
+      base: "minmax(12px, 1fr) auto minmax(calc(var(--journey-orb-clear) - var(--journey-head)), 1fr)",
+      md: "minmax(clamp(16px, 4vh, 40px), 1fr) auto minmax(calc(var(--journey-orb-clear) - var(--journey-head)), 1fr)",
+    },
+    paddingTop: "0",
+    paddingBottom: "var(--journey-head)",
   },
+  "[data-live=on] & > *": { gridRow: "2" },
   // The first frame starts at its section's top, after the journey's intro.
   "[data-live=on] section:first-of-type > &": { marginTop: "0" },
 });

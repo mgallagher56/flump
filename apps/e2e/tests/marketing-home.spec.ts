@@ -433,11 +433,12 @@ test.describe("marketing home: controls", () => {
 
   // At rest each pinned stop's pair sits in the middle of the window, not under the header with
   // the rest of the window empty (owner, 28 Nov 2026): desktop, a tall desktop window, and the
-  // stacked phone layout. A pair taller than the space between the header and the orb's lane
-  // starts at the top of that space instead (safe centring), never under the header.
+  // stacked phone layout. A pair too tall to centre clear of the resting orb rises just enough to
+  // stay off it, and one taller than that starts under the header.
   for (const [width, height] of [
     [1440, 900],
     [1440, 1300],
+    [1000, 800],
     [560, 1267],
     [390, 844],
   ] as const) {
@@ -460,20 +461,31 @@ test.describe("marketing home: controls", () => {
         await untilStill(page, "#journey :is([data-stop-side], [data-stop-pair])");
         const at = await stop.locator("[data-stop-pair]").evaluate((el) => {
           const r = el.getBoundingClientRect();
-          const frame = el.closest<HTMLElement>("[data-stop-frame]");
-          const style = frame ? getComputedStyle(frame) : null;
+          const h = window.innerHeight;
           const header = document.querySelector("header")?.getBoundingClientRect().bottom ?? 0;
-          const spaceTop = header + Number.parseFloat(style?.paddingTop ?? "0");
-          const spaceBottom = window.innerHeight - Number.parseFloat(style?.paddingBottom ?? "0");
-          return {
-            offset: (r.top + r.bottom) / 2 - window.innerHeight / 2,
-            fits: r.height <= spaceBottom - spaceTop + 1,
-            topGap: r.top - spaceTop,
-          };
+          // Where the orb rests (the scene's lane, laneFor in journeyLayout.ts): a band of an
+          // eighth of the height and a 38px orb on a phone, else a band of 130px held to 11% to
+          // 17% of the height and an orb of half the band, at most 66px.
+          const phone = window.innerWidth < 768;
+          const band = phone ? h * 0.125 : Math.min(0.17 * h, Math.max(0.11 * h, 130));
+          const orbTop = h - band - (phone ? 38 : Math.min(66, band / 2));
+          return { top: r.top, bottom: r.bottom, height: r.height, h, header, orbTop };
         });
-        if (at.fits)
-          expect(Math.abs(at.offset), `stop ${k + 1} off centre by ${at.offset}px`).toBeLessThan(4);
-        else expect(Math.abs(at.topGap), `stop ${k + 1} too tall, not at the top`).toBeLessThan(2);
+        const label = `stop ${k + 1} at ${Math.round(at.top)} to ${Math.round(at.bottom)}`;
+        // Never under the header.
+        expect(at.top, label).toBeGreaterThanOrEqual(at.header + 11);
+        const centredTop = at.h / 2 - at.height / 2;
+        if (centredTop + at.height <= at.orbTop - 16) {
+          // Room to centre it clear of the orb: centred.
+          expect(Math.abs(at.top - centredTop), label).toBeLessThan(4);
+        } else if (at.height <= at.orbTop - 16 - at.header - 12) {
+          // Room above the orb but not centred: as low as it goes, still clear of the orb.
+          expect(at.bottom, label).toBeLessThanOrEqual(at.orbTop - 15);
+          expect(at.bottom, label).toBeGreaterThan(at.orbTop - 20);
+        } else {
+          // Taller than the space: it starts just under the header.
+          expect(at.top, label).toBeLessThan(at.header + 42);
+        }
       }
       await page.context().close();
     });
