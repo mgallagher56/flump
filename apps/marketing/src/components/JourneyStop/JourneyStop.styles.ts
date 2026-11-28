@@ -62,8 +62,9 @@ export const frame = css({
     },
     paddingTop: "0",
     paddingBottom: "var(--journey-head)",
+    // The pair takes the middle row.
+    "& > *": { gridRow: "2" },
   },
-  "[data-live=on] & > *": { gridRow: "2" },
   // The first frame starts at its section's top, after the journey's intro.
   "[data-live=on] section:first-of-type > &": { marginTop: "0" },
 });
