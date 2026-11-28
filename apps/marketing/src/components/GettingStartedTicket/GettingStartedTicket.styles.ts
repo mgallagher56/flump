@@ -31,7 +31,10 @@ export const ruling = css({
   fill: "color-mix(in oklab, token(colors.text.primary) 2.5%, transparent)",
 });
 
-export const sheenFrom = css({ stopColor: "surface.card", stopOpacity: "0" });
+/** Written with `token()`: Panda does not read a bare token name in `stopColor` (it painted black). */
+export const sheenFrom = css({
+  stopColor: "color-mix(in oklab, token(colors.surface.card) 0%, transparent)",
+});
 
 export const sheenTo = css({
   stopColor: "color-mix(in oklab, token(colors.text.primary) 9%, transparent)",
