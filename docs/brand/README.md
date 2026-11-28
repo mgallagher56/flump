@@ -11,6 +11,12 @@ It reads colour, typography, spacing, radius, elevation, motion, logo, illustrat
 - **Reduce motion**: sets `data-motion="reduce"` on the page root for readers who prefer stillness.
 - Both choices are saved in browser storage when available and degrade cleanly with scripts turned off, falling back to the device theme.
 
+## Motion, reduced motion and print
+
+- **Live motion**: approved marketing and app motion specimens play using the exact durations and easings from `packages/tokens/src/motion.ts`, starting once when scrolled into view and offering a `Play again` button. The two home page videos in the evolution chapter play muted in a loop only while in view and when motion is allowed. The three-bubble logo stays still everywhere.
+- **Reduced motion**: under `@media (prefers-reduced-motion: reduce)` or `data-motion="reduce"`, all animations jump to their finished state at once, floating orbs and bubbles stand still, hover light stays active without card tilt, and videos stay paused on their poster frame. With scripts turned off, CSS animations play once (or rest finished under reduced motion) and all copy remains readable.
+- **Print**: the `@media print` stylesheet forces the Mint (light) theme, settles every animation to its finished state, hides navigation, controls and video elements, shows still poster images instead of videos, avoids awkward page breaks inside cards and diagrams, and styles links plainly.
+
 ## Standing rules take precedence
 
 The brand book presents the standing rules and never adds to them. These documents remain the source of truth and win any difference:
@@ -25,4 +31,5 @@ The brand book presents the standing rules and never adds to them. These documen
 ```sh
 bun run brand-book
 bun test scripts/brand-book
+bun run --cwd apps/e2e e2e:brand-book
 ```

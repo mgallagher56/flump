@@ -27,7 +27,7 @@ export function renderColourChapter(tokens: BrandTokens): string {
   const coreFields = [
     renderColorField(tokens, {
       key: "surface.canvas",
-      name: "Canvas",
+      name: "Mint canvas",
       role: "About 60% of light mode in pale mint; deep cool charcoal in dark mode.",
     }),
     renderColorField(tokens, {
@@ -47,22 +47,22 @@ export function renderColourChapter(tokens: BrandTokens): string {
     }),
     renderColorField(tokens, {
       key: "primary",
-      name: "Interactive primary",
+      name: "Primary teal",
       role: "Deep teal in light and bright mint in dark for links, focus rings and outlines.",
     }),
     renderColorField(tokens, {
       key: "primary.solid",
-      name: "Primary button fill",
+      name: "Primary button",
       role: "Charcoal button with white text in light; bright mint button with dark ink in dark.",
     }),
     renderColorField(tokens, {
       key: "chart.debt",
-      name: "Debt apricot",
+      name: "Debt and borrowing",
       role: "Borrowing, credit cards and loans always appear in warm apricot, never red.",
     }),
     renderColorField(tokens, {
       key: "chart.wealth",
-      name: "Savings sage",
+      name: "Savings",
       role: "Cash savings and growth pots across cards, icon tiles and charts.",
     }),
   ].join("");
@@ -70,22 +70,22 @@ export function renderColourChapter(tokens: BrandTokens): string {
   const orbFields = [
     renderColorField(tokens, {
       key: "orb.skyTeal.core",
-      name: "Sky orb",
+      name: "Sky",
       role: "Primary lit glass orb tone and pension area marker.",
     }),
     renderColorField(tokens, {
       key: "orb.skyTeal.shade",
-      name: "Teal orb",
+      name: "Teal",
       role: "Alternating orb tone, net worth and mortgage highlights.",
     }),
     renderColorField(tokens, {
       key: "orb.violetRose.core",
-      name: "Violet orb",
+      name: "Violet",
       role: "Contained strictly to orbs, the logo, small markers and tax charts.",
     }),
     renderColorField(tokens, {
       key: "orb.violetRose.shade",
-      name: "Rose orb",
+      name: "Rose",
       role: "Warm orb rim light and budget area highlights, never a card tint.",
     }),
   ].join("");
@@ -105,7 +105,7 @@ export function renderColourChapter(tokens: BrandTokens): string {
         <div class="editorial-copy">
           <h3 class="sub-title">Core system palette</h3>
           <p class="prose">
-            Every token resolves to a paired light and dark value so Mint and Midnight keep their proportions without custom per-page overrides.
+            Every colour resolves to a paired light and dark value so Mint and Midnight keep their proportions without custom per-page overrides.
           </p>
         </div>
         <div class="color-field-grid">

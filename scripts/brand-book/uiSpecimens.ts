@@ -93,6 +93,16 @@ export function getUiSpecimensCss(): string {
       ":where(.dark, [data-theme='dark'])",
       ":where(.dark, [data-theme='dark']), .theme-dark",
     );
+    for (const dup of [
+      "    --shadows-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);\n",
+      "    --radii-sm: 6px;\n",
+      "    --radii-md: 8px;\n",
+      "    --radii-lg: 12px;\n",
+      "    --radii-xl: 16px;\n",
+      "    --radii-2xl: 24px;\n",
+    ]) {
+      rawCss = rawCss.replace(dup, "");
+    }
     rawCss = rawCss.replace(/—/g, "-").replace(/https?:\/\//gi, "");
     cachedUiCss = rawCss;
     return cachedUiCss;

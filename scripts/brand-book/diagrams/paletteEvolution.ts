@@ -44,7 +44,7 @@ export function renderPaletteEvolutionDiagram(tokens: BrandTokens): string {
         <text x="278" y="${y + 15}" fill="${colorVar("text.secondary")}" font-family="var(--font-mono)" font-size="10" style="font-variant-numeric:tabular-nums">D ${row.oldDark}</text>
 
         <line x1="368" y1="${y + 11}" x2="392" y2="${y + 11}" stroke="${colorVar("border.strong")}" stroke-width="1.25"/>
-        <polyline points="387,7 393,11 387,15" fill="none" stroke="${colorVar("border.strong")}" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+        <polyline points="387,${y + 7} 393,${y + 11} 387,${y + 15}" fill="none" stroke="${colorVar("border.strong")}" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
 
         <rect x="412" y="${y + 2}" width="18" height="18" rx="4" fill="${newLight}" stroke="${colorVar("border.strong")}" stroke-width="1"/>
         <text x="436" y="${y + 15}" fill="${colorVar("text.primary")}" font-family="var(--font-mono)" font-size="10" font-weight="600" style="font-variant-numeric:tabular-nums">L ${newLight}</text>

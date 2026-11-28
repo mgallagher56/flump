@@ -1,11 +1,46 @@
 import { renderChartAnatomyDiagram } from "../diagrams/chartAnatomy";
 import { renderChapterOpener, renderProvenanceComment } from "../renderHelpers";
-import type { BrandTokens } from "../tokens";
+import { type BrandTokens, colorVar } from "../tokens";
 
 export function renderChartsChapter(tokens: BrandTokens): string {
+  const h = tokens.sampleHousehold;
+  const drawMs = Number.parseFloat(tokens.authored.primitiveDurations.draw.value);
   const openerVisual = `<div class="opener-visual-plate" data-motion-hook="chart-specimen">
     ${renderChartAnatomyDiagram(tokens)}
   </div>`;
+
+  const drawnChartSvg = `<svg viewBox="0 0 640 240" role="img" aria-labelledby="diag-draw-chart-title diag-draw-chart-desc">
+    <title id="diag-draw-chart-title">Self-drawing savings chart</title>
+    <desc id="diag-draw-chart-desc">Sample household cash and savings line drawing from June to November, ending at ${h.savings} and ${h.savingsRate}.</desc>
+    <rect x="1" y="1" width="638" height="238" rx="14" fill="${colorVar("surface.card")}" stroke="${colorVar("border")}"/>
+    <text x="24" y="30" fill="${colorVar("text.primary")}" font-family="var(--font-heading)" font-size="13" font-weight="600">Cash and savings over six months</text>
+    <rect x="552" y="14" width="64" height="22" rx="11" fill="${colorVar("surface.sunken")}" stroke="${colorVar("border")}"/>
+    <text x="584" y="29" text-anchor="middle" fill="${colorVar("text.secondary")}" font-family="var(--font-body)" font-size="11" font-weight="500">Example</text>
+
+    <line x1="72" y1="62" x2="540" y2="62" stroke="${colorVar("chart.grid")}" stroke-width="1"/>
+    <line x1="72" y1="106" x2="540" y2="106" stroke="${colorVar("chart.grid")}" stroke-width="1"/>
+    <line x1="72" y1="150" x2="540" y2="150" stroke="${colorVar("chart.grid")}" stroke-width="1"/>
+    <line x1="72" y1="194" x2="540" y2="194" stroke="${colorVar("chart.baseline")}" stroke-width="1.25"/>
+
+    <text x="60" y="66" text-anchor="end" fill="${colorVar("text.muted")}" font-family="var(--font-body)" font-size="11" style="font-variant-numeric:tabular-nums">£24k</text>
+    <text x="60" y="110" text-anchor="end" fill="${colorVar("text.muted")}" font-family="var(--font-body)" font-size="11" style="font-variant-numeric:tabular-nums">£18k</text>
+    <text x="60" y="154" text-anchor="end" fill="${colorVar("text.muted")}" font-family="var(--font-body)" font-size="11" style="font-variant-numeric:tabular-nums">£12k</text>
+    <text x="60" y="198" text-anchor="end" fill="${colorVar("text.muted")}" font-family="var(--font-body)" font-size="11" style="font-variant-numeric:tabular-nums">£6k</text>
+
+    <path class="motion-chart-area" d="M72,162 L165,148 L259,134 L353,120 L446,104 L540,86 L540,194 L72,194 Z" fill="${colorVar("chart.wealth")}" fill-opacity="0.14"/>
+    <path class="motion-chart-line" pathLength="100" d="M72,162 L165,148 L259,134 L353,120 L446,104 L540,86" fill="none" stroke="${colorVar("chart.wealth")}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle class="motion-chart-dot" cx="540" cy="86" r="5" fill="${colorVar("chart.wealth")}"/>
+
+    <text x="554" y="83" fill="${colorVar("text.primary")}" font-family="var(--font-heading)" font-size="13" font-weight="700" style="font-variant-numeric:tabular-nums">${h.savings}</text>
+    <text x="554" y="102" fill="${colorVar("text.muted")}" font-family="var(--font-body)" font-size="11" style="font-variant-numeric:tabular-nums">${h.savingsRate}</text>
+
+    <text x="72" y="220" text-anchor="middle" fill="${colorVar("text.muted")}" font-family="var(--font-body)" font-size="11">Jun</text>
+    <text x="165" y="220" text-anchor="middle" fill="${colorVar("text.muted")}" font-family="var(--font-body)" font-size="11">Jul</text>
+    <text x="259" y="220" text-anchor="middle" fill="${colorVar("text.muted")}" font-family="var(--font-body)" font-size="11">Aug</text>
+    <text x="353" y="220" text-anchor="middle" fill="${colorVar("text.muted")}" font-family="var(--font-body)" font-size="11">Sep</text>
+    <text x="446" y="220" text-anchor="middle" fill="${colorVar("text.muted")}" font-family="var(--font-body)" font-size="11">Oct</text>
+    <text x="540" y="220" text-anchor="middle" fill="${colorVar("text.muted")}" font-family="var(--font-body)" font-size="11">Nov</text>
+  </svg>`;
 
   const seriesChips = [
     {
@@ -42,6 +77,29 @@ export function renderChartsChapter(tokens: BrandTokens): string {
 
     <div class="spread">
       <div class="spread-inner">
+        <div class="editorial-split editorial-split-text-first">
+          <div class="editorial-copy">
+            <h3 class="sub-title">Self-drawing chart line</h3>
+            <p class="prose">
+              Line charts draw once when first seen, then stay still while you inspect points or drag a scenario slider.
+            </p>
+            <div class="motion-demo-controls">
+              <button type="button" class="motion-replay-btn" data-motion-replay="drawn-chart">Play again</button>
+            </div>
+          </div>
+
+          <figure class="diagram-figure" data-diagram="self-drawing-chart" data-motion-demo="drawn-chart" data-motion-playable="drawn-chart">
+            ${drawnChartSvg}
+            <figcaption class="diagram-caption">
+              A sample savings line drawing itself once when first seen on the website; app charts draw once per visit in ${drawMs} milliseconds.
+            </figcaption>
+          </figure>
+        </div>
+      </div>
+    </div>
+
+    <div class="spread spread-subtle">
+      <div class="spread-inner">
         <div class="editorial-copy">
           <h3 class="sub-title">Consistent series colour</h3>
           <p class="prose">
@@ -54,7 +112,7 @@ export function renderChartsChapter(tokens: BrandTokens): string {
       </div>
     </div>
 
-    <div class="spread spread-subtle">
+    <div class="spread">
       <div class="spread-inner">
         <div class="grid-2">
           <article class="card">

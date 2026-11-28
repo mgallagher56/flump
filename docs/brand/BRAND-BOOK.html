@@ -1232,6 +1232,7 @@ code {
 }
 
 .cover-spread {
+  scroll-margin-top: var(--book-bar-offset, 128px);
   position: relative;
   overflow: hidden;
   min-height: min(86vh, 840px);
@@ -1401,7 +1402,14 @@ code {
 .chapter {
   display: grid;
   min-width: 0;
-  scroll-margin-top: 64px;
+  scroll-margin-top: var(--book-bar-offset, 128px);
+}
+
+@media (min-width: 768px) {
+  .cover-spread,
+  .chapter {
+    scroll-margin-top: var(--book-bar-offset, 76px);
+  }
 }
 
 .chapter-opener {
@@ -3036,7 +3044,6 @@ tr:last-child td {
     --sizes-touch: 44px;
     --sizes-page-max: 1200px;
     --shadows-2xs: 0 1px rgb(0 0 0 / 0.05);
-    --shadows-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
     --shadows-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
     --shadows-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
     --shadows-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
@@ -3092,11 +3099,6 @@ tr:last-child td {
     --spacing-page-top-lg: 32px;
     --spacing-page-section: 36px;
     --radii-xs: 4px;
-    --radii-sm: 6px;
-    --radii-md: 8px;
-    --radii-lg: 12px;
-    --radii-xl: 16px;
-    --radii-2xl: 24px;
     --radii-3xl: 1.5rem;
     --radii-4xl: 2rem;
     --radii-full: 9999px;
@@ -4386,12 +4388,819 @@ tr:last-child td {
   }
 }
 
-/* Run B hook: live motion demos and @media print stylesheet go below */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.history-video-poster {
+  display: none;
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-card);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-card);
+}
+
+@keyframes orbFloatA {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(0, -10px, 0); }
+}
+
+@keyframes orbFloatB {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(6px, 8px, 0); }
+}
+
+@keyframes bubbleDrift {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(var(--drift-x, 12px), var(--drift-y, -16px), 0); }
+}
+
+@keyframes entranceArrive {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes barTravel {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@keyframes chartDraw {
+  from { stroke-dashoffset: 100; }
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes chartAreaReveal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes gatherPieceIn {
+  0% { opacity: 1; transform: translate(var(--from-x, 0px), var(--from-y, 0px)) rotate(var(--from-rot, 0deg)) scale(1); }
+  72% { opacity: 1; transform: translate(0, 0) rotate(0deg) scale(0.92); }
+  100% { opacity: 0; transform: translate(0, 0) rotate(0deg) scale(0.86); }
+}
+
+@keyframes gatherLayerFade {
+  0%, 82% { opacity: 1; }
+  100% { opacity: 0; visibility: hidden; }
+}
+
+.cover-orb-1,
+.cover-orb-3 {
+  animation: orbFloatA calc(var(--duration-marketing-hero) * 2) var(--easing-marketing-calm-in-out) infinite;
+}
+
+.cover-orb-2,
+.cover-orb-4 {
+  animation: orbFloatB calc(var(--duration-marketing-hero) * 2.4) var(--easing-marketing-calm-in-out) infinite;
+}
+
+.motion-demo-card {
+  margin: 0;
+  background-color: var(--color-surface-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-4);
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+  min-width: 0;
+}
+
+.motion-demo-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.motion-demo-body {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.motion-demo-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.motion-replay-btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border-strong);
+  background-color: var(--color-surface-subtle);
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+  font-size: var(--text-label-sm-size);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+}
+
+.motion-replay-btn:hover:not(:disabled) {
+  background-color: var(--color-primary-subtle);
+  border-color: var(--color-primary);
+}
+
+.motion-replay-btn:disabled {
+  opacity: 0.48;
+  cursor: not-allowed;
+}
+
+.motion-stage-frame {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface-canvas);
+  min-height: 200px;
+  padding: var(--space-4);
+  display: grid;
+  place-items: center;
+}
+
+.motion-orb-stage {
+  background-image:
+    radial-gradient(60% 60% at 25% 25%, color-mix(in oklab, var(--color-orb-sky-teal-core) 10%, transparent), transparent 70%),
+    radial-gradient(50% 50% at 80% 80%, color-mix(in oklab, var(--color-orb-violet-rose-core) 10%, transparent), transparent 70%);
+}
+
+.motion-hero-orb {
+  position: absolute;
+}
+
+.motion-hero-orb-1 {
+  --orb-size: 74px;
+  left: 20%;
+  top: 22%;
+  animation: orbFloatA calc(var(--duration-marketing-hero) * 1.6) var(--easing-marketing-calm-in-out) infinite;
+}
+
+.motion-hero-orb-2 {
+  --orb-size: 52px;
+  right: 20%;
+  top: 18%;
+  animation: orbFloatB calc(var(--duration-marketing-hero) * 1.9) var(--easing-marketing-calm-in-out) infinite;
+}
+
+.motion-hero-orb-3 {
+  --orb-size: 46px;
+  left: 32%;
+  bottom: 16%;
+  animation: orbFloatB calc(var(--duration-marketing-hero) * 2.1) var(--easing-marketing-calm-in-out) infinite;
+}
+
+.motion-hero-orb-4 {
+  --orb-size: 36px;
+  right: 26%;
+  bottom: 20%;
+  animation: orbFloatA calc(var(--duration-marketing-hero) * 1.7) var(--easing-marketing-calm-in-out) infinite;
+}
+
+.motion-bubble-stage {
+  align-content: center;
+}
+
+.motion-bubble-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.motion-bubble {
+  position: absolute;
+  border-radius: 9999px;
+  opacity: 0.85;
+  animation: bubbleDrift calc(var(--duration-marketing-hero) * 2.2) var(--easing-marketing-calm-in-out) infinite;
+}
+
+.motion-bubble-sky {
+  background: radial-gradient(circle at 35% 30%, var(--color-orb-sky-teal-bubble), var(--color-orb-sky-teal-bubble-shade) 80%);
+  box-shadow: inset 0 0 0 1px var(--color-orb-sky-teal-rim);
+}
+
+.motion-bubble-violet {
+  background: radial-gradient(circle at 35% 30%, var(--color-orb-violet-rose-bubble), var(--color-orb-violet-rose-bubble-shade) 80%);
+  box-shadow: inset 0 0 0 1px var(--color-orb-violet-rose-rim);
+}
+
+.motion-bubble-teal {
+  background: radial-gradient(circle at 35% 30%, var(--color-orb-sky-teal-bubble-shade), var(--color-orb-sky-teal-bubble) 80%);
+  box-shadow: inset 0 0 0 1px var(--color-orb-sky-teal-rim);
+}
+
+.motion-bubble-1 {
+  width: 112px;
+  height: 112px;
+  right: -24px;
+  top: -18px;
+  --drift-x: -10px;
+  --drift-y: 16px;
+}
+
+.motion-bubble-2 {
+  width: 72px;
+  height: 72px;
+  left: -14px;
+  bottom: -14px;
+  --drift-x: 14px;
+  --drift-y: -14px;
+}
+
+.motion-bubble-3 {
+  width: 44px;
+  height: 44px;
+  right: 22%;
+  bottom: 10%;
+  --drift-x: -8px;
+  --drift-y: -12px;
+}
+
+.motion-bubble-copy {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: var(--space-1);
+  text-align: left;
+}
+
+.motion-tilt-stage {
+  background-color: var(--color-surface-subtle);
+}
+
+.motion-tilt-card {
+  position: relative;
+  width: 100%;
+  background-color: var(--color-material-glass-fill);
+  border: 1px solid var(--color-material-glass-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-4);
+  display: grid;
+  gap: var(--space-2);
+  transform: perspective(900px) rotateX(var(--tilt-rx, 0deg)) rotateY(var(--tilt-ry, 0deg));
+  transition-property: transform, box-shadow;
+  transition-duration: var(--duration-marketing-hover);
+  transition-timing-function: var(--easing-marketing-calm);
+}
+
+.motion-tilt-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background-image: radial-gradient(
+    280px circle at var(--light-x, 50%) var(--light-y, 20%),
+    color-mix(in oklab, var(--color-primary) 18%, transparent),
+    color-mix(in oklab, var(--color-primary) 6%, transparent) 42%,
+    transparent 74%
+  );
+  opacity: 0;
+  transition-property: opacity;
+  transition-duration: var(--duration-marketing-hover);
+  transition-timing-function: var(--easing-marketing-calm);
+}
+
+.motion-tilt-card[data-tilt-light="on"],
+.motion-tilt-card:hover {
+  box-shadow: var(--shadow-raised);
+}
+
+.motion-tilt-card[data-tilt-light="on"]::after,
+.motion-tilt-card:hover::after {
+  opacity: 1;
+}
+
+.motion-entrance-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+}
+
+@media (min-width: 768px) {
+  .motion-entrance-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.motion-entrance-item {
+  background-color: var(--color-surface-subtle);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3);
+  display: grid;
+  gap: var(--space-2);
+  animation: entranceArrive var(--duration-marketing-entry) var(--easing-marketing-calm) calc(var(--stagger-index, 0) * var(--duration-marketing-stagger)) both;
+}
+
+.js-motion [data-motion-playable="entrance"]:not(.is-playing) .motion-entrance-item {
+  animation: none;
+  opacity: 1;
+  transform: none;
+}
+
+.motion-count-stage {
+  display: grid;
+  place-items: center;
+  min-height: 156px;
+}
+
+.motion-count-card {
+  width: 100%;
+  background-color: var(--color-material-paper-fill);
+  border: 1px solid var(--color-material-paper-edge);
+  border-radius: var(--radius-card);
+  padding: var(--space-4);
+  display: grid;
+  gap: var(--space-2);
+}
+
+.motion-timing-group {
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+}
+
+.motion-timing-list {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.motion-timing-row {
+  display: grid;
+  gap: 4px;
+}
+
+.motion-timing-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-size: var(--text-body-sm-size);
+}
+
+.motion-timing-track {
+  height: 10px;
+  border-radius: var(--radius-full);
+  background-color: var(--color-surface-sunken);
+  border: 1px solid var(--color-border-subtle);
+  overflow: hidden;
+}
+
+.motion-timing-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  background-color: var(--color-primary);
+  transform-origin: left center;
+  animation: barTravel var(--bar-dur, var(--duration-base)) var(--bar-ease, var(--easing-standard)) both;
+}
+
+.js-motion [data-motion-playable="timing-scale"]:not(.is-playing) .motion-timing-fill {
+  animation: none;
+  transform: scaleX(1);
+}
+
+.motion-chart-line {
+  stroke-dasharray: 100;
+  stroke-dashoffset: 0;
+  animation: chartDraw var(--duration-marketing-chart) var(--easing-marketing-calm) both;
+}
+
+.motion-chart-area,
+.motion-chart-dot {
+  animation: chartAreaReveal var(--duration-marketing-chart) var(--easing-marketing-calm) both;
+}
+
+.js-motion [data-motion-playable="drawn-chart"]:not(.is-playing) .motion-chart-line {
+  animation: none;
+  stroke-dashoffset: 0;
+}
+
+.js-motion [data-motion-playable="drawn-chart"]:not(.is-playing) .motion-chart-area,
+.js-motion [data-motion-playable="drawn-chart"]:not(.is-playing) .motion-chart-dot {
+  animation: none;
+  opacity: 1;
+}
+
+.motion-gather-stage {
+  position: relative;
+  display: grid;
+}
+
+.motion-gather-card {
+  background-color: var(--color-surface-subtle);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: var(--space-4);
+  display: grid;
+  gap: var(--space-3);
+}
+
+.gather-kpis {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+}
+
+@media (min-width: 768px) {
+  .gather-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.gather-made-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+
+.gather-made-row {
+  display: grid;
+  grid-template-columns: 4px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background-color: var(--color-surface-card);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-control);
+}
+
+.gather-row-bar {
+  width: 4px;
+  height: 22px;
+  border-radius: var(--radius-full);
+  background-color: var(--color-primary);
+}
+
+.gather-row-text {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.gather-row-fig {
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.motion-gather-layer {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  animation: gatherLayerFade var(--duration-marketing-hero) var(--easing-marketing-calm) both;
+}
+
+.js-motion [data-motion-playable="assembling-hero"]:not(.is-playing) .motion-gather-layer {
+  display: none;
+  animation: none;
+}
+
+.gather-piece {
+  position: absolute;
+  min-width: 124px;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-control);
+  box-shadow: var(--shadow-raised);
+  border: 1px solid var(--color-border-strong);
+  display: grid;
+  gap: 2px;
+  animation: gatherPieceIn var(--duration-marketing-entry) var(--easing-marketing-calm) calc(var(--piece-index, 0) * var(--duration-marketing-stagger)) both;
+}
+
+.gather-piece-paper {
+  background-color: var(--color-material-paper-fill);
+  border-color: var(--color-material-paper-edge);
+  color: var(--color-text-primary);
+}
+
+.gather-piece-charcoal {
+  background-color: var(--color-surface-contrast);
+  color: var(--color-text-on-contrast);
+}
+
+.gather-piece-mint {
+  background-color: var(--color-primary-subtle);
+  border-color: var(--color-primary-border);
+  color: var(--color-text-primary);
+}
+
+.gather-piece-title {
+  font-size: var(--text-label-sm-size);
+  font-weight: var(--weight-semibold);
+}
+
+.gather-piece-fig {
+  font-size: var(--text-body-md-size);
+  font-weight: var(--weight-bold);
+}
+
+.gather-piece-tl { --from-x: -70px; --from-y: -85px; --from-rot: -5deg; }
+.gather-piece-tr { --from-x: 70px; --from-y: -80px; --from-rot: 4deg; }
+.gather-piece-ml { --from-x: -90px; --from-y: 0px; --from-rot: -4deg; }
+.gather-piece-mr { --from-x: 90px; --from-y: 8px; --from-rot: 5deg; }
+.gather-piece-bl { --from-x: -64px; --from-y: 88px; --from-rot: 3deg; }
+.gather-piece-br { --from-x: 64px; --from-y: 92px; --from-rot: -6deg; }
+
+@media (prefers-reduced-motion: reduce) {
+  .cover-orb,
+  .motion-hero-orb,
+  .motion-bubble,
+  .motion-entrance-item,
+  .motion-timing-fill,
+  .motion-chart-line,
+  .motion-chart-area,
+  .motion-chart-dot,
+  .gather-piece {
+    animation: none !important;
+  }
+  .motion-entrance-item {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .motion-timing-fill {
+    transform: scaleX(1) !important;
+  }
+  .motion-chart-line {
+    stroke-dashoffset: 0 !important;
+  }
+  .motion-chart-area,
+  .motion-chart-dot {
+    opacity: 1 !important;
+  }
+  .motion-gather-layer {
+    display: none !important;
+  }
+  .motion-tilt-card {
+    transform: none !important;
+  }
+}
+
+:root[data-motion="reduce"] .cover-orb,
+:root[data-motion="reduce"] .motion-hero-orb,
+:root[data-motion="reduce"] .motion-bubble,
+:root[data-motion="reduce"] .motion-entrance-item,
+:root[data-motion="reduce"] .motion-timing-fill,
+:root[data-motion="reduce"] .motion-chart-line,
+:root[data-motion="reduce"] .motion-chart-area,
+:root[data-motion="reduce"] .motion-chart-dot,
+:root[data-motion="reduce"] .gather-piece {
+  animation: none !important;
+}
+
+:root[data-motion="reduce"] .motion-entrance-item {
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+:root[data-motion="reduce"] .motion-timing-fill {
+  transform: scaleX(1) !important;
+}
+
+:root[data-motion="reduce"] .motion-chart-line {
+  stroke-dashoffset: 0 !important;
+}
+
+:root[data-motion="reduce"] .motion-chart-area,
+:root[data-motion="reduce"] .motion-chart-dot {
+  opacity: 1 !important;
+}
+
+:root[data-motion="reduce"] .motion-gather-layer {
+  display: none !important;
+}
+
+:root[data-motion="reduce"] .motion-tilt-card {
+  transform: none !important;
+}
+
+@media print {
+  :root,
+  :root[data-theme="dark"],
+  :root[data-theme="light"] {
+    color-scheme: light;
+  --color-accent: #1d5f73;
+  --color-accent-border: #a9c6be;
+  --color-accent-on-hero: #0b6b5d;
+  --color-accent-subtle: #d2eef0;
+  --color-border: #c8dcd5;
+  --color-border-focus-ring: #0b6b5d;
+  --color-border-hero: #6fd0ba;
+  --color-border-input: #5e837a;
+  --color-border-section: #0f2a2a;
+  --color-border-strong: #678a82;
+  --color-border-subtle: #d5e5e0;
+  --color-chart-accent: #1d5f73;
+  --color-chart-accent-cyan: #2f7fa0;
+  --color-chart-accent-purple: #7e67a8;
+  --color-chart-band: rgba(11, 107, 93, 0.14);
+  --color-chart-baseline: #5e837a;
+  --color-chart-debt: #c26a18;
+  --color-chart-grid: rgba(15, 42, 42, 0.08);
+  --color-chart-primary: #0b6b5d;
+  --color-chart-projection: #6b3f2a;
+  --color-chart-series1: #0b6b5d;
+  --color-chart-series2: #64885c;
+  --color-chart-series3: #c26a18;
+  --color-chart-series4: #7e67a8;
+  --color-chart-series5: #b03f6a;
+  --color-chart-series6: #2f7fa0;
+  --color-chart-series7: #94750f;
+  --color-chart-series8: #5f7470;
+  --color-chart-warning: #94750f;
+  --color-chart-wealth: #64885c;
+  --color-logo-backing: #f8fcfa;
+  --color-logo-glint: #f8fcfa;
+  --color-logo-rose: #b03f6a;
+  --color-logo-shadow: #0f2a2a;
+  --color-logo-sky: #2f7fa0;
+  --color-logo-teal: #0b6b5d;
+  --color-logo-violet: #7e67a8;
+  --color-material-glass-border: #c8dcd5;
+  --color-material-glass-fill: #f8fcfa;
+  --color-material-glass-light: rgba(248, 252, 250, 0.14);
+  --color-material-glass-sheen: rgba(248, 252, 250, 0.07);
+  --color-material-paper-edge: #c8dcd5;
+  --color-material-paper-fill: #f8fcfa;
+  --color-material-paper-rule: rgba(15, 42, 42, 0.025);
+  --color-orb-sky-teal-bubble: #d8e8f2;
+  --color-orb-sky-teal-bubble-shade: #c6e6dc;
+  --color-orb-sky-teal-core: #2f7fa0;
+  --color-orb-sky-teal-rim: rgba(47, 127, 160, 0.22);
+  --color-orb-sky-teal-shade: #0b6b5d;
+  --color-orb-violet-rose-bubble: #e3e0f4;
+  --color-orb-violet-rose-bubble-shade: #f3e3ea;
+  --color-orb-violet-rose-core: #7e67a8;
+  --color-orb-violet-rose-rim: rgba(126, 103, 168, 0.22);
+  --color-orb-violet-rose-shade: #b03f6a;
+  --color-primary: #0b6b5d;
+  --color-primary-border: #5a8f83;
+  --color-primary-emphasis: #084f45;
+  --color-primary-foreground: #f8fcfa;
+  --color-primary-hover: #2c323b;
+  --color-primary-mark: #084f45;
+  --color-primary-mark-lit: #0b6b5d;
+  --color-primary-solid: #14171c;
+  --color-primary-subtle: #cfe9e2;
+  --color-status-danger-bg: #fbe5e0;
+  --color-status-danger-border: #e8b0a4;
+  --color-status-danger-solid: #b64030;
+  --color-status-danger-text: #a13a2b;
+  --color-status-info-bg: #eef0ff;
+  --color-status-info-border: #c7c9f7;
+  --color-status-info-solid: #4f46e5;
+  --color-status-info-text: #3730a3;
+  --color-status-neutral-bg: #dbe9e5;
+  --color-status-neutral-border: #a9c6be;
+  --color-status-neutral-solid: #5a716d;
+  --color-status-neutral-text: #2f4a4a;
+  --color-status-positive-bg: #eaf3da;
+  --color-status-positive-border: #bcd68f;
+  --color-status-positive-solid: #3a5c08;
+  --color-status-positive-text: #3e6b12;
+  --color-status-warning-bg: #fcebd2;
+  --color-status-warning-border: #ebc38a;
+  --color-status-warning-solid: #b06a10;
+  --color-status-warning-text: #8a4a08;
+  --color-surface: #f8fcfa;
+  --color-surface-canvas: #eef6f3;
+  --color-surface-card: #f8fcfa;
+  --color-surface-contrast: #14171c;
+  --color-surface-hero: #6fd0ba;
+  --color-surface-overlay: #f6f7f7;
+  --color-surface-scrim: rgba(15, 42, 42, 0.4);
+  --color-surface-subtle: #e7f2ee;
+  --color-surface-sunken: #dfeee9;
+  --color-surface-tint-apricot: #fae5cc;
+  --color-surface-tint-rose: #f3e3ea;
+  --color-surface-tint-sage: #e1edd6;
+  --color-surface-tint-sky: #d8e8f2;
+  --color-surface-tint-teal: #c6e6dc;
+  --color-surface-tint-violet: #e3e0f4;
+  --color-text-hero-figure: #0f2a2a;
+  --color-text-muted: #476060;
+  --color-text-on-contrast: #f8fcfa;
+  --color-text-on-hero: #0f2a2a;
+  --color-text-primary: #0f2a2a;
+  --color-text-secondary: #2f4a4a;
+  --shadow-card: 0 1px 2px rgba(15, 42, 42, 0.08), 0 4px 14px rgba(15, 42, 42, 0.07);
+  --shadow-focus: 0 0 0 2px #f8fcfa, 0 0 0 4px #0b6b5d;
+  --shadow-glass: inset 0 1px 0 rgba(248, 252, 250, 0.14), 0 1px 2px rgba(15, 42, 42, 0.08), 0 4px 14px rgba(15, 42, 42, 0.07);
+  --shadow-overlay: 0 12px 32px -4px rgba(15, 42, 42, 0.16), 0 4px 8px -2px rgba(15, 42, 42, 0.08);
+  --shadow-paper: inset 0 0 0 1px #c8dcd5, 0 22px 35px -19px rgba(15, 42, 42, 0.45);
+  --shadow-raised: 0 2px 8px -2px rgba(15, 42, 42, 0.12), 0 1px 2px rgba(15, 42, 42, 0.06);
+  --shadow-xs: 0 1px 2px rgba(15, 42, 42, 0.07);
+  --logo-op-backing: 0.55;
+  --logo-op-core: 0.4;
+  --logo-op-mid: 0.62;
+  --logo-op-sheen: 0.6;
+  --logo-op-glint: 0.9;
+  --logo-floor-light-display: inline;
+  --logo-floor-dark-display: none;
+  --show-on-light: block;
+  --show-on-dark: none;
+  --scene-ground: #dfeee9;
+  --scene-apricot-op: 0.5;
+  --doc-shadow-op: 0.14;
+  --orb-light: #f8fcfa;
+  }
+  html,
+  body {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  .book-bar,
+  .skip-link,
+  .page-controls,
+  .motion-demo-controls,
+  .motion-replay-btn,
+  video.history-video {
+    display: none !important;
+  }
+  img.history-video-poster {
+    display: block !important;
+  }
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  .motion-entrance-item {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .motion-timing-fill {
+    transform: scaleX(1) !important;
+  }
+  .motion-chart-line {
+    stroke-dashoffset: 0 !important;
+  }
+  .motion-chart-area,
+  .motion-chart-dot {
+    opacity: 1 !important;
+  }
+  .motion-gather-layer {
+    display: none !important;
+  }
+  .motion-tilt-card {
+    transform: none !important;
+  }
+  .cover-spread {
+    min-height: auto;
+    break-after: page;
+  }
+  .chapter {
+    break-before: page;
+  }
+  .card,
+  .card-subtle,
+  .diagram-figure,
+  .motion-demo-card,
+  .timeline-entry,
+  .history-figure,
+  .screen-frame,
+  .swatch-card,
+  .color-field-card {
+    break-inside: avoid;
+  }
+  h2,
+  h3,
+  h4 {
+    break-after: avoid;
+  }
+  a {
+    color: var(--color-text-primary);
+    text-decoration: none;
+  }
+}
 </style>
 <script>
 (() => {
   try {
     const root = document.documentElement;
+    root.classList.add("js-motion");
     const theme = localStorage.getItem("flump-brand-book-theme");
     if (theme === "light" || theme === "dark") {
       root.setAttribute("data-theme", theme);
@@ -4505,14 +5314,14 @@ tr:last-child td {
           </nav>
         </details>
       </div>
-      <div class="page-controls" role="region" aria-label="Display controls">
+      <section class="page-controls" aria-label="Display controls">
     <fieldset class="theme-switch" aria-label="Colour theme">
       <button type="button" class="theme-btn" data-theme-choice="system" aria-pressed="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg><span>System</span></button>
       <button type="button" class="theme-btn" data-theme-choice="light" aria-pressed="false"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg><span>Light</span></button>
       <button type="button" class="theme-btn" data-theme-choice="dark" aria-pressed="false"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg><span>Dark</span></button>
     </fieldset>
     <button type="button" class="motion-toggle" id="motion-toggle" data-motion-toggle="" aria-pressed="false"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><line x1="10" y1="9" x2="10" y2="15"/><line x1="14" y1="9" x2="14" y2="15"/></svg><span>Reduce motion</span></button>
-  </div>
+  </section>
     </div>
   </header>
 <main class="book-main" id="main-content">
@@ -4654,8 +5463,8 @@ tr:last-child td {
     <div class="screen-pair">
       <figure class="screen-frame screen-frame-desktop">
     <div class="screen-viewport">
-      <img class="screen-img themed-img-light" src="assets/screens/marketing-home-1280-light.jpg" alt="Flump marketing home page showing the headline and monthly picture card (light theme)" width="960" height="600" loading="lazy"/>
-      <img class="screen-img themed-img-dark" src="assets/screens/marketing-home-1280-dark.jpg" alt="Flump marketing home page showing the headline and monthly picture card (dark theme)" width="960" height="600" loading="lazy"/>
+      <img class="screen-img themed-img-light" src="assets/screens/marketing-home-1280-light.jpg" alt="Flump marketing home page showing the headline and monthly overview card (light theme)" width="960" height="600" loading="lazy"/>
+      <img class="screen-img themed-img-dark" src="assets/screens/marketing-home-1280-dark.jpg" alt="Flump marketing home page showing the headline and monthly overview card (dark theme)" width="960" height="600" loading="lazy"/>
     </div>
     
   </figure>
@@ -5371,48 +6180,59 @@ tr:last-child td {
       <div class="spread-inner">
         <div class="editorial-split">
           <figure class="diagram-figure" data-diagram="logo-construction">
-    <svg viewBox="0 0 550 400" role="img" aria-labelledby="diag-logo-title diag-logo-desc">
+    <svg viewBox="0 0 760 400" role="img" aria-labelledby="diag-logo-title diag-logo-desc">
       <title id="diag-logo-title">Logo construction and clear space</title>
-      <desc id="diag-logo-desc">Geometry of the three-bubble mark in a 200 by 200 frame with floor shadow and half-width clear space on all four sides.</desc>
-      <rect x="1" y="1" width="548" height="398" rx="14" fill="var(--color-surface-subtle)" stroke="var(--color-border)" stroke-width="1"/>
-      <rect x="65" y="0" width="400" height="400" rx="8" fill="none" stroke="var(--color-border-strong)" stroke-width="1.25" stroke-dasharray="6 4"/>
-      <rect x="165" y="100" width="200" height="200" fill="var(--color-surface-card)" stroke="var(--color-primary)" stroke-width="1.5"/>
-      <text x="173" y="116" fill="var(--color-primary)" font-family="var(--font-body)" font-size="10" font-weight="600">200 by 200 frame</text>
+      <desc id="diag-logo-desc">Three glass bubbles stacked above one floor shadow inside a square frame, surrounded by clear space equal to half the mark width on all sides.</desc>
+      <rect x="1" y="1" width="758" height="398" rx="14" fill="var(--color-surface-subtle)" stroke="var(--color-border)" stroke-width="1"/>
 
-      <line x1="65" y1="200" x2="165" y2="200" stroke="var(--color-primary)" stroke-width="1.2"/>
-      <text x="115" y="194" text-anchor="middle" fill="var(--color-primary)" font-family="var(--font-body)" font-size="10" font-weight="600">Half width</text>
-      <line x1="365" y1="200" x2="465" y2="200" stroke="var(--color-primary)" stroke-width="1.2"/>
-      <text x="415" y="194" text-anchor="middle" fill="var(--color-primary)" font-family="var(--font-body)" font-size="10" font-weight="600">Half width</text>
-      <text x="265" y="54" text-anchor="middle" fill="var(--color-primary)" font-family="var(--font-body)" font-size="10" font-weight="600">Minimum clear space: half the mark width on all sides</text>
+      <text x="380" y="26" text-anchor="middle" fill="var(--color-primary)" font-family="var(--font-body)" font-size="12.5" font-weight="600">Clear space: half the mark's width on all sides</text>
 
-      <ellipse cx="264" cy="277" rx="53" ry="6.890000000000001" fill="var(--color-logo-shadow)" fill-opacity="0.22" stroke="var(--color-border-strong)" stroke-width="1" stroke-dasharray="2 2"/>
-      <text x="264" y="295" text-anchor="middle" fill="var(--color-text-muted)" font-family="var(--font-body)" font-size="10">Shared floor shadow</text>
+      <rect x="220" y="44" width="320" height="320" rx="8" fill="none" stroke="var(--color-border-strong)" stroke-width="1.25" stroke-dasharray="6 4"/>
+      <rect x="300" y="124" width="160" height="160" fill="var(--color-surface-card)" stroke="var(--color-primary)" stroke-width="1.5"/>
 
+      <line x1="380" y1="44" x2="380" y2="124" stroke="var(--color-primary)" stroke-width="1.25"/>
+      <line x1="375" y1="44" x2="385" y2="44" stroke="var(--color-primary)" stroke-width="1.25"/>
+      <line x1="375" y1="124" x2="385" y2="124" stroke="var(--color-primary)" stroke-width="1.25"/>
+      <text x="390" y="88" text-anchor="start" fill="var(--color-primary)" font-family="var(--font-body)" font-size="12" font-weight="600">Half width</text>
+
+      <ellipse cx="379.2" cy="265.6" rx="42.400000000000006" ry="5.5120000000000005" fill="var(--color-logo-shadow)" fill-opacity="0.22" stroke="var(--color-border-strong)" stroke-width="1" stroke-dasharray="2 2"/>
       
-      <circle cx="273" cy="154" r="20" fill="var(--color-logo-violet)" fill-opacity="0.14" stroke="var(--color-logo-violet)" stroke-width="2"/>
-      <line x1="267" y1="154" x2="279" y2="154" stroke="var(--color-text-primary)" stroke-width="1.5"/>
-      <line x1="273" y1="148" x2="273" y2="160" stroke="var(--color-text-primary)" stroke-width="1.5"/>
-      <line x1="273" y1="154" x2="293" y2="154" stroke="var(--color-logo-violet)" stroke-width="1.2" stroke-dasharray="3 3"/>
-      <line x1="293" y1="154" x2="375" y2="162" stroke="var(--color-border-strong)" stroke-width="1"/>
-      <text x="381" y="166" text-anchor="start" fill="var(--color-text-primary)" font-family="var(--font-body)" font-size="11" font-weight="600" style="font-variant-numeric:tabular-nums">Front bubble (violet)</text>
-      <text x="381" y="180" text-anchor="start" fill="var(--color-text-muted)" font-family="var(--font-body)" font-size="10" style="font-variant-numeric:tabular-nums">Radius 20, highlight rose</text>
-      <circle cx="305" cy="192" r="28" fill="var(--color-logo-sky)" fill-opacity="0.14" stroke="var(--color-logo-sky)" stroke-width="2"/>
-      <line x1="299" y1="192" x2="311" y2="192" stroke="var(--color-text-primary)" stroke-width="1.5"/>
-      <line x1="305" y1="186" x2="305" y2="198" stroke="var(--color-text-primary)" stroke-width="1.5"/>
-      <line x1="305" y1="192" x2="333" y2="192" stroke="var(--color-logo-sky)" stroke-width="1.2" stroke-dasharray="3 3"/>
-      <line x1="333" y1="192" x2="375" y2="184" stroke="var(--color-border-strong)" stroke-width="1"/>
-      <text x="381" y="188" text-anchor="start" fill="var(--color-text-primary)" font-family="var(--font-body)" font-size="11" font-weight="600" style="font-variant-numeric:tabular-nums">Middle bubble (sky)</text>
-      <text x="381" y="202" text-anchor="start" fill="var(--color-text-muted)" font-family="var(--font-body)" font-size="10" style="font-variant-numeric:tabular-nums">Radius 28, highlight violet</text>
-      <circle cx="249" cy="222" r="48" fill="var(--color-logo-teal)" fill-opacity="0.14" stroke="var(--color-logo-teal)" stroke-width="2"/>
-      <line x1="243" y1="222" x2="255" y2="222" stroke="var(--color-text-primary)" stroke-width="1.5"/>
-      <line x1="249" y1="216" x2="249" y2="228" stroke="var(--color-text-primary)" stroke-width="1.5"/>
-      <line x1="249" y1="222" x2="201" y2="222" stroke="var(--color-logo-teal)" stroke-width="1.2" stroke-dasharray="3 3"/>
-      <line x1="201" y1="222" x2="155" y2="218" stroke="var(--color-border-strong)" stroke-width="1"/>
-      <text x="149" y="222" text-anchor="end" fill="var(--color-text-primary)" font-family="var(--font-body)" font-size="11" font-weight="600" style="font-variant-numeric:tabular-nums">Top bubble (teal)</text>
-      <text x="149" y="236" text-anchor="end" fill="var(--color-text-muted)" font-family="var(--font-body)" font-size="10" style="font-variant-numeric:tabular-nums">Radius 48, highlight violet</text>
+      <circle cx="386.4" cy="167.2" r="16" fill="var(--color-logo-violet)" fill-opacity="0.16" stroke="var(--color-logo-violet)" stroke-width="2"/>
+      <line x1="382.4" y1="167.2" x2="390.4" y2="167.2" stroke="var(--color-text-primary)" stroke-width="1.25"/>
+      <line x1="386.4" y1="163.2" x2="386.4" y2="171.2" stroke="var(--color-text-primary)" stroke-width="1.25"/>
+      <circle cx="412" cy="197.60000000000002" r="22.400000000000002" fill="var(--color-logo-sky)" fill-opacity="0.16" stroke="var(--color-logo-sky)" stroke-width="2"/>
+      <line x1="408" y1="197.60000000000002" x2="416" y2="197.60000000000002" stroke="var(--color-text-primary)" stroke-width="1.25"/>
+      <line x1="412" y1="193.60000000000002" x2="412" y2="201.60000000000002" stroke="var(--color-text-primary)" stroke-width="1.25"/>
+      <circle cx="367.2" cy="221.60000000000002" r="38.400000000000006" fill="var(--color-logo-teal)" fill-opacity="0.16" stroke="var(--color-logo-teal)" stroke-width="2"/>
+      <line x1="363.2" y1="221.60000000000002" x2="371.2" y2="221.60000000000002" stroke="var(--color-text-primary)" stroke-width="1.25"/>
+      <line x1="367.2" y1="217.60000000000002" x2="367.2" y2="225.60000000000002" stroke="var(--color-text-primary)" stroke-width="1.25"/>
+
+      <polyline points="375.1,155.9 288,130 212,130" fill="none" stroke="var(--color-border-strong)" stroke-width="1.15"/>
+      <text x="202" y="126" text-anchor="end" fill="var(--color-text-primary)" font-family="var(--font-body)" font-size="13" font-weight="600">Smallest bubble, violet</text>
+      <text x="202" y="143" text-anchor="end" fill="var(--color-text-muted)" font-family="var(--font-body)" font-size="11.5">Back layer, rose edge light</text>
+
+      <line x1="328.8" y1="221.6" x2="212" y2="221.6" stroke="var(--color-border-strong)" stroke-width="1.15"/>
+      <text x="202" y="217.6" text-anchor="end" fill="var(--color-text-primary)" font-family="var(--font-body)" font-size="13" font-weight="600">Largest bubble, teal</text>
+      <text x="202" y="234.6" text-anchor="end" fill="var(--color-text-muted)" font-family="var(--font-body)" font-size="11.5">Front layer, violet edge light</text>
+
+      <polyline points="336.8,265.6 276,304 212,304" fill="none" stroke="var(--color-border-strong)" stroke-width="1.15"/>
+      <text x="202" y="300" text-anchor="end" fill="var(--color-text-primary)" font-family="var(--font-body)" font-size="13" font-weight="600">Shared floor shadow</text>
+      <text x="202" y="317" text-anchor="end" fill="var(--color-text-muted)" font-family="var(--font-body)" font-size="11.5">Grounds all three bubbles</text>
+
+      <line x1="540" y1="124" x2="550" y2="124" stroke="var(--color-border-strong)" stroke-width="1.15"/>
+      <text x="558" y="120" text-anchor="start" fill="var(--color-text-primary)" font-family="var(--font-body)" font-size="13" font-weight="600">Clear-space edge</text>
+      <text x="558" y="137" text-anchor="start" fill="var(--color-text-muted)" font-family="var(--font-body)" font-size="11.5">Keep free of text or marks</text>
+
+      <line x1="434.4" y1="197.6" x2="550" y2="197.6" stroke="var(--color-border-strong)" stroke-width="1.15"/>
+      <text x="558" y="193.6" text-anchor="start" fill="var(--color-text-primary)" font-family="var(--font-body)" font-size="13" font-weight="600">Middle bubble, sky</text>
+      <text x="558" y="210.6" text-anchor="start" fill="var(--color-text-muted)" font-family="var(--font-body)" font-size="11.5">Middle layer, violet edge light</text>
+
+      <line x1="460" y1="284" x2="550" y2="284" stroke="var(--color-border-strong)" stroke-width="1.15"/>
+      <text x="558" y="280" text-anchor="start" fill="var(--color-text-primary)" font-family="var(--font-body)" font-size="13" font-weight="600">Square mark frame</text>
+      <text x="558" y="297" text-anchor="start" fill="var(--color-text-muted)" font-family="var(--font-body)" font-size="11.5">Exact sizes in reference</text>
     </svg>
     <figcaption class="diagram-caption">
-      Three circles climb from back (violet) through sky to front (teal) above one floor shadow inside a square frame with half-width clear space.
+      Three circles climb from violet at the back through sky to teal at the front above one floor shadow, with clear space equal to half the mark's width on every side.
     </figcaption>
   </figure>
           <div class="editorial-copy">
@@ -5513,7 +6333,7 @@ tr:last-child td {
         <div class="editorial-copy">
           <h3 class="sub-title">Core system palette</h3>
           <p class="prose">
-            Every token resolves to a paired light and dark value so Mint and Midnight keep their proportions without custom per-page overrides.
+            Every colour resolves to a paired light and dark value so Mint and Midnight keep their proportions without custom per-page overrides.
           </p>
         </div>
         <div class="color-field-grid">
@@ -5521,8 +6341,7 @@ tr:last-child td {
     <div class="color-field-fill" style="background:var(--color-surface-canvas)" aria-hidden="true"></div>
     <div class="color-field-meta">
       <div class="color-field-title">
-        <strong>Canvas</strong>
-        <code>surface.canvas</code>
+        <strong>Mint canvas</strong>
       </div>
       <p class="swatch-note">About 60% of light mode in pale mint; deep cool charcoal in dark mode.</p>
       <div class="swatch-values num">
@@ -5535,7 +6354,6 @@ tr:last-child td {
     <div class="color-field-meta">
       <div class="color-field-title">
         <strong>Card surface</strong>
-        <code>surface.card</code>
       </div>
       <p class="swatch-note">About 30% of every view: clean off-white in light, stepped charcoal in dark.</p>
       <div class="swatch-values num">
@@ -5548,7 +6366,6 @@ tr:last-child td {
     <div class="color-field-meta">
       <div class="color-field-title">
         <strong>Headline panel</strong>
-        <code>surface.hero</code>
       </div>
       <p class="swatch-note">Solid mint fill for the one main figure in light; subtly edged card in dark.</p>
       <div class="swatch-values num">
@@ -5561,7 +6378,6 @@ tr:last-child td {
     <div class="color-field-meta">
       <div class="color-field-title">
         <strong>Primary ink</strong>
-        <code>text.primary</code>
       </div>
       <p class="swatch-note">Deep forest-charcoal in light mode and crisp warm off-white in dark mode.</p>
       <div class="swatch-values num">
@@ -5573,8 +6389,7 @@ tr:last-child td {
     <div class="color-field-fill" style="background:var(--color-primary)" aria-hidden="true"></div>
     <div class="color-field-meta">
       <div class="color-field-title">
-        <strong>Interactive primary</strong>
-        <code>primary</code>
+        <strong>Primary teal</strong>
       </div>
       <p class="swatch-note">Deep teal in light and bright mint in dark for links, focus rings and outlines.</p>
       <div class="swatch-values num">
@@ -5586,8 +6401,7 @@ tr:last-child td {
     <div class="color-field-fill" style="background:var(--color-primary-solid)" aria-hidden="true"></div>
     <div class="color-field-meta">
       <div class="color-field-title">
-        <strong>Primary button fill</strong>
-        <code>primary.solid</code>
+        <strong>Primary button</strong>
       </div>
       <p class="swatch-note">Charcoal button with white text in light; bright mint button with dark ink in dark.</p>
       <div class="swatch-values num">
@@ -5599,8 +6413,7 @@ tr:last-child td {
     <div class="color-field-fill" style="background:var(--color-chart-debt)" aria-hidden="true"></div>
     <div class="color-field-meta">
       <div class="color-field-title">
-        <strong>Debt apricot</strong>
-        <code>chart.debt</code>
+        <strong>Debt and borrowing</strong>
       </div>
       <p class="swatch-note">Borrowing, credit cards and loans always appear in warm apricot, never red.</p>
       <div class="swatch-values num">
@@ -5612,8 +6425,7 @@ tr:last-child td {
     <div class="color-field-fill" style="background:var(--color-chart-wealth)" aria-hidden="true"></div>
     <div class="color-field-meta">
       <div class="color-field-title">
-        <strong>Savings sage</strong>
-        <code>chart.wealth</code>
+        <strong>Savings</strong>
       </div>
       <p class="swatch-note">Cash savings and growth pots across cards, icon tiles and charts.</p>
       <div class="swatch-values num">
@@ -5639,8 +6451,7 @@ tr:last-child td {
     <div class="color-field-fill" style="background:var(--color-orb-sky-teal-core)" aria-hidden="true"></div>
     <div class="color-field-meta">
       <div class="color-field-title">
-        <strong>Sky orb</strong>
-        <code>orb.skyTeal.core</code>
+        <strong>Sky</strong>
       </div>
       <p class="swatch-note">Primary lit glass orb tone and pension area marker.</p>
       <div class="swatch-values num">
@@ -5652,8 +6463,7 @@ tr:last-child td {
     <div class="color-field-fill" style="background:var(--color-orb-sky-teal-shade)" aria-hidden="true"></div>
     <div class="color-field-meta">
       <div class="color-field-title">
-        <strong>Teal orb</strong>
-        <code>orb.skyTeal.shade</code>
+        <strong>Teal</strong>
       </div>
       <p class="swatch-note">Alternating orb tone, net worth and mortgage highlights.</p>
       <div class="swatch-values num">
@@ -5665,8 +6475,7 @@ tr:last-child td {
     <div class="color-field-fill" style="background:var(--color-orb-violet-rose-core)" aria-hidden="true"></div>
     <div class="color-field-meta">
       <div class="color-field-title">
-        <strong>Violet orb</strong>
-        <code>orb.violetRose.core</code>
+        <strong>Violet</strong>
       </div>
       <p class="swatch-note">Contained strictly to orbs, the logo, small markers and tax charts.</p>
       <div class="swatch-values num">
@@ -5678,8 +6487,7 @@ tr:last-child td {
     <div class="color-field-fill" style="background:var(--color-orb-violet-rose-shade)" aria-hidden="true"></div>
     <div class="color-field-meta">
       <div class="color-field-title">
-        <strong>Rose orb</strong>
-        <code>orb.violetRose.shade</code>
+        <strong>Rose</strong>
       </div>
       <p class="swatch-note">Warm orb rim light and budget area highlights, never a card tint.</p>
       <div class="swatch-values num">
@@ -6300,6 +7108,70 @@ tr:last-child td {
 
     <div class="spread">
       <div class="spread-inner">
+        <div class="editorial-copy">
+          <h3 class="sub-title">Live materials on the website</h3>
+          <p class="prose">
+            Marketing pages add slow ambient depth and pointer light around glass materials. None of these movements appear inside the apps or over personal figures.
+          </p>
+        </div>
+
+        <div class="grid-3">
+          <figure class="motion-demo-card" data-motion-demo="hero-orbs">
+            <div class="motion-stage-frame motion-orb-stage" aria-hidden="true">
+              <span class="glass-orb glass-orb-sky motion-hero-orb motion-hero-orb-1"></span>
+              <span class="glass-orb glass-orb-violet motion-hero-orb motion-hero-orb-2"></span>
+              <span class="glass-orb glass-orb-teal motion-hero-orb motion-hero-orb-3"></span>
+              <span class="glass-orb glass-orb-rose motion-hero-orb motion-hero-orb-4"></span>
+            </div>
+            <div class="motion-demo-body">
+              <strong class="card-title">Floating glass orbs</strong>
+              <figcaption class="swatch-note">
+                Four glass orbs floating slowly in place, used in the top band of feature and area pages on the website.
+              </figcaption>
+            </div>
+          </figure>
+
+          <figure class="motion-demo-card" data-motion-demo="bubble-field">
+            <div class="motion-stage-frame motion-bubble-stage">
+              <div class="motion-bubble-layer" aria-hidden="true">
+                <span class="motion-bubble motion-bubble-sky motion-bubble-1"></span>
+                <span class="motion-bubble motion-bubble-violet motion-bubble-2"></span>
+                <span class="motion-bubble motion-bubble-teal motion-bubble-3"></span>
+              </div>
+              <div class="motion-bubble-copy">
+                <span class="chapter-kicker">Marketing band</span>
+                <p class="card-title">Soft bubbles drift behind headings, never behind figures.</p>
+              </div>
+            </div>
+            <div class="motion-demo-body">
+              <strong class="card-title">Bubble field</strong>
+              <figcaption class="swatch-note">
+                Soft drifting circles in the two orb colour sets, used behind marketing bands and never behind personal figures.
+              </figcaption>
+            </div>
+          </figure>
+
+          <figure class="motion-demo-card" data-motion-demo="tilt-light">
+            <div class="motion-stage-frame motion-tilt-stage">
+              <div class="motion-tilt-card" data-motion-tilt="">
+                <span class="chapter-kicker">Interactive specimen</span>
+                <strong class="card-title">Soft glass tile</strong>
+                <p class="swatch-note">Move a pointer across this tile to see the light follow and up to six degrees of tilt.</p>
+              </div>
+            </div>
+            <div class="motion-demo-body">
+              <strong class="card-title">Tilt and light hover</strong>
+              <figcaption class="swatch-note">
+                Pointer light and up to six degrees of tilt on hover, used on marketing tiles and never on cards holding personal figures.
+              </figcaption>
+            </div>
+          </figure>
+        </div>
+      </div>
+    </div>
+
+    <div class="spread spread-subtle">
+      <div class="spread-inner">
         <div class="grid-2">
           <figure class="diagram-figure" data-diagram="glass-orb-lighting">
     <svg viewBox="0 0 700 240" role="img" aria-labelledby="diag-orb-lit-title diag-orb-lit-desc">
@@ -6829,6 +7701,112 @@ tr:last-child td {
 
     <div class="spread">
       <div class="spread-inner">
+        <div class="editorial-split editorial-split-text-first">
+          <div class="editorial-copy">
+            <h3 class="sub-title">Documents gathering into one picture</h3>
+            <p class="prose">
+              On the home page, six sample household documents settle together into the Monthly picture card. Under reduced motion or print, only the finished picture is shown.
+            </p>
+            <div class="motion-demo-controls">
+              <button type="button" class="motion-replay-btn" data-motion-replay="assembling-hero">Play again</button>
+            </div>
+          </div>
+
+          <figure class="motion-demo-card" data-motion-demo="assembling-hero" data-motion-playable="assembling-hero">
+            <div class="motion-gather-stage">
+              <div class="motion-gather-card">
+                <div class="ui-card-head">
+                  <strong class="card-title">Monthly picture</strong>
+                  <span class="ui-tag-slot" data-ui-specimen="example-tag"><span class="d_inline-flex ai_center flex_none px_8px py_2px bdr_full bd-w_1px border-style_solid textStyle_label.sm white-space_nowrap us_none bg-c_surface.sunken c_text.secondary bd-c_border.strong">Example</span></span>
+                </div>
+                <div class="gather-kpis">
+                  <div class="hero-panel" style="padding:var(--space-4)">
+                    <span class="swatch-note" style="color:var(--color-text-on-hero)">Net worth</span>
+                    <strong class="ui-card-figure num" style="color:var(--color-text-hero-figure)">£232,000</strong>
+                  </div>
+                  <div class="card-subtle" style="padding:var(--space-4)">
+                    <span class="swatch-note">Left over each month</span>
+                    <strong class="ui-card-figure num">£639</strong>
+                  </div>
+                </div>
+                <ul class="gather-made-list">
+                  <li class="gather-made-row" style="--row-index:1">
+        <span class="gather-row-bar" aria-hidden="true"></span>
+        <span class="gather-row-text">
+          <strong>Cash and savings</strong>
+          <span class="swatch-note">3.5% AER</span>
+        </span>
+        <span class="gather-row-fig num">£21,000</span>
+      </li><li class="gather-made-row" style="--row-index:2">
+        <span class="gather-row-bar" aria-hidden="true"></span>
+        <span class="gather-row-text">
+          <strong>Pension</strong>
+          <span class="swatch-note">Workplace and personal</span>
+        </span>
+        <span class="gather-row-fig num">£96,000</span>
+      </li><li class="gather-made-row" style="--row-index:3">
+        <span class="gather-row-bar" aria-hidden="true"></span>
+        <span class="gather-row-text">
+          <strong>Salary</strong>
+          <span class="swatch-note">£3,249 a month after tax</span>
+        </span>
+        <span class="gather-row-fig num">£52,000</span>
+      </li><li class="gather-made-row" style="--row-index:4">
+        <span class="gather-row-bar" aria-hidden="true"></span>
+        <span class="gather-row-text">
+          <strong>Budget</strong>
+          <span class="swatch-note">£3,249 in, £2,610 out</span>
+        </span>
+        <span class="gather-row-fig num">£639 left</span>
+      </li><li class="gather-made-row" style="--row-index:5">
+        <span class="gather-row-bar" aria-hidden="true"></span>
+        <span class="gather-row-text">
+          <strong>Mortgage</strong>
+          <span class="swatch-note">4.19%, fixed until September 2028</span>
+        </span>
+        <span class="gather-row-fig num">£186,000</span>
+      </li><li class="gather-made-row" style="--row-index:6">
+        <span class="gather-row-bar" aria-hidden="true"></span>
+        <span class="gather-row-text">
+          <strong>Credit card</strong>
+          <span class="swatch-note">22.9% APR</span>
+        </span>
+        <span class="gather-row-fig num">£1,800</span>
+      </li>
+                </ul>
+              </div>
+              <div class="motion-gather-layer" aria-hidden="true">
+                <div class="gather-piece gather-piece-tl gather-piece-charcoal" style="--piece-index:0">
+          <span class="gather-piece-title">Cash and savings</span>
+          <span class="gather-piece-fig num">£21,000</span>
+        </div><div class="gather-piece gather-piece-tr gather-piece-paper" style="--piece-index:1">
+          <span class="gather-piece-title">Payslip</span>
+          <span class="gather-piece-fig num">£3,249</span>
+        </div><div class="gather-piece gather-piece-ml gather-piece-paper" style="--piece-index:2">
+          <span class="gather-piece-title">This month</span>
+          <span class="gather-piece-fig num">£639</span>
+        </div><div class="gather-piece gather-piece-mr gather-piece-paper" style="--piece-index:3">
+          <span class="gather-piece-title">Mortgage statement</span>
+          <span class="gather-piece-fig num">£186,000</span>
+        </div><div class="gather-piece gather-piece-bl gather-piece-paper" style="--piece-index:4">
+          <span class="gather-piece-title">Pension statement</span>
+          <span class="gather-piece-fig num">£96,000</span>
+        </div><div class="gather-piece gather-piece-br gather-piece-mint" style="--piece-index:5">
+          <span class="gather-piece-title">Credit card</span>
+          <span class="gather-piece-fig num">£1,800</span>
+        </div>
+              </div>
+            </div>
+            <figcaption class="diagram-caption">
+              Six household documents gathering once into one Monthly picture card, showing the home page opening sequence.
+            </figcaption>
+          </figure>
+        </div>
+      </div>
+    </div>
+
+    <div class="spread spread-subtle">
+      <div class="spread-inner">
         <div class="screen-spread" data-motion-hook="screen-pair">
     <div class="screen-spread-head">
       <h3 class="sub-title">Document pictures and orbs on a real marketing page</h3>
@@ -6855,7 +7833,7 @@ tr:last-child td {
       </div>
     </div>
 
-    <div class="spread spread-subtle">
+    <div class="spread">
       <div class="spread-inner">
         <div class="grid-2">
           <article class="card">
@@ -6892,12 +7870,12 @@ tr:last-child td {
     <div class="grid-2">
       <div class="motion-stage" data-motion-hook="motion-demo-app">
         <span class="chapter-kicker">App scale</span>
-        <strong class="num" style="font-size:var(--text-heading-md-size)">120 to 320 ms</strong>
+        <strong class="num" style="font-size:var(--text-heading-md-size)">120 to 900 ms</strong>
         <p class="swatch-note">Brief transitions that confirm saves and step changes without shifting real balances.</p>
       </div>
       <div class="motion-stage" data-motion-hook="motion-demo-marketing">
         <span class="chapter-kicker">Marketing calm scale</span>
-        <strong class="num" style="font-size:var(--text-heading-md-size)">240 to 1,200 ms</strong>
+        <strong class="num" style="font-size:var(--text-heading-md-size)">196 to 4,760 ms</strong>
         <p class="swatch-note">Unhurried scroll scenes and assembling document cards over sample figures only.</p>
       </div>
     </div>
@@ -6907,6 +7885,194 @@ tr:last-child td {
   </header>
 
     <div class="spread">
+      <div class="spread-inner">
+        <div class="editorial-copy">
+          <h3 class="sub-title">Live motion specimens</h3>
+          <p class="prose">
+            Each specimen below runs at its real timing from the design system. Select Play again to replay any piece, or switch on Reduce motion at the top to see the still state.
+          </p>
+        </div>
+
+        <div class="grid-2">
+          <figure class="motion-demo-card" data-motion-demo="entrance" data-motion-playable="entrance">
+            <div class="motion-demo-top">
+              <strong class="card-title">Entrance cascade</strong>
+              <button type="button" class="motion-replay-btn" data-motion-replay="entrance">Play again</button>
+            </div>
+            <div class="motion-entrance-grid">
+              <div class="motion-entrance-item" style="--stagger-index:0">
+        <div class="ui-card-head">
+          <strong>Accounts</strong>
+          <span class="ui-tag-slot" data-ui-specimen="example-tag"><span class="d_inline-flex ai_center flex_none px_8px py_2px bdr_full bd-w_1px border-style_solid textStyle_label.sm white-space_nowrap us_none bg-c_surface.sunken c_text.secondary bd-c_border.strong">Example</span></span>
+        </div>
+        <strong class="ui-card-figure num">£21,000</strong>
+        <span class="swatch-note">Balances typed by you</span>
+      </div><div class="motion-entrance-item" style="--stagger-index:1">
+        <div class="ui-card-head">
+          <strong>Budget</strong>
+          <span class="ui-tag-slot" data-ui-specimen="example-tag"><span class="d_inline-flex ai_center flex_none px_8px py_2px bdr_full bd-w_1px border-style_solid textStyle_label.sm white-space_nowrap us_none bg-c_surface.sunken c_text.secondary bd-c_border.strong">Example</span></span>
+        </div>
+        <strong class="ui-card-figure num">£639</strong>
+        <span class="swatch-note">Comes in and goes out</span>
+      </div><div class="motion-entrance-item" style="--stagger-index:2">
+        <div class="ui-card-head">
+          <strong>Pension</strong>
+          <span class="ui-tag-slot" data-ui-specimen="example-tag"><span class="d_inline-flex ai_center flex_none px_8px py_2px bdr_full bd-w_1px border-style_solid textStyle_label.sm white-space_nowrap us_none bg-c_surface.sunken c_text.secondary bd-c_border.strong">Example</span></span>
+        </div>
+        <strong class="ui-card-figure num">£96,000</strong>
+        <span class="swatch-note">Workplace and personal</span>
+      </div>
+            </div>
+            <figcaption class="diagram-caption">
+              Cards arriving once in order by distance and opacity when a marketing section scrolls into view.
+            </figcaption>
+          </figure>
+
+          <figure class="motion-demo-card" data-motion-demo="count-up" data-motion-playable="count-up">
+            <div class="motion-demo-top">
+              <strong class="card-title">Sample count-up</strong>
+              <button type="button" class="motion-replay-btn" data-motion-replay="count-up">Play again</button>
+            </div>
+            <div class="motion-count-stage">
+              <div class="motion-count-card">
+                <div class="ui-card-head">
+                  <span class="swatch-note">Cash and savings</span>
+                  <span class="ui-tag-slot" data-ui-specimen="example-tag"><span class="d_inline-flex ai_center flex_none px_8px py_2px bdr_full bd-w_1px border-style_solid textStyle_label.sm white-space_nowrap us_none bg-c_surface.sunken c_text.secondary bd-c_border.strong">Example</span></span>
+                </div>
+                <p class="hero-figure num" style="color:var(--color-text-primary)">
+                  <span class="sr-only">£21,000</span>
+                  <span aria-hidden="true" data-count-up="21000" data-count-duration="2240">£21,000</span>
+                </p>
+                <span class="swatch-note num">3.5% AER, sample household</span>
+              </div>
+            </div>
+            <figcaption class="diagram-caption">
+              A fixed sample figure tagged Example counting once to its value on the website; personal balances in the apps never count up.
+            </figcaption>
+          </figure>
+        </div>
+
+        <figure class="motion-demo-card" data-motion-demo="timing-scale" data-motion-playable="timing-scale">
+          <div class="motion-demo-top">
+            <div>
+              <strong class="card-title">App pace versus calm marketing pace</strong>
+              <p class="swatch-note">Bars travel to scale for their exact duration and easing.</p>
+            </div>
+            <button type="button" class="motion-replay-btn" data-motion-replay="timing-scale">Play again</button>
+          </div>
+          <div class="grid-2">
+            <div class="motion-timing-group">
+        <strong class="card-title">App timing scale</strong>
+        <div class="motion-timing-list"><div class="motion-timing-row" data-timing-row="hover-and-press">
+            <div class="motion-timing-head">
+              <span>Hover and press</span>
+              <span class="num swatch-note">120 ms</span>
+            </div>
+            <div class="motion-timing-track" aria-hidden="true">
+              <div class="motion-timing-fill" style="width:4%;--bar-dur:var(--duration-fast);--bar-ease:var(--easing-standard)"></div>
+            </div>
+          </div><div class="motion-timing-row" data-timing-row="tabs-and-disclosures">
+            <div class="motion-timing-head">
+              <span>Tabs and disclosures</span>
+              <span class="num swatch-note">200 ms</span>
+            </div>
+            <div class="motion-timing-track" aria-hidden="true">
+              <div class="motion-timing-fill" style="width:4%;--bar-dur:var(--duration-base);--bar-ease:var(--easing-standard)"></div>
+            </div>
+          </div><div class="motion-timing-row" data-timing-row="sheets-and-dialogs">
+            <div class="motion-timing-head">
+              <span>Sheets and dialogs</span>
+              <span class="num swatch-note">320 ms</span>
+            </div>
+            <div class="motion-timing-track" aria-hidden="true">
+              <div class="motion-timing-fill" style="width:7%;--bar-dur:var(--duration-slow);--bar-ease:var(--easing-enter)"></div>
+            </div>
+          </div><div class="motion-timing-row" data-timing-row="chart-line-draw">
+            <div class="motion-timing-head">
+              <span>Chart line draw</span>
+              <span class="num swatch-note">600 ms</span>
+            </div>
+            <div class="motion-timing-track" aria-hidden="true">
+              <div class="motion-timing-fill" style="width:13%;--bar-dur:var(--duration-draw);--bar-ease:var(--easing-standard)"></div>
+            </div>
+          </div><div class="motion-timing-row" data-timing-row="scene-settle">
+            <div class="motion-timing-head">
+              <span>Scene settle</span>
+              <span class="num swatch-note">900 ms</span>
+            </div>
+            <div class="motion-timing-track" aria-hidden="true">
+              <div class="motion-timing-fill" style="width:19%;--bar-dur:var(--duration-scene);--bar-ease:var(--easing-settle)"></div>
+            </div>
+          </div></div>
+      </div><div class="motion-timing-group">
+        <strong class="card-title">Marketing calm scale</strong>
+        <div class="motion-timing-list"><div class="motion-timing-row" data-timing-row="stagger-gap">
+            <div class="motion-timing-head">
+              <span>Stagger gap</span>
+              <span class="num swatch-note">196 ms</span>
+            </div>
+            <div class="motion-timing-track" aria-hidden="true">
+              <div class="motion-timing-fill" style="width:4%;--bar-dur:var(--duration-marketing-stagger);--bar-ease:var(--easing-marketing-calm)"></div>
+            </div>
+          </div><div class="motion-timing-row" data-timing-row="hover-light-and-glide">
+            <div class="motion-timing-head">
+              <span>Hover light and glide</span>
+              <span class="num swatch-note">588 ms</span>
+            </div>
+            <div class="motion-timing-track" aria-hidden="true">
+              <div class="motion-timing-fill" style="width:12%;--bar-dur:var(--duration-marketing-hover);--bar-ease:var(--easing-marketing-calm)"></div>
+            </div>
+          </div><div class="motion-timing-row" data-timing-row="disclosure-open">
+            <div class="motion-timing-head">
+              <span>Disclosure open</span>
+              <span class="num swatch-note">980 ms</span>
+            </div>
+            <div class="motion-timing-track" aria-hidden="true">
+              <div class="motion-timing-fill" style="width:21%;--bar-dur:var(--duration-marketing-disclosure);--bar-ease:var(--easing-marketing-calm-in-out)"></div>
+            </div>
+          </div><div class="motion-timing-row" data-timing-row="card-entrance">
+            <div class="motion-timing-head">
+              <span>Card entrance</span>
+              <span class="num swatch-note">1,540 ms</span>
+            </div>
+            <div class="motion-timing-track" aria-hidden="true">
+              <div class="motion-timing-fill" style="width:32%;--bar-dur:var(--duration-marketing-entry);--bar-ease:var(--easing-marketing-calm)"></div>
+            </div>
+          </div><div class="motion-timing-row" data-timing-row="sample-count-up">
+            <div class="motion-timing-head">
+              <span>Sample count-up</span>
+              <span class="num swatch-note">2,240 ms</span>
+            </div>
+            <div class="motion-timing-track" aria-hidden="true">
+              <div class="motion-timing-fill" style="width:47%;--bar-dur:var(--duration-marketing-count);--bar-ease:var(--easing-marketing-calm)"></div>
+            </div>
+          </div><div class="motion-timing-row" data-timing-row="self-drawing-chart">
+            <div class="motion-timing-head">
+              <span>Self-drawing chart</span>
+              <span class="num swatch-note">2,660 ms</span>
+            </div>
+            <div class="motion-timing-track" aria-hidden="true">
+              <div class="motion-timing-fill" style="width:56%;--bar-dur:var(--duration-marketing-chart);--bar-ease:var(--easing-marketing-calm)"></div>
+            </div>
+          </div><div class="motion-timing-row" data-timing-row="timed-hero-sequence">
+            <div class="motion-timing-head">
+              <span>Timed hero sequence</span>
+              <span class="num swatch-note">4,760 ms</span>
+            </div>
+            <div class="motion-timing-track" aria-hidden="true">
+              <div class="motion-timing-fill" style="width:100%;--bar-dur:var(--duration-marketing-hero);--bar-ease:var(--easing-marketing-calm)"></div>
+            </div>
+          </div></div>
+      </div>
+          </div>
+          <figcaption class="diagram-caption">
+            Each bar moves for its real duration and easing so you can compare the brief app pace with the unhurried website pace.
+          </figcaption>
+        </figure>
+      </div>
+    </div>
+
+    <div class="spread spread-subtle">
       <div class="spread-inner">
         <div class="screen-spread" data-motion-hook="screen-pair">
     <div class="screen-spread-head">
@@ -6934,7 +8100,7 @@ tr:last-child td {
       </div>
     </div>
 
-    <div class="spread spread-subtle">
+    <div class="spread">
       <div class="spread-inner">
         <div class="editorial-copy">
           <h3 class="sub-title">Three motion tiers inside the apps</h3>
@@ -6980,7 +8146,7 @@ tr:last-child td {
       </div>
     </div>
 
-    <div class="spread">
+    <div class="spread spread-subtle">
       <div class="spread-inner">
         <div class="grid-2">
           <article class="card">
@@ -7073,6 +8239,60 @@ tr:last-child td {
 
     <div class="spread">
       <div class="spread-inner">
+        <div class="editorial-split editorial-split-text-first">
+          <div class="editorial-copy">
+            <h3 class="sub-title">Self-drawing chart line</h3>
+            <p class="prose">
+              Line charts draw once when first seen, then stay still while you inspect points or drag a scenario slider.
+            </p>
+            <div class="motion-demo-controls">
+              <button type="button" class="motion-replay-btn" data-motion-replay="drawn-chart">Play again</button>
+            </div>
+          </div>
+
+          <figure class="diagram-figure" data-diagram="self-drawing-chart" data-motion-demo="drawn-chart" data-motion-playable="drawn-chart">
+            <svg viewBox="0 0 640 240" role="img" aria-labelledby="diag-draw-chart-title diag-draw-chart-desc">
+    <title id="diag-draw-chart-title">Self-drawing savings chart</title>
+    <desc id="diag-draw-chart-desc">Sample household cash and savings line drawing from June to November, ending at £21,000 and 3.5% AER.</desc>
+    <rect x="1" y="1" width="638" height="238" rx="14" fill="var(--color-surface-card)" stroke="var(--color-border)"/>
+    <text x="24" y="30" fill="var(--color-text-primary)" font-family="var(--font-heading)" font-size="13" font-weight="600">Cash and savings over six months</text>
+    <rect x="552" y="14" width="64" height="22" rx="11" fill="var(--color-surface-sunken)" stroke="var(--color-border)"/>
+    <text x="584" y="29" text-anchor="middle" fill="var(--color-text-secondary)" font-family="var(--font-body)" font-size="11" font-weight="500">Example</text>
+
+    <line x1="72" y1="62" x2="540" y2="62" stroke="var(--color-chart-grid)" stroke-width="1"/>
+    <line x1="72" y1="106" x2="540" y2="106" stroke="var(--color-chart-grid)" stroke-width="1"/>
+    <line x1="72" y1="150" x2="540" y2="150" stroke="var(--color-chart-grid)" stroke-width="1"/>
+    <line x1="72" y1="194" x2="540" y2="194" stroke="var(--color-chart-baseline)" stroke-width="1.25"/>
+
+    <text x="60" y="66" text-anchor="end" fill="var(--color-text-muted)" font-family="var(--font-body)" font-size="11" style="font-variant-numeric:tabular-nums">£24k</text>
+    <text x="60" y="110" text-anchor="end" fill="var(--color-text-muted)" font-family="var(--font-body)" font-size="11" style="font-variant-numeric:tabular-nums">£18k</text>
+    <text x="60" y="154" text-anchor="end" fill="var(--color-text-muted)" font-family="var(--font-body)" font-size="11" style="font-variant-numeric:tabular-nums">£12k</text>
+    <text x="60" y="198" text-anchor="end" fill="var(--color-text-muted)" font-family="var(--font-body)" font-size="11" style="font-variant-numeric:tabular-nums">£6k</text>
+
+    <path class="motion-chart-area" d="M72,162 L165,148 L259,134 L353,120 L446,104 L540,86 L540,194 L72,194 Z" fill="var(--color-chart-wealth)" fill-opacity="0.14"/>
+    <path class="motion-chart-line" pathLength="100" d="M72,162 L165,148 L259,134 L353,120 L446,104 L540,86" fill="none" stroke="var(--color-chart-wealth)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle class="motion-chart-dot" cx="540" cy="86" r="5" fill="var(--color-chart-wealth)"/>
+
+    <text x="554" y="83" fill="var(--color-text-primary)" font-family="var(--font-heading)" font-size="13" font-weight="700" style="font-variant-numeric:tabular-nums">£21,000</text>
+    <text x="554" y="102" fill="var(--color-text-muted)" font-family="var(--font-body)" font-size="11" style="font-variant-numeric:tabular-nums">3.5% AER</text>
+
+    <text x="72" y="220" text-anchor="middle" fill="var(--color-text-muted)" font-family="var(--font-body)" font-size="11">Jun</text>
+    <text x="165" y="220" text-anchor="middle" fill="var(--color-text-muted)" font-family="var(--font-body)" font-size="11">Jul</text>
+    <text x="259" y="220" text-anchor="middle" fill="var(--color-text-muted)" font-family="var(--font-body)" font-size="11">Aug</text>
+    <text x="353" y="220" text-anchor="middle" fill="var(--color-text-muted)" font-family="var(--font-body)" font-size="11">Sep</text>
+    <text x="446" y="220" text-anchor="middle" fill="var(--color-text-muted)" font-family="var(--font-body)" font-size="11">Oct</text>
+    <text x="540" y="220" text-anchor="middle" fill="var(--color-text-muted)" font-family="var(--font-body)" font-size="11">Nov</text>
+  </svg>
+            <figcaption class="diagram-caption">
+              A sample savings line drawing itself once when first seen on the website; app charts draw once per visit in 600 milliseconds.
+            </figcaption>
+          </figure>
+        </div>
+      </div>
+    </div>
+
+    <div class="spread spread-subtle">
+      <div class="spread-inner">
         <div class="editorial-copy">
           <h3 class="sub-title">Consistent series colour</h3>
           <p class="prose">
@@ -7101,7 +8321,7 @@ tr:last-child td {
       </div>
     </div>
 
-    <div class="spread spread-subtle">
+    <div class="spread">
       <div class="spread-inner">
         <div class="grid-2">
           <article class="card">
@@ -7334,7 +8554,7 @@ tr:last-child td {
         <text x="278" y="71" fill="var(--color-text-secondary)" font-family="var(--font-mono)" font-size="10" style="font-variant-numeric:tabular-nums">D #1d1a17</text>
 
         <line x1="368" y1="67" x2="392" y2="67" stroke="var(--color-border-strong)" stroke-width="1.25"/>
-        <polyline points="387,7 393,11 387,15" fill="none" stroke="var(--color-border-strong)" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+        <polyline points="387,63 393,67 387,71" fill="none" stroke="var(--color-border-strong)" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
 
         <rect x="412" y="58" width="18" height="18" rx="4" fill="#eef6f3" stroke="var(--color-border-strong)" stroke-width="1"/>
         <text x="436" y="71" fill="var(--color-text-primary)" font-family="var(--font-mono)" font-size="10" font-weight="600" style="font-variant-numeric:tabular-nums">L #eef6f3</text>
@@ -7353,7 +8573,7 @@ tr:last-child td {
         <text x="278" y="105" fill="var(--color-text-secondary)" font-family="var(--font-mono)" font-size="10" style="font-variant-numeric:tabular-nums">D #272320</text>
 
         <line x1="368" y1="101" x2="392" y2="101" stroke="var(--color-border-strong)" stroke-width="1.25"/>
-        <polyline points="387,7 393,11 387,15" fill="none" stroke="var(--color-border-strong)" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+        <polyline points="387,97 393,101 387,105" fill="none" stroke="var(--color-border-strong)" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
 
         <rect x="412" y="92" width="18" height="18" rx="4" fill="#f8fcfa" stroke="var(--color-border-strong)" stroke-width="1"/>
         <text x="436" y="105" fill="var(--color-text-primary)" font-family="var(--font-mono)" font-size="10" font-weight="600" style="font-variant-numeric:tabular-nums">L #f8fcfa</text>
@@ -7372,7 +8592,7 @@ tr:last-child td {
         <text x="278" y="139" fill="var(--color-text-secondary)" font-family="var(--font-mono)" font-size="10" style="font-variant-numeric:tabular-nums">D #1b5448</text>
 
         <line x1="368" y1="135" x2="392" y2="135" stroke="var(--color-border-strong)" stroke-width="1.25"/>
-        <polyline points="387,7 393,11 387,15" fill="none" stroke="var(--color-border-strong)" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+        <polyline points="387,131 393,135 387,139" fill="none" stroke="var(--color-border-strong)" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
 
         <rect x="412" y="126" width="18" height="18" rx="4" fill="#6fd0ba" stroke="var(--color-border-strong)" stroke-width="1"/>
         <text x="436" y="139" fill="var(--color-text-primary)" font-family="var(--font-mono)" font-size="10" font-weight="600" style="font-variant-numeric:tabular-nums">L #6fd0ba</text>
@@ -7391,7 +8611,7 @@ tr:last-child td {
         <text x="278" y="173" fill="var(--color-text-secondary)" font-family="var(--font-mono)" font-size="10" style="font-variant-numeric:tabular-nums">D #3a352f</text>
 
         <line x1="368" y1="169" x2="392" y2="169" stroke="var(--color-border-strong)" stroke-width="1.25"/>
-        <polyline points="387,7 393,11 387,15" fill="none" stroke="var(--color-border-strong)" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+        <polyline points="387,165 393,169 387,173" fill="none" stroke="var(--color-border-strong)" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
 
         <rect x="412" y="160" width="18" height="18" rx="4" fill="#14171c" stroke="var(--color-border-strong)" stroke-width="1"/>
         <text x="436" y="173" fill="var(--color-text-primary)" font-family="var(--font-mono)" font-size="10" font-weight="600" style="font-variant-numeric:tabular-nums">L #14171c</text>
@@ -7410,7 +8630,7 @@ tr:last-child td {
         <text x="278" y="207" fill="var(--color-text-secondary)" font-family="var(--font-mono)" font-size="10" style="font-variant-numeric:tabular-nums">D #f4efe7</text>
 
         <line x1="368" y1="203" x2="392" y2="203" stroke="var(--color-border-strong)" stroke-width="1.25"/>
-        <polyline points="387,7 393,11 387,15" fill="none" stroke="var(--color-border-strong)" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+        <polyline points="387,199 393,203 387,207" fill="none" stroke="var(--color-border-strong)" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
 
         <rect x="412" y="194" width="18" height="18" rx="4" fill="#0f2a2a" stroke="var(--color-border-strong)" stroke-width="1"/>
         <text x="436" y="207" fill="var(--color-text-primary)" font-family="var(--font-mono)" font-size="10" font-weight="600" style="font-variant-numeric:tabular-nums">L #0f2a2a</text>
@@ -7429,7 +8649,7 @@ tr:last-child td {
         <text x="278" y="241" fill="var(--color-text-secondary)" font-family="var(--font-mono)" font-size="10" style="font-variant-numeric:tabular-nums">D #6fd0ba</text>
 
         <line x1="368" y1="237" x2="392" y2="237" stroke="var(--color-border-strong)" stroke-width="1.25"/>
-        <polyline points="387,7 393,11 387,15" fill="none" stroke="var(--color-border-strong)" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+        <polyline points="387,233 393,237 387,241" fill="none" stroke="var(--color-border-strong)" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
 
         <rect x="412" y="228" width="18" height="18" rx="4" fill="#0b6b5d" stroke="var(--color-border-strong)" stroke-width="1"/>
         <text x="436" y="241" fill="var(--color-text-primary)" font-family="var(--font-mono)" font-size="10" font-weight="600" style="font-variant-numeric:tabular-nums">L #0b6b5d</text>
@@ -7448,7 +8668,7 @@ tr:last-child td {
         <text x="278" y="275" fill="var(--color-text-secondary)" font-family="var(--font-mono)" font-size="10" style="font-variant-numeric:tabular-nums">D #0f6b5e</text>
 
         <line x1="368" y1="271" x2="392" y2="271" stroke="var(--color-border-strong)" stroke-width="1.25"/>
-        <polyline points="387,7 393,11 387,15" fill="none" stroke="var(--color-border-strong)" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+        <polyline points="387,267 393,271 387,275" fill="none" stroke="var(--color-border-strong)" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
 
         <rect x="412" y="262" width="18" height="18" rx="4" fill="#14171c" stroke="var(--color-border-strong)" stroke-width="1"/>
         <text x="436" y="275" fill="var(--color-text-primary)" font-family="var(--font-mono)" font-size="10" font-weight="600" style="font-variant-numeric:tabular-nums">L #14171c</text>
@@ -7467,7 +8687,7 @@ tr:last-child td {
         <text x="278" y="309" fill="var(--color-text-secondary)" font-family="var(--font-mono)" font-size="10" style="font-variant-numeric:tabular-nums">D #dba6c9</text>
 
         <line x1="368" y1="305" x2="392" y2="305" stroke="var(--color-border-strong)" stroke-width="1.25"/>
-        <polyline points="387,7 393,11 387,15" fill="none" stroke="var(--color-border-strong)" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+        <polyline points="387,301 393,305 387,309" fill="none" stroke="var(--color-border-strong)" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
 
         <rect x="412" y="296" width="18" height="18" rx="4" fill="#1d5f73" stroke="var(--color-border-strong)" stroke-width="1"/>
         <text x="436" y="309" fill="var(--color-text-primary)" font-family="var(--font-mono)" font-size="10" font-weight="600" style="font-variant-numeric:tabular-nums">L #1d5f73</text>
@@ -7486,7 +8706,7 @@ tr:last-child td {
         <text x="278" y="343" fill="var(--color-text-secondary)" font-family="var(--font-mono)" font-size="10" style="font-variant-numeric:tabular-nums">D #3b362f</text>
 
         <line x1="368" y1="339" x2="392" y2="339" stroke="var(--color-border-strong)" stroke-width="1.25"/>
-        <polyline points="387,7 393,11 387,15" fill="none" stroke="var(--color-border-strong)" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+        <polyline points="387,335 393,339 387,343" fill="none" stroke="var(--color-border-strong)" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
 
         <rect x="412" y="330" width="18" height="18" rx="4" fill="#c8dcd5" stroke="var(--color-border-strong)" stroke-width="1"/>
         <text x="436" y="343" fill="var(--color-text-primary)" font-family="var(--font-mono)" font-size="10" font-weight="600" style="font-variant-numeric:tabular-nums">L #c8dcd5</text>
@@ -7603,12 +8823,14 @@ tr:last-child td {
                 <video class="history-video" muted loop playsinline controls preload="metadata" poster="assets/history/baseline-2026-11-28-home-light.jpg" width="960" height="675" data-brand-video="hero">
                   <source src="assets/video/home-hero-light.webm" type="video/webm">
                 </video>
+                <img class="history-video-poster" src="assets/history/baseline-2026-11-28-home-light.jpg" alt="Still poster of the home page hero assembling in light theme" width="960" height="675" loading="lazy"/>
                 <figcaption class="swatch-note">The finished home page hero assembling from six household documents in light theme (8 seconds).</figcaption>
               </figure>
               <figure class="history-figure">
                 <video class="history-video" muted loop playsinline controls preload="metadata" poster="assets/history/baseline-2026-11-28-home-dark.jpg" width="960" height="600" data-brand-video="journey">
                   <source src="assets/video/home-journey-dark.webm" type="video/webm">
                 </video>
+                <img class="history-video-poster" src="assets/history/baseline-2026-11-28-home-dark.jpg" alt="Still poster of the home page scroll journey in dark theme" width="960" height="600" loading="lazy"/>
                 <figcaption class="swatch-note">The scroll journey stepping through Flump's money areas in dark theme.</figcaption>
               </figure>
             </div>
@@ -9793,8 +11015,18 @@ tr:last-child td {
     if (motionButton) {
       motionButton.setAttribute("aria-pressed", reduced ? "true" : "false");
     }
+    document.dispatchEvent(new CustomEvent("flump:motion-change", { detail: { reduced: Boolean(reduced) } }));
   }
 
+  function syncBarOffset() {
+    const bar = document.querySelector(".book-bar");
+    if (bar) {
+      root.style.setProperty("--book-bar-offset", Math.ceil(bar.getBoundingClientRect().height + 12) + "px");
+    }
+  }
+
+  syncBarOffset();
+  window.addEventListener("resize", syncBarOffset);
   syncTheme(readStorage(THEME_KEY) || "system");
   syncMotion(readStorage(MOTION_KEY) === "reduce");
 
@@ -9826,6 +11058,199 @@ tr:last-child td {
       if (event.key === "Escape" && tocDrawer.hasAttribute("open")) {
         tocDrawer.removeAttribute("open");
       }
+    });
+  }
+})();
+</script>
+<script>
+(() => {
+  const root = document.documentElement;
+  const mq = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
+  const gbp = new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP", maximumFractionDigits: 0 });
+  const isReduced = () => root.getAttribute("data-motion") === "reduce" || Boolean(mq && mq.matches);
+
+  function calmEase(t) {
+    let u = t;
+    for (let i = 0; i < 4; i += 1) {
+      const x = 3 * (1 - u) * (1 - u) * u * 0.25 + 3 * (1 - u) * u * u * 0.2 + u * u * u;
+      const dx = 3 * (1 - u) * (1 - u) * 0.25 + 6 * (1 - u) * u * -0.05 + 3 * u * u * 0.8;
+      if (Math.abs(dx) < 1e-5) break;
+      u = Math.min(1, Math.max(0, u - (x - t) / dx));
+    }
+    return 3 * (1 - u) * (1 - u) * u * 0.1 + 3 * (1 - u) * u * u + u * u * u;
+  }
+
+  const countFrames = new WeakMap();
+  function snapCount(el) {
+    const raf = countFrames.get(el);
+    if (raf) cancelAnimationFrame(raf);
+    countFrames.delete(el);
+    el.textContent = gbp.format(Number(el.getAttribute("data-count-up") || "0"));
+  }
+
+  function runCount(el) {
+    const target = Number(el.getAttribute("data-count-up") || "0");
+    const dur = Number(el.getAttribute("data-count-duration") || "0");
+    if (isReduced() || dur <= 0) {
+      snapCount(el);
+      return;
+    }
+    const prev = countFrames.get(el);
+    if (prev) cancelAnimationFrame(prev);
+    const start = performance.now();
+    const tick = (now) => {
+      if (isReduced()) {
+        snapCount(el);
+        return;
+      }
+      const p = Math.min(1, (now - start) / dur);
+      el.textContent = gbp.format(Math.round(target * calmEase(p)));
+      if (p < 1) {
+        countFrames.set(el, requestAnimationFrame(tick));
+      } else {
+        countFrames.delete(el);
+        el.textContent = gbp.format(target);
+      }
+    };
+    el.textContent = gbp.format(0);
+    countFrames.set(el, requestAnimationFrame(tick));
+  }
+
+  function playDemo(el) {
+    if (isReduced()) return;
+    el.classList.remove("is-playing");
+    void el.offsetWidth;
+    el.classList.add("is-playing");
+    const counter = el.querySelector("[data-count-up]");
+    if (counter) runCount(counter);
+  }
+
+  function syncMotionState() {
+    const reduced = isReduced();
+    for (const b of document.querySelectorAll("[data-motion-replay]")) b.disabled = reduced;
+    if (reduced) {
+      for (const p of document.querySelectorAll("[data-motion-playable]")) p.classList.remove("is-playing");
+      for (const c of document.querySelectorAll("[data-count-up]")) snapCount(c);
+    }
+  }
+
+  for (const btn of document.querySelectorAll("[data-motion-replay]")) {
+    btn.addEventListener("click", () => {
+      const key = btn.getAttribute("data-motion-replay");
+      const target = key ? document.querySelector('[data-motion-playable="' + key + '"]') : null;
+      if (target) playDemo(target);
+    });
+  }
+
+  if ("IntersectionObserver" in window) {
+    const demoObs = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        const el = entry.target;
+        if (entry.isIntersecting && !el.getAttribute("data-played-once")) {
+          el.setAttribute("data-played-once", "true");
+          playDemo(el);
+        }
+      }
+    }, { threshold: 0.25 });
+    for (const el of document.querySelectorAll("[data-motion-playable]")) demoObs.observe(el);
+  }
+
+  document.addEventListener("flump:motion-change", syncMotionState);
+  window.addEventListener("beforeprint", () => {
+    for (const c of document.querySelectorAll("[data-count-up]")) snapCount(c);
+  });
+  if (mq && mq.addEventListener) mq.addEventListener("change", syncMotionState);
+  syncMotionState();
+})();
+</script>
+<script>
+(() => {
+  const root = document.documentElement;
+  const mq = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
+  const isReduced = () => root.getAttribute("data-motion") === "reduce" || Boolean(mq && mq.matches);
+
+  function syncVideos() {
+    const videos = document.querySelectorAll("video[data-brand-video]");
+    const canPlay = !isReduced() && !document.hidden;
+    for (let i = 0; i < videos.length; i += 1) {
+      const v = videos[i];
+      if (canPlay && v.getAttribute("data-in-view") === "true") {
+        v.muted = true;
+        v.loop = true;
+        const p = v.play();
+        if (p && p.catch) p.catch(() => {});
+      } else {
+        v.pause();
+      }
+    }
+  }
+
+  if ("IntersectionObserver" in window) {
+    const vidObs = new IntersectionObserver((entries) => {
+      for (let i = 0; i < entries.length; i += 1) {
+        entries[i].target.setAttribute("data-in-view", entries[i].isIntersecting ? "true" : "false");
+      }
+      syncVideos();
+    }, { threshold: 0.2 });
+    const videos = document.querySelectorAll("video[data-brand-video]");
+    for (let i = 0; i < videos.length; i += 1) {
+      vidObs.observe(videos[i]);
+    }
+  }
+
+  document.addEventListener("flump:motion-change", syncVideos);
+  document.addEventListener("visibilitychange", syncVideos);
+  window.addEventListener("beforeprint", () => {
+    const videos = document.querySelectorAll("video[data-brand-video]");
+    for (let i = 0; i < videos.length; i += 1) {
+      videos[i].pause();
+    }
+  });
+  if (mq && mq.addEventListener) mq.addEventListener("change", syncVideos);
+  syncVideos();
+})();
+</script>
+<script>
+(() => {
+  const root = document.documentElement;
+  const mq = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
+  const isReduced = () => root.getAttribute("data-motion") === "reduce" || Boolean(mq && mq.matches);
+  const tiltEls = document.querySelectorAll("[data-motion-tilt]");
+
+  function resetTilts() {
+    for (let i = 0; i < tiltEls.length; i += 1) {
+      tiltEls[i].style.setProperty("--tilt-rx", "0deg");
+      tiltEls[i].style.setProperty("--tilt-ry", "0deg");
+    }
+  }
+
+  for (let i = 0; i < tiltEls.length; i += 1) {
+    const el = tiltEls[i];
+    el.addEventListener("pointermove", (e) => {
+      if (e.pointerType && e.pointerType !== "mouse") return;
+      const r = el.getBoundingClientRect();
+      if (r.width <= 0 || r.height <= 0) return;
+      const px = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
+      const py = Math.min(1, Math.max(0, (e.clientY - r.top) / r.height));
+      el.setAttribute("data-tilt-light", "on");
+      el.style.setProperty("--light-x", (px * 100).toFixed(1) + "%");
+      el.style.setProperty("--light-y", (py * 100).toFixed(1) + "%");
+      el.style.setProperty("--tilt-rx", isReduced() ? "0deg" : ((0.5 - py) * 12).toFixed(2) + "deg");
+      el.style.setProperty("--tilt-ry", isReduced() ? "0deg" : ((px - 0.5) * 12).toFixed(2) + "deg");
+    });
+    el.addEventListener("pointerleave", () => {
+      el.removeAttribute("data-tilt-light");
+      el.style.setProperty("--tilt-rx", "0deg");
+      el.style.setProperty("--tilt-ry", "0deg");
+    });
+  }
+
+  document.addEventListener("flump:motion-change", () => {
+    if (isReduced()) resetTilts();
+  });
+  if (mq && mq.addEventListener) {
+    mq.addEventListener("change", () => {
+      if (isReduced()) resetTilts();
     });
   }
 })();

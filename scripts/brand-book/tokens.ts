@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { buildFinancialPicture, SAMPLE_HOUSEHOLDS } from "../../packages/finance-engine/src/index";
 import { NAV_BREAKPOINT, NAV_WIDE_BREAKPOINT } from "../../packages/tokens/src/breakpoints";
 import { elevationShadows } from "../../packages/tokens/src/elevation";
 import {
@@ -150,6 +151,81 @@ export interface BrandTokens {
     headingLatinWoff2: string;
     bodyLatinWoff2: string;
   };
+  sampleHousehold: {
+    netWorth: string;
+    leftOver: string;
+    savings: string;
+    savingsNumeric: number;
+    savingsRate: string;
+    pension: string;
+    salary: string;
+    netMonthly: string;
+    comesIn: string;
+    goesOut: string;
+    mortgage: string;
+    mortgageRate: string;
+    fixedUntil: string;
+    card: string;
+    cardRate: string;
+    home: string;
+    loan: string;
+  };
+}
+
+function loadSampleHousehold(): BrandTokens["sampleHousehold"] {
+  const fixture = SAMPLE_HOUSEHOLDS.homeowner.fixture;
+  const picture = buildFinancialPicture(fixture);
+  const account = (type: string) => fixture.accounts.find((a) => a.type === type);
+  const gbp = new Intl.NumberFormat("en-GB", {
+    style: "currency",
+    currency: "GBP",
+    maximumFractionDigits: 0,
+  });
+  const pctFmt = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 2 });
+  const monthYearFmt = new Intl.DateTimeFormat("en-GB", {
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+  const savingsAcc = account("Saving");
+  const pensionAcc = account("Pension");
+  const mortgageAcc = account("Mortgage");
+  const cardAcc = account("Credit Card");
+  const homeAcc = account("Property");
+  const loanAcc = account("Loan");
+  const comesIn = fixture.budget
+    .filter((entry) => entry.isIncome)
+    .reduce((sum, entry) => sum + entry.amount, 0);
+  const goesOut = fixture.budget
+    .filter((entry) => !entry.isIncome)
+    .reduce((sum, entry) => sum + entry.amount, 0);
+  const salaryNum = Number(fixture.profile.annualSalary ?? 0);
+  const savingsNum = Number(savingsAcc?.balance ?? 0);
+  const fixedDate = mortgageAcc?.fixedRateEndDate ?? "2028-09-30";
+  const [yr = 2028, mo = 9] = fixedDate.split("-").map(Number);
+
+  return {
+    netWorth: gbp.format(picture.netWorth.netWorth),
+    leftOver:
+      picture.budget.status === "known"
+        ? gbp.format(picture.budget.value.surplus)
+        : gbp.format(comesIn - goesOut),
+    savings: gbp.format(savingsNum),
+    savingsNumeric: savingsNum,
+    savingsRate: `${pctFmt.format(Number(savingsAcc?.interestRate ?? 0))}% AER`,
+    pension: gbp.format(Number(pensionAcc?.balance ?? 0)),
+    salary: gbp.format(salaryNum),
+    netMonthly: gbp.format(comesIn),
+    comesIn: gbp.format(comesIn),
+    goesOut: gbp.format(goesOut),
+    mortgage: gbp.format(Number(mortgageAcc?.balance ?? 0)),
+    mortgageRate: `${pctFmt.format(Number(mortgageAcc?.interestRate ?? 0))}%`,
+    fixedUntil: monthYearFmt.format(new Date(Date.UTC(yr, mo - 1, 15))),
+    card: gbp.format(Number(cardAcc?.balance ?? 0)),
+    cardRate: `${pctFmt.format(Number(cardAcc?.interestRate ?? 0))}% APR`,
+    home: gbp.format(Number(homeAcc?.balance ?? 0)),
+    loan: gbp.format(Number(loanAcc?.balance ?? 0)),
+  };
 }
 
 export function loadBrandTokens(): BrandTokens {
@@ -222,6 +298,7 @@ export function loadBrandTokens(): BrandTokens {
       ),
       bodyLatinWoff2: readFontBase64("@fontsource-variable/inter", "inter-latin-wght-normal.woff2"),
     },
+    sampleHousehold: loadSampleHousehold(),
   };
 }
 

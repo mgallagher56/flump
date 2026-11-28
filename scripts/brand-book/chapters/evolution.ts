@@ -216,12 +216,14 @@ export function renderEvolutionChapter(tokens: BrandTokens): string {
                 <video class="history-video" muted loop playsinline controls preload="metadata" poster="assets/history/baseline-2026-11-28-home-light.jpg" width="960" height="675" data-brand-video="hero">
                   <source src="assets/video/home-hero-light.webm" type="video/webm">
                 </video>
+                <img class="history-video-poster" src="assets/history/baseline-2026-11-28-home-light.jpg" alt="Still poster of the home page hero assembling in light theme" width="960" height="675" loading="lazy"/>
                 <figcaption class="swatch-note">The finished home page hero assembling from six household documents in light theme (8 seconds).</figcaption>
               </figure>
               <figure class="history-figure">
                 <video class="history-video" muted loop playsinline controls preload="metadata" poster="assets/history/baseline-2026-11-28-home-dark.jpg" width="960" height="600" data-brand-video="journey">
                   <source src="assets/video/home-journey-dark.webm" type="video/webm">
                 </video>
+                <img class="history-video-poster" src="assets/history/baseline-2026-11-28-home-dark.jpg" alt="Still poster of the home page scroll journey in dark theme" width="960" height="600" loading="lazy"/>
                 <figcaption class="swatch-note">The scroll journey stepping through Flump's money areas in dark theme.</figcaption>
               </figure>
             </div>

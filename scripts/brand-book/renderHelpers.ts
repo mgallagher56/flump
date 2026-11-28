@@ -331,7 +331,6 @@ export function renderColorField(tokens: BrandTokens, options: ColorFieldOptions
     <div class="color-field-meta">
       <div class="color-field-title">
         <strong>${escapeHtml(name)}</strong>
-        <code>${escapeHtml(key)}</code>
       </div>
       <p class="swatch-note">${escapeHtml(role)}</p>
       <div class="swatch-values num">

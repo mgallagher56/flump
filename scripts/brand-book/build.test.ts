@@ -277,9 +277,18 @@ describe("Flump brand book", () => {
       'data-ui-specimen="example-tag"',
       'data-ui-specimen="status-badge"',
       'data-ui-specimen="icon-tile"',
+      'data-motion-demo="hero-orbs"',
+      'data-motion-demo="bubble-field"',
+      'data-motion-demo="tilt-light"',
+      'data-motion-demo="assembling-hero"',
+      'data-motion-demo="entrance"',
+      'data-motion-demo="count-up"',
+      'data-motion-demo="timing-scale"',
+      'data-motion-demo="drawn-chart"',
     ]) {
       expect(visibleChaptersHtml).toContain(marker);
     }
+    expect(committedHtml).toContain("@media print");
 
     const refHtml = committedHtml.slice(refIdx);
     const refDetails = [...refHtml.matchAll(/<details\b([^>]*)class="ref-section"([^>]*)>/gi)];
@@ -304,6 +313,7 @@ describe("Flump brand book", () => {
       /\b(?:gsap|three\.js|WebGL)\b/i,
       /\bseamless\w*\b/i,
       /\brollout\b/i,
+      /\b(?:surface|orb|chart|primary|text|border|material|durations|easings)\.[a-zA-Z]+\b/,
     ];
     for (const pattern of forbiddenLabels) {
       expect(visibleChaptersText).not.toMatch(pattern);

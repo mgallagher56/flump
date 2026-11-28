@@ -5,13 +5,62 @@ import {
   renderScreenPair,
 } from "../renderHelpers";
 import type { BrandTokens } from "../tokens";
+import { renderUiExampleTagSpecimen } from "../uiSpecimens";
 
 export function renderIllustrationChapter(tokens: BrandTokens): string {
   const defs = tokens.illustration.definitions;
+  const h = tokens.sampleHousehold;
   const openerVisual = `<div class="opener-visual-plate">
     ${renderDocumentPictureSvg(tokens, defs["feature-accounts"], "illus-opener-accounts", "orb")}
     <p class="swatch-note">Drawn live from shared shape coordinates used across the website, web app and mobile app.</p>
   </div>`;
+
+  const madeFromRows = [
+    { name: "Cash and savings", detail: h.savingsRate, figure: h.savings, slot: "1" },
+    { name: "Pension", detail: "Workplace and personal", figure: h.pension, slot: "2" },
+    { name: "Salary", detail: `${h.netMonthly} a month after tax`, figure: h.salary, slot: "3" },
+    {
+      name: "Budget",
+      detail: `${h.comesIn} in, ${h.goesOut} out`,
+      figure: `${h.leftOver} left`,
+      slot: "4",
+    },
+    {
+      name: "Mortgage",
+      detail: `${h.mortgageRate}, fixed until ${h.fixedUntil}`,
+      figure: h.mortgage,
+      slot: "5",
+    },
+    { name: "Credit card", detail: h.cardRate, figure: h.card, slot: "6" },
+  ]
+    .map(
+      (row) => `<li class="gather-made-row" style="--row-index:${row.slot}">
+        <span class="gather-row-bar" aria-hidden="true"></span>
+        <span class="gather-row-text">
+          <strong>${row.name}</strong>
+          <span class="swatch-note">${row.detail}</span>
+        </span>
+        <span class="gather-row-fig num">${row.figure}</span>
+      </li>`,
+    )
+    .join("");
+
+  const gatherCards = [
+    { title: "Cash and savings", figure: h.savings, tone: "charcoal", pos: "tl" },
+    { title: "Payslip", figure: h.netMonthly, tone: "paper", pos: "tr" },
+    { title: "This month", figure: h.leftOver, tone: "paper", pos: "ml" },
+    { title: "Mortgage statement", figure: h.mortgage, tone: "paper", pos: "mr" },
+    { title: "Pension statement", figure: h.pension, tone: "paper", pos: "bl" },
+    { title: "Credit card", figure: h.card, tone: "mint", pos: "br" },
+  ]
+    .map(
+      (card, index) =>
+        `<div class="gather-piece gather-piece-${card.pos} gather-piece-${card.tone}" style="--piece-index:${index}">
+          <span class="gather-piece-title">${card.title}</span>
+          <span class="gather-piece-fig num">${card.figure}</span>
+        </div>`,
+    )
+    .join("");
 
   const appGallery = [
     {
@@ -111,6 +160,52 @@ export function renderIllustrationChapter(tokens: BrandTokens): string {
 
     <div class="spread">
       <div class="spread-inner">
+        <div class="editorial-split editorial-split-text-first">
+          <div class="editorial-copy">
+            <h3 class="sub-title">Documents gathering into one picture</h3>
+            <p class="prose">
+              On the home page, six sample household documents settle together into the Monthly picture card. Under reduced motion or print, only the finished picture is shown.
+            </p>
+            <div class="motion-demo-controls">
+              <button type="button" class="motion-replay-btn" data-motion-replay="assembling-hero">Play again</button>
+            </div>
+          </div>
+
+          <figure class="motion-demo-card" data-motion-demo="assembling-hero" data-motion-playable="assembling-hero">
+            <div class="motion-gather-stage">
+              <div class="motion-gather-card">
+                <div class="ui-card-head">
+                  <strong class="card-title">Monthly picture</strong>
+                  ${renderUiExampleTagSpecimen("paper")}
+                </div>
+                <div class="gather-kpis">
+                  <div class="hero-panel" style="padding:var(--space-4)">
+                    <span class="swatch-note" style="color:var(--color-text-on-hero)">Net worth</span>
+                    <strong class="ui-card-figure num" style="color:var(--color-text-hero-figure)">${h.netWorth}</strong>
+                  </div>
+                  <div class="card-subtle" style="padding:var(--space-4)">
+                    <span class="swatch-note">Left over each month</span>
+                    <strong class="ui-card-figure num">${h.leftOver}</strong>
+                  </div>
+                </div>
+                <ul class="gather-made-list">
+                  ${madeFromRows}
+                </ul>
+              </div>
+              <div class="motion-gather-layer" aria-hidden="true">
+                ${gatherCards}
+              </div>
+            </div>
+            <figcaption class="diagram-caption">
+              Six household documents gathering once into one Monthly picture card, showing the home page opening sequence.
+            </figcaption>
+          </figure>
+        </div>
+      </div>
+    </div>
+
+    <div class="spread spread-subtle">
+      <div class="spread-inner">
         ${renderScreenPair({
           baseName: "marketing-ai-connection",
           title: "Document pictures and orbs on a real marketing page",
@@ -123,7 +218,7 @@ export function renderIllustrationChapter(tokens: BrandTokens): string {
       </div>
     </div>
 
-    <div class="spread spread-subtle">
+    <div class="spread">
       <div class="spread-inner">
         <div class="grid-2">
           <article class="card">

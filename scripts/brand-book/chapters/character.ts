@@ -26,7 +26,7 @@ export function renderCharacterChapter(_tokens: BrandTokens): string {
           baseName: "marketing-home",
           title: "One voice from first visit to daily check-in",
           copy: "The home page opens with a plain statement of what Flump holds, paired with an illustrative monthly picture so an outsider understands the product in seconds.",
-          desktopAlt: "Flump marketing home page showing the headline and monthly picture card",
+          desktopAlt: "Flump marketing home page showing the headline and monthly overview card",
           phoneAlt: "Flump marketing home page at phone width",
           caption:
             "Desktop (1280px) and phone (375px) views of the home page. Switch Light or Dark at the top to compare Mint and Midnight.",
