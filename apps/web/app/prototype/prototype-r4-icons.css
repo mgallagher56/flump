@@ -47,9 +47,10 @@ html[data-proto-level="2"]:is(
     [data-proto-icons="cluster"],
     [data-proto-icons="docs"]
   )
-  [data-testid="mobile-nav-drawer"]
-  :is(a, button)
-  > svg {
+  :is(
+    [data-testid="mobile-nav-drawer"] > div:first-child > :not(:first-child) a svg,
+    [data-testid="mobile-nav-drawer"] > div:last-child :is(a, button) > svg
+  ) {
   --t-tint: var(--colors-surface-tint-teal);
   --t-ink: var(--colors-primary);
   --t-orb: var(--o-teal);
@@ -64,9 +65,10 @@ html[data-proto-level="2"]:is(
 :is(html[data-proto-level="2"][data-proto-icons="orb"], [data-proto-icons-scope="orb"])
   [data-tile-tone],
 html[data-proto-level="2"][data-proto-icons="orb"]
-  [data-testid="mobile-nav-drawer"]
-  :is(a, button)
-  > svg {
+  :is(
+    [data-testid="mobile-nav-drawer"] > div:first-child > :not(:first-child) a svg,
+    [data-testid="mobile-nav-drawer"] > div:last-child :is(a, button) > svg
+  ) {
   border: 0 !important;
   border-radius: 9999px !important;
   background: var(--t-orb) center / 140% no-repeat !important;
@@ -77,9 +79,10 @@ html[data-proto-level="2"][data-proto-icons="orb"]
   [data-tile-tone]
   svg,
 html[data-proto-level="2"][data-proto-icons="orb"]
-  [data-testid="mobile-nav-drawer"]
-  :is(a, button)
-  > svg {
+  :is(
+    [data-testid="mobile-nav-drawer"] > div:first-child > :not(:first-child) a svg,
+    [data-testid="mobile-nav-drawer"] > div:last-child :is(a, button) > svg
+  ) {
   color: #fff !important;
   filter: drop-shadow(0 1px 1px rgb(0 0 0 / 0.45));
   stroke-width: 2.25;
@@ -228,9 +231,10 @@ html[data-proto-level="2"][data-proto-icons="orb"]
 :is(html[data-proto-level="2"][data-proto-icons="stamp"], [data-proto-icons-scope="stamp"])
   [data-tile-tone],
 html[data-proto-level="2"][data-proto-icons="stamp"]
-  [data-testid="mobile-nav-drawer"]
-  :is(a, button)
-  > svg {
+  :is(
+    [data-testid="mobile-nav-drawer"] > div:first-child > :not(:first-child) a svg,
+    [data-testid="mobile-nav-drawer"] > div:last-child :is(a, button) > svg
+  ) {
   border: 0 !important;
   border-radius: 9999px !important;
   background:
@@ -254,9 +258,10 @@ html[data-proto-level="2"][data-proto-icons="stamp"]
   [data-tile-tone]
   svg,
 html[data-proto-level="2"][data-proto-icons="stamp"]
-  [data-testid="mobile-nav-drawer"]
-  :is(a, button)
-  > svg {
+  :is(
+    [data-testid="mobile-nav-drawer"] > div:first-child > :not(:first-child) a svg,
+    [data-testid="mobile-nav-drawer"] > div:last-child :is(a, button) > svg
+  ) {
   color: var(--t-ink) !important;
   scale: 0.82;
   filter: drop-shadow(0 1px 0 rgb(255 255 255 / 0.85)) drop-shadow(0 -0.5px 0 rgb(15 42 42 / 0.25));
@@ -284,9 +289,10 @@ html[data-proto-level="2"][data-proto-icons="stamp"]
 :is(html[data-proto-level="2"][data-proto-icons="clay"], [data-proto-icons-scope="clay"])
   [data-tile-tone],
 html[data-proto-level="2"][data-proto-icons="clay"]
-  [data-testid="mobile-nav-drawer"]
-  :is(a, button)
-  > svg {
+  :is(
+    [data-testid="mobile-nav-drawer"] > div:first-child > :not(:first-child) a svg,
+    [data-testid="mobile-nav-drawer"] > div:last-child :is(a, button) > svg
+  ) {
   border: 0 !important;
   border-radius: 46% 54% 52% 48% / 52% 46% 54% 48% !important;
   background: var(--t-tint) !important;
@@ -320,9 +326,10 @@ html[data-proto-level="2"][data-proto-icons="clay"]
   [data-tile-tone]
   svg,
 html[data-proto-level="2"][data-proto-icons="hand"]
-  [data-testid="mobile-nav-drawer"]
-  :is(a, button)
-  > svg {
+  :is(
+    [data-testid="mobile-nav-drawer"] > div:first-child > :not(:first-child) a svg,
+    [data-testid="mobile-nav-drawer"] > div:last-child :is(a, button) > svg
+  ) {
   color: var(--t-ink) !important;
   stroke-width: 1.6;
   filter: url(#proto-hand-line);
@@ -333,9 +340,10 @@ html[data-proto-level="2"][data-proto-icons="hand"]
 :is(html[data-proto-level="2"][data-proto-icons="dots"], [data-proto-icons-scope="dots"])
   [data-tile-tone],
 html[data-proto-level="2"][data-proto-icons="dots"]
-  [data-testid="mobile-nav-drawer"]
-  :is(a, button)
-  > svg {
+  :is(
+    [data-testid="mobile-nav-drawer"] > div:first-child > :not(:first-child) a svg,
+    [data-testid="mobile-nav-drawer"] > div:last-child :is(a, button) > svg
+  ) {
   border: 0 !important;
   box-shadow: none !important;
   background:
@@ -349,16 +357,18 @@ html[data-proto-level="2"][data-proto-icons="dots"]
   visibility: hidden;
 }
 html[data-proto-level="2"][data-proto-icons="dots"]
-  [data-testid="mobile-nav-drawer"]
-  :is(a, button)
-  > svg {
+  :is(
+    [data-testid="mobile-nav-drawer"] > div:first-child > :not(:first-child) a svg,
+    [data-testid="mobile-nav-drawer"] > div:last-child :is(a, button) > svg
+  ) {
   color: transparent !important;
 }
 /* Cluster and docs have no drawer form of their own: the drawer shows dots there. */
 html[data-proto-level="2"]:is([data-proto-icons="cluster"], [data-proto-icons="docs"])
-  [data-testid="mobile-nav-drawer"]
-  :is(a, button)
-  > svg {
+  :is(
+    [data-testid="mobile-nav-drawer"] > div:first-child > :not(:first-child) a svg,
+    [data-testid="mobile-nav-drawer"] > div:last-child :is(a, button) > svg
+  ) {
   color: transparent !important;
   background:
     radial-gradient(circle, var(--t-ink) 0 22%, transparent 25%) center / 100% 100% no-repeat !important;
