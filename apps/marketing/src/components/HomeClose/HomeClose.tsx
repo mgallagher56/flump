@@ -2,8 +2,8 @@ import { Button, Card, marketingMs } from "@repo/ui";
 import { type FC, type ReactNode, useRef } from "react";
 import type { GsapKit } from "../../motion/loadGsapKit";
 import { useGsapMoment } from "../../motion/useGsapMoment";
-import { signupCta } from "../../utils/site";
 import { CloseStack, STACK_SCATTER } from "../CloseStack";
+import { InviteSignIn } from "../InviteSignIn";
 import { MarketingBand } from "../MarketingBand";
 import { closeCard, closeGlass, closePicture, closeText, closeTitle } from "./HomeClose.styles";
 
@@ -54,11 +54,11 @@ export interface HomeCloseProps {
 /**
  * The home page's close (ROLLOUT-PLAN M1, from prototype 11): calm, on the canvas band as the
  * prototype's, with no dark band. Prototype 10's gathered stack of the hero's pieces (owner,
- * 28 Nov 2026), the question, one line and the page's last "Request an invite". The shared
- * `ClosingCta` stays as it is for the other pages.
+ * 28 Nov 2026), the question, one line, "Interactive preview" and under it the quiet sign-in line
+ * for people with an invite link (invites are shared by hand, owner, 28 Nov 2026). The shared
+ * `ClosingCta` stays as it is for the preview page.
  */
 export const HomeClose: FC<HomeCloseProps> = ({ picture = <CloseStack /> }) => {
-  const cta = signupCta();
   const cardRef = useRef<HTMLDivElement>(null);
   useGsapMoment(cardRef, closeMoment);
 
@@ -87,8 +87,9 @@ export const HomeClose: FC<HomeCloseProps> = ({ picture = <CloseStack /> }) => {
             </h2>
             <p className={closeText}>Start with a few rough numbers.</p>
             <Button asChild size="lg" variant="primary">
-              <a href={cta.href}>{cta.label}</a>
+              <a href="/preview">Interactive preview</a>
             </Button>
+            <InviteSignIn />
           </div>
         </Card>
       </div>

@@ -177,8 +177,8 @@ export function heroModeFrom(search: string): HeroMode {
 }
 
 /**
- * The home hero (ROLLOUT-PLAN M1, from prototype 11): the decided headline and lead, the two calls
- * to action and a cue to the five areas, then the "Monthly picture" dashboard. Under 1024px one
+ * The home hero (ROLLOUT-PLAN M1, from prototype 11): the decided headline and lead, the one call
+ * to action ("Interactive preview"; no invite request, owner, 28 Nov 2026) and a cue to the five areas, then the "Monthly picture" dashboard. Under 1024px one
  * centred column; from 1024px the copy on the left beside the dashboard.
  *
  * Once GSAP has loaded after first paint, six pieces of a household's money float apart and fly

@@ -99,8 +99,10 @@ describe("Tools Routes", () => {
     expect(screen.getAllByText(entry.description)).toHaveLength(1);
     expect(calculator.contains(screen.getByText(entry.description))).toBe(false);
     expect(within(calculator).queryAllByRole("heading", { level: 1 })).toHaveLength(0);
-    // Sign-up is invite-only, so the tool's one button asks for an invite.
-    expect(within(calculator).getByRole("button", { name: /Request an invite/ })).toBeDefined();
+    // Invite links are shared by hand (owner, 28 Nov 2026), so the tool's one button opens the
+    // interactive preview and nothing asks for an invite.
+    expect(within(calculator).getByRole("button", { name: /Interactive preview/ })).toBeDefined();
+    expect(within(calculator).queryByText(/request an invite/i)).toBeNull();
     expect(calculator.hasAttribute("aria-describedby")).toBe(false);
 
     // Exactly one notice, and it is the calculator's own.
@@ -155,6 +157,9 @@ describe("Tools Routes", () => {
 
     expect(res.tool).toBeDefined();
     expect(res.tool.slug).toBe("uk-100k-tax-trap-calculator");
+    // The button goes to the marketing site's interactive preview, not an invite request.
+    expect(res.previewHref).toMatch(/^https?:\/\/[^/]+\/preview$/);
+    expect(res).not.toHaveProperty("inviteHref");
 
     await expect(
       slugLoader({

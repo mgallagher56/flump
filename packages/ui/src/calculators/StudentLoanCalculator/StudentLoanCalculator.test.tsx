@@ -131,8 +131,8 @@ describe("StudentLoanCalculator", () => {
   });
 
   it("shows one arrow on the sign-up button when the caller's label has its own", () => {
-    render(<StudentLoanCalculator ctaText="Request an invite →" />);
-    expect(screen.getByRole("button", { name: "Request an invite" })).toBeDefined();
+    render(<StudentLoanCalculator ctaText="Interactive preview →" />);
+    expect(screen.getByRole("button", { name: "Interactive preview" })).toBeDefined();
   });
 
   it("calls onSaveAndContinue with the salary and selected plan", () => {

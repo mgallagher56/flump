@@ -29,7 +29,7 @@ const renderCrumbLink: ToolBreadcrumbsRenderLink = (href, className, children) =
   </RouterLink>
 );
 
-/** What every calculator takes on a tool page: no own title, and the invite request as its button. */
+/** What every calculator takes on a tool page: no own title, and the interactive preview as its button. */
 interface ToolCalculatorProps {
   embedded: boolean;
   ctaText: string;
@@ -51,8 +51,11 @@ const TOOL_COMPONENTS: Record<ToolSlug, ComponentType<ToolCalculatorProps>> = {
   "uk-100k-tax-trap-calculator": TaxTrapCalculator,
 };
 
-/** Sign-up is invite-only, so the button asks for an invite, as on the marketing tool pages. */
-const TOOL_CTA_TEXT = "Request an invite";
+/**
+ * Invite links are shared by hand (owner, 28 Nov 2026), so nothing asks for an invite: the button
+ * opens the marketing site's interactive preview, the marketing heroes' one call to action.
+ */
+const TOOL_CTA_TEXT = "Interactive preview";
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
   if (!data?.tool) {
@@ -80,8 +83,8 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
   return {
     tool: getToolEntry(canonical),
-    // The invite request lives on the marketing contact page; figures are not handed over.
-    inviteHref: `${getMarketingUrl(request.url).replace(/\/+$/, "")}/contact#beta`,
+    // The preview lives on the marketing site; figures are not handed over.
+    previewHref: `${getMarketingUrl(request.url).replace(/\/+$/, "")}/preview`,
   };
 };
 
@@ -90,7 +93,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
  * title; it carries the page's one notice), then the collapsed guide and FAQ (E16 PR 11). Nothing else sits above the tool.
  */
 export const ToolDetailPage: FC = () => {
-  const { tool, inviteHref } = useLoaderData<typeof loader>();
+  const { tool, previewHref } = useLoaderData<typeof loader>();
 
   if (!tool) return null;
   const Calculator = TOOL_COMPONENTS[tool.slug];
@@ -107,7 +110,7 @@ export const ToolDetailPage: FC = () => {
           embedded
           persistSeed={false}
           onSaveAndContinue={() => {
-            window.location.href = inviteHref;
+            window.location.href = previewHref;
           }}
         />
       </section>

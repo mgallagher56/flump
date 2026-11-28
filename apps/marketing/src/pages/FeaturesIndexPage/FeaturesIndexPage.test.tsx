@@ -66,14 +66,13 @@ describe("FeaturesIndexPage", () => {
     ).toBe(true);
   });
 
-  it("offers the invite and the interactive preview", () => {
+  it("offers the interactive preview as the hero's one primary button, and no invite request", () => {
     renderPage();
     const main = screen.getByRole("main");
-    expect(within(main).getByRole("link", { name: "Request an invite" }).getAttribute("href")).toBe(
-      "/contact#beta",
-    );
-    expect(
-      within(main).getByRole("link", { name: "Interactive preview" }).getAttribute("href"),
-    ).toBe("/preview");
+    expect(main.textContent).not.toMatch(/request an invite/i);
+    const ctas = Array.from(main.querySelectorAll("[data-lit-ctas] a"));
+    expect(ctas.map((a) => a.textContent)).toEqual(["Interactive preview"]);
+    expect(ctas[0]?.getAttribute("href")).toBe("/preview");
+    expect(ctas[0]?.getAttribute("data-variant")).toBe("primary");
   });
 });

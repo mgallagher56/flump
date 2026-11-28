@@ -11,7 +11,7 @@ const meta: Meta<typeof ClosingCta> = {
     titleId: "closing-title",
     title: "Ready to see where you stand?",
     text: "Start with a few rough numbers.",
-    cta: { href: "#", label: "Request an invite" },
+    cta: { href: "#", label: "Sign in" },
   },
 };
 
@@ -21,7 +21,7 @@ type Story = StoryObj<typeof ClosingCta>;
 const assertCta: Story["play"] = async ({ canvasElement }) => {
   const canvas = within(canvasElement);
   await expect(canvas.getByRole("heading", { level: 2 })).toBeVisible();
-  await expect(canvas.getByRole("link", { name: "Request an invite" })).toBeVisible();
+  await expect(canvas.getByRole("link", { name: "Sign in" })).toBeVisible();
 };
 
 export const Light: Story = { globals: { theme: "light" }, play: assertCta };

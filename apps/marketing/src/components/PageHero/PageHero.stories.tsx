@@ -33,7 +33,8 @@ const assertHero: Story["play"] = async ({ canvasElement }) => {
   await expect(
     canvas.getByRole("heading", { level: 1, name: "Take-home pay and Self Assessment" }),
   ).toBeVisible();
-  await expect(canvas.getByRole("link", { name: "Request an invite" })).toBeVisible();
+  await expect(canvas.getByRole("link", { name: "Interactive preview" })).toBeVisible();
+  await expect(canvas.queryByRole("link", { name: /request an invite/i })).toBeNull();
 };
 
 export const Light: Story = { globals: { theme: "light" }, play: assertHero };

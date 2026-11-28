@@ -6,7 +6,6 @@ import { HelmetProvider } from "react-helmet-async";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { PRICE_NOT_SET } from "../../utils/pricing";
-import { signupCta } from "../../utils/site";
 import { BETA_FEATURES, BETA_STATEMENT, PricingPage } from "./PricingPage";
 
 const renderPage = () =>
@@ -61,11 +60,22 @@ describe("PricingPage (D10 b)", () => {
     expect(text).not.toMatch(/per month|per year|billed annually|Example figure only/i);
   });
 
-  it("asks for an invite through the shared sign-up CTA, the page's one primary button", () => {
+  it("offers the interactive preview as its one primary button, then the sign-in line, and no invite request", () => {
     renderPage();
     const main = screen.getByRole("main");
-    const link = within(main).getByRole("link", { name: "Request an invite" });
-    expect(link.getAttribute("href")).toBe(signupCta().href);
+    const plan = main.querySelector('[data-plan="beta"]') as HTMLElement;
+    expect(
+      within(plan)
+        .getAllByRole("link")
+        .map((a) => a.textContent),
+    ).toEqual(["Interactive preview", "Sign in"]);
+    const preview = within(plan).getByRole("link", { name: "Interactive preview" });
+    expect(preview.getAttribute("href")).toBe("/preview");
+    expect(preview.getAttribute("data-variant")).toBe("primary");
+    expect(within(plan).getByTestId("invite-sign-in").textContent).toBe(
+      "Have an invite link? Sign in.",
+    );
+    expect(main.textContent).not.toMatch(/request an invite/i);
     expect(within(main).queryByText("Get started")).toBeNull();
     expect(main.querySelector('a[href$="/signUp"], a[href$="/signup"]')).toBeNull();
     expectPageRules(main, { projectionNotices: 0 });
@@ -103,7 +113,9 @@ describe("PricingPage (D10 b)", () => {
       expect(screen.queryByText("Paid plan")).toBeNull();
       expect(container.querySelectorAll("[data-plan]")).toHaveLength(1);
       expect(screen.getByRole("heading", { name: "Free during the beta" })).toBeDefined();
-      expect(within(screen.getByRole("main")).getByText("Request an invite")).toBeDefined();
+      expect(
+        within(screen.getByRole("main")).getByRole("link", { name: "Interactive preview" }),
+      ).toBeDefined();
     });
   });
 });

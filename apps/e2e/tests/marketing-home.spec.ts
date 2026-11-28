@@ -150,7 +150,9 @@ test.describe("marketing home: layout", () => {
         // The dashboard's title sits at its card's left, so measure the card.
         const card = await hero.locator("figure").first().boundingBox();
         const ctas = await hero.locator("[data-lit-ctas]").boundingBox();
-        const firstCta = await hero.getByRole("link", { name: "Request an invite" }).boundingBox();
+        const firstCta = await hero
+          .getByRole("link", { name: "Interactive preview" })
+          .boundingBox();
         const align = await hero
           .locator("h1")
           .locator("..")
@@ -279,6 +281,28 @@ async function stackPlaces(page: Page): Promise<string[]> {
 }
 
 test.describe("marketing home: the close's stack (owner, 28 Nov 2026)", () => {
+  test("offers the interactive preview and, under it, the sign-in line, with no invite request", async ({
+    browser,
+  }) => {
+    const page = await browser.newPage({ reducedMotion: "reduce" });
+    await page.goto(HOME);
+    const card = page.getByTestId("home-final-cta");
+    await card.scrollIntoViewIfNeeded();
+    await expect(card.getByRole("link")).toHaveText(["Interactive preview", "Sign in"]);
+    await expect(card.getByRole("link", { name: "Interactive preview" })).toHaveAttribute(
+      "data-variant",
+      "primary",
+    );
+    const line = card.getByTestId("invite-sign-in");
+    await expect(line).toHaveText("Have an invite link? Sign in.");
+    await expect(line.getByRole("link", { name: "Sign in" })).toHaveAttribute("href", /\/login$/);
+    const button = await card.getByRole("link", { name: "Interactive preview" }).boundingBox();
+    const under = await line.boundingBox();
+    expect(button && under && under.y >= button.y + button.height).toBe(true);
+    await expect(card.getByText(/request an invite/i)).toHaveCount(0);
+    await page.close();
+  });
+
   test("shows prototype 10's gathered stack with real-text Example tags, still under reduced motion", async ({
     browser,
   }) => {

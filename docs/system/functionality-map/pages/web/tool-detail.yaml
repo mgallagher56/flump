@@ -3,7 +3,7 @@ app: web
 route: /tools/:slug
 title: Public money calculator
 auth: public
-purpose: Run one of eight public UK money calculators locally without signing in, read its guide and FAQ, or request a beta invite.
+purpose: Run one of eight public UK money calculators locally without signing in, read its guide and FAQ, or open the interactive preview.
 route_file: apps/web/app/routes/tools.$slug.tsx
 
 sections:

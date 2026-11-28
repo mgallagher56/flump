@@ -125,6 +125,19 @@ describe("no links to old addresses (E42)", () => {
       .map((file) => path.relative(__dirname, file));
     expect(hits).toEqual([]);
   });
+
+  // Invite links are shared by hand (owner, 28 Nov 2026): no page asks for an invite or links to
+  // the contact page's old invite section. Access is by invite link during testing.
+  it("no source asks for an invite or links to the old #beta section", () => {
+    const hits = sourceFiles(__dirname)
+      .filter((file) =>
+        /request an invite|ask (us )?for an? (beta )?invite|for an invite|#beta\b/i.test(
+          withoutComments(fs.readFileSync(file, "utf-8")),
+        ),
+      )
+      .map((file) => path.relative(__dirname, file));
+    expect(hits).toEqual([]);
+  });
 });
 
 // "tool slugs" left with E42 PR 2: the marketing site lists no calculator slugs. Every slug and

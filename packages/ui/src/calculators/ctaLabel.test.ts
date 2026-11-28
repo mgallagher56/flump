@@ -4,7 +4,7 @@ import { ctaLabel } from "./ctaLabel";
 
 describe("ctaLabel", () => {
   it("strips a trailing arrow so the icon is the only arrow", () => {
-    expect(ctaLabel("Request an invite →")).toBe("Request an invite");
+    expect(ctaLabel("Interactive preview →")).toBe("Interactive preview");
     expect(ctaLabel("Continue ->")).toBe("Continue");
     expect(ctaLabel("Next »")).toBe("Next");
   });

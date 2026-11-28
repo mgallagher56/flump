@@ -107,7 +107,7 @@ describe("HomeJourney", () => {
     }
   });
 
-  it("counts the stops as 'N of 6' and ends on the page's two calls to action", () => {
+  it("counts the stops as 'N of 6' and ends on the page's call to action", () => {
     const host = serverDom();
     const kickers = Array.from(host.querySelectorAll("[data-stop-kicker]"));
     expect(kickers.map((p) => p.textContent)).toEqual([
@@ -119,8 +119,8 @@ describe("HomeJourney", () => {
       "6 of 6",
     ]);
     const links = Array.from(host.querySelectorAll('[data-stop-key="picture"] a'));
-    expect(links.map((a) => a.textContent)).toEqual(["Request an invite", "Interactive preview"]);
-    expect(links[1]?.getAttribute("href")).toBe("/preview");
+    expect(links.map((a) => a.textContent)).toEqual(["Interactive preview"]);
+    expect(links[0]?.getAttribute("href")).toBe("/preview");
   });
 
   it("puts the scene in an aria-hidden stage, still in the server render, with the pause control in the intro", () => {

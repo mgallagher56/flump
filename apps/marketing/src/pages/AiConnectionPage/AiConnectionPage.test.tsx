@@ -34,7 +34,7 @@ const registeredToolNames = (): string[] => {
 };
 
 describe("Marketing AI connection page (E42 S2b)", () => {
-  it("is a feature page: name, h1, lead, how a tester gets it, and two calls to action", () => {
+  it("is a feature page: name, h1, lead, how a tester gets it, and one call to action", () => {
     renderPage();
     const hero = screen.getByTestId("feature-hero");
     expect(screen.getByRole("heading", { level: 1, name: "AI connection" })).toBeDefined();
@@ -47,11 +47,12 @@ describe("Marketing AI connection page (E42 S2b)", () => {
     ).toBeDefined();
     // Kept until the owner rules on it (plan section 7.1).
     expect(screen.getByTestId("mcp-preview-badge").textContent).toMatch(/preview/i);
-    const invite = within(hero).getByRole("link", { name: "Request an invite" });
-    expect(invite.getAttribute("href")).toBe("/contact#beta");
-    expect(invite.getAttribute("data-variant")).toBe("primary");
-    // The sample preview has no AI connection in it, so the page does not offer it.
-    expect(within(hero).queryByRole("link", { name: "Interactive preview" })).toBeNull();
+    // Every hero offers the interactive preview as its one primary button, and no invite request
+    // (coordinator, 28 Nov 2026). The preview has no AI connection in it, so it opens at its top.
+    const links = within(hero).getAllByRole("link");
+    expect(links.map((a) => a.textContent)).toEqual(["Interactive preview"]);
+    expect(links[0]?.getAttribute("href")).toBe("/preview");
+    expect(links[0]?.getAttribute("data-variant")).toBe("primary");
     expectPageRules(hero, { projectionNotices: 0 });
   });
 

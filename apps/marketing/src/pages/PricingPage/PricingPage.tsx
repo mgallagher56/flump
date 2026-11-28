@@ -3,9 +3,9 @@ import { Check } from "lucide-react";
 import type { FC } from "react";
 import { Footer } from "../../components/Footer";
 import { Header } from "../../components/Header";
+import { InviteSignIn } from "../../components/InviteSignIn";
 import { PageMeta } from "../../components/PageMeta";
 import { PRICING } from "../../utils/pricing";
-import { signupCta } from "../../utils/site";
 import {
   container,
   featureIcon,
@@ -20,6 +20,7 @@ import {
   paidName,
   paidNote,
   paidPrice,
+  planActions,
   planCard,
   planName,
 } from "./PricingPage.styles";
@@ -41,7 +42,6 @@ export const BETA_FEATURES = [
  * quiet line with "Price not set". No billing toggle, no example price and no disabled button.
  */
 export const PricingPage: FC = () => {
-  const cta = signupCta();
   // Build-time constant (vite.config.ts): false in a launch build with no price set, so the paid
   // line is dropped from the bundle.
   const paid = import.meta.env.VITE_SHOW_PAID_PLAN !== "false";
@@ -76,10 +76,12 @@ export const PricingPage: FC = () => {
                 </li>
               ))}
             </ul>
-            <div>
+            {/* No invite request: invite links are shared by hand (owner, 28 Nov 2026). */}
+            <div className={planActions()}>
               <Button asChild size="lg" variant="primary">
-                <a href={cta.href}>{cta.label}</a>
+                <a href="/preview">Interactive preview</a>
               </Button>
+              <InviteSignIn />
             </div>
           </section>
 

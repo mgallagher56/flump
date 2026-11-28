@@ -111,7 +111,9 @@ describe("public calculator copy guard (E16 PR 11)", () => {
 
 /**
  * Sign-up CTA guard (E24-T3). The web app sign-up path appears only in utils/site.ts, so no CTA
- * can link to a sign-up that the invite-only beta refuses.
+ * can link to a sign-up that the invite-only beta refuses. While invite-only, `signupCta()` gives
+ * no call to action at all (owner, 28 Nov 2026: invite links are shared by hand), and copy.test.ts
+ * refuses any "Request an invite" or `#beta` link.
  */
 describe("sign-up CTA guard", () => {
   it("keeps the /signup path inside utils/site.ts", () => {

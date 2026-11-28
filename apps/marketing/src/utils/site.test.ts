@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { mailto, SIGNUP_MODE, signupCta } from "./site";
+import { mailto, SIGNUP_MODE, signInHref, signupCta } from "./site";
 
 describe("site settings", () => {
   it("defaults to invite-only sign-up", () => {
@@ -13,13 +13,13 @@ describe("site settings", () => {
     expect(mailto("a@example.invalid")).toBe("mailto:a@example.invalid");
   });
 
-  it("points the sign-up CTA at the invite request while invite-only", () => {
-    expect(signupCta("invite-only", "https://app.example.test")).toEqual({
-      href: "/contact#beta",
-      label: "Request an invite",
-      shortLabel: "Request an invite",
-      external: false,
-    });
+  it("has no sign-up call to action while invite-only: invite links are shared by hand", () => {
+    expect(signupCta("invite-only", "https://app.example.test")).toBeNull();
+    expect(signupCta()).toBeNull();
+  });
+
+  it("signs in at the web app's login page", () => {
+    expect(signInHref("https://app.example.test")).toBe("https://app.example.test/login");
   });
 
   it("points the sign-up CTA at the web app when open", () => {

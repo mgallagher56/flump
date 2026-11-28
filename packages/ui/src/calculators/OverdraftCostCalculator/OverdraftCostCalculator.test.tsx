@@ -86,8 +86,8 @@ describe("OverdraftCostCalculator", () => {
   });
 
   it("shows one arrow on the sign-up button when the caller's label has its own", () => {
-    render(<OverdraftCostCalculator ctaText="Request an invite →" />);
-    expect(screen.getByRole("button", { name: "Request an invite" })).toBeDefined();
+    render(<OverdraftCostCalculator ctaText="Interactive preview →" />);
+    expect(screen.getByRole("button", { name: "Interactive preview" })).toBeDefined();
   });
 
   it("has three visible inputs at most and exactly one notice", () => {

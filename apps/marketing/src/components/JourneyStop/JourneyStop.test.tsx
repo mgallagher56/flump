@@ -140,11 +140,12 @@ describe("JourneyStop", () => {
     );
   });
 
-  it("ends the journey on the page's two calls to action", () => {
+  it("ends the journey on the interactive preview, primary, with no invite request", () => {
     render(tree(5));
     const links = screen.getAllByRole("link");
-    expect(links.map((a) => a.textContent)).toEqual(["Request an invite", "Interactive preview"]);
-    expect(links[1]?.getAttribute("href")).toBe("/preview");
+    expect(links.map((a) => a.textContent)).toEqual(["Interactive preview"]);
+    expect(links[0]?.getAttribute("href")).toBe("/preview");
+    expect(links[0]?.getAttribute("data-variant")).toBe("primary");
   });
 
   it("puts the text before the sample in the HTML, the sample swapping sides each stop", () => {

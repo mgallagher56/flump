@@ -178,9 +178,13 @@ describe("UI Calculators", () => {
       (_name, Calculator) => {
         const onSave = vi.fn();
         render(
-          <Calculator ctaText="Request an invite" onSaveAndContinue={onSave} persistSeed={false} />,
+          <Calculator
+            ctaText="Interactive preview"
+            onSaveAndContinue={onSave}
+            persistSeed={false}
+          />,
         );
-        fireEvent.click(screen.getByRole("button", { name: /Request an invite/i }));
+        fireEvent.click(screen.getByRole("button", { name: /Interactive preview/i }));
         expect(onSave).toHaveBeenCalled();
         expect(localStorage.getItem(ONBOARDING_SEED_STORAGE_KEY)).toBeNull();
       },
@@ -282,8 +286,8 @@ describe("UI Calculators", () => {
     it.each(calculators)("%s sends the visitor to the sign-up page", (_name, Calculator) => {
       const location = { href: "http://localhost:3000/tools" } as Location;
       vi.spyOn(window, "location", "get").mockReturnValue(location);
-      render(<Calculator ctaText="Request an invite" persistSeed={false} />);
-      fireEvent.click(screen.getByRole("button", { name: "Request an invite" }));
+      render(<Calculator ctaText="Interactive preview" persistSeed={false} />);
+      fireEvent.click(screen.getByRole("button", { name: "Interactive preview" }));
       expect(location.href).toBe("/signup");
     });
   });

@@ -4,9 +4,7 @@ import type { GsapKit } from "../../motion/loadGsapKit";
 import { closeMoment, HomeClose } from "./HomeClose";
 
 vi.mock("../../motion/useGsapMoment", () => ({ useGsapMoment: vi.fn() }));
-vi.mock("../../utils/site", () => ({
-  signupCta: () => ({ href: "/contact#beta", label: "Request an invite", external: false }),
-}));
+vi.mock("../../utils/url", () => ({ getAppUrl: () => "https://app.example.test" }));
 
 describe("HomeClose", () => {
   it("asks the closing question on the calm canvas band (prototype 11), never a dark band", () => {
@@ -17,9 +15,22 @@ describe("HomeClose", () => {
     expect(screen.getByRole("region", { name: "Ready to see where you stand?" })).toBe(band);
     const card = within(band).getByTestId("home-final-cta");
     expect(within(card).getByText("Start with a few rough numbers.")).toBeDefined();
-    const invite = within(card).getByRole("link", { name: "Request an invite" });
-    expect(invite.getAttribute("href")).toBe("/contact#beta");
-    expect(invite.getAttribute("data-variant")).toBe("primary");
+  });
+
+  it("offers the interactive preview, then a quiet sign-in line for people with an invite link, and no invite request", () => {
+    render(<HomeClose />);
+    const card = screen.getByTestId("home-final-cta");
+    const links = within(card).getAllByRole("link");
+    expect(links.map((a) => a.textContent)).toEqual(["Interactive preview", "Sign in"]);
+    const preview = within(card).getByRole("link", { name: "Interactive preview" });
+    expect(preview.getAttribute("href")).toBe("/preview");
+    expect(preview.getAttribute("data-variant")).toBe("primary");
+    const line = within(card).getByTestId("invite-sign-in");
+    expect(line.textContent).toBe("Have an invite link? Sign in.");
+    expect(within(line).getByRole("link", { name: "Sign in" }).getAttribute("href")).toBe(
+      "https://app.example.test/login",
+    );
+    expect(within(card).queryByText(/request an invite/i)).toBeNull();
   });
 
   it("shows prototype 10's gathered stack, its Example tags in real text, hidden from assistive technology", () => {

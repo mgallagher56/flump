@@ -6,7 +6,6 @@ import { renderToString } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { StillMotionProvider } from "../../context/StillMotionContext";
 import type { GsapKit } from "../../motion/loadGsapKit";
-import { signupCta } from "../../utils/site";
 import { HomeHero as Hero, heroModeFrom } from "./HomeHero";
 import { pieceStart } from "./HomeHero.styles";
 import { ASSEMBLY_UNITS, armHeroAssembly, FLIGHTS_START } from "./heroAssembly";
@@ -32,7 +31,7 @@ afterEach(() => {
 });
 
 describe("HomeHero", () => {
-  it("is the labelled hero with the decided heading, lead and two calls to action", () => {
+  it("is the labelled hero with the decided heading, lead and one call to action", () => {
     renderHero();
     const section = screen.getByTestId("home-hero");
     expect(section.tagName).toBe("SECTION");
@@ -43,19 +42,18 @@ describe("HomeHero", () => {
     expect(
       screen.getByText("Accounts, budget, pay, savings, pension and debts in one place."),
     ).toBeDefined();
-    expect(screen.getByRole("link", { name: "Request an invite" }).getAttribute("href")).toBe(
-      signupCta().href,
-    );
-    expect(screen.getByRole("link", { name: "Interactive preview" }).getAttribute("href")).toBe(
-      "/preview",
-    );
+    // One primary call to action, lit (prototype 11's pointer light), and no invite request
+    // (owner, 28 Nov 2026: invite links are shared by hand).
+    const ctas = Array.from(section.querySelectorAll("[data-lit-ctas] a"));
+    expect(ctas.map((a) => a.textContent)).toEqual(["Interactive preview"]);
+    const preview = screen.getByRole("link", { name: "Interactive preview" });
+    expect(preview.getAttribute("href")).toBe("/preview");
+    expect(preview.getAttribute("data-variant")).toBe("primary");
+    expect(preview.hasAttribute("data-light")).toBe(true);
+    expect(within(section).queryByText(/request an invite/i)).toBeNull();
     expect(screen.getByRole("link", { name: "See the five areas" }).getAttribute("href")).toBe(
       "#features",
     );
-    // Every call to action in the hero carries prototype 11's pointer light.
-    for (const name of ["Request an invite", "Interactive preview"]) {
-      expect(screen.getByRole("link", { name }).hasAttribute("data-light")).toBe(true);
-    }
     expect(section.getAttribute("data-home-section-name")).toBe("One picture");
     expect(section.id).toBe("home-hero");
   });

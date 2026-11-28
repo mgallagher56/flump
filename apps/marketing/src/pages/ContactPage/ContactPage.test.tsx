@@ -1,6 +1,6 @@
 import { BUSINESS_DETAILS } from "@flump/business-details";
 import { expectPageRules } from "@repo/ui/testing";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import { HelmetProvider } from "react-helmet-async";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
@@ -29,13 +29,22 @@ describe("ContactPage", () => {
     expectPageRules(main, { projectionNotices: 0 });
   });
 
-  it("leaves the invite button to the header and keeps pricing off the page", () => {
+  it("asks no one to request an invite, says access is by invite link, and keeps pricing off the page", () => {
     renderPage();
     const main = screen.getByRole("main");
-    // The header carries the invite button; the page body has none (round 4).
-    expect(within(main).queryByRole("link", { name: "Request an invite" })).toBeNull();
-    expect(within(main).queryByText(/Email for an invite/)).toBeNull();
+    // Invite links are shared by hand (owner, 28 Nov 2026): nothing on the page asks for one.
+    expect(within(main).queryByRole("link", { name: /request an invite/i })).toBeNull();
+    expect(main.textContent).not.toMatch(/for an invite|ask for|ask here|beta invite/i);
+    expect(main.textContent).toMatch(/Access is by invite link during testing\./);
     expect(main.textContent).not.toMatch(/free|Nothing is charged/i);
+  });
+
+  it("describes the page without an invite request", async () => {
+    renderPage();
+    await waitFor(() => expect(document.title).toContain("Contact"));
+    expect(document.querySelector('meta[name="description"]')?.getAttribute("content")).toBe(
+      "Email Flump with a question or feedback, or to raise a complaint.",
+    );
   });
 
   it("folds the placeholder notice into the email line and says it once", () => {
@@ -58,11 +67,9 @@ describe("ContactPage", () => {
     for (const href of hrefs) expect(href.startsWith(`mailto:${address}`)).toBe(true);
   });
 
-  it("has the #beta anchor that the sign-up CTAs point at", () => {
+  it("has no #beta section: nothing links to an invite request any more", () => {
     const { container } = renderPage();
-    const beta = container.querySelector("#beta");
-    expect(beta).not.toBeNull();
-    expect(beta?.textContent).toMatch(/invite-only/);
+    expect(container.querySelector("#beta")).toBeNull();
   });
 
   it("puts no financial data in any mailto body and no body at all", () => {

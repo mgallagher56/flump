@@ -11,7 +11,7 @@ export interface JourneyStopCopy {
   readonly title: string;
   readonly lead: string;
   readonly fact: string;
-  /** The area page; the last stop has the page's two calls to action instead. */
+  /** The area page; the last stop has the page's call to action (the interactive preview) instead. */
   readonly link?: { readonly to: string; readonly label: string };
   /**
    * The orb's two colours at this stop (prototype 11's `STOP_ORB_TONES`): its own on arrival, and
@@ -69,7 +69,7 @@ const DOT: Record<JourneyStopKey, OrbTone> = {
 
 /**
  * The six stops in reading order, their copy from `featureAreas.ts` so the journey and the feature
- * pages cannot drift apart. The last stop ends on the page's two calls to action (prototype 11).
+ * pages cannot drift apart. The last stop ends on the page's call to action, the interactive preview.
  */
 export const JOURNEY_STOPS: readonly JourneyStopCopy[] = [
   ...MONEY_AREAS.map((area) => ({

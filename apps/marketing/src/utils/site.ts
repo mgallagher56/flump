@@ -3,8 +3,8 @@ import { getAppUrl } from "./url";
 
 /**
  * Site-wide contact and sign-up settings (E24-T2, E24-T3). Every marketing surface reads the
- * support mailbox and the sign-up call to action from here, so a closed beta never links to a
- * sign-up form that refuses people. Business details come from `@flump/business-details`.
+ * support mailbox, the sign-up call to action and the sign-in address from here, so a closed beta
+ * never links to a sign-up form that refuses people. Business details come from `@flump/business-details`.
  */
 export type SignupMode = "invite-only" | "open";
 
@@ -22,9 +22,6 @@ export const SIGNUP_MODE: SignupMode = "invite-only";
 
 export const SUPPORT_EMAIL = BUSINESS_DETAILS.supportEmail.value;
 
-/** Page and anchor where a visitor asks for a beta invite. */
-const BETA_INVITE_PATH = "/contact#beta";
-
 /** `mailto:` link with an encoded subject. Never put financial data in the subject. */
 export function mailto(address: string, subject?: string): string {
   return subject ? `mailto:${address}?subject=${encodeURIComponent(subject)}` : `mailto:${address}`;
@@ -39,20 +36,24 @@ export interface SignupCta {
   external: boolean;
 }
 
-/** The one sign-up call to action. Invite-only points at the invite request, open at the web app. */
-export function signupCta(mode: SignupMode = SIGNUP_MODE, appUrl: string = getAppUrl()): SignupCta {
-  if (mode === "open") {
-    return {
-      href: `${appUrl}/signup`,
-      label: "Get started",
-      shortLabel: "Sign up",
-      external: true,
-    };
-  }
+/**
+ * The one sign-up call to action, for when sign-up opens. While invite-only there is none: the
+ * owner shares invite links by hand (28 Nov 2026), so nothing asks for an invite.
+ */
+export function signupCta(
+  mode: SignupMode = SIGNUP_MODE,
+  appUrl: string = getAppUrl(),
+): SignupCta | null {
+  if (mode !== "open") return null;
   return {
-    href: BETA_INVITE_PATH,
-    label: "Request an invite",
-    shortLabel: "Request an invite",
-    external: false,
+    href: `${appUrl}/signup`,
+    label: "Get started",
+    shortLabel: "Sign up",
+    external: true,
   };
+}
+
+/** The web app's sign-in, where the header's "Sign in" goes; an invite link also lands there. */
+export function signInHref(appUrl: string = getAppUrl()): string {
+  return `${appUrl}/login`;
 }

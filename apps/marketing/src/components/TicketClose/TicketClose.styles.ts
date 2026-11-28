@@ -1,6 +1,6 @@
 import { css } from "@repo/ui/styled-system/css";
 
-/** The close: the picture, the question, one line and the button, in one card. */
+/** The close: the picture, the question, one line, the button and the sign-in line, in one card. */
 export const closeCard = css({
   display: "grid",
   justifyItems: "center",

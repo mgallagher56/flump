@@ -32,7 +32,8 @@ describe("payRiseResult", () => {
 
 const { persistOnboardingSeed, cta } = vi.hoisted(() => ({
   persistOnboardingSeed: vi.fn(),
-  cta: { current: { href: "/contact#beta", label: "Request an invite", external: false } },
+  // Invite-only: there is no sign-up call to action (owner, 28 Nov 2026).
+  cta: { current: null as null | { href: string; label: string; external: boolean } },
 }));
 
 vi.mock("@flump/finance-engine", async (importOriginal) => ({
@@ -45,7 +46,7 @@ vi.mock("../../utils/site", () => ({ signupCta: () => cta.current }));
 describe("PayRiseTeaser", () => {
   afterEach(() => {
     persistOnboardingSeed.mockClear();
-    cta.current = { href: "/contact#beta", label: "Request an invite", external: false };
+    cta.current = null;
   });
 
   it("starts from a typical salary, not the £100k band, and shows no taper note", () => {
@@ -89,7 +90,7 @@ describe("PayRiseTeaser", () => {
     const link = screen.getByRole("link", { name: "About pay in Flump" });
     expect(link.getAttribute("href")).toBe("/features/pay");
     expect(document.querySelector('a[href^="/tools"]')).toBeNull();
-    expect(screen.queryByText(/Request an invite/)).toBeNull();
+    expect(screen.queryByText(/request an invite/i)).toBeNull();
     expect(persistOnboardingSeed).not.toHaveBeenCalled();
   });
 

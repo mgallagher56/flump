@@ -163,7 +163,7 @@ export const link = css({
   _focusVisible: { outline: "none", boxShadow: "focus" },
 });
 
-/** The last stop's two calls to action. */
+/** The last stop's call to action. */
 export const ctas = css({
   marginTop: "1",
   // Prototype 11's `p11-stop__ctas > div`: the buttons start at the left at every width.

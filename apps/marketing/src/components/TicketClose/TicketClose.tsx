@@ -1,9 +1,9 @@
 import { Button } from "@repo/ui";
 import { type FC, type ReactNode, useRef } from "react";
 import { useGsapMoment } from "../../motion/useGsapMoment";
-import { signupCta } from "../../utils/site";
 import { CloseStack } from "../CloseStack";
 import { closeMoment } from "../HomeClose";
+import { InviteSignIn } from "../InviteSignIn";
 import { MarketingBand } from "../MarketingBand";
 import type { MarketingSectionTone } from "../MarketingSection";
 import { SoftCard } from "../SoftCard";
@@ -21,8 +21,10 @@ export interface TicketCloseProps {
 
 /**
  * The close of the area and AI connection pages: the picture (prototype 10's gathered stack of the
- * home hero's pieces, owner, 28 Nov 2026), the question, one line and "Request an invite" in one
- * card, in production's words. The card rises, then the pieces gather, once, on time.
+ * home hero's pieces, owner, 28 Nov 2026), the question, one line, "Interactive preview" and the
+ * quiet sign-in line for people with an invite link (invites are shared by hand, owner,
+ * 28 Nov 2026), in one card, in production's words. The card rises, then the pieces gather, once,
+ * on time.
  */
 export const TicketClose: FC<TicketCloseProps> = ({
   tone,
@@ -30,7 +32,6 @@ export const TicketClose: FC<TicketCloseProps> = ({
   titleId = "feature-cta-title",
   picture = <CloseStack />,
 }) => {
-  const cta = signupCta();
   const ref = useRef<HTMLDivElement>(null);
   useGsapMoment(ref, closeMoment);
   return (
@@ -50,8 +51,9 @@ export const TicketClose: FC<TicketCloseProps> = ({
           </h2>
           <p className={closeText}>{text}</p>
           <Button asChild size="lg" variant="primary">
-            <a href={cta.href}>{cta.label}</a>
+            <a href="/preview">Interactive preview</a>
           </Button>
+          <InviteSignIn />
         </SoftCard>
       </div>
     </MarketingBand>

@@ -26,7 +26,7 @@ const headerHeight = () => document.querySelector("header")?.offsetHeight ?? 0;
 const beatOf = (frame: Element | null | undefined) =>
   frame ? -(Number.parseFloat(getComputedStyle(frame).marginTop) || 0) : 0;
 
-/** The page's two calls to action, lit as the hero's (prototype 11's `LitCtas`), closing the journey. */
+/** The page's call to action, lit as the hero's (prototype 11's `LitCtas`), closing the journey. */
 const StopCtas: FC = () => (
   <div className={s.ctas}>
     <LitCtas />
@@ -35,7 +35,7 @@ const StopCtas: FC = () => (
 
 /**
  * One stop of the journey (prototype 11's `stops/JourneyStop.tsx`): "N of 6", the title, lead, one
- * fact and a link (the last stop: the two calls to action), beside its sample, sides swapping at
+ * fact and a link (the last stop: the interactive preview), beside its sample, sides swapping at
  * every stop. A section in the page's stop control (`data-home-section`).
  *
  * The server render, no JavaScript and reduced motion: a plain section, everything finished and

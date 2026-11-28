@@ -127,8 +127,69 @@ for (const corner of CORNERS) {
   });
 }
 
+/*
+ * No invite request anywhere (owner, 28 Nov 2026: invite links are shared by hand). Every page has
+ * no "Request an invite" text and no link to the contact page's old `#beta` section, and the home
+ * page is checked here too since its spec is about motion and layout.
+ */
+const OTHER_PATHS = [
+  "/",
+  "/pricing",
+  "/contact",
+  "/preview",
+  "/security",
+  "/privacy",
+  "/terms",
+  "/cookies",
+  "/accessibility",
+] as const;
+
+async function expectNoInviteRequest(page: Page): Promise<void> {
+  await expect(page.getByText(/request an invite/i)).toHaveCount(0);
+  await expect(page.locator('a[href*="#beta"]')).toHaveCount(0);
+  await expect(page.locator("#beta")).toHaveCount(0);
+}
+
+for (const path of OTHER_PATHS) {
+  test(`marketing ${path}: no invite request and no link to #beta`, async ({ browser }) => {
+    const page = await openPage(browser, path, {
+      reducedMotion: "reduce",
+      viewport: { width: 1280, height: 900 },
+    });
+    await expect(page.locator("main")).toBeVisible();
+    await expectNoInviteRequest(page);
+    await page.context().close();
+  });
+}
+
 for (const row of PAGES) {
   test.describe(`marketing ${row.name}`, () => {
+    test("asks no one to request an invite: the hero's one primary Interactive preview, and the close's preview and sign-in line", async ({
+      browser,
+    }) => {
+      const page = await openPage(browser, row.path, {
+        reducedMotion: "reduce",
+        viewport: { width: 1280, height: 900 },
+      });
+      await expectNoInviteRequest(page);
+      const heroLinks = page.locator("main > :first-child [data-lit-ctas] a");
+      await expect(heroLinks).toHaveText(["Interactive preview"]);
+      await expect(heroLinks.first()).toHaveAttribute("data-variant", "primary");
+      // The features index has no close.
+      if (row.path !== "/features") {
+        const close = page.getByTestId("feature-final-cta");
+        await expect(close.getByRole("link")).toHaveText(["Interactive preview", "Sign in"]);
+        await expect(close.getByTestId("invite-sign-in")).toHaveText(
+          "Have an invite link? Sign in.",
+        );
+        await expect(close.getByRole("link", { name: "Sign in" })).toHaveAttribute(
+          "href",
+          /\/login$/,
+        );
+      }
+      await page.context().close();
+    });
+
     test("is complete with no JavaScript: every band in reading order, nothing waiting to fade in, the still orbs in the hero (MK1, MK11)", async ({
       browser,
     }) => {

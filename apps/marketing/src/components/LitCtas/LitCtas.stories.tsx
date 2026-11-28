@@ -22,7 +22,7 @@ type Story = StoryObj<typeof LitCtas>;
 const assertLinks: Story["play"] = async ({ canvasElement }) => {
   const canvas = within(canvasElement);
   await expect(canvas.getByRole("link", { name: "Interactive preview" })).toBeVisible();
-  await expect(canvas.getAllByRole("link")).toHaveLength(2);
+  await expect(canvas.getAllByRole("link")).toHaveLength(1);
 };
 
 export const Light: Story = { globals: { theme: "light" }, play: assertLinks };
