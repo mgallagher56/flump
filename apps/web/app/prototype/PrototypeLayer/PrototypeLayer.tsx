@@ -14,16 +14,21 @@ import { applyReducedMotion, readReducedMotion } from "../motion";
 
 // Round two: a new key, so the revised level 2 is the default even where round one stored a level.
 const LEVEL_KEY = "flump-proto-level-r2";
-const DEPTH_KEY = "flump-proto-depth";
-const ICONS_KEY = "flump-proto-icons";
-export const PROTO_DEPTHS = ["1", "2", "3"] as const;
-export const PROTO_ICONS = ["glass", "orb", "lit"] as const;
-const DEPTH_NAMES: Record<string, string> = { "1": "Soft", "2": "Medium", "3": "Rich" };
-const ICON_NAMES: Record<string, string> = { glass: "Glass", orb: "Orb", lit: "Lit tile" };
+const TEXTURE_KEY = "flump-proto-texture";
+const ICONS_KEY = "flump-proto-icons-r3";
+export const PROTO_TEXTURES = ["1", "2", "3"] as const;
+export const PROTO_ICONS = ["paper", "tab", "cut", "seal", "mini"] as const;
+const TEXTURE_NAMES: Record<string, string> = { "1": "Fine", "2": "Paper", "3": "Heavy" };
+const ICON_NAMES: Record<string, string> = {
+  paper: "Paper",
+  tab: "Tab",
+  cut: "Cut paper",
+  seal: "Seal",
+  mini: "Mini documents",
+};
 
-/** Cards and clickable rows that take the pointer light (level 2, round two). */
-const LIGHT_TARGETS =
-  "main [data-card], main [data-kpi-card], main [data-section-card], main [data-tone='hero'], main li:has(a), [role='dialog'] [data-card]";
+/** The larger clickable cards that take the pointer light (round three: no rows). */
+const LIGHT_TARGETS = "main [data-section-card], main #monthly-check-in-card";
 
 const readChoice = <T extends string>(key: string, allowed: readonly T[], fallback: T): T => {
   try {
@@ -84,8 +89,8 @@ export const PrototypeLayer: FC = () => {
   const { theme, setPreference } = useThemeContext();
   const [level, setLevel] = useState<ProtoLevel | null>(null);
   const [capture, setCapture] = useState(false);
-  const [depth, setDepth] = useState<(typeof PROTO_DEPTHS)[number]>("2");
-  const [icons, setIcons] = useState<(typeof PROTO_ICONS)[number]>("glass");
+  const [texture, setTexture] = useState<(typeof PROTO_TEXTURES)[number]>("2");
+  const [icons, setIcons] = useState<(typeof PROTO_ICONS)[number]>("paper");
 
   // Read the query once per navigation: a level or theme in the link wins and is remembered.
   useEffect(() => {
@@ -99,30 +104,37 @@ export const PrototypeLayer: FC = () => {
     const themeParam = params.get("theme");
     if (themeParam === "light" || themeParam === "dark") setPreference(themeParam);
     if (params.get("capture") === "1") setCapture(true);
-    const depthParam = params.get("depth");
-    setDepth(
-      depthParam && (PROTO_DEPTHS as readonly string[]).includes(depthParam)
-        ? (depthParam as (typeof PROTO_DEPTHS)[number])
-        : readChoice(DEPTH_KEY, PROTO_DEPTHS, "2"),
+    const textureParam = params.get("texture");
+    setTexture(
+      textureParam && (PROTO_TEXTURES as readonly string[]).includes(textureParam)
+        ? (textureParam as (typeof PROTO_TEXTURES)[number])
+        : readChoice(TEXTURE_KEY, PROTO_TEXTURES, "2"),
     );
     const iconsParam = params.get("icons");
     setIcons(
       iconsParam && (PROTO_ICONS as readonly string[]).includes(iconsParam)
         ? (iconsParam as (typeof PROTO_ICONS)[number])
-        : readChoice(ICONS_KEY, PROTO_ICONS, "glass"),
+        : readChoice(ICONS_KEY, PROTO_ICONS, "paper"),
     );
     applyReducedMotion(readReducedMotion());
   }, [location.search, setPreference]);
 
+  // Round three: medium depth is the depth; texture is the choice.
   useEffect(() => {
-    document.documentElement.dataset.protoDepth = depth;
-    storeChoice(DEPTH_KEY, depth);
-  }, [depth]);
+    document.documentElement.dataset.protoDepth = "2";
+    document.documentElement.dataset.protoTexture = texture;
+    storeChoice(TEXTURE_KEY, texture);
+  }, [texture]);
 
   useEffect(() => {
+    // The icon sheet shows every option itself, so no page-wide option there.
+    if (location.pathname.startsWith("/prototype")) {
+      delete document.documentElement.dataset.protoIcons;
+      return;
+    }
     document.documentElement.dataset.protoIcons = icons;
     storeChoice(ICONS_KEY, icons);
-  }, [icons]);
+  }, [icons, location.pathname]);
 
   // The orbs pause in a hidden tab and while off screen.
   useEffect(() => {
@@ -226,7 +238,7 @@ export const PrototypeLayer: FC = () => {
     if (capture) document.documentElement.dataset.protoCapture = "";
   }, [capture]);
 
-  if (level === null || capture || location.pathname === "/prototype") return null;
+  if (level === null || capture || location.pathname.startsWith("/prototype")) return null;
 
   return (
     <section aria-label="Prototype controls" className="proto-control">
@@ -248,20 +260,20 @@ export const PrototypeLayer: FC = () => {
       {level === 2 ? (
         <>
           <fieldset className="proto-control__group">
-            <legend className="proto-control__legend">Depth</legend>
+            <legend className="proto-control__legend">Texture</legend>
             <span aria-hidden="true" className="proto-control__label">
-              Depth
+              Texture
             </span>
-            {PROTO_DEPTHS.map((value) => (
+            {PROTO_TEXTURES.map((value) => (
               <button
-                aria-label={`Depth ${DEPTH_NAMES[value]}`}
-                aria-pressed={depth === value}
+                aria-label={`Texture ${TEXTURE_NAMES[value]}`}
+                aria-pressed={texture === value}
                 className="proto-control__button"
                 key={value}
-                onClick={() => setDepth(value)}
+                onClick={() => setTexture(value)}
                 type="button"
               >
-                {DEPTH_NAMES[value]}
+                {TEXTURE_NAMES[value]}
               </button>
             ))}
           </fieldset>

@@ -40,7 +40,10 @@ export const MobileBottomBar: FC<MobileBottomBarProps> = ({
             item,
             mobileBottomBarLink(),
             <>
-              {item.icon}
+              {/* PROTOTYPE ONLY: a box the icon-style options can draw on. */}
+              <span aria-hidden="true" data-proto-nav-icon="" data-tile-tone="neutral">
+                {item.icon}
+              </span>
               <span className={mobileBottomBarLabel()} data-nav-label="">
                 {item.label}
               </span>

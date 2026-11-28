@@ -19,8 +19,8 @@ const LEVELS = [
   },
   {
     value: 2,
-    name: "Level 2, still ornament",
-    note: "Level 1 plus still glass orbs in page headers and soft bubbles beside empty states, onboarding and check-in. The tier B moments play once.",
+    name: "Level 2, revised (round three)",
+    note: "The owner's pick, revised: medium depth with a choice of paper texture, a pointer light on the larger clickable cards, header orbs that drift in and out (stop them in Settings or with Pause motion in the header), a choice of icon style, and an info button on each calculated headline figure that shows its working.",
   },
   {
     value: 3,
@@ -32,7 +32,9 @@ const LEVELS = [
 export default function PrototypeIndex() {
   const [origins, setOrigins] = useState<Origins>({});
   const [firstAccount, setFirstAccount] = useState<string | null>(null);
-  const [level, setLevel] = useState(1);
+  const [level, setLevel] = useState(2);
+  const [texture, setTexture] = useState("2");
+  const [icons, setIcons] = useState("paper");
   const [theme, setTheme] = useState<"light" | "dark">("light");
 
   useEffect(() => {
@@ -55,9 +57,9 @@ export default function PrototypeIndex() {
       const origin = origins[s.stack] ?? "";
       const path = s.path.replace(":first", firstAccount ?? "");
       const joiner = path.includes("?") ? "&" : "?";
-      return `${origin}${path}${joiner}level=${level}&theme=${theme}`;
+      return `${origin}${path}${joiner}level=${level}&theme=${theme}&texture=${texture}&icons=${icons}`;
     },
-    [origins, firstAccount, level, theme],
+    [origins, firstAccount, level, theme, texture, icons],
   );
   const levelInfo = LEVELS.find((l) => l.value === level) ?? LEVELS[1];
 
@@ -84,6 +86,48 @@ export default function PrototypeIndex() {
             </label>
           ))}
         </fieldset>
+        {level === 2 ? (
+          <>
+            <fieldset>
+              <legend>Texture</legend>
+              {[
+                ["1", "Fine"],
+                ["2", "Paper"],
+                ["3", "Heavy"],
+              ].map(([v, n]) => (
+                <label key={v}>
+                  <input
+                    checked={texture === v}
+                    name="texture"
+                    onChange={() => setTexture(v)}
+                    type="radio"
+                  />
+                  {n}
+                </label>
+              ))}
+            </fieldset>
+            <fieldset>
+              <legend>Icons</legend>
+              {[
+                ["paper", "Paper"],
+                ["tab", "Tab"],
+                ["cut", "Cut paper"],
+                ["seal", "Seal"],
+                ["mini", "Mini documents"],
+              ].map(([v, n]) => (
+                <label key={v}>
+                  <input
+                    checked={icons === v}
+                    name="icons"
+                    onChange={() => setIcons(v)}
+                    type="radio"
+                  />
+                  {n}
+                </label>
+              ))}
+            </fieldset>
+          </>
+        ) : null}
         <fieldset>
           <legend>Theme</legend>
           {(["light", "dark"] as const).map((t) => (

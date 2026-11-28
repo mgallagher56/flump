@@ -8,7 +8,7 @@
  *      same light on keyboard focus.
  *   3. The header orbs breathe slowly for as long as the page is open; still under reduced motion,
  *      with "Reduce motion" on, in a hidden tab and off screen.
- *   4. Three icon styles (data-proto-icons): glass, orb, lit tile. Same Lucide icons underneath.
+ *   4. Icon styles (data-proto-icons): paper, tab, cut, seal, mini (round three). Lucide underneath.
  *   5. Explain buttons on calculated figures (explain.ts); the Budget equation chip moves into it.
  * Everything here is scoped to html[data-proto-level="2"].
  */
@@ -170,10 +170,10 @@ html[data-proto-level="2"][data-proto-depth="1"] main [data-tone="hero"] {
 }
 
 /* Raised on hover: the shadow deepens a step (no movement). */
+html[data-proto-level="2"] main :is([data-section-card], #monthly-check-in-card)[data-proto-lit],
 html[data-proto-level="2"]
   main
-  :is([data-card], [data-kpi-card], [data-section-card])[data-proto-lit],
-html[data-proto-level="2"] main :is([data-card], [data-section-card]):has(:focus-visible) {
+  :is([data-section-card], #monthly-check-in-card):has(:focus-visible) {
   box-shadow: var(--p-shadow-hi);
 }
 
@@ -272,15 +272,14 @@ html[data-proto-level="2"] main :is(li:has(a)) {
     --proto-lit var(--durations-fast, 150ms) ease-out,
     box-shadow var(--durations-fast, 150ms) ease-out;
 }
-html[data-proto-level="2"] main :is(li:has(a)) {
-  background-image: var(--p-hover);
-}
 @media (hover: hover) {
   html[data-proto-level="2"] [data-proto-lit] {
     --proto-lit: 1;
   }
 }
-html[data-proto-level="2"] main :is([data-card], [data-section-card], li):has(:focus-visible) {
+html[data-proto-level="2"]
+  main
+  :is([data-section-card], #monthly-check-in-card):has(:focus-visible) {
   --proto-lit: 1;
   --light-x: 50%;
   --light-y: 0%;
@@ -299,16 +298,16 @@ html[data-proto-level="2"] main :is([data-card], [data-section-card], li):has(:f
 
 @media (prefers-reduced-motion: no-preference) {
   html[data-proto-level="2"]:not([data-proto-motion="reduced"]) [data-proto-ornament] [data-orb] {
-    animation: proto-breathe-slow 7.2s cubic-bezier(0.45, 0, 0.3, 1) infinite both;
+    animation: proto-drift 7.2s cubic-bezier(0.45, 0, 0.3, 1) infinite both;
   }
   html[data-proto-level="2"] [data-proto-ornament] [data-orb="2"] {
-    animation-delay: -1.8s;
+    animation-delay: -0.5s;
   }
   html[data-proto-level="2"] [data-proto-ornament] [data-orb="3"] {
-    animation-delay: -3.6s;
+    animation-delay: -0.9s;
   }
   html[data-proto-level="2"] [data-proto-ornament] [data-orb="4"] {
-    animation-delay: -5.4s;
+    animation-delay: -0.3s;
   }
   html[data-proto-level="2"][data-proto-hidden] [data-proto-ornament] [data-orb],
   html[data-proto-level="2"] [data-proto-ornament][data-proto-offscreen] [data-orb] {
@@ -395,111 +394,46 @@ html[data-proto-level="2"] .proto-motion-setting {
 /* 4. Icon styles, in each area's tone (debt is apricot, never rose)   */
 /* ------------------------------------------------------------------ */
 
-html[data-proto-level="2"] [data-tile-tone] {
+[data-tile-tone] {
   --t-tint: var(--colors-surface-subtle);
   --t-ink: var(--colors-text-primary);
 }
-html[data-proto-level="2"] [data-tile-tone="teal"] {
+[data-tile-tone="teal"] {
   --t-tint: var(--colors-surface-tint-teal);
   --t-ink: var(--colors-chart-series1);
 }
-html[data-proto-level="2"] [data-tile-tone="sage"] {
+[data-tile-tone="sage"] {
   --t-tint: var(--colors-surface-tint-sage);
   --t-ink: var(--colors-chart-series2);
 }
-html[data-proto-level="2"] [data-tile-tone="apricot"] {
+[data-tile-tone="apricot"] {
   --t-tint: var(--colors-surface-tint-apricot);
   --t-ink: var(--colors-chart-series3);
 }
-html[data-proto-level="2"] [data-tile-tone="violet"] {
+[data-tile-tone="violet"] {
   --t-tint: var(--colors-surface-tint-violet);
   --t-ink: var(--colors-chart-series4);
 }
-html[data-proto-level="2"] [data-tile-tone="rose"] {
+[data-tile-tone="rose"] {
   --t-tint: var(--colors-surface-tint-rose);
   --t-ink: var(--colors-chart-series5);
 }
-html[data-proto-level="2"] [data-tile-tone="sky"] {
+[data-tile-tone="sky"] {
   --t-tint: var(--colors-surface-tint-sky);
   --t-ink: var(--colors-chart-series6);
 }
-html[data-proto-level="2"] [data-tile-tone="accent"] {
+[data-tile-tone="accent"] {
   --t-tint: var(--colors-accent-subtle);
   --t-ink: var(--colors-accent);
 }
 /* Section headers' neutral tiles take the page's area. */
-html[data-proto-level="2"] [data-tile-tone="neutral"] {
+[data-tile-tone="neutral"] {
   --t-tint: var(--proto-area-tint);
   --t-ink: var(--proto-area);
 }
 html[data-proto-level="2"] [data-tile-tone] svg {
   color: var(--t-ink);
   position: relative;
-}
-
-/* A. Glass: a clear tile in the tone, lit from the top, a thin rim in the glyph's colour. */
-html[data-proto-level="2"][data-proto-icons="glass"] [data-tile-tone] {
-  border-radius: 12px;
-  border-color: transparent;
-  background: linear-gradient(
-    160deg,
-    color-mix(in oklab, var(--colors-surface-card) 55%, var(--t-tint)) 0%,
-    var(--t-tint) 72%
-  );
-  box-shadow:
-    inset 0 1px 0 0 rgb(var(--p-hi) / calc(var(--p-hi-a) + 0.1)),
-    inset 0 0 0 1px color-mix(in oklab, var(--t-ink) 22%, transparent),
-    0 3px 8px -3px color-mix(in oklab, var(--t-ink) 35%, transparent);
-}
-
-/* B. Orb: a round glass bead in the tone with a highlight, the glyph at its centre. */
-html[data-proto-level="2"][data-proto-icons="orb"] [data-tile-tone] {
-  border-radius: 9999px;
-  border-color: transparent;
-  background:
-    radial-gradient(
-      circle at 30% 24%,
-      color-mix(in oklab, var(--colors-surface-card) 80%, transparent) 0 8%,
-      transparent 30%
-    ),
-    radial-gradient(
-      circle at 50% 56%,
-      var(--t-tint) 0 50%,
-      color-mix(in oklab, var(--t-ink) 34%, var(--t-tint)) 100%
-    );
-  box-shadow:
-    inset 0 0 0 1px color-mix(in oklab, var(--t-ink) 30%, transparent),
-    inset 0 -3px 6px -2px color-mix(in oklab, var(--t-ink) 25%, transparent),
-    0 4px 8px -4px color-mix(in oklab, var(--t-ink) 50%, transparent);
-}
-
-/* C. Lit tile: a small raised tile, light on top and a shade underneath, a softer line. */
-html[data-proto-level="2"][data-proto-icons="lit"] [data-tile-tone] {
-  border-radius: 10px;
-  border-color: transparent;
-  background: linear-gradient(
-    180deg,
-    color-mix(in oklab, var(--t-tint) 55%, var(--colors-surface-card)) 0%,
-    var(--t-tint) 100%
-  );
-  box-shadow:
-    inset 0 1px 0 0 rgb(var(--p-hi) / calc(var(--p-hi-a) + 0.15)),
-    inset 0 -2px 0 0 color-mix(in oklab, var(--t-ink) 24%, transparent),
-    0 1px 1px 0 rgb(var(--p-ink) / 0.1),
-    0 4px 8px -3px color-mix(in oklab, var(--t-ink) 35%, transparent);
-}
-html[data-proto-level="2"][data-proto-icons="lit"] [data-tile-tone] svg {
-  stroke-width: 1.75;
-}
-
-/* Navigation icons (the phone's bottom bar): the current page's icon sits on the same tile. */
-html[data-proto-level="2"] nav [aria-current="page"] svg {
-  color: var(--colors-primary);
-}
-html[data-proto-level="2"][data-proto-icons="orb"] nav [aria-current="page"] svg,
-html[data-proto-level="2"][data-proto-icons="glass"] nav [aria-current="page"] svg,
-html[data-proto-level="2"][data-proto-icons="lit"] nav [aria-current="page"] svg {
-  filter: drop-shadow(0 1px 0 rgb(var(--p-hi) / var(--p-hi-a)));
 }
 
 /* ------------------------------------------------------------------ */
@@ -575,4 +509,483 @@ html[data-proto-level="2"] [role="dialog"] [data-card] {
       40%,
     transparent 72%
   );
+}
+
+/* ================================================================== */
+/* Round three (owner, 28 Nov 2026)                                    */
+/* ================================================================== */
+
+/* Orbs drift towards each other and apart again. Each keeps its size: translate only, no scale.
+   The vectors point at the group's middle, so the group closes in and opens out. */
+@keyframes proto-drift {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: var(--dx, 0) var(--dy, 0);
+  }
+}
+[data-proto-ornament] [data-orb="1"] {
+  --dx: -5px;
+  --dy: 3px;
+}
+[data-proto-ornament] [data-orb="2"] {
+  --dx: -6px;
+  --dy: -5px;
+}
+[data-proto-ornament] [data-orb="3"] {
+  --dx: 7px;
+  --dy: -4px;
+}
+[data-proto-ornament] [data-orb="4"] {
+  --dx: 6px;
+  --dy: 5px;
+}
+@media (min-width: 48rem) {
+  [data-proto-ornament] [data-orb="1"] {
+    --dx: -10px;
+    --dy: 6px;
+  }
+  [data-proto-ornament] [data-orb="2"] {
+    --dx: -14px;
+    --dy: -10px;
+  }
+  [data-proto-ornament] [data-orb="3"] {
+    --dx: 16px;
+    --dy: -9px;
+  }
+  [data-proto-ornament] [data-orb="4"] {
+    --dx: 12px;
+    --dy: 11px;
+  }
+}
+
+/* Texture: the paper pictures' ruled lines plus grain, at medium depth, in three strengths that
+   each read clearly stronger than the last. Grain pushes away from the text colour (white in
+   mint, black in Midnight); the ruled lines are ink in mint and light in Midnight. */
+html[data-proto-level="2"] {
+  --p-rule: 15 42 42;
+  --p-tex-grain: var(--p-grain-10);
+  --p-rule-a: 0.05;
+  --p-rule-pitch: 4px;
+  --p-grain:
+    repeating-linear-gradient(
+      0deg,
+      rgb(var(--p-rule) / var(--p-rule-a)) 0 1px,
+      transparent 1px var(--p-rule-pitch)
+    ),
+    var(--p-tex-grain);
+}
+html.dark[data-proto-level="2"] {
+  --p-rule: 255 255 255;
+}
+html[data-proto-level="2"][data-proto-texture="1"] {
+  --p-rule-a: 0.05;
+  --p-tex-grain: var(--p-grain-10);
+}
+html.dark[data-proto-level="2"][data-proto-texture="1"] {
+  --p-rule-a: 0.035;
+}
+html[data-proto-level="2"][data-proto-texture="2"] {
+  --p-rule-a: 0.09;
+  --p-tex-grain: var(--p-grain-16);
+}
+html.dark[data-proto-level="2"][data-proto-texture="2"] {
+  --p-rule-a: 0.06;
+}
+html[data-proto-level="2"][data-proto-texture="3"] {
+  --p-rule-a: 0.14;
+  --p-rule-pitch: 3px;
+  --p-tex-grain: var(--p-grain-16), var(--p-grain-16);
+}
+html.dark[data-proto-level="2"][data-proto-texture="3"] {
+  --p-rule-a: 0.095;
+}
+/* Buttons and the bar keep grain only; the ruled paper is for cards and bands. */
+html[data-proto-level="2"] :is([data-variant="outline"], [data-variant="secondary"]),
+html[data-proto-level="2"] header[data-sticky-header] {
+  --p-grain: var(--p-tex-grain);
+}
+
+/* ------------------------------------------------------------------ */
+/* Icon options: flat paper, drawn from the document pictures          */
+/* ------------------------------------------------------------------ */
+
+[data-proto-nav-icon] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+html[data-proto-level="2"] [data-proto-nav-icon] {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+}
+html[data-proto-level="2"] nav [aria-current="page"] [data-proto-nav-icon] {
+  --t-tint: var(--colors-surface-tint-teal);
+  --t-ink: var(--colors-primary);
+}
+html[data-proto-level="2"] nav :not([aria-current="page"]) > [data-proto-nav-icon] {
+  --t-ink: currentColor;
+}
+:is(html[data-proto-level="2"], [data-proto-icons-scope]) [data-tile-tone] {
+  position: relative;
+  border-color: transparent;
+  box-shadow: none;
+}
+:is(html[data-proto-level="2"], [data-proto-icons-scope]) [data-tile-tone] svg {
+  color: var(--t-ink);
+  position: relative;
+}
+
+/* 1. Paper: a ruled paper tile with a crisp edge and a top rule in the area's colour. */
+:is(html[data-proto-level="2"][data-proto-icons="paper"], [data-proto-icons-scope="paper"])
+  [data-tile-tone] {
+  border-radius: 22%;
+  border: 1px solid var(--colors-material-paper-edge);
+  background:
+    linear-gradient(var(--t-ink), var(--t-ink)) top / 100% 2px no-repeat,
+    repeating-linear-gradient(0deg, var(--colors-material-paper-rule) 0 1px, transparent 1px 3px),
+    var(--colors-material-paper-fill);
+  box-shadow: 0 1px 2px 0 rgb(15 42 42 / 0.12);
+}
+
+/* 2. Tab: the "Check-in day" label: flat paper, a coloured edge on the left, ink glyph. */
+:is(html[data-proto-level="2"][data-proto-icons="tab"], [data-proto-icons-scope="tab"])
+  [data-tile-tone] {
+  border-radius: 3px 22% 22% 3px;
+  border: 1px solid var(--colors-material-paper-edge);
+  border-left: 3px solid var(--t-ink);
+  background: var(--colors-material-paper-fill);
+  box-shadow: 0 1px 2px 0 rgb(15 42 42 / 0.12);
+}
+:is(html[data-proto-level="2"][data-proto-icons="tab"], [data-proto-icons-scope="tab"])
+  [data-tile-tone]
+  svg {
+  color: var(--colors-text-primary);
+}
+
+/* 3. Cut paper: a solid flat tile in the pictures' mint (Midnight in dark) with a small round
+   seal in the area's colour stuck on its corner. */
+:is(html[data-proto-level="2"][data-proto-icons="cut"], [data-proto-icons-scope="cut"])
+  [data-tile-tone] {
+  border-radius: 22%;
+  background: var(--colors-surface-hero);
+}
+:is(html[data-proto-level="2"][data-proto-icons="cut"], [data-proto-icons-scope="cut"])
+  [data-tile-tone]
+  svg {
+  color: var(--colors-text-on-hero);
+}
+:is(
+    html.dark[data-proto-level="2"][data-proto-icons="cut"],
+    .dark [data-proto-icons-scope="cut"],
+    [data-proto-icons-scope="cut"].dark
+  )
+  [data-tile-tone] {
+  background: var(--colors-surface-sunken);
+  border: 1px solid var(--colors-border-strong);
+}
+:is(
+    html.dark[data-proto-level="2"][data-proto-icons="cut"],
+    .dark [data-proto-icons-scope="cut"],
+    [data-proto-icons-scope="cut"].dark
+  )
+  [data-tile-tone]
+  svg {
+  color: var(--colors-primary);
+}
+:is(html[data-proto-level="2"][data-proto-icons="cut"], [data-proto-icons-scope="cut"])
+  [data-tile-tone]::after {
+  content: "";
+  position: absolute;
+  top: -12%;
+  right: -12%;
+  width: 38%;
+  height: 38%;
+  border-radius: 9999px;
+  background: var(--t-ink);
+  box-shadow: 0 0 0 2px var(--colors-surface-card);
+}
+
+/* 4. Seal: no box. A round seal in the area's tint behind the glyph, as the statements' mark. */
+:is(html[data-proto-level="2"][data-proto-icons="seal"], [data-proto-icons-scope="seal"])
+  [data-tile-tone] {
+  background: transparent;
+  border: 0;
+}
+:is(html[data-proto-level="2"][data-proto-icons="seal"], [data-proto-icons-scope="seal"])
+  [data-tile-tone]::before {
+  content: "";
+  position: absolute;
+  left: 4%;
+  bottom: 4%;
+  width: 70%;
+  height: 70%;
+  border-radius: 9999px;
+  background: var(--t-tint);
+  box-shadow: inset 0 0 0 1.5px color-mix(in oklab, var(--t-ink) 45%, transparent);
+}
+:is(html[data-proto-level="2"][data-proto-icons="seal"], [data-proto-icons-scope="seal"])
+  [data-tile-tone]
+  svg {
+  translate: 10% -10%;
+}
+
+/* 5. Miniature documents: each account type drawn as a tiny version of its picture. Six bespoke
+   drawings; anything without one falls back to the paper tile with its library glyph. */
+:is(html[data-proto-level="2"][data-proto-icons="mini"], [data-proto-icons-scope="mini"])
+  [data-tile-tone] {
+  border-radius: 22%;
+  border: 1px solid var(--colors-material-paper-edge);
+  background:
+    linear-gradient(var(--t-ink), var(--t-ink)) top / 100% 2px no-repeat,
+    var(--colors-material-paper-fill);
+}
+:is(html[data-proto-level="2"][data-proto-icons="mini"], [data-proto-icons-scope="mini"])
+  [data-tile-tone]:has(
+    > svg:is(
+        .lucide-wallet,
+        .lucide-credit-card,
+        .lucide-piggy-bank,
+        .lucide-chart-line,
+        .lucide-shield-check,
+        .lucide-house,
+        .lucide-hand-coins
+      )
+  ) {
+  background: transparent;
+  border: 0;
+}
+:is(html[data-proto-level="2"][data-proto-icons="mini"], [data-proto-icons-scope="mini"])
+  [data-tile-tone]
+  > svg:is(
+    .lucide-wallet,
+    .lucide-credit-card,
+    .lucide-piggy-bank,
+    .lucide-chart-line,
+    .lucide-shield-check,
+    .lucide-house,
+    .lucide-hand-coins
+  ) {
+  visibility: hidden;
+}
+:is(html[data-proto-level="2"][data-proto-icons="mini"], [data-proto-icons-scope="mini"])
+  [data-tile-tone]:has(
+    > svg:is(
+        .lucide-wallet,
+        .lucide-credit-card,
+        .lucide-piggy-bank,
+        .lucide-chart-line,
+        .lucide-shield-check,
+        .lucide-house,
+        .lucide-hand-coins
+      )
+  )::before,
+:is(html[data-proto-level="2"][data-proto-icons="mini"], [data-proto-icons-scope="mini"])
+  [data-tile-tone]:has(
+    > svg:is(
+        .lucide-wallet,
+        .lucide-credit-card,
+        .lucide-piggy-bank,
+        .lucide-chart-line,
+        .lucide-shield-check,
+        .lucide-house,
+        .lucide-hand-coins
+      )
+  )::after {
+  content: "";
+  position: absolute;
+}
+/* Cards (current account, credit card): landscape, rounded, a chip or two circles. */
+:is(html[data-proto-level="2"][data-proto-icons="mini"], [data-proto-icons-scope="mini"])
+  [data-tile-tone]:has(> svg:is(.lucide-wallet, .lucide-credit-card))::before {
+  inset: 18% 2%;
+  border-radius: 12% / 18%;
+  background: linear-gradient(140deg, #2b3139, #111418);
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.25);
+}
+:is(html[data-proto-level="2"][data-proto-icons="mini"], [data-proto-icons-scope="mini"])
+  [data-tile-tone]:has(> svg.lucide-wallet)::after {
+  left: 14%;
+  top: 38%;
+  width: 22%;
+  height: 16%;
+  border-radius: 2px;
+  background: #c9ced3;
+}
+:is(html[data-proto-level="2"][data-proto-icons="mini"], [data-proto-icons-scope="mini"])
+  [data-tile-tone]:has(> svg.lucide-credit-card)::before {
+  background: linear-gradient(140deg, #8fd6c3, #5fb7a1);
+}
+:is(html[data-proto-level="2"][data-proto-icons="mini"], [data-proto-icons-scope="mini"])
+  [data-tile-tone]:has(> svg.lucide-credit-card)::after {
+  left: 12%;
+  top: 34%;
+  width: 34%;
+  height: 22%;
+  background:
+    radial-gradient(circle at 30% 50%, rgb(15 42 42 / 0.35) 0 28%, transparent 30%),
+    radial-gradient(circle at 66% 50%, rgb(15 42 42 / 0.25) 0 28%, transparent 30%);
+}
+/* Paper slips and statements: portrait, ruled, crisp edge. */
+:is(html[data-proto-level="2"][data-proto-icons="mini"], [data-proto-icons-scope="mini"])
+  [data-tile-tone]:has(
+    > svg:is(
+        .lucide-piggy-bank,
+        .lucide-chart-line,
+        .lucide-shield-check,
+        .lucide-house,
+        .lucide-hand-coins
+      )
+  )::before {
+  inset: 4% 16%;
+  border-radius: 2px;
+  border: 1px solid var(--colors-material-paper-edge);
+  background:
+    linear-gradient(rgb(15 42 42 / 0.28), rgb(15 42 42 / 0.28)) 22% 54% / 56% 1px no-repeat,
+    linear-gradient(rgb(15 42 42 / 0.28), rgb(15 42 42 / 0.28)) 22% 70% / 56% 1px no-repeat,
+    var(--colors-material-paper-fill);
+  box-shadow: 0 1px 2px 0 rgb(15 42 42 / 0.16);
+}
+/* Savings passbook and loan slip: a perforated top. */
+:is(html[data-proto-level="2"][data-proto-icons="mini"], [data-proto-icons-scope="mini"])
+  [data-tile-tone]:has(> svg:is(.lucide-piggy-bank, .lucide-hand-coins))::after {
+  left: 22%;
+  right: 22%;
+  top: 16%;
+  height: 2px;
+  background: repeating-linear-gradient(90deg, var(--t-ink) 0 2px, transparent 2px 4px);
+}
+/* Statements (pension, mortgage): the small round mark top left. */
+:is(html[data-proto-level="2"][data-proto-icons="mini"], [data-proto-icons-scope="mini"])
+  [data-tile-tone]:has(> svg:is(.lucide-shield-check, .lucide-house))::after {
+  left: 26%;
+  top: 14%;
+  width: 22%;
+  height: 22%;
+  border-radius: 9999px;
+  background: var(--t-ink);
+}
+/* Investment statement: a small rising line. */
+:is(html[data-proto-level="2"][data-proto-icons="mini"], [data-proto-icons-scope="mini"])
+  [data-tile-tone]:has(> svg.lucide-chart-line)::after {
+  left: 26%;
+  top: 14%;
+  width: 48%;
+  height: 30%;
+  background: linear-gradient(to top right, transparent 44%, var(--t-ink) 44% 56%, transparent 56%);
+}
+/* Midnight: the paper reads as paper on the dark canvas. */
+:is(html.dark[data-proto-level="2"], .dark [data-proto-icons-scope], [data-proto-icons-scope].dark)
+  [data-tile-tone] {
+  --colors-material-paper-rule: rgb(255 255 255 / 0.07);
+}
+
+/* The icon sheet (/prototype/icons). */
+.proto-sheet {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 8px 0 64px;
+  display: grid;
+  gap: 28px;
+}
+.proto-sheet h1 {
+  font: 700 clamp(2rem, 1.45rem + 1.8vw, 3rem) / 1.15 var(--fonts-heading);
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+.proto-sheet h2 {
+  font: 700 1.5rem / 1.2 var(--fonts-heading);
+  margin: 0 0 6px;
+}
+.proto-sheet__panels {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 16px;
+  margin-top: 12px;
+}
+.proto-sheet__panel {
+  padding: 16px 20px;
+  border-radius: 20px;
+  border: 1px solid var(--colors-border);
+  background: var(--colors-surface-card);
+  color: var(--colors-text-primary);
+}
+.proto-sheet__panel-title {
+  margin: 0 0 8px;
+  font-weight: 600;
+  color: var(--colors-text-secondary);
+}
+.proto-sheet__table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 14px;
+}
+.proto-sheet__table th,
+.proto-sheet__table td {
+  padding: 7px 6px;
+  text-align: left;
+  vertical-align: middle;
+  font-weight: 500;
+}
+.proto-sheet__table thead th {
+  color: var(--colors-text-secondary);
+  font-weight: 600;
+}
+.proto-sheet__tile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+[data-proto-sheet-today] .proto-sheet__tile {
+  border-radius: 25%;
+  background: var(--t-tint);
+}
+[data-proto-sheet-today] .proto-sheet__tile svg {
+  color: var(--colors-text-primary) !important;
+}
+
+/* Midnight: mini documents step up from the surface (as the dark pictures' grey paper), and the
+   dark card gets a lit edge so it never sinks into the canvas. */
+:is(html.dark[data-proto-level="2"][data-proto-icons="mini"], .dark[data-proto-icons-scope="mini"])
+  [data-tile-tone]:has(
+    > svg:is(
+        .lucide-piggy-bank,
+        .lucide-chart-line,
+        .lucide-shield-check,
+        .lucide-house,
+        .lucide-hand-coins
+      )
+  )::before {
+  border-color: rgb(255 255 255 / 0.22);
+  background:
+    linear-gradient(rgb(255 255 255 / 0.32), rgb(255 255 255 / 0.32)) 22% 54% / 56% 1px no-repeat,
+    linear-gradient(rgb(255 255 255 / 0.32), rgb(255 255 255 / 0.32)) 22% 70% / 56% 1px no-repeat,
+    #343b45;
+}
+:is(html.dark[data-proto-level="2"][data-proto-icons="mini"], .dark[data-proto-icons-scope="mini"])
+  [data-tile-tone]:has(> svg.lucide-wallet)::before {
+  background: linear-gradient(140deg, #4a535f, #262b33);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.16);
+}
+:is(html[data-proto-level="2"][data-proto-icons="cut"], [data-proto-icons-scope="cut"])
+  [data-tile-tone]::after {
+  width: 30%;
+  height: 30%;
+  top: -8%;
+  right: -8%;
+}
+
+/* The texture replaces medium depth's own grain (this selector outranks the depth rule). */
+html[data-proto-level="2"][data-proto-texture] {
+  --p-grain:
+    repeating-linear-gradient(
+      0deg,
+      rgb(var(--p-rule) / var(--p-rule-a)) 0 1px,
+      transparent 1px var(--p-rule-pitch)
+    ),
+    var(--p-tex-grain);
 }
