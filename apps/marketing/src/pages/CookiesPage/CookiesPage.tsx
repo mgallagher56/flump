@@ -45,7 +45,7 @@ export const NEEDED_ITEMS: StoredItem[] = [
   {
     name: MOTION_STORAGE_KEY,
     kind: "Local storage, on this site",
-    purpose: "Remembers that you chose Reduce motion. Set only when you choose it.",
+    purpose: 'Remembers that you chose "Reduce motion". Set only when you choose it.',
     lifetime: 'Until you press "Reduce motion" again, which removes it.',
   },
   {
@@ -182,7 +182,7 @@ export const CookiesPage: FC = () => (
     <LegalSection id="changes" title="Changes to this page">
       <p>When Flump starts or stops using an item, this page and its version change with it.</p>
       <ul className={versionHistory()}>
-        <li>Version 0.2, 28 November 2026: adds the item that remembers Reduce motion.</li>
+        <li>Version 0.2, 28 November 2026: adds the item that remembers "Reduce motion".</li>
         <li>Version 0.1, 25 November 2026: first version, for the test phase.</li>
       </ul>
     </LegalSection>
