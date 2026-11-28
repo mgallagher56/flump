@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.48.0](https://github.com/mgallagher56/flump/compare/flump/backend-v1.47.1...flump/backend-v1.48.0) (2026-11-28)
+
+
+### Features ✨
+
+* **beta:** the admin's People with access list and used invite links show the person's name and email address, read from WorkOS at request time ([21e8d93](https://github.com/mgallagher56/flump/commit/21e8d93e8a2353f941919a314bf85d4070ae197a))
+* **privacy:** GET /user-profile/export/summary says whether the caller has anything to export ([53f43a3](https://github.com/mgallagher56/flump/commit/53f43a32ddf232beb90b104a3576213580c4a1ce))
+* **web:** the not-invited page and the terms screen offer Download your data only when there is something to download ([7b7e719](https://github.com/mgallagher56/flump/commit/7b7e71960fa07b00ba045a45451af54b70df287a))
+
+
+### Bug Fixes 🪲
+
+* **beta:** an allow-listed person who opens an invite link uses it and is recorded; someone who already has access is told the link was not used ([2290805](https://github.com/mgallagher56/flump/commit/2290805b3891923de8d2442a8f4579146d0c0256))
+* **beta:** review: the already-member page is true for an allow-listed caller's unusable link too, the contract doc says who gets already-member, and unit cases for every redeem branch ([24c4bcc](https://github.com/mgallagher56/flump/commit/24c4bcc92aa0043ca75f98899359640706dae597))
+
+
+### Tests 🧪
+
+* **identity:** getUserContact maps the name, reads 404 as unknown and throws on an outage (review) ([3c9c466](https://github.com/mgallagher56/flump/commit/3c9c466cbeb6c8ceaa0d0bbe61bc2f8ebc396e3d))
+* the manifest counts the export summary route; a fresh uninvited or terms-pending account has nothing to download and no profile row ([0f33339](https://github.com/mgallagher56/flump/commit/0f3333988d80bf6eced4f232e4bb9946683660f2))
+
 ## [1.47.1](https://github.com/mgallagher56/flump/compare/flump/backend-v1.47.0...flump/backend-v1.47.1) (2026-11-27)
 
 

@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.57.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.56.0...flump/web-v1.57.0) (2026-11-28)
+
+
+### Features ✨
+
+* **beta:** the admin's People with access list and used invite links show the person's name and email address, read from WorkOS at request time ([21e8d93](https://github.com/mgallagher56/flump/commit/21e8d93e8a2353f941919a314bf85d4070ae197a))
+* **web:** the not-invited page and the terms screen offer Download your data only when there is something to download ([7b7e719](https://github.com/mgallagher56/flump/commit/7b7e71960fa07b00ba045a45451af54b70df287a))
+
+
+### Bug Fixes 🪲
+
+* **beta:** an allow-listed person who opens an invite link uses it and is recorded; someone who already has access is told the link was not used ([2290805](https://github.com/mgallagher56/flump/commit/2290805b3891923de8d2442a8f4579146d0c0256))
+* **beta:** review: the already-member page is true for an allow-listed caller's unusable link too, the contract doc says who gets already-member, and unit cases for every redeem branch ([24c4bcc](https://github.com/mgallagher56/flump/commit/24c4bcc92aa0043ca75f98899359640706dae597))
+* **web:** NotInvitedDataActions stories define the routed component at module level (lint) ([fa5bb5a](https://github.com/mgallagher56/flump/commit/fa5bb5acdf7478e8909504ed61b49ec6ff2a342c))
+* **web:** the not-invited page reached by a client navigation gets the same download answer (review) ([bba3c63](https://github.com/mgallagher56/flump/commit/bba3c63976fef7672fb1c7774566a12f5eb9cfc1))
+
+
+### Tests 🧪
+
+* the manifest counts the export summary route; a fresh uninvited or terms-pending account has nothing to download and no profile row ([0f33339](https://github.com/mgallagher56/flump/commit/0f3333988d80bf6eced4f232e4bb9946683660f2))
+
 ## [1.56.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.55.0...flump/web-v1.56.0) (2026-11-28)
 
 
