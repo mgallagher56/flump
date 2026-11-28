@@ -1,6 +1,6 @@
 # Legal pages: review record
 
-Status: version 0.1 of the terms, cookies and accessibility pages and version 0.2 of the privacy notice, 25 November 2026.
+Status: version 0.1 of the terms, cookies and accessibility pages (25 November 2026) and version 0.5 of the privacy notice (28 November 2026).
 
 - **Written by:** Claude Fable (an AI model), from the code, the hosting settings and primary legal sources read that day.
 - **Approved by:** a separate Claude Fable reviewer that wrote none of the pages (owner decision, 25 November 2026: "use fable to write and approve the legal pages").
@@ -12,7 +12,7 @@ Decisions: open. The owner steps and the solicitor list below are not answered h
 
 | Page                        | Route            | Source                                                             | Verdict                     |
 | --------------------------- | ---------------- | ------------------------------------------------------------------ | --------------------------- |
-| Privacy notice              | `/privacy`       | `apps/marketing/src/pages/PrivacyPage/PrivacyPage.tsx`             | 0.4 approved in round 8     |
+| Privacy notice              | `/privacy`       | `apps/marketing/src/pages/PrivacyPage/PrivacyPage.tsx`             | 0.5 awaiting round 9        |
 | Terms of use                | `/terms`         | `apps/marketing/src/pages/TermsPage/TermsPage.tsx`                 | Approved on the second look |
 | Cookies and browser storage | `/cookies`       | `apps/marketing/src/pages/CookiesPage/CookiesPage.tsx`             | Approved on the first look  |
 | Accessibility statement     | `/accessibility` | `apps/marketing/src/pages/AccessibilityPage/AccessibilityPage.tsx` | Approved on the second look |
@@ -76,6 +76,10 @@ D5 was revised so the backend runs the retention purge itself (`docs/audit/plans
 ### Round 8: the two optional questions after a check-in (privacy notice 0.4)
 
 E35 W5 adds two optional questions after a check-in, at most once a calendar quarter. A Fable decider chose the lawful basis (legitimate interest for the choice and the free text, no Article 9 condition relied on), the period (13 months from the quarter's first day) and the default (on; switching off deletes earlier answers), and drafted the text. A separate Fable decider, signed `fable-decider`, reviewed it against the design. It required three changes: "at most once in each quarter of the year" in place of "once every three months", "which quarter it was", and "treat you differently from anyone else" in place of "change what you see", since the stop rules can pause a feature for everyone. All three were applied verbatim, and the second look approved it, with the `ropa.md` row 14 (numbered 13 before the households row took it) and the `data-map.md` row. Not legal advice; Fable is not a solicitor. The reviewer checked against the design while the backend was being built; An independent Fable decider, signed `fable-decider`, checked the final 0.4 text against the code as built on 26 November 2026 and approved it. On rebases onto main the version became 0.4, after round 6 took 0.2 and round 7 took 0.3.
+
+### Round 9: the questions after a check-in removed (privacy notice 0.5)
+
+On 28 November 2026 the owner removed the two optional questions after a check-in, with their Settings switch, and ruled that the stored answers are dropped (no one had answered). Migration `DropWellbeingAnswers1795760000000` drops `wellbeing_answers` and `user_profiles.wellbeing_questions`. Privacy notice 0.5 removes the section "Two questions after a check-in", the retention line for the answers and the mention in the right to object, and adds the 0.5 line to the version history. ROPA row 14 is withdrawn and the `data-map.md` row is removed. An independent Fable decider, signed `fable-decider`, reviewed it on 28 November 2026 and approved it with two changes, both applied verbatim: the history line says Flump "has deleted the answers" in place of "holds any answers" (backups may keep deleted data until they expire, which the Backups line already covers), and ROPA "Open for the owner" item 6 is withdrawn. It found the other legal pages, the data map, the functionality map, the export, the retention job and the tests otherwise clean. Not legal advice; Fable is not a solicitor.
 
 ## Judgement calls the reviewer made
 

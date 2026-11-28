@@ -104,6 +104,7 @@ export const LEGAL_PAGES: readonly LegalPage[] = [
     label: "Privacy",
     title: "Privacy notice",
     history: [
+      { version: "0.5", updated: "28 November 2026", effectiveFrom: "2026-11-28" },
       { version: "0.4", updated: "26 November 2026", effectiveFrom: "2026-11-26" },
       { version: "0.3", updated: "25 November 2026", effectiveFrom: "2026-11-25" },
       { version: "0.2", updated: "25 November 2026", effectiveFrom: "2026-11-25" },
