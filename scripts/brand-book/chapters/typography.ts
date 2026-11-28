@@ -128,7 +128,7 @@ export function renderTypographyChapter(tokens: BrandTokens): string {
       weight: authored.webTextStyles.body.md.value.fontWeight,
       lineHeight: authored.webTextStyles.body.md.value.lineHeight,
       use: "Default text",
-      sampleText: "You owe £8,420 across 3 debts.",
+      sampleText: "Add your first account to see your monthly picture.",
     },
     {
       name: "numeric.md",
