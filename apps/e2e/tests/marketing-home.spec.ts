@@ -426,10 +426,14 @@ test.describe("marketing home: the hero's start state (owner, 28 Nov 2026)", () 
             return [r.left, r.top, r.width, r.height].map(Math.round);
           });
         // Shifts of what the script takes over: the hero, its column, the dashboard, the pieces
-        // and the bubbles, each moved by a pixel or more. The copy's text settles by a pixel as
-        // the web font arrives, and the caption's text reflows in place, script or none, so
-        // neither counts.
+        // and the bubbles, each moved by a pixel or more, from the frame before the take-over on.
+        // The copy's text settles by a pixel as the web font arrives, and the caption's text
+        // reflows in place, script or none, so neither counts. Earlier shifts are not the
+        // script's: on a machine without Inter installed (CI) the web font replaces the fallback
+        // after first paint and reflows the dashboard's text (its info button moved 6px at
+        // 358ms, the dashboard grew about 12px), with or without the hero script.
         w.__shift = 0;
+        w.__from = Number.POSITIVE_INFINITY;
         w.__shiftSources = [] as string[];
         type Source = {
           node: Node | null;
@@ -453,6 +457,8 @@ test.describe("marketing home: the hero's start state (owner, 28 Nov 2026)", () 
             hadRecentInput: boolean;
             sources: Source[];
           }[]) {
+            const at = (entry as unknown as { startTime: number }).startTime;
+            if (at < (w.__from as number)) continue;
             if (!entry.hadRecentInput && entry.sources.some(taken)) {
               w.__shift = (w.__shift as number) + entry.value;
               for (const source of entry.sources.filter(taken)) {
@@ -467,14 +473,24 @@ test.describe("marketing home: the hero's start state (owner, 28 Nov 2026)", () 
             }
           }
         }).observe({ type: "layout-shift", buffered: true });
-        // Hydrated, before GSAP: what the CSS draws.
-        document.addEventListener("DOMContentLoaded", () => {
-          w.__painted = boxes();
-        });
+        // What the CSS draws, each frame until the take-over: the last of these is the frame
+        // just before GSAP takes the pieces.
+        let watching = true;
+        const frame = () => {
+          if (!watching) return;
+          if (document.querySelector("[data-hero-piece]")) {
+            w.__painted = boxes();
+            w.__paintedAt = performance.now();
+          }
+          requestAnimationFrame(frame);
+        };
+        requestAnimationFrame(frame);
         // The moment GSAP has drawn its start state, before its first tick.
         new MutationObserver((records, observer) => {
           if (records.some((r) => (r.target as HTMLElement).dataset.heroLive === "true")) {
             w.__taken = boxes();
+            w.__from = (w.__paintedAt as number | undefined) ?? 0;
+            watching = false;
             observer.disconnect();
           }
         }).observe(document, {
